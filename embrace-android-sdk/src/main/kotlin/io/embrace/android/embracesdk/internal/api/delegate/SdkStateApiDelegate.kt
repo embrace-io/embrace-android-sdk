@@ -6,9 +6,11 @@ import io.embrace.android.embracesdk.internal.injection.ModuleInitBootstrapper
 import io.embrace.android.embracesdk.internal.injection.embraceImplInject
 
 internal class SdkStateApiDelegate(
-    bootstrapper: ModuleInitBootstrapper,
+    lazyBootstrapper: Lazy<ModuleInitBootstrapper>,
     private val sdkCallChecker: SdkCallChecker,
 ) : SdkStateApi {
+
+    private val bootstrapper by lazyBootstrapper
 
     private val sessionIdsProvider by embraceImplInject(sdkCallChecker) {
         bootstrapper.userSessionOrchestrationModule.sessionIdsProvider

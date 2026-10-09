@@ -75,10 +75,12 @@ internal class StrictModeStartupTest(
 
             bootstrapper = ModuleInitBootstrapper(TestInitModule(InitModuleImpl(), otelSdkMode))
             EmbraceImpl(
-                bootstrapper,
+                lazyOf(bootstrapper),
                 { embrace },
                 SdkCallChecker(bootstrapper.initModule.logger),
                 NoopOpenTelemetry,
+                bootstrapper.initModule.clock,
+                bootstrapper.initModule.logger,
             ).let {
                 embrace = it
                 it.start(context)

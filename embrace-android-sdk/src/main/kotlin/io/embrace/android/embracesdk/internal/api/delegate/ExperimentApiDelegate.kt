@@ -11,9 +11,11 @@ import io.embrace.android.embracesdk.internal.injection.ModuleInitBootstrapper
 import io.embrace.android.embracesdk.internal.injection.embraceImplInject
 
 internal class ExperimentApiDelegate(
-    bootstrapper: ModuleInitBootstrapper,
+    lazyBootstrapper: Lazy<ModuleInitBootstrapper>,
     private val sdkCallChecker: SdkCallChecker,
 ) : ExperimentApi {
+
+    private val bootstrapper by lazyBootstrapper
 
     private val clock by embraceImplInject(sdkCallChecker) {
         bootstrapper.initModule.clock

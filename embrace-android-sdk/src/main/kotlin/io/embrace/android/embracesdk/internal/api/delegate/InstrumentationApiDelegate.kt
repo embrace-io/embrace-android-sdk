@@ -12,9 +12,11 @@ import io.embrace.android.embracesdk.spans.EmbraceSpanEvent
 import io.embrace.android.embracesdk.spans.ErrorCode
 
 internal class InstrumentationApiDelegate(
-    private val bootstrapper: ModuleInitBootstrapper,
+    lazyBootstrapper: Lazy<ModuleInitBootstrapper>,
     private val sdkCallChecker: SdkCallChecker,
 ) : InstrumentationApi {
+
+    private val bootstrapper by lazyBootstrapper
 
     private val clock by embraceImplInject(sdkCallChecker) {
         bootstrapper.initModule.clock

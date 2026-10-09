@@ -5,11 +5,13 @@ import io.embrace.android.embracesdk.internal.injection.ModuleInitBootstrapper
 import io.embrace.android.embracesdk.internal.injection.embraceImplInject
 
 internal class BreadcrumbApiDelegate(
-    bootstrapper: ModuleInitBootstrapper,
+    lazyBootstrapper: Lazy<ModuleInitBootstrapper>,
     private val sdkCallChecker: SdkCallChecker,
 ) : BreadcrumbApi {
 
-    private val sdkClock = bootstrapper.initModule.clock
+    private val bootstrapper by lazyBootstrapper
+
+    private val sdkClock get() = bootstrapper.initModule.clock
     private val breadcrumbDataSource by embraceImplInject(sdkCallChecker) {
         bootstrapper.featureModule.breadcrumbDataSource
     }

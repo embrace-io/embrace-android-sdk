@@ -27,7 +27,7 @@ import java.util.concurrent.TimeUnit
 import java.util.concurrent.TimeoutException
 
 /**
- * Reads any session parts that were persisted on disk by the multi-file persistence layer,
+ * Reads any session parts that were persisted on disk in multi-file persistence mode,
  * reconstructs each one into an envelope, and hands it to the [IntakeService] for delivery. A
  * session part is deleted once intake has stored it.
  *

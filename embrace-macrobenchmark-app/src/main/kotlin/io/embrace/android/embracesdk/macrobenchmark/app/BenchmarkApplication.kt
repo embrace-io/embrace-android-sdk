@@ -17,7 +17,7 @@ class BenchmarkApplication : Application() {
     }
 
     /**
-     * Selects the persistence layer and the opentelemetry-kotlin implementation without rebuilding
+     * Selects the persistence mode and the opentelemetry-kotlin implementation without rebuilding
      * the APK, from global settings that survive the `pm clear` the benchmark runs between iterations:
      *
      * ```

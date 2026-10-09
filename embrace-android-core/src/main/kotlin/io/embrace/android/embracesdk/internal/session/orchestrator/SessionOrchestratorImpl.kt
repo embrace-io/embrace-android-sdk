@@ -434,7 +434,7 @@ internal class SessionOrchestratorImpl(
                             scheduleLastActivityUpdate(userSession, endAppState)
 
                             // initiate periodic caching of the payload if a new session has started.
-                            // the multi file layer writes as telemetry changes, so it needs no tick.
+                            // multi-file mode writes as telemetry changes, so it needs no tick.
                             if (!multiFilePersistenceEnabled()) {
                                 EmbTrace.trace("initiate-periodic-caching") {
                                     updatePeriodicCacheAttrs()

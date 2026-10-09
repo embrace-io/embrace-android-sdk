@@ -3,7 +3,6 @@ package io.embrace.android.embracesdk
 import android.annotation.SuppressLint
 import android.content.Context
 import android.util.Log
-import io.embrace.android.embracesdk.internal.EmbraceInternalApi
 import io.embrace.android.embracesdk.internal.EmbraceInternalInterface
 import io.embrace.android.embracesdk.internal.FlutterInternalInterface
 import io.embrace.android.embracesdk.internal.InternalInterfaceApi
@@ -47,6 +46,7 @@ import io.embrace.android.embracesdk.internal.instance.BufferingSdkInstance
 import io.embrace.android.embracesdk.internal.logging.InternalErrorHandler
 import io.embrace.android.embracesdk.internal.telemetry.InternalTelemetryService
 import io.embrace.android.embracesdk.internal.utils.EmbTrace
+import io.embrace.android.embracesdk.internal.utils.Provider
 import io.embrace.android.embracesdk.spans.EmbraceSpan
 import io.embrace.android.embracesdk.spans.EmbraceSpanEvent
 import io.embrace.android.embracesdk.spans.ErrorCode
@@ -67,6 +67,7 @@ import java.util.concurrent.Executors
 @SuppressLint("EmbracePublicApiPackageRule")
 internal class EmbraceImpl(
     private val bootstrapper: ModuleInitBootstrapper,
+    private val hostedSdkApiProvider: Provider<SdkApi>,
     private val sdkCallChecker: SdkCallChecker =
         SdkCallChecker(bootstrapper.initModule.logger),
     private val userApiDelegate: UserApiDelegate = UserApiDelegate(bootstrapper, sdkCallChecker),
@@ -100,11 +101,6 @@ internal class EmbraceImpl(
     ExperimentApi by preStartBuffer,
     InternalInterfaceApi {
 
-    init {
-        EmbraceInternalApi.internalInterfaceApi = this
-        EmbraceInternalApi.isStarted = sdkCallChecker.started::get
-    }
-
     val telemetryService: InternalTelemetryService get() = bootstrapper.initModule.telemetryService
     val internalErrorHandler: InternalErrorHandler get() = bootstrapper.initModule.logger
     private val startStopLock = Any()
@@ -129,7 +125,7 @@ internal class EmbraceImpl(
                             bootstrapper.initModule,
                             bootstrapper.configService,
                             bootstrapper.payloadSourceModule,
-                            this,
+                            hostedSdkApiProvider(),
                             bootstrapper,
                         )
 

@@ -69,7 +69,7 @@ class SessionMetadataWriter(
             partDir = partDir,
             fileName = METADATA_FILE_NAME,
             maxBytes = MAX_PART_FILE_BYTES,
-            counters = target.counters,
+            target = target,
             syncImmediately = firstMetadataWrite,
         ) { stream ->
             SessionMetadata.ADAPTER.encode(stream, metadata)

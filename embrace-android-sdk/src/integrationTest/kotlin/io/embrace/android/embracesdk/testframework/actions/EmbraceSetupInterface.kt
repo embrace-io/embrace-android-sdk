@@ -278,7 +278,7 @@ internal class EmbraceSetupInterface(
             "Could not create session part directory ${directory.dirName}"
         }
 
-        val target = SessionPartWriteTarget(sessionsDir) { directory }
+        val target = SessionPartWriteTarget(sessionsDir, fakeClock) { directory }
         SessionMetadataWriter(
             target = target,
             metadataSource = { EnvelopeMetadata() },

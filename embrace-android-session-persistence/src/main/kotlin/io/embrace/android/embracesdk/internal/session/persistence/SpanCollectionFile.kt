@@ -1,6 +1,5 @@
 package io.embrace.android.embracesdk.internal.session.persistence
 
-import io.embrace.android.embracesdk.internal.utils.FileWriteCounters
 import java.io.File
 import java.io.FileOutputStream
 
@@ -10,7 +9,7 @@ import java.io.FileOutputStream
 internal class SpanCollectionFile(
     val directory: SessionPartDirectory,
     private val file: File,
-    private val counters: FileWriteCounters,
+    private val target: SessionPartWriteTarget,
 ) {
 
     private var stream: FileOutputStream? = null
@@ -24,7 +23,7 @@ internal class SpanCollectionFile(
         stream.write(bytes)
         size += bytes.size
         if (bytes.isNotEmpty()) {
-            counters.recordWrite(bytes.size.toLong())
+            target.recordWrite(file, bytes.size.toLong())
         }
     }
 

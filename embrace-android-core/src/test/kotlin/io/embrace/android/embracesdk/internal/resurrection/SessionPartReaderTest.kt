@@ -7,6 +7,9 @@ import io.embrace.android.embracesdk.fakes.FakeConfigService
 import io.embrace.android.embracesdk.fakes.FakeIntakeService
 import io.embrace.android.embracesdk.fakes.FakeInternalLogger
 import io.embrace.android.embracesdk.fakes.FakeNativeCrashService
+import io.embrace.android.embracesdk.internal.clock.Clock
+import io.embrace.android.embracesdk.internal.clock.millisToNanos
+import io.embrace.android.embracesdk.internal.clock.nanosToMillis
 import io.embrace.android.embracesdk.internal.config.resolved.EmbraceConfig
 import io.embrace.android.embracesdk.internal.config.resolved.PersistenceConfig
 import io.embrace.android.embracesdk.internal.delivery.PayloadType
@@ -158,6 +161,23 @@ internal class SessionPartReaderTest {
         assertEquals("1", intake.envelope.sessionPartAttribute(EmbSessionAttributes.EMB_IS_FINAL_SESSION_PART))
         assertEquals(TERMINATION_REASON, intake.envelope.sessionPartAttribute(EmbSessionAttributes.EMB_USER_SESSION_TERMINATION_REASON))
         assertDeleted(partDirectory)
+    }
+
+    @Test
+    fun `a dead session part ends at the last time it had data written`() {
+        val sessionSnapshot = sessionSpan().copy(endTimeNanos = null)
+        val completedWork = sessionSpan().copy(
+            spanId = "aaaaaaaaaaaaaaa3",
+            name = "work",
+            attributes = listOf(Attribute(key = "emb.type", data = "perf")),
+        )
+        // written a minute after anything the part's telemetry records a time for
+        val lastWriteMs = checkNotNull(completedWork.endTimeNanos).nanosToMillis() + 60_000L
+        persist(partDirectory, span = completedWork, snapshots = listOf(sessionSnapshot), writtenAtMs = lastWriteMs)
+        createReader().readPersistedSessionParts()
+
+        val sessionPartSpan = intakeService.getIntakes<SessionPartPayload>().single().envelope.getSessionPartSpan()
+        assertEquals(lastWriteMs.millisToNanos(), sessionPartSpan?.endTimeNanos)
     }
 
     @Test
@@ -652,10 +672,12 @@ internal class SessionPartReaderTest {
         directory: SessionPartDirectory,
         span: Span = sessionSpan(),
         snapshots: List<Span> = emptyList(),
+        writtenAtMs: Long? = null,
     ) {
         create(directory)
 
-        val target = SessionPartWriteTarget(lazy { sessionsDir }) { directory }
+        val writeClock = writtenAtMs?.let { time -> Clock { time } } ?: clock
+        val target = SessionPartWriteTarget(lazy { sessionsDir }, writeClock) { directory }
         SessionMetadataWriter(
             target = target,
             metadataSource = { EnvelopeMetadata(username = "fake-user") },

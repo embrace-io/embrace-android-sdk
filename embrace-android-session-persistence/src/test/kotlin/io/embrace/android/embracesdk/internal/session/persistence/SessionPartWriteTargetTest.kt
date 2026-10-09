@@ -1,5 +1,6 @@
 package io.embrace.android.embracesdk.internal.session.persistence
 
+import io.embrace.android.embracesdk.fakes.FakeClock
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNull
@@ -39,7 +40,7 @@ internal class SessionPartWriteTargetTest {
         sessionsDir = tempFolder.newFolder("embrace_sessions")
         activePart = partDirectory
         reported.clear()
-        target = SessionPartWriteTarget(lazy { sessionsDir }) { activePart }
+        target = SessionPartWriteTarget(lazy { sessionsDir }, FakeClock()) { activePart }
     }
 
     @Test
@@ -101,7 +102,7 @@ internal class SessionPartWriteTargetTest {
 
     @Test
     fun `a write failure is reported as itself when the active part cannot be resolved`() {
-        target = SessionPartWriteTarget(lazy { sessionsDir }) { error("boom") }
+        target = SessionPartWriteTarget(lazy { sessionsDir }, FakeClock()) { error("boom") }
         val failure = IOException("disk full")
 
         target.reportWriteFailure(failure, reported::add)
@@ -143,7 +144,7 @@ internal class SessionPartWriteTargetTest {
         val other = SessionPartDirectory(timestamp = TIMESTAMP + 1, uuid = UUID)
         createPartDir(other)
         activePart = other
-        val next = SessionPartWriteTarget(lazy { sessionsDir }) { activePart }
+        val next = SessionPartWriteTarget(lazy { sessionsDir }, FakeClock()) { activePart }
 
         assertEquals(other, next.directory)
         assertEquals(File(sessionsDir, other.dirName), next.partDir(other, reported::add))

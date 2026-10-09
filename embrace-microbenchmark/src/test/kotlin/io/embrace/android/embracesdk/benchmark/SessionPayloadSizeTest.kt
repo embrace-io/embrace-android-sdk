@@ -2,6 +2,7 @@ package io.embrace.android.embracesdk.benchmark
 
 import io.embrace.android.embracesdk.benchmark.SessionPayloadSizeTest.PersistenceMethod.MULTI_FILE
 import io.embrace.android.embracesdk.benchmark.SessionPayloadSizeTest.PersistenceMethod.SINGLE_FILE
+import io.embrace.android.embracesdk.fakes.FakeClock
 import io.embrace.android.embracesdk.fakes.FakeInternalLogger
 import io.embrace.android.embracesdk.fakes.OtelSdkMode
 import io.embrace.android.embracesdk.internal.payload.Envelope
@@ -78,7 +79,7 @@ internal class SessionPayloadSizeTest(
         val logger = FakeInternalLogger(throwOnInternalError = true)
         val sessionsDir = tempFolder.newFolder("embrace_sessions")
         val partDir = File(sessionsDir, fixture.directory.dirName).apply { mkdirs() }
-        val target = SessionPartWriteTarget(lazy { sessionsDir }) { fixture.directory }
+        val target = SessionPartWriteTarget(lazy { sessionsDir }, FakeClock()) { fixture.directory }
 
         SessionMetadataWriter(
             target = target,

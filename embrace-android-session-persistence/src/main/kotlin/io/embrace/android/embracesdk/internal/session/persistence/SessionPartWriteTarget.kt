@@ -1,5 +1,6 @@
 package io.embrace.android.embracesdk.internal.session.persistence
 
+import io.embrace.android.embracesdk.internal.clock.Clock
 import io.embrace.android.embracesdk.internal.utils.FileWriteCounters
 import java.io.File
 import java.io.IOException
@@ -11,10 +12,12 @@ internal const val MULTI_FILE_BYTES_COUNTER = "mf-bytes-written"
 internal const val MULTI_FILE_FILES_COUNTER = "mf-files-written"
 
 /**
- * Where the telemetry for one session part is written.
+ * Where the telemetry for one session part is written. [clock] provides the timestamp for when
+ * the part was last modified.
  */
 class SessionPartWriteTarget(
     private val sessionsDir: Lazy<File>,
+    private val clock: Clock,
     private val sessionPartDirectorySource: () -> SessionPartDirectory?,
 ) {
 
@@ -53,6 +56,15 @@ class SessionPartWriteTarget(
         if (!gone) {
             track(exc)
         }
+    }
+
+    /**
+     * Records that [bytes] were just written to [file]: counts them, and sets the file's modification
+     * time to [clock]'s time.
+     */
+    internal fun recordWrite(file: File, bytes: Long) {
+        counters.recordWrite(bytes)
+        runCatching { file.setLastModified(clock.now()) }
     }
 
     /**

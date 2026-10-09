@@ -66,11 +66,7 @@ import java.util.concurrent.Executors
  */
 @SuppressLint("EmbracePublicApiPackageRule")
 internal class EmbraceImpl(
-    private val bootstrapper: ModuleInitBootstrapper = EmbTrace.trace(
-        sectionName = "bootstrapper-init",
-        recordDuration = true,
-        code = ::ModuleInitBootstrapper,
-    ),
+    private val bootstrapper: ModuleInitBootstrapper,
     private val sdkCallChecker: SdkCallChecker =
         SdkCallChecker(bootstrapper.initModule.logger),
     private val userApiDelegate: UserApiDelegate = UserApiDelegate(bootstrapper, sdkCallChecker),

@@ -17,7 +17,7 @@ import java.io.ByteArrayInputStream
 import java.util.zip.GZIPInputStream
 
 /**
- * Measures what each persistence layer costs to turn the bytes it stored back into one session,
+ * Measures what each persistence mode costs to turn the bytes it stored back into one session,
  * without I/O. The counterpart to [PersistenceSerializationBenchmarks], over the same session.
  *
  * [deserializeSessionSingleFile] measures **gunzip** and JSON decoding.

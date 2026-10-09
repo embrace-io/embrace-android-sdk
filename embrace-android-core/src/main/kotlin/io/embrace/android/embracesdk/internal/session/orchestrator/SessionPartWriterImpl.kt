@@ -30,7 +30,7 @@ import io.embrace.android.embracesdk.internal.worker.BackgroundWorker
 import java.io.File
 
 /**
- * Writes session part telemetry to disk, if the multi-file persistence layer is enabled.
+ * Writes session part telemetry to disk, if multi-file persistence mode is enabled.
  * All filesystem work is queued on a single-threaded [worker]. A queued write that is superseded
  * before it runs is cancelled to avoid duplicate work.
  */

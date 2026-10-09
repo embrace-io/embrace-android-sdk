@@ -13,7 +13,7 @@ import java.io.ByteArrayOutputStream
 import java.util.zip.GZIPOutputStream
 
 /**
- * One short session's worth of telemetry, in the bytes each persistence layer would have stored.
+ * One short session's worth of telemetry, in the bytes each persistence mode would have stored.
  */
 internal class StoredSessionFixture(session: SimpleSessionFixture = SimpleSessionFixture()) {
 

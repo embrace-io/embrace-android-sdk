@@ -37,9 +37,12 @@ class PriorityWorker<T>(
     }
 
     /**
-     * Cancels [future] and, if cancellation succeeds (i.e. the task hadn't already started
-     * running), removes it from the executor's task queue so it doesn't linger there until the
-     * executor drains it.
+     * Cancels [future] without interrupting it and, if cancellation succeeds, removes it from the
+     * executor's task queue so it doesn't linger there until the executor drains it.
+     *
+     * Cancellation succeeds for any task that hasn't finished, including one that is already
+     * running. A running task is not stopped: it runs to the end and keeps its side effects, and
+     * only its result is discarded. Removing it from the queue is then a no-op.
      */
     fun cancelAndRemove(future: Future<*>): Boolean {
         val cancelled = future.cancel(false)

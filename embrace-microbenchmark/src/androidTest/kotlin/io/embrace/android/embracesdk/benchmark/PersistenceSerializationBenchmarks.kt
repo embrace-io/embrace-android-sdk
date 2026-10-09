@@ -24,7 +24,7 @@ import org.junit.runners.Parameterized
 import java.util.zip.GZIPOutputStream
 
 /**
- * Measures what each persistence layer costs to turn one session into the bytes it stores, without I/O.
+ * Measures what each persistence mode costs to turn one session into the bytes it stores, without I/O.
  *
  * [serializeSessionSingleFile] measures JSON encoding **and gzip**.
  * [serializeSessionMultiFile] measures encoding to uncompressed protobuf.
@@ -67,7 +67,7 @@ class PersistenceSerializationBenchmarks(
     }
 
     /**
-     * Measures what one periodic cache window costs the multi-file layer: the snapshots file is
+     * Measures what one periodic cache window costs in multi-file mode: the snapshots file is
      * rewritten in full, which is where the session span is held with a fresh heartbeat until it
      * ends, and the spans that ended during the window were appended as they ended.
      */

@@ -90,14 +90,14 @@ will not, such as the perfetto UI:
 unzip -p <bundle>.perfetto-trace Trace_output.pb > trace.perfetto
 ```
 
-## Selecting the persistence layer and OTel implementation
+## Selecting the persistence mode and OTel implementation
 
 Without rebuilding the APK, via global settings the app reads before starting the SDK:
 
 ```bash
-adb shell settings put global embrace_pct_multi_file_persistence 100   # multi-file layer
-adb shell settings put global embrace_pct_multi_file_persistence 0     # legacy layer
-adb shell settings delete global embrace_pct_multi_file_persistence    # SDK default (legacy)
+adb shell settings put global embrace_pct_multi_file_persistence 100   # multi-file mode
+adb shell settings put global embrace_pct_multi_file_persistence 0     # single-file mode
+adb shell settings delete global embrace_pct_multi_file_persistence    # SDK default (single-file)
 
 adb shell settings put global embrace_pct_otel_kotlin_sdk 100          # regular opentelemetry-kotlin
 adb shell settings put global embrace_pct_otel_kotlin_sdk 0            # compat opentelemetry-kotlin

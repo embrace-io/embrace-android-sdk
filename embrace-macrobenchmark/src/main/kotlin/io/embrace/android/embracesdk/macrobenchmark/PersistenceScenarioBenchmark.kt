@@ -26,7 +26,7 @@ import org.junit.runners.Parameterized
 
 /**
  * Captures a perfetto trace per iteration of each scenario in [PersistenceScenarios], so that the
- * cost of persisting a realistically shaped session can be compared between storage layers.
+ * cost of persisting a realistically shaped session can be compared between persistence modes.
  */
 @RunWith(Parameterized::class)
 internal class PersistenceScenarioBenchmark(

@@ -3,7 +3,6 @@ package io.embrace.android.embracesdk.testframework
 
 import android.content.Context
 import androidx.test.core.app.ApplicationProvider
-import io.embrace.android.embracesdk.EmbraceImpl
 import io.embrace.android.embracesdk.fakes.FakeClock
 import io.embrace.android.embracesdk.fakes.FakeConfigService
 import io.embrace.android.embracesdk.fakes.TestPlatformSerializer
@@ -26,6 +25,7 @@ import io.embrace.android.embracesdk.internal.injection.InitModule
 import io.embrace.android.embracesdk.internal.injection.ModuleInitBootstrapper
 import io.embrace.android.embracesdk.internal.instance.SdkState
 import io.embrace.android.embracesdk.internal.instance.SdkStateHolder
+import io.embrace.android.embracesdk.internal.instance.createSdkStateHolder
 import io.embrace.android.embracesdk.internal.utils.EmbTrace
 import io.embrace.android.embracesdk.internal.utils.Provider
 import io.embrace.android.embracesdk.testframework.actions.EmbraceActionInterface
@@ -119,7 +119,6 @@ internal class SdkIntegrationTestRule(
     private lateinit var otelAssertion: EmbraceOtelExportAssertionInterface
     private lateinit var spanExporter: FilteredSpanExporter
     private lateinit var logExporter: FilteredLogExporter
-    private lateinit var embraceImpl: EmbraceImpl
     private lateinit var sdkStateHolder: SdkStateHolder
     private lateinit var baseUrl: String
 
@@ -171,8 +170,7 @@ internal class SdkIntegrationTestRule(
 
         setupAction(setup)
         with(setup) {
-            embraceImpl = EmbraceImpl(bootstrapper = bootstrapper)
-            sdkStateHolder = SdkStateHolder(embraceImpl, embraceImpl.telemetryService, embraceImpl.internalErrorHandler)
+            sdkStateHolder = createSdkStateHolder(bootstrapper)
             preSdkStartAction(preSdkStart)
             //TODO: Filtered span and log exporters should be migrated to Kotlin.
             sdkStateHolder.api.addSpanExporter(spanExporter.toOtelKotlinSpanExporter())
@@ -252,8 +250,8 @@ internal class SdkIntegrationTestRule(
      * Teardown the Embrace SDK, closing any resources as required
      */
     override fun after() {
-        if (::embraceImpl.isInitialized) {
-            embraceImpl.stop()
+        if (::sdkStateHolder.isInitialized) {
+            sdkStateHolder.disable()
         }
     }
 

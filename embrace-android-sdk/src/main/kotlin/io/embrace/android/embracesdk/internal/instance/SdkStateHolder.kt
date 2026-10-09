@@ -14,11 +14,12 @@ import io.embrace.android.embracesdk.internal.telemetry.InternalTelemetryService
  *
  * ```
  * NOT_STARTED --start() succeeds--> STARTED --disable()--> DISABLED
+ *                                       ^                         |
+ *                                       +-------------------------+
  * ```
  *
- * A start that does not succeed leaves the SDK in [SdkState.NOT_STARTED] so that it can be retried. [SdkState.DISABLED]
- * is terminal: the SDK cannot be restarted once it has been disabled. Exceptions are reported to [errorHandler] rather
- * than thrown.
+ * A start that does not succeed leaves the SDK in [SdkState.NOT_STARTED] so that it can be retried. A disabled SDK can
+ * currently be restarted by calling start() again. Exceptions are reported to [errorHandler] rather than thrown.
  */
 internal class SdkStateHolder(
     instance: SdkApi,
@@ -44,7 +45,7 @@ internal class SdkStateHolder(
         private set
 
     /**
-     * Starts the SDK. Has no effect unless the SDK is in [SdkState.NOT_STARTED].
+     * Starts the SDK. Has no effect if the SDK is already in [SdkState.STARTED].
      */
     fun start(context: Context) {
         synchronized(lock) {
@@ -109,7 +110,7 @@ internal enum class SdkState {
     STARTED,
 
     /**
-     * The SDK was disabled after it started. This state is terminal.
+     * The SDK was disabled after it started.
      */
     DISABLED,
 }

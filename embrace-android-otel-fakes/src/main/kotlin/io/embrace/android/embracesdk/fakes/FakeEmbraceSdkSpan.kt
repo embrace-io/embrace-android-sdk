@@ -33,6 +33,8 @@ import io.opentelemetry.kotlin.tracing.StatusData
 import io.opentelemetry.kotlin.tracing.Span
 import io.opentelemetry.kotlin.tracing.SpanContext
 import io.opentelemetry.kotlin.tracing.SpanKind
+import io.opentelemetry.kotlin.tracing.createInvalidSpanContext
+import io.opentelemetry.kotlin.tracing.createSpanContext
 import java.util.concurrent.ConcurrentLinkedQueue
 import kotlin.random.Random
 
@@ -85,16 +87,13 @@ class FakeEmbraceSdkSpan(
 
     private fun createFakeKotlinSdkSpan(timestampMs: Long): Span = FakeSpan(
         name = name,
-        spanContext = openTelemetry.spanContext.create(
+        spanContext = createSpanContext(
             traceId = parent?.traceId ?: Random.nextBytes(16).toHexString(),
             spanId = Random.nextBytes(8).toHexString(),
-            traceFlags = openTelemetry.traceFlags.default,
-            traceState = openTelemetry.traceState.default,
-            isRemote = false,
         ),
         startTimestamp = timestampMs.millisToNanos(),
         parent = parentContext.getEmbraceSpan(openTelemetry)?.spanContext
-            ?: openTelemetry.spanContext.invalid
+            ?: createInvalidSpanContext()
     )
 
     override fun stop(errorCode: ErrorCode?, endTimeMs: Long?): Boolean =

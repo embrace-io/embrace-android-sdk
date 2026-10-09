@@ -150,7 +150,7 @@ internal class EmbSpanChangeNotificationTest(
     fun `EmbInvalidSpan never notifies`() {
         mutators.forEach { (name, mutate) ->
             observed.clear()
-            EmbInvalidSpan(otelInstance).mutate()
+            EmbInvalidSpan().mutate()
             assertEquals("$name should not notify", emptyList<EmbraceSdkSpan>(), observed)
         }
     }
@@ -187,7 +187,7 @@ internal class EmbSpanChangeNotificationTest(
 
     private fun declaredApi(): Set<String> = Span::class.java.inheritedApiMethodNames()
 
-    private fun wrap(impl: EmbraceSdkSpan) = EmbSpan(impl = impl, clock = otelClock, openTelemetry = otelInstance)
+    private fun wrap(impl: EmbraceSdkSpan) = EmbSpan(impl = impl, clock = otelClock)
 
     private fun createStartedSpan(): EmbraceSdkSpan = spanFactory.create(
         otelSpanStartArgs = OtelSpanStartArgs(

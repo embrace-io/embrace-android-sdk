@@ -29,7 +29,6 @@ import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertTrue
-import org.junit.Assume.assumeTrue
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -251,8 +250,6 @@ internal class OTelExportTest(
 
     @Test
     fun `span exported to user-supplied SpanProcessor using Java API`() {
-        // TODO: future: opentelemetry-kotlin's SpanProcessorAdapter only forwards compat spans, so regular mode drops them
-        assumeTrue(otelSdkMode == OtelSdkMode.COMPAT)
         val processor = FakeOtelJavaSpanProcessor()
         val spanName = "test-java-processor-span"
 
@@ -275,8 +272,6 @@ internal class OTelExportTest(
 
     @Test
     fun `log record exported to user-supplied LogRecordProcessor using Java API`() {
-        // TODO: future: opentelemetry-kotlin's LogRecordProcessorAdapter only forwards compat logs, so regular mode drops them
-        assumeTrue(otelSdkMode == OtelSdkMode.COMPAT)
         val processor = FakeOtelJavaLogRecordProcessor()
 
         testRule.runTest(

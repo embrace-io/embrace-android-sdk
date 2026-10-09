@@ -4,12 +4,8 @@ import io.opentelemetry.kotlin.OpenTelemetry
 import io.opentelemetry.kotlin.attributes.AttributesMutator
 import io.opentelemetry.kotlin.context.Context
 import io.opentelemetry.kotlin.context.ContextKey
-import io.opentelemetry.kotlin.factory.BaggageFactory
 import io.opentelemetry.kotlin.factory.ContextFactory
-import io.opentelemetry.kotlin.factory.SpanContextFactory
 import io.opentelemetry.kotlin.factory.SpanFactory
-import io.opentelemetry.kotlin.factory.TraceFlagsFactory
-import io.opentelemetry.kotlin.factory.TraceStateFactory
 import io.opentelemetry.kotlin.logging.Logger
 import io.opentelemetry.kotlin.logging.LoggerProvider
 import io.opentelemetry.kotlin.logging.SeverityNumber
@@ -49,12 +45,8 @@ internal class LateBindingOpenTelemetry(
     }
 
     override val meterProvider: MeterProvider get() = resolve().meterProvider
-    override val spanContext: SpanContextFactory get() = resolve().spanContext
-    override val traceFlags: TraceFlagsFactory get() = resolve().traceFlags
-    override val traceState: TraceStateFactory get() = resolve().traceState
     override val context: ContextFactory = LateBindingContextFactory { resolve().context }
     override val span: SpanFactory get() = resolve().span
-    override val baggage: BaggageFactory get() = resolve().baggage
     override val propagator: TextMapPropagator = LateBindingTextMapPropagator { resolve().propagator }
 }
 

@@ -17,6 +17,9 @@ internal const val INITIAL_CAPACITY = 16
  *
  * State travels separately, against a [StateKey]: a value emitted against one is retained and replayed to handlers registered
  * against that key afterwards.
+ *
+ * A [BusPoll] travels the other way, against a [PollKey]: it is sent to every [PollHandler] registered against its key, and their
+ * results are gathered back to the caller.
  */
 class EventBus(private val internalErrorHandler: InternalErrorHandler) {
 
@@ -29,7 +32,7 @@ class EventBus(private val internalErrorHandler: InternalErrorHandler) {
      * The handlers registered against each key, indexed by [BusKey.id], written and replaced only under [lock].
      *
      * This `AtomicReferenceArray` is heterogeneous and each slot's array is created with the element type of what it holds
-     * (`Array<EventHandler>`), so that it can be cast whole by [registeredFor].
+     * (`Array<EventHandler>`, `Array<PollHandler>`), so that it can be cast whole by [registeredFor].
      */
     @Volatile
     private var registrations = AtomicReferenceArray<Array<*>?>(INITIAL_CAPACITY)
@@ -74,6 +77,13 @@ class EventBus(private val internalErrorHandler: InternalErrorHandler) {
     }
 
     /**
+     * Registers [handler] against [key]. Registering a handler already registered against [key] does nothing.
+     */
+    fun <V : Any> addPollHandler(key: PollKey<V>, handler: PollHandler<V>) {
+        addTo<PollHandler<*>>(key, handler)
+    }
+
+    /**
      * Unregisters [handler] from [key], forgetting any failure reported for it so that registering it again, reports again.
      */
     fun <E : Any> removeHandler(key: EventKey<E>, handler: EventHandler<E>) {
@@ -87,6 +97,15 @@ class EventBus(private val internalErrorHandler: InternalErrorHandler) {
      */
     fun <E : Any> removeStateHandler(key: StateKey<E>, handler: EventHandler<E>) {
         if (removeFrom<EventHandler<*>>(key, handler)) {
+            loggedFailures.remove(handler)
+        }
+    }
+
+    /**
+     * Unregisters [handler] from [key], forgetting any failure reported for it so that registering it again, reports again.
+     */
+    fun <V : Any> removePollHandler(key: PollKey<V>, handler: PollHandler<V>) {
+        if (removeFrom<PollHandler<*>>(key, handler)) {
             loggedFailures.remove(handler)
         }
     }
@@ -121,6 +140,25 @@ class EventBus(private val internalErrorHandler: InternalErrorHandler) {
 
         val registered = registeredFor<EventHandler<*>>(key.id) ?: return
         deliverTo(registered, value)
+    }
+
+    /**
+     * Sends [BusPoll] to every handler registered against its key, on the calling thread, and returns their results. A handler that
+     * throws contributes no result.
+     */
+    fun <V : Any> gather(poll: BusPoll<V>): List<PollResult<V>> {
+        val registered = registeredFor<PollHandler<*>>(poll.key.id) ?: return emptyList()
+        val results = ArrayList<PollResult<V>>(registered.size)
+        for (handler in registered) {
+            @Suppress("UNCHECKED_CAST") // addPollHandler pairs a key with handlers of that key's own type
+            val typed = handler as PollHandler<V>
+            try {
+                results.add(typed.onPoll(poll))
+            } catch (failure: Exception) {
+                reportFailure(handler, failure)
+            }
+        }
+        return results
     }
 
     /**

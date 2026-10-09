@@ -37,11 +37,12 @@ class PayloadStorageServiceImpl(
      * [SerializationAction] is expected to return bytes that are not compressed, and they will be gzipped before
      * being persisted.
      */
-    override fun store(metadata: StoredTelemetryMetadata, action: SerializationAction) {
-        fileStorageService.store(metadata) { stream ->
+    override fun store(metadata: StoredTelemetryMetadata, action: SerializationAction): StorageOutcome {
+        val outcome = fileStorageService.store(metadata) { stream ->
             GZIPOutputStream(stream).use(action)
         }
         deliveryTracer?.onStore(metadata)
+        return outcome
     }
 
     override fun delete(metadata: StoredTelemetryMetadata, callback: () -> Unit) {

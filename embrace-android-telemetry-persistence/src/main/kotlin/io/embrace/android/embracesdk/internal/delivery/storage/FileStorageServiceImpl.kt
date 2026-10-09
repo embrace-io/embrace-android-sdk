@@ -39,20 +39,24 @@ class FileStorageServiceImpl(
         maxAgeMs = maxAgeMs,
     )
 
-    override fun store(metadata: StoredTelemetryMetadata, action: SerializationAction) {
-        try {
+    override fun store(metadata: StoredTelemetryMetadata, action: SerializationAction): StorageOutcome {
+        return try {
             storeImpl(metadata, action)
-        } catch (exc: Throwable) {
-            logger.trackInternalError(InternalErrorType.PayloadStorageFail, exc)
+        } catch (t: Throwable) {
+            // Building the payload or writing it failed. A file system in trouble, such as a full disk, is
+            // not expected to recover soon, so this is not worth retrying.
+            logger.trackInternalError(InternalErrorType.PayloadStorageFail, t)
+            StorageOutcome.FAILED
         }
     }
 
     private fun storeImpl(
         metadata: StoredTelemetryMetadata,
         action: SerializationAction,
-    ) = SystemTrace.trace(metadata.traceSection("payload-file-write")) {
+    ): StorageOutcome = SystemTrace.trace(metadata.traceSection("payload-file-write")) {
+        // A pruned entry may not be pruned in the next attempt once delivery frees up capacity
         if (index.prune(newEntry = metadata)) {
-            return@trace
+            return@trace StorageOutcome.REJECTED
         }
 
         // write to a temporary file then rename it, to avoid sending incomplete files
@@ -71,6 +75,10 @@ class FileStorageServiceImpl(
             if (tmpFile.renameTo(dst)) {
                 index.add(metadata)
                 counters.recordWrite(stream.written)
+                StorageOutcome.STORED
+            } else {
+                // a failed rename is the file system failing, like any other write error
+                StorageOutcome.FAILED
             }
         } finally {
             // clean up the temp file on any failure
@@ -85,7 +93,7 @@ class FileStorageServiceImpl(
         }
         try {
             worker.submit(metadata, action)
-        } catch (exc: RejectedExecutionException) { // handle JVM crash case where worker is shutdown
+        } catch (_: RejectedExecutionException) { // handle JVM crash case where worker is shutdown
             action()
         }
     }

@@ -31,4 +31,9 @@ interface NativeCrashService {
      * Delete the data files associated with all the native crashes that have been recorded by the SDK
      */
     fun deleteAllNativeCrashes()
+
+    /**
+     * Delete the data files associated with the given [nativeCrash].
+     */
+    fun deleteNativeCrash(nativeCrash: NativeCrashData)
 }

@@ -444,12 +444,15 @@ internal class SessionPartReaderTest {
         reader.readPersistedSessionParts()
         assertEquals(ids(partDirectory), slowIntake.takenPartIds)
         assertRetained(partDirectory, laterPartDirectory)
+        assertNull(slowIntake.takes.first().cancelMayInterrupt)
 
-        // the intake never finishes, so the next pass gives up on it and takes the later part
+        // the intake never finishes, so the next pass gives up on it, cancelling it without
+        // interrupting it so it can't store the part later
         slowIntake.stall = false
         reader.readPersistedSessionParts()
         assertEquals(ids(partDirectory, laterPartDirectory), slowIntake.takenPartIds)
         assertEquals(2, slowIntake.takes.first().waits)
+        assertEquals(false, slowIntake.takes.first().cancelMayInterrupt)
         assertDeleted(partDirectory, laterPartDirectory)
         assertEquals(
             listOf(TimeoutException::class, TimeoutException::class, IllegalStateException::class),
@@ -608,6 +611,11 @@ internal class SessionPartReaderTest {
     ) : Future<IntakeResult> {
         var waits: Int = 0
         var onNextWait: (() -> Unit)? = null
+
+        /**
+         * The `mayInterruptIfRunning` the take was canceled with, or null if it wasn't canceled.
+         */
+        var cancelMayInterrupt: Boolean? = null
         private var done = false
         private var result: IntakeResult = IntakeResult.STORED
 
@@ -621,8 +629,12 @@ internal class SessionPartReaderTest {
             done = true
         }
 
-        override fun cancel(mayInterruptIfRunning: Boolean) = false
-        override fun isCancelled() = false
+        override fun cancel(mayInterruptIfRunning: Boolean): Boolean {
+            cancelMayInterrupt = mayInterruptIfRunning
+            return !done
+        }
+
+        override fun isCancelled() = cancelMayInterrupt != null
         override fun isDone() = done
         override fun get() = error("the reader must always wait with a timeout")
         override fun get(timeout: Long, unit: TimeUnit): IntakeResult {

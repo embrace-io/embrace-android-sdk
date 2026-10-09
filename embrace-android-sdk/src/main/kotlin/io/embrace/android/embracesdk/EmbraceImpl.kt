@@ -43,6 +43,7 @@ import io.embrace.android.embracesdk.internal.injection.postInit
 import io.embrace.android.embracesdk.internal.injection.postLoadInstrumentation
 import io.embrace.android.embracesdk.internal.injection.registerListeners
 import io.embrace.android.embracesdk.internal.injection.triggerPayloadSend
+import io.embrace.android.embracesdk.internal.instance.BufferingSdkInstance
 import io.embrace.android.embracesdk.internal.telemetry.InternalTelemetryService
 import io.embrace.android.embracesdk.internal.utils.EmbTrace
 import io.embrace.android.embracesdk.spans.TracingApi
@@ -77,6 +78,10 @@ internal class EmbraceImpl(
     private val instrumentationApiDelegate: InstrumentationApiDelegate =
         InstrumentationApiDelegate(bootstrapper, sdkCallChecker),
     private val experimentApiDelegate: ExperimentApiDelegate = ExperimentApiDelegate(bootstrapper, sdkCallChecker),
+    private val preStartBuffer: BufferingSdkInstance = BufferingSdkInstance(
+        clock = { bootstrapper.initModule.clock.now() },
+        logger = bootstrapper.initModule.logger,
+    ),
 ) : SdkApi,
     LogsApi by logsApiDelegate,
     NetworkRequestApi by networkRequestApiDelegate,
@@ -88,7 +93,7 @@ internal class EmbraceImpl(
     ViewTrackingApi by viewTrackingApiDelegate,
     BreadcrumbApi by breadcrumbApiDelegate,
     InstrumentationApi by instrumentationApiDelegate,
-    ExperimentApi by experimentApiDelegate,
+    ExperimentApi by preStartBuffer,
     InternalInterfaceApi {
 
     init {
@@ -127,7 +132,9 @@ internal class EmbraceImpl(
                         // not fully initialized, but the SDK shouldn't catastrophically throw after this point,
                         // so we allow external calls.
                         sdkCallChecker.started.set(true)
-                        bootstrapper.applyCustomMetadata(experimentApiDelegate::flushPendingCalls)
+                        bootstrapper.applyCustomMetadata {
+                            preStartBuffer.drainExperimentCalls(experimentApiDelegate, experimentApiDelegate::replay)
+                        }
                         bootstrapper.registerListeners()
                         bootstrapper.loadInstrumentation()
                         bootstrapper.postLoadInstrumentation()

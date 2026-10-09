@@ -23,6 +23,7 @@ import io.opentelemetry.kotlin.tracing.export.SpanExporter
 import io.opentelemetry.kotlin.tracing.export.SpanProcessor
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
+import org.junit.Assert.assertNull
 import org.junit.Assert.assertThrows
 import org.junit.Assert.assertTrue
 import org.junit.Before
@@ -46,6 +47,20 @@ internal class BufferingSdkInstanceTest {
         target = RecordingSdkApi()
         replayed = mutableListOf()
         instance = BufferingSdkInstance(clock, logger)
+    }
+
+    @Test
+    fun `applicationInitStart records the first timestamp only`() {
+        assertNull(instance.applicationInitStartMs)
+        instance.applicationInitStart()
+        clock.tick(100)
+        instance.applicationInitStart()
+        assertEquals(1000L, instance.applicationInitStartMs)
+    }
+
+    @Test
+    fun `getSdkCurrentTimeMs returns zero`() {
+        assertEquals(0, instance.getSdkCurrentTimeMs())
     }
 
     @Test

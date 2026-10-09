@@ -5,13 +5,13 @@ import io.embrace.android.embracesdk.internal.otel.spans.getEmbraceSpan
 import io.opentelemetry.kotlin.Clock
 import io.opentelemetry.kotlin.OpenTelemetry
 import io.opentelemetry.kotlin.context.Context
-import io.opentelemetry.kotlin.context.ImplicitContextStorageMode
 import io.opentelemetry.kotlin.createCompatOpenTelemetry
 import io.opentelemetry.kotlin.createOpenTelemetry
 import io.opentelemetry.kotlin.error.NoopSdkErrorHandler
 import io.opentelemetry.kotlin.error.SdkErrorHandler
 import io.opentelemetry.kotlin.init.LoggerProviderConfigDsl
 import io.opentelemetry.kotlin.init.TracerProviderConfigDsl
+import io.opentelemetry.kotlin.init.useOtelJavaContextStorage
 
 internal fun createSdkOtelInstance(
     useKotlinSdk: Boolean,
@@ -22,9 +22,8 @@ internal fun createSdkOtelInstance(
 ): OpenTelemetry {
     return if (useKotlinSdk) {
         createOpenTelemetry(clock) {
-            // opentelemetry-kotlin stores implicit context in a process-wide slot, whereas we want
-            // to match opentelemetry-java's default behavior
-            context { storageMode = ImplicitContextStorageMode.THREAD_LOCAL }
+            // share implicit context with opentelemetry-java so getJavaOpenTelemetry() and customer OTel Java code interoperate
+            context { useOtelJavaContextStorage() }
             errorHandler(errorHandler)
             tracerProvider { tracerProvider() }
             loggerProvider { loggerProvider() }

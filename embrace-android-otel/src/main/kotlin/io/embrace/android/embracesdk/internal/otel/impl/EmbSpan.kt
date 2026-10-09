@@ -5,7 +5,6 @@ import io.embrace.android.embracesdk.internal.otel.spans.EmbraceSdkSpan
 import io.embrace.android.embracesdk.internal.payload.Link
 import io.embrace.android.embracesdk.internal.payload.SpanEvent
 import io.opentelemetry.kotlin.Clock
-import io.opentelemetry.kotlin.OpenTelemetry
 import io.opentelemetry.kotlin.attributes.AnyValue
 import io.opentelemetry.kotlin.attributes.AttributesMutator
 import io.opentelemetry.kotlin.tracing.Span
@@ -13,11 +12,11 @@ import io.opentelemetry.kotlin.tracing.SpanContext
 import io.opentelemetry.kotlin.tracing.SpanCreationAction
 import io.opentelemetry.kotlin.tracing.SpanKind
 import io.opentelemetry.kotlin.tracing.StatusData
+import io.opentelemetry.kotlin.tracing.createInvalidSpanContext
 
 class EmbSpan(
     private val impl: EmbraceSdkSpan,
     private val clock: Clock,
-    private val openTelemetry: OpenTelemetry,
 ) : Span, SpanCreationAction {
 
     override fun setStringAttribute(key: String, value: String) {
@@ -69,7 +68,7 @@ class EmbSpan(
     }
 
     override val spanContext: SpanContext
-        get() = impl.spanContext ?: openTelemetry.spanContext.invalid
+        get() = impl.spanContext ?: createInvalidSpanContext()
 
     override fun isRecording(): Boolean = impl.isRecording
 
@@ -96,7 +95,7 @@ class EmbSpan(
     }
 
     override val parent: SpanContext
-        get() = impl.parent?.spanContext ?: openTelemetry.spanContext.invalid
+        get() = impl.parent?.spanContext ?: createInvalidSpanContext()
 
     val spanKind: SpanKind
         get() = impl.spanKind

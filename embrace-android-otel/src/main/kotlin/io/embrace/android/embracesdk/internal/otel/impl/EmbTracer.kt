@@ -49,11 +49,10 @@ class EmbTracer(
                 span = EmbSpan(
                     impl = embraceSpan,
                     clock = clock,
-                    openTelemetry = openTelemetry,
                 )
             }
         }
-        val ref = span ?: EmbInvalidSpan(openTelemetry)
+        val ref = span ?: EmbInvalidSpan()
         if (action != null) {
             action(ref as SpanCreationAction)
         }

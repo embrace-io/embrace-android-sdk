@@ -138,6 +138,7 @@ internal class ExportedTelemetryParityValidator {
          */
         private val REDACTED_ATTRIBUTES = setOf(
             TelemetryAttributes.TELEMETRY_DISTRO_VERSION,
+            "telemetry.sdk.mode",
             SessionAttributes.SESSION_ID,
             EmbSessionAttributes.EMB_USER_SESSION_ID,
             EmbSessionAttributes.EMB_SESSION_PART_ID,

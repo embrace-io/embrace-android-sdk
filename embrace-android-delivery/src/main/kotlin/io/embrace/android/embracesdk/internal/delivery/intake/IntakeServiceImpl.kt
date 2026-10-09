@@ -41,6 +41,11 @@ class IntakeServiceImpl(
      */
     private val serializedBytes = TraceCounter("sf-bytes-serialized")
 
+    // The pending and last cached payload of each envelope type, which a newer cached payload of that type supersedes.
+    // This assumes cached payloads come only from the current process, so a session snapshot is always of the current
+    // session part, and a snapshot of a newer part makes any older one redundant because that part's complete payload
+    // has already been taken. Anything that caches snapshots of other parts, such as parts read back from disk, would
+    // delete the snapshots it doesn't supersede, so it must take them in complete instead.
     private val cachingTasks: MutableMap<SupportedEnvelopeType, Future<*>> = ConcurrentHashMap()
     private val lastCachedEntry: MutableMap<SupportedEnvelopeType, StoredTelemetryMetadata> = ConcurrentHashMap()
 

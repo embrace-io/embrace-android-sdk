@@ -3,7 +3,10 @@ package io.embrace.android.embracesdk.internal.injection
 import io.embrace.android.embracesdk.internal.config.ConfigService
 import io.embrace.android.embracesdk.internal.delivery.storage.StorageLocation
 import io.embrace.android.embracesdk.internal.delivery.storage.asFile
+import io.embrace.android.embracesdk.internal.instrumentation.crash.ndk.NativeCrashDataSource
+import io.embrace.android.embracesdk.internal.resurrection.MultiFileDeadPartResurrector
 import io.embrace.android.embracesdk.internal.resurrection.SessionPartReader
+import io.embrace.android.embracesdk.internal.resurrection.SessionPartResurrector
 import io.embrace.android.embracesdk.internal.session.UserSessionMetadataStore
 import io.embrace.android.embracesdk.internal.session.id.SessionIdsProvider
 import io.embrace.android.embracesdk.internal.session.message.PayloadFactoryImpl
@@ -62,6 +65,13 @@ class UserSessionOrchestrationModuleImpl(
             reconstructionService = SessionReconstructionService(sessionsDir, initModule.logger),
             intakeService = delivery.intakeService,
             writeTracker = sessionPartWriteTracker,
+            deadPartResurrector = MultiFileDeadPartResurrector(
+                resurrector = SessionPartResurrector(delivery.cachedLogEnvelopeStore),
+                nativeCrashServiceProvider = {
+                    instrumentationModule.instrumentationRegistry.findByType(NativeCrashDataSource::class)
+                },
+                restoreDecisionProvider = { sessionOrchestrator.userSessionRestoreDecision },
+            ),
             processIdProvider = { openTelemetryModule.otelSdkConfig.processIdentifier },
             configService = configService,
             logger = initModule.logger,

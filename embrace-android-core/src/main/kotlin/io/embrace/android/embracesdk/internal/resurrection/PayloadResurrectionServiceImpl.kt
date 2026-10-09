@@ -51,10 +51,11 @@ internal class PayloadResurrectionServiceImpl(
     override fun resurrectOldPayloads(
         nativeCrashServiceProvider: Provider<NativeCrashService?>,
         userSessionRestoreDecisionProvider: Provider<UserSessionRestoreDecision?>,
+        pendingSessionPartIdsProvider: Provider<Set<String>>,
     ) {
         EmbTrace.trace("resurrect-payloads") {
             runCatching {
-                processTombstones(nativeCrashServiceProvider, userSessionRestoreDecisionProvider())
+                processTombstones(nativeCrashServiceProvider, userSessionRestoreDecisionProvider(), pendingSessionPartIdsProvider)
             }.onFailure {
                 logger.trackInternalError(InternalErrorType.PayloadResurrectionFail, it)
             }
@@ -71,6 +72,7 @@ internal class PayloadResurrectionServiceImpl(
     private fun processTombstones(
         nativeCrashServiceProvider: Provider<NativeCrashService?>,
         restoreDecision: UserSessionRestoreDecision?,
+        pendingSessionPartIdsProvider: Provider<Set<String>>,
     ) {
         val nativeCrashService = nativeCrashServiceProvider()
         val undeliveredPayloads = cacheStorageService.getUndeliveredPayloads()
@@ -117,7 +119,13 @@ internal class PayloadResurrectionServiceImpl(
         }
 
         if (nativeCrashService != null) {
-            processNativeCrashes(nativeCrashes, processedCrashes, undeliveredPayloads, nativeCrashService)
+            processNativeCrashes(
+                nativeCrashes = nativeCrashes,
+                processedCrashes = processedCrashes,
+                pendingSessionPartIds = pendingSessionPartIdsProvider(),
+                undeliveredPayloads = undeliveredPayloads,
+                nativeCrashService = nativeCrashService,
+            )
         }
 
         undeliveredPayloads.filter { it.isCrashEnvelope() }.forEach { crashEnvelopeMetadata ->
@@ -129,6 +137,7 @@ internal class PayloadResurrectionServiceImpl(
     private fun processNativeCrashes(
         nativeCrashes: Map<String, NativeCrashData>,
         processedCrashes: MutableSet<NativeCrashData>,
+        pendingSessionPartIds: Set<String>,
         undeliveredPayloads: List<StoredTelemetryMetadata>,
         nativeCrashService: NativeCrashService,
     ) {
@@ -142,7 +151,10 @@ internal class PayloadResurrectionServiceImpl(
         //
         // Solving this requires the persistence of the processIdentifier, and we will only do this if this
         // proves to be a problem in production.
-        val sessionlessNativeCrashes = nativeCrashes.values.filterNot { processedCrashes.contains(it) }
+        // A crash of a session part still on disk is the session part reader's to attach when it
+        // resurrects that part, so it is neither sent here nor deleted.
+        val (pendingCrashes, unpendingCrashes) = nativeCrashes.values.partition { it.sessionPartId in pendingSessionPartIds }
+        val sessionlessNativeCrashes = unpendingCrashes.filterNot { processedCrashes.contains(it) }
         if (sessionlessNativeCrashes.isNotEmpty()) {
             val cachedCrashEnvelopeMetadata = undeliveredPayloads.firstOrNull { it.isCrashEnvelope() }
             val cachedCrashEnvelope = cachedCrashEnvelopeMetadata
@@ -187,7 +199,13 @@ internal class PayloadResurrectionServiceImpl(
                 )
             }
         }
-        nativeCrashService.deleteAllNativeCrashes()
+        if (pendingCrashes.isEmpty()) {
+            nativeCrashService.deleteAllNativeCrashes()
+        } else {
+            // keep the pending crashes; a crash file that failed to load is cleared by a later launch
+            // that has no pending crash
+            unpendingCrashes.forEach(nativeCrashService::deleteNativeCrash)
+        }
     }
 
     private fun StoredTelemetryMetadata.isCrashEnvelope() = envelopeType == SupportedEnvelopeType.CRASH

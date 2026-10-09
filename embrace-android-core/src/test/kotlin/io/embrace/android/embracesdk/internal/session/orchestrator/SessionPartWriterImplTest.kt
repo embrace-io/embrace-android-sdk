@@ -1079,6 +1079,27 @@ internal class SessionPartWriterImplTest {
     }
 
     @Test
+    fun `a debounced write stamps the part's files with when it ran`() {
+        val writer = createWriter()
+        writer.onSessionPartStarted(clock.now(), USER_SESSION_ID, SESSION_PART_ID)
+        drain()
+
+        clock.tick(10_000)
+        val changedAt = clock.now()
+        inFlightSpans = listOf(inFlightSpan("network-request"))
+        writer.onSpanSnapshotChanged(inFlightSpans.single())
+        writer.onMetadataChanged()
+        drainOnce()
+
+        // the writes ran a debounce interval after the change, and carry the time they ran
+        val writtenAt = clock.now()
+        assertTrue(writtenAt > changedAt)
+        assertEquals(writtenAt, partFile(SESSION_PART_ID, SPAN_SNAPSHOTS_FILE_NAME)?.lastModified())
+        assertEquals(writtenAt, partFile(SESSION_PART_ID, METADATA_FILE_NAME)?.lastModified())
+        assertNoInternalErrors()
+    }
+
+    @Test
     fun `a burst of span snapshot changes is coalesced into one append`() {
         val writer = createWriter()
         writer.onSessionPartStarted(clock.now(), USER_SESSION_ID, SESSION_PART_ID)

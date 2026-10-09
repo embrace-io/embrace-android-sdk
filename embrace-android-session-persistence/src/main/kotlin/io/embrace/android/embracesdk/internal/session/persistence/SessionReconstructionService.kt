@@ -37,6 +37,20 @@ class SessionReconstructionService(
             }
         }
 
+    /**
+     * When the given session part last had data written, in milliseconds since the epoch, or null if
+     * none of its files can be found. Writes only happen when the part's data changes, so this is the
+     * last time the part was updated.
+     */
+    fun lastUpdatedMs(directory: SessionPartDirectory): Long? =
+        runCatching {
+            val partDir = File(sessionsDir.value, directory.dirName)
+            SessionPartFile.entries
+                .map { File(partDir, it.fileName).lastModified() }
+                .filter { it > 0 }
+                .maxOrNull()
+        }.getOrNull()
+
     private fun trackFailure(exc: Throwable) {
         logger.trackInternalError(InternalErrorType.SessionReconstructionFail, exc)
     }

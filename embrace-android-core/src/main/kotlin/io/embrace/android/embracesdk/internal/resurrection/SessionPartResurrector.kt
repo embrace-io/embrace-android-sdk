@@ -36,8 +36,8 @@ class SessionPartResurrector(
 ) {
 
     /**
-     * Returns the envelope [deadPart] should be delivered as, or null if it does not contain exactly one
-     * session part span. [processIdentifier] is the process that persisted it.
+     * Returns the modified payload [deadPart] should be delivered as, or null if it does not contain exactly
+     * one session part span. [processIdentifier] is the process that persisted it.
      *
      * The native crash recorded for [deadPart], if any, is attached to the envelope, then sent and reported to
      * [onNativeCrashProcessed] by the work handed to [sendNativeCrash]. That work runs at once unless the caller
@@ -51,6 +51,7 @@ class SessionPartResurrector(
         onNativeCrashProcessed: (NativeCrashData) -> Unit,
         userSessionTerminationReason: String?,
         isBackgroundOnly: Boolean,
+        lastUpdatedMs: Long? = null,
         sendNativeCrash: (send: () -> Unit) -> Unit = { send -> send() },
     ): Envelope<SessionPartPayload>? {
         val deadSessionPartSpan = deadPart.getSessionPartSpan()
@@ -96,6 +97,7 @@ class SessionPartResurrector(
             nativeCrashData = nativeCrash,
             userSessionTerminationReason = userSessionTerminationReason,
             isBackgroundOnly = isBackgroundOnly,
+            lastUpdatedMs = lastUpdatedMs,
         )
     }
 
@@ -107,21 +109,21 @@ class SessionPartResurrector(
         nativeCrashData: NativeCrashData?,
         userSessionTerminationReason: String?,
         isBackgroundOnly: Boolean,
+        lastUpdatedMs: Long?,
     ): Envelope<SessionPartPayload>? {
         val completedSpanIds = data.spans?.map { it.spanId }?.toSet() ?: emptySet()
         val snapshots = data.spanSnapshots
             ?.filterNot { completedSpanIds.contains(it.spanId) }
 
-        // estimate the end time for snapshots as the latest of any completed span's end and any snapshot's start,
-        // falling back to 0 if nothing is available. completed spans can predate the snapshots (e.g. spans carried
-        // over from the previous part), so their end alone could fall before a snapshot started.
-        val latestCompletedEnd = data.spans?.mapNotNull { it.endTimeNanos }?.maxOrNull()
-        val latestSnapshotStart = snapshots?.mapNotNull { it.startTimeNanos }?.maxOrNull()
-        val estimatedEndTime = listOfNotNull(latestCompletedEnd, latestSnapshotStart).maxOrNull()
+        val persistedSpans = data.spans.orEmpty()
+
+        // In multi-file mode, lastUpdatedMs is basically always provided, so that is always used.
+        // In single-file mode, it's never provided, so we calculate it based on span start/end times in the payload.
+        val estimatedEndTimeMs = lastUpdatedMs ?: estimateEndTimeMs(persistedSpans, snapshots.orEmpty()) ?: 0
         val failedSpans = snapshots
-            ?.map { it.toFailedSpan(endTimeMs = estimatedEndTime?.nanosToMillis() ?: 0) }
+            ?.map { it.toFailedSpan(endTimeMs = estimatedEndTimeMs) }
             ?: emptyList()
-        val completedSpans = (data.spans ?: emptyList()) + failedSpans
+        val completedSpans = persistedSpans + failedSpans
         val sessionPartSpan = completedSpans.singleOrNull { it.hasEmbraceAttribute(EmbType.Ux.Session) } ?: return null
 
         val attributesToAttach = buildList {
@@ -149,6 +151,18 @@ class SessionPartResurrector(
                 spanSnapshots = emptyList(),
             ),
         )
+    }
+
+    /**
+     * Estimates when the process that left this part died, in milliseconds, as the latest of any completed
+     * span's end and any snapshot's start. Completed spans' end times alone aren't enough, as spans carried
+     * over from a previous session part can end before a snapshot in this part started. Null if nothing is
+     * known.
+     */
+    private fun estimateEndTimeMs(persistedSpans: List<Span>, snapshots: List<Span>): Long? {
+        val latestCompletedEnd = persistedSpans.mapNotNull { it.endTimeNanos }.maxOrNull()
+        val latestSnapshotStart = snapshots.mapNotNull { it.startTimeNanos }.maxOrNull()
+        return listOfNotNull(latestCompletedEnd, latestSnapshotStart).maxOrNull()?.nanosToMillis()
     }
 
     /**

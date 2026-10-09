@@ -6,7 +6,7 @@ import com.squareup.kotlinpoet.TypeSpec
 
 /**
  * Generates a unit test for a resolved config that checks each field's default and its remote/local/default
- * precedence. Local values are injected via `overrideLocal()`, which must exist in the test source set.
+ * precedence. Local values are injected by delegating to the generated local config and overriding one getter.
  *
  * These only prove the generated plumbing is sound, not that a value means the right thing to the SDK. Domain-specific
  * behaviour belongs in a hand-written `<Slice>Test` alongside the generated `<Slice>GeneratedTest`.

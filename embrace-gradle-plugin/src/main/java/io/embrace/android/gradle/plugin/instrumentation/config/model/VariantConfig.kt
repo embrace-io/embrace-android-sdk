@@ -3,6 +3,7 @@ package io.embrace.android.gradle.plugin.instrumentation.config.model
 import io.embrace.android.gradle.plugin.model.AndroidCompactedVariantData
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
+import kotlinx.serialization.Transient
 
 /**
  * This data class holds all configuration from Embrace and Android that is dependent on the
@@ -59,6 +60,10 @@ data class EmbraceVariantConfig(
 
     @SerialName("unity")
     val unityConfig: UnityConfig?,
+
+    /** The whole config file as minified JSON, used to instrument generated SDK local config. */
+    @Transient
+    val json: String? = null,
 
 ) : java.io.Serializable {
 

@@ -22,9 +22,9 @@
         "max_length": { "type": "integer", "minimum": 1, "description": "String only." },
         "local": {
           "type": "object",
-          "required": ["type", "sdk"],
+          "required": ["type", "json"],
           "additionalProperties": false,
-          "properties": { "type": { "enum": ["Boolean", "Int", "Long", "String"] }, "sdk": { "type": "string" } }
+          "properties": { "type": { "enum": ["Boolean", "Int", "Long", "String"] }, "json": { "type": "string", "pattern": "^[a-z0-9_]+(\\.[a-z0-9_]+)*$" } }
         },
         "remote": {
           "type": "object",

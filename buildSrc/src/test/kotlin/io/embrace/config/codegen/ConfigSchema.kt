@@ -1,14 +1,14 @@
 package io.embrace.config.codegen
 
-import com.fasterxml.jackson.databind.JsonNode
-import com.fasterxml.jackson.databind.ObjectMapper
-import com.networknt.schema.JsonSchemaFactory
-import com.networknt.schema.SpecVersion
+import com.networknt.schema.SchemaRegistry
+import com.networknt.schema.SpecificationVersion
 import org.yaml.snakeyaml.Yaml
+import tools.jackson.databind.JsonNode
+import tools.jackson.databind.ObjectMapper
 
 internal object ConfigSchema {
 
-    private val schema = JsonSchemaFactory.getInstance(SpecVersion.VersionFlag.V7).getSchema(Fixtures.read("config.schema.json"))
+    private val schema = SchemaRegistry.withDefaultDialect(SpecificationVersion.DRAFT_7).getSchema(Fixtures.read("config.schema.json"))
 
     fun errors(yaml: String): List<String> =
         schema.validate(ObjectMapper().valueToTree<JsonNode>(Yaml().load<Any>(yaml))).map { it.message }

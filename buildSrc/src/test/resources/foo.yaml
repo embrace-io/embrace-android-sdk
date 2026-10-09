@@ -4,7 +4,7 @@ FooConfig:
     default: false
     local:
       type: Boolean
-      sdk: enabledFeatures.isFooEnabled()
+      json: sdk_config.foo_enabled
     remote:
       type: Pct
       sdk: pctFooEnabled
@@ -13,7 +13,7 @@ FooConfig:
     default: 10
     local:
       type: Int
-      sdk: foo.getLimit()
+      json: sdk_config.foo.limit
     remote:
       type: Int
       sdk: fooLimit
@@ -29,7 +29,7 @@ BarConfig:
     default: 10
     local:
       type: Int
-      sdk: foo.getLimit()
+      json: bar_limit
 RangeConfig:
   bounded:
     property: bounded
@@ -38,7 +38,7 @@ RangeConfig:
     max: 100
     local:
       type: Int
-      sdk: range.getBounded()
+      json: sdk_config.range.bounded
     remote:
       type: Int
       sdk: rangeBounded

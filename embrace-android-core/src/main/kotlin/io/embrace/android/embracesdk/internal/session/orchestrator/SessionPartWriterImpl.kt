@@ -57,7 +57,12 @@ class SessionPartWriterImpl(
         private const val MAX_CARRIED_OVER_SPANS: Int = 1000
         private const val CARRIED_OVER_SPAN_LIMIT_TYPE: String = "carried_over_span"
 
-        const val METADATA_WRITE_DELAY_MS: Long = 2000
+        /**
+         * Shorter than the span write delays: user info and resource changes are rare, so a change is
+         * persisted sooner at little cost, while a burst of them still coalesces into one write of the
+         * metadata file, which also holds the native symbol map.
+         */
+        const val METADATA_WRITE_DELAY_MS: Long = 500
         const val SPAN_SNAPSHOT_WRITE_DELAY_MS: Long = 2000
         const val COMPLETED_SPAN_WRITE_DELAY_MS: Long = 2000
     }

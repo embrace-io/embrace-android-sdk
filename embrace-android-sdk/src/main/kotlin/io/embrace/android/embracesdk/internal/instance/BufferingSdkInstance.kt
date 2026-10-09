@@ -44,6 +44,10 @@ internal class BufferingSdkInstance(
     private var bufferedSpanCount = 0
     private var bufferedExperimentEntryCount = 0
 
+    @Volatile
+    var applicationInitStartMs: Long? = null
+        private set
+
     fun drainOTelConfig(target: OTelApi) {
         otelConfigCalls.drain(target) { calls ->
             calls.forEach { call ->
@@ -148,6 +152,14 @@ internal class BufferingSdkInstance(
             forward = { it.recordCompletedSpan(name, startTimeMs, endTimeMs, errorCode, parent, attributes, events) },
         )
     }
+
+    override fun applicationInitStart() {
+        if (applicationInitStartMs == null) {
+            applicationInitStartMs = clock.now()
+        }
+    }
+
+    override fun getSdkCurrentTimeMs(): Long = 0
 
     // avoid default implementations getting delegate to the no-op instance - route explicitly
 

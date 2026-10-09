@@ -9,12 +9,14 @@ import io.embrace.android.embracesdk.assertions.findSpanByName
 import io.embrace.android.embracesdk.assertions.findSpansOfType
 import io.embrace.android.embracesdk.assertions.getSessionPartId
 import io.embrace.android.embracesdk.assertions.getUserSessionId
+import io.embrace.android.embracesdk.assertions.returnIfConditionMet
 import io.embrace.android.embracesdk.fakes.FakeInternalLogger
 import io.embrace.android.embracesdk.fakes.config.FakeInstrumentedConfig
 import io.embrace.android.embracesdk.internal.arch.schema.EmbType
 import io.embrace.android.embracesdk.internal.arch.state.ProcessState
 import io.embrace.android.embracesdk.internal.config.remote.BackgroundActivityRemoteConfig
 import io.embrace.android.embracesdk.internal.config.remote.RemoteConfig
+import io.embrace.android.embracesdk.internal.delivery.SupportedEnvelopeType
 import io.embrace.android.embracesdk.internal.delivery.storage.StorageLocation
 import io.embrace.android.embracesdk.internal.delivery.storage.asFile
 import io.embrace.android.embracesdk.internal.otel.sdk.findAttributeValue
@@ -25,8 +27,8 @@ import io.embrace.android.embracesdk.internal.payload.SessionPartPayload
 import io.embrace.android.embracesdk.internal.payload.Span
 import io.embrace.android.embracesdk.internal.payload.SpanEvent
 import io.embrace.android.embracesdk.internal.session.getSessionProperty
-import io.embrace.android.embracesdk.internal.session.persistence.SpanCollection
 import io.embrace.android.embracesdk.internal.session.persistence.SessionPartDirectory
+import io.embrace.android.embracesdk.internal.session.persistence.SpanCollection
 import io.embrace.android.embracesdk.internal.session.persistence.SpanProto
 import io.embrace.android.embracesdk.internal.worker.Worker
 import io.embrace.android.embracesdk.network.EmbraceNetworkRequest
@@ -523,6 +525,74 @@ internal class MultiFilePersistenceParityTest(
     }
 
     @Test
+    fun `a session part whose process died after it ended is delivered unchanged by the next launch`() {
+        // Verify the state of the payloads after process termination
+        testRule.runTest(
+            persistedRemoteConfig = remoteConfig(),
+            setupAction = {
+                getEmbLogger().throwOnInternalError = false
+            },
+            testCaseAction = {
+                // Allow a session part's data to be persisted to disk, but stop the worker used in
+                // multi-file mode from processing it, leaving the raw files on disk.
+                val ioRegWorker = testRule.setup.getFakedWorkerExecutor(Worker.Background.IoRegWorker)
+                ioRegWorker.blockingMode = true
+                recordSession()
+                ioRegWorker.shutdownNow()
+            },
+            assertAction = {
+                when (persistenceMode) {
+                    // In legacy mode, the ended part is built and handed to delivery directly, so it's
+                    // delivered in this process.
+                    PersistenceMode.LEGACY -> {
+                        assertMatchesGoldenFile(deliveredParts().single())
+                        awaitDeliveredSessionPayloadsDeleted()
+                    }
+
+                    // In multi-file mode, the ended parts stay on disk because the blocked worker never
+                    // handed them to delivery: the background part before the session, the session, and
+                    // the background part that was live.
+                    PersistenceMode.MULTI_FILE -> {
+                        assertEquals(0, getSessionEnvelopes(0).size)
+                        assertEquals(3, storedSessionPartDirectories().size)
+                        assertEquals(0, testRule.setup.getEmbLogger().internalErrorMessages.size)
+                    }
+                }
+            },
+        )
+
+        testRule.bootstrapper.stop()
+
+        // Verify the real payload gets delivered in a new process with an unblocked worker if we are in multi-file mode.
+        // This part ended cleanly, so it must not be treated as terminated by the process's death, and is delivered as
+        // the single-file layer would have delivered it.
+        testRule.runTest(
+            persistedRemoteConfig = remoteConfig(),
+            setupAction = {
+                getEmbLogger().throwOnInternalError = false
+            },
+            testCaseAction = {},
+            assertAction = {
+                when (persistenceMode) {
+                    PersistenceMode.LEGACY -> {
+                        // Everything was delivered in the first process, so nothing is left to deliver.
+                        assertEquals(0, getSessionEnvelopes(0).size)
+                    }
+                    PersistenceMode.MULTI_FILE -> {
+                        // Payload assembled and delivered as expected with no errors.
+                        assertMatchesGoldenFile(deliveredParts().single())
+                        assertEquals(0, testRule.setup.getEmbLogger().internalErrorMessages.size)
+
+                        // Every part the dead process left behind is delivered, not just its last one: the
+                        // background part before the session, and the one that was live when it died.
+                        deliveredParts(expectedParts = 2, state = ProcessState.BACKGROUND)
+                    }
+                }
+            },
+        )
+    }
+
+    @Test
     fun `each session part holds exactly one session span`() {
         testRule.runTest(
             persistedRemoteConfig = remoteConfig(),
@@ -681,6 +751,21 @@ internal class MultiFilePersistenceParityTest(
         return SpanCollection.ADAPTER.decode(bytes).spans.filter { span ->
             span.attributes.any { it.key == "emb.type" && it.value_ == "ux.session" }
         }
+    }
+
+    /**
+     * Waits until delivery has deleted every session payload it sent. The server receives a payload
+     * before delivery deletes it, so a process stopped in between leaves the payload on disk for the
+     * next launch to send again.
+     */
+    private fun awaitDeliveredSessionPayloadsDeleted() {
+        val storage = checkNotNull(testRule.bootstrapper.deliveryModule).payloadStorageService
+        returnIfConditionMet(
+            desiredValueSupplier = {},
+            dataProvider = { storage.getPayloadsByPriority().count { it.envelopeType == SupportedEnvelopeType.SESSION } },
+            condition = { it == 0 },
+            errorMessageSupplier = { "a delivered session payload was left on disk" },
+        )
     }
 
     private fun storedSessionPartDirectories(): List<SessionPartDirectory> =

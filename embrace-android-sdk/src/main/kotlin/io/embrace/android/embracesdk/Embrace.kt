@@ -6,13 +6,14 @@ import io.embrace.android.embracesdk.internal.api.SdkApi
 import io.embrace.android.embracesdk.internal.instance.NoopInternalTelemetryService
 import io.embrace.android.embracesdk.internal.instance.NoopSdkInstance
 import io.embrace.android.embracesdk.internal.instance.SdkStateHolder
+import io.embrace.android.embracesdk.internal.instance.createSdkStateHolder
 import io.embrace.android.embracesdk.internal.logging.InternalLoggerImpl
 import io.embrace.android.embracesdk.internal.utils.EmbTrace
 
 private val sdkStateHolder = try {
     EmbTrace.trace(sectionName = "embrace-impl-init", recordDuration = true) {
-        EmbraceImpl()
-    }.let { SdkStateHolder(it, it.telemetryService, it.internalErrorHandler) }
+        createSdkStateHolder()
+    }
 } catch (exc: Throwable) {
     // not possible to report, but don't throw
     Log.w("Embrace", "Failed to initialize the Embrace SDK", exc)

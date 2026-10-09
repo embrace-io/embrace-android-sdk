@@ -23,7 +23,7 @@ internal class InternalInterfaceModuleImplTest {
             initModule,
             FakeConfigService(),
             FakePayloadSourceModule(),
-            EmbraceImpl(),
+            EmbraceImpl(ModuleInitBootstrapper()),
             ModuleInitBootstrapper(FakeInitModule(otelSdkMode = OtelSdkMode.COMPAT)),
         )
 

@@ -69,3 +69,23 @@ FooConfig:
 # schema: invalid
 FooConfig:
   foo: { property: foo, default: 1, min: 0, local: { type: Int, json: foo } }
+---
+# error: FooConfig.foo: remote: nested properties need a parent_type
+# schema: invalid
+FooConfig:
+  foo: { property: foo, default: 1, remote: { type: Int, sdk: "fooConfig?.foo" } }
+---
+# error: FooConfig.foo: remote: parent_type is only valid for nested properties
+# schema: invalid
+FooConfig:
+  foo: { property: foo, default: 1, remote: { type: Int, sdk: foo, parent_type: FooRemoteConfig } }
+---
+# error: FooConfig.foo: remote: 'fooConfig.foo' is not a valid RemoteConfig path
+# schema: invalid
+FooConfig:
+  foo: { property: foo, default: 1, remote: { type: Int, sdk: fooConfig.foo } }
+---
+# error: FooConfig.foo: remote: 'fooRemoteConfig' is not a valid class name
+# schema: invalid
+FooConfig:
+  foo: { property: foo, default: 1, remote: { type: Int, sdk: "fooConfig?.foo", parent_type: fooRemoteConfig } }

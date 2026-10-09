@@ -30,7 +30,14 @@
           "type": "object",
           "required": ["type", "sdk"],
           "additionalProperties": false,
-          "properties": { "type": { "enum": ["Boolean", "Int", "Long", "String", "Pct"] }, "sdk": { "type": "string" } }
+          "properties": {
+            "type": { "enum": ["Boolean", "Int", "Long", "String", "Pct"] },
+            "sdk": { "type": "string", "pattern": "^\\w+(\\?\\.\\w+)?$" },
+            "parent_type": { "type": "string", "pattern": "^[A-Z]\\w*$", "description": "Type of the RemoteConfig property a nested sdk path reads." }
+          },
+          "if": { "properties": { "sdk": { "pattern": "\\?\\." } } },
+          "then": { "required": ["parent_type"] },
+          "else": { "not": { "required": ["parent_type"] } }
         }
       }
     }

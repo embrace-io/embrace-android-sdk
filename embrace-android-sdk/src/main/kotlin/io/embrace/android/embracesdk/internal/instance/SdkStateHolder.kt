@@ -23,12 +23,21 @@ import io.embrace.android.embracesdk.internal.telemetry.InternalTelemetryService
 internal class SdkStateHolder(
     instance: SdkApi,
     telemetryService: InternalTelemetryService,
-    val errorHandler: InternalErrorHandler,
+    private val errorHandler: InternalErrorHandler,
 ) {
 
     private val lock = Any()
 
     val dispatcher: SdkApiDispatcher = SdkApiDispatcher(instance, telemetryService, errorHandler)
+
+    /**
+     * The [SdkApi] that backs the public `Embrace` object. Calls that change SDK state are handled here and
+     * everything else is delegated to [dispatcher].
+     */
+    val api: SdkApi = object : SdkApi by dispatcher {
+        override fun start(context: Context) = guard { this@SdkStateHolder.start(context) }
+        override fun disable() = guard { this@SdkStateHolder.disable() }
+    }
 
     @Volatile
     var state: SdkState = SdkState.NOT_STARTED
@@ -72,6 +81,14 @@ internal class SdkStateHolder(
             } catch (exc: Throwable) {
                 errorHandler.trackInternalError(InternalErrorType.PublicApiFail, exc)
             }
+        }
+    }
+
+    inline fun guard(call: () -> Unit) {
+        try {
+            call()
+        } catch (exc: Throwable) {
+            errorHandler.trackInternalError(InternalErrorType.PublicApiFail, exc)
         }
     }
 }

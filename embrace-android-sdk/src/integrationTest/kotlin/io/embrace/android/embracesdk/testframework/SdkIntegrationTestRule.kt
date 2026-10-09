@@ -24,7 +24,8 @@ import io.embrace.android.embracesdk.internal.injection.EssentialServiceModule
 import io.embrace.android.embracesdk.internal.injection.EssentialServiceModuleImpl
 import io.embrace.android.embracesdk.internal.injection.InitModule
 import io.embrace.android.embracesdk.internal.injection.ModuleInitBootstrapper
-import io.embrace.android.embracesdk.internal.instance.SdkApiDispatcher
+import io.embrace.android.embracesdk.internal.instance.SdkState
+import io.embrace.android.embracesdk.internal.instance.SdkStateHolder
 import io.embrace.android.embracesdk.internal.utils.EmbTrace
 import io.embrace.android.embracesdk.internal.utils.Provider
 import io.embrace.android.embracesdk.testframework.actions.EmbraceActionInterface
@@ -73,6 +74,10 @@ import org.junit.rules.ExternalResource
  * careful when you do so by passing in overridden module instances as that might break the integrity of the
  * "one instance" guarantee of using the modules created by default (besides the fakes).
  *
+ * Each test gets its own [SdkStateHolder], and test code calls the SDK through [SdkStateHolder.api]. The public
+ * [Embrace] object delegates to that same API, so tests exercise the production lifecycle and dispatch logic,
+ * without the pain of dealing with a singleton in parallelized unit tests.
+ *
  * It is also possible to access internal modules & dependencies that are not exposed via the public API.
  * For example, it is possible to access the [FakeDeliveryModule] to get event/session payloads the SDK sent.
  *
@@ -115,7 +120,7 @@ internal class SdkIntegrationTestRule(
     private lateinit var spanExporter: FilteredSpanExporter
     private lateinit var logExporter: FilteredLogExporter
     private lateinit var embraceImpl: EmbraceImpl
-    private lateinit var sdkApi: SdkApiDispatcher
+    private lateinit var sdkStateHolder: SdkStateHolder
     private lateinit var baseUrl: String
 
     lateinit var bootstrapper: ModuleInitBootstrapper
@@ -151,15 +156,15 @@ internal class SdkIntegrationTestRule(
         }
         baseUrl = server.url("api").toString()
 
-        preSdkStart = EmbracePreSdkStartInterface(setup) { sdkApi }
+        preSdkStart = EmbracePreSdkStartInterface(setup) { sdkStateHolder.api }
         bootstrapper = setup.createBootstrapper(
             localConfig.copy(
                 baseUrls = FakeBaseUrlConfig(configImpl = baseUrl, dataImpl = baseUrl)
             ),
             deliveryTracer
         )
-        action = EmbraceActionInterface(setup, bootstrapper) { sdkApi }
-        payloadAssertion = EmbracePayloadAssertionInterface(bootstrapper, apiServer)
+        action = EmbraceActionInterface(setup, bootstrapper, { sdkStateHolder.api }, { sdkStateHolder.state })
+        payloadAssertion = EmbracePayloadAssertionInterface(bootstrapper, apiServer) { sdkStateHolder.state }
         spanExporter = FilteredSpanExporter()
         logExporter = FilteredLogExporter()
         otelAssertion = EmbraceOtelExportAssertionInterface(spanExporter, logExporter)
@@ -167,11 +172,11 @@ internal class SdkIntegrationTestRule(
         setupAction(setup)
         with(setup) {
             embraceImpl = EmbraceImpl(bootstrapper = bootstrapper)
-            sdkApi = SdkApiDispatcher(embraceImpl, embraceImpl.telemetryService, embraceImpl.internalErrorHandler)
+            sdkStateHolder = SdkStateHolder(embraceImpl, embraceImpl.telemetryService, embraceImpl.internalErrorHandler)
             preSdkStartAction(preSdkStart)
             //TODO: Filtered span and log exporters should be migrated to Kotlin.
-            embraceImpl.addSpanExporter(spanExporter.toOtelKotlinSpanExporter())
-            embraceImpl.addLogRecordExporter(logExporter.toOtelKotlinLogRecordExporter())
+            sdkStateHolder.api.addSpanExporter(spanExporter.toOtelKotlinSpanExporter())
+            sdkStateHolder.api.addLogRecordExporter(logExporter.toOtelKotlinLogRecordExporter())
 
             // persist config here before the SDK starts up: the SDK reads it during start()
             persistConfig(persistedConfig)
@@ -183,13 +188,18 @@ internal class SdkIntegrationTestRule(
             )
 
             if (startSdk) {
-                embraceImpl.start(ApplicationProvider.getApplicationContext())
+                sdkStateHolder.api.start(ApplicationProvider.getApplicationContext())
                 assertEquals(
                     "SDK did not start in integration test.",
                     expectSdkToStart,
-                    embraceImpl.isStarted
+                    sdkStateHolder.api.isStarted
                 )
-                if (embraceImpl.isStarted) {
+                assertEquals(
+                    "SDK state holder did not reach the expected state.",
+                    if (expectSdkToStart) SdkState.STARTED else SdkState.NOT_STARTED,
+                    sdkStateHolder.state
+                )
+                if (sdkStateHolder.api.isStarted) {
                     assertEquals(
                         "SDK did not select the $otelSdkMode opentelemetry-kotlin implementation.",
                         otelSdkMode.useKotlinSdk,

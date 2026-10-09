@@ -1,13 +1,11 @@
 package io.embrace.android.embracesdk
 
 import android.annotation.SuppressLint
-import android.content.Context
 import android.util.Log
 import io.embrace.android.embracesdk.internal.api.SdkApi
 import io.embrace.android.embracesdk.internal.instance.NoopInternalTelemetryService
 import io.embrace.android.embracesdk.internal.instance.NoopSdkInstance
 import io.embrace.android.embracesdk.internal.instance.SdkStateHolder
-import io.embrace.android.embracesdk.internal.logging.InternalErrorType
 import io.embrace.android.embracesdk.internal.logging.InternalLoggerImpl
 import io.embrace.android.embracesdk.internal.utils.EmbTrace
 
@@ -28,23 +26,7 @@ private val sdkStateHolder = try {
  * Contains a singleton instance of itself, and is used for initializing the SDK.
  */
 @SuppressLint("EmbracePublicApiPackageRule")
-public object Embrace : SdkApi by sdkStateHolder.dispatcher {
-
-    override fun start(context: Context) {
-        try {
-            sdkStateHolder.start(context)
-        } catch (exc: Throwable) {
-            sdkStateHolder.errorHandler.trackInternalError(InternalErrorType.PublicApiFail, exc)
-        }
-    }
-
-    override fun disable() {
-        try {
-            sdkStateHolder.disable()
-        } catch (exc: Throwable) {
-            sdkStateHolder.errorHandler.trackInternalError(InternalErrorType.PublicApiFail, exc)
-        }
-    }
+public object Embrace : SdkApi by sdkStateHolder.api {
 
     /**
      * Gets the singleton instance of the Embrace SDK.

@@ -46,6 +46,7 @@ sealed class InternalErrorType(private val severity: Severity) {
     object CompletedSpansWriteFail : InternalErrorType(ERROR)
     object SpanSnapshotsWriteFail : InternalErrorType(ERROR)
     object InternalInterfaceFail : InternalErrorType(ERROR)
+    object PublicApiFail : InternalErrorType(ERROR)
     object NativeReadFail : InternalErrorType(Severity.WARNING)
     object AppLaunchTraceFail : InternalErrorType(Severity.WARNING)
     object UiCallbackFail : InternalErrorType(ERROR)

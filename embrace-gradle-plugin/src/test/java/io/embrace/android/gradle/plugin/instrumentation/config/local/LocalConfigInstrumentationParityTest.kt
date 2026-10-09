@@ -25,9 +25,10 @@ private const val LOCAL_CONFIG_KEY = "L$PACKAGE/LocalConfigKey;"
  * Instruments the local config classes that embrace-android-config actually generates. This will
  * fail if the generated code and plugin disagree on how a getter is keyed.
  */
-class GeneratedLocalConfigInstrumentationTest {
+class LocalConfigInstrumentationParityTest {
 
     private val classes: Map<String, ByteArray> = readGeneratedClasses()
+    private val generated: Map<String, Any> = classes.mapValues { (name, bytecode) -> instanceFor(name, bytecode) }
 
     @Test
     fun `every generated class has keyed getters`() {
@@ -41,7 +42,8 @@ class GeneratedLocalConfigInstrumentationTest {
     fun `getters return generated defaults when embrace-config json omits them`() {
         classes.forEach { (name, bytecode) ->
             val getters = readGetters(bytecode)
-            assertEquals(name, invoke(name, bytecode, getters), invoke(name, instrument(bytecode, "{}"), getters))
+            val instrumented = instanceFor(name, instrument(bytecode, "{}"))
+            assertEquals(name, generated.getValue(name).invokeEach(getters), instrumented.invokeEach(getters))
         }
     }
 
@@ -49,9 +51,9 @@ class GeneratedLocalConfigInstrumentationTest {
     fun `getters return values set in embrace-config json`() {
         classes.forEach { (name, bytecode) ->
             val getters = readGetters(bytecode)
-            val overrides = invoke(name, bytecode, getters).map(::override)
+            val overrides = generated.getValue(name).invokeEach(getters).map(::override)
             val json = jsonOf(getters.map { it.path }.zip(overrides).toMap())
-            assertEquals(name, overrides, invoke(name, instrument(bytecode, json), getters))
+            assertEquals(name, overrides, instanceFor(name, instrument(bytecode, json)).invokeEach(getters))
         }
     }
 
@@ -125,15 +127,17 @@ class GeneratedLocalConfigInstrumentationTest {
     }
 
     /**
-     * Loads [bytecode] in its own class loader and invokes [getters] on its Kotlin object instance.
+     * Loads [bytecode] in its own class loader and returns its Kotlin object instance.
      */
-    private fun invoke(name: String, bytecode: ByteArray, getters: List<LocalConfigGetter>): List<Any?> {
+    private fun instanceFor(name: String, bytecode: ByteArray): Any {
         val cls = object : ClassLoader(javaClass.classLoader) {
             val subject: Class<*> = defineClass(name, bytecode, 0, bytecode.size)
         }.subject
-        val instance = cls.getField("INSTANCE").get(null)
-        return getters.map { cls.getMethod(it.name).invoke(instance) }
+        return cls.getField("INSTANCE").get(null)
     }
+
+    private fun Any.invokeEach(getters: List<LocalConfigGetter>): List<Any?> =
+        getters.map { javaClass.getMethod(it.name).invoke(this) }
 
     private fun override(default: Any?): Any = when (default) {
         is Boolean -> !default

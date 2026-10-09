@@ -34,3 +34,25 @@ inline fun <T, R> returnIfConditionMet(
     }
     throw TimeoutException(errorMessageSupplier())
 }
+
+/**
+ * Waits until [condition] is true of what [dataProvider] returns, before [waitTimeMs] elapses.
+ * Otherwise, throws [TimeoutException]. Use this rather than [returnIfConditionMet] when nothing
+ * needs to be returned.
+ */
+inline fun <R> waitUntilConditionMet(
+    waitTimeMs: Int = 1000,
+    checkIntervalMs: Int = 10,
+    dataProvider: () -> R,
+    condition: (R) -> Boolean,
+    errorMessageSupplier: () -> String = { "Timeout period elapsed before condition met." },
+) {
+    returnIfConditionMet(
+        desiredValueSupplier = {},
+        waitTimeMs = waitTimeMs,
+        checkIntervalMs = checkIntervalMs,
+        dataProvider = dataProvider,
+        condition = condition,
+        errorMessageSupplier = errorMessageSupplier,
+    )
+}

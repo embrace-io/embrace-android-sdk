@@ -19,6 +19,7 @@ import io.embrace.android.embracesdk.spans.EmbraceSpan
 import io.embrace.android.embracesdk.spans.EmbraceSpanEvent
 import io.embrace.android.embracesdk.spans.ErrorCode
 import io.embrace.android.embracesdk.spans.TracingApi
+import io.opentelemetry.kotlin.OpenTelemetry
 import io.opentelemetry.kotlin.logging.export.LogRecordExporter
 import io.opentelemetry.kotlin.logging.export.LogRecordProcessor
 import io.opentelemetry.kotlin.tracing.export.SpanExporter
@@ -34,6 +35,7 @@ import java.util.concurrent.TimeUnit
 internal class BufferingSdkInstance(
     private val clock: Clock,
     private val logger: InternalLogger,
+    private val openTelemetryKotlin: OpenTelemetry,
 ) : SdkApi by NoopSdkInstance(logger, NoopSdkInstance.SDK_NOT_INITIALIZED) {
 
     private val otelConfigCalls = CallBuffer<OTelApi, OTelConfigCall>()
@@ -160,6 +162,8 @@ internal class BufferingSdkInstance(
     }
 
     override fun getSdkCurrentTimeMs(): Long = 0
+
+    override fun getOpenTelemetryKotlin(): OpenTelemetry = openTelemetryKotlin
 
     // avoid default implementations getting delegate to the no-op instance - route explicitly
 

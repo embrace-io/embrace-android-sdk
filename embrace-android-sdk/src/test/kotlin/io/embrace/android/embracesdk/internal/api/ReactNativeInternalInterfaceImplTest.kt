@@ -3,7 +3,6 @@ package io.embrace.android.embracesdk.internal.api
 import android.content.Context
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
-import io.embrace.android.embracesdk.EmbraceImpl
 import io.embrace.android.embracesdk.fakes.FakeEmbraceInternalInterface
 import io.embrace.android.embracesdk.fakes.FakeInstrumentationModule
 import io.embrace.android.embracesdk.fakes.FakeInternalLogger
@@ -31,7 +30,7 @@ import org.junit.runner.RunWith
 internal class ReactNativeInternalInterfaceImplTest {
 
     private lateinit var impl: ReactNativeInternalInterfaceImpl
-    private lateinit var embrace: EmbraceImpl
+    private lateinit var embrace: SdkApi
     private lateinit var store: FakeKeyValueStore
     private lateinit var bootstrapper: ModuleInitBootstrapper
     private lateinit var rnBundleIdTracker: FakeRnBundleIdTracker

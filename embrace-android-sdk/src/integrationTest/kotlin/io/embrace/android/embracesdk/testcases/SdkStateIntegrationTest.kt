@@ -5,6 +5,7 @@ package io.embrace.android.embracesdk.testcases
 import android.app.Activity
 import android.content.Context
 import androidx.test.core.app.ApplicationProvider
+import io.embrace.android.embracesdk.EmbraceImpl
 import io.embrace.android.embracesdk.LastRunEndState
 import io.embrace.android.embracesdk.PropertyScope
 import io.embrace.android.embracesdk.Severity
@@ -17,6 +18,7 @@ import io.embrace.android.embracesdk.fakes.FakeLogRecordProcessor
 import io.embrace.android.embracesdk.fakes.FakeSpanExporter
 import io.embrace.android.embracesdk.fakes.FakeSpanProcessor
 import io.embrace.android.embracesdk.internal.EmbraceInternalApi
+import io.embrace.android.embracesdk.internal.NoopInternalInterfaceApi
 import io.embrace.android.embracesdk.internal.api.SdkApi
 import io.embrace.android.embracesdk.internal.clock.millisToNanos
 import io.embrace.android.embracesdk.internal.config.remote.RemoteConfig
@@ -36,7 +38,9 @@ import io.opentelemetry.kotlin.tracing.data.SpanData
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNotNull
+import org.junit.Assert.assertNotSame
 import org.junit.Assert.assertNull
+import org.junit.Assert.assertSame
 import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Rule
@@ -369,6 +373,84 @@ internal class SdkStateIntegrationTest(
                 assertEquals(0, getSessionEnvelopes(0).size)
             },
         )
+    }
+
+    @Test
+    fun `NOT_STARTED to STARTED - internal API switches from noop to the SDK`() {
+        testRule.runTest(
+            startSdk = false,
+            testCaseAction = {
+                assertInternalApiIsNoop()
+                EmbraceInternalApi.internalInterface.addEnvelopeResource("before", "start")
+
+                embrace.start(context)
+                assertInternalApiIsLive()
+                EmbraceInternalApi.internalInterface.addEnvelopeResource("after", "start")
+                recordSession()
+            },
+            assertAction = {
+                val extras = checkNotNull(getSingleSessionEnvelope().resource?.extras)
+                assertEquals("start", extras["after"])
+                assertFalse(extras.containsKey("before"))
+            },
+        )
+    }
+
+    @Test
+    fun `NOT_STARTED to NOT_STARTED - internal API stays noop when start is rejected`() {
+        testRule.runTest(
+            persistedRemoteConfig = sdkDisabledConfig,
+            expectSdkToStart = false,
+            testCaseAction = {
+                assertInternalApiIsNoop()
+                embrace.start(context)
+                assertEquals(SdkState.NOT_STARTED, sdkState)
+                assertInternalApiIsNoop()
+            },
+        )
+    }
+
+    @Test
+    fun `STARTED to DISABLED to STARTED - internal API follows SDK state`() {
+        testRule.runTest(
+            testCaseAction = {
+                assertInternalApiIsLive()
+
+                embrace.disable()
+                assertEquals(SdkState.DISABLED, sdkState)
+                assertInternalApiIsNoop()
+                assertFalse(EmbraceInternalApi.internalInterface.isNetworkSpanForwardingEnabled())
+
+                embrace.start(context)
+                assertEquals(SdkState.STARTED, sdkState)
+                assertInternalApiIsLive()
+            },
+            assertAction = {
+                awaitStorageDeleted()
+            },
+        )
+    }
+
+    private fun assertInternalApiIsNoop() {
+        assertSame(NoopInternalInterfaceApi, EmbraceInternalApi.internalInterfaceApi)
+        assertSame(NoopInternalInterfaceApi.internalInterface, EmbraceInternalApi.internalInterface)
+        assertSame(
+            NoopInternalInterfaceApi.reactNativeInternalInterface,
+            EmbraceInternalApi.reactNativeInternalInterface,
+        )
+        assertSame(NoopInternalInterfaceApi.unityInternalInterface, EmbraceInternalApi.unityInternalInterface)
+        assertSame(NoopInternalInterfaceApi.flutterInternalInterface, EmbraceInternalApi.flutterInternalInterface)
+    }
+
+    private fun assertInternalApiIsLive() {
+        assertTrue(EmbraceInternalApi.internalInterfaceApi is EmbraceImpl)
+        assertNotSame(NoopInternalInterfaceApi.internalInterface, EmbraceInternalApi.internalInterface)
+        assertNotSame(
+            NoopInternalInterfaceApi.reactNativeInternalInterface,
+            EmbraceInternalApi.reactNativeInternalInterface,
+        )
+        assertNotSame(NoopInternalInterfaceApi.unityInternalInterface, EmbraceInternalApi.unityInternalInterface)
+        assertNotSame(NoopInternalInterfaceApi.flutterInternalInterface, EmbraceInternalApi.flutterInternalInterface)
     }
 
     private fun awaitStorageDeleted() {

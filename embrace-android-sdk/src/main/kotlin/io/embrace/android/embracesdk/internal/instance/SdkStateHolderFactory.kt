@@ -15,6 +15,8 @@ internal fun createSdkStateHolder(
         code = ::ModuleInitBootstrapper,
     ),
 ): SdkStateHolder {
-    val impl = EmbraceImpl(bootstrapper)
-    return SdkStateHolder(impl, impl.telemetryService, impl.internalErrorHandler)
+    lateinit var holder: SdkStateHolder
+    val impl = EmbraceImpl(bootstrapper, { holder.api })
+    holder = SdkStateHolder(impl, impl.telemetryService, impl.internalErrorHandler, impl)
+    return holder
 }

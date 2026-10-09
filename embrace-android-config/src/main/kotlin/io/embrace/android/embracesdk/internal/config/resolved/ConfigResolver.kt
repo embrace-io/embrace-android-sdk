@@ -59,16 +59,6 @@ fun resolveAei(local: InstrumentedConfig, remote: RemoteConfig?, bucket: Lazy<Fl
     )
 }
 
-fun resolveLog(remote: RemoteConfig?): LogConfig {
-    val cfg = remote?.logConfig
-    return LogConfig(
-        maxMessageLength = { cfg?.logMessageMaximumAllowedLength },
-        infoLimit = { cfg?.logInfoLimit },
-        warnLimit = { cfg?.logWarnLimit },
-        errorLimit = { cfg?.logErrorLimit },
-    )
-}
-
 fun resolveExperiment(remote: RemoteConfig?): ExperimentConfig = ExperimentConfig(
     maxCount = { remote?.experimentMaxCount },
     maxIdLength = { remote?.experimentIdMaxLength },

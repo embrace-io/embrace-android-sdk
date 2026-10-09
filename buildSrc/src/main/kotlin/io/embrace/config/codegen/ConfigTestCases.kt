@@ -17,12 +17,6 @@ internal class ConfigTestCases(
     private val type = field.type
     private val unreadBucket = CodeBlock.of("%M", MemberName(packageName, "unreadBucket"))
 
-    init {
-        require(field.remote == null || field.remote.sdk.matches(Regex("\\w+"))) {
-            "generated tests only support top-level RemoteConfig properties"
-        }
-    }
-
     fun tests(): List<FunSpec> = listOfNotNull(
         defaults(),
         fallback(),
@@ -106,8 +100,11 @@ internal class ConfigTestCases(
         CodeBlock.of("object : %L { override fun %N(): %T = %L }", config, field.localGetter, it.type.typeName, it.type.literal(value))
     }
 
-    private fun remoteWith(remote: ConfigProperty, value: CodeBlock): CodeBlock =
-        CodeBlock.of("%T(%N = %L)", ConfigClassNames.REMOTE_CONFIG, remote.sdk, value)
+    private fun remoteWith(remote: ConfigProperty, value: CodeBlock): CodeBlock {
+        val path = remote.sdk.split("?.")
+        val nested = remote.parentType?.let { CodeBlock.of("%T(%N = %L)", it, path.last(), value) } ?: value
+        return CodeBlock.of("%T(%N = %L)", ConfigClassNames.REMOTE_CONFIG, path.first(), nested)
+    }
 
     private fun resolve(local: CodeBlock?, remote: CodeBlock, bucket: CodeBlock = unreadBucket): CodeBlock {
         val args = mapOf(

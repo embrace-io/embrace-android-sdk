@@ -9,3 +9,32 @@ PersistenceConfig:
     remote:
       type: Pct
       sdk: pctMultiFilePersistenceEnabled
+LogConfig:
+  max_length:
+    property: maxMessageLength
+    default: 128
+    remote:
+      type: Int
+      sdk: logConfig?.logMessageMaximumAllowedLength
+      parent_type: LogRemoteConfig
+  info_limit:
+    property: infoLimit
+    default: 100
+    remote:
+      type: Int
+      sdk: logConfig?.logInfoLimit
+      parent_type: LogRemoteConfig
+  warn_limit:
+    property: warnLimit
+    default: 200
+    remote:
+      type: Int
+      sdk: logConfig?.logWarnLimit
+      parent_type: LogRemoteConfig
+  error_limit:
+    property: errorLimit
+    default: 500
+    remote:
+      type: Int
+      sdk: logConfig?.logErrorLimit
+      parent_type: LogRemoteConfig

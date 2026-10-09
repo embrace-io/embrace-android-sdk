@@ -22,6 +22,13 @@ import org.yaml.snakeyaml.error.YAMLException
  *     remote:
  *       type: Pct                     # rollout percentage, resolved to a Boolean
  *       sdk: pctFooEnabled            # read from RemoteConfig
+ *   foo_limit:
+ *     property: fooLimit
+ *     default: 10
+ *     remote:
+ *       type: Int
+ *       sdk: fooConfig?.limit         # nested one level down in RemoteConfig
+ *       parent_type: FooRemoteConfig  # the type of RemoteConfig.fooConfig
  * ```
  *
  * Int and Long features may set `min` and `max` together, and String features `max_length`.
@@ -106,8 +113,18 @@ class ConfigSlice(
                 ?: throw IllegalArgumentException("'$key' is not a valid ${type.yamlName}")
 
         private fun parseProperty(yaml: Map<String, Any>): ConfigProperty {
-            yaml.checkKeys("type", "sdk")
-            return ConfigProperty(ConfigType.fromYaml(yaml.string("type")), yaml.string("sdk"))
+            yaml.checkKeys("type", "sdk", "parent_type?")
+            val sdk = yaml.string("sdk")
+            val nested = sdk.matches(Regex("\\w+\\?\\.\\w+"))
+            require(nested || sdk.matches(Regex("\\w+"))) { "'$sdk' is not a valid RemoteConfig path" }
+            val parentType = yaml["parent_type"]?.let {
+                require(nested) { "parent_type is only valid for nested properties" }
+                val name = yaml.string("parent_type")
+                require(name.matches(Regex("[A-Z]\\w*"))) { "'$name' is not a valid class name" }
+                ConfigClassNames.REMOTE_CONFIG.peerClass(name)
+            }
+            require(!nested || parentType != null) { "nested properties need a parent_type" }
+            return ConfigProperty(ConfigType.fromYaml(yaml.string("type")), sdk, parentType)
         }
 
         private fun parseLocalProperty(yaml: Map<String, Any>): LocalConfigProperty {

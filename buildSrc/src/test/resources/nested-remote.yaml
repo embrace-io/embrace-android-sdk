@@ -5,3 +5,4 @@ FooConfig:
     remote:
       type: Int
       sdk: fooConfig?.limit
+      parent_type: FooRemoteConfig

@@ -72,7 +72,7 @@ internal class StrictModeStartupTest(
             recorder.install()
 
             bootstrapper = ModuleInitBootstrapper(TestInitModule(InitModuleImpl(), otelSdkMode))
-            EmbraceImpl(bootstrapper).let {
+            EmbraceImpl(bootstrapper, { embrace }).let {
                 embrace = it
                 it.start(context)
             }

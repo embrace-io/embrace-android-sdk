@@ -1,6 +1,5 @@
 package io.embrace.android.embracesdk.internal.api
 
-import io.embrace.android.embracesdk.EmbraceImpl
 import io.embrace.android.embracesdk.fakes.FakeKeyValueStore
 import io.embrace.android.embracesdk.internal.api.delegate.FlutterInternalInterfaceImpl
 import io.embrace.android.embracesdk.internal.envelope.metadata.FlutterSdkVersionInfo
@@ -15,7 +14,7 @@ import org.junit.Test
 internal class FlutterInternalInterfaceImplTest {
 
     private lateinit var impl: FlutterInternalInterfaceImpl
-    private lateinit var embrace: EmbraceImpl
+    private lateinit var embrace: SdkApi
     private lateinit var logger: InternalLogger
     private lateinit var hostedSdkVersionInfo: HostedSdkVersionInfo
     private lateinit var store: FakeKeyValueStore

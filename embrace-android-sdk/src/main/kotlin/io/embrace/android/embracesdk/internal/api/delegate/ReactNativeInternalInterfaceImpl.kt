@@ -1,9 +1,9 @@
 package io.embrace.android.embracesdk.internal.api.delegate
 
 import android.content.Context
-import io.embrace.android.embracesdk.EmbraceImpl
 import io.embrace.android.embracesdk.internal.EmbraceInternalInterface
 import io.embrace.android.embracesdk.internal.ReactNativeInternalInterface
+import io.embrace.android.embracesdk.internal.api.SdkApi
 import io.embrace.android.embracesdk.internal.arch.schema.EmbType.System.ReactNativeCrash.embAndroidReactNativeCrashJsException
 import io.embrace.android.embracesdk.internal.arch.schema.SchemaType
 import io.embrace.android.embracesdk.internal.capture.metadata.RnBundleIdTracker
@@ -15,7 +15,7 @@ import io.embrace.android.embracesdk.internal.payload.JsException
 import io.embrace.android.embracesdk.internal.utils.encodeToUTF8String
 
 internal class ReactNativeInternalInterfaceImpl(
-    private val embrace: EmbraceImpl,
+    private val embrace: SdkApi,
     private val impl: EmbraceInternalInterface,
     private val bootstrapper: ModuleInitBootstrapper,
     private val rnBundleIdTracker: RnBundleIdTracker,

@@ -1,6 +1,5 @@
 package io.embrace.android.embracesdk.internal.api
 
-import io.embrace.android.embracesdk.EmbraceImpl
 import io.embrace.android.embracesdk.fakes.FakeKeyValueStore
 import io.embrace.android.embracesdk.internal.api.delegate.UnityInternalInterfaceImpl
 import io.embrace.android.embracesdk.internal.envelope.metadata.HostedSdkVersionInfo
@@ -17,7 +16,7 @@ internal class UnityInternalInterfaceImplTest {
 
     private lateinit var hostedSdkVersionInfo: HostedSdkVersionInfo
     private lateinit var impl: UnityInternalInterfaceImpl
-    private lateinit var embrace: EmbraceImpl
+    private lateinit var embrace: SdkApi
     private lateinit var store: FakeKeyValueStore
     private lateinit var logger: InternalLogger
 

@@ -5,6 +5,7 @@ import androidx.test.ext.junit.runners.AndroidJUnit4
 import io.embrace.android.embracesdk.fakes.FakeConfigService
 import io.embrace.android.embracesdk.fakes.FakeInstrumentationArgs
 import io.embrace.android.embracesdk.internal.arch.schema.EmbType
+import io.embrace.android.embracesdk.internal.arch.ui.TapSignal
 import io.embrace.android.embracesdk.internal.config.resolved.BreadcrumbConfig
 import io.embrace.android.embracesdk.internal.config.resolved.EmbraceConfig
 import io.embrace.android.embracesdk.semconv.EmbTapAttributes
@@ -17,7 +18,6 @@ import org.junit.runner.RunWith
 @RunWith(AndroidJUnit4::class)
 internal class TapBreadcrumbDataSourceTest {
 
-    private lateinit var source: TapDataSource
     private lateinit var args: FakeInstrumentationArgs
 
     @Before
@@ -28,16 +28,15 @@ internal class TapBreadcrumbDataSourceTest {
                 config = EmbraceConfig(breadcrumb = { BreadcrumbConfig(captureViewClickCoordinates = { true }) }),
             ),
         )
-        source = TapDataSource(args)
+
+        // constructing the data source registers its handler on the event bus
+        TapDataSource(args)
     }
 
     @Test
     fun `add breadcrumb`() {
-        val point = Pair(126f, 309f)
-        source.logComposeTap(
-            point,
-            "my-button-id",
-        )
+        args.eventBus.emit(TapSignal.KEY, TapSignal("my-button-id", 126f, 309f))
+
         with(args.destination.addedEvents.single()) {
             assertEquals(EmbType.Ux.Tap, schemaType.telemetryType)
             assertEquals(args.clock.now(), startTimeMs)
@@ -54,12 +53,8 @@ internal class TapBreadcrumbDataSourceTest {
 
     @Test
     fun `limit not exceeded`() {
-        val point = Pair(126f, 309f)
         repeat(150) { k ->
-            source.logComposeTap(
-                point,
-                "my-button-$k",
-            )
+            args.eventBus.emit(TapSignal.KEY, TapSignal("my-button-$k", 126f, 309f))
         }
         assertEquals(100, args.destination.addedEvents.size)
     }

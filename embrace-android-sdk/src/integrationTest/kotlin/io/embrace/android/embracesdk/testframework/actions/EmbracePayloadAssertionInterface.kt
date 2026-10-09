@@ -8,6 +8,7 @@ import io.embrace.android.embracesdk.assertions.findSessionPartSpan
 import io.embrace.android.embracesdk.assertions.getSessionPartId
 import io.embrace.android.embracesdk.assertions.getUserSessionId
 import io.embrace.android.embracesdk.assertions.returnIfConditionMet
+import io.embrace.android.embracesdk.assertions.waitUntilConditionMet
 import io.embrace.android.embracesdk.internal.arch.schema.EmbType
 import io.embrace.android.embracesdk.internal.arch.state.ProcessState
 import io.embrace.android.embracesdk.internal.clock.nanosToMillis
@@ -277,8 +278,7 @@ internal class EmbracePayloadAssertionInterface(
     }
 
     fun assertNativeCrashDoesNotExist(crashData: StoredNativeCrashData) {
-        returnIfConditionMet(
-            desiredValueSupplier = { false },
+        waitUntilConditionMet(
             dataProvider = {
                 val exists = crashData.getCrashFile().exists()
                 exists

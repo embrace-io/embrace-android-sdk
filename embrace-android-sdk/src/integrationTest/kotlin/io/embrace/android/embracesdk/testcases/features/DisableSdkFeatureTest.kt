@@ -2,7 +2,7 @@ package io.embrace.android.embracesdk.testcases.features
 
 import android.content.Context
 import androidx.test.core.app.ApplicationProvider
-import io.embrace.android.embracesdk.assertions.returnIfConditionMet
+import io.embrace.android.embracesdk.assertions.waitUntilConditionMet
 import io.embrace.android.embracesdk.fakes.FakeInternalLogger
 import io.embrace.android.embracesdk.internal.delivery.storage.StorageLocation
 import io.embrace.android.embracesdk.internal.delivery.storage.asFile
@@ -95,14 +95,14 @@ internal class DisableSdkFeatureTest(
             },
             assertAction = {
                 // ensure that the files were deleted by waiting for the background thread
-                returnIfConditionMet(
-                    desiredValueSupplier = { true },
+                waitUntilConditionMet(
                     dataProvider = {
                         embraceDirs.values.all {
                             !it.sentinelFile().exists()
                         }
                     },
-                    condition = { true },
+                    condition = { it },
+                    errorMessageSupplier = { "disable() left a file in an Embrace storage directory" },
                 )
 
                 assertEquals(0, getLogEnvelopes(0).size)
@@ -146,16 +146,6 @@ internal class DisableSdkFeatureTest(
                 }
             },
             assertAction = {
-                returnIfConditionMet(
-                    desiredValueSupplier = { true },
-                    dataProvider = {
-                        embraceDirs.values.all {
-                            !it.sentinelFile().exists()
-                        }
-                    },
-                    condition = { true },
-                )
-
                 assertEquals(0, getLogEnvelopes(0).size)
                 assertEquals(0, getSessionEnvelopes(0).size)
                 assertEquals(4, logger.sdkNotInitializedMessages.size)

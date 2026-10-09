@@ -257,13 +257,42 @@ internal class SessionPartReaderTest {
     }
 
     @Test
-    fun `a session part whose intake times out is kept and stops the intake pass`() {
+    fun `a session part whose intake times out twice is deleted and the intake pass continues`() {
         persistTwoParts()
-        createReader(slowIntake).readPersistedSessionParts()
+        val reader = createReader(slowIntake)
 
+        // the first timeout keeps the part and stops the pass before the later part is taken
+        reader.readPersistedSessionParts()
         assertEquals(ids(partDirectory), slowIntake.takenPartIds)
         assertRetained(partDirectory, laterPartDirectory)
-        assertTrue(logger.internalErrorMessages.single().throwable is TimeoutException)
+
+        // the intake never finishes, so the next pass gives up on it and takes the later part
+        slowIntake.stall = false
+        reader.readPersistedSessionParts()
+        assertEquals(ids(partDirectory, laterPartDirectory), slowIntake.takenPartIds)
+        assertEquals(2, slowIntake.takes.first().waits)
+        assertDeleted(partDirectory, laterPartDirectory)
+        assertEquals(
+            listOf(TimeoutException::class, TimeoutException::class, IllegalStateException::class),
+            logger.internalErrorMessages.map { it.throwable?.let { throwable -> throwable::class } },
+        )
+    }
+
+    @Test
+    fun `a timed out intake is waited on again by the next pass instead of retrying it from scratch`() {
+        persistTwoParts()
+        val reader = createReader(slowIntake)
+        reader.readPersistedSessionParts()
+
+        // the first intake finishes while the next pass waits on it
+        val firstTake = slowIntake.takes.single()
+        firstTake.onNextWait = firstTake::store
+        slowIntake.stall = false
+        reader.readPersistedSessionParts()
+
+        assertEquals(ids(partDirectory, laterPartDirectory), slowIntake.takenPartIds)
+        assertEquals(2, firstTake.waits)
+        assertDeleted(partDirectory, laterPartDirectory)
     }
 
     @Test
@@ -278,10 +307,70 @@ internal class SessionPartReaderTest {
         assertDeleted(partDirectory, laterPartDirectory)
     }
 
+    @Test
+    fun `a recoverable failure reported after the intake timed out will still be retried`() {
+        persistTwoParts()
+        val reader = createReader(slowIntake)
+        reader.readPersistedSessionParts()
+
+        // the late failure is picked up by the next pass, which holds the part for its retry
+        slowIntake.takes.single().fail(IntakeResult.RETRYABLE_FAILURE)
+        slowIntake.stall = false
+        reader.readPersistedSessionParts()
+        assertEquals(ids(partDirectory), slowIntake.takenPartIds)
+        assertRetained(partDirectory, laterPartDirectory)
+
+        // the retry takes in the previously failed part and stores it before the later part
+        reader.readPersistedSessionParts()
+        assertEquals(ids(partDirectory, partDirectory, laterPartDirectory), slowIntake.takenPartIds)
+        assertDeleted(partDirectory, laterPartDirectory)
+    }
+
+    @Test
+    fun `an unrecoverable failure after an initial intake time out deletes the part and doesn't retry`() {
+        persistTwoParts()
+        val reader = createReader(slowIntake)
+        reader.readPersistedSessionParts()
+
+        // the late failure is picked up by the next pass, which drops the part and moves on
+        slowIntake.takes.single().fail(IntakeResult.PERMANENT_FAILURE)
+        slowIntake.stall = false
+        reader.readPersistedSessionParts()
+
+        assertEquals(ids(partDirectory, laterPartDirectory), slowIntake.takenPartIds)
+        assertDeleted(partDirectory, laterPartDirectory)
+        assertTrue(logger.internalErrorMessages.last().throwable is IllegalStateException)
+    }
+
+    @Test
+    fun `the session part from an interrupted intake will be retried again if it times out after its first complete intake attempt`() {
+        persistTwoParts()
+        slowIntake.firstWait = { throw InterruptedException() }
+        val reader = createReader(slowIntake)
+
+        // the interrupt stops the intake pass and the interrupt flag is restored on the thread
+        reader.readPersistedSessionParts()
+        assertTrue(Thread.interrupted())
+        slowIntake.firstWait = null
+
+        // the next intake pass times out the intake for the first time, so the part is kept
+        reader.readPersistedSessionParts()
+        assertEquals(ids(partDirectory), slowIntake.takenPartIds)
+        assertRetained(partDirectory, laterPartDirectory)
+
+        // the second timeout deletes it and the intake pass moves on to the later part
+        slowIntake.stall = false
+        reader.readPersistedSessionParts()
+        assertEquals(ids(partDirectory, laterPartDirectory), slowIntake.takenPartIds)
+        assertEquals(3, slowIntake.takes.first().waits)
+        assertDeleted(partDirectory, laterPartDirectory)
+    }
+
     /**
      * An intake service that can be configured to behave in nonstandard ways:
      *
      * - Set [stall] to true to ensure an intake never completes. Setting it to false completes the intakes right away.
+     * - Set [firstWait] to run some code on the first wait of each new take.
      *
      * Every take and wait is recorded in [events].
      */
@@ -289,6 +378,7 @@ internal class SessionPartReaderTest {
         val takes: MutableList<SlowTake> = mutableListOf()
         val events: MutableList<String> = mutableListOf()
         var stall: Boolean = true
+        var firstWait: (() -> Unit)? = null
 
         val takenPartIds: List<String>
             get() = takes.map(SlowTake::partId)
@@ -304,6 +394,7 @@ internal class SessionPartReaderTest {
             val take = SlowTake(metadata.sessionPartId, events, onStored)
             takes.add(take)
             events.add("take:${take.partId}")
+            take.onNextWait = firstWait
             if (!stall) {
                 take.store()
             }
@@ -317,10 +408,17 @@ internal class SessionPartReaderTest {
         private val onStored: (() -> Unit)?,
     ) : Future<IntakeResult> {
         var waits: Int = 0
+        var onNextWait: (() -> Unit)? = null
         private var done = false
+        private var result: IntakeResult = IntakeResult.STORED
 
         fun store() {
             onStored?.invoke()
+            done = true
+        }
+
+        fun fail(result: IntakeResult) {
+            this.result = result
             done = true
         }
 
@@ -331,10 +429,13 @@ internal class SessionPartReaderTest {
         override fun get(timeout: Long, unit: TimeUnit): IntakeResult {
             waits++
             events.add("wait:$partId")
+            val action = onNextWait
+            onNextWait = null
+            action?.invoke()
             if (!done) {
                 throw TimeoutException("stalled")
             }
-            return IntakeResult.STORED
+            return result
         }
     }
 

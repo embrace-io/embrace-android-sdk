@@ -23,6 +23,9 @@ dependencies {
     testImplementation(libs.mockk)
     testImplementation(libs.mockwebserver)
     testImplementation(project(":embrace-test-common"))
+
+    // the generated local config classes, instrumented as bytecode by GeneratedLocalConfigInstrumentationTest
+    testRuntimeOnly(project(":embrace-android-config")) { isTransitive = false }
 }
 
 buildConfig {

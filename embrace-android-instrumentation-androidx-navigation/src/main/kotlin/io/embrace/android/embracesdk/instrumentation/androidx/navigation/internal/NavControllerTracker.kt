@@ -5,20 +5,23 @@ import androidx.fragment.app.FragmentActivity
 import androidx.navigation.NavController
 import androidx.navigation.NavDestination
 import androidx.navigation.fragment.NavHostFragment
-import io.embrace.android.embracesdk.internal.arch.navigation.NavigationControllerEventListener
+import io.embrace.android.embracesdk.internal.arch.navigation.NavigationSignal
+import io.embrace.android.embracesdk.internal.arch.navigation.NavigationSignal.ScreenChanged
+import io.embrace.android.embracesdk.internal.arch.navigation.NavigationSignal.ScreenSourceAttached
 import io.embrace.android.embracesdk.internal.arch.navigation.NavigationTrackingInitListener
 import io.embrace.android.embracesdk.internal.arch.navigation.NavigationTrackingService
 import io.embrace.android.embracesdk.internal.arch.navigation.getId
 import io.embrace.android.embracesdk.internal.clock.Clock
 import io.embrace.android.embracesdk.internal.logging.InternalErrorType
 import io.embrace.android.embracesdk.internal.logging.InternalLogger
+import io.embrace.android.embracesdk.internal.utils.event.EventBus
 
 /**
  * Discovers and attaches [NavController.OnDestinationChangedListener] instances to Activities that use a [NavController].
  * Implements [NavigationTrackingInitListener] so it can be registered with [NavigationTrackingService] tracking events.
  */
 internal class NavControllerTracker(
-    private val navigationControllerEventListener: NavigationControllerEventListener,
+    private val eventBus: EventBus,
     private val clock: Clock,
     private val logger: InternalLogger,
 ) : NavigationTrackingInitListener {
@@ -44,9 +47,9 @@ internal class NavControllerTracker(
 
     private fun NavController.trackForActivity(activity: Activity) {
         val activityId = activity.getId()
-        navigationControllerEventListener.onControllerAttached(activity, clock.now())
+        eventBus.emit(NavigationSignal.KEY, ScreenSourceAttached(activityId, clock.now()))
         addOnDestinationChangedListener { _, destination, _ ->
-            navigationControllerEventListener.onDestinationChange(activity, extractScreenName(destination), clock.now())
+            eventBus.emit(NavigationSignal.KEY, ScreenChanged(activityId, extractScreenName(destination), clock.now()))
         }
         trackAttemptStatus[activityId] = true
     }

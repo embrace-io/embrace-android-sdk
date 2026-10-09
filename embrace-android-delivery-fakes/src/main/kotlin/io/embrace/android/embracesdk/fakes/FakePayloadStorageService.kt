@@ -6,6 +6,7 @@ import io.embrace.android.embracesdk.internal.delivery.StoredTelemetryMetadata
 import io.embrace.android.embracesdk.internal.delivery.SupportedEnvelopeType
 import io.embrace.android.embracesdk.internal.delivery.storage.PayloadStorageService
 import io.embrace.android.embracesdk.internal.delivery.storage.SerializationAction
+import io.embrace.android.embracesdk.internal.delivery.storage.StorageOutcome
 import io.embrace.android.embracesdk.internal.payload.Envelope
 import io.embrace.android.embracesdk.internal.payload.LogPayload
 import io.embrace.android.embracesdk.internal.payload.SessionPartPayload
@@ -43,12 +44,32 @@ class FakePayloadStorageService(
      * Lets tests verify that callers close the payload stream they were handed.
      */
     val closedStreamCount = AtomicInteger(0)
+
+    /**
+     * Throw [IOException] on storage call
+     */
     var failStorage: Boolean = false
 
-    override fun store(metadata: StoredTelemetryMetadata, action: SerializationAction) {
+    /**
+     * Reports every store as failed by the payload itself
+     */
+    var failPayloadConstruction: Boolean = false
+
+    /**
+     * Rejects every storage call without throwing.
+     */
+    var rejectStorage: Boolean = false
+
+    override fun store(metadata: StoredTelemetryMetadata, action: SerializationAction): StorageOutcome {
         storeCount.incrementAndGet()
         if (failStorage) {
             throw IOException("Failed to store payload")
+        }
+        if (rejectStorage) {
+            return StorageOutcome.REJECTED
+        }
+        if (failPayloadConstruction) {
+            return StorageOutcome.FAILED
         }
 
         val baos = ByteArrayOutputStream()
@@ -58,6 +79,7 @@ class FakePayloadStorageService(
             action(baos)
         }
         cachedPayloads[metadata] = baos.toByteArray()
+        return StorageOutcome.STORED
     }
 
     override fun loadPayloadAsStream(metadata: StoredTelemetryMetadata): InputStream? {
@@ -70,7 +92,7 @@ class FakePayloadStorageService(
                     }
                 }
             }
-        } catch (t: Throwable) {
+        } catch (_: Throwable) {
             null
         }
     }

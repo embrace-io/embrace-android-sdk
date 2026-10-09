@@ -9,9 +9,10 @@ import java.io.InputStream
 interface FileStorageService {
 
     /**
-     * Stores a payload
+     * Constructs a payload based on [metadata] by invoking [action], then persist it to disk.
+     * Returns the appropriate [StorageOutcome] given what happens.
      */
-    fun store(metadata: StoredTelemetryMetadata, action: SerializationAction)
+    fun store(metadata: StoredTelemetryMetadata, action: SerializationAction): StorageOutcome
 
     /**
      * Deletes a payload

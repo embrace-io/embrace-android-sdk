@@ -1,6 +1,7 @@
 package io.embrace.android.embracesdk.fakes
 
 import io.embrace.android.embracesdk.internal.delivery.StoredTelemetryMetadata
+import io.embrace.android.embracesdk.internal.delivery.intake.IntakeFailure
 import io.embrace.android.embracesdk.internal.delivery.intake.IntakeService
 import io.embrace.android.embracesdk.internal.payload.Envelope
 import java.util.concurrent.Future
@@ -13,10 +14,10 @@ class FakeIntakeService : IntakeService {
     var cacheList: MutableList<FakePayloadIntake<*>> = mutableListOf()
 
     /**
-     * Whether an intake is treated as stored. Set to false to simulate a payload that the intake
-     * service dropped or failed to persist, in which case the onStored callback is not invoked.
+     * Each intake will take the first item off this list and use it as a failure for the invocation.
+     * An empty list means intakes don't fail.
      */
-    var storeSucceeds: Boolean = true
+    val pendingFailures: ArrayDeque<IntakeFailure> = ArrayDeque()
 
     @Suppress("UNCHECKED_CAST")
     inline fun <reified T : Any> getIntakes(complete: Boolean = true): List<FakePayloadIntake<T>> {
@@ -36,14 +37,18 @@ class FakeIntakeService : IntakeService {
         metadata: StoredTelemetryMetadata,
         staleEntry: StoredTelemetryMetadata?,
         onStored: (() -> Unit)?,
+        onFailure: ((IntakeFailure) -> Unit)?,
     ): Future<*> {
         val dst = when (metadata.complete) {
             true -> intakeList
             false -> cacheList
         }
         dst.add(FakePayloadIntake(intake, metadata))
-        if (storeSucceeds) {
+        val failure = pendingFailures.removeFirstOrNull()
+        if (failure == null) {
             onStored?.invoke()
+        } else {
+            onFailure?.invoke(failure)
         }
         return fakeFuture
     }

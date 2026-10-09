@@ -2,7 +2,6 @@ plugins {
     id("embrace-common-conventions")
     id("embrace-android-conventions")
     id("embrace-publishing-conventions")
-    id("org.jetbrains.kotlinx.kover")
 }
 
 android {

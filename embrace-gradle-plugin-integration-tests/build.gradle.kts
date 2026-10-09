@@ -41,6 +41,13 @@ tasks.withType<Test>().configureEach {
     outputs.upToDateWhen { false }
 }
 
+// A single end-to-end build of an Android app that applies the plugin, used by the root 'verify' task.
+tasks.register<Test>("sanityTest") {
+    testClassesDirs = sourceSets.test.get().output.classesDirs
+    classpath = sourceSets.test.get().runtimeClasspath
+    filter.includeTestsMatching("io.embrace.android.gradle.integration.testcases.AndroidSimpleTest.assembleRelease")
+}
+
 group = "io.embrace"
 version = project.properties["version"] as String
 

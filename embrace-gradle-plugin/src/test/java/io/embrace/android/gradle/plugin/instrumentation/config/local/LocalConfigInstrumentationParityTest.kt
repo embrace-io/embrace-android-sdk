@@ -25,7 +25,7 @@ private const val LOCAL_CONFIG_KEY = "L$PACKAGE/LocalConfigKey;"
  * Instruments the local config classes that embrace-android-config actually generates. This will
  * fail if the generated code and plugin disagree on how a getter is keyed.
  */
-class GeneratedLocalConfigInstrumentationTest {
+class LocalConfigInstrumentationParityTest {
 
     private val classes: Map<String, ByteArray> = readGeneratedClasses()
 

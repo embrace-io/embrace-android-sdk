@@ -124,6 +124,19 @@ internal class SdkStateHolderTest {
         assertEquals(listOf("start", "disable", "disable"), calls)
     }
 
+    @Test
+    fun `api routes lifecycle calls through the holder`() {
+        val holder = SdkStateHolder(FakeInstance(calls), FakeInternalTelemetryService(), logger)
+        holder.api.disable()
+        assertEquals(SdkState.NOT_STARTED, holder.state)
+        holder.api.start(context)
+        assertEquals(SdkState.STARTED, holder.state)
+        holder.api.logInfo("message")
+        holder.api.disable()
+        assertEquals(SdkState.DISABLED, holder.state)
+        assertEquals(listOf("start", "logInfo/1", "disable"), calls)
+    }
+
     private class FakeInstance(
         private val calls: MutableList<String>,
         private val startSucceeds: Boolean = true,

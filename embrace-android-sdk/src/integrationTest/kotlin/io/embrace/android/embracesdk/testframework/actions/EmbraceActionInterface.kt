@@ -14,6 +14,7 @@ import io.embrace.android.embracesdk.internal.capture.connectivity.ConnectionTyp
 import io.embrace.android.embracesdk.internal.capture.connectivity.ConnectivityStatus
 import io.embrace.android.embracesdk.internal.capture.connectivity.toOptimisticStatus
 import io.embrace.android.embracesdk.internal.injection.ModuleInitBootstrapper
+import io.embrace.android.embracesdk.internal.instance.SdkState
 import org.robolectric.Robolectric
 import org.robolectric.android.controller.ActivityController
 
@@ -24,12 +25,19 @@ internal class EmbraceActionInterface(
     private val setup: EmbraceSetupInterface,
     private val bootstrapper: ModuleInitBootstrapper,
     private val embraceSupplier: () -> SdkApi,
+    private val sdkStateSupplier: () -> SdkState,
 ) {
 
     /**
      * The [Embrace] instance that can be used for testing
      */
     val embrace: SdkApi by lazy { embraceSupplier() }
+
+    /**
+     * The current lifecycle state of the SDK under test.
+     */
+    val sdkState: SdkState
+        get() = sdkStateSupplier()
 
     val clock: FakeClock
         get() = setup.getClock()

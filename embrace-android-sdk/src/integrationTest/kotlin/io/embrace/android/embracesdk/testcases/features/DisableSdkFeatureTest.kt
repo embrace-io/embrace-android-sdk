@@ -6,6 +6,7 @@ import io.embrace.android.embracesdk.assertions.returnIfConditionMet
 import io.embrace.android.embracesdk.fakes.FakeInternalLogger
 import io.embrace.android.embracesdk.internal.delivery.storage.StorageLocation
 import io.embrace.android.embracesdk.internal.delivery.storage.asFile
+import io.embrace.android.embracesdk.internal.instance.SdkState
 import io.embrace.android.embracesdk.testframework.OtelSdkMode
 import io.embrace.android.embracesdk.testframework.SdkIntegrationTestRule
 import org.junit.Assert.assertEquals
@@ -87,6 +88,7 @@ internal class DisableSdkFeatureTest(
 
                     // disable SDK at this point
                     embrace.disable()
+                    assertEquals(SdkState.DISABLED, sdkState)
 
                     // log some more data
                     embrace.startSpan(SPAN_3).stop()
@@ -136,6 +138,7 @@ internal class DisableSdkFeatureTest(
             testCaseAction = {
                 recordSession {
                     embrace.disable()
+                    assertEquals(SdkState.DISABLED, sdkState)
                     embrace.startSpan(SPAN_3).stop()
                     embrace.addBreadcrumb("foo")
                     embrace.logInfo(LOG_1)

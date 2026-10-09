@@ -7,7 +7,7 @@ data class ExportedSpan(
     val name: String,
 
     /**
-     * The resource's `telemetry.sdk.language`.
+     * The resource's `telemetry.sdk.mode`.
      */
-    val sdkLanguage: String?,
+    val sdkMode: String?,
 )

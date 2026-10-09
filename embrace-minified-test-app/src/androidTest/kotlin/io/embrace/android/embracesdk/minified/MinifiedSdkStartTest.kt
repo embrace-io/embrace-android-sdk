@@ -21,8 +21,8 @@ internal class MinifiedSdkStartTest {
         assertNotNull("Span was not exported. Exported: ${RecordingSpanExporter.exportedSpans}", span)
         assertEquals(
             "Span was not exported by the expected opentelemetry-kotlin implementation.",
-            if (BuildConfig.USE_KOTLIN_SDK) "kotlin" else null,
-            span?.sdkLanguage,
+            if (BuildConfig.USE_KOTLIN_SDK) "regular" else "compat",
+            span?.sdkMode,
         )
     }
 

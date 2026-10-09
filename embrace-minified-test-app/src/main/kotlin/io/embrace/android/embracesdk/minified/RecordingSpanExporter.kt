@@ -13,7 +13,7 @@ object RecordingSpanExporter : SpanExporter {
         telemetry.forEach {
             exportedSpans += ExportedSpan(
                 name = it.name,
-                sdkLanguage = it.resource.attributes["telemetry.sdk.language"] as? String,
+                sdkMode = it.resource.attributes["telemetry.sdk.mode"] as? String,
             )
         }
         return OperationResultCode.Success

@@ -1,20 +1,20 @@
 package io.embrace.android.embracesdk.internal.otel.impl
 
-import io.opentelemetry.kotlin.OpenTelemetry
 import io.opentelemetry.kotlin.attributes.AnyValue
 import io.opentelemetry.kotlin.attributes.AttributesMutator
 import io.opentelemetry.kotlin.tracing.Span
 import io.opentelemetry.kotlin.tracing.SpanContext
 import io.opentelemetry.kotlin.tracing.SpanCreationAction
 import io.opentelemetry.kotlin.tracing.StatusData
+import io.opentelemetry.kotlin.tracing.createInvalidSpanContext
 
 /**
  * Embrace-specific decorator that adds extra logic to OTel Tracing.
  */
-internal class EmbInvalidSpan(openTelemetry: OpenTelemetry) : Span, SpanCreationAction {
+internal class EmbInvalidSpan : Span, SpanCreationAction {
 
-    override val parent: SpanContext = openTelemetry.spanContext.invalid
-    override val spanContext: SpanContext = openTelemetry.spanContext.invalid
+    override val parent: SpanContext = createInvalidSpanContext()
+    override val spanContext: SpanContext = createInvalidSpanContext()
 
     override fun setName(name: String) {}
 

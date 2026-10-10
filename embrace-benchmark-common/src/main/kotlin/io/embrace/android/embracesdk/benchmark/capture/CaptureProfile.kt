@@ -22,6 +22,12 @@ enum class CaptureProfile(val key: String, private val resource: String) {
 
     /** The sections plus the scheduling, frequency, binder, runtime and memory context around them. */
     WITH_CONTEXT("with-context", "/perfetto-config-with-context.pbtx"),
+
+    /**
+     * The sections plus what `MemoryUsageMetric` reads: the app's resident set size (`kmem/rss_stat`)
+     * and ART's heap size counter (the `dalvik` category), without the scheduling `with-context` adds.
+     */
+    MEMORY("memory", "/perfetto-config-memory.pbtx"),
     ;
 
     /** The config's text, as androidx.benchmark takes it, read from the resource. */

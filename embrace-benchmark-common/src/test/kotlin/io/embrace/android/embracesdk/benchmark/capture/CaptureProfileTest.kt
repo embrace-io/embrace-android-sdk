@@ -54,6 +54,17 @@ internal class CaptureProfileTest {
         }
     }
 
+    @Test
+    fun `only memory captures the resident set events`() {
+        CaptureProfile.entries.forEach { profile ->
+            assertEquals(
+                profile.key,
+                profile == CaptureProfile.MEMORY,
+                profile.traceConfig.contains("kmem/rss_stat"),
+            )
+        }
+    }
+
     private companion object {
         const val BENCHMARK_APP = "io.embrace.android.embracesdk.macrobenchmark.app"
     }

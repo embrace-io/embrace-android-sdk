@@ -79,10 +79,38 @@ with the union of both profiles. Gradle downloads and boots the emulator itself.
 
 ## Traces
 
-The benchmark records only the app's own [atrace sections](https://perfetto.dev/docs/data-sources/atrace) and counters.
-The default macrobenchmark config captures system-wide scheduling data as well, which costs tens of
-megabytes an iteration; this drastically reduces size for analysis. The tradeoff
-is that lots of other data is omitted.
+By default the benchmark records only the app's own [atrace sections](https://github.com/google/perfetto/blob/v46.0/docs/data-sources/atrace.md)
+and counters. The default macrobenchmark config captures system-wide scheduling data as well, which
+costs tens of megabytes an iteration; this drastically reduces size for analysis. The tradeoff is
+that lots of other data is omitted, which is what the second capture profile is for.
+
+### Capture profiles
+
+`--capture` picks the perfetto config a run captures with (`embrace.capture` as an instrumentation
+argument when running Gradle directly; `tools/startup fleet-campaign --harness macrobenchmark
+--capture <profile>` when a campaign of several passes drives this harness). The profile is part of
+what makes two runs comparable, and the trace records the config it was captured with, so the
+analysis reads which one it has rather than being told.
+
+| profile | config | holds | per iteration |
+|---|---|---|---|
+| `app-only` (default) | `perfetto-config-app-only.pbtx` | the app's sections and counters, thread names | ~120 KB |
+| `with-context` | `perfetto-config-with-context.pbtx` | the same, plus every thread's scheduling (switches, wakings, blocked reasons, compact-encoded), cpu frequency and limits, binder transactions, ART's class-load and GC sections (`dalvik`) from every process, and memory available / swap once a second | ~2 MB |
+
+`with-context` is what explaining an outlier needs: which thread state a section spent its time in and on
+which cpus, what else was running, and whether the clock had been throttled. Scheduling events arrive for
+every task on every cpu, which the kernel cannot filter, so this profile is megabytes an iteration. The
+app's sections get a ring buffer of their own so a burst of scheduling cannot evict the start of a launch.
+
+```bash
+scripts/macrobenchmark.sh --out perf/macrobenchmark/context --capture with-context
+```
+
+The sizes are approximate and grow with what a benchmark does in an iteration. They are the protobuf
+trace; the zip androidx.benchmark wraps it in is roughly a third to a half of that.
+
+The ART sections are the one thing `app-only` cannot show at all: `atrace_apps` alone leaves them out, and
+only the `dalvik` category brings them, so a class-load check needs `with-context`.
 
 androidx.benchmark wraps each trace in a zip. `scripts/analyse-trace.sh` and
 `scripts/analyse-trace-iterations.sh` read that as it is; unpack one only to open it in something that

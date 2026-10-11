@@ -11,6 +11,8 @@ that side's module.
   the benchmark drives is the benchmark's own business, so its package and host activity stay in
   `embrace-macrobenchmark`.
 - **The scenarios.** The app runs them, and the benchmark looks them up by id to parameterize its tests.
+  `ResurrectionScenarios` are recorded as fixtures instead: the benchmark launches the app to run one, and
+  the app keeps what it left on disk to restore before every iteration.
 - **The capture profiles.** `CaptureProfile` and its perfetto configs are only used by the benchmark.
   They live here because `embrace-macrobenchmark` is a `com.android.test` module, which never runs a
   JVM unit test placed under its `src/test`, and `CaptureProfileTest` checks the configs.

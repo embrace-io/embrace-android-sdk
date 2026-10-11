@@ -13,9 +13,14 @@ val quickCheck = ScenarioSpec(
 ) {
     embrace.addBreadcrumb("opened from notification")
     embrace.recordSpan("notification-target-load") {
-        request("https://api.example.com/v1/notifications/4821")
+        recordRequest("https://api.example.com/v1/notifications/4821")
         advanceTime(180)
     }
     advanceTime(11_000)
 }
 ```
+
+A scenario calls the SDK under test directly, through `embrace`. Its `ScenarioScope` gives it what depends
+on where it runs, the scenario clock and the app's foreground state, and simulates what an app does that
+takes more than a single call to the SDK, such as a request made through the manual network API that
+takes scenario time.

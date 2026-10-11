@@ -5,6 +5,7 @@ import android.app.Application
 import android.app.Application.ActivityLifecycleCallbacks
 import android.content.Intent
 import android.os.Bundle
+import android.os.SystemClock
 import android.os.Trace
 import android.provider.Settings
 import io.embrace.android.embracesdk.Embrace
@@ -47,14 +48,18 @@ internal class ScenarioHost(private val app: Application) : ActivityLifecycleCal
     @Volatile
     private var hostActivity: WeakReference<ScenarioHostActivity>? = null
 
+    // the directory names of the session parts in multi-file mode's directory when the SDK started
+    @Volatile
+    private var partsAtStart: List<String> = emptyList()
+
     private val foregrounded = AtomicReference<CountDownLatch?>(null)
     private var thread: Thread? = null
 
     /**
      * Readies this process for what the benchmark launched it to do, then starts the SDK under test through
      * [startSdk]. The app calls it from `Application.onCreate`, before anything else that touches the SDK. It
-     * registers the host for activity lifecycle callbacks and writes the remote config the benchmark's global
-     * settings select, before the SDK reads it. A launch that restores a fixture leaves the SDK stopped, so that
+     * registers the host for activity lifecycle callbacks, notes the session parts on disk and writes the remote
+     * config the benchmark's global settings select, both before the SDK reads them. A launch that restores a fixture leaves the SDK stopped, so that
      * nothing of its own lands on disk.
      */
     fun start(startSdk: () -> Unit) {
@@ -62,7 +67,9 @@ internal class ScenarioHost(private val app: Application) : ActivityLifecycleCal
         if (globalSetting(RESTORE_FIXTURE_SETTING) != null) {
             return
         }
-        seedRemoteConfig(SdkStorage(File(app.applicationInfo.dataDir)))
+        val storage = SdkStorage(File(app.applicationInfo.dataDir))
+        partsAtStart = storage.sessionPartDirs()
+        seedRemoteConfig(storage)
         startSdk()
     }
 
@@ -110,6 +117,7 @@ internal class ScenarioHost(private val app: Application) : ActivityLifecycleCal
                 is HostTask.RunPersistenceScenario -> runPersistenceScenario(task.scenario)
                 is HostTask.RecordFixture -> status(fixtureRecorder().record { runScenario(task.scenario) })
                 HostTask.RestoreFixture -> status(fixtureRecorder().restore())
+                HostTask.AwaitResurrection -> awaitResurrection()
             }
         } catch (exc: Exception) {
             STATUS_ERROR + (exc.message ?: exc.javaClass.simpleName)
@@ -144,6 +152,33 @@ internal class ScenarioHost(private val app: Application) : ActivityLifecycleCal
      */
     private fun runScenario(scenario: ScenarioSpec) {
         scenario.action(AppScenarioScope(Embrace, this))
+    }
+
+    /**
+     * Waits until every session part that was on disk when the SDK started has left multi-file mode's
+     * directory, and the cache of incomplete payloads that the SDK may pass parts through on their way to being
+     * resurrected is empty again. It fails when the SDK started with no parts, so that a launch with nothing to
+     * resurrect fails rather than measuring nothing.
+     */
+    private fun awaitResurrection(): String {
+        val parts = partsAtStart
+        if (parts.isEmpty()) {
+            return STATUS_ERROR + "no session parts were on disk when the SDK started"
+        }
+        val storage = SdkStorage(File(app.applicationInfo.dataDir))
+        val sessionsDir = storage.sessionsDir
+        val cacheDir = storage.cacheDir
+        val deadlineMs = SystemClock.uptimeMillis() + RESURRECTION_TIMEOUT_MS
+        while (parts.any { File(sessionsDir, it).exists() } || cacheDir.list().orEmpty().isNotEmpty()) {
+            if (SystemClock.uptimeMillis() > deadlineMs) {
+                return STATUS_ERROR + "${parts.count { File(sessionsDir, it).exists() }} dead parts and " +
+                    "${cacheDir.list().orEmpty().size} cached payloads left after ${RESURRECTION_TIMEOUT_MS}ms"
+            }
+            SystemClock.sleep(RESURRECTION_POLL_MS)
+        }
+        // the SDK's sections have ended, but give perfetto time to flush them
+        SystemClock.sleep(RESURRECTION_SETTLE_MS)
+        return STATUS_OK
     }
 
     private fun fixtureRecorder(): FixtureRecorder {
@@ -209,5 +244,8 @@ internal class ScenarioHost(private val app: Application) : ActivityLifecycleCal
         const val SECTION_SESSION_END = "session-end"
         const val STATUS_END_DECLINED = "end-declined"
         const val SCENARIO_SETTLE_MS = 2000L
+        const val RESURRECTION_POLL_MS = 10L
+        const val RESURRECTION_TIMEOUT_MS = 60_000L
+        const val RESURRECTION_SETTLE_MS = 500L
     }
 }

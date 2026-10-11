@@ -8,6 +8,8 @@ internal class HostTaskTest {
 
     private val tasks = listOf(
         HostTask.RunPersistenceScenario(PersistenceScenarios.all.first()),
+        HostTask.RecordFixture(ResurrectionScenarios.largePart),
+        HostTask.RestoreFixture,
     )
 
     @Test

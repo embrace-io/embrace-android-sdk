@@ -32,10 +32,31 @@ sealed interface HostTask {
     }
 
     /**
+     * Runs [scenario], then adds what it left on disk to the recorded fixture.
+     */
+    data class RecordFixture(val scenario: ScenarioSpec) : HostTask {
+        override val key: Key
+            get() = Key.RECORD_FIXTURE
+
+        override val arguments: Map<String, String>
+            get() = mapOf(EXTRA_SCENARIO_ID to scenario.id)
+    }
+
+    /**
+     * Restores the recorded fixture where the SDK reads it, in a launch that leaves the SDK stopped.
+     */
+    data object RestoreFixture : HostTask {
+        override val key: Key = Key.RESTORE_FIXTURE
+        override val arguments: Map<String, String> = emptyMap()
+    }
+
+    /**
      * Identifies each kind of task, one entry per task. [value] is the string that the launch intent carries.
      */
     enum class Key(val value: String) {
         RUN_PERSISTENCE_SCENARIO("run_persistence_scenario"),
+        RECORD_FIXTURE("record_fixture"),
+        RESTORE_FIXTURE("restore_fixture"),
     }
 }
 
@@ -53,6 +74,12 @@ fun hostTaskFrom(stringExtraLookup: (String) -> String?): HostTask {
     return when (keyWithValue(stringExtraLookup(EXTRA_TASK))) {
         HostTask.Key.RUN_PERSISTENCE_SCENARIO ->
             HostTask.RunPersistenceScenario(PersistenceScenarios.byId(stringExtraLookup.required(EXTRA_SCENARIO_ID)))
+
+        HostTask.Key.RECORD_FIXTURE ->
+            HostTask.RecordFixture(ResurrectionScenarios.byId(stringExtraLookup.required(EXTRA_SCENARIO_ID)))
+
+        HostTask.Key.RESTORE_FIXTURE ->
+            HostTask.RestoreFixture
     }
 }
 

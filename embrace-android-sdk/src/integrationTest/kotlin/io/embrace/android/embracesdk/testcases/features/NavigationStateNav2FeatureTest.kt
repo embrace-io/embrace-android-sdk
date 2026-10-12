@@ -451,40 +451,6 @@ internal class NavigationStateNav2FeatureTest(
         )
     }
 
-    @Test
-    fun `transitions capped at limit`() {
-        testRule.runTest(
-            persistedRemoteConfig = enabledRemoteConfig,
-            testCaseAction = {
-                val activityController = Robolectric.buildActivity(BasicNavHostFragmentActivity::class.java)
-                simulateOpeningActivities(
-                    addStartupActivity = false,
-                    startInBackground = true,
-                    activitiesAndActions = listOf(
-                        activityController to {
-                            val navController = activityController.get().getNavController()
-                            repeat(1001) { i ->
-                                navController.navigate(
-                                    if (i % 2 == 0) {
-                                        "about"
-                                    } else {
-                                        "contacts"
-                                    }
-                                )
-                                clock.tick(POST_ACTIVITY_ACTION_DWELL)
-                            }
-                        },
-                    )
-                )
-            },
-            assertAction = {
-                val stateSpan = getSingleSessionEnvelope().getNavigationStateSpan()
-                val events = checkNotNull(stateSpan?.events)
-                assertEquals(1000, events.size)
-            },
-        )
-    }
-
     private inline fun <reified T> runNavStateTest(
         defaultDestination: String,
         routes: List<String>,

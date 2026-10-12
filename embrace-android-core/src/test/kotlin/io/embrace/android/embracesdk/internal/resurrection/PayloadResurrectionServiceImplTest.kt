@@ -38,6 +38,7 @@ import io.embrace.android.embracesdk.internal.delivery.PayloadType
 import io.embrace.android.embracesdk.internal.delivery.StoredTelemetryMetadata
 import io.embrace.android.embracesdk.internal.delivery.SupportedEnvelopeType
 import io.embrace.android.embracesdk.internal.delivery.SupportedEnvelopeType.CRASH
+import io.embrace.android.embracesdk.internal.delivery.intake.IntakeResult
 import io.embrace.android.embracesdk.internal.delivery.intake.IntakeService
 import io.embrace.android.embracesdk.internal.delivery.intake.IntakeServiceImpl
 import io.embrace.android.embracesdk.internal.delivery.storage.PayloadStorageService
@@ -836,8 +837,8 @@ class PayloadResurrectionServiceImplTest {
                 metadata: StoredTelemetryMetadata,
                 staleEntry: StoredTelemetryMetadata?,
                 onStored: (() -> Unit)?,
-            ): Future<*> {
-                return object : Future<Unit> {
+            ): Future<IntakeResult> {
+                return object : Future<IntakeResult> {
                     override fun cancel(mayInterruptIfRunning: Boolean) = false
                     override fun isCancelled() = false
                     override fun isDone() = false

@@ -10,6 +10,7 @@ import io.embrace.android.embracesdk.internal.config.resolved.PersistenceConfig
 import io.embrace.android.embracesdk.internal.delivery.PayloadType
 import io.embrace.android.embracesdk.internal.delivery.StoredTelemetryMetadata
 import io.embrace.android.embracesdk.internal.delivery.SupportedEnvelopeType
+import io.embrace.android.embracesdk.internal.delivery.intake.IntakeResult
 import io.embrace.android.embracesdk.internal.delivery.intake.IntakeService
 import io.embrace.android.embracesdk.internal.envelope.session.SESSION_ENVELOPE_TYPE
 import io.embrace.android.embracesdk.internal.envelope.session.SESSION_ENVELOPE_VERSION
@@ -174,7 +175,7 @@ internal class SessionPartReaderTest {
     @Test
     fun `a session part that intake does not store is left on disk`() {
         persist(partDirectory)
-        intakeService.storeSucceeds = false
+        intakeService.pendingResults.add(IntakeResult.RETRYABLE_FAILURE)
 
         createReader().readPersistedSessionParts()
 
@@ -258,7 +259,7 @@ internal class SessionPartReaderTest {
     fun `a session part that intake drops without stalling does not abandon the pass`() {
         persist(laterPartDirectory)
         persist(partDirectory)
-        intakeService.storeSucceeds = false
+        intakeService.pendingResults.addAll(listOf(IntakeResult.RETRYABLE_FAILURE, IntakeResult.RETRYABLE_FAILURE))
         createReader().readPersistedSessionParts()
 
         assertEquals(
@@ -293,17 +294,18 @@ internal class SessionPartReaderTest {
             metadata: StoredTelemetryMetadata,
             staleEntry: StoredTelemetryMetadata?,
             onStored: (() -> Unit)?,
-        ): Future<*> {
+        ): Future<IntakeResult> {
             val partId = metadata.sessionPartId
             events.add("take:$partId")
             onStored?.invoke()
-            return object : Future<Unit> {
+            return object : Future<IntakeResult> {
                 override fun cancel(mayInterruptIfRunning: Boolean) = false
                 override fun isCancelled() = false
                 override fun isDone() = true
                 override fun get() = error("the reader must always wait with a timeout")
-                override fun get(timeout: Long, unit: TimeUnit) {
+                override fun get(timeout: Long, unit: TimeUnit): IntakeResult {
                     events.add("wait:$partId")
+                    return IntakeResult.STORED
                 }
             }
         }
@@ -319,14 +321,14 @@ internal class SessionPartReaderTest {
             metadata: StoredTelemetryMetadata,
             staleEntry: StoredTelemetryMetadata?,
             onStored: (() -> Unit)?,
-        ): Future<*> {
+        ): Future<IntakeResult> {
             takenPartIds.add(metadata.sessionPartId)
-            return object : Future<Unit> {
+            return object : Future<IntakeResult> {
                 override fun cancel(mayInterruptIfRunning: Boolean) = false
                 override fun isCancelled() = false
                 override fun isDone() = false
                 override fun get() = error("the reader must always wait with a timeout")
-                override fun get(timeout: Long, unit: TimeUnit): Unit = throw TimeoutException("stalled")
+                override fun get(timeout: Long, unit: TimeUnit): IntakeResult = throw TimeoutException("stalled")
             }
         }
     }

@@ -20,7 +20,7 @@ dependencies {
     implementation(libs.mockwebserver)
     implementation(libs.zstd.jni)
     implementation(libs.bundletool)
-    implementation(libs.apktool.lib)
+    implementation(libs.smali.baksmali)
 
     testImplementation(project(":embrace-test-common"))
 }

@@ -10,9 +10,7 @@ class SmaliConfigReader {
 
     fun readSmaliFiles(projectDir: File, classNames: List<String>): List<File> {
         val apk = findArtifact(projectDir, "build/outputs/apk/release/", ".apk")
-        val decodedApk = ApkDisassembler().disassembleApk(apk)
-        val smaliFiles = decodedApk.getSmaliFiles(classNames)
-        return smaliFiles
+        return ApkDisassembler().disassembleClasses(apk, classNames)
     }
 
     fun readExpectedConfig(resName: String): ExpectedSmaliConfig {

@@ -3,12 +3,14 @@ package io.embrace.android.embracesdk.fakes.injection
 import android.app.Application
 import android.content.Context
 import android.content.pm.PackageInfo
+import io.embrace.android.embracesdk.fakes.FakeInternalLogger
 import io.embrace.android.embracesdk.fakes.FakeKeyValueStore
 import io.embrace.android.embracesdk.fakes.FakeOrdinalStore
 import io.embrace.android.embracesdk.internal.config.BuildInfo
 import io.embrace.android.embracesdk.internal.injection.CoreModule
 import io.embrace.android.embracesdk.internal.store.KeyValueStore
 import io.embrace.android.embracesdk.internal.store.OrdinalStore
+import io.embrace.android.embracesdk.internal.utils.event.EventBus
 import io.mockk.every
 import io.mockk.isMockKMock
 import io.mockk.mockk
@@ -27,6 +29,7 @@ class FakeCoreModule(
     override val store: KeyValueStore = FakeKeyValueStore(),
     override val ordinalStore: OrdinalStore = FakeOrdinalStore(),
     override val appVersionStartupCounter: Int = 1,
+    override val eventBus: EventBus = EventBus(FakeInternalLogger()),
 ) : CoreModule {
 
     companion object {

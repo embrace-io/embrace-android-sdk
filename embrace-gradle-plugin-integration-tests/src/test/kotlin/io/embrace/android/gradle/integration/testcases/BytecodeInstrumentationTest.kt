@@ -32,7 +32,7 @@ class BytecodeInstrumentationTest {
     fun `bytecode instrumentation enabled`() {
         rule.runTest(
             fixture = "android-instrumentation",
-            task = "assembleRelease",
+            tasks = listOf("assembleRelease"),
             additionalArgs = defaultArgs,
             projectType = ProjectType.ANDROID,
             setup = ndkSetup,
@@ -46,7 +46,7 @@ class BytecodeInstrumentationTest {
     fun `bytecode instrumentation disabled globally`() {
         rule.runTest(
             fixture = "android-instrumentation",
-            task = "assembleRelease",
+            tasks = listOf("assembleRelease"),
             additionalArgs = defaultArgs.plus(listOf("-P", "globalDisable=true")),
             projectType = ProjectType.ANDROID,
             setup = ndkSetup,
@@ -60,7 +60,7 @@ class BytecodeInstrumentationTest {
     fun `bytecode instrumentation disabled individually`() {
         rule.runTest(
             fixture = "android-instrumentation",
-            task = "assembleRelease",
+            tasks = listOf("assembleRelease"),
             additionalArgs = defaultArgs.plus(listOf("-P", "individualDisable=true")),
             projectType = ProjectType.ANDROID,
             setup = ndkSetup,
@@ -74,7 +74,7 @@ class BytecodeInstrumentationTest {
     fun `bytecode instrumentation disabled by variant`() {
         rule.runTest(
             fixture = "android-instrumentation",
-            task = "assembleRelease",
+            tasks = listOf("assembleRelease"),
             additionalArgs = defaultArgs.plus(listOf("-P", "disableByVariant=true")),
             projectType = ProjectType.ANDROID,
             setup = ndkSetup,

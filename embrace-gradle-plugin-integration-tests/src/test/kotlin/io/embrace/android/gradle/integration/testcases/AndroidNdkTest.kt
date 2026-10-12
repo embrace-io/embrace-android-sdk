@@ -26,7 +26,7 @@ class AndroidNdkTest {
     fun buildCMake() {
         rule.runTest(
             fixture = "android-cmake",
-            task = "build",
+            tasks = listOf("build"),
             projectType = ProjectType.ANDROID,
             setup = {
                 setupMockResponses(
@@ -47,7 +47,7 @@ class AndroidNdkTest {
     fun buildNdkBuild() {
         rule.runTest(
             fixture = "android-ndk-build",
-            task = "build",
+            tasks = listOf("build"),
             projectType = ProjectType.ANDROID,
             setup = {
                 setupMockResponses(
@@ -68,7 +68,7 @@ class AndroidNdkTest {
     fun `symbols are injected through ASM`() {
         rule.runTest(
             fixture = "android-cmake-with-code",
-            task = "assembleRelease",
+            tasks = listOf("assembleRelease"),
             projectType = ProjectType.ANDROID,
             setup = {
                 setupMockResponses(defaultExpectedLibs, defaultExpectedArchs, defaultExpectedVariants)
@@ -105,7 +105,7 @@ class AndroidNdkTest {
     fun `send 3rd party native library symbols even when the project has no native libraries`() {
         rule.runTest(
             fixture = "android-3rd-party-symbols",
-            task = "build",
+            tasks = listOf("build"),
             projectType = ProjectType.ANDROID,
             setup = {
                 setupMockResponses(
@@ -128,7 +128,7 @@ class AndroidNdkTest {
         val expectedLibs = defaultExpectedLibs + "libemb-asado.so"
         rule.runTest(
             fixture = "android-local-and-3rd-party-symbols",
-            task = "build",
+            tasks = listOf("build"),
             projectType = ProjectType.ANDROID,
             setup = {
                 setupMockResponses(expectedLibs, defaultExpectedArchs, defaultExpectedVariants)
@@ -145,7 +145,7 @@ class AndroidNdkTest {
     fun `don't upload symbols if not requested by the backend`() {
         rule.runTest(
             fixture = "android-cmake",
-            task = "build",
+            tasks = listOf("build"),
             projectType = ProjectType.ANDROID,
             setup = {
                 setupMockResponses(
@@ -168,7 +168,7 @@ class AndroidNdkTest {
         val expectedArchs = listOf("arm64-v8a")
         rule.runTest(
             fixture = "android-cmake",
-            task = "build",
+            tasks = listOf("build"),
             projectType = ProjectType.ANDROID,
             setup = {
                 setupMockResponses(
@@ -189,7 +189,7 @@ class AndroidNdkTest {
     fun `ndk disabled test`() {
         rule.runTest(
             fixture = "android-cmake-ndk-disabled",
-            task = "assembleRelease",
+            tasks = listOf("assembleRelease"),
             projectType = ProjectType.ANDROID,
             assertions = {
                 verifyBuildTelemetryRequestSent(variantsSentInBuildTelemetry)
@@ -204,7 +204,7 @@ class AndroidNdkTest {
     fun `debug builds should not upload symbols`() {
         rule.runTest(
             fixture = "android-cmake",
-            task = "assembleDebug",
+            tasks = listOf("assembleDebug"),
             projectType = ProjectType.ANDROID,
             assertions = {
                 verifyBuildTelemetryRequestSent(variantsSentInBuildTelemetry)

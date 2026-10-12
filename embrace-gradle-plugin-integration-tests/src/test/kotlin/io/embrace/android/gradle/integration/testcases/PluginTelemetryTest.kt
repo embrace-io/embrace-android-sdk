@@ -16,7 +16,7 @@ class PluginTelemetryTest {
     fun `telemetry sent by plugin`() {
         rule.runTest(
             fixture = "android-simple",
-            task = "assembleRelease",
+            tasks = listOf("assembleRelease"),
             projectType = ProjectType.ANDROID,
             assertions = {
                 verifyBuildTelemetryRequestSent(listOf("debug", "release"))
@@ -28,7 +28,7 @@ class PluginTelemetryTest {
     fun `telemetry capture disabled`() {
         rule.runTest(
             fixture = "android-simple",
-            task = "assembleRelease",
+            tasks = listOf("assembleRelease"),
             projectType = ProjectType.ANDROID,
             additionalArgs = listOf("-Pembrace.disableCollectBuildData=true"),
             assertions = {

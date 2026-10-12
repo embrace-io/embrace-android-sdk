@@ -19,7 +19,7 @@ class AndroidBuildTypeTest {
     fun assemble() {
         rule.runTest(
             fixture = "android-build-types",
-            task = "assemble",
+            tasks = listOf("assemble"),
             projectType = ProjectType.ANDROID,
             assertions = {
                 verifyBuildTelemetryRequestSent(expectedVariants = variants, expectedAppIds = appIds)
@@ -32,7 +32,7 @@ class AndroidBuildTypeTest {
     fun assembleBuildType() {
         rule.runTest(
             fixture = "android-build-types",
-            task = "assembleCustom",
+            tasks = listOf("assembleCustom"),
             projectType = ProjectType.ANDROID,
             assertions = {
                 verifyBuildTelemetryRequestSent(expectedVariants = variants, expectedAppIds = appIds)
@@ -45,7 +45,7 @@ class AndroidBuildTypeTest {
     fun bundle() {
         rule.runTest(
             fixture = "android-build-types",
-            task = "bundle",
+            tasks = listOf("bundle"),
             projectType = ProjectType.ANDROID,
             assertions = {
                 verifyBuildTelemetryRequestSent(expectedVariants = variants, expectedAppIds = appIds)
@@ -58,7 +58,7 @@ class AndroidBuildTypeTest {
     fun bundleBuildType() {
         rule.runTest(
             fixture = "android-build-types",
-            task = "bundleCustom",
+            tasks = listOf("bundleCustom"),
             projectType = ProjectType.ANDROID,
             assertions = {
                 verifyBuildTelemetryRequestSent(expectedVariants = variants, expectedAppIds = appIds)

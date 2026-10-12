@@ -46,7 +46,7 @@ class ReactNativeAndroidTest {
             fixture = "react-native-android",
             testMatrix = TestMatrix.MiddleVersion,
             androidProjectRoot = "android",
-            task = "build",
+            tasks = listOf("build"),
             setup = { projectDir ->
                 installNodeModules(projectDir)
                 setupMockResponses(handshakeLibs, handshakeArchs, defaultExpectedVariants)
@@ -65,7 +65,7 @@ class ReactNativeAndroidTest {
             fixture = "react-native-android",
             testMatrix = TestMatrix.MiddleVersion,
             androidProjectRoot = "android",
-            task = "assembleRelease",
+            tasks = listOf("assembleRelease"),
             setup = { projectDir ->
                 setupEmptyHandshakeResponse()
                 installNodeModules(projectDir)
@@ -82,7 +82,7 @@ class ReactNativeAndroidTest {
             fixture = "not-react-native-android",
             androidProjectRoot = "android",
             additionalArgs = listOf("-Pandroid.useAndroidX=true"),
-            task = "assembleRelease",
+            tasks = listOf("assembleRelease"),
             setup = {
                 setupEmptyHandshakeResponse()
             },
@@ -104,7 +104,7 @@ class ReactNativeAndroidTest {
         rule.runTest(
             fixture = "react-native-android",
             testMatrix = TestMatrix.MiddleVersion,
-            task = "assembleDebug",
+            tasks = listOf("assembleDebug"),
             androidProjectRoot = "android",
             setup = { projectDir ->
                 installNodeModules(projectDir)

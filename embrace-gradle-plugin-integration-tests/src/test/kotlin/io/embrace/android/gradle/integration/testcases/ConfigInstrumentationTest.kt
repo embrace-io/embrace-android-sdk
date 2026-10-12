@@ -35,7 +35,7 @@ class ConfigInstrumentationTest {
     fun `config default instrumentation`() {
         rule.runTest(
             fixture = "android-with-code",
-            task = "assembleRelease",
+            tasks = listOf("assembleRelease"),
             additionalArgs = listOf("-x", "lintVitalRelease"),
             projectType = ProjectType.ANDROID,
             setup = {
@@ -51,7 +51,7 @@ class ConfigInstrumentationTest {
     fun `config non-default instrumentation`() {
         rule.runTest(
             fixture = "android-with-code",
-            task = "assembleRelease",
+            tasks = listOf("assembleRelease"),
             additionalArgs = listOf("-x", "lintVitalRelease"),
             projectType = ProjectType.ANDROID,
             setup = { projectDir ->
@@ -70,7 +70,7 @@ class ConfigInstrumentationTest {
     fun `invalid build ID instrumented when mapping upload disabled`() {
         rule.runTest(
             fixture = "android-with-code",
-            task = "assembleRelease",
+            tasks = listOf("assembleRelease"),
             additionalArgs = listOf("-x", "lintVitalRelease", "-Pembrace.disableMappingFileUpload=true"),
             projectType = ProjectType.ANDROID,
             assertions = { projectDir ->

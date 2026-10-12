@@ -17,7 +17,7 @@ class DexguardTest {
     fun `dexguard task`() {
         rule.runTest(
             fixture = "android-dexguard",
-            task = "assemble",
+            tasks = listOf("assemble"),
             projectType = ProjectType.ANDROID,
             assertions = {
                 verifyBuildTelemetryRequestSent(variants)

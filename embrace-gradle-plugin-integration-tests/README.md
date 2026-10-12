@@ -1,3 +1,12 @@
+# Writing integration tests
+Each test case boots a Gradle build, so prefer covering several behaviours in one build over adding a new test case:
+
+- List several `tasks` in one `runTest` call to run them in one build. This reuses the project directory and resets
+  the fake API server
+- Express config scenarios (e.g. NDK disabled, config overrides) as extra build types in one fixture, with its own
+  `src/<buildType>/embrace-config.json`, rather than separate test cases/fixtures
+- Give any test that asserts several behaviours a KDoc `Covers:` list that detail responsibilities
+
 # Debugging Embrace Gradle Plugin
 You can attach a debugger to an integration test by:
 

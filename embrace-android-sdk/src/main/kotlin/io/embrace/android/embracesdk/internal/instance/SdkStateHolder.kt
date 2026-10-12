@@ -18,12 +18,13 @@ import io.embrace.android.embracesdk.internal.utils.Provider
  *
  * ```
  * NOT_STARTED --start() succeeds--> STARTED --disable()--> DISABLED
- *                                       ^                         |
- *                                       +-------------------------+
+ *      |                                                      ^
+ *      +----------------------disable()-----------------------+
  * ```
  *
- * A start that does not succeed leaves the SDK in [SdkState.NOT_STARTED] so that it can be retried. A disabled SDK can
- * currently be restarted by calling start() again. Exceptions are reported to [errorHandler] rather than thrown.
+ * A start that does not succeed leaves the SDK in [SdkState.NOT_STARTED] so that it can be retried. [SdkState.DISABLED]
+ * is terminal: once disabled, the SDK cannot be started again. Exceptions are reported to [errorHandler] rather than
+ * thrown.
  */
 internal class SdkStateHolder(
     instance: Provider<SdkApi>,
@@ -59,11 +60,11 @@ internal class SdkStateHolder(
     }
 
     /**
-     * Starts the SDK. Has no effect if the SDK is already in [SdkState.STARTED].
+     * Starts the SDK. Has no effect unless the SDK is in [SdkState.NOT_STARTED].
      */
     fun start(context: Context) {
         synchronized(lock) {
-            if (state == SdkState.STARTED) {
+            if (state != SdkState.NOT_STARTED) {
                 return
             }
             val instance = dispatcher.target
@@ -82,19 +83,22 @@ internal class SdkStateHolder(
     }
 
     /**
-     * Disables the SDK. Has no effect unless the SDK is in [SdkState.STARTED].
+     * Disables the SDK. Has no effect if the SDK is already in [SdkState.DISABLED].
      */
     fun disable() {
         synchronized(lock) {
-            if (state != SdkState.STARTED) {
-                return
-            }
-            // TODO: future: dispatcher.target will be changed here and at other state transitions.
-            try {
-                dispatcher.target.disable()
-                state = SdkState.DISABLED
-            } catch (exc: Throwable) {
-                errorHandler.trackInternalError(InternalErrorType.PublicApiFail, exc)
+            when (state) {
+                SdkState.DISABLED -> return
+                SdkState.NOT_STARTED -> state = SdkState.DISABLED
+                SdkState.STARTED -> {
+                    // TODO: future: dispatcher.target will be changed here and at other state transitions.
+                    try {
+                        dispatcher.target.disable()
+                        state = SdkState.DISABLED
+                    } catch (exc: Throwable) {
+                        errorHandler.trackInternalError(InternalErrorType.PublicApiFail, exc)
+                    }
+                }
             }
         }
     }
@@ -131,7 +135,7 @@ internal enum class SdkState {
     STARTED,
 
     /**
-     * The SDK was disabled after it started.
+     * The SDK was disabled. This state is terminal.
      */
     DISABLED,
 }

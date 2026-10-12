@@ -94,22 +94,35 @@ internal class SdkStateHolderTest {
     }
 
     @Test
-    fun `start after disable is allowed`() {
+    fun `start after disable is ignored`() {
         val holder = createHolder(FakeInstance(calls))
         holder.start(context)
         holder.disable()
         holder.start(context)
-        assertEquals(SdkState.STARTED, holder.state)
-        assertEquals(listOf("start", "disable", "start"), calls)
+        assertEquals(SdkState.DISABLED, holder.state)
+        assertEquals(listOf("start", "disable"), calls)
     }
 
     @Test
-    fun `disable before start is ignored`() {
+    fun `disable before start is terminal`() {
         val holder = createHolder(FakeInstance(calls))
         holder.disable()
-        assertEquals(SdkState.NOT_STARTED, holder.state)
+        assertEquals(SdkState.DISABLED, holder.state)
         holder.start(context)
-        assertEquals(SdkState.STARTED, holder.state)
+        assertEquals(SdkState.DISABLED, holder.state)
+        assertEquals(emptyList<String>(), calls)
+    }
+
+    @Test
+    fun `disable after unsuccessful start is terminal`() {
+        val instance = FakeInstance(calls, startSucceeds = false)
+        val holder = createHolder(instance)
+        holder.start(context)
+        holder.disable()
+        assertEquals(SdkState.DISABLED, holder.state)
+        instance.startSucceeds = true
+        holder.start(context)
+        assertEquals(SdkState.DISABLED, holder.state)
         assertEquals(listOf("start"), calls)
     }
 
@@ -130,12 +143,12 @@ internal class SdkStateHolderTest {
     @Test
     fun `api routes lifecycle calls through the holder`() {
         val holder = createHolder(FakeInstance(calls))
-        holder.api.disable()
-        assertEquals(SdkState.NOT_STARTED, holder.state)
         holder.api.start(context)
         assertEquals(SdkState.STARTED, holder.state)
         holder.api.logInfo("message")
         holder.api.disable()
+        assertEquals(SdkState.DISABLED, holder.state)
+        holder.api.start(context)
         assertEquals(SdkState.DISABLED, holder.state)
         assertEquals(listOf("start", "logInfo/1", "disable"), calls)
     }
@@ -159,7 +172,7 @@ internal class SdkStateHolderTest {
         assertSame(NoopInternalInterfaceApi, EmbraceInternalApi.internalInterfaceApi)
 
         holder.start(context)
-        assertSame(internalInterfaceApi, EmbraceInternalApi.internalInterfaceApi)
+        assertSame(NoopInternalInterfaceApi, EmbraceInternalApi.internalInterfaceApi)
     }
 
     private fun createHolder(

@@ -37,3 +37,12 @@ dependencies {
     add("testImplementation", findLibrary("androidx.test.core"))
     add("testImplementation", findLibrary("androidx.test.junit"))
 }
+
+kover {
+    currentProject {
+        instrumentation {
+            // Kover's agent slows tests - only attach when coverage is requested
+            disabledForAll.set(!providers.gradleProperty("embrace.coverage").isPresent)
+        }
+    }
+}

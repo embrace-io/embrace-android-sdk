@@ -42,8 +42,8 @@ Most changesets should be verified using `./gradlew verify`. Additional tasks sh
 # Run integration tests (in the SDK module)
 ./gradlew :embrace-android-sdk:test
 
-# Code coverage report (XML); Kover is only applied when the CI env var is set
-CI=true ./gradlew koverXmlReport
+# Code coverage report (XML). Kover only instruments tests when -Pembrace.coverage is set
+./gradlew koverXmlReport -Pembrace.coverage
 
 # Build the example app
 cd examples/ExampleApp && ./gradlew bundleRelease

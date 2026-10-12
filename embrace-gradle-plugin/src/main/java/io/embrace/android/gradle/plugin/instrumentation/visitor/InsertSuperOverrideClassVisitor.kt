@@ -51,7 +51,7 @@ class InsertSuperOverrideClassVisitor(
             val nextMethodVisitor = super.visitMethod(
                 Opcodes.ACC_PUBLIC,
                 feature.targetParams.name,
-                feature.targetParams.descriptor,
+                checkNotNull(feature.targetParams.descriptor),
                 null,
                 emptyArray(),
             )

@@ -12,6 +12,20 @@ class InstrumentationTargetClassVisitor(
     private val feature: BytecodeInstrumentationFeature,
 ) : ClassVisitor(api, nextClassVisitor) {
 
+    private var className: String? = null
+
+    override fun visit(
+        version: Int,
+        access: Int,
+        name: String,
+        signature: String?,
+        superName: String?,
+        interfaces: Array<String>?,
+    ) {
+        className = name
+        super.visit(version, access, name, signature, superName, interfaces)
+    }
+
     override fun visitMethod(
         access: Int,
         name: String,
@@ -20,9 +34,18 @@ class InstrumentationTargetClassVisitor(
         exceptions: Array<String>?,
     ): MethodVisitor? {
         val nextMethodVisitor = super.visitMethod(access, name, desc, signature, exceptions)
+        val target = feature.targetParams
+        val descriptorMatches = target.descriptor == null || target.descriptor == desc
 
-        return if (feature.targetParams.name == name && feature.targetParams.descriptor == desc && !isStatic(access)) {
-            if (feature.insertionParams.insertAtEnd) {
+        return if (target.name == name && descriptorMatches && !isStatic(access)) {
+            if (name == "<init>") {
+                InstrumentationTargetConstructorVisitor(
+                    api = api,
+                    methodVisitor = nextMethodVisitor,
+                    className = checkNotNull(className),
+                    params = feature.insertionParams,
+                )
+            } else if (feature.insertionParams.insertAtEnd) {
                 InstrumentationTargetMethodEndVisitor(
                     api = api,
                     methodVisitor = nextMethodVisitor,

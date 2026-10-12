@@ -1,0 +1,38 @@
+// class version 55.0 (55)
+// access flags 0x21
+public class io/embrace/test/fixtures/JavaConstructorTarget$Inner extends io/embrace/test/fixtures/ConstructorTargetBase {
+
+  // compiled from: JavaConstructorTarget.java
+  NESTHOST io/embrace/test/fixtures/JavaConstructorTarget
+  // access flags 0x1
+  public INNERCLASS io/embrace/test/fixtures/JavaConstructorTarget$Inner io/embrace/test/fixtures/JavaConstructorTarget Inner
+
+  // access flags 0x1010
+  final synthetic Lio/embrace/test/fixtures/JavaConstructorTarget; this$0
+
+  // access flags 0x1
+  public <init>(Lio/embrace/test/fixtures/JavaConstructorTarget;)V
+    // parameter final mandated  <no name>
+   L0
+    LINENUMBER 66 L0
+    ALOAD 0
+    ALOAD 1
+    PUTFIELD io/embrace/test/fixtures/JavaConstructorTarget$Inner.this$0 : Lio/embrace/test/fixtures/JavaConstructorTarget;
+   L1
+    LINENUMBER 67 L1
+    ALOAD 0
+    NEW java/lang/Object
+    DUP
+    INVOKESPECIAL java/lang/Object.<init> ()V
+    INVOKESPECIAL io/embrace/test/fixtures/ConstructorTargetBase.<init> (Ljava/lang/Object;)V
+   L2
+    LINENUMBER 68 L2
+    ALOAD 0
+    INVOKESTATIC io/embrace/gradle/plugin/instrumentation/ConstructorHookRecorder.onConstructed (Ljava/lang/Object;)V
+    RETURN
+   L3
+    LOCALVARIABLE this Lio/embrace/test/fixtures/JavaConstructorTarget$Inner; L0 L3 0
+    LOCALVARIABLE this$0 Lio/embrace/test/fixtures/JavaConstructorTarget; L0 L3 1
+    MAXSTACK = 3
+    MAXLOCALS = 2
+}

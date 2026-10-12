@@ -11,7 +11,7 @@ data class BytecodeClassInsertionParams(
     val name: String,
 
     /**
-     * The type signature of the function that will be targeted for bytecode instrumentation.
+     * The type signature of the function that will be targeted for bytecode instrumentation, or null to match any.
      */
-    val descriptor: String,
+    val descriptor: String?,
 )

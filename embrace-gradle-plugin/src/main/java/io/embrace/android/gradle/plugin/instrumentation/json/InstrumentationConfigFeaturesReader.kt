@@ -20,8 +20,16 @@ private fun readBytecodeInstrumentationConfig(): InstrumentationConfigFeatures {
     return JsonSerializer().fromJson(stream, InstrumentationConfigFeatures.serializer())
 }
 
-private fun InstrumentationConfigFeature.convertInstrumentationConfigFeature(): BytecodeInstrumentationFeature =
-    BytecodeInstrumentationFeature(
+private fun InstrumentationConfigFeature.convertInstrumentationConfigFeature(): BytecodeInstrumentationFeature {
+    if (target.name == "<init>") {
+        require(insert.insertAtEnd && addOverride == null) {
+            "Feature $name: constructors require insertAtEnd and do not support addOverride"
+        }
+    } else {
+        requireNotNull(target.descriptor) { "Feature $name: a descriptor is required for non-constructor targets" }
+    }
+
+    return BytecodeInstrumentationFeature(
         name = name,
         targetParams = BytecodeClassInsertionParams(
             name = target.name,
@@ -43,6 +51,7 @@ private fun InstrumentationConfigFeature.convertInstrumentationConfigFeature(): 
             )
         },
     )
+}
 
 private fun InstrumentationConfigFeature.convertVisitStrategy(): ClassVisitStrategy {
     return when (visitStrategy.type) {

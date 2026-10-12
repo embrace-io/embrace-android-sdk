@@ -1,0 +1,200 @@
+// class version 55.0 (55)
+// access flags 0x31
+public final class io/embrace/test/fixtures/KotlinConstructorTarget extends io/embrace/test/fixtures/ConstructorTargetBase {
+
+  // compiled from: KotlinConstructorTarget.kt
+  // debug info: SMAP
+KotlinConstructorTarget.kt
+Kotlin
+*S Kotlin
+*F
++ 1 KotlinConstructorTarget.kt
+io/embrace/test/fixtures/KotlinConstructorTarget
++ 2 fake.kt
+kotlin/jvm/internal/FakeKt
+*L
+1#1,12:1
+1#2:13
+*E
+
+
+  @Lkotlin/Metadata;(mv={2, 0, 0}, k=1, xi=48, d1={"\u0000 \n\u0002\u0018\u0002\n\u0002\u0018\u0002\n\u0000\n\u0002\u0010\u0000\n\u0000\n\u0002\u0010\u000e\n\u0002\u0008\u0004\n\u0002\u0010\u0008\n\u0002\u0008\u0007\u0018\u00002\u00020\u0001B\u0019\u0012\u0006\u0010\u0002\u001a\u00020\u0003\u0012\u0008\u0008\u0002\u0010\u0004\u001a\u00020\u0005\u00a2\u0006\u0004\u0008\u0006\u0010\u0007B\u0009\u0008\u0016\u00a2\u0006\u0004\u0008\u0006\u0010\u0008B\u0011\u0008\u0016\u0012\u0006\u0010\u0009\u001a\u00020\n\u00a2\u0006\u0004\u0008\u0006\u0010\u000bR\u0011\u0010\u0004\u001a\u00020\u0005\u00a2\u0006\u0008\n\u0000\u001a\u0004\u0008\u000c\u0010\rR\u0011\u0010\u000e\u001a\u00020\n\u00a2\u0006\u0008\n\u0000\u001a\u0004\u0008\u000f\u0010\u0010\u00a8\u0006\u0011"}, d2={"Lio/embrace/test/fixtures/KotlinConstructorTarget;", "Lio/embrace/test/fixtures/ConstructorTargetBase;", "value", "", "label", "", "<init>", "(Ljava/lang/Object;Ljava/lang/String;)V", "()V", "count", "", "(I)V", "getLabel", "()Ljava/lang/String;", "length", "getLength", "()I", "embrace-bytecode-instrumentation-tests"})
+
+  @Lkotlin/jvm/internal/SourceDebugExtension;(value={"SMAP\nKotlinConstructorTarget.kt\nKotlin\n*S Kotlin\n*F\n+ 1 KotlinConstructorTarget.kt\nio/embrace/test/fixtures/KotlinConstructorTarget\n+ 2 fake.kt\nkotlin/jvm/internal/FakeKt\n*L\n1#1,12:1\n1#2:13\n*E\n"}) // invisible
+
+  // access flags 0x12
+  private final Ljava/lang/String; label
+  @Lorg/jetbrains/annotations/NotNull;() // invisible
+
+  // access flags 0x12
+  private final I length
+
+  // access flags 0x1
+  public <init>(Ljava/lang/Object;Ljava/lang/String;)V
+    // annotable parameter count: 2 (invisible)
+    @Lorg/jetbrains/annotations/NotNull;() // invisible, parameter 0
+    @Lorg/jetbrains/annotations/NotNull;() // invisible, parameter 1
+   L0
+    ALOAD 1
+    LDC "value"
+    INVOKESTATIC kotlin/jvm/internal/Intrinsics.checkNotNullParameter (Ljava/lang/Object;Ljava/lang/String;)V
+    ALOAD 2
+    LDC "label"
+    INVOKESTATIC kotlin/jvm/internal/Intrinsics.checkNotNullParameter (Ljava/lang/Object;Ljava/lang/String;)V
+   L1
+    LINENUMBER 3 L1
+    ALOAD 0
+   L2
+    LINENUMBER 4 L2
+    ALOAD 1
+   L3
+    LINENUMBER 3 L3
+    INVOKESPECIAL io/embrace/test/fixtures/ConstructorTargetBase.<init> (Ljava/lang/Object;)V
+   L4
+    LINENUMBER 4 L4
+    ALOAD 0
+    ALOAD 2
+    PUTFIELD io/embrace/test/fixtures/KotlinConstructorTarget.label : Ljava/lang/String;
+   L5
+    LINENUMBER 6 L5
+    ALOAD 0
+    ALOAD 0
+    GETFIELD io/embrace/test/fixtures/KotlinConstructorTarget.label : Ljava/lang/String;
+    INVOKEVIRTUAL java/lang/String.length ()I
+    PUTFIELD io/embrace/test/fixtures/KotlinConstructorTarget.length : I
+   L6
+    LINENUMBER 4 L6
+    ALOAD 0
+    INVOKESTATIC io/embrace/gradle/plugin/instrumentation/ConstructorHookRecorder.onConstructed (Ljava/lang/Object;)V
+    RETURN
+   L7
+    LOCALVARIABLE this Lio/embrace/test/fixtures/KotlinConstructorTarget; L0 L7 0
+    LOCALVARIABLE value Ljava/lang/Object; L0 L7 1
+    LOCALVARIABLE label Ljava/lang/String; L0 L7 2
+    MAXSTACK = 2
+    MAXLOCALS = 3
+
+  // access flags 0x1001
+  public synthetic <init>(Ljava/lang/Object;Ljava/lang/String;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+   L0
+    LINENUMBER 4 L0
+    ILOAD 3
+    ICONST_2
+    IAND
+    IFEQ L1
+    LDC "default"
+    ASTORE 2
+   L1
+   FRAME FULL [U java/lang/Object java/lang/String I kotlin/jvm/internal/DefaultConstructorMarker] []
+    ALOAD 0
+    ALOAD 1
+    ALOAD 2
+    INVOKESPECIAL io/embrace/test/fixtures/KotlinConstructorTarget.<init> (Ljava/lang/Object;Ljava/lang/String;)V
+    RETURN
+    MAXSTACK = 3
+    MAXLOCALS = 5
+
+  // access flags 0x11
+  public final getLabel()Ljava/lang/String;
+  @Lorg/jetbrains/annotations/NotNull;() // invisible
+   L0
+    LINENUMBER 4 L0
+    ALOAD 0
+    GETFIELD io/embrace/test/fixtures/KotlinConstructorTarget.label : Ljava/lang/String;
+    ARETURN
+   L1
+    LOCALVARIABLE this Lio/embrace/test/fixtures/KotlinConstructorTarget; L0 L1 0
+    MAXSTACK = 1
+    MAXLOCALS = 1
+
+  // access flags 0x11
+  public final getLength()I
+   L0
+    LINENUMBER 6 L0
+    ALOAD 0
+    GETFIELD io/embrace/test/fixtures/KotlinConstructorTarget.length : I
+    IRETURN
+   L1
+    LOCALVARIABLE this Lio/embrace/test/fixtures/KotlinConstructorTarget; L0 L1 0
+    MAXSTACK = 1
+    MAXLOCALS = 1
+
+  // access flags 0x1
+  public <init>()V
+   L0
+    LINENUMBER 8 L0
+    ALOAD 0
+    NEW java/lang/Object
+    DUP
+    INVOKESPECIAL java/lang/Object.<init> ()V
+    ACONST_NULL
+    ICONST_2
+    ACONST_NULL
+    INVOKESPECIAL io/embrace/test/fixtures/KotlinConstructorTarget.<init> (Ljava/lang/Object;Ljava/lang/String;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
+    RETURN
+   L1
+    LOCALVARIABLE this Lio/embrace/test/fixtures/KotlinConstructorTarget; L0 L1 0
+    MAXSTACK = 5
+    MAXLOCALS = 1
+
+  // access flags 0x1
+  public <init>(I)V
+   L0
+    LINENUMBER 10 L0
+    ALOAD 0
+    ASTORE 7
+    NEW java/util/ArrayList
+    DUP
+    ILOAD 1
+    INVOKESPECIAL java/util/ArrayList.<init> (I)V
+    ASTORE 2
+    ICONST_0
+    ISTORE 3
+   L1
+   FRAME FULL [U I java/util/ArrayList I T T T U] []
+    ILOAD 3
+    ILOAD 1
+    IF_ICMPGE L2
+    ILOAD 3
+    ISTORE 4
+    ALOAD 2
+    ILOAD 4
+    ISTORE 5
+   L3
+    LINENUMBER 13 L3
+    ASTORE 8
+   L4
+    ICONST_0
+    ISTORE 6
+   L5
+    LINENUMBER 10 L5
+    ILOAD 5
+   L6
+    INVOKESTATIC java/lang/Integer.valueOf (I)Ljava/lang/Integer;
+    ALOAD 8
+    SWAP
+   L7
+    LINENUMBER 10 L7
+    INVOKEVIRTUAL java/util/ArrayList.add (Ljava/lang/Object;)Z
+    POP
+    IINC 3 1
+    GOTO L1
+   L2
+   FRAME FULL [U I java/util/ArrayList I T T T U] []
+    ALOAD 2
+    CHECKCAST java/util/List
+    ALOAD 7
+    SWAP
+   L8
+    LINENUMBER 10 L8
+    LDC "count"
+    INVOKESPECIAL io/embrace/test/fixtures/KotlinConstructorTarget.<init> (Ljava/lang/Object;Ljava/lang/String;)V
+    RETURN
+   L9
+    LOCALVARIABLE $i$a$-List-KotlinConstructorTarget$1 I L5 L6 6
+    LOCALVARIABLE it I L4 L6 5
+    LOCALVARIABLE this Lio/embrace/test/fixtures/KotlinConstructorTarget; L0 L9 0
+    LOCALVARIABLE count I L0 L9 1
+    MAXSTACK = 3
+    MAXLOCALS = 9
+}

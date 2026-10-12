@@ -1,0 +1,255 @@
+// class version 55.0 (55)
+// access flags 0x21
+public class io/embrace/test/fixtures/JavaConstructorTarget extends io/embrace/test/fixtures/ConstructorTargetBase {
+
+  // compiled from: JavaConstructorTarget.java
+  NESTMEMBER io/embrace/test/fixtures/JavaConstructorTarget$Inner
+  // access flags 0x1
+  public INNERCLASS io/embrace/test/fixtures/JavaConstructorTarget$Inner io/embrace/test/fixtures/JavaConstructorTarget Inner
+
+  // access flags 0x2
+  private Ljava/lang/String; state
+
+  // access flags 0x1
+  public <init>()V
+   L0
+    LINENUMBER 11 L0
+    ALOAD 0
+    NEW java/lang/Object
+    DUP
+    INVOKESPECIAL java/lang/Object.<init> ()V
+    INVOKESPECIAL io/embrace/test/fixtures/JavaConstructorTarget.<init> (Ljava/lang/Object;)V
+   L1
+    LINENUMBER 12 L1
+    RETURN
+   L2
+    LOCALVARIABLE this Lio/embrace/test/fixtures/JavaConstructorTarget; L0 L2 0
+    MAXSTACK = 3
+    MAXLOCALS = 1
+
+  // access flags 0x1
+  public <init>(Ljava/lang/Object;)V
+   L0
+    LINENUMBER 15 L0
+    ALOAD 0
+    ALOAD 1
+    INVOKESPECIAL io/embrace/test/fixtures/ConstructorTargetBase.<init> (Ljava/lang/Object;)V
+   L1
+    LINENUMBER 16 L1
+    ALOAD 0
+    INVOKESTATIC io/embrace/gradle/plugin/instrumentation/ConstructorHookRecorder.onConstructed (Ljava/lang/Object;)V
+    RETURN
+   L2
+    LOCALVARIABLE this Lio/embrace/test/fixtures/JavaConstructorTarget; L0 L2 0
+    LOCALVARIABLE value Ljava/lang/Object; L0 L2 1
+    MAXSTACK = 2
+    MAXLOCALS = 2
+
+  // access flags 0x1
+  public <init>(Z)V
+   L0
+    LINENUMBER 19 L0
+    ALOAD 0
+    ILOAD 1
+    IFEQ L1
+    NEW java/lang/StringBuilder
+    DUP
+    INVOKESPECIAL java/lang/StringBuilder.<init> ()V
+    GOTO L2
+   L1
+   FRAME FULL [U I] [U]
+    NEW java/util/ArrayList
+    DUP
+    INVOKESPECIAL java/util/ArrayList.<init> ()V
+   L2
+   FRAME FULL [U I] [U java/lang/Object]
+    INVOKESPECIAL io/embrace/test/fixtures/ConstructorTargetBase.<init> (Ljava/lang/Object;)V
+   L3
+    LINENUMBER 20 L3
+    ALOAD 0
+    INVOKESTATIC io/embrace/gradle/plugin/instrumentation/ConstructorHookRecorder.onConstructed (Ljava/lang/Object;)V
+    RETURN
+   L4
+    LOCALVARIABLE this Lio/embrace/test/fixtures/JavaConstructorTarget; L0 L4 0
+    LOCALVARIABLE flag Z L0 L4 1
+    MAXSTACK = 3
+    MAXLOCALS = 2
+
+  // access flags 0x1
+  public <init>(I)V
+   L0
+    LINENUMBER 23 L0
+    ALOAD 0
+    ILOAD 1
+    IFLE L1
+    NEW io/embrace/test/fixtures/JavaConstructorTarget
+    DUP
+    ILOAD 1
+    ICONST_1
+    ISUB
+    INVOKESPECIAL io/embrace/test/fixtures/JavaConstructorTarget.<init> (I)V
+    GOTO L2
+   L1
+   FRAME FULL [U I] [U]
+    ACONST_NULL
+   L2
+   FRAME FULL [U I] [U java/lang/Object]
+    INVOKESPECIAL io/embrace/test/fixtures/JavaConstructorTarget.<init> (Ljava/lang/Object;)V
+   L3
+    LINENUMBER 24 L3
+    RETURN
+   L4
+    LOCALVARIABLE this Lio/embrace/test/fixtures/JavaConstructorTarget; L0 L4 0
+    LOCALVARIABLE depth I L0 L4 1
+    MAXSTACK = 5
+    MAXLOCALS = 2
+
+  // access flags 0x1
+  public <init>(Ljava/lang/String;)V
+    TRYCATCHBLOCK L0 L1 L2 java/lang/NumberFormatException
+   L3
+    LINENUMBER 27 L3
+    ALOAD 0
+    ALOAD 1
+    INVOKESPECIAL io/embrace/test/fixtures/ConstructorTargetBase.<init> (Ljava/lang/Object;)V
+   L4
+    LINENUMBER 28 L4
+    ALOAD 1
+    INVOKEVIRTUAL java/lang/String.isEmpty ()Z
+    IFEQ L0
+   L5
+    LINENUMBER 29 L5
+    ALOAD 0
+    INVOKESTATIC io/embrace/gradle/plugin/instrumentation/ConstructorHookRecorder.onConstructed (Ljava/lang/Object;)V
+    RETURN
+   L0
+    LINENUMBER 32 L0
+   FRAME FULL [io/embrace/test/fixtures/JavaConstructorTarget java/lang/String] []
+    ALOAD 1
+    INVOKESTATIC java/lang/Integer.parseInt (Ljava/lang/String;)I
+    POP
+   L1
+    LINENUMBER 35 L1
+    GOTO L6
+   L2
+    LINENUMBER 33 L2
+   FRAME FULL [io/embrace/test/fixtures/JavaConstructorTarget java/lang/String] [java/lang/NumberFormatException]
+    ASTORE 2
+   L7
+    LINENUMBER 34 L7
+    ALOAD 0
+    INVOKESTATIC io/embrace/gradle/plugin/instrumentation/ConstructorHookRecorder.onConstructed (Ljava/lang/Object;)V
+    RETURN
+   L6
+    LINENUMBER 36 L6
+   FRAME FULL [io/embrace/test/fixtures/JavaConstructorTarget java/lang/String] []
+    GETSTATIC java/lang/System.out : Ljava/io/PrintStream;
+    ALOAD 1
+    INVOKEVIRTUAL java/io/PrintStream.println (Ljava/lang/String;)V
+   L8
+    LINENUMBER 37 L8
+    ALOAD 0
+    INVOKESTATIC io/embrace/gradle/plugin/instrumentation/ConstructorHookRecorder.onConstructed (Ljava/lang/Object;)V
+    RETURN
+   L9
+    LOCALVARIABLE ignored Ljava/lang/NumberFormatException; L7 L6 2
+    LOCALVARIABLE this Lio/embrace/test/fixtures/JavaConstructorTarget; L3 L9 0
+    LOCALVARIABLE value Ljava/lang/String; L3 L9 1
+    MAXSTACK = 2
+    MAXLOCALS = 3
+
+  // access flags 0x1
+  public <init>(J)V
+   L0
+    LINENUMBER 40 L0
+    ALOAD 0
+    LLOAD 1
+    INVOKESTATIC io/embrace/test/fixtures/JavaConstructorTarget.requirePositive (J)Ljava/lang/Object;
+    INVOKESPECIAL io/embrace/test/fixtures/ConstructorTargetBase.<init> (Ljava/lang/Object;)V
+   L1
+    LINENUMBER 41 L1
+    ALOAD 0
+    INVOKESTATIC io/embrace/gradle/plugin/instrumentation/ConstructorHookRecorder.onConstructed (Ljava/lang/Object;)V
+    RETURN
+   L2
+    LOCALVARIABLE this Lio/embrace/test/fixtures/JavaConstructorTarget; L0 L2 0
+    LOCALVARIABLE value J L0 L2 1
+    MAXSTACK = 3
+    MAXLOCALS = 3
+
+  // access flags 0x1
+  public <init>(C)V
+   L0
+    LINENUMBER 44 L0
+    ALOAD 0
+    ILOAD 1
+    INVOKESTATIC java/lang/Character.valueOf (C)Ljava/lang/Character;
+    INVOKESPECIAL io/embrace/test/fixtures/ConstructorTargetBase.<init> (Ljava/lang/Object;)V
+   L1
+    LINENUMBER 45 L1
+    ALOAD 0
+    LDC "initialized"
+    PUTFIELD io/embrace/test/fixtures/JavaConstructorTarget.state : Ljava/lang/String;
+   L2
+    LINENUMBER 46 L2
+    ILOAD 1
+    BIPUSH 120
+    IF_ICMPNE L3
+   L4
+    LINENUMBER 47 L4
+    NEW java/lang/IllegalArgumentException
+    DUP
+    LDC "value must not be x"
+    INVOKESPECIAL java/lang/IllegalArgumentException.<init> (Ljava/lang/String;)V
+    ATHROW
+   L3
+    LINENUMBER 49 L3
+   FRAME FULL [io/embrace/test/fixtures/JavaConstructorTarget I] []
+    ALOAD 0
+    INVOKESTATIC io/embrace/gradle/plugin/instrumentation/ConstructorHookRecorder.onConstructed (Ljava/lang/Object;)V
+    RETURN
+   L5
+    LOCALVARIABLE this Lio/embrace/test/fixtures/JavaConstructorTarget; L0 L5 0
+    LOCALVARIABLE value C L0 L5 1
+    MAXSTACK = 3
+    MAXLOCALS = 2
+
+  // access flags 0x1
+  public toString()Ljava/lang/String;
+   L0
+    LINENUMBER 53 L0
+    ALOAD 0
+    GETFIELD io/embrace/test/fixtures/JavaConstructorTarget.state : Ljava/lang/String;
+    INVOKESTATIC java/lang/String.valueOf (Ljava/lang/Object;)Ljava/lang/String;
+    ARETURN
+   L1
+    LOCALVARIABLE this Lio/embrace/test/fixtures/JavaConstructorTarget; L0 L1 0
+    MAXSTACK = 1
+    MAXLOCALS = 1
+
+  // access flags 0xA
+  private static requirePositive(J)Ljava/lang/Object;
+   L0
+    LINENUMBER 57 L0
+    LLOAD 0
+    LCONST_0
+    LCMP
+    IFGT L1
+   L2
+    LINENUMBER 58 L2
+    NEW java/lang/IllegalArgumentException
+    DUP
+    LDC "value must be positive"
+    INVOKESPECIAL java/lang/IllegalArgumentException.<init> (Ljava/lang/String;)V
+    ATHROW
+   L1
+    LINENUMBER 60 L1
+   FRAME FULL [J] []
+    LLOAD 0
+    INVOKESTATIC java/lang/Long.valueOf (J)Ljava/lang/Long;
+    ARETURN
+   L3
+    LOCALVARIABLE value J L0 L3 0
+    MAXSTACK = 4
+    MAXLOCALS = 2
+}

@@ -5,5 +5,5 @@ import kotlinx.serialization.Serializable
 @Serializable
 internal data class InstrumentationConfigTarget(
     val name: String,
-    val descriptor: String,
+    val descriptor: String? = null,
 )

@@ -4,6 +4,7 @@ plugins {
 
 mavenPublishing {
     coordinates("io.embrace", project.name, project.version.toString())
+    configureIntegrationPublish(project)
 
     publishToMavenCentral()
 

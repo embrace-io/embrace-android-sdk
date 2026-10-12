@@ -73,7 +73,7 @@ jobs:
 
       - name: Gradle (embrace-gradle-plugin-integration-tests:test)
         if: ${{ matrix.gradle-task == 'test' }}
-        run: ./gradlew embrace-gradle-plugin-integration-tests:test --stacktrace
+        run: ./gradlew embrace-gradle-plugin-integration-tests:test -PintegrationPublish --stacktrace
 
       - name: Gradle (build -x embrace-gradle-plugin-integration-tests:test)
         if: ${{ matrix.gradle-task == 'build' }}

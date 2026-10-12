@@ -46,6 +46,7 @@ gradlePlugin {
 // Configure Vanniktech Maven Publish Plugin
 mavenPublishing {
     coordinates("io.embrace", "embrace-gradle-plugin", project.version.toString())
+    configureIntegrationPublish(project)
 
     publishToMavenCentral()
 

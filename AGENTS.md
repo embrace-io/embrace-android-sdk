@@ -162,6 +162,7 @@ InitModule -> CoreModule -> EssentialServiceModule -> ...
 **Gradle plugin integration tests**: `embrace-gradle-plugin-integration-tests`
 
 - Uses Gradle TestKit
+- Run with `./gradlew embrace-gradle-plugin-integration-tests:test -PintegrationPublish`; the flag skips javadoc/source jars when publishing SDK modules to mavenLocal
 - Supports remote JVM debugging (see module README)
 - `sanityTest` runs a single case and is part of `verify`; the full suite is slow, so run it only for Gradle plugin changes
 

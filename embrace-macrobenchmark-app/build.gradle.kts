@@ -82,6 +82,13 @@ android {
         sourceCompatibility = JavaVersion.VERSION_11
         targetCompatibility = JavaVersion.VERSION_11
     }
+
+    // run on CI only
+    lint {
+        checkDependencies = false
+        checkReleaseBuilds = false
+        ignoreTestSources = true
+    }
 }
 
 kotlin {

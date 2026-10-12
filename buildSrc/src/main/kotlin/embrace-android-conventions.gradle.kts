@@ -24,6 +24,7 @@ android {
         abortOnError = true
         warningsAsErrors = true
         checkAllWarnings = true
+        ignoreTestSources = true
         htmlReport = false
         baseline = project.file("lint-baseline.xml")
         disable.addAll(setOf("GradleDependency", "NewerVersionAvailable", "AndroidGradlePluginVersion"))

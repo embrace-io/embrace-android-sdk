@@ -51,6 +51,13 @@ android {
         sourceCompatibility = JavaVersion.VERSION_11
         targetCompatibility = JavaVersion.VERSION_11
     }
+
+    // run on CI only
+    lint {
+        checkDependencies = false
+        checkReleaseBuilds = false
+        ignoreTestSources = true
+    }
 }
 
 kotlin {
@@ -197,4 +204,10 @@ dependencies {
     androidTestImplementation(libs.androidx.test.core)
     androidTestImplementation(libs.androidx.test.junit)
     androidTestImplementation(libs.androidx.test.runner)
+}
+
+// Linting this app's variant runs lintAnalyzeRelease on every library, even with checkDependencies
+// off, so keep lint out of `check` to keep local builds fast. CI runs it by name (see ci-gradle.yml).
+tasks.named("check") {
+    setDependsOn(dependsOn.filterNot { it is TaskProvider<*> && it.name == "lint" })
 }

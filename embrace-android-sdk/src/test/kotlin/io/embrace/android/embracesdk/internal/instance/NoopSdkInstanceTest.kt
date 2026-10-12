@@ -54,12 +54,22 @@ internal class NoopSdkInstanceTest {
     }
 
     @Test
-    fun `logs not initialized message once`() {
+    fun `logs not initialized warning once`() {
         instance.addBreadcrumb("crumb")
         instance.logInfo("msg")
+        val msg = logger.warningMessages.single()
+        assertEquals("Embrace SDK is not initialized yet, cannot add_breadcrumb.", msg.msg)
+        assertEquals(msg.msg, msg.throwable?.message)
+        assertTrue(logger.infoMessages.isEmpty())
+        assertTrue(logger.sdkNotInitializedMessages.isEmpty())
+    }
+
+    @Test
+    fun `deviceId logs a dropped call`() {
+        assertEquals("", instance.deviceId)
         assertEquals(
-            "Embrace SDK is not initialized yet, cannot add_breadcrumb. Subsequent dropped calls will not be logged.",
-            logger.infoMessages.single().msg,
+            "Embrace SDK is not initialized yet, cannot get_device_id.",
+            logger.warningMessages.single().msg,
         )
     }
 
@@ -71,5 +81,6 @@ internal class NoopSdkInstanceTest {
             "Embrace SDK is disabled, cannot add_breadcrumb. Subsequent dropped calls will not be logged.",
             logger.infoMessages.single().msg,
         )
+        assertTrue(logger.warningMessages.isEmpty())
     }
 }

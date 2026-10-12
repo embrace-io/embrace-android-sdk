@@ -361,6 +361,7 @@ internal class ExperimentApiDelegateTest {
     private fun assertNoErrorsLogged() {
         assertTrue(checkerLogger.sdkNotInitializedMessages.isEmpty())
         assertTrue(bufferLogger.infoMessages.isEmpty())
+        assertTrue(bufferLogger.warningMessages.isEmpty())
     }
 
     private companion object {

@@ -13,6 +13,7 @@ import io.embrace.android.embracesdk.internal.capture.experiment.ExperimentKind
 import io.embrace.android.embracesdk.internal.capture.experiment.TrackedData
 import io.embrace.android.embracesdk.internal.clock.Clock
 import io.embrace.android.embracesdk.internal.config.resolved.ExperimentConfig
+import io.embrace.android.embracesdk.internal.instrumentation.network.DefaultTraceparentGenerator
 import io.embrace.android.embracesdk.internal.logging.InternalErrorType
 import io.embrace.android.embracesdk.internal.logging.InternalLogger
 import io.embrace.android.embracesdk.spans.EmbraceSpan
@@ -164,6 +165,9 @@ internal class BufferingSdkInstance(
     override fun getSdkCurrentTimeMs(): Long = 0
 
     override fun getOpenTelemetryKotlin(): OpenTelemetry = openTelemetryKotlin
+
+    @Deprecated("This is no longer supported")
+    override fun generateW3cTraceparent(): String = DefaultTraceparentGenerator.generateW3cTraceparent()
 
     // avoid default implementations getting delegate to the no-op instance - route explicitly
 

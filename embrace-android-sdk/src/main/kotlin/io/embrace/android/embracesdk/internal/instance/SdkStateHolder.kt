@@ -9,6 +9,7 @@ import io.embrace.android.embracesdk.internal.api.SdkApi
 import io.embrace.android.embracesdk.internal.logging.InternalErrorHandler
 import io.embrace.android.embracesdk.internal.logging.InternalErrorType
 import io.embrace.android.embracesdk.internal.telemetry.InternalTelemetryService
+import io.embrace.android.embracesdk.internal.utils.Provider
 
 /**
  * Holds the [SdkApi] instance that backs the public `Embrace` object, and the lifecycle state of the SDK.
@@ -25,7 +26,9 @@ import io.embrace.android.embracesdk.internal.telemetry.InternalTelemetryService
  * currently be restarted by calling start() again. Exceptions are reported to [errorHandler] rather than thrown.
  */
 internal class SdkStateHolder(
-    instance: SdkApi,
+    instance: Provider<SdkApi>,
+    @Suppress("UnusedPrivateProperty") preStart: Provider<SdkApi>,
+    @Suppress("UnusedPrivateProperty") disabled: Provider<SdkApi>,
     telemetryService: InternalTelemetryService,
     private val errorHandler: InternalErrorHandler,
     private val internalInterfaceApi: InternalInterfaceApi = NoopInternalInterfaceApi,
@@ -33,7 +36,7 @@ internal class SdkStateHolder(
 
     private val lock = Any()
 
-    val dispatcher: SdkApiDispatcher = SdkApiDispatcher(instance, telemetryService, errorHandler)
+    val dispatcher: SdkApiDispatcher = SdkApiDispatcher(instance(), telemetryService, errorHandler)
 
     /**
      * The [SdkApi] that backs the public `Embrace` object. Calls that change SDK state are handled here and

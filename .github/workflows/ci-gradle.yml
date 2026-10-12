@@ -77,7 +77,7 @@ jobs:
 
       - name: Gradle (build -x embrace-gradle-plugin-integration-tests:test)
         if: ${{ matrix.gradle-task == 'build' }}
-        run: ./gradlew build embrace-microbenchmark:assembleAndroidTest -x embrace-gradle-plugin-integration-tests:test --stacktrace
+        run: ./gradlew build koverXmlReport embrace-microbenchmark:assembleAndroidTest -x embrace-gradle-plugin-integration-tests:test -Pembrace.coverage --stacktrace
 
       - name: Gradle (examples/ExampleApp/ bundleRelease)
         if: ${{ matrix.gradle-task == 'bundleReleaseExampleApp' }}
@@ -90,10 +90,6 @@ jobs:
         with:
           name: test-results-${{ matrix.gradle-task }}
           path: '**/build/reports/tests/**'
-
-      - name: Run Kover Code Coverage
-        if: ${{ matrix.gradle-task == 'build' }}
-        run: ./gradlew koverXmlReport
 
       - name: Upload Code Coverage
         uses: codecov/codecov-action@303a32d7a59b442fa8d48b6a1cc6825c09c847a5 # v7.1.1

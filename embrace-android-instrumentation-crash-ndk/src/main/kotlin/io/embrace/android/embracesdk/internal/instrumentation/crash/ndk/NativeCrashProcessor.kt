@@ -9,11 +9,6 @@ import io.embrace.android.embracesdk.internal.payload.NativeCrashData
 interface NativeCrashProcessor {
 
     /**
-     * Get the latest stored [NativeCrashData] instance and purge all existing native crash data files.
-     */
-    fun getLatestNativeCrash(): NativeCrashData?
-
-    /**
      * Get all the native crash instances that have been persisted without deleting anything
      */
     fun getNativeCrashes(): List<NativeCrashData>

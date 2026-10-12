@@ -41,12 +41,6 @@ internal class NativeCrashProcessorImpl(
      */
     private val crashes: MutableMap<String, LoadedCrash> by lazy(::loadAllNativeCrashes)
 
-    override fun getLatestNativeCrash(): NativeCrashData? {
-        return getNativeCrashes().lastOrNull().also {
-            deleteAllNativeCrashes()
-        }
-    }
-
     override fun getNativeCrashes(): List<NativeCrashData> {
         if (!sharedObjectLoader.loaded.get()) {
             return emptyList()

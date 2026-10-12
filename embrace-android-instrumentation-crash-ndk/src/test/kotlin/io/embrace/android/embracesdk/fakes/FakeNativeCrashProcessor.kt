@@ -15,8 +15,6 @@ class FakeNativeCrashProcessor : NativeCrashProcessor {
         nativeCrashDataBlobs.remove(nativeCrash)
     }
 
-    override fun getLatestNativeCrash(): NativeCrashData? = nativeCrashDataBlobs.lastOrNull()
-
     override fun getNativeCrashes(): List<NativeCrashData> = nativeCrashDataBlobs
 
     fun addNativeCrashData(data: NativeCrashData) {

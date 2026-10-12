@@ -3,6 +3,7 @@ plugins {
     id("java-gradle-plugin")
     id("groovy")
     id("com.vanniktech.maven.publish")
+    id("embrace-integration-test-repo-conventions")
     id("org.jetbrains.kotlin.plugin.serialization")
     alias(libs.plugins.buildconfig)
 }

@@ -9,7 +9,7 @@ buildscript {
     repositories {
         google()
         mavenCentral()
-        mavenLocal()
+        maven { url = uri(providers.gradleProperty("integration_repo").get()) }
     }
     dependencies {
         classpath("com.android.tools.build:gradle:$agp_version")

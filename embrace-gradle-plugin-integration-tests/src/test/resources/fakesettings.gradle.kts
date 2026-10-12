@@ -2,7 +2,7 @@ pluginManagement {
     repositories {
         google()
         mavenCentral()
-        mavenLocal()
+        maven { url = uri(providers.gradleProperty("integration_repo").get()) }
     }
     plugins {
         val agpVersion = extra["agp_version"] as String

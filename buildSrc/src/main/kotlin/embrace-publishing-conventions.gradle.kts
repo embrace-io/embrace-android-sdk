@@ -1,5 +1,6 @@
 plugins {
     id("com.vanniktech.maven.publish")
+    id("embrace-integration-test-repo-conventions")
 }
 
 mavenPublishing {

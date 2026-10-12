@@ -3,6 +3,7 @@ plugins {
     id("org.jetbrains.kotlin.plugin.serialization")
     id("java-gradle-plugin")
     id("maven-publish")
+    id("embrace-integration-test-repo-conventions")
 }
 
 dependencies {
@@ -24,21 +25,34 @@ dependencies {
     testImplementation(project(":embrace-test-common"))
 }
 
-// Ensure all publishable modules are published to maven local before running integration tests
+val integrationRepo = fileTree(isolated.rootProject.projectDirectory.dir(INTEGRATION_TEST_REPO_PATH)) {
+    // ignore timestamps in maven-metadata.xml and signatures
+    exclude("**/maven-metadata.xml*", "**/*.asc")
+}
+
 tasks.withType<Test>().configureEach {
-    dependsOn(
-        rootProject.subprojects
-            .filter { it.plugins.hasPlugin(MavenPublishPlugin::class.java) }
-            .map { it.tasks.named("publishToMavenLocal") }
-    )
+    // fixtures resolve Embrace artifacts from the integration test repo, so publish everything to it first
+    dependsOn(integrationTestPublishedProjects.map { "$it:publishAllPublicationsToIntegrationTestRepository" })
+
+    // declare everything the fixture builds read so that results can be cached. Repo file names contain a
+    // unique timestamp per publish, so only content is fingerprinted.
+    inputs.files(integrationRepo)
+        .withPropertyName("integrationRepo")
+        .withPathSensitivity(PathSensitivity.NONE)
+    inputs.dir("fixtures")
+        .withPropertyName("fixtures")
+        .withPathSensitivity(PathSensitivity.RELATIVE)
+    listOf(17, 21).forEach { version ->
+        inputs.property(
+            "jdk$version",
+            providers.environmentVariable("JAVA_HOME_${version}_X64")
+                .orElse(providers.environmentVariable("LOCAL_JAVA_${version}_PATH"))
+                .orElse(""),
+        )
+    }
 
     // avoid default behavior of parallelisation as it can lead to resource exhaustion on CI (and locally)
     maxParallelForks = 1
-
-    // fixtures consume SDK artifacts from mavenLocal, which aren't inputs to this task. Always run the
-    // tests so that SDK changes can't be hidden by a cached or up-to-date result.
-    outputs.cacheIf("fixtures consume mavenLocal artifacts that aren't task inputs") { false }
-    outputs.upToDateWhen { false }
 }
 
 // A single end-to-end build of an Android app that applies the plugin, used by the root 'verify' task.

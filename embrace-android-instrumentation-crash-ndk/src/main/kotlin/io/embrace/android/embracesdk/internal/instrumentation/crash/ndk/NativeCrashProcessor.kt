@@ -22,4 +22,9 @@ interface NativeCrashProcessor {
      * Purge all existing native crash data files.
      */
     fun deleteAllNativeCrashes()
+
+    /**
+     * Purge the data files associated with [nativeCrash].
+     */
+    fun deleteNativeCrash(nativeCrash: NativeCrashData)
 }

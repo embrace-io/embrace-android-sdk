@@ -31,36 +31,59 @@ internal class NativeCrashProcessorImpl(
         args.clock,
     )
 
+    /**
+     * The native crashes on disk, lazily-loaded, each with the stored metadata file it was loaded
+     * using, by native crash ID. Loading once is safe because no new crash files will appear
+     * during the lifetime of the process given they are only written after a crash, which means the
+     * process (and this map) is dead anyway.
+     *
+     * Not synchronized, as every caller runs on the same worker thread.
+     */
+    private val crashes: MutableMap<String, LoadedCrash> by lazy(::loadAllNativeCrashes)
+
     override fun getLatestNativeCrash(): NativeCrashData? {
-        return getAllNativeCrashes().lastOrNull().also {
+        return getNativeCrashes().lastOrNull().also {
             deleteAllNativeCrashes()
         }
     }
 
-    override fun getNativeCrashes(): List<NativeCrashData> = getAllNativeCrashes()
-
-    override fun deleteAllNativeCrashes() {
-        fileStorageService.getStoredPayloads().forEach(fileStorageService::delete)
-    }
-
-    private fun getAllNativeCrashes(): List<NativeCrashData> {
+    override fun getNativeCrashes(): List<NativeCrashData> {
         if (!sharedObjectLoader.loaded.get()) {
             return emptyList()
         }
-        val files = fileStorageService.getStoredPayloads().map { File(outputDir.value, it.filename) }
-        val nativeCrashes = files.mapNotNull { crashFile ->
+        return crashes.values.map(LoadedCrash::data)
+    }
+
+    override fun deleteAllNativeCrashes() {
+        if (sharedObjectLoader.loaded.get()) {
+            crashes.clear()
+        }
+        fileStorageService.getStoredPayloads().forEach(fileStorageService::delete)
+    }
+
+    override fun deleteNativeCrash(nativeCrash: NativeCrashData) {
+        if (!sharedObjectLoader.loaded.get()) {
+            return
+        }
+        crashes.remove(nativeCrash.nativeCrashId)?.let { fileStorageService.delete(it.metadata) }
+    }
+
+    private fun loadAllNativeCrashes(): MutableMap<String, LoadedCrash> {
+        val nativeCrashes = LinkedHashMap<String, LoadedCrash>()
+        fileStorageService.getStoredPayloads().forEach { metadata ->
+            val crashFile = File(outputDir.value, metadata.filename)
             try {
                 val crashReport = delegate.getCrashReport(crashFile.path)
                 if (crashReport != null) {
-                    serializer.fromJson(crashReport, NativeCrashData.serializer()).apply {
-                        this.symbols = symbolMap
-                    }
+                    val nativeCrash = serializer
+                        .fromJson(crashReport, NativeCrashData.serializer())
+                        .copy(symbols = symbolMap)
+                    nativeCrashes[nativeCrash.nativeCrashId] = LoadedCrash(nativeCrash, metadata)
                 } else {
                     logger.trackInternalError(
                         type = InternalErrorType.NativeCrashLoadFail,
                         throwable = FileNotFoundException("Failed to load crash report at ${crashFile.path}"),
                     )
-                    null
                 }
             } catch (t: Throwable) {
                 crashFile.delete()
@@ -71,9 +94,16 @@ internal class NativeCrashProcessorImpl(
                         t,
                     ),
                 )
-                null
             }
         }
         return nativeCrashes
     }
+
+    /**
+     * A native crash and the stored metadata file that defines its identity.
+     */
+    private class LoadedCrash(
+        val data: NativeCrashData,
+        val metadata: StoredTelemetryMetadata,
+    )
 }

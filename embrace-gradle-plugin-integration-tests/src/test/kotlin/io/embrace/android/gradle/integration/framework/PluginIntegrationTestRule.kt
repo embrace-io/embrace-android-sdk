@@ -16,6 +16,7 @@ import java.util.concurrent.atomic.AtomicInteger
 class PluginIntegrationTestRule : ExternalResource() {
 
     private val uniqueDirName: AtomicInteger = AtomicInteger(0)
+    private val rootDir: File = File(System.getProperty("user.dir")).parentFile
 
     private var tmpDir: File? = null
     private lateinit var server: MockWebServer
@@ -232,8 +233,8 @@ class PluginIntegrationTestRule : ExternalResource() {
         val args = mutableListOf(task)
         args.addAll(additionalArgs)
         if (refreshDependencies) {
-            // fixtures consume io.embrace:*:<version>-SNAPSHOT from mavenLocal. Force a refresh
-            // to avoid CI jobs picking up old artifacts
+            // fixtures consume io.embrace:*:<version>-SNAPSHOT from the integration test repo. Force a
+            // refresh to avoid picking up old artifacts
             args.add("--refresh-dependencies")
         }
         args.addAll(
@@ -248,6 +249,7 @@ class PluginIntegrationTestRule : ExternalResource() {
                 "-Pagp_version=${testMatrix.agp}",
                 "-Pkotlin_version=${testMatrix.kotlin}",
                 "-Pplugin_snapshot_version=${loadSnapshotVersion()}",
+                "-Pintegration_repo=${File(rootDir, "build/integration-repo").toURI()}",
                 "-PcompileAndTargetSdk=${testMatrix.compileAndTargetSdk}",
             ),
         )
@@ -271,7 +273,6 @@ class PluginIntegrationTestRule : ExternalResource() {
     }
 
     private fun loadSnapshotVersion(): String {
-        val rootDir = File(System.getProperty("user.dir")).parentFile
         val file = File(rootDir, "gradle.properties")
         file.inputStream().buffered().use {
             Properties().apply {

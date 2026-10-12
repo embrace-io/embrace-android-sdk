@@ -13,7 +13,7 @@ if (agpMajorVersion < 9) {
 repositories {
     google()
     mavenCentral()
-    mavenLocal()
+    maven { url = uri(providers.gradleProperty("integration_repo").get()) }
 }
 
 def globalDisable = project.hasProperty("globalDisable") ? project.getProperty("globalDisable") == "true" : false

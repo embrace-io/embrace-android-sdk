@@ -42,6 +42,10 @@ class InstrumentationBehaviorImpl(
         enabled && (instrumentation.firebasePushNotificationsEnabled.orNull ?: false)
     }
 
+    override val viewModelLeakDetectionEnabled: Boolean by lazy {
+        enabled && (instrumentation.viewModelLeakDetectionEnabled.orNull ?: true)
+    }
+
     override val ignoredClasses: List<String> by lazy {
         instrumentation.classIgnorePatterns.get()
     }

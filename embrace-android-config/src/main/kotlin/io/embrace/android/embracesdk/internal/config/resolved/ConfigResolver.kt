@@ -140,6 +140,7 @@ fun resolveAutoDataCapture(
         activityLeakDetectionEnabled = { rolloutEnabled(remote?.pctActivityLeakDetectionEnabled, bucket) },
         fragmentLeakDetectionEnabled = { rolloutEnabled(remote?.pctFragmentLeakDetectionEnabled, bucket) },
         webViewLeakDetectionEnabled = { rolloutEnabled(remote?.pctWebViewLeakDetectionEnabled, bucket) },
+        viewModelLeakDetectionEnabled = { rolloutEnabled(remote?.pctViewModelLeakDetectionEnabled, bucket) },
     )
 }
 

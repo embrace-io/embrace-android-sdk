@@ -7,8 +7,6 @@ import org.junit.Assert.assertSame
 import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
-import org.objectweb.asm.ClassReader
-import org.objectweb.asm.ClassWriter
 import java.lang.reflect.InvocationTargetException
 import kotlin.jvm.internal.DefaultConstructorMarker
 
@@ -23,7 +21,7 @@ class ConstructorVisitorExecutionTest {
             JavaConstructorTarget.Inner::class.java.name,
             KotlinConstructorTarget::class.java.name,
         )
-    )
+    ) { nextVisitor, _ -> createConstructorVisitor(nextVisitor) }
     private val javaTarget = loader.loadClass(JavaConstructorTarget::class.java.name)
     private val kotlinTarget = loader.loadClass(KotlinConstructorTarget::class.java.name)
 
@@ -127,31 +125,5 @@ class ConstructorVisitorExecutionTest {
     private fun assertConstructedOnce(instance: Any) {
         assertEquals(1, ConstructorHookRecorder.constructed.size)
         assertSame(instance, ConstructorHookRecorder.constructed.single())
-    }
-
-    /**
-     * Defines instrumented copies of the given classes and delegates everything else to the parent.
-     */
-    private class InstrumentedClassLoader(
-        private val classNames: Set<String>,
-    ) : ClassLoader(InstrumentedClassLoader::class.java.classLoader) {
-
-        override fun loadClass(name: String, resolve: Boolean): Class<*> {
-            if (name !in classNames) {
-                return super.loadClass(name, resolve)
-            }
-            val cls = findLoadedClass(name) ?: instrument(name).let { defineClass(name, it, 0, it.size) }
-            if (resolve) {
-                resolveClass(cls)
-            }
-            return cls
-        }
-
-        private fun instrument(name: String): ByteArray {
-            val reader = ClassReader(name)
-            val writer = ClassWriter(reader, ASM_CLASS_WRITER_FLAGS)
-            reader.accept(createConstructorVisitor(writer), ASM_CLASS_READER_FLAGS)
-            return writer.toByteArray()
-        }
     }
 }

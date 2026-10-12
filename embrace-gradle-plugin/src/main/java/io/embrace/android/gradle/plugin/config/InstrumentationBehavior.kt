@@ -38,6 +38,11 @@ interface InstrumentationBehavior {
     val fcmPushNotificationsEnabled: Boolean
 
     /**
+     * Whether ViewModel construction should be auto-instrumented for leak detection
+     */
+    val viewModelLeakDetectionEnabled: Boolean
+
+    /**
      * A list of string regexes that are used to filter classes during bytecode instrumentation
      */
     val ignoredClasses: List<String>

@@ -166,6 +166,23 @@
         "type": "match_super_class_name",
         "value": "android.app.Application"
       }
+    },
+    {
+      "name": "view_model_leak_detection",
+      "target": {
+        "name": "<init>"
+      },
+      "insert": {
+        "owner": "io/embrace/android/embracesdk/internal/instrumentation/bytecode/ViewModelBytecodeEntrypoint",
+        "name": "onViewModelCreated",
+        "descriptor": "(Landroidx/lifecycle/ViewModel;)V",
+        "operandStackIndices": [0],
+        "insertAtEnd": true
+      },
+      "visitStrategy": {
+        "type": "match_class_name",
+        "value": "androidx.lifecycle.ViewModel"
+      }
     }
   ]
 }

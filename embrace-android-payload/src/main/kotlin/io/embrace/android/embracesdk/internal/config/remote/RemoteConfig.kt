@@ -191,4 +191,10 @@ data class RemoteConfig(
      */
     @SerialName("pct_web_view_leak_detection_enabled")
     val pctWebViewLeakDetectionEnabled: Float? = null,
+
+    /**
+     * Percentage of devices for which ViewModel leak detection is captured.
+     */
+    @SerialName("pct_view_model_leak_detection_enabled")
+    val pctViewModelLeakDetectionEnabled: Float? = null,
 )

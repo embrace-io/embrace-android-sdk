@@ -111,6 +111,11 @@ interface AutoDataCaptureConfig {
      * Whether WebView leak detection is enabled.
      */
     val webViewLeakDetectionEnabled: Boolean
+
+    /**
+     * Whether ViewModel leak detection is enabled.
+     */
+    val viewModelLeakDetectionEnabled: Boolean
 }
 
 /**
@@ -139,6 +144,7 @@ inline fun AutoDataCaptureConfig(
     crossinline activityLeakDetectionEnabled: () -> Boolean? = { null },
     crossinline fragmentLeakDetectionEnabled: () -> Boolean? = { null },
     crossinline webViewLeakDetectionEnabled: () -> Boolean? = { null },
+    crossinline viewModelLeakDetectionEnabled: () -> Boolean? = { null },
 ): AutoDataCaptureConfig = object : AutoDataCaptureConfig {
     override val thermalStatusCaptureEnabled: Boolean = thermalStatusCaptureEnabled() ?: true
     override val powerSaveModeCaptureEnabled: Boolean = powerSaveModeCaptureEnabled() ?: true
@@ -161,4 +167,5 @@ inline fun AutoDataCaptureConfig(
     override val activityLeakDetectionEnabled: Boolean = activityLeakDetectionEnabled() ?: false
     override val fragmentLeakDetectionEnabled: Boolean = fragmentLeakDetectionEnabled() ?: false
     override val webViewLeakDetectionEnabled: Boolean = webViewLeakDetectionEnabled() ?: false
+    override val viewModelLeakDetectionEnabled: Boolean = viewModelLeakDetectionEnabled() ?: false
 }

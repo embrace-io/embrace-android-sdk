@@ -39,6 +39,7 @@ internal class AutoDataCaptureConfigTest {
             assertFalse(activityLeakDetectionEnabled)
             assertFalse(fragmentLeakDetectionEnabled)
             assertFalse(webViewLeakDetectionEnabled)
+            assertFalse(viewModelLeakDetectionEnabled)
         }
         assertEquals(defaults.snapshot(), resolved.snapshot())
     }
@@ -132,6 +133,7 @@ internal class AutoDataCaptureConfigTest {
             pctActivityLeakDetectionEnabled = pct,
             pctFragmentLeakDetectionEnabled = pct,
             pctWebViewLeakDetectionEnabled = pct,
+            pctViewModelLeakDetectionEnabled = pct,
         )
         return with(resolveAutoDataCapture(InstrumentedConfigImpl, remote, bucket)) {
             listOf(
@@ -145,6 +147,7 @@ internal class AutoDataCaptureConfigTest {
                 activityLeakDetectionEnabled,
                 fragmentLeakDetectionEnabled,
                 webViewLeakDetectionEnabled,
+                viewModelLeakDetectionEnabled,
             )
         }
     }
@@ -171,9 +174,10 @@ internal class AutoDataCaptureConfigTest {
         activityLeakDetectionEnabled,
         fragmentLeakDetectionEnabled,
         webViewLeakDetectionEnabled,
+        viewModelLeakDetectionEnabled,
     )
 
     private companion object {
-        const val ROLLOUT_COUNT = 10
+        const val ROLLOUT_COUNT = 11
     }
 }

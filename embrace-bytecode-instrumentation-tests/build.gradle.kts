@@ -38,4 +38,5 @@ dependencies {
     testImplementation(libs.asm.util)
     testImplementation(libs.gradle.test.kit)
     testImplementation(libs.mockk)
+    testImplementation(libs.lifecycle.viewmodel)
 }

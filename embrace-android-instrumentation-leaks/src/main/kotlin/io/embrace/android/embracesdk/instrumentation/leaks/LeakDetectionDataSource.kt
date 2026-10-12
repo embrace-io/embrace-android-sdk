@@ -32,6 +32,13 @@ class LeakDetectionDataSource(args: InstrumentationArgs) :
             NoOpFragmentSupport
         }
 
+    private val viewModelTracker: ViewModelLeakTracker? =
+        if (args.configService.config.autoDataCapture.viewModelLeakDetectionEnabled) {
+            ViewModelLeakTracker(leakDetector, args::activeSessionIds)
+        } else {
+            null
+        }
+
     private val callbacks = ActivityLeakDetectionLifecycleCallbacks(
         leakDetector,
         args::activeSessionIds,
@@ -43,6 +50,7 @@ class LeakDetectionDataSource(args: InstrumentationArgs) :
     override fun onDataCaptureEnabled() {
         application.registerActivityLifecycleCallbacks(callbacks)
         leakDetector.start()
+        viewModelLeakTracker = viewModelTracker
     }
 
     /**

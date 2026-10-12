@@ -81,4 +81,7 @@ interface BytecodeInstrumentationParams : InstrumentationParameters {
 
     @get:Input
     val applicationInitTimingEnabled: Property<Boolean>
+
+    @get:Input
+    val shouldInstrumentViewModelLeakDetection: Property<Boolean>
 }

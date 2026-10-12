@@ -96,6 +96,19 @@ class EmbraceClassVisitorFactoryTest {
         assertSame(visitor, observed)
     }
 
+    @Test
+    fun testViewModelClassVisitorDisabled() {
+        val visitor = TestClassVisitor()
+        val ctx = createMockClassContext("androidx.lifecycle.ViewModel")
+        val config = createInstrumentationConfig(
+            instrumentOnClick = false,
+            instrumentOnLongClick = false,
+            instrumentViewModelLeakDetection = false,
+        )
+        val observed = fetchClassVisitor(config, ctx, visitor)
+        assertSame(visitor, observed)
+    }
+
     private fun fetchClassVisitor(
         testParams: TestBytecodeInstrumentationParams,
         ctx: ClassContext,
@@ -113,8 +126,10 @@ class EmbraceClassVisitorFactoryTest {
         instrumentAutoSdkInitialization: Boolean = true,
         instrumentFirebaseMessaging: Boolean = true,
         applicationInitTimingEnabled: Boolean = false,
+        instrumentViewModelLeakDetection: Boolean = true,
     ): TestBytecodeInstrumentationParams {
         return TestBytecodeInstrumentationParams(
+            instrumentViewModelLeakDetection = instrumentViewModelLeakDetection,
             instrumentFirebaseMessaging = instrumentFirebaseMessaging,
             instrumentWebview = instrumentWebview,
             instrumentAutoSdkInitialization = instrumentAutoSdkInitialization,

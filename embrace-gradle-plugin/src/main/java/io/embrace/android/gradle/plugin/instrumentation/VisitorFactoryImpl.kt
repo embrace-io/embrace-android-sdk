@@ -48,6 +48,7 @@ class VisitorFactoryImpl(
             "on_long_click" -> params.shouldInstrumentOnLongClick.get()
             "application_init_time_start" -> params.applicationInitTimingEnabled.get()
             "application_init_time_end" -> params.applicationInitTimingEnabled.get()
+            "view_model_leak_detection" -> params.shouldInstrumentViewModelLeakDetection.get()
             else -> error("Unknown feature: $name. Please add a property that enables/disables it on EmbraceBytecodeInstrumentation.")
         }
         return enabledViaDsl && visitStrategy.shouldVisit(ctx)

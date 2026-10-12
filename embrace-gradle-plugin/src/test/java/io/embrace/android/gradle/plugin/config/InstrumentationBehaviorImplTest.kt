@@ -91,6 +91,23 @@ class InstrumentationBehaviorImplTest {
     }
 
     @Test
+    fun `viewModelLeakDetectionEnabled default`() {
+        assertTrue(behavior.viewModelLeakDetectionEnabled)
+    }
+
+    @Test
+    fun `viewModelLeakDetectionEnabled via embrace`() {
+        embrace.bytecodeInstrumentation.viewModelLeakDetectionEnabled.set(false)
+        assertFalse(behavior.viewModelLeakDetectionEnabled)
+    }
+
+    @Test
+    fun `viewModelLeakDetectionEnabled disabled via global`() {
+        embrace.bytecodeInstrumentation.enabled.set(false)
+        assertFalse(behavior.viewModelLeakDetectionEnabled)
+    }
+
+    @Test
     fun `autoSdkInitializationEnabled default`() {
         assertFalse(behavior.autoSdkInitializationEnabled)
     }

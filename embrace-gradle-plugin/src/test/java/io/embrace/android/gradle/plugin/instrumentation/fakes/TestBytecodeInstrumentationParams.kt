@@ -20,6 +20,7 @@ class TestBytecodeInstrumentationParams(
     instrumentOnLongClick: Boolean = true,
     instrumentOnClick: Boolean = true,
     applicationInitTimingEnabled: Boolean = true,
+    instrumentViewModelLeakDetection: Boolean = true,
 ) : BytecodeInstrumentationParams {
 
     override val config: Property<VariantConfig> =
@@ -52,4 +53,6 @@ class TestBytecodeInstrumentationParams(
         DefaultProperty(PropertyHost.NO_OP, Boolean::class.javaObjectType).convention(instrumentOnClick)
     override val applicationInitTimingEnabled: Property<Boolean> =
         DefaultProperty(PropertyHost.NO_OP, Boolean::class.javaObjectType).convention(applicationInitTimingEnabled)
+    override val shouldInstrumentViewModelLeakDetection: Property<Boolean> =
+        DefaultProperty(PropertyHost.NO_OP, Boolean::class.javaObjectType).convention(instrumentViewModelLeakDetection)
 }

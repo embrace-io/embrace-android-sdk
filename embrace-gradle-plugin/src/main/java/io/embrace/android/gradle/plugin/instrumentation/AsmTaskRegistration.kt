@@ -51,6 +51,7 @@ class AsmTaskRegistration : EmbraceTaskRegistration {
                 params.shouldInstrumentOnLongClick.set(behavior.instrumentation.onLongClickEnabled)
                 params.shouldInstrumentOnClick.set(behavior.instrumentation.onClickEnabled)
                 params.applicationInitTimingEnabled.set(behavior.instrumentation.applicationInitTimingEnabled)
+                params.shouldInstrumentViewModelLeakDetection.set(behavior.instrumentation.viewModelLeakDetectionEnabled)
                 params.variantOutputInfo.set(variant.toVariantOutputInfoProvider(project))
 
                 val encodeFileToBase64Task = project.lazyTaskLookup<EncodeFileToBase64Task>(

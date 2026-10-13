@@ -20,9 +20,10 @@ class AndroidSimpleTest {
             fixture = "android-simple",
             tasks = listOf("assemble"),
             projectType = ProjectType.ANDROID,
-            assertions = {
+            assertions = { projectDir ->
                 verifyBuildTelemetryRequestSent(variants)
                 verifyJvmMappingRequestsSent(1)
+                verifyNoBuildInfoExported(projectDir, "release")
             },
         )
     }

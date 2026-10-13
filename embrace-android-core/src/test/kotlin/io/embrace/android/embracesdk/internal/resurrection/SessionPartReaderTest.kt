@@ -7,6 +7,8 @@ import io.embrace.android.embracesdk.fakes.FakeConfigService
 import io.embrace.android.embracesdk.fakes.FakeIntakeService
 import io.embrace.android.embracesdk.fakes.FakeInternalLogger
 import io.embrace.android.embracesdk.fakes.FakeNativeCrashService
+import io.embrace.android.embracesdk.internal.clock.millisToNanos
+import io.embrace.android.embracesdk.internal.clock.nanosToMillis
 import io.embrace.android.embracesdk.internal.config.resolved.EmbraceConfig
 import io.embrace.android.embracesdk.internal.config.resolved.PersistenceConfig
 import io.embrace.android.embracesdk.internal.delivery.PayloadType
@@ -27,9 +29,12 @@ import io.embrace.android.embracesdk.internal.payload.Span
 import io.embrace.android.embracesdk.internal.session.UserSessionRestoreDecision
 import io.embrace.android.embracesdk.internal.session.getSessionPartSpan
 import io.embrace.android.embracesdk.internal.session.persistence.CompletedSpansWriter
+import io.embrace.android.embracesdk.internal.session.persistence.NoopSessionPartLastAliveStore
 import io.embrace.android.embracesdk.internal.session.persistence.SessionMetadataWriter
 import io.embrace.android.embracesdk.internal.session.persistence.SessionPartDirectory
 import io.embrace.android.embracesdk.internal.session.persistence.SessionPartDirectoryStore
+import io.embrace.android.embracesdk.internal.session.persistence.SessionPartLastAliveRecorder
+import io.embrace.android.embracesdk.internal.session.persistence.SessionPartLastAliveStore
 import io.embrace.android.embracesdk.internal.session.persistence.SessionPartWriteTarget
 import io.embrace.android.embracesdk.internal.session.persistence.SessionPartWriteTracker
 import io.embrace.android.embracesdk.internal.session.persistence.SessionReconstructionService
@@ -158,6 +163,24 @@ internal class SessionPartReaderTest {
         assertEquals("1", intake.envelope.sessionPartAttribute(EmbSessionAttributes.EMB_IS_FINAL_SESSION_PART))
         assertEquals(TERMINATION_REASON, intake.envelope.sessionPartAttribute(EmbSessionAttributes.EMB_USER_SESSION_TERMINATION_REASON))
         assertDeleted(partDirectory)
+    }
+
+    @Test
+    fun `a dead session part ends at the last time its process was recorded alive`() {
+        val sessionSnapshot = sessionSpan().copy(endTimeNanos = null)
+        val completedWork = sessionSpan().copy(
+            spanId = "aaaaaaaaaaaaaaa3",
+            name = "work",
+            attributes = listOf(Attribute(key = "emb.type", data = "perf")),
+        )
+        // recorded alive a minute after anything the part's telemetry records a time for
+        val lastAliveMs = checkNotNull(completedWork.endTimeNanos).nanosToMillis() + 60_000L
+        persist(partDirectory, span = completedWork, snapshots = listOf(sessionSnapshot))
+        val partDir = File(sessionsDir, partDirectory.dirName)
+        createReader(lastAliveStore = FixedLastAliveStore(mapOf(partDir to lastAliveMs))).readPersistedSessionParts()
+
+        val sessionPartSpan = intakeService.getIntakes<SessionPartPayload>().single().envelope.getSessionPartSpan()
+        assertEquals(lastAliveMs.millisToNanos(), sessionPartSpan?.endTimeNanos)
     }
 
     @Test
@@ -633,10 +656,11 @@ internal class SessionPartReaderTest {
     private fun createReader(
         intakeService: IntakeService = this.intakeService,
         enabled: Boolean = true,
+        lastAliveStore: SessionPartLastAliveStore = NoopSessionPartLastAliveStore(),
     ) = SessionPartReader(
         sessionsDir = lazy { sessionsDir },
         directoryStore = directoryStore,
-        reconstructionService = SessionReconstructionService(lazy { sessionsDir }, logger),
+        reconstructionService = SessionReconstructionService(lazy { sessionsDir }, logger, lastAliveStore),
         intakeService = intakeService,
         writeTracker = writeTracker,
         deadPartResurrector = MultiFileDeadPartResurrector(
@@ -744,4 +768,13 @@ internal class SessionPartReaderTest {
     @Suppress("UNCHECKED_CAST")
     private fun Envelope<*>.sessionPartAttribute(key: String): String? =
         (this as Envelope<SessionPartPayload>).getSessionPartSpan()?.attributes?.findAttributeValue(key)
+
+    /**
+     * Reads back [lastAliveMs] for each part directory it holds, and records nothing.
+     */
+    private class FixedLastAliveStore(private val lastAliveMs: Map<File, Long>) : SessionPartLastAliveStore {
+        override fun recorder(partDir: File) = SessionPartLastAliveRecorder { }
+
+        override fun lastAliveMs(partDir: File): Long? = lastAliveMs[partDir]
+    }
 }

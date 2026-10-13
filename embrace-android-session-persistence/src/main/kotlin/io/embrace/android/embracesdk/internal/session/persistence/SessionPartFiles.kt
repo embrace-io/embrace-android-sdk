@@ -1,6 +1,5 @@
 package io.embrace.android.embracesdk.internal.session.persistence
 
-import io.embrace.android.embracesdk.internal.utils.FileWriteCounters
 import io.embrace.android.embracesdk.internal.utils.SystemTrace
 import java.io.File
 import java.io.IOException
@@ -43,17 +42,20 @@ internal const val FILE_SYNC_SECTION = "mf-file-sync"
  * but worth it in cases that happen infrequently and where a write failure is more consequential.
  *
  * Throws [IOException] if the file could not be written; callers are responsible for reporting that
- * as an internal error of the appropriate type.
+ * as an internal error of the appropriate type. The write is recorded with [target] before it starts
+ * and again once the file is in place.
  */
 internal fun writeAtomically(
     partDir: File,
     fileName: String,
     maxBytes: Long,
-    counters: FileWriteCounters,
+    target: SessionPartWriteTarget,
     syncImmediately: Boolean = false,
     encode: (OutputStream) -> Unit,
 ) {
     SystemTrace.trace("mf-file-write-atomic") {
+        val file = File(partDir, fileName)
+        target.recordAlive(file)
         val tmpFile = File(partDir, "$fileName.tmp")
         try {
             val fileStream = tmpFile.outputStream()
@@ -67,10 +69,10 @@ internal fun writeAtomically(
                     }
                 }
             }
-            if (!tmpFile.renameTo(File(partDir, fileName))) {
+            if (!tmpFile.renameTo(file)) {
                 throw IOException("Failed to rename $fileName")
             }
-            counters.recordWrite(stream.written)
+            target.recordWrite(file, stream.written)
         } finally {
             tmpFile.delete()
         }

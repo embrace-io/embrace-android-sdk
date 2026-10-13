@@ -441,7 +441,7 @@ internal class SpanSnapshotsWriterTest {
     }
 
     private fun target(source: () -> SessionPartDirectory?): SessionPartWriteTarget =
-        SessionPartWriteTarget(lazy { sessionsDir }, source)
+        SessionPartWriteTarget(lazy { sessionsDir }, sessionPartDirectorySource = source)
 
     private fun createPartDir(directory: SessionPartDirectory): File =
         File(sessionsDir, directory.dirName).apply { mkdirs() }

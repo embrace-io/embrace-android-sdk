@@ -15,6 +15,7 @@ import java.io.IOException
 class SessionReconstructionService(
     private val sessionsDir: Lazy<File>,
     private val logger: InternalLogger,
+    private val lastAliveStore: SessionPartLastAliveStore = NoopSessionPartLastAliveStore(),
 ) {
 
     private val decoder = SessionPartDecoder(logger)
@@ -36,6 +37,13 @@ class SessionReconstructionService(
                 null
             }
         }
+
+    /**
+     * The last time the given session part's process was recorded alive, in milliseconds since the
+     * epoch, or null if none was.
+     */
+    fun lastAliveMs(directory: SessionPartDirectory): Long? =
+        runCatching { lastAliveStore.lastAliveMs(File(sessionsDir.value, directory.dirName)) }.getOrNull()
 
     private fun trackFailure(exc: Throwable) {
         logger.trackInternalError(InternalErrorType.SessionReconstructionFail, exc)

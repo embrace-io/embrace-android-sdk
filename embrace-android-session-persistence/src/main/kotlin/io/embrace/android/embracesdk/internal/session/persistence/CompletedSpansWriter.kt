@@ -99,7 +99,7 @@ class CompletedSpansWriter(
         }
         file?.let { return it }
         val partDir = target.partDir(directory, ::trackFailure) ?: return null
-        return SpanCollectionFile(directory, File(partDir, COMPLETED_SPANS_FILE_NAME), target.counters)
+        return SpanCollectionFile(directory, File(partDir, COMPLETED_SPANS_FILE_NAME), target)
             .also { file = it }
     }
 

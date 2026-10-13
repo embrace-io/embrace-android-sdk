@@ -151,6 +151,57 @@ internal class SessionPartWriteTargetTest {
         assertEquals(1, reported.size)
     }
 
+    @Test
+    fun `an atomic write records the part alive before it starts and once the file is in place`() {
+        val partDir = createPartDir(partDirectory)
+        val store = RecordingLastAliveStore()
+        target = SessionPartWriteTarget(lazy { sessionsDir }, store) { activePart }
+
+        writeAtomically(partDir, METADATA_FILE_NAME, maxBytes = 16, target = target) { it.write(byteArrayOf(1, 2)) }
+
+        assertEquals(listOf(Recorded(METADATA_FILE_NAME, 0), Recorded(METADATA_FILE_NAME, 2)), store.recorded)
+    }
+
+    @Test
+    fun `an append records the part alive before it starts and once the bytes are written`() {
+        val partDir = createPartDir(partDirectory)
+        val store = RecordingLastAliveStore()
+        target = SessionPartWriteTarget(lazy { sessionsDir }, store) { activePart }
+        val file = SpanCollectionFile(partDirectory, File(partDir, COMPLETED_SPANS_FILE_NAME), target)
+
+        file.append(byteArrayOf(1, 2, 3))
+        file.close()
+
+        assertEquals(listOf(Recorded(COMPLETED_SPANS_FILE_NAME, 0), Recorded(COMPLETED_SPANS_FILE_NAME, 3)), store.recorded)
+    }
+
+    @Test
+    fun `a write that fails still records the part alive before it started`() {
+        val partDir = createPartDir(partDirectory)
+        val store = RecordingLastAliveStore()
+        target = SessionPartWriteTarget(lazy { sessionsDir }, store) { activePart }
+
+        runCatching {
+            writeAtomically(partDir, METADATA_FILE_NAME, maxBytes = 1, target = target) { it.write(byteArrayOf(1, 2)) }
+        }
+
+        assertEquals(listOf(Recorded(METADATA_FILE_NAME, 0)), store.recorded)
+    }
+
+    @Test
+    fun `one recorder is opened for a part however many writes it takes`() {
+        val partDir = createPartDir(partDirectory)
+        val store = RecordingLastAliveStore()
+        target = SessionPartWriteTarget(lazy { sessionsDir }, store) { activePart }
+
+        repeat(3) {
+            writeAtomically(partDir, METADATA_FILE_NAME, maxBytes = 16, target = target) { it.write(byteArrayOf(1)) }
+        }
+
+        assertEquals(listOf(partDir), store.openedFor)
+        assertEquals(6, store.recorded.size)
+    }
+
     private fun createPartDir(directory: SessionPartDirectory): File =
         File(sessionsDir, directory.dirName).apply { mkdirs() }
 
@@ -160,5 +211,26 @@ internal class SessionPartWriteTargetTest {
     private fun partDir(): File? {
         val directory = target.directory ?: return null
         return target.partDir(directory, reported::add)
+    }
+
+    /**
+     * A file a part's process was recorded alive writing, with the file's length at that moment, which shows
+     * whether the write had happened yet.
+     */
+    private data class Recorded(val fileName: String, val length: Long)
+
+    /**
+     * Records each time a part's process was recorded alive, and the part directories it opened recorders for.
+     */
+    private class RecordingLastAliveStore : SessionPartLastAliveStore {
+        val recorded = mutableListOf<Recorded>()
+        val openedFor = mutableListOf<File>()
+
+        override fun recorder(partDir: File): SessionPartLastAliveRecorder {
+            openedFor += partDir
+            return SessionPartLastAliveRecorder { file -> recorded += Recorded(file.name, file.length()) }
+        }
+
+        override fun lastAliveMs(partDir: File): Long? = null
     }
 }

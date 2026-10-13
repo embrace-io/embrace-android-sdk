@@ -11,14 +11,21 @@ internal const val MULTI_FILE_BYTES_COUNTER = "mf-bytes-written"
 internal const val MULTI_FILE_FILES_COUNTER = "mf-files-written"
 
 /**
- * Where the telemetry for one session part is written.
+ * Where the telemetry for one session part is written. Each write is recorded with [lastAliveStore] just
+ * before and just after it, as proof the part's process was alive then.
  */
 class SessionPartWriteTarget(
     private val sessionsDir: Lazy<File>,
+    private val lastAliveStore: SessionPartLastAliveStore = NoopSessionPartLastAliveStore(),
     private val sessionPartDirectorySource: () -> SessionPartDirectory?,
 ) {
 
     private val givenUp = AtomicBoolean(false)
+
+    /**
+     * Opened on the part's first write. Writes for a part all run on one thread.
+     */
+    private var lastAliveRecorder: SessionPartLastAliveRecorder? = null
 
     val counters: FileWriteCounters = FileWriteCounters(MULTI_FILE_BYTES_COUNTER, MULTI_FILE_FILES_COUNTER)
 
@@ -53,6 +60,26 @@ class SessionPartWriteTarget(
         if (!gone) {
             track(exc)
         }
+    }
+
+    /**
+     * Records that the part's process is alive as it is about to write [file].
+     */
+    internal fun recordAlive(file: File) {
+        runCatching {
+            val recorder = lastAliveRecorder ?: lastAliveStore.recorder(checkNotNull(file.parentFile))
+                .also { lastAliveRecorder = it }
+            recorder.recordAlive(file)
+        }
+    }
+
+    /**
+     * Records that [bytes] were just written to [file]: counts them, and records that the part's process
+     * was alive to finish the write.
+     */
+    internal fun recordWrite(file: File, bytes: Long) {
+        counters.recordWrite(bytes)
+        recordAlive(file)
     }
 
     /**

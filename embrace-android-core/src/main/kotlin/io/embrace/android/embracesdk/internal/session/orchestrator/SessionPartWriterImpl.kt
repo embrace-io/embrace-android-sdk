@@ -15,9 +15,11 @@ import io.embrace.android.embracesdk.internal.payload.Span
 import io.embrace.android.embracesdk.internal.session.orchestrator.SessionPartWriterImpl.Companion.MAX_CARRIED_OVER_SPANS
 import io.embrace.android.embracesdk.internal.session.orchestrator.TelemetryWriteScheduler.WriteStrategy
 import io.embrace.android.embracesdk.internal.session.persistence.CompletedSpansWriter
+import io.embrace.android.embracesdk.internal.session.persistence.NoopSessionPartLastAliveStore
 import io.embrace.android.embracesdk.internal.session.persistence.SessionMetadataWriter
 import io.embrace.android.embracesdk.internal.session.persistence.SessionPartDirectory
 import io.embrace.android.embracesdk.internal.session.persistence.SessionPartDirectoryStore
+import io.embrace.android.embracesdk.internal.session.persistence.SessionPartLastAliveStore
 import io.embrace.android.embracesdk.internal.session.persistence.SessionPartWriteTarget
 import io.embrace.android.embracesdk.internal.session.persistence.SessionPartWriteTracker
 import io.embrace.android.embracesdk.internal.session.persistence.SpanSnapshotsWriter
@@ -50,6 +52,7 @@ class SessionPartWriterImpl(
         SessionPartDirectoryStore(sessionsDir, worker, clock, logger),
     private val writeTracker: SessionPartWriteTracker = SessionPartWriteTracker(),
     private val onWritesComplete: () -> Unit = {},
+    private val lastAliveStore: SessionPartLastAliveStore = NoopSessionPartLastAliveStore(),
 ) : SessionPartWriter {
 
     internal companion object {
@@ -344,7 +347,10 @@ class SessionPartWriterImpl(
         @Volatile
         var sealed: Boolean = false
 
-        private val target = SessionPartWriteTarget(sessionsDir) { directory }
+        private val target = SessionPartWriteTarget(
+            sessionsDir = sessionsDir,
+            lastAliveStore = lastAliveStore,
+        ) { directory }
 
         /**
          * Whether nothing more should be written for this part: it has either been fully written,

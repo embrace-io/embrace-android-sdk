@@ -301,7 +301,13 @@ class SessionPartReader(
         isLastPartOfUserSession: Boolean,
     ): MultiFileDeadPartResurrector.ResurrectedPart? {
         val resurrected = runCatching {
-            deadPartResurrector.resurrect(deadPart, directory, processIdentifier, isLastPartOfUserSession)
+            deadPartResurrector.resurrect(
+                deadPart = deadPart,
+                directory = directory,
+                processIdentifier = processIdentifier,
+                isLastPartOfUserSession = isLastPartOfUserSession,
+                lastAliveMs = reconstructionService.lastAliveMs(directory),
+            )
         }.onFailure {
             logger.trackInternalError(InternalErrorType.PayloadResurrectionPayloadFail, it)
         }.getOrNull()

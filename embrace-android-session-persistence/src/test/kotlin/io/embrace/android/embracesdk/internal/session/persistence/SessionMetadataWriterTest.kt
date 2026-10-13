@@ -485,7 +485,7 @@ internal class SessionMetadataWriterTest {
 
     private fun createWriter(source: () -> SessionPartDirectory?): SessionMetadataWriter =
         SessionMetadataWriter(
-            target = SessionPartWriteTarget(lazy { sessionsDir }, source),
+            target = SessionPartWriteTarget(lazy { sessionsDir }, sessionPartDirectorySource = source),
             metadataSource = { metadataProvider() },
             resourceSource = { resourceProvider() },
             envelopeVersion = ENVELOPE_VERSION,

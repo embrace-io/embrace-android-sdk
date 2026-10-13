@@ -19,8 +19,11 @@ import io.embrace.android.embracesdk.internal.otel.spans.EmbraceSdkSpan
 import io.embrace.android.embracesdk.internal.payload.EnvelopeMetadata
 import io.embrace.android.embracesdk.internal.payload.EnvelopeResource
 import io.embrace.android.embracesdk.internal.payload.Span
+import io.embrace.android.embracesdk.internal.session.persistence.NoopSessionPartLastAliveStore
 import io.embrace.android.embracesdk.internal.session.persistence.SessionMetadata
 import io.embrace.android.embracesdk.internal.session.persistence.SessionPartDirectory
+import io.embrace.android.embracesdk.internal.session.persistence.SessionPartLastAliveRecorder
+import io.embrace.android.embracesdk.internal.session.persistence.SessionPartLastAliveStore
 import io.embrace.android.embracesdk.internal.session.persistence.SpanCollection
 import io.embrace.android.embracesdk.internal.session.persistence.SpanProto
 import io.embrace.android.embracesdk.internal.telemetry.AppliedLimitType
@@ -1079,6 +1082,32 @@ internal class SessionPartWriterImplTest {
     }
 
     @Test
+    fun `a debounced write records the part alive before and after it runs`() {
+        val lastAliveStore = RecordingLastAliveStore()
+        val writer = createWriter(lastAliveStore = lastAliveStore)
+        writer.onSessionPartStarted(clock.now(), USER_SESSION_ID, SESSION_PART_ID)
+        drain()
+        lastAliveStore.recorded.clear()
+
+        clock.tick(10_000)
+        val changedAt = clock.now()
+        inFlightSpans = listOf(inFlightSpan("network-request"))
+        writer.onSpanSnapshotChanged(inFlightSpans.single())
+        writer.onMetadataChanged()
+        assertEquals(emptyList<Pair<String, Long>>(), lastAliveStore.recorded)
+        drainOnce()
+
+        // each write ran a debounce interval after the change, and was recorded on both sides of it
+        val writtenAt = clock.now()
+        assertTrue(writtenAt > changedAt)
+        assertEquals(
+            listOf(METADATA_FILE_NAME, SPAN_SNAPSHOTS_FILE_NAME).flatMap { listOf(it to writtenAt, it to writtenAt) },
+            lastAliveStore.recorded.sortedBy { it.first },
+        )
+        assertNoInternalErrors()
+    }
+
+    @Test
     fun `a burst of span snapshot changes is coalesced into one append`() {
         val writer = createWriter()
         writer.onSessionPartStarted(clock.now(), USER_SESSION_ID, SESSION_PART_ID)
@@ -1671,6 +1700,7 @@ internal class SessionPartWriterImplTest {
         sessionsDir: File = this.sessionsDir,
         worker: BackgroundWorker = BackgroundWorker(executor),
         onWritesComplete: () -> Unit = {},
+        lastAliveStore: SessionPartLastAliveStore = NoopSessionPartLastAliveStore(),
     ) = SessionPartWriterImpl(
         lazy { sessionsDir },
         worker,
@@ -1687,7 +1717,19 @@ internal class SessionPartWriterImplTest {
         },
         telemetryService,
         onWritesComplete = onWritesComplete,
+        lastAliveStore = lastAliveStore,
     )
+
+    /**
+     * Records each file a part's process was recorded alive writing, and the clock's time when it was.
+     */
+    private inner class RecordingLastAliveStore : SessionPartLastAliveStore {
+        val recorded = mutableListOf<Pair<String, Long>>()
+
+        override fun recorder(partDir: File) = SessionPartLastAliveRecorder { file -> recorded += file.name to clock.now() }
+
+        override fun lastAliveMs(partDir: File): Long? = null
+    }
 
     private fun configService(
         enabled: Boolean,

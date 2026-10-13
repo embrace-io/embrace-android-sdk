@@ -65,6 +65,7 @@ class BuildVariantConfigFromFileTest {
         assertEquals("abcde", variantConfiguration?.appId)
         assertEquals("12345678901234567890123456789012", variantConfiguration?.apiToken)
         assertEquals(true, variantConfiguration?.ndkEnabled)
+        assertEquals("""{"app_id":"abcde","api_token":"12345678901234567890123456789012","ndk_enabled":true}""", variantConfiguration?.json)
     }
 
     @Test

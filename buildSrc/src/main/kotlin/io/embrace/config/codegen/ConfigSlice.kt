@@ -18,7 +18,7 @@ import org.yaml.snakeyaml.error.YAMLException
  *     default: false
  *     local:
  *       type: Boolean                 # Boolean, Int, Long or String
- *       sdk: enabledFeatures.isFooEnabled()   # read from InstrumentedConfig
+ *       json: sdk_config.foo_enabled  # path in embrace-config.json, instrumented into FooLocalConfigImpl
  *     remote:
  *       type: Pct                     # rollout percentage, resolved to a Boolean
  *       sdk: pctFooEnabled            # read from RemoteConfig
@@ -42,7 +42,7 @@ class ConfigSlice(
         "Resolved " + name.removeSuffix("Config").split(Regex("(?=[A-Z])")).joinToString(" ") { it.lowercase() }.trim() + " config."
 
     val resolverParams: List<ParameterSpec> = listOfNotNull(
-        ParameterSpec("local", ConfigClassNames.INSTRUMENTED_CONFIG).takeIf { localFields.isNotEmpty() },
+        ParameterSpec("local", localConfig).takeIf { localFields.isNotEmpty() },
         ParameterSpec("remote", ConfigClassNames.REMOTE_CONFIG.copy(nullable = true)).takeIf { fields.any { it.remote != null } },
         ParameterSpec("bucket", ConfigClassNames.LAZY_FLOAT).takeIf { fields.any { it.remote?.type == ConfigType.PCT } },
     )
@@ -68,7 +68,7 @@ class ConfigSlice(
 
         private fun parseFeature(feature: Map<String, Any>): ConfigField {
             feature.checkKeys("property", "default", "local?", "remote?", "min?", "max?", "max_length?")
-            val local = feature["local"]?.let { within("local") { parseProperty(it.asMap()) } }
+            val local = feature["local"]?.let { within("local") { parseLocalProperty(it.asMap()) } }
             val remote = feature["remote"]?.let { within("remote") { parseProperty(it.asMap()) } }
             val type = local?.type ?: remote?.type?.resolvedType ?: throw IllegalArgumentException("needs a local or remote section")
             require(local?.type != ConfigType.PCT) { "Pct is only valid for remote" }
@@ -108,6 +108,13 @@ class ConfigSlice(
         private fun parseProperty(yaml: Map<String, Any>): ConfigProperty {
             yaml.checkKeys("type", "sdk")
             return ConfigProperty(ConfigType.fromYaml(yaml.string("type")), yaml.string("sdk"))
+        }
+
+        private fun parseLocalProperty(yaml: Map<String, Any>): LocalConfigProperty {
+            yaml.checkKeys("type", "json")
+            val json = yaml.string("json")
+            require(json.matches(Regex("[a-z0-9_]+(\\.[a-z0-9_]+)*"))) { "'$json' is not a valid json path" }
+            return LocalConfigProperty(ConfigType.fromYaml(yaml.string("type")), json)
         }
 
         private fun Map<String, Any>.checkKeys(vararg keys: String) {

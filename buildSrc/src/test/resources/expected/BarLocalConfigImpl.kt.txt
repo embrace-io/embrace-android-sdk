@@ -8,5 +8,6 @@ import io.embrace.android.embracesdk.`internal`.config.instrumented.schema.BarLo
  */
 @LocalConfigInstrumented
 public object BarLocalConfigImpl : BarLocalConfig {
+    @LocalConfigKey("bar_limit")
     override fun getLimit(): Int = 10
 }

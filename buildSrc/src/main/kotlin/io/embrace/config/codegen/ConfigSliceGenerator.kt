@@ -47,7 +47,7 @@ fun configSliceFile(slice: ConfigSlice, packageName: String, sourceName: String)
                 CodeBlock.of("remote?.%L%L", it.sdk, inRange?.let { CodeBlock.of("?%L", it) } ?: "")
             }
         }
-        val local = field.local?.let { CodeBlock.of("local.%L%L", it.sdk, inRange ?: "") }
+        val local = field.local?.let { CodeBlock.of("local.%N()%L", field.localGetter, inRange ?: "") }
         val default = field.type.literal(field.default).takeIf { local == null || inRange != null }
         CodeBlock.of("%N = { %L },\n", field.name, listOfNotNull(remote, local, default).joinToCode(" ?: "))
     }

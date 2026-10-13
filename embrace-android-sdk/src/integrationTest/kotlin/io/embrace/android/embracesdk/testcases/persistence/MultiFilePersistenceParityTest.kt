@@ -238,50 +238,53 @@ internal class MultiFilePersistenceParityTest(
     }
 
     /**
-     * A change made less than one write interval after the last write is lost in both modes when the
-     * process dies: the multi-file mode's debounced metadata write and the single-file mode's next
-     * periodic cache tick are both still pending, so the part is resurrected with the metadata it
-     * started with.
+     * A change made just before the process dies is lost in both modes: the multi-file mode's
+     * debounced metadata write and the single-file mode's next periodic cache tick are both still
+     * pending, so the part is resurrected with the metadata it started with.
      */
     @Test
-    fun `envelope metadata changed less than one write interval before the process dies is lost in both modes`() {
+    fun `envelope metadata changed just before the process dies is lost in both modes`() {
         killMidPart {
             changeEnvelopeMetadata(AFTER)
-            clock.tick(WRITE_INTERVAL_MS - 1)
+            clock.tick(METADATA_WRITE_DELAY_MS - 1)
             persistDueWrites()
         }
         relaunchAndAssertDeliveredMetadata(BEFORE)
     }
 
     /**
-     * The modes differ here. The single-file mode caches on a fixed cadence, so a change is persisted by
-     * the next tick however soon that comes; the multi-file mode debounces from the change itself,
-     * so it persists the change a full interval after it was made. A process that dies between the
-     * two keeps the change under the single-file mode and loses it under the multi-file mode.
+     * The modes differ here. The single-file mode caches on a fixed cadence, so a change made just after
+     * a tick waits a whole interval for the next one; the multi-file mode writes metadata a short
+     * delay after the change itself. A process that dies between the two keeps the change under the
+     * multi-file mode and loses it under the single-file mode.
      */
     @Test
-    fun `envelope metadata changed between a single-file cache tick and the multi-file debounce differs by mode`() {
+    fun `envelope metadata changed just after a single-file cache tick is kept only by the multi-file mode`() {
         killMidPart {
-            clock.tick(WRITE_INTERVAL_MS / 2)
             changeEnvelopeMetadata(AFTER)
-            clock.tick(WRITE_INTERVAL_MS / 2)
+            clock.tick(METADATA_WRITE_DELAY_MS)
             persistDueWrites()
         }
         relaunchAndAssertDeliveredMetadata(
             when (persistenceMode) {
-                PersistenceMode.SINGLE_FILE -> AFTER
-                PersistenceMode.MULTI_FILE -> BEFORE
+                PersistenceMode.SINGLE_FILE -> BEFORE
+                PersistenceMode.MULTI_FILE -> AFTER
             },
         )
     }
 
+    /**
+     * The second change comes within the multi-file mode's metadata write delay of the first, so both
+     * modes coalesce the two into one write: the multi-file mode's debounced metadata write and the
+     * single-file mode's next periodic cache tick.
+     */
     @Test
     fun `the last envelope metadata change inside one write interval is what the next launch delivers`() {
         killMidPart {
             changeEnvelopeMetadata(AFTER)
-            clock.tick(WRITE_INTERVAL_MS / 2)
+            clock.tick(METADATA_WRITE_DELAY_MS / 2)
             changeEnvelopeMetadata(LAST)
-            clock.tick(WRITE_INTERVAL_MS / 2)
+            clock.tick(WRITE_INTERVAL_MS - METADATA_WRITE_DELAY_MS / 2)
             persistDueWrites()
         }
         relaunchAndAssertDeliveredMetadata(LAST)
@@ -1056,9 +1059,11 @@ internal class MultiFilePersistenceParityTest(
         private const val EVENT_DRIVEN_PROPERTY = "event-driven"
         private const val WRITE_DEBOUNCE_WAIT_MS = 1000L
 
-        // the multi-file mode debounces its metadata writes by the same interval as the single-file
-        // mode's default periodic cache (SessionPartWriterImpl.METADATA_WRITE_DELAY_MS)
+        // the single-file mode's default periodic cache interval
         private const val WRITE_INTERVAL_MS = DEFAULT_PERIODIC_CACHE_INTERVAL_MS
+
+        // the multi-file mode's metadata write delay (SessionPartWriterImpl.METADATA_WRITE_DELAY_MS)
+        private const val METADATA_WRITE_DELAY_MS = 500L
         private const val BEFORE = "before"
         private const val AFTER = "after"
         private const val LAST = "last"

@@ -159,6 +159,18 @@ internal class NavigationStateDataSourceTest {
         args.eventBus.emitState(CurrentScreen.KEY, CurrentScreen(screen, args.clock.tick()))
     }
 
+    @Test
+    fun `transitions capped at limit`() {
+        dataSource.onDataCaptureEnabled()
+        val token = args.destination.createdStateTokens.single()
+
+        repeat(1001) { i ->
+            dataSource.onScreenLoad(args.clock.tick(), Screen.Named(if (i % 2 == 0) "about" else "contacts"))
+        }
+
+        assertEquals(1000, token.transitions.size)
+    }
+
     private class CountingScreenAttributesSource : ScreenAttributesSource {
         var collectCount = 0
 

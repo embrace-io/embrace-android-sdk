@@ -1,6 +1,5 @@
 package io.embrace.android.embracesdk.internal.instance
 
-import io.embrace.android.embracesdk.EmbraceImpl
 import io.embrace.android.embracesdk.internal.SystemInfo
 import io.embrace.android.embracesdk.internal.api.delegate.LateBindingOpenTelemetry
 import io.embrace.android.embracesdk.internal.api.delegate.SdkCallChecker
@@ -58,7 +57,7 @@ internal fun createSdkStateHolder(
         openTelemetryKotlin = openTelemetryKotlin,
     )
     lateinit var holder: SdkStateHolder
-    val impl = EmbraceImpl(
+    val impl = RealSdkInstance(
         lazyBootstrapper = bootstrapper,
         hostedSdkApiProvider = { holder.api },
         sdkCallChecker = sdkCallChecker,

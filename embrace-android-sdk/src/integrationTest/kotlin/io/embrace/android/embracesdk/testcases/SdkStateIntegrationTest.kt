@@ -5,7 +5,6 @@ package io.embrace.android.embracesdk.testcases
 import android.app.Activity
 import android.content.Context
 import androidx.test.core.app.ApplicationProvider
-import io.embrace.android.embracesdk.EmbraceImpl
 import io.embrace.android.embracesdk.LastRunEndState
 import io.embrace.android.embracesdk.PropertyScope
 import io.embrace.android.embracesdk.Severity
@@ -24,6 +23,7 @@ import io.embrace.android.embracesdk.internal.clock.millisToNanos
 import io.embrace.android.embracesdk.internal.config.remote.RemoteConfig
 import io.embrace.android.embracesdk.internal.delivery.storage.StorageLocation
 import io.embrace.android.embracesdk.internal.delivery.storage.asFile
+import io.embrace.android.embracesdk.internal.instance.RealSdkInstance
 import io.embrace.android.embracesdk.internal.instance.SdkState
 import io.embrace.android.embracesdk.internal.otel.sdk.findAttributeValue
 import io.embrace.android.embracesdk.internal.otel.spans.NoopEmbraceSdkSpan
@@ -441,7 +441,7 @@ internal class SdkStateIntegrationTest(
     }
 
     private fun assertInternalApiIsLive() {
-        assertTrue(EmbraceInternalApi.internalInterfaceApi is EmbraceImpl)
+        assertTrue(EmbraceInternalApi.internalInterfaceApi is RealSdkInstance)
         assertNotSame(NoopInternalInterfaceApi.internalInterface, EmbraceInternalApi.internalInterface)
         assertNotSame(
             NoopInternalInterfaceApi.reactNativeInternalInterface,

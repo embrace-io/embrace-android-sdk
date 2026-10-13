@@ -20,25 +20,30 @@ class AndroidNdkTest {
     private val defaultExpectedVariants = listOf("release")
     private val variantsSentInBuildTelemetry = listOf("debug", "release")
     private val defaultExpectedLibs = listOf("libemb-donuts.so", "libemb-crisps.so")
-    private val defaultExpectedArchs = listOf("x86_64", "x86", "armeabi-v7a", "arm64-v8a")
+    private val defaultExpectedArchs = listOf("x86_64", "arm64-v8a")
+    private val allArchs = listOf("x86_64", "x86", "armeabi-v7a", "arm64-v8a")
 
+    /**
+     * Most fixtures build two ABIs by default to save time. This test builds every ABI to cover the full set.
+     */
     @Test
     fun buildCMake() {
         rule.runTest(
             fixture = "android-cmake",
             tasks = listOf("build"),
+            additionalArgs = listOf("-PabiFilters=${allArchs.joinToString(",")}"),
             projectType = ProjectType.ANDROID,
             setup = {
                 setupMockResponses(
                     defaultExpectedLibs,
-                    defaultExpectedArchs,
+                    allArchs,
                     defaultExpectedVariants,
                 )
             },
             assertions = {
                 verifyBuildTelemetryRequestSent(variantsSentInBuildTelemetry)
-                verifyHandshakes(defaultExpectedLibs, defaultExpectedArchs, defaultExpectedVariants)
-                verifyUploads(defaultExpectedLibs, defaultExpectedArchs, defaultExpectedVariants)
+                verifyHandshakes(defaultExpectedLibs, allArchs, defaultExpectedVariants)
+                verifyUploads(defaultExpectedLibs, allArchs, defaultExpectedVariants)
             },
         )
     }

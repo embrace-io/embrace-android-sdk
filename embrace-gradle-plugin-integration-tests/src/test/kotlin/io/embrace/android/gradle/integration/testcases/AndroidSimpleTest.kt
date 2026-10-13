@@ -111,6 +111,7 @@ class AndroidSimpleTest {
         rule.runTest(
             fixture = "android-simple",
             tasks = listOf("build"),
+            additionalArgs = listOf("-Pandroid.lint.checkReleaseBuilds=true"),
             projectType = ProjectType.ANDROID,
             assertions = {
                 verifyBuildTelemetryRequestSent(variants)

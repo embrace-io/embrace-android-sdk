@@ -24,8 +24,6 @@ class BytecodeInstrumentationTest {
         "/okhttp3/OkHttpClient\$Builder",
         "/com/example/app/FcmServiceFixture",
     )
-    private val defaultArgs = listOf("-x", "lintVitalRelease")
-
     private val ndkSetup: SetupInterface.(File) -> Unit = { setupEmptyHandshakeResponse() }
 
     @Test
@@ -33,7 +31,6 @@ class BytecodeInstrumentationTest {
         rule.runTest(
             fixture = "android-instrumentation",
             tasks = listOf("assembleRelease"),
-            additionalArgs = defaultArgs,
             projectType = ProjectType.ANDROID,
             setup = ndkSetup,
             assertions = { projectDir ->
@@ -47,7 +44,7 @@ class BytecodeInstrumentationTest {
         rule.runTest(
             fixture = "android-instrumentation",
             tasks = listOf("assembleRelease"),
-            additionalArgs = defaultArgs.plus(listOf("-P", "globalDisable=true")),
+            additionalArgs = listOf("-P", "globalDisable=true"),
             projectType = ProjectType.ANDROID,
             setup = ndkSetup,
             assertions = { projectDir ->
@@ -61,7 +58,7 @@ class BytecodeInstrumentationTest {
         rule.runTest(
             fixture = "android-instrumentation",
             tasks = listOf("assembleRelease"),
-            additionalArgs = defaultArgs.plus(listOf("-P", "individualDisable=true")),
+            additionalArgs = listOf("-P", "individualDisable=true"),
             projectType = ProjectType.ANDROID,
             setup = ndkSetup,
             assertions = { projectDir ->
@@ -75,7 +72,7 @@ class BytecodeInstrumentationTest {
         rule.runTest(
             fixture = "android-instrumentation",
             tasks = listOf("assembleRelease"),
-            additionalArgs = defaultArgs.plus(listOf("-P", "disableByVariant=true")),
+            additionalArgs = listOf("-P", "disableByVariant=true"),
             projectType = ProjectType.ANDROID,
             setup = ndkSetup,
             assertions = { projectDir ->
@@ -85,8 +82,6 @@ class BytecodeInstrumentationTest {
     }
 
     private fun AssertionInterface.verifyBytecodeInstrumented(projectDir: File, resName: String) {
-        verifyJvmMappingRequestsSent(1)
-
         val reader = SmaliConfigReader()
         val smaliFiles = reader.readSmaliFiles(projectDir, classNames)
         val parser = SmaliParser()

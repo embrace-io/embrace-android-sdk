@@ -11,7 +11,7 @@ class ConfigCacheTest {
 
     private val defaultExpectedVariants = listOf("debug", "release")
     private val defaultExpectedLibs = listOf("libemb-donuts.so", "libemb-crisps.so")
-    private val defaultExpectedArchs = listOf("x86_64", "x86", "armeabi-v7a", "arm64-v8a")
+    private val defaultExpectedArchs = listOf("x86_64", "arm64-v8a")
 
     private val configCacheArgs = listOf(
         "-Dorg.gradle.configuration-cache=true",

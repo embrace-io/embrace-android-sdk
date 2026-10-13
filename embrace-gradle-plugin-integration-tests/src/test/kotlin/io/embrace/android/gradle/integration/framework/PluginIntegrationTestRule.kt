@@ -13,6 +13,8 @@ import java.nio.file.Files
 import java.util.Properties
 import java.util.concurrent.atomic.AtomicInteger
 
+private const val CHECK_RELEASE_BUILDS = "android.lint.checkReleaseBuilds"
+
 class PluginIntegrationTestRule : ExternalResource() {
 
     private val uniqueDirName: AtomicInteger = AtomicInteger(0)
@@ -245,6 +247,10 @@ class PluginIntegrationTestRule : ExternalResource() {
         // Android projects currently require this flag to compile
         if (projectType == ProjectType.ANDROID) {
             args.add("-Pandroid.useAndroidX=true")
+        }
+        // skip lintVitalRelease by default as it's slow
+        if (additionalArgs.none { it.startsWith("-P$CHECK_RELEASE_BUILDS=") }) {
+            args.add("-P$CHECK_RELEASE_BUILDS=false")
         }
         if (attachDebugger) {
             println(

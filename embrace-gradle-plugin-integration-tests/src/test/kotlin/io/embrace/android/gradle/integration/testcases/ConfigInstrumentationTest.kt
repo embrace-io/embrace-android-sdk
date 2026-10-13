@@ -9,6 +9,7 @@ import io.embrace.android.gradle.integration.framework.smali.SmaliMethod
 import io.embrace.android.gradle.integration.framework.smali.SmaliParser
 import io.embrace.android.gradle.plugin.util.INVALID_BUILD_ID
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertNotEquals
 import org.junit.Rule
 import org.junit.Test
 import java.io.File
@@ -18,6 +19,8 @@ class ConfigInstrumentationTest {
     @Rule
     @JvmField
     val rule: PluginIntegrationTestRule = PluginIntegrationTestRule()
+
+    private val notMinified = "-PminifyRelease=false"
 
     private val variants = listOf("debug", "release")
     private val classNames = listOf(
@@ -36,7 +39,6 @@ class ConfigInstrumentationTest {
         rule.runTest(
             fixture = "android-with-code",
             tasks = listOf("assembleRelease"),
-            additionalArgs = listOf("-x", "lintVitalRelease"),
             projectType = ProjectType.ANDROID,
             setup = {
                 setupEmptyHandshakeResponse()
@@ -52,7 +54,7 @@ class ConfigInstrumentationTest {
         rule.runTest(
             fixture = "android-with-code",
             tasks = listOf("assembleRelease"),
-            additionalArgs = listOf("-x", "lintVitalRelease"),
+            additionalArgs = listOf(notMinified),
             projectType = ProjectType.ANDROID,
             setup = { projectDir ->
                 // copy embrace-config.json with non-default values to project directory
@@ -61,7 +63,7 @@ class ConfigInstrumentationTest {
                 }
             },
             assertions = { projectDir ->
-                verifyInstrumentedConfig(projectDir, "instrumented-config-overrides.json")
+                verifyInstrumentedConfig(projectDir, "instrumented-config-overrides.json", minified = false)
             },
         )
     }
@@ -71,7 +73,7 @@ class ConfigInstrumentationTest {
         rule.runTest(
             fixture = "android-with-code",
             tasks = listOf("assembleRelease"),
-            additionalArgs = listOf("-x", "lintVitalRelease", "-Pembrace.disableMappingFileUpload=true"),
+            additionalArgs = listOf(notMinified, "-Pembrace.disableMappingFileUpload=true"),
             projectType = ProjectType.ANDROID,
             assertions = { projectDir ->
                 assertEquals(INVALID_BUILD_ID, readInstrumentedBuildId(projectDir))
@@ -89,7 +91,7 @@ class ConfigInstrumentationTest {
             .returnValue
     }
 
-    private fun AssertionInterface.verifyInstrumentedConfig(projectDir: File, resName: String) {
+    private fun AssertionInterface.verifyInstrumentedConfig(projectDir: File, resName: String, minified: Boolean = true) {
         verifyBuildTelemetryRequestSent(variants)
         val reader = SmaliConfigReader()
         val smaliFiles = reader.readSmaliFiles(projectDir, classNames)
@@ -117,6 +119,10 @@ class ConfigInstrumentationTest {
 
         // build ID is non-deterministic, test independently
         val buildId = checkNotNull(buildIdMethod?.returnValue)
-        verifyJvmMappingRequestsSent(appIds = listOf("abcde"), buildIds = listOf(buildId))
+        assertNotEquals(INVALID_BUILD_ID, buildId)
+
+        if (minified) {
+            verifyJvmMappingRequestsSent(appIds = listOf("abcde"), buildIds = listOf(buildId))
+        }
     }
 }

@@ -17,7 +17,7 @@ class MissingConfigFileTest {
     fun assembleRelease() {
         rule.runTest(
             fixture = "android-simple",
-            task = "assembleRelease",
+            tasks = listOf("assembleRelease"),
             projectType = ProjectType.ANDROID,
             setup = { projectDir ->
                 File(projectDir, "src/main/embrace-config.json").delete()

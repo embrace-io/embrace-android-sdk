@@ -19,7 +19,7 @@ class UnsuccessfulHttpCallTest {
     fun `proguard 4xx status code`() {
         rule.runTest(
             fixture = "android-simple",
-            task = "assembleRelease",
+            tasks = listOf("assembleRelease"),
             projectType = ProjectType.ANDROID,
             setup = {
                 enqueueResponse(EmbraceEndpoint.PROGUARD, MockResponse().setResponseCode(400))
@@ -36,7 +36,7 @@ class UnsuccessfulHttpCallTest {
     fun `proguard 5xx status code`() {
         rule.runTest(
             fixture = "android-simple",
-            task = "assembleRelease",
+            tasks = listOf("assembleRelease"),
             projectType = ProjectType.ANDROID,
             setup = {
                 enqueueResponse(EmbraceEndpoint.PROGUARD, MockResponse().setResponseCode(500))

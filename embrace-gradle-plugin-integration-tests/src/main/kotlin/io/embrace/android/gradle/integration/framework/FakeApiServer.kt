@@ -4,16 +4,17 @@ import io.embrace.android.gradle.plugin.network.EmbraceEndpoint
 import okhttp3.mockwebserver.Dispatcher
 import okhttp3.mockwebserver.MockResponse
 import okhttp3.mockwebserver.RecordedRequest
-import java.util.LinkedList
+import java.util.concurrent.ConcurrentLinkedQueue
+import java.util.concurrent.CopyOnWriteArrayList
 
 class FakeApiServer : Dispatcher() {
 
     private val endpoints = EmbraceEndpoint.entries.associateBy(EmbraceEndpoint::url)
     private val receivedRequests = EmbraceEndpoint.entries.associateWith {
-        mutableListOf<RecordedRequest>()
+        CopyOnWriteArrayList<RecordedRequest>()
     }
     private val enqueuedResponses = EmbraceEndpoint.entries.associateWith {
-        LinkedList<MockResponse>()
+        ConcurrentLinkedQueue<MockResponse>()
     }
 
     override fun dispatch(request: RecordedRequest): MockResponse {
@@ -33,5 +34,10 @@ class FakeApiServer : Dispatcher() {
 
     fun enqueueResponse(endpoint: EmbraceEndpoint, response: MockResponse) {
         enqueuedResponses[endpoint]?.add(response)
+    }
+
+    fun reset() {
+        receivedRequests.values.forEach(CopyOnWriteArrayList<RecordedRequest>::clear)
+        enqueuedResponses.values.forEach(ConcurrentLinkedQueue<MockResponse>::clear)
     }
 }

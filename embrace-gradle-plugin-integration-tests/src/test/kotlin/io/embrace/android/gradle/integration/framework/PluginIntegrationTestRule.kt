@@ -46,7 +46,8 @@ class PluginIntegrationTestRule : ExternalResource() {
      * can be written this way if you need to run something once, then assert that the file system
      * was changed appropriately. If you need to run multiple builds for one test, e.g. in order
      * to test that a task handles caching correctly, then you can simply call this function
-     * multiple times in a single JUnit test case.
+     * multiple times in a single JUnit test case. The fake API server is reset at the start of each
+     * call, so assertions only observe requests made by the current build.
      */
     @Suppress("LongParameterList")
     fun runTest(
@@ -57,9 +58,9 @@ class PluginIntegrationTestRule : ExternalResource() {
         fixture: String,
 
         /**
-         * The name of the task to run.
+         * The names of the tasks to run in a single build. Each task is asserted to have [expectedOutcome].
          */
-        task: String = "testTask",
+        tasks: List<String> = listOf("testTask"),
 
         /**
          * The versions of Gradle/AGP to use.
@@ -125,8 +126,9 @@ class PluginIntegrationTestRule : ExternalResource() {
         // invoked multiple times per test case
         val dir = tmpDir ?: prepareTempDirectory(fixture, projectType, androidProjectRoot)
         tmpDir = dir
+        apiServer.reset()
         val args = prepareCommandArgs(
-            task,
+            tasks,
             projectType,
             baseUrl,
             additionalArgs,
@@ -140,7 +142,7 @@ class PluginIntegrationTestRule : ExternalResource() {
         val result = executeGradleBuild(args, testMatrix.gradle, expectedExceptionMessage != null)
 
         // run assertions on the build outcome
-        assertTaskOutcome(result, task, expectedOutcome, expectedExceptionMessage)
+        assertTaskOutcomes(result, tasks, expectedOutcome, expectedExceptionMessage)
         assertionInterface.buildOutput = result.output
         assertionInterface.assertions(dir)
     }
@@ -222,7 +224,7 @@ class PluginIntegrationTestRule : ExternalResource() {
      * Adds some additional arguments to the gradle build for better performance of the test suite.
      */
     private fun prepareCommandArgs(
-        task: String,
+        tasks: List<String>,
         projectType: ProjectType,
         baseUrl: String?,
         additionalArgs: List<String>,
@@ -230,7 +232,7 @@ class PluginIntegrationTestRule : ExternalResource() {
         testMatrix: TestMatrix,
         refreshDependencies: Boolean,
     ): List<String> {
-        val args = mutableListOf(task)
+        val args = tasks.toMutableList()
         args.addAll(additionalArgs)
         if (refreshDependencies) {
             // fixtures consume io.embrace:*:<version>-SNAPSHOT from the integration test repo. Force a
@@ -283,11 +285,11 @@ class PluginIntegrationTestRule : ExternalResource() {
     }
 
     /**
-     * Asserts the task executed with the expected outcome. Generally speaking this will be SUCCESS.
+     * Asserts each task executed with the expected outcome. Generally speaking this will be SUCCESS.
      */
-    private fun assertTaskOutcome(
+    private fun assertTaskOutcomes(
         result: BuildResult,
-        task: String,
+        tasks: List<String>,
         expectedOutcome: TaskOutcome,
         exceptionExpected: String?,
     ) {
@@ -295,9 +297,10 @@ class PluginIntegrationTestRule : ExternalResource() {
             assertTrue(result.output.contains(exceptionExpected))
             return
         }
-        val buildTask = result.tasks.singleOrNull { it.path == ":$task" || it.path == ":app:$task" }
-            ?: error("Task '$task' not found in result.")
-        val outcome = buildTask.outcome
-        assertEquals(expectedOutcome, outcome)
+        tasks.forEach { task ->
+            val buildTask = result.tasks.singleOrNull { it.path == ":$task" || it.path == ":app:$task" }
+                ?: error("Task '$task' not found in result.")
+            assertEquals("Unexpected outcome for task '$task'", expectedOutcome, buildTask.outcome)
+        }
     }
 }

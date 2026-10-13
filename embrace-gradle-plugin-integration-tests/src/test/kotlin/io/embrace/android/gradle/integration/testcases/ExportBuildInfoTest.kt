@@ -20,7 +20,7 @@ class ExportBuildInfoTest {
     fun `no build info exported by default`() {
         rule.runTest(
             fixture = "android-simple",
-            task = "assembleRelease",
+            tasks = listOf("assembleRelease"),
             projectType = ProjectType.ANDROID,
             assertions = { projectDir ->
                 verifyNoBuildInfoExported(projectDir, "release")
@@ -32,7 +32,7 @@ class ExportBuildInfoTest {
     fun `build info exported for release variant when enabled`() {
         rule.runTest(
             fixture = "android-simple",
-            task = "assembleRelease",
+            tasks = listOf("assembleRelease"),
             projectType = ProjectType.ANDROID,
             additionalArgs = listOf("-Pembrace.exportBuildInfo=true"),
             assertions = { projectDir ->
@@ -48,7 +48,7 @@ class ExportBuildInfoTest {
     fun `build info exported with unique build ID when mapping upload disabled`() {
         rule.runTest(
             fixture = "android-simple",
-            task = "assembleRelease",
+            tasks = listOf("assembleRelease"),
             projectType = ProjectType.ANDROID,
             additionalArgs = listOf("-Pembrace.exportBuildInfo=true", "-Pembrace.disableMappingFileUpload=true"),
             assertions = { projectDir ->
@@ -63,7 +63,7 @@ class ExportBuildInfoTest {
     fun `no build info exported for debug variant when enabled`() {
         rule.runTest(
             fixture = "android-simple",
-            task = "assembleDebug",
+            tasks = listOf("assembleDebug"),
             projectType = ProjectType.ANDROID,
             additionalArgs = listOf("-Pembrace.exportBuildInfo=true"),
             assertions = { projectDir ->
@@ -76,7 +76,7 @@ class ExportBuildInfoTest {
     fun `build info exported for dexguard obfuscation task`() {
         rule.runTest(
             fixture = "android-dexguard",
-            task = "assemble",
+            tasks = listOf("assemble"),
             projectType = ProjectType.ANDROID,
             additionalArgs = listOf("-Pembrace.exportBuildInfo=true"),
             assertions = { projectDir ->

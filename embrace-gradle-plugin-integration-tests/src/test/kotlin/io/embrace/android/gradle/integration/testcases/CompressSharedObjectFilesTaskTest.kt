@@ -40,7 +40,7 @@ class CompressSharedObjectFilesTaskTest {
     fun `verify compression reduces folder size`() {
         rule.runTest(
             fixture = "compress-shared-object-files",
-            task = "compressTask",
+            tasks = listOf("compressTask"),
             setup = { projectDir ->
                 assertTrue(projectDir.file("testArchitecturesDir").exists())
             },
@@ -64,7 +64,7 @@ class CompressSharedObjectFilesTaskTest {
     fun `verify compressed files maintain directory structure`() {
         rule.runTest(
             fixture = "compress-shared-object-files",
-            task = "compressTask",
+            tasks = listOf("compressTask"),
             assertions = { projectDir ->
                 expectedArchitectures.forEach { architecture ->
                     expectedSharedObjectFiles.forEach { sharedObjectFile ->
@@ -80,7 +80,7 @@ class CompressSharedObjectFilesTaskTest {
     fun `task is not executed when architecturesDirectory doesn't exist`() {
         rule.runTest(
             fixture = "compress-shared-object-files",
-            task = "compressTask",
+            tasks = listOf("compressTask"),
             setup = { projectDir ->
                 projectDir.file("testArchitecturesDir").deleteRecursively()
             },
@@ -95,7 +95,7 @@ class CompressSharedObjectFilesTaskTest {
     fun `task is not executed when architecturesDirectory is empty`() {
         rule.runTest(
             fixture = "compress-shared-object-files",
-            task = "compressTask",
+            tasks = listOf("compressTask"),
             setup = { projectDir ->
                 // keep testArchitecturesDir but delete its contents
                 projectDir.file("testArchitecturesDir").listFiles()?.forEach { it.deleteRecursively() }
@@ -111,7 +111,7 @@ class CompressSharedObjectFilesTaskTest {
     fun `task is not executed when architecturesDirectory only contains empty directories `() {
         rule.runTest(
             fixture = "compress-shared-object-files",
-            task = "compressTask",
+            tasks = listOf("compressTask"),
             setup = { projectDir ->
                 // delete architecture directories
                 projectDir.file("testArchitecturesDir").listFiles()?.forEach { it.deleteRecursively() }
@@ -130,7 +130,7 @@ class CompressSharedObjectFilesTaskTest {
     fun `an error is thrown when architecturesDirectory is not a directory`() {
         rule.runTest(
             fixture = "compress-shared-object-files",
-            task = "compressTask",
+            tasks = listOf("compressTask"),
             setup = { projectDir ->
                 // delete testArchitecturesDir
                 projectDir.file("testArchitecturesDir").deleteRecursively()
@@ -148,7 +148,7 @@ class CompressSharedObjectFilesTaskTest {
     fun `an error is thrown when architecturesDirectory does not contain directories`() {
         rule.runTest(
             fixture = "compress-shared-object-files",
-            task = "compressTask",
+            tasks = listOf("compressTask"),
             setup = { projectDir ->
                 // delete architecture directories
                 projectDir.file("testArchitecturesDir").listFiles()?.forEach { it.deleteRecursively() }
@@ -166,7 +166,7 @@ class CompressSharedObjectFilesTaskTest {
     fun `an error is thrown when architecture directories contain files other than shared objects`() {
         rule.runTest(
             fixture = "compress-shared-object-files",
-            task = "compressTask",
+            tasks = listOf("compressTask"),
             setup = { projectDir ->
                 // delete architecture directories
                 projectDir.file("testArchitecturesDir").listFiles()?.forEach { it.deleteRecursively() }
@@ -185,7 +185,7 @@ class CompressSharedObjectFilesTaskTest {
     fun `an error is thrown when architecture directories only contains nested directories`() {
         rule.runTest(
             fixture = "compress-shared-object-files",
-            task = "compressTask",
+            tasks = listOf("compressTask"),
             setup = { projectDir ->
                 // delete architecture directories
                 projectDir.file("testArchitecturesDir").listFiles()?.forEach { it.deleteRecursively() }
@@ -207,7 +207,7 @@ class CompressSharedObjectFilesTaskTest {
     fun `files that are not directly in architecture directories are ignored`() {
         rule.runTest(
             fixture = "compress-shared-object-files",
-            task = "compressTask",
+            tasks = listOf("compressTask"),
             setup = { projectDir ->
                 // create a file inside a nested directory inside an architecture directory
                 projectDir.file("testArchitecturesDir/arm64-v8a/nestedDirectory").mkdirs()
@@ -229,7 +229,7 @@ class CompressSharedObjectFilesTaskTest {
     fun `don't throw an error when failBuildOnUploadErrors is disabled`() {
         rule.runTest(
             fixture = "compress-shared-object-files",
-            task = "compressTask",
+            tasks = listOf("compressTask"),
             additionalArgs = listOf("-PfailBuildOnUploadErrors=false"),
             setup = { projectDir ->
                 // delete architecture directories

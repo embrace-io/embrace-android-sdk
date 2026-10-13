@@ -30,7 +30,7 @@ class ConfigCacheTest {
     fun assembleRelease() {
         rule.runTest(
             fixture = "android-cmake",
-            task = "assembleRelease",
+            tasks = listOf("assembleRelease"),
             additionalArgs = configCacheArgs,
             setup = {
                 setupMockResponses(
@@ -68,7 +68,7 @@ class ConfigCacheTest {
         repeat(2) { run ->
             rule.runTest(
                 fixture = "android-simple",
-                task = task,
+                tasks = listOf(task),
                 additionalArgs = configCacheArgs + extraArgs,
                 projectType = ProjectType.ANDROID,
                 refreshDependencies = run == 0,

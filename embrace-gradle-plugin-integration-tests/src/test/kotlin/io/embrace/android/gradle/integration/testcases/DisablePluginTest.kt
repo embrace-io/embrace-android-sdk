@@ -17,7 +17,7 @@ class DisablePluginTest {
     fun `plugin entirely disabled for one build variant`() {
         rule.runTest(
             fixture = "android-disable-product-flavor",
-            task = "assemble",
+            tasks = listOf("assemble"),
             projectType = ProjectType.ANDROID,
             assertions = {
                 verifyBuildTelemetryRequestSent(variants)

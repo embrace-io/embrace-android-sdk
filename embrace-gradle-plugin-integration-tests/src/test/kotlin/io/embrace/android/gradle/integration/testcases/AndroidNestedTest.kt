@@ -17,7 +17,7 @@ class AndroidNestedTest {
     fun assembleRelease() {
         rule.runTest(
             fixture = "android-nested",
-            task = "app:assembleRelease",
+            tasks = listOf("app:assembleRelease"),
             projectType = ProjectType.ANDROID,
             assertions = {
                 verifyBuildTelemetryRequestSent(variants)

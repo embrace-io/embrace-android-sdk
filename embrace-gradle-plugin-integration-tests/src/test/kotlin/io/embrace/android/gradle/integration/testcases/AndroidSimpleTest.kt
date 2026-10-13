@@ -18,7 +18,7 @@ class AndroidSimpleTest {
     fun assemble() {
         rule.runTest(
             fixture = "android-simple",
-            task = "assemble",
+            tasks = listOf("assemble"),
             projectType = ProjectType.ANDROID,
             assertions = {
                 verifyBuildTelemetryRequestSent(variants)
@@ -31,7 +31,7 @@ class AndroidSimpleTest {
     fun `debug builds should not upload symbols`() {
         rule.runTest(
             fixture = "android-simple",
-            task = "assembleDebug",
+            tasks = listOf("assembleDebug"),
             projectType = ProjectType.ANDROID,
             assertions = {
                 verifyNoHandshakes()
@@ -45,7 +45,7 @@ class AndroidSimpleTest {
     fun assembleRelease() {
         rule.runTest(
             fixture = "android-simple",
-            task = "assembleRelease",
+            tasks = listOf("assembleRelease"),
             projectType = ProjectType.ANDROID,
             assertions = {
                 verifyBuildTelemetryRequestSent(variants)
@@ -58,7 +58,7 @@ class AndroidSimpleTest {
     fun assembleDebug() {
         rule.runTest(
             fixture = "android-simple",
-            task = "assembleDebug",
+            tasks = listOf("assembleDebug"),
             projectType = ProjectType.ANDROID,
             assertions = {
                 verifyBuildTelemetryRequestSent(variants)
@@ -71,7 +71,7 @@ class AndroidSimpleTest {
     fun bundle() {
         rule.runTest(
             fixture = "android-simple",
-            task = "bundle",
+            tasks = listOf("bundle"),
             projectType = ProjectType.ANDROID,
             assertions = {
                 verifyBuildTelemetryRequestSent(variants)
@@ -84,7 +84,7 @@ class AndroidSimpleTest {
     fun bundleRelease() {
         rule.runTest(
             fixture = "android-simple",
-            task = "bundleRelease",
+            tasks = listOf("bundleRelease"),
             projectType = ProjectType.ANDROID,
             assertions = {
                 verifyBuildTelemetryRequestSent(variants)
@@ -97,7 +97,7 @@ class AndroidSimpleTest {
     fun bundleDebug() {
         rule.runTest(
             fixture = "android-simple",
-            task = "bundleDebug",
+            tasks = listOf("bundleDebug"),
             projectType = ProjectType.ANDROID,
             assertions = {
                 verifyBuildTelemetryRequestSent(variants)
@@ -110,7 +110,7 @@ class AndroidSimpleTest {
     fun build() {
         rule.runTest(
             fixture = "android-simple",
-            task = "build",
+            tasks = listOf("build"),
             projectType = ProjectType.ANDROID,
             assertions = {
                 verifyBuildTelemetryRequestSent(variants)

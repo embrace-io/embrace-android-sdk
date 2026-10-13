@@ -44,7 +44,7 @@ class HashSharedObjectFilesTaskTest {
     fun `map output is correct for expectedSharedObjectFiles`() {
         rule.runTest(
             fixture = "hash-shared-object-files",
-            task = "hashTask",
+            tasks = listOf("hashTask"),
             setup = { projectDir ->
                 assertTrue(projectDir.file("compressedSharedObjectFiles").exists())
             },
@@ -66,7 +66,7 @@ class HashSharedObjectFilesTaskTest {
     fun `an error is thrown when compressedSharedObjectFiles contain files other than shared objects`() {
         rule.runTest(
             fixture = "hash-shared-object-files",
-            task = "hashTask",
+            tasks = listOf("hashTask"),
             setup = { projectDir ->
                 // delete architecture directories
                 projectDir.file("compressedSharedObjectFiles").listFiles()?.forEach { it.deleteRecursively() }
@@ -85,7 +85,7 @@ class HashSharedObjectFilesTaskTest {
     fun `an error is thrown when compressedSharedObjectFilesDirectory does not contain directories`() {
         rule.runTest(
             fixture = "hash-shared-object-files",
-            task = "hashTask",
+            tasks = listOf("hashTask"),
             setup = { projectDir ->
                 // delete architecture directories
                 projectDir.file("compressedSharedObjectFiles").listFiles()?.forEach { it.deleteRecursively() }
@@ -103,7 +103,7 @@ class HashSharedObjectFilesTaskTest {
     fun `don't throw an error when failBuildOnUploadErrors is disabled`() {
         rule.runTest(
             fixture = "hash-shared-object-files",
-            task = "hashTask",
+            tasks = listOf("hashTask"),
             additionalArgs = listOf("-PfailBuildOnUploadErrors=false"),
             setup = { projectDir ->
                 // delete architecture directories

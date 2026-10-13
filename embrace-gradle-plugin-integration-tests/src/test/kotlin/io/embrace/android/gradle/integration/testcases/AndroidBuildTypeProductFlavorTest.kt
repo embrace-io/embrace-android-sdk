@@ -19,7 +19,7 @@ class AndroidBuildTypeProductFlavorTest {
     fun assemble() {
         rule.runTest(
             fixture = "android-build-types-product-flavors",
-            task = "assemble",
+            tasks = listOf("assemble"),
             projectType = ProjectType.ANDROID,
             assertions = {
                 verifyBuildTelemetryRequestSent(expectedVariants = variants, expectedAppIds = appIds)
@@ -32,7 +32,7 @@ class AndroidBuildTypeProductFlavorTest {
     fun assembleProductFlavor() {
         rule.runTest(
             fixture = "android-build-types-product-flavors",
-            task = "assembleDemo",
+            tasks = listOf("assembleDemo"),
             projectType = ProjectType.ANDROID,
             assertions = {
                 verifyBuildTelemetryRequestSent(expectedVariants = variants, expectedAppIds = appIds)
@@ -45,7 +45,7 @@ class AndroidBuildTypeProductFlavorTest {
     fun assembleBuildType() {
         rule.runTest(
             fixture = "android-build-types-product-flavors",
-            task = "assembleRelease",
+            tasks = listOf("assembleRelease"),
             projectType = ProjectType.ANDROID,
             assertions = {
                 verifyBuildTelemetryRequestSent(expectedVariants = variants, expectedAppIds = appIds)
@@ -58,7 +58,7 @@ class AndroidBuildTypeProductFlavorTest {
     fun assembleBuildTypeProductFlavor() {
         rule.runTest(
             fixture = "android-build-types-product-flavors",
-            task = "assembleFullCustom",
+            tasks = listOf("assembleFullCustom"),
             projectType = ProjectType.ANDROID,
             assertions = {
                 verifyBuildTelemetryRequestSent(expectedVariants = variants, expectedAppIds = appIds)
@@ -71,7 +71,7 @@ class AndroidBuildTypeProductFlavorTest {
     fun bundle() {
         rule.runTest(
             fixture = "android-build-types-product-flavors",
-            task = "bundle",
+            tasks = listOf("bundle"),
             projectType = ProjectType.ANDROID,
             assertions = {
                 verifyBuildTelemetryRequestSent(expectedVariants = variants, expectedAppIds = appIds)
@@ -84,7 +84,7 @@ class AndroidBuildTypeProductFlavorTest {
     fun bundleProductFlavor() {
         rule.runTest(
             fixture = "android-build-types-product-flavors",
-            task = "bundleDemo",
+            tasks = listOf("bundleDemo"),
             projectType = ProjectType.ANDROID,
             assertions = {
                 verifyBuildTelemetryRequestSent(expectedVariants = variants, expectedAppIds = appIds)
@@ -97,7 +97,7 @@ class AndroidBuildTypeProductFlavorTest {
     fun bundleBuildType() {
         rule.runTest(
             fixture = "android-build-types-product-flavors",
-            task = "bundleRelease",
+            tasks = listOf("bundleRelease"),
             projectType = ProjectType.ANDROID,
             assertions = {
                 verifyBuildTelemetryRequestSent(expectedVariants = variants, expectedAppIds = appIds)
@@ -110,7 +110,7 @@ class AndroidBuildTypeProductFlavorTest {
     fun bundleBuildTypeProductFlavor() {
         rule.runTest(
             fixture = "android-build-types-product-flavors",
-            task = "bundleFullCustom",
+            tasks = listOf("bundleFullCustom"),
             projectType = ProjectType.ANDROID,
             assertions = {
                 verifyBuildTelemetryRequestSent(expectedVariants = variants, expectedAppIds = appIds)

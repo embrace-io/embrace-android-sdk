@@ -19,7 +19,7 @@ class AndroidProductFlavorTest {
     fun assemble() {
         rule.runTest(
             fixture = "android-product-flavors",
-            task = "assemble",
+            tasks = listOf("assemble"),
             projectType = ProjectType.ANDROID,
             assertions = {
                 verifyBuildTelemetryRequestSent(expectedVariants = variants, expectedAppIds = appIds)
@@ -32,7 +32,7 @@ class AndroidProductFlavorTest {
     fun assembleProductFlavor() {
         rule.runTest(
             fixture = "android-product-flavors",
-            task = "assembleDemo",
+            tasks = listOf("assembleDemo"),
             projectType = ProjectType.ANDROID,
             assertions = {
                 verifyBuildTelemetryRequestSent(expectedVariants = variants, expectedAppIds = appIds)
@@ -45,7 +45,7 @@ class AndroidProductFlavorTest {
     fun bundle() {
         rule.runTest(
             fixture = "android-product-flavors",
-            task = "bundle",
+            tasks = listOf("bundle"),
             projectType = ProjectType.ANDROID,
             assertions = {
                 verifyBuildTelemetryRequestSent(expectedVariants = variants, expectedAppIds = appIds)
@@ -58,7 +58,7 @@ class AndroidProductFlavorTest {
     fun bundleProductFlavor() {
         rule.runTest(
             fixture = "android-product-flavors",
-            task = "bundleFull",
+            tasks = listOf("bundleFull"),
             projectType = ProjectType.ANDROID,
             assertions = {
                 verifyBuildTelemetryRequestSent(expectedVariants = variants, expectedAppIds = appIds)

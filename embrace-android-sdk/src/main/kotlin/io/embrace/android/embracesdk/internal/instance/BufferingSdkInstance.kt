@@ -5,6 +5,8 @@ package io.embrace.android.embracesdk.internal.instance
 import io.embrace.android.embracesdk.experiments.TrackedEntry
 import io.embrace.android.embracesdk.experiments.TrackedExperiment
 import io.embrace.android.embracesdk.experiments.TrackedFeatureFlag
+import io.embrace.android.embracesdk.internal.InternalInterfaceApi
+import io.embrace.android.embracesdk.internal.NoopInternalInterfaceApi
 import io.embrace.android.embracesdk.internal.api.ExperimentApi
 import io.embrace.android.embracesdk.internal.api.OTelApi
 import io.embrace.android.embracesdk.internal.api.SdkApi
@@ -20,6 +22,7 @@ import io.embrace.android.embracesdk.spans.EmbraceSpan
 import io.embrace.android.embracesdk.spans.EmbraceSpanEvent
 import io.embrace.android.embracesdk.spans.ErrorCode
 import io.embrace.android.embracesdk.spans.TracingApi
+import io.opentelemetry.kotlin.NoopOpenTelemetry
 import io.opentelemetry.kotlin.OpenTelemetry
 import io.opentelemetry.kotlin.logging.export.LogRecordExporter
 import io.opentelemetry.kotlin.logging.export.LogRecordProcessor
@@ -36,8 +39,9 @@ import java.util.concurrent.TimeUnit
 internal class BufferingSdkInstance(
     private val clock: Clock,
     private val logger: InternalLogger,
-    private val openTelemetryKotlin: OpenTelemetry,
-) : SdkApi by NoopSdkInstance(logger, NoopSdkInstance.SDK_NOT_INITIALIZED) {
+) : InternalSdkApi,
+    SdkApi by NoopSdkInstance(logger, NoopSdkInstance.SDK_NOT_INITIALIZED),
+    InternalInterfaceApi by NoopInternalInterfaceApi {
 
     private val otelConfigCalls = CallBuffer<OTelApi, OTelConfigCall>()
     private val completedSpanCalls = CallBuffer<TracingApi, CompletedSpanCall>()
@@ -164,7 +168,7 @@ internal class BufferingSdkInstance(
 
     override fun getSdkCurrentTimeMs(): Long = 0
 
-    override fun getOpenTelemetryKotlin(): OpenTelemetry = openTelemetryKotlin
+    override fun getOpenTelemetryKotlin(): OpenTelemetry = NoopOpenTelemetry
 
     @Deprecated("This is no longer supported")
     override fun generateW3cTraceparent(): String = DefaultTraceparentGenerator.generateW3cTraceparent()

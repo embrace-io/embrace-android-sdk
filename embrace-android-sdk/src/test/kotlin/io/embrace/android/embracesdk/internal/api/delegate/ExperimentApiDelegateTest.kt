@@ -15,7 +15,6 @@ import io.embrace.android.embracesdk.internal.capture.experiment.TrackedData
 import io.embrace.android.embracesdk.internal.config.resolved.ExperimentConfig
 import io.embrace.android.embracesdk.internal.injection.ModuleInitBootstrapper
 import io.embrace.android.embracesdk.internal.instance.BufferingSdkInstance
-import io.opentelemetry.kotlin.NoopOpenTelemetry
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
@@ -43,7 +42,7 @@ internal class ExperimentApiDelegateTest {
         clock = checkNotNull(initModule.getFakeClock())
         delegate = createDelegate()
         bufferLogger = FakeInternalLogger()
-        buffer = BufferingSdkInstance(clock, bufferLogger, NoopOpenTelemetry)
+        buffer = BufferingSdkInstance(clock, bufferLogger)
     }
 
     @Test

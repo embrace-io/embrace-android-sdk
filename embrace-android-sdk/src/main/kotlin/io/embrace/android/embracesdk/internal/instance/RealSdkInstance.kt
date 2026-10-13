@@ -4,7 +4,6 @@ import android.content.Context
 import android.util.Log
 import io.embrace.android.embracesdk.internal.EmbraceInternalInterface
 import io.embrace.android.embracesdk.internal.FlutterInternalInterface
-import io.embrace.android.embracesdk.internal.InternalInterfaceApi
 import io.embrace.android.embracesdk.internal.ReactNativeInternalInterface
 import io.embrace.android.embracesdk.internal.UnityInternalInterface
 import io.embrace.android.embracesdk.internal.api.BreadcrumbApi
@@ -49,6 +48,7 @@ import io.embrace.android.embracesdk.spans.EmbraceSpan
 import io.embrace.android.embracesdk.spans.EmbraceSpanEvent
 import io.embrace.android.embracesdk.spans.ErrorCode
 import io.embrace.android.embracesdk.spans.TracingApi
+import io.opentelemetry.kotlin.NoopOpenTelemetry
 import io.opentelemetry.kotlin.OpenTelemetry
 import java.util.concurrent.Executors
 
@@ -60,25 +60,22 @@ import java.util.concurrent.Executors
  * here instead.
  */
 internal class RealSdkInstance(
-    lazyBootstrapper: Lazy<ModuleInitBootstrapper>,
-    private val hostedSdkApiProvider: Provider<SdkApi>,
-    openTelemetryKotlin: OpenTelemetry,
+    private val bootstrapper: ModuleInitBootstrapper,
+    private val hostedSdkApiProvider: Provider<SdkApi>, // handles dropped calls etc for internal interface
     private val clock: Clock,
-    private val userApiDelegate: UserApiDelegate = UserApiDelegate(lazyBootstrapper),
-    private val sessionApiDelegate: UserSessionApiDelegate = UserSessionApiDelegate(lazyBootstrapper),
+    private val userApiDelegate: UserApiDelegate = UserApiDelegate(lazyOf(bootstrapper)),
+    private val sessionApiDelegate: UserSessionApiDelegate = UserSessionApiDelegate(lazyOf(bootstrapper)),
     private val networkRequestApiDelegate: NetworkRequestApiDelegate =
-        NetworkRequestApiDelegate(lazyBootstrapper),
-    private val logsApiDelegate: LogsApiDelegate = LogsApiDelegate(lazyBootstrapper),
+        NetworkRequestApiDelegate(lazyOf(bootstrapper)),
+    private val logsApiDelegate: LogsApiDelegate = LogsApiDelegate(lazyOf(bootstrapper)),
     private val viewTrackingApiDelegate: ViewTrackingApiDelegate =
-        ViewTrackingApiDelegate(lazyBootstrapper),
-    private val sdkStateApiDelegate: SdkStateApiDelegate = SdkStateApiDelegate(
-        lazyBootstrapper,
-    ),
-    private val otelApiDelegate: OTelApiDelegate = OTelApiDelegate(openTelemetryKotlin),
-    private val breadcrumbApiDelegate: BreadcrumbApiDelegate = BreadcrumbApiDelegate(lazyBootstrapper),
+        ViewTrackingApiDelegate(lazyOf(bootstrapper)),
+    private val sdkStateApiDelegate: SdkStateApiDelegate = SdkStateApiDelegate(lazyOf(bootstrapper)),
+    private val otelApiDelegate: OTelApiDelegate = OTelApiDelegate(lazyOf(bootstrapper)),
+    private val breadcrumbApiDelegate: BreadcrumbApiDelegate = BreadcrumbApiDelegate(lazyOf(bootstrapper)),
     private val instrumentationApiDelegate: InstrumentationApiDelegate =
-        InstrumentationApiDelegate(lazyBootstrapper),
-    private val experimentApiDelegate: ExperimentApiDelegate = ExperimentApiDelegate(lazyBootstrapper),
+        InstrumentationApiDelegate(lazyOf(bootstrapper)),
+    private val experimentApiDelegate: ExperimentApiDelegate = ExperimentApiDelegate(lazyOf(bootstrapper)),
 ) : SdkInstance,
     LogsApi by logsApiDelegate,
     NetworkRequestApi by networkRequestApiDelegate,
@@ -89,10 +86,8 @@ internal class RealSdkInstance(
     ViewTrackingApi by viewTrackingApiDelegate,
     BreadcrumbApi by breadcrumbApiDelegate,
     InstrumentationApi by instrumentationApiDelegate,
-    ExperimentApi by experimentApiDelegate,
-    InternalInterfaceApi {
+    ExperimentApi by experimentApiDelegate {
 
-    private val bootstrapper by lazyBootstrapper
     private val tracingApi: TracingApi get() = bootstrapper.openTelemetryModule.tracingApi
 
     private var internalInterfaceModule: InternalInterfaceModule? = null
@@ -105,6 +100,12 @@ internal class RealSdkInstance(
 
     override val isStarted: Boolean
         get() = started
+
+    override fun getOpenTelemetryKotlin(): OpenTelemetry = if (started) {
+        otelApiDelegate.getOpenTelemetryKotlin()
+    } else {
+        NoopOpenTelemetry
+    }
 
     override fun onPreStart(buffer: BufferingSdkInstance) {
         // drain before building OTel SDK

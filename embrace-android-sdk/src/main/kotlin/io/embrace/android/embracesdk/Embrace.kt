@@ -10,7 +10,6 @@ import io.embrace.android.embracesdk.internal.instance.SdkStateHolder
 import io.embrace.android.embracesdk.internal.instance.createSdkStateHolder
 import io.embrace.android.embracesdk.internal.logging.InternalLoggerImpl
 import io.embrace.android.embracesdk.internal.utils.EmbTrace
-import io.opentelemetry.kotlin.NoopOpenTelemetry
 
 private val sdkStateHolder = try {
     EmbTrace.trace(sectionName = "embrace-impl-init", recordDuration = true) {
@@ -27,7 +26,7 @@ private val sdkStateHolder = try {
     val instance = NoopSdkInstance(logger, NoopSdkInstance.SDK_NOT_INITIALIZED)
     SdkStateHolder(
         instance = { instance },
-        preStart = { BufferingSdkInstance(System::currentTimeMillis, logger, NoopOpenTelemetry) },
+        preStart = { BufferingSdkInstance(System::currentTimeMillis, logger) },
         disabled = { instance },
         telemetryService = NoopInternalTelemetryService,
         errorHandler = logger,

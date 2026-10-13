@@ -5,7 +5,7 @@ import io.embrace.android.embracesdk.internal.api.SdkApi
 /**
  * An [SdkApi] that drains the [BufferingSdkInstance] used before the SDK starts.
  */
-internal interface SdkInstance : SdkApi {
+internal interface SdkInstance : InternalSdkApi {
 
     /**
      * Invoked before the instance is started.

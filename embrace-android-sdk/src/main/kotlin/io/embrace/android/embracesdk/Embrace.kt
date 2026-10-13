@@ -3,12 +3,14 @@ package io.embrace.android.embracesdk
 import android.annotation.SuppressLint
 import android.util.Log
 import io.embrace.android.embracesdk.internal.api.SdkApi
+import io.embrace.android.embracesdk.internal.instance.BufferingSdkInstance
 import io.embrace.android.embracesdk.internal.instance.NoopInternalTelemetryService
 import io.embrace.android.embracesdk.internal.instance.NoopSdkInstance
 import io.embrace.android.embracesdk.internal.instance.SdkStateHolder
 import io.embrace.android.embracesdk.internal.instance.createSdkStateHolder
 import io.embrace.android.embracesdk.internal.logging.InternalLoggerImpl
 import io.embrace.android.embracesdk.internal.utils.EmbTrace
+import io.opentelemetry.kotlin.NoopOpenTelemetry
 
 private val sdkStateHolder = try {
     EmbTrace.trace(sectionName = "embrace-impl-init", recordDuration = true) {
@@ -25,7 +27,7 @@ private val sdkStateHolder = try {
     val instance = NoopSdkInstance(logger, NoopSdkInstance.SDK_NOT_INITIALIZED)
     SdkStateHolder(
         instance = { instance },
-        preStart = { instance },
+        preStart = { BufferingSdkInstance(System::currentTimeMillis, logger, NoopOpenTelemetry) },
         disabled = { instance },
         telemetryService = NoopInternalTelemetryService,
         errorHandler = logger,

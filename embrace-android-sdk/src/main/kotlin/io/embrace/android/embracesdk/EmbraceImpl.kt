@@ -44,6 +44,7 @@ import io.embrace.android.embracesdk.internal.injection.postLoadInstrumentation
 import io.embrace.android.embracesdk.internal.injection.registerListeners
 import io.embrace.android.embracesdk.internal.injection.triggerPayloadSend
 import io.embrace.android.embracesdk.internal.instance.BufferingSdkInstance
+import io.embrace.android.embracesdk.internal.instance.SdkInstance
 import io.embrace.android.embracesdk.internal.logging.InternalLogger
 import io.embrace.android.embracesdk.internal.utils.EmbTrace
 import io.embrace.android.embracesdk.internal.utils.Provider
@@ -93,7 +94,7 @@ internal class EmbraceImpl(
         logger = logger,
         openTelemetryKotlin = openTelemetryKotlin,
     ),
-) : SdkApi,
+) : SdkInstance,
     LogsApi by logsApiDelegate,
     NetworkRequestApi by networkRequestApiDelegate,
     UserSessionApi by sessionApiDelegate,
@@ -112,17 +113,25 @@ internal class EmbraceImpl(
 
     private var internalInterfaceModule: InternalInterfaceModule? = null
 
+    override fun onPreStart(buffer: BufferingSdkInstance) {
+        // drain before building OTel SDK
+        buffer.drainOTelConfig(otelApiDelegate)
+    }
+
+    override fun onPostStart(buffer: BufferingSdkInstance) {
+        buffer.drainCompletedSpans(tracingApi)
+        bootstrapper.applyCustomMetadata {
+            buffer.drainExperimentCalls(experimentApiDelegate, experimentApiDelegate::replay)
+        }
+    }
+
     override fun start(context: Context) {
         EmbTrace.trace("sdk-start") {
             synchronized(startStopLock) {
                 try {
-                    // drain before building OTel SDK
-                    preStartBuffer.drainOTelConfig(otelApiDelegate)
                     if (!bootstrapper.init(context)) {
                         return
                     }
-                    // replay spans before the first session part starts
-                    preStartBuffer.drainCompletedSpans(tracingApi)
                     bootstrapper.postInit()
 
                     EmbTrace.trace(sectionName = "post-services-setup", recordDuration = true) {
@@ -137,9 +146,6 @@ internal class EmbraceImpl(
                         // not fully initialized, but the SDK shouldn't catastrophically throw after this point,
                         // so we allow external calls.
                         sdkCallChecker.started.set(true)
-                        bootstrapper.applyCustomMetadata {
-                            preStartBuffer.drainExperimentCalls(experimentApiDelegate, experimentApiDelegate::replay)
-                        }
                         bootstrapper.registerListeners()
                         bootstrapper.loadInstrumentation()
                         bootstrapper.postLoadInstrumentation()

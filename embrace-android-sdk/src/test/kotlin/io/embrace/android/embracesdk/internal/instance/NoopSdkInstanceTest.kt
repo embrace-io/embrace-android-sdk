@@ -3,7 +3,12 @@ package io.embrace.android.embracesdk.internal.instance
 import io.embrace.android.embracesdk.LastRunEndState
 import io.embrace.android.embracesdk.PropertyScope
 import io.embrace.android.embracesdk.fakes.FakeInternalLogger
+import io.embrace.android.embracesdk.internal.api.SdkApi
 import io.embrace.android.embracesdk.internal.otel.spans.NoopEmbraceSdkSpan
+import io.embrace.android.embracesdk.spans.EmbraceSpan
+import io.embrace.android.embracesdk.spans.EmbraceSpanEvent
+import io.embrace.android.embracesdk.spans.ErrorCode
+import io.opentelemetry.kotlin.NoopOpenTelemetry
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNull
@@ -38,6 +43,66 @@ internal class NoopSdkInstanceTest {
         assertFalse(instance.recordCompletedSpan("span", 1, 2))
         assertSame(NoopEmbraceSdkSpan, instance.startSpan("span"))
         assertNull(instance.getSpan("id"))
+    }
+
+    @Test
+    fun `onPreStart retains buffered calls`() {
+        val buffer = createBuffer()
+        instance.onPreStart(buffer)
+        assertEquals(listOf("key", "span", "exp"), drainRemaining(buffer))
+    }
+
+    @Test
+    fun `onPostStart drains buffered calls`() {
+        val buffer = createBuffer()
+        instance.onPreStart(buffer)
+        instance.onPostStart(buffer)
+        assertEquals(emptyList<String>(), drainRemaining(buffer))
+    }
+
+    @Test
+    fun `calls after onPostStart are not buffered`() {
+        val buffer = BufferingSdkInstance({ 0 }, logger, NoopOpenTelemetry)
+        instance.onPostStart(buffer)
+        buffer.setResourceAttribute("key", "value")
+        buffer.recordCompletedSpan("span", 1, 2)
+        buffer.trackExperiment("exp", "variant", 1)
+        assertEquals(emptyList<String>(), drainRemaining(buffer))
+    }
+
+    private fun createBuffer() = BufferingSdkInstance({ 0 }, logger, NoopOpenTelemetry).apply {
+        setResourceAttribute("key", "value")
+        recordCompletedSpan("span", 1, 2)
+        trackExperiment("exp", "variant", 1)
+    }
+
+    /**
+     * Drains whatever [buffer] still holds into a recorder and returns what was replayed.
+     */
+    private fun drainRemaining(buffer: BufferingSdkInstance): List<String> {
+        val replayed = mutableListOf<String>()
+        val recorder = object : SdkApi by instance {
+            override fun setResourceAttribute(key: String, value: String) {
+                replayed += key
+            }
+
+            override fun recordCompletedSpan(
+                name: String,
+                startTimeMs: Long,
+                endTimeMs: Long,
+                errorCode: ErrorCode?,
+                parent: EmbraceSpan?,
+                attributes: Map<String, String>,
+                events: List<EmbraceSpanEvent>,
+            ): Boolean {
+                replayed += name
+                return true
+            }
+        }
+        buffer.drainOTelConfig(recorder)
+        buffer.drainCompletedSpans(recorder)
+        buffer.drainExperimentCalls(recorder) { calls -> replayed += calls.map { "exp" } }
+        return replayed
     }
 
     @Test

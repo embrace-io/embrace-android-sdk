@@ -73,6 +73,13 @@ internal class BufferingSdkInstanceTest {
         assertSame(openTelemetryKotlin, instance.getOpenTelemetryKotlin())
     }
 
+    @Suppress("DEPRECATION")
+    @Test
+    fun `generateW3cTraceparent returns a valid traceparent`() {
+        val traceparent = checkNotNull(instance.generateW3cTraceparent())
+        assertTrue(traceparent.matches(Regex("00-[0-9a-f]{32}-[0-9a-f]{16}-01")))
+    }
+
     @Test
     fun `otel config calls are replayed in order when drained`() {
         val spanExporter = FakeSpanExporter()
@@ -403,7 +410,10 @@ internal class BufferingSdkInstanceTest {
     fun `calls that cannot be buffered are dropped with a log`() {
         instance.addBreadcrumb("crumb")
         instance.logInfo("msg")
-        assertEquals(1, logger.infoMessages.size)
+        assertEquals(
+            "Embrace SDK is not initialized yet, cannot add_breadcrumb.",
+            logger.warningMessages.single().msg,
+        )
         assertTrue(target.calls.isEmpty())
     }
 

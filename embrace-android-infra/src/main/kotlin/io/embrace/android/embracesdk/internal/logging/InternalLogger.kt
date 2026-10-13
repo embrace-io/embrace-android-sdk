@@ -22,6 +22,11 @@ interface InternalLogger : InternalErrorHandler {
     fun logInfo(msg: String, throwable: Throwable? = null)
 
     /**
+     * Logs a warning message.
+     */
+    fun logWarning(msg: String, throwable: Throwable? = null)
+
+    /**
      * Logs a warning message with an optional error.
      */
     fun logError(msg: String, throwable: Throwable? = null)

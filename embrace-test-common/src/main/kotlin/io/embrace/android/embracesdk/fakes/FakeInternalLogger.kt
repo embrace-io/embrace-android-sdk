@@ -17,12 +17,17 @@ class FakeInternalLogger(
     )
 
     var infoMessages: MutableList<LogMessage> = mutableListOf()
+    var warningMessages: MutableList<LogMessage> = mutableListOf()
     var errorMessages: MutableList<LogMessage> = mutableListOf()
     var sdkNotInitializedMessages: MutableList<LogMessage> = mutableListOf()
     var internalErrorMessages: MutableList<LogMessage> = mutableListOf()
 
     override fun logInfo(msg: String, throwable: Throwable?) {
         infoMessages.add(LogMessage(msg, throwable))
+    }
+
+    override fun logWarning(msg: String, throwable: Throwable?) {
+        warningMessages.add(LogMessage(msg, throwable))
     }
 
     override fun logError(msg: String, throwable: Throwable?) {

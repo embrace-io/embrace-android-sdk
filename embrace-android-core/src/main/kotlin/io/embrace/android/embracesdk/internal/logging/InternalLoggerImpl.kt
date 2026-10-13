@@ -19,6 +19,10 @@ class InternalLoggerImpl : InternalLogger {
         log(msg, InternalLogger.Severity.INFO, throwable)
     }
 
+    override fun logWarning(msg: String, throwable: Throwable?) {
+        log(msg, InternalLogger.Severity.WARNING, throwable)
+    }
+
     override fun logError(msg: String, throwable: Throwable?) {
         log(msg, InternalLogger.Severity.ERROR, throwable)
     }
@@ -26,7 +30,7 @@ class InternalLoggerImpl : InternalLogger {
     override fun logSdkNotInitialized(action: String) {
         if (!loggedSdkNotStarted.getAndSet(true)) {
             val msg = "Embrace SDK is not initialized yet, cannot $action."
-            log(msg, InternalLogger.Severity.WARNING, Throwable(msg))
+            logWarning(msg, Throwable(msg))
         }
     }
 

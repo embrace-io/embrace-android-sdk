@@ -71,7 +71,6 @@ class ConfigCacheTest {
                 tasks = listOf(task),
                 additionalArgs = configCacheArgs + extraArgs,
                 projectType = ProjectType.ANDROID,
-                refreshDependencies = run == 0,
                 expectedOutcome = if (run == 0) TaskOutcome.SUCCESS else TaskOutcome.UP_TO_DATE,
                 assertions = {
                     if (run == 1) {

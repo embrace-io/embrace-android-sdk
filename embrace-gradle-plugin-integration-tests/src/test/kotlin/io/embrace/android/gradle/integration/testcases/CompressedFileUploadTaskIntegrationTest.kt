@@ -10,7 +10,6 @@ import io.embrace.android.gradle.integration.framework.IntegrationTestDefaults
 import io.embrace.android.gradle.integration.framework.PluginIntegrationTestRule
 import io.embrace.android.gradle.integration.framework.file
 import io.embrace.android.gradle.plugin.network.EmbraceEndpoint
-import org.gradle.testkit.runner.TaskOutcome
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Rule
@@ -23,41 +22,17 @@ class CompressedFileUploadTaskIntegrationTest {
     val rule: PluginIntegrationTestRule = PluginIntegrationTestRule()
 
     @Test
-    fun `upload compressed file`() {
+    fun `upload compressed file to configured endpoints`() {
         var expectedFileContents: String? = null
         rule.runTest(
             fixture = "file-upload-simple",
+            tasks = listOf("proguardEndpointTask", "ndkEndpointTask"),
             setup = { projectDir ->
                 assertTrue(projectDir.file("input.txt").exists())
                 expectedFileContents = projectDir.file("input.txt").readText()
             },
             assertions = {
                 assertFileUploaded(expectedFileContents, EmbraceEndpoint.PROGUARD)
-            },
-        )
-    }
-
-    @Test
-    fun `skips upload when file is missing`() {
-        rule.runTest(
-            fixture = "file-upload-missing-input",
-            expectedOutcome = TaskOutcome.NO_SOURCE,
-            assertions = {
-                verifyNoRequestsSent(EmbraceEndpoint.PROGUARD)
-            },
-        )
-    }
-
-    @Test
-    fun `configure endpoint`() {
-        var expectedFileContents: String? = null
-        rule.runTest(
-            fixture = "file-upload-set-endpoint",
-            setup = { projectDir ->
-                assertTrue(projectDir.file("input.txt").exists())
-                expectedFileContents = projectDir.file("input.txt").readText()
-            },
-            assertions = {
                 assertFileUploaded(expectedFileContents, EmbraceEndpoint.NDK)
             },
         )

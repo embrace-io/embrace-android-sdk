@@ -47,7 +47,7 @@ internal class UserSessionApiDelegateTest {
         logger = FakeInternalLogger()
         sdkCallChecker = SdkCallChecker(logger)
         sdkCallChecker.started.set(true)
-        delegate = UserSessionApiDelegate(moduleInitBootstrapper, sdkCallChecker)
+        delegate = UserSessionApiDelegate(lazyOf(moduleInitBootstrapper), sdkCallChecker)
     }
 
     @Test

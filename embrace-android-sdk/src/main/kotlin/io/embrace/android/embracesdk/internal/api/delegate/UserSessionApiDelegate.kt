@@ -9,9 +9,11 @@ import io.embrace.android.embracesdk.internal.injection.embraceImplInject
 import io.embrace.android.embracesdk.internal.session.UserSessionListener as InternalUserSessionListener
 
 internal class UserSessionApiDelegate(
-    bootstrapper: ModuleInitBootstrapper,
+    lazyBootstrapper: Lazy<ModuleInitBootstrapper>,
     private val sdkCallChecker: SdkCallChecker,
 ) : UserSessionApi {
+
+    private val bootstrapper by lazyBootstrapper
 
     private val userSessionPropertiesService by embraceImplInject(sdkCallChecker) {
         bootstrapper.essentialServiceModule.userSessionPropertiesService

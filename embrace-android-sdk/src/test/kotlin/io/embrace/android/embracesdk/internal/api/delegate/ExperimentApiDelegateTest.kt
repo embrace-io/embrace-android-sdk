@@ -350,7 +350,7 @@ internal class ExperimentApiDelegateTest {
             },
         )
         moduleInitBootstrapper.init(ApplicationProvider.getApplicationContext())
-        return ExperimentApiDelegate(moduleInitBootstrapper, sdkCallChecker)
+        return ExperimentApiDelegate(lazyOf(moduleInitBootstrapper), sdkCallChecker)
     }
 
     private fun startAndDrain() {

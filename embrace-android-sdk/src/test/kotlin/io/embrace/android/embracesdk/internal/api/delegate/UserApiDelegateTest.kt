@@ -36,7 +36,7 @@ internal class UserApiDelegateTest {
         moduleInitBootstrapper.init(ApplicationProvider.getApplicationContext())
         val sdkCallChecker = SdkCallChecker(FakeInternalLogger())
         sdkCallChecker.started.set(true)
-        delegate = UserApiDelegate(moduleInitBootstrapper, sdkCallChecker)
+        delegate = UserApiDelegate(lazyOf(moduleInitBootstrapper), sdkCallChecker)
     }
 
     @Test

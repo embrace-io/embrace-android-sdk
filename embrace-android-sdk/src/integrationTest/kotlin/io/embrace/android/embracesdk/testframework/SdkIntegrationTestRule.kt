@@ -25,7 +25,6 @@ import io.embrace.android.embracesdk.internal.injection.InitModule
 import io.embrace.android.embracesdk.internal.injection.ModuleInitBootstrapper
 import io.embrace.android.embracesdk.internal.instance.SdkState
 import io.embrace.android.embracesdk.internal.instance.SdkStateHolder
-import io.embrace.android.embracesdk.internal.instance.createSdkStateHolder
 import io.embrace.android.embracesdk.internal.utils.EmbTrace
 import io.embrace.android.embracesdk.internal.utils.Provider
 import io.embrace.android.embracesdk.testframework.actions.EmbraceActionInterface
@@ -170,7 +169,7 @@ internal class SdkIntegrationTestRule(
 
         setupAction(setup)
         with(setup) {
-            sdkStateHolder = createSdkStateHolder(bootstrapper)
+            sdkStateHolder = createStateHolder(bootstrapper)
             preSdkStartAction(preSdkStart)
             //TODO: Filtered span and log exporters should be migrated to Kotlin.
             sdkStateHolder.api.addSpanExporter(spanExporter.toOtelKotlinSpanExporter())

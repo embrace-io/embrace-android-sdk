@@ -11,9 +11,11 @@ import io.embrace.android.embracesdk.network.EmbraceNetworkRequest
 import io.embrace.android.embracesdk.network.http.HttpRequestInfoModifier
 
 internal class NetworkRequestApiDelegate(
-    bootstrapper: ModuleInitBootstrapper,
+    lazyBootstrapper: Lazy<ModuleInitBootstrapper>,
     private val sdkCallChecker: SdkCallChecker,
 ) : NetworkRequestApi {
+
+    private val bootstrapper by lazyBootstrapper
 
     private val configService by embraceImplInject(sdkCallChecker) { bootstrapper.configService }
     private val registry by embraceImplInject(sdkCallChecker) {

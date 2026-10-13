@@ -63,8 +63,6 @@ internal fun createSdkStateHolder(
         sdkCallChecker = sdkCallChecker,
         openTelemetryKotlin = openTelemetryKotlin,
         clock = clock,
-        logger = logger,
-        preStartBuffer = preStartBuffer,
     )
     holder = SdkStateHolder(
         instance = { impl },

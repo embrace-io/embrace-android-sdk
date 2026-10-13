@@ -16,7 +16,7 @@ import io.embrace.android.embracesdk.internal.session.orchestrator.SessionOrches
 import io.embrace.android.embracesdk.internal.session.orchestrator.SessionOrchestratorImpl
 import io.embrace.android.embracesdk.internal.session.orchestrator.SessionPartSpanAttrPopulatorImpl
 import io.embrace.android.embracesdk.internal.session.orchestrator.SessionPartWriterImpl
-import io.embrace.android.embracesdk.internal.session.persistence.NoopSessionPartLastAliveStore
+import io.embrace.android.embracesdk.internal.session.persistence.MappedFileLastAliveStore
 import io.embrace.android.embracesdk.internal.session.persistence.SessionPartDirectoryStore
 import io.embrace.android.embracesdk.internal.session.persistence.SessionPartLastAliveStore
 import io.embrace.android.embracesdk.internal.session.persistence.SessionPartWriteTracker
@@ -64,7 +64,7 @@ class UserSessionOrchestrationModuleImpl(
      * Records when each session part's process was last alive as its files are written, and reads it
      * back for a part whose process died.
      */
-    private val sessionPartLastAliveStore: SessionPartLastAliveStore = NoopSessionPartLastAliveStore()
+    private val sessionPartLastAliveStore: SessionPartLastAliveStore = MappedFileLastAliveStore(initModule.clock)
 
     override val sessionPartReader: SessionPartReader? = deliveryModule?.let { delivery ->
         SessionPartReader(

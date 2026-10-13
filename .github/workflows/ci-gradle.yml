@@ -77,7 +77,7 @@ jobs:
 
       - name: Gradle (build -x embrace-gradle-plugin-integration-tests:test)
         if: ${{ matrix.gradle-task == 'build' }}
-        run: ./gradlew build koverXmlReport embrace-microbenchmark:assembleAndroidTest -x embrace-gradle-plugin-integration-tests:test -Pembrace.coverage --stacktrace
+        run: ./gradlew build koverXmlReport embrace-microbenchmark:assembleAndroidTest embrace-minified-test-app:lint embrace-microbenchmark:lint -x embrace-gradle-plugin-integration-tests:test -Pembrace.coverage --stacktrace
 
       - name: Gradle (examples/ExampleApp/ bundleRelease)
         if: ${{ matrix.gradle-task == 'bundleReleaseExampleApp' }}

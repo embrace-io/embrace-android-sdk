@@ -29,6 +29,9 @@ android {
         }
     }
     testOptions.unitTests.isReturnDefaultValues = true
+    lint {
+        ignoreTestSources = true
+    }
 }
 
 kotlin {
@@ -36,6 +39,12 @@ kotlin {
         jvmTarget.set(JvmTarget.JVM_11)
         optIn.add("io.opentelemetry.kotlin.ExperimentalApi")
     }
+}
+
+// Linting the release variant runs lintAnalyzeRelease on every library it depends on, so keep lint
+// out of `check` to keep local builds fast. CI runs it by name (see ci-gradle.yml).
+tasks.named("check") {
+    setDependsOn(dependsOn.filterNot { it is TaskProvider<*> && it.name == "lint" })
 }
 
 dependencies {

@@ -1071,7 +1071,7 @@ internal class SessionOrchestratorTest {
     }
 
     @Test
-    fun `the legacy store does not receive a session part when multi file persistence is enabled`() {
+    fun `the single-file store does not receive a session part when multi file persistence is enabled`() {
         createOrchestrator(ProcessState.FOREGROUND, multiFilePersistenceConfigService())
         val sessionPartId = checkNotNull(sessionTracker.getActiveSessionPartId())
         clock.tick(10000)

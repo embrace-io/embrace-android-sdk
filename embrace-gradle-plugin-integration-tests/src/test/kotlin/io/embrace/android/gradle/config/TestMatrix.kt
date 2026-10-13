@@ -2,9 +2,10 @@ package io.embrace.android.gradle.config
 
 /**
  * Defines the test matrix we use in one place to ensure that test cases use sane version
- * combinations. Our strategy is to pick ~5 version combinations that are representative of our
- * supported range of versions. The theory is that most customers will fall somewhere along the
- * middle of the version range distribution.
+ * combinations. Our strategy is to pick 3 version combinations that between them cover every branch
+ * the plugin has: AGP 8 vs 9, external vs built-in Kotlin, and JDK 17 vs 21. Each extra combination
+ * costs roughly a minute of CI time per test that uses it, so avoid adding more without a new branch
+ * to cover.
  *
  * These versions should be regularly reviewed & updated. The AGP/Gradle compatibility matrix may
  * be helpful: https://developer.android.com/build/releases/gradle-plugin#updating-gradle
@@ -28,19 +29,9 @@ sealed class TestMatrix(
     object MinVersion : TestMatrix("8.0.2", "8.0.2", "2.0.21", JdkEnv.JAVA_17, "34")
 
     /**
-     * Older than middle of the pack, but not as bad as our minimum.
-     */
-    object OlderVersion : TestMatrix("8.9.3", "8.11.1", "2.1.21", JdkEnv.JAVA_17, "35")
-
-    /**
-     * Middle of the pack.
+     * The last AGP 8 line, and the first combination running on JDK 21.
      */
     object MiddleVersion : TestMatrix("8.13.2", "8.14.5", "2.2.21", JdkEnv.JAVA_21, "36")
-
-    /**
-     * Not the latest, but newer than the middle of the pack.
-     */
-    object NewerVersion : TestMatrix("9.2.1", "9.4.1", "2.3.21", JdkEnv.JAVA_21, "36")
 
     /**
      * The maximum version we currently run tests against. Newer versions may work, but are not

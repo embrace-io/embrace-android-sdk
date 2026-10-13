@@ -3,9 +3,17 @@ package io.embrace.android.embracesdk.internal.instance
 import android.app.Activity
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import io.embrace.android.embracesdk.PropertyScope
+import io.embrace.android.embracesdk.fakes.FakeInternalLogger
 import io.embrace.android.embracesdk.fakes.FakeInternalTelemetryService
 import io.embrace.android.embracesdk.internal.api.SdkApi
+import io.embrace.android.embracesdk.internal.otel.spans.NoopEmbraceSdkSpan
+import io.embrace.android.embracesdk.spans.AutoTerminationMode
+import io.embrace.android.embracesdk.spans.EmbraceSpan
+import io.embrace.android.embracesdk.spans.EmbraceSpanEvent
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
+import org.junit.Assert.assertSame
+import org.junit.Assert.assertThrows
 import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -17,12 +25,14 @@ internal class SdkApiDispatcherTest {
 
     private val calls = mutableListOf<String>()
     private lateinit var telemetryService: FakeInternalTelemetryService
+    private lateinit var logger: FakeInternalLogger
     private lateinit var sdk: SdkApiDispatcher
 
     @Before
     fun setUp() {
         telemetryService = FakeInternalTelemetryService()
-        sdk = SdkApiDispatcher(recordingSdkApi(calls), telemetryService)
+        logger = FakeInternalLogger(throwOnInternalError = false)
+        sdk = SdkApiDispatcher(recordingSdkApi(calls), telemetryService, logger)
     }
 
     @Test
@@ -101,7 +111,66 @@ internal class SdkApiDispatcherTest {
         sdk.disable()
         assertEquals(emptyList<String>(), telemetryService.apiCalls)
     }
+
+    @Test
+    fun `sdk exceptions are reported and a fallback is returned`() {
+        sdk.target = throwingSdkApi()
+        sdk.logInfo("message")
+        assertFalse(sdk.startView("view"))
+        assertSame(NoopEmbraceSdkSpan, sdk.startSpan("span"))
+        assertEquals("", sdk.deviceId)
+        assertEquals(4, logger.internalErrorMessages.size)
+    }
+
+    @Test
+    fun `user code runs when recordSpan throws before invoking it`() {
+        sdk.target = throwingSdkApi()
+        assertEquals("result", sdk.recordSpan("span") { "result" })
+        assertEquals(1, logger.internalErrorMessages.size)
+    }
+
+    @Test
+    fun `user code does not run twice when recordSpan throws after invoking it`() {
+        var invocations = 0
+        sdk.target = RecordSpanSdkApi { code -> code().also { error("sdk failure") } }
+        val result = sdk.recordSpan("span") {
+            invocations++
+            "result"
+        }
+        assertEquals("result", result)
+        assertEquals(1, invocations)
+        assertEquals("sdk failure", logger.internalErrorMessages.single().throwable?.message)
+    }
+
+    @Test
+    fun `user code exceptions propagate from recordSpan`() {
+        sdk.target = RecordSpanSdkApi { code -> code() }
+        val exc = IllegalArgumentException("user failure")
+        assertSame(exc, assertThrows(IllegalArgumentException::class.java) { sdk.recordSpan("span") { throw exc } })
+        assertEquals(emptyList<FakeInternalLogger.LogMessage>(), logger.internalErrorMessages)
+    }
+
+    private class RecordSpanSdkApi(
+        private val impl: (() -> Any?) -> Any?,
+    ) : SdkApi by throwingSdkApi() {
+        @Suppress("UNCHECKED_CAST")
+        override fun <T> recordSpan(
+            name: String,
+            parent: EmbraceSpan?,
+            attributes: Map<String, String>,
+            events: List<EmbraceSpanEvent>,
+            autoTerminationMode: AutoTerminationMode,
+            code: () -> T,
+        ): T = impl(code) as T
+    }
 }
+
+private fun throwingSdkApi(): SdkApi = Proxy.newProxyInstance(
+    SdkApi::class.java.classLoader,
+    arrayOf(SdkApi::class.java),
+) { _, method, _ ->
+    throw IllegalStateException(method.name)
+} as SdkApi
 
 /**
  * An [SdkApi] that records each call as `name/argumentCount`, so that overloads are told apart.

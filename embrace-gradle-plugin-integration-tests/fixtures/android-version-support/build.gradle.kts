@@ -18,7 +18,7 @@ integrationTest.configureAndroidProject(project)
 repositories {
     google()
     mavenCentral()
-    mavenLocal()
+    maven { url = uri(providers.gradleProperty("integration_repo").get()) }
 }
 
 embrace {

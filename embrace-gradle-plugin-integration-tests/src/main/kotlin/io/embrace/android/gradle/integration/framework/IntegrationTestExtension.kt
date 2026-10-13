@@ -130,7 +130,7 @@ abstract class IntegrationTestExtension(objectFactory: ObjectFactory) {
         repositories.apply {
             google()
             mavenCentral()
-            mavenLocal()
+            maven { it.url = uri(providers.gradleProperty("integration_repo").get()) }
         }
 
         android.compileOptions {

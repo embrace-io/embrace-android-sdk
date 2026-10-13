@@ -1,9 +1,11 @@
 plugins {
     id("com.vanniktech.maven.publish")
+    id("embrace-integration-test-repo-conventions")
 }
 
 mavenPublishing {
     coordinates("io.embrace", project.name, project.version.toString())
+    configureIntegrationPublish(project)
 
     publishToMavenCentral()
 

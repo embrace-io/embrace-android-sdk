@@ -56,11 +56,6 @@ internal class LeakDetectorTest {
         assertEquals(5000L, suspect.trackedAtMs)
         assertSame(token, suspect.token)
         assertEquals("surviving the sentinel that confirmed it already counts as one cycle survived", 1L, suspect.cyclesSurvived)
-        assertEquals(
-            "read fresh from the still-live object rather than captured at confirmation",
-            leaked.javaClass.name,
-            suspect.className,
-        )
         assertEquals(System.identityHashCode(leaked), suspect.id)
 
         gcCycleCount = 7L

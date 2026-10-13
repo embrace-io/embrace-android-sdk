@@ -221,7 +221,8 @@ internal fun ModuleGraph.postLoadInstrumentation() = safeInit {
 internal fun ModuleGraph.triggerPayloadSend() = safeInit {
     val worker = workerThreadModule.backgroundWorker(Worker.Background.IoRegWorker)
     worker.submit {
-        // process multi-file session part directories before resurrection can run
+        // process multi-file session part directories before resurrection can run. The reader resurrects
+        // dead parts itself, so a part this pass doesn't reach is still resurrected by a later pass
         userSessionOrchestrationModule.sessionPartReader?.readPersistedSessionParts(true)
 
         val resurrectionService = payloadSourceModule.payloadResurrectionService
@@ -236,6 +237,9 @@ internal fun ModuleGraph.triggerPayloadSend() = safeInit {
                 },
                 userSessionRestoreDecisionProvider = {
                     userSessionOrchestrationModule.sessionOrchestrator.userSessionRestoreDecision
+                },
+                pendingSessionPartIdsProvider = {
+                    userSessionOrchestrationModule.sessionPartReader?.storedSessionPartIds() ?: emptySet()
                 },
             )
             resurrectionAttempted = true

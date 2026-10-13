@@ -779,6 +779,18 @@ class PayloadResurrectionServiceImplTest {
     }
 
     @Test
+    fun `a native crash of a session part still on disk is left for the reader, and the rest are sent and deleted`() {
+        val pendingCrash = createNativeCrashData(nativeCrashId = "native-crash-1", sessionPartId = "pending-part-id")
+        val sessionlessCrash = createNativeCrashData(nativeCrashId = "native-crash-2", sessionPartId = "no-session-id")
+        nativeCrashService.addNativeCrashData(pendingCrash)
+        nativeCrashService.addNativeCrashData(sessionlessCrash)
+        resurrectInBackground(pendingSessionPartIds = setOf("pending-part-id"))
+
+        assertEquals(listOf(sessionlessCrash), nativeCrashService.nativeCrashesSent.map { it.first })
+        assertEquals(listOf(pendingCrash), nativeCrashService.getNativeCrashes())
+    }
+
+    @Test
     fun `native crashes without sessions or cached crash envelopes sent`() {
         val deadSessionCrashData = createNativeCrashData(
             nativeCrashId = "native-crash-1",
@@ -876,9 +888,10 @@ class PayloadResurrectionServiceImplTest {
     private fun resurrectInBackground(
         nativeCrashServiceProvider: () -> NativeCrashService? = { nativeCrashService },
         restoreDecision: UserSessionRestoreDecision? = null,
+        pendingSessionPartIds: Set<String> = emptySet(),
     ) {
         val thread = Thread {
-            resurrectionService.resurrectOldPayloads(nativeCrashServiceProvider, { restoreDecision })
+            resurrectionService.resurrectOldPayloads(nativeCrashServiceProvider, { restoreDecision }, { pendingSessionPartIds })
         }
         thread.start()
         thread.join(5000)

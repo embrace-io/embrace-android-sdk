@@ -28,11 +28,14 @@ internal class ActivityLeakDetectionLifecycleCallbacks(
 
     override fun onActivityDestroyed(activity: Activity) {
         val sessionIds = activeSessionIdsProvider()
-        leakDetector.trackClosed(activity, LeakContext(OBJECT_TYPE, sessionIds))
+        leakDetector.trackClosed(activity, LeakContext(OBJECT_TYPE, sessionIds, activity.javaClass))
 
         if (webViewLeakDetectionEnabled) {
             WebViewLeakScanner.scan(activity.window?.decorView, logger) { webView ->
-                leakDetector.trackClosed(webView, LeakContext(WebViewLeakScanner.WEBVIEW_OBJECT_TYPE, sessionIds))
+                leakDetector.trackClosed(
+                    webView,
+                    LeakContext(WebViewLeakScanner.WEBVIEW_OBJECT_TYPE, sessionIds, webView.javaClass),
+                )
             }
         }
     }

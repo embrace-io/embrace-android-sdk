@@ -59,7 +59,7 @@ internal class LeakDetectionDataSourceTest {
         val leaked = Any()
         val detector = dataSource.leakDetector
         detector.trackOpened(leaked)
-        val ref = checkNotNull(detector.trackClosed(leaked, LeakContext(OBJECT_TYPE, SESSION_IDS)))
+        val ref = checkNotNull(detector.trackClosed(leaked, LeakContext(OBJECT_TYPE, SESSION_IDS, leaked.javaClass)))
 
         detector.onSentinelReclaimed(ref)
         dataSource.onPreSessionEnd()
@@ -85,7 +85,7 @@ internal class LeakDetectionDataSourceTest {
     private fun confirmLeak(referent: Any, sessionIds: SessionIdsSnapshot) {
         val detector = dataSource.leakDetector
         detector.trackOpened(referent)
-        val ref = checkNotNull(detector.trackClosed(referent, LeakContext(OBJECT_TYPE, sessionIds)))
+        val ref = checkNotNull(detector.trackClosed(referent, LeakContext(OBJECT_TYPE, sessionIds, referent.javaClass)))
 
         val confirmation = checkNotNull(detector.onSentinelReclaimed(ref))
         detector.onSentinelReclaimed(confirmation)

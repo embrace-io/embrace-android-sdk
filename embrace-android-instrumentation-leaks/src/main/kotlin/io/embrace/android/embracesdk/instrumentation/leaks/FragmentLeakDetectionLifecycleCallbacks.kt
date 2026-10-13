@@ -34,7 +34,7 @@ internal class FragmentLeakDetectionLifecycleCallbacks(
     }
 
     override fun onFragmentDestroyed(fm: FragmentManager, f: Fragment) {
-        leakDetector.trackClosed(f, LeakContext(FRAGMENT_OBJECT_TYPE, activeSessionIdsProvider()))
+        leakDetector.trackClosed(f, LeakContext(FRAGMENT_OBJECT_TYPE, activeSessionIdsProvider(), f.javaClass))
     }
 
     override fun onFragmentViewCreated(fm: FragmentManager, f: Fragment, v: View, savedInstanceState: Bundle?) {
@@ -53,11 +53,14 @@ internal class FragmentLeakDetectionLifecycleCallbacks(
     override fun onFragmentViewDestroyed(fm: FragmentManager, f: Fragment) {
         val view = pendingViews.closed(f) ?: return
         val sessionIds = activeSessionIdsProvider()
-        leakDetector.trackClosed(view, LeakContext(FRAGMENT_VIEW_OBJECT_TYPE, sessionIds))
+        leakDetector.trackClosed(view, LeakContext(FRAGMENT_VIEW_OBJECT_TYPE, sessionIds, view.javaClass))
 
         if (webViewLeakDetectionEnabled) {
             WebViewLeakScanner.scan(view, logger) { webView ->
-                leakDetector.trackClosed(webView, LeakContext(WebViewLeakScanner.WEBVIEW_OBJECT_TYPE, sessionIds))
+                leakDetector.trackClosed(
+                    webView,
+                    LeakContext(WebViewLeakScanner.WEBVIEW_OBJECT_TYPE, sessionIds, webView.javaClass),
+                )
             }
         }
     }

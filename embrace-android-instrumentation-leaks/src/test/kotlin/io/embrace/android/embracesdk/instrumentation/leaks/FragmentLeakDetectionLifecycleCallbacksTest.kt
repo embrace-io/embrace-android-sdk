@@ -56,7 +56,7 @@ internal class FragmentLeakDetectionLifecycleCallbacksTest {
 
         assertNotNull(
             "onFragmentAttached should have opened a sentinel for the fragment",
-            leakDetector.trackClosed(fragment, LeakContext("fragment", SESSION_IDS)),
+            leakDetector.trackClosed(fragment, FRAGMENT_CONTEXT),
         )
     }
 
@@ -70,7 +70,7 @@ internal class FragmentLeakDetectionLifecycleCallbacksTest {
 
         assertNull(
             "onFragmentDestroyed should already have released the sentinel opened at attach",
-            leakDetector.trackClosed(fragment, LeakContext("fragment", SESSION_IDS)),
+            leakDetector.trackClosed(fragment, FRAGMENT_CONTEXT),
         )
     }
 
@@ -84,7 +84,7 @@ internal class FragmentLeakDetectionLifecycleCallbacksTest {
 
         assertNotNull(
             "onFragmentViewCreated should have opened a sentinel for the fragment's view",
-            leakDetector.trackClosed(view, LeakContext("fragment_view", SESSION_IDS)),
+            leakDetector.trackClosed(view, FRAGMENT_VIEW_CONTEXT),
         )
     }
 
@@ -99,7 +99,7 @@ internal class FragmentLeakDetectionLifecycleCallbacksTest {
 
         assertNull(
             "onFragmentViewDestroyed should already have released the sentinel opened at view-created",
-            leakDetector.trackClosed(view, LeakContext("fragment_view", SESSION_IDS)),
+            leakDetector.trackClosed(view, FRAGMENT_VIEW_CONTEXT),
         )
     }
 
@@ -114,7 +114,7 @@ internal class FragmentLeakDetectionLifecycleCallbacksTest {
 
         assertNotNull(
             "a fragment attached to a child FragmentManager should be tracked too",
-            leakDetector.trackClosed(child, LeakContext("fragment", SESSION_IDS)),
+            leakDetector.trackClosed(child, FRAGMENT_CONTEXT),
         )
     }
 
@@ -133,7 +133,7 @@ internal class FragmentLeakDetectionLifecycleCallbacksTest {
 
         assertNotNull(
             "resuming a fragment with a WebView in its view should have opened a sentinel for it",
-            leakDetector.trackClosed(fragment.webView, LeakContext(WebViewLeakScanner.WEBVIEW_OBJECT_TYPE, SESSION_IDS)),
+            leakDetector.trackClosed(fragment.webView, WEBVIEW_CONTEXT),
         )
     }
 
@@ -153,7 +153,7 @@ internal class FragmentLeakDetectionLifecycleCallbacksTest {
 
         assertNull(
             "onFragmentViewDestroyed should already have released the sentinel opened when the webview was found",
-            leakDetector.trackClosed(fragment.webView, LeakContext(WebViewLeakScanner.WEBVIEW_OBJECT_TYPE, SESSION_IDS)),
+            leakDetector.trackClosed(fragment.webView, WEBVIEW_CONTEXT),
         )
     }
 
@@ -166,7 +166,7 @@ internal class FragmentLeakDetectionLifecycleCallbacksTest {
 
         assertNull(
             "no sentinel should have been opened when webview leak detection is disabled (the default)",
-            leakDetector.trackClosed(fragment.webView, LeakContext(WebViewLeakScanner.WEBVIEW_OBJECT_TYPE, SESSION_IDS)),
+            leakDetector.trackClosed(fragment.webView, WEBVIEW_CONTEXT),
         )
     }
 
@@ -183,6 +183,9 @@ internal class FragmentLeakDetectionLifecycleCallbacksTest {
 
     private companion object {
         val SESSION_IDS = SessionIdsSnapshot(userSessionId = "session-1", sessionPartId = "part-1")
+        val FRAGMENT_CONTEXT = LeakContext("fragment", SESSION_IDS, Fragment::class.java)
+        val FRAGMENT_VIEW_CONTEXT = LeakContext("fragment_view", SESSION_IDS, View::class.java)
+        val WEBVIEW_CONTEXT = LeakContext(WebViewLeakScanner.WEBVIEW_OBJECT_TYPE, SESSION_IDS, WebView::class.java)
     }
 }
 

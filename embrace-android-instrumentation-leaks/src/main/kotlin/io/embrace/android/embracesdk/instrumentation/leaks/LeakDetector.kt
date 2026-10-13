@@ -205,8 +205,8 @@ internal class LeakDetector(
 
     /**
      * A snapshot of every confirmed suspect still reachable, safe to hand outside the detector: it never carries the tracked
-     * object itself, only what [trackClosed] was given, its class name read fresh from the still-live object, and how many
-     * GC cycles it has survived since being confirmed.
+     * object itself, only what [trackClosed] was given, its identity, and how many GC cycles it has survived since being
+     * confirmed.
      */
     fun suspects(): List<LeakSnapshot> {
         val cycleCount = currentGcCycleCount()
@@ -220,7 +220,6 @@ internal class LeakDetector(
                     suspect.trackedAtMs,
                     suspect.token,
                     cyclesSurvived,
-                    referent.javaClass.name,
                     System.identityHashCode(referent),
                 )
             }
@@ -324,7 +323,7 @@ internal class LeakDetector(
      * finalization as well, and would hold the referent's memory alive until explicitly cleared; neither is needed here,
      * since nothing but bookkeeping happens once a suspect is gone.
      *
-     * [get] doubles as the live read [suspects] uses for the class name, since unlike a [PhantomReference] a
+     * [get] doubles as the live read [suspects] uses for the identity hashcode, since unlike a [PhantomReference] a
      * [WeakReference] hands the referent back for as long as it is still reachable.
      */
     internal class ConfirmedSuspect(
@@ -348,7 +347,6 @@ internal class LeakDetector(
         val trackedAtMs: Long,
         val token: Any?,
         val cyclesSurvived: Long,
-        val className: String,
         val id: Int,
     )
 

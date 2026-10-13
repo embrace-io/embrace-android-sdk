@@ -1,0 +1,9 @@
+// Generated from foo.yaml. Do not edit.
+package io.embrace.android.embracesdk.`internal`.config.instrumented.schema
+
+/**
+ * Local bar config, read from embrace-config.json.
+ */
+public interface BarLocalConfig {
+    public fun getLimit(): Int
+}

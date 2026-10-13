@@ -38,7 +38,8 @@ abstract class GenerateConfigTask : DefaultTask() {
         val pkg = packageName.get()
         val (slices, tests) = try {
             val slices = ConfigSlice.fromYaml(file.readText())
-            slices.map { configSliceFile(it, pkg, file.name) } to slices.map { configTestFile(it, pkg, file.name) }
+            val sliceFiles = slices.flatMap { listOf(configSliceFile(it, pkg, file.name)) + localConfigFiles(it, file.name) }
+            sliceFiles to slices.map { configTestFile(it, pkg, file.name) }
         } catch (exc: IllegalArgumentException) {
             throw GradleException("${file.name}: ${exc.message}", exc)
         }

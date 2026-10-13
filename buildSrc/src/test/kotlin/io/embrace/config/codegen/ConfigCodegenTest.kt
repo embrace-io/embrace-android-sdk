@@ -12,6 +12,7 @@ class ConfigCodegenTest {
         Fixtures.parse("foo.yaml").forEach {
             Fixtures.assertMatches("${it.name}.kt", configSliceFile(it, "com.example", "foo.yaml").toString())
             Fixtures.assertMatches("${it.name}GeneratedTest.kt", configTestFile(it, "com.example", "foo.yaml").toString())
+            localConfigFiles(it, "foo.yaml").forEach { file -> Fixtures.assertMatches("${file.name}.kt", file.toString()) }
         }
     }
 
@@ -23,6 +24,11 @@ class ConfigCodegenTest {
             "FooConfig.limit: generated tests only support top-level RemoteConfig properties",
             assertThrows(IllegalArgumentException::class.java) { configTestFile(slice, "com.example", "nested-remote.yaml") }.message,
         )
+    }
+
+    @Test
+    fun `remote-only configs have no local config`() {
+        assertEquals(emptyList<Any>(), localConfigFiles(Fixtures.parse("nested-remote.yaml").single(), "nested-remote.yaml"))
     }
 
     @Test

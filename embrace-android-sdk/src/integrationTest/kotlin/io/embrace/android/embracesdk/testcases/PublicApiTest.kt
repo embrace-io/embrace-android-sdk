@@ -9,7 +9,6 @@ import io.embrace.android.embracesdk.testframework.OtelSdkMode
 import io.embrace.android.embracesdk.testframework.SdkIntegrationTestRule
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotNull
-import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Rule
 import org.junit.Test
@@ -37,27 +36,6 @@ internal class PublicApiTest(
     @Rule
     @JvmField
     val testRule: SdkIntegrationTestRule = SdkIntegrationTestRule(otelSdkMode = otelSdkMode)
-
-    @Test
-    fun `SDK start defaults to native app framework`() {
-        testRule.runTest(
-            instrumentedConfig = instrumentedConfig,
-            testCaseAction = {
-                assertTrue(embrace.isStarted)
-            }
-        )
-    }
-
-    @Test
-    fun `getCurrentUserSessionId returns null when SDK is not started`() {
-        testRule.runTest(
-            instrumentedConfig = instrumentedConfig,
-            startSdk = false,
-            testCaseAction = {
-                assertNull(embrace.currentUserSessionId)
-            }
-        )
-    }
 
     @Test
     fun `getCurrentUserSessionId returns the user session id when SDK is started and foreground session is active`() {

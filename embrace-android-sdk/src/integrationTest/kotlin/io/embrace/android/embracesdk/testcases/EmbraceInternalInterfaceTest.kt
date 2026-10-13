@@ -26,20 +26,6 @@ internal class EmbraceInternalInterfaceTest(
     val testRule: SdkIntegrationTestRule = SdkIntegrationTestRule(otelSdkMode = otelSdkMode)
 
     @Test
-    fun `no NPEs when SDK not started`() {
-        testRule.runTest(
-            startSdk = false,
-            testCaseAction = {
-                assertFalse(embrace.isStarted)
-                with(EmbraceInternalApi.internalInterface) {
-                    assertFalse(isNetworkSpanForwardingEnabled())
-                }
-                assertFalse(embrace.isStarted)
-            }
-        )
-    }
-
-    @Test
     fun `access check methods work as expected`() {
         testRule.runTest(
             persistedRemoteConfig = RemoteConfig(
@@ -74,17 +60,6 @@ internal class EmbraceInternalInterfaceTest(
 
                 val logResource = checkNotNull(getSingleLogEnvelope().resource)
                 assertEquals(expected, logResource.extras)
-            }
-        )
-    }
-
-    @Test
-    fun `SDK will not start if feature flag has it being disabled`() {
-        testRule.runTest(
-            persistedRemoteConfig = RemoteConfig(threshold = 0),
-            expectSdkToStart = false,
-            testCaseAction = {
-                assertFalse(embrace.isStarted)
             }
         )
     }

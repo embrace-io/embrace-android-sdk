@@ -2,7 +2,6 @@ package io.embrace.android.embracesdk.internal.api.delegate
 
 import io.embrace.android.embracesdk.internal.api.NetworkRequestApi
 import io.embrace.android.embracesdk.internal.injection.ModuleInitBootstrapper
-import io.embrace.android.embracesdk.internal.injection.embraceImplInject
 import io.embrace.android.embracesdk.internal.instrumentation.network.DefaultTraceparentGenerator
 import io.embrace.android.embracesdk.internal.instrumentation.network.HttpNetworkRequest
 import io.embrace.android.embracesdk.internal.instrumentation.network.NetworkCaptureDataSource
@@ -17,16 +16,9 @@ internal class NetworkRequestApiDelegate(
 
     private val bootstrapper by lazyBootstrapper
 
-    private val configService by embraceImplInject(sdkCallChecker) { bootstrapper.configService }
-    private val registry by embraceImplInject(sdkCallChecker) {
-        bootstrapper.instrumentationModule.instrumentationRegistry
-    }
-    private val httpRequestInfoModifierChain by embraceImplInject(sdkCallChecker) {
-        bootstrapper.instrumentationModule.instrumentationArgs.httpRequestInfoModifierChain
-    }
-    private val sessionOrchestrator by embraceImplInject(sdkCallChecker) {
-        bootstrapper.userSessionOrchestrationModule.sessionOrchestrator
-    }
+    private val registry get() = bootstrapper.instrumentationModule.instrumentationRegistry
+    private val httpRequestInfoModifierChain get() = bootstrapper.instrumentationModule.instrumentationArgs.httpRequestInfoModifierChain
+    private val sessionOrchestrator get() = bootstrapper.userSessionOrchestrationModule.sessionOrchestrator
 
     override fun recordNetworkRequest(networkRequest: EmbraceNetworkRequest) {
         if (sdkCallChecker.check("record_network_request")) {
@@ -36,13 +28,13 @@ internal class NetworkRequestApiDelegate(
 
     override fun addHttpRequestInfoModifier(modifier: HttpRequestInfoModifier) {
         if (sdkCallChecker.check("add_http_request_info_modifier")) {
-            httpRequestInfoModifierChain?.add(modifier)
+            httpRequestInfoModifierChain.add(modifier)
         }
     }
 
     override fun removeHttpRequestInfoModifier(modifier: HttpRequestInfoModifier) {
         if (sdkCallChecker.check("remove_http_request_info_modifier")) {
-            httpRequestInfoModifierChain?.remove(modifier)
+            httpRequestInfoModifierChain.remove(modifier)
         }
     }
 
@@ -51,11 +43,11 @@ internal class NetworkRequestApiDelegate(
 
     private fun logNetworkRequest(request: EmbraceNetworkRequest) {
         val req = request.toHttpNetworkRequest()
-        val networkRequestDataSource = registry?.findByType(NetworkRequestDataSource::class)
-        val networkCaptureDataSource = registry?.findByType(NetworkCaptureDataSource::class)
+        val networkRequestDataSource = registry.findByType(NetworkRequestDataSource::class)
+        val networkCaptureDataSource = registry.findByType(NetworkCaptureDataSource::class)
         networkRequestDataSource?.recordNetworkRequest(req)
         networkCaptureDataSource?.recordNetworkRequest(req)
-        sessionOrchestrator?.onSessionDataUpdate()
+        sessionOrchestrator.onSessionDataUpdate()
     }
 
     private fun EmbraceNetworkRequest.toHttpNetworkRequest(): HttpNetworkRequest {

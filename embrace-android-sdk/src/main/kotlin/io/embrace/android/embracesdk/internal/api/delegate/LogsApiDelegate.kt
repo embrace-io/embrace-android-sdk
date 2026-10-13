@@ -9,7 +9,6 @@ import io.embrace.android.embracesdk.internal.arch.schema.SchemaType.Log
 import io.embrace.android.embracesdk.internal.arch.schema.SendMode
 import io.embrace.android.embracesdk.internal.arch.schema.TelemetryAttributes
 import io.embrace.android.embracesdk.internal.injection.ModuleInitBootstrapper
-import io.embrace.android.embracesdk.internal.injection.embraceImplInject
 import io.embrace.android.embracesdk.internal.instrumentation.fcm.PushNotificationBreadcrumb
 import io.embrace.android.embracesdk.internal.instrumentation.fcm.fcmDataSource
 import io.embrace.android.embracesdk.internal.logs.LogExceptionType
@@ -34,22 +33,12 @@ internal class LogsApiDelegate(
 
     private val bootstrapper by lazyBootstrapper
 
-    private val logService by embraceImplInject(sdkCallChecker) { bootstrapper.logModule.logService }
-    private val attachmentService by embraceImplInject(sdkCallChecker) {
-        bootstrapper.logModule.attachmentService
-    }
-    private val logger by embraceImplInject(sdkCallChecker) {
-        bootstrapper.initModule.logger
-    }
-    private val payloadStore by embraceImplInject(sdkCallChecker) {
-        bootstrapper.deliveryModule?.payloadStore
-    }
-    private val serializer by embraceImplInject(sdkCallChecker) {
-        bootstrapper.initModule.jsonSerializer
-    }
-    private val telemetryService by embraceImplInject(sdkCallChecker) {
-        bootstrapper.initModule.telemetryService
-    }
+    private val logService get() = bootstrapper.logModule.logService
+    private val attachmentService get() = bootstrapper.logModule.attachmentService
+    private val logger get() = bootstrapper.initModule.logger
+    private val payloadStore get() = bootstrapper.deliveryModule?.payloadStore
+    private val serializer get() = bootstrapper.initModule.jsonSerializer
+    private val telemetryService get() = bootstrapper.initModule.telemetryService
 
     override fun logInfo(message: String) = logMessage(message, Severity.INFO)
     override fun logWarning(message: String) = logMessage(message, Severity.WARNING)
@@ -73,7 +62,7 @@ internal class LogsApiDelegate(
         properties: Map<String, Any>,
         attachment: ByteArray,
     ) {
-        val obj = attachmentService?.createAttachment(attachment) ?: return
+        val obj = attachmentService.createAttachment(attachment)
         logAttachmentErrorIfNeeded(obj)
         logMessageImpl(
             severity = severity,
@@ -90,7 +79,7 @@ internal class LogsApiDelegate(
         attachmentId: String,
         attachmentUrl: String,
     ) {
-        val obj = attachmentService?.createAttachment(attachmentId, attachmentUrl) ?: return
+        val obj = attachmentService.createAttachment(attachmentId, attachmentUrl)
         logAttachmentErrorIfNeeded(obj)
         logMessageImpl(
             severity = severity,
@@ -107,8 +96,8 @@ internal class LogsApiDelegate(
             UNKNOWN -> "An unknown error occurred while processing the attachment."
             else -> return
         }
-        telemetryService?.trackAppliedLimit("attachment", AppliedLimitType.DROP)
-        logger?.logError(msg, RuntimeException(msg))
+        telemetryService.trackAppliedLimit("attachment", AppliedLimitType.DROP)
+        logger.logError(msg, RuntimeException(msg))
     }
 
     override fun logException(
@@ -239,7 +228,7 @@ internal class LogsApiDelegate(
     }
 
     private fun serializeStacktrace(elements: Array<StackTraceElement>): String? = runCatching {
-        serializer?.truncatedStacktrace(elements)
+        serializer.truncatedStacktrace(elements)
     }.getOrNull()
 
     @Deprecated("This API is deprecated and will be removed in a future release.Use logMessage() instead.")

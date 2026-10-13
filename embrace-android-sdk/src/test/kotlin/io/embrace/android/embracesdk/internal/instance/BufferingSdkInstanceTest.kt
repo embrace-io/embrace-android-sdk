@@ -17,6 +17,8 @@ import io.embrace.android.embracesdk.internal.logging.InternalErrorType
 import io.embrace.android.embracesdk.spans.EmbraceSpan
 import io.embrace.android.embracesdk.spans.EmbraceSpanEvent
 import io.embrace.android.embracesdk.spans.ErrorCode
+import io.opentelemetry.kotlin.NoopOpenTelemetry
+import io.opentelemetry.kotlin.OpenTelemetry
 import io.opentelemetry.kotlin.logging.export.LogRecordExporter
 import io.opentelemetry.kotlin.logging.export.LogRecordProcessor
 import io.opentelemetry.kotlin.tracing.export.SpanExporter
@@ -24,6 +26,7 @@ import io.opentelemetry.kotlin.tracing.export.SpanProcessor
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNull
+import org.junit.Assert.assertSame
 import org.junit.Assert.assertThrows
 import org.junit.Assert.assertTrue
 import org.junit.Before
@@ -38,6 +41,7 @@ internal class BufferingSdkInstanceTest {
     private lateinit var logger: FakeInternalLogger
     private lateinit var target: RecordingSdkApi
     private lateinit var replayed: MutableList<List<ExperimentApiCall>>
+    private lateinit var openTelemetryKotlin: OpenTelemetry
     private lateinit var instance: BufferingSdkInstance
 
     @Before
@@ -46,7 +50,8 @@ internal class BufferingSdkInstanceTest {
         logger = FakeInternalLogger(throwOnInternalError = false)
         target = RecordingSdkApi()
         replayed = mutableListOf()
-        instance = BufferingSdkInstance(clock, logger)
+        openTelemetryKotlin = object : OpenTelemetry by NoopOpenTelemetry {}
+        instance = BufferingSdkInstance(clock, logger, openTelemetryKotlin)
     }
 
     @Test
@@ -61,6 +66,11 @@ internal class BufferingSdkInstanceTest {
     @Test
     fun `getSdkCurrentTimeMs returns zero`() {
         assertEquals(0, instance.getSdkCurrentTimeMs())
+    }
+
+    @Test
+    fun `getOpenTelemetryKotlin returns the injected instance`() {
+        assertSame(openTelemetryKotlin, instance.getOpenTelemetryKotlin())
     }
 
     @Test

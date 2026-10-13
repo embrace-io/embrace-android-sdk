@@ -11,10 +11,12 @@ import io.embrace.android.embracesdk.fakes.OtelSdkMode
 import io.embrace.android.embracesdk.fakes.config.FakeBaseUrlConfig
 import io.embrace.android.embracesdk.fakes.config.FakeEnabledFeatureConfig
 import io.embrace.android.embracesdk.fakes.config.FakeInstrumentedConfig
+import io.embrace.android.embracesdk.internal.api.delegate.SdkCallChecker
 import io.embrace.android.embracesdk.internal.injection.InitModule
 import io.embrace.android.embracesdk.internal.injection.InitModuleImpl
 import io.embrace.android.embracesdk.internal.injection.ModuleInitBootstrapper
 import io.embrace.android.embracesdk.internal.worker.Worker
+import io.opentelemetry.kotlin.NoopOpenTelemetry
 import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
@@ -72,7 +74,12 @@ internal class StrictModeStartupTest(
             recorder.install()
 
             bootstrapper = ModuleInitBootstrapper(TestInitModule(InitModuleImpl(), otelSdkMode))
-            EmbraceImpl(bootstrapper, { embrace }).let {
+            EmbraceImpl(
+                bootstrapper,
+                { embrace },
+                SdkCallChecker(bootstrapper.initModule.logger),
+                NoopOpenTelemetry,
+            ).let {
                 embrace = it
                 it.start(context)
             }

@@ -12,6 +12,7 @@ import androidx.fragment.app.Fragment
 import androidx.fragment.app.FragmentActivity
 import io.embrace.android.embracesdk.fakes.FakeInternalLogger
 import io.embrace.android.embracesdk.internal.session.id.SessionIdsSnapshot
+import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
@@ -104,6 +105,28 @@ internal class FragmentLeakDetectionLifecycleCallbacksTest {
     }
 
     @Test
+    fun `a leaked fragment view is reported under its fragment's class`() {
+        val detector = LeakDetector(clock = { 0L }, gcCycleCountReader = { "0" })
+        val activity = buildActivity(FragmentActivity::class.java).setup().get()
+        FragmentLeakDetectionLifecycleCallbacks(detector, { SESSION_IDS }, logger).onActivityCreated(activity)
+        val fragment = ViewFragment()
+
+        detector.start()
+        try {
+            activity.supportFragmentManager.beginTransaction().add(content, fragment).commitNow()
+            // held strongly here so that it outlives its lifecycle, the same way a real leak would
+            val view = checkNotNull(fragment.view)
+            activity.supportFragmentManager.beginTransaction().remove(fragment).commitNow()
+
+            val context = awaitSuspect(detector, "fragment_view")
+            assertEquals(ViewFragment::class.java, context.reportedClass)
+            assertNotNull(view)
+        } finally {
+            detector.stop()
+        }
+    }
+
+    @Test
     fun `child fragments are tracked recursively`() {
         val activity = registerOn(buildActivity(FragmentActivity::class.java).setup().get())
         val parent = Fragment()
@@ -181,11 +204,30 @@ internal class FragmentLeakDetectionLifecycleCallbacksTest {
         return activity
     }
 
+    /**
+     * Forces real collections until [detector] confirms a suspect of [objectType], and returns its [LeakContext].
+     * [System.gc] is only a request, so this retries a bounded number of times rather than trusting a single call.
+     */
+    private fun awaitSuspect(detector: LeakDetector, objectType: String): LeakContext {
+        repeat(GC_ATTEMPTS) {
+            val match = detector.suspects()
+                .mapNotNull { it.token as? LeakContext }
+                .firstOrNull { it.objectType == objectType }
+            if (match != null) return match
+            System.gc()
+            Thread.sleep(GC_RETRY_DELAY_MS)
+        }
+
+        throw AssertionError("no $objectType suspect was confirmed after $GC_ATTEMPTS collections")
+    }
+
     private companion object {
         val SESSION_IDS = SessionIdsSnapshot(userSessionId = "session-1", sessionPartId = "part-1")
         val FRAGMENT_CONTEXT = LeakContext("fragment", SESSION_IDS, Fragment::class.java)
-        val FRAGMENT_VIEW_CONTEXT = LeakContext("fragment_view", SESSION_IDS, View::class.java)
+        val FRAGMENT_VIEW_CONTEXT = LeakContext("fragment_view", SESSION_IDS, Fragment::class.java)
         val WEBVIEW_CONTEXT = LeakContext(WebViewLeakScanner.WEBVIEW_OBJECT_TYPE, SESSION_IDS, WebView::class.java)
+        const val GC_ATTEMPTS = 20
+        const val GC_RETRY_DELAY_MS = 25L
     }
 }
 

@@ -15,7 +15,8 @@ import io.embrace.android.embracesdk.internal.session.id.SessionIdsSnapshot
  * belongs to.
  *
  * [reportedClass] is supplied by the instrumentation for the same reason as [objectType]: it is usually the tracked object's
- * own class, but need not be.
+ * own class, but not always - a Fragment's root view is reported under its Fragment, since the view's class alone rarely
+ * identifies the leak.
  */
 internal class LeakContext(
     val objectType: String,

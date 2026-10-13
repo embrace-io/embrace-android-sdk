@@ -1,53 +1,31 @@
 package io.embrace.android.embracesdk.internal
 
-import io.embrace.android.embracesdk.internal.api.delegate.NoopEmbraceInternalInterface
-import io.embrace.android.embracesdk.internal.api.delegate.NoopFlutterInternalInterface
-import io.embrace.android.embracesdk.internal.api.delegate.NoopReactNativeInternalInterface
-import io.embrace.android.embracesdk.internal.api.delegate.NoopUnityInternalInterface
-
 /**
  * Provides access to internal Embrace SDK APIs. This is intended for use by Embrace's SDKs only and is subject
  * to breaking changes without warning.
  */
 object EmbraceInternalApi : InternalInterfaceApi {
 
-    var internalInterfaceApi: InternalInterfaceApi? = null
-    var isStarted: () -> Boolean = { false }
+    /**
+     * The [InternalInterfaceApi] that calls are delegated to. This is [NoopInternalInterfaceApi] unless the SDK
+     * is started.
+     */
+    @Volatile
+    var internalInterfaceApi: InternalInterfaceApi = NoopInternalInterfaceApi
 
     @JvmStatic
     @Deprecated("", replaceWith = ReplaceWith("EmbraceInternalApi"))
     fun getInstance(): EmbraceInternalApi = this
 
-    private val noopEmbraceInternalInterface by lazy {
-        NoopEmbraceInternalInterface
-    }
-    private val noopFlutterInternalInterface by lazy { NoopFlutterInternalInterface(noopEmbraceInternalInterface) }
-    private val noopReactNativeInternalInterface by lazy { NoopReactNativeInternalInterface(noopEmbraceInternalInterface) }
-    private val noopUnityInternalInterface by lazy { NoopUnityInternalInterface(noopEmbraceInternalInterface) }
-
     override val internalInterface: EmbraceInternalInterface
-        get() = resolveInternalInterface(noopEmbraceInternalInterface) { internalInterfaceApi?.internalInterface }
+        get() = internalInterfaceApi.internalInterface
 
     override val reactNativeInternalInterface: ReactNativeInternalInterface
-        get() = resolveInternalInterface(noopReactNativeInternalInterface) {
-            internalInterfaceApi?.reactNativeInternalInterface
-        }
+        get() = internalInterfaceApi.reactNativeInternalInterface
 
     override val unityInternalInterface: UnityInternalInterface
-        get() = resolveInternalInterface(noopUnityInternalInterface) { internalInterfaceApi?.unityInternalInterface }
+        get() = internalInterfaceApi.unityInternalInterface
 
     override val flutterInternalInterface: FlutterInternalInterface
-        get() = resolveInternalInterface(noopFlutterInternalInterface) { internalInterfaceApi?.flutterInternalInterface }
-
-    private inline fun <reified T> resolveInternalInterface(
-        defaultValue: T,
-        provider: () -> T?,
-    ): T {
-        val internalInterface = runCatching(provider).getOrNull()
-        return if (isStarted()) {
-            internalInterface ?: defaultValue
-        } else {
-            defaultValue
-        }
-    }
+        get() = internalInterfaceApi.flutterInternalInterface
 }

@@ -2,6 +2,9 @@ package io.embrace.android.embracesdk.internal.instance
 
 import android.content.Context
 import android.util.Log
+import io.embrace.android.embracesdk.internal.EmbraceInternalApi
+import io.embrace.android.embracesdk.internal.InternalInterfaceApi
+import io.embrace.android.embracesdk.internal.NoopInternalInterfaceApi
 import io.embrace.android.embracesdk.internal.api.SdkApi
 import io.embrace.android.embracesdk.internal.logging.InternalErrorHandler
 import io.embrace.android.embracesdk.internal.logging.InternalErrorType
@@ -25,6 +28,7 @@ internal class SdkStateHolder(
     instance: SdkApi,
     telemetryService: InternalTelemetryService,
     private val errorHandler: InternalErrorHandler,
+    private val internalInterfaceApi: InternalInterfaceApi = NoopInternalInterfaceApi,
 ) {
 
     private val lock = Any()
@@ -42,7 +46,14 @@ internal class SdkStateHolder(
 
     @Volatile
     var state: SdkState = SdkState.NOT_STARTED
-        private set
+        private set(value) {
+            field = value
+            updateInternalInterfaceApi()
+        }
+
+    init {
+        updateInternalInterfaceApi()
+    }
 
     /**
      * Starts the SDK. Has no effect if the SDK is already in [SdkState.STARTED].
@@ -82,6 +93,13 @@ internal class SdkStateHolder(
             } catch (exc: Throwable) {
                 errorHandler.trackInternalError(InternalErrorType.PublicApiFail, exc)
             }
+        }
+    }
+
+    private fun updateInternalInterfaceApi() {
+        EmbraceInternalApi.internalInterfaceApi = when (state) {
+            SdkState.STARTED -> internalInterfaceApi
+            SdkState.NOT_STARTED, SdkState.DISABLED -> NoopInternalInterfaceApi
         }
     }
 

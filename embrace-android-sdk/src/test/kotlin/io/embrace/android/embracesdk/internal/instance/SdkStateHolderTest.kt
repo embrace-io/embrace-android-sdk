@@ -5,6 +5,9 @@ import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import io.embrace.android.embracesdk.fakes.FakeInternalLogger
 import io.embrace.android.embracesdk.fakes.FakeInternalTelemetryService
+import io.embrace.android.embracesdk.internal.EmbraceInternalApi
+import io.embrace.android.embracesdk.internal.InternalInterfaceApi
+import io.embrace.android.embracesdk.internal.NoopInternalInterfaceApi
 import io.embrace.android.embracesdk.internal.api.SdkApi
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertSame
@@ -137,9 +140,33 @@ internal class SdkStateHolderTest {
         assertEquals(listOf("start", "logInfo/1", "disable"), calls)
     }
 
+    @Test
+    fun `internal interface api follows state`() {
+        val internalInterfaceApi = FakeInternalInterfaceApi()
+        EmbraceInternalApi.internalInterfaceApi = internalInterfaceApi
+        val instance = FakeInstance(calls, startSucceeds = false)
+        val holder = SdkStateHolder(instance, FakeInternalTelemetryService(), logger, internalInterfaceApi)
+        assertSame(NoopInternalInterfaceApi, EmbraceInternalApi.internalInterfaceApi)
+
+        holder.start(context)
+        assertSame(NoopInternalInterfaceApi, EmbraceInternalApi.internalInterfaceApi)
+
+        instance.startSucceeds = true
+        holder.start(context)
+        assertSame(internalInterfaceApi, EmbraceInternalApi.internalInterfaceApi)
+
+        holder.disable()
+        assertSame(NoopInternalInterfaceApi, EmbraceInternalApi.internalInterfaceApi)
+
+        holder.start(context)
+        assertSame(internalInterfaceApi, EmbraceInternalApi.internalInterfaceApi)
+    }
+
+    private class FakeInternalInterfaceApi : InternalInterfaceApi by NoopInternalInterfaceApi
+
     private class FakeInstance(
         private val calls: MutableList<String>,
-        private val startSucceeds: Boolean = true,
+        var startSucceeds: Boolean = true,
         private val startThrows: Boolean = false,
         var disableThrows: Boolean = false,
     ) : SdkApi by recordingSdkApi(calls) {

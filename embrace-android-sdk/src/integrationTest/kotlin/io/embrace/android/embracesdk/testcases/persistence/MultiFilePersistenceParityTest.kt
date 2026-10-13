@@ -12,13 +12,19 @@ import io.embrace.android.embracesdk.assertions.getUserSessionId
 import io.embrace.android.embracesdk.assertions.returnIfConditionMet
 import io.embrace.android.embracesdk.fakes.FakeInternalLogger
 import io.embrace.android.embracesdk.fakes.config.FakeInstrumentedConfig
+import io.embrace.android.embracesdk.fakes.config.FakeProjectConfig
+import io.embrace.android.embracesdk.internal.EmbraceInternalApi
 import io.embrace.android.embracesdk.internal.arch.schema.EmbType
 import io.embrace.android.embracesdk.internal.arch.state.ProcessState
+import io.embrace.android.embracesdk.internal.capture.connectivity.ConnectivityStatus
+import io.embrace.android.embracesdk.internal.config.behavior.DEFAULT_PERIODIC_CACHE_INTERVAL_MS
 import io.embrace.android.embracesdk.internal.config.remote.BackgroundActivityRemoteConfig
 import io.embrace.android.embracesdk.internal.config.remote.RemoteConfig
+import io.embrace.android.embracesdk.internal.delivery.StoredTelemetryMetadata
 import io.embrace.android.embracesdk.internal.delivery.SupportedEnvelopeType
 import io.embrace.android.embracesdk.internal.delivery.storage.StorageLocation
 import io.embrace.android.embracesdk.internal.delivery.storage.asFile
+import io.embrace.android.embracesdk.internal.logging.InternalErrorType
 import io.embrace.android.embracesdk.internal.otel.sdk.findAttributeValue
 import io.embrace.android.embracesdk.internal.otel.spans.hasEmbraceAttribute
 import io.embrace.android.embracesdk.internal.payload.Attribute
@@ -39,6 +45,7 @@ import io.embrace.android.embracesdk.spans.EmbraceSpan
 import io.embrace.android.embracesdk.testcases.features.createNativeSymbolsForCurrentArch
 import io.embrace.android.embracesdk.testframework.OtelSdkMode
 import io.embrace.android.embracesdk.testframework.SdkIntegrationTestRule
+import io.embrace.android.embracesdk.testframework.actions.EmbraceActionInterface
 import io.embrace.android.embracesdk.testframework.actions.EmbracePayloadAssertionInterface
 import io.embrace.android.embracesdk.testframework.actions.EmbraceSetupInterface
 import io.embrace.android.embracesdk.testframework.assertions.Placeholder
@@ -47,38 +54,42 @@ import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
+import org.junit.Assume.assumeTrue
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.ParameterizedRobolectricTestRunner
 import java.io.File
+import java.util.UUID
+import java.util.concurrent.CountDownLatch
+import java.util.concurrent.TimeUnit
 
 /**
  * Verifies that a session payload reaches the server, and looks the same, whether it was persisted
- * by the legacy single-file layer or by the multi-file layer.
+ * in single-file mode or in multi-file mode.
  *
- * Every case runs under both layers, and under each [OtelSdkMode]. Only one of them may deliver a given session part - see
+ * Every case runs under both modes, and under each [OtelSdkMode]. Only one of them may deliver a given session part - see
  * [deliveredParts].
  */
 @RunWith(ParameterizedRobolectricTestRunner::class)
 internal class MultiFilePersistenceParityTest(
     private val persistenceMode: PersistenceMode,
-    private val otelSdkMode: OtelSdkMode,
+    otelSdkMode: OtelSdkMode,
 ) {
 
-    internal enum class PersistenceMode { LEGACY, MULTI_FILE }
+    internal enum class PersistenceMode { SINGLE_FILE, MULTI_FILE }
 
     private val backgroundActivityEnabled = BackgroundActivityRemoteConfig(100f)
 
     /**
-     * The remote config for the layer under test.
+     * The remote config for the mode under test.
      */
     private fun remoteConfig(
         backgroundActivity: BackgroundActivityRemoteConfig = backgroundActivityEnabled,
     ) = RemoteConfig(
         pctMultiFilePersistenceEnabled = when (persistenceMode) {
             PersistenceMode.MULTI_FILE -> 100.0f
-            PersistenceMode.LEGACY -> 0.0f
+            PersistenceMode.SINGLE_FILE -> 0.0f
         },
         backgroundActivityConfig = backgroundActivity,
     )
@@ -204,25 +215,76 @@ internal class MultiFilePersistenceParityTest(
         )
     }
 
-    @Suppress("DEPRECATION")
+    /**
+     * The harness never runs the debounced metadata write, so the change can only reach the payload
+     * through what each mode does at part end: the single-file mode builds the payload from live state,
+     * the multi-file mode flushes its pending writes.
+     */
     @Test
     fun `user info changed mid-session is persisted identically`() {
         testRule.runTest(
+            instrumentedConfig = hostedSdkConfig,
             persistedRemoteConfig = remoteConfig(),
             testCaseAction = {
+                changeEnvelopeMetadata(BEFORE)
                 recordSession {
-                    embrace.setUserIdentifier("newId")
-                    embrace.setUsername("newUserName")
-                    embrace.setUserEmail("new@domain.com")
+                    changeEnvelopeMetadata(AFTER)
                 }
             },
             assertAction = {
-                val metadata = checkNotNull(deliveredParts().single().metadata)
-                assertEquals("newId", metadata.userId)
-                assertEquals("newUserName", metadata.username)
-                assertEquals("new@domain.com", metadata.email)
+                deliveredParts().single().assertEnvelopeMetadata(AFTER)
             },
         )
+    }
+
+    /**
+     * A change made less than one write interval after the last write is lost in both modes when the
+     * process dies: the multi-file mode's debounced metadata write and the single-file mode's next
+     * periodic cache tick are both still pending, so the part is resurrected with the metadata it
+     * started with.
+     */
+    @Test
+    fun `envelope metadata changed less than one write interval before the process dies is lost in both modes`() {
+        killMidPart {
+            changeEnvelopeMetadata(AFTER)
+            clock.tick(WRITE_INTERVAL_MS - 1)
+            persistDueWrites()
+        }
+        relaunchAndAssertDeliveredMetadata(BEFORE)
+    }
+
+    /**
+     * The modes differ here. The single-file mode caches on a fixed cadence, so a change is persisted by
+     * the next tick however soon that comes; the multi-file mode debounces from the change itself,
+     * so it persists the change a full interval after it was made. A process that dies between the
+     * two keeps the change under the single-file mode and loses it under the multi-file mode.
+     */
+    @Test
+    fun `envelope metadata changed between a single-file cache tick and the multi-file debounce differs by mode`() {
+        killMidPart {
+            clock.tick(WRITE_INTERVAL_MS / 2)
+            changeEnvelopeMetadata(AFTER)
+            clock.tick(WRITE_INTERVAL_MS / 2)
+            persistDueWrites()
+        }
+        relaunchAndAssertDeliveredMetadata(
+            when (persistenceMode) {
+                PersistenceMode.SINGLE_FILE -> AFTER
+                PersistenceMode.MULTI_FILE -> BEFORE
+            },
+        )
+    }
+
+    @Test
+    fun `the last envelope metadata change inside one write interval is what the next launch delivers`() {
+        killMidPart {
+            changeEnvelopeMetadata(AFTER)
+            clock.tick(WRITE_INTERVAL_MS / 2)
+            changeEnvelopeMetadata(LAST)
+            clock.tick(WRITE_INTERVAL_MS / 2)
+            persistDueWrites()
+        }
+        relaunchAndAssertDeliveredMetadata(LAST)
     }
 
     @Test
@@ -450,8 +512,8 @@ internal class MultiFilePersistenceParityTest(
                 assertEquals(0, getSessionEnvelopes(0).size)
 
                 when (persistenceMode) {
-                    // the legacy layer keeps no session part directories
-                    PersistenceMode.LEGACY -> assertEquals(
+                    // the single-file mode keeps no session part directories
+                    PersistenceMode.SINGLE_FILE -> assertEquals(
                         emptyList<SessionPartDirectory>(),
                         storedSessionPartDirectories(),
                     )
@@ -542,9 +604,9 @@ internal class MultiFilePersistenceParityTest(
             },
             assertAction = {
                 when (persistenceMode) {
-                    // In legacy mode, the ended part is built and handed to delivery directly, so it's
+                    // In single-file mode, the ended part is built and handed to delivery directly, so it's
                     // delivered in this process.
-                    PersistenceMode.LEGACY -> {
+                    PersistenceMode.SINGLE_FILE -> {
                         assertMatchesGoldenFile(deliveredParts().single())
                         awaitDeliveredSessionPayloadsDeleted()
                     }
@@ -565,7 +627,7 @@ internal class MultiFilePersistenceParityTest(
 
         // Verify the real payload gets delivered in a new process with an unblocked worker if we are in multi-file mode.
         // This part ended cleanly, so it must not be treated as terminated by the process's death, and is delivered as
-        // the single-file layer would have delivered it.
+        // the single-file mode would have delivered it.
         testRule.runTest(
             persistedRemoteConfig = remoteConfig(),
             setupAction = {
@@ -574,7 +636,7 @@ internal class MultiFilePersistenceParityTest(
             testCaseAction = {},
             assertAction = {
                 when (persistenceMode) {
-                    PersistenceMode.LEGACY -> {
+                    PersistenceMode.SINGLE_FILE -> {
                         // Everything was delivered in the first process, so nothing is left to deliver.
                         assertEquals(0, getSessionEnvelopes(0).size)
                     }
@@ -674,6 +736,88 @@ internal class MultiFilePersistenceParityTest(
         )
     }
 
+    @Test
+    fun `a session part rejected by full payload storage in multi-file mode is kept and delivered once space frees`() {
+        assumeTrue(persistenceMode == PersistenceMode.MULTI_FILE)
+        lateinit var heldBack: List<StoredTelemetryMetadata>
+        lateinit var keptAfterRejection: List<SessionPartDirectory>
+        testRule.runTest(
+            persistedRemoteConfig = remoteConfig(backgroundActivity = BackgroundActivityRemoteConfig(0f)),
+            setupAction = {
+                fakeNetworkConnectivityService.connectivityStatus = ConnectivityStatus.None
+                heldBack = fillPayloadStorage()
+            },
+            testCaseAction = {
+                recordSession {
+                    embrace.recordSpan("first-part-span") { clock.tick(100) }
+                }
+                keptAfterRejection = storedSessionPartDirectories()
+
+                freePayloadStorage(heldBack)
+                simulateConnectivityChange(ConnectivityStatus.Wifi(true))
+                clock.tick(20000)
+                recordSession {
+                    embrace.recordSpan("second-part-span") { clock.tick(100) }
+                }
+            },
+            assertAction = {
+                assertEquals(
+                    "the part the storage rejected was not left on disk",
+                    1,
+                    keptAfterRejection.size,
+                )
+                val retried = deliveredParts(expectedParts = 2).single { "first-part-span" in it.allSpanNames() }
+                assertEquals(keptAfterRejection.single().sessionPartId, retried.getSessionPartId())
+                assertEquals(
+                    "a delivered part was left on disk",
+                    emptyList<SessionPartDirectory>(),
+                    storedSessionPartDirectories(),
+                )
+            },
+        )
+    }
+
+    @Test
+    fun `a session part still rejected by full payload storage in multi-file mode on its retry is deleted`() {
+        assumeTrue(persistenceMode == PersistenceMode.MULTI_FILE)
+        lateinit var keptAfterRejection: List<SessionPartDirectory>
+        testRule.runTest(
+            persistedRemoteConfig = remoteConfig(backgroundActivity = BackgroundActivityRemoteConfig(0f)),
+            setupAction = {
+                // the deleted part is reported as an internal error
+                getEmbLogger().throwOnInternalError = false
+                fakeNetworkConnectivityService.connectivityStatus = ConnectivityStatus.None
+                fillPayloadStorage()
+            },
+            testCaseAction = {
+                recordSession()
+                keptAfterRejection = storedSessionPartDirectories()
+                clock.tick(20000)
+                recordSession()
+            },
+            assertAction = {
+                val rejectedTwice = keptAfterRejection.single()
+                val remaining = storedSessionPartDirectories()
+                assertFalse(
+                    "the part rejected on its retry was left on disk",
+                    remaining.any { it.sessionPartId == rejectedTwice.sessionPartId },
+                )
+                assertEquals(
+                    "the part rejected for the first time was not left on disk for its retry",
+                    1,
+                    remaining.size,
+                )
+                assertTrue(
+                    "the deleted part was not reported",
+                    testRule.setup.getEmbLogger().internalErrorMessages.any {
+                        it.msg == InternalErrorType.SessionPartReadFail.toString() &&
+                            it.throwable?.message?.contains("failed intake retry failed again") == true
+                    },
+                )
+            },
+        )
+    }
+
     private fun assertExactlyOneSessionSpan(envelope: Envelope<SessionPartPayload>) {
         assertEquals(
             "wrong number of session spans in the delivered part",
@@ -690,8 +834,8 @@ internal class MultiFilePersistenceParityTest(
     /**
      * Returns the envelope delivered for each session part.
      *
-     * Exactly one envelope is expected per part: only one persistence layer may own a part, so a
-     * second envelope for the same part means both layers delivered it. `getSessionEnvelopes`
+     * Exactly one envelope is expected per part: only one persistence mode may own a part, so a
+     * second envelope for the same part means both modes delivered it. `getSessionEnvelopes`
      * waits for an exact count, so a duplicate delivery fails here rather than passing silently.
      */
     private fun EmbracePayloadAssertionInterface.deliveredParts(
@@ -735,6 +879,97 @@ internal class MultiFilePersistenceParityTest(
         assertEquals("foreground", sessionSpan.attributes?.findAttributeValue(EmbSessionAttributes.EMB_STATE))
     }
 
+    /**
+     * Records a foreground part that the process dies in the middle of. Both modes persist the part as it starts.
+     */
+    private fun killMidPart(action: EmbraceActionInterface.() -> Unit) {
+        testRule.runTest(
+            instrumentedConfig = hostedSdkConfig,
+            persistedRemoteConfig = remoteConfig(),
+            testCaseAction = {
+                changeEnvelopeMetadata(BEFORE)
+                recordSession(endInBackground = false) {
+                    // the single-file mode's first cache tick is due as the part starts, while the
+                    // multi-file mode has already written the part's metadata
+                    persistDueWrites()
+                    action()
+                }
+                killProcess()
+            },
+            assertAction = {
+                assertEquals(0, getSessionEnvelopes(0).size)
+            },
+        )
+    }
+
+    /**
+     * Starts the next process, which delivers the part the previous one died in, and asserts it
+     * carries the expected set of metadata prefixed by [token].
+     */
+    private fun relaunchAndAssertDeliveredMetadata(token: String) {
+        testRule.bootstrapper.stop()
+        testRule.runTest(
+            instrumentedConfig = hostedSdkConfig,
+            persistedRemoteConfig = remoteConfig(),
+            testCaseAction = {},
+            assertAction = {
+                deliveredParts().single().assertEnvelopeMetadata(token)
+            },
+        )
+    }
+
+    /**
+     * Runs every persistence write that is due by now: the multi-file mode's debounced writes, and
+     * the single-file mode's periodic cache tick.
+     */
+    private fun persistDueWrites() {
+        persistenceWorkers.forEach { worker ->
+            testRule.setup.getFakedWorkerExecutor(worker).runCurrentlyBlocked()
+        }
+    }
+
+    /**
+     * Kills the process: every write still waiting on a debounce or a cache tick dies with it. What
+     * was already handed to storage is allowed to land, so only the timing of the persistence mode
+     * decides what survives.
+     */
+    private fun killProcess() {
+        persistenceWorkers.forEach { worker ->
+            testRule.setup.getFakedWorkerExecutor(worker).apply {
+                // queue the pending writes without running them, then discard them
+                blockingMode = true
+                shutdownNow()
+            }
+        }
+        checkNotNull(testRule.bootstrapper.deliveryModule).intakeService.shutdown()
+    }
+
+    /**
+     * Changes everything in the envelope that a session part persists outside its spans: the user
+     * info, and the envelope resource via the hosted SDK version.
+     */
+    @Suppress("DEPRECATION")
+    private fun EmbraceActionInterface.changeEnvelopeMetadata(token: String) {
+        embrace.setUserIdentifier("$token-id")
+        embrace.setUsername("$token-name")
+        embrace.setUserEmail("$token@domain.com")
+        embrace.clearAllUserPersonas()
+        embrace.addUserPersona("${token}_persona")
+        EmbraceInternalApi.flutterInternalInterface.setEmbraceFlutterSdkVersion("$token-sdk")
+    }
+
+    private fun Envelope<SessionPartPayload>.assertEnvelopeMetadata(token: String) {
+        val metadata = checkNotNull(metadata)
+        assertEquals("$token-id", metadata.userId)
+        assertEquals("$token-name", metadata.username)
+        assertEquals("$token@domain.com", metadata.email)
+        assertEquals(
+            setOf("${token}_persona"),
+            metadata.personas.orEmpty().filter { it.endsWith("_persona") }.toSet(),
+        )
+        assertEquals("$token-sdk", resource?.hostedSdkVersion)
+    }
+
     private fun Envelope<SessionPartPayload>.allSpanNames(): List<String> =
         (data.spans.orEmpty() + data.spanSnapshots.orEmpty()).mapNotNull(Span::name)
 
@@ -771,13 +1006,43 @@ internal class MultiFilePersistenceParityTest(
     private fun storedSessionPartDirectories(): List<SessionPartDirectory> =
         (sessionsDir().list() ?: emptyArray()).mapNotNull(SessionPartDirectory::fromDirName)
 
-    private fun sessionsDir(): File {
+    private fun sessionsDir(): File = storageDir(StorageLocation.SESSION_SPLIT)
+
+    private fun storageDir(location: StorageLocation): File {
         val ctx = ApplicationProvider.getApplicationContext<Context>()
-        return StorageLocation.SESSION_SPLIT.asFile(
+        return location.asFile(
             logger = FakeInternalLogger(),
             rootDirSupplier = { ctx.filesDir },
             fallbackDirSupplier = { ctx.cacheDir },
         ).value
+    }
+
+    /**
+     * Fills the payload storage to its count limit, as an earlier offline process would have left
+     * it, with crash payloads: they outrank a session part, so the storage rejects the part rather
+     * than evicting one of them. Returns what was stored so a test can free the space again.
+     */
+    private fun fillPayloadStorage(): List<StoredTelemetryMetadata> {
+        val dir = storageDir(StorageLocation.PAYLOAD)
+        return (0 until PAYLOAD_STORAGE_LIMIT).map { index ->
+            StoredTelemetryMetadata(
+                timestamp = SdkIntegrationTestRule.DEFAULT_SDK_START_TIME_MS - 1000L,
+                uuid = UUID(0L, index.toLong()).toString(),
+                processIdentifier = "earlier-process",
+                envelopeType = SupportedEnvelopeType.CRASH,
+            ).also { File(dir, it.filename).writeBytes(ByteArray(0)) }
+        }
+    }
+
+    /**
+     * Frees the payload storage the way delivery does: by deleting stored payloads through the
+     * storage service, which keeps its index in step with the disk.
+     */
+    private fun freePayloadStorage(entries: List<StoredTelemetryMetadata>) {
+        val storage = checkNotNull(testRule.bootstrapper.deliveryModule).payloadStorageService
+        val deleted = CountDownLatch(entries.size)
+        entries.forEach { storage.delete(it) { deleted.countDown() } }
+        assertTrue("the payload storage was not freed", deleted.await(5, TimeUnit.SECONDS))
     }
 
     /**
@@ -791,7 +1056,24 @@ internal class MultiFilePersistenceParityTest(
         private const val COMPLETED_SPANS_FILE_NAME = "completed_spans.pb"
         private const val EVENT_DRIVEN_PROPERTY = "event-driven"
         private const val WRITE_DEBOUNCE_WAIT_MS = 1000L
+
+        // the multi-file mode debounces its metadata writes by the same interval as the single-file
+        // mode's default periodic cache (SessionPartWriterImpl.METADATA_WRITE_DELAY_MS)
+        private const val WRITE_INTERVAL_MS = DEFAULT_PERIODIC_CACHE_INTERVAL_MS
+        private const val BEFORE = "before"
+        private const val AFTER = "after"
+        private const val LAST = "last"
+
+        private val persistenceWorkers = listOf(
+            Worker.Background.SessionPersistenceWorker,
+            Worker.Background.PeriodicCacheWorker,
+        )
+
+        private val hostedSdkConfig = FakeInstrumentedConfig(
+            project = FakeProjectConfig(appId = "abcde", appFramework = "flutter"),
+        )
         private const val GOLDEN_FILE = "multi_file_parity_session_part_span.json"
+        private const val PAYLOAD_STORAGE_LIMIT = 500
 
         @JvmStatic
         @ParameterizedRobolectricTestRunner.Parameters(name = "{0}-{1}")

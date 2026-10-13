@@ -11,7 +11,6 @@ import io.embrace.android.embracesdk.network.http.HttpRequestInfoModifier
 
 internal class NetworkRequestApiDelegate(
     lazyBootstrapper: Lazy<ModuleInitBootstrapper>,
-    private val sdkCallChecker: SdkCallChecker,
 ) : NetworkRequestApi {
 
     private val bootstrapper by lazyBootstrapper
@@ -21,21 +20,15 @@ internal class NetworkRequestApiDelegate(
     private val sessionOrchestrator get() = bootstrapper.userSessionOrchestrationModule.sessionOrchestrator
 
     override fun recordNetworkRequest(networkRequest: EmbraceNetworkRequest) {
-        if (sdkCallChecker.check("record_network_request")) {
-            logNetworkRequest(networkRequest)
-        }
+        logNetworkRequest(networkRequest)
     }
 
     override fun addHttpRequestInfoModifier(modifier: HttpRequestInfoModifier) {
-        if (sdkCallChecker.check("add_http_request_info_modifier")) {
-            httpRequestInfoModifierChain.add(modifier)
-        }
+        httpRequestInfoModifierChain.add(modifier)
     }
 
     override fun removeHttpRequestInfoModifier(modifier: HttpRequestInfoModifier) {
-        if (sdkCallChecker.check("remove_http_request_info_modifier")) {
-            httpRequestInfoModifierChain.remove(modifier)
-        }
+        httpRequestInfoModifierChain.remove(modifier)
     }
 
     @Deprecated("This is no longer supported")

@@ -12,7 +12,6 @@ import io.embrace.android.embracesdk.spans.ErrorCode
 
 internal class InstrumentationApiDelegate(
     lazyBootstrapper: Lazy<ModuleInitBootstrapper>,
-    private val sdkCallChecker: SdkCallChecker,
 ) : InstrumentationApi {
 
     private val bootstrapper by lazyBootstrapper
@@ -23,23 +22,17 @@ internal class InstrumentationApiDelegate(
     private val navigationTrackingService get() = bootstrapper.essentialServiceModule.navigationTrackingService
 
     override fun appReady() {
-        if (sdkCallChecker.check("app_ready")) {
-            appStartupDataCollector.appReady(timestampMs = clock.now())
-        }
+        appStartupDataCollector.appReady(timestampMs = clock.now())
     }
 
     override fun activityLoaded(activity: Activity) {
-        if (sdkCallChecker.check("activity_fully_loaded")) {
-            uiLoadTraceEmitter?.complete(traceInstanceId(activity), clock.now())
-        }
+        uiLoadTraceEmitter?.complete(traceInstanceId(activity), clock.now())
     }
 
     override fun getSdkCurrentTimeMs(): Long = clock.now()
 
     override fun addLoadTraceAttribute(activity: Activity, key: String, value: String) {
-        if (sdkCallChecker.check("add_load_trace_attribute")) {
-            uiLoadTraceEmitter?.addAttribute(traceInstanceId(activity), key, value)
-        }
+        uiLoadTraceEmitter?.addAttribute(traceInstanceId(activity), key, value)
     }
 
     override fun addLoadTraceChildSpan(
@@ -51,23 +44,19 @@ internal class InstrumentationApiDelegate(
         events: List<EmbraceSpanEvent>,
         errorCode: ErrorCode?,
     ) {
-        if (sdkCallChecker.check("add_load_trace_child_span")) {
-            uiLoadTraceEmitter?.addChildSpan(
-                instanceId = traceInstanceId(activity),
-                name = name,
-                startTimeMs = startTimeMs,
-                endTimeMs = endTimeMs,
-                attributes = attributes,
-                events = events.map(::toSpanEvent),
-                errorCode = errorCode.toErrorCodeAttribute(),
-            )
-        }
+        uiLoadTraceEmitter?.addChildSpan(
+            instanceId = traceInstanceId(activity),
+            name = name,
+            startTimeMs = startTimeMs,
+            endTimeMs = endTimeMs,
+            attributes = attributes,
+            events = events.map(::toSpanEvent),
+            errorCode = errorCode.toErrorCodeAttribute(),
+        )
     }
 
     override fun addStartupTraceAttribute(key: String, value: String) {
-        if (sdkCallChecker.check("add_startup_trace_attribute")) {
-            appStartupDataCollector.addAttribute(key, value)
-        }
+        appStartupDataCollector.addAttribute(key, value)
     }
 
     override fun addStartupTraceChildSpan(
@@ -78,22 +67,18 @@ internal class InstrumentationApiDelegate(
         events: List<EmbraceSpanEvent>,
         errorCode: ErrorCode?,
     ) {
-        if (sdkCallChecker.check("add_startup_trace_child_span")) {
-            appStartupDataCollector.addTrackedInterval(
-                name = name,
-                startTimeMs = startTimeMs,
-                endTimeMs = endTimeMs,
-                attributes = attributes,
-                events = events.map(::toSpanEvent),
-                errorCode = errorCode?.toErrorCodeAttribute(),
-            )
-        }
+        appStartupDataCollector.addTrackedInterval(
+            name = name,
+            startTimeMs = startTimeMs,
+            endTimeMs = endTimeMs,
+            attributes = attributes,
+            events = events.map(::toSpanEvent),
+            errorCode = errorCode?.toErrorCodeAttribute(),
+        )
     }
 
     override fun observeNavigation(activity: Activity, navigationController: Any) {
-        if (sdkCallChecker.check("observe_navigation")) {
-            navigationTrackingService.trackNavigation(activity, navigationController)
-        }
+        navigationTrackingService.trackNavigation(activity, navigationController)
     }
 
     private fun toSpanEvent(event: EmbraceSpanEvent): SpanEvent = SpanEventImpl(

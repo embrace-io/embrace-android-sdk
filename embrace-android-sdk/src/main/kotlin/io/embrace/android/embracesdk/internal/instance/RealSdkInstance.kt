@@ -24,7 +24,7 @@ import io.embrace.android.embracesdk.internal.api.delegate.InstrumentationApiDel
 import io.embrace.android.embracesdk.internal.api.delegate.LogsApiDelegate
 import io.embrace.android.embracesdk.internal.api.delegate.NetworkRequestApiDelegate
 import io.embrace.android.embracesdk.internal.api.delegate.OTelApiDelegate
-import io.embrace.android.embracesdk.internal.api.delegate.SdkCallChecker
+import io.embrace.android.embracesdk.internal.api.delegate.PreStartOTelApi
 import io.embrace.android.embracesdk.internal.api.delegate.SdkStateApiDelegate
 import io.embrace.android.embracesdk.internal.api.delegate.UserApiDelegate
 import io.embrace.android.embracesdk.internal.api.delegate.UserSessionApiDelegate
@@ -62,41 +62,23 @@ import java.util.concurrent.Executors
 internal class RealSdkInstance(
     lazyBootstrapper: Lazy<ModuleInitBootstrapper>,
     private val hostedSdkApiProvider: Provider<SdkApi>,
-    private val sdkCallChecker: SdkCallChecker,
     openTelemetryKotlin: OpenTelemetry,
     private val clock: Clock,
-    private val userApiDelegate: UserApiDelegate = UserApiDelegate(
-        lazyBootstrapper,
-        sdkCallChecker,
-    ),
-    private val sessionApiDelegate: UserSessionApiDelegate = UserSessionApiDelegate(
-        lazyBootstrapper,
-        sdkCallChecker,
-    ),
+    private val userApiDelegate: UserApiDelegate = UserApiDelegate(lazyBootstrapper),
+    private val sessionApiDelegate: UserSessionApiDelegate = UserSessionApiDelegate(lazyBootstrapper),
     private val networkRequestApiDelegate: NetworkRequestApiDelegate =
-        NetworkRequestApiDelegate(lazyBootstrapper, sdkCallChecker),
-    private val logsApiDelegate: LogsApiDelegate = LogsApiDelegate(
-        lazyBootstrapper,
-        sdkCallChecker,
-    ),
+        NetworkRequestApiDelegate(lazyBootstrapper),
+    private val logsApiDelegate: LogsApiDelegate = LogsApiDelegate(lazyBootstrapper),
     private val viewTrackingApiDelegate: ViewTrackingApiDelegate =
-        ViewTrackingApiDelegate(lazyBootstrapper, sdkCallChecker),
+        ViewTrackingApiDelegate(lazyBootstrapper),
     private val sdkStateApiDelegate: SdkStateApiDelegate = SdkStateApiDelegate(
         lazyBootstrapper,
-        sdkCallChecker,
     ),
-    private val otelApiDelegate: OTelApiDelegate =
-        OTelApiDelegate(lazyBootstrapper, sdkCallChecker, openTelemetryKotlin),
-    private val breadcrumbApiDelegate: BreadcrumbApiDelegate = BreadcrumbApiDelegate(
-        lazyBootstrapper,
-        sdkCallChecker,
-    ),
+    private val otelApiDelegate: OTelApiDelegate = OTelApiDelegate(openTelemetryKotlin),
+    private val breadcrumbApiDelegate: BreadcrumbApiDelegate = BreadcrumbApiDelegate(lazyBootstrapper),
     private val instrumentationApiDelegate: InstrumentationApiDelegate =
-        InstrumentationApiDelegate(lazyBootstrapper, sdkCallChecker),
-    private val experimentApiDelegate: ExperimentApiDelegate = ExperimentApiDelegate(
-        lazyBootstrapper,
-        sdkCallChecker,
-    ),
+        InstrumentationApiDelegate(lazyBootstrapper),
+    private val experimentApiDelegate: ExperimentApiDelegate = ExperimentApiDelegate(lazyBootstrapper),
 ) : SdkInstance,
     LogsApi by logsApiDelegate,
     NetworkRequestApi by networkRequestApiDelegate,
@@ -118,9 +100,15 @@ internal class RealSdkInstance(
     @Volatile
     private var applicationInitStartMs: Long? = null
 
+    @Volatile
+    private var started: Boolean = false
+
+    override val isStarted: Boolean
+        get() = started
+
     override fun onPreStart(buffer: BufferingSdkInstance) {
         // drain before building OTel SDK
-        buffer.drainOTelConfig(otelApiDelegate)
+        buffer.drainOTelConfig(PreStartOTelApi(bootstrapper.openTelemetryModule.otelSdkConfig, otelApiDelegate))
     }
 
     override fun onPostStart(buffer: BufferingSdkInstance) {
@@ -151,7 +139,7 @@ internal class RealSdkInstance(
 
                     // not fully initialized, but the SDK shouldn't catastrophically throw after this point,
                     // so we allow external calls.
-                    sdkCallChecker.started.set(true)
+                    started = true
                     bootstrapper.registerListeners()
                     bootstrapper.loadInstrumentation()
                     bootstrapper.postLoadInstrumentation()
@@ -165,31 +153,29 @@ internal class RealSdkInstance(
     }
 
     override fun disable() {
-        if (sdkCallChecker.started.get()) {
-            bootstrapper.openTelemetryModule.otelSdkConfig.disableDataExport()
-            val rootDir = bootstrapper.coreModule.context.filesDir
-            val fallbackDir = bootstrapper.coreModule.context.cacheDir
-            sdkCallChecker.started.set(false)
-            bootstrapper.stop()
-            val executor = Executors.newSingleThreadExecutor()
-            executor.execute {
-                runCatching {
-                    StorageLocation.entries.map {
-                        it.asFile(
-                            logger = null,
-                            rootDirSupplier = { rootDir },
-                            fallbackDirSupplier = { fallbackDir },
-                        ).value
-                    }.forEach {
-                        it.deleteRecursively()
-                    }
-                }.onFailure { exception ->
-                    Log.e("[Embrace]", "An error occurred while trying to disable Embrace SDK.", exception)
+        bootstrapper.openTelemetryModule.otelSdkConfig.disableDataExport()
+        val rootDir = bootstrapper.coreModule.context.filesDir
+        val fallbackDir = bootstrapper.coreModule.context.cacheDir
+        started = false
+        bootstrapper.stop()
+        val executor = Executors.newSingleThreadExecutor()
+        executor.execute {
+            runCatching {
+                StorageLocation.entries.map {
+                    it.asFile(
+                        logger = null,
+                        rootDirSupplier = { rootDir },
+                        fallbackDirSupplier = { fallbackDir },
+                    ).value
+                }.forEach {
+                    it.deleteRecursively()
                 }
+            }.onFailure { exception ->
+                Log.e("[Embrace]", "An error occurred while trying to disable Embrace SDK.", exception)
             }
-            // lets the queued deletion finish, then releases the worker thread
-            executor.shutdown()
         }
+        // lets the queued deletion finish, then releases the worker thread
+        executor.shutdown()
     }
 
     /**
@@ -257,11 +243,9 @@ internal class RealSdkInstance(
     }
 
     override fun applicationInitEnd() {
-        if (sdkCallChecker.check("application_init_end", false)) {
-            bootstrapper.dataCaptureServiceModule.appStartupDataCollector.run {
-                this@RealSdkInstance.applicationInitStartMs?.let { applicationInitStart(it) }
-                applicationInitEnd()
-            }
+        bootstrapper.dataCaptureServiceModule.appStartupDataCollector.run {
+            this@RealSdkInstance.applicationInitStartMs?.let { applicationInitStart(it) }
+            applicationInitEnd()
         }
     }
 }

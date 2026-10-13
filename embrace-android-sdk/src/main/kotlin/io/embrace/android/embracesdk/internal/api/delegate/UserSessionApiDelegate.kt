@@ -9,7 +9,6 @@ import io.embrace.android.embracesdk.internal.session.UserSessionListener as Int
 
 internal class UserSessionApiDelegate(
     lazyBootstrapper: Lazy<ModuleInitBootstrapper>,
-    private val sdkCallChecker: SdkCallChecker,
 ) : UserSessionApi {
 
     private val bootstrapper by lazyBootstrapper
@@ -21,46 +20,34 @@ internal class UserSessionApiDelegate(
      * Adds a property to the current session.
      */
     override fun addUserSessionProperty(key: String, value: String, scope: PropertyScope): Boolean {
-        if (sdkCallChecker.check("add_session_property")) {
-            val internalScope = when (scope) {
-                PropertyScope.USER_SESSION -> io.embrace.android.embracesdk.internal.capture.session.PropertyScope.USER_SESSION
-                PropertyScope.PROCESS -> io.embrace.android.embracesdk.internal.capture.session.PropertyScope.PROCESS
-                PropertyScope.PERMANENT -> io.embrace.android.embracesdk.internal.capture.session.PropertyScope.PERMANENT
-            }
-            return userSessionPropertiesService.addProperty(key, value, internalScope)
+        val internalScope = when (scope) {
+            PropertyScope.USER_SESSION -> io.embrace.android.embracesdk.internal.capture.session.PropertyScope.USER_SESSION
+            PropertyScope.PROCESS -> io.embrace.android.embracesdk.internal.capture.session.PropertyScope.PROCESS
+            PropertyScope.PERMANENT -> io.embrace.android.embracesdk.internal.capture.session.PropertyScope.PERMANENT
         }
-        return false
+        return userSessionPropertiesService.addProperty(key, value, internalScope)
     }
 
     /**
      * Removes a property from the current session.
      */
     override fun removeUserSessionProperty(key: String): Boolean {
-        if (sdkCallChecker.check("remove_session_property")) {
-            return userSessionPropertiesService.removeProperty(key)
-        }
-        return false
+        return userSessionPropertiesService.removeProperty(key)
     }
 
     /**
      * Ends the current session and starts a new one.
      */
     override fun endUserSession() {
-        if (sdkCallChecker.check("end_session")) {
-            sessionOrchestrator.endSessionWithManual()
-        }
+        sessionOrchestrator.endSessionWithManual()
     }
 
     override fun addUserSessionListener(listener: UserSessionListener) {
-        if (sdkCallChecker.check("add_user_session_listener")) {
-            sessionOrchestrator.addUserSessionListener(ListenerWrapper(listener))
-        }
+        sessionOrchestrator.addUserSessionListener(ListenerWrapper(listener))
     }
 
     override fun removeUserSessionListener(listener: UserSessionListener) {
-        if (sdkCallChecker.check("remove_user_session_listener")) {
-            sessionOrchestrator.removeUserSessionListener(ListenerWrapper(listener))
-        }
+        sessionOrchestrator.removeUserSessionListener(ListenerWrapper(listener))
     }
 
     /**

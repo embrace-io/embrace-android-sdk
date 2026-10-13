@@ -2,7 +2,6 @@ package io.embrace.android.embracesdk.internal.instance
 
 import io.embrace.android.embracesdk.internal.SystemInfo
 import io.embrace.android.embracesdk.internal.api.delegate.LateBindingOpenTelemetry
-import io.embrace.android.embracesdk.internal.api.delegate.SdkCallChecker
 import io.embrace.android.embracesdk.internal.clock.Clock
 import io.embrace.android.embracesdk.internal.clock.NormalizedIntervalClock
 import io.embrace.android.embracesdk.internal.injection.InitModuleImpl
@@ -43,9 +42,9 @@ internal fun createSdkStateHolder(
     },
 ): SdkStateHolder {
     val bootstrapper = lazy(bootstrapperProvider)
-    val sdkCallChecker = SdkCallChecker(logger)
+    lateinit var impl: RealSdkInstance
     val openTelemetryKotlin = LateBindingOpenTelemetry {
-        if (sdkCallChecker.started.get()) {
+        if (impl.isStarted) {
             bootstrapper.value.openTelemetryModule.otelSdkWrapper.openTelemetryKotlin
         } else {
             NoopOpenTelemetry
@@ -57,10 +56,9 @@ internal fun createSdkStateHolder(
         openTelemetryKotlin = openTelemetryKotlin,
     )
     lateinit var holder: SdkStateHolder
-    val impl = RealSdkInstance(
+    impl = RealSdkInstance(
         lazyBootstrapper = bootstrapper,
         hostedSdkApiProvider = { holder.api },
-        sdkCallChecker = sdkCallChecker,
         openTelemetryKotlin = openTelemetryKotlin,
         clock = clock,
     )

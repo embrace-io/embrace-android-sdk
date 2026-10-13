@@ -1,7 +1,5 @@
 package io.embrace.android.gradle.integration.testcases
 
-import io.embrace.android.embracesdk.ResourceReader
-import io.embrace.android.gradle.integration.framework.AssertionInterface
 import io.embrace.android.gradle.integration.framework.PluginIntegrationTestRule
 import io.embrace.android.gradle.integration.framework.ProjectType
 import io.embrace.android.gradle.integration.framework.smali.SmaliConfigReader
@@ -20,9 +18,7 @@ class ConfigInstrumentationTest {
     @JvmField
     val rule: PluginIntegrationTestRule = PluginIntegrationTestRule()
 
-    private val notMinified = "-PminifyRelease=false"
-
-    private val variants = listOf("debug", "release")
+    private val variants = listOf("debug", "release", "overrides")
     private val classNames = listOf(
         "BaseUrlConfigImpl",
         "EnabledFeatureConfigImpl",
@@ -34,67 +30,37 @@ class ConfigInstrumentationTest {
         "/io/embrace/android/embracesdk/internal/config/instrumented/$it"
     }
 
+    /**
+     * Covers:
+     * - default config values are instrumented on the minified `release` build type
+     * - non-default values from `src/overrides/embrace-config.json` are instrumented on the `overrides` build type
+     * - the instrumented build ID on `release` matches the one sent with the mapping file upload
+     */
     @Test
-    fun `config default instrumentation`() {
+    fun `config instrumentation`() {
         rule.runTest(
             fixture = "android-with-code",
-            tasks = listOf("assembleRelease"),
+            tasks = listOf("assembleRelease", "assembleOverrides"),
             projectType = ProjectType.ANDROID,
             setup = {
                 setupEmptyHandshakeResponse()
             },
             assertions = { projectDir ->
-                verifyInstrumentedConfig(projectDir, "instrumented-config-default.json")
+                verifyBuildTelemetryRequestSent(variants)
+                val buildId = verifyInstrumentedConfig(projectDir, "release", "instrumented-config-default.json")
+                verifyJvmMappingRequestsSent(appIds = listOf("abcde"), buildIds = listOf(buildId))
+                verifyInstrumentedConfig(projectDir, "overrides", "instrumented-config-overrides.json")
             },
         )
     }
 
-    @Test
-    fun `config non-default instrumentation`() {
-        rule.runTest(
-            fixture = "android-with-code",
-            tasks = listOf("assembleRelease"),
-            additionalArgs = listOf(notMinified),
-            projectType = ProjectType.ANDROID,
-            setup = { projectDir ->
-                // copy embrace-config.json with non-default values to project directory
-                File(projectDir, "src/main/embrace-config.json").outputStream().buffered().use {
-                    ResourceReader.readResource("config-overrides.json").buffered().copyTo(it)
-                }
-            },
-            assertions = { projectDir ->
-                verifyInstrumentedConfig(projectDir, "instrumented-config-overrides.json", minified = false)
-            },
-        )
-    }
-
-    @Test
-    fun `invalid build ID instrumented when mapping upload disabled`() {
-        rule.runTest(
-            fixture = "android-with-code",
-            tasks = listOf("assembleRelease"),
-            additionalArgs = listOf(notMinified, "-Pembrace.disableMappingFileUpload=true"),
-            projectType = ProjectType.ANDROID,
-            assertions = { projectDir ->
-                assertEquals(INVALID_BUILD_ID, readInstrumentedBuildId(projectDir))
-            },
-        )
-    }
-
-    private fun readInstrumentedBuildId(projectDir: File): String? {
+    /**
+     * Asserts the instrumented config matches [resName] and returns the instrumented build ID, which is
+     * non-deterministic so is asserted separately.
+     */
+    private fun verifyInstrumentedConfig(projectDir: File, buildType: String, resName: String): String {
         val reader = SmaliConfigReader()
-        val file = reader.readSmaliFiles(projectDir, classNames).single { it.name == "ProjectConfigImpl.smali" }
-        val expected = reader.readExpectedConfig("instrumented-config-default.json").values
-            .single { it.className == "ProjectConfigImpl" }
-        return SmaliParser().parse(file, expected.methods).methods
-            .single { it.signature.contains("getBuildId") }
-            .returnValue
-    }
-
-    private fun AssertionInterface.verifyInstrumentedConfig(projectDir: File, resName: String, minified: Boolean = true) {
-        verifyBuildTelemetryRequestSent(variants)
-        val reader = SmaliConfigReader()
-        val smaliFiles = reader.readSmaliFiles(projectDir, classNames)
+        val smaliFiles = reader.readSmaliFiles(projectDir, classNames, buildType)
         val parser = SmaliParser()
         val cfg = reader.readExpectedConfig(resName)
         var buildIdMethod: SmaliMethod? = null
@@ -117,12 +83,8 @@ class ConfigInstrumentationTest {
             assertEquals(exp, obs)
         }
 
-        // build ID is non-deterministic, test independently
         val buildId = checkNotNull(buildIdMethod?.returnValue)
         assertNotEquals(INVALID_BUILD_ID, buildId)
-
-        if (minified) {
-            verifyJvmMappingRequestsSent(appIds = listOf("abcde"), buildIds = listOf(buildId))
-        }
+        return buildId
     }
 }

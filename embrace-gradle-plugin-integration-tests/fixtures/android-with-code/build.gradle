@@ -15,3 +15,13 @@ integrationTest.configureAndroidProject(project)
 embrace {
     autoAddEmbraceDependencies.set(true)
 }
+
+android {
+    buildTypes {
+        // builds with src/overrides/embrace-config.json, which sets non-default values
+        overrides {
+            initWith(release)
+            minifyEnabled = false
+        }
+    }
+}

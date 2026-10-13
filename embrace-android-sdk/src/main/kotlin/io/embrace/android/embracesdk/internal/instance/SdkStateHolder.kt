@@ -25,13 +25,10 @@ import io.embrace.android.embracesdk.internal.utils.Provider
  * A start that does not succeed leaves the SDK in [SdkState.NOT_STARTED] so that it can be retried. [SdkState.DISABLED]
  * is terminal: once disabled, the SDK cannot be started again. Exceptions are reported to [errorHandler] rather than
  * thrown.
- *
- * Leaving [SdkState.NOT_STARTED] switches away from the [preStart] buffer, which is handed over to the next
- * [SdkInstance] via [SdkInstance.onPreStart] and [SdkInstance.onPostStart].
  */
 internal class SdkStateHolder(
     instance: Provider<SdkInstance>,
-    private val preStart: Provider<BufferingSdkInstance>,
+    preStart: Provider<BufferingSdkInstance>,
     private val disabled: Provider<SdkInstance>,
     telemetryService: InternalTelemetryService,
     private val errorHandler: InternalErrorHandler,
@@ -42,7 +39,9 @@ internal class SdkStateHolder(
 
     private val instance: SdkInstance = instance()
 
-    val dispatcher: SdkApiDispatcher = SdkApiDispatcher(this.instance, telemetryService, errorHandler)
+    private val preStart: BufferingSdkInstance = preStart()
+
+    val dispatcher: SdkApiDispatcher = SdkApiDispatcher(this.preStart, telemetryService, errorHandler)
 
     /**
      * The [SdkApi] that backs the public `Embrace` object. Calls that change SDK state are handled here and
@@ -75,7 +74,12 @@ internal class SdkStateHolder(
             val started = try {
                 drainBufferedCalls(instance) {
                     instance.start(context)
-                    instance.isStarted
+                    instance.isStarted.also { started ->
+                        if (started) {
+                            // swap before onPostStart invocation
+                            dispatcher.target = instance
+                        }
+                    }
                 }
             } catch (exc: Throwable) {
                 Log.w("Embrace", "Failed to start the Embrace SDK", exc)
@@ -96,13 +100,15 @@ internal class SdkStateHolder(
             when (state) {
                 SdkState.DISABLED -> return
                 SdkState.NOT_STARTED -> {
-                    guard { drainBufferedCalls(disabled()) { true } }
+                    val next = disabled()
+                    dispatcher.target = next
+                    guard { drainBufferedCalls(next) { true } }
                     state = SdkState.DISABLED
                 }
                 SdkState.STARTED -> {
-                    // TODO: future: dispatcher.target will be changed here and at other state transitions.
                     try {
-                        dispatcher.target.disable()
+                        instance.disable()
+                        dispatcher.target = disabled()
                         state = SdkState.DISABLED
                     } catch (exc: Throwable) {
                         errorHandler.trackInternalError(InternalErrorType.PublicApiFail, exc)
@@ -113,12 +119,11 @@ internal class SdkStateHolder(
     }
 
     private inline fun drainBufferedCalls(next: SdkInstance, start: () -> Boolean): Boolean {
-        val buffer = preStart()
-        next.onPreStart(buffer)
+        next.onPreStart(preStart)
         if (!start()) {
             return false
         }
-        guard { next.onPostStart(buffer) }
+        guard { next.onPostStart(preStart) }
         return true
     }
 

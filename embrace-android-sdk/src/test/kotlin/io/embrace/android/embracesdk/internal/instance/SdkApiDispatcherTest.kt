@@ -175,10 +175,10 @@ private fun throwingSdkApi(): SdkApi = Proxy.newProxyInstance(
 /**
  * An [SdkApi] that records each call as `name/argumentCount`, so that overloads are told apart.
  */
-internal fun recordingSdkApi(calls: MutableList<String>): SdkApi = Proxy.newProxyInstance(
+internal fun recordingSdkApi(calls: MutableList<String>, prefix: String = ""): SdkApi = Proxy.newProxyInstance(
     SdkApi::class.java.classLoader,
     arrayOf(SdkApi::class.java),
 ) { _, method, _ ->
-    calls += "${method.name}/${method.parameterCount}"
+    calls += "$prefix${method.name}/${method.parameterCount}"
     if (method.returnType == Boolean::class.javaPrimitiveType) false else null
 } as SdkApi

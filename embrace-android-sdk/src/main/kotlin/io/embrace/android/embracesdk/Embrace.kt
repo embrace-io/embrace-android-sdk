@@ -17,7 +17,11 @@ private val sdkStateHolder = try {
     }.let { SdkStateHolder(it, it.telemetryService, it.internalErrorHandler) }
 } catch (exc: Throwable) {
     // not possible to report, but don't throw
-    Log.w("Embrace", "Failed to initialize the Embrace SDK", exc)
+    Log.w(
+        "Embrace",
+        "Failed to create the Embrace SDK instance. All Embrace API calls will be no-ops and no telemetry will be captured.",
+        exc,
+    )
     val logger = InternalLoggerImpl()
     SdkStateHolder(NoopSdkInstance(logger, NoopSdkInstance.SDK_NOT_INITIALIZED), NoopInternalTelemetryService, logger)
 }

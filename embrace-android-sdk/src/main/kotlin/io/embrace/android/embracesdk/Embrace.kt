@@ -22,7 +22,14 @@ private val sdkStateHolder = try {
         exc,
     )
     val logger = InternalLoggerImpl()
-    SdkStateHolder(NoopSdkInstance(logger, NoopSdkInstance.SDK_NOT_INITIALIZED), NoopInternalTelemetryService, logger)
+    val instance = NoopSdkInstance(logger, NoopSdkInstance.SDK_NOT_INITIALIZED)
+    SdkStateHolder(
+        instance = { instance },
+        preStart = { instance },
+        disabled = { instance },
+        telemetryService = NoopInternalTelemetryService,
+        errorHandler = logger,
+    )
 }
 
 /**

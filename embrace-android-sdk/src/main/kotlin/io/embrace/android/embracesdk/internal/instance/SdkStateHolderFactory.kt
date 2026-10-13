@@ -52,8 +52,28 @@ internal fun createSdkStateHolder(
             NoopOpenTelemetry
         }
     }
+    val preStartBuffer = BufferingSdkInstance(
+        clock = clock::now,
+        logger = logger,
+        openTelemetryKotlin = openTelemetryKotlin,
+    )
     lateinit var holder: SdkStateHolder
-    val impl = EmbraceImpl(bootstrapper, { holder.api }, sdkCallChecker, openTelemetryKotlin, clock, logger)
-    holder = SdkStateHolder(impl, telemetryService, logger, impl)
+    val impl = EmbraceImpl(
+        lazyBootstrapper = bootstrapper,
+        hostedSdkApiProvider = { holder.api },
+        sdkCallChecker = sdkCallChecker,
+        openTelemetryKotlin = openTelemetryKotlin,
+        clock = clock,
+        logger = logger,
+        preStartBuffer = preStartBuffer,
+    )
+    holder = SdkStateHolder(
+        instance = { impl },
+        preStart = { preStartBuffer },
+        disabled = { NoopSdkInstance(logger, NoopSdkInstance.SDK_DISABLED) },
+        telemetryService = telemetryService,
+        errorHandler = logger,
+        internalInterfaceApi = impl,
+    )
     return holder
 }

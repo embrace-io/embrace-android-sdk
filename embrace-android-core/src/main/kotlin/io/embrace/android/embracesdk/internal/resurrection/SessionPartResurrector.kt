@@ -112,16 +112,12 @@ class SessionPartResurrector(
         val snapshots = data.spanSnapshots
             ?.filterNot { completedSpanIds.contains(it.spanId) }
 
-        // estimate the end time for snapshots as the latest of any completed span's end and any snapshot's start,
-        // falling back to 0 if nothing is available. completed spans can predate the snapshots (e.g. spans carried
-        // over from the previous part), so their end alone could fall before a snapshot started.
-        val latestCompletedEnd = data.spans?.mapNotNull { it.endTimeNanos }?.maxOrNull()
-        val latestSnapshotStart = snapshots?.mapNotNull { it.startTimeNanos }?.maxOrNull()
-        val estimatedEndTime = listOfNotNull(latestCompletedEnd, latestSnapshotStart).maxOrNull()
+        val persistedSpans = data.spans.orEmpty()
+        val estimatedEndTimeMs = estimateEndTimeMs(persistedSpans, snapshots.orEmpty())
         val failedSpans = snapshots
-            ?.map { it.toFailedSpan(endTimeMs = estimatedEndTime?.nanosToMillis() ?: 0) }
+            ?.map { it.toFailedSpan(endTimeMs = estimatedEndTimeMs) }
             ?: emptyList()
-        val completedSpans = (data.spans ?: emptyList()) + failedSpans
+        val completedSpans = persistedSpans + failedSpans
         val sessionPartSpan = completedSpans.singleOrNull { it.hasEmbraceAttribute(EmbType.Ux.Session) } ?: return null
 
         val attributesToAttach = buildList {
@@ -149,6 +145,44 @@ class SessionPartResurrector(
                 spanSnapshots = emptyList(),
             ),
         )
+    }
+
+    /**
+     * Estimates when the process that left this part died, in milliseconds, as the latest time recorded in the
+     * part's spans: a [completedSpans] end, a [snapshots] start, or the timestamp of an event on any of them.
+     * 0 if none of them records a time. Times are taken as recorded, whether the SDK clock or the caller set them.
+     *
+     * Completed spans' ends alone aren't enough, as spans carried over from a previous session part can end before
+     * a snapshot in this part started. Events matter as many changes add one to a span that is still in progress,
+     * such as a breadcrumb on the session part span, without moving any span's start or end. A change that only
+     * sets an attribute, such as a session property, records no time, so it does not move the estimate.
+     *
+     * Each time is read once into a running maximum, using indexed loops so no iterators are created, which keeps
+     * the memory used constant however many spans and events the part holds.
+     */
+    private fun estimateEndTimeMs(completedSpans: List<Span>, snapshots: List<Span>): Long {
+        var latestNanos = 0L
+        for (i in completedSpans.indices) {
+            val span = completedSpans[i]
+            latestNanos = maxOf(latestNanos, span.endTimeNanos ?: 0L, span.latestEventNanos())
+        }
+        for (i in snapshots.indices) {
+            val snapshot = snapshots[i]
+            latestNanos = maxOf(latestNanos, snapshot.startTimeNanos ?: 0L, snapshot.latestEventNanos())
+        }
+        return latestNanos.nanosToMillis()
+    }
+
+    /**
+     * The latest timestamp of this span's events, or 0 if it has none.
+     */
+    private fun Span.latestEventNanos(): Long {
+        val events = events ?: return 0L
+        var latestNanos = 0L
+        for (i in events.indices) {
+            latestNanos = maxOf(latestNanos, events[i].timestampNanos ?: 0L)
+        }
+        return latestNanos
     }
 
     /**

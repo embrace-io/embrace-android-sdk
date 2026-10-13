@@ -71,16 +71,96 @@ internal class SessionPartResurrectorTest {
     }
 
     @Test
-    fun `an event later than every span start and end does not move the end`() {
+    fun `an event later than every span start and end moves the end to it`() {
         val deadPart = incompleteEnvelope()
         val latestSnapshotStart = checkNotNull(deadPart.data.spanSnapshots).maxOf { checkNotNull(it.startTimeNanos) }
-        val withLateEvent = deadPart.withSessionSpanEvent(
-            SpanEvent(name = "breadcrumb", timestampNanos = latestSnapshotStart + 7_000_000_000L),
-        )
+        val eventTimeNanos = latestSnapshotStart + 7_000_000_000L
+        val withLateEvent = deadPart
+            .withSessionSpanEvent(SpanEvent(name = "earlier", timestampNanos = latestSnapshotStart + 1_000_000_000L))
+            .withSessionSpanEvent(SpanEvent(name = "breadcrumb", timestampNanos = eventTimeNanos))
 
         val resurrected = checkNotNull(resurrect(withLateEvent))
         checkNotNull(resurrected.data.spans).forEach { span ->
-            assertEquals(latestSnapshotStart.nanosToMillis(), span.endTimeMs())
+            assertEquals(eventTimeNanos.nanosToMillis(), span.endTimeMs())
+        }
+    }
+
+    @Test
+    fun `a completed span that ended after every snapshot started sets the end`() {
+        val deadPart = incompleteEnvelope()
+        val latestSnapshotStart = checkNotNull(deadPart.data.spanSnapshots).maxOf { checkNotNull(it.startTimeNanos) }
+        val latestEndNanos = latestSnapshotStart + 3_000_000_000L
+        val withCompletedSpans = deadPart.withCompletedSpans(
+            completedSpan("first", endTimeNanos = latestSnapshotStart + 2_000_000_000L),
+            completedSpan("second", endTimeNanos = latestEndNanos),
+        )
+
+        val resurrected = checkNotNull(resurrect(withCompletedSpans))
+        resurrected.failedSpans(deadPart).forEach { span ->
+            assertEquals(latestEndNanos.nanosToMillis(), span.endTimeMs())
+        }
+    }
+
+    @Test
+    fun `an event earlier than a completed span end does not pull the end back`() {
+        val deadPart = incompleteEnvelope()
+        val latestSnapshotStart = checkNotNull(deadPart.data.spanSnapshots).maxOf { checkNotNull(it.startTimeNanos) }
+        val completedEndNanos = latestSnapshotStart + 4_000_000_000L
+        val withEarlierEvent = deadPart
+            .withCompletedSpans(completedSpan("work", endTimeNanos = completedEndNanos))
+            .withSessionSpanEvent(SpanEvent(name = "breadcrumb", timestampNanos = latestSnapshotStart + 1_000_000_000L))
+
+        val resurrected = checkNotNull(resurrect(withEarlierEvent))
+        resurrected.failedSpans(deadPart).forEach { span ->
+            assertEquals(completedEndNanos.nanosToMillis(), span.endTimeMs())
+        }
+    }
+
+    @Test
+    fun `an event on a completed span later than every other time moves the end to it`() {
+        val deadPart = incompleteEnvelope()
+        val latestSnapshotStart = checkNotNull(deadPart.data.spanSnapshots).maxOf { checkNotNull(it.startTimeNanos) }
+        val eventTimeNanos = latestSnapshotStart + 9_000_000_000L
+        val withCompletedSpanEvent = deadPart.withCompletedSpans(
+            completedSpan(
+                "work",
+                endTimeNanos = latestSnapshotStart + 2_000_000_000L,
+                events = listOf(SpanEvent(name = "after-end", timestampNanos = eventTimeNanos)),
+            ),
+        )
+
+        val resurrected = checkNotNull(resurrect(withCompletedSpanEvent))
+        resurrected.failedSpans(deadPart).forEach { span ->
+            assertEquals(eventTimeNanos.nanosToMillis(), span.endTimeMs())
+        }
+    }
+
+    @Test
+    fun `a part that records no time ends its failed spans at zero`() {
+        val deadPart = incompleteEnvelope()
+        val untimed = deadPart.copy(
+            data = deadPart.data.copy(
+                spanSnapshots = checkNotNull(deadPart.data.spanSnapshots).map { it.copy(startTimeNanos = null) },
+            ),
+        ).withSessionSpanEvent(SpanEvent(name = "untimed"))
+
+        val resurrected = checkNotNull(resurrect(untimed))
+        resurrected.failedSpans(deadPart).forEach { span ->
+            assertEquals(0L, span.endTimeMs())
+        }
+    }
+
+    @Test
+    fun `a failed span ends on a whole millisecond`() {
+        val deadPart = incompleteEnvelope()
+        val latestSnapshotStart = checkNotNull(deadPart.data.spanSnapshots).maxOf { checkNotNull(it.startTimeNanos) }
+        val withSubMillisecondEvent = deadPart.withSessionSpanEvent(
+            SpanEvent(name = "breadcrumb", timestampNanos = latestSnapshotStart + 1_999_999L),
+        )
+
+        val resurrected = checkNotNull(resurrect(withSubMillisecondEvent))
+        resurrected.failedSpans(deadPart).forEach { span ->
+            assertEquals(latestSnapshotStart + 1_000_000L, span.endTimeNanos)
         }
     }
 
@@ -273,6 +353,25 @@ internal class SessionPartResurrectorTest {
      * The span's end time at the millisecond resolution a resurrected part's end time is estimated at.
      */
     private fun Span.endTimeMs(): Long = checkNotNull(endTimeNanos).nanosToMillis()
+
+    /**
+     * The spans the resurrector failed: every snapshot [deadPart] held.
+     */
+    private fun Envelope<SessionPartPayload>.failedSpans(deadPart: Envelope<SessionPartPayload>): List<Span> {
+        val snapshotIds = checkNotNull(deadPart.data.spanSnapshots).map(Span::spanId).toSet()
+        return checkNotNull(data.spans).filter { it.spanId in snapshotIds }
+    }
+
+    private fun completedSpan(name: String, endTimeNanos: Long, events: List<SpanEvent>? = null) = Span(
+        spanId = "$name-span-id",
+        name = name,
+        startTimeNanos = endTimeNanos - 1_000_000_000L,
+        endTimeNanos = endTimeNanos,
+        events = events,
+    )
+
+    private fun Envelope<SessionPartPayload>.withCompletedSpans(vararg spans: Span) =
+        copy(data = data.copy(spans = spans.toList()))
 
     private fun Envelope<SessionPartPayload>.sessionSpanAttribute(key: String): String? =
         getSessionPartSpan()?.attributes?.findAttributeValue(key)

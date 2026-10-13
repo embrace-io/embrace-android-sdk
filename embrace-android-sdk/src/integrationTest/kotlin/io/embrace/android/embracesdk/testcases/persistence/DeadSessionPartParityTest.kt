@@ -41,8 +41,9 @@ import org.robolectric.ParameterizedRobolectricTestRunner
  * under both persistence modes.
  *
  * Neither mode ends the part at the death of the process: a user idle in the foreground before a kill
- * does not lengthen the session. Both end it at the latest time a span in it started or ended, which
- * neither a breadcrumb nor a session property moves.
+ * does not lengthen the session. Both end it at the latest time recorded in the part's spans, which a
+ * change that records a time of its own moves, such as a breadcrumb, and a change that only sets an
+ * attribute does not, such as a session property.
  *
  * These tests pin down what each mode persisted before the process died, and that the delivered end
  * follows from it. The rules that pick the end from a part's data are covered by SessionPartResurrectorTest.
@@ -71,7 +72,7 @@ internal class DeadSessionPartParityTest(
     }
 
     @Test
-    fun `a breadcrumb does not move the estimated end time`() {
+    fun `a breadcrumb moves the estimated end time to when it was added`() {
         var breadcrumbMs = 0L
         killActiveSessionPart {
             clock.tick(5_000)
@@ -81,7 +82,7 @@ internal class DeadSessionPartParityTest(
         }
         relaunch {
             assertEquals(listOf(breadcrumbMs), deliveredBreadcrumbTimesMs())
-            assertDeliveredPartEnd()
+            assertDeliveredPartEnd(multiFileEndMs = breadcrumbMs, singleFileEndMs = breadcrumbMs)
         }
     }
 
@@ -101,7 +102,7 @@ internal class DeadSessionPartParityTest(
         relaunch {
             assertEquals(listOf(breadcrumbMs), deliveredBreadcrumbTimesMs())
             assertEquals("value", deliveredSessionSpan().getSessionProperty("late"))
-            assertDeliveredPartEnd()
+            assertDeliveredPartEnd(multiFileEndMs = breadcrumbMs, singleFileEndMs = breadcrumbMs)
         }
     }
 

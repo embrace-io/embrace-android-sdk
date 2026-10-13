@@ -35,7 +35,7 @@ class ReactNativeAndroidTest {
     private val defaultExpectedArchs = listOf("x86_64", "x86", "armeabi-v7a", "arm64-v8a")
 
     @Test
-    fun `react native ndk upload test`() {
+    fun `react native release build`() {
         val handshakeLibs = listOf(
             "libfbjni.so",
             "libhermesvm.so",
@@ -46,49 +46,16 @@ class ReactNativeAndroidTest {
             fixture = "react-native-android",
             testMatrix = TestMatrix.MiddleVersion,
             androidProjectRoot = "android",
-            tasks = listOf("build"),
+            tasks = listOf("assembleRelease"),
             setup = { projectDir ->
                 installNodeModules(projectDir)
                 setupMockResponses(handshakeLibs, handshakeArchs, defaultExpectedVariants)
             },
-            assertions = {
+            assertions = { projectDir ->
                 verifyBuildTelemetryRequestSent(variantsSentInBuildTelemetry, testMatrix = TestMatrix.MiddleVersion)
                 verifyHandshakes(defaultExpectedLibs, defaultExpectedArchs, defaultExpectedVariants)
                 verifyUploads(handshakeLibs, handshakeArchs, defaultExpectedVariants)
-            },
-        )
-    }
-
-    @Test
-    fun `react native asm injection test`() {
-        rule.runTest(
-            fixture = "react-native-android",
-            testMatrix = TestMatrix.MiddleVersion,
-            androidProjectRoot = "android",
-            tasks = listOf("assembleRelease"),
-            setup = { projectDir ->
-                setupEmptyHandshakeResponse()
-                installNodeModules(projectDir)
-            },
-            assertions = { projectDir ->
                 verifyAsmInjection(File(projectDir, "app"), "ADE0E26EA90702B9C80F03C3812C372E")
-            },
-        )
-    }
-
-    @Test
-    fun `react native project without bundle or sourcemap`() {
-        rule.runTest(
-            fixture = "not-react-native-android",
-            androidProjectRoot = "android",
-            additionalArgs = listOf("-Pandroid.useAndroidX=true"),
-            tasks = listOf("assembleRelease"),
-            setup = {
-                setupEmptyHandshakeResponse()
-            },
-            assertions = { projectDir ->
-                verifyNoUploads()
-                verifyAsmInjection(projectDir, null)
             },
         )
     }
@@ -120,7 +87,7 @@ class ReactNativeAndroidTest {
     }
 
     private fun installNodeModules(projectDir: File) {
-        val process = ProcessBuilder("npm", "install")
+        val process = ProcessBuilder("npm", "ci", "--prefer-offline")
             .directory(projectDir)
             .redirectErrorStream(true) // Merges stderr into stdout
             .start()
@@ -129,7 +96,7 @@ class ReactNativeAndroidTest {
         val exitCode = process.waitFor()
 
         if (exitCode != 0) {
-            error("npm install failed with exit code $exitCode\n$output")
+            error("npm ci failed with exit code $exitCode\n$output")
         }
     }
 

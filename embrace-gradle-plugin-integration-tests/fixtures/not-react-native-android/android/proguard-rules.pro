@@ -1,2 +1,0 @@
--keep class com.example.app.Foo { *; }
--keep class io.embrace.android.embracesdk.internal.config.instrumented.* { *; }

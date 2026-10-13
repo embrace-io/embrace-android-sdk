@@ -9,7 +9,7 @@ import io.embrace.android.embracesdk.assertions.findSpanByName
 import io.embrace.android.embracesdk.assertions.findSpansOfType
 import io.embrace.android.embracesdk.assertions.getSessionPartId
 import io.embrace.android.embracesdk.assertions.getUserSessionId
-import io.embrace.android.embracesdk.assertions.returnIfConditionMet
+import io.embrace.android.embracesdk.assertions.waitUntilConditionMet
 import io.embrace.android.embracesdk.fakes.FakeInternalLogger
 import io.embrace.android.embracesdk.fakes.config.FakeInstrumentedConfig
 import io.embrace.android.embracesdk.fakes.config.FakeProjectConfig
@@ -995,8 +995,7 @@ internal class MultiFilePersistenceParityTest(
      */
     private fun awaitDeliveredSessionPayloadsDeleted() {
         val storage = checkNotNull(testRule.bootstrapper.deliveryModule).payloadStorageService
-        returnIfConditionMet(
-            desiredValueSupplier = {},
+        waitUntilConditionMet(
             dataProvider = { storage.getPayloadsByPriority().count { it.envelopeType == SupportedEnvelopeType.SESSION } },
             condition = { it == 0 },
             errorMessageSupplier = { "a delivered session payload was left on disk" },

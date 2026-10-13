@@ -5,6 +5,7 @@ import io.embrace.android.embracesdk.assertions.assertIsPrivateSpan
 import io.embrace.android.embracesdk.assertions.assertIsType
 import io.embrace.android.embracesdk.assertions.assertIsTypePerformance
 import io.embrace.android.embracesdk.assertions.assertNotPrivateSpan
+import io.embrace.android.embracesdk.assertions.returnIfConditionMet
 import io.embrace.android.embracesdk.fakes.FakeClock
 import io.embrace.android.embracesdk.fakes.FakeInternalLogger
 import io.embrace.android.embracesdk.fakes.FakeInternalTelemetryService
@@ -766,15 +767,16 @@ internal class SpanServiceImplTest(
     @Test
     fun `completed span recorded while buffered spans are replayed is not lost`() {
         val replayStarted = CountDownLatch(1)
+        lateinit var recorder: Thread
         val service = createUninitializedSpanService(
-            spanFactoryDecorator = { SlowEmbraceSpanFactory(it, replayStarted) },
+            spanFactoryDecorator = { SlowEmbraceSpanFactory(it, replayStarted) { recorder } },
         )
         repeat(5) { i ->
             assertTrue(service.recordCompletedSpan("pre-init-$i", 10, 20))
         }
 
         val initializer = Thread { service.initializeService(otelClock.now().nanosToMillis()) }
-        val recorder = Thread {
+        recorder = Thread {
             assertTrue(replayStarted.await(2, TimeUnit.SECONDS))
             service.recordCompletedSpan("racing-span", 10, 20)
         }
@@ -913,16 +915,21 @@ internal class SpanServiceImplTest(
     }
 
     /**
-     * Widens the window in which the service is replaying buffered spans, so that a racing caller can reliably be observed.
+     * Holds the replay until [racer] is blocked waiting for it, so that the racing caller is reliably observed mid-replay.
      */
     private class SlowEmbraceSpanFactory(
         private val delegate: EmbraceSpanFactory,
         private val replayStarted: CountDownLatch,
+        private val racer: () -> Thread,
     ) : EmbraceSpanFactory {
         override fun create(otelSpanStartArgs: OtelSpanStartArgs): EmbraceSdkSpan {
             if (replayStarted.count > 0) {
                 replayStarted.countDown()
-                Thread.sleep(200L)
+                returnIfConditionMet(
+                    desiredValueSupplier = {},
+                    dataProvider = { racer().state },
+                    condition = { it == Thread.State.BLOCKED },
+                )
             }
             return delegate.create(otelSpanStartArgs)
         }

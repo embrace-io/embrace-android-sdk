@@ -54,7 +54,6 @@ internal class EmbSpanTest(
         embSpan = EmbSpan(
             impl = fakeEmbraceSpan,
             clock = openTelemetryClock,
-            openTelemetry = fakeOpenTelemetry(otelSdkMode),
         )
     }
 
@@ -183,7 +182,6 @@ internal class EmbSpanTest(
         val realEmbSpan = EmbSpan(
             impl = realSpan,
             clock = openTelemetryClock,
-            openTelemetry = fakeOpenTelemetry(otelSdkMode),
         )
         val max = dataValidator.otelLimitsConfig.getMaxEventAttributeCount()
 

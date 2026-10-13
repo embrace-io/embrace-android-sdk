@@ -21,7 +21,6 @@ class FakeMainThreadHandler(
     }
 
     override fun postDelayed(runnable: Runnable, delayMillis: Long) {
-        Thread.sleep(20L)
         runnable.run()
     }
 

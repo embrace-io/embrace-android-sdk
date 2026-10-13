@@ -38,6 +38,7 @@ import io.embrace.android.embracesdk.internal.injection.DeliveryModuleImpl
 import io.embrace.android.embracesdk.internal.injection.EssentialServiceModuleImpl
 import io.embrace.android.embracesdk.internal.injection.InstrumentationModule
 import io.embrace.android.embracesdk.internal.injection.InstrumentationModuleImpl
+import io.embrace.android.embracesdk.internal.injection.LogModuleImpl
 import io.embrace.android.embracesdk.internal.injection.ModuleInitBootstrapper
 import io.embrace.android.embracesdk.internal.injection.WorkerThreadModule
 import io.embrace.android.embracesdk.internal.injection.WorkerThreadModuleImpl
@@ -64,6 +65,7 @@ import io.embrace.android.embracesdk.internal.session.persistence.SessionPartWri
 import io.embrace.android.embracesdk.internal.spans.CurrentSessionPartSpan
 import io.embrace.android.embracesdk.internal.store.KeyValueStore
 import io.embrace.android.embracesdk.internal.utils.UuidSource
+import io.embrace.android.embracesdk.internal.worker.BackgroundWorker
 import io.embrace.android.embracesdk.internal.worker.Worker
 import io.embrace.android.embracesdk.internal.worker.Worker.Background.NonIoRegWorker
 import io.embrace.android.embracesdk.semconv.EmbCommonAttributes
@@ -130,6 +132,9 @@ internal class EmbraceSetupInterface(
         workersToFake = workersToFake,
         threadBlockageWatchdogThread = threadBlockageWatchdogThread
     )
+
+    /** Runs the log orchestrator's batch checks on the fake clock rather than after real delays. */
+    private val logOrchestratorExecutor = BlockingScheduledExecutorService(fakeClock, blockingMode = false)
 
     private val fakeCoreModule: CoreModule = FakeCoreModule()
 
@@ -235,8 +240,29 @@ internal class EmbraceSetupInterface(
                 override val instrumentationArgs: InstrumentationArgs = impl.instrumentationArgs
             }
         },
+        logModuleSupplier = { initModule, openTelemetryModule, essentialServiceModule, configService, deliveryModule, workerThreadModule, payloadSourceModule ->
+            val logWorker = BackgroundWorker(logOrchestratorExecutor)
+            LogModuleImpl(
+                initModule,
+                openTelemetryModule,
+                essentialServiceModule,
+                configService,
+                deliveryModule,
+                object : WorkerThreadModule by workerThreadModule {
+                    override fun backgroundWorker(worker: Worker.Background): BackgroundWorker = logWorker
+                },
+                payloadSourceModule,
+            )
+        },
         sdkInitResourceUsageTrackerSupplier = { fakeSdkInitResourceUsageTracker() },
     )
+
+    /**
+     * Runs the log batch checks that are due at the fake clock's current time.
+     */
+    fun runDueLogBatchChecks() {
+        logOrchestratorExecutor.runCurrentlyBlocked()
+    }
 
     /**
      * Setup a fake dead session on disk

@@ -200,6 +200,7 @@ internal class SdkIntegrationTestRule(
             }
         }
         testCaseAction(action)
+        setup.runDueLogBatchChecks()
         drainExternalExports()
         assertAction(payloadAssertion)
         spanExporter.failOnDuplicate()

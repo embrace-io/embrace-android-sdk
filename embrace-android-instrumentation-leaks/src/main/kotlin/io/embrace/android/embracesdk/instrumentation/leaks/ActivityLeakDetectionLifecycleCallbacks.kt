@@ -16,25 +16,27 @@ internal class ActivityLeakDetectionLifecycleCallbacks(
 ) : Application.ActivityLifecycleCallbacks {
 
     override fun onActivityPreCreated(activity: Activity, savedInstanceState: Bundle?) {
-        leakDetector.trackOpened(activity)
+        leakDetector.trackOpened(activity, TrackingSource.ACTIVITY)
     }
 
     override fun onActivityCreated(activity: Activity, savedInstanceState: Bundle?) {
         if (Build.VERSION.SDK_INT < Build.VERSION_CODES.Q) {
-            leakDetector.trackOpened(activity)
+            leakDetector.trackOpened(activity, TrackingSource.ACTIVITY)
         }
         fragmentSupport.onActivityCreated(activity)
     }
 
     override fun onActivityDestroyed(activity: Activity) {
         val sessionIds = activeSessionIdsProvider()
-        leakDetector.trackClosed(activity, LeakContext(OBJECT_TYPE, sessionIds, activity.javaClass))
+        leakDetector.trackClosed(activity, TrackingSource.ACTIVITY, LeakContext(OBJECT_TYPE, sessionIds, activity.javaClass))
 
         if (webViewLeakDetectionEnabled) {
+            // WebViews inside Fragments are opened by the Fragment instrumentation first, so are not closed here
             WebViewLeakScanner.scan(activity.window?.decorView, logger) { webView ->
                 leakDetector.trackClosed(
                     webView,
-                    LeakContext(WebViewLeakScanner.WEBVIEW_OBJECT_TYPE, sessionIds, webView.javaClass),
+                    TrackingSource.ACTIVITY,
+                    LeakContext(WebViewLeakScanner.WEBVIEW_OBJECT_TYPE, sessionIds, activity.javaClass),
                 )
             }
         }
@@ -45,7 +47,7 @@ internal class ActivityLeakDetectionLifecycleCallbacks(
     override fun onActivityResumed(activity: Activity) {
         if (webViewLeakDetectionEnabled) {
             WebViewLeakScanner.scan(activity.window?.decorView, logger) { webView ->
-                leakDetector.trackOpened(webView)
+                leakDetector.trackOpened(webView, TrackingSource.ACTIVITY)
             }
         }
     }

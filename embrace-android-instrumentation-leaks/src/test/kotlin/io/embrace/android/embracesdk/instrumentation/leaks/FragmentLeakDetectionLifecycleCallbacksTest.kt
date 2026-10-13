@@ -57,7 +57,7 @@ internal class FragmentLeakDetectionLifecycleCallbacksTest {
 
         assertNotNull(
             "onFragmentAttached should have opened a sentinel for the fragment",
-            leakDetector.trackClosed(fragment, FRAGMENT_CONTEXT),
+            leakDetector.trackClosed(fragment, OWNER, FRAGMENT_CONTEXT),
         )
     }
 
@@ -71,7 +71,7 @@ internal class FragmentLeakDetectionLifecycleCallbacksTest {
 
         assertNull(
             "onFragmentDestroyed should already have released the sentinel opened at attach",
-            leakDetector.trackClosed(fragment, FRAGMENT_CONTEXT),
+            leakDetector.trackClosed(fragment, OWNER, FRAGMENT_CONTEXT),
         )
     }
 
@@ -85,7 +85,7 @@ internal class FragmentLeakDetectionLifecycleCallbacksTest {
 
         assertNotNull(
             "onFragmentViewCreated should have opened a sentinel for the fragment's view",
-            leakDetector.trackClosed(view, FRAGMENT_VIEW_CONTEXT),
+            leakDetector.trackClosed(view, OWNER, FRAGMENT_VIEW_CONTEXT),
         )
     }
 
@@ -100,7 +100,7 @@ internal class FragmentLeakDetectionLifecycleCallbacksTest {
 
         assertNull(
             "onFragmentViewDestroyed should already have released the sentinel opened at view-created",
-            leakDetector.trackClosed(view, FRAGMENT_VIEW_CONTEXT),
+            leakDetector.trackClosed(view, OWNER, FRAGMENT_VIEW_CONTEXT),
         )
     }
 
@@ -137,12 +137,12 @@ internal class FragmentLeakDetectionLifecycleCallbacksTest {
 
         assertNotNull(
             "a fragment attached to a child FragmentManager should be tracked too",
-            leakDetector.trackClosed(child, FRAGMENT_CONTEXT),
+            leakDetector.trackClosed(child, OWNER, FRAGMENT_CONTEXT),
         )
     }
 
     @Test
-    fun `a webview nested in a fragment's view is tracked as opened once resumed, when enabled`() {
+    fun `a webview nested in a fragment's view is tracked as opened once started, when enabled`() {
         val webViewCallbacks = FragmentLeakDetectionLifecycleCallbacks(
             leakDetector,
             { SESSION_IDS },
@@ -155,8 +155,8 @@ internal class FragmentLeakDetectionLifecycleCallbacksTest {
         activity.supportFragmentManager.beginTransaction().add(content, fragment).commitNow()
 
         assertNotNull(
-            "resuming a fragment with a WebView in its view should have opened a sentinel for it",
-            leakDetector.trackClosed(fragment.webView, WEBVIEW_CONTEXT),
+            "starting a fragment with a WebView in its view should have opened a sentinel for it",
+            leakDetector.trackClosed(fragment.webView, OWNER, WEBVIEW_CONTEXT),
         )
     }
 
@@ -176,7 +176,7 @@ internal class FragmentLeakDetectionLifecycleCallbacksTest {
 
         assertNull(
             "onFragmentViewDestroyed should already have released the sentinel opened when the webview was found",
-            leakDetector.trackClosed(fragment.webView, WEBVIEW_CONTEXT),
+            leakDetector.trackClosed(fragment.webView, OWNER, WEBVIEW_CONTEXT),
         )
     }
 
@@ -189,7 +189,7 @@ internal class FragmentLeakDetectionLifecycleCallbacksTest {
 
         assertNull(
             "no sentinel should have been opened when webview leak detection is disabled (the default)",
-            leakDetector.trackClosed(fragment.webView, WEBVIEW_CONTEXT),
+            leakDetector.trackClosed(fragment.webView, OWNER, WEBVIEW_CONTEXT),
         )
     }
 
@@ -204,30 +204,12 @@ internal class FragmentLeakDetectionLifecycleCallbacksTest {
         return activity
     }
 
-    /**
-     * Forces real collections until [detector] confirms a suspect of [objectType], and returns its [LeakContext].
-     * [System.gc] is only a request, so this retries a bounded number of times rather than trusting a single call.
-     */
-    private fun awaitSuspect(detector: LeakDetector, objectType: String): LeakContext {
-        repeat(GC_ATTEMPTS) {
-            val match = detector.suspects()
-                .mapNotNull { it.token as? LeakContext }
-                .firstOrNull { it.objectType == objectType }
-            if (match != null) return match
-            System.gc()
-            Thread.sleep(GC_RETRY_DELAY_MS)
-        }
-
-        throw AssertionError("no $objectType suspect was confirmed after $GC_ATTEMPTS collections")
-    }
-
     private companion object {
+        val OWNER = TrackingSource.FRAGMENT
         val SESSION_IDS = SessionIdsSnapshot(userSessionId = "session-1", sessionPartId = "part-1")
         val FRAGMENT_CONTEXT = LeakContext("fragment", SESSION_IDS, Fragment::class.java)
         val FRAGMENT_VIEW_CONTEXT = LeakContext("fragment_view", SESSION_IDS, Fragment::class.java)
-        val WEBVIEW_CONTEXT = LeakContext(WebViewLeakScanner.WEBVIEW_OBJECT_TYPE, SESSION_IDS, WebView::class.java)
-        const val GC_ATTEMPTS = 20
-        const val GC_RETRY_DELAY_MS = 25L
+        val WEBVIEW_CONTEXT = LeakContext(WebViewLeakScanner.WEBVIEW_OBJECT_TYPE, SESSION_IDS, Fragment::class.java)
     }
 }
 

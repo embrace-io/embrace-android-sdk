@@ -42,7 +42,6 @@ import io.embrace.android.embracesdk.internal.injection.postInit
 import io.embrace.android.embracesdk.internal.injection.postLoadInstrumentation
 import io.embrace.android.embracesdk.internal.injection.registerListeners
 import io.embrace.android.embracesdk.internal.injection.triggerPayloadSend
-import io.embrace.android.embracesdk.internal.logging.InternalLogger
 import io.embrace.android.embracesdk.internal.utils.EmbTrace
 import io.embrace.android.embracesdk.internal.utils.Provider
 import io.embrace.android.embracesdk.spans.AutoTerminationMode
@@ -51,10 +50,6 @@ import io.embrace.android.embracesdk.spans.EmbraceSpanEvent
 import io.embrace.android.embracesdk.spans.ErrorCode
 import io.embrace.android.embracesdk.spans.TracingApi
 import io.opentelemetry.kotlin.OpenTelemetry
-import io.opentelemetry.kotlin.logging.export.LogRecordExporter
-import io.opentelemetry.kotlin.logging.export.LogRecordProcessor
-import io.opentelemetry.kotlin.tracing.export.SpanExporter
-import io.opentelemetry.kotlin.tracing.export.SpanProcessor
 import java.util.concurrent.Executors
 
 /**
@@ -69,8 +64,7 @@ internal class RealSdkInstance(
     private val hostedSdkApiProvider: Provider<SdkApi>,
     private val sdkCallChecker: SdkCallChecker,
     openTelemetryKotlin: OpenTelemetry,
-    clock: Clock,
-    logger: InternalLogger,
+    private val clock: Clock,
     private val userApiDelegate: UserApiDelegate = UserApiDelegate(
         lazyBootstrapper,
         sdkCallChecker,
@@ -103,11 +97,6 @@ internal class RealSdkInstance(
         lazyBootstrapper,
         sdkCallChecker,
     ),
-    private val preStartBuffer: BufferingSdkInstance = BufferingSdkInstance(
-        clock = clock::now,
-        logger = logger,
-        openTelemetryKotlin = openTelemetryKotlin,
-    ),
 ) : SdkInstance,
     LogsApi by logsApiDelegate,
     NetworkRequestApi by networkRequestApiDelegate,
@@ -118,14 +107,16 @@ internal class RealSdkInstance(
     ViewTrackingApi by viewTrackingApiDelegate,
     BreadcrumbApi by breadcrumbApiDelegate,
     InstrumentationApi by instrumentationApiDelegate,
-    ExperimentApi by preStartBuffer,
+    ExperimentApi by experimentApiDelegate,
     InternalInterfaceApi {
 
     private val bootstrapper by lazyBootstrapper
     private val tracingApi: TracingApi get() = bootstrapper.openTelemetryModule.tracingApi
-    private val startStopLock = Any()
 
     private var internalInterfaceModule: InternalInterfaceModule? = null
+
+    @Volatile
+    private var applicationInitStartMs: Long? = null
 
     override fun onPreStart(buffer: BufferingSdkInstance) {
         // drain before building OTel SDK
@@ -137,69 +128,67 @@ internal class RealSdkInstance(
         bootstrapper.applyCustomMetadata {
             buffer.drainExperimentCalls(experimentApiDelegate, experimentApiDelegate::replay)
         }
+        // the buffered value was recorded first, so takes precedence
+        buffer.applicationInitStartMs?.let { applicationInitStartMs = it }
     }
 
     override fun start(context: Context) {
         EmbTrace.trace("sdk-start") {
-            synchronized(startStopLock) {
-                try {
-                    if (!bootstrapper.init(context)) {
-                        return
-                    }
-                    bootstrapper.postInit()
-
-                    EmbTrace.trace(sectionName = "post-services-setup", recordDuration = true) {
-                        internalInterfaceModule = InternalInterfaceModuleImpl(
-                            bootstrapper.initModule,
-                            bootstrapper.configService,
-                            bootstrapper.payloadSourceModule,
-                            hostedSdkApiProvider(),
-                            bootstrapper,
-                        )
-
-                        // not fully initialized, but the SDK shouldn't catastrophically throw after this point,
-                        // so we allow external calls.
-                        sdkCallChecker.started.set(true)
-                        bootstrapper.registerListeners()
-                        bootstrapper.loadInstrumentation()
-                        bootstrapper.postLoadInstrumentation()
-                        bootstrapper.triggerPayloadSend()
-                    }
-                    bootstrapper.markSdkInitComplete(EmbTrace.durationTracker::flush)
-                } catch (ignored: Throwable) {
-                    Log.w("Embrace", "Failed to initialize Embrace SDK", ignored)
+            try {
+                if (!bootstrapper.init(context)) {
+                    return
                 }
+                bootstrapper.postInit()
+
+                EmbTrace.trace(sectionName = "post-services-setup", recordDuration = true) {
+                    internalInterfaceModule = InternalInterfaceModuleImpl(
+                        bootstrapper.initModule,
+                        bootstrapper.configService,
+                        bootstrapper.payloadSourceModule,
+                        hostedSdkApiProvider(),
+                        bootstrapper,
+                    )
+
+                    // not fully initialized, but the SDK shouldn't catastrophically throw after this point,
+                    // so we allow external calls.
+                    sdkCallChecker.started.set(true)
+                    bootstrapper.registerListeners()
+                    bootstrapper.loadInstrumentation()
+                    bootstrapper.postLoadInstrumentation()
+                    bootstrapper.triggerPayloadSend()
+                }
+                bootstrapper.markSdkInitComplete(EmbTrace.durationTracker::flush)
+            } catch (ignored: Throwable) {
+                Log.w("Embrace", "Failed to initialize Embrace SDK", ignored)
             }
         }
     }
 
     override fun disable() {
-        synchronized(startStopLock) {
-            if (sdkCallChecker.started.get()) {
-                bootstrapper.openTelemetryModule.otelSdkConfig.disableDataExport()
-                val rootDir = bootstrapper.coreModule.context.filesDir
-                val fallbackDir = bootstrapper.coreModule.context.cacheDir
-                sdkCallChecker.started.set(false)
-                bootstrapper.stop()
-                val executor = Executors.newSingleThreadExecutor()
-                executor.execute {
-                    runCatching {
-                        StorageLocation.entries.map {
-                            it.asFile(
-                                logger = null,
-                                rootDirSupplier = { rootDir },
-                                fallbackDirSupplier = { fallbackDir },
-                            ).value
-                        }.forEach {
-                            it.deleteRecursively()
-                        }
-                    }.onFailure { exception ->
-                        Log.e("[Embrace]", "An error occurred while trying to disable Embrace SDK.", exception)
+        if (sdkCallChecker.started.get()) {
+            bootstrapper.openTelemetryModule.otelSdkConfig.disableDataExport()
+            val rootDir = bootstrapper.coreModule.context.filesDir
+            val fallbackDir = bootstrapper.coreModule.context.cacheDir
+            sdkCallChecker.started.set(false)
+            bootstrapper.stop()
+            val executor = Executors.newSingleThreadExecutor()
+            executor.execute {
+                runCatching {
+                    StorageLocation.entries.map {
+                        it.asFile(
+                            logger = null,
+                            rootDirSupplier = { rootDir },
+                            fallbackDirSupplier = { fallbackDir },
+                        ).value
+                    }.forEach {
+                        it.deleteRecursively()
                     }
+                }.onFailure { exception ->
+                    Log.e("[Embrace]", "An error occurred while trying to disable Embrace SDK.", exception)
                 }
-                // lets the queued deletion finish, then releases the worker thread
-                executor.shutdown()
             }
+            // lets the queued deletion finish, then releases the worker thread
+            executor.shutdown()
         }
     }
 
@@ -226,18 +215,6 @@ internal class RealSdkInstance(
         get() {
             return checkNotNull(internalInterfaceModule?.flutterInternalInterface)
         }
-
-    override fun addSpanExporter(spanExporter: SpanExporter) = preStartBuffer.addSpanExporter(spanExporter)
-
-    override fun addSpanProcessor(spanProcessor: SpanProcessor) = preStartBuffer.addSpanProcessor(spanProcessor)
-
-    override fun addLogRecordExporter(logRecordExporter: LogRecordExporter) =
-        preStartBuffer.addLogRecordExporter(logRecordExporter)
-
-    override fun addLogRecordProcessor(logRecordProcessor: LogRecordProcessor) =
-        preStartBuffer.addLogRecordProcessor(logRecordProcessor)
-
-    override fun setResourceAttribute(key: String, value: String) = preStartBuffer.setResourceAttribute(key, value)
 
     override fun createSpan(
         name: String,
@@ -271,14 +248,18 @@ internal class RealSdkInstance(
         parent: EmbraceSpan?,
         attributes: Map<String, String>,
         events: List<EmbraceSpanEvent>,
-    ): Boolean = preStartBuffer.recordCompletedSpan(name, startTimeMs, endTimeMs, errorCode, parent, attributes, events)
+    ): Boolean = tracingApi.recordCompletedSpan(name, startTimeMs, endTimeMs, errorCode, parent, attributes, events)
 
-    override fun applicationInitStart() = preStartBuffer.applicationInitStart()
+    override fun applicationInitStart() {
+        if (applicationInitStartMs == null) {
+            applicationInitStartMs = clock.now()
+        }
+    }
 
     override fun applicationInitEnd() {
         if (sdkCallChecker.check("application_init_end", false)) {
             bootstrapper.dataCaptureServiceModule.appStartupDataCollector.run {
-                preStartBuffer.applicationInitStartMs?.let { applicationInitStart(it) }
+                this@RealSdkInstance.applicationInitStartMs?.let { applicationInitStart(it) }
                 applicationInitEnd()
             }
         }

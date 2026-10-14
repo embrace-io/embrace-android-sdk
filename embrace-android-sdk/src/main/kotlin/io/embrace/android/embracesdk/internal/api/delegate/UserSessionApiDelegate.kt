@@ -5,7 +5,6 @@ import io.embrace.android.embracesdk.SessionStateEvent
 import io.embrace.android.embracesdk.UserSessionListener
 import io.embrace.android.embracesdk.internal.api.UserSessionApi
 import io.embrace.android.embracesdk.internal.injection.ModuleInitBootstrapper
-import io.embrace.android.embracesdk.internal.injection.embraceImplInject
 import io.embrace.android.embracesdk.internal.session.UserSessionListener as InternalUserSessionListener
 
 internal class UserSessionApiDelegate(
@@ -15,12 +14,8 @@ internal class UserSessionApiDelegate(
 
     private val bootstrapper by lazyBootstrapper
 
-    private val userSessionPropertiesService by embraceImplInject(sdkCallChecker) {
-        bootstrapper.essentialServiceModule.userSessionPropertiesService
-    }
-    private val sessionOrchestrator by embraceImplInject(sdkCallChecker) {
-        bootstrapper.userSessionOrchestrationModule.sessionOrchestrator
-    }
+    private val userSessionPropertiesService get() = bootstrapper.essentialServiceModule.userSessionPropertiesService
+    private val sessionOrchestrator get() = bootstrapper.userSessionOrchestrationModule.sessionOrchestrator
 
     /**
      * Adds a property to the current session.
@@ -32,7 +27,7 @@ internal class UserSessionApiDelegate(
                 PropertyScope.PROCESS -> io.embrace.android.embracesdk.internal.capture.session.PropertyScope.PROCESS
                 PropertyScope.PERMANENT -> io.embrace.android.embracesdk.internal.capture.session.PropertyScope.PERMANENT
             }
-            return userSessionPropertiesService?.addProperty(key, value, internalScope) ?: false
+            return userSessionPropertiesService.addProperty(key, value, internalScope)
         }
         return false
     }
@@ -42,7 +37,7 @@ internal class UserSessionApiDelegate(
      */
     override fun removeUserSessionProperty(key: String): Boolean {
         if (sdkCallChecker.check("remove_session_property")) {
-            return userSessionPropertiesService?.removeProperty(key) ?: false
+            return userSessionPropertiesService.removeProperty(key)
         }
         return false
     }
@@ -52,19 +47,19 @@ internal class UserSessionApiDelegate(
      */
     override fun endUserSession() {
         if (sdkCallChecker.check("end_session")) {
-            sessionOrchestrator?.endSessionWithManual()
+            sessionOrchestrator.endSessionWithManual()
         }
     }
 
     override fun addUserSessionListener(listener: UserSessionListener) {
         if (sdkCallChecker.check("add_user_session_listener")) {
-            sessionOrchestrator?.addUserSessionListener(ListenerWrapper(listener))
+            sessionOrchestrator.addUserSessionListener(ListenerWrapper(listener))
         }
     }
 
     override fun removeUserSessionListener(listener: UserSessionListener) {
         if (sdkCallChecker.check("remove_user_session_listener")) {
-            sessionOrchestrator?.removeUserSessionListener(ListenerWrapper(listener))
+            sessionOrchestrator.removeUserSessionListener(ListenerWrapper(listener))
         }
     }
 

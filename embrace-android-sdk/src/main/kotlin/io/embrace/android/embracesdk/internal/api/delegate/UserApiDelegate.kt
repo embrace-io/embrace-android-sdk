@@ -2,7 +2,6 @@ package io.embrace.android.embracesdk.internal.api.delegate
 
 import io.embrace.android.embracesdk.internal.api.UserApi
 import io.embrace.android.embracesdk.internal.injection.ModuleInitBootstrapper
-import io.embrace.android.embracesdk.internal.injection.embraceImplInject
 
 internal class UserApiDelegate(
     lazyBootstrapper: Lazy<ModuleInitBootstrapper>,
@@ -11,37 +10,37 @@ internal class UserApiDelegate(
 
     private val bootstrapper by lazyBootstrapper
 
-    private val userService by embraceImplInject(sdkCallChecker) { bootstrapper.essentialServiceModule.userService }
+    private val userService get() = bootstrapper.essentialServiceModule.userService
 
     override fun setUserIdentifier(userId: String?) {
         if (sdkCallChecker.check("set_user_identifier")) {
-            userService?.setUserIdentifier(userId)
+            userService.setUserIdentifier(userId)
         }
     }
 
     override fun clearUserIdentifier() {
         if (sdkCallChecker.check("clear_user_identifier")) {
-            userService?.clearUserIdentifier()
+            userService.clearUserIdentifier()
         }
     }
 
     @Deprecated("Use discouraged. Personal identifying information shouldn't be stored in telemetry.")
     override fun setUserEmail(email: String?) {
         if (sdkCallChecker.check("set_user_email")) {
-            userService?.setUserEmail(email)
+            userService.setUserEmail(email)
         }
     }
 
     @Deprecated("Use discouraged. Personal identifying information shouldn't be stored in telemetry.")
     override fun clearUserEmail() {
         if (sdkCallChecker.check("clear_user_email")) {
-            userService?.clearUserEmail()
+            userService.clearUserEmail()
         }
     }
 
     override fun addUserPersona(persona: String) {
         if (sdkCallChecker.check("add_user_persona")) {
-            userService?.addUserPersona(persona)
+            userService.addUserPersona(persona)
         }
     }
 
@@ -52,7 +51,7 @@ internal class UserApiDelegate(
      */
     override fun clearUserPersona(persona: String) {
         if (sdkCallChecker.check("clear_user_persona")) {
-            userService?.clearUserPersona(persona)
+            userService.clearUserPersona(persona)
         }
     }
 
@@ -61,21 +60,21 @@ internal class UserApiDelegate(
      */
     override fun clearAllUserPersonas() {
         if (sdkCallChecker.check("clear_user_personas")) {
-            userService?.clearAllUserPersonas()
+            userService.clearAllUserPersonas()
         }
     }
 
     @Deprecated("Use discouraged. Personal identifying information shouldn't be stored in telemetry.")
     override fun setUsername(username: String?) {
         if (sdkCallChecker.check("set_username")) {
-            userService?.setUsername(username)
+            userService.setUsername(username)
         }
     }
 
     @Deprecated("Use discouraged. Personal identifying information shouldn't be stored in telemetry.")
     override fun clearUsername() {
         if (sdkCallChecker.check("clear_username")) {
-            userService?.clearUsername()
+            userService.clearUsername()
         }
     }
 }

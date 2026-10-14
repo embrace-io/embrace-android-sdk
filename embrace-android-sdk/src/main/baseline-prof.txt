@@ -2349,10 +2349,6 @@ HSPLio/embrace/android/embracesdk/internal/injection/DeliveryModuleImpl;->getPay
 HSPLio/embrace/android/embracesdk/internal/injection/DeliveryModuleImpl;->getSchedulingService()Lio/embrace/android/embracesdk/internal/delivery/scheduling/SchedulingService;
 HSPLio/embrace/android/embracesdk/internal/injection/DeliveryModuleImpl;->processIdProvider$lambda$0(Lio/embrace/android/embracesdk/internal/injection/OpenTelemetryModule;)Ljava/lang/String;
 HSPLio/embrace/android/embracesdk/internal/injection/DeliveryModuleImpl;->rootDirSupplier$lambda$0(Lio/embrace/android/embracesdk/internal/injection/CoreModule;)Ljava/io/File;
-Lio/embrace/android/embracesdk/internal/injection/EmbraceImplFieldDelegate;
-HSPLio/embrace/android/embracesdk/internal/injection/EmbraceImplFieldDelegate;-><init>(Lkotlin/jvm/functions/Function0;Lkotlin/jvm/functions/Function0;)V
-HSPLio/embrace/android/embracesdk/internal/injection/EmbraceImplFieldDelegate;->getValue()Ljava/lang/Object;
-HSPLio/embrace/android/embracesdk/internal/injection/EmbraceImplFieldDelegate;->getValue(Ljava/lang/Object;Lkotlin/reflect/KProperty;)Ljava/lang/Object;
 Lio/embrace/android/embracesdk/internal/injection/EssentialServiceModule;
 Lio/embrace/android/embracesdk/internal/injection/EssentialServiceModuleImpl$$ExternalSyntheticLambda0;
 HSPLio/embrace/android/embracesdk/internal/injection/EssentialServiceModuleImpl$$ExternalSyntheticLambda0;-><init>(Lio/embrace/android/embracesdk/internal/injection/CoreModule;)V
@@ -2490,10 +2486,6 @@ HSPLio/embrace/android/embracesdk/internal/injection/InitializedModuleGraph;->ge
 HSPLio/embrace/android/embracesdk/internal/injection/InitializedModuleGraph;->getUserSessionOrchestrationModule()Lio/embrace/android/embracesdk/internal/injection/UserSessionOrchestrationModule;
 HSPLio/embrace/android/embracesdk/internal/injection/InitializedModuleGraph;->getWorkerThreadModule()Lio/embrace/android/embracesdk/internal/injection/WorkerThreadModule;
 HSPLio/embrace/android/embracesdk/internal/injection/InitializedModuleGraph;->instrumentationModule$lambda$0$1(Lio/embrace/android/embracesdk/internal/injection/InitializedModuleGraph;)Lio/embrace/android/embracesdk/internal/session/id/SessionIdsSnapshot;
-Lio/embrace/android/embracesdk/internal/injection/InjectEmbraceImplKt$embraceImplInject$2;
-HSPLio/embrace/android/embracesdk/internal/injection/InjectEmbraceImplKt$embraceImplInject$2;-><init>(Lio/embrace/android/embracesdk/internal/api/delegate/SdkCallChecker;)V
-HSPLio/embrace/android/embracesdk/internal/injection/InjectEmbraceImplKt$embraceImplInject$2;->invoke()Ljava/lang/Boolean;
-HSPLio/embrace/android/embracesdk/internal/injection/InjectEmbraceImplKt$embraceImplInject$2;->invoke()Ljava/lang/Object;
 Lio/embrace/android/embracesdk/internal/injection/InstrumentationModule;
 Lio/embrace/android/embracesdk/internal/injection/InstrumentationModuleImpl$$ExternalSyntheticLambda0;
 HSPLio/embrace/android/embracesdk/internal/injection/InstrumentationModuleImpl$$ExternalSyntheticLambda0;-><init>(Lio/embrace/android/embracesdk/internal/injection/CoreModule;)V

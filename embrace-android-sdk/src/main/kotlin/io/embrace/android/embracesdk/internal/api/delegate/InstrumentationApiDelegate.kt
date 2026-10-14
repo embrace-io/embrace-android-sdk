@@ -6,7 +6,6 @@ import io.embrace.android.embracesdk.internal.arch.datasource.SpanEvent
 import io.embrace.android.embracesdk.internal.arch.datasource.SpanEventImpl
 import io.embrace.android.embracesdk.internal.arch.schema.ErrorCodeAttribute
 import io.embrace.android.embracesdk.internal.injection.ModuleInitBootstrapper
-import io.embrace.android.embracesdk.internal.injection.embraceImplInject
 import io.embrace.android.embracesdk.internal.instrumentation.startup.activity.traceInstanceId
 import io.embrace.android.embracesdk.spans.EmbraceSpanEvent
 import io.embrace.android.embracesdk.spans.ErrorCode
@@ -18,32 +17,24 @@ internal class InstrumentationApiDelegate(
 
     private val bootstrapper by lazyBootstrapper
 
-    private val clock by embraceImplInject(sdkCallChecker) {
-        bootstrapper.initModule.clock
-    }
-    private val uiLoadTraceEmitter by embraceImplInject(sdkCallChecker) {
-        bootstrapper.dataCaptureServiceModule.uiLoadDataListener
-    }
-    private val appStartupDataCollector by embraceImplInject(sdkCallChecker) {
-        bootstrapper.dataCaptureServiceModule.appStartupDataCollector
-    }
-    private val navigationTrackingService by embraceImplInject(sdkCallChecker) {
-        bootstrapper.essentialServiceModule.navigationTrackingService
-    }
+    private val clock get() = bootstrapper.initModule.clock
+    private val uiLoadTraceEmitter get() = bootstrapper.dataCaptureServiceModule.uiLoadDataListener
+    private val appStartupDataCollector get() = bootstrapper.dataCaptureServiceModule.appStartupDataCollector
+    private val navigationTrackingService get() = bootstrapper.essentialServiceModule.navigationTrackingService
 
     override fun appReady() {
         if (sdkCallChecker.check("app_ready")) {
-            appStartupDataCollector?.appReady(timestampMs = clock?.now())
+            appStartupDataCollector.appReady(timestampMs = clock.now())
         }
     }
 
     override fun activityLoaded(activity: Activity) {
         if (sdkCallChecker.check("activity_fully_loaded")) {
-            uiLoadTraceEmitter?.complete(traceInstanceId(activity), clock?.now() ?: 0)
+            uiLoadTraceEmitter?.complete(traceInstanceId(activity), clock.now())
         }
     }
 
-    override fun getSdkCurrentTimeMs(): Long = clock?.now() ?: 0
+    override fun getSdkCurrentTimeMs(): Long = clock.now()
 
     override fun addLoadTraceAttribute(activity: Activity, key: String, value: String) {
         if (sdkCallChecker.check("add_load_trace_attribute")) {
@@ -75,7 +66,7 @@ internal class InstrumentationApiDelegate(
 
     override fun addStartupTraceAttribute(key: String, value: String) {
         if (sdkCallChecker.check("add_startup_trace_attribute")) {
-            appStartupDataCollector?.addAttribute(key, value)
+            appStartupDataCollector.addAttribute(key, value)
         }
     }
 
@@ -88,7 +79,7 @@ internal class InstrumentationApiDelegate(
         errorCode: ErrorCode?,
     ) {
         if (sdkCallChecker.check("add_startup_trace_child_span")) {
-            appStartupDataCollector?.addTrackedInterval(
+            appStartupDataCollector.addTrackedInterval(
                 name = name,
                 startTimeMs = startTimeMs,
                 endTimeMs = endTimeMs,
@@ -101,7 +92,7 @@ internal class InstrumentationApiDelegate(
 
     override fun observeNavigation(activity: Activity, navigationController: Any) {
         if (sdkCallChecker.check("observe_navigation")) {
-            navigationTrackingService?.trackNavigation(activity, navigationController)
+            navigationTrackingService.trackNavigation(activity, navigationController)
         }
     }
 

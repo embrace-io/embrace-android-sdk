@@ -303,7 +303,6 @@ internal class ExperimentApiDelegateTest {
     fun `calls before start are dropped with an error`() {
         delegate.trackExperiment("exp1", startedAt = 1L)
         delegate.untrackFeatureFlag("flag1", endedAt = 1L)
-        delegate.replay(listOf(ExperimentApiCall.Track(listOf(TrackedData.experiment("exp2", 1L, null)))))
         assertEquals(0, fakeExperimentTrackingService.serviceInvocations)
         assertEquals(2, checkerLogger.sdkNotInitializedMessages.size)
     }

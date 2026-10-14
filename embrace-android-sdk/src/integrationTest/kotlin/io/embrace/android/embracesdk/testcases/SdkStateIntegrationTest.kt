@@ -152,23 +152,22 @@ internal class SdkStateIntegrationTest(
     }
 
     @Test
-    fun `NOT_STARTED - disable is ignored`() {
+    fun `NOT_STARTED to DISABLED - start is ignored`() {
         testRule.runTest(
             startSdk = false,
             testCaseAction = {
                 embrace.disable()
-                assertEquals(SdkState.NOT_STARTED, sdkState)
+                assertEquals(SdkState.DISABLED, sdkState)
 
                 embrace.start(context)
-                assertEquals(SdkState.STARTED, sdkState)
-                recordSession {
-                    embrace.logInfo(LOG_1)
-                }
+                assertEquals(SdkState.DISABLED, sdkState)
+                assertFalse(embrace.isStarted)
+                assertInternalApiIsNoop()
             },
             assertAction = {
-                assertEquals(SdkState.STARTED, sdkState)
-                getSingleSessionEnvelope()
-                getSingleLogEnvelope()
+                assertEquals(SdkState.DISABLED, sdkState)
+                assertEquals(0, getLogEnvelopes(0).size)
+                assertEquals(0, getSessionEnvelopes(0).size)
             },
         )
     }
@@ -336,7 +335,7 @@ internal class SdkStateIntegrationTest(
     }
 
     @Test
-    fun `DISABLED to STARTED - start restarts the SDK`() {
+    fun `DISABLED - start is ignored`() {
         lateinit var logger: FakeInternalLogger
         lateinit var calls: ApiCalls
         testRule.runTest(
@@ -355,20 +354,16 @@ internal class SdkStateIntegrationTest(
                 calls.callDroppedApis(embrace, noopSpans = false)
 
                 embrace.start(context)
-                assertEquals(SdkState.STARTED, sdkState)
-                assertTrue(embrace.isStarted)
-                assertNotNull(embrace.currentUserSessionId)
-                recordSession {
-                    embrace.startSpan(SPAN_1).stop()
-                    embrace.logInfo(LOG_2)
-                }
+                assertEquals(SdkState.DISABLED, sdkState)
+                assertFalse(embrace.isStarted)
+                assertNull(embrace.currentUserSessionId)
+                recordSession()
             },
             assertAction = {
                 calls.assertDropped(logger, bufferedCallsDropped = true)
 
-                // restarting does not re-enable data export, or replay calls made while disabled
+                // calls made while disabled are not replayed
                 calls.assertOTelConfigNotApplied()
-                assertNull(testRule.bootstrapper.essentialServiceModule.experimentTrackingService.getRecords())
                 assertEquals(0, getLogEnvelopes(0).size)
                 assertEquals(0, getSessionEnvelopes(0).size)
             },
@@ -411,7 +406,7 @@ internal class SdkStateIntegrationTest(
     }
 
     @Test
-    fun `STARTED to DISABLED to STARTED - internal API follows SDK state`() {
+    fun `STARTED to DISABLED - internal API stays noop after start`() {
         testRule.runTest(
             testCaseAction = {
                 assertInternalApiIsLive()
@@ -422,8 +417,8 @@ internal class SdkStateIntegrationTest(
                 assertFalse(EmbraceInternalApi.internalInterface.isNetworkSpanForwardingEnabled())
 
                 embrace.start(context)
-                assertEquals(SdkState.STARTED, sdkState)
-                assertInternalApiIsLive()
+                assertEquals(SdkState.DISABLED, sdkState)
+                assertInternalApiIsNoop()
             },
             assertAction = {
                 awaitStorageDeleted()

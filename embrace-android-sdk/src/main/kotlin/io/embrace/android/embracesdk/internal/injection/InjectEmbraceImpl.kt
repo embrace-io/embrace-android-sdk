@@ -1,21 +1,16 @@
 package io.embrace.android.embracesdk.internal.injection
 
-import io.embrace.android.embracesdk.EmbraceImpl
 import io.embrace.android.embracesdk.internal.api.delegate.SdkCallChecker
 import io.embrace.android.embracesdk.internal.utils.Provider
 import kotlin.properties.ReadOnlyProperty
 import kotlin.reflect.KProperty
 
 /**
- * Provides a lazy property delegate for fields in [EmbraceImpl]. If the SDK is not started, this will
+ * Provides a lazy property delegate for fields in the SDK's API delegates. If the SDK is not started, this will
  * return null. If it is started, the value will return the value from the provider.
  *
- * This is convenient syntax to avoid a large number of lateinit vars in [EmbraceImpl].
+ * This is convenient syntax to avoid a large number of lateinit vars in the API delegates.
  */
-internal inline fun <reified T> EmbraceImpl.embraceImplInject(
-    noinline provider: Provider<T>,
-): ReadOnlyProperty<Any?, T?> = EmbraceImplFieldDelegate({ this.isStarted }, provider)
-
 internal inline fun <reified T> embraceImplInject(
     checker: SdkCallChecker,
     noinline provider: Provider<T>,

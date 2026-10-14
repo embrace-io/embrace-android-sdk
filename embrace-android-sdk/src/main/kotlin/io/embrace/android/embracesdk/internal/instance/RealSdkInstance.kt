@@ -1,6 +1,5 @@
-package io.embrace.android.embracesdk
+package io.embrace.android.embracesdk.internal.instance
 
-import android.annotation.SuppressLint
 import android.content.Context
 import android.util.Log
 import io.embrace.android.embracesdk.internal.EmbraceInternalInterface
@@ -43,8 +42,6 @@ import io.embrace.android.embracesdk.internal.injection.postInit
 import io.embrace.android.embracesdk.internal.injection.postLoadInstrumentation
 import io.embrace.android.embracesdk.internal.injection.registerListeners
 import io.embrace.android.embracesdk.internal.injection.triggerPayloadSend
-import io.embrace.android.embracesdk.internal.instance.BufferingSdkInstance
-import io.embrace.android.embracesdk.internal.instance.SdkInstance
 import io.embrace.android.embracesdk.internal.logging.InternalLogger
 import io.embrace.android.embracesdk.internal.utils.EmbTrace
 import io.embrace.android.embracesdk.internal.utils.Provider
@@ -67,28 +64,45 @@ import java.util.concurrent.Executors
  * Any non-public APIs or functionality related to the Embrace.java client should ideally be put
  * here instead.
  */
-@SuppressLint("EmbracePublicApiPackageRule")
-internal class EmbraceImpl(
+internal class RealSdkInstance(
     lazyBootstrapper: Lazy<ModuleInitBootstrapper>,
     private val hostedSdkApiProvider: Provider<SdkApi>,
     private val sdkCallChecker: SdkCallChecker,
     openTelemetryKotlin: OpenTelemetry,
     clock: Clock,
     logger: InternalLogger,
-    private val userApiDelegate: UserApiDelegate = UserApiDelegate(lazyBootstrapper, sdkCallChecker),
-    private val sessionApiDelegate: UserSessionApiDelegate = UserSessionApiDelegate(lazyBootstrapper, sdkCallChecker),
+    private val userApiDelegate: UserApiDelegate = UserApiDelegate(
+        lazyBootstrapper,
+        sdkCallChecker,
+    ),
+    private val sessionApiDelegate: UserSessionApiDelegate = UserSessionApiDelegate(
+        lazyBootstrapper,
+        sdkCallChecker,
+    ),
     private val networkRequestApiDelegate: NetworkRequestApiDelegate =
         NetworkRequestApiDelegate(lazyBootstrapper, sdkCallChecker),
-    private val logsApiDelegate: LogsApiDelegate = LogsApiDelegate(lazyBootstrapper, sdkCallChecker),
+    private val logsApiDelegate: LogsApiDelegate = LogsApiDelegate(
+        lazyBootstrapper,
+        sdkCallChecker,
+    ),
     private val viewTrackingApiDelegate: ViewTrackingApiDelegate =
         ViewTrackingApiDelegate(lazyBootstrapper, sdkCallChecker),
-    private val sdkStateApiDelegate: SdkStateApiDelegate = SdkStateApiDelegate(lazyBootstrapper, sdkCallChecker),
+    private val sdkStateApiDelegate: SdkStateApiDelegate = SdkStateApiDelegate(
+        lazyBootstrapper,
+        sdkCallChecker,
+    ),
     private val otelApiDelegate: OTelApiDelegate =
         OTelApiDelegate(lazyBootstrapper, sdkCallChecker, openTelemetryKotlin),
-    private val breadcrumbApiDelegate: BreadcrumbApiDelegate = BreadcrumbApiDelegate(lazyBootstrapper, sdkCallChecker),
+    private val breadcrumbApiDelegate: BreadcrumbApiDelegate = BreadcrumbApiDelegate(
+        lazyBootstrapper,
+        sdkCallChecker,
+    ),
     private val instrumentationApiDelegate: InstrumentationApiDelegate =
         InstrumentationApiDelegate(lazyBootstrapper, sdkCallChecker),
-    private val experimentApiDelegate: ExperimentApiDelegate = ExperimentApiDelegate(lazyBootstrapper, sdkCallChecker),
+    private val experimentApiDelegate: ExperimentApiDelegate = ExperimentApiDelegate(
+        lazyBootstrapper,
+        sdkCallChecker,
+    ),
     private val preStartBuffer: BufferingSdkInstance = BufferingSdkInstance(
         clock = clock::now,
         logger = logger,
@@ -190,7 +204,7 @@ internal class EmbraceImpl(
     }
 
     /**
-     * Gets the [EmbraceInternalInterface] that should be used as the sole source of
+     * Gets the [io.embrace.android.embracesdk.internal.EmbraceInternalInterface] that should be used as the sole source of
      * communication with other Android SDK modules.
      */
     override val internalInterface: EmbraceInternalInterface

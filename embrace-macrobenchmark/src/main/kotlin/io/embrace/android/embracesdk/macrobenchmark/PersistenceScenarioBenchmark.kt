@@ -82,7 +82,7 @@ internal class PersistenceScenarioBenchmark(
                 else -> error(
                     "$scenarioId did not complete: $outcome. 'sdk-not-started' means the app has " +
                         "no appId, which happens when the Embrace gradle plugin is not in " +
-                        "mavenLocal - run the benchmark again (see README)."
+                        "build/integration-repo - run the benchmark again (see README)."
                 )
             }
         }

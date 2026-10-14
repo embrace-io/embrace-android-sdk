@@ -1,17 +1,17 @@
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 
 buildscript {
-    // Resolved only if a copy is already in mavenLocal, because a buildscript classpath is resolved
-    // before any task can publish one. See the comment on `instrumentConfig` below.
+    // Resolved only if a copy is already in the integration test repo, because a buildscript classpath
+    // is resolved before any task can publish one. See the comment on `instrumentConfig` below.
     val pluginVersion = providers.gradleProperty("version").get()
-    val localRepo = System.getProperty("maven.repo.local") ?: "${System.getProperty("user.home")}/.m2/repository"
-    val published = file("$localRepo/io/embrace/embrace-gradle-plugin/$pluginVersion").isDirectory
+    val repo = isolated.rootProject.projectDirectory.dir(INTEGRATION_TEST_REPO_PATH)
+    val published = repo.dir("io/embrace/embrace-gradle-plugin/$pluginVersion").asFile.isDirectory
 
     extra["embracePluginPublished"] = published
 
     if (published) {
         repositories {
-            mavenLocal()
+            maven { url = uri(repo) }
             google()
             mavenCentral()
         }
@@ -31,8 +31,9 @@ plugins {
  * SDK refuses to start without one.
  *
  * The plugin is a subproject of this build, so it can only be applied from a published copy, and a
- * buildscript classpath is resolved long before `:embrace-gradle-plugin:publishToMavenLocal` could
- * run. `:embrace-macrobenchmark:connectedBenchmarkAndroidTest` therefore publishes it for the *next*
+ * buildscript classpath is resolved long before
+ * `:embrace-gradle-plugin:publishAllPublicationsToIntegrationTestRepository` could run.
+ * `:embrace-macrobenchmark:connectedBenchmarkAndroidTest` therefore publishes it for the *next*
  * build, and a checkout that has never published simply configures without it - that is all CI needs
  * from this module, and SessionBenchmark reports `sdk-not-started` rather than measuring nothing.
  */

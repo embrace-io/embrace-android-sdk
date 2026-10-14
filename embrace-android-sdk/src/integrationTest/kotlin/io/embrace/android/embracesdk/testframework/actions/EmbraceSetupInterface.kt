@@ -39,7 +39,8 @@ import io.embrace.android.embracesdk.internal.injection.EssentialServiceModuleIm
 import io.embrace.android.embracesdk.internal.injection.InstrumentationModule
 import io.embrace.android.embracesdk.internal.injection.InstrumentationModuleImpl
 import io.embrace.android.embracesdk.internal.injection.LogModuleImpl
-import io.embrace.android.embracesdk.internal.injection.ModuleInitBootstrapper
+import io.embrace.android.embracesdk.internal.injection.ModuleGraph
+import io.embrace.android.embracesdk.internal.injection.ModuleGraphFactory
 import io.embrace.android.embracesdk.internal.injection.WorkerThreadModule
 import io.embrace.android.embracesdk.internal.injection.WorkerThreadModuleImpl
 import io.embrace.android.embracesdk.internal.instance.SdkStateHolder
@@ -141,7 +142,7 @@ internal class EmbraceSetupInterface(
     private val fakeCoreModule: CoreModule = FakeCoreModule()
 
     /**
-     * The SDK's store, backed by the same `SharedPreferences` the bootstrapper will use. Owned here
+     * The SDK's store, backed by the same `SharedPreferences` the module graph will use. Owned here
      * rather than read off [CoreModule] because tests write to it in `setupAction`, before the module
      * graph exists.
      */
@@ -153,10 +154,10 @@ internal class EmbraceSetupInterface(
         setupPlatformShadows()
     }
 
-    fun createBootstrapper(
+    fun createModuleGraphFactory(
         instrumentedConfig: FakeInstrumentedConfig,
         deliveryTracer: DeliveryTracer,
-    ): ModuleInitBootstrapper = ModuleInitBootstrapper(
+    ): ModuleGraphFactory = ModuleGraphFactory(
         initModule = fakeInitModule.apply {
             this.instrumentedConfig = instrumentedConfig
         },
@@ -470,12 +471,16 @@ internal class EmbraceSetupInterface(
 
     fun getEmbLogger(): FakeInternalLogger = fakeInitModule.logger as FakeInternalLogger
 
-    fun createStateHolder(bootstrapper: ModuleInitBootstrapper): SdkStateHolder = createSdkStateHolder(
+    fun createStateHolder(
+        moduleGraphFactory: ModuleGraphFactory,
+        onModuleGraphCreated: (ModuleGraph) -> Unit,
+    ): SdkStateHolder = createSdkStateHolder(
         logger = fakeInitModule.logger,
         clock = fakeInitModule.clock,
         telemetryService = fakeInitModule.telemetryService,
         internalErrorHandler = fakeInitModule.internalErrorHandler,
-        bootstrapperProvider = { bootstrapper },
+        moduleGraphFactoryProvider = { moduleGraphFactory },
+        onModuleGraphCreated = onModuleGraphCreated,
     )
 
     fun getFakedWorkerExecutor(worker: Worker.Background): BlockingScheduledExecutorService =

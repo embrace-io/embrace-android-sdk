@@ -8,11 +8,6 @@ import io.embrace.android.embracesdk.internal.api.SdkApi
 internal interface SdkInstance : InternalSdkApi {
 
     /**
-     * Invoked before the instance is started.
-     */
-    fun onPreStart(buffer: BufferingSdkInstance)
-
-    /**
      * Invoked after the instance has started successfully. Not invoked if the start did not succeed.
      */
     fun onPostStart(buffer: BufferingSdkInstance)

@@ -1,10 +1,12 @@
 package io.embrace.android.embracesdk.internal.instance
 
 import io.embrace.android.embracesdk.internal.SystemInfo
+import io.embrace.android.embracesdk.internal.api.delegate.PreStartOTelApi
 import io.embrace.android.embracesdk.internal.clock.Clock
 import io.embrace.android.embracesdk.internal.clock.NormalizedIntervalClock
 import io.embrace.android.embracesdk.internal.injection.InitModuleImpl
-import io.embrace.android.embracesdk.internal.injection.ModuleInitBootstrapper
+import io.embrace.android.embracesdk.internal.injection.ModuleGraph
+import io.embrace.android.embracesdk.internal.injection.ModuleGraphFactory
 import io.embrace.android.embracesdk.internal.injection.OpenTelemetryModuleImpl
 import io.embrace.android.embracesdk.internal.logging.BufferedInternalErrorHandler
 import io.embrace.android.embracesdk.internal.logging.InternalLogger
@@ -25,7 +27,7 @@ internal fun createSdkStateHolder(
     internalErrorHandler: BufferedInternalErrorHandler = BufferedInternalErrorHandler(clock).also {
         logger.errorHandlerProvider = { it }
     },
-    bootstrapperProvider: Provider<ModuleInitBootstrapper> = {
+    moduleGraphFactoryProvider: Provider<ModuleGraphFactory> = {
         EmbTrace.trace(sectionName = "bootstrapper-init", recordDuration = true) {
             val initModule = EmbTrace.trace("init-module") {
                 InitModuleImpl(
@@ -35,28 +37,34 @@ internal fun createSdkStateHolder(
                     internalErrorHandler = internalErrorHandler,
                 )
             }
-            ModuleInitBootstrapper(
+            ModuleGraphFactory(
                 initModule = initModule,
                 openTelemetryModule = EmbTrace.trace("otel-module") { OpenTelemetryModuleImpl(initModule) },
             )
         }
     },
+    onModuleGraphCreated: ((ModuleGraph) -> Unit)? = null,
 ): SdkStateHolder {
+    val moduleGraphFactory = moduleGraphFactoryProvider()
+    val buffer = BufferingSdkInstance(
+        clock = clock::now,
+        logger = logger,
+    )
     var holder: SdkStateHolder? = null
     holder = SdkStateHolder(
-        instance = {
-            RealSdkInstance(
-                bootstrapper = bootstrapperProvider(),
-                hostedSdkApiProvider = { checkNotNull(holder?.api) },
-                clock = clock,
-            )
+        instanceFactory = { context ->
+            // drain before the module graph builds the OTel SDK
+            buffer.drainOTelConfig(PreStartOTelApi(moduleGraphFactory.openTelemetryModule.otelSdkConfig))
+            moduleGraphFactory.init(context)?.let { moduleGraph ->
+                onModuleGraphCreated?.invoke(moduleGraph)
+                RealSdkInstance(
+                    moduleGraph = moduleGraph,
+                    hostedSdkApiProvider = { checkNotNull(holder?.api) },
+                    clock = clock,
+                )
+            }
         },
-        preStart = {
-            BufferingSdkInstance(
-                clock = clock::now,
-                logger = logger,
-            )
-        },
+        preStart = { buffer },
         disabled = { NoopSdkInstance(logger, NoopSdkInstance.SDK_DISABLED) },
         telemetryService = telemetryService,
         errorHandler = logger,

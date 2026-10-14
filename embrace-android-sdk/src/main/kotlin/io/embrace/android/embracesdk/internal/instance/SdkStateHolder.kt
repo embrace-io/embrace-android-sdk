@@ -7,6 +7,7 @@ import io.embrace.android.embracesdk.internal.api.SdkApi
 import io.embrace.android.embracesdk.internal.logging.InternalErrorHandler
 import io.embrace.android.embracesdk.internal.logging.InternalErrorType
 import io.embrace.android.embracesdk.internal.telemetry.InternalTelemetryService
+import io.embrace.android.embracesdk.internal.utils.EmbTrace
 import io.embrace.android.embracesdk.internal.utils.Provider
 
 /**
@@ -20,12 +21,15 @@ import io.embrace.android.embracesdk.internal.utils.Provider
  *      +----------------------disable()-----------------------+
  * ```
  *
+ * The [SdkInstance] is created by [instanceFactory] when the SDK starts. A null instance means the SDK could not be
+ * instantiated. Once created, the same instance is used for all subsequent calls.
+ *
  * A start that does not succeed leaves the SDK in [SdkState.NOT_STARTED] so that it can be retried. [SdkState.DISABLED]
  * is terminal: once disabled, the SDK cannot be started again. Exceptions are reported to [errorHandler] rather than
  * thrown.
  */
 internal class SdkStateHolder(
-    instance: Provider<SdkInstance>,
+    private val instanceFactory: (Context) -> SdkInstance?,
     preStart: Provider<BufferingSdkInstance>,
     private val disabled: Provider<SdkInstance>,
     telemetryService: InternalTelemetryService,
@@ -34,7 +38,7 @@ internal class SdkStateHolder(
 
     private val lock = Any()
 
-    private val instance: SdkInstance = instance()
+    private var instance: SdkInstance? = null
 
     private val preStart: BufferingSdkInstance = preStart()
 
@@ -61,27 +65,30 @@ internal class SdkStateHolder(
      * Starts the SDK. Has no effect unless the SDK is in [SdkState.NOT_STARTED].
      */
     fun start(context: Context) {
-        synchronized(lock) {
-            if (state != SdkState.NOT_STARTED) {
-                return
-            }
-            val started = try {
-                drainBufferedCalls(instance) {
-                    instance.start(context)
-                    instance.isStarted.also { started ->
-                        if (started) {
-                            // swap before onPostStart invocation
-                            dispatcher.target = instance
+        EmbTrace.trace("sdk-start") {
+            synchronized(lock) {
+                if (state != SdkState.NOT_STARTED) {
+                    return
+                }
+                val started = try {
+                    val next = instance ?: instanceFactory(context)?.also { instance = it }
+                    next != null && drainBufferedCalls(next) {
+                        next.start(context)
+                        next.isStarted.also { started ->
+                            if (started) {
+                                // swap before onPostStart invocation
+                                dispatcher.target = next
+                            }
                         }
                     }
+                } catch (exc: Throwable) {
+                    Log.w("Embrace", "Failed to start the Embrace SDK", exc)
+                    errorHandler.trackInternalError(InternalErrorType.PublicApiFail, exc)
+                    false
                 }
-            } catch (exc: Throwable) {
-                Log.w("Embrace", "Failed to start the Embrace SDK", exc)
-                errorHandler.trackInternalError(InternalErrorType.PublicApiFail, exc)
-                false
-            }
-            if (started) {
-                state = SdkState.STARTED
+                if (started) {
+                    state = SdkState.STARTED
+                }
             }
         }
     }
@@ -101,7 +108,7 @@ internal class SdkStateHolder(
                 }
                 SdkState.STARTED -> {
                     try {
-                        instance.disable()
+                        instance?.disable()
                         dispatcher.target = disabled()
                         state = SdkState.DISABLED
                     } catch (exc: Throwable) {
@@ -113,7 +120,6 @@ internal class SdkStateHolder(
     }
 
     private inline fun drainBufferedCalls(next: SdkInstance, start: () -> Boolean): Boolean {
-        next.onPreStart(preStart)
         if (!start()) {
             return false
         }
@@ -130,23 +136,3 @@ internal class SdkStateHolder(
     }
 }
 
-/**
- * The lifecycle state of the SDK.
- */
-internal enum class SdkState {
-
-    /**
-     * The SDK has not started yet, or a previous attempt to start it did not succeed.
-     */
-    NOT_STARTED,
-
-    /**
-     * The SDK started successfully.
-     */
-    STARTED,
-
-    /**
-     * The SDK was disabled. This state is terminal.
-     */
-    DISABLED,
-}

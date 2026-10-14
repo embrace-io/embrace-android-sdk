@@ -62,8 +62,6 @@ internal class NoopSdkInstance(
         }
     }
 
-    override fun onPreStart(buffer: BufferingSdkInstance) {}
-
     override fun onPostStart(buffer: BufferingSdkInstance) {
         buffer.drainCompletedSpans(this)
         buffer.drainExperimentCalls(this) {}

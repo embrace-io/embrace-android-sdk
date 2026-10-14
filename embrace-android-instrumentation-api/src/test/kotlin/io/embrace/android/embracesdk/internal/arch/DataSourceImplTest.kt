@@ -1,7 +1,5 @@
 package io.embrace.android.embracesdk.internal.arch
 
-import androidx.test.core.app.ApplicationProvider
-import androidx.test.ext.junit.runners.AndroidJUnit4
 import io.embrace.android.embracesdk.fakes.FakeInstrumentationArgs
 import io.embrace.android.embracesdk.fakes.FakeInternalLogger
 import io.embrace.android.embracesdk.internal.arch.datasource.DataSourceImpl
@@ -11,9 +9,7 @@ import io.embrace.android.embracesdk.internal.arch.limits.UpToLimitStrategy
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Test
-import org.junit.runner.RunWith
 
-@RunWith(AndroidJUnit4::class)
 internal class DataSourceImplTest {
 
     @Test
@@ -76,7 +72,6 @@ internal class DataSourceImplTest {
     private class FakeDataSourceImpl(
         limitStrategy: LimitStrategy = NoopLimitStrategy,
         args: FakeInstrumentationArgs = FakeInstrumentationArgs(
-            ApplicationProvider.getApplicationContext(),
             logger = FakeInternalLogger(throwOnInternalError = false),
         ),
     ) : DataSourceImpl(

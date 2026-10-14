@@ -1,7 +1,6 @@
 package io.embrace.android.embracesdk.instrumentation.huclite
 
 import android.os.Build.VERSION_CODES
-import androidx.test.ext.junit.runners.AndroidJUnit4
 import io.embrace.android.embracesdk.internal.logging.InternalErrorType
 import io.embrace.android.embracesdk.internal.utils.VersionChecker
 import io.mockk.every
@@ -14,7 +13,6 @@ import org.junit.Assert.assertThrows
 import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
-import org.junit.runner.RunWith
 import java.io.IOException
 import java.io.InputStream
 import java.io.OutputStream
@@ -24,7 +22,6 @@ import java.security.cert.Certificate
 import javax.net.ssl.HostnameVerifier
 import javax.net.ssl.SSLSocketFactory
 
-@RunWith(AndroidJUnit4::class)
 internal class InstrumentedHttpsURLConnectionTest {
     private lateinit var harness: HucTestHarness
 

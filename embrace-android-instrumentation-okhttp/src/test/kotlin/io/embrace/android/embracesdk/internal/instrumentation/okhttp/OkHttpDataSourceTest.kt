@@ -1,7 +1,5 @@
 package io.embrace.android.embracesdk.internal.instrumentation.okhttp
 
-import androidx.test.core.app.ApplicationProvider
-import androidx.test.ext.junit.runners.AndroidJUnit4
 import io.embrace.android.embracesdk.fakes.FakeClock
 import io.embrace.android.embracesdk.fakes.FakeConfigService
 import io.embrace.android.embracesdk.fakes.FakeInstrumentationArgs
@@ -45,13 +43,11 @@ import org.junit.Assert.assertThrows
 import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
-import org.junit.runner.RunWith
 import java.io.ByteArrayOutputStream
 import java.net.SocketException
 import java.util.concurrent.TimeUnit
 import java.util.zip.GZIPOutputStream
 
-@RunWith(AndroidJUnit4::class)
 internal class OkHttpDataSourceTest {
 
     companion object {
@@ -111,7 +107,6 @@ internal class OkHttpDataSourceTest {
         configService = FakeConfigService()
         sdkClock = FakeClock(System.currentTimeMillis())
         args = FakeInstrumentationArgs(
-            application = ApplicationProvider.getApplicationContext(),
             configService = configService,
             clock = sdkClock,
         )

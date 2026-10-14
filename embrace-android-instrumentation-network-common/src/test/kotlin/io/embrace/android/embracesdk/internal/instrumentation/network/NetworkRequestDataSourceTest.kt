@@ -1,6 +1,5 @@
 package io.embrace.android.embracesdk.internal.instrumentation.network
 
-import androidx.test.ext.junit.runners.AndroidJUnit4
 import io.embrace.android.embracesdk.internal.arch.SessionPartEndListener
 import io.embrace.android.embracesdk.internal.arch.schema.ErrorCodeAttribute
 import io.embrace.android.embracesdk.internal.telemetry.AppliedLimitType
@@ -13,9 +12,7 @@ import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
-import org.junit.runner.RunWith
 
-@RunWith(AndroidJUnit4::class)
 internal class NetworkRequestDataSourceTest {
     private lateinit var harness: NetworkRequestDataSourceTestHarness
 

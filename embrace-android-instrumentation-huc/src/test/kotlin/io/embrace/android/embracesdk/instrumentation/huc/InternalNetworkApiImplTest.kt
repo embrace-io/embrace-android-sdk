@@ -1,7 +1,5 @@
 package io.embrace.android.embracesdk.instrumentation.huc
 
-import androidx.test.core.app.ApplicationProvider
-import androidx.test.ext.junit.runners.AndroidJUnit4
 import io.embrace.android.embracesdk.fakes.FakeInstrumentationArgs
 import io.embrace.android.embracesdk.fakes.FakeInternalLogger
 import io.embrace.android.embracesdk.fakes.behavior.FakeNetworkSpanForwardingBehavior
@@ -15,9 +13,7 @@ import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Before
 import org.junit.Test
-import org.junit.runner.RunWith
 
-@RunWith(AndroidJUnit4::class)
 internal class InternalNetworkApiImplTest {
 
     private lateinit var args: FakeInstrumentationArgs
@@ -25,7 +21,7 @@ internal class InternalNetworkApiImplTest {
 
     @Before
     fun setup() {
-        args = FakeInstrumentationArgs(ApplicationProvider.getApplicationContext(), logger = FakeInternalLogger(false))
+        args = FakeInstrumentationArgs(logger = FakeInternalLogger(false))
         requestDataSource = FakeNetworkRequestDataSource()
     }
 

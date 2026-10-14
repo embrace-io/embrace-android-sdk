@@ -20,7 +20,7 @@ import io.embrace.android.embracesdk.internal.worker.Worker
 import java.io.File
 
 class FakeInstrumentationArgs(
-    override val application: Application,
+    override val application: Application = Application(),
     override val configService: FakeConfigService = FakeConfigService(),
     override val context: Context = application,
     override val destination: FakeTelemetryDestination = FakeTelemetryDestination(),

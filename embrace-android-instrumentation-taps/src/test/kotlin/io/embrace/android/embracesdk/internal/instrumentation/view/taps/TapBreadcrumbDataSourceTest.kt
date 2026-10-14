@@ -1,7 +1,5 @@
 package io.embrace.android.embracesdk.internal.instrumentation.view.taps
 
-import androidx.test.core.app.ApplicationProvider
-import androidx.test.ext.junit.runners.AndroidJUnit4
 import io.embrace.android.embracesdk.fakes.FakeConfigService
 import io.embrace.android.embracesdk.fakes.FakeInstrumentationArgs
 import io.embrace.android.embracesdk.internal.arch.schema.EmbType
@@ -13,9 +11,7 @@ import io.embrace.android.embracesdk.semconv.EmbViewAttributes
 import org.junit.Assert.assertEquals
 import org.junit.Before
 import org.junit.Test
-import org.junit.runner.RunWith
 
-@RunWith(AndroidJUnit4::class)
 internal class TapBreadcrumbDataSourceTest {
 
     private lateinit var args: FakeInstrumentationArgs
@@ -23,7 +19,6 @@ internal class TapBreadcrumbDataSourceTest {
     @Before
     fun setUp() {
         args = FakeInstrumentationArgs(
-            ApplicationProvider.getApplicationContext(),
             configService = FakeConfigService(
                 config = EmbraceConfig(breadcrumb = { BreadcrumbConfig(captureViewClickCoordinates = { true }) }),
             ),

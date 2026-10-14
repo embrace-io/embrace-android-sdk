@@ -1,6 +1,5 @@
 package io.embrace.android.embracesdk.instrumentation.huclite
 
-import androidx.test.core.app.ApplicationProvider
 import io.embrace.android.embracesdk.fakes.FakeClock
 import io.embrace.android.embracesdk.fakes.FakeClock.Companion.DEFAULT_FAKE_CURRENT_TIME
 import io.embrace.android.embracesdk.fakes.FakeInstrumentationArgs
@@ -30,7 +29,6 @@ internal class HucTestHarness(versionChecker: VersionChecker = BuildVersionCheck
     val fakeEmbLogger = FakeInternalLogger(throwOnInternalError = false)
     val hucLiteDataSource = HucLiteDataSource(
         FakeInstrumentationArgs(
-            application = ApplicationProvider.getApplicationContext(),
             destination = fakeTelemetryDestination,
             logger = fakeEmbLogger,
             clock = fakeClock,

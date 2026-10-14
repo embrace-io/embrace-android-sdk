@@ -6,24 +6,17 @@ import io.embrace.android.embracesdk.internal.instrumentation.view.ViewDataSourc
 
 internal class ViewTrackingApiDelegate(
     lazyBootstrapper: Lazy<ModuleInitBootstrapper>,
-    private val sdkCallChecker: SdkCallChecker,
 ) : ViewTrackingApi {
 
     private val bootstrapper by lazyBootstrapper
 
     override fun startView(name: String): Boolean {
-        if (sdkCallChecker.check("start_view")) {
-            val dataSource = bootstrapper.instrumentationModule.instrumentationRegistry.findByType(ViewDataSource::class)
-            return dataSource?.startView(name, true) ?: false
-        }
-        return false
+        val dataSource = bootstrapper.instrumentationModule.instrumentationRegistry.findByType(ViewDataSource::class)
+        return dataSource?.startView(name, true) ?: false
     }
 
     override fun endView(name: String): Boolean {
-        if (sdkCallChecker.check("end_view")) {
-            val dataSource = bootstrapper.instrumentationModule.instrumentationRegistry.findByType(ViewDataSource::class)
-            return dataSource?.endView(name) ?: false
-        }
-        return false
+        val dataSource = bootstrapper.instrumentationModule.instrumentationRegistry.findByType(ViewDataSource::class)
+        return dataSource?.endView(name) ?: false
     }
 }

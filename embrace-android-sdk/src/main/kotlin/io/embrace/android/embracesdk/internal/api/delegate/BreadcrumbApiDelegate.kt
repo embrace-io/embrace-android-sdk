@@ -5,7 +5,6 @@ import io.embrace.android.embracesdk.internal.injection.ModuleInitBootstrapper
 
 internal class BreadcrumbApiDelegate(
     lazyBootstrapper: Lazy<ModuleInitBootstrapper>,
-    private val sdkCallChecker: SdkCallChecker,
 ) : BreadcrumbApi {
 
     private val bootstrapper by lazyBootstrapper
@@ -14,8 +13,6 @@ internal class BreadcrumbApiDelegate(
     private val breadcrumbDataSource get() = bootstrapper.featureModule.breadcrumbDataSource
 
     override fun addBreadcrumb(message: String) {
-        if (sdkCallChecker.check("add_breadcrumb")) {
-            breadcrumbDataSource?.logCustom(message, sdkClock.now())
-        }
+        breadcrumbDataSource?.logCustom(message, sdkClock.now())
     }
 }

@@ -28,7 +28,6 @@ import io.opentelemetry.kotlin.semconv.ExceptionAttributes
 
 internal class LogsApiDelegate(
     lazyBootstrapper: Lazy<ModuleInitBootstrapper>,
-    private val sdkCallChecker: SdkCallChecker,
 ) : LogsApi {
 
     private val bootstrapper by lazyBootstrapper
@@ -146,11 +145,9 @@ internal class LogsApiDelegate(
         exceptionData: ExceptionData? = null,
         attachment: Attachment? = null,
     ) {
-        if (sdkCallChecker.check("log_message")) {
-            runCatching {
-                val dst = logService ?: return
-                sendLog(attributes, exceptionData, attachment, severity, dst, message)
-            }
+        runCatching {
+            val dst = logService ?: return
+            sendLog(attributes, exceptionData, attachment, severity, dst, message)
         }
     }
 
@@ -242,12 +239,10 @@ internal class LogsApiDelegate(
         isNotification: Boolean?,
         hasData: Boolean?,
     ) {
-        if (sdkCallChecker.check("log_push_notification")) {
-            if (hasData == null || isNotification == null || messageDeliveredPriority == null) {
-                return
-            }
-            val type = PushNotificationBreadcrumb.NotificationType.notificationTypeFor(hasData, isNotification)
-            fcmDataSource?.logPushNotification(title, body, topic, id, notificationPriority, type)
+        if (hasData == null || isNotification == null || messageDeliveredPriority == null) {
+            return
         }
+        val type = PushNotificationBreadcrumb.NotificationType.notificationTypeFor(hasData, isNotification)
+        fcmDataSource?.logPushNotification(title, body, topic, id, notificationPriority, type)
     }
 }

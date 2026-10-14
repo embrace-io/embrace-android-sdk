@@ -41,8 +41,6 @@ HSPLio/embrace/android/embracesdk/EmbraceImpl$start$1$1$2;-><init>(Ljava/lang/Ob
 HSPLio/embrace/android/embracesdk/EmbraceImpl$start$1$1$2;->invoke()Ljava/lang/Object;
 HSPLio/embrace/android/embracesdk/EmbraceImpl$start$1$1$2;->invoke()Ljava/util/Map;
 Lio/embrace/android/embracesdk/EmbraceImpl;
-HSPLio/embrace/android/embracesdk/EmbraceImpl;-><init>(Lio/embrace/android/embracesdk/internal/injection/ModuleInitBootstrapper;Lio/embrace/android/embracesdk/internal/api/delegate/SdkCallChecker;Lio/embrace/android/embracesdk/internal/api/delegate/UserApiDelegate;Lio/embrace/android/embracesdk/internal/api/delegate/UserSessionApiDelegate;Lio/embrace/android/embracesdk/internal/api/delegate/NetworkRequestApiDelegate;Lio/embrace/android/embracesdk/internal/api/delegate/LogsApiDelegate;Lio/embrace/android/embracesdk/internal/api/delegate/ViewTrackingApiDelegate;Lio/embrace/android/embracesdk/internal/api/delegate/SdkStateApiDelegate;Lio/embrace/android/embracesdk/internal/api/delegate/OTelApiDelegate;Lio/embrace/android/embracesdk/internal/api/delegate/BreadcrumbApiDelegate;Lio/embrace/android/embracesdk/internal/api/delegate/InstrumentationApiDelegate;Lio/embrace/android/embracesdk/internal/api/delegate/ExperimentApiDelegate;)V
-HSPLio/embrace/android/embracesdk/EmbraceImpl;-><init>(Lio/embrace/android/embracesdk/internal/injection/ModuleInitBootstrapper;Lio/embrace/android/embracesdk/internal/api/delegate/SdkCallChecker;Lio/embrace/android/embracesdk/internal/api/delegate/UserApiDelegate;Lio/embrace/android/embracesdk/internal/api/delegate/UserSessionApiDelegate;Lio/embrace/android/embracesdk/internal/api/delegate/NetworkRequestApiDelegate;Lio/embrace/android/embracesdk/internal/api/delegate/LogsApiDelegate;Lio/embrace/android/embracesdk/internal/api/delegate/ViewTrackingApiDelegate;Lio/embrace/android/embracesdk/internal/api/delegate/SdkStateApiDelegate;Lio/embrace/android/embracesdk/internal/api/delegate/OTelApiDelegate;Lio/embrace/android/embracesdk/internal/api/delegate/BreadcrumbApiDelegate;Lio/embrace/android/embracesdk/internal/api/delegate/InstrumentationApiDelegate;Lio/embrace/android/embracesdk/internal/api/delegate/ExperimentApiDelegate;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
 HSPLio/embrace/android/embracesdk/EmbraceImpl;->addBreadcrumb(Ljava/lang/String;)V
 HSPLio/embrace/android/embracesdk/EmbraceImpl;->addUserPersona(Ljava/lang/String;)V
 HSPLio/embrace/android/embracesdk/EmbraceImpl;->addUserSessionProperty(Ljava/lang/String;Ljava/lang/String;Lio/embrace/android/embracesdk/PropertyScope;)Z
@@ -218,7 +216,7 @@ HSPLio/embrace/android/embracesdk/internal/api/delegate/BreadcrumbApiDelegate$$E
 HSPLio/embrace/android/embracesdk/internal/api/delegate/BreadcrumbApiDelegate$$ExternalSyntheticLambda0;->invoke()Ljava/lang/Object;
 Lio/embrace/android/embracesdk/internal/api/delegate/BreadcrumbApiDelegate;
 HSPLio/embrace/android/embracesdk/internal/api/delegate/BreadcrumbApiDelegate;-><clinit>()V
-HSPLio/embrace/android/embracesdk/internal/api/delegate/BreadcrumbApiDelegate;-><init>(Lio/embrace/android/embracesdk/internal/injection/ModuleInitBootstrapper;Lio/embrace/android/embracesdk/internal/api/delegate/SdkCallChecker;)V
+HSPLio/embrace/android/embracesdk/internal/api/delegate/BreadcrumbApiDelegate;-><init>(Lio/embrace/android/embracesdk/internal/injection/ModuleInitBootstrapper;)V
 HSPLio/embrace/android/embracesdk/internal/api/delegate/BreadcrumbApiDelegate;->addBreadcrumb(Ljava/lang/String;)V
 HSPLio/embrace/android/embracesdk/internal/api/delegate/BreadcrumbApiDelegate;->breadcrumbDataSource_delegate$lambda$0(Lio/embrace/android/embracesdk/internal/injection/ModuleInitBootstrapper;)Lio/embrace/android/embracesdk/internal/capture/crumbs/BreadcrumbDataSource;
 HSPLio/embrace/android/embracesdk/internal/api/delegate/BreadcrumbApiDelegate;->getBreadcrumbDataSource()Lio/embrace/android/embracesdk/internal/capture/crumbs/BreadcrumbDataSource;
@@ -239,7 +237,7 @@ HSPLio/embrace/android/embracesdk/internal/api/delegate/ExperimentApiDelegate$Co
 HSPLio/embrace/android/embracesdk/internal/api/delegate/ExperimentApiDelegate$Companion;-><init>(Lkotlin/jvm/internal/DefaultConstructorMarker;)V
 Lio/embrace/android/embracesdk/internal/api/delegate/ExperimentApiDelegate;
 HSPLio/embrace/android/embracesdk/internal/api/delegate/ExperimentApiDelegate;-><clinit>()V
-HSPLio/embrace/android/embracesdk/internal/api/delegate/ExperimentApiDelegate;-><init>(Lio/embrace/android/embracesdk/internal/injection/ModuleInitBootstrapper;Lio/embrace/android/embracesdk/internal/api/delegate/SdkCallChecker;)V
+HSPLio/embrace/android/embracesdk/internal/api/delegate/ExperimentApiDelegate;-><init>(Lio/embrace/android/embracesdk/internal/injection/ModuleInitBootstrapper;)V
 HSPLio/embrace/android/embracesdk/internal/api/delegate/ExperimentApiDelegate;->clock_delegate$lambda$0(Lio/embrace/android/embracesdk/internal/injection/ModuleInitBootstrapper;)Lio/embrace/android/embracesdk/internal/clock/Clock;
 HSPLio/embrace/android/embracesdk/internal/api/delegate/ExperimentApiDelegate;->createExperiment(Ljava/lang/String;Ljava/lang/String;Ljava/lang/Long;)Lio/embrace/android/embracesdk/experiments/TrackedExperiment;
 HSPLio/embrace/android/embracesdk/internal/api/delegate/ExperimentApiDelegate;->createFeatureFlag(Ljava/lang/String;Ljava/lang/String;Ljava/lang/Long;)Lio/embrace/android/embracesdk/experiments/TrackedFeatureFlag;
@@ -269,7 +267,7 @@ Lio/embrace/android/embracesdk/internal/api/delegate/InstrumentationApiDelegate$
 HSPLio/embrace/android/embracesdk/internal/api/delegate/InstrumentationApiDelegate$$ExternalSyntheticLambda3;-><init>(Lio/embrace/android/embracesdk/internal/api/delegate/InstrumentationApiDelegate;)V
 Lio/embrace/android/embracesdk/internal/api/delegate/InstrumentationApiDelegate;
 HSPLio/embrace/android/embracesdk/internal/api/delegate/InstrumentationApiDelegate;-><clinit>()V
-HSPLio/embrace/android/embracesdk/internal/api/delegate/InstrumentationApiDelegate;-><init>(Lio/embrace/android/embracesdk/internal/injection/ModuleInitBootstrapper;Lio/embrace/android/embracesdk/internal/api/delegate/SdkCallChecker;)V
+HSPLio/embrace/android/embracesdk/internal/api/delegate/InstrumentationApiDelegate;-><init>(Lio/embrace/android/embracesdk/internal/injection/ModuleInitBootstrapper;)V
 Lio/embrace/android/embracesdk/internal/api/delegate/LateBindingLogger;
 HSPLio/embrace/android/embracesdk/internal/api/delegate/LateBindingLogger;-><init>(Lkotlin/jvm/functions/Function0;)V
 HSPLio/embrace/android/embracesdk/internal/api/delegate/LateBindingLogger;->emit(Ljava/lang/Object;Ljava/lang/String;Ljava/lang/Long;Ljava/lang/Long;Lio/opentelemetry/kotlin/context/Context;Lio/opentelemetry/kotlin/logging/SeverityNumber;Ljava/lang/String;Ljava/lang/Throwable;Lkotlin/jvm/functions/Function1;)V
@@ -325,7 +323,7 @@ HSPLio/embrace/android/embracesdk/internal/api/delegate/LogsApiDelegate$createSc
 HSPLio/embrace/android/embracesdk/internal/api/delegate/LogsApiDelegate$createSchemaProvider$4;->invoke(Ljava/lang/Object;)Ljava/lang/Object;
 Lio/embrace/android/embracesdk/internal/api/delegate/LogsApiDelegate;
 HSPLio/embrace/android/embracesdk/internal/api/delegate/LogsApiDelegate;-><clinit>()V
-HSPLio/embrace/android/embracesdk/internal/api/delegate/LogsApiDelegate;-><init>(Lio/embrace/android/embracesdk/internal/injection/ModuleInitBootstrapper;Lio/embrace/android/embracesdk/internal/api/delegate/SdkCallChecker;)V
+HSPLio/embrace/android/embracesdk/internal/api/delegate/LogsApiDelegate;-><init>(Lio/embrace/android/embracesdk/internal/injection/ModuleInitBootstrapper;)V
 HSPLio/embrace/android/embracesdk/internal/api/delegate/LogsApiDelegate;->createSchemaProvider(Ljava/util/Map;)Lkotlin/jvm/functions/Function1;
 HSPLio/embrace/android/embracesdk/internal/api/delegate/LogsApiDelegate;->getLogService()Lio/embrace/android/embracesdk/internal/logs/LogService;
 HSPLio/embrace/android/embracesdk/internal/api/delegate/LogsApiDelegate;->getSerializer()Lio/embrace/android/embracesdk/internal/serialization/PlatformSerializer;
@@ -351,20 +349,14 @@ Lio/embrace/android/embracesdk/internal/api/delegate/NetworkRequestApiDelegate$$
 HSPLio/embrace/android/embracesdk/internal/api/delegate/NetworkRequestApiDelegate$$ExternalSyntheticLambda3;-><init>(Lio/embrace/android/embracesdk/internal/injection/ModuleInitBootstrapper;)V
 Lio/embrace/android/embracesdk/internal/api/delegate/NetworkRequestApiDelegate;
 HSPLio/embrace/android/embracesdk/internal/api/delegate/NetworkRequestApiDelegate;-><clinit>()V
-HSPLio/embrace/android/embracesdk/internal/api/delegate/NetworkRequestApiDelegate;-><init>(Lio/embrace/android/embracesdk/internal/injection/ModuleInitBootstrapper;Lio/embrace/android/embracesdk/internal/api/delegate/SdkCallChecker;)V
+HSPLio/embrace/android/embracesdk/internal/api/delegate/NetworkRequestApiDelegate;-><init>(Lio/embrace/android/embracesdk/internal/injection/ModuleInitBootstrapper;)V
 Lio/embrace/android/embracesdk/internal/api/delegate/OTelApiDelegate$$ExternalSyntheticLambda0;
 HSPLio/embrace/android/embracesdk/internal/api/delegate/OTelApiDelegate$$ExternalSyntheticLambda0;-><init>(Lio/embrace/android/embracesdk/internal/api/delegate/OTelApiDelegate;)V
 HSPLio/embrace/android/embracesdk/internal/api/delegate/OTelApiDelegate$$ExternalSyntheticLambda0;->invoke()Ljava/lang/Object;
 Lio/embrace/android/embracesdk/internal/api/delegate/OTelApiDelegate;
-HSPLio/embrace/android/embracesdk/internal/api/delegate/OTelApiDelegate;-><init>(Lio/embrace/android/embracesdk/internal/injection/ModuleInitBootstrapper;Lio/embrace/android/embracesdk/internal/api/delegate/SdkCallChecker;)V
+HSPLio/embrace/android/embracesdk/internal/api/delegate/OTelApiDelegate;-><init>(Lio/opentelemetry/kotlin/OpenTelemetry;)V
 HSPLio/embrace/android/embracesdk/internal/api/delegate/OTelApiDelegate;->getOpenTelemetryKotlin()Lio/opentelemetry/kotlin/OpenTelemetry;
 HSPLio/embrace/android/embracesdk/internal/api/delegate/OTelApiDelegate;->openTelemetryKotlin$lambda$0(Lio/embrace/android/embracesdk/internal/api/delegate/OTelApiDelegate;)Lio/opentelemetry/kotlin/OpenTelemetry;
-Lio/embrace/android/embracesdk/internal/api/delegate/SdkCallChecker;
-HSPLio/embrace/android/embracesdk/internal/api/delegate/SdkCallChecker;-><init>(Lio/embrace/android/embracesdk/internal/logging/InternalLogger;Lio/embrace/android/embracesdk/internal/telemetry/TelemetryService;)V
-HSPLio/embrace/android/embracesdk/internal/api/delegate/SdkCallChecker;->check$default(Lio/embrace/android/embracesdk/internal/api/delegate/SdkCallChecker;Ljava/lang/String;ZILjava/lang/Object;)Z
-HSPLio/embrace/android/embracesdk/internal/api/delegate/SdkCallChecker;->check(Ljava/lang/String;Z)Z
-HSPLio/embrace/android/embracesdk/internal/api/delegate/SdkCallChecker;->getStarted()Ljava/util/concurrent/atomic/AtomicBoolean;
-HSPLio/embrace/android/embracesdk/internal/api/delegate/SdkCallChecker;->recordApiCall(Ljava/lang/String;)V
 Lio/embrace/android/embracesdk/internal/api/delegate/SdkStateApiDelegate$$ExternalSyntheticLambda0;
 HSPLio/embrace/android/embracesdk/internal/api/delegate/SdkStateApiDelegate$$ExternalSyntheticLambda0;-><init>(Lio/embrace/android/embracesdk/internal/injection/ModuleInitBootstrapper;)V
 HSPLio/embrace/android/embracesdk/internal/api/delegate/SdkStateApiDelegate$$ExternalSyntheticLambda0;->invoke()Ljava/lang/Object;
@@ -374,7 +366,7 @@ Lio/embrace/android/embracesdk/internal/api/delegate/SdkStateApiDelegate$$Extern
 HSPLio/embrace/android/embracesdk/internal/api/delegate/SdkStateApiDelegate$$ExternalSyntheticLambda2;-><init>(Lio/embrace/android/embracesdk/internal/injection/ModuleInitBootstrapper;)V
 Lio/embrace/android/embracesdk/internal/api/delegate/SdkStateApiDelegate;
 HSPLio/embrace/android/embracesdk/internal/api/delegate/SdkStateApiDelegate;-><clinit>()V
-HSPLio/embrace/android/embracesdk/internal/api/delegate/SdkStateApiDelegate;-><init>(Lio/embrace/android/embracesdk/internal/injection/ModuleInitBootstrapper;Lio/embrace/android/embracesdk/internal/api/delegate/SdkCallChecker;)V
+HSPLio/embrace/android/embracesdk/internal/api/delegate/SdkStateApiDelegate;-><init>(Lio/embrace/android/embracesdk/internal/injection/ModuleInitBootstrapper;)V
 HSPLio/embrace/android/embracesdk/internal/api/delegate/SdkStateApiDelegate;->getCurrentUserSessionId()Ljava/lang/String;
 HSPLio/embrace/android/embracesdk/internal/api/delegate/SdkStateApiDelegate;->getSessionIdsProvider()Lio/embrace/android/embracesdk/internal/session/id/SessionIdsProvider;
 HSPLio/embrace/android/embracesdk/internal/api/delegate/SdkStateApiDelegate;->isStarted()Z
@@ -394,7 +386,7 @@ HSPLio/embrace/android/embracesdk/internal/api/delegate/UserApiDelegate$$Externa
 HSPLio/embrace/android/embracesdk/internal/api/delegate/UserApiDelegate$$ExternalSyntheticLambda0;->invoke()Ljava/lang/Object;
 Lio/embrace/android/embracesdk/internal/api/delegate/UserApiDelegate;
 HSPLio/embrace/android/embracesdk/internal/api/delegate/UserApiDelegate;-><clinit>()V
-HSPLio/embrace/android/embracesdk/internal/api/delegate/UserApiDelegate;-><init>(Lio/embrace/android/embracesdk/internal/injection/ModuleInitBootstrapper;Lio/embrace/android/embracesdk/internal/api/delegate/SdkCallChecker;)V
+HSPLio/embrace/android/embracesdk/internal/api/delegate/UserApiDelegate;-><init>(Lio/embrace/android/embracesdk/internal/injection/ModuleInitBootstrapper;)V
 HSPLio/embrace/android/embracesdk/internal/api/delegate/UserApiDelegate;->addUserPersona(Ljava/lang/String;)V
 HSPLio/embrace/android/embracesdk/internal/api/delegate/UserApiDelegate;->clearUserPersona(Ljava/lang/String;)V
 HSPLio/embrace/android/embracesdk/internal/api/delegate/UserApiDelegate;->getUserService()Lio/embrace/android/embracesdk/internal/capture/user/UserService;
@@ -412,7 +404,7 @@ Lio/embrace/android/embracesdk/internal/api/delegate/UserSessionApiDelegate$When
 HSPLio/embrace/android/embracesdk/internal/api/delegate/UserSessionApiDelegate$WhenMappings;-><clinit>()V
 Lio/embrace/android/embracesdk/internal/api/delegate/UserSessionApiDelegate;
 HSPLio/embrace/android/embracesdk/internal/api/delegate/UserSessionApiDelegate;-><clinit>()V
-HSPLio/embrace/android/embracesdk/internal/api/delegate/UserSessionApiDelegate;-><init>(Lio/embrace/android/embracesdk/internal/injection/ModuleInitBootstrapper;Lio/embrace/android/embracesdk/internal/api/delegate/SdkCallChecker;)V
+HSPLio/embrace/android/embracesdk/internal/api/delegate/UserSessionApiDelegate;-><init>(Lio/embrace/android/embracesdk/internal/injection/ModuleInitBootstrapper;)V
 HSPLio/embrace/android/embracesdk/internal/api/delegate/UserSessionApiDelegate;->addUserSessionProperty(Ljava/lang/String;Ljava/lang/String;Lio/embrace/android/embracesdk/PropertyScope;)Z
 HSPLio/embrace/android/embracesdk/internal/api/delegate/UserSessionApiDelegate;->endUserSession()V
 HSPLio/embrace/android/embracesdk/internal/api/delegate/UserSessionApiDelegate;->getSessionOrchestrator()Lio/embrace/android/embracesdk/internal/session/orchestrator/SessionOrchestrator;
@@ -421,7 +413,7 @@ HSPLio/embrace/android/embracesdk/internal/api/delegate/UserSessionApiDelegate;-
 HSPLio/embrace/android/embracesdk/internal/api/delegate/UserSessionApiDelegate;->sessionOrchestrator_delegate$lambda$0(Lio/embrace/android/embracesdk/internal/injection/ModuleInitBootstrapper;)Lio/embrace/android/embracesdk/internal/session/orchestrator/SessionOrchestrator;
 HSPLio/embrace/android/embracesdk/internal/api/delegate/UserSessionApiDelegate;->userSessionPropertiesService_delegate$lambda$0(Lio/embrace/android/embracesdk/internal/injection/ModuleInitBootstrapper;)Lio/embrace/android/embracesdk/internal/capture/session/UserSessionPropertiesService;
 Lio/embrace/android/embracesdk/internal/api/delegate/ViewTrackingApiDelegate;
-HSPLio/embrace/android/embracesdk/internal/api/delegate/ViewTrackingApiDelegate;-><init>(Lio/embrace/android/embracesdk/internal/injection/ModuleInitBootstrapper;Lio/embrace/android/embracesdk/internal/api/delegate/SdkCallChecker;)V
+HSPLio/embrace/android/embracesdk/internal/api/delegate/ViewTrackingApiDelegate;-><init>(Lio/embrace/android/embracesdk/internal/injection/ModuleInitBootstrapper;)V
 Lio/embrace/android/embracesdk/internal/arch/CrashTeardownHandler;
 Lio/embrace/android/embracesdk/internal/arch/InstrumentationArgs;
 Lio/embrace/android/embracesdk/internal/arch/InstrumentationProvider$DefaultImpls;

@@ -5,10 +5,8 @@ import io.embrace.android.embracesdk.internal.api.SdkStateApi
 import io.embrace.android.embracesdk.internal.injection.ModuleInitBootstrapper
 
 internal class SdkStateApiDelegate(
-    lazyBootstrapper: Lazy<ModuleInitBootstrapper>,
+    private val bootstrapper: ModuleInitBootstrapper,
 ) : SdkStateApi {
-
-    private val bootstrapper by lazyBootstrapper
 
     private val sessionIdsProvider get() = bootstrapper.userSessionOrchestrationModule.sessionIdsProvider
     private val deviceIdentifier get() = bootstrapper.configService.deviceId

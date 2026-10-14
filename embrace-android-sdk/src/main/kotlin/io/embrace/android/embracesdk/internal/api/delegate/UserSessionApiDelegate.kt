@@ -8,10 +8,8 @@ import io.embrace.android.embracesdk.internal.injection.ModuleInitBootstrapper
 import io.embrace.android.embracesdk.internal.session.UserSessionListener as InternalUserSessionListener
 
 internal class UserSessionApiDelegate(
-    lazyBootstrapper: Lazy<ModuleInitBootstrapper>,
+    private val bootstrapper: ModuleInitBootstrapper,
 ) : UserSessionApi {
-
-    private val bootstrapper by lazyBootstrapper
 
     private val userSessionPropertiesService get() = bootstrapper.essentialServiceModule.userSessionPropertiesService
     private val sessionOrchestrator get() = bootstrapper.userSessionOrchestrationModule.sessionOrchestrator

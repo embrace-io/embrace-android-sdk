@@ -11,10 +11,8 @@ import io.embrace.android.embracesdk.spans.EmbraceSpanEvent
 import io.embrace.android.embracesdk.spans.ErrorCode
 
 internal class InstrumentationApiDelegate(
-    lazyBootstrapper: Lazy<ModuleInitBootstrapper>,
+    private val bootstrapper: ModuleInitBootstrapper,
 ) : InstrumentationApi {
-
-    private val bootstrapper by lazyBootstrapper
 
     private val clock get() = bootstrapper.initModule.clock
     private val uiLoadTraceEmitter get() = bootstrapper.dataCaptureServiceModule.uiLoadDataListener

@@ -51,22 +51,24 @@ internal class ModuleInitBootstrapper(
 ) : ModuleGraph {
 
     @Volatile
-    private var delegate: ModuleGraph = UninitializedModuleGraph
-    override val sdkStartTimeMs: Long get() = delegate.sdkStartTimeMs
-    override val sdkInitResourceUsageTracker: SdkInitResourceUsageTracker get() = delegate.sdkInitResourceUsageTracker
-    override val coreModule: CoreModule get() = delegate.coreModule
-    override val configService: ConfigService get() = delegate.configService
-    override val workerThreadModule: WorkerThreadModule get() = delegate.workerThreadModule
-    override val storageService: StorageService get() = delegate.storageService
-    override val essentialServiceModule: EssentialServiceModule get() = delegate.essentialServiceModule
-    override val dataCaptureServiceModule: DataCaptureServiceModule get() = delegate.dataCaptureServiceModule
-    override val deliveryModule: DeliveryModule? get() = delegate.deliveryModule
-    override val threadBlockageService: ThreadBlockageService? get() = delegate.threadBlockageService
-    override val logModule: LogModule get() = delegate.logModule
-    override val instrumentationModule: InstrumentationModule get() = delegate.instrumentationModule
-    override val featureModule: FeatureModule get() = delegate.featureModule
-    override val userSessionOrchestrationModule: UserSessionOrchestrationModule get() = delegate.userSessionOrchestrationModule
-    override val payloadSourceModule: PayloadSourceModule get() = delegate.payloadSourceModule
+    private var delegate: ModuleGraph? = null
+    private val graph: ModuleGraph get() = checkNotNull(delegate) { "SDK not initialized" }
+
+    override val sdkStartTimeMs: Long get() = graph.sdkStartTimeMs
+    override val sdkInitResourceUsageTracker: SdkInitResourceUsageTracker get() = graph.sdkInitResourceUsageTracker
+    override val coreModule: CoreModule get() = graph.coreModule
+    override val configService: ConfigService get() = graph.configService
+    override val workerThreadModule: WorkerThreadModule get() = graph.workerThreadModule
+    override val storageService: StorageService get() = graph.storageService
+    override val essentialServiceModule: EssentialServiceModule get() = graph.essentialServiceModule
+    override val dataCaptureServiceModule: DataCaptureServiceModule get() = graph.dataCaptureServiceModule
+    override val deliveryModule: DeliveryModule? get() = graph.deliveryModule
+    override val threadBlockageService: ThreadBlockageService? get() = graph.threadBlockageService
+    override val logModule: LogModule get() = graph.logModule
+    override val instrumentationModule: InstrumentationModule get() = graph.instrumentationModule
+    override val featureModule: FeatureModule get() = graph.featureModule
+    override val userSessionOrchestrationModule: UserSessionOrchestrationModule get() = graph.userSessionOrchestrationModule
+    override val payloadSourceModule: PayloadSourceModule get() = graph.payloadSourceModule
 
     /**
      * Returns true when the call has triggered an initialization, false if initialization is already in progress or is complete.
@@ -143,10 +145,10 @@ internal class ModuleInitBootstrapper(
         essentialServiceModule.networkConnectivityService.close()
         openTelemetryModule.otelSdkConfig.shutdownExport()
         workerThreadModule.close()
-        delegate = UninitializedModuleGraph
+        delegate = null
     }
 
-    private fun isInitialized(): Boolean = delegate != UninitializedModuleGraph
+    private fun isInitialized(): Boolean = delegate != null
 
     /**
      * Touches the default `SharedPreferences` on a background worker as early as possible to speculatively

@@ -40,7 +40,7 @@ internal class UserSessionApiDelegateTest {
         moduleInitBootstrapper.init(ApplicationProvider.getApplicationContext())
         userSessionPropertiesService =
             moduleInitBootstrapper.essentialServiceModule.userSessionPropertiesService as FakeUserSessionPropertiesService
-        delegate = UserSessionApiDelegate(lazyOf(moduleInitBootstrapper))
+        delegate = UserSessionApiDelegate(moduleInitBootstrapper)
     }
 
     @Test

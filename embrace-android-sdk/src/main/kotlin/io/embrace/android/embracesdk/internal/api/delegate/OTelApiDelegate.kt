@@ -9,10 +9,8 @@ import io.opentelemetry.kotlin.tracing.export.SpanExporter
 import io.opentelemetry.kotlin.tracing.export.SpanProcessor
 
 internal class OTelApiDelegate(
-    lazyBootstrapper: Lazy<ModuleInitBootstrapper>,
+    private val bootstrapper: ModuleInitBootstrapper,
 ) : OTelApi {
-
-    private val bootstrapper by lazyBootstrapper
 
     override fun addSpanExporter(spanExporter: SpanExporter) {
     }

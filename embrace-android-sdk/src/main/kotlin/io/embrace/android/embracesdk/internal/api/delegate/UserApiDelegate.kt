@@ -4,10 +4,8 @@ import io.embrace.android.embracesdk.internal.api.UserApi
 import io.embrace.android.embracesdk.internal.injection.ModuleInitBootstrapper
 
 internal class UserApiDelegate(
-    lazyBootstrapper: Lazy<ModuleInitBootstrapper>,
+    private val bootstrapper: ModuleInitBootstrapper,
 ) : UserApi {
-
-    private val bootstrapper by lazyBootstrapper
 
     private val userService get() = bootstrapper.essentialServiceModule.userService
 

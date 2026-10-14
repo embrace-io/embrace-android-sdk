@@ -5,10 +5,8 @@ import io.embrace.android.embracesdk.internal.injection.ModuleInitBootstrapper
 import io.embrace.android.embracesdk.internal.instrumentation.view.ViewDataSource
 
 internal class ViewTrackingApiDelegate(
-    lazyBootstrapper: Lazy<ModuleInitBootstrapper>,
+    private val bootstrapper: ModuleInitBootstrapper,
 ) : ViewTrackingApi {
-
-    private val bootstrapper by lazyBootstrapper
 
     override fun startView(name: String): Boolean {
         val dataSource = bootstrapper.instrumentationModule.instrumentationRegistry.findByType(ViewDataSource::class)

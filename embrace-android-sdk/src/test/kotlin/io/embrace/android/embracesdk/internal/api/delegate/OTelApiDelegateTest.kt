@@ -43,7 +43,7 @@ internal class OTelApiDelegateTest(
         bootstrapper.init(ApplicationProvider.getApplicationContext())
         cfg = bootstrapper.openTelemetryModule.otelSdkConfig
 
-        delegate = OTelApiDelegate(lazy { bootstrapper })
+        delegate = OTelApiDelegate(bootstrapper)
     }
 
     @Test

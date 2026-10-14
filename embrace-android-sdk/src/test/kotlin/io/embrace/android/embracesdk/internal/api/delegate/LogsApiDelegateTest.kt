@@ -40,7 +40,7 @@ internal class LogsApiDelegateTest {
         )
         moduleInitBootstrapper.init(ApplicationProvider.getApplicationContext())
 
-        delegate = LogsApiDelegate(lazyOf(moduleInitBootstrapper))
+        delegate = LogsApiDelegate(moduleInitBootstrapper)
     }
 
     @Test

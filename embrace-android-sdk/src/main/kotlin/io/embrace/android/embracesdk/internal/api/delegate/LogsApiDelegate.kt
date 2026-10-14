@@ -27,10 +27,8 @@ import io.embrace.android.embracesdk.semconv.EmbSessionAttributes
 import io.opentelemetry.kotlin.semconv.ExceptionAttributes
 
 internal class LogsApiDelegate(
-    lazyBootstrapper: Lazy<ModuleInitBootstrapper>,
+    private val bootstrapper: ModuleInitBootstrapper,
 ) : LogsApi {
-
-    private val bootstrapper by lazyBootstrapper
 
     private val logService get() = bootstrapper.logModule.logService
     private val attachmentService get() = bootstrapper.logModule.attachmentService

@@ -33,7 +33,7 @@ internal class UserApiDelegateTest {
             },
         )
         moduleInitBootstrapper.init(ApplicationProvider.getApplicationContext())
-        delegate = UserApiDelegate(lazyOf(moduleInitBootstrapper))
+        delegate = UserApiDelegate(moduleInitBootstrapper)
     }
 
     @Test

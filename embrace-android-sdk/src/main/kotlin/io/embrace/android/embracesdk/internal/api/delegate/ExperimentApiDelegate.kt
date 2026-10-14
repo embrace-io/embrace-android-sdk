@@ -10,10 +10,8 @@ import io.embrace.android.embracesdk.internal.capture.experiment.TrackedData
 import io.embrace.android.embracesdk.internal.injection.ModuleInitBootstrapper
 
 internal class ExperimentApiDelegate(
-    lazyBootstrapper: Lazy<ModuleInitBootstrapper>,
+    private val bootstrapper: ModuleInitBootstrapper,
 ) : ExperimentApi {
-
-    private val bootstrapper by lazyBootstrapper
 
     private val clock get() = bootstrapper.initModule.clock
 

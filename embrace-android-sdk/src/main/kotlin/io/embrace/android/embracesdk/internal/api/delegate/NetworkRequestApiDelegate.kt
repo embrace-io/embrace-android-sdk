@@ -10,10 +10,8 @@ import io.embrace.android.embracesdk.network.EmbraceNetworkRequest
 import io.embrace.android.embracesdk.network.http.HttpRequestInfoModifier
 
 internal class NetworkRequestApiDelegate(
-    lazyBootstrapper: Lazy<ModuleInitBootstrapper>,
+    private val bootstrapper: ModuleInitBootstrapper,
 ) : NetworkRequestApi {
-
-    private val bootstrapper by lazyBootstrapper
 
     private val registry get() = bootstrapper.instrumentationModule.instrumentationRegistry
     private val httpRequestInfoModifierChain get() = bootstrapper.instrumentationModule.instrumentationArgs.httpRequestInfoModifierChain

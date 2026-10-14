@@ -47,7 +47,7 @@ internal class SdkStateApiDelegateTest {
             },
         )
         moduleInitBootstrapper.init(ApplicationProvider.getApplicationContext())
-        delegate = SdkStateApiDelegate(lazyOf(moduleInitBootstrapper))
+        delegate = SdkStateApiDelegate(moduleInitBootstrapper)
     }
 
     @Test

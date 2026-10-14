@@ -64,6 +64,16 @@ internal class SpanCollectionReader(
         null
     }
 
+    /** The 64-bit varint held by the frame just announced. */
+    fun readVarint64(): Long? = try {
+        reader.readVarint64()
+    } catch (exc: EOFException) {
+        null
+    } catch (exc: IOException) {
+        recordCorruption(exc)
+        null
+    }
+
     /**
      * The record held by the frame just announced, or null if it is torn, corrupt, or past a limit.
      */

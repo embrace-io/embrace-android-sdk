@@ -20,7 +20,7 @@ class SessionPartDecoder(
     /**
      * Decodes the session part [source] holds, or null if it cannot be read.
      */
-    fun decode(source: SessionPartSource): Envelope<SessionPartPayload>? {
+    fun decode(source: SessionPartSource): DecodedSessionPart? {
         val metadataProto = readPartFile(
             source,
             SessionPartFile.METADATA,
@@ -35,18 +35,18 @@ class SessionPartDecoder(
         }
 
         val budget = SpanBudget()
-        val completedSpans = readCompletedSpansFile(source, budget)
-        val completedIds = completedSpans.mapNotNullTo(HashSet(), Span::spanId)
-        val spanSnapshots = readSpanSnapshotsFile(source, budget, completedIds)
+        val completedSpansFile = readCompletedSpansFile(source, budget)
+        val completedIds = completedSpansFile.spans.mapNotNullTo(HashSet(), Span::spanId)
+        val spanSnapshotsFile = readSpanSnapshotsFile(source, budget, completedIds)
         if (budget.exceeded) {
             trackFailure(IllegalStateException(TOO_MANY_PERSISTED_SPANS_MSG))
         }
 
         // the session span is logged as a completed span once it ends, and is held in the snapshots
         // file until then, so it needs no handling of its own here
-        val deduped = dedupeSpanIds(completedSpans, completedIds, spanSnapshots)
+        val deduped = dedupeSpanIds(completedSpansFile.spans, completedIds, spanSnapshotsFile.spans)
 
-        return Envelope(
+        val envelope = Envelope(
             resource = resource.toPayload(),
             metadata = metadataProto.toPayload(),
             version = metadataProto.envelope_version,
@@ -57,6 +57,9 @@ class SessionPartDecoder(
                 sharedLibSymbolMapping = metadataProto.shared_lib_symbol_mapping?.symbols,
             ),
         )
+        val lastWrittenMs =
+            maxOf(metadataProto.written_at_ms, completedSpansFile.lastWrittenMs, spanSnapshotsFile.lastWrittenMs)
+        return DecodedSessionPart(envelope, lastWrittenMs.takeIf { it > 0 })
     }
 
     /**
@@ -113,9 +116,9 @@ class SessionPartDecoder(
         file: SessionPartFile,
         budget: SpanBudget,
         read: (BufferedSource, Int) -> DecodedSpans,
-    ): List<Span> = SystemTrace.trace(file.traceSection) {
+    ): DecodedSpanCollections = SystemTrace.trace(file.traceSection) {
         if (!source.exists(file)) {
-            return@trace emptyList()
+            return@trace DecodedSpanCollections.NONE
         }
         if (source.sizeBytes(file) > MAX_PART_FILE_BYTES) {
             trackFailure(IOException(OVERSIZED_PART_FILE_MSG))
@@ -125,14 +128,14 @@ class SessionPartDecoder(
             decoded.corruption?.let(::trackFailure)
             val payload = SystemTrace.trace("mf-spans-proto-to-payload") { decoded.drainToPayload() }
             budget.spend(payload.size, truncated = decoded.spanLimitReached)
-            payload
+            DecodedSpanCollections(payload, decoded.lastWrittenMs ?: 0L)
         } catch (exc: Throwable) {
             trackFailure(exc)
-            emptyList()
+            DecodedSpanCollections.NONE
         }
     }
 
-    private fun readCompletedSpansFile(source: SessionPartSource, budget: SpanBudget): List<Span> =
+    private fun readCompletedSpansFile(source: SessionPartSource, budget: SpanBudget): DecodedSpanCollections =
         readSpanCollectionFile(source, SessionPartFile.COMPLETED_SPANS, budget) { src, maxSpans ->
             readCompletedSpans(src, maxSpans = maxSpans)
         }
@@ -141,7 +144,7 @@ class SessionPartDecoder(
         source: SessionPartSource,
         budget: SpanBudget,
         completedIds: Set<String>,
-    ): List<Span> =
+    ): DecodedSpanCollections =
         readSpanCollectionFile(source, SessionPartFile.SPAN_SNAPSHOTS, budget) { src, maxSpans ->
             readSpanSnapshots(src, maxSpans = maxSpans, supersededIds = completedIds)
         }
@@ -210,6 +213,15 @@ class SessionPartDecoder(
         fun spend(spans: Int, truncated: Boolean) {
             remaining = (remaining - spans).coerceAtLeast(0)
             exceeded = exceeded || truncated
+        }
+    }
+
+    /**
+     * The spans read back from a file, and the latest time a write to it was recorded, or 0 if none did.
+     */
+    private class DecodedSpanCollections(val spans: List<Span>, val lastWrittenMs: Long) {
+        companion object {
+            val NONE = DecodedSpanCollections(emptyList(), 0L)
         }
     }
 }

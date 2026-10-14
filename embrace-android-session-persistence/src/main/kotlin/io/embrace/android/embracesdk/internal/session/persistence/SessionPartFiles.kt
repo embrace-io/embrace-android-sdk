@@ -23,6 +23,8 @@ internal const val SPAN_COLLECTION_VERSION_TAG = 1
 
 internal const val SPAN_COLLECTION_RECORD_TAG = 2
 
+internal const val SPAN_COLLECTION_WRITTEN_AT_TAG = 3
+
 /**
  * Trace section around an immediate sync to disk after an atomic write.
  * */

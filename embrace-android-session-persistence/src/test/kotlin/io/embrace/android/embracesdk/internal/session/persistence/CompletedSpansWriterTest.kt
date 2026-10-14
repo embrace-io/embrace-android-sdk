@@ -104,7 +104,7 @@ internal class CompletedSpansWriterTest {
             listOf("aaaaaaaaaaaaaaa1", "aaaaaaaaaaaaaaa2", "aaaaaaaaaaaaaaa3", "aaaaaaaaaaaaaaa4"),
             readLog().map { it.span_id },
         )
-        assertEquals(clock.now(), logFile().inputStream().use(SpanCollection.ADAPTER::decode).written_at_ms)
+        assertEquals(clock.now(), decodeLog().lastWrittenMs)
         assertNoInternalErrors()
     }
 
@@ -454,7 +454,10 @@ internal class CompletedSpansWriterTest {
         File(partDir(directory), COMPLETED_SPANS_FILE_NAME)
 
     private fun readLog(directory: SessionPartDirectory = partDirectory): List<SpanProto> =
-        logFile(directory).source().buffer().use(::readCompletedSpans).spans
+        decodeLog(directory).spans
+
+    private fun decodeLog(directory: SessionPartDirectory = partDirectory): DecodedSpans =
+        logFile(directory).source().buffer().use(::readCompletedSpans)
 
     private fun write(
         directory: SessionPartDirectory? = partDirectory,

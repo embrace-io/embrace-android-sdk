@@ -105,12 +105,6 @@ class PluginIntegrationTestRule : ExternalResource() {
         attachDebugger: Boolean = false,
 
         /**
-         * Whether dependencies should be refreshed. This prevents the configuration cache from being reused, so
-         * tests that assert on configuration cache reuse should disable it for subsequent builds.
-         */
-        refreshDependencies: Boolean = true,
-
-        /**
          * Custom assertions to run after the build has finished. The assertions should focus on
          * the state of the file system.
          */
@@ -134,7 +128,6 @@ class PluginIntegrationTestRule : ExternalResource() {
             additionalArgs,
             attachDebugger,
             testMatrix,
-            refreshDependencies,
         )
 
         // run any preconditions before the build
@@ -230,15 +223,9 @@ class PluginIntegrationTestRule : ExternalResource() {
         additionalArgs: List<String>,
         attachDebugger: Boolean,
         testMatrix: TestMatrix,
-        refreshDependencies: Boolean,
     ): List<String> {
         val args = tasks.toMutableList()
         args.addAll(additionalArgs)
-        if (refreshDependencies) {
-            // fixtures consume io.embrace:*:<version>-SNAPSHOT from the integration test repo. Force a
-            // refresh to avoid picking up old artifacts
-            args.add("--refresh-dependencies")
-        }
         args.addAll(
             listOf(
                 "--stacktrace",

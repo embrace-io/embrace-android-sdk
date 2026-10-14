@@ -2,6 +2,7 @@ package io.embrace.android.embracesdk.internal.session.persistence
 
 import com.squareup.wire.ProtoAdapter
 import com.squareup.wire.ProtoWriter
+import io.embrace.android.embracesdk.fakes.FakeClock
 import io.embrace.android.embracesdk.fakes.FakeInternalLogger
 import io.embrace.android.embracesdk.internal.payload.Span
 import okio.Buffer
@@ -265,7 +266,7 @@ internal class SessionReconstructionServiceFileSizeTest {
     }
 
     private fun target(): SessionPartWriteTarget =
-        SessionPartWriteTarget(lazy { sessionsDir }) { activePart }
+        SessionPartWriteTarget(lazy { sessionsDir }, FakeClock()) { activePart }
 
     private fun partFile(fileName: String): File = File(File(sessionsDir, partDirectory.dirName), fileName)
 

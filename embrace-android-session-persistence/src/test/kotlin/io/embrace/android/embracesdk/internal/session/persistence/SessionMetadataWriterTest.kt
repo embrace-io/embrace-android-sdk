@@ -1,5 +1,6 @@
 package io.embrace.android.embracesdk.internal.session.persistence
 
+import io.embrace.android.embracesdk.fakes.FakeClock
 import io.embrace.android.embracesdk.fakes.FakeInternalLogger
 import io.embrace.android.embracesdk.fakes.FakeSectionRecorder
 import io.embrace.android.embracesdk.internal.payload.EnvelopeMetadata
@@ -39,6 +40,7 @@ internal class SessionMetadataWriterTest {
     val tempFolder: TemporaryFolder = TemporaryFolder()
 
     private lateinit var sessionsDir: File
+    private lateinit var clock: FakeClock
     private lateinit var logger: FakeInternalLogger
     private lateinit var writer: SessionMetadataWriter
 
@@ -59,6 +61,7 @@ internal class SessionMetadataWriterTest {
     @Before
     fun setUp() {
         sessionsDir = tempFolder.newFolder("embrace_sessions")
+        clock = FakeClock()
         logger = FakeInternalLogger(throwOnInternalError = false)
         metadataProvider = { fullyPopulatedMetadata }
         resourceProvider = { fullyPopulatedResource }
@@ -485,7 +488,11 @@ internal class SessionMetadataWriterTest {
 
     private fun createWriter(source: () -> SessionPartDirectory?): SessionMetadataWriter =
         SessionMetadataWriter(
-            target = SessionPartWriteTarget(lazy { sessionsDir }, source),
+            target = SessionPartWriteTarget(
+                sessionsDir = lazy { sessionsDir },
+                clock = clock,
+                sessionPartDirectorySource = source,
+            ),
             metadataSource = { metadataProvider() },
             resourceSource = { resourceProvider() },
             envelopeVersion = ENVELOPE_VERSION,

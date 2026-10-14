@@ -24,60 +24,45 @@ class ConfigCacheTest {
     val rule: PluginIntegrationTestRule = PluginIntegrationTestRule()
 
     /**
-     * Test that the assemble task works with configuration cache enabled without throwing an error
+     * Stores a configuration cache entry for a release build that uploads symbols, then asserts that later builds
+     * reuse their entries. A build ID that is resolved at configuration time would invalidate the entry on every build.
      */
     @Test
-    fun assembleRelease() {
+    fun `config cache is stored and reused`() {
+        runBuild("assembleRelease", expectedOutcome = TaskOutcome.SUCCESS)
+        verifyConfigCacheReused("assembleDebug", firstOutcome = TaskOutcome.SUCCESS)
+        verifyConfigCacheReused("assembleRelease", uploadDisabled, firstOutcome = TaskOutcome.UP_TO_DATE)
+    }
+
+    private fun verifyConfigCacheReused(
+        task: String,
+        extraArgs: List<String> = emptyList(),
+        firstOutcome: TaskOutcome,
+    ) {
+        runBuild(task, extraArgs, firstOutcome)
+        runBuild(task, extraArgs, TaskOutcome.UP_TO_DATE, expectReuse = true)
+    }
+
+    private fun runBuild(
+        task: String,
+        extraArgs: List<String> = emptyList(),
+        expectedOutcome: TaskOutcome,
+        expectReuse: Boolean = false,
+    ) {
         rule.runTest(
             fixture = "android-cmake",
-            tasks = listOf("assembleRelease"),
-            additionalArgs = configCacheArgs,
+            tasks = listOf(task),
+            additionalArgs = configCacheArgs + extraArgs,
+            expectedOutcome = expectedOutcome,
             setup = {
-                setupMockResponses(
-                    defaultExpectedLibs,
-                    defaultExpectedArchs,
-                    defaultExpectedVariants,
-                )
+                setupMockResponses(defaultExpectedLibs, defaultExpectedArchs, defaultExpectedVariants)
             },
             projectType = ProjectType.ANDROID,
             assertions = {
+                if (expectReuse) {
+                    assertTrue(buildOutput, buildOutput.contains("Reusing configuration cache."))
+                }
             },
         )
-    }
-
-    @Test
-    fun `config cache reused for release when mapping upload disabled`() {
-        verifyConfigCacheReused("assembleRelease", uploadDisabled)
-    }
-
-    @Test
-    fun `config cache reused for debug when mapping upload disabled`() {
-        verifyConfigCacheReused("assembleDebug", uploadDisabled)
-    }
-
-    @Test
-    fun `config cache reused for debug when release uploads mapping files`() {
-        verifyConfigCacheReused("assembleDebug")
-    }
-
-    /**
-     * Runs a task twice and asserts the second build reuses the configuration cache entry. A build ID that
-     * is resolved at configuration time would invalidate the entry on every build.
-     */
-    private fun verifyConfigCacheReused(task: String, extraArgs: List<String> = emptyList()) {
-        repeat(2) { run ->
-            rule.runTest(
-                fixture = "android-simple",
-                tasks = listOf(task),
-                additionalArgs = configCacheArgs + extraArgs,
-                projectType = ProjectType.ANDROID,
-                expectedOutcome = if (run == 0) TaskOutcome.SUCCESS else TaskOutcome.UP_TO_DATE,
-                assertions = {
-                    if (run == 1) {
-                        assertTrue(buildOutput, buildOutput.contains("Reusing configuration cache."))
-                    }
-                },
-            )
-        }
     }
 }

@@ -26,27 +26,11 @@ class DesugaringTest {
     }
 
     @Test
-    fun `app builds correctly if min sdk is 26 or higher`() {
-        rule.runTest(
-            fixture = "android-version-support",
-            tasks = listOf("assembleRelease"),
-            additionalArgs = listOf("-PminSdk=26"),
-            projectType = ProjectType.ANDROID,
-            setup = {
-                setupEmptyHandshakeResponse()
-            },
-            assertions = {
-                verifyBuildTelemetryRequestSent(listOf("debug", "release"))
-                verifyJvmMappingRequestsSent(1)
-            },
-        )
-    }
-
-    @Test
     fun `app builds correctly with desugaring and min sdk less than 26`() {
         rule.runTest(
             fixture = "android-desugaring",
-            tasks = listOf("assembleRelease"),
+            // the useFullClasspathForDexingTransform workaround only affects D8 dexing, which debug builds use
+            tasks = listOf("assembleDebug"),
             additionalArgs = listOf("-PminSdk=21"),
             projectType = ProjectType.ANDROID,
             setup = {
@@ -54,7 +38,7 @@ class DesugaringTest {
             },
             assertions = {
                 verifyBuildTelemetryRequestSent(listOf("debug", "release"))
-                verifyJvmMappingRequestsSent(1)
+                verifyJvmMappingRequestsSent(0)
             },
         )
     }

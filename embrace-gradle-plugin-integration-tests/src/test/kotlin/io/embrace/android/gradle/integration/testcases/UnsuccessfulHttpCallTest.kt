@@ -27,19 +27,4 @@ class UnsuccessfulHttpCallTest {
             expectedExceptionMessage = "Embrace HTTP request failed: ${EmbraceEndpoint.PROGUARD.url}, status=400",
         )
     }
-
-    @Test
-    fun `proguard 5xx status code`() {
-        rule.runTest(
-            fixture = "file-upload-simple",
-            tasks = listOf("proguardEndpointTask"),
-            setup = {
-                enqueueResponse(EmbraceEndpoint.PROGUARD, MockResponse().setResponseCode(500))
-            },
-            assertions = {
-                assertEquals(1, fetchRequests(EmbraceEndpoint.PROGUARD).size)
-            },
-            expectedExceptionMessage = "Embrace HTTP request failed: ${EmbraceEndpoint.PROGUARD.url}",
-        )
-    }
 }

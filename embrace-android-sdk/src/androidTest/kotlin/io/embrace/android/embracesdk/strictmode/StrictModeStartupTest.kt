@@ -6,17 +6,16 @@ import androidx.annotation.RequiresApi
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.filters.SdkSuppress
 import androidx.test.platform.app.InstrumentationRegistry
-import io.embrace.android.embracesdk.EmbraceImpl
 import io.embrace.android.embracesdk.fakes.OtelSdkMode
 import io.embrace.android.embracesdk.fakes.config.FakeBaseUrlConfig
 import io.embrace.android.embracesdk.fakes.config.FakeEnabledFeatureConfig
 import io.embrace.android.embracesdk.fakes.config.FakeInstrumentedConfig
-import io.embrace.android.embracesdk.internal.api.delegate.SdkCallChecker
 import io.embrace.android.embracesdk.internal.injection.InitModule
 import io.embrace.android.embracesdk.internal.injection.InitModuleImpl
 import io.embrace.android.embracesdk.internal.injection.ModuleInitBootstrapper
+import io.embrace.android.embracesdk.internal.instance.SdkStateHolder
+import io.embrace.android.embracesdk.internal.instance.createSdkStateHolder
 import io.embrace.android.embracesdk.internal.worker.Worker
-import io.opentelemetry.kotlin.NoopOpenTelemetry
 import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
@@ -54,7 +53,7 @@ internal class StrictModeStartupTest(
     private val context = ApplicationProvider.getApplicationContext<Context>()
     private val recorder = StrictModeRecorder()
     private lateinit var bootstrapper: ModuleInitBootstrapper
-    private lateinit var embrace: EmbraceImpl
+    private lateinit var sdkStateHolder: SdkStateHolder
 
     @Before
     fun setUp() {
@@ -63,8 +62,8 @@ internal class StrictModeStartupTest(
 
     @After
     fun tearDown() {
-        if (::embrace.isInitialized) {
-            embrace.stop()
+        if (::bootstrapper.isInitialized) {
+            bootstrapper.stop()
         }
     }
 
@@ -74,21 +73,19 @@ internal class StrictModeStartupTest(
             recorder.install()
 
             bootstrapper = ModuleInitBootstrapper(TestInitModule(InitModuleImpl(), otelSdkMode))
-            EmbraceImpl(
-                lazyOf(bootstrapper),
-                { embrace },
-                SdkCallChecker(bootstrapper.initModule.logger),
-                NoopOpenTelemetry,
-                bootstrapper.initModule.clock,
-                bootstrapper.initModule.logger,
-            ).let {
-                embrace = it
-                it.start(context)
-            }
+            val initModule = bootstrapper.initModule
+            sdkStateHolder = createSdkStateHolder(
+                logger = initModule.logger,
+                clock = initModule.clock,
+                telemetryService = initModule.telemetryService,
+                internalErrorHandler = initModule.internalErrorHandler,
+                bootstrapperProvider = { bootstrapper },
+            )
+            sdkStateHolder.api.start(context)
         }
 
         drainInitWork()
-        assertTrue("SDK did not start.", embrace.isStarted)
+        assertTrue("SDK did not start.", sdkStateHolder.api.isStarted)
         assertEquals(otelSdkMode.useKotlinSdk, bootstrapper.openTelemetryModule.otelSdkWrapper.useKotlinSdk)
         assertNoUnexpectedViolations(recorder.violations())
     }

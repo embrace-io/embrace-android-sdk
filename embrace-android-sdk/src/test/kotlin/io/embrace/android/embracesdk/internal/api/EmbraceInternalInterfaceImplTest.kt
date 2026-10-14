@@ -1,6 +1,5 @@
 package io.embrace.android.embracesdk.internal.api
 
-import io.embrace.android.embracesdk.EmbraceImpl
 import io.embrace.android.embracesdk.fakes.FakeClock
 import io.embrace.android.embracesdk.fakes.FakeConfigService
 import io.embrace.android.embracesdk.fakes.FakeEnvelopeResourceSource
@@ -9,7 +8,6 @@ import io.embrace.android.embracesdk.fakes.OtelSdkMode
 import io.embrace.android.embracesdk.fakes.behavior.FakeNetworkSpanForwardingBehavior
 import io.embrace.android.embracesdk.fakes.injection.FakeInitModule
 import io.embrace.android.embracesdk.internal.api.delegate.EmbraceInternalInterfaceImpl
-import io.mockk.mockk
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
@@ -19,7 +17,6 @@ import org.junit.Test
 internal class EmbraceInternalInterfaceImplTest {
 
     private lateinit var internalImpl: EmbraceInternalInterfaceImpl
-    private lateinit var embraceImpl: EmbraceImpl
     private lateinit var fakeClock: FakeClock
     private lateinit var initModule: FakeInitModule
     private lateinit var fakeConfigService: FakeConfigService
@@ -27,7 +24,6 @@ internal class EmbraceInternalInterfaceImplTest {
 
     @Before
     fun setUp() {
-        embraceImpl = mockk(relaxed = true)
         fakeClock = FakeClock(currentTime = beforeObjectInitTime)
         initModule = FakeInitModule(clock = fakeClock, logger = FakeInternalLogger(false), otelSdkMode = OtelSdkMode.COMPAT)
         fakeConfigService = FakeConfigService()

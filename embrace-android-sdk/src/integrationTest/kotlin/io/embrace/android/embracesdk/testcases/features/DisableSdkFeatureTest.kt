@@ -34,6 +34,8 @@ internal class DisableSdkFeatureTest {
         private const val DUMMY_CONTENT = "Hello, world!"
 
         private fun File.sentinelFile(): File = File(File(this, TEST_SUBDIR_NAME), TEST_FILE_NAME)
+
+        private fun File.persistedFiles(): List<File> = walkTopDown().filter(File::isFile).toList()
     }
 
     @Rule
@@ -111,6 +113,35 @@ internal class DisableSdkFeatureTest {
                 }
                 assertEquals(listOf(LOG_1, LOG_2), logData.map { it.bodyValue?.value })
             }
+        )
+    }
+
+    @Test
+    fun `no data is persisted after SDK disabling`() {
+        testRule.runTest(
+            setupAction = {
+                getEmbLogger().throwOnInternalError = false
+            },
+            testCaseAction = {
+                recordSession {
+                    embrace.disable()
+                }
+                returnIfConditionMet(
+                    desiredValueSupplier = { true },
+                    dataProvider = { embraceDirs.flatMap { it.persistedFiles() } },
+                    condition = { it.isEmpty() },
+                    errorMessageSupplier = { "disable() did not clear storage" },
+                )
+                recordSession {
+                    embrace.startSpan(SPAN_1)?.stop()
+                    embrace.logInfo(LOG_1)
+                    embrace.addBreadcrumb("foo")
+                }
+                simulateJvmUncaughtException(RuntimeException("crash after disable"))
+            },
+            assertAction = {
+                assertEquals(emptyList<File>(), embraceDirs.flatMap { it.persistedFiles() })
+            },
         )
     }
 

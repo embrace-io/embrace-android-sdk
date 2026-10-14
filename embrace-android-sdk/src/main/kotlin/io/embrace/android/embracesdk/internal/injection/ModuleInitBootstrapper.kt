@@ -50,6 +50,9 @@ internal class ModuleInitBootstrapper(
 
     @Volatile
     private var delegate: ModuleGraph = UninitializedModuleGraph
+
+    @Volatile
+    private var stopped: Boolean = false
     override val sdkStartTimeMs: Long get() = delegate.sdkStartTimeMs
     override val sdkInitResourceUsageTracker: SdkInitResourceUsageTracker get() = delegate.sdkInitResourceUsageTracker
     override val coreModule: CoreModule get() = delegate.coreModule
@@ -133,13 +136,13 @@ internal class ModuleInitBootstrapper(
     }
 
     fun stop() {
-        if (!isInitialized()) {
+        if (!isInitialized() || stopped) {
             return
         }
+        stopped = true
         essentialServiceModule.networkConnectivityService.close()
         openTelemetryModule.otelSdkConfig.shutdownExport()
         workerThreadModule.close()
-        delegate = UninitializedModuleGraph
     }
 
     private fun isInitialized(): Boolean = delegate != UninitializedModuleGraph

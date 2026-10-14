@@ -37,12 +37,18 @@ internal class FirstDrawDetector(
             val window = activity.window
             if (window.callback != null) {
                 window.onDecorViewReady {
-                    val decorView = window.decorView
-                    decorView.onNextDraw {
-                        if (!trackingLoad(instanceId)) {
-                            drawBeginCallback()
-                            loadingActivities[instanceId] = Runnable { drawCompleteCallback() }
-                            decorView.viewTreeObserver.registerFrameCommitCallback(drawCompleteCallback)
+                    safely {
+                        val decorView = window.decorView
+                        decorView.onNextDraw {
+                            safely {
+                                if (!trackingLoad(instanceId)) {
+                                    drawBeginCallback()
+                                    loadingActivities[instanceId] = Runnable { drawCompleteCallback() }
+                                    decorView.viewTreeObserver.registerFrameCommitCallback {
+                                        safely { drawCompleteCallback() }
+                                    }
+                                }
+                            }
                         }
                     }
                 }
@@ -78,6 +84,14 @@ internal class FirstDrawDetector(
     }
 
     private fun trackingLoad(instanceId: Int): Boolean = loadingActivities.containsKey(instanceId)
+
+    private inline fun safely(action: () -> Unit) {
+        try {
+            action()
+        } catch (exc: Throwable) {
+            logger.trackInternalError(InternalErrorType.UiCallbackFail, exc)
+        }
+    }
 
     private fun View.onNextDraw(onDrawCallback: () -> Unit) {
         viewTreeObserver.addOnDrawListener(

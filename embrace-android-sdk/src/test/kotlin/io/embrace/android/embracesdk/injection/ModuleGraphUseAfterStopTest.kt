@@ -28,6 +28,7 @@ import io.embrace.android.embracesdk.internal.worker.Worker
 import io.opentelemetry.kotlin.NoopOpenTelemetry
 import org.junit.After
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Assert.fail
 import org.junit.Before
@@ -74,6 +75,13 @@ internal class ModuleGraphUseAfterStopTest {
     @After
     fun tearDown() {
         workerThreadModule.shutdownCapturing()
+    }
+
+    @Test
+    fun `stop is final for the process`() {
+        startSdk()
+        bootstrapper.stop()
+        assertFalse(bootstrapper.init(context))
     }
 
     @Test

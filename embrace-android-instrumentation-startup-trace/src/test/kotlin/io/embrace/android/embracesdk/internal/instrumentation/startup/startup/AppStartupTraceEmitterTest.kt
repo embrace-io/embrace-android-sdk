@@ -74,9 +74,9 @@ internal class AppStartupTraceEmitterTest {
     fun setUp() {
         clock = FakeClock(processInitTime)
         destination = FakeTelemetryDestination()
-        startupService = StartupServiceImpl(destination) { APP_VERSION_STARTUP_COUNTER }
-        clock.tick(100L)
         logger = FakeInternalLogger(false)
+        startupService = StartupServiceImpl(destination, logger) { APP_VERSION_STARTUP_COUNTER }
+        clock.tick(100L)
         firePreAndPostCreate = hasPrePostEvents(BuildVersionChecker)
         trackProcessStart = BuildVersionChecker.isAtLeast(VERSION_CODES.N)
         hasRenderEvent = hasRenderEvent(BuildVersionChecker)

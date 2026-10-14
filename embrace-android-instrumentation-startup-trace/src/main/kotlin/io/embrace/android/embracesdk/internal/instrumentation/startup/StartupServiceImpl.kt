@@ -2,12 +2,15 @@ package io.embrace.android.embracesdk.internal.instrumentation.startup
 
 import io.embrace.android.embracesdk.internal.arch.datasource.TelemetryDestination
 import io.embrace.android.embracesdk.internal.arch.state.ProcessState
+import io.embrace.android.embracesdk.internal.logging.InternalErrorType
+import io.embrace.android.embracesdk.internal.logging.InternalLogger
 import io.embrace.android.embracesdk.semconv.EmbAppAttributes
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicReference
 
 internal class StartupServiceImpl(
     private val destination: TelemetryDestination,
+    private val logger: InternalLogger,
     appVersionStartupCounterProvider: () -> Int?,
 ) : StartupService {
 
@@ -87,7 +90,12 @@ internal class StartupServiceImpl(
     override fun getAppVersionStartupCounter(): Int? = startupCounter
     override fun getSdkInitAttributes(): Map<String, String> {
         sdkInitAttributes.get()?.let { return it }
-        val computed = attributesProvider?.invoke() ?: emptyMap()
+        val computed = try {
+            attributesProvider?.invoke() ?: emptyMap()
+        } catch (exc: Throwable) {
+            logger.trackInternalError(InternalErrorType.SdkInitAttributeCaptureFail, exc)
+            emptyMap()
+        }
         sdkInitAttributes.compareAndSet(null, computed)
         return sdkInitAttributes.get() ?: computed
     }

@@ -30,6 +30,7 @@ class DataCaptureServiceModuleImpl(
 
     override val startupService: StartupService = StartupServiceImpl(
         destination = destination,
+        logger = logger,
         appVersionStartupCounterProvider = appVersionStartupCounterProvider,
     )
 
@@ -82,5 +83,6 @@ class DataCaptureServiceModuleImpl(
         appStartupDataCollector = appStartupDataCollector,
         activityLoadEventEmitter = activityLoadEventEmitter,
         drawEventEmitter = createDrawEventEmitter(versionChecker, logger),
+        logger = logger,
     )
 }

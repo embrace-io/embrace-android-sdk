@@ -4,8 +4,11 @@ import android.app.Activity
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import io.embrace.android.embracesdk.EmbraceImpl
 import io.embrace.android.embracesdk.PropertyScope
+import io.embrace.android.embracesdk.fakes.FakeConfigService
+import io.embrace.android.embracesdk.fakes.FakeInstrumentationModule
 import io.embrace.android.embracesdk.fakes.FakeInternalLogger
 import io.embrace.android.embracesdk.fakes.FakeTelemetryService
+import io.embrace.android.embracesdk.fakes.injection.FakeCoreModule
 import io.embrace.android.embracesdk.fakes.injection.FakeInitModule
 import io.embrace.android.embracesdk.internal.injection.ModuleInitBootstrapper
 import io.embrace.android.embracesdk.network.EmbraceNetworkRequest
@@ -15,6 +18,7 @@ import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.Robolectric
+import org.robolectric.RuntimeEnvironment
 
 /**
  * Public API calls check `SdkCallChecker.started` and then read modules from the bootstrapper.
@@ -29,7 +33,15 @@ internal class ApiDelegateStopRaceTest {
 
     @Before
     fun setUp() {
-        bootstrapper = ModuleInitBootstrapper(FakeInitModule())
+        val application = RuntimeEnvironment.getApplication()
+        bootstrapper = ModuleInitBootstrapper(
+            FakeInitModule(),
+            configServiceSupplier = { _, _, _, _, _ -> FakeConfigService() },
+            coreModuleSupplier = { _, _, _ -> FakeCoreModule() },
+            instrumentationModuleSupplier = { _, _, _, _, _, _, _, _, _ -> FakeInstrumentationModule(application) },
+        )
+        bootstrapper.init(application)
+        bootstrapper.stop()
         sdkCallChecker = SdkCallChecker(FakeInternalLogger(), FakeTelemetryService()).apply {
             started.set(true)
         }

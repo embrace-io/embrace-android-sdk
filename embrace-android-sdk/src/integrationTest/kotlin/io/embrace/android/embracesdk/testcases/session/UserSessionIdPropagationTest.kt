@@ -4,7 +4,6 @@ import android.app.ActivityManager
 import android.app.Application
 import android.app.ApplicationExitInfo
 import android.content.Context
-import android.os.Build
 import androidx.test.core.app.ApplicationProvider
 import io.embrace.android.embracesdk.Severity
 import io.embrace.android.embracesdk.assertions.SessionIds
@@ -319,7 +318,7 @@ internal class UserSessionIdPropagationTest(
     }
 
     @Test
-    @Config(sdk = [Build.VERSION_CODES.R], shadows = [ShadowActivityManager::class])
+    @Config(shadows = [ShadowActivityManager::class])
     fun `AEI log carries the session ids of the exit it describes and no live session ids`() {
         val sessionPartId = "1a2b3c4d5e6f7a8b9c0d1e2f3a4b5c6d"
         val userSessionId = "2b3c4d5e6f7a8b9c0d1e2f3a4b5c6d7e"
@@ -364,7 +363,7 @@ internal class UserSessionIdPropagationTest(
     }
 
     @Test
-    @Config(sdk = [Build.VERSION_CODES.R], shadows = [ShadowActivityManager::class])
+    @Config(shadows = [ShadowActivityManager::class])
     fun `AEI payload carries old user session id when persisted session expired between app instances`() {
         val processStateSummary = "${DEFAULT_DEAD_SESSION_PART_ID}_${DEFAULT_EXPIRED_USER_SESSION_ID}"
         val nativeAei = TestAeiData(

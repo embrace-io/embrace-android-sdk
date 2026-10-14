@@ -28,7 +28,6 @@ import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.ParameterizedRobolectricTestRunner
-import org.robolectric.annotation.Config
 
 /**
  * Asserts the SDK's behavior with background activity capture enabled and disabled: background parts are
@@ -164,7 +163,6 @@ internal class BackgroundActivityCaptureTest(
         )
     }
 
-    @Config(sdk = [21])
     @Test
     fun `session part span and payloads structurally correct`() {
         var session1StartMs: Long = -1

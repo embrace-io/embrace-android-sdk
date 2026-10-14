@@ -14,6 +14,8 @@ import io.embrace.android.embracesdk.internal.config.ConfigService
 import io.embrace.android.embracesdk.internal.envelope.resource.EnvelopeResourceSource
 import io.embrace.android.embracesdk.internal.injection.getSystemServiceSafe
 import io.embrace.android.embracesdk.internal.store.KeyValueStore
+import io.embrace.android.embracesdk.internal.utils.BuildVersionChecker
+import io.embrace.android.embracesdk.internal.utils.VersionChecker
 import io.embrace.android.embracesdk.internal.worker.BackgroundWorker
 
 /**
@@ -27,6 +29,7 @@ internal class EmbraceMetadataService(
     private val store: KeyValueStore,
     private val clock: Clock,
     private val metadataBackgroundWorker: BackgroundWorker,
+    private val versionChecker: VersionChecker = BuildVersionChecker,
 ) : MetadataService {
 
     private val res by lazy { resourceSource.value.getEnvelopeResource() }
@@ -57,7 +60,7 @@ internal class EmbraceMetadataService(
                 osVersion = res.osVersion
             }
             val free = statFs.freeBytes
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O && configService.config.autoDataCapture.diskUsageCaptureEnabled) {
+            if (versionChecker.isAtLeast(Build.VERSION_CODES.O) && configService.config.autoDataCapture.diskUsageCaptureEnabled) {
                 val deviceDiskAppUsage = getDeviceDiskAppUsage(
                     context.getSystemServiceSafe(Context.STORAGE_STATS_SERVICE),
                 )
@@ -96,7 +99,7 @@ internal class EmbraceMetadataService(
     override fun getClockDrift(): ClockDrift? = clockDrift
 
     private fun computeClockDrift(): ClockDrift? {
-        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.Q) {
+        if (!versionChecker.isAtLeast(Build.VERSION_CODES.Q)) {
             return null
         }
 
@@ -106,7 +109,7 @@ internal class EmbraceMetadataService(
         }.getOrNull()
 
         val networkDrift =
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            if (versionChecker.isAtLeast(Build.VERSION_CODES.TIRAMISU)) {
                 runCatching {
                     val network = SystemClock.currentNetworkTimeClock().millis()
                     ClockDrift.calculateDrift(wallTimeMillis = clock.now(), auxTimeMillis = network)

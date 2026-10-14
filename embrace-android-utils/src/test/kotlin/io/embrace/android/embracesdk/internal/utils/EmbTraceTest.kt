@@ -8,7 +8,6 @@ import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
-import org.robolectric.annotation.Config
 import org.robolectric.shadows.ShadowTrace
 
 @RunWith(AndroidJUnit4::class)
@@ -25,6 +24,7 @@ internal class EmbTraceTest {
     fun tearDown() {
         ShadowTrace.reset()
         EmbTrace.durationTracker.reset()
+        EmbTrace.versionChecker = BuildVersionChecker
     }
 
     @Test
@@ -69,19 +69,33 @@ internal class EmbTraceTest {
         assertTrue(EmbTrace.durationTracker.flush().isEmpty())
     }
 
-    @Config(sdk = [VERSION_CODES.Q])
     @Test
     fun `trace records a section on the minimum supported API version`() {
+        EmbTrace.versionChecker = VersionChecker { min -> VERSION_CODES.Q >= min }
         EmbTrace.trace("test") { }
         assertEquals("emb-test", ShadowTrace.getPreviousSections().single())
     }
 
-    @Config(sdk = [VERSION_CODES.P])
     @Test
     fun `trace runs the lambda and records a duration below the supported API version`() {
+        EmbTrace.versionChecker = VersionChecker { min -> VERSION_CODES.P >= min }
         assertEquals(2, EmbTrace.trace(sectionName = "test", recordDuration = true) { 1 + 1 })
         assertTrue(ShadowTrace.getPreviousSections().isEmpty())
         assertEquals(setOf("test"), EmbTrace.durationTracker.flush().keys)
+    }
+
+    @Test
+    fun `counter is recorded on the minimum supported API version`() {
+        EmbTrace.versionChecker = VersionChecker { min -> VERSION_CODES.Q >= min }
+        EmbTrace.counter("test", 1)
+        assertEquals(listOf("emb-test" to 1L), ShadowTrace.getCounters().map { it.name to it.value })
+    }
+
+    @Test
+    fun `counter is not recorded below the supported API version`() {
+        EmbTrace.versionChecker = VersionChecker { min -> VERSION_CODES.P >= min }
+        EmbTrace.counter("test", 1)
+        assertTrue(ShadowTrace.getCounters().isEmpty())
     }
 
     private companion object {

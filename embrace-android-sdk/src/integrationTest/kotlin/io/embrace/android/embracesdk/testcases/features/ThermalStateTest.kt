@@ -1,6 +1,5 @@
 package io.embrace.android.embracesdk.testcases.features
 
-import android.os.Build
 import android.os.PowerManager
 import io.embrace.android.embracesdk.assertions.findSpanSnapshotOfType
 import io.embrace.android.embracesdk.assertions.findSpansOfType
@@ -20,7 +19,7 @@ import org.robolectric.ParameterizedRobolectricTestRunner
 import org.robolectric.annotation.Config
 import org.robolectric.shadows.ShadowActivityManager
 
-@Config(sdk = [Build.VERSION_CODES.Q], shadows = [ShadowActivityManager::class])
+@Config(shadows = [ShadowActivityManager::class])
 @RunWith(ParameterizedRobolectricTestRunner::class)
 internal class ThermalStateFeatureTest(
     private val otelSdkMode: OtelSdkMode,

@@ -1,7 +1,10 @@
 package io.embrace.android.embracesdk.internal.capture.metadata
 
 import android.app.Application
-import android.os.Build
+import android.os.Build.VERSION_CODES.P
+import android.os.Build.VERSION_CODES.Q
+import android.os.Build.VERSION_CODES.S
+import android.os.Build.VERSION_CODES.TIRAMISU
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import io.embrace.android.embracesdk.fakes.FakeClock
@@ -10,6 +13,7 @@ import io.embrace.android.embracesdk.fakes.FakeEnvelopeResourceSource
 import io.embrace.android.embracesdk.fakes.FakeKeyValueStore
 import io.embrace.android.embracesdk.fakes.fakeBackgroundWorker
 import io.embrace.android.embracesdk.internal.capture.metadata.shadows.EmbraceShadowSystemClock
+import io.embrace.android.embracesdk.internal.utils.VersionChecker
 import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
@@ -26,19 +30,10 @@ import java.time.ZoneOffset
 internal class EmbraceMetadataServiceClockDriftTest {
 
     private val wallTimeMillis = FakeClock.DEFAULT_FAKE_CURRENT_TIME
-    private lateinit var service: EmbraceMetadataService
 
     @Before
     fun setUp() {
         EmbraceShadowSystemClock.reset()
-        service = EmbraceMetadataService(
-            resourceSource = lazy { FakeEnvelopeResourceSource() },
-            context = ApplicationProvider.getApplicationContext<Application>(),
-            configService = FakeConfigService(),
-            store = FakeKeyValueStore(),
-            clock = FakeClock(currentTime = wallTimeMillis),
-            metadataBackgroundWorker = fakeBackgroundWorker(),
-        )
     }
 
     @After
@@ -46,91 +41,89 @@ internal class EmbraceMetadataServiceClockDriftTest {
         EmbraceShadowSystemClock.reset()
     }
 
-    @Config(sdk = [Build.VERSION_CODES.P])
     @Test
     fun `getClockDrift returns null below Q regardless of clock availability`() {
         EmbraceShadowSystemClock.gnssClock = fixedClock(wallTimeMillis - 50)
         EmbraceShadowSystemClock.networkClock = fixedClock(wallTimeMillis - 100)
 
-        service.precomputeValues()
-        assertNull(service.getClockDrift())
+        assertNull(computeClockDrift(sdkInt = P))
     }
 
-    @Config(sdk = [Build.VERSION_CODES.Q])
     @Test
     fun `getClockDrift on Q returns GNSS drift and null network drift`() {
         EmbraceShadowSystemClock.gnssClock = fixedClock(wallTimeMillis - 50)
         EmbraceShadowSystemClock.networkClock = fixedClock(wallTimeMillis - 100)
 
-        service.precomputeValues()
-        val drift = service.getClockDrift()
+        val drift = computeClockDrift(sdkInt = Q)
 
         assertEquals(50L, drift?.gnssDriftMillis)
         assertNull(drift?.networkDriftMillis)
     }
 
-    @Config(sdk = [Build.VERSION_CODES.Q])
     @Test
     fun `getClockDrift on Q returns null when GNSS clock is unavailable`() {
-        service.precomputeValues()
-        assertNull(service.getClockDrift())
+        assertNull(computeClockDrift(sdkInt = Q))
     }
 
-    @Config(sdk = [Build.VERSION_CODES.S])
     @Test
     fun `getClockDrift between Q and TIRAMISU does not query network clock`() {
         EmbraceShadowSystemClock.gnssClock = fixedClock(wallTimeMillis - 25)
         EmbraceShadowSystemClock.networkClock = fixedClock(wallTimeMillis - 100)
 
-        service.precomputeValues()
-        val drift = service.getClockDrift()
+        val drift = computeClockDrift(sdkInt = S)
 
         assertEquals(25L, drift?.gnssDriftMillis)
         assertNull(drift?.networkDriftMillis)
     }
 
-    @Config(sdk = [Build.VERSION_CODES.TIRAMISU])
     @Test
     fun `getClockDrift on TIRAMISU returns both drifts when both clocks are available`() {
         EmbraceShadowSystemClock.gnssClock = fixedClock(wallTimeMillis - 50)
         EmbraceShadowSystemClock.networkClock = fixedClock(wallTimeMillis - 100)
 
-        service.precomputeValues()
-        val drift = service.getClockDrift()
+        val drift = computeClockDrift(sdkInt = TIRAMISU)
 
         assertEquals(50L, drift?.gnssDriftMillis)
         assertEquals(100L, drift?.networkDriftMillis)
     }
 
-    @Config(sdk = [Build.VERSION_CODES.TIRAMISU])
     @Test
     fun `getClockDrift on TIRAMISU returns only network drift when GNSS is unavailable`() {
         EmbraceShadowSystemClock.networkClock = fixedClock(wallTimeMillis - 100)
 
-        service.precomputeValues()
-        val drift = service.getClockDrift()
+        val drift = computeClockDrift(sdkInt = TIRAMISU)
 
         assertNull(drift?.gnssDriftMillis)
         assertEquals(100L, drift?.networkDriftMillis)
     }
 
-    @Config(sdk = [Build.VERSION_CODES.TIRAMISU])
     @Test
     fun `getClockDrift on TIRAMISU returns only GNSS drift when network is unavailable`() {
         EmbraceShadowSystemClock.gnssClock = fixedClock(wallTimeMillis - 50)
 
-        service.precomputeValues()
-        val drift = service.getClockDrift()
+        val drift = computeClockDrift(sdkInt = TIRAMISU)
 
         assertEquals(50L, drift?.gnssDriftMillis)
         assertNull(drift?.networkDriftMillis)
     }
 
-    @Config(sdk = [Build.VERSION_CODES.TIRAMISU])
     @Test
     fun `getClockDrift on TIRAMISU returns null when both clocks are unavailable`() {
+        assertNull(computeClockDrift(sdkInt = TIRAMISU))
+    }
+
+    private fun computeClockDrift(sdkInt: Int): ClockDrift? {
+        val service = EmbraceMetadataService(
+            resourceSource = lazy { FakeEnvelopeResourceSource() },
+            context = ApplicationProvider.getApplicationContext<Application>(),
+            configService = FakeConfigService(),
+            store = FakeKeyValueStore(),
+            clock = FakeClock(currentTime = wallTimeMillis),
+            metadataBackgroundWorker = fakeBackgroundWorker(),
+            versionChecker = VersionChecker { min -> sdkInt >= min },
+        )
         service.precomputeValues()
-        assertNull(service.getClockDrift())
+        return service.getClockDrift()
     }
 
     private fun fixedClock(epochMillis: Long): Clock =

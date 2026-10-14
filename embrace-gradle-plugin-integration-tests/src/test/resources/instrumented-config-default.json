@@ -166,6 +166,9 @@
         },
         {
           "signature": "getBuildId()Ljava/lang/String;"
+        },
+        {
+          "signature": "getReactNativeBundleId()Ljava/lang/String;"
         }
       ]
     },

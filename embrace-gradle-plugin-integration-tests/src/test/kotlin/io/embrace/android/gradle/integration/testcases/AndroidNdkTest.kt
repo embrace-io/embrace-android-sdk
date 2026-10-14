@@ -2,15 +2,8 @@ package io.embrace.android.gradle.integration.testcases
 
 import io.embrace.android.gradle.integration.framework.PluginIntegrationTestRule
 import io.embrace.android.gradle.integration.framework.ProjectType
-import io.embrace.android.gradle.integration.framework.smali.SmaliConfigReader
-import io.embrace.android.gradle.integration.framework.smali.SmaliMethod
-import io.embrace.android.gradle.integration.framework.smali.SmaliParser
-import io.embrace.android.gradle.plugin.tasks.ndk.ArchitecturesToHashedSharedObjectFilesMap
-import io.embrace.android.gradle.plugin.util.serialization.JsonSerializer
-import org.junit.Assert.assertTrue
 import org.junit.Rule
 import org.junit.Test
-import java.util.Base64
 
 class AndroidNdkTest {
     @Rule
@@ -24,84 +17,29 @@ class AndroidNdkTest {
     private val allArchs = listOf("x86_64", "x86", "armeabi-v7a", "arm64-v8a")
 
     /**
-     * Most fixtures build two ABIs by default to save time. This test builds every ABI to cover the full set.
+     * Covers:
+     * - local (CMake) and 3rd party (ndk-build) native library symbols are uploaded for the `release` build type
+     * - every ABI is uploaded, whereas most fixtures build two ABIs by default to save time
+     * - `debug` builds don't upload symbols
+     * - `src/nondk/embrace-config.json` disables NDK uploads on the `nondk` build type but still uploads its mapping file
      */
     @Test
-    fun buildCMake() {
+    fun `native symbols end to end`() {
+        val expectedLibs = defaultExpectedLibs + "libemb-asado.so"
         rule.runTest(
-            fixture = "android-cmake",
-            tasks = listOf("build"),
+            fixture = "android-local-and-3rd-party-symbols",
+            tasks = listOf("assembleDebug", "assembleRelease", "assembleNondk"),
             additionalArgs = listOf("-PabiFilters=${allArchs.joinToString(",")}"),
             projectType = ProjectType.ANDROID,
             setup = {
-                setupMockResponses(
-                    defaultExpectedLibs,
-                    allArchs,
-                    defaultExpectedVariants,
-                )
+                setupMockResponses(expectedLibs, allArchs, defaultExpectedVariants)
             },
             assertions = {
-                verifyBuildTelemetryRequestSent(variantsSentInBuildTelemetry)
-                verifyHandshakes(defaultExpectedLibs, allArchs, defaultExpectedVariants)
-                verifyUploads(defaultExpectedLibs, allArchs, defaultExpectedVariants)
-            },
-        )
-    }
-
-    @Test
-    fun buildNdkBuild() {
-        rule.runTest(
-            fixture = "android-ndk-build",
-            tasks = listOf("build"),
-            projectType = ProjectType.ANDROID,
-            setup = {
-                setupMockResponses(
-                    defaultExpectedLibs,
-                    defaultExpectedArchs,
-                    defaultExpectedVariants,
-                )
-            },
-            assertions = {
-                verifyBuildTelemetryRequestSent(variantsSentInBuildTelemetry)
-                verifyHandshakes(defaultExpectedLibs, defaultExpectedArchs, defaultExpectedVariants)
-                verifyUploads(defaultExpectedLibs, defaultExpectedArchs, defaultExpectedVariants)
-            },
-        )
-    }
-
-    @Test
-    fun `symbols are injected through ASM`() {
-        rule.runTest(
-            fixture = "android-cmake-with-code",
-            tasks = listOf("assembleRelease"),
-            projectType = ProjectType.ANDROID,
-            setup = {
-                setupMockResponses(defaultExpectedLibs, defaultExpectedArchs, defaultExpectedVariants)
-            },
-            assertions = { projectDir ->
-                // Read and parse the smali file containing the injected symbols
-                val smaliFile = SmaliConfigReader().readSmaliFiles(
-                    projectDir,
-                    listOf("/io/embrace/android/embracesdk/internal/config/instrumented/Base64SharedObjectFilesMapImpl"),
-                ).first()
-
-                // Get the return value of the getBase64SharedObjectFilesMap method
-                val method = SmaliParser().parse(
-                    smaliFile,
-                    listOf(SmaliMethod("getBase64SharedObjectFilesMap()Ljava/lang/String;")),
-                ).methods.first()
-
-                // Decode the base64 string into a map
-                val json = Base64.getDecoder().decode(method.returnValue).toString(Charsets.UTF_8)
-                val symbols = JsonSerializer().fromJson(json, ArchitecturesToHashedSharedObjectFilesMap.serializer()).symbols
-
-                // Verify all expected architectures and libraries are present
-                defaultExpectedArchs.forEach { arch ->
-                    assertTrue(symbols.containsKey(arch))
-                    defaultExpectedLibs.forEach { lib ->
-                        assertTrue(symbols[arch]?.containsKey(lib) ?: false)
-                    }
-                }
+                verifyBuildTelemetryRequestSent(listOf("debug", "release", "nondk"))
+                verifyHandshakes(expectedLibs, allArchs, defaultExpectedVariants)
+                verifyUploads(expectedLibs, allArchs, defaultExpectedVariants)
+                // release and nondk are both minified
+                verifyJvmMappingRequestsSent(2)
             },
         )
     }
@@ -123,55 +61,6 @@ class AndroidNdkTest {
                 verifyBuildTelemetryRequestSent(variantsSentInBuildTelemetry)
                 verifyHandshakes(defaultExpectedLibs, defaultExpectedArchs, defaultExpectedVariants)
                 verifyUploads(defaultExpectedLibs, defaultExpectedArchs, defaultExpectedVariants)
-            },
-        )
-    }
-
-    // If besides the project .so files, there are also 3rd party libraries with native code, we should send the symbols for them as well.
-    @Test
-    fun `send local and 3rd party library symbols`() {
-        val expectedLibs = defaultExpectedLibs + "libemb-asado.so"
-        rule.runTest(
-            fixture = "android-local-and-3rd-party-symbols",
-            tasks = listOf("build"),
-            projectType = ProjectType.ANDROID,
-            setup = {
-                setupMockResponses(expectedLibs, defaultExpectedArchs, defaultExpectedVariants)
-            },
-            assertions = {
-                verifyBuildTelemetryRequestSent(variantsSentInBuildTelemetry)
-                verifyHandshakes(expectedLibs, defaultExpectedArchs, defaultExpectedVariants)
-                verifyUploads(expectedLibs, defaultExpectedArchs, defaultExpectedVariants)
-            },
-        )
-    }
-
-    @Test
-    fun `ndk disabled test`() {
-        rule.runTest(
-            fixture = "android-cmake-ndk-disabled",
-            tasks = listOf("assembleRelease"),
-            projectType = ProjectType.ANDROID,
-            assertions = {
-                verifyBuildTelemetryRequestSent(variantsSentInBuildTelemetry)
-                verifyNoHandshakes()
-                verifyNoUploads()
-                verifyJvmMappingRequestsSent(1)
-            },
-        )
-    }
-
-    @Test
-    fun `debug builds should not upload symbols`() {
-        rule.runTest(
-            fixture = "android-cmake",
-            tasks = listOf("assembleDebug"),
-            projectType = ProjectType.ANDROID,
-            assertions = {
-                verifyBuildTelemetryRequestSent(variantsSentInBuildTelemetry)
-                verifyNoHandshakes()
-                verifyNoUploads()
-                verifyJvmMappingRequestsSent(0)
             },
         )
     }

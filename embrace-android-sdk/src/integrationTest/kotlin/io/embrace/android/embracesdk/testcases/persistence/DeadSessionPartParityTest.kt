@@ -1,11 +1,15 @@
 package io.embrace.android.embracesdk.testcases.persistence
 
+import io.embrace.android.embracesdk.PropertyScope
+import io.embrace.android.embracesdk.assertions.findEventsOfType
 import io.embrace.android.embracesdk.assertions.findSessionPartSpan
 import io.embrace.android.embracesdk.assertions.getLogOfType
 import io.embrace.android.embracesdk.fakes.TestPlatformSerializer
 import io.embrace.android.embracesdk.fakes.config.FakeEnabledFeatureConfig
 import io.embrace.android.embracesdk.fakes.config.FakeInstrumentedConfig
 import io.embrace.android.embracesdk.internal.arch.schema.EmbType
+import io.embrace.android.embracesdk.internal.clock.nanosToMillis
+import io.embrace.android.embracesdk.internal.config.behavior.DEFAULT_PERIODIC_CACHE_INTERVAL_MS
 import io.embrace.android.embracesdk.internal.config.remote.BackgroundActivityRemoteConfig
 import io.embrace.android.embracesdk.internal.config.remote.RemoteConfig
 import io.embrace.android.embracesdk.internal.delivery.PayloadType
@@ -13,6 +17,8 @@ import io.embrace.android.embracesdk.internal.delivery.StoredTelemetryMetadata
 import io.embrace.android.embracesdk.internal.delivery.SupportedEnvelopeType
 import io.embrace.android.embracesdk.internal.otel.sdk.findAttributeValue
 import io.embrace.android.embracesdk.internal.payload.NativeCrashData
+import io.embrace.android.embracesdk.internal.payload.Span
+import io.embrace.android.embracesdk.internal.session.getSessionProperty
 import io.embrace.android.embracesdk.internal.session.id.SessionIdsSnapshot
 import io.embrace.android.embracesdk.internal.worker.Worker
 import io.embrace.android.embracesdk.semconv.EmbSessionAttributes
@@ -33,6 +39,13 @@ import org.robolectric.ParameterizedRobolectricTestRunner
 /**
  * Verifies what the next launch delivers for a foreground session part that its process died in,
  * under both persistence modes.
+ *
+ * Neither mode ends the part at the death of the process: a user idle in the foreground before a kill
+ * does not lengthen the session. Both end it at the latest time a span in it started or ended, which
+ * neither a breadcrumb nor a session property moves.
+ *
+ * These tests pin down what each mode persisted before the process died, and that the delivered end
+ * follows from it. The rules that pick the end from a part's data are covered by SessionPartResurrectorTest.
  */
 @RunWith(ParameterizedRobolectricTestRunner::class)
 internal class DeadSessionPartParityTest(
@@ -54,6 +67,53 @@ internal class DeadSessionPartParityTest(
             getFakedWorkerExecutor(Worker.Background.SessionPersistenceWorker).blockingMode = false
             getFakedWorkerExecutor(Worker.Background.NonIoRegWorker).blockingMode = false
             getFakedWorkerExecutor(Worker.Background.IoRegWorker).blockingMode = false
+        }
+    }
+
+    @Test
+    fun `a breadcrumb does not move the estimated end time`() {
+        var breadcrumbMs = 0L
+        killActiveSessionPart {
+            clock.tick(5_000)
+            breadcrumbMs = clock.now()
+            embrace.addBreadcrumb("last-thing-the-user-did")
+            persistAfterOneInterval()
+        }
+        relaunch {
+            assertEquals(listOf(breadcrumbMs), deliveredBreadcrumbTimesMs())
+            assertDeliveredPartEnd()
+        }
+    }
+
+    @Test
+    fun `a session property update does not move the estimated end time`() {
+        var breadcrumbMs = 0L
+        killActiveSessionPart {
+            clock.tick(5_000)
+            breadcrumbMs = clock.now()
+            embrace.addBreadcrumb("last-thing-the-user-did")
+            persistAfterOneInterval()
+
+            clock.tick(10_000)
+            embrace.addUserSessionProperty("late", "value", PropertyScope.USER_SESSION)
+            persistAfterOneInterval()
+        }
+        relaunch {
+            assertEquals(listOf(breadcrumbMs), deliveredBreadcrumbTimesMs())
+            assertEquals("value", deliveredSessionSpan().getSessionProperty("late"))
+            assertDeliveredPartEnd()
+        }
+    }
+
+    @Test
+    fun `a change whose write never ran does not move the end`() {
+        killActiveSessionPart {
+            clock.tick(5_000)
+            embrace.addBreadcrumb("last-thing-the-user-did")
+        }
+        relaunch {
+            assertEquals(emptyList<Long>(), deliveredBreadcrumbTimesMs())
+            assertDeliveredPartEnd()
         }
     }
 
@@ -155,6 +215,45 @@ internal class DeadSessionPartParityTest(
         )
     }
 
+    /**
+     * Asserts the delivered part's session span ended at [multiFileEndMs] under the multi-file mode and at
+     * [singleFileEndMs] under the single-file mode. Null means when the span started, as no other span in
+     * the part starts or ends later.
+     */
+    private fun EmbracePayloadAssertionInterface.assertDeliveredPartEnd(
+        multiFileEndMs: Long? = null,
+        singleFileEndMs: Long? = null,
+    ) {
+        val sessionSpan = deliveredSessionSpan()
+        val startMs = sessionSpan.startTimeNanos?.nanosToMillis()
+        val expectedEndMs = when (persistenceMode) {
+            PersistenceMode.SINGLE_FILE -> singleFileEndMs ?: startMs
+            PersistenceMode.MULTI_FILE -> multiFileEndMs ?: startMs
+        }
+        assertEquals(expectedEndMs, sessionSpan.endTimeNanos?.nanosToMillis())
+    }
+
+    /**
+     * The session span of the one part the next launch delivered.
+     */
+    private fun EmbracePayloadAssertionInterface.deliveredSessionSpan(): Span =
+        getSessionEnvelopes(1).single().findSessionPartSpan()
+
+    /**
+     * When each breadcrumb the delivered part holds was added, which shows whether it was persisted.
+     */
+    private fun EmbracePayloadAssertionInterface.deliveredBreadcrumbTimesMs(): List<Long> =
+        deliveredSessionSpan().findEventsOfType(EmbType.System.Breadcrumb).map { checkNotNull(it.timestampNanos).nanosToMillis() }
+
+    /**
+     * Lets one write interval pass and runs the writes due by then, so both modes persist what
+     * changed: the multi-file mode's debounced writes and the single-file mode's periodic cache tick.
+     */
+    private fun EmbraceActionInterface.persistAfterOneInterval() {
+        clock.tick(WRITE_INTERVAL_MS)
+        persistDueWrites()
+    }
+
     private fun persistDueWrites() {
         persistenceWorkers.forEach { worker ->
             testRule.setup.getFakedWorkerExecutor(worker).runCurrentlyBlocked()
@@ -202,6 +301,8 @@ internal class DeadSessionPartParityTest(
     )
 
     internal companion object {
+        private const val WRITE_INTERVAL_MS = DEFAULT_PERIODIC_CACHE_INTERVAL_MS
+
         private val persistenceWorkers = listOf(
             Worker.Background.SessionPersistenceWorker,
             Worker.Background.PeriodicCacheWorker,

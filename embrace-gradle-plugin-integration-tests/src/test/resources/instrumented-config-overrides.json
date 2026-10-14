@@ -192,7 +192,7 @@
         },
         {
           "signature": "getBuildType()Ljava/lang/String;",
-          "returnValue": "release"
+          "returnValue": "overrides"
         },
         {
           "signature": "getBuildId()Ljava/lang/String;"

@@ -8,8 +8,8 @@ import java.io.File
 
 class SmaliConfigReader {
 
-    fun readSmaliFiles(projectDir: File, classNames: List<String>): List<File> {
-        val apk = findArtifact(projectDir, "build/outputs/apk/release/", ".apk")
+    fun readSmaliFiles(projectDir: File, classNames: List<String>, buildType: String = "release"): List<File> {
+        val apk = findArtifact(projectDir, "build/outputs/apk/$buildType/", ".apk")
         return ApkDisassembler().disassembleClasses(apk, classNames)
     }
 

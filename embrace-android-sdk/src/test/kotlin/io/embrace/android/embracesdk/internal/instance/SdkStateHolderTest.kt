@@ -19,6 +19,7 @@ internal class SdkStateHolderTest {
     private val calls = mutableListOf<String>()
     private val logger = FakeInternalLogger(throwOnInternalError = false)
     private val buffer = BufferingSdkInstance({ 0 }, logger)
+    private val failed = FakeInstance(calls, prefix = "failed:")
     private val disabled = FakeInstance(calls, prefix = "disabled:")
 
     @Test
@@ -57,25 +58,58 @@ internal class SdkStateHolderTest {
     }
 
     @Test
-    fun `unsuccessful start can be retried`() {
+    fun `unsuccessful start is not retried`() {
         val instance = FakeInstance(calls, startSucceeds = false)
         val holder = createHolder(instance)
         holder.start(context)
-        assertEquals(SdkState.NOT_STARTED, holder.state)
+        assertEquals(SdkState.FAILED, holder.state)
+        instance.startSucceeds = true
         holder.start(context)
-        assertEquals(SdkState.NOT_STARTED, holder.state)
-        assertSame(buffer, holder.dispatcher.target)
-        assertEquals(listOf("instantiate", "start", "start"), calls)
+        holder.dispatcher.logInfo("message")
+        assertEquals(SdkState.FAILED, holder.state)
+        assertSame(failed, holder.dispatcher.target)
+        assertEquals(listOf("instantiate", "start", "disable", "failed:onPostStart", "failed:logInfo/1"), calls)
     }
 
     @Test
-    fun `start that throws can be retried`() {
+    fun `start that throws is not retried`() {
         val instance = FakeInstance(calls, startThrows = true)
         val holder = createHolder(instance)
         holder.start(context)
-        assertEquals(SdkState.NOT_STARTED, holder.state)
-        assertSame(buffer, holder.dispatcher.target)
+        holder.start(context)
+        assertEquals(SdkState.FAILED, holder.state)
+        assertSame(failed, holder.dispatcher.target)
+        assertEquals(listOf("instantiate", "start", "disable", "failed:onPostStart"), calls)
         assertEquals("start failed", logger.internalErrorMessages.single().throwable?.message)
+    }
+
+    @Test
+    fun `start fails even if disabling the instance fails`() {
+        val instance = FakeInstance(calls, startSucceeds = false, disableThrows = true)
+        val holder = createHolder(instance)
+        holder.start(context)
+        assertEquals(SdkState.FAILED, holder.state)
+        assertSame(failed, holder.dispatcher.target)
+        assertEquals(listOf("instantiate", "start", "disable", "failed:onPostStart"), calls)
+        assertEquals("disable failed", logger.internalErrorMessages.single().throwable?.message)
+    }
+
+    @Test
+    fun `buffer is handed over to the failed instance`() {
+        val instance = FakeInstance(calls, startSucceeds = false)
+        createHolder(instance).start(context)
+        assertEquals(emptyList<BufferingSdkInstance>(), instance.handedOver)
+        assertEquals(listOf(buffer), failed.handedOver)
+    }
+
+    @Test
+    fun `start fails even if the handover to the failed instance fails`() {
+        failed.postStartThrows = true
+        val holder = createHolder(FakeInstance(calls, startSucceeds = false))
+        holder.start(context)
+        assertEquals(SdkState.FAILED, holder.state)
+        assertSame(failed, holder.dispatcher.target)
+        assertEquals("post start failed", logger.internalErrorMessages.single().throwable?.message)
     }
 
     @Test
@@ -129,10 +163,11 @@ internal class SdkStateHolderTest {
         holder.start(context)
         holder.disable()
         assertEquals(SdkState.DISABLED, holder.state)
+        assertSame(disabled, holder.dispatcher.target)
         instance.startSucceeds = true
         holder.start(context)
         assertEquals(SdkState.DISABLED, holder.state)
-        assertEquals(listOf("instantiate", "start", "disabled:onPostStart"), calls)
+        assertEquals(listOf("instantiate", "start", "disable", "failed:onPostStart"), calls)
     }
 
     @Test
@@ -166,15 +201,10 @@ internal class SdkStateHolderTest {
 
     @Test
     fun `internal interface api follows the dispatcher target`() {
-        val instance = FakeInstance(calls, startSucceeds = false)
-        val holder = createHolder(instance)
+        val holder = createHolder(FakeInstance(calls))
         assertSame(buffer, EmbraceInternalApi.internalInterfaceApi)
-
-        holder.start(context)
         assertSame(NoopInternalInterfaceApi.internalInterface, EmbraceInternalApi.internalInterface)
-        assertEquals(listOf("instantiate", "start"), calls)
 
-        instance.startSucceeds = true
         holder.start(context)
         calls.clear()
         EmbraceInternalApi.internalInterface
@@ -184,6 +214,15 @@ internal class SdkStateHolderTest {
         calls.clear()
         EmbraceInternalApi.internalInterface
         assertEquals(listOf("disabled:getInternalInterface/0"), calls)
+    }
+
+    @Test
+    fun `internal interface api follows the failed instance`() {
+        val holder = createHolder(FakeInstance(calls, startSucceeds = false))
+        holder.start(context)
+        calls.clear()
+        EmbraceInternalApi.internalInterface
+        assertEquals(listOf("failed:getInternalInterface/0"), calls)
     }
 
     @Test
@@ -220,23 +259,22 @@ internal class SdkStateHolderTest {
     }
 
     @Test
-    fun `failed instantiation can be retried`() {
+    fun `failed instantiation is not retried`() {
         var instance: SdkInstance? = null
         val holder = createHolder { instance }
         holder.start(context)
-        assertEquals(SdkState.NOT_STARTED, holder.state)
-        assertSame(buffer, holder.dispatcher.target)
-        assertEquals(listOf("instantiate"), calls)
+        assertEquals(SdkState.FAILED, holder.state)
+        assertSame(failed, holder.dispatcher.target)
 
         instance = FakeInstance(calls)
         holder.start(context)
-        assertEquals(SdkState.STARTED, holder.state)
-        assertSame(instance, holder.dispatcher.target)
-        assertEquals(listOf("instantiate", "instantiate", "start", "onPostStart"), calls)
+        assertEquals(SdkState.FAILED, holder.state)
+        assertSame(failed, holder.dispatcher.target)
+        assertEquals(listOf("instantiate", "failed:onPostStart"), calls)
     }
 
     @Test
-    fun `instantiation that throws can be retried`() {
+    fun `instantiation that throws is not retried`() {
         val instance = FakeInstance(calls)
         var instantiationThrows = true
         val holder = createHolder {
@@ -244,14 +282,14 @@ internal class SdkStateHolderTest {
             instance
         }
         holder.start(context)
-        assertEquals(SdkState.NOT_STARTED, holder.state)
-        assertSame(buffer, holder.dispatcher.target)
+        assertEquals(SdkState.FAILED, holder.state)
+        assertSame(failed, holder.dispatcher.target)
         assertEquals("instantiation failed", logger.internalErrorMessages.single().throwable?.message)
 
         instantiationThrows = false
         holder.start(context)
-        assertEquals(SdkState.STARTED, holder.state)
-        assertSame(instance, holder.dispatcher.target)
+        assertEquals(SdkState.FAILED, holder.state)
+        assertSame(failed, holder.dispatcher.target)
     }
 
     @Test
@@ -280,6 +318,7 @@ internal class SdkStateHolderTest {
             instanceFactory()
         },
         preStart = { buffer },
+        failed = { failed },
         disabled = { disabled },
         telemetryService = FakeInternalTelemetryService(),
         errorHandler = logger,

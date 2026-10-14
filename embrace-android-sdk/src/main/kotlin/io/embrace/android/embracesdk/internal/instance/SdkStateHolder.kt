@@ -16,20 +16,22 @@ import io.embrace.android.embracesdk.internal.utils.Provider
  *
  * ```
  * NOT_STARTED --start() succeeds--> STARTED --disable()--> DISABLED
- *      |                                                      ^
- *      +----------------------disable()-----------------------+
+ *      |   |                                                ^  ^
+ *      |   +--start() fails--> FAILED --disable()-----------+  |
+ *      +----------------------disable()------------------------+
  * ```
  *
  * The [SdkInstance] is created by [instanceFactory] when the SDK starts. A null instance means the SDK could not be
- * instantiated. Once created, the same instance is used for all subsequent calls.
+ * instantiated.
  *
- * A start that does not succeed leaves the SDK in [SdkState.NOT_STARTED] so that it can be retried. [SdkState.DISABLED]
- * is terminal: once disabled, the SDK cannot be started again. Exceptions are reported to [errorHandler] rather than
- * thrown.
+ * Only one attempt is made to start the SDK. A start that does not succeed disables any instance that was created, moves
+ * the SDK to [SdkState.FAILED], routes all subsequent calls to [failed] and discards any buffered calls. Neither [SdkState.FAILED] nor [SdkState.DISABLED]
+ * can be started again. Exceptions are reported to [errorHandler] rather than thrown.
  */
 internal class SdkStateHolder(
     private val instanceFactory: (Context) -> SdkInstance?,
     preStart: Provider<BufferingSdkInstance>,
+    private val failed: Provider<SdkInstance>,
     private val disabled: Provider<SdkInstance>,
     telemetryService: InternalTelemetryService,
     private val errorHandler: InternalErrorHandler,
@@ -66,7 +68,7 @@ internal class SdkStateHolder(
                     return
                 }
                 val started = try {
-                    val next = instance ?: instanceFactory(context)?.also { instance = it }
+                    val next = instanceFactory(context)?.also { instance = it }
                     next != null && drainBufferedCalls(next) {
                         next.start(context)
                         next.isStarted.also { started ->
@@ -83,6 +85,12 @@ internal class SdkStateHolder(
                 }
                 if (started) {
                     state = SdkState.STARTED
+                } else {
+                    instance?.let { guard { it.disable() } }
+                    val next = failed()
+                    dispatcher.target = next
+                    guard { drainBufferedCalls(next) { true } }
+                    state = SdkState.FAILED
                 }
             }
         }
@@ -99,6 +107,10 @@ internal class SdkStateHolder(
                     val next = disabled()
                     dispatcher.target = next
                     guard { drainBufferedCalls(next) { true } }
+                    state = SdkState.DISABLED
+                }
+                SdkState.FAILED -> {
+                    dispatcher.target = disabled()
                     state = SdkState.DISABLED
                 }
                 SdkState.STARTED -> {

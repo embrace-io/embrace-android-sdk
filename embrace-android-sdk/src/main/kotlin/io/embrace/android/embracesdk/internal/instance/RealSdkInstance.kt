@@ -129,9 +129,6 @@ internal class RealSdkInstance(
     private var applicationInitStartMs: Long? = null
 
     @Volatile
-    private var startAttempted: Boolean = false
-
-    @Volatile
     private var started: Boolean = false
 
     override val isStarted: Boolean
@@ -154,11 +151,6 @@ internal class RealSdkInstance(
 
     override fun start(context: Context) {
         try {
-            // post-init must only run once against the module graph, even if a previous attempt failed
-            if (startAttempted) {
-                return
-            }
-            startAttempted = true
             moduleGraph.postInit()
 
             EmbTrace.trace(sectionName = "post-services-setup", recordDuration = true) {
@@ -177,31 +169,34 @@ internal class RealSdkInstance(
     }
 
     override fun disable() {
-        moduleGraph.openTelemetryModule.otelSdkConfig.disableDataExport()
-        val rootDir = moduleGraph.coreModule.context.filesDir
-        val fallbackDir = moduleGraph.coreModule.context.cacheDir
-        started = false
-        moduleGraph.essentialServiceModule.networkConnectivityService.close()
-        moduleGraph.openTelemetryModule.otelSdkConfig.shutdownExport()
-        moduleGraph.workerThreadModule.close()
-        val executor = Executors.newSingleThreadExecutor()
-        executor.execute {
-            runCatching {
-                StorageLocation.entries.map {
-                    it.asFile(
-                        logger = null,
-                        rootDirSupplier = { rootDir },
-                        fallbackDirSupplier = { fallbackDir },
-                    ).value
-                }.forEach {
-                    it.deleteRecursively()
+        try {
+            moduleGraph.openTelemetryModule.otelSdkConfig.disableDataExport()
+            val rootDir = moduleGraph.coreModule.context.filesDir
+            val fallbackDir = moduleGraph.coreModule.context.cacheDir
+            started = false
+            moduleGraph.essentialServiceModule.networkConnectivityService.close()
+            moduleGraph.openTelemetryModule.otelSdkConfig.shutdownExport()
+            moduleGraph.workerThreadModule.close()
+            val executor = Executors.newSingleThreadExecutor()
+            executor.execute {
+                runCatching {
+                    StorageLocation.entries.map {
+                        it.asFile(
+                            logger = null,
+                            rootDirSupplier = { rootDir },
+                            fallbackDirSupplier = { fallbackDir },
+                        ).value
+                    }.forEach {
+                        it.deleteRecursively()
+                    }
+                }.onFailure { exception ->
+                    Log.e("[Embrace]", "An error occurred while trying to disable Embrace SDK.", exception)
                 }
-            }.onFailure { exception ->
-                Log.e("[Embrace]", "An error occurred while trying to disable Embrace SDK.", exception)
             }
+            // lets the queued deletion finish, then releases the worker thread
+            executor.shutdown()
+        } catch (ignored: Throwable) {
         }
-        // lets the queued deletion finish, then releases the worker thread
-        executor.shutdown()
     }
 
     override fun createSpan(

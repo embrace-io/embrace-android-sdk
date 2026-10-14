@@ -87,6 +87,9 @@ abstract class IntegrationTestExtension(objectFactory: ObjectFactory) {
 
         val customMinSdk = project.providers.gradleProperty("minSdk").orNull?.toIntOrNull()
         val compileAndTargetSdk = project.providers.gradleProperty("compileAndTargetSdk").orNull?.toIntOrNull()
+        val minifyRelease = project.providers.gradleProperty("minifyRelease").orNull?.toBoolean() ?: true
+        val abis = project.providers.gradleProperty("abiFilters").orNull?.split(",")
+            ?: listOf("arm64-v8a", "x86_64")
 
         android.apply {
             namespace = "com.example"
@@ -99,10 +102,16 @@ abstract class IntegrationTestExtension(objectFactory: ObjectFactory) {
                 minSdk = customMinSdk ?: 26
                 versionCode = 1
                 versionName = "1.0"
+
+                // one 64-bit ARM and one x86 ABI halves native build time and is a good default.
+                // tests can supply other ABIs via -PabiFilters
+                ndk {
+                    abiFilters.addAll(abis)
+                }
             }
             buildTypes {
                 release {
-                    isMinifyEnabled = true
+                    isMinifyEnabled = minifyRelease
                     proguardFiles(
                         getDefaultProguardFile("proguard-android-optimize.txt"),
                         "proguard-rules.pro",

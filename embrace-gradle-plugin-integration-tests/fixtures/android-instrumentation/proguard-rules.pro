@@ -1,3 +1,0 @@
--keep class com.example.app.** { *; }
--keep class okhttp3.** { *; }
--keep class com.google.firebase.messaging.RemoteMessage

@@ -16,7 +16,7 @@ internal class InternalInterfaceModuleImpl(
     configService: ConfigService,
     payloadSourceModule: PayloadSourceModule,
     embrace: SdkApi,
-    bootstrapper: ModuleInitBootstrapper,
+    moduleGraph: ModuleGraph,
 ) : InternalInterfaceModule {
 
     override val embraceInternalInterface: EmbraceInternalInterface by lazy {
@@ -30,7 +30,7 @@ internal class InternalInterfaceModuleImpl(
         ReactNativeInternalInterfaceImpl(
             embrace,
             embraceInternalInterface,
-            bootstrapper,
+            moduleGraph,
             payloadSourceModule.rnBundleIdTracker,
             payloadSourceModule.hostedSdkVersionInfo,
             initModule.logger,

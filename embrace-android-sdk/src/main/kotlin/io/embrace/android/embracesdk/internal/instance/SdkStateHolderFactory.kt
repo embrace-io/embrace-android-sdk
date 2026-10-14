@@ -5,6 +5,7 @@ import io.embrace.android.embracesdk.internal.clock.Clock
 import io.embrace.android.embracesdk.internal.clock.NormalizedIntervalClock
 import io.embrace.android.embracesdk.internal.injection.InitModuleImpl
 import io.embrace.android.embracesdk.internal.injection.ModuleInitBootstrapper
+import io.embrace.android.embracesdk.internal.injection.OpenTelemetryModuleImpl
 import io.embrace.android.embracesdk.internal.logging.BufferedInternalErrorHandler
 import io.embrace.android.embracesdk.internal.logging.InternalLogger
 import io.embrace.android.embracesdk.internal.logging.InternalLoggerImpl
@@ -26,15 +27,17 @@ internal fun createSdkStateHolder(
     },
     bootstrapperProvider: Provider<ModuleInitBootstrapper> = {
         EmbTrace.trace(sectionName = "bootstrapper-init", recordDuration = true) {
+            val initModule = EmbTrace.trace("init-module") {
+                InitModuleImpl(
+                    logger = logger,
+                    clock = clock,
+                    telemetryService = telemetryService,
+                    internalErrorHandler = internalErrorHandler,
+                )
+            }
             ModuleInitBootstrapper(
-                initModule = EmbTrace.trace("init-module") {
-                    InitModuleImpl(
-                        logger = logger,
-                        clock = clock,
-                        telemetryService = telemetryService,
-                        internalErrorHandler = internalErrorHandler,
-                    )
-                },
+                initModule = initModule,
+                openTelemetryModule = EmbTrace.trace("otel-module") { OpenTelemetryModuleImpl(initModule) },
             )
         }
     },

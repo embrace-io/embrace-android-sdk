@@ -1,12 +1,9 @@
 package io.embrace.android.embracesdk.internal.api.delegate
 
-import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
+import io.embrace.android.embracesdk.fakes.FakeModuleGraph
 import io.embrace.android.embracesdk.fakes.FakeUserService
-import io.embrace.android.embracesdk.fakes.OtelSdkMode
 import io.embrace.android.embracesdk.fakes.injection.FakeEssentialServiceModule
-import io.embrace.android.embracesdk.fakes.injection.FakeInitModule
-import io.embrace.android.embracesdk.internal.injection.ModuleInitBootstrapper
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNull
@@ -24,16 +21,10 @@ internal class UserApiDelegateTest {
 
     @Before
     fun setUp() {
-        val moduleInitBootstrapper = ModuleInitBootstrapper(
-            FakeInitModule(otelSdkMode = OtelSdkMode.COMPAT),
-            essentialServiceModuleSupplier = { _, _, _, _, _, _, _, _, _ ->
-                FakeEssentialServiceModule().apply {
-                    fakeUserService = userService as FakeUserService
-                }
-            },
+        fakeUserService = FakeUserService()
+        delegate = UserApiDelegate(
+            FakeModuleGraph(essentialServiceModule = FakeEssentialServiceModule(userService = fakeUserService)),
         )
-        moduleInitBootstrapper.init(ApplicationProvider.getApplicationContext())
-        delegate = UserApiDelegate(moduleInitBootstrapper)
     }
 
     @Test

@@ -1,7 +1,7 @@
 package io.embrace.android.embracesdk.internal.api.delegate
 
 import io.embrace.android.embracesdk.internal.api.NetworkRequestApi
-import io.embrace.android.embracesdk.internal.injection.ModuleInitBootstrapper
+import io.embrace.android.embracesdk.internal.injection.ModuleGraph
 import io.embrace.android.embracesdk.internal.instrumentation.network.DefaultTraceparentGenerator
 import io.embrace.android.embracesdk.internal.instrumentation.network.HttpNetworkRequest
 import io.embrace.android.embracesdk.internal.instrumentation.network.NetworkCaptureDataSource
@@ -10,12 +10,12 @@ import io.embrace.android.embracesdk.network.EmbraceNetworkRequest
 import io.embrace.android.embracesdk.network.http.HttpRequestInfoModifier
 
 internal class NetworkRequestApiDelegate(
-    private val bootstrapper: ModuleInitBootstrapper,
+    private val moduleGraph: ModuleGraph,
 ) : NetworkRequestApi {
 
-    private val registry get() = bootstrapper.instrumentationModule.instrumentationRegistry
-    private val httpRequestInfoModifierChain get() = bootstrapper.instrumentationModule.instrumentationArgs.httpRequestInfoModifierChain
-    private val sessionOrchestrator get() = bootstrapper.userSessionOrchestrationModule.sessionOrchestrator
+    private val registry get() = moduleGraph.instrumentationModule.instrumentationRegistry
+    private val httpRequestInfoModifierChain get() = moduleGraph.instrumentationModule.instrumentationArgs.httpRequestInfoModifierChain
+    private val sessionOrchestrator get() = moduleGraph.userSessionOrchestrationModule.sessionOrchestrator
 
     override fun recordNetworkRequest(networkRequest: EmbraceNetworkRequest) {
         logNetworkRequest(networkRequest)

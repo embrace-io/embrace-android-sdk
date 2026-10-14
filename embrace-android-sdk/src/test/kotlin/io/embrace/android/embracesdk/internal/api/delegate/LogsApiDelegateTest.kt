@@ -1,15 +1,14 @@
 package io.embrace.android.embracesdk.internal.api.delegate
 
-import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import io.embrace.android.embracesdk.Severity
 import io.embrace.android.embracesdk.fakes.FakeInternalTelemetryService
 import io.embrace.android.embracesdk.fakes.FakeLogService
+import io.embrace.android.embracesdk.fakes.FakeModuleGraph
 import io.embrace.android.embracesdk.fakes.OtelSdkMode
 import io.embrace.android.embracesdk.fakes.injection.FakeInitModule
 import io.embrace.android.embracesdk.fakes.injection.FakeLogModule
 import io.embrace.android.embracesdk.internal.arch.datasource.LogSeverity
-import io.embrace.android.embracesdk.internal.injection.ModuleInitBootstrapper
 import io.embrace.android.embracesdk.internal.telemetry.AppliedLimitType
 import io.embrace.android.embracesdk.semconv.EmbAndroidAttributes
 import org.junit.Assert.assertEquals
@@ -25,22 +24,17 @@ internal class LogsApiDelegateTest {
     private lateinit var delegate: LogsApiDelegate
     private lateinit var logService: FakeLogService
     private lateinit var telemetryService: FakeInternalTelemetryService
-    private lateinit var moduleInitBootstrapper: ModuleInitBootstrapper
 
     @Before
     fun setUp() {
         logService = FakeLogService()
         telemetryService = FakeInternalTelemetryService()
-        val fakeInitModule = FakeInitModule(fakeTelemetryService = telemetryService, otelSdkMode = OtelSdkMode.COMPAT)
-        moduleInitBootstrapper = ModuleInitBootstrapper(
-            fakeInitModule,
-            logModuleSupplier = { _, _, _, _, _, _, _ ->
-                FakeLogModule(logService = logService)
-            },
+        delegate = LogsApiDelegate(
+            FakeModuleGraph(
+                initModule = FakeInitModule(fakeTelemetryService = telemetryService, otelSdkMode = OtelSdkMode.COMPAT),
+                logModule = FakeLogModule(logService = logService),
+            ),
         )
-        moduleInitBootstrapper.init(ApplicationProvider.getApplicationContext())
-
-        delegate = LogsApiDelegate(moduleInitBootstrapper)
     }
 
     @Test

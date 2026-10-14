@@ -21,6 +21,7 @@ import io.embrace.android.embracesdk.internal.config.resolved.SdkModeConfig
 import io.embrace.android.embracesdk.internal.injection.EssentialServiceModuleImpl
 import io.embrace.android.embracesdk.internal.injection.InitModuleImpl
 import io.embrace.android.embracesdk.internal.injection.ModuleInitBootstrapper
+import io.embrace.android.embracesdk.internal.injection.OpenTelemetryModuleImpl
 import io.embrace.android.embracesdk.internal.injection.postInit
 import io.embrace.android.embracesdk.internal.injection.postLoadInstrumentation
 import io.embrace.android.embracesdk.semconv.EmbSessionAttributes
@@ -52,8 +53,10 @@ internal class ModuleInitBootstrapperTest {
         coreModule = FakeCoreModule()
         val application = RuntimeEnvironment.getApplication()
         context = application.applicationContext
+        val initModule = InitModuleImpl(logger, clock)
         moduleInitBootstrapper = ModuleInitBootstrapper(
-            InitModuleImpl(logger, clock),
+            initModule = initModule,
+            openTelemetryModule = OpenTelemetryModuleImpl(initModule),
             configServiceSupplier = { _, _, _, _, _ -> FakeConfigService() },
             coreModuleSupplier = { _, _, _ -> coreModule },
             instrumentationModuleSupplier = { _, _, _, _, _, _, _, _, _ ->
@@ -152,8 +155,10 @@ internal class ModuleInitBootstrapperTest {
     @Test
     fun `otel sdk is not built until the config service has been created`() {
         var initializedWhenConfigServiceBuilt: Boolean? = null
+        val initModule = FakeInitModule(clock = clock, logger = logger, otelSdkMode = OtelSdkMode.COMPAT)
         val bootstrapper = ModuleInitBootstrapper(
-            initModule = FakeInitModule(clock = clock, logger = logger, otelSdkMode = OtelSdkMode.COMPAT),
+            initModule = initModule,
+            openTelemetryModule = OpenTelemetryModuleImpl(initModule),
             configServiceSupplier = { _, _, openTelemetryModule, _, _ ->
                 initializedWhenConfigServiceBuilt = openTelemetryModule.spanService.initialized()
                 FakeConfigService()
@@ -169,8 +174,10 @@ internal class ModuleInitBootstrapperTest {
 
     @Test
     fun `otel sdk is not built when the sdk is remotely disabled`() {
+        val initModule = FakeInitModule(clock = clock, logger = logger, otelSdkMode = OtelSdkMode.COMPAT)
         val bootstrapper = ModuleInitBootstrapper(
-            initModule = FakeInitModule(clock = clock, logger = logger, otelSdkMode = OtelSdkMode.COMPAT),
+            initModule = initModule,
+            openTelemetryModule = OpenTelemetryModuleImpl(initModule),
             configServiceSupplier = { _, _, _, _, _ ->
                 FakeConfigService(
                     config = EmbraceConfig(sdkMode = { SdkModeConfig(sdkDisabled = { true }) }),
@@ -186,8 +193,10 @@ internal class ModuleInitBootstrapperTest {
         File(storageDir, "most_recent_response").outputStream().buffered().use { stream ->
             TestPlatformSerializer().toJson(cfg, RemoteConfig.serializer(), stream)
         }
+        val initModule = FakeInitModule(clock = clock, logger = logger, otelSdkMode = OtelSdkMode.COMPAT)
         return ModuleInitBootstrapper(
-            initModule = FakeInitModule(clock = clock, logger = logger, otelSdkMode = OtelSdkMode.COMPAT),
+            initModule = initModule,
+            openTelemetryModule = OpenTelemetryModuleImpl(initModule),
             configServiceSupplier = { _, _, _, _, _ -> FakeConfigService() },
             instrumentationModuleSupplier = { _, _, _, _, _, _, _, _, _ ->
                 FakeInstrumentationModule(RuntimeEnvironment.getApplication(), logger = logger)

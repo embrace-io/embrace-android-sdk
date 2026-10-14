@@ -1,16 +1,13 @@
 package io.embrace.android.embracesdk.internal.api.delegate
 
-import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import io.embrace.android.embracesdk.PropertyScope
 import io.embrace.android.embracesdk.UserSessionListener
+import io.embrace.android.embracesdk.fakes.FakeModuleGraph
 import io.embrace.android.embracesdk.fakes.FakeSessionOrchestrator
 import io.embrace.android.embracesdk.fakes.FakeUserSessionPropertiesService
-import io.embrace.android.embracesdk.fakes.OtelSdkMode
 import io.embrace.android.embracesdk.fakes.injection.FakeEssentialServiceModule
-import io.embrace.android.embracesdk.fakes.injection.FakeInitModule
 import io.embrace.android.embracesdk.fakes.injection.FakeUserSessionOrchestrationModule
-import io.embrace.android.embracesdk.internal.injection.ModuleInitBootstrapper
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
@@ -28,19 +25,14 @@ internal class UserSessionApiDelegateTest {
     @Before
     fun setUp() {
         fakeModule = FakeUserSessionOrchestrationModule()
-        val moduleInitBootstrapper = ModuleInitBootstrapper(
-            FakeInitModule(otelSdkMode = OtelSdkMode.COMPAT),
-            essentialServiceModuleSupplier = { _, _, _, _, _, _, _, _, _ ->
-                FakeEssentialServiceModule()
-            },
-            userSessionOrchestrationModuleSupplier = { _, _, _, _, _, _, _, _, _, _, _, _ ->
-                fakeModule
-            },
+        val essentialServiceModule = FakeEssentialServiceModule()
+        userSessionPropertiesService = essentialServiceModule.userSessionPropertiesService
+        delegate = UserSessionApiDelegate(
+            FakeModuleGraph(
+                essentialServiceModule = essentialServiceModule,
+                userSessionOrchestrationModule = fakeModule,
+            ),
         )
-        moduleInitBootstrapper.init(ApplicationProvider.getApplicationContext())
-        userSessionPropertiesService =
-            moduleInitBootstrapper.essentialServiceModule.userSessionPropertiesService as FakeUserSessionPropertiesService
-        delegate = UserSessionApiDelegate(moduleInitBootstrapper)
     }
 
     @Test

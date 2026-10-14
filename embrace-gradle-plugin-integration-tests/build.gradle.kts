@@ -59,7 +59,7 @@ tasks.withType<Test>().configureEach {
 tasks.register<Test>("sanityTest") {
     testClassesDirs = sourceSets.test.get().output.classesDirs
     classpath = sourceSets.test.get().runtimeClasspath
-    filter.includeTestsMatching("io.embrace.android.gradle.integration.testcases.AndroidSimpleTest.assembleRelease")
+    filter.includeTestsMatching("io.embrace.android.gradle.integration.testcases.AndroidSimpleTest.smoke")
 }
 
 group = "io.embrace"

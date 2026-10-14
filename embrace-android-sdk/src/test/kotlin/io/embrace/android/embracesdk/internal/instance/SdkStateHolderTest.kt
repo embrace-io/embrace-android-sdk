@@ -9,6 +9,7 @@ import io.embrace.android.embracesdk.internal.EmbraceInternalApi
 import io.embrace.android.embracesdk.internal.InternalInterfaceApi
 import io.embrace.android.embracesdk.internal.NoopInternalInterfaceApi
 import io.embrace.android.embracesdk.internal.api.SdkApi
+import io.opentelemetry.kotlin.NoopOpenTelemetry
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertSame
 import org.junit.Test
@@ -20,6 +21,8 @@ internal class SdkStateHolderTest {
     private val context = ApplicationProvider.getApplicationContext<Context>()
     private val calls = mutableListOf<String>()
     private val logger = FakeInternalLogger(throwOnInternalError = false)
+    private val buffer = BufferingSdkInstance({ 0 }, logger, NoopOpenTelemetry)
+    private val disabled = FakeInstance(calls, prefix = "disabled:")
 
     @Test
     fun `initial state`() {
@@ -37,7 +40,7 @@ internal class SdkStateHolderTest {
         holder.dispatcher.logInfo("message")
         assertEquals(SdkState.STARTED, holder.state)
         assertSame(instance, holder.dispatcher.target)
-        assertEquals(listOf("start", "logInfo/1"), calls)
+        assertEquals(listOf("onPreStart", "start", "onPostStart", "logInfo/1"), calls)
     }
 
     @Test
@@ -46,7 +49,7 @@ internal class SdkStateHolderTest {
         holder.start(context)
         holder.start(context)
         assertEquals(SdkState.STARTED, holder.state)
-        assertEquals(listOf("start"), calls)
+        assertEquals(listOf("onPreStart", "start", "onPostStart"), calls)
     }
 
     @Test
@@ -58,7 +61,7 @@ internal class SdkStateHolderTest {
         holder.start(context)
         assertEquals(SdkState.NOT_STARTED, holder.state)
         assertSame(instance, holder.dispatcher.target)
-        assertEquals(listOf("start", "start"), calls)
+        assertEquals(listOf("onPreStart", "start", "onPreStart", "start"), calls)
     }
 
     @Test
@@ -80,7 +83,7 @@ internal class SdkStateHolderTest {
         holder.dispatcher.logInfo("message")
         assertEquals(SdkState.DISABLED, holder.state)
         assertSame(instance, holder.dispatcher.target)
-        assertEquals(listOf("start", "disable", "logInfo/1"), calls)
+        assertEquals(listOf("onPreStart", "start", "onPostStart", "disable", "logInfo/1"), calls)
     }
 
     @Test
@@ -90,7 +93,7 @@ internal class SdkStateHolderTest {
         holder.disable()
         holder.disable()
         assertEquals(SdkState.DISABLED, holder.state)
-        assertEquals(listOf("start", "disable"), calls)
+        assertEquals(listOf("onPreStart", "start", "onPostStart", "disable"), calls)
     }
 
     @Test
@@ -100,7 +103,7 @@ internal class SdkStateHolderTest {
         holder.disable()
         holder.start(context)
         assertEquals(SdkState.DISABLED, holder.state)
-        assertEquals(listOf("start", "disable"), calls)
+        assertEquals(listOf("onPreStart", "start", "onPostStart", "disable"), calls)
     }
 
     @Test
@@ -110,7 +113,7 @@ internal class SdkStateHolderTest {
         assertEquals(SdkState.DISABLED, holder.state)
         holder.start(context)
         assertEquals(SdkState.DISABLED, holder.state)
-        assertEquals(emptyList<String>(), calls)
+        assertEquals(listOf("disabled:onPreStart", "disabled:onPostStart"), calls)
     }
 
     @Test
@@ -123,7 +126,7 @@ internal class SdkStateHolderTest {
         instance.startSucceeds = true
         holder.start(context)
         assertEquals(SdkState.DISABLED, holder.state)
-        assertEquals(listOf("start"), calls)
+        assertEquals(listOf("onPreStart", "start", "disabled:onPreStart", "disabled:onPostStart"), calls)
     }
 
     @Test
@@ -137,7 +140,7 @@ internal class SdkStateHolderTest {
         instance.disableThrows = false
         holder.disable()
         assertEquals(SdkState.DISABLED, holder.state)
-        assertEquals(listOf("start", "disable", "disable"), calls)
+        assertEquals(listOf("onPreStart", "start", "onPostStart", "disable", "disable"), calls)
     }
 
     @Test
@@ -150,7 +153,7 @@ internal class SdkStateHolderTest {
         assertEquals(SdkState.DISABLED, holder.state)
         holder.api.start(context)
         assertEquals(SdkState.DISABLED, holder.state)
-        assertEquals(listOf("start", "logInfo/1", "disable"), calls)
+        assertEquals(listOf("onPreStart", "start", "onPostStart", "logInfo/1", "disable"), calls)
     }
 
     @Test
@@ -175,13 +178,65 @@ internal class SdkStateHolderTest {
         assertSame(NoopInternalInterfaceApi, EmbraceInternalApi.internalInterfaceApi)
     }
 
+    @Test
+    fun `buffer is handed over to the started instance`() {
+        val instance = FakeInstance(calls)
+        createHolder(instance).start(context)
+        assertEquals(listOf(buffer, buffer), instance.handedOver)
+    }
+
+    @Test
+    fun `buffer is handed over to the disabled instance`() {
+        val instance = FakeInstance(calls)
+        createHolder(instance).disable()
+        assertEquals(emptyList<BufferingSdkInstance>(), instance.handedOver)
+        assertEquals(listOf(buffer, buffer), disabled.handedOver)
+    }
+
+    @Test
+    fun `buffer is not handed over when disabling a started instance`() {
+        val instance = FakeInstance(calls)
+        val holder = createHolder(instance)
+        holder.start(context)
+        holder.disable()
+        assertEquals(emptyList<BufferingSdkInstance>(), disabled.handedOver)
+    }
+
+    @Test
+    fun `failed post start hook still starts the sdk`() {
+        val instance = FakeInstance(calls, postStartThrows = true)
+        val holder = createHolder(instance)
+        holder.start(context)
+        assertEquals(SdkState.STARTED, holder.state)
+        assertEquals("post start failed", logger.internalErrorMessages.single().throwable?.message)
+    }
+
+    @Test
+    fun `failed pre start hook does not start the sdk`() {
+        val instance = FakeInstance(calls, preStartThrows = true)
+        val holder = createHolder(instance)
+        holder.start(context)
+        assertEquals(SdkState.NOT_STARTED, holder.state)
+        assertEquals(listOf("onPreStart"), calls)
+        assertEquals("pre start failed", logger.internalErrorMessages.single().throwable?.message)
+    }
+
+    @Test
+    fun `disable before start is terminal even if the handover fails`() {
+        disabled.preStartThrows = true
+        val holder = createHolder(FakeInstance(calls))
+        holder.disable()
+        assertEquals(SdkState.DISABLED, holder.state)
+        assertEquals("pre start failed", logger.internalErrorMessages.single().throwable?.message)
+    }
+
     private fun createHolder(
-        instance: SdkApi,
+        instance: SdkInstance,
         internalInterfaceApi: InternalInterfaceApi = NoopInternalInterfaceApi,
     ) = SdkStateHolder(
         instance = { instance },
-        preStart = { instance },
-        disabled = { instance },
+        preStart = { buffer },
+        disabled = { disabled },
         telemetryService = FakeInternalTelemetryService(),
         errorHandler = logger,
         internalInterfaceApi = internalInterfaceApi,
@@ -194,9 +249,26 @@ internal class SdkStateHolderTest {
         var startSucceeds: Boolean = true,
         private val startThrows: Boolean = false,
         var disableThrows: Boolean = false,
-    ) : SdkApi by recordingSdkApi(calls) {
+        var preStartThrows: Boolean = false,
+        private val postStartThrows: Boolean = false,
+        private val prefix: String = "",
+    ) : SdkInstance, SdkApi by recordingSdkApi(calls) {
 
         private var started = false
+
+        val handedOver = mutableListOf<BufferingSdkInstance>()
+
+        override fun onPreStart(buffer: BufferingSdkInstance) {
+            calls += "${prefix}onPreStart"
+            handedOver += buffer
+            check(!preStartThrows) { "pre start failed" }
+        }
+
+        override fun onPostStart(buffer: BufferingSdkInstance) {
+            calls += "${prefix}onPostStart"
+            handedOver += buffer
+            check(!postStartThrows) { "post start failed" }
+        }
 
         override val isStarted: Boolean get() = started
 

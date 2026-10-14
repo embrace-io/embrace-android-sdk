@@ -25,11 +25,14 @@ import io.embrace.android.embracesdk.internal.utils.Provider
  * A start that does not succeed leaves the SDK in [SdkState.NOT_STARTED] so that it can be retried. [SdkState.DISABLED]
  * is terminal: once disabled, the SDK cannot be started again. Exceptions are reported to [errorHandler] rather than
  * thrown.
+ *
+ * Leaving [SdkState.NOT_STARTED] switches away from the [preStart] buffer, which is handed over to the next
+ * [SdkInstance] via [SdkInstance.onPreStart] and [SdkInstance.onPostStart].
  */
 internal class SdkStateHolder(
-    instance: Provider<SdkApi>,
-    @Suppress("UnusedPrivateProperty") preStart: Provider<SdkApi>,
-    @Suppress("UnusedPrivateProperty") disabled: Provider<SdkApi>,
+    instance: Provider<SdkInstance>,
+    private val preStart: Provider<BufferingSdkInstance>,
+    private val disabled: Provider<SdkInstance>,
     telemetryService: InternalTelemetryService,
     private val errorHandler: InternalErrorHandler,
     private val internalInterfaceApi: InternalInterfaceApi = NoopInternalInterfaceApi,
@@ -37,7 +40,9 @@ internal class SdkStateHolder(
 
     private val lock = Any()
 
-    val dispatcher: SdkApiDispatcher = SdkApiDispatcher(instance(), telemetryService, errorHandler)
+    private val instance: SdkInstance = instance()
+
+    val dispatcher: SdkApiDispatcher = SdkApiDispatcher(this.instance, telemetryService, errorHandler)
 
     /**
      * The [SdkApi] that backs the public `Embrace` object. Calls that change SDK state are handled here and
@@ -67,10 +72,11 @@ internal class SdkStateHolder(
             if (state != SdkState.NOT_STARTED) {
                 return
             }
-            val instance = dispatcher.target
             val started = try {
-                instance.start(context)
-                instance.isStarted
+                drainBufferedCalls(instance) {
+                    instance.start(context)
+                    instance.isStarted
+                }
             } catch (exc: Throwable) {
                 Log.w("Embrace", "Failed to start the Embrace SDK", exc)
                 errorHandler.trackInternalError(InternalErrorType.PublicApiFail, exc)
@@ -89,7 +95,10 @@ internal class SdkStateHolder(
         synchronized(lock) {
             when (state) {
                 SdkState.DISABLED -> return
-                SdkState.NOT_STARTED -> state = SdkState.DISABLED
+                SdkState.NOT_STARTED -> {
+                    guard { drainBufferedCalls(disabled()) { true } }
+                    state = SdkState.DISABLED
+                }
                 SdkState.STARTED -> {
                     // TODO: future: dispatcher.target will be changed here and at other state transitions.
                     try {
@@ -101,6 +110,16 @@ internal class SdkStateHolder(
                 }
             }
         }
+    }
+
+    private inline fun drainBufferedCalls(next: SdkInstance, start: () -> Boolean): Boolean {
+        val buffer = preStart()
+        next.onPreStart(buffer)
+        if (!start()) {
+            return false
+        }
+        guard { next.onPostStart(buffer) }
+        return true
     }
 
     private fun updateInternalInterfaceApi() {

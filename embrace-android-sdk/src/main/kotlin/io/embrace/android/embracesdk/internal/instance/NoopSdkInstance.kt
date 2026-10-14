@@ -31,11 +31,13 @@ import io.opentelemetry.kotlin.tracing.export.SpanProcessor
 /**
  * A no-op implementation of [SdkApi]. The first API call that gets dropped logs [message] along
  * with the name of the action that could not be performed.
+ *
+ * When handed a [BufferingSdkInstance] it discards the buffered calls so their memory is released.
  */
 internal class NoopSdkInstance(
     private val logger: InternalLogger,
     private val message: String,
-) : SdkApi {
+) : SdkInstance {
 
     companion object {
         const val SDK_NOT_INITIALIZED: String = "Embrace SDK is not initialized yet"
@@ -56,6 +58,14 @@ internal class NoopSdkInstance(
                 logger.logInfo(msg, Throwable(msg))
             }
         }
+    }
+
+    override fun onPreStart(buffer: BufferingSdkInstance) {}
+
+    override fun onPostStart(buffer: BufferingSdkInstance) {
+        buffer.drainCompletedSpans(this)
+        buffer.drainExperimentCalls(this) {}
+        buffer.drainOTelConfig(this)
     }
 
     override fun start(context: Context) {}

@@ -30,10 +30,9 @@ class AgpSupportTest {
     fun `unsupported old gradle version`() {
         val errorMessage = "Embrace requires Gradle version ${GradleVersion.MIN_VERSION} or higher. Please update your Gradle version."
         rule.runTest(
-            fixture = "android-version-support",
-            tasks = listOf("assembleRelease"),
+            fixture = "jvm-simple",
+            tasks = listOf("help"),
             testMatrix = TestMatrix.UnsupportedOldGradleVersion,
-            projectType = ProjectType.ANDROID,
             expectedExceptionMessage = errorMessage,
             assertions = {
                 verifyNoUploads()

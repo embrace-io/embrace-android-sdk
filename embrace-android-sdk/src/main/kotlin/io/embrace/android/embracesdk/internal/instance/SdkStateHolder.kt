@@ -2,7 +2,6 @@ package io.embrace.android.embracesdk.internal.instance
 
 import android.content.Context
 import android.util.Log
-import io.embrace.android.embracesdk.internal.EmbraceInternalApi
 import io.embrace.android.embracesdk.internal.api.SdkApi
 import io.embrace.android.embracesdk.internal.logging.InternalErrorHandler
 import io.embrace.android.embracesdk.internal.logging.InternalErrorType
@@ -56,10 +55,6 @@ internal class SdkStateHolder(
     @Volatile
     var state: SdkState = SdkState.NOT_STARTED
         private set
-
-    init {
-        EmbraceInternalApi.internalInterfaceApi = dispatcher
-    }
 
     /**
      * Starts the SDK. Has no effect unless the SDK is in [SdkState.NOT_STARTED].

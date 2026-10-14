@@ -2,23 +2,20 @@ package io.embrace.android.embracesdk.internal.instance
 
 import android.content.Context
 import android.util.Log
-import io.embrace.android.embracesdk.internal.EmbraceInternalInterface
-import io.embrace.android.embracesdk.internal.FlutterInternalInterface
-import io.embrace.android.embracesdk.internal.ReactNativeInternalInterface
-import io.embrace.android.embracesdk.internal.UnityInternalInterface
+import io.embrace.android.embracesdk.internal.InternalInterfaceApi
 import io.embrace.android.embracesdk.internal.api.BreadcrumbApi
 import io.embrace.android.embracesdk.internal.api.ExperimentApi
 import io.embrace.android.embracesdk.internal.api.InstrumentationApi
 import io.embrace.android.embracesdk.internal.api.LogsApi
 import io.embrace.android.embracesdk.internal.api.NetworkRequestApi
 import io.embrace.android.embracesdk.internal.api.OTelApi
-import io.embrace.android.embracesdk.internal.api.SdkApi
 import io.embrace.android.embracesdk.internal.api.SdkStateApi
 import io.embrace.android.embracesdk.internal.api.UserApi
 import io.embrace.android.embracesdk.internal.api.UserSessionApi
 import io.embrace.android.embracesdk.internal.api.ViewTrackingApi
 import io.embrace.android.embracesdk.internal.api.delegate.BreadcrumbApiDelegate
 import io.embrace.android.embracesdk.internal.api.delegate.ExperimentApiDelegate
+import io.embrace.android.embracesdk.internal.api.delegate.HostedSdkInternalInterfaceImpl
 import io.embrace.android.embracesdk.internal.api.delegate.InstrumentationApiDelegate
 import io.embrace.android.embracesdk.internal.api.delegate.LogsApiDelegate
 import io.embrace.android.embracesdk.internal.api.delegate.NetworkRequestApiDelegate
@@ -30,8 +27,6 @@ import io.embrace.android.embracesdk.internal.api.delegate.ViewTrackingApiDelega
 import io.embrace.android.embracesdk.internal.clock.Clock
 import io.embrace.android.embracesdk.internal.delivery.storage.StorageLocation
 import io.embrace.android.embracesdk.internal.delivery.storage.asFile
-import io.embrace.android.embracesdk.internal.injection.InternalInterfaceModule
-import io.embrace.android.embracesdk.internal.injection.InternalInterfaceModuleImpl
 import io.embrace.android.embracesdk.internal.injection.ModuleGraph
 import io.embrace.android.embracesdk.internal.injection.applyCustomMetadata
 import io.embrace.android.embracesdk.internal.injection.loadInstrumentation
@@ -41,7 +36,6 @@ import io.embrace.android.embracesdk.internal.injection.postLoadInstrumentation
 import io.embrace.android.embracesdk.internal.injection.registerListeners
 import io.embrace.android.embracesdk.internal.injection.triggerPayloadSend
 import io.embrace.android.embracesdk.internal.utils.EmbTrace
-import io.embrace.android.embracesdk.internal.utils.Provider
 import io.embrace.android.embracesdk.spans.AutoTerminationMode
 import io.embrace.android.embracesdk.spans.EmbraceSpan
 import io.embrace.android.embracesdk.spans.EmbraceSpanEvent
@@ -60,7 +54,6 @@ import java.util.concurrent.Executors
  */
 internal class RealSdkInstance(
     private val moduleGraph: ModuleGraph,
-    private val hostedSdkApiProvider: Provider<SdkApi>, // handles dropped calls etc for internal interface
     private val clock: Clock,
     private val userApiDelegate: UserApiDelegate = UserApiDelegate(
         userService = lazy { moduleGraph.essentialServiceModule.userService },
@@ -81,6 +74,16 @@ internal class RealSdkInstance(
         payloadStore = moduleGraph.deliveryModule?.payloadStore,
         serializer = moduleGraph.initModule.jsonSerializer,
         telemetryService = moduleGraph.initModule.telemetryService,
+    ),
+    private val hostedSdkInternalInterface: HostedSdkInternalInterfaceImpl = HostedSdkInternalInterfaceImpl(
+        logsApi = logsApiDelegate,
+        configService = moduleGraph.configService,
+        resourceSource = moduleGraph.payloadSourceModule.resourceSource,
+        instrumentationRegistry = moduleGraph.instrumentationModule.instrumentationRegistry,
+        serializer = moduleGraph.initModule.jsonSerializer,
+        rnBundleIdTracker = lazy { moduleGraph.payloadSourceModule.rnBundleIdTracker },
+        hostedSdkVersionInfo = moduleGraph.payloadSourceModule.hostedSdkVersionInfo,
+        logger = moduleGraph.initModule.logger,
     ),
     private val viewTrackingApiDelegate: ViewTrackingApiDelegate = ViewTrackingApiDelegate(
         registry = moduleGraph.instrumentationModule.instrumentationRegistry,
@@ -117,11 +120,10 @@ internal class RealSdkInstance(
     ViewTrackingApi by viewTrackingApiDelegate,
     BreadcrumbApi by breadcrumbApiDelegate,
     InstrumentationApi by instrumentationApiDelegate,
-    ExperimentApi by experimentApiDelegate {
+    ExperimentApi by experimentApiDelegate,
+    InternalInterfaceApi by hostedSdkInternalInterface {
 
     private val tracingApi: TracingApi get() = moduleGraph.openTelemetryModule.tracingApi
-
-    private var internalInterfaceModule: InternalInterfaceModule? = null
 
     @Volatile
     private var applicationInitStartMs: Long? = null
@@ -160,14 +162,6 @@ internal class RealSdkInstance(
             moduleGraph.postInit()
 
             EmbTrace.trace(sectionName = "post-services-setup", recordDuration = true) {
-                internalInterfaceModule = InternalInterfaceModuleImpl(
-                    moduleGraph.initModule,
-                    moduleGraph.configService,
-                    moduleGraph.payloadSourceModule,
-                    hostedSdkApiProvider(),
-                    moduleGraph.instrumentationModule.instrumentationRegistry,
-                )
-
                 // not fully initialized, but the SDK shouldn't catastrophically throw after this point,
                 // so we allow external calls.
                 started = true
@@ -209,30 +203,6 @@ internal class RealSdkInstance(
         // lets the queued deletion finish, then releases the worker thread
         executor.shutdown()
     }
-
-    /**
-     * Gets the [io.embrace.android.embracesdk.internal.EmbraceInternalInterface] that should be used as the sole source of
-     * communication with other Android SDK modules.
-     */
-    override val internalInterface: EmbraceInternalInterface
-        get() {
-            return checkNotNull(internalInterfaceModule?.embraceInternalInterface)
-        }
-
-    override val reactNativeInternalInterface: ReactNativeInternalInterface
-        get() {
-            return checkNotNull(internalInterfaceModule?.reactNativeInternalInterface)
-        }
-
-    override val unityInternalInterface: UnityInternalInterface
-        get() {
-            return checkNotNull(internalInterfaceModule?.unityInternalInterface)
-        }
-
-    override val flutterInternalInterface: FlutterInternalInterface
-        get() {
-            return checkNotNull(internalInterfaceModule?.flutterInternalInterface)
-        }
 
     override fun createSpan(
         name: String,

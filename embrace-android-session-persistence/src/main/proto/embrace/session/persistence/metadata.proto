@@ -32,6 +32,9 @@ message SessionMetadata {
 
   string timezone_description = 12;
   string locale = 13;
+
+  // When this file was written, in milliseconds since the epoch by the SDK clock. 0 if unknown.
+  int64 written_at_ms = 14;
 }
 
 message SharedLibSymbolMapping {

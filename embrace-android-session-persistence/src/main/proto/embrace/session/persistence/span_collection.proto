@@ -15,4 +15,10 @@ option java_package = "io.embrace.android.embracesdk.internal.session.persistenc
 message SpanCollection {
   uint32 format_version = 1;
   repeated SpanProto spans = 2;
+
+  // When the write ending with this field was made, in milliseconds since the epoch by the SDK clock.
+  // Every write to the collection ends with one, after its span records, so a write cut short
+  // leaves no time for spans that did not land. The latest one read is when the collection was
+  // last written. 0 if unknown.
+  int64 written_at_ms = 3;
 }

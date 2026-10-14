@@ -90,7 +90,7 @@ internal class SessionMetadataWriterTest {
         write()
 
         val proto = readMetadata()
-        assertEquals(fullyPopulatedMetadataProto(), proto)
+        assertEquals(persisted(fullyPopulatedMetadataProto()), proto)
         assertEquals("userId", proto.user_id)
         assertEquals("email@example.com", proto.email)
         assertEquals("username", proto.username)
@@ -134,12 +134,14 @@ internal class SessionMetadataWriterTest {
     @Test
     fun `metadata is overwritten when the user info changes`() {
         write()
+        clock.tick(1000)
         metadataProvider = { fullyPopulatedMetadata.copy(userId = "newUserId", personas = linkedSetOf("payer")) }
         assertTrue(writer.write())
 
         with(readMetadata()) {
             assertEquals("newUserId", user_id)
             assertEquals(listOf("payer"), personas)
+            assertEquals(clock.now(), written_at_ms)
         }
         assertEquals(listOf(METADATA_FILE_NAME), partDir().list()?.toList())
         assertNoInternalErrors()
@@ -282,7 +284,7 @@ internal class SessionMetadataWriterTest {
 
         // the 'none' token in the directory name must not leak into the metadata
         assertEquals(
-            fullyPopulatedMetadataProto(userSessionId = "", sessionPartId = ""),
+            persisted(fullyPopulatedMetadataProto(userSessionId = "", sessionPartId = "")),
             readMetadata(anonymous),
         )
     }
@@ -319,7 +321,7 @@ internal class SessionMetadataWriterTest {
     fun `a stale temporary file is reclaimed by the next write`() {
         File(partDir(), "$METADATA_FILE_NAME.tmp").writeText("torn write")
         assertTrue(write())
-        assertEquals(fullyPopulatedMetadataProto(), readMetadata())
+        assertEquals(persisted(fullyPopulatedMetadataProto()), readMetadata())
         assertEquals(listOf(METADATA_FILE_NAME), partDir().list()?.toList())
         assertNoInternalErrors()
     }
@@ -422,7 +424,7 @@ internal class SessionMetadataWriterTest {
         metadataProvider = { error("boom") }
         assertFalse(writer.write())
 
-        assertEquals(fullyPopulatedMetadataProto(), readMetadata())
+        assertEquals(persisted(fullyPopulatedMetadataProto()), readMetadata())
         assertEquals(listOf(METADATA_FILE_NAME), partDir().list()?.toList())
         assertWriteFailureTracked()
     }
@@ -468,7 +470,7 @@ internal class SessionMetadataWriterTest {
 
         metadataProvider = { fullyPopulatedMetadata }
         assertTrue(write())
-        assertEquals(fullyPopulatedMetadataProto(), readMetadata())
+        assertEquals(persisted(fullyPopulatedMetadataProto()), readMetadata())
 
         assertTrue(metadataFile().delete())
         assertTrue(write())
@@ -482,7 +484,7 @@ internal class SessionMetadataWriterTest {
         metadataProvider = { fullyPopulatedMetadata }
         assertTrue(write())
 
-        assertEquals(fullyPopulatedMetadataProto(), readMetadata())
+        assertEquals(persisted(fullyPopulatedMetadataProto()), readMetadata())
         assertWriteFailureTracked()
     }
 
@@ -517,6 +519,10 @@ internal class SessionMetadataWriterTest {
         activePart = directory
         return writer.write()
     }
+
+    /** [metadata] as the writer persists it: stamped with the time it was written. */
+    private fun persisted(metadata: SessionMetadata): SessionMetadata =
+        metadata.copy(written_at_ms = clock.now())
 
     private fun assertNoInternalErrors() {
         assertEquals(emptyList<FakeInternalLogger.LogMessage>(), logger.internalErrorMessages)

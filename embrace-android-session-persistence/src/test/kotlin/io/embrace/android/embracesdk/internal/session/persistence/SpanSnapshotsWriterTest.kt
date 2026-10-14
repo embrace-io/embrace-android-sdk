@@ -86,7 +86,7 @@ internal class SpanSnapshotsWriterTest {
         write()
 
         val decoded = readSnapshots()
-        assertEquals(fullyPopulatedSpanSnapshotsProto, decoded)
+        assertEquals(persisted(fullyPopulatedSpanSnapshotsProto), decoded)
         assertEquals(fullyPopulatedSpanProto, decoded.spans.first())
     }
 
@@ -119,7 +119,7 @@ internal class SpanSnapshotsWriterTest {
     @Test
     fun `an empty list of spans is still written`() {
         assertTrue(write(span = emptyList()))
-        assertEquals(SpanCollection(format_version = FORMAT_VERSION), readSnapshots())
+        assertEquals(persisted(SpanCollection(format_version = FORMAT_VERSION)), readSnapshots())
         assertNoInternalErrors()
     }
 
@@ -166,7 +166,7 @@ internal class SpanSnapshotsWriterTest {
         val directory = SessionPartDirectory(timestamp = TIMESTAMP, uuid = UUID)
         createPartDir(directory)
         assertTrue(write(directory))
-        assertEquals(fullyPopulatedSpanSnapshotsProto, readSnapshots(directory))
+        assertEquals(persisted(fullyPopulatedSpanSnapshotsProto), readSnapshots(directory))
     }
 
     @Test
@@ -197,7 +197,7 @@ internal class SpanSnapshotsWriterTest {
     fun `a stale temporary file is reclaimed by the next write`() {
         File(partDir(), "$SPAN_SNAPSHOTS_FILE_NAME.tmp").writeText("torn write")
         assertTrue(write())
-        assertEquals(fullyPopulatedSpanSnapshotsProto, readSnapshots())
+        assertEquals(persisted(fullyPopulatedSpanSnapshotsProto), readSnapshots())
         assertEquals(listOf(SPAN_SNAPSHOTS_FILE_NAME), partDir().list()?.toList())
         assertNoInternalErrors()
     }
@@ -256,7 +256,7 @@ internal class SpanSnapshotsWriterTest {
     fun `a failed overwrite leaves the previous span snapshots intact`() {
         assertTrue(write())
         assertFalse(writer.write(listOf(Span(attributes = ExplodingList()))))
-        assertEquals(fullyPopulatedSpanSnapshotsProto, readSnapshots())
+        assertEquals(persisted(fullyPopulatedSpanSnapshotsProto), readSnapshots())
         assertEquals(listOf(SPAN_SNAPSHOTS_FILE_NAME), partDir().list()?.toList())
         assertWriteFailureTracked()
     }
@@ -282,9 +282,11 @@ internal class SpanSnapshotsWriterTest {
     @Test
     fun `an append adds to the file rather than replacing it`() {
         assertTrue(write(span = listOf(first)))
+        clock.tick(1000)
         assertTrue(append(listOf(second)))
         assertEquals(protos(first, second), loggedRecords())
         assertEquals(protos(first, second), latestSnapshots())
+        assertEquals(clock.now(), readSnapshots().written_at_ms)
         assertNoInternalErrors()
     }
 
@@ -323,9 +325,11 @@ internal class SpanSnapshotsWriterTest {
         assertEquals(protos(first, second, third), loggedRecords())
 
         val updated = first.copy(name = "renamed")
+        clock.tick(1000)
         assertTrue(append(listOf(updated), live = listOf(updated, second, third)))
         assertEquals(protos(updated, second, third), loggedRecords())
         assertEquals(protos(updated, second, third), latestSnapshots())
+        assertEquals(clock.now(), readSnapshots().written_at_ms)
         assertNoInternalErrors()
     }
 
@@ -499,11 +503,15 @@ internal class SpanSnapshotsWriterTest {
     private fun protos(vararg spans: Span): List<SpanProto> = spans.map(Span::toProto)
 
     private fun rollupSize(spans: List<Span>): Long = SpanCollection.ADAPTER.encodedSize(
-        SpanCollection(format_version = FORMAT_VERSION, spans = spans.map(Span::toProto)),
+        persisted(SpanCollection(format_version = FORMAT_VERSION, spans = spans.map(Span::toProto))),
     ).toLong()
 
     private fun appendSize(spans: List<Span>): Long =
-        SpanCollection.ADAPTER.encodedSize(SpanCollection(spans = spans.map(Span::toProto))).toLong()
+        SpanCollection.ADAPTER.encodedSize(persisted(SpanCollection(spans = spans.map(Span::toProto)))).toLong()
+
+    /** [collection] as the writer persists it: ending with the time it was written. */
+    private fun persisted(collection: SpanCollection): SpanCollection =
+        collection.copy(written_at_ms = clock.now())
 
     private fun assertNoInternalErrors() {
         assertEquals(emptyList<FakeInternalLogger.LogMessage>(), logger.internalErrorMessages)

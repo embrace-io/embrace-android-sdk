@@ -12,7 +12,8 @@ import io.embrace.android.embracesdk.internal.utils.SystemTrace
  *
  * The file is overwritten in place. [write] is called when a session part starts, and whenever the
  * user info or envelope resource changes. The new file cannot exceed [MAX_PART_FILE_BYTES] bytes,
- * as anything bigger couldn't be read due to the limit imposed on the reader.
+ * as anything bigger couldn't be read due to the limit imposed on the reader. Each write holds the
+ * time it was written.
  */
 class SessionMetadataWriter(
     private val target: SessionPartWriteTarget,
@@ -60,6 +61,7 @@ class SessionMetadataWriter(
             sharedLibSymbolMapping = sharedLibSymbolMapping,
         )
 
+        // compared before the time it is written at is added, so an unchanged file is not rewritten
         if (metadata == lastWritten) {
             return true
         }
@@ -72,7 +74,7 @@ class SessionMetadataWriter(
             counters = target.counters,
             syncImmediately = firstMetadataWrite,
         ) { stream ->
-            SessionMetadata.ADAPTER.encode(stream, metadata)
+            SessionMetadata.ADAPTER.encode(stream, metadata.copy(written_at_ms = target.currentTimeMs()))
         }
         lastWritten = metadata
         return true

@@ -6,10 +6,7 @@ import androidx.test.ext.junit.runners.AndroidJUnit4
 import io.embrace.android.embracesdk.fakes.FakeInternalLogger
 import io.embrace.android.embracesdk.fakes.FakeInternalTelemetryService
 import io.embrace.android.embracesdk.internal.EmbraceInternalApi
-import io.embrace.android.embracesdk.internal.InternalInterfaceApi
 import io.embrace.android.embracesdk.internal.NoopInternalInterfaceApi
-import io.embrace.android.embracesdk.internal.api.SdkApi
-import io.opentelemetry.kotlin.NoopOpenTelemetry
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertSame
 import org.junit.Test
@@ -21,7 +18,7 @@ internal class SdkStateHolderTest {
     private val context = ApplicationProvider.getApplicationContext<Context>()
     private val calls = mutableListOf<String>()
     private val logger = FakeInternalLogger(throwOnInternalError = false)
-    private val buffer = BufferingSdkInstance({ 0 }, logger, NoopOpenTelemetry)
+    private val buffer = BufferingSdkInstance({ 0 }, logger)
     private val disabled = FakeInstance(calls, prefix = "disabled:")
 
     @Test
@@ -168,25 +165,25 @@ internal class SdkStateHolderTest {
     }
 
     @Test
-    fun `internal interface api follows state`() {
-        val internalInterfaceApi = FakeInternalInterfaceApi()
-        EmbraceInternalApi.internalInterfaceApi = internalInterfaceApi
+    fun `internal interface api is routed through the dispatcher`() {
         val instance = FakeInstance(calls, startSucceeds = false)
-        val holder = createHolder(instance, internalInterfaceApi)
-        assertSame(NoopInternalInterfaceApi, EmbraceInternalApi.internalInterfaceApi)
+        val holder = createHolder(instance)
+        assertSame(holder.dispatcher, EmbraceInternalApi.internalInterfaceApi)
 
         holder.start(context)
-        assertSame(NoopInternalInterfaceApi, EmbraceInternalApi.internalInterfaceApi)
+        assertSame(NoopInternalInterfaceApi.internalInterface, EmbraceInternalApi.internalInterface)
+        assertEquals(listOf("onPreStart", "start"), calls)
 
         instance.startSucceeds = true
         holder.start(context)
-        assertSame(internalInterfaceApi, EmbraceInternalApi.internalInterfaceApi)
+        calls.clear()
+        EmbraceInternalApi.internalInterface
+        assertEquals(listOf("getInternalInterface/0"), calls)
 
         holder.disable()
-        assertSame(NoopInternalInterfaceApi, EmbraceInternalApi.internalInterfaceApi)
-
-        holder.start(context)
-        assertSame(NoopInternalInterfaceApi, EmbraceInternalApi.internalInterfaceApi)
+        calls.clear()
+        EmbraceInternalApi.internalInterface
+        assertEquals(listOf("disabled:getInternalInterface/0"), calls)
     }
 
     @Test
@@ -243,19 +240,13 @@ internal class SdkStateHolderTest {
         assertEquals("pre start failed", logger.internalErrorMessages.single().throwable?.message)
     }
 
-    private fun createHolder(
-        instance: SdkInstance,
-        internalInterfaceApi: InternalInterfaceApi = NoopInternalInterfaceApi,
-    ) = SdkStateHolder(
+    private fun createHolder(instance: SdkInstance) = SdkStateHolder(
         instance = { instance },
         preStart = { buffer },
         disabled = { disabled },
         telemetryService = FakeInternalTelemetryService(),
         errorHandler = logger,
-        internalInterfaceApi = internalInterfaceApi,
     )
-
-    private class FakeInternalInterfaceApi : InternalInterfaceApi by NoopInternalInterfaceApi
 
     private class FakeInstance(
         private val calls: MutableList<String>,
@@ -265,7 +256,7 @@ internal class SdkStateHolderTest {
         var preStartThrows: Boolean = false,
         private val postStartThrows: Boolean = false,
         private val prefix: String = "",
-    ) : SdkInstance, SdkApi by recordingSdkApi(calls, prefix) {
+    ) : SdkInstance, InternalSdkApi by recordingSdkApi(calls, prefix) {
 
         private var started = false
 

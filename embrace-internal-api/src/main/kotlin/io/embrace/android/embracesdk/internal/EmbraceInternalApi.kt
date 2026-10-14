@@ -7,7 +7,7 @@ package io.embrace.android.embracesdk.internal
 object EmbraceInternalApi : InternalInterfaceApi {
 
     /**
-     * The [InternalInterfaceApi] that calls are delegated to. This is [NoopInternalInterfaceApi] unless the SDK
+     * The [InternalInterfaceApi] that calls are delegated to. Its internal interfaces are no-ops unless the SDK
      * is started.
      */
     @Volatile

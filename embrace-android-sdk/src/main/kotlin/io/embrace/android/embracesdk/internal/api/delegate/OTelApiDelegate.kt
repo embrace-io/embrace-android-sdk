@@ -1,6 +1,7 @@
 package io.embrace.android.embracesdk.internal.api.delegate
 
 import io.embrace.android.embracesdk.internal.api.OTelApi
+import io.embrace.android.embracesdk.internal.injection.ModuleInitBootstrapper
 import io.opentelemetry.kotlin.OpenTelemetry
 import io.opentelemetry.kotlin.logging.export.LogRecordExporter
 import io.opentelemetry.kotlin.logging.export.LogRecordProcessor
@@ -8,8 +9,10 @@ import io.opentelemetry.kotlin.tracing.export.SpanExporter
 import io.opentelemetry.kotlin.tracing.export.SpanProcessor
 
 internal class OTelApiDelegate(
-    private val openTelemetryKotlin: OpenTelemetry,
+    lazyBootstrapper: Lazy<ModuleInitBootstrapper>,
 ) : OTelApi {
+
+    private val bootstrapper by lazyBootstrapper
 
     override fun addSpanExporter(spanExporter: SpanExporter) {
     }
@@ -26,5 +29,6 @@ internal class OTelApiDelegate(
     override fun setResourceAttribute(key: String, value: String) {
     }
 
-    override fun getOpenTelemetryKotlin(): OpenTelemetry = openTelemetryKotlin
+    override fun getOpenTelemetryKotlin(): OpenTelemetry =
+        bootstrapper.openTelemetryModule.otelSdkWrapper.openTelemetryKotlin
 }

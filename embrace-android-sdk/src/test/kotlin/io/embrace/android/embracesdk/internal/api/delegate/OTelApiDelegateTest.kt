@@ -11,18 +11,13 @@ import io.embrace.android.embracesdk.fakes.OtelSdkMode
 import io.embrace.android.embracesdk.fakes.injection.FakeInitModule
 import io.embrace.android.embracesdk.internal.injection.ModuleInitBootstrapper
 import io.embrace.android.embracesdk.internal.otel.config.OtelSdkConfig
-import io.opentelemetry.kotlin.NoopOpenTelemetry
-import io.opentelemetry.kotlin.OpenTelemetry
-import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertSame
-import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.ParameterizedRobolectricTestRunner
-import java.util.concurrent.atomic.AtomicBoolean
 
 @RunWith(ParameterizedRobolectricTestRunner::class)
 internal class OTelApiDelegateTest(
@@ -38,8 +33,6 @@ internal class OTelApiDelegateTest(
     private lateinit var bootstrapper: ModuleInitBootstrapper
     private lateinit var delegate: OTelApiDelegate
     private lateinit var cfg: OtelSdkConfig
-    private lateinit var started: AtomicBoolean
-    private lateinit var openTelemetryKotlin: OpenTelemetry
 
     @Before
     fun setUp() {
@@ -50,15 +43,7 @@ internal class OTelApiDelegateTest(
         bootstrapper.init(ApplicationProvider.getApplicationContext())
         cfg = bootstrapper.openTelemetryModule.otelSdkConfig
 
-        started = AtomicBoolean(true)
-        openTelemetryKotlin = LateBindingOpenTelemetry {
-            if (started.get()) {
-                bootstrapper.openTelemetryModule.otelSdkWrapper.openTelemetryKotlin
-            } else {
-                NoopOpenTelemetry
-            }
-        }
-        delegate = OTelApiDelegate(openTelemetryKotlin)
+        delegate = OTelApiDelegate(lazy { bootstrapper })
     }
 
     @Test
@@ -76,31 +61,11 @@ internal class OTelApiDelegateTest(
     }
 
     @Test
-    fun `get opentelemetry kotlin binds late`() {
-        started.set(false)
-        val otel = delegate.getOpenTelemetryKotlin()
-        assertSame(openTelemetryKotlin, otel)
-        val tracer = otel.tracerProvider.getTracer("test")
-        assertFalse(tracer.startSpan("before").isRecording())
-
-        started.set(true)
-        assertTrue(tracer.startSpan("after").isRecording())
-    }
-
-    @Test
-    fun `context captured before start binds late`() {
-        started.set(false)
-        val otel = delegate.getOpenTelemetryKotlin()
-        val context = otel.context
-
-        started.set(true)
-        val span = otel.tracerProvider.getTracer("test").startSpan("span")
-        val scope = context.root().storeSpan(span).attach()
-        try {
-            assertEquals(span.spanContext.traceId, context.implicit().extractSpan().spanContext.traceId)
-        } finally {
-            scope.detach()
-        }
+    fun `get opentelemetry kotlin returns sdk instance`() {
+        assertSame(
+            bootstrapper.openTelemetryModule.otelSdkWrapper.openTelemetryKotlin,
+            delegate.getOpenTelemetryKotlin(),
+        )
     }
 
     @Test

@@ -1,7 +1,6 @@
 package io.embrace.android.embracesdk.internal.instance
 
 import io.embrace.android.embracesdk.internal.SystemInfo
-import io.embrace.android.embracesdk.internal.api.delegate.LateBindingOpenTelemetry
 import io.embrace.android.embracesdk.internal.clock.Clock
 import io.embrace.android.embracesdk.internal.clock.NormalizedIntervalClock
 import io.embrace.android.embracesdk.internal.injection.InitModuleImpl
@@ -13,7 +12,6 @@ import io.embrace.android.embracesdk.internal.telemetry.InternalTelemetryService
 import io.embrace.android.embracesdk.internal.telemetry.InternalTelemetryServiceImpl
 import io.embrace.android.embracesdk.internal.utils.EmbTrace
 import io.embrace.android.embracesdk.internal.utils.Provider
-import io.opentelemetry.kotlin.NoopOpenTelemetry
 
 /**
  * Assembles the [SdkStateHolder] that backs the public `Embrace` object. Production code and integration tests both
@@ -41,34 +39,24 @@ internal fun createSdkStateHolder(
         }
     },
 ): SdkStateHolder {
-    val bootstrapper = lazy(bootstrapperProvider)
-    lateinit var impl: RealSdkInstance
-    val openTelemetryKotlin = LateBindingOpenTelemetry {
-        if (impl.isStarted) {
-            bootstrapper.value.openTelemetryModule.otelSdkWrapper.openTelemetryKotlin
-        } else {
-            NoopOpenTelemetry
-        }
-    }
-    val preStartBuffer = BufferingSdkInstance(
-        clock = clock::now,
-        logger = logger,
-        openTelemetryKotlin = openTelemetryKotlin,
-    )
-    lateinit var holder: SdkStateHolder
-    impl = RealSdkInstance(
-        lazyBootstrapper = bootstrapper,
-        hostedSdkApiProvider = { holder.api },
-        openTelemetryKotlin = openTelemetryKotlin,
-        clock = clock,
-    )
+    var holder: SdkStateHolder? = null
     holder = SdkStateHolder(
-        instance = { impl },
-        preStart = { preStartBuffer },
+        instance = {
+            RealSdkInstance(
+                bootstrapper = bootstrapperProvider(),
+                hostedSdkApiProvider = { checkNotNull(holder?.api) },
+                clock = clock,
+            )
+        },
+        preStart = {
+            BufferingSdkInstance(
+                clock = clock::now,
+                logger = logger,
+            )
+        },
         disabled = { NoopSdkInstance(logger, NoopSdkInstance.SDK_DISABLED) },
         telemetryService = telemetryService,
         errorHandler = logger,
-        internalInterfaceApi = impl,
     )
     return holder
 }

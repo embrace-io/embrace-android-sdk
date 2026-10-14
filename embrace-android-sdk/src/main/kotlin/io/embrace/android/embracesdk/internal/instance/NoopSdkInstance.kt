@@ -10,6 +10,8 @@ import io.embrace.android.embracesdk.Severity
 import io.embrace.android.embracesdk.UserSessionListener
 import io.embrace.android.embracesdk.experiments.TrackedExperiment
 import io.embrace.android.embracesdk.experiments.TrackedFeatureFlag
+import io.embrace.android.embracesdk.internal.InternalInterfaceApi
+import io.embrace.android.embracesdk.internal.NoopInternalInterfaceApi
 import io.embrace.android.embracesdk.internal.api.SdkApi
 import io.embrace.android.embracesdk.internal.api.delegate.TrackedExperimentImpl
 import io.embrace.android.embracesdk.internal.api.delegate.TrackedFeatureFlagImpl
@@ -37,7 +39,7 @@ import io.opentelemetry.kotlin.tracing.export.SpanProcessor
 internal class NoopSdkInstance(
     private val logger: InternalLogger,
     private val message: String,
-) : SdkInstance {
+) : SdkInstance, InternalInterfaceApi by NoopInternalInterfaceApi {
 
     companion object {
         const val SDK_NOT_INITIALIZED: String = "Embrace SDK is not initialized yet"

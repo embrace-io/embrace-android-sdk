@@ -8,7 +8,6 @@ import io.embrace.android.embracesdk.internal.otel.spans.NoopEmbraceSdkSpan
 import io.embrace.android.embracesdk.spans.EmbraceSpan
 import io.embrace.android.embracesdk.spans.EmbraceSpanEvent
 import io.embrace.android.embracesdk.spans.ErrorCode
-import io.opentelemetry.kotlin.NoopOpenTelemetry
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNull
@@ -62,7 +61,7 @@ internal class NoopSdkInstanceTest {
 
     @Test
     fun `calls after onPostStart are not buffered`() {
-        val buffer = BufferingSdkInstance({ 0 }, logger, NoopOpenTelemetry)
+        val buffer = BufferingSdkInstance({ 0 }, logger)
         instance.onPostStart(buffer)
         buffer.setResourceAttribute("key", "value")
         buffer.recordCompletedSpan("span", 1, 2)
@@ -70,7 +69,7 @@ internal class NoopSdkInstanceTest {
         assertEquals(emptyList<String>(), drainRemaining(buffer))
     }
 
-    private fun createBuffer() = BufferingSdkInstance({ 0 }, logger, NoopOpenTelemetry).apply {
+    private fun createBuffer() = BufferingSdkInstance({ 0 }, logger).apply {
         setResourceAttribute("key", "value")
         recordCompletedSpan("span", 1, 2)
         trackExperiment("exp", "variant", 1)

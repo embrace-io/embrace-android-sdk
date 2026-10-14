@@ -5,7 +5,8 @@ import androidx.test.ext.junit.runners.AndroidJUnit4
 import io.embrace.android.embracesdk.PropertyScope
 import io.embrace.android.embracesdk.fakes.FakeInternalLogger
 import io.embrace.android.embracesdk.fakes.FakeInternalTelemetryService
-import io.embrace.android.embracesdk.internal.api.SdkApi
+import io.embrace.android.embracesdk.internal.InternalInterfaceApi
+import io.embrace.android.embracesdk.internal.NoopInternalInterfaceApi
 import io.embrace.android.embracesdk.internal.otel.spans.NoopEmbraceSdkSpan
 import io.embrace.android.embracesdk.spans.AutoTerminationMode
 import io.embrace.android.embracesdk.spans.EmbraceSpan
@@ -123,6 +124,34 @@ internal class SdkApiDispatcherTest {
     }
 
     @Test
+    fun `internal interfaces are forwarded to the target`() {
+        sdk.internalInterface
+        sdk.reactNativeInternalInterface
+        sdk.unityInternalInterface
+        sdk.flutterInternalInterface
+        assertEquals(
+            listOf(
+                "getInternalInterface/0",
+                "getReactNativeInternalInterface/0",
+                "getUnityInternalInterface/0",
+                "getFlutterInternalInterface/0",
+            ),
+            calls,
+        )
+        assertEquals(emptyList<String>(), telemetryService.apiCalls)
+    }
+
+    @Test
+    fun `internal interface exceptions are reported and a no-op is returned`() {
+        sdk.target = throwingSdkApi()
+        assertSame(NoopInternalInterfaceApi.internalInterface, sdk.internalInterface)
+        assertSame(NoopInternalInterfaceApi.reactNativeInternalInterface, sdk.reactNativeInternalInterface)
+        assertSame(NoopInternalInterfaceApi.unityInternalInterface, sdk.unityInternalInterface)
+        assertSame(NoopInternalInterfaceApi.flutterInternalInterface, sdk.flutterInternalInterface)
+        assertEquals(4, logger.internalErrorMessages.size)
+    }
+
+    @Test
     fun `user code runs when recordSpan throws before invoking it`() {
         sdk.target = throwingSdkApi()
         assertEquals("result", sdk.recordSpan("span") { "result" })
@@ -152,7 +181,7 @@ internal class SdkApiDispatcherTest {
 
     private class RecordSpanSdkApi(
         private val impl: (() -> Any?) -> Any?,
-    ) : SdkApi by throwingSdkApi() {
+    ) : InternalSdkApi by throwingSdkApi() {
         @Suppress("UNCHECKED_CAST")
         override fun <T> recordSpan(
             name: String,
@@ -165,20 +194,25 @@ internal class SdkApiDispatcherTest {
     }
 }
 
-private fun throwingSdkApi(): SdkApi = Proxy.newProxyInstance(
-    SdkApi::class.java.classLoader,
-    arrayOf(SdkApi::class.java),
+private fun throwingSdkApi(): InternalSdkApi = Proxy.newProxyInstance(
+    InternalSdkApi::class.java.classLoader,
+    arrayOf(InternalSdkApi::class.java),
 ) { _, method, _ ->
     throw IllegalStateException(method.name)
-} as SdkApi
+} as InternalSdkApi
 
 /**
- * An [SdkApi] that records each call as `name/argumentCount`, so that overloads are told apart.
+ * An [InternalSdkApi] that records each call as `name/argumentCount`, so that overloads are told apart. Internal
+ * interfaces are served by [NoopInternalInterfaceApi].
  */
-internal fun recordingSdkApi(calls: MutableList<String>, prefix: String = ""): SdkApi = Proxy.newProxyInstance(
-    SdkApi::class.java.classLoader,
-    arrayOf(SdkApi::class.java),
+internal fun recordingSdkApi(calls: MutableList<String>, prefix: String = ""): InternalSdkApi = Proxy.newProxyInstance(
+    InternalSdkApi::class.java.classLoader,
+    arrayOf(InternalSdkApi::class.java),
 ) { _, method, _ ->
     calls += "$prefix${method.name}/${method.parameterCount}"
-    if (method.returnType == Boolean::class.javaPrimitiveType) false else null
-} as SdkApi
+    when {
+        method.declaringClass == InternalInterfaceApi::class.java -> method.invoke(NoopInternalInterfaceApi)
+        method.returnType == Boolean::class.javaPrimitiveType -> false
+        else -> null
+    }
+} as InternalSdkApi

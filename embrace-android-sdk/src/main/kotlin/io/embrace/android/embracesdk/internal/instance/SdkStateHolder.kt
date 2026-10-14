@@ -3,8 +3,6 @@ package io.embrace.android.embracesdk.internal.instance
 import android.content.Context
 import android.util.Log
 import io.embrace.android.embracesdk.internal.EmbraceInternalApi
-import io.embrace.android.embracesdk.internal.InternalInterfaceApi
-import io.embrace.android.embracesdk.internal.NoopInternalInterfaceApi
 import io.embrace.android.embracesdk.internal.api.SdkApi
 import io.embrace.android.embracesdk.internal.logging.InternalErrorHandler
 import io.embrace.android.embracesdk.internal.logging.InternalErrorType
@@ -32,7 +30,6 @@ internal class SdkStateHolder(
     private val disabled: Provider<SdkInstance>,
     telemetryService: InternalTelemetryService,
     private val errorHandler: InternalErrorHandler,
-    private val internalInterfaceApi: InternalInterfaceApi = NoopInternalInterfaceApi,
 ) {
 
     private val lock = Any()
@@ -54,13 +51,10 @@ internal class SdkStateHolder(
 
     @Volatile
     var state: SdkState = SdkState.NOT_STARTED
-        private set(value) {
-            field = value
-            updateInternalInterfaceApi()
-        }
+        private set
 
     init {
-        updateInternalInterfaceApi()
+        EmbraceInternalApi.internalInterfaceApi = dispatcher
     }
 
     /**
@@ -125,13 +119,6 @@ internal class SdkStateHolder(
         }
         guard { next.onPostStart(preStart) }
         return true
-    }
-
-    private fun updateInternalInterfaceApi() {
-        EmbraceInternalApi.internalInterfaceApi = when (state) {
-            SdkState.STARTED -> internalInterfaceApi
-            SdkState.NOT_STARTED, SdkState.DISABLED -> NoopInternalInterfaceApi
-        }
     }
 
     inline fun guard(call: () -> Unit) {

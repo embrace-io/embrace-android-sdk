@@ -18,7 +18,6 @@ import io.embrace.android.embracesdk.spans.EmbraceSpan
 import io.embrace.android.embracesdk.spans.EmbraceSpanEvent
 import io.embrace.android.embracesdk.spans.ErrorCode
 import io.opentelemetry.kotlin.NoopOpenTelemetry
-import io.opentelemetry.kotlin.OpenTelemetry
 import io.opentelemetry.kotlin.logging.export.LogRecordExporter
 import io.opentelemetry.kotlin.logging.export.LogRecordProcessor
 import io.opentelemetry.kotlin.tracing.export.SpanExporter
@@ -41,7 +40,6 @@ internal class BufferingSdkInstanceTest {
     private lateinit var logger: FakeInternalLogger
     private lateinit var target: RecordingSdkApi
     private lateinit var replayed: MutableList<List<ExperimentApiCall>>
-    private lateinit var openTelemetryKotlin: OpenTelemetry
     private lateinit var instance: BufferingSdkInstance
 
     @Before
@@ -50,8 +48,7 @@ internal class BufferingSdkInstanceTest {
         logger = FakeInternalLogger(throwOnInternalError = false)
         target = RecordingSdkApi()
         replayed = mutableListOf()
-        openTelemetryKotlin = object : OpenTelemetry by NoopOpenTelemetry {}
-        instance = BufferingSdkInstance(clock, logger, openTelemetryKotlin)
+        instance = BufferingSdkInstance(clock, logger)
     }
 
     @Test
@@ -69,8 +66,8 @@ internal class BufferingSdkInstanceTest {
     }
 
     @Test
-    fun `getOpenTelemetryKotlin returns the injected instance`() {
-        assertSame(openTelemetryKotlin, instance.getOpenTelemetryKotlin())
+    fun `getOpenTelemetryKotlin returns noop`() {
+        assertSame(NoopOpenTelemetry, instance.getOpenTelemetryKotlin())
     }
 
     @Suppress("DEPRECATION")

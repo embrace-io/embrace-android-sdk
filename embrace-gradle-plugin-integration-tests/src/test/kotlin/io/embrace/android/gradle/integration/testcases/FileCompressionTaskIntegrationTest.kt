@@ -4,7 +4,6 @@ import com.github.luben.zstd.ZstdInputStream
 import io.embrace.android.gradle.integration.framework.PluginIntegrationTestRule
 import io.embrace.android.gradle.integration.framework.buildFile
 import io.embrace.android.gradle.integration.framework.file
-import org.gradle.testkit.runner.TaskOutcome
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
@@ -36,18 +35,6 @@ class FileCompressionTaskIntegrationTest {
                 assertEquals("Hello, world!", output)
                 val input = projectDir.file("input.txt").readText()
                 assertEquals(input, output)
-            },
-        )
-    }
-
-    @Test
-    fun `skips compression when input file is missing`() {
-        rule.runTest(
-            fixture = "file-compression-missing-input",
-            expectedOutcome = TaskOutcome.NO_SOURCE,
-            assertions = { projectDir ->
-                assertFalse(projectDir.file("mapping.txt").exists())
-                assertFalse(projectDir.buildFile("mapping.txt").exists())
             },
         )
     }

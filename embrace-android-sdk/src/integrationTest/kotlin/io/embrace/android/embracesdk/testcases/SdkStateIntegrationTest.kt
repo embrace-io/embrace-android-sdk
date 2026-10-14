@@ -210,7 +210,10 @@ internal class SdkStateIntegrationTest(
             },
             assertAction = {
                 assertNoInternalErrors(logger)
-                assertEquals(listOf("log_message"), logger.sdkNotInitializedMessages.map { it.msg })
+                assertEquals(
+                    listOf("Embrace SDK is not initialized yet, cannot log_message."),
+                    logger.warningMessages.map { it.msg },
+                )
                 assertEquals(0, getLogEnvelopes(0).size)
                 assertEquals(0, getSessionEnvelopes(0).size)
             },
@@ -304,13 +307,13 @@ internal class SdkStateIntegrationTest(
                 assertEquals(SdkState.DISABLED, sdkState)
 
                 calls = ApiCalls(clock.now())
-                assertTrue(calls.callBufferedApis(embrace))
-                calls.callDroppedApis(embrace, noopSpans = false)
+                assertFalse(calls.callBufferedApis(embrace))
+                calls.callDroppedApis(embrace, disabled = true)
                 assertEquals(SdkState.DISABLED, sdkState)
                 recordSession()
             },
             assertAction = {
-                calls.assertDropped(logger, bufferedCallsDropped = true)
+                calls.assertDropped(logger, disabled = true)
                 calls.assertOTelConfigNotApplied()
                 awaitStorageDeleted()
                 assertEquals(0, getLogEnvelopes(0).size)
@@ -350,8 +353,8 @@ internal class SdkStateIntegrationTest(
                 assertNull(embrace.currentUserSessionId)
 
                 calls = ApiCalls(clock.now())
-                assertTrue(calls.callBufferedApis(embrace))
-                calls.callDroppedApis(embrace, noopSpans = false)
+                assertFalse(calls.callBufferedApis(embrace))
+                calls.callDroppedApis(embrace, disabled = true)
 
                 embrace.start(context)
                 assertEquals(SdkState.DISABLED, sdkState)
@@ -360,7 +363,7 @@ internal class SdkStateIntegrationTest(
                 recordSession()
             },
             assertAction = {
-                calls.assertDropped(logger, bufferedCallsDropped = true)
+                calls.assertDropped(logger, disabled = true)
 
                 // calls made while disabled are not replayed
                 calls.assertOTelConfigNotApplied()
@@ -517,7 +520,7 @@ internal class SdkStateIntegrationTest(
         /**
          * Calls every function that is dropped when the SDK is not started.
          */
-        fun callDroppedApis(embrace: SdkApi, noopSpans: Boolean = true) {
+        fun callDroppedApis(embrace: SdkApi, disabled: Boolean = false) {
             val activity = Robolectric.buildActivity(Activity::class.java).get()
             embrace.applicationInitStart()
             embrace.applicationInitEnd()
@@ -580,13 +583,15 @@ internal class SdkStateIntegrationTest(
             embrace.observeNavigation(activity, Any())
             assertFalse(embrace.startView("view"))
             assertFalse(embrace.endView("view"))
-            assertEquals(noopSpans, embrace.createSpan("span") === NoopEmbraceSdkSpan)
-            assertEquals(noopSpans, embrace.startSpan("span") === NoopEmbraceSdkSpan)
+            assertSame(NoopEmbraceSdkSpan, embrace.createSpan("span"))
+            assertSame(NoopEmbraceSdkSpan, embrace.startSpan("span"))
             assertEquals("result", embrace.recordSpan("span") { "result" })
             assertNull(embrace.getSpan("0000000000000000"))
-            assertNotNull(embrace.generateW3cTraceparent())
+            assertEquals(disabled, embrace.generateW3cTraceparent() == null)
             assertNotNull(embrace.getOpenTelemetryKotlin())
-            assertEquals(0, embrace.getSdkCurrentTimeMs())
+            if (!disabled) {
+                assertEquals(0, embrace.getSdkCurrentTimeMs())
+            }
             assertFalse(embrace.isStarted)
             assertEquals("", embrace.deviceId)
             assertNull(embrace.currentUserSessionId)
@@ -595,56 +600,22 @@ internal class SdkStateIntegrationTest(
         }
 
         /**
-         * Asserts that every dropped call was reported
+         * Asserts that the first dropped call was reported, and that subsequent dropped calls were not.
          */
-        fun assertDropped(logger: FakeInternalLogger, bufferedCallsDropped: Boolean = false) {
-            val droppedExperimentCalls = listOf(
-                "track_experiment",
-                "track_experiment",
-                "untrack_experiment",
-                "untrack_experiment",
-                "track_feature_flag",
-                "track_feature_flag",
-                "untrack_feature_flag",
-                "untrack_feature_flag",
-            ).takeIf { bufferedCallsDropped }.orEmpty()
+        fun assertDropped(logger: FakeInternalLogger, disabled: Boolean = false) {
             assertNoInternalErrors(logger)
-            assertEquals(
-                droppedExperimentCalls + List(6) { "log_message" } + listOf(
-                    "log_push_notification",
-                    "record_network_request",
-                    "add_http_request_info_modifier",
-                    "remove_http_request_info_modifier",
-                    "add_session_property",
-                    "remove_session_property",
-                    "end_session",
-                    "add_user_session_listener",
-                    "remove_user_session_listener",
-                    "set_user_identifier",
-                    "clear_user_identifier",
-                    "set_user_email",
-                    "clear_user_email",
-                    "add_user_persona",
-                    "clear_user_persona",
-                    "clear_user_personas",
-                    "set_username",
-                    "clear_username",
-                    "add_breadcrumb",
-                    "app_ready",
-                    "activity_fully_loaded",
-                    "add_load_trace_attribute",
-                    "add_load_trace_child_span",
-                    "add_load_trace_child_span",
-                    "add_startup_trace_attribute",
-                    "add_startup_trace_child_span",
-                    "add_startup_trace_child_span",
-                    "observe_navigation",
-                    "start_view",
-                    "end_view",
-                    "get_device_id",
-                ),
-                logger.sdkNotInitializedMessages.map { it.msg },
-            )
+            assertEquals(emptyList<String>(), logger.sdkNotInitializedMessages.map { it.msg })
+            if (disabled) {
+                assertEquals(
+                    listOf("Embrace SDK is disabled, cannot add_span_exporter. Subsequent dropped calls will not be logged."),
+                    logger.infoMessages.map { it.msg }.filter { it.startsWith("Embrace SDK is disabled") },
+                )
+            } else {
+                assertEquals(
+                    listOf("Embrace SDK is not initialized yet, cannot log_message."),
+                    logger.warningMessages.map { it.msg },
+                )
+            }
         }
 
         /**

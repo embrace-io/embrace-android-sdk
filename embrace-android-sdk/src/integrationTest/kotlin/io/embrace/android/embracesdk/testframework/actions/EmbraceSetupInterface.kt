@@ -39,12 +39,9 @@ import io.embrace.android.embracesdk.internal.injection.EssentialServiceModuleIm
 import io.embrace.android.embracesdk.internal.injection.InstrumentationModule
 import io.embrace.android.embracesdk.internal.injection.InstrumentationModuleImpl
 import io.embrace.android.embracesdk.internal.injection.LogModuleImpl
-import io.embrace.android.embracesdk.internal.injection.ModuleGraph
 import io.embrace.android.embracesdk.internal.injection.ModuleGraphFactory
 import io.embrace.android.embracesdk.internal.injection.WorkerThreadModule
 import io.embrace.android.embracesdk.internal.injection.WorkerThreadModuleImpl
-import io.embrace.android.embracesdk.internal.instance.SdkStateHolder
-import io.embrace.android.embracesdk.internal.instance.createSdkStateHolder
 import io.embrace.android.embracesdk.internal.instrumentation.crash.ndk.jniDelegateTestOverride
 import io.embrace.android.embracesdk.internal.instrumentation.crash.ndk.sharedObjectLoaderTestOverride
 import io.embrace.android.embracesdk.internal.instrumentation.startup.SdkInitResourceUsageTracker
@@ -470,18 +467,6 @@ internal class EmbraceSetupInterface(
     fun getCurrentSessionPartSpan(): CurrentSessionPartSpan = fakeInitModule.openTelemetryModule.currentSessionPartSpan
 
     fun getEmbLogger(): FakeInternalLogger = fakeInitModule.logger as FakeInternalLogger
-
-    fun createStateHolder(
-        moduleGraphFactory: ModuleGraphFactory,
-        onModuleGraphCreated: (ModuleGraph) -> Unit,
-    ): SdkStateHolder = createSdkStateHolder(
-        logger = fakeInitModule.logger,
-        clock = fakeInitModule.clock,
-        telemetryService = fakeInitModule.telemetryService,
-        internalErrorHandler = fakeInitModule.internalErrorHandler,
-        moduleGraphFactoryProvider = { moduleGraphFactory },
-        onModuleGraphCreated = onModuleGraphCreated,
-    )
 
     fun getFakedWorkerExecutor(worker: Worker.Background): BlockingScheduledExecutorService =
         (workerThreadModule as FakeWorkerThreadModule).executorFor(worker)

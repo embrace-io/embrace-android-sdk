@@ -64,11 +64,7 @@ internal class StrictModeStartupTest(
 
     @After
     fun tearDown() {
-        if (moduleGraph != null) {
-            moduleGraph.essentialServiceModule.networkConnectivityService.close()
-            moduleGraph.openTelemetryModule.otelSdkConfig.shutdownExport()
-            moduleGraph.workerThreadModule.close()
-        }
+        sdkStateHolder.disable()
     }
 
     @Test

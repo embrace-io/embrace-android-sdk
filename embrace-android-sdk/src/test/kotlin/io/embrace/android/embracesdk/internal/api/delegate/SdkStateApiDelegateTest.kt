@@ -2,10 +2,10 @@ package io.embrace.android.embracesdk.internal.api.delegate
 
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import io.embrace.android.embracesdk.fakes.FakeConfigService
-import io.embrace.android.embracesdk.fakes.FakeModuleGraph
 import io.embrace.android.embracesdk.fakes.FakeSessionIdsProvider
 import io.embrace.android.embracesdk.fakes.TestUuidSource
-import io.embrace.android.embracesdk.fakes.injection.FakeUserSessionOrchestrationModule
+import io.embrace.android.embracesdk.internal.instrumentation.crash.LastRunCrashVerifier
+import io.mockk.mockk
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Before
@@ -24,10 +24,9 @@ internal class SdkStateApiDelegateTest {
         configService = FakeConfigService(deviceId = TestUuidSource().createUuid())
         sessionIdsProvider = FakeSessionIdsProvider()
         delegate = SdkStateApiDelegate(
-            FakeModuleGraph(
-                configService = configService,
-                userSessionOrchestrationModule = FakeUserSessionOrchestrationModule(sessionIdsProvider = sessionIdsProvider),
-            ),
+            deviceIdentifier = lazy { configService.deviceId },
+            sessionIdsProvider = sessionIdsProvider,
+            crashVerifier = LastRunCrashVerifier(mockk(relaxed = true)),
         )
     }
 

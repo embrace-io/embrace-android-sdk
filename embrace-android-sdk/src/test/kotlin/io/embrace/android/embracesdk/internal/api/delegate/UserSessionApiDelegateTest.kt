@@ -3,7 +3,6 @@ package io.embrace.android.embracesdk.internal.api.delegate
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import io.embrace.android.embracesdk.PropertyScope
 import io.embrace.android.embracesdk.UserSessionListener
-import io.embrace.android.embracesdk.fakes.FakeModuleGraph
 import io.embrace.android.embracesdk.fakes.FakeSessionOrchestrator
 import io.embrace.android.embracesdk.fakes.FakeUserSessionPropertiesService
 import io.embrace.android.embracesdk.fakes.injection.FakeEssentialServiceModule
@@ -28,10 +27,8 @@ internal class UserSessionApiDelegateTest {
         val essentialServiceModule = FakeEssentialServiceModule()
         userSessionPropertiesService = essentialServiceModule.userSessionPropertiesService
         delegate = UserSessionApiDelegate(
-            FakeModuleGraph(
-                essentialServiceModule = essentialServiceModule,
-                userSessionOrchestrationModule = fakeModule,
-            ),
+            userSessionPropertiesService = userSessionPropertiesService,
+            sessionOrchestrator = fakeModule.sessionOrchestrator,
         )
     }
 

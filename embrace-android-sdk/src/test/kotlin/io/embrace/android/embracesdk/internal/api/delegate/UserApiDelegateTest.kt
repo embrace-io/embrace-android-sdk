@@ -1,9 +1,7 @@
 package io.embrace.android.embracesdk.internal.api.delegate
 
 import androidx.test.ext.junit.runners.AndroidJUnit4
-import io.embrace.android.embracesdk.fakes.FakeModuleGraph
 import io.embrace.android.embracesdk.fakes.FakeUserService
-import io.embrace.android.embracesdk.fakes.injection.FakeEssentialServiceModule
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNull
@@ -22,9 +20,7 @@ internal class UserApiDelegateTest {
     @Before
     fun setUp() {
         fakeUserService = FakeUserService()
-        delegate = UserApiDelegate(
-            FakeModuleGraph(essentialServiceModule = FakeEssentialServiceModule(userService = fakeUserService)),
-        )
+        delegate = UserApiDelegate(lazy { fakeUserService })
     }
 
     @Test

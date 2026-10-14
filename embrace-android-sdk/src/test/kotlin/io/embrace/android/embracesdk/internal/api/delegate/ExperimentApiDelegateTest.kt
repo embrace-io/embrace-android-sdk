@@ -4,9 +4,7 @@ import androidx.test.ext.junit.runners.AndroidJUnit4
 import io.embrace.android.embracesdk.fakes.FakeClock
 import io.embrace.android.embracesdk.fakes.FakeExperimentTrackingService
 import io.embrace.android.embracesdk.fakes.FakeInternalLogger
-import io.embrace.android.embracesdk.fakes.FakeModuleGraph
 import io.embrace.android.embracesdk.fakes.OtelSdkMode
-import io.embrace.android.embracesdk.fakes.injection.FakeEssentialServiceModule
 import io.embrace.android.embracesdk.fakes.injection.FakeInitModule
 import io.embrace.android.embracesdk.internal.capture.experiment.ExperimentApiCall
 import io.embrace.android.embracesdk.internal.capture.experiment.ExperimentKind
@@ -311,10 +309,8 @@ internal class ExperimentApiDelegateTest {
 
     private fun createDelegate(): ExperimentApiDelegate {
         return ExperimentApiDelegate(
-            FakeModuleGraph(
-                initModule = initModule,
-                essentialServiceModule = FakeEssentialServiceModule(experimentTrackingService = fakeExperimentTrackingService),
-            ),
+            clock = initModule.clock,
+            experimentTrackingService = lazy { fakeExperimentTrackingService },
         )
     }
 

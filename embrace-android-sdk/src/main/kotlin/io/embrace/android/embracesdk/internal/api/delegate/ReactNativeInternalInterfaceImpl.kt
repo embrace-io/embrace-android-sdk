@@ -4,20 +4,22 @@ import android.content.Context
 import io.embrace.android.embracesdk.internal.EmbraceInternalInterface
 import io.embrace.android.embracesdk.internal.ReactNativeInternalInterface
 import io.embrace.android.embracesdk.internal.api.SdkApi
+import io.embrace.android.embracesdk.internal.arch.InstrumentationRegistry
 import io.embrace.android.embracesdk.internal.arch.schema.EmbType.System.ReactNativeCrash.embAndroidReactNativeCrashJsException
 import io.embrace.android.embracesdk.internal.arch.schema.SchemaType
 import io.embrace.android.embracesdk.internal.capture.metadata.RnBundleIdTracker
 import io.embrace.android.embracesdk.internal.envelope.metadata.HostedSdkVersionInfo
-import io.embrace.android.embracesdk.internal.injection.ModuleGraph
 import io.embrace.android.embracesdk.internal.instrumentation.crash.jvm.JvmCrashDataSource
 import io.embrace.android.embracesdk.internal.logging.InternalLogger
 import io.embrace.android.embracesdk.internal.payload.JsException
+import io.embrace.android.embracesdk.internal.serialization.PlatformSerializer
 import io.embrace.android.embracesdk.internal.utils.encodeToUTF8String
 
 internal class ReactNativeInternalInterfaceImpl(
     private val embrace: SdkApi,
     private val impl: EmbraceInternalInterface,
-    private val moduleGraph: ModuleGraph,
+    private val instrumentationRegistry: InstrumentationRegistry,
+    private val serializer: PlatformSerializer,
     private val rnBundleIdTracker: RnBundleIdTracker,
     private val hostedSdkVersionInfo: HostedSdkVersionInfo,
     private val logger: InternalLogger,
@@ -30,11 +32,9 @@ internal class ReactNativeInternalInterfaceImpl(
         stacktrace: String?,
     ) {
         if (embrace.isStarted) {
-            val registry = moduleGraph.instrumentationModule.instrumentationRegistry
-            val dataSource = registry.findByType(JvmCrashDataSource::class)
+            val dataSource = instrumentationRegistry.findByType(JvmCrashDataSource::class)
             dataSource?.telemetryModifier = { attributes ->
                 val exception = JsException(name, message, type, stacktrace)
-                val serializer = moduleGraph.initModule.jsonSerializer
                 attributes.setAttribute(
                     embAndroidReactNativeCrashJsException,
                     encodeToUTF8String(

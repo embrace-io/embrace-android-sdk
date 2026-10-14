@@ -1,34 +1,32 @@
 package io.embrace.android.embracesdk.internal.api.delegate
 
 import io.embrace.android.embracesdk.internal.api.UserApi
-import io.embrace.android.embracesdk.internal.injection.ModuleGraph
+import io.embrace.android.embracesdk.internal.capture.user.UserService
 
 internal class UserApiDelegate(
-    private val moduleGraph: ModuleGraph,
+    private val userService: Lazy<UserService>,
 ) : UserApi {
 
-    private val userService get() = moduleGraph.essentialServiceModule.userService
-
     override fun setUserIdentifier(userId: String?) {
-        userService.setUserIdentifier(userId)
+        userService.value.setUserIdentifier(userId)
     }
 
     override fun clearUserIdentifier() {
-        userService.clearUserIdentifier()
+        userService.value.clearUserIdentifier()
     }
 
     @Deprecated("Use discouraged. Personal identifying information shouldn't be stored in telemetry.")
     override fun setUserEmail(email: String?) {
-        userService.setUserEmail(email)
+        userService.value.setUserEmail(email)
     }
 
     @Deprecated("Use discouraged. Personal identifying information shouldn't be stored in telemetry.")
     override fun clearUserEmail() {
-        userService.clearUserEmail()
+        userService.value.clearUserEmail()
     }
 
     override fun addUserPersona(persona: String) {
-        userService.addUserPersona(persona)
+        userService.value.addUserPersona(persona)
     }
 
     /**
@@ -37,23 +35,23 @@ internal class UserApiDelegate(
      * @param persona the persona to clear
      */
     override fun clearUserPersona(persona: String) {
-        userService.clearUserPersona(persona)
+        userService.value.clearUserPersona(persona)
     }
 
     /**
      * Clears all custom user personas from the user.
      */
     override fun clearAllUserPersonas() {
-        userService.clearAllUserPersonas()
+        userService.value.clearAllUserPersonas()
     }
 
     @Deprecated("Use discouraged. Personal identifying information shouldn't be stored in telemetry.")
     override fun setUsername(username: String?) {
-        userService.setUsername(username)
+        userService.value.setUsername(username)
     }
 
     @Deprecated("Use discouraged. Personal identifying information shouldn't be stored in telemetry.")
     override fun clearUsername() {
-        userService.clearUsername()
+        userService.value.clearUsername()
     }
 }

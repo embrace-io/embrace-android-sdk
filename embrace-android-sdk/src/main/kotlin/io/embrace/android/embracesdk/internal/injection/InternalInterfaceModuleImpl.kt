@@ -9,6 +9,7 @@ import io.embrace.android.embracesdk.internal.api.delegate.EmbraceInternalInterf
 import io.embrace.android.embracesdk.internal.api.delegate.FlutterInternalInterfaceImpl
 import io.embrace.android.embracesdk.internal.api.delegate.ReactNativeInternalInterfaceImpl
 import io.embrace.android.embracesdk.internal.api.delegate.UnityInternalInterfaceImpl
+import io.embrace.android.embracesdk.internal.arch.InstrumentationRegistry
 import io.embrace.android.embracesdk.internal.config.ConfigService
 
 internal class InternalInterfaceModuleImpl(
@@ -16,7 +17,7 @@ internal class InternalInterfaceModuleImpl(
     configService: ConfigService,
     payloadSourceModule: PayloadSourceModule,
     embrace: SdkApi,
-    moduleGraph: ModuleGraph,
+    instrumentationRegistry: InstrumentationRegistry,
 ) : InternalInterfaceModule {
 
     override val embraceInternalInterface: EmbraceInternalInterface by lazy {
@@ -30,7 +31,8 @@ internal class InternalInterfaceModuleImpl(
         ReactNativeInternalInterfaceImpl(
             embrace,
             embraceInternalInterface,
-            moduleGraph,
+            instrumentationRegistry,
+            initModule.jsonSerializer,
             payloadSourceModule.rnBundleIdTracker,
             payloadSourceModule.hostedSdkVersionInfo,
             initModule.logger,

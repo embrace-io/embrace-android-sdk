@@ -135,4 +135,3 @@ internal class SdkStateHolder(
         }
     }
 }
-

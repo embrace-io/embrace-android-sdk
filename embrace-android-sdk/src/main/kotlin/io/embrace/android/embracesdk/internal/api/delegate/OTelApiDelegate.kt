@@ -1,7 +1,7 @@
 package io.embrace.android.embracesdk.internal.api.delegate
 
 import io.embrace.android.embracesdk.internal.api.OTelApi
-import io.embrace.android.embracesdk.internal.injection.ModuleGraph
+import io.embrace.android.embracesdk.internal.otel.sdk.OtelSdkWrapper
 import io.opentelemetry.kotlin.OpenTelemetry
 import io.opentelemetry.kotlin.logging.export.LogRecordExporter
 import io.opentelemetry.kotlin.logging.export.LogRecordProcessor
@@ -9,7 +9,7 @@ import io.opentelemetry.kotlin.tracing.export.SpanExporter
 import io.opentelemetry.kotlin.tracing.export.SpanProcessor
 
 internal class OTelApiDelegate(
-    private val moduleGraph: ModuleGraph,
+    private val otelSdkWrapper: Lazy<OtelSdkWrapper>,
 ) : OTelApi {
 
     override fun addSpanExporter(spanExporter: SpanExporter) {
@@ -28,5 +28,5 @@ internal class OTelApiDelegate(
     }
 
     override fun getOpenTelemetryKotlin(): OpenTelemetry =
-        moduleGraph.openTelemetryModule.otelSdkWrapper.openTelemetryKotlin
+        otelSdkWrapper.value.openTelemetryKotlin
 }

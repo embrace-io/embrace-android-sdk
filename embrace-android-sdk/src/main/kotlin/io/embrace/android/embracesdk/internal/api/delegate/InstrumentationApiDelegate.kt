@@ -4,20 +4,21 @@ import android.app.Activity
 import io.embrace.android.embracesdk.internal.api.InstrumentationApi
 import io.embrace.android.embracesdk.internal.arch.datasource.SpanEvent
 import io.embrace.android.embracesdk.internal.arch.datasource.SpanEventImpl
+import io.embrace.android.embracesdk.internal.arch.navigation.NavigationTrackingService
 import io.embrace.android.embracesdk.internal.arch.schema.ErrorCodeAttribute
-import io.embrace.android.embracesdk.internal.injection.ModuleGraph
+import io.embrace.android.embracesdk.internal.clock.Clock
+import io.embrace.android.embracesdk.internal.instrumentation.startup.AppStartupDataCollector
+import io.embrace.android.embracesdk.internal.instrumentation.startup.activity.UiLoadDataListener
 import io.embrace.android.embracesdk.internal.instrumentation.startup.activity.traceInstanceId
 import io.embrace.android.embracesdk.spans.EmbraceSpanEvent
 import io.embrace.android.embracesdk.spans.ErrorCode
 
 internal class InstrumentationApiDelegate(
-    private val moduleGraph: ModuleGraph,
+    private val clock: Clock,
+    private val uiLoadTraceEmitter: UiLoadDataListener?,
+    private val appStartupDataCollector: AppStartupDataCollector,
+    private val navigationTrackingService: NavigationTrackingService,
 ) : InstrumentationApi {
-
-    private val clock get() = moduleGraph.initModule.clock
-    private val uiLoadTraceEmitter get() = moduleGraph.dataCaptureServiceModule.uiLoadDataListener
-    private val appStartupDataCollector get() = moduleGraph.dataCaptureServiceModule.appStartupDataCollector
-    private val navigationTrackingService get() = moduleGraph.essentialServiceModule.navigationTrackingService
 
     override fun appReady() {
         appStartupDataCollector.appReady(timestampMs = clock.now())

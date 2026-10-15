@@ -212,7 +212,7 @@ internal class SdkIntegrationTestRule(
                 )
                 assertEquals(
                     "SDK state holder did not reach the expected state.",
-                    if (expectSdkToStart) SdkState.STARTED else SdkState.NOT_STARTED,
+                    if (expectSdkToStart) SdkState.STARTED else SdkState.FAILED,
                     sdkStateHolder.state
                 )
                 if (sdkStateHolder.api.isStarted) {

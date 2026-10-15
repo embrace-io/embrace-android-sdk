@@ -27,6 +27,7 @@ private val sdkStateHolder = try {
     SdkStateHolder(
         instanceFactory = { instance },
         preStart = { BufferingSdkInstance(System::currentTimeMillis, logger) },
+        failed = { instance },
         disabled = { instance },
         telemetryService = NoopInternalTelemetryService,
         errorHandler = logger,

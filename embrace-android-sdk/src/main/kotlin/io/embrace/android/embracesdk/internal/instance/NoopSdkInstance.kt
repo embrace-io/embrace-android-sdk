@@ -44,6 +44,7 @@ internal class NoopSdkInstance(
     companion object {
         const val SDK_NOT_INITIALIZED: String = "Embrace SDK is not initialized yet"
         const val SDK_DISABLED: String = "Embrace SDK is disabled"
+        const val SDK_START_FAILED: String = "Embrace SDK failed to start"
     }
 
     @Volatile

@@ -1,5 +1,6 @@
 package io.embrace.android.embracesdk.internal.api
 
+import io.embrace.android.embracesdk.fakes.FakeInternalTelemetryService
 import io.embrace.android.embracesdk.fakes.FakeKeyValueStore
 import io.embrace.android.embracesdk.internal.api.delegate.HostedSdkInternalInterfaceImpl
 import io.embrace.android.embracesdk.internal.envelope.metadata.HostedSdkVersionInfo
@@ -31,6 +32,7 @@ internal class UnityInternalInterfaceImplTest {
             rnBundleIdTracker = lazy { mockk() },
             hostedSdkVersionInfo = hostedSdkVersionInfo,
             logger = logger,
+            telemetryService = FakeInternalTelemetryService(),
         )
     }
 

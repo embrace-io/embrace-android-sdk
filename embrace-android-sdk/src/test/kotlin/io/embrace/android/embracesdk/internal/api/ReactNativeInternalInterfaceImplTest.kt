@@ -7,6 +7,7 @@ import io.embrace.android.embracesdk.fakes.FakeConfigService
 import io.embrace.android.embracesdk.fakes.FakeEnvelopeResourceSource
 import io.embrace.android.embracesdk.fakes.FakeInstrumentationModule
 import io.embrace.android.embracesdk.fakes.FakeInternalLogger
+import io.embrace.android.embracesdk.fakes.FakeInternalTelemetryService
 import io.embrace.android.embracesdk.fakes.FakeKeyValueStore
 import io.embrace.android.embracesdk.fakes.FakeRnBundleIdTracker
 import io.embrace.android.embracesdk.fakes.FakeTelemetryDestination
@@ -52,6 +53,7 @@ internal class ReactNativeInternalInterfaceImplTest {
             rnBundleIdTracker = lazyOf(rnBundleIdTracker),
             hostedSdkVersionInfo = hostedSdkVersionInfo,
             logger = logger,
+            telemetryService = FakeInternalTelemetryService(),
         )
     }
 
@@ -100,6 +102,7 @@ internal class ReactNativeInternalInterfaceImplTest {
             rnBundleIdTracker = lazyOf(rnBundleIdTracker),
             hostedSdkVersionInfo = hostedSdkVersionInfo,
             logger = logger,
+            telemetryService = FakeInternalTelemetryService(),
         )
 
         impl.setJavaScriptBundleUrl(context, "index.android.bundle")

@@ -4,6 +4,7 @@ import io.embrace.android.embracesdk.fakes.FakeClock
 import io.embrace.android.embracesdk.fakes.FakeConfigService
 import io.embrace.android.embracesdk.fakes.FakeEnvelopeResourceSource
 import io.embrace.android.embracesdk.fakes.FakeInternalLogger
+import io.embrace.android.embracesdk.fakes.FakeInternalTelemetryService
 import io.embrace.android.embracesdk.fakes.OtelSdkMode
 import io.embrace.android.embracesdk.fakes.behavior.FakeNetworkSpanForwardingBehavior
 import io.embrace.android.embracesdk.fakes.injection.FakeInitModule
@@ -38,6 +39,7 @@ internal class EmbraceInternalInterfaceImplTest {
             rnBundleIdTracker = lazy { mockk() },
             hostedSdkVersionInfo = mockk(),
             logger = mockk(),
+            telemetryService = FakeInternalTelemetryService(),
         )
     }
 

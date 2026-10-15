@@ -16,10 +16,12 @@ import io.embrace.android.embracesdk.internal.config.ConfigService
 import io.embrace.android.embracesdk.internal.envelope.metadata.HostedSdkVersionInfo
 import io.embrace.android.embracesdk.internal.envelope.resource.EnvelopeResourceSource
 import io.embrace.android.embracesdk.internal.instrumentation.crash.jvm.JvmCrashDataSource
+import io.embrace.android.embracesdk.internal.logging.InternalErrorType
 import io.embrace.android.embracesdk.internal.logging.InternalLogger
 import io.embrace.android.embracesdk.internal.logs.LogExceptionType
 import io.embrace.android.embracesdk.internal.payload.JsException
 import io.embrace.android.embracesdk.internal.serialization.PlatformSerializer
+import io.embrace.android.embracesdk.internal.telemetry.InternalTelemetryService
 import io.embrace.android.embracesdk.internal.utils.encodeToUTF8String
 import io.embrace.android.embracesdk.semconv.EmbAndroidAttributes
 import io.embrace.android.embracesdk.semconv.EmbSessionAttributes
@@ -34,6 +36,7 @@ internal class HostedSdkInternalInterfaceImpl(
     private val rnBundleIdTracker: Lazy<RnBundleIdTracker>,
     private val hostedSdkVersionInfo: HostedSdkVersionInfo,
     private val logger: InternalLogger,
+    private val telemetryService: InternalTelemetryService,
 ) : EmbraceInternalInterface,
     ReactNativeInternalInterface,
     UnityInternalInterface,
@@ -45,10 +48,11 @@ internal class HostedSdkInternalInterfaceImpl(
     override val unityInternalInterface: UnityInternalInterface = this
     override val flutterInternalInterface: FlutterInternalInterface = this
 
-    override fun isNetworkSpanForwardingEnabled(): Boolean =
+    override fun isNetworkSpanForwardingEnabled(): Boolean = guard(false) {
         configService.networkSpanForwardingBehavior.isNetworkSpanForwardingEnabled()
+    }
 
-    override fun addEnvelopeResource(key: String, value: String) {
+    override fun addEnvelopeResource(key: String, value: String) = record("add_envelope_resource") {
         resourceSource.add(key, value)
     }
 
@@ -57,7 +61,7 @@ internal class HostedSdkInternalInterfaceImpl(
         message: String,
         type: String?,
         stacktrace: String?,
-    ) {
+    ) = record("log_unhandled_js_exception") {
         val dataSource = instrumentationRegistry.findByType(JvmCrashDataSource::class)
         dataSource?.telemetryModifier = { attributes ->
             val exception = JsException(name, message, type, stacktrace)
@@ -71,25 +75,23 @@ internal class HostedSdkInternalInterfaceImpl(
         }
     }
 
-    override fun setJavaScriptPatchNumber(number: String?) {
-        if (number.isNullOrEmpty()) {
-            return
+    override fun setJavaScriptPatchNumber(number: String?) = record("set_javascript_patch_number") {
+        if (!number.isNullOrEmpty()) {
+            hostedSdkVersionInfo.javaScriptPatchNumber = number
         }
-        hostedSdkVersionInfo.javaScriptPatchNumber = number
     }
 
-    override fun setReactNativeSdkVersion(version: String?) {
+    override fun setReactNativeSdkVersion(version: String?) = record("set_react_native_sdk_version") {
         hostedSdkVersionInfo.hostedSdkVersion = version
     }
 
-    override fun setReactNativeVersionNumber(version: String?) {
-        if (version.isNullOrEmpty()) {
-            return
+    override fun setReactNativeVersionNumber(version: String?) = record("set_react_native_version_number") {
+        if (!version.isNullOrEmpty()) {
+            hostedSdkVersionInfo.hostedPlatformVersion = version
         }
-        hostedSdkVersionInfo.hostedPlatformVersion = version
     }
 
-    override fun setJavaScriptBundleUrl(context: Context, url: String) {
+    override fun setJavaScriptBundleUrl(context: Context, url: String) = record("set_javascript_bundle_url") {
         rnBundleIdTracker.value.setReactNativeBundleId(url)
     }
 
@@ -97,7 +99,7 @@ internal class HostedSdkInternalInterfaceImpl(
         unityVersion: String?,
         buildGuid: String?,
         unitySdkVersion: String?,
-    ) {
+    ) = record("set_unity_metadata") {
         if (unityVersion == null || buildGuid == null) {
             val sdkVersionMessage = unitySdkVersion ?: "null or previous than 1.7.5"
             logger.logError(
@@ -105,9 +107,7 @@ internal class HostedSdkInternalInterfaceImpl(
                     unityVersion + ", Unity build id is " + buildGuid +
                     " and Unity SDK version is " + sdkVersionMessage,
             )
-            return
-        }
-        if (unitySdkVersion != null) {
+        } else if (unitySdkVersion != null) {
             hostedSdkVersionInfo.batch {
                 hostedSdkVersionInfo.hostedPlatformVersion = unityVersion
                 hostedSdkVersionInfo.hostedSdkVersion = unitySdkVersion
@@ -116,13 +116,15 @@ internal class HostedSdkInternalInterfaceImpl(
         }
     }
 
-    override fun logUnhandledUnityException(name: String, message: String, stacktrace: String?) {
-        logUnityException(name, message, stacktrace, LogExceptionType.UNHANDLED)
-    }
+    override fun logUnhandledUnityException(name: String, message: String, stacktrace: String?) =
+        record("log_unhandled_unity_exception") {
+            logUnityException(name, message, stacktrace, LogExceptionType.UNHANDLED)
+        }
 
-    override fun logHandledUnityException(name: String, message: String, stacktrace: String?) {
-        logUnityException(name, message, stacktrace, LogExceptionType.HANDLED)
-    }
+    override fun logHandledUnityException(name: String, message: String, stacktrace: String?) =
+        record("log_handled_unity_exception") {
+            logUnityException(name, message, stacktrace, LogExceptionType.HANDLED)
+        }
 
     private fun logUnityException(
         name: String?,
@@ -151,15 +153,33 @@ internal class HostedSdkInternalInterfaceImpl(
         )
     }
 
-    override fun setEmbraceFlutterSdkVersion(version: String?) {
+    override fun setEmbraceFlutterSdkVersion(version: String?) = record("set_embrace_flutter_sdk_version") {
         if (version != null) {
             hostedSdkVersionInfo.hostedSdkVersion = version
         }
     }
 
-    override fun setDartVersion(version: String?) {
+    override fun setDartVersion(version: String?) = record("set_dart_version") {
         if (version != null) {
             hostedSdkVersionInfo.hostedPlatformVersion = version
         }
+    }
+
+    /**
+     * Records usage of the internal API [name] then performs [call], reporting anything it throws as an internal error.
+     */
+    private inline fun record(name: String, call: () -> Unit) = guard(Unit) {
+        telemetryService.onPublicApiCalled(name)
+        call()
+    }
+
+    /**
+     * Performs [call], reporting anything it throws as an internal error and returning [fallback] instead.
+     */
+    private inline fun <T> guard(fallback: T, call: () -> T): T = try {
+        call()
+    } catch (exc: Throwable) {
+        logger.trackInternalError(InternalErrorType.PublicApiFail, exc)
+        fallback
     }
 }

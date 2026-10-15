@@ -87,6 +87,7 @@ internal class RealSdkInstance(
         rnBundleIdTracker = lazy { moduleGraph.payloadSourceModule.rnBundleIdTracker },
         hostedSdkVersionInfo = moduleGraph.payloadSourceModule.hostedSdkVersionInfo,
         logger = moduleGraph.initModule.logger,
+        telemetryService = moduleGraph.initModule.telemetryService,
     ),
     private val viewTrackingApiDelegate: ViewTrackingApiDelegate = ViewTrackingApiDelegate(
         registry = moduleGraph.instrumentationModule.instrumentationRegistry,

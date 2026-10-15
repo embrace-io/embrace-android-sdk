@@ -4,19 +4,16 @@ import android.content.Context
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import io.embrace.android.embracesdk.fakes.FakeEmbraceInternalInterface
-import io.embrace.android.embracesdk.fakes.FakeInstrumentationModule
 import io.embrace.android.embracesdk.fakes.FakeInternalLogger
 import io.embrace.android.embracesdk.fakes.FakeKeyValueStore
+import io.embrace.android.embracesdk.fakes.FakeModuleGraph
 import io.embrace.android.embracesdk.fakes.FakeRnBundleIdTracker
 import io.embrace.android.embracesdk.fakes.FakeTelemetryDestination
-import io.embrace.android.embracesdk.fakes.OtelSdkMode
-import io.embrace.android.embracesdk.fakes.injection.FakeInitModule
 import io.embrace.android.embracesdk.internal.api.delegate.ReactNativeInternalInterfaceImpl
 import io.embrace.android.embracesdk.internal.arch.schema.EmbType
 import io.embrace.android.embracesdk.internal.arch.schema.EmbType.System.ReactNativeCrash.embAndroidReactNativeCrashJsException
 import io.embrace.android.embracesdk.internal.envelope.metadata.HostedSdkVersionInfo
 import io.embrace.android.embracesdk.internal.envelope.metadata.ReactNativeSdkVersionInfo
-import io.embrace.android.embracesdk.internal.injection.ModuleInitBootstrapper
 import io.embrace.android.embracesdk.internal.instrumentation.crash.jvm.JvmCrashDataSourceImpl
 import io.mockk.every
 import io.mockk.mockk
@@ -32,7 +29,7 @@ internal class ReactNativeInternalInterfaceImplTest {
     private lateinit var impl: ReactNativeInternalInterfaceImpl
     private lateinit var embrace: SdkApi
     private lateinit var store: FakeKeyValueStore
-    private lateinit var bootstrapper: ModuleInitBootstrapper
+    private lateinit var moduleGraph: FakeModuleGraph
     private lateinit var rnBundleIdTracker: FakeRnBundleIdTracker
     private lateinit var logger: FakeInternalLogger
     private lateinit var context: Context
@@ -46,16 +43,11 @@ internal class ReactNativeInternalInterfaceImplTest {
         hostedSdkVersionInfo = ReactNativeSdkVersionInfo(store)
         logger = FakeInternalLogger(false)
         context = ApplicationProvider.getApplicationContext()
-        bootstrapper = ModuleInitBootstrapper(
-            FakeInitModule(otelSdkMode = OtelSdkMode.COMPAT),
-            instrumentationModuleSupplier = { _, _, _, _, _, _, _, _, _ ->
-                FakeInstrumentationModule(ApplicationProvider.getApplicationContext())
-            },
-        )
+        moduleGraph = FakeModuleGraph()
         impl = ReactNativeInternalInterfaceImpl(
             embrace,
             FakeEmbraceInternalInterface(),
-            bootstrapper,
+            moduleGraph,
             rnBundleIdTracker,
             hostedSdkVersionInfo,
             logger,
@@ -127,7 +119,7 @@ internal class ReactNativeInternalInterfaceImplTest {
         impl = ReactNativeInternalInterfaceImpl(
             embrace,
             FakeEmbraceInternalInterface(),
-            bootstrapper,
+            moduleGraph,
             rnBundleIdTracker,
             hostedSdkVersionInfo,
             logger,
@@ -143,10 +135,8 @@ internal class ReactNativeInternalInterfaceImplTest {
     @Test
     fun `test RN crash by calling logUnhandledJsException() before handleCrash()`() {
         every { embrace.isStarted } returns true
-        bootstrapper.init(ApplicationProvider.getApplicationContext())
-
-        val registry = bootstrapper.instrumentationModule.instrumentationRegistry
-        val args = bootstrapper.instrumentationModule.instrumentationArgs
+        val registry = moduleGraph.instrumentationModule.instrumentationRegistry
+        val args = moduleGraph.instrumentationModule.instrumentationArgs
         val dataSource = JvmCrashDataSourceImpl(args)
         registry.add { dataSource }
 

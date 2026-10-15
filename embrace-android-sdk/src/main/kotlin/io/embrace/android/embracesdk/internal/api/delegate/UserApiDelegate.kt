@@ -1,13 +1,13 @@
 package io.embrace.android.embracesdk.internal.api.delegate
 
 import io.embrace.android.embracesdk.internal.api.UserApi
-import io.embrace.android.embracesdk.internal.injection.ModuleInitBootstrapper
+import io.embrace.android.embracesdk.internal.injection.ModuleGraph
 
 internal class UserApiDelegate(
-    private val bootstrapper: ModuleInitBootstrapper,
+    private val moduleGraph: ModuleGraph,
 ) : UserApi {
 
-    private val userService get() = bootstrapper.essentialServiceModule.userService
+    private val userService get() = moduleGraph.essentialServiceModule.userService
 
     override fun setUserIdentifier(userId: String?) {
         userService.setUserIdentifier(userId)

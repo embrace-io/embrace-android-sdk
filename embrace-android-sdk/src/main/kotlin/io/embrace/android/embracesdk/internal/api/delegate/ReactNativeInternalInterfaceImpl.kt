@@ -8,7 +8,7 @@ import io.embrace.android.embracesdk.internal.arch.schema.EmbType.System.ReactNa
 import io.embrace.android.embracesdk.internal.arch.schema.SchemaType
 import io.embrace.android.embracesdk.internal.capture.metadata.RnBundleIdTracker
 import io.embrace.android.embracesdk.internal.envelope.metadata.HostedSdkVersionInfo
-import io.embrace.android.embracesdk.internal.injection.ModuleInitBootstrapper
+import io.embrace.android.embracesdk.internal.injection.ModuleGraph
 import io.embrace.android.embracesdk.internal.instrumentation.crash.jvm.JvmCrashDataSource
 import io.embrace.android.embracesdk.internal.logging.InternalLogger
 import io.embrace.android.embracesdk.internal.payload.JsException
@@ -17,7 +17,7 @@ import io.embrace.android.embracesdk.internal.utils.encodeToUTF8String
 internal class ReactNativeInternalInterfaceImpl(
     private val embrace: SdkApi,
     private val impl: EmbraceInternalInterface,
-    private val bootstrapper: ModuleInitBootstrapper,
+    private val moduleGraph: ModuleGraph,
     private val rnBundleIdTracker: RnBundleIdTracker,
     private val hostedSdkVersionInfo: HostedSdkVersionInfo,
     private val logger: InternalLogger,
@@ -30,11 +30,11 @@ internal class ReactNativeInternalInterfaceImpl(
         stacktrace: String?,
     ) {
         if (embrace.isStarted) {
-            val registry = bootstrapper.instrumentationModule.instrumentationRegistry
+            val registry = moduleGraph.instrumentationModule.instrumentationRegistry
             val dataSource = registry.findByType(JvmCrashDataSource::class)
             dataSource?.telemetryModifier = { attributes ->
                 val exception = JsException(name, message, type, stacktrace)
-                val serializer = bootstrapper.initModule.jsonSerializer
+                val serializer = moduleGraph.initModule.jsonSerializer
                 attributes.setAttribute(
                     embAndroidReactNativeCrashJsException,
                     encodeToUTF8String(

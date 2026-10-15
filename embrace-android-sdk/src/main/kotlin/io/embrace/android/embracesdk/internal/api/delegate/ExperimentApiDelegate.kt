@@ -7,15 +7,15 @@ import io.embrace.android.embracesdk.internal.api.ExperimentApi
 import io.embrace.android.embracesdk.internal.capture.experiment.ExperimentApiCall
 import io.embrace.android.embracesdk.internal.capture.experiment.ExperimentKind
 import io.embrace.android.embracesdk.internal.capture.experiment.TrackedData
-import io.embrace.android.embracesdk.internal.injection.ModuleInitBootstrapper
+import io.embrace.android.embracesdk.internal.injection.ModuleGraph
 
 internal class ExperimentApiDelegate(
-    private val bootstrapper: ModuleInitBootstrapper,
+    private val moduleGraph: ModuleGraph,
 ) : ExperimentApi {
 
-    private val clock get() = bootstrapper.initModule.clock
+    private val clock get() = moduleGraph.initModule.clock
 
-    private val experimentTrackingService get() = bootstrapper.essentialServiceModule.experimentTrackingService
+    private val experimentTrackingService get() = moduleGraph.essentialServiceModule.experimentTrackingService
 
     override fun createExperiment(id: String, variant: String?, startedAt: Long?): TrackedExperiment =
         TrackedExperimentImpl(id, variant, startedAt)

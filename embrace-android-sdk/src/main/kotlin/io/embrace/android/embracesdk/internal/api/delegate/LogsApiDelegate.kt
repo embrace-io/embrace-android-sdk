@@ -8,7 +8,7 @@ import io.embrace.android.embracesdk.internal.arch.schema.SchemaType.Exception
 import io.embrace.android.embracesdk.internal.arch.schema.SchemaType.Log
 import io.embrace.android.embracesdk.internal.arch.schema.SendMode
 import io.embrace.android.embracesdk.internal.arch.schema.TelemetryAttributes
-import io.embrace.android.embracesdk.internal.injection.ModuleInitBootstrapper
+import io.embrace.android.embracesdk.internal.injection.ModuleGraph
 import io.embrace.android.embracesdk.internal.instrumentation.fcm.PushNotificationBreadcrumb
 import io.embrace.android.embracesdk.internal.instrumentation.fcm.fcmDataSource
 import io.embrace.android.embracesdk.internal.logs.LogExceptionType
@@ -27,15 +27,15 @@ import io.embrace.android.embracesdk.semconv.EmbSessionAttributes
 import io.opentelemetry.kotlin.semconv.ExceptionAttributes
 
 internal class LogsApiDelegate(
-    private val bootstrapper: ModuleInitBootstrapper,
+    private val moduleGraph: ModuleGraph,
 ) : LogsApi {
 
-    private val logService get() = bootstrapper.logModule.logService
-    private val attachmentService get() = bootstrapper.logModule.attachmentService
-    private val logger get() = bootstrapper.initModule.logger
-    private val payloadStore get() = bootstrapper.deliveryModule?.payloadStore
-    private val serializer get() = bootstrapper.initModule.jsonSerializer
-    private val telemetryService get() = bootstrapper.initModule.telemetryService
+    private val logService get() = moduleGraph.logModule.logService
+    private val attachmentService get() = moduleGraph.logModule.attachmentService
+    private val logger get() = moduleGraph.initModule.logger
+    private val payloadStore get() = moduleGraph.deliveryModule?.payloadStore
+    private val serializer get() = moduleGraph.initModule.jsonSerializer
+    private val telemetryService get() = moduleGraph.initModule.telemetryService
 
     override fun logInfo(message: String) = logMessage(message, Severity.INFO)
     override fun logWarning(message: String) = logMessage(message, Severity.WARNING)

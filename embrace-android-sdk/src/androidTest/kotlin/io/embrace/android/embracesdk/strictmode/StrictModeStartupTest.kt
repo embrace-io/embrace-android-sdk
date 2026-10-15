@@ -13,6 +13,7 @@ import io.embrace.android.embracesdk.fakes.config.FakeInstrumentedConfig
 import io.embrace.android.embracesdk.internal.injection.InitModule
 import io.embrace.android.embracesdk.internal.injection.InitModuleImpl
 import io.embrace.android.embracesdk.internal.injection.ModuleInitBootstrapper
+import io.embrace.android.embracesdk.internal.injection.OpenTelemetryModuleImpl
 import io.embrace.android.embracesdk.internal.instance.SdkStateHolder
 import io.embrace.android.embracesdk.internal.instance.createSdkStateHolder
 import io.embrace.android.embracesdk.internal.worker.Worker
@@ -72,8 +73,8 @@ internal class StrictModeStartupTest(
         instrumentation.runOnMainSync {
             recorder.install()
 
-            bootstrapper = ModuleInitBootstrapper(TestInitModule(InitModuleImpl(), otelSdkMode))
-            val initModule = bootstrapper.initModule
+            val initModule = TestInitModule(InitModuleImpl(), otelSdkMode)
+            bootstrapper = ModuleInitBootstrapper(initModule, OpenTelemetryModuleImpl(initModule))
             sdkStateHolder = createSdkStateHolder(
                 logger = initModule.logger,
                 clock = initModule.clock,

@@ -1,3 +1,4 @@
+import com.android.build.api.variant.DeviceTestBuilder
 import org.gradle.api.tasks.testing.logging.TestExceptionFormat
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 import org.jetbrains.kotlin.gradle.dsl.KotlinVersion
@@ -63,6 +64,13 @@ android {
                 optIn.add("io.embrace.android.embracesdk.semconv.ExperimentalSemconv")
             }
         }
+    }
+}
+
+// skip empty androidTest APKs for modules that don't have device tests.
+if (!file("src/androidTest").exists()) {
+    androidComponents.beforeVariants { variant ->
+        variant.deviceTests[DeviceTestBuilder.ANDROID_TEST_TYPE]?.enable = false
     }
 }
 

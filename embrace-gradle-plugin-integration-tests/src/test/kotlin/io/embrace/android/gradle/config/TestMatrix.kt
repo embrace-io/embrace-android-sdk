@@ -35,7 +35,19 @@ sealed class TestMatrix(
 
     /**
      * The maximum version we currently run tests against. Newer versions may work, but are not
-     * explicitly tested.
+     * explicitly tested. AGP, Kotlin and compileSdk come from the version catalog and Gradle from the
+     * wrapper.
      */
-    object MaxVersion : TestMatrix("9.4.1", "9.8.1", "2.4.21", JdkEnv.JAVA_21, "36")
+    object MaxVersion : TestMatrix(
+        maxVersionProperty("agp"),
+        maxVersionProperty("gradle"),
+        maxVersionProperty("kotlin"),
+        JdkEnv.JAVA_21,
+        maxVersionProperty("compileSdk"),
+    )
+}
+
+private fun maxVersionProperty(name: String): String {
+    val key = "embrace.maxVersion.$name"
+    return checkNotNull(System.getProperty(key)) { "System property '$key' must be set by the Gradle test task" }
 }

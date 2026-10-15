@@ -5,7 +5,6 @@ import io.embrace.android.embracesdk.fakes.OtelSdkMode
 import io.embrace.android.embracesdk.fakes.injection.FakeInitModule
 import io.embrace.android.embracesdk.internal.otel.sdk.findAttributeValue
 import io.embrace.android.embracesdk.internal.otel.spans.SpanRepository
-import io.embrace.android.embracesdk.internal.otel.spans.SpanService
 import io.embrace.android.embracesdk.internal.payload.Span
 import io.embrace.android.embracesdk.semconv.EmbSessionAttributes
 import org.junit.Assert.assertEquals
@@ -28,7 +27,6 @@ internal class CurrentSessionPartSpanAttributeTests(
 
     private lateinit var spanRepository: SpanRepository
     private lateinit var currentSessionPartSpan: CurrentSessionPartSpan
-    private lateinit var spanService: SpanService
     private val clock = FakeClock(1000L)
 
     @Before
@@ -36,8 +34,7 @@ internal class CurrentSessionPartSpanAttributeTests(
         val initModule = FakeInitModule(clock = clock, otelSdkMode = otelSdkMode)
         spanRepository = initModule.openTelemetryModule.spanRepository
         currentSessionPartSpan = initModule.openTelemetryModule.currentSessionPartSpan
-        spanService = initModule.openTelemetryModule.spanService
-        spanService.initializeService(clock.now())
+        currentSessionPartSpan.initializeService(clock.now())
     }
 
     @Test

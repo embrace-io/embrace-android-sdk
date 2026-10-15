@@ -2,6 +2,7 @@ package io.embrace.android.embracesdk.internal.otel.impl
 
 import io.embrace.android.embracesdk.internal.otel.sdk.ApiKey
 import io.embrace.android.embracesdk.internal.otel.spans.SpanService
+import io.embrace.android.embracesdk.internal.utils.Provider
 import io.opentelemetry.kotlin.Clock
 import io.opentelemetry.kotlin.OpenTelemetry
 import io.opentelemetry.kotlin.attributes.AttributesMutator
@@ -14,7 +15,7 @@ import java.util.concurrent.ConcurrentHashMap
  */
 class EmbTracerProvider(
     private val impl: OpenTelemetry,
-    private val spanService: SpanService,
+    private val spanServiceProvider: Provider<SpanService>,
     private val clock: Clock,
 ) : TracerProvider {
 
@@ -49,7 +50,7 @@ class EmbTracerProvider(
         )
         val tracer = EmbTracer(
             impl = tracerImpl,
-            spanService = spanService,
+            spanService = spanServiceProvider(),
             clock = clock,
             openTelemetry = impl,
         )

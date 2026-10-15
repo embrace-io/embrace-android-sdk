@@ -1,6 +1,5 @@
 package io.embrace.android.embracesdk.internal.otel.spans
 
-import io.embrace.android.embracesdk.internal.Initializable
 import io.embrace.android.embracesdk.internal.arch.datasource.SpanEvent
 import io.embrace.android.embracesdk.internal.arch.schema.EmbType
 import io.embrace.android.embracesdk.internal.arch.schema.ErrorCodeAttribute
@@ -9,7 +8,7 @@ import io.embrace.android.embracesdk.spans.EmbraceSpan
 /**
  * Internal service that supports the creation and recording of [EmbraceSpan]
  */
-interface SpanService : Initializable {
+interface SpanService {
 
     /**
      * Return an [EmbraceSpan] instance that can be used to record spans. Returns noop instance if at least one input parameter
@@ -61,8 +60,8 @@ interface SpanService : Initializable {
     ): T
 
     /**
-     * Record a completed span for an operation with the given start and end times. Returns true if the span was recorded or queued to be
-     * recorded, false if it wasn't.
+     * Record a completed span for an operation with the given start and end times. Returns true if the span was recorded, false if it
+     * wasn't.
      */
     fun recordCompletedSpan(
         name: String,

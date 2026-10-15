@@ -256,7 +256,7 @@ internal class UserSessionHandlerTest(
     }
 
     private fun initializeServices(startTimeMillis: Long = clock.now()) {
-        spanService.initializeService(startTimeMillis)
+        currentSessionPartSpan.initializeService(startTimeMillis)
     }
 
     private fun assertSpanInSessionEnvelope(envelope: Envelope<SessionPartPayload>?) {

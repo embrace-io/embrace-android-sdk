@@ -18,11 +18,6 @@ class FakeSpanService : SpanService {
 
     private val knownSpans: MutableMap<String, EmbraceSpan> = mutableMapOf()
 
-    override fun initializeService(sdkInitStartTimeMs: Long) {
-    }
-
-    override fun initialized(): Boolean = true
-
     override fun createSpan(
         name: String,
         parent: EmbraceSpan?,

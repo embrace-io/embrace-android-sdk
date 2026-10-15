@@ -159,6 +159,12 @@ internal class EmbraceNetworkRequestTest {
         assertEquals(captureData, request.networkCaptureData)
     }
 
+    @Test
+    fun testHttpMethodFromString() {
+        assertEquals(HttpMethod.PATCH, HttpMethod.fromString("patch"))
+        assertEquals(HttpMethod.GET, HttpMethod.fromString("PROPFIND"))
+    }
+
     private fun verifyDefaultCompletedRequest(request: EmbraceNetworkRequest) {
         assertEquals(URL, request.url)
         assertEquals(httpMethod.name, request.httpMethod)

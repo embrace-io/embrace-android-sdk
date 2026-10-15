@@ -51,8 +51,7 @@ tasks.withType<Test>().configureEach {
         )
     }
 
-    // avoid default behavior of parallelisation as it can lead to resource exhaustion on CI (and locally)
-    maxParallelForks = 1
+    maxParallelForks = providers.gradleProperty("integrationTestForks").map(String::toInt).getOrElse(2)
 }
 
 // A single end-to-end build of an Android app that applies the plugin, used by the root 'verify' task.

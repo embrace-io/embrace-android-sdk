@@ -1,46 +1,30 @@
 package io.embrace.android.gradle.integration.testcases
 
 import io.embrace.android.gradle.config.TestMatrix
-import io.embrace.android.gradle.config.TestMatrix.MaxVersion
-import io.embrace.android.gradle.config.TestMatrix.MiddleVersion
-import io.embrace.android.gradle.config.TestMatrix.MinVersion
 import io.embrace.android.gradle.integration.framework.PluginIntegrationTestRule
 import io.embrace.android.gradle.integration.framework.ProjectType
-import io.embrace.android.gradle.plugin.gradle.GradleVersion
 import org.junit.Assert.assertEquals
 import org.junit.Rule
 import org.junit.Test
 
-class AgpSupportTest {
+class AgpMinVersionTest : AgpSupportTest(TestMatrix.MinVersion)
+
+class AgpMiddleVersionTest : AgpSupportTest(TestMatrix.MiddleVersion)
+
+class AgpMaxVersionTest : AgpSupportTest(TestMatrix.MaxVersion)
+
+/**
+ * Builds an app against one [TestMatrix] version. Versions are split into separate classes
+ * as it allows parallelization of the slowest tests in the suite.
+ */
+abstract class AgpSupportTest(private val testMatrix: TestMatrix) {
 
     @Rule
     @JvmField
     val rule: PluginIntegrationTestRule = PluginIntegrationTestRule()
 
     @Test
-    fun `minimum supported version`() = runTest(MinVersion)
-
-    @Test
-    fun `middle version`() = runTest(MiddleVersion)
-
-    @Test
-    fun `maximum supported version`() = runTest(MaxVersion)
-
-    @Test
-    fun `unsupported old gradle version`() {
-        val errorMessage = "Embrace requires Gradle version ${GradleVersion.MIN_VERSION} or higher. Please update your Gradle version."
-        rule.runTest(
-            fixture = "jvm-simple",
-            tasks = listOf("help"),
-            testMatrix = TestMatrix.UnsupportedOldGradleVersion,
-            expectedExceptionMessage = errorMessage,
-            assertions = {
-                verifyNoUploads()
-            },
-        )
-    }
-
-    private fun runTest(testMatrix: TestMatrix) {
+    fun `supported version`() {
         val agpMajorVersion = testMatrix.agp.split(".").firstOrNull()?.toIntOrNull() ?: 8
         rule.runTest(
             fixture = "android-version-support",

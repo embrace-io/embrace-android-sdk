@@ -31,6 +31,7 @@ class IsolatedProjectsTest {
                         assertTrue(checkNotNull(isIsolatedProjectsEnabled))
                     },
                 )
+                verifyJvmMappingRequestsSent(1)
             },
         )
     }

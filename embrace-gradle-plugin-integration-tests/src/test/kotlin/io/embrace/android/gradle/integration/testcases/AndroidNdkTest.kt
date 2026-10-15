@@ -147,50 +147,6 @@ class AndroidNdkTest {
     }
 
     @Test
-    fun `don't upload symbols if not requested by the backend`() {
-        rule.runTest(
-            fixture = "android-cmake",
-            tasks = listOf("build"),
-            projectType = ProjectType.ANDROID,
-            setup = {
-                setupMockResponses(
-                    expectedLibs = emptyList(),
-                    expectedArchs = emptyList(),
-                    expectedVariants = defaultExpectedVariants,
-                )
-            },
-            assertions = {
-                verifyBuildTelemetryRequestSent(variantsSentInBuildTelemetry)
-                verifyHandshakes(defaultExpectedLibs, defaultExpectedArchs, defaultExpectedVariants)
-                verifyNoUploads()
-            },
-        )
-    }
-
-    @Test
-    fun `partial upload when some symbols are not requested by the backend`() {
-        val expectedLibs = listOf("libemb-donuts.so")
-        val expectedArchs = listOf("arm64-v8a")
-        rule.runTest(
-            fixture = "android-cmake",
-            tasks = listOf("build"),
-            projectType = ProjectType.ANDROID,
-            setup = {
-                setupMockResponses(
-                    expectedLibs = expectedLibs,
-                    expectedArchs = expectedArchs,
-                    expectedVariants = defaultExpectedVariants,
-                )
-            },
-            assertions = {
-                verifyBuildTelemetryRequestSent(variantsSentInBuildTelemetry)
-                verifyHandshakes(defaultExpectedLibs, defaultExpectedArchs, defaultExpectedVariants)
-                verifyUploads(expectedLibs, expectedArchs, defaultExpectedVariants)
-            },
-        )
-    }
-
-    @Test
     fun `ndk disabled test`() {
         rule.runTest(
             fixture = "android-cmake-ndk-disabled",

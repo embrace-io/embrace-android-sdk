@@ -8,6 +8,7 @@ import io.embrace.android.embracesdk.internal.delivery.debug.DeliveryTracer
 import io.embrace.android.embracesdk.internal.delivery.execution.RequestExecutionService
 import io.embrace.android.embracesdk.internal.delivery.storage.PayloadStorageService
 import io.embrace.android.embracesdk.internal.envelope.session.OtelPayloadMapper
+import io.embrace.android.embracesdk.internal.otel.config.ExternalOtelConfig
 import io.embrace.android.embracesdk.internal.session.id.SessionIdsSnapshot
 import io.embrace.android.embracesdk.internal.session.lifecycle.LifecycleTracker
 import io.embrace.android.embracesdk.internal.session.orchestrator.SessionOrchestrator
@@ -59,6 +60,10 @@ typealias FeatureModuleSupplier = (
     storageService: StorageService,
 ) -> FeatureModule
 
+typealias InitModuleSupplier = (
+    bootstrapServices: BootstrapServices,
+) -> InitModule
+
 typealias InstrumentationModuleSupplier = (
     initModule: InitModule,
     openTelemetryModule: OpenTelemetryModule,
@@ -80,6 +85,11 @@ typealias LogModuleSupplier = (
     workerThreadModule: WorkerThreadModule,
     payloadSourceModule: PayloadSourceModule,
 ) -> LogModule
+
+typealias OpenTelemetryModuleSupplier = (
+    initModule: InitModule,
+    externalOtelConfig: ExternalOtelConfig,
+) -> OpenTelemetryModule
 
 typealias PayloadSourceModuleSupplier = (
     initModule: InitModule,

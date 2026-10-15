@@ -32,7 +32,7 @@ import io.embrace.android.embracesdk.internal.clock.Clock
 import io.embrace.android.embracesdk.internal.config.behavior.SensitiveKeysBehavior
 import io.embrace.android.embracesdk.internal.delivery.storage.StorageLocation
 import io.embrace.android.embracesdk.internal.delivery.storage.asFile
-import io.embrace.android.embracesdk.internal.injection.ModuleGraph
+import io.embrace.android.embracesdk.internal.injection.InitializedModuleGraph
 import io.embrace.android.embracesdk.internal.instrumentation.crash.jvm.JvmCrashDataSource
 import io.embrace.android.embracesdk.internal.instrumentation.crash.ndk.NativeCrashDataSource
 import io.embrace.android.embracesdk.internal.instrumentation.network.NetworkCaptureDataSource
@@ -72,7 +72,7 @@ private const val WORKER_TERMINATION_TIMEOUT_MS = 2_000L
  * here instead.
  */
 internal class RealSdkInstance(
-    private val moduleGraph: ModuleGraph,
+    private val moduleGraph: InitializedModuleGraph,
     private val clock: Clock,
     private val userApiDelegate: UserApiDelegate = UserApiDelegate(
         userService = lazy { moduleGraph.essentialServiceModule.userService },
@@ -291,7 +291,7 @@ internal class RealSdkInstance(
             openTelemetryModule.setEventMetadataProvider(eventMetadataSupplierProvider())
 
             // note: otelBehavior is not applied here - it decides which OTel SDK is built, so it is set
-            // right after the persisted config is read in ModuleGraphFactory.init.
+            // right after the persisted config is read in InitializedModuleGraph.
             openTelemetryModule.applyConfiguration(
                 sensitiveKeysBehavior = SensitiveKeysBehavior(configService.config.sensitiveKeys),
                 bypassValidation = configService.isOnlyUsingOtelExporters(),

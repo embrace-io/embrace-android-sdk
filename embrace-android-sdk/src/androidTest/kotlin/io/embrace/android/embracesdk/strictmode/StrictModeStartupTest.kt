@@ -13,9 +13,7 @@ import io.embrace.android.embracesdk.fakes.config.FakeInstrumentedConfig
 import io.embrace.android.embracesdk.internal.injection.BootstrapServices
 import io.embrace.android.embracesdk.internal.injection.InitModule
 import io.embrace.android.embracesdk.internal.injection.InitModuleImpl
-import io.embrace.android.embracesdk.internal.injection.ModuleGraph
-import io.embrace.android.embracesdk.internal.injection.ModuleGraphFactory
-import io.embrace.android.embracesdk.internal.injection.OpenTelemetryModuleImpl
+import io.embrace.android.embracesdk.internal.injection.InitializedModuleGraph
 import io.embrace.android.embracesdk.internal.instance.SdkStateHolder
 import io.embrace.android.embracesdk.internal.instance.createSdkStateHolder
 import io.embrace.android.embracesdk.internal.worker.Worker
@@ -55,7 +53,7 @@ internal class StrictModeStartupTest(
     private val instrumentation = InstrumentationRegistry.getInstrumentation()
     private val context = ApplicationProvider.getApplicationContext<Context>()
     private val recorder = StrictModeRecorder()
-    private var moduleGraph: ModuleGraph? = null
+    private var moduleGraph: InitializedModuleGraph? = null
     private lateinit var sdkStateHolder: SdkStateHolder
 
     @Before
@@ -73,15 +71,16 @@ internal class StrictModeStartupTest(
         instrumentation.runOnMainSync {
             recorder.install()
 
-            val bootstrapServices = BootstrapServices()
-            val initModule = TestInitModule(InitModuleImpl(bootstrapServices), otelSdkMode)
-            val moduleGraphFactory = ModuleGraphFactory(
-                initModule,
-                OpenTelemetryModuleImpl(initModule, bootstrapServices.externalOtelConfig),
-            )
             sdkStateHolder = createSdkStateHolder(
-                bootstrapServices = bootstrapServices,
-                moduleGraphFactoryProvider = { moduleGraphFactory },
+                bootstrapServices = BootstrapServices(),
+                moduleGraphSupplier = { ctx, bootstrapServices, buffer ->
+                    InitializedModuleGraph(
+                        context = ctx,
+                        bootstrapServices = bootstrapServices,
+                        buffer = buffer,
+                        initModuleSupplier = { TestInitModule(InitModuleImpl(it), otelSdkMode) },
+                    )
+                },
                 onModuleGraphCreated = { moduleGraph = it },
             )
             sdkStateHolder.api.start(context)

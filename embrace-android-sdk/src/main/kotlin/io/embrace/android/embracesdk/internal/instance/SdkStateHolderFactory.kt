@@ -1,13 +1,10 @@
 package io.embrace.android.embracesdk.internal.instance
 
-import io.embrace.android.embracesdk.internal.api.delegate.PreStartOTelApi
 import io.embrace.android.embracesdk.internal.injection.BootstrapServices
-import io.embrace.android.embracesdk.internal.injection.InitModuleImpl
-import io.embrace.android.embracesdk.internal.injection.ModuleGraph
-import io.embrace.android.embracesdk.internal.injection.ModuleGraphFactory
-import io.embrace.android.embracesdk.internal.injection.OpenTelemetryModuleImpl
+import io.embrace.android.embracesdk.internal.injection.InitializedModuleGraph
+import io.embrace.android.embracesdk.internal.injection.ModuleGraphSupplier
+import io.embrace.android.embracesdk.internal.injection.SdkDisabledException
 import io.embrace.android.embracesdk.internal.utils.EmbTrace
-import io.embrace.android.embracesdk.internal.utils.Provider
 
 /**
  * Assembles the [SdkStateHolder] that backs the public `Embrace` object. Production code and integration tests both
@@ -15,24 +12,11 @@ import io.embrace.android.embracesdk.internal.utils.Provider
  */
 internal fun createSdkStateHolder(
     bootstrapServices: BootstrapServices = BootstrapServices(),
-    moduleGraphFactoryProvider: Provider<ModuleGraphFactory> = {
-        EmbTrace.trace(sectionName = "bootstrapper-init", recordDuration = true) {
-            val initModule = EmbTrace.trace("init-module") {
-                InitModuleImpl(bootstrapServices)
-            }
-            ModuleGraphFactory(
-                initModule = initModule,
-                openTelemetryModule = EmbTrace.trace("otel-module") {
-                    OpenTelemetryModuleImpl(initModule, bootstrapServices.externalOtelConfig)
-                },
-            )
-        }
-    },
-    onModuleGraphCreated: ((ModuleGraph) -> Unit)? = null,
+    moduleGraphSupplier: ModuleGraphSupplier? = null,
+    onModuleGraphCreated: ((InitializedModuleGraph) -> Unit)? = null,
 ): SdkStateHolder {
     val logger = bootstrapServices.logger
     val clock = bootstrapServices.clock
-    val moduleGraphFactory = moduleGraphFactoryProvider()
     val buffer = BufferingSdkInstance(
         clock = clock::now,
         logger = logger,
@@ -40,9 +24,15 @@ internal fun createSdkStateHolder(
     )
     return SdkStateHolder(
         instanceFactory = { context ->
-            // drain before the module graph builds the OTel SDK
-            buffer.drainOTelConfig(PreStartOTelApi(moduleGraphFactory.openTelemetryModule.otelSdkConfig.externalConfig))
-            moduleGraphFactory.init(context)?.let { moduleGraph ->
+            EmbTrace.trace(sectionName = "modules-init", recordDuration = true) {
+                try {
+                    moduleGraphSupplier?.invoke(context, bootstrapServices, buffer)
+                        ?: InitializedModuleGraph(context, bootstrapServices, buffer)
+                } catch (ignored: SdkDisabledException) {
+                    // do nothing - avoid instantiating SDK code any more than necessary.
+                    null
+                }
+            }?.let { moduleGraph ->
                 onModuleGraphCreated?.invoke(moduleGraph)
                 RealSdkInstance(
                     moduleGraph = moduleGraph,

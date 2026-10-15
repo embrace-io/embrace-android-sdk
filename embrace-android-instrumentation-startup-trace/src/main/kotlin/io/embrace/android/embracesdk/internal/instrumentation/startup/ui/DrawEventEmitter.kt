@@ -1,7 +1,6 @@
 package io.embrace.android.embracesdk.internal.instrumentation.startup.ui
 
 import android.app.Activity
-import android.os.Build
 import android.os.Build.VERSION_CODES
 import io.embrace.android.embracesdk.internal.handler.AndroidMainThreadHandler
 import io.embrace.android.embracesdk.internal.logging.InternalLogger
@@ -41,4 +40,4 @@ internal fun createDrawEventEmitter(
 internal fun hasRenderEvent(versionChecker: VersionChecker) = versionChecker.isAtLeast(VERSION_CODES.M)
 
 internal fun supportFrameCommitCallback(versionChecker: VersionChecker) = versionChecker.isAtLeast(VERSION_CODES.Q) &&
-    (Build.VERSION.SDK_INT != VERSION_CODES.S && Build.VERSION.SDK_INT != VERSION_CODES.S_V2)
+    (!versionChecker.isAtLeast(VERSION_CODES.S) || versionChecker.isAtLeast(VERSION_CODES.TIRAMISU))

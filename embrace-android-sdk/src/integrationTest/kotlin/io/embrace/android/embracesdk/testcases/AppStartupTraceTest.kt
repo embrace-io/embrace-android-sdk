@@ -41,10 +41,8 @@ import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.ParameterizedRobolectricTestRunner
 import org.robolectric.Robolectric
-import org.robolectric.annotation.Config
 import java.util.zip.GZIPInputStream
 
-@Config(sdk = [Build.VERSION_CODES.LOLLIPOP])
 @RunWith(ParameterizedRobolectricTestRunner::class)
 internal class AppStartupTraceTest(
     private val otelSdkMode: OtelSdkMode,
@@ -56,6 +54,7 @@ internal class AppStartupTraceTest(
     val testRule: SdkIntegrationTestRule = SdkIntegrationTestRule(otelSdkMode) {
         EmbraceSetupInterface(
             fakeStorageLayer = true,
+            simulatedSdkInt = Build.VERSION_CODES.LOLLIPOP,
             workersToFake = listOf(
                 Worker.Background.NonIoRegWorker,
                 Worker.Background.IoRegWorker,

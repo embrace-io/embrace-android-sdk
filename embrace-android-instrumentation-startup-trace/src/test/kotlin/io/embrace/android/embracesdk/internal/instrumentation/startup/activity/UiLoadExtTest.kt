@@ -2,7 +2,8 @@ package io.embrace.android.embracesdk.internal.instrumentation.startup.activity
 
 import android.app.Activity
 import android.app.Application
-import android.os.Build
+import android.os.Build.VERSION_CODES.LOLLIPOP
+import android.os.Build.VERSION_CODES.UPSIDE_DOWN_CAKE
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import io.embrace.android.embracesdk.fakes.FakeClock
 import io.embrace.android.embracesdk.fakes.FakeClock.Companion.DEFAULT_FAKE_CURRENT_TIME
@@ -16,8 +17,9 @@ import io.embrace.android.embracesdk.internal.instrumentation.startup.ClockTicki
 import io.embrace.android.embracesdk.internal.instrumentation.startup.ClockTickingActivityLifecycleCallbacks.Companion.POST_DURATION
 import io.embrace.android.embracesdk.internal.instrumentation.startup.ClockTickingActivityLifecycleCallbacks.Companion.PRE_DURATION
 import io.embrace.android.embracesdk.internal.instrumentation.startup.ClockTickingActivityLifecycleCallbacks.Companion.STATE_DURATION
+import io.embrace.android.embracesdk.internal.instrumentation.startup.asDispatchedOn
 import io.embrace.android.embracesdk.internal.instrumentation.startup.ui.hasRenderEvent
-import io.embrace.android.embracesdk.internal.utils.BuildVersionChecker
+import io.embrace.android.embracesdk.internal.utils.VersionChecker
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertTrue
@@ -27,7 +29,6 @@ import org.junit.runner.RunWith
 import org.robolectric.Robolectric
 import org.robolectric.RuntimeEnvironment
 import org.robolectric.android.controller.ActivityController
-import org.robolectric.annotation.Config
 import kotlin.reflect.KClass
 
 @RunWith(AndroidJUnit4::class)
@@ -38,130 +39,121 @@ internal class UiLoadExtTest {
     private lateinit var eventEmitter: Application.ActivityLifecycleCallbacks
     private lateinit var drawEventEmitter: FakeDrawEventEmitter
     private lateinit var activityController: ActivityController<*>
+    private lateinit var versionChecker: VersionChecker
 
     @Before
     fun setUp() {
         clock = FakeClock(currentTime = DEFAULT_FAKE_CURRENT_TIME)
         uiLoadEventListener = FakeUiLoadEventListener()
         drawEventEmitter = FakeDrawEventEmitter()
-        RuntimeEnvironment.getApplication().registerActivityLifecycleCallbacks(
-            ClockTickingActivityLifecycleCallbacks(clock),
-        )
     }
 
-    @Config(sdk = [Build.VERSION_CODES.UPSIDE_DOWN_CAKE])
     @Test
     fun `check cold ui load event stages in U`() {
-        createEventEmitter(autoTraceEnabled = false, activityClass = FakeTracedActivity::class)
+        createEventEmitter(sdkInt = UPSIDE_DOWN_CAKE, autoTraceEnabled = false, activityClass = FakeTracedActivity::class)
         stepThroughActivityLifecycle()
         uiLoadEventListener.events.assertEventData(expectedColdOpenEvents)
         assertDrawEvents()
     }
 
-    @Config(sdk = [Build.VERSION_CODES.UPSIDE_DOWN_CAKE])
     @Test
     fun `check hot ui load event stages in U`() {
-        createEventEmitter(autoTraceEnabled = false, activityClass = FakeTracedActivity::class)
+        createEventEmitter(sdkInt = UPSIDE_DOWN_CAKE, autoTraceEnabled = false, activityClass = FakeTracedActivity::class)
         stepThroughActivityLifecycle(isColdOpen = false)
         uiLoadEventListener.events.assertEventData(expectedHotOpenEvents)
         assertDrawEvents()
     }
 
-    @Config(sdk = [Build.VERSION_CODES.UPSIDE_DOWN_CAKE])
     @Test
     fun `unannotated activities will emit ui load events in U if auto capture is enabled`() {
-        createEventEmitter(autoTraceEnabled = true, activityClass = Activity::class)
+        createEventEmitter(sdkInt = UPSIDE_DOWN_CAKE, autoTraceEnabled = true, activityClass = Activity::class)
         stepThroughActivityLifecycle()
         uiLoadEventListener.events.assertEventData(expectedColdOpenEvents)
         assertDrawEvents()
     }
 
-    @Config(sdk = [Build.VERSION_CODES.UPSIDE_DOWN_CAKE])
     @Test
     fun `unannotated activities will not emit ui load events in U if auto capture is not enabled`() {
-        createEventEmitter(autoTraceEnabled = false, activityClass = Activity::class)
+        createEventEmitter(sdkInt = UPSIDE_DOWN_CAKE, autoTraceEnabled = false, activityClass = Activity::class)
         stepThroughActivityLifecycle()
         assertTrue(uiLoadEventListener.events.isEmpty())
     }
 
-    @Config(sdk = [Build.VERSION_CODES.UPSIDE_DOWN_CAKE])
     @Test
     fun `activities will not emit ui load events in U if explicitly disabled`() {
-        createEventEmitter(autoTraceEnabled = true, activityClass = FakeNotTracedActivity::class)
+        createEventEmitter(sdkInt = UPSIDE_DOWN_CAKE, autoTraceEnabled = true, activityClass = FakeNotTracedActivity::class)
         stepThroughActivityLifecycle()
         assertTrue(uiLoadEventListener.events.isEmpty())
     }
 
-    @Config(sdk = [Build.VERSION_CODES.UPSIDE_DOWN_CAKE])
     @Test
     fun `activities with manual ended trace will emit ui load events in U`() {
-        createEventEmitter(autoTraceEnabled = false, activityClass = FakeCustomTracedActivity::class)
+        createEventEmitter(sdkInt = UPSIDE_DOWN_CAKE, autoTraceEnabled = false, activityClass = FakeCustomTracedActivity::class)
         stepThroughActivityLifecycle()
         uiLoadEventListener.events.assertEventData(expectedColdOpenEvents)
         assertDrawEvents()
     }
 
-    @Config(sdk = [Build.VERSION_CODES.LOLLIPOP])
     @Test
     fun `check cold ui load event stages in L`() {
-        createEventEmitter(autoTraceEnabled = false, activityClass = FakeTracedActivity::class)
+        createEventEmitter(sdkInt = LOLLIPOP, autoTraceEnabled = false, activityClass = FakeTracedActivity::class)
         stepThroughActivityLifecycle()
         uiLoadEventListener.events.assertEventData(legacyColdOpenEvents)
         assertDrawEvents()
     }
 
-    @Config(sdk = [Build.VERSION_CODES.LOLLIPOP])
     @Test
     fun `check hot ui load event stages in L`() {
-        createEventEmitter(autoTraceEnabled = false, activityClass = FakeTracedActivity::class)
+        createEventEmitter(sdkInt = LOLLIPOP, autoTraceEnabled = false, activityClass = FakeTracedActivity::class)
         stepThroughActivityLifecycle(isColdOpen = false)
         uiLoadEventListener.events.assertEventData(legacyHotOpenEvents)
         assertDrawEvents()
     }
 
-    @Config(sdk = [Build.VERSION_CODES.LOLLIPOP])
     @Test
     fun `unannotated activities will emit ui load events in L if auto capture is enabled`() {
-        createEventEmitter(autoTraceEnabled = true, activityClass = Activity::class)
+        createEventEmitter(sdkInt = LOLLIPOP, autoTraceEnabled = true, activityClass = Activity::class)
         stepThroughActivityLifecycle()
         uiLoadEventListener.events.assertEventData(legacyColdOpenEvents)
         assertDrawEvents()
     }
 
-    @Config(sdk = [Build.VERSION_CODES.LOLLIPOP])
     @Test
     fun `unannotated activities will not emit ui load events in L if auto capture is not enabled`() {
-        createEventEmitter(autoTraceEnabled = false, activityClass = Activity::class)
+        createEventEmitter(sdkInt = LOLLIPOP, autoTraceEnabled = false, activityClass = Activity::class)
         stepThroughActivityLifecycle()
         assertTrue(uiLoadEventListener.events.isEmpty())
     }
 
-    @Config(sdk = [Build.VERSION_CODES.LOLLIPOP])
     @Test
     fun `activities will not emit ui load events in L if explicitly disabled`() {
-        createEventEmitter(autoTraceEnabled = true, activityClass = FakeNotTracedActivity::class)
+        createEventEmitter(sdkInt = LOLLIPOP, autoTraceEnabled = true, activityClass = FakeNotTracedActivity::class)
         stepThroughActivityLifecycle()
         assertTrue(uiLoadEventListener.events.isEmpty())
     }
 
-    @Config(sdk = [Build.VERSION_CODES.LOLLIPOP])
     @Test
     fun `activities with manual ended trace will emit ui load events in L`() {
-        createEventEmitter(autoTraceEnabled = false, activityClass = FakeCustomTracedActivity::class)
+        createEventEmitter(sdkInt = LOLLIPOP, autoTraceEnabled = false, activityClass = FakeCustomTracedActivity::class)
         stepThroughActivityLifecycle()
         uiLoadEventListener.events.assertEventData(legacyColdOpenEvents)
         assertDrawEvents()
     }
 
-    private fun <T : Activity> createEventEmitter(autoTraceEnabled: Boolean, activityClass: KClass<T>) {
+    private fun <T : Activity> createEventEmitter(sdkInt: Int, autoTraceEnabled: Boolean, activityClass: KClass<T>) {
+        versionChecker = VersionChecker { min -> sdkInt >= min }
+        val application = RuntimeEnvironment.getApplication()
+        application.registerActivityLifecycleCallbacks(
+            ClockTickingActivityLifecycleCallbacks(clock).asDispatchedOn(sdkInt),
+        )
         eventEmitter = createActivityLoadEventEmitter(
             uiLoadEventListener = uiLoadEventListener,
             firstDrawDetector = drawEventEmitter,
             autoTraceEnabled = autoTraceEnabled,
             clock = clock,
-            versionChecker = BuildVersionChecker,
+            versionChecker = versionChecker,
         ).apply {
-            RuntimeEnvironment.getApplication().registerActivityLifecycleCallbacks(this)
+            application.registerActivityLifecycleCallbacks(asDispatchedOn(sdkInt))
             activityController = Robolectric.buildActivity(activityClass.java)
         }
     }
@@ -173,7 +165,7 @@ internal class UiLoadExtTest {
             }
             start()
             resume()
-            if (hasRenderEvent(BuildVersionChecker)) {
+            if (hasRenderEvent(versionChecker)) {
                 drawEventEmitter.draw(activityController.get()) {
                     clock.tick(RENDER_DURATION)
                 }

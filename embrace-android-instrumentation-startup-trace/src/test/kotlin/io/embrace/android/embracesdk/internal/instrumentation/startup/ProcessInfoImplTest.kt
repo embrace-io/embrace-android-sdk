@@ -2,62 +2,66 @@ package io.embrace.android.embracesdk.internal.instrumentation.startup
 
 import android.app.ActivityManager
 import android.app.ApplicationStartInfo
-import android.os.Build
+import android.os.Build.VERSION_CODES.LOLLIPOP
+import android.os.Build.VERSION_CODES.N
+import android.os.Build.VERSION_CODES.TIRAMISU
+import android.os.Build.VERSION_CODES.UPSIDE_DOWN_CAKE
+import android.os.Build.VERSION_CODES.VANILLA_ICE_CREAM
 import android.os.Process
 import androidx.test.ext.junit.runners.AndroidJUnit4
-import io.embrace.android.embracesdk.internal.utils.BuildVersionChecker
+import io.embrace.android.embracesdk.internal.utils.VersionChecker
 import io.embrace.android.embracesdk.semconv.EmbSessionAttributes.EmbStartupLaunchReasonValues
 import io.mockk.every
 import io.mockk.mockk
 import io.mockk.verify
+import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
 import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
-import org.robolectric.annotation.Config
+import org.robolectric.util.ReflectionHelpers
 
 @RunWith(AndroidJUnit4::class)
 internal class ProcessInfoImplTest {
 
     private val fakeDeviceStartTime = 100_000L
-    private lateinit var processInfo: ProcessInfo
+    private var originalStartElapsedRealtime = 0L
+    private var originalStartRequestedElapsedRealtime = 0L
 
     @Before
     fun setUp() {
-        processInfo = ProcessInfoImpl(fakeDeviceStartTime, BuildVersionChecker)
+        originalStartElapsedRealtime = Process.getStartElapsedRealtime()
+        originalStartRequestedElapsedRealtime = Process.getStartRequestedElapsedRealtime()
+        setProcessStartTimes(startElapsedRealtime = 2_000L, startRequestedElapsedRealtime = 1_000L)
     }
 
-    @Config(sdk = [Build.VERSION_CODES.TIRAMISU])
+    @After
+    fun tearDown() {
+        setProcessStartTimes(originalStartElapsedRealtime, originalStartRequestedElapsedRealtime)
+    }
+
     @Test
     fun `verify start time in T`() {
-        val startRequestElapsedTime = Process.getStartRequestedElapsedRealtime()
-        val startRequestedEpochTime = checkNotNull(processInfo.startRequestedTimeMs())
-        assertEquals(startRequestElapsedTime, startRequestedEpochTime - fakeDeviceStartTime)
+        assertEquals(fakeDeviceStartTime + 1_000L, processInfo(TIRAMISU).startRequestedTimeMs())
     }
 
-    @Config(sdk = [Build.VERSION_CODES.N])
     @Test
     fun `verify start time in N`() {
-        val startElapsedTime = Process.getStartElapsedRealtime()
-        val startRequestedEpochTime = checkNotNull(processInfo.startRequestedTimeMs())
-        assertEquals(startElapsedTime, startRequestedEpochTime - fakeDeviceStartTime)
+        assertEquals(fakeDeviceStartTime + 2_000L, processInfo(N).startRequestedTimeMs())
     }
 
-    @Config(sdk = [Build.VERSION_CODES.LOLLIPOP])
     @Test
     fun `verify start time in L`() {
-        assertNull(processInfo.startRequestedTimeMs())
+        assertNull(processInfo(LOLLIPOP).startRequestedTimeMs())
     }
 
-    @Config(sdk = [Build.VERSION_CODES.VANILLA_ICE_CREAM])
     @Test
     fun `verify launch reason in V`() {
         val activityManager = activityManagerWith(startInfo(ApplicationStartInfo.START_REASON_PUSH, startedBeforeUs))
         assertEquals(EmbStartupLaunchReasonValues.PUSH, processInfo(activityManager).launchReason())
     }
 
-    @Config(sdk = [Build.VERSION_CODES.VANILLA_ICE_CREAM])
     @Test
     fun `verify launch reason read from records the platform did not populate a pid for in V`() {
         val record = startInfo(ApplicationStartInfo.START_REASON_LAUNCHER, startedBeforeUs)
@@ -65,7 +69,6 @@ internal class ProcessInfoImplTest {
         assertEquals(EmbStartupLaunchReasonValues.LAUNCHER, processInfo(activityManagerWith(record)).launchReason())
     }
 
-    @Config(sdk = [Build.VERSION_CODES.VANILLA_ICE_CREAM])
     @Test
     fun `verify starts logged after our process was requested are not reported as ours in V`() {
         val activityManager = activityManagerWith(
@@ -75,7 +78,6 @@ internal class ProcessInfoImplTest {
         assertEquals(EmbStartupLaunchReasonValues.LAUNCHER, processInfo(activityManager).launchReason())
     }
 
-    @Config(sdk = [Build.VERSION_CODES.VANILLA_ICE_CREAM])
     @Test
     fun `verify no launch reason when every record postdates our process being requested in V`() {
         val activityManager =
@@ -83,7 +85,6 @@ internal class ProcessInfoImplTest {
         assertNull(processInfo(activityManager).launchReason())
     }
 
-    @Config(sdk = [Build.VERSION_CODES.VANILLA_ICE_CREAM])
     @Test
     fun `verify no launch reason when a record cannot be placed in time in V`() {
         val record = startInfo(ApplicationStartInfo.START_REASON_LAUNCHER, startedBeforeUs)
@@ -91,19 +92,16 @@ internal class ProcessInfoImplTest {
         assertNull(processInfo(activityManagerWith(record)).launchReason())
     }
 
-    @Config(sdk = [Build.VERSION_CODES.VANILLA_ICE_CREAM])
     @Test
     fun `verify no launch reason when no start records exist in V`() {
         assertNull(processInfo(activityManagerWith()).launchReason())
     }
 
-    @Config(sdk = [Build.VERSION_CODES.VANILLA_ICE_CREAM])
     @Test
     fun `verify no launch reason for an unrecognised platform reason in V`() {
         assertNull(processInfo(activityManagerWith(startInfo(Int.MAX_VALUE, startedBeforeUs))).launchReason())
     }
 
-    @Config(sdk = [Build.VERSION_CODES.VANILLA_ICE_CREAM])
     @Test
     fun `verify no launch reason when the platform call fails in V`() {
         val activityManager = mockk<ActivityManager> {
@@ -112,21 +110,18 @@ internal class ProcessInfoImplTest {
         assertNull(processInfo(activityManager).launchReason())
     }
 
-    @Config(sdk = [Build.VERSION_CODES.VANILLA_ICE_CREAM])
     @Test
     fun `verify no launch reason without an ActivityManager in V`() {
         assertNull(processInfo(activityManager = null).launchReason())
     }
 
-    @Config(sdk = [Build.VERSION_CODES.UPSIDE_DOWN_CAKE])
     @Test
     fun `verify no launch reason in U`() {
         val activityManager =
             activityManagerWith(startInfo(ApplicationStartInfo.START_REASON_LAUNCHER, startedBeforeUs))
-        assertNull(processInfo(activityManager).launchReason())
+        assertNull(processInfo(activityManager, UPSIDE_DOWN_CAKE).launchReason())
     }
 
-    @Config(sdk = [Build.VERSION_CODES.VANILLA_ICE_CREAM])
     @Test
     fun `verify the platform is only consulted once however often the reason is read in V`() {
         val activityManager = activityManagerWith(startInfo(ApplicationStartInfo.START_REASON_JOB, startedBeforeUs))
@@ -139,8 +134,15 @@ internal class ProcessInfoImplTest {
         verify(exactly = 1) { activityManager.getHistoricalProcessStartReasons(any()) }
     }
 
-    private fun processInfo(activityManager: ActivityManager?) =
-        ProcessInfoImpl(fakeDeviceStartTime, BuildVersionChecker, activityManager)
+    private fun processInfo(activityManager: ActivityManager?, sdkInt: Int = VANILLA_ICE_CREAM) =
+        ProcessInfoImpl(fakeDeviceStartTime, VersionChecker { min -> sdkInt >= min }, activityManager)
+
+    private fun processInfo(sdkInt: Int) = processInfo(activityManager = null, sdkInt = sdkInt)
+
+    private fun setProcessStartTimes(startElapsedRealtime: Long, startRequestedElapsedRealtime: Long) {
+        ReflectionHelpers.setStaticField(Process::class.java, "sStartElapsedRealtime", startElapsedRealtime)
+        ReflectionHelpers.setStaticField(Process::class.java, "sStartRequestedElapsedRealtime", startRequestedElapsedRealtime)
+    }
 
     private fun activityManagerWith(vararg records: ApplicationStartInfo) = mockk<ActivityManager> {
         every { getHistoricalProcessStartReasons(any()) } returns records.toList()

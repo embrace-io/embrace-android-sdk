@@ -1,7 +1,6 @@
 package io.embrace.android.embracesdk.internal.utils
 
 import android.annotation.SuppressLint
-import android.os.Build
 import android.os.Build.VERSION_CODES
 import android.os.Trace
 
@@ -11,9 +10,11 @@ import android.os.Trace
  */
 object AndroidSectionRecorder : SectionRecorder {
 
+    internal var versionChecker: VersionChecker = BuildVersionChecker
+
     @SuppressLint("UnclosedTrace")
     override fun beginSection(sectionName: String): Boolean {
-        if (Build.VERSION.SDK_INT < VERSION_CODES.Q || !Trace.isEnabled()) {
+        if (!versionChecker.isAtLeast(VERSION_CODES.Q) || !Trace.isEnabled()) {
             return false
         }
         Trace.beginSection(prefixedTraceName(sectionName))
@@ -21,13 +22,13 @@ object AndroidSectionRecorder : SectionRecorder {
     }
 
     override fun endSection() {
-        if (Build.VERSION.SDK_INT >= VERSION_CODES.Q) {
+        if (versionChecker.isAtLeast(VERSION_CODES.Q)) {
             Trace.endSection()
         }
     }
 
     override fun setCounter(name: String, value: Long) {
-        if (Build.VERSION.SDK_INT < VERSION_CODES.Q || !Trace.isEnabled()) {
+        if (!versionChecker.isAtLeast(VERSION_CODES.Q) || !Trace.isEnabled()) {
             return
         }
         Trace.setCounter(prefixedTraceName(name), value)

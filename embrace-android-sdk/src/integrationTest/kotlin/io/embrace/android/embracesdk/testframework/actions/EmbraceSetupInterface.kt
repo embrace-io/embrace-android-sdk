@@ -47,6 +47,7 @@ import io.embrace.android.embracesdk.internal.instance.SdkStateHolder
 import io.embrace.android.embracesdk.internal.instance.createSdkStateHolder
 import io.embrace.android.embracesdk.internal.instrumentation.crash.ndk.jniDelegateTestOverride
 import io.embrace.android.embracesdk.internal.instrumentation.crash.ndk.sharedObjectLoaderTestOverride
+import io.embrace.android.embracesdk.internal.instrumentation.startup.DataCaptureServiceModuleImpl
 import io.embrace.android.embracesdk.internal.instrumentation.startup.SdkInitResourceUsageTracker
 import io.embrace.android.embracesdk.internal.instrumentation.thread.blockage.createThreadBlockageService
 import io.embrace.android.embracesdk.internal.logging.InternalErrorType
@@ -68,6 +69,8 @@ import io.embrace.android.embracesdk.internal.session.persistence.SessionPartWri
 import io.embrace.android.embracesdk.internal.spans.CurrentSessionPartSpan
 import io.embrace.android.embracesdk.internal.store.KeyValueStore
 import io.embrace.android.embracesdk.internal.utils.UuidSource
+import io.embrace.android.embracesdk.internal.utils.VersionChecker
+import io.embrace.android.embracesdk.internal.vitals.vitalsVersionCheckerTestOverride
 import io.embrace.android.embracesdk.internal.worker.BackgroundWorker
 import io.embrace.android.embracesdk.internal.worker.Worker
 import io.embrace.android.embracesdk.internal.worker.Worker.Background.NonIoRegWorker
@@ -89,6 +92,10 @@ import kotlin.time.Duration.Companion.seconds
  *
  * Defaults to a [TestUuidSource] that randomizes the UUIDs it generates. A custom [UuidSource] can be
  * used instead for, say, tests that require predictable UUID sequences to be generated.
+ *
+ * [simulatedSdkInt] makes the startup trace, UI load and vitals instrumentation take the branches
+ * they would on that API level, so a test can cover an older platform on Robolectric's default SDK
+ * rather than paying for an extra sandbox.
  */
 internal class EmbraceSetupInterface(
     private val workersToFake: List<Worker.Background> = emptyList(),
@@ -97,8 +104,15 @@ internal class EmbraceSetupInterface(
     ignoredInternalErrors: List<InternalErrorType> = listOf(),
     val fakeClock: FakeClock = FakeClock(currentTime = SdkIntegrationTestRule.DEFAULT_SDK_START_TIME_MS),
     private val uuidSource: UuidSource = TestUuidSource(Random.nextInt()),
+    simulatedSdkInt: Int? = null,
 ) {
     private val processIdentifier: String = uuidSource.createUuid()
+
+    private val simulatedVersionChecker: VersionChecker? = simulatedSdkInt?.let { sdkInt ->
+        VersionChecker { min -> sdkInt >= min }
+    }.also {
+        vitalsVersionCheckerTestOverride = it
+    }
 
     val fakeNetworkConnectivityService = FakeNetworkConnectivityService()
     val fakeJniDelegate = FakeJniDelegate().also {
@@ -259,6 +273,21 @@ internal class EmbraceSetupInterface(
                 },
                 payloadSourceModule,
             )
+        },
+        dataCaptureServiceModuleSupplier = simulatedVersionChecker?.let { versionChecker ->
+            { clock, logger, destination, configService, appVersionStartupCounterProvider, startupClassifier, _, activityManager, backgroundWorker ->
+                DataCaptureServiceModuleImpl(
+                    clock = clock,
+                    logger = logger,
+                    destination = destination,
+                    configService = configService,
+                    appVersionStartupCounterProvider = appVersionStartupCounterProvider,
+                    startupClassifier = startupClassifier,
+                    versionChecker = versionChecker,
+                    activityManager = activityManager,
+                    backgroundWorker = backgroundWorker,
+                )
+            }
         },
         sdkInitResourceUsageTrackerSupplier = { fakeSdkInitResourceUsageTracker() },
     )

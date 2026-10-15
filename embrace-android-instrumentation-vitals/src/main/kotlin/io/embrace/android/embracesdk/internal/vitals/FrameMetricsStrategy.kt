@@ -5,6 +5,8 @@ import android.os.SystemClock
 import android.view.FrameMetrics
 import androidx.annotation.RequiresApi
 import androidx.annotation.WorkerThread
+import io.embrace.android.embracesdk.internal.utils.BuildVersionChecker
+import io.embrace.android.embracesdk.internal.utils.VersionChecker
 import io.embrace.android.embracesdk.internal.vitals.FrameMetricsStrategy.Companion.create
 import io.embrace.android.embracesdk.internal.vitals.smoothness.SmoothnessReporter
 
@@ -64,16 +66,18 @@ internal interface FrameMetricsStrategy {
          *
          * @param refreshIntervalNanos nanoseconds between frames at the current refresh rate (for devices < SDK_31)
          * @param jankHeuristicMultiplier the grace multiplier to apply to the refresh rate before a delayed frame is considered dropped
+         * @param versionChecker selects the strategy for the device's API level
          */
         @RequiresApi(Build.VERSION_CODES.N)
         fun create(
             refreshIntervalNanos: Long,
             jankHeuristicMultiplier: Double = SmoothnessReporter.DEFAULT_JANK_HEURISTIC_MULTIPLIER,
+            versionChecker: VersionChecker = BuildVersionChecker,
         ): FrameMetricsStrategy = when {
-            Build.VERSION.SDK_INT >= Build.VERSION_CODES.S ->
+            versionChecker.isAtLeast(Build.VERSION_CODES.S) ->
                 Api31FrameMetricsStrategy(jankHeuristicMultiplier)
 
-            Build.VERSION.SDK_INT >= Build.VERSION_CODES.O ->
+            versionChecker.isAtLeast(Build.VERSION_CODES.O) ->
                 Api26FrameMetricsStrategy(refreshIntervalNanos, jankHeuristicMultiplier)
 
             else ->

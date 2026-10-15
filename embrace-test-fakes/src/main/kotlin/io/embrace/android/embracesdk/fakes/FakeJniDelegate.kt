@@ -11,6 +11,7 @@ class FakeJniDelegate : JniDelegate {
     var reportPath: String? = null
     var signalHandlerInstalled: Boolean = false
     var signalHandlerReinstalled = false
+    var crashCaptureDisabled = false
 
     override fun installSignalHandlers(
         markerFilePath: String?,
@@ -41,5 +42,9 @@ class FakeJniDelegate : JniDelegate {
     override fun reinstallSignalHandlers(): Boolean {
         signalHandlerReinstalled = true
         return false
+    }
+
+    override fun disableCrashCapture() {
+        crashCaptureDisabled = true
     }
 }

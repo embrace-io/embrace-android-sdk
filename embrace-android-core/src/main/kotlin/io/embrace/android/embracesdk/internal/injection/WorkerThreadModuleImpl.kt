@@ -27,6 +27,9 @@ class WorkerThreadModuleImpl(
     private val backgroundWorkers: MutableMap<Worker, BackgroundWorker> = ConcurrentHashMap()
     override val threadBlockageMonitorThread: AtomicReference<Thread> = AtomicReference<Thread>()
 
+    @Volatile
+    private var closed = false
+
     @Suppress("UNCHECKED_CAST")
     override fun <T> priorityWorker(worker: Worker.Priority): PriorityWorker<T> {
         return priorityWorkers.getOrPut(worker) {
@@ -41,14 +44,31 @@ class WorkerThreadModuleImpl(
     }
 
     override fun close() {
-        executors.values.forEach(ExecutorService::shutdown)
+        closed = true
+        executors.values.forEach(::shutdown)
     }
 
-    override fun awaitTermination(worker: Worker, timeoutMs: Long) {
-        runCatching { executors[worker]?.awaitTermination(timeoutMs, TimeUnit.MILLISECONDS) }
+    private fun shutdown(executor: ExecutorService) {
+        (executor as? ScheduledThreadPoolExecutor)?.executeExistingDelayedTasksAfterShutdownPolicy = false
+        executor.shutdown()
+    }
+
+    override fun awaitTermination(timeoutMs: Long): Boolean {
+        val deadline = System.nanoTime() + TimeUnit.MILLISECONDS.toNanos(timeoutMs)
+        return executors.values.all { executor ->
+            executor.awaitTermination(deadline - System.nanoTime(), TimeUnit.NANOSECONDS)
+        }
     }
 
     private fun fetchExecutor(worker: Worker): ExecutorService {
+        val executor = createOrGetExecutor(worker)
+        if (closed) {
+            shutdown(executor)
+        }
+        return executor
+    }
+
+    private fun createOrGetExecutor(worker: Worker): ExecutorService {
         return executors.getOrPut(worker) {
             val threadFactory = createThreadFactory(worker)
 

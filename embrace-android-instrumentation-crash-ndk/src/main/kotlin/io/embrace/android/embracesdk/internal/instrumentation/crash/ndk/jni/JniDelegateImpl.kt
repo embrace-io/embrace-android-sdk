@@ -11,4 +11,5 @@ class JniDelegateImpl : JniDelegate {
     external override fun getCrashReport(path: String): String?
     external override fun checkForOverwrittenHandlers(): String?
     external override fun reinstallSignalHandlers(): Boolean
+    external override fun disableCrashCapture()
 }

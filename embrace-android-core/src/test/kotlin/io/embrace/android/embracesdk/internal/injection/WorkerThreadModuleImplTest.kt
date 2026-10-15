@@ -1,13 +1,16 @@
 package io.embrace.android.embracesdk.internal.injection
 
 import io.embrace.android.embracesdk.internal.worker.Worker
+import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertNotSame
 import org.junit.Assert.assertSame
 import org.junit.Assert.assertTrue
 import org.junit.Test
+import java.util.concurrent.CountDownLatch
 import java.util.concurrent.TimeUnit
+import java.util.concurrent.atomic.AtomicBoolean
 
 internal class WorkerThreadModuleImplTest {
 
@@ -34,6 +37,49 @@ internal class WorkerThreadModuleImplTest {
 
         val future = worker.submit {}
         assertNotNull(future)
+    }
+
+    @Test
+    fun `await termination waits for running and queued tasks`() {
+        val module = WorkerThreadModuleImpl()
+        val worker = module.backgroundWorker(Worker.Background.IoRegWorker)
+        val started = CountDownLatch(1)
+        val release = CountDownLatch(1)
+        val completed = mutableListOf<Int>()
+        worker.submit {
+            started.countDown()
+            release.await()
+            completed += 1
+        }
+        worker.submit { completed += 2 }
+        started.await(1, TimeUnit.SECONDS)
+        module.close()
+
+        assertFalse(module.awaitTermination(50))
+        release.countDown()
+        assertTrue(module.awaitTermination(1000))
+        assertEquals(listOf(1, 2), completed)
+    }
+
+    @Test
+    fun `close drops delayed tasks`() {
+        val module = WorkerThreadModuleImpl()
+        val worker = module.backgroundWorker(Worker.Background.IoRegWorker)
+        worker.schedule<Unit>({}, 1, TimeUnit.HOURS)
+        module.close()
+        assertTrue(module.awaitTermination(1000))
+    }
+
+    @Test
+    fun `worker first requested after close is shut down`() {
+        val module = WorkerThreadModuleImpl()
+        module.backgroundWorker(Worker.Background.IoRegWorker)
+        module.close()
+
+        val ran = AtomicBoolean(false)
+        module.backgroundWorker(Worker.Background.NonIoRegWorker).submit { ran.set(true) }
+        assertTrue(module.awaitTermination(1000))
+        assertFalse(ran.get())
     }
 
     @Test

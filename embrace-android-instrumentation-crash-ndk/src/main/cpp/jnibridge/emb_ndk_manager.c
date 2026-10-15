@@ -172,7 +172,14 @@ static jboolean JniDelegateImpl_reinstallSignalHandlers(JNIEnv *env, jobject thi
     return false;
 }
 
-static const int NATIVE_BRIDGE_METHOD_COUNT = 5;
+static void JniDelegateImpl_disableCrashCapture(JNIEnv *env, jobject thiz) {
+    EMB_LOGINFO("Disabling native crash capture");
+    // fail open() so that no crash report or marker gets written
+    __emb_env->report_path[0] = '\0';
+    __emb_env->crash_marker_path[0] = '\0';
+}
+
+static const int NATIVE_BRIDGE_METHOD_COUNT = 6;
 
 static const JNINativeMethod JniDelegateImpl_Methods[] = {
         {"installSignalHandlers", "(Ljava/lang/String;Ljava/lang/String;Z)V", &JniDelegateImpl_installSignalHandlers},
@@ -180,6 +187,7 @@ static const JNINativeMethod JniDelegateImpl_Methods[] = {
         {"onSessionChange", "(Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;)V", &JniDelegateImpl_onSessionChange},
         {"checkForOverwrittenHandlers", "()Ljava/lang/String;", &JniDelegateImpl_checkForOverwrittenHandlers},
         {"reinstallSignalHandlers", "()Z", &JniDelegateImpl_reinstallSignalHandlers},
+        {"disableCrashCapture", "()V", &JniDelegateImpl_disableCrashCapture},
 };
 
 void EMB_RegisterJniDelegateImpl(JNIEnv *env) {

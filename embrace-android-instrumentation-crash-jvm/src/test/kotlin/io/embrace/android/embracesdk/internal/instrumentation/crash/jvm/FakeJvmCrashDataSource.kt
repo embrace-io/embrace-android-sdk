@@ -14,6 +14,9 @@ class FakeJvmCrashDataSource : JvmCrashDataSource {
     override fun onDataCaptureEnabled() {
     }
 
+    override fun onDataCaptureDisabled() {
+    }
+
     override fun <T> captureTelemetry(
         inputValidation: () -> Boolean,
         invalidInputCallback: () -> Unit,

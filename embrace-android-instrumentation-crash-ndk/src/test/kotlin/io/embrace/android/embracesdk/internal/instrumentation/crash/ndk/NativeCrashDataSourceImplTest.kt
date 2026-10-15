@@ -1,6 +1,7 @@
 package io.embrace.android.embracesdk.internal.instrumentation.crash.ndk
 
 import io.embrace.android.embracesdk.fakes.FakeInstrumentationArgs
+import io.embrace.android.embracesdk.fakes.FakeNativeCrashHandlerInstaller
 import io.embrace.android.embracesdk.fakes.FakeNativeCrashProcessor
 import io.embrace.android.embracesdk.internal.arch.attrs.toEmbraceAttributeName
 import io.embrace.android.embracesdk.internal.arch.schema.EmbType
@@ -14,7 +15,9 @@ import kotlinx.serialization.builtins.MapSerializer
 import kotlinx.serialization.builtins.nullable
 import kotlinx.serialization.builtins.serializer
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNull
+import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
 
@@ -23,15 +26,25 @@ internal class NativeCrashDataSourceImplTest {
     private lateinit var crashProcessor: FakeNativeCrashProcessor
     private lateinit var args: FakeInstrumentationArgs
     private lateinit var nativeCrashDataSource: NativeCrashDataSourceImpl
+    private lateinit var installer: FakeNativeCrashHandlerInstaller
 
     @Before
     fun setUp() {
         crashProcessor = FakeNativeCrashProcessor()
         args = FakeInstrumentationArgs()
+        installer = FakeNativeCrashHandlerInstaller()
         nativeCrashDataSource = NativeCrashDataSourceImpl(
             nativeCrashProcessor = crashProcessor,
+            nativeCrashHandlerInstaller = installer,
             args = args,
         )
+    }
+
+    @Test
+    fun `disabling data capture disables the native crash handler`() {
+        assertFalse(installer.disabled)
+        nativeCrashDataSource.onDataCaptureDisabled()
+        assertTrue(installer.disabled)
     }
 
     @Test

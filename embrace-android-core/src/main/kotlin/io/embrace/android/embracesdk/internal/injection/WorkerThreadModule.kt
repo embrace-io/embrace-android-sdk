@@ -28,12 +28,13 @@ interface WorkerThreadModule : Closeable {
 
     /**
      * This should only be invoked when the SDK is shutting down. Closing all the worker threads in production means the
-     * SDK will not be functional afterwards.
+     * SDK will not be functional afterwards. Tasks that are already queued still run, but delayed tasks are dropped.
      */
     override fun close()
 
     /**
-     * Blocks until [worker] has finished its in-flight and queued tasks after [close], or until [timeoutMs] elapses.
+     * Blocks until every worker has finished its remaining tasks after [close], or [timeoutMs] elapses. Returns true
+     * if every worker terminated.
      */
-    fun awaitTermination(worker: Worker, timeoutMs: Long)
+    fun awaitTermination(timeoutMs: Long): Boolean
 }

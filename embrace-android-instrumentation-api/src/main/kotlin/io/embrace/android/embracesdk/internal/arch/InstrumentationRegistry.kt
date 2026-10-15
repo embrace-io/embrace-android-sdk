@@ -2,16 +2,17 @@ package io.embrace.android.embracesdk.internal.arch
 
 import io.embrace.android.embracesdk.internal.arch.datasource.DataSource
 import io.embrace.android.embracesdk.internal.arch.datasource.DataSourceFactory
+import java.io.Closeable
 import kotlin.reflect.KClass
 
 /**
  * Registry for all features whose instrumentation should be orchestrated by the Embrace SDK.
  */
-interface InstrumentationRegistry : SessionPartEndListener, SessionPartChangeListener {
+interface InstrumentationRegistry : SessionPartEndListener, SessionPartChangeListener, Closeable {
 
     /**
      * Creates a data source from [state] and adds it to the registry, enabling data capture.
-     * Returns the data source, or null if [state] did not create one.
+     * Returns the data source, or null if [state] did not create one or the registry has been closed.
      */
     fun <T : DataSource> add(state: DataSourceFactory<T>): T?
 
@@ -33,4 +34,10 @@ interface InstrumentationRegistry : SessionPartEndListener, SessionPartChangeLis
      * Return a [Map] of states and their current values
      */
     fun getCurrentStates(): Map<String, Any>
+
+    /**
+     * Permanently disables data capture for every registered data source. Data sources created after this
+     * call (e.g. by async instrumentation init) are disabled immediately rather than registered.
+     */
+    override fun close()
 }

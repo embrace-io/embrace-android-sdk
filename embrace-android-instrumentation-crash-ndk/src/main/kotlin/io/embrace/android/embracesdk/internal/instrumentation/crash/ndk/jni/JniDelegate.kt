@@ -10,4 +10,5 @@ interface JniDelegate {
     fun getCrashReport(path: String): String?
     fun checkForOverwrittenHandlers(): String?
     fun reinstallSignalHandlers(): Boolean
+    fun disableCrashCapture()
 }

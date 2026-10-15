@@ -46,6 +46,10 @@ class JvmCrashDataSourceImpl(
 
     override var telemetryModifier: ((TelemetryAttributes) -> SchemaType)? = null
 
+    override fun onDataCaptureDisabled() {
+        mainCrashHandled.set(true)
+    }
+
     /**
      * Handles a crash caught by the [EmbraceUncaughtExceptionHandler] by constructing a
      * JSON message containing a description of the crash, device, and context, and then sending

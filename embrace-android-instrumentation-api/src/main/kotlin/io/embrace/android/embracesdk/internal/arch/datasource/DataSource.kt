@@ -25,6 +25,12 @@ interface DataSource {
     fun onDataCaptureEnabled()
 
     /**
+     * Permanently disables data capture because the SDK has been disabled. This should stop anything that would
+     * otherwise capture data or write to disk outside of [captureTelemetry], such as crash handlers.
+     */
+    fun onDataCaptureDisabled()
+
+    /**
      * Resets any data capture limits since the last time [onDataCaptureEnabled] was called.
      */
     fun resetDataCaptureLimits()

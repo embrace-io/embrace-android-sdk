@@ -165,10 +165,10 @@ internal class SdkStateHolderTest {
     }
 
     @Test
-    fun `internal interface api is routed through the dispatcher`() {
+    fun `internal interface api follows the dispatcher target`() {
         val instance = FakeInstance(calls, startSucceeds = false)
         val holder = createHolder(instance)
-        assertSame(holder.dispatcher, EmbraceInternalApi.internalInterfaceApi)
+        assertSame(buffer, EmbraceInternalApi.internalInterfaceApi)
 
         holder.start(context)
         assertSame(NoopInternalInterfaceApi.internalInterface, EmbraceInternalApi.internalInterface)

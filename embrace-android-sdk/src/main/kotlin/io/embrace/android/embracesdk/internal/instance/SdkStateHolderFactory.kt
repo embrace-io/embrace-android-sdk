@@ -50,8 +50,7 @@ internal fun createSdkStateHolder(
         clock = clock::now,
         logger = logger,
     )
-    var holder: SdkStateHolder? = null
-    holder = SdkStateHolder(
+    return SdkStateHolder(
         instanceFactory = { context ->
             // drain before the module graph builds the OTel SDK
             buffer.drainOTelConfig(PreStartOTelApi(moduleGraphFactory.openTelemetryModule.otelSdkConfig))
@@ -59,7 +58,6 @@ internal fun createSdkStateHolder(
                 onModuleGraphCreated?.invoke(moduleGraph)
                 RealSdkInstance(
                     moduleGraph = moduleGraph,
-                    hostedSdkApiProvider = { checkNotNull(holder?.api) },
                     clock = clock,
                 )
             }
@@ -69,5 +67,4 @@ internal fun createSdkStateHolder(
         telemetryService = telemetryService,
         errorHandler = logger,
     )
-    return holder
 }

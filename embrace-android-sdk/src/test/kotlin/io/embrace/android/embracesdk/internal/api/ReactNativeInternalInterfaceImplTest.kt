@@ -3,20 +3,20 @@ package io.embrace.android.embracesdk.internal.api
 import android.content.Context
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
-import io.embrace.android.embracesdk.fakes.FakeEmbraceInternalInterface
+import io.embrace.android.embracesdk.fakes.FakeConfigService
+import io.embrace.android.embracesdk.fakes.FakeEnvelopeResourceSource
 import io.embrace.android.embracesdk.fakes.FakeInstrumentationModule
 import io.embrace.android.embracesdk.fakes.FakeInternalLogger
 import io.embrace.android.embracesdk.fakes.FakeKeyValueStore
 import io.embrace.android.embracesdk.fakes.FakeRnBundleIdTracker
 import io.embrace.android.embracesdk.fakes.FakeTelemetryDestination
 import io.embrace.android.embracesdk.fakes.TestPlatformSerializer
-import io.embrace.android.embracesdk.internal.api.delegate.ReactNativeInternalInterfaceImpl
+import io.embrace.android.embracesdk.internal.api.delegate.HostedSdkInternalInterfaceImpl
 import io.embrace.android.embracesdk.internal.arch.schema.EmbType
 import io.embrace.android.embracesdk.internal.arch.schema.EmbType.System.ReactNativeCrash.embAndroidReactNativeCrashJsException
 import io.embrace.android.embracesdk.internal.envelope.metadata.HostedSdkVersionInfo
 import io.embrace.android.embracesdk.internal.envelope.metadata.ReactNativeSdkVersionInfo
 import io.embrace.android.embracesdk.internal.instrumentation.crash.jvm.JvmCrashDataSourceImpl
-import io.mockk.every
 import io.mockk.mockk
 import io.opentelemetry.kotlin.semconv.ExceptionAttributes
 import org.junit.Assert.assertEquals
@@ -27,8 +27,7 @@ import org.junit.runner.RunWith
 @RunWith(AndroidJUnit4::class)
 internal class ReactNativeInternalInterfaceImplTest {
 
-    private lateinit var impl: ReactNativeInternalInterfaceImpl
-    private lateinit var embrace: SdkApi
+    private lateinit var impl: HostedSdkInternalInterfaceImpl
     private lateinit var store: FakeKeyValueStore
     private lateinit var instrumentationModule: FakeInstrumentationModule
     private lateinit var rnBundleIdTracker: FakeRnBundleIdTracker
@@ -38,34 +37,26 @@ internal class ReactNativeInternalInterfaceImplTest {
 
     @Before
     fun setUp() {
-        embrace = mockk(relaxed = true)
         store = FakeKeyValueStore()
         rnBundleIdTracker = FakeRnBundleIdTracker()
         hostedSdkVersionInfo = ReactNativeSdkVersionInfo(store)
         logger = FakeInternalLogger(false)
         context = ApplicationProvider.getApplicationContext()
         instrumentationModule = FakeInstrumentationModule(ApplicationProvider.getApplicationContext())
-        impl = ReactNativeInternalInterfaceImpl(
-            embrace,
-            FakeEmbraceInternalInterface(),
-            instrumentationModule.instrumentationRegistry,
-            TestPlatformSerializer(),
-            rnBundleIdTracker,
-            hostedSdkVersionInfo,
-            logger,
+        impl = HostedSdkInternalInterfaceImpl(
+            logsApi = mockk(),
+            configService = FakeConfigService(),
+            resourceSource = FakeEnvelopeResourceSource(),
+            instrumentationRegistry = instrumentationModule.instrumentationRegistry,
+            serializer = TestPlatformSerializer(),
+            rnBundleIdTracker = lazyOf(rnBundleIdTracker),
+            hostedSdkVersionInfo = hostedSdkVersionInfo,
+            logger = logger,
         )
     }
 
     @Test
-    fun testSetJavaScriptPatchNumberNotStarted() {
-        every { embrace.isStarted } returns false
-        impl.setJavaScriptPatchNumber("28.9.1")
-        assertEquals(1, logger.sdkNotInitializedMessages.size)
-    }
-
-    @Test
     fun testSetJavaScriptPatchNumberNull() {
-        every { embrace.isStarted } returns true
         impl.setJavaScriptPatchNumber("123")
         impl.setJavaScriptPatchNumber(null)
         assertEquals("123", store.values().values.single())
@@ -73,22 +64,13 @@ internal class ReactNativeInternalInterfaceImplTest {
 
     @Test
     fun testSetJavaScriptPatchNumberEmpty() {
-        every { embrace.isStarted } returns true
         impl.setJavaScriptPatchNumber("123")
         impl.setJavaScriptPatchNumber("")
         assertEquals("123", store.values().values.single())
     }
 
     @Test
-    fun testSetReactNativeVersionNumberNotStarted() {
-        every { embrace.isStarted } returns false
-        impl.setReactNativeVersionNumber("0.69.1")
-        assertEquals(1, logger.sdkNotInitializedMessages.size)
-    }
-
-    @Test
     fun testSetReactNativeVersionNumberNull() {
-        every { embrace.isStarted } returns true
         impl.setReactNativeVersionNumber("0.1")
         impl.setReactNativeVersionNumber(null)
         assertEquals("0.1", store.values().values.single())
@@ -96,7 +78,6 @@ internal class ReactNativeInternalInterfaceImplTest {
 
     @Test
     fun testSetReactNativeVersionNumberEmpty() {
-        every { embrace.isStarted } returns true
         impl.setReactNativeVersionNumber("0.1")
         impl.setReactNativeVersionNumber("")
         assertEquals("0.1", store.values().values.single())
@@ -104,31 +85,23 @@ internal class ReactNativeInternalInterfaceImplTest {
 
     @Test
     fun testSetJavaScriptBundleURL() {
-        every { embrace.isStarted } returns true
         impl.setJavaScriptBundleUrl(context, "index.android.bundle")
         assertEquals("index.android.bundle", rnBundleIdTracker.fakeReactNativeBundleId)
     }
 
     @Test
-    fun testSetJavaScriptBundleURLNotStarted() {
-        every { embrace.isStarted } returns false
-        impl.setJavaScriptBundleUrl(context, "index.android.bundle")
-        assertEquals(1, logger.sdkNotInitializedMessages.size)
-    }
-
-    @Test
     fun testSetJavaScriptBundleURLForOtherOTAs() {
-        impl = ReactNativeInternalInterfaceImpl(
-            embrace,
-            FakeEmbraceInternalInterface(),
-            instrumentationModule.instrumentationRegistry,
-            TestPlatformSerializer(),
-            rnBundleIdTracker,
-            hostedSdkVersionInfo,
-            logger,
+        impl = HostedSdkInternalInterfaceImpl(
+            logsApi = mockk(),
+            configService = FakeConfigService(),
+            resourceSource = FakeEnvelopeResourceSource(),
+            instrumentationRegistry = instrumentationModule.instrumentationRegistry,
+            serializer = TestPlatformSerializer(),
+            rnBundleIdTracker = lazyOf(rnBundleIdTracker),
+            hostedSdkVersionInfo = hostedSdkVersionInfo,
+            logger = logger,
         )
 
-        every { embrace.isStarted } returns true
         impl.setJavaScriptBundleUrl(context, "index.android.bundle")
         // Test that the metadata service was called with the correct parameters
         assertEquals("index.android.bundle", rnBundleIdTracker.fakeReactNativeBundleId)
@@ -137,7 +110,6 @@ internal class ReactNativeInternalInterfaceImplTest {
 
     @Test
     fun `test RN crash by calling logUnhandledJsException() before handleCrash()`() {
-        every { embrace.isStarted } returns true
         val registry = instrumentationModule.instrumentationRegistry
         val args = instrumentationModule.instrumentationArgs
         val dataSource = JvmCrashDataSourceImpl(args)
@@ -161,12 +133,5 @@ internal class ReactNativeInternalInterfaceImplTest {
                 "stack\"}",
             lastSentCrashAttributes[embAndroidReactNativeCrashJsException],
         )
-    }
-
-    @Test
-    fun testLogUnhandledJsExceptionNotStarted() {
-        every { embrace.isStarted } returns false
-        impl.logUnhandledJsException("name", "message", "type", "stack")
-        assertEquals(1, logger.sdkNotInitializedMessages.size)
     }
 }

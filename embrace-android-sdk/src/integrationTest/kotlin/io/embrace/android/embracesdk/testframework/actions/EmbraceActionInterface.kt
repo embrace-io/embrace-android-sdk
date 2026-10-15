@@ -13,7 +13,7 @@ import io.embrace.android.embracesdk.internal.arch.datasource.DataSource
 import io.embrace.android.embracesdk.internal.capture.connectivity.ConnectionType
 import io.embrace.android.embracesdk.internal.capture.connectivity.ConnectivityStatus
 import io.embrace.android.embracesdk.internal.capture.connectivity.toOptimisticStatus
-import io.embrace.android.embracesdk.internal.injection.ModuleInitBootstrapper
+import io.embrace.android.embracesdk.internal.injection.ModuleGraph
 import io.embrace.android.embracesdk.internal.instance.SdkState
 import org.robolectric.Robolectric
 import org.robolectric.android.controller.ActivityController
@@ -23,7 +23,7 @@ import org.robolectric.android.controller.ActivityController
  */
 internal class EmbraceActionInterface(
     private val setup: EmbraceSetupInterface,
-    private val bootstrapper: ModuleInitBootstrapper,
+    private val moduleGraphSupplier: () -> ModuleGraph,
     private val embraceSupplier: () -> SdkApi,
     private val sdkStateSupplier: () -> SdkState,
 ) {
@@ -290,7 +290,7 @@ internal class EmbraceActionInterface(
      * non-trivial to invoke the platform API - e.g. when network connectivity changes.
      */
     inline fun <reified T : DataSource> findDataSource(): T {
-        val registry = (bootstrapper.instrumentationModule.instrumentationRegistry as FakeInstrumentationRegistry)
+        val registry = (moduleGraphSupplier().instrumentationModule.instrumentationRegistry as FakeInstrumentationRegistry)
         return checkNotNull(registry.findByType(T::class))
     }
 

@@ -110,7 +110,7 @@ internal class ResurrectionFeatureTest(
                 symbols = symbols,
             ),
             testCaseAction = {
-                filesDir = testRule.bootstrapper.coreModule.context.filesDir
+                filesDir = testRule.moduleGraph.coreModule.context.filesDir
                 recordSession(isBackgroundActivityEnabled = true, endInBackground = false)
                 shutdownSdkWithIncompleteSession()
             },
@@ -156,7 +156,7 @@ internal class ResurrectionFeatureTest(
                 symbols = symbols,
             ),
             testCaseAction = {
-                filesDir = testRule.bootstrapper.coreModule.context.filesDir
+                filesDir = testRule.moduleGraph.coreModule.context.filesDir
                 recordSession(isBackgroundActivityEnabled = true, endInBackground = false)
                 shutdownSdkWithIncompleteSession()
             },
@@ -201,10 +201,12 @@ internal class ResurrectionFeatureTest(
     }
 
     private fun shutdownSdkWithIncompleteSession() {
-        val workerThreadModule = testRule.bootstrapper.workerThreadModule
+        val workerThreadModule = testRule.moduleGraph.workerThreadModule
         val worker = workerThreadModule.backgroundWorker(Worker.Background.SessionPersistenceWorker)
         worker.shutdownAndWait(3000)
-        testRule.bootstrapper.stop()
+        testRule.moduleGraph.essentialServiceModule.networkConnectivityService.close()
+        testRule.moduleGraph.openTelemetryModule.otelSdkConfig.shutdownExport()
+        testRule.moduleGraph.workerThreadModule.close()
     }
 
     private fun obtainSessionPartDirectory(

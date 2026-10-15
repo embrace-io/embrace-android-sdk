@@ -94,7 +94,7 @@ internal class InitializedModuleGraph(
             }
         }
         // Deliberately after the disable check so a disabled SDK never builds the OTel SDK, and after
-        // configService so that the otel behavior set in ModuleInitBootstrapper.init has been read
+        // configService so that the otel behavior set in ModuleGraphFactory.init has been read
         // from the same persisted config this service uses.
         EmbTrace.trace(sectionName = "span-service-init", recordDuration = true) {
             openTelemetryModule.spanService.initializeService(sdkStartTimeMs)

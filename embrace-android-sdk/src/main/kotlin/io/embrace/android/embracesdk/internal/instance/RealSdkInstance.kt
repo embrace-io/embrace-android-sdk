@@ -23,7 +23,6 @@ import io.embrace.android.embracesdk.internal.api.delegate.InstrumentationApiDel
 import io.embrace.android.embracesdk.internal.api.delegate.LogsApiDelegate
 import io.embrace.android.embracesdk.internal.api.delegate.NetworkRequestApiDelegate
 import io.embrace.android.embracesdk.internal.api.delegate.OTelApiDelegate
-import io.embrace.android.embracesdk.internal.api.delegate.PreStartOTelApi
 import io.embrace.android.embracesdk.internal.api.delegate.SdkStateApiDelegate
 import io.embrace.android.embracesdk.internal.api.delegate.UserApiDelegate
 import io.embrace.android.embracesdk.internal.api.delegate.UserSessionApiDelegate
@@ -33,7 +32,7 @@ import io.embrace.android.embracesdk.internal.delivery.storage.StorageLocation
 import io.embrace.android.embracesdk.internal.delivery.storage.asFile
 import io.embrace.android.embracesdk.internal.injection.InternalInterfaceModule
 import io.embrace.android.embracesdk.internal.injection.InternalInterfaceModuleImpl
-import io.embrace.android.embracesdk.internal.injection.ModuleInitBootstrapper
+import io.embrace.android.embracesdk.internal.injection.ModuleGraph
 import io.embrace.android.embracesdk.internal.injection.applyCustomMetadata
 import io.embrace.android.embracesdk.internal.injection.loadInstrumentation
 import io.embrace.android.embracesdk.internal.injection.markSdkInitComplete
@@ -60,22 +59,22 @@ import java.util.concurrent.Executors
  * here instead.
  */
 internal class RealSdkInstance(
-    private val bootstrapper: ModuleInitBootstrapper,
+    private val moduleGraph: ModuleGraph,
     private val hostedSdkApiProvider: Provider<SdkApi>, // handles dropped calls etc for internal interface
     private val clock: Clock,
-    private val userApiDelegate: UserApiDelegate = UserApiDelegate(bootstrapper),
-    private val sessionApiDelegate: UserSessionApiDelegate = UserSessionApiDelegate(bootstrapper),
+    private val userApiDelegate: UserApiDelegate = UserApiDelegate(moduleGraph),
+    private val sessionApiDelegate: UserSessionApiDelegate = UserSessionApiDelegate(moduleGraph),
     private val networkRequestApiDelegate: NetworkRequestApiDelegate =
-        NetworkRequestApiDelegate(bootstrapper),
-    private val logsApiDelegate: LogsApiDelegate = LogsApiDelegate(bootstrapper),
+        NetworkRequestApiDelegate(moduleGraph),
+    private val logsApiDelegate: LogsApiDelegate = LogsApiDelegate(moduleGraph),
     private val viewTrackingApiDelegate: ViewTrackingApiDelegate =
-        ViewTrackingApiDelegate(bootstrapper),
-    private val sdkStateApiDelegate: SdkStateApiDelegate = SdkStateApiDelegate(bootstrapper),
-    private val otelApiDelegate: OTelApiDelegate = OTelApiDelegate(bootstrapper),
-    private val breadcrumbApiDelegate: BreadcrumbApiDelegate = BreadcrumbApiDelegate(bootstrapper),
+        ViewTrackingApiDelegate(moduleGraph),
+    private val sdkStateApiDelegate: SdkStateApiDelegate = SdkStateApiDelegate(moduleGraph),
+    private val otelApiDelegate: OTelApiDelegate = OTelApiDelegate(moduleGraph),
+    private val breadcrumbApiDelegate: BreadcrumbApiDelegate = BreadcrumbApiDelegate(moduleGraph),
     private val instrumentationApiDelegate: InstrumentationApiDelegate =
-        InstrumentationApiDelegate(bootstrapper),
-    private val experimentApiDelegate: ExperimentApiDelegate = ExperimentApiDelegate(bootstrapper),
+        InstrumentationApiDelegate(moduleGraph),
+    private val experimentApiDelegate: ExperimentApiDelegate = ExperimentApiDelegate(moduleGraph),
 ) : SdkInstance,
     LogsApi by logsApiDelegate,
     NetworkRequestApi by networkRequestApiDelegate,
@@ -88,12 +87,15 @@ internal class RealSdkInstance(
     InstrumentationApi by instrumentationApiDelegate,
     ExperimentApi by experimentApiDelegate {
 
-    private val tracingApi: TracingApi get() = bootstrapper.openTelemetryModule.tracingApi
+    private val tracingApi: TracingApi get() = moduleGraph.openTelemetryModule.tracingApi
 
     private var internalInterfaceModule: InternalInterfaceModule? = null
 
     @Volatile
     private var applicationInitStartMs: Long? = null
+
+    @Volatile
+    private var startAttempted: Boolean = false
 
     @Volatile
     private var started: Boolean = false
@@ -107,14 +109,9 @@ internal class RealSdkInstance(
         NoopOpenTelemetry
     }
 
-    override fun onPreStart(buffer: BufferingSdkInstance) {
-        // drain before building OTel SDK
-        buffer.drainOTelConfig(PreStartOTelApi(bootstrapper.openTelemetryModule.otelSdkConfig, otelApiDelegate))
-    }
-
     override fun onPostStart(buffer: BufferingSdkInstance) {
         buffer.drainCompletedSpans(tracingApi)
-        bootstrapper.applyCustomMetadata {
+        moduleGraph.applyCustomMetadata {
             buffer.drainExperimentCalls(experimentApiDelegate, experimentApiDelegate::replay)
         }
         // the buffered value was recorded first, so takes precedence
@@ -122,43 +119,45 @@ internal class RealSdkInstance(
     }
 
     override fun start(context: Context) {
-        EmbTrace.trace("sdk-start") {
-            try {
-                if (!bootstrapper.init(context)) {
-                    return
-                }
-                bootstrapper.postInit()
-
-                EmbTrace.trace(sectionName = "post-services-setup", recordDuration = true) {
-                    internalInterfaceModule = InternalInterfaceModuleImpl(
-                        bootstrapper.initModule,
-                        bootstrapper.configService,
-                        bootstrapper.payloadSourceModule,
-                        hostedSdkApiProvider(),
-                        bootstrapper,
-                    )
-
-                    // not fully initialized, but the SDK shouldn't catastrophically throw after this point,
-                    // so we allow external calls.
-                    started = true
-                    bootstrapper.registerListeners()
-                    bootstrapper.loadInstrumentation()
-                    bootstrapper.postLoadInstrumentation()
-                    bootstrapper.triggerPayloadSend()
-                }
-                bootstrapper.markSdkInitComplete(EmbTrace.durationTracker::flush)
-            } catch (ignored: Throwable) {
-                Log.w("Embrace", "Failed to initialize Embrace SDK", ignored)
+        try {
+            // post-init must only run once against the module graph, even if a previous attempt failed
+            if (startAttempted) {
+                return
             }
+            startAttempted = true
+            moduleGraph.postInit()
+
+            EmbTrace.trace(sectionName = "post-services-setup", recordDuration = true) {
+                internalInterfaceModule = InternalInterfaceModuleImpl(
+                    moduleGraph.initModule,
+                    moduleGraph.configService,
+                    moduleGraph.payloadSourceModule,
+                    hostedSdkApiProvider(),
+                    moduleGraph,
+                )
+
+                // not fully initialized, but the SDK shouldn't catastrophically throw after this point,
+                // so we allow external calls.
+                started = true
+                moduleGraph.registerListeners()
+                moduleGraph.loadInstrumentation()
+                moduleGraph.postLoadInstrumentation()
+                moduleGraph.triggerPayloadSend()
+            }
+            moduleGraph.markSdkInitComplete(EmbTrace.durationTracker::flush)
+        } catch (ignored: Throwable) {
+            Log.w("Embrace", "Failed to initialize Embrace SDK", ignored)
         }
     }
 
     override fun disable() {
-        bootstrapper.openTelemetryModule.otelSdkConfig.disableDataExport()
-        val rootDir = bootstrapper.coreModule.context.filesDir
-        val fallbackDir = bootstrapper.coreModule.context.cacheDir
+        moduleGraph.openTelemetryModule.otelSdkConfig.disableDataExport()
+        val rootDir = moduleGraph.coreModule.context.filesDir
+        val fallbackDir = moduleGraph.coreModule.context.cacheDir
         started = false
-        bootstrapper.stop()
+        moduleGraph.essentialServiceModule.networkConnectivityService.close()
+        moduleGraph.openTelemetryModule.otelSdkConfig.shutdownExport()
+        moduleGraph.workerThreadModule.close()
         val executor = Executors.newSingleThreadExecutor()
         executor.execute {
             runCatching {
@@ -244,7 +243,7 @@ internal class RealSdkInstance(
     }
 
     override fun applicationInitEnd() {
-        bootstrapper.dataCaptureServiceModule.appStartupDataCollector.run {
+        moduleGraph.dataCaptureServiceModule.appStartupDataCollector.run {
             this@RealSdkInstance.applicationInitStartMs?.let { applicationInitStart(it) }
             applicationInitEnd()
         }

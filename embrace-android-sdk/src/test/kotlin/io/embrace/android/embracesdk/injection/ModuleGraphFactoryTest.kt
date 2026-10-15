@@ -20,7 +20,7 @@ import io.embrace.android.embracesdk.internal.config.resolved.EmbraceConfig
 import io.embrace.android.embracesdk.internal.config.resolved.SdkModeConfig
 import io.embrace.android.embracesdk.internal.injection.EssentialServiceModuleImpl
 import io.embrace.android.embracesdk.internal.injection.InitModuleImpl
-import io.embrace.android.embracesdk.internal.injection.ModuleInitBootstrapper
+import io.embrace.android.embracesdk.internal.injection.ModuleGraphFactory
 import io.embrace.android.embracesdk.internal.injection.OpenTelemetryModuleImpl
 import io.embrace.android.embracesdk.internal.injection.postInit
 import io.embrace.android.embracesdk.internal.injection.postLoadInstrumentation
@@ -29,6 +29,7 @@ import io.opentelemetry.kotlin.NoopOpenTelemetry
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNotNull
+import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
@@ -37,9 +38,9 @@ import org.robolectric.RuntimeEnvironment
 import java.io.File
 
 @RunWith(AndroidJUnit4::class)
-internal class ModuleInitBootstrapperTest {
+internal class ModuleGraphFactoryTest {
 
-    private lateinit var moduleInitBootstrapper: ModuleInitBootstrapper
+    private lateinit var factory: ModuleGraphFactory
     private lateinit var logger: FakeInternalLogger
     private lateinit var clock: Clock
     private lateinit var coreModule: FakeCoreModule
@@ -54,7 +55,7 @@ internal class ModuleInitBootstrapperTest {
         val application = RuntimeEnvironment.getApplication()
         context = application.applicationContext
         val initModule = InitModuleImpl(logger, clock)
-        moduleInitBootstrapper = ModuleInitBootstrapper(
+        factory = ModuleGraphFactory(
             initModule = initModule,
             openTelemetryModule = OpenTelemetryModuleImpl(initModule),
             configServiceSupplier = { _, _, _, _, _ -> FakeConfigService() },
@@ -69,12 +70,7 @@ internal class ModuleInitBootstrapperTest {
 
     @Test
     fun `test default implementation`() {
-        with(moduleInitBootstrapper) {
-            assertTrue(
-                moduleInitBootstrapper.init(
-                    context = context,
-                ),
-            )
+        with(checkNotNull(factory.init(context))) {
             assertNotNull(initModule)
             assertNotNull(openTelemetryModule)
             assertNotNull(workerThreadModule)
@@ -82,43 +78,25 @@ internal class ModuleInitBootstrapperTest {
             assertNotNull(dataCaptureServiceModule)
             assertNotNull(deliveryModule)
             assertNotNull(payloadSourceModule)
-            assertEquals(clock, moduleInitBootstrapper.initModule.clock)
+            assertEquals(clock, initModule.clock)
         }
     }
 
     @Test
-    fun `cannot initialize twice`() {
-        assertTrue(
-            moduleInitBootstrapper.init(
-                context = context,
-            ),
-        )
-        assertFalse(
-            moduleInitBootstrapper.init(
-                context = context,
-            ),
-        )
-    }
-
-    @Test
     fun `init returns normally and without failure`() {
-        assertTrue(
-            moduleInitBootstrapper.init(
-                context = context,
-            ),
-        )
+        assertNotNull(factory.init(context))
     }
 
     @Test
     fun `postInit installs metadata provider before instrumentation loads`() {
-        assertTrue(moduleInitBootstrapper.init(context))
-        val processor = moduleInitBootstrapper.openTelemetryModule.otelSdkConfig.logRecordProcessor
+        val moduleGraph = checkNotNull(factory.init(context))
+        val processor = moduleGraph.openTelemetryModule.otelSdkConfig.logRecordProcessor
 
         val preLog = FakeReadWriteLogRecord()
         processor.onEmit(preLog, NoopOpenTelemetry.context.implicit())
         assertFalse(preLog.attributes.containsKey(EmbSessionAttributes.EMB_STATE))
 
-        moduleInitBootstrapper.postInit()
+        moduleGraph.postInit()
 
         val postLog = FakeReadWriteLogRecord()
         processor.onEmit(postLog, NoopOpenTelemetry.context.implicit())
@@ -132,20 +110,20 @@ internal class ModuleInitBootstrapperTest {
      */
     @Test
     fun `kotlin otel sdk selected from persisted config during init`() {
-        val bootstrapper = createBootstrapperWithPersistedConfig(
+        val factory = createFactoryWithPersistedConfig(
             RemoteConfig(otelKotlinSdkConfig = OtelKotlinSdkConfig(pctEnabled = 100f)),
         )
-        assertTrue(bootstrapper.init(context))
-        assertTrue(bootstrapper.openTelemetryModule.otelSdkWrapper.useKotlinSdk)
+        assertNotNull(factory.init(context))
+        assertTrue(factory.openTelemetryModule.otelSdkWrapper.useKotlinSdk)
     }
 
     @Test
     fun `kotlin otel sdk not selected when disabled by persisted config`() {
-        val bootstrapper = createBootstrapperWithPersistedConfig(
+        val factory = createFactoryWithPersistedConfig(
             RemoteConfig(otelKotlinSdkConfig = OtelKotlinSdkConfig(pctEnabled = 0f)),
         )
-        assertTrue(bootstrapper.init(context))
-        assertFalse(bootstrapper.openTelemetryModule.otelSdkWrapper.useKotlinSdk)
+        assertNotNull(factory.init(context))
+        assertFalse(factory.openTelemetryModule.otelSdkWrapper.useKotlinSdk)
     }
 
     /**
@@ -156,7 +134,7 @@ internal class ModuleInitBootstrapperTest {
     fun `otel sdk is not built until the config service has been created`() {
         var initializedWhenConfigServiceBuilt: Boolean? = null
         val initModule = FakeInitModule(clock = clock, logger = logger, otelSdkMode = OtelSdkMode.COMPAT)
-        val bootstrapper = ModuleInitBootstrapper(
+        val factory = ModuleGraphFactory(
             initModule = initModule,
             openTelemetryModule = OpenTelemetryModuleImpl(initModule),
             configServiceSupplier = { _, _, openTelemetryModule, _, _ ->
@@ -167,15 +145,15 @@ internal class ModuleInitBootstrapperTest {
                 FakeInstrumentationModule(RuntimeEnvironment.getApplication(), logger = logger)
             },
         )
-        assertTrue(bootstrapper.init(context))
+        assertNotNull(factory.init(context))
         assertEquals(false, initializedWhenConfigServiceBuilt)
-        assertTrue(bootstrapper.openTelemetryModule.spanService.initialized())
+        assertTrue(factory.openTelemetryModule.spanService.initialized())
     }
 
     @Test
     fun `otel sdk is not built when the sdk is remotely disabled`() {
         val initModule = FakeInitModule(clock = clock, logger = logger, otelSdkMode = OtelSdkMode.COMPAT)
-        val bootstrapper = ModuleInitBootstrapper(
+        val factory = ModuleGraphFactory(
             initModule = initModule,
             openTelemetryModule = OpenTelemetryModuleImpl(initModule),
             configServiceSupplier = { _, _, _, _, _ ->
@@ -184,17 +162,17 @@ internal class ModuleInitBootstrapperTest {
                 )
             },
         )
-        assertFalse(bootstrapper.init(context))
-        assertFalse(bootstrapper.openTelemetryModule.spanService.initialized())
+        assertNull(factory.init(context))
+        assertFalse(factory.openTelemetryModule.spanService.initialized())
     }
 
-    private fun createBootstrapperWithPersistedConfig(cfg: RemoteConfig): ModuleInitBootstrapper {
+    private fun createFactoryWithPersistedConfig(cfg: RemoteConfig): ModuleGraphFactory {
         val storageDir = File(context.filesDir, PersistedConfig.STORAGE_DIR_NAME).apply { mkdirs() }
         File(storageDir, "most_recent_response").outputStream().buffered().use { stream ->
             TestPlatformSerializer().toJson(cfg, RemoteConfig.serializer(), stream)
         }
         val initModule = FakeInitModule(clock = clock, logger = logger, otelSdkMode = OtelSdkMode.COMPAT)
-        return ModuleInitBootstrapper(
+        return ModuleGraphFactory(
             initModule = initModule,
             openTelemetryModule = OpenTelemetryModuleImpl(initModule),
             configServiceSupplier = { _, _, _, _, _ -> FakeConfigService() },
@@ -206,20 +184,20 @@ internal class ModuleInitBootstrapperTest {
 
     @Test
     fun `post load instrumentation hooks up listeners`() {
-        moduleInitBootstrapper.init(context)
-        val registry = moduleInitBootstrapper.instrumentationModule.instrumentationRegistry
+        val moduleGraph = checkNotNull(factory.init(context))
+        val registry = moduleGraph.instrumentationModule.instrumentationRegistry
         val dataSource = CrashHandlerDataSource()
         registry.add { dataSource }
 
-        moduleInitBootstrapper.postLoadInstrumentation()
+        moduleGraph.postLoadInstrumentation()
 
         val handlers = dataSource.handlers
         val expected = listOf(
-            moduleInitBootstrapper.threadBlockageService,
-            moduleInitBootstrapper.logModule.logOrchestrator,
-            moduleInitBootstrapper.userSessionOrchestrationModule.sessionOrchestrator,
-            moduleInitBootstrapper.featureModule.crashMarker,
-            moduleInitBootstrapper.deliveryModule?.payloadStore,
+            moduleGraph.threadBlockageService,
+            moduleGraph.logModule.logOrchestrator,
+            moduleGraph.userSessionOrchestrationModule.sessionOrchestrator,
+            moduleGraph.featureModule.crashMarker,
+            moduleGraph.deliveryModule?.payloadStore,
         )
         assertEquals(expected, handlers)
     }

@@ -45,16 +45,8 @@ internal class NoopSdkInstanceTest {
     }
 
     @Test
-    fun `onPreStart retains buffered calls`() {
-        val buffer = createBuffer()
-        instance.onPreStart(buffer)
-        assertEquals(listOf("key", "span", "exp"), drainRemaining(buffer))
-    }
-
-    @Test
     fun `onPostStart drains buffered calls`() {
         val buffer = createBuffer()
-        instance.onPreStart(buffer)
         instance.onPostStart(buffer)
         assertEquals(emptyList<String>(), drainRemaining(buffer))
     }

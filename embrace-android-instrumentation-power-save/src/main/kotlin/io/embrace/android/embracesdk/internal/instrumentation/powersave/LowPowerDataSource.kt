@@ -28,6 +28,8 @@ class LowPowerDataSource(
 
     override fun onDataCaptureEnabled() = receiver.register(args.context, backgroundWorker)
 
+    override fun onDataCaptureDisabled() = receiver.unregister(args.context)
+
     fun onPowerSaveModeChanged(powerSaveMode: Boolean) {
         val activeSpan = span
 

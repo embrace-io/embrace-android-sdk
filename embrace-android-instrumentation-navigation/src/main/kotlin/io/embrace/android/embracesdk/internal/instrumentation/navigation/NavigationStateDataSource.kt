@@ -1,5 +1,6 @@
 package io.embrace.android.embracesdk.internal.instrumentation.navigation
 
+import android.app.Application
 import io.embrace.android.embracesdk.internal.arch.InstrumentationArgs
 import io.embrace.android.embracesdk.internal.arch.datasource.StateDataSource
 import io.embrace.android.embracesdk.internal.arch.navigation.CurrentScreen
@@ -12,6 +13,7 @@ import io.embrace.android.embracesdk.internal.arch.schema.SystemStateValue
  */
 class NavigationStateDataSource(
     private val args: InstrumentationArgs,
+    private val activityCallbacks: Application.ActivityLifecycleCallbacks? = null,
 ) : StateDataSource<Screen>(
     args = args,
     stateTypeFactory = ::NavigationState,
@@ -24,6 +26,10 @@ class NavigationStateDataSource(
         args.eventBus.addStateHandler(CurrentScreen.KEY) { current ->
             onStateChange(newState = current.screen, transitionTimeMs = current.sinceMs)
         }
+    }
+
+    override fun onDataCaptureDisabled() {
+        activityCallbacks?.let(args.application::unregisterActivityLifecycleCallbacks)
     }
 
     override fun outgoingValueAttributes(value: Screen): Map<String, String> {

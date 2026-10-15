@@ -5,16 +5,21 @@ import android.content.Intent
 import android.os.PowerManager
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
+import io.embrace.android.embracesdk.concurrency.BlockingScheduledExecutorService
 import io.embrace.android.embracesdk.fakes.FakeInstrumentationArgs
 import io.embrace.android.embracesdk.fakes.fakeBackgroundWorker
 import io.embrace.android.embracesdk.internal.arch.attrs.asPair
 import io.embrace.android.embracesdk.internal.arch.schema.EmbType
+import io.embrace.android.embracesdk.internal.worker.BackgroundWorker
 import io.mockk.mockk
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
+import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.RuntimeEnvironment
+import org.robolectric.Shadows.shadowOf
 
 @RunWith(AndroidJUnit4::class)
 internal class LowPowerDataSourceTest {
@@ -81,4 +86,29 @@ internal class LowPowerDataSourceTest {
             span.attributes,
         )
     }
+
+    @Test
+    fun `receiver is unregistered when data capture is disabled`() {
+        assertTrue(hasPowerSaveReceiver())
+        dataSource.onDataCaptureDisabled()
+        assertFalse(hasPowerSaveReceiver())
+    }
+
+    @Test
+    fun `pending registration is dropped when data capture is disabled first`() {
+        val executor = BlockingScheduledExecutorService()
+        val pending = LowPowerDataSource(
+            FakeInstrumentationArgs(application = ApplicationProvider.getApplicationContext()),
+            BackgroundWorker(executor),
+        ) { mockk(relaxed = true) }
+        dataSource.onDataCaptureDisabled()
+
+        pending.onDataCaptureEnabled()
+        pending.onDataCaptureDisabled()
+        executor.runCurrentlyBlocked()
+        assertFalse(hasPowerSaveReceiver())
+    }
+
+    private fun hasPowerSaveReceiver(): Boolean =
+        shadowOf(RuntimeEnvironment.getApplication()).registeredReceivers.any { it.broadcastReceiver is PowerSaveModeReceiver }
 }

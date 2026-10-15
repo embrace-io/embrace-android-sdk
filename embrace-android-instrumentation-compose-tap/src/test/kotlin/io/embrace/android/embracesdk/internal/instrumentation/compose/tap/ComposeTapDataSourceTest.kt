@@ -1,15 +1,18 @@
 package io.embrace.android.embracesdk.internal.instrumentation.compose.tap
 
+import android.app.Activity
 import android.app.Application
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import io.embrace.android.embracesdk.fakes.FakeInstrumentationArgs
 import io.embrace.android.embracesdk.internal.arch.ui.TapSignal
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
+import org.robolectric.Robolectric.buildActivity
 
 @RunWith(AndroidJUnit4::class)
 internal class ComposeTapDataSourceTest {
@@ -42,5 +45,20 @@ internal class ComposeTapDataSourceTest {
 
         assertTrue(isolated.destination.addedEvents.isEmpty())
         assertTrue(isolated.logger.errorMessages.isEmpty())
+    }
+
+    @Test
+    fun `window callbacks are installed when data capture is enabled`() {
+        source.onDataCaptureEnabled()
+        val activity = buildActivity(Activity::class.java).setup().get()
+        assertTrue(activity.window.callback is EmbraceWindowCallback)
+    }
+
+    @Test
+    fun `activity lifecycle callbacks are unregistered when data capture is disabled`() {
+        source.onDataCaptureEnabled()
+        source.onDataCaptureDisabled()
+        val activity = buildActivity(Activity::class.java).setup().get()
+        assertFalse(activity.window.callback is EmbraceWindowCallback)
     }
 }

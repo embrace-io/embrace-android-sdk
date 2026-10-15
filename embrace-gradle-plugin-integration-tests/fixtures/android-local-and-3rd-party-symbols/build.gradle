@@ -8,6 +8,14 @@ integrationTest.configureAndroidProject(project)
 integrationTest.configure3rdPartyLibrary(project)
 
 android {
+    buildTypes {
+        // builds with src/nondk/embrace-config.json, which sets ndk_enabled to false
+        nondk {
+            initWith(release)
+            matchingFallbacks = ["release"]
+        }
+    }
+    // the app uses CMake and customLibrary uses ndk-build, so both build systems are covered
     externalNativeBuild {
         cmake {
             path("src/main/cpp/CMakeLists.txt")

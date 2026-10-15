@@ -24,4 +24,10 @@ android {
             minifyEnabled = false
         }
     }
+    // native libs are hashed and injected into Base64SharedObjectFilesMapImpl on release
+    externalNativeBuild {
+        cmake {
+            path("src/main/cpp/CMakeLists.txt")
+        }
+    }
 }

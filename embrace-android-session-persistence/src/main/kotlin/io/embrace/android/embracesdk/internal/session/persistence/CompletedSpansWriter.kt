@@ -12,7 +12,8 @@ import java.io.IOException
  *
  * The log is only ever added to, so the cost of a write is proportional to the spans being written
  * rather than to everything logged for the session part so far. Each record is self contained,
- * which lets [readCompletedSpans] recover every span logged before a process died mid-append.
+ * which lets [readCompletedSpans] recover every span logged before a process died mid-append. Each
+ * append ends with the time it was written.
  *
  * The session span of a session part is logged here too, once that part has ended.
  */
@@ -63,12 +64,14 @@ class CompletedSpansWriter(
         }
         val file = openFile() ?: return false
         val header = if (file.size == 0L) VERSION_HEADER else ByteArray(0)
-        val budget = maxBytes - file.size - header.size
+        val writtenAt = target.currentTimeMs()
+        val budget = maxBytes - file.size - header.size - writtenAtSize(writtenAt)
         val written = spanRecords(spans, budget, maxRecordBytes, ::reportDrop).capped()
         if (written.isEmpty()) {
             return false
         }
-        file.append(header + SpanCollection.ADAPTER.encode(SpanCollection(spans = written)))
+        val appended = SpanCollection(spans = written, written_at_ms = writtenAt)
+        file.append(header + SpanCollection.ADAPTER.encode(appended))
         records += written.size
         return true
     }

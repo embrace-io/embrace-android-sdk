@@ -36,7 +36,10 @@ internal class CompletedSpansWriterTest {
         private val oversized = paddedSpan("aaaaaaaaaaaaaaa2", padding = 4096)
 
         private val twoSpanBudget = spanCollectionHeader().size + 2L * SpanCollection.ADAPTER.encode(
-            SpanCollection(spans = listOf(span("aaaaaaaaaaaaaaa1").toProto())),
+            SpanCollection(
+                spans = listOf(span("aaaaaaaaaaaaaaa1").toProto()),
+                written_at_ms = FakeClock.DEFAULT_FAKE_CURRENT_TIME,
+            ),
         ).size
 
         private fun span(id: String, name: String = "emb-network-request") =
@@ -92,13 +95,16 @@ internal class CompletedSpansWriterTest {
     @Test
     fun `later writes append to the log rather than replacing it`() {
         assertTrue(write(spans = listOf(span("aaaaaaaaaaaaaaa1"))))
+        clock.tick(1000)
         assertTrue(write(spans = listOf(span("aaaaaaaaaaaaaaa2"), span("aaaaaaaaaaaaaaa3"))))
+        clock.tick(1000)
         assertTrue(write(spans = listOf(span("aaaaaaaaaaaaaaa4"))))
 
         assertEquals(
             listOf("aaaaaaaaaaaaaaa1", "aaaaaaaaaaaaaaa2", "aaaaaaaaaaaaaaa3", "aaaaaaaaaaaaaaa4"),
             readLog().map { it.span_id },
         )
+        assertEquals(clock.now(), logFile().inputStream().use(SpanCollection.ADAPTER::decode).written_at_ms)
         assertNoInternalErrors()
     }
 
@@ -415,7 +421,8 @@ internal class CompletedSpansWriterTest {
             ),
         )
         assertEquals(listOf("aaaaaaaaaaaaaaa1", "aaaaaaaaaaaaaaa2"), readLog().map(SpanProto::span_id))
-        assertEquals(twoSpanBudget, logFile().length())
+        // one append, so the log ends with one write time where the budget allows for two
+        assertEquals(twoSpanBudget - writtenAtSize(clock.now()), logFile().length())
         assertWriteFailureTracked()
     }
 

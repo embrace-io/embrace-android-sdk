@@ -19,6 +19,9 @@ import java.io.IOException
  * A rollup is written atomically, so a process that dies during one leaves the previous file
  * intact, and one that dies mid-append leaves a torn tail that the reader tolerates.
  *
+ * Every rollup and append ends with the time it was written, so the next launch can tell when the
+ * part was last written.
+ *
  * The spans written here include the session span, until the session part ends.
  */
 class SpanSnapshotsWriter(
@@ -68,11 +71,16 @@ class SpanSnapshotsWriter(
     private fun writeImpl(spans: List<Span>): Boolean {
         val directory = target.directory ?: return false
         val partDir = target.partDir(directory, ::trackFailure) ?: return false
-        val written = spanRecords(spans, maxBytes - VERSION_HEADER_BYTES, maxRecordBytes, ::reportDrop)
+        val writtenAt = target.currentTimeMs()
+        val budget = maxBytes - VERSION_HEADER_BYTES - writtenAtSize(writtenAt)
+        val written = spanRecords(spans, budget, maxRecordBytes, ::reportDrop)
 
         discardFile()
         writeAtomically(partDir, SPAN_SNAPSHOTS_FILE_NAME, maxBytes, target.counters) { stream ->
-            SpanCollection.ADAPTER.encode(stream, SpanCollection(format_version = FORMAT_VERSION, spans = written))
+            SpanCollection.ADAPTER.encode(
+                stream,
+                SpanCollection(format_version = FORMAT_VERSION, spans = written, written_at_ms = writtenAt),
+            )
         }
         file = SpanCollectionFile(directory, File(partDir, SPAN_SNAPSHOTS_FILE_NAME), target.counters)
         records = written.size
@@ -92,7 +100,7 @@ class SpanSnapshotsWriter(
             return false
         }
         // a record with no version field is an update rather than a rollup
-        val bytes = SpanCollection.ADAPTER.encode(SpanCollection(spans = appended))
+        val bytes = SpanCollection.ADAPTER.encode(SpanCollection(spans = appended, written_at_ms = target.currentTimeMs()))
         if (exceedsLimits(file, bytes.size, appended.size)) {
             return write(liveSpans())
         }

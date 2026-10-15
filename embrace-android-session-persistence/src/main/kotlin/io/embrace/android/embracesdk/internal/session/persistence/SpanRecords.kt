@@ -9,6 +9,10 @@ internal val VERSION_HEADER: ByteArray =
 /** Bytes a collection costs before any span is written to it. */
 internal val VERSION_HEADER_BYTES: Long = VERSION_HEADER.size.toLong()
 
+/** Bytes a write to a collection costs to end with [writtenAtMs], the time it was written. */
+internal fun writtenAtSize(writtenAtMs: Long): Long =
+    SpanCollection.ADAPTER.encodedSize(SpanCollection(written_at_ms = writtenAtMs)).toLong()
+
 /** Bytes [record] costs once framed as one span record of a collection. */
 internal fun recordSize(record: SpanProto): Long =
     SpanCollection.ADAPTER.encodedSize(SpanCollection(spans = listOf(record))).toLong()

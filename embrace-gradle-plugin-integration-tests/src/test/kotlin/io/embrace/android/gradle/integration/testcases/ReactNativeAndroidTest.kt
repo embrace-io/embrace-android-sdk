@@ -71,7 +71,7 @@ class ReactNativeAndroidTest {
                 installNodeModules(projectDir)
             },
             assertions = { projectDir ->
-                verifyAsmInjection(File(projectDir, "app"), "27D4D89A18B0426A47151D4888D4E40A")
+                verifyAsmInjection(File(projectDir, "app"), "93F1246D26A1808A0B5E62625552F38C")
             },
         )
     }

@@ -37,17 +37,17 @@ internal class SessionPartTrackerImpl(
         postTransitionProcessState: ProcessState,
     ): SessionPartToken? {
         activeSession?.let { endingSession ->
-            sessionEndListeners.forEach { notify(it::onPreSessionEnd) }
+            sessionEndListeners.forEach { safely(it::onPreSessionEnd) }
             endingSession.endSessionPartCallback()
         }
 
         activeSession = startSessionPartCallback()
-        sessionChangeListeners.forEach { notify(it::onPostSessionChange) }
+        sessionChangeListeners.forEach { safely(it::onPostSessionChange) }
 
         return activeSession
     }
 
-    private inline fun notify(listener: () -> Unit) {
+    private inline fun safely(listener: () -> Unit) {
         try {
             listener()
         } catch (exc: Throwable) {

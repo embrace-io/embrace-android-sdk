@@ -37,7 +37,8 @@ class SessionPartResurrector(
 
     /**
      * Returns the envelope [deadPart] should be delivered as, or null if it does not contain exactly one
-     * session part span. [processIdentifier] is the process that persisted it.
+     * session part span. [processIdentifier] is the process that persisted it, and [lastWrittenMs] is the
+     * last time its files were written, if they record it.
      *
      * The native crash recorded for [deadPart], if any, is attached to the envelope, then sent and reported to
      * [onNativeCrashProcessed] by the work handed to [sendNativeCrash]. That work runs at once unless the caller
@@ -51,6 +52,7 @@ class SessionPartResurrector(
         onNativeCrashProcessed: (NativeCrashData) -> Unit,
         userSessionTerminationReason: String?,
         isBackgroundOnly: Boolean,
+        lastWrittenMs: Long? = null,
         sendNativeCrash: (send: () -> Unit) -> Unit = { send -> send() },
     ): Envelope<SessionPartPayload>? {
         val deadSessionPartSpan = deadPart.getSessionPartSpan()
@@ -96,6 +98,7 @@ class SessionPartResurrector(
             nativeCrashData = nativeCrash,
             userSessionTerminationReason = userSessionTerminationReason,
             isBackgroundOnly = isBackgroundOnly,
+            lastWrittenMs = lastWrittenMs,
         )
     }
 
@@ -107,6 +110,7 @@ class SessionPartResurrector(
         nativeCrashData: NativeCrashData?,
         userSessionTerminationReason: String?,
         isBackgroundOnly: Boolean,
+        lastWrittenMs: Long?,
     ): Envelope<SessionPartPayload>? {
         val completedSpanIds = data.spans?.map { it.spanId }?.toSet() ?: emptySet()
         val snapshots = data.spanSnapshots
@@ -118,8 +122,13 @@ class SessionPartResurrector(
         val latestCompletedEnd = data.spans?.mapNotNull { it.endTimeNanos }?.maxOrNull()
         val latestSnapshotStart = snapshots?.mapNotNull { it.startTimeNanos }?.maxOrNull()
         val estimatedEndTime = listOfNotNull(latestCompletedEnd, latestSnapshotStart).maxOrNull()
+
+        // In multi-file mode, lastWrittenMs is the last time the part's files were written, which the process had
+        // to be alive to do. It is used unless a span in the payload started or ended later, so no span ends before
+        // it started. It is never provided in single-file mode, so the end there is the estimate above.
+        val endTimeMs = maxOf(lastWrittenMs ?: 0L, estimatedEndTime?.nanosToMillis() ?: 0L)
         val failedSpans = snapshots
-            ?.map { it.toFailedSpan(endTimeMs = estimatedEndTime?.nanosToMillis() ?: 0) }
+            ?.map { it.toFailedSpan(endTimeMs = endTimeMs) }
             ?: emptyList()
         val completedSpans = (data.spans ?: emptyList()) + failedSpans
         val sessionPartSpan = completedSpans.singleOrNull { it.hasEmbraceAttribute(EmbType.Ux.Session) } ?: return null

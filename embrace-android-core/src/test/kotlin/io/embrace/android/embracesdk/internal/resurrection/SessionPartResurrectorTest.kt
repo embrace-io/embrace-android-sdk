@@ -85,6 +85,28 @@ internal class SessionPartResurrectorTest {
     }
 
     @Test
+    fun `a failed span ends when the part was last written if that is later than every span start and end`() {
+        val deadPart = incompleteEnvelope()
+        val latestSnapshotStart = checkNotNull(deadPart.data.spanSnapshots).maxOf { checkNotNull(it.startTimeNanos) }
+        val lastWrittenMs = latestSnapshotStart.nanosToMillis() + 7_000L
+        val resurrected = checkNotNull(resurrect(deadPart, lastWrittenMs = lastWrittenMs))
+        checkNotNull(resurrected.data.spans).forEach { span ->
+            assertEquals(lastWrittenMs, span.endTimeMs())
+        }
+    }
+
+    @Test
+    fun `a last written time earlier than a span start does not end the span before it started`() {
+        val deadPart = incompleteEnvelope()
+        val latestSnapshotStart = checkNotNull(deadPart.data.spanSnapshots).maxOf { checkNotNull(it.startTimeNanos) }
+        val resurrected =
+            checkNotNull(resurrect(deadPart, lastWrittenMs = latestSnapshotStart.nanosToMillis() - 7_000L))
+        checkNotNull(resurrected.data.spans).forEach { span ->
+            assertEquals(latestSnapshotStart.nanosToMillis(), span.endTimeMs())
+        }
+    }
+
+    @Test
     fun `a failed span never ends before it started when completed spans predate the part`() {
         val deadPart = incompleteEnvelope()
         val snapshots = checkNotNull(deadPart.data.spanSnapshots)
@@ -233,6 +255,7 @@ internal class SessionPartResurrectorTest {
         crash: NativeCrashData? = null,
         userSessionTerminationReason: String? = null,
         isBackgroundOnly: Boolean = false,
+        lastWrittenMs: Long? = null,
     ): Envelope<SessionPartPayload>? {
         val processed = mutableListOf<NativeCrashData>()
         val resurrected = resurrector.resurrect(
@@ -243,6 +266,7 @@ internal class SessionPartResurrectorTest {
             onNativeCrashProcessed = processed::add,
             userSessionTerminationReason = userSessionTerminationReason,
             isBackgroundOnly = isBackgroundOnly,
+            lastWrittenMs = lastWrittenMs,
         )
         assertEquals(listOfNotNull(crash.takeIf { nativeCrashService.nativeCrashesSent.isNotEmpty() }), processed)
         return resurrected

@@ -41,4 +41,7 @@ class FakeConfigService(
     override val nativeSymbolMap: Map<String, String>? = emptyMap(),
 ) : ConfigService {
     override fun isOnlyUsingOtelExporters(): Boolean = onlyUsingOtelExporters
+
+    override fun scheduleConfigRequests() {
+    }
 }

@@ -112,7 +112,7 @@ class EssentialServiceModuleImpl(
                 coreModule.store,
                 initModule.clock,
                 initModule.logger,
-            )
+            ).apply { recordInstallDateIfAbsent() }
         }
     }
 

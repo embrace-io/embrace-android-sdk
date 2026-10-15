@@ -46,5 +46,5 @@ fun createThreadBlockageService(args: InstrumentationArgs): ThreadBlockageServic
         blockedThreadDetector = blockedThreadDetector,
         watchdogWorker = watchdogWorker,
         stacktraceSampler = stacktraceSampler,
-    )
+    ).apply { scheduleStartupBackgroundCheck() }
 }

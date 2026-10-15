@@ -1215,6 +1215,7 @@ internal class SessionOrchestratorTest {
             startupClassifier,
             sessionPartWriter,
         ).apply {
+            attach()
             start()
         }
         orchestratorStartTimeMs = clock.now()

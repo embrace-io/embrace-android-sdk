@@ -409,6 +409,7 @@ internal class SessionOrchestratorListenerTest {
             startupClassifier,
             null,
         ).apply {
+            attach()
             start()
         }
         orchestratorStartTimeMs = clock.now()

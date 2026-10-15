@@ -48,7 +48,7 @@ internal class EmbraceUserServiceTest {
         )
 
         // load user info
-        service = EmbraceUserService(store, clock, logger)
+        service = EmbraceUserService(store, clock, logger).apply { recordInstallDateIfAbsent() }
     }
 
     @Test

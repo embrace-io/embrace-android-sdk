@@ -30,7 +30,11 @@ internal class ThreadBlockageServiceImpl(
     private val telemetryDestination = args.destination
     private var delayedBackgroundCheckTask: ScheduledFuture<*>? = null
 
-    init {
+    /**
+     * Schedules a delayed check that stops monitoring if the process started in the background and stays there. Must be called once,
+     * straight after construction.
+     */
+    fun scheduleStartupBackgroundCheck() {
         if (appStateTracker.getAppState() == ProcessState.BACKGROUND) {
             scheduleDelayedBackgroundCheck()
         }

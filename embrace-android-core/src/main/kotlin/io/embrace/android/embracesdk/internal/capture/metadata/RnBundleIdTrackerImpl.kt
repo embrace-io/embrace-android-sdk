@@ -23,7 +23,10 @@ internal class RnBundleIdTrackerImpl(
 
     private val listeners = CopyOnWriteArrayList<() -> Unit>()
 
-    init {
+    /**
+     * Computes the bundle ID on the background worker for React Native apps. Must be called once, straight after construction.
+     */
+    fun startAsyncRetrieval() {
         if (configService.appFramework == AppFramework.REACT_NATIVE) {
             metadataBackgroundWorker.submit {
                 val lastKnownJsBundleUrl = javaScriptBundleURL

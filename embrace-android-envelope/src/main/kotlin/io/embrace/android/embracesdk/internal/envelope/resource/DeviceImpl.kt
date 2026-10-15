@@ -44,7 +44,10 @@ class DeviceImpl(
         "/data/local/",
     )
 
-    init {
+    /**
+     * Retrieves values that are expensive to compute on the background worker. Must be called once, straight after construction.
+     */
+    fun startAsyncRetrieval() {
         asyncRetrieveIsJailbroken()
         asyncRetrieveScreenResolution()
         asyncRetrieveUsesEmmcStorage()

@@ -78,7 +78,7 @@ internal class ThreadBlockageServiceRule<T : ScheduledExecutorService>(
             blockedThreadDetector = blockedThreadDetector,
             watchdogWorker = worker,
             stacktraceSampler = stacktraceSampler,
-        )
+        ).apply { scheduleStartupBackgroundCheck() }
     }
 
     /**
@@ -90,6 +90,6 @@ internal class ThreadBlockageServiceRule<T : ScheduledExecutorService>(
             blockedThreadDetector = blockedThreadDetector,
             watchdogWorker = worker,
             stacktraceSampler = stacktraceSampler,
-        )
+        ).apply { scheduleStartupBackgroundCheck() }
     }
 }

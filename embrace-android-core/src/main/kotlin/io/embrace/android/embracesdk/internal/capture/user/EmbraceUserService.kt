@@ -53,7 +53,10 @@ internal class EmbraceUserService(
         get() = impl.getLong(INSTALL_DATE_KEY)
         set(value) = impl.editAndCommit { putLong(INSTALL_DATE_KEY, value) }
 
-    init {
+    /**
+     * Persists the install date if none has been stored yet. Must be called once, straight after construction.
+     */
+    fun recordInstallDateIfAbsent() {
         if (installDate == null) {
             installDate = clock.now()
         }

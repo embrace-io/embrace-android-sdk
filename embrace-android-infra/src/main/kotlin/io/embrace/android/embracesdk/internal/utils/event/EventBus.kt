@@ -64,11 +64,11 @@ class EventBus(private val internalErrorHandler: InternalErrorHandler) {
     }
 
     /**
-     * Registers [handler] against [key], replaying the value retained against it before returning. Registering a handler already
-     * registered against [key] does nothing.
+     * Registers [handler] against [key], replaying the value retained against it before returning unless [replay] is false.
+     * Registering a handler already registered against [key] does nothing.
      */
-    fun <E : Any> addStateHandler(key: StateKey<E>, handler: EventHandler<E>) {
-        if (addTo<EventHandler<*>>(key, handler)) {
+    fun <E : Any> addStateHandler(key: StateKey<E>, replay: Boolean = true, handler: EventHandler<E>) {
+        if (addTo<EventHandler<*>>(key, handler) && replay) {
             replayState(key, handler)
         }
     }

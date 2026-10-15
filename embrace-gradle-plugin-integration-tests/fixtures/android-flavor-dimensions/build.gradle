@@ -16,15 +16,29 @@ android {
             )
         }
     }
-    flavorDimensions "apple", "banana"
+    flavorDimensions "tier", "store"
     productFlavors {
         demo {
-            dimension "apple"
+            dimension "tier"
             versionNameSuffix "-demo"
         }
         full {
-            dimension "banana"
+            dimension "tier"
             versionNameSuffix "-full"
+        }
+        play {
+            dimension "store"
+        }
+        amazon {
+            dimension "store"
+        }
+    }
+}
+
+embrace {
+    buildVariantFilter {
+        if (it.name == "fullPlayRelease") {
+            it.disablePluginForVariant()
         }
     }
 }

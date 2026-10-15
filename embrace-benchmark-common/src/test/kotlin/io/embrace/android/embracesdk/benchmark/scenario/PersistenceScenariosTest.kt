@@ -6,7 +6,7 @@ import org.junit.Assert.assertTrue
 import org.junit.Test
 
 /**
- * Runs every scenario against a stand-in SDK. Because a scenario is code rather than data, running
+ * Runs every scenario against a fake SDK. Because a scenario is code rather than data, running
  * it is the only way to know it holds together - this catches a scenario that throws, never
  * advances the clock, or calls the API in a way that does not compile against the current surface.
  */

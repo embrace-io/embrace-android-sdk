@@ -77,7 +77,7 @@ internal class InitializedModuleGraph(
                 worker = workerThreadModule.backgroundWorker(Worker.Background.HttpRequestWorker),
                 serializer = initModule.jsonSerializer,
                 okHttpClient = initModule.okHttpClient,
-                hasConfiguredOtlpExport = openTelemetryModule.otelSdkConfig::hasConfiguredOtlpExport,
+                hasConfiguredOtlpExport = openTelemetryModule.otelSdkConfig.externalConfig::hasConfiguredOtlpExport,
                 sdkVersion = BuildConfig.VERSION_NAME,
                 apiLevel = Build.VERSION.SDK_INT,
                 primaryAbi = initModule.systemInfo.primaryAbi,

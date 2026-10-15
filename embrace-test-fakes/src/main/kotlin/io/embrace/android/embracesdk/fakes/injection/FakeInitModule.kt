@@ -11,12 +11,14 @@ import io.embrace.android.embracesdk.internal.clock.Clock
 import io.embrace.android.embracesdk.internal.config.instrumented.schema.InstrumentedConfig
 import io.embrace.android.embracesdk.internal.config.remote.OtelKotlinSdkConfig
 import io.embrace.android.embracesdk.internal.config.remote.RemoteConfig
+import io.embrace.android.embracesdk.internal.injection.BootstrapServices
 import io.embrace.android.embracesdk.internal.injection.InitModule
 import io.embrace.android.embracesdk.internal.injection.InitModuleImpl
 import io.embrace.android.embracesdk.internal.injection.OpenTelemetryModule
 import io.embrace.android.embracesdk.internal.injection.OpenTelemetryModuleImpl
 import io.embrace.android.embracesdk.internal.logging.InternalLogger
 import io.embrace.android.embracesdk.internal.telemetry.InternalTelemetryService
+import io.embrace.android.embracesdk.internal.telemetry.InternalTelemetryServiceImpl
 import io.embrace.android.embracesdk.internal.utils.UuidSource
 
 class FakeInitModule(
@@ -27,26 +29,30 @@ class FakeInitModule(
         deviceManufacturer = "Fake Manufacturer",
         deviceModel = "Phake Phone Phive"
     ),
-    private val fakeTelemetryService: InternalTelemetryService? = null,
+    fakeTelemetryService: InternalTelemetryService? = null,
     override val uuidSource: UuidSource = TestUuidSource(),
-    private val initModule: InitModule = InitModuleImpl(
+    val bootstrapServices: BootstrapServices = BootstrapServices(
         logger = logger,
         clock = clock,
         systemInfo = systemInfo,
+        telemetryService = fakeTelemetryService ?: InternalTelemetryServiceImpl(systemInfo = systemInfo),
+    ),
+    private val initModule: InitModule = InitModuleImpl(
+        bootstrapServices = bootstrapServices,
         uuidSource = uuidSource,
     ),
     override var instrumentedConfig: InstrumentedConfig = FakeInstrumentedConfig(),
     private val otelSdkMode: OtelSdkMode,
 ) : InitModule by initModule {
 
-    override val telemetryService: InternalTelemetryService
-        get() = fakeTelemetryService ?: initModule.telemetryService
-
     /**
      * Selects the OTel SDK implementation from [otelSdkMode] before SDK init.
      */
     val openTelemetryModule: OpenTelemetryModule by lazy {
-        OpenTelemetryModuleImpl(initModule = this).apply {
+        OpenTelemetryModuleImpl(
+            initModule = this,
+            externalOtelConfig = bootstrapServices.externalOtelConfig,
+        ).apply {
             setOtelBehavior(
                 createOtelBehavior(
                     remoteCfg = RemoteConfig(

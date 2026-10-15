@@ -18,6 +18,7 @@ import io.embrace.android.embracesdk.internal.config.remote.OtelKotlinSdkConfig
 import io.embrace.android.embracesdk.internal.config.remote.RemoteConfig
 import io.embrace.android.embracesdk.internal.config.resolved.EmbraceConfig
 import io.embrace.android.embracesdk.internal.config.resolved.SdkModeConfig
+import io.embrace.android.embracesdk.internal.injection.BootstrapServices
 import io.embrace.android.embracesdk.internal.injection.EssentialServiceModuleImpl
 import io.embrace.android.embracesdk.internal.injection.InitModuleImpl
 import io.embrace.android.embracesdk.internal.injection.ModuleInitBootstrapper
@@ -53,7 +54,7 @@ internal class ModuleInitBootstrapperTest {
         val application = RuntimeEnvironment.getApplication()
         context = application.applicationContext
         moduleInitBootstrapper = ModuleInitBootstrapper(
-            InitModuleImpl(logger, clock),
+            InitModuleImpl(BootstrapServices(logger, clock)),
             configServiceSupplier = { _, _, _, _, _ -> FakeConfigService() },
             coreModuleSupplier = { _, _, _ -> coreModule },
             instrumentationModuleSupplier = { _, _, _, _, _, _, _, _, _ ->

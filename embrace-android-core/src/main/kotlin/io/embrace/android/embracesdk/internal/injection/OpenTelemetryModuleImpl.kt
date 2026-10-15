@@ -5,6 +5,7 @@ import io.embrace.android.embracesdk.internal.config.behavior.OtelBehavior
 import io.embrace.android.embracesdk.internal.config.behavior.REDACTED_LABEL
 import io.embrace.android.embracesdk.internal.config.behavior.SensitiveKeysBehavior
 import io.embrace.android.embracesdk.internal.config.resolved.BreadcrumbConfig
+import io.embrace.android.embracesdk.internal.otel.config.ExternalOtelConfig
 import io.embrace.android.embracesdk.internal.otel.config.OtelSdkConfig
 import io.embrace.android.embracesdk.internal.otel.impl.EmbClock
 import io.embrace.android.embracesdk.internal.otel.logs.LogSink
@@ -26,6 +27,7 @@ import io.embrace.android.embracesdk.spans.TracingApi
 
 class OpenTelemetryModuleImpl(
     private val initModule: InitModule,
+    private val externalOtelConfig: ExternalOtelConfig = ExternalOtelConfig(),
     private val openTelemetryClock: EmbClock = EmbClock(
         embraceClock = initModule.clock,
     ),
@@ -61,6 +63,7 @@ class OpenTelemetryModuleImpl(
             userIdProvider = { storedUserIdProvider?.invoke() },
             eventMetadataProvider = { storedEventMetadataProvider?.invoke() ?: emptyMap() },
             processIdentifierProvider = processIdentifierProvider,
+            externalConfig = externalOtelConfig,
         )
     }
 

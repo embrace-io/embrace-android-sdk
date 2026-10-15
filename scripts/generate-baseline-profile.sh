@@ -30,7 +30,7 @@ root=$(CDPATH= cd -- "$(dirname -- "$0")/.." && pwd)
 generator=io.embrace.android.embracesdk.macrobenchmark.BaselineProfileGenerator
 dest=$root/embrace-android-sdk/src/main/baseline-prof.txt
 
-pub=:embrace-gradle-plugin:publishToMavenLocal
+pub=:embrace-gradle-plugin:publishAllPublicationsToIntegrationTestRepository
 set -- :embrace-macrobenchmark:pixel6Api34BaselineProfileAndroidTest \
     "-Pandroid.testInstrumentationRunnerArguments.androidx.benchmark.enabledRules=BaselineProfile" \
     "-Pandroid.testInstrumentationRunnerArguments.class=$generator"
@@ -45,7 +45,7 @@ if [ "$dry_run" = true ]; then
 fi
 
 # Separate invocation: the app resolves the Embrace gradle plugin on its buildscript classpath, so
-# the plugin must be in mavenLocal before the generator configures.
+# the plugin must be in build/integration-repo before the generator configures.
 if [ "$publish" = true ]; then
     ( cd "$root" && ./gradlew "$pub" -Psigning.skip ) || die 3 "publish failed"
 fi

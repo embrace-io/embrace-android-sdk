@@ -1,0 +1,70 @@
+name: Create GitHub release
+
+# The web UI renders string inputs as single-line text fields, which strips the newlines from a
+# pasted changelog entry. Trigger this from the CLI instead:
+#
+#   gh workflow run create-github-release.yml -f rc_version=9.4.0 -f changelog="$(cat entry.md)"
+
+on:
+  workflow_dispatch:
+    inputs:
+      rc_version:
+        description: 'Version to release. Specify <major.minor.patch>, e.g. 7.1.2. The tag must already exist.'
+        required: true
+      changelog:
+        description: 'Changelog entry in markdown, starting with the "### <version>" heading. Trigger via the gh CLI so newlines are preserved.'
+        required: true
+
+permissions:
+  contents: write
+
+jobs:
+  create-release:
+    name: Create GitHub release
+    timeout-minutes: 10
+    runs-on: ubuntu-latest
+    steps:
+      - name: Validate changelog entry
+        env:
+          RC_VERSION: ${{ inputs.rc_version }}
+          CHANGELOG: ${{ inputs.changelog }}
+        run: |
+          if [[ ! "$RC_VERSION" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+            echo "::error::rc_version must be <major.minor.patch>, got '$RC_VERSION'"
+            exit 1
+          fi
+          printf '%s\n' "$CHANGELOG" | tr -d '\r' > entry.md
+          if (( $(wc -l < entry.md) < 2 )); then
+            echo "::error::The changelog entry is a single line, so its newlines were probably lost. Trigger this workflow with 'gh workflow run' instead of the web UI."
+            exit 1
+          fi
+          if [[ "$(head -n 1 entry.md)" != "### ${RC_VERSION}" ]]; then
+            echo "::error::The changelog entry must start with '### ${RC_VERSION}', got '$(head -n 1 entry.md)'"
+            exit 1
+          fi
+          if grep -qi 'not for publication' entry.md; then
+            echo "::error::The changelog entry still contains the internal changes section. Remove it before publishing."
+            exit 1
+          fi
+
+      # The release title already shows the version, so the notes drop the heading and date.
+      - name: Extract release notes
+        run: |
+          awk '
+            NR == 1 { next }
+            !body && /^[[:space:]]*$/ { next }
+            !body && !dated && /^_.+_$/ { dated = 1; next }
+            { body = 1; print }
+          ' entry.md > notes.md
+          cat notes.md
+
+      - name: Create release
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_REPO: ${{ github.repository }}
+          RC_VERSION: ${{ inputs.rc_version }}
+        run: |
+          gh release create "$RC_VERSION" \
+              --verify-tag \
+              --title "$RC_VERSION" \
+              --notes-file notes.md

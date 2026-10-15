@@ -667,7 +667,7 @@ internal class SessionPartReaderTest {
     ) {
         create(directory)
 
-        val target = SessionPartWriteTarget(lazy { sessionsDir }) { directory }
+        val target = SessionPartWriteTarget(lazy { sessionsDir }, clock) { directory }
         SessionMetadataWriter(
             target = target,
             metadataSource = { EnvelopeMetadata(username = "fake-user") },

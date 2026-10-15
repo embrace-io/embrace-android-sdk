@@ -1,5 +1,6 @@
 package io.embrace.android.embracesdk.internal.session.persistence
 
+import io.embrace.android.embracesdk.fakes.FakeClock
 import io.embrace.android.embracesdk.fakes.FakeInternalLogger
 import io.embrace.android.embracesdk.internal.payload.Attribute
 import io.embrace.android.embracesdk.internal.payload.Span
@@ -46,6 +47,7 @@ internal class CompletedSpansWriterTest {
     val tempFolder: TemporaryFolder = TemporaryFolder()
 
     private lateinit var sessionsDir: File
+    private lateinit var clock: FakeClock
     private lateinit var logger: FakeInternalLogger
     private lateinit var writer: CompletedSpansWriter
 
@@ -55,6 +57,7 @@ internal class CompletedSpansWriterTest {
     @Before
     fun setUp() {
         sessionsDir = tempFolder.newFolder("embrace_sessions")
+        clock = FakeClock()
         logger = FakeInternalLogger(throwOnInternalError = false)
         activePart = partDirectory
         writer = CompletedSpansWriter(target { activePart }, logger)
@@ -428,7 +431,11 @@ internal class CompletedSpansWriterTest {
         CompletedSpansWriter(target { activePart }, logger, twoSpanBudget)
 
     private fun target(source: () -> SessionPartDirectory?): SessionPartWriteTarget =
-        SessionPartWriteTarget(lazy { sessionsDir }, source)
+        SessionPartWriteTarget(
+            sessionsDir = lazy { sessionsDir },
+            clock = clock,
+            sessionPartDirectorySource = source,
+        )
 
     private fun createPartDir(directory: SessionPartDirectory): File =
         File(sessionsDir, directory.dirName).apply { mkdirs() }

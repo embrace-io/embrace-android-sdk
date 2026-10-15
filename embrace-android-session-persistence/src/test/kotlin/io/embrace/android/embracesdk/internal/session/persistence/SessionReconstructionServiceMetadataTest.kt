@@ -1,5 +1,6 @@
 package io.embrace.android.embracesdk.internal.session.persistence
 
+import io.embrace.android.embracesdk.fakes.FakeClock
 import io.embrace.android.embracesdk.fakes.FakeInternalLogger
 import io.embrace.android.embracesdk.internal.payload.EnvelopeMetadata
 import io.embrace.android.embracesdk.internal.payload.EnvelopeResource
@@ -61,7 +62,7 @@ internal class SessionReconstructionServiceMetadataTest {
         symbolProvider = { null }
         activePart = partDirectory
         writer = SessionMetadataWriter(
-            target = SessionPartWriteTarget(lazy { sessionsDir }) { activePart },
+            target = SessionPartWriteTarget(lazy { sessionsDir }, FakeClock()) { activePart },
             metadataSource = { metadataProvider() },
             resourceSource = { resourceProvider() },
             envelopeVersion = ENVELOPE_VERSION,

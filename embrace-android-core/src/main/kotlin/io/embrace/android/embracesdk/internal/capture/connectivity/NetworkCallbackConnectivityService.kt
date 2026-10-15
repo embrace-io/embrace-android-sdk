@@ -64,10 +64,12 @@ internal class NetworkCallbackConnectivityService(
     }
 
     override fun close() {
-        backgroundWorker.submit {
-            updateSafely {
-                if (registered.getAndSet(false)) {
-                    connectivityManager.value?.unregisterNetworkCallback(this)
+        runCatching {
+            backgroundWorker.submit {
+                updateSafely {
+                    if (registered.getAndSet(false)) {
+                        connectivityManager.value?.unregisterNetworkCallback(this)
+                    }
                 }
             }
         }

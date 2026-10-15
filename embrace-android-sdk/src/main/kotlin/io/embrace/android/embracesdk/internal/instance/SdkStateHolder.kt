@@ -115,13 +115,10 @@ internal class SdkStateHolder(
                     state = SdkState.DISABLED
                 }
                 SdkState.STARTED -> {
-                    try {
-                        instance?.close()
-                        dispatcher.target = disabled()
-                        state = SdkState.DISABLED
-                    } catch (exc: Throwable) {
-                        errorHandler.trackInternalError(InternalErrorType.PublicApiFail, exc)
-                    }
+                    // disabling is terminal even if teardown fails partway
+                    guard { instance?.close() }
+                    dispatcher.target = disabled()
+                    state = SdkState.DISABLED
                 }
             }
         }

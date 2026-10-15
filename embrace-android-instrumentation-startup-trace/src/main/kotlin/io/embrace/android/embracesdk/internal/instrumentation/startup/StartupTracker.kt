@@ -126,9 +126,9 @@ class StartupTracker(
         synchronized(lock) {
             startupDataCollectionComplete.set(true)
             val application = application ?: return
-            application.unregisterActivityLifecycleCallbacks(this)
+            runCatching { application.unregisterActivityLifecycleCallbacks(this) }
             if (activityLoadEventEmitter != null) {
-                application.unregisterActivityLifecycleCallbacks(activityLoadEventEmitter)
+                runCatching { application.unregisterActivityLifecycleCallbacks(activityLoadEventEmitter) }
             }
         }
     }

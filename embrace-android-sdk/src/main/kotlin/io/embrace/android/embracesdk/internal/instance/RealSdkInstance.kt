@@ -194,7 +194,9 @@ internal class RealSdkInstance(
         }
     }
 
-    override fun disable() {
+    override fun disable() = close()
+
+    override fun close() {
         try {
             moduleGraph.openTelemetryModule.otelSdkConfig.disableDataExport()
             val rootDir = moduleGraph.coreModule.context.filesDir

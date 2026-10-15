@@ -263,6 +263,8 @@ internal class NoopSdkInstance(
 
     override fun disable() {}
 
+    override fun close() {}
+
     override fun applicationInitStart() {}
 
     override fun applicationInitEnd() {}

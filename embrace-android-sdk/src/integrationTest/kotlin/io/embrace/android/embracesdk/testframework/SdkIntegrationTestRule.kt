@@ -270,7 +270,7 @@ internal class SdkIntegrationTestRule(
      */
     override fun after() {
         if (::sdkStateHolder.isInitialized) {
-            sdkStateHolder.disable()
+            sdkStateHolder.close()
         }
     }
 

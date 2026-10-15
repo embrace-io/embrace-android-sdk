@@ -68,7 +68,7 @@ internal class SdkStateHolderTest {
         holder.dispatcher.logInfo("message")
         assertEquals(SdkState.FAILED, holder.state)
         assertSame(failed, holder.dispatcher.target)
-        assertEquals(listOf("instantiate", "start", "disable", "failed:onPostStart", "failed:logInfo/1"), calls)
+        assertEquals(listOf("instantiate", "start", "close", "failed:onPostStart", "failed:logInfo/1"), calls)
     }
 
     @Test
@@ -79,19 +79,19 @@ internal class SdkStateHolderTest {
         holder.start(context)
         assertEquals(SdkState.FAILED, holder.state)
         assertSame(failed, holder.dispatcher.target)
-        assertEquals(listOf("instantiate", "start", "disable", "failed:onPostStart"), calls)
+        assertEquals(listOf("instantiate", "start", "close", "failed:onPostStart"), calls)
         assertEquals("start failed", logger.internalErrorMessages.single().throwable?.message)
     }
 
     @Test
     fun `start fails even if disabling the instance fails`() {
-        val instance = FakeInstance(calls, startSucceeds = false, disableThrows = true)
+        val instance = FakeInstance(calls, startSucceeds = false, closeThrows = true)
         val holder = createHolder(instance)
         holder.start(context)
         assertEquals(SdkState.FAILED, holder.state)
         assertSame(failed, holder.dispatcher.target)
-        assertEquals(listOf("instantiate", "start", "disable", "failed:onPostStart"), calls)
-        assertEquals("disable failed", logger.internalErrorMessages.single().throwable?.message)
+        assertEquals(listOf("instantiate", "start", "close", "failed:onPostStart"), calls)
+        assertEquals("close failed", logger.internalErrorMessages.single().throwable?.message)
     }
 
     @Test
@@ -113,41 +113,41 @@ internal class SdkStateHolderTest {
     }
 
     @Test
-    fun `disable after start`() {
+    fun `close after start`() {
         val instance = FakeInstance(calls)
         val holder = createHolder(instance)
         holder.start(context)
-        holder.disable()
+        holder.close()
         holder.dispatcher.logInfo("message")
         assertEquals(SdkState.DISABLED, holder.state)
         assertSame(disabled, holder.dispatcher.target)
-        assertEquals(listOf("instantiate", "start", "onPostStart", "disable", "disabled:logInfo/1"), calls)
+        assertEquals(listOf("instantiate", "start", "onPostStart", "close", "disabled:logInfo/1"), calls)
     }
 
     @Test
-    fun `repeated disable is ignored`() {
+    fun `repeated close is ignored`() {
         val holder = createHolder(FakeInstance(calls))
         holder.start(context)
-        holder.disable()
-        holder.disable()
+        holder.close()
+        holder.close()
         assertEquals(SdkState.DISABLED, holder.state)
-        assertEquals(listOf("instantiate", "start", "onPostStart", "disable"), calls)
+        assertEquals(listOf("instantiate", "start", "onPostStart", "close"), calls)
     }
 
     @Test
-    fun `start after disable is ignored`() {
+    fun `start after close is ignored`() {
         val holder = createHolder(FakeInstance(calls))
         holder.start(context)
-        holder.disable()
+        holder.close()
         holder.start(context)
         assertEquals(SdkState.DISABLED, holder.state)
-        assertEquals(listOf("instantiate", "start", "onPostStart", "disable"), calls)
+        assertEquals(listOf("instantiate", "start", "onPostStart", "close"), calls)
     }
 
     @Test
-    fun `disable before start is terminal`() {
+    fun `close before start is terminal`() {
         val holder = createHolder(FakeInstance(calls))
-        holder.disable()
+        holder.close()
         assertEquals(SdkState.DISABLED, holder.state)
         assertSame(disabled, holder.dispatcher.target)
         holder.start(context)
@@ -157,33 +157,33 @@ internal class SdkStateHolderTest {
     }
 
     @Test
-    fun `disable after unsuccessful start is terminal`() {
+    fun `close after unsuccessful start is terminal`() {
         val instance = FakeInstance(calls, startSucceeds = false)
         val holder = createHolder(instance)
         holder.start(context)
-        holder.disable()
+        holder.close()
         assertEquals(SdkState.DISABLED, holder.state)
         assertSame(disabled, holder.dispatcher.target)
         instance.startSucceeds = true
         holder.start(context)
         assertEquals(SdkState.DISABLED, holder.state)
-        assertEquals(listOf("instantiate", "start", "disable", "failed:onPostStart"), calls)
+        assertEquals(listOf("instantiate", "start", "close", "failed:onPostStart"), calls)
     }
 
     @Test
-    fun `failed disable can be retried`() {
-        val instance = FakeInstance(calls, disableThrows = true)
+    fun `failed close can be retried`() {
+        val instance = FakeInstance(calls, closeThrows = true)
         val holder = createHolder(instance)
         holder.start(context)
-        holder.disable()
+        holder.close()
         assertEquals(SdkState.STARTED, holder.state)
         assertSame(instance, holder.dispatcher.target)
-        assertEquals("disable failed", logger.internalErrorMessages.single().throwable?.message)
-        instance.disableThrows = false
-        holder.disable()
+        assertEquals("close failed", logger.internalErrorMessages.single().throwable?.message)
+        instance.closeThrows = false
+        holder.close()
         assertEquals(SdkState.DISABLED, holder.state)
         assertSame(disabled, holder.dispatcher.target)
-        assertEquals(listOf("instantiate", "start", "onPostStart", "disable", "disable"), calls)
+        assertEquals(listOf("instantiate", "start", "onPostStart", "close", "close"), calls)
     }
 
     @Test
@@ -196,7 +196,7 @@ internal class SdkStateHolderTest {
         assertEquals(SdkState.DISABLED, holder.state)
         holder.api.start(context)
         assertEquals(SdkState.DISABLED, holder.state)
-        assertEquals(listOf("instantiate", "start", "onPostStart", "logInfo/1", "disable"), calls)
+        assertEquals(listOf("instantiate", "start", "onPostStart", "logInfo/1", "close"), calls)
     }
 
     @Test
@@ -210,7 +210,7 @@ internal class SdkStateHolderTest {
         EmbraceInternalApi.internalInterface
         assertEquals(listOf("getInternalInterface/0"), calls)
 
-        holder.disable()
+        holder.close()
         calls.clear()
         EmbraceInternalApi.internalInterface
         assertEquals(listOf("disabled:getInternalInterface/0"), calls)
@@ -235,7 +235,7 @@ internal class SdkStateHolderTest {
     @Test
     fun `buffer is handed over to the disabled instance`() {
         val instance = FakeInstance(calls)
-        createHolder(instance).disable()
+        createHolder(instance).close()
         assertEquals(emptyList<BufferingSdkInstance>(), instance.handedOver)
         assertEquals(listOf(buffer), disabled.handedOver)
     }
@@ -245,7 +245,7 @@ internal class SdkStateHolderTest {
         val instance = FakeInstance(calls)
         val holder = createHolder(instance)
         holder.start(context)
-        holder.disable()
+        holder.close()
         assertEquals(emptyList<BufferingSdkInstance>(), disabled.handedOver)
     }
 
@@ -295,16 +295,16 @@ internal class SdkStateHolderTest {
     @Test
     fun `instance is never instantiated if disabled before start`() {
         val holder = createHolder(FakeInstance(calls))
-        holder.disable()
+        holder.close()
         holder.start(context)
         assertEquals(listOf("disabled:onPostStart"), calls)
     }
 
     @Test
-    fun `disable before start is terminal even if the handover fails`() {
+    fun `close before start is terminal even if the handover fails`() {
         disabled.postStartThrows = true
         val holder = createHolder(FakeInstance(calls))
-        holder.disable()
+        holder.close()
         assertEquals(SdkState.DISABLED, holder.state)
         assertSame(disabled, holder.dispatcher.target)
         assertEquals("post start failed", logger.internalErrorMessages.single().throwable?.message)
@@ -328,7 +328,7 @@ internal class SdkStateHolderTest {
         private val calls: MutableList<String>,
         var startSucceeds: Boolean = true,
         private val startThrows: Boolean = false,
-        var disableThrows: Boolean = false,
+        var closeThrows: Boolean = false,
         var postStartThrows: Boolean = false,
         private val prefix: String = "",
     ) : SdkInstance, InternalSdkApi by recordingSdkApi(calls, prefix) {
@@ -353,9 +353,9 @@ internal class SdkStateHolderTest {
             }
         }
 
-        override fun disable() {
-            calls += "disable"
-            check(!disableThrows) { "disable failed" }
+        override fun close() {
+            calls += "close"
+            check(!closeThrows) { "close failed" }
             started = false
         }
     }

@@ -30,6 +30,9 @@ android {
         disable.addAll(setOf("GradleDependency", "NewerVersionAvailable", "AndroidGradlePluginVersion"))
     }
 
+    val forkCount = project.testForkCount()
+    val heapSize = project.testHeapSize()
+
     testOptions {
         // Calling Android logging methods will throw exceptions if this is false
         // see: http://tools.android.com/tech-docs/unit-testing-support#TOC-Method-...-not-mocked.-
@@ -41,8 +44,8 @@ android {
                 test.testLogging {
                     this.exceptionFormat = TestExceptionFormat.FULL
                 }
-                test.maxParallelForks = (Runtime.getRuntime().availableProcessors() / 3) + 1
-                test.maxHeapSize = "2g"
+                test.maxParallelForks = forkCount
+                test.maxHeapSize = heapSize
 
                 // Disable test discovery failure for modules without test sources
                 test.failOnNoDiscoveredTests.set(false)

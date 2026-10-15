@@ -33,9 +33,11 @@ kotlin.compilerOptions {
 }
 kotlin.coreLibrariesVersion = coreLibrariesVersion
 
+val forkCount = project.testForkCount()
+
 project.tasks.withType<Test>().configureEach {
     testLogging {
         exceptionFormat = TestExceptionFormat.FULL
     }
-    maxParallelForks = (Runtime.getRuntime().availableProcessors() / 3) + 1
+    maxParallelForks = forkCount
 }

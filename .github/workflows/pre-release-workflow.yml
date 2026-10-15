@@ -4,17 +4,37 @@ on:
   workflow_dispatch:
     inputs:
       rc_version:
-        description: 'Version to release. Specify <major.minor.patch>  e.g. 7.1.2. A new branch called "release/<version>" will be created where the release-specific changes will be committed.'
-        required: true
-      next_version:
-        description: 'Next version. Specify <major.minor.patch>, e.g. 7.2.0 (Do NOT include -SNAPSHOT, will be added automatically)'
+        description: 'Version to release. Specify <major.minor>.0, e.g. 7.1.0 (use the Upload Artifacts workflow for hotfixes). A new branch called "release/<version>" will be created where the release-specific changes will be committed.'
         required: true
 
 jobs:
+  resolve-next-version:
+    name: Resolve Next Version
+    permissions: {}
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    outputs:
+      next_version: ${{ steps.next_version.outputs.next_version }}
+    steps:
+      - name: Resolve next version
+        id: next_version
+        env:
+          RC_VERSION: ${{ inputs.rc_version }}
+        run: |
+          # Later jobs check out release/<major.minor>.0, so only .0 releases can be cut here.
+          if [[ ! "$RC_VERSION" =~ ^(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)\.0$ ]]; then
+            echo "rc_version must be <major.minor>.0, got '$RC_VERSION'. Use the Upload Artifacts workflow for hotfixes."
+            exit 1
+          fi
+          NEXT_VERSION="${BASH_REMATCH[1]}.$((BASH_REMATCH[2] + 1)).0"
+          echo "Next version: $NEXT_VERSION"
+          echo "next_version=$NEXT_VERSION" >> $GITHUB_OUTPUT
+
   create-release-branch:
     name: Create Release Branch
     permissions:
       contents: write
+    needs: resolve-next-version
     uses: $/.github/workflows/create-release-branch.yml
     with:
       rc_version: ${{ inputs.rc_version }}
@@ -24,9 +44,10 @@ jobs:
     permissions:
       contents: write
       pull-requests: write
+    needs: resolve-next-version
     uses: $/.github/workflows/bump-snapshot-version.yml
     with:
-      next_version: ${{ inputs.next_version }}
+      next_version: ${{ needs.resolve-next-version.outputs.next_version }}
 
   upload-artifacts-to-sonatype:
     name: Upload RC artifacts to Maven Central

@@ -116,21 +116,19 @@ class SessionPartResurrector(
         val snapshots = data.spanSnapshots
             ?.filterNot { completedSpanIds.contains(it.spanId) }
 
-        // estimate the end time for snapshots as the latest of any completed span's end and any snapshot's start,
-        // falling back to 0 if nothing is available. completed spans can predate the snapshots (e.g. spans carried
-        // over from the previous part), so their end alone could fall before a snapshot started.
-        val latestCompletedEnd = data.spans?.mapNotNull { it.endTimeNanos }?.maxOrNull()
-        val latestSnapshotStart = snapshots?.mapNotNull { it.startTimeNanos }?.maxOrNull()
-        val estimatedEndTime = listOfNotNull(latestCompletedEnd, latestSnapshotStart).maxOrNull()
+        val persistedSpans = data.spans.orEmpty()
 
         // In multi-file mode, lastWrittenMs is the last time the part's files were written, which the process had
-        // to be alive to do. It is used unless a span in the payload started or ended later, so no span ends before
-        // it started. It is never provided in single-file mode, so the end there is the estimate above.
-        val endTimeMs = maxOf(lastWrittenMs ?: 0L, estimatedEndTime?.nanosToMillis() ?: 0L)
+        // to be alive to do. It is the end of the part even when a span in the payload records a later time, as
+        // span times can be set by the app. A span that started after lastWrittenMs will have its end time set to
+        // its start time rather than the lastWrittenMs because a span can't end before its starts.
+        // For files where we don't have lastWrittenMs or if we are in single-file mode, estimate the end from the
+        // payload's span times.
+        val estimatedEndTimeMs = lastWrittenMs ?: estimateEndTimeMs(persistedSpans, snapshots.orEmpty())
         val failedSpans = snapshots
-            ?.map { it.toFailedSpan(endTimeMs = endTimeMs) }
+            ?.map { it.toFailedSpan(endTimeMs = maxOf(estimatedEndTimeMs, it.startTimeMs())) }
             ?: emptyList()
-        val completedSpans = (data.spans ?: emptyList()) + failedSpans
+        val completedSpans = persistedSpans + failedSpans
         val sessionPartSpan = completedSpans.singleOrNull { it.hasEmbraceAttribute(EmbType.Ux.Session) } ?: return null
 
         val attributesToAttach = buildList {
@@ -159,6 +157,25 @@ class SessionPartResurrector(
             ),
         )
     }
+
+    /**
+     * Estimates when the process that left this part died, in milliseconds, as the latest of any completed
+     * span's end and any snapshot's start. Completed spans' end times alone aren't enough, as spans carried
+     * over from a previous session part can end before a snapshot in this part started. 0 if nothing is
+     * known.
+     */
+    private fun estimateEndTimeMs(completedSpans: List<Span>, snapshots: List<Span>): Long {
+        var latestNanos = 0L
+        for (i in completedSpans.indices) {
+            latestNanos = maxOf(latestNanos, completedSpans[i].endTimeNanos ?: 0L)
+        }
+        for (i in snapshots.indices) {
+            latestNanos = maxOf(latestNanos, snapshots[i].startTimeNanos ?: 0L)
+        }
+        return latestNanos.nanosToMillis()
+    }
+
+    private fun Span.startTimeMs(): Long = (startTimeNanos ?: 0L).nanosToMillis()
 
     /**
      * Attribute marking this session part as belonging to a background-only user session.

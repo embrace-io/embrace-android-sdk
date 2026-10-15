@@ -37,6 +37,10 @@ jobs:
         env:
           RC_VERSION: ${{ inputs.rc_version }}
         run: |
+          if [[ ! "$RC_VERSION" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+            echo "rc_version must be <major.minor.patch>, got '$RC_VERSION'"
+            exit 1
+          fi
           base_version=$(echo "$RC_VERSION" | cut -d. -f1,2).0
           echo "base_version=$base_version" >> $GITHUB_OUTPUT
 
@@ -45,6 +49,37 @@ jobs:
         with:
           ref: release/${{ steps.base_version.outputs.base_version }}
           persist-credentials: true
+
+      # Hotfixes reuse the release/X.Y.0 branch, so the version needs bumping before publishing.
+      - name: Set version in gradle.properties
+        env:
+          RC_VERSION: ${{ inputs.rc_version }}
+          RELEASE_BRANCH: release/${{ steps.base_version.outputs.base_version }}
+        run: |
+          current_version=$(sed -n -r "s#^version=(.*)#\1#p" gradle.properties)
+          if [[ ! "$current_version" =~ ^([0-9]+\.[0-9]+)\.([0-9]+)$ ]]; then
+            echo "Unexpected version '$current_version' in gradle.properties on ${RELEASE_BRANCH}"
+            exit 1
+          fi
+          current_minor=${BASH_REMATCH[1]}
+          current_patch=${BASH_REMATCH[2]}
+          [[ "$RC_VERSION" =~ ^([0-9]+\.[0-9]+)\.([0-9]+)$ ]]
+          if [[ "$current_minor" != "${BASH_REMATCH[1]}" ]] || (( 10#$current_patch > 10#${BASH_REMATCH[2]} )); then
+            echo "Refusing to change version from ${current_version} to ${RC_VERSION} on ${RELEASE_BRANCH}"
+            exit 1
+          fi
+          sed -i -r "s#^version=.*#version=${RC_VERSION}#" gradle.properties
+          if ! grep -qx "version=${RC_VERSION}" gradle.properties; then
+            echo "Failed to set version=${RC_VERSION} in gradle.properties"
+            exit 1
+          fi
+          if [[ `git status --porcelain` ]]; then
+            git add gradle.properties
+            git commit -m "CI/CD: change version to be released: ${RC_VERSION}"
+            git push origin HEAD:${RELEASE_BRANCH}
+          else
+            echo "gradle.properties already set to ${RC_VERSION}"
+          fi
 
       - name: Setup Java
         uses: actions/setup-java@de7274f081f381c8f8158605e0321c36c376e2e6 # v6.0.1

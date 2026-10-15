@@ -3,6 +3,8 @@ package io.embrace.android.embracesdk.internal.utils.event
 import io.embrace.android.embracesdk.fakes.FakeInternalLogger
 import io.embrace.android.embracesdk.internal.logging.InternalErrorType
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertNull
+import org.junit.Assert.assertSame
 import org.junit.Test
 import java.util.concurrent.atomic.AtomicInteger
 
@@ -302,6 +304,51 @@ internal class EventBusTest {
         bus.addStateHandler(screenKey) { received.add(it.name) }
 
         assertEquals(listOf("home"), received)
+    }
+
+    @Test
+    fun `current state is null for a key that has had nothing emitted against it`() {
+        assertNull(bus.currentState(screenKey))
+        assertNull(bus.currentState(keyBeyondCapacityFor(screenKey) { StateKey<ScreenState>() }))
+    }
+
+    @Test
+    fun `current state is the value most recently emitted against the key`() {
+        bus.emitState(connectionKey, Connected("home-wifi"))
+        bus.emitState(connectionKey, Disconnected)
+
+        assertSame(Disconnected, bus.currentState(connectionKey))
+    }
+
+    @Test
+    fun `current state of one key is independent of another key of the same type`() {
+        val home = ScreenState("home")
+        bus.emitState(screenKey, home)
+
+        assertSame(home, bus.currentState(screenKey))
+        assertNull(bus.currentState(otherScreenKey))
+    }
+
+    @Test
+    fun `current state survives the values growing to hold later keys`() {
+        val home = ScreenState("home")
+        val laterKey = keyBeyondCapacityFor(screenKey) { StateKey<ScreenState>() }
+        val details = ScreenState("details")
+        bus.emitState(screenKey, home)
+        bus.emitState(laterKey, details)
+
+        assertSame(home, bus.currentState(screenKey))
+        assertSame(details, bus.currentState(laterKey))
+    }
+
+    @Test
+    fun `current state is the value a newly registered handler is replayed`() {
+        bus.emitState(screenKey, ScreenState("home"))
+
+        val replayed = mutableListOf<ScreenState>()
+        bus.addStateHandler(screenKey) { replayed.add(it) }
+
+        assertSame(replayed.single(), bus.currentState(screenKey))
     }
 
     @Test

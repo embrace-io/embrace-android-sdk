@@ -6,6 +6,8 @@ import android.os.Bundle
 import io.embrace.android.embracesdk.annotation.IgnoreForStartup
 import io.embrace.android.embracesdk.internal.instrumentation.startup.activity.traceInstanceId
 import io.embrace.android.embracesdk.internal.instrumentation.startup.ui.DrawEventEmitter
+import io.embrace.android.embracesdk.internal.logging.InternalErrorType
+import io.embrace.android.embracesdk.internal.logging.InternalLogger
 import java.util.concurrent.atomic.AtomicBoolean
 
 /**
@@ -31,46 +33,49 @@ class StartupTracker(
     private val appStartupDataCollector: AppStartupDataCollector,
     private val activityLoadEventEmitter: Application.ActivityLifecycleCallbacks?,
     private val drawEventEmitter: DrawEventEmitter?,
+    private val logger: InternalLogger,
 ) : Application.ActivityLifecycleCallbacks {
 
     private val startupDataCollectionComplete = AtomicBoolean(false)
     private val firstActivitySeen = AtomicBoolean(false)
     private var startupActivityId: Int? = null
 
-    override fun onActivityPreCreated(activity: Activity, savedInstanceState: Bundle?) {
+    override fun onActivityPreCreated(activity: Activity, savedInstanceState: Bundle?) = safely {
         firstActivityInit(activity)
         if (activity.useAsStartupActivity()) {
             appStartupDataCollector.startupActivityPreCreated()
         }
     }
 
-    override fun onActivityCreated(activity: Activity, savedInstanceState: Bundle?) {
+    override fun onActivityCreated(activity: Activity, savedInstanceState: Bundle?) = safely {
         firstActivityInit(activity)
         if (activity.useAsStartupActivity()) {
             appStartupDataCollector.startupActivityInitStart()
             val activityName = activity.localClassName
             val callback = {
-                appStartupDataCollector.firstFrameRendered(
-                    activityName = activityName,
-                )
+                safely {
+                    appStartupDataCollector.firstFrameRendered(
+                        activityName = activityName,
+                    )
+                }
             }
             drawEventEmitter?.registerFirstDrawCallback(activity, {}, callback)
         }
     }
 
-    override fun onActivityPostCreated(activity: Activity, savedInstanceState: Bundle?) {
+    override fun onActivityPostCreated(activity: Activity, savedInstanceState: Bundle?) = safely {
         if (activity.useAsStartupActivity()) {
             appStartupDataCollector.startupActivityPostCreated()
         }
     }
 
-    override fun onActivityStarted(activity: Activity) {
+    override fun onActivityStarted(activity: Activity) = safely {
         if (activity.isStartupActivity()) {
             appStartupDataCollector.startupActivityInitEnd()
         }
     }
 
-    override fun onActivityResumed(activity: Activity) {
+    override fun onActivityResumed(activity: Activity) = safely {
         if (activity.observeForStartup()) {
             appStartupDataCollector.startupActivityResumed(
                 activityName = activity.localClassName,
@@ -128,6 +133,14 @@ class StartupTracker(
         }
 
         return isStartupActivity()
+    }
+
+    private inline fun safely(action: () -> Unit) {
+        try {
+            action()
+        } catch (exc: Throwable) {
+            logger.trackInternalError(InternalErrorType.AppLaunchTraceFail, exc)
+        }
     }
 
     private companion object {

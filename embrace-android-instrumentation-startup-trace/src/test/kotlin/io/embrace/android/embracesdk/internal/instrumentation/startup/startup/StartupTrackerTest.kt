@@ -11,8 +11,10 @@ import io.embrace.android.embracesdk.fakes.FakeClock
 import io.embrace.android.embracesdk.fakes.FakeDrawEventEmitter
 import io.embrace.android.embracesdk.fakes.FakeInternalLogger
 import io.embrace.android.embracesdk.fakes.FakeSplashScreenActivity
+import io.embrace.android.embracesdk.internal.instrumentation.startup.AppStartupDataCollector
 import io.embrace.android.embracesdk.internal.instrumentation.startup.StartupTracker
 import io.embrace.android.embracesdk.internal.instrumentation.startup.ui.hasRenderEvent
+import io.embrace.android.embracesdk.internal.logging.InternalErrorType
 import io.embrace.android.embracesdk.internal.logging.InternalLogger
 import io.embrace.android.embracesdk.internal.utils.BuildVersionChecker
 import org.junit.Assert.assertEquals
@@ -50,9 +52,35 @@ internal class StartupTrackerTest {
             appStartupDataCollector = dataCollector,
             activityLoadEventEmitter = activityLifecycleListener,
             drawEventEmitter = drawEventEmitter,
+            logger = logger,
         )
         application.registerActivityLifecycleCallbacks(startupTracker)
         defaultActivityController = Robolectric.buildActivity(Activity::class.java)
+    }
+
+    @Config(sdk = [Build.VERSION_CODES.Q])
+    @Test
+    fun `collector failures are reported and not propagated to the host app`() {
+        application.unregisterActivityLifecycleCallbacks(startupTracker)
+        val failingCollector = object : AppStartupDataCollector by dataCollector {
+            override fun startupActivityResumed(activityName: String, timestampMs: Long?) = error("resumed failed")
+            override fun firstFrameRendered(activityName: String, timestampMs: Long?) = error("render failed")
+        }
+        val reportingLogger = FakeInternalLogger(throwOnInternalError = false)
+        application.registerActivityLifecycleCallbacks(
+            StartupTracker(
+                appStartupDataCollector = failingCollector,
+                activityLoadEventEmitter = activityLifecycleListener,
+                drawEventEmitter = drawEventEmitter,
+                logger = reportingLogger,
+            ),
+        )
+        launchActivity()
+
+        assertEquals(
+            listOf(InternalErrorType.AppLaunchTraceFail.toString(), InternalErrorType.AppLaunchTraceFail.toString()),
+            reportingLogger.internalErrorMessages.map { it.msg },
+        )
     }
 
     @Config(sdk = [Build.VERSION_CODES.UPSIDE_DOWN_CAKE])

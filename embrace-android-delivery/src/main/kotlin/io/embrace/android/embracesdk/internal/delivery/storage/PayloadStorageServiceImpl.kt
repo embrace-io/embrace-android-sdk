@@ -22,8 +22,12 @@ class PayloadStorageServiceImpl(
     logger: InternalLogger,
     clock: Clock,
     private val deliveryTracer: DeliveryTracer? = null,
-    storageLimit: Int = 500,
+    storageLimit: Int = DEFAULT_STORAGE_LIMIT,
 ) : PayloadStorageService {
+
+    companion object {
+        const val DEFAULT_STORAGE_LIMIT: Int = 500
+    }
 
     private val fileStorageService: FileStorageService = FileStorageServiceImpl(
         outputDir,

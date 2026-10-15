@@ -81,7 +81,7 @@ class CombinedRemoteConfigSourceTest {
     ) = CombinedRemoteConfigSource(
         remoteConfigStore,
         response,
-        lazy { remoteConfigSource },
+        remoteConfigSource,
         worker,
         intervalMs,
     )

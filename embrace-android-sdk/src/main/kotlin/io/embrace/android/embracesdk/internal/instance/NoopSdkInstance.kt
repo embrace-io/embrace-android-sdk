@@ -67,6 +67,7 @@ internal class NoopSdkInstance(
         buffer.drainCompletedSpans(this)
         buffer.drainExperimentCalls(this) {}
         buffer.drainOTelConfig(this)
+        buffer.discardInternalErrors()
     }
 
     override fun start(context: Context) {}

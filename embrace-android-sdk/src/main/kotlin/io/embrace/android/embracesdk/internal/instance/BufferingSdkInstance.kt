@@ -10,12 +10,14 @@ import io.embrace.android.embracesdk.internal.NoopInternalInterfaceApi
 import io.embrace.android.embracesdk.internal.api.ExperimentApi
 import io.embrace.android.embracesdk.internal.api.OTelApi
 import io.embrace.android.embracesdk.internal.api.SdkApi
+import io.embrace.android.embracesdk.internal.arch.datasource.TelemetryDestination
 import io.embrace.android.embracesdk.internal.capture.experiment.ExperimentApiCall
 import io.embrace.android.embracesdk.internal.capture.experiment.ExperimentKind
 import io.embrace.android.embracesdk.internal.capture.experiment.TrackedData
 import io.embrace.android.embracesdk.internal.clock.Clock
 import io.embrace.android.embracesdk.internal.config.resolved.ExperimentConfig
 import io.embrace.android.embracesdk.internal.instrumentation.network.DefaultTraceparentGenerator
+import io.embrace.android.embracesdk.internal.logging.BufferedInternalErrorHandler
 import io.embrace.android.embracesdk.internal.logging.InternalErrorType
 import io.embrace.android.embracesdk.internal.logging.InternalLogger
 import io.embrace.android.embracesdk.spans.EmbraceSpan
@@ -39,6 +41,7 @@ import java.util.concurrent.TimeUnit
 internal class BufferingSdkInstance(
     private val clock: Clock,
     private val logger: InternalLogger,
+    private val internalErrorHandler: BufferedInternalErrorHandler = BufferedInternalErrorHandler(clock),
 ) : InternalSdkApi,
     SdkApi by NoopSdkInstance(logger, NoopSdkInstance.SDK_NOT_INITIALIZED),
     InternalInterfaceApi by NoopInternalInterfaceApi {
@@ -91,6 +94,14 @@ internal class BufferingSdkInstance(
 
     fun drainExperimentCalls(target: ExperimentApi, replay: (List<ExperimentApiCall>) -> Unit) {
         experimentCalls.drain(target) { calls -> guard { replay(calls) } }
+    }
+
+    fun drainInternalErrors(destination: TelemetryDestination, enabled: Boolean) {
+        internalErrorHandler.drainTo(destination, enabled)
+    }
+
+    fun discardInternalErrors() {
+        internalErrorHandler.discard()
     }
 
     override fun addSpanExporter(spanExporter: SpanExporter) {

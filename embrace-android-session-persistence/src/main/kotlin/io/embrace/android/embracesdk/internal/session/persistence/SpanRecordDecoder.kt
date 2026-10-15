@@ -11,11 +11,17 @@ import java.io.IOException
  * and is not reported: every record written in full before it is kept. A record that is all present
  * but does not decode is corruption, as is a frame that cannot be followed at all. Both are
  * reported alongside the records that did read back.
+ *
+ * Each write to the collection ends with the time it was made, and the latest of them is kept as
+ * when the collection was last written.
  */
 internal abstract class SpanRecordDecoder(protected val collection: SpanCollectionReader) {
 
     private var corruption: Throwable? = null
     private var versioned = false
+
+    /** The latest time a write to the collection was recorded, or 0 if none did. */
+    private var lastWrittenMs = 0L
 
     /** Whether reading stopped at a limit rather than at the end of what was written. */
     protected var truncated = false
@@ -31,7 +37,7 @@ internal abstract class SpanRecordDecoder(protected val collection: SpanCollecti
         if (!versioned) {
             throw IOException(UNSUPPORTED_VERSION_MSG, failure)
         }
-        return DecodedSpans(decoded(), failure, truncated)
+        return DecodedSpans(decoded(), failure, truncated, lastWrittenMs.takeIf { it > 0 })
     }
 
     /** Decodes the record the frame just announced holds, returning false to stop reading. */
@@ -71,8 +77,15 @@ internal abstract class SpanRecordDecoder(protected val collection: SpanCollecti
         return when (tag) {
             SPAN_COLLECTION_VERSION_TAG -> readVersion()
             SPAN_COLLECTION_RECORD_TAG -> readRecord()
+            SPAN_COLLECTION_WRITTEN_AT_TAG -> readWrittenAt()
             else -> collection.skipFrame()
         }
+    }
+
+    private fun readWrittenAt(): Boolean {
+        val writtenAtMs = collection.readVarint64() ?: return stop()
+        lastWrittenMs = maxOf(lastWrittenMs, writtenAtMs)
+        return true
     }
 
     private fun readVersion(): Boolean {

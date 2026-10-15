@@ -169,13 +169,13 @@ class SessionPartReader(
         performingResurrection: Boolean,
     ): Boolean {
         val intake = incomplete.remove(directory) ?: run {
-            val envelope = reconstructionService.reconstruct(directory)
-            if (envelope == null) {
+            val part = reconstructionService.reconstruct(directory)
+            if (part == null) {
                 // No need to log as the failed construction is recorded elsewhere
                 directoryStore.delete(directory)
                 return true
             }
-            val deliverable = deliverable(envelope, directory, isLastPartOfUserSession, performingResurrection)
+            val deliverable = deliverable(part.envelope, directory, isLastPartOfUserSession, performingResurrection)
                 ?: return true
             val task = intakeService.take(
                 intake = deliverable.envelope,

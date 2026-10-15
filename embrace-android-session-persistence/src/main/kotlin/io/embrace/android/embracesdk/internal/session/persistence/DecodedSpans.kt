@@ -3,12 +3,14 @@ package io.embrace.android.embracesdk.internal.session.persistence
 import io.embrace.android.embracesdk.internal.payload.Span
 
 /**
- * The spans read back from a session part file, including the first exception (if any) found when decoding
+ * The spans read back from a session part file, including the first exception (if any) found when decoding,
+ * and [lastWrittenMs], the latest time a write to the file recorded, or null if none did.
  */
 internal class DecodedSpans(
     private val decoded: MutableList<SpanProto>,
     val corruption: Throwable?,
     val spanLimitReached: Boolean = false,
+    val lastWrittenMs: Long? = null,
 ) {
 
     val spans: List<SpanProto> get() = decoded

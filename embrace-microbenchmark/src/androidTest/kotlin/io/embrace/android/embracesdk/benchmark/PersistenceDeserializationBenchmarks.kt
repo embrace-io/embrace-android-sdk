@@ -55,7 +55,7 @@ class PersistenceDeserializationBenchmarks(
     fun deserializeSessionMultiFile() {
         benchmarkRule.measureRepeated {
             val stored = runWithMeasurementDisabled { fixture.newPartSource() }
-            val envelope = decoder.decode(stored)
+            val envelope = decoder.decode(stored)?.envelope
             runWithMeasurementDisabled { checkSpanCount(checkNotNull(envelope) { "session part did not decode" }) }
         }
     }

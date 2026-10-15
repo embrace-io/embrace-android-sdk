@@ -134,7 +134,7 @@ internal class SessionPartWriterResourceReadTest {
         clock.tick(1000)
         endSessionPart()
 
-        val envelope = checkNotNull(service.reconstruct(directory()))
+        val envelope = checkNotNull(service.reconstruct(directory())?.envelope)
         val expected = checkNotNull(sessionSpan.snapshot())
         assertEquals(expected, envelope.data.spans?.last())
         assertNull(envelope.data.spanSnapshots?.find { it.spanId == sessionSpan.spanId })
@@ -162,7 +162,7 @@ internal class SessionPartWriterResourceReadTest {
         )
         drain()
 
-        val envelope = checkNotNull(service.reconstruct(directory()))
+        val envelope = checkNotNull(service.reconstruct(directory())?.envelope)
         assertEquals(
             RESOURCE.copy(screenResolution = "1440x3120", reactNativeBundleId = "bundle-2"),
             envelope.resource,
@@ -196,7 +196,7 @@ internal class SessionPartWriterResourceReadTest {
                 write(SpanCollection.ADAPTER.encode(SpanCollection(spans = listOf(completedSpan))))
             }.readByteArray(),
         )
-        service.reconstruct(directory())
+        service.reconstruct(directory())?.envelope
     }
 
     private fun endSessionPart() {

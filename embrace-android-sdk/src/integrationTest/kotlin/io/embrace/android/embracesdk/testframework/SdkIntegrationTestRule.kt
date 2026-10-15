@@ -26,6 +26,7 @@ import io.embrace.android.embracesdk.internal.injection.ModuleGraph
 import io.embrace.android.embracesdk.internal.injection.ModuleGraphFactory
 import io.embrace.android.embracesdk.internal.instance.SdkState
 import io.embrace.android.embracesdk.internal.instance.SdkStateHolder
+import io.embrace.android.embracesdk.internal.instance.createSdkStateHolder
 import io.embrace.android.embracesdk.internal.utils.EmbTrace
 import io.embrace.android.embracesdk.internal.utils.Provider
 import io.embrace.android.embracesdk.testframework.actions.EmbraceActionInterface
@@ -38,12 +39,12 @@ import io.embrace.android.embracesdk.testframework.export.FilteredSpanExporter
 import io.embrace.android.embracesdk.testframework.server.FakeApiServer
 import io.opentelemetry.kotlin.logging.export.toOtelKotlinLogRecordExporter
 import io.opentelemetry.kotlin.tracing.export.toOtelKotlinSpanExporter
-import java.io.File
 import kotlinx.coroutines.runBlocking
 import okhttp3.Protocol
 import okhttp3.mockwebserver.MockWebServer
 import org.junit.Assert.assertEquals
 import org.junit.rules.ExternalResource
+import java.io.File
 
 /**
  * A [org.junit.Rule] that is responsible for setting up and tearing down the Embrace SDK for use in
@@ -170,10 +171,15 @@ internal class SdkIntegrationTestRule(
             ),
             deliveryTracer
         )
-        action = EmbraceActionInterface(setup, { moduleGraph }, { sdkStateHolder.api }, { sdkStateHolder.state })
+        action = EmbraceActionInterface(
+            setup,
+            { moduleGraph.instrumentationModule.instrumentationRegistry },
+            { sdkStateHolder.api },
+            { sdkStateHolder.state },
+        )
         payloadAssertion = EmbracePayloadAssertionInterface(
             moduleGraphFactory.initModule,
-            { moduleGraph },
+            deliveryTracer,
             apiServer,
         ) { sdkStateHolder.state }
         spanExporter = FilteredSpanExporter()
@@ -182,7 +188,7 @@ internal class SdkIntegrationTestRule(
 
         setupAction(setup)
         with(setup) {
-            sdkStateHolder = createStateHolder(moduleGraphFactory) { createdModuleGraph = it }
+            sdkStateHolder = createStateHolder()
             preSdkStartAction(preSdkStart)
             //TODO: Filtered span and log exporters should be migrated to Kotlin.
             sdkStateHolder.api.addSpanExporter(spanExporter.toOtelKotlinSpanExporter())
@@ -266,6 +272,18 @@ internal class SdkIntegrationTestRule(
         if (::sdkStateHolder.isInitialized) {
             sdkStateHolder.disable()
         }
+    }
+
+    private fun createStateHolder(): SdkStateHolder {
+        val initModule = moduleGraphFactory.initModule
+        return createSdkStateHolder(
+            logger = initModule.logger,
+            clock = initModule.clock,
+            telemetryService = initModule.telemetryService,
+            internalErrorHandler = initModule.internalErrorHandler,
+            moduleGraphFactoryProvider = { moduleGraphFactory },
+            onModuleGraphCreated = { createdModuleGraph = it },
+        )
     }
 
     companion object {

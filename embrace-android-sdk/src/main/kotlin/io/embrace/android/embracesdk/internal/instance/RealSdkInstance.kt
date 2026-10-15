@@ -62,19 +62,51 @@ internal class RealSdkInstance(
     private val moduleGraph: ModuleGraph,
     private val hostedSdkApiProvider: Provider<SdkApi>, // handles dropped calls etc for internal interface
     private val clock: Clock,
-    private val userApiDelegate: UserApiDelegate = UserApiDelegate(moduleGraph),
-    private val sessionApiDelegate: UserSessionApiDelegate = UserSessionApiDelegate(moduleGraph),
-    private val networkRequestApiDelegate: NetworkRequestApiDelegate =
-        NetworkRequestApiDelegate(moduleGraph),
-    private val logsApiDelegate: LogsApiDelegate = LogsApiDelegate(moduleGraph),
-    private val viewTrackingApiDelegate: ViewTrackingApiDelegate =
-        ViewTrackingApiDelegate(moduleGraph),
-    private val sdkStateApiDelegate: SdkStateApiDelegate = SdkStateApiDelegate(moduleGraph),
-    private val otelApiDelegate: OTelApiDelegate = OTelApiDelegate(moduleGraph),
-    private val breadcrumbApiDelegate: BreadcrumbApiDelegate = BreadcrumbApiDelegate(moduleGraph),
-    private val instrumentationApiDelegate: InstrumentationApiDelegate =
-        InstrumentationApiDelegate(moduleGraph),
-    private val experimentApiDelegate: ExperimentApiDelegate = ExperimentApiDelegate(moduleGraph),
+    private val userApiDelegate: UserApiDelegate = UserApiDelegate(
+        userService = lazy { moduleGraph.essentialServiceModule.userService },
+    ),
+    private val sessionApiDelegate: UserSessionApiDelegate = UserSessionApiDelegate(
+        userSessionPropertiesService = moduleGraph.essentialServiceModule.userSessionPropertiesService,
+        sessionOrchestrator = moduleGraph.userSessionOrchestrationModule.sessionOrchestrator,
+    ),
+    private val networkRequestApiDelegate: NetworkRequestApiDelegate = NetworkRequestApiDelegate(
+        registry = moduleGraph.instrumentationModule.instrumentationRegistry,
+        httpRequestInfoModifierChain = moduleGraph.instrumentationModule.instrumentationArgs.httpRequestInfoModifierChain,
+        sessionOrchestrator = moduleGraph.userSessionOrchestrationModule.sessionOrchestrator,
+    ),
+    private val logsApiDelegate: LogsApiDelegate = LogsApiDelegate(
+        logService = lazy { moduleGraph.logModule.logService },
+        attachmentService = moduleGraph.logModule.attachmentService,
+        logger = moduleGraph.initModule.logger,
+        payloadStore = moduleGraph.deliveryModule?.payloadStore,
+        serializer = moduleGraph.initModule.jsonSerializer,
+        telemetryService = moduleGraph.initModule.telemetryService,
+    ),
+    private val viewTrackingApiDelegate: ViewTrackingApiDelegate = ViewTrackingApiDelegate(
+        registry = moduleGraph.instrumentationModule.instrumentationRegistry,
+    ),
+    private val sdkStateApiDelegate: SdkStateApiDelegate = SdkStateApiDelegate(
+        deviceIdentifier = lazy { moduleGraph.configService.deviceId },
+        sessionIdsProvider = moduleGraph.userSessionOrchestrationModule.sessionIdsProvider,
+        crashVerifier = moduleGraph.featureModule.lastRunCrashVerifier,
+    ),
+    private val otelApiDelegate: OTelApiDelegate = OTelApiDelegate(
+        otelSdkWrapper = lazy { moduleGraph.openTelemetryModule.otelSdkWrapper },
+    ),
+    private val breadcrumbApiDelegate: BreadcrumbApiDelegate = BreadcrumbApiDelegate(
+        clock = moduleGraph.initModule.clock,
+        breadcrumbDataSource = lazy { moduleGraph.featureModule.breadcrumbDataSource },
+    ),
+    private val instrumentationApiDelegate: InstrumentationApiDelegate = InstrumentationApiDelegate(
+        clock = moduleGraph.initModule.clock,
+        uiLoadTraceEmitter = moduleGraph.dataCaptureServiceModule.uiLoadDataListener,
+        appStartupDataCollector = moduleGraph.dataCaptureServiceModule.appStartupDataCollector,
+        navigationTrackingService = moduleGraph.essentialServiceModule.navigationTrackingService,
+    ),
+    private val experimentApiDelegate: ExperimentApiDelegate = ExperimentApiDelegate(
+        clock = moduleGraph.initModule.clock,
+        experimentTrackingService = lazy { moduleGraph.essentialServiceModule.experimentTrackingService },
+    ),
 ) : SdkInstance,
     LogsApi by logsApiDelegate,
     NetworkRequestApi by networkRequestApiDelegate,
@@ -133,7 +165,7 @@ internal class RealSdkInstance(
                     moduleGraph.configService,
                     moduleGraph.payloadSourceModule,
                     hostedSdkApiProvider(),
-                    moduleGraph,
+                    moduleGraph.instrumentationModule.instrumentationRegistry,
                 )
 
                 // not fully initialized, but the SDK shouldn't catastrophically throw after this point,

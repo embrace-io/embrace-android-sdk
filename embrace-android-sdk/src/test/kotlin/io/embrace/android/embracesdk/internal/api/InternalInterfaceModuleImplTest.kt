@@ -1,8 +1,9 @@
 package io.embrace.android.embracesdk.internal.api
 
+import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import io.embrace.android.embracesdk.fakes.FakeConfigService
-import io.embrace.android.embracesdk.fakes.FakeModuleGraph
+import io.embrace.android.embracesdk.fakes.FakeInstrumentationModule
 import io.embrace.android.embracesdk.fakes.OtelSdkMode
 import io.embrace.android.embracesdk.fakes.injection.FakeInitModule
 import io.embrace.android.embracesdk.fakes.injection.FakePayloadSourceModule
@@ -24,7 +25,7 @@ internal class InternalInterfaceModuleImplTest {
             FakeConfigService(),
             FakePayloadSourceModule(),
             NoopSdkInstance(initModule.logger, NoopSdkInstance.SDK_NOT_INITIALIZED),
-            FakeModuleGraph(),
+            FakeInstrumentationModule(ApplicationProvider.getApplicationContext()).instrumentationRegistry,
         )
 
         assertNotNull(module.flutterInternalInterface)

@@ -14,8 +14,8 @@ import io.embrace.android.embracesdk.internal.arch.state.ProcessState
 import io.embrace.android.embracesdk.internal.clock.nanosToMillis
 import io.embrace.android.embracesdk.internal.config.remote.RemoteConfig
 import io.embrace.android.embracesdk.internal.config.source.ConfigHttpResponse
+import io.embrace.android.embracesdk.internal.delivery.debug.DeliveryTracer
 import io.embrace.android.embracesdk.internal.injection.InitModule
-import io.embrace.android.embracesdk.internal.injection.ModuleGraph
 import io.embrace.android.embracesdk.internal.instance.SdkState
 import io.embrace.android.embracesdk.internal.otel.sdk.findAttributeValue
 import io.embrace.android.embracesdk.internal.payload.Envelope
@@ -50,7 +50,7 @@ import java.util.concurrent.TimeoutException
  */
 internal class EmbracePayloadAssertionInterface(
     initModule: InitModule,
-    moduleGraphSupplier: () -> ModuleGraph,
+    private val deliveryTracer: DeliveryTracer,
     private val apiServer: FakeApiServer?,
     private val sdkStateSupplier: () -> SdkState,
 ) {
@@ -66,9 +66,6 @@ internal class EmbracePayloadAssertionInterface(
         get() = sdkStateSupplier()
 
     internal val serializer by lazy { initModule.jsonSerializer }
-    private val deliveryTracer by lazy {
-        checkNotNull(moduleGraphSupplier().deliveryModule?.deliveryTracer)
-    }
 
     /*** LOGS ***/
 

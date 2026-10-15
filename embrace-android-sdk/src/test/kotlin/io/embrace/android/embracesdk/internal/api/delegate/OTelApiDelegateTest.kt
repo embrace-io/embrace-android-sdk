@@ -3,7 +3,6 @@ package io.embrace.android.embracesdk.internal.api.delegate
 import io.embrace.android.embracesdk.fakes.FakeAttributesMutator
 import io.embrace.android.embracesdk.fakes.FakeLogRecordExporter
 import io.embrace.android.embracesdk.fakes.FakeLogRecordProcessor
-import io.embrace.android.embracesdk.fakes.FakeModuleGraph
 import io.embrace.android.embracesdk.fakes.FakeOpenTelemetryModule
 import io.embrace.android.embracesdk.fakes.FakeSpanExporter
 import io.embrace.android.embracesdk.fakes.FakeSpanProcessor
@@ -28,36 +27,36 @@ internal class OTelApiDelegateTest(
         fun modes(): List<Array<Any>> = OtelSdkMode.parameters()
     }
 
-    private lateinit var moduleGraph: FakeModuleGraph
+    private lateinit var otelModule: FakeOpenTelemetryModule
     private lateinit var delegate: OTelApiDelegate
     private lateinit var cfg: OtelSdkConfig
 
     @Before
     fun setUp() {
-        moduleGraph = FakeModuleGraph(openTelemetryModule = FakeOpenTelemetryModule(otelSdkMode = otelSdkMode))
-        cfg = moduleGraph.openTelemetryModule.otelSdkConfig
+        otelModule = FakeOpenTelemetryModule(otelSdkMode = otelSdkMode)
+        cfg = otelModule.otelSdkConfig
 
-        delegate = OTelApiDelegate(moduleGraph)
+        delegate = OTelApiDelegate(lazy { otelModule.otelSdkWrapper })
     }
 
     @Test
     fun `add exporters after start`() {
         delegate.addSpanExporter(FakeSpanExporter())
         delegate.addLogRecordExporter(FakeLogRecordExporter())
-        assertFalse(moduleGraph.openTelemetryModule.otelSdkConfig.hasConfiguredOtlpExport())
+        assertFalse(otelModule.otelSdkConfig.hasConfiguredOtlpExport())
     }
 
     @Test
     fun `add processors after start`() {
         delegate.addSpanProcessor(FakeSpanProcessor())
         delegate.addLogRecordProcessor(FakeLogRecordProcessor())
-        assertFalse(moduleGraph.openTelemetryModule.otelSdkConfig.hasConfiguredOtlpExport())
+        assertFalse(otelModule.otelSdkConfig.hasConfiguredOtlpExport())
     }
 
     @Test
     fun `get opentelemetry kotlin returns sdk instance`() {
         assertSame(
-            moduleGraph.openTelemetryModule.otelSdkWrapper.openTelemetryKotlin,
+            otelModule.otelSdkWrapper.openTelemetryKotlin,
             delegate.getOpenTelemetryKotlin(),
         )
     }

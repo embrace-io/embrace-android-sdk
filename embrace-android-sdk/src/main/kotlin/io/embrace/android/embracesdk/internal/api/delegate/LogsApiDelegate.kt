@@ -8,9 +8,9 @@ import io.embrace.android.embracesdk.internal.arch.schema.SchemaType.Exception
 import io.embrace.android.embracesdk.internal.arch.schema.SchemaType.Log
 import io.embrace.android.embracesdk.internal.arch.schema.SendMode
 import io.embrace.android.embracesdk.internal.arch.schema.TelemetryAttributes
-import io.embrace.android.embracesdk.internal.injection.ModuleGraph
 import io.embrace.android.embracesdk.internal.instrumentation.fcm.PushNotificationBreadcrumb
 import io.embrace.android.embracesdk.internal.instrumentation.fcm.fcmDataSource
+import io.embrace.android.embracesdk.internal.logging.InternalLogger
 import io.embrace.android.embracesdk.internal.logs.LogExceptionType
 import io.embrace.android.embracesdk.internal.logs.LogService
 import io.embrace.android.embracesdk.internal.logs.attachments.Attachment
@@ -18,24 +18,26 @@ import io.embrace.android.embracesdk.internal.logs.attachments.Attachment.Embrac
 import io.embrace.android.embracesdk.internal.logs.attachments.AttachmentErrorCode.ATTACHMENT_TOO_LARGE
 import io.embrace.android.embracesdk.internal.logs.attachments.AttachmentErrorCode.OVER_MAX_ATTACHMENTS
 import io.embrace.android.embracesdk.internal.logs.attachments.AttachmentErrorCode.UNKNOWN
+import io.embrace.android.embracesdk.internal.logs.attachments.AttachmentService
 import io.embrace.android.embracesdk.internal.payload.Envelope
+import io.embrace.android.embracesdk.internal.serialization.PlatformSerializer
 import io.embrace.android.embracesdk.internal.serialization.truncatedStacktrace
+import io.embrace.android.embracesdk.internal.session.orchestrator.PayloadStore
 import io.embrace.android.embracesdk.internal.telemetry.AppliedLimitType
+import io.embrace.android.embracesdk.internal.telemetry.InternalTelemetryService
 import io.embrace.android.embracesdk.internal.utils.getSafeStackTrace
 import io.embrace.android.embracesdk.semconv.EmbAndroidAttributes
 import io.embrace.android.embracesdk.semconv.EmbSessionAttributes
 import io.opentelemetry.kotlin.semconv.ExceptionAttributes
 
 internal class LogsApiDelegate(
-    private val moduleGraph: ModuleGraph,
+    private val logService: Lazy<LogService>,
+    private val attachmentService: AttachmentService,
+    private val logger: InternalLogger,
+    private val payloadStore: PayloadStore?,
+    private val serializer: PlatformSerializer,
+    private val telemetryService: InternalTelemetryService,
 ) : LogsApi {
-
-    private val logService get() = moduleGraph.logModule.logService
-    private val attachmentService get() = moduleGraph.logModule.attachmentService
-    private val logger get() = moduleGraph.initModule.logger
-    private val payloadStore get() = moduleGraph.deliveryModule?.payloadStore
-    private val serializer get() = moduleGraph.initModule.jsonSerializer
-    private val telemetryService get() = moduleGraph.initModule.telemetryService
 
     override fun logInfo(message: String) = logMessage(message, Severity.INFO)
     override fun logWarning(message: String) = logMessage(message, Severity.WARNING)
@@ -144,7 +146,7 @@ internal class LogsApiDelegate(
         attachment: Attachment? = null,
     ) {
         runCatching {
-            val dst = logService ?: return
+            val dst = logService.value
             sendLog(attributes, exceptionData, attachment, severity, dst, message)
         }
     }

@@ -27,11 +27,15 @@ internal class InitModuleImplTest {
     fun testInitModuleImplOverrideComponents() {
         val clock = FakeClock()
         val systemInfo = SystemInfo()
-        val initModule = InitModuleImpl(
+        val bootstrapServices = BootstrapServices(
             clock = clock,
             systemInfo = systemInfo,
         )
+        val initModule = InitModuleImpl(bootstrapServices)
         assertSame(clock, initModule.clock)
         assertSame(systemInfo, initModule.systemInfo)
+        assertSame(bootstrapServices.logger, initModule.logger)
+        assertSame(bootstrapServices.telemetryService, initModule.telemetryService)
+        assertSame(bootstrapServices.internalErrorHandler, initModule.internalErrorHandler)
     }
 }

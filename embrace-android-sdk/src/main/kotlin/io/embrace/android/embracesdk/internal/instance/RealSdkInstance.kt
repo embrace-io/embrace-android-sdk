@@ -109,7 +109,9 @@ internal class RealSdkInstance(
 
     override fun onPreStart(buffer: BufferingSdkInstance) {
         // drain before building OTel SDK
-        buffer.drainOTelConfig(PreStartOTelApi(bootstrapper.openTelemetryModule.otelSdkConfig, otelApiDelegate))
+        buffer.drainOTelConfig(
+            PreStartOTelApi(bootstrapper.openTelemetryModule.otelSdkConfig.externalConfig, otelApiDelegate),
+        )
     }
 
     override fun onPostStart(buffer: BufferingSdkInstance) {

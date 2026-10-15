@@ -15,16 +15,13 @@ import io.embrace.android.embracesdk.internal.session.id.SessionIdsProvider
 import io.embrace.android.embracesdk.internal.utils.EmbTrace
 import io.embrace.android.embracesdk.internal.utils.UuidSource
 import io.opentelemetry.kotlin.attributes.AttributesMutator
-import io.opentelemetry.kotlin.logging.export.LogRecordExporter
 import io.opentelemetry.kotlin.logging.export.LogRecordProcessor
 import io.opentelemetry.kotlin.semconv.AndroidAttributes
 import io.opentelemetry.kotlin.semconv.DeviceAttributes
 import io.opentelemetry.kotlin.semconv.OsAttributes
 import io.opentelemetry.kotlin.semconv.ServiceAttributes
 import io.opentelemetry.kotlin.semconv.TelemetryAttributes
-import io.opentelemetry.kotlin.tracing.export.SpanExporter
 import io.opentelemetry.kotlin.tracing.export.SpanProcessor
-import java.util.concurrent.ConcurrentHashMap
 
 class OtelSdkConfig(
     spanRepository: SpanRepository,
@@ -40,9 +37,8 @@ class OtelSdkConfig(
     private val eventMetadataProvider: () -> Map<String, String> = { emptyMap() },
     private val processIdentifierProvider: () -> String = IdGenerator.Companion::generateLaunchInstanceId,
     private val externalExportDispatcher: ExternalExportDispatcher = ExternalExportDispatcher(),
+    val externalConfig: ExternalOtelConfig = ExternalOtelConfig(),
 ) {
-
-    private val customAttributes: MutableMap<String, String> = ConcurrentHashMap()
 
     val resourceAction: AttributesMutator.() -> Unit
         get() = {
@@ -59,7 +55,7 @@ class OtelSdkConfig(
             setStringAttribute(TelemetryAttributes.TELEMETRY_DISTRO_NAME, sdkName)
             setStringAttribute(TelemetryAttributes.TELEMETRY_DISTRO_VERSION, sdkVersion)
 
-            customAttributes.forEach {
+            externalConfig.getResourceAttributes().forEach {
                 setStringAttribute(it.key, it.value)
             }
         }
@@ -72,11 +68,6 @@ class OtelSdkConfig(
     val processIdentifier: String by lazy {
         EmbTrace.trace(sectionName = "process-identifier-init", code = processIdentifierProvider)
     }
-
-    private val externalSpanExporters = mutableListOf<SpanExporter>()
-    private val externalSpanProcessors = mutableListOf<SpanProcessor>()
-    private val externalLogExporters = mutableListOf<LogRecordExporter>()
-    private val externalLogRecordProcessors = mutableListOf<LogRecordProcessor>()
 
     private var exportEnabled: Boolean = true
     private val exportCheck: () -> Boolean = { exportEnabled }
@@ -92,7 +83,7 @@ class OtelSdkConfig(
     private val spanExporter: DefaultSpanExporter by lazy {
         DefaultSpanExporter(
             spanRepository = spanRepository,
-            externalExporters = externalSpanExporters.map(::PrivateTelemetryFilteringSpanExporter),
+            externalExporters = externalConfig.getSpanExporters().map(::PrivateTelemetryFilteringSpanExporter),
             exportCheck = exportCheck,
             externalExportDispatcher = externalExportDispatcher,
         )
@@ -109,7 +100,7 @@ class OtelSdkConfig(
     private val logRecordExporter: DefaultLogRecordExporter by lazy {
         DefaultLogRecordExporter(
             logSink = logSink,
-            externalExporters = externalLogExporters.map(::PrivateTelemetryFilteringLogRecordExporter),
+            externalExporters = externalConfig.getLogExporters().map(::PrivateTelemetryFilteringLogRecordExporter),
             exportCheck = exportCheck,
             externalExportDispatcher = externalExportDispatcher,
         )
@@ -121,32 +112,5 @@ class OtelSdkConfig(
             eventMetadataProvider,
             logRecordExporter,
         )
-    }
-
-    fun addSpanExporter(spanExporter: SpanExporter) {
-        externalSpanExporters.add(spanExporter)
-    }
-
-    fun addSpanProcessor(spanProcessor: SpanProcessor) {
-        externalSpanProcessors.add(spanProcessor)
-    }
-
-    fun getExternalSpanProcessors(): List<SpanProcessor> = externalSpanProcessors.toList()
-
-    fun addLogExporter(logExporter: LogRecordExporter) {
-        externalLogExporters.add(logExporter)
-    }
-
-    fun addLogRecordProcessor(logRecordProcessor: LogRecordProcessor) {
-        externalLogRecordProcessors.add(logRecordProcessor)
-    }
-
-    fun getExternalLogRecordProcessors(): List<LogRecordProcessor> = externalLogRecordProcessors.toList()
-
-    fun hasConfiguredOtlpExport(): Boolean = externalLogExporters.isNotEmpty() || externalLogRecordProcessors.isNotEmpty() ||
-        externalSpanExporters.isNotEmpty() || externalSpanProcessors.isNotEmpty()
-
-    fun setResourceAttribute(key: String, value: String) {
-        customAttributes[key] = value
     }
 }

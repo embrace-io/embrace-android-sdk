@@ -23,8 +23,7 @@ import io.embrace.android.embracesdk.internal.injection.EssentialServiceModuleIm
 import io.embrace.android.embracesdk.internal.injection.InitModuleImpl
 import io.embrace.android.embracesdk.internal.injection.ModuleGraphFactory
 import io.embrace.android.embracesdk.internal.injection.OpenTelemetryModuleImpl
-import io.embrace.android.embracesdk.internal.injection.postInit
-import io.embrace.android.embracesdk.internal.injection.postLoadInstrumentation
+import io.embrace.android.embracesdk.internal.instance.RealSdkInstance
 import io.embrace.android.embracesdk.semconv.EmbSessionAttributes
 import io.opentelemetry.kotlin.NoopOpenTelemetry
 import org.junit.Assert.assertEquals
@@ -97,7 +96,7 @@ internal class ModuleGraphFactoryTest {
         processor.onEmit(preLog, NoopOpenTelemetry.context.implicit())
         assertFalse(preLog.attributes.containsKey(EmbSessionAttributes.EMB_STATE))
 
-        moduleGraph.postInit()
+        RealSdkInstance(moduleGraph, clock).postInit()
 
         val postLog = FakeReadWriteLogRecord()
         processor.onEmit(postLog, NoopOpenTelemetry.context.implicit())
@@ -106,7 +105,7 @@ internal class ModuleGraphFactoryTest {
 
     /**
      * The persisted config decides which OTel SDK implementation is built, so it has to be read
-     * before that construction happens. Note that [ModuleGraph.postInit] is deliberately not called:
+     * before that construction happens. Note that [RealSdkInstance.postInit] is deliberately not called:
      * if the flag were still applied there, this would fail.
      */
     @Test
@@ -190,7 +189,7 @@ internal class ModuleGraphFactoryTest {
         val dataSource = CrashHandlerDataSource()
         registry.add { dataSource }
 
-        moduleGraph.postLoadInstrumentation()
+        RealSdkInstance(moduleGraph, clock).postLoadInstrumentation()
 
         val handlers = dataSource.handlers
         val expected = listOf(

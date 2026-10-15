@@ -21,7 +21,7 @@ private val MANUAL_NAMES = listOf(
     Field("$SDK.Embrace", "INSTANCE"),
     Method("$SDK.Embrace", "start", 1),
 
-    // SdkInitActions.initializeHucInstrumentation()
+    // RealSdkInstance.initializeHucInstrumentation()
     Field(HUC_TRACKER, "INSTANCE"),
     Method(HUC_TRACKER, "registerUrlStreamHandlerFactory", 4),
 

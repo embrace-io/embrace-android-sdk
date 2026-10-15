@@ -55,7 +55,7 @@ internal val KNOWN_VIOLATIONS: List<KnownViolation> = listOf(
             "awaitLoadedLocked",
     ),
     KnownViolation(
-        signature = "internal.injection.SdkInitActionsKt.loadInstrumentationProviders",
+        signature = "internal.instance.RealSdkInstance.loadInstrumentationProviders",
         violation = DiskReadViolation::class,
         reason = "ServiceLoader reads META-INF/services out of the APK. R8 rewrites this away in release builds",
     ),

@@ -1,5 +1,6 @@
 package io.embrace.android.embracesdk.internal.session
 
+import android.os.Looper
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.testing.TestLifecycleOwner
 import androidx.test.ext.junit.runners.AndroidJUnit4
@@ -10,6 +11,8 @@ import org.junit.Assert.assertEquals
 import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
+import org.robolectric.Shadows.shadowOf
+import kotlin.concurrent.thread
 
 /**
  * Covers the ProcessLifecycleOwner-based implementation, i.e. deciding when a transition happened
@@ -100,6 +103,30 @@ internal class AndroidxProcessLifecycleTrackerTest {
 
         assertEquals(1, listener.foregroundCount.get())
         assertEquals(0, listener.backgroundCount.get())
+    }
+
+    @Test
+    fun `lifecycle events are ignored after the tracker closes`() {
+        val lifecycleOwner = TestLifecycleOwner(Lifecycle.State.INITIALIZED)
+        val tracker = createTracker(lifecycleOwner)
+        tracker.close()
+        lifecycleOwner.handleLifecycleEvent(Lifecycle.Event.ON_START)
+
+        assertEquals(0, lifecycleOwner.observerCount)
+        assertEquals(0, listener.foregroundCount.get())
+    }
+
+    @Test
+    fun `a registration posted from a background thread does not run after the tracker closes`() {
+        val lifecycleOwner = TestLifecycleOwner(Lifecycle.State.INITIALIZED)
+        val tracker = createTracker(lifecycleOwner, registerTracker = false)
+        thread { tracker.register(listener) }.join()
+        tracker.close()
+        shadowOf(Looper.getMainLooper()).idle()
+        lifecycleOwner.handleLifecycleEvent(Lifecycle.Event.ON_START)
+
+        assertEquals(0, lifecycleOwner.observerCount)
+        assertEquals(0, listener.foregroundCount.get())
     }
 
     @Test

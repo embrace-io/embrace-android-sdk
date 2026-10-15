@@ -1,9 +1,11 @@
 package io.embrace.android.embracesdk.internal.arch.state
 
+import java.io.Closeable
+
 /**
  * Service which handles Android process lifecycle callbacks.
  */
-interface ProcessStateTracker {
+interface ProcessStateTracker : Closeable {
 
     /**
      * Adds an observer of the application's process lifecycle events.

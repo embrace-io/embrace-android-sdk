@@ -38,6 +38,9 @@ class JvmCrashDataSourceImpl(
     private val mainCrashHandled = AtomicBoolean(false)
     private val handlers: CopyOnWriteArrayList<CrashTeardownHandler> = CopyOnWriteArrayList()
 
+    @Volatile
+    private var exceptionHandler: EmbraceUncaughtExceptionHandler? = null
+
     init {
         // we always register so that crash teardown can happen. We check whether telemetry
         // should be captured at the point of a crash.
@@ -48,6 +51,8 @@ class JvmCrashDataSourceImpl(
 
     override fun onDataCaptureDisabled() {
         mainCrashHandled.set(true)
+        exceptionHandler?.detach()
+        exceptionHandler = null
     }
 
     /**
@@ -141,6 +146,7 @@ class JvmCrashDataSourceImpl(
         if (defaultHandler !is EmbraceUncaughtExceptionHandler) {
             val embraceHandler = EmbraceUncaughtExceptionHandler(defaultHandler, this, logger)
             Thread.setDefaultUncaughtExceptionHandler(embraceHandler)
+            exceptionHandler = embraceHandler
         }
     }
 }

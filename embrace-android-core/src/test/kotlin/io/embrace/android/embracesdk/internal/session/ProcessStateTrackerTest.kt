@@ -61,6 +61,21 @@ internal class ProcessStateTrackerTest {
     }
 
     @Test
+    fun `close closes the lifecycle tracker and drops listeners`() {
+        val invocations = mutableListOf<String>()
+        stateService.addListener(DecoratedListener(invocations))
+        stateService.addListener(DecoratedSessionOrchestrator(invocations))
+        stateService.register()
+        stateService.close()
+        stateService.onForeground()
+        stateService.onBackground()
+
+        assertTrue(lifecycleTracker.closed)
+        assertNull(lifecycleTracker.listener)
+        assertTrue(invocations.isEmpty())
+    }
+
+    @Test
     fun `app state is whatever the lifecycle tracker reports`() {
         lifecycleTracker.state = ProcessState.BACKGROUND
         assertEquals(ProcessState.BACKGROUND, stateService.getAppState())

@@ -9,12 +9,13 @@ import io.embrace.android.embracesdk.internal.capture.session.UserSessionPropert
 import io.embrace.android.embracesdk.internal.capture.user.UserService
 import io.embrace.android.embracesdk.internal.session.id.SessionIdsProvider
 import io.embrace.android.embracesdk.internal.session.id.SessionPartTracker
+import java.io.Closeable
 
 /**
  * This module contains services that are essential for bootstrapping other functionality in
  * the SDK during initialization.
  */
-interface EssentialServiceModule {
+interface EssentialServiceModule : Closeable {
     val processStateTracker: ProcessStateTracker
     val navigationTrackingService: NavigationTrackingService
     val userService: UserService

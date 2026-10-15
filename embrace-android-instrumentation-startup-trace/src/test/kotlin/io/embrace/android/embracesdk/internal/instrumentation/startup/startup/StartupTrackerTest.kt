@@ -53,7 +53,7 @@ internal class StartupTrackerTest {
             activityLoadEventEmitter = activityLifecycleListener,
             drawEventEmitter = drawEventEmitter,
         )
-        application.registerActivityLifecycleCallbacks(startupTracker)
+        startupTracker.register(application)
         defaultActivityController = Robolectric.buildActivity(Activity::class.java)
     }
 
@@ -209,6 +209,31 @@ internal class StartupTrackerTest {
         defaultActivityController.create(null)
         assertNotEquals(clock.now(), dataCollector.startupActivityInitStartMs)
         assertEquals(1, activityLifecycleListener.onCreateInvokedCount)
+    }
+
+    @Test
+    fun `closing before startup completes detaches the startup tracker`() {
+        startupTracker.close()
+        launchActivity()
+        assertNull(dataCollector.startupActivityInitStartMs)
+        assertEquals(0, activityLifecycleListener.onCreateInvokedCount)
+    }
+
+    @Test
+    fun `closing after startup completes detaches the lifecycle event emitter`() {
+        launchActivity()
+        startupTracker.close()
+        Robolectric.buildActivity(Activity::class.java).create()
+        assertEquals(0, activityLifecycleListener.onCreateInvokedCount)
+    }
+
+    @Test
+    fun `startup completing after close does not attach the lifecycle event emitter`() {
+        defaultActivityController.create(null)
+        startupTracker.close()
+        drawEventEmitter.draw(defaultActivityController.get())
+        Robolectric.buildActivity(Activity::class.java).create()
+        assertEquals(0, activityLifecycleListener.onCreateInvokedCount)
     }
 
     private fun simulateApi(sdkInt: Int) {

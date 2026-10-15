@@ -28,4 +28,11 @@ class FakeEssentialServiceModule(
     override val telemetryDestination: TelemetryDestination = FakeTelemetryDestination(),
     override val userSessionPropertiesService: FakeUserSessionPropertiesService = FakeUserSessionPropertiesService(),
     override val experimentTrackingService: FakeExperimentTrackingService = FakeExperimentTrackingService(),
-) : EssentialServiceModule
+) : EssentialServiceModule {
+
+    var closed: Boolean = false
+
+    override fun close() {
+        closed = true
+    }
+}

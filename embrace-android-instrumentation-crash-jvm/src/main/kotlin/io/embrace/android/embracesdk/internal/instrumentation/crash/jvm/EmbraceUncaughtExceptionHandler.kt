@@ -17,17 +17,28 @@ internal class EmbraceUncaughtExceptionHandler(
     /**
      * The crash service which will submit the exception to the API as a crash
      */
-    private val dataSource: JvmCrashDataSource,
+    dataSource: JvmCrashDataSource,
     private val logger: InternalLogger,
 ) : Thread.UncaughtExceptionHandler {
 
+    @Volatile
+    private var dataSource: JvmCrashDataSource? = dataSource
+
     override fun uncaughtException(thread: Thread, exception: Throwable) {
         try {
-            dataSource.logUnhandledJvmThrowable(exception)
+            dataSource?.logUnhandledJvmThrowable(exception)
         } catch (ex: Exception) {
             logger.trackInternalError(InternalErrorType.UncaughtExceptionHandler, ex)
         } finally {
             defaultHandler?.uncaughtException(thread, exception)
         }
+    }
+
+    /**
+     * Stops forwarding exceptions to the data source and releases it. We continue to delegate to
+     * the default handler.
+     */
+    fun detach() {
+        dataSource = null
     }
 }

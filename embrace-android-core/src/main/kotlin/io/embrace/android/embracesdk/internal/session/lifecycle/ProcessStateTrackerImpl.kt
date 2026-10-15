@@ -73,4 +73,10 @@ internal class ProcessStateTrackerImpl(
     }
 
     override fun getAppState(): ProcessState = lifecycleTracker.getProcessState()
+
+    override fun close() {
+        lifecycleTracker.close()
+        listeners.clear()
+        sessionOrchestrator = null
+    }
 }

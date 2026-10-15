@@ -274,6 +274,25 @@ internal class ActivityProcessLifecycleTrackerTest {
         assertEquals(ProcessState.BACKGROUND, tracker.getProcessState())
     }
 
+    @Test
+    fun `activity callbacks are ignored after the tracker closes`() {
+        val tracker = createTracker()
+        tracker.close()
+        buildActivity().start()
+        assertEquals(0, listener.foregroundCount.get())
+        assertEquals(ProcessState.BACKGROUND, tracker.getProcessState())
+    }
+
+    @Test
+    fun `closing cancels a pending background transition`() {
+        val tracker = createTracker()
+        buildActivity().start().stop()
+        tracker.close()
+        elapseDebounce()
+        assertEquals(1, listener.foregroundCount.get())
+        assertEquals(0, listener.backgroundCount.get())
+    }
+
     private fun createTracker(
         startupContext: Context? = application,
         registerTracker: Boolean = true,

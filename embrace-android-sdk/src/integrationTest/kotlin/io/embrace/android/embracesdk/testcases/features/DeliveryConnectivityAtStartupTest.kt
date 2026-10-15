@@ -1,12 +1,17 @@
 package io.embrace.android.embracesdk.testcases.features
 
+import io.embrace.android.embracesdk.assertions.getUserSessionId
 import io.embrace.android.embracesdk.fakes.FakePayloadStorageService
 import io.embrace.android.embracesdk.fakes.fakeSessionEnvelope
 import io.embrace.android.embracesdk.fixtures.fakeSessionStoredTelemetryMetadata
 import io.embrace.android.embracesdk.internal.capture.connectivity.ConnectivityStatus
+import io.embrace.android.embracesdk.internal.delivery.SupportedEnvelopeType
 import io.embrace.android.embracesdk.internal.worker.Worker
 import io.embrace.android.embracesdk.testframework.OtelSdkMode
 import io.embrace.android.embracesdk.testframework.SdkIntegrationTestRule
+import io.embrace.android.embracesdk.testframework.SdkIntegrationTestRule.Companion.DEFAULT_EXPIRED_USER_SESSION_ID
+import io.embrace.android.embracesdk.testframework.SdkIntegrationTestRule.Companion.DEFAULT_SDK_START_TIME_MS
+import io.embrace.android.embracesdk.testframework.actions.EmbraceActionInterface
 import io.embrace.android.embracesdk.testframework.actions.EmbraceSetupInterface
 import org.junit.Assert.assertEquals
 import org.junit.Rule
@@ -44,7 +49,30 @@ internal class DeliveryConnectivityAtStartupTest(
      * an unverified network connection.
      */
     @Test
-    fun `stored payload not sent at startup when the device is known to be offline`() {
+    fun `resurrected payload not sent at startup when offline and sent as soon as the device is online`() {
+        testRule.runTest(
+            setupAction = {
+                fakeNetworkConnectivityService.connectivityStatus = ConnectivityStatus.None
+                persistExpiredUserSession(
+                    sdkStartTimeMs = DEFAULT_SDK_START_TIME_MS,
+                    userSessionId = DEFAULT_EXPIRED_USER_SESSION_ID,
+                    cacheIncompletePartPayload = true,
+                )
+            },
+            testCaseAction = {
+                goOnlineAndAssertDelivery()
+            },
+            assertAction = {
+                assertEquals(DEFAULT_EXPIRED_USER_SESSION_ID, getSessionEnvelopes(1).single().getUserSessionId())
+            }
+        )
+    }
+
+    /**
+     * With nothing to resurrect, the payloads already stored for delivery still wait for the device to be online.
+     */
+    @Test
+    fun `stored payload not sent at startup when offline with nothing to resurrect and sent once online`() {
         testRule.runTest(
             setupAction = {
                 fakeNetworkConnectivityService.connectivityStatus = ConnectivityStatus.None
@@ -53,12 +81,28 @@ internal class DeliveryConnectivityAtStartupTest(
                     fakeSessionEnvelope(startMs = fakeSessionStoredTelemetryMetadata.timestamp),
                 )
             },
-            testCaseAction = {},
+            testCaseAction = {
+                goOnlineAndAssertDelivery()
+            },
             assertAction = {
-                assertEquals(0, getSessionEnvelopes(0).size)
+                assertEquals(1, getSessionEnvelopes(1).size)
             }
         )
     }
+
+    /**
+     * Asserts startup left the one session payload undelivered, then brings the device online and asserts that
+     * change alone delivered it: the fake clock doesn't move, so no retry or backoff can be what sent it.
+     */
+    private fun EmbraceActionInterface.goOnlineAndAssertDelivery() {
+        // the workers run inline, so a payload delivered during startup would have left storage already
+        assertEquals(1, storedSessionPayloadCount())
+        simulateConnectivityChange(ConnectivityStatus.Wifi(true))
+        assertEquals(0, storedSessionPayloadCount())
+    }
+
+    private fun storedSessionPayloadCount(): Int =
+        payloadStorageService.storedPayloadMetadata().count { it.envelopeType == SupportedEnvelopeType.SESSION }
 
     internal companion object {
         private val inlineWorkers = listOf(

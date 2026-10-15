@@ -5,7 +5,7 @@ import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import io.embrace.android.embracesdk.fakes.FakeInstrumentationArgs
 import io.embrace.android.embracesdk.fakes.FakeInternalTelemetryService
-import io.embrace.android.embracesdk.fakes.FakeProcessStateTracker
+import io.embrace.android.embracesdk.internal.arch.lifecycle.ProcessChannels
 import io.embrace.android.embracesdk.internal.arch.state.ProcessState
 import io.embrace.android.embracesdk.internal.config.resolved.EmbraceConfig
 import io.embrace.android.embracesdk.internal.config.resolved.VitalsConfig
@@ -99,9 +99,8 @@ internal class VitalsDataSourceTest {
 
     @Test
     fun `a background session part records no frame counts, and does not carry them into the next part`() {
-        val processStateTracker = FakeProcessStateTracker(ProcessState.BACKGROUND)
         val args =
-            FakeInstrumentationArgs(ApplicationProvider.getApplicationContext(), processStateTracker = processStateTracker)
+            FakeInstrumentationArgs(ApplicationProvider.getApplicationContext(), processState = ProcessState.BACKGROUND)
         val dataSource = VitalsDataSource(args)
         dataSource.onPostSessionChange()
         dataSource.countFrames(dropped = true, expectedFrames = 2)
@@ -110,7 +109,7 @@ internal class VitalsDataSourceTest {
         assertTrue(args.destination.sessionPartAttributeWrites.isEmpty())
 
         // the app foregrounds: the next part counts only its own frames
-        processStateTracker.state = ProcessState.FOREGROUND
+        args.eventBus.emitState(ProcessChannels.ProcessState, ProcessState.FOREGROUND)
         dataSource.onPostSessionChange()
         dataSource.countFrames(dropped = false, expectedFrames = 1)
         dataSource.onPreSessionEnd()

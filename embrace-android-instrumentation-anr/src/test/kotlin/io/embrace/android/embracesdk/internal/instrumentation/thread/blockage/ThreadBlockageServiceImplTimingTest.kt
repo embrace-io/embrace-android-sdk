@@ -54,7 +54,7 @@ internal class ThreadBlockageServiceImplTimingTest {
     fun `test delayed background check stops monitoring when app remains in background`() {
         with(rule) {
             // Set background state and recreate service
-            fakeAppStateTracker.state = ProcessState.BACKGROUND
+            setProcessState(ProcessState.BACKGROUND)
             recreateService()
 
             // Start capture - this should trigger scheduleDelayedBackgroundCheck
@@ -73,7 +73,7 @@ internal class ThreadBlockageServiceImplTimingTest {
     fun `test delayed background check does not stop monitoring when app transitions to foreground`() {
         with(rule) {
             // Set background state and recreate service
-            fakeAppStateTracker.state = ProcessState.BACKGROUND
+            setProcessState(ProcessState.BACKGROUND)
             recreateService()
 
             // Start capture - this should trigger scheduleDelayedBackgroundCheck
@@ -84,7 +84,7 @@ internal class ThreadBlockageServiceImplTimingTest {
             watchdogExecutorService.moveForwardAndRunBlocked(TimeUnit.SECONDS.toMillis(5))
 
             // Transition to foreground before the 10-second delay
-            fakeAppStateTracker.state = ProcessState.FOREGROUND
+            setProcessState(ProcessState.FOREGROUND)
             service.onForeground()
             watchdogExecutorService.runCurrentlyBlocked()
 

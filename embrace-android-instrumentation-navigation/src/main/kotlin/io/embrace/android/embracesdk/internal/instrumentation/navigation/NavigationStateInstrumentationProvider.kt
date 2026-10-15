@@ -4,8 +4,10 @@ import io.embrace.android.embracesdk.internal.arch.InstrumentationArgs
 import io.embrace.android.embracesdk.internal.arch.datasource.DataSource
 import io.embrace.android.embracesdk.internal.arch.datasource.DataSourceFactory
 import io.embrace.android.embracesdk.internal.arch.datasource.StateInstrumentationProvider
+import io.embrace.android.embracesdk.internal.arch.lifecycle.ProcessChannels
 import io.embrace.android.embracesdk.internal.arch.navigation.NavigationSignal
 import io.embrace.android.embracesdk.internal.arch.schema.SchemaType.NavigationState.Screen
+import io.embrace.android.embracesdk.internal.arch.state.ProcessState
 
 class NavigationStateInstrumentationProvider :
     StateInstrumentationProvider<NavigationStateDataSource, Screen>(
@@ -38,6 +40,10 @@ class NavigationStateInstrumentationProvider :
             navigationTrackingService = args.navigationTrackingService,
         )
         args.application.registerActivityLifecycleCallbacks(activityTracker)
-        args.processStateTracker.addListener(activityTracker)
+        args.eventBus.addStateHandler(ProcessChannels.ProcessState, replay = false) { state ->
+            if (state == ProcessState.BACKGROUND) {
+                activityTracker.onBackground()
+            }
+        }
     }
 }

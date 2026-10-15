@@ -53,12 +53,31 @@ interface ScenarioScope {
     ) {
         val startMs = nowMs
         advanceTime(REQUEST_DURATION_MS)
+        recordRequest(url, startMs, nowMs, method, statusCode, bytesReceived)
+    }
+
+    /**
+     * Records a network request that the app made from [startTimeMs] to [endTimeMs] without the SDK instrumenting
+     * it, as an app does through the SDK's manual network API. The scenario clock does not move, so a scenario can
+     * give each request a time of its own without waiting for it.
+     */
+    fun recordRequest(
+        url: String,
+        startTimeMs: Long,
+        endTimeMs: Long,
+        method: HttpMethod = DEFAULT_METHOD,
+        statusCode: Int = DEFAULT_STATUS_CODE,
+        bytesReceived: Long = DEFAULT_BYTES_RECEIVED,
+    ) {
+        require(endTimeMs >= startTimeMs) {
+            "a request to $url cannot end at $endTimeMs, before it starts at $startTimeMs"
+        }
         embrace.recordNetworkRequest(
             EmbraceNetworkRequest.fromCompletedRequest(
                 url = url,
                 httpMethod = method,
-                startTime = startMs,
-                endTime = nowMs,
+                startTime = startTimeMs,
+                endTime = endTimeMs,
                 bytesSent = REQUEST_BYTES_SENT,
                 bytesReceived = bytesReceived,
                 statusCode = statusCode,

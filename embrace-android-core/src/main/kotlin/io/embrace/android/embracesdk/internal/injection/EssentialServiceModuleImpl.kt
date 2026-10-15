@@ -125,7 +125,7 @@ class EssentialServiceModuleImpl(
     }
 
     override fun close() {
-        processStateTracker.close()
-        networkConnectivityService.close()
+        runCatching { processStateTracker.close() }
+        runCatching { networkConnectivityService.close() }
     }
 }

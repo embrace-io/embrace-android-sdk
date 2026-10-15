@@ -196,43 +196,47 @@ internal class RealSdkInstance(
 
     override fun disable() = close()
 
+    /**
+     * Tears down the SDK. Each step tolerates failure independently so that a partially initialized module graph
+     * does not prevent the remaining steps from running.
+     */
     override fun close() {
-        try {
-            started = false
-            moduleGraph.openTelemetryModule.otelSdkConfig.disableDataExport()
-            moduleGraph.instrumentationModule.instrumentationRegistry.close()
+        started = false
+        runCatching { moduleGraph.openTelemetryModule.otelSdkConfig.disableDataExport() }
+        runCatching { moduleGraph.instrumentationModule.instrumentationRegistry.close() }
 
-            val rootDir = moduleGraph.coreModule.context.filesDir
-            val fallbackDir = moduleGraph.coreModule.context.cacheDir
-            val workerThreadModule = moduleGraph.workerThreadModule
-            moduleGraph.essentialServiceModule.close()
-            moduleGraph.dataCaptureServiceModule.startupTracker.close()
-            moduleGraph.openTelemetryModule.otelSdkConfig.shutdownExport()
-            workerThreadModule.close()
+        val rootDir = runCatching { moduleGraph.coreModule.context.filesDir }.getOrNull()
+        val fallbackDir = runCatching { moduleGraph.coreModule.context.cacheDir }.getOrNull()
+        val workerThreadModule = runCatching { moduleGraph.workerThreadModule }.getOrNull()
+        runCatching { moduleGraph.essentialServiceModule.close() }
+        runCatching { moduleGraph.dataCaptureServiceModule.startupTracker.close() }
+        runCatching { moduleGraph.openTelemetryModule.otelSdkConfig.shutdownExport() }
+        runCatching { workerThreadModule?.close() }
 
-            val executor = Executors.newSingleThreadExecutor()
-            executor.execute {
-                runCatching {
-                    if (!workerThreadModule.awaitTermination(WORKER_TERMINATION_TIMEOUT_MS)) {
-                        Log.w("[Embrace]", "Timed out waiting for Embrace workers to finish before deleting data.")
-                    }
-                    StorageLocation.entries.map {
-                        it.asFile(
-                            logger = null,
-                            rootDirSupplier = { rootDir },
-                            fallbackDirSupplier = { fallbackDir },
-                        ).value
-                    }.forEach {
-                        it.deleteRecursively()
-                    }
-                }.onFailure { exception ->
-                    Log.e("[Embrace]", "An error occurred while trying to disable Embrace SDK.", exception)
-                }
-            }
-            // lets the queued deletion finish, then releases the worker thread
-            executor.shutdown()
-        } catch (ignored: Throwable) {
+        if (rootDir == null || fallbackDir == null) {
+            return
         }
+        val executor = runCatching { Executors.newSingleThreadExecutor() }.getOrNull() ?: return
+        executor.execute {
+            runCatching {
+                if (workerThreadModule?.awaitTermination(WORKER_TERMINATION_TIMEOUT_MS) == false) {
+                    Log.w("[Embrace]", "Timed out waiting for Embrace workers to finish before deleting data.")
+                }
+                StorageLocation.entries.map {
+                    it.asFile(
+                        logger = null,
+                        rootDirSupplier = { rootDir },
+                        fallbackDirSupplier = { fallbackDir },
+                    ).value
+                }.forEach {
+                    it.deleteRecursively()
+                }
+            }.onFailure { exception ->
+                Log.e("[Embrace]", "An error occurred while trying to disable Embrace SDK.", exception)
+            }
+        }
+        // lets the queued deletion finish, then releases the worker thread
+        executor.shutdown()
     }
 
     override fun createSpan(

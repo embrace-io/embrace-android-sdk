@@ -32,6 +32,7 @@ import io.embrace.android.embracesdk.internal.config.ConfigServiceImpl
 import io.embrace.android.embracesdk.internal.delivery.debug.DeliveryTracer
 import io.embrace.android.embracesdk.internal.delivery.storage.StorageLocation
 import io.embrace.android.embracesdk.internal.delivery.storage.asFile
+import io.embrace.android.embracesdk.internal.injection.BootstrapServices
 import io.embrace.android.embracesdk.internal.injection.CoreModule
 import io.embrace.android.embracesdk.internal.injection.CoreModuleImpl
 import io.embrace.android.embracesdk.internal.injection.DeliveryModuleImpl
@@ -127,6 +128,9 @@ internal class EmbraceSetupInterface(
         otelSdkMode = OtelSdkMode.COMPAT,
     )
 
+    val bootstrapServices: BootstrapServices
+        get() = fakeInitModule.bootstrapServices
+
     private val workerThreadModule: WorkerThreadModule = initWorkerThreadModule(
         fakeInitModule = fakeInitModule,
         workersToFake = workersToFake,
@@ -171,7 +175,7 @@ internal class EmbraceSetupInterface(
                 worker = workerThreadModule.backgroundWorker(Worker.Background.HttpRequestWorker),
                 serializer = initModule.jsonSerializer,
                 okHttpClient = initModule.okHttpClient,
-                hasConfiguredOtlpExport = openTelemetryModule.otelSdkConfig::hasConfiguredOtlpExport,
+                hasConfiguredOtlpExport = openTelemetryModule.otelSdkConfig.externalConfig::hasConfiguredOtlpExport,
                 sdkVersion = BuildConfig.VERSION_NAME,
                 apiLevel = Build.VERSION.SDK_INT,
                 primaryAbi = initModule.systemInfo.primaryAbi,

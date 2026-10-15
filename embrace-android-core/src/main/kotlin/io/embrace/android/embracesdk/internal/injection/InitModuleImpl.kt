@@ -4,16 +4,13 @@ import io.embrace.android.embracesdk.internal.SystemInfo
 import io.embrace.android.embracesdk.internal.arch.startup.StartupClassifier
 import io.embrace.android.embracesdk.internal.arch.startup.StartupClassifierImpl
 import io.embrace.android.embracesdk.internal.clock.Clock
-import io.embrace.android.embracesdk.internal.clock.NormalizedIntervalClock
 import io.embrace.android.embracesdk.internal.config.instrumented.InstrumentedConfigImpl
 import io.embrace.android.embracesdk.internal.config.instrumented.schema.InstrumentedConfig
 import io.embrace.android.embracesdk.internal.logging.BufferedInternalErrorHandler
 import io.embrace.android.embracesdk.internal.logging.InternalLogger
-import io.embrace.android.embracesdk.internal.logging.InternalLoggerImpl
 import io.embrace.android.embracesdk.internal.serialization.EmbraceSerializer
 import io.embrace.android.embracesdk.internal.serialization.PlatformSerializer
 import io.embrace.android.embracesdk.internal.telemetry.InternalTelemetryService
-import io.embrace.android.embracesdk.internal.telemetry.InternalTelemetryServiceImpl
 import io.embrace.android.embracesdk.internal.utils.EmbTrace
 import io.embrace.android.embracesdk.internal.utils.UuidSource
 import io.embrace.android.embracesdk.internal.utils.UuidSourceImpl
@@ -22,18 +19,16 @@ import okhttp3.Protocol
 import java.util.concurrent.TimeUnit
 
 class InitModuleImpl(
-    override val logger: InternalLogger = InternalLoggerImpl(),
-    override val clock: Clock = NormalizedIntervalClock(logger = logger),
-    override val systemInfo: SystemInfo = SystemInfo(),
+    bootstrapServices: BootstrapServices = BootstrapServices(),
     override val uuidSource: UuidSource = UuidSourceImpl(),
     override val startupClassifier: StartupClassifier = StartupClassifierImpl(),
-    override val telemetryService: InternalTelemetryService = InternalTelemetryServiceImpl(systemInfo = systemInfo),
-    override val internalErrorHandler: BufferedInternalErrorHandler = BufferedInternalErrorHandler(clock),
 ) : InitModule {
 
-    init {
-        logger.errorHandlerProvider = { internalErrorHandler }
-    }
+    override val logger: InternalLogger = bootstrapServices.logger
+    override val clock: Clock = bootstrapServices.clock
+    override val systemInfo: SystemInfo = bootstrapServices.systemInfo
+    override val telemetryService: InternalTelemetryService = bootstrapServices.telemetryService
+    override val internalErrorHandler: BufferedInternalErrorHandler = bootstrapServices.internalErrorHandler
 
     override val jsonSerializer: PlatformSerializer by lazy {
         EmbraceSerializer()

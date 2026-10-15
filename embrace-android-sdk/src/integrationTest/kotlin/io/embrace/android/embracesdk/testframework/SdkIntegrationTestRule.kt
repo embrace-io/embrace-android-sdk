@@ -275,12 +275,8 @@ internal class SdkIntegrationTestRule(
     }
 
     private fun createStateHolder(): SdkStateHolder {
-        val initModule = moduleGraphFactory.initModule
         return createSdkStateHolder(
-            logger = initModule.logger,
-            clock = initModule.clock,
-            telemetryService = initModule.telemetryService,
-            internalErrorHandler = initModule.internalErrorHandler,
+            bootstrapServices = setup.bootstrapServices,
             moduleGraphFactoryProvider = { moduleGraphFactory },
             onModuleGraphCreated = { createdModuleGraph = it },
         )

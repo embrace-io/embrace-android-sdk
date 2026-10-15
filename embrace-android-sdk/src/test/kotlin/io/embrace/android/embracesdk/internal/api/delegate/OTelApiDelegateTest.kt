@@ -43,14 +43,14 @@ internal class OTelApiDelegateTest(
     fun `add exporters after start`() {
         delegate.addSpanExporter(FakeSpanExporter())
         delegate.addLogRecordExporter(FakeLogRecordExporter())
-        assertFalse(otelModule.otelSdkConfig.hasConfiguredOtlpExport())
+        assertFalse(otelModule.otelSdkConfig.externalConfig.hasConfiguredOtlpExport())
     }
 
     @Test
     fun `add processors after start`() {
         delegate.addSpanProcessor(FakeSpanProcessor())
         delegate.addLogRecordProcessor(FakeLogRecordProcessor())
-        assertFalse(otelModule.otelSdkConfig.hasConfiguredOtlpExport())
+        assertFalse(otelModule.otelSdkConfig.externalConfig.hasConfiguredOtlpExport())
     }
 
     @Test

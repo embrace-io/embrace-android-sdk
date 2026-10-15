@@ -1,7 +1,7 @@
 package io.embrace.android.embracesdk.internal.api.delegate
 
 import io.embrace.android.embracesdk.internal.api.OTelApi
-import io.embrace.android.embracesdk.internal.otel.config.OtelSdkConfig
+import io.embrace.android.embracesdk.internal.otel.config.ExternalOtelConfig
 import io.opentelemetry.kotlin.NoopOpenTelemetry
 import io.opentelemetry.kotlin.OpenTelemetry
 import io.opentelemetry.kotlin.logging.export.LogRecordExporter
@@ -10,11 +10,11 @@ import io.opentelemetry.kotlin.tracing.export.SpanExporter
 import io.opentelemetry.kotlin.tracing.export.SpanProcessor
 
 /**
- * Applies OTel configuration calls made before the SDK starts directly to the [OtelSdkConfig], before the
+ * Applies OTel configuration calls made before the SDK starts directly to the [ExternalOtelConfig], before the
  * OTel SDK is built.
  */
 internal class PreStartOTelApi(
-    private val config: OtelSdkConfig,
+    private val config: ExternalOtelConfig,
 ) : OTelApi {
 
     override fun getOpenTelemetryKotlin(): OpenTelemetry = NoopOpenTelemetry

@@ -10,6 +10,7 @@ import io.embrace.android.embracesdk.fakes.OtelSdkMode
 import io.embrace.android.embracesdk.fakes.config.FakeBaseUrlConfig
 import io.embrace.android.embracesdk.fakes.config.FakeEnabledFeatureConfig
 import io.embrace.android.embracesdk.fakes.config.FakeInstrumentedConfig
+import io.embrace.android.embracesdk.internal.injection.BootstrapServices
 import io.embrace.android.embracesdk.internal.injection.InitModule
 import io.embrace.android.embracesdk.internal.injection.InitModuleImpl
 import io.embrace.android.embracesdk.internal.injection.ModuleGraph
@@ -72,13 +73,14 @@ internal class StrictModeStartupTest(
         instrumentation.runOnMainSync {
             recorder.install()
 
-            val initModule = TestInitModule(InitModuleImpl(), otelSdkMode)
-            val moduleGraphFactory = ModuleGraphFactory(initModule, OpenTelemetryModuleImpl(initModule))
+            val bootstrapServices = BootstrapServices()
+            val initModule = TestInitModule(InitModuleImpl(bootstrapServices), otelSdkMode)
+            val moduleGraphFactory = ModuleGraphFactory(
+                initModule,
+                OpenTelemetryModuleImpl(initModule, bootstrapServices.externalOtelConfig),
+            )
             sdkStateHolder = createSdkStateHolder(
-                logger = initModule.logger,
-                clock = initModule.clock,
-                telemetryService = initModule.telemetryService,
-                internalErrorHandler = initModule.internalErrorHandler,
+                bootstrapServices = bootstrapServices,
                 moduleGraphFactoryProvider = { moduleGraphFactory },
                 onModuleGraphCreated = { moduleGraph = it },
             )

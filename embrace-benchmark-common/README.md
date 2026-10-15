@@ -5,9 +5,11 @@ measures, and `embrace-macrobenchmark-app`, the app it measures. Code that only 
 that side's module.
 
 - **The contract between the two processes.** `ScenarioProtocol` names what one side writes and the
-  other reads: intent extras, global settings and the statuses the app reports. A name both sides' code
-  uses is defined here, never spelled out on both. Which app the benchmark drives is the benchmark's own
-  business, so its package stays in `embrace-macrobenchmark`.
+  other reads: global settings and the statuses the app reports. `HostTask` is what a launch of the host
+  runs and what it runs on, and it carries itself to the app as the launch intent's extras, so only it
+  knows their names. A name both sides' code uses is defined here, never spelled out on both. Which app
+  the benchmark drives is the benchmark's own business, so its package and host activity stay in
+  `embrace-macrobenchmark`.
 - **The scenarios.** The app runs them, and the benchmark looks them up by id to parameterize its tests.
 - **The capture profiles.** `CaptureProfile` and its perfetto configs are only used by the benchmark.
   They live here because `embrace-macrobenchmark` is a `com.android.test` module, which never runs a

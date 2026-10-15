@@ -70,6 +70,15 @@ internal class NetworkCaptureDataSourceTest {
     }
 
     @Test
+    fun `malformed url regex is ignored`() {
+        val badRule = getDefaultRule(id = "bad", urlRegex = "embrace.io/(")
+        val goodRule = getDefaultRule(id = "good")
+        cfg = RemoteConfig(networkCaptureRules = setOf(badRule, goodRule))
+        val result = getService().getNetworkCaptureRules("https://embrace.io/changelog", "GET")
+        assertEquals(setOf(goodRule), result)
+    }
+
+    @Test
     fun `test capture rule expires in`() {
         val rule = getDefaultRule(expiresIn = 0)
         cfg = RemoteConfig(networkCaptureRules = setOf(rule))

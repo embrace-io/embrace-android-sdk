@@ -50,7 +50,7 @@ internal class PersistenceScenarioBenchmark(
     @Test
     fun scenario() {
         benchmarkRule.measureRepeated(
-            packageName = PACKAGE_NAME,
+            packageName = TARGET_PACKAGE,
             metrics = listOf(
                 TraceSectionMetric("emb-sdk-start", mode = TraceSectionMetric.Mode.Sum),
                 TraceSectionMetric("emb-mf-%", mode = TraceSectionMetric.Mode.Sum, label = "emb-mf-sections"),
@@ -95,7 +95,7 @@ internal class PersistenceScenarioBenchmark(
     }
 
     private fun scenarioIntent(): Intent = Intent().apply {
-        setClassName(PACKAGE_NAME, "$PACKAGE_NAME.ScenarioActivity")
+        setClassName(TARGET_PACKAGE, "$TARGET_PACKAGE.ScenarioActivity")
         putExtra(EXTRA_SCENARIO_ID, scenarioId)
     }
 
@@ -107,7 +107,6 @@ internal class PersistenceScenarioBenchmark(
             OtelSdkMode.entries.map { mode -> arrayOf(id, mode) }
         }
 
-        private const val PACKAGE_NAME = "io.embrace.android.embracesdk.macrobenchmark.app"
         private const val ITERATIONS = 10
         private const val STATUS_TIMEOUT_MS = 60_000L
     }

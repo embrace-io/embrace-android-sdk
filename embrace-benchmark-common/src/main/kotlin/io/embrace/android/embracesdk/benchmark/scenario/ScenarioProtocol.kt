@@ -6,6 +6,17 @@ package io.embrace.android.embracesdk.benchmark.scenario
 object ScenarioProtocol {
 
     /**
+     * Global setting holding the percentage the app's remote config enables multi-file persistence for.
+     */
+    const val MULTI_FILE_PERSISTENCE_SETTING: String = "embrace_pct_multi_file_persistence"
+
+    /**
+     * Global setting holding the percentage the app's remote config enables opentelemetry-kotlin's regular
+     * implementation for.
+     */
+    const val OTEL_KOTLIN_SDK_SETTING: String = "embrace_pct_otel_kotlin_sdk"
+
+    /**
      * Intent extra naming the [ScenarioSpec] to run, as [PersistenceScenarios.byId] resolves it.
      */
     const val EXTRA_SCENARIO_ID: String = "scenario_id"

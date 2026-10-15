@@ -37,7 +37,7 @@ internal class SessionBenchmark(otelSdkMode: OtelSdkMode) {
     @Test
     fun sessionEnd() {
         benchmarkRule.measureRepeated(
-            packageName = "io.embrace.android.embracesdk.macrobenchmark.app",
+            packageName = TARGET_PACKAGE,
             // sum reports zero as non-atrace sections are absent
             metrics = listOf(
                 TraceSectionMetric("emb-sdk-start", mode = TraceSectionMetric.Mode.Sum),

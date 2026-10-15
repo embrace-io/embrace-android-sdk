@@ -1,7 +1,17 @@
 # embrace-benchmark-common
 
-Contains common code used for benchmarking scenarios within an SDK. Currently this mainly holds benchmarks for persistence
-operations.
+Holds what both sides of a macrobenchmark use: `embrace-macrobenchmark`, the test APK that drives and
+measures, and `embrace-macrobenchmark-app`, the app it measures. Code that only one side runs belongs in
+that side's module.
+
+- **The contract between the two processes.** `ScenarioProtocol` names what one side writes and the
+  other reads: intent extras, global settings and the statuses the app reports. A name both sides' code
+  uses is defined here, never spelled out on both. Which app the benchmark drives is the benchmark's own
+  business, so its package stays in `embrace-macrobenchmark`.
+- **The scenarios.** The app runs them, and the benchmark looks them up by id to parameterize its tests.
+- **The capture profiles.** `CaptureProfile` and its perfetto configs are only used by the benchmark.
+  They live here because `embrace-macrobenchmark` is a `com.android.test` module, which never runs a
+  JVM unit test placed under its `src/test`, and `CaptureProfileTest` checks the configs.
 
 A scenario is a named block of telemetry-producing code written against the public Embrace API, in
 the same declarative style as the SDK integration tests:

@@ -2,8 +2,10 @@ package io.embrace.android.embracesdk.internal.instrumentation.navigation
 
 import io.embrace.android.embracesdk.internal.arch.InstrumentationArgs
 import io.embrace.android.embracesdk.internal.arch.datasource.StateInstrumentationProvider
+import io.embrace.android.embracesdk.internal.arch.lifecycle.ProcessChannels
 import io.embrace.android.embracesdk.internal.arch.navigation.NavigationSignal
 import io.embrace.android.embracesdk.internal.arch.schema.SchemaType.NavigationState.Screen
+import io.embrace.android.embracesdk.internal.arch.state.ProcessState
 
 class NavigationStateInstrumentationProvider :
     StateInstrumentationProvider<NavigationStateDataSource, Screen>(
@@ -30,6 +32,10 @@ class NavigationStateInstrumentationProvider :
     private fun startPublishing(args: InstrumentationArgs, activityTracker: ActivityNavigationTracker) {
         args.eventBus.addHandler(NavigationSignal.KEY, NavigationEventBroker(args.eventBus))
         args.application.registerActivityLifecycleCallbacks(activityTracker)
-        args.processStateTracker.addListener(activityTracker)
+        args.eventBus.addStateHandler(ProcessChannels.ProcessState, replay = false) { state ->
+            if (state == ProcessState.BACKGROUND) {
+                activityTracker.onBackground()
+            }
+        }
     }
 }

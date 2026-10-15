@@ -1,12 +1,13 @@
 package io.embrace.android.embracesdk.fakes
 
+import io.embrace.android.embracesdk.internal.arch.lifecycle.ProcessChannels
 import android.app.Application
 import android.content.Context
 import android.content.pm.PackageInfo
 import io.embrace.android.embracesdk.internal.arch.InstrumentationArgs
 import io.embrace.android.embracesdk.internal.arch.SessionPartChangeListener
 import io.embrace.android.embracesdk.internal.arch.SessionPartEndListener
-import io.embrace.android.embracesdk.internal.arch.state.ProcessStateTracker
+import io.embrace.android.embracesdk.internal.arch.state.ProcessState
 import io.embrace.android.embracesdk.internal.network.http.HttpRequestInfoModifierChain
 import io.embrace.android.embracesdk.internal.serialization.PlatformSerializer
 import io.embrace.android.embracesdk.internal.session.id.SessionIdsSnapshot
@@ -31,7 +32,7 @@ class FakeInstrumentationArgs(
     override val uuidSource: UuidSource = TestUuidSource(),
     override val ordinalStore: OrdinalStore = FakeOrdinalStore(),
     override val processIdentifier: String = "fake-process-id",
-    override val processStateTracker: ProcessStateTracker = FakeProcessStateTracker(),
+    processState: ProcessState = ProcessState.FOREGROUND,
     override val telemetryService: InternalTelemetryService = FakeInternalTelemetryService(),
     override val packageInfo: PackageInfo? = null,
     val backgroundWorkerSupplier: (worker: Worker.Background) -> BackgroundWorker = { fakeBackgroundWorker() },
@@ -44,6 +45,11 @@ class FakeInstrumentationArgs(
     val systemServiceSupplier: (name: String) -> Any? = { null },
     override val eventBus: EventBus = EventBus(logger),
 ) : InstrumentationArgs {
+
+    init {
+        // the SDK emits the process state before any instrumentation registers
+        eventBus.emitState(ProcessChannels.ProcessState, processState)
+    }
 
     override fun backgroundWorker(worker: Worker.Background): BackgroundWorker = backgroundWorkerSupplier(worker)
 

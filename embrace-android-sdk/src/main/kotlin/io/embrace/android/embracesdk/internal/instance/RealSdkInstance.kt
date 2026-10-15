@@ -28,6 +28,8 @@ import io.embrace.android.embracesdk.internal.api.delegate.ViewTrackingApiDelega
 import io.embrace.android.embracesdk.internal.arch.InstrumentationArgs
 import io.embrace.android.embracesdk.internal.arch.InstrumentationProvider
 import io.embrace.android.embracesdk.internal.arch.attrs.toEmbraceAttributeName
+import io.embrace.android.embracesdk.internal.arch.lifecycle.ProcessChannels
+import io.embrace.android.embracesdk.internal.arch.state.ProcessState
 import io.embrace.android.embracesdk.internal.clock.Clock
 import io.embrace.android.embracesdk.internal.config.behavior.SensitiveKeysBehavior
 import io.embrace.android.embracesdk.internal.delivery.storage.StorageLocation
@@ -358,17 +360,28 @@ internal class RealSdkInstance(
                 )
 
                 val sessionPartTracker = essentialServiceModule.sessionPartTracker
-                val appStateTracker = essentialServiceModule.processStateTracker
+                val eventBus = coreModule.eventBus
 
                 sessionPartTracker.addSessionPartChangeListener {
                     configService.networkBehavior.domainCountLimiter.reset()
                 }
 
-                appStateTracker.addListener(dataCaptureServiceModule.appStartupDataCollector)
+                val appStartupDataCollector = dataCaptureServiceModule.appStartupDataCollector
+                eventBus.addStateHandler(ProcessChannels.ProcessState, replay = false) { state ->
+                    when (state) {
+                        ProcessState.FOREGROUND -> appStartupDataCollector.onForeground()
+                        ProcessState.BACKGROUND -> appStartupDataCollector.onBackground()
+                    }
+                }
 
-                threadBlockageService?.let {
-                    appStateTracker.addListener(it)
-                    sessionPartTracker.addSessionPartChangeListener(it)
+                threadBlockageService?.let { service ->
+                    eventBus.addStateHandler(ProcessChannels.ProcessState, replay = false) { state ->
+                        when (state) {
+                            ProcessState.FOREGROUND -> service.onForeground()
+                            ProcessState.BACKGROUND -> service.onBackground()
+                        }
+                    }
+                    sessionPartTracker.addSessionPartChangeListener(service)
                 }
 
                 sessionPartTracker.addSessionPartChangeListener(logModule.attachmentService)

@@ -46,7 +46,7 @@ class EssentialServiceModuleImpl(
     override val processStateTracker: ProcessStateTracker = EmbTrace.trace("process-state-service-init") {
         val lifecycleTracker = lifecycleTrackerProvider()
             ?: createLifecycleTracker(configService, coreModule.application, startupContext)
-        ProcessStateTrackerImpl(initModule.logger, lifecycleTracker)
+        ProcessStateTrackerImpl(initModule.logger, lifecycleTracker, coreModule.eventBus)
             .apply { register() }
     }
 

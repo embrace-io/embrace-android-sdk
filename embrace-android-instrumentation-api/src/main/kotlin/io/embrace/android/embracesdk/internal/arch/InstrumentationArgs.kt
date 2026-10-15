@@ -5,7 +5,6 @@ import android.content.Context
 import android.content.pm.PackageInfo
 import io.embrace.android.embracesdk.internal.arch.datasource.TelemetryDestination
 import io.embrace.android.embracesdk.internal.arch.navigation.NavigationTrackingService
-import io.embrace.android.embracesdk.internal.arch.state.ProcessStateTracker
 import io.embrace.android.embracesdk.internal.clock.Clock
 import io.embrace.android.embracesdk.internal.config.ConfigService
 import io.embrace.android.embracesdk.internal.logging.InternalLogger
@@ -31,11 +30,6 @@ interface InstrumentationArgs {
      * Declares how instrumentation should behave.
      */
     val configService: ConfigService
-
-    /**
-     * Tracks app state (foreground/background)
-     */
-    val processStateTracker: ProcessStateTracker
 
     /**
      * An interface where telemetry can be written.

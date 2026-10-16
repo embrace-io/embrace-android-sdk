@@ -18,6 +18,7 @@ class NavigationStateInstrumentationProvider :
                 clock = args.clock,
                 eventBus = args.eventBus,
                 navigationTrackingService = args.navigationTrackingService,
+                logger = args.logger,
             )
             NavigationStateDataSource(args, activityTracker).also { startPublishing(args, activityTracker) }
         }

@@ -74,7 +74,11 @@ internal class NavControllerTracker(
     }
 
     private fun onDestinationChanged(activityId: Int, destination: NavDestination) {
-        eventBus.emit(NavigationSignal.KEY, ScreenChanged(activityId, extractScreenName(destination), clock.now()))
+        try {
+            eventBus.emit(NavigationSignal.KEY, ScreenChanged(activityId, extractScreenName(destination), clock.now()))
+        } catch (exc: Throwable) {
+            logger.trackInternalError(InternalErrorType.UiCallbackFail, exc)
+        }
     }
 
     private fun findNavController(activity: Activity): NavController? {

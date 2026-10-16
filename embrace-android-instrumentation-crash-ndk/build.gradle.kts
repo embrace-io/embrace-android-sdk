@@ -17,6 +17,10 @@ android {
         jniLibs.pickFirsts.add("**/*.so")
     }
     defaultConfig.consumerProguardFiles("embrace-proguard.cfg")
+    providers.gradleProperty("embrace.abiFilters").orNull?.let {
+        //noinspection ChromeOsAbiSupport only set on CI to match the emulator ABI
+        defaultConfig.ndk.abiFilters += it.split(",")
+    }
 }
 
 dependencies {

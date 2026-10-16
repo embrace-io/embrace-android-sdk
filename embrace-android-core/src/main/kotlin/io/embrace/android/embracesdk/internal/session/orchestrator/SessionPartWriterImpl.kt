@@ -9,6 +9,7 @@ import io.embrace.android.embracesdk.internal.envelope.session.SESSION_ENVELOPE_
 import io.embrace.android.embracesdk.internal.envelope.session.SESSION_ENVELOPE_VERSION
 import io.embrace.android.embracesdk.internal.logging.InternalErrorType
 import io.embrace.android.embracesdk.internal.logging.InternalLogger
+import io.embrace.android.embracesdk.internal.logging.guardSdkCode
 import io.embrace.android.embracesdk.internal.otel.spans.EmbraceSdkSpan
 import io.embrace.android.embracesdk.internal.otel.spans.hasEmbraceAttribute
 import io.embrace.android.embracesdk.internal.payload.Span
@@ -309,11 +310,7 @@ class SessionPartWriterImpl(
     ): (Runnable) -> Runnable = { task ->
         Runnable {
             if (!abandoned()) {
-                try {
-                    task.run()
-                } catch (exc: Throwable) {
-                    logger.trackInternalError(errorType, exc)
-                }
+                logger.guardSdkCode(errorType, task::run)
             }
         }
     }

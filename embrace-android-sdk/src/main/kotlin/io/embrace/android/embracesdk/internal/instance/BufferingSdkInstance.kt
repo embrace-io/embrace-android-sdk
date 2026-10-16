@@ -20,6 +20,7 @@ import io.embrace.android.embracesdk.internal.instrumentation.network.DefaultTra
 import io.embrace.android.embracesdk.internal.logging.BufferedInternalErrorHandler
 import io.embrace.android.embracesdk.internal.logging.InternalErrorType
 import io.embrace.android.embracesdk.internal.logging.InternalLogger
+import io.embrace.android.embracesdk.internal.logging.guardSdkCode
 import io.embrace.android.embracesdk.spans.EmbraceSpan
 import io.embrace.android.embracesdk.spans.EmbraceSpanEvent
 import io.embrace.android.embracesdk.spans.ErrorCode
@@ -230,13 +231,7 @@ internal class BufferingSdkInstance(
         )
     }
 
-    private inline fun guard(action: () -> Unit) {
-        try {
-            action()
-        } catch (exc: Throwable) {
-            logger.trackInternalError(InternalErrorType.PublicApiFail, exc)
-        }
-    }
+    private inline fun guard(action: () -> Unit) = logger.guardSdkCode(InternalErrorType.PublicApiFail, action)
 
     private fun bufferOTelConfig(calls: MutableList<OTelConfigCall>, call: OTelConfigCall) {
         if (bufferedOTelConfigCount < MAX_BUFFERED_OTEL_CONFIG_CALLS) {

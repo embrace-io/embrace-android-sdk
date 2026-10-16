@@ -1,0 +1,368 @@
+@file:OptIn(ExperimentalSemconv::class)
+
+package io.embrace.android.embracesdk.internal.injection
+
+import android.content.Context
+import io.embrace.android.embracesdk.core.BuildConfig
+import io.embrace.android.embracesdk.internal.arch.InstrumentationArgs
+import io.embrace.android.embracesdk.internal.arch.InstrumentationProvider
+import io.embrace.android.embracesdk.internal.arch.attrs.toEmbraceAttributeName
+import io.embrace.android.embracesdk.internal.config.behavior.SensitiveKeysBehavior
+import io.embrace.android.embracesdk.internal.instrumentation.crash.jvm.JvmCrashDataSource
+import io.embrace.android.embracesdk.internal.instrumentation.crash.ndk.NativeCrashDataSource
+import io.embrace.android.embracesdk.internal.instrumentation.network.NetworkCaptureDataSource
+import io.embrace.android.embracesdk.internal.instrumentation.network.NetworkRequestDataSource
+import io.embrace.android.embracesdk.internal.instrumentation.network.NetworkStateDataSource
+import io.embrace.android.embracesdk.internal.instrumentation.network.NetworkStatusDataSource
+import io.embrace.android.embracesdk.internal.instrumentation.startup.ArtOptimizationState
+import io.embrace.android.embracesdk.internal.instrumentation.startup.sdkInitEnvironmentAttributes
+import io.embrace.android.embracesdk.internal.instrumentation.startup.toSdkInitDurationAttributes
+import io.embrace.android.embracesdk.internal.logging.InternalErrorType
+import io.embrace.android.embracesdk.internal.logging.guardSdkCode
+import io.embrace.android.embracesdk.internal.utils.EmbTrace
+import io.embrace.android.embracesdk.internal.utils.Provider
+import io.embrace.android.embracesdk.internal.worker.Worker
+import io.embrace.android.embracesdk.semconv.EmbCommonAttributes
+import io.embrace.android.embracesdk.semconv.EmbSessionAttributes
+import io.embrace.android.embracesdk.semconv.ExperimentalSemconv
+import io.opentelemetry.kotlin.semconv.UserAttributes
+import java.io.File
+import java.util.ServiceLoader
+import java.util.concurrent.TimeUnit
+
+/**
+ * Performs bootstrapping by setting required values where there is an interdependency
+ * between modules.
+ */
+internal fun ModuleGraph.postInit() = EmbTrace.trace(sectionName = "post-init", recordDuration = true) {
+    openTelemetryModule.setEventMetadataProvider(eventMetadataSupplierProvider())
+
+    // note: otelBehavior is not applied here - it decides which OTel SDK is built, so it is set
+    // right after the persisted config is read in ModuleGraphFactory.init.
+    openTelemetryModule.applyConfiguration(
+        sensitiveKeysBehavior = SensitiveKeysBehavior(configService.config.sensitiveKeys),
+        bypassValidation = configService.isOnlyUsingOtelExporters(),
+        otelBehavior = configService.otelBehavior,
+        breadcrumbConfig = configService.config.breadcrumb,
+    )
+
+    deliveryModule?.payloadCachingService?.run {
+        openTelemetryModule.spanRepository.addSpanChangeListener { reportBackgroundActivityStateChange() }
+    }
+
+    payloadSourceModule.metadataService.precomputeValues()
+
+    // Start the log orchestrator
+    openTelemetryModule.logSink.registerLogStoredCallback {
+        logModule.logOrchestrator.onLogsAdded()
+    }
+    initModule.internalErrorHandler.drainTo(
+        essentialServiceModule.telemetryDestination,
+        configService.config.dataCaptureEvent.internalExceptionCaptureEnabled,
+    )
+
+    essentialServiceModule.telemetryDestination.sessionUpdateAction =
+        userSessionOrchestrationModule.sessionOrchestrator::onSessionDataUpdate
+    essentialServiceModule.telemetryDestination.currentStatesProvider =
+        instrumentationModule.instrumentationRegistry::getCurrentStates
+
+    openTelemetryModule.setSessionIdsProvider(userSessionOrchestrationModule.sessionIdsProvider)
+    openTelemetryModule.setUserIdProvider { essentialServiceModule.userService.getUserInfo().userId }
+
+    // Start the orchestrator and create the first session part once all the module dependencies have been created and wired up
+    userSessionOrchestrationModule.sessionOrchestrator.start()
+}
+
+/**
+ * Apply custom metadata by the SDK user through Embrace APIs.
+ * Should only be done after the SDK has been started successfully.
+ */
+internal fun ModuleGraph.applyCustomMetadata(applyMetadata: () -> Unit) =
+    safeInit {
+        applyMetadata()
+    }
+
+/**
+ * Registers listeners for various lifecycle/system callbacks.
+ */
+internal fun ModuleGraph.registerListeners() = safeInit {
+    EmbTrace.trace("service-registration") {
+        val ctx = coreModule.application
+        ctx.registerActivityLifecycleCallbacks(dataCaptureServiceModule.startupTracker)
+
+        // periodically fail any in-flight spans that have exceeded their timeout, so leaked spans
+        // are terminated and their memory released even during a long-running session.
+        val spanRepository = openTelemetryModule.spanRepository
+        val clock = initModule.clock
+        val logger = initModule.logger
+        workerThreadModule.backgroundWorker(Worker.Background.NonIoRegWorker).scheduleWithFixedDelay(
+            {
+                try {
+                    spanRepository.stopTimedOutSpans(clock.now())
+                } catch (exc: Throwable) {
+                    logger.trackInternalError(InternalErrorType.SpanTimeoutSweepFail, exc)
+                }
+            },
+            SPAN_TIMEOUT_SWEEP_INTERVAL_MS,
+            SPAN_TIMEOUT_SWEEP_INTERVAL_MS,
+            TimeUnit.MILLISECONDS,
+        )
+
+        val sessionPartTracker = essentialServiceModule.sessionPartTracker
+        val appStateTracker = essentialServiceModule.processStateTracker
+
+        sessionPartTracker.addSessionPartChangeListener {
+            configService.networkBehavior.domainCountLimiter.reset()
+        }
+
+        appStateTracker.addListener(dataCaptureServiceModule.appStartupDataCollector)
+
+        threadBlockageService?.let {
+            appStateTracker.addListener(it)
+            sessionPartTracker.addSessionPartChangeListener(it)
+        }
+
+        sessionPartTracker.addSessionPartChangeListener(logModule.attachmentService)
+        sessionPartTracker.addSessionPartChangeListener(logModule.logLimitingService)
+        sessionPartTracker.addSessionPartChangeListener(initModule.internalErrorHandler::resetLimit)
+    }
+}
+
+/**
+ * Loads instrumentation via SPI and legacy methods.
+ */
+internal fun ModuleGraph.loadInstrumentation() = safeInit {
+    EmbTrace.trace(sectionName = "load-instrumentation", recordDuration = true) {
+        val registry = instrumentationModule.instrumentationRegistry
+        registry.loadInstrumentations(loadInstrumentationProviders(), instrumentationModule.instrumentationArgs)
+
+        threadBlockageService?.startCapture()
+        featureModule.lastRunCrashVerifier.readAndCleanMarkerAsync(
+            workerThreadModule.backgroundWorker(Worker.Background.IoRegWorker),
+        )
+    }
+
+    initializeHucInstrumentation()
+}
+
+/**
+ * Loads the [InstrumentationProvider] implementations declared via SPI. Before making changes
+ * to this function please study R8, as currently it optimizes out lookup and reflection from
+ * the startup path.
+ *
+ * See R8 for further details on how ServiceLoaderRewriter optimizes SPI:
+ * https://r8.googlesource.com/r8/+/refs/heads/main/src/main/java/com/android/tools/r8/ir/optimize/ServiceLoaderRewriter.java
+ */
+private fun loadInstrumentationProviders(): List<InstrumentationProvider> {
+    val providers = mutableListOf<InstrumentationProvider>()
+    for (provider in ServiceLoader.load(InstrumentationProvider::class.java, InstrumentationProvider::class.java.classLoader)) {
+        providers.add(provider)
+    }
+    return providers
+}
+
+/**
+ * Initializes HttpUrlConnection instrumentation via reflection, if the module is present and capture is enabled.
+ */
+private fun ModuleGraph.initializeHucInstrumentation() {
+    val networkBehavior = configService.networkBehavior
+    try {
+        if (networkBehavior.isHttpUrlConnectionCaptureEnabled()) {
+            EmbTrace.trace(sectionName = "huc-init", recordDuration = true) {
+                val trackerClass = Class.forName("io.embrace.android.embracesdk.instrumentation.huc.HttpUrlConnectionTracker")
+                val objectField = trackerClass.getDeclaredField("INSTANCE")
+                val trackerObject = objectField.get(null)
+                val initMethod = trackerClass.getDeclaredMethod(
+                    "registerUrlStreamHandlerFactory",
+                    Boolean::class.java,
+                    InstrumentationArgs::class.java,
+                    NetworkRequestDataSource::class.java,
+                    NetworkCaptureDataSource::class.java,
+                )
+                val module = instrumentationModule
+                initMethod.invoke(
+                    trackerObject,
+                    networkBehavior.isRequestContentLengthCaptureEnabled(),
+                    module.instrumentationArgs,
+                    module.instrumentationRegistry.findByType(NetworkRequestDataSource::class),
+                    module.instrumentationRegistry.findByType(NetworkCaptureDataSource::class),
+                )
+            }
+        }
+    } catch (t: Throwable) {
+        initModule.logger.trackInternalError(InternalErrorType.InstrumentationRegFail, t)
+    }
+}
+
+/**
+ * Performs post-load instrumentation tasks such as setting listeners.
+ */
+internal fun ModuleGraph.postLoadInstrumentation() = safeInit {
+    // setup crash teardown handlers
+    val registry = instrumentationModule.instrumentationRegistry
+    registry.findByType(JvmCrashDataSource::class)?.apply {
+        threadBlockageService?.let(::addCrashTeardownHandler)
+        addCrashTeardownHandler(logModule.logOrchestrator)
+        addCrashTeardownHandler(userSessionOrchestrationModule.sessionOrchestrator)
+        addCrashTeardownHandler(featureModule.crashMarker)
+        deliveryModule?.payloadStore?.let(::addCrashTeardownHandler)
+    }
+    workerThreadModule.backgroundWorker(Worker.Background.NonIoRegWorker).submit {
+        with(essentialServiceModule.networkConnectivityService) {
+            registry.findByType(NetworkStatusDataSource::class)?.let(::addNetworkConnectivityListener)
+            registry.findByType(NetworkStateDataSource::class)?.let(::addNetworkConnectivityListener)
+            register()
+        }
+    }
+}
+
+/**
+ * Trigger sending cached data on disk.
+ */
+internal fun ModuleGraph.triggerPayloadSend() = safeInit {
+    val worker = workerThreadModule.backgroundWorker(Worker.Background.IoRegWorker)
+    worker.submit {
+        // Get real network status as soon as we can on the worker.
+        // This allows the delivery triggered by resurrection to get the most accurate network status as possible
+        // so that it won't waste time trying to send when the device is known to be offline.
+        deliveryModule?.schedulingService?.let(
+            essentialServiceModule.networkConnectivityService::addNetworkConnectivityListener,
+        )
+
+        // process multi-file session part directories before resurrection can run. The reader resurrects
+        // dead parts itself, so a part this pass doesn't reach is still resurrected by a later pass
+        userSessionOrchestrationModule.sessionPartReader?.readPersistedSessionParts(true)
+
+        val resurrectionService = payloadSourceModule.payloadResurrectionService
+        var resurrectionAttempted = false
+        if (resurrectionService != null) {
+            deliveryModule?.schedulingService?.let { scheduler ->
+                resurrectionService.addResurrectionCompleteListener(scheduler::onResurrectionComplete)
+            }
+            resurrectionService.resurrectOldPayloads(
+                nativeCrashServiceProvider = {
+                    instrumentationModule.instrumentationRegistry.findByType(NativeCrashDataSource::class)
+                },
+                userSessionRestoreDecisionProvider = {
+                    userSessionOrchestrationModule.sessionOrchestrator.userSessionRestoreDecision
+                },
+                pendingSessionPartIdsProvider = {
+                    userSessionOrchestrationModule.sessionPartReader?.storedSessionPartIds() ?: emptySet()
+                },
+            )
+            resurrectionAttempted = true
+        } else {
+            val payloadCount = deliveryModule?.cacheStorageService?.getUndeliveredPayloads()?.size ?: 0
+            initModule.logger.trackInternalError(
+                type = InternalErrorType.PayloadResurrectionFail,
+                throwable = IllegalStateException(
+                    "Resurrection service not found. Undelivered payloads not processed: $payloadCount",
+                ),
+            )
+        }
+
+        // Unblock scheduler and attempt to send undelivered payloads if no resurrection was attempted
+        if (!resurrectionAttempted) {
+            deliveryModule?.schedulingService?.onResurrectionComplete()
+        }
+    }
+}
+
+/**
+ * Mark SDK initialization as complete.
+ */
+internal fun ModuleGraph.markSdkInitComplete(sdkInitDurationsProvider: () -> Map<String, Long>) = safeInit {
+    val startupService = dataCaptureServiceModule.startupService
+    EmbTrace.trace("startup-tracking") {
+        val sdkInitDurations = sdkInitDurationsProvider()
+        val resourceUsageTracker = sdkInitResourceUsageTracker
+        resourceUsageTracker.captureEnd()
+        startupService.setSdkStartupInfo(
+            startTimeMs = sdkStartTimeMs,
+            endTimeMs = initModule.clock.now(),
+            endState = essentialServiceModule.processStateTracker.getAppState(),
+            threadName = Thread.currentThread().name,
+            attributesProvider = {
+                sdkInitDurations.toSdkInitDurationAttributes() +
+                    resourceUsageTracker.buildAttributes() +
+                    sdkInitEnvironmentAttributes(
+                        nowMs = initModule.clock.now(),
+                        logger = initModule.logger,
+                        packageInfo = instrumentationModule.instrumentationArgs.packageInfo,
+                        powerManagerProvider = {
+                            instrumentationModule.instrumentationArgs.systemService(Context.POWER_SERVICE)
+                        },
+                        activityManagerProvider = {
+                            instrumentationModule.instrumentationArgs.systemService(Context.ACTIVITY_SERVICE)
+                        },
+                        prefsFileSizeProvider = { defaultPrefsFile(coreModule.context)?.length() },
+                    ) {
+                        coreModule.context.applicationInfo?.sourceDir?.let { sourceDir ->
+                            ArtOptimizationState.create(
+                                apkPath = sourceDir,
+                                primaryAbi = initModule.systemInfo.primaryAbi,
+                                logger = initModule.logger,
+                            )
+                        }
+                    }
+            },
+        )
+    }
+    workerThreadModule.backgroundWorker(Worker.Background.NonIoRegWorker).submit {
+        startupService.recordSdkInitSpan()
+    }
+    val appId = configService.appId
+    val startMsg = "Embrace SDK version ${BuildConfig.VERSION_NAME} started" +
+        (appId?.let { " for appId = $it" } ?: " without an app ID")
+    initModule.logger.logInfo(startMsg)
+}
+
+private fun ModuleGraph.eventMetadataSupplierProvider(): Provider<Map<String, String>> {
+    return {
+        mutableMapOf<String, String>().apply {
+            val sessionPart = essentialServiceModule.sessionPartTracker.getActiveSessionPart()
+            val sessionState = sessionPart?.processState ?: essentialServiceModule.processStateTracker.getAppState()
+            val sessionIds = userSessionOrchestrationModule.sessionIdsProvider.getActiveSessionIds()
+
+            put(EmbSessionAttributes.EMB_SESSION_PART_ID, sessionIds.sessionPartId)
+            put(EmbSessionAttributes.EMB_USER_SESSION_ID, sessionIds.userSessionId)
+            put(EmbSessionAttributes.EMB_STATE, sessionState.description)
+            essentialServiceModule.userService.getUserInfo().userId?.let {
+                put(UserAttributes.USER_ID, it)
+            }
+            essentialServiceModule.experimentTrackingService.getRecords()?.let {
+                put(EmbCommonAttributes.EMB_EXPERIMENTS, it)
+            }
+            putAll(
+                essentialServiceModule.userSessionPropertiesService
+                    .getProperties()
+                    .mapKeys { property ->
+                        property.key.toEmbraceAttributeName()
+                    },
+            )
+            instrumentationModule.instrumentationRegistry.getCurrentStates().forEach {
+                put(it.key, it.value.toString())
+            }
+        }
+    }
+}
+
+/**
+ * Run the given initialization phase and record any failures, but allow execution to continue even if it does.
+ */
+private inline fun ModuleGraph.safeInit(
+    init: () -> Unit,
+) = initModule.logger.guardSdkCode(InternalErrorType.SdkInitPhaseFail, init)
+
+private const val SPAN_TIMEOUT_SWEEP_INTERVAL_MS = 30_000L
+
+/**
+ * Attempt to identify the size of the host app's default `SharedPreferences` file without actually opening it.
+ * This file currently hosts the SDK's key-value store, and the bigger it is, the more impact it will have on
+ * SDK init time if the SDK is the thing that opens it first.
+ *
+ * Returns null if the file is absent, so a missing file is not reported.
+ */
+private fun defaultPrefsFile(context: Context): File? =
+    File(File(context.applicationInfo.dataDir, "shared_prefs"), "${context.packageName}_preferences.xml")
+        .takeIf(File::exists)

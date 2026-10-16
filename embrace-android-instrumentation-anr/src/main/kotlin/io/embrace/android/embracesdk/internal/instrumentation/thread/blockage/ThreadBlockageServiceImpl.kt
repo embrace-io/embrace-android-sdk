@@ -44,6 +44,11 @@ internal class ThreadBlockageServiceImpl(
         blockedThreadDetector.start()
     }
 
+    override fun close() {
+        cancelDelayedBackgroundCheck()
+        blockedThreadDetector.close()
+    }
+
     override fun simulateTargetThreadResponse() {
         blockedThreadDetector.onTargetThreadProcessedMessage(clock.now())
     }

@@ -9,6 +9,8 @@ import androidx.fragment.app.FragmentActivity
 import androidx.fragment.app.FragmentManager
 import io.embrace.android.embracesdk.internal.logging.InternalLogger
 import io.embrace.android.embracesdk.internal.session.id.SessionIdsSnapshot
+import java.util.Collections
+import java.util.WeakHashMap
 
 /**
  * Tracks Fragment and Fragment View leaks by registering itself, recursively, on every [FragmentActivity]'s
@@ -23,10 +25,22 @@ internal class FragmentLeakDetectionLifecycleCallbacks(
 
     private val pendingViews = FragmentViewMap()
 
+    private val fragmentManagers: MutableSet<FragmentManager> =
+        Collections.synchronizedSet(Collections.newSetFromMap(WeakHashMap()))
+
     override fun onActivityCreated(activity: Activity) {
         if (activity is FragmentActivity) {
-            activity.supportFragmentManager.registerFragmentLifecycleCallbacks(this, true)
+            val fragmentManager = activity.supportFragmentManager
+            fragmentManager.registerFragmentLifecycleCallbacks(this, true)
+            fragmentManagers.add(fragmentManager)
         }
+    }
+
+    override fun close() {
+        val registered = synchronized(fragmentManagers) {
+            fragmentManagers.toList().also { fragmentManagers.clear() }
+        }
+        registered.forEach { it.unregisterFragmentLifecycleCallbacks(this) }
     }
 
     override fun onFragmentAttached(fm: FragmentManager, f: Fragment, context: Context) {

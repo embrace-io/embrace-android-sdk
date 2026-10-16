@@ -44,5 +44,8 @@ internal class HttpUrlConnectionTrackerTest {
             networkCaptureDataSource = null,
         )
         assertFalse(EmbraceUrlStreamHandler.enableRequestSizeCapture)
+
+        HttpUrlConnectionTracker.reset()
+        assertEquals(NoopInternalNetworkApi, HttpUrlConnectionTracker.getInternalNetworkApi())
     }
 }

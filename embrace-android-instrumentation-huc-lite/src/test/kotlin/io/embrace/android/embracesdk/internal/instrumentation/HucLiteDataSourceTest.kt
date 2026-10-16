@@ -12,6 +12,7 @@ import io.embrace.android.embracesdk.fakes.FakeURLStreamHandlerFactory
 import io.embrace.android.embracesdk.fakes.behavior.FakeNetworkBehavior
 import io.embrace.android.embracesdk.instrumentation.huclite.DelegatingInstrumentedURLStreamHandlerFactory
 import io.embrace.android.embracesdk.instrumentation.huclite.FAKE_TIME_MS
+import io.embrace.android.embracesdk.instrumentation.huclite.InstrumentedHttpsURLConnection
 import io.embrace.android.embracesdk.instrumentation.huclite.InstrumentedUrlStreamHandlerFactory
 import io.embrace.android.embracesdk.instrumentation.huclite.testUrl
 import io.embrace.android.embracesdk.internal.network.http.HttpRequestInfoModifierChain
@@ -21,6 +22,7 @@ import io.mockk.every
 import io.mockk.mockk
 import io.opentelemetry.kotlin.semconv.HttpAttributes
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
@@ -200,6 +202,29 @@ class HucLiteDataSourceTest {
         hucLiteDataSource.onDataCaptureEnabled()
         hucLiteDataSource.onDataCaptureEnabled()
         assertEquals(1, staticFactorySetAttempts)
+    }
+
+    @Test
+    fun `connections are not instrumented after capture is disabled`() {
+        hucLiteDataSource.onDataCaptureEnabled()
+        val handler = checkNotNull(factoryField).createURLStreamHandler("https")
+        assertTrue(URL(null, testUrl.toString(), handler).openConnection() is InstrumentedHttpsURLConnection)
+
+        hucLiteDataSource.onDataCaptureDisabled()
+        assertFalse(URL(null, testUrl.toString(), handler).openConnection() is InstrumentedHttpsURLConnection)
+
+        hucLiteDataSource.onDataCaptureEnabled()
+        assertTrue(URL(null, testUrl.toString(), handler).openConnection() is InstrumentedHttpsURLConnection)
+        assertEquals(1, staticFactorySetAttempts)
+    }
+
+    @Test
+    fun `delegating factory stops instrumenting after capture is disabled`() {
+        factoryField = FakeURLStreamHandlerFactory()
+        hucLiteDataSource.onDataCaptureEnabled()
+        hucLiteDataSource.onDataCaptureDisabled()
+        val handler = checkNotNull(factoryField).createURLStreamHandler("https")
+        assertFalse(URL(null, testUrl.toString(), handler).openConnection() is InstrumentedHttpsURLConnection)
     }
 
     private fun attemptToSetURLStreamHandlerFactory(

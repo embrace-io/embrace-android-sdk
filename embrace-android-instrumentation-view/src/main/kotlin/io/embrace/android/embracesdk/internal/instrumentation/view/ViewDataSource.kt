@@ -32,6 +32,10 @@ class ViewDataSource(
         application.registerActivityLifecycleCallbacks(this)
     }
 
+    override fun onDataCaptureDisabled() {
+        application.unregisterActivityLifecycleCallbacks(this)
+    }
+
     /**
      * Called when a view is started. If a view with the same name is already running, it will be ended.
      */

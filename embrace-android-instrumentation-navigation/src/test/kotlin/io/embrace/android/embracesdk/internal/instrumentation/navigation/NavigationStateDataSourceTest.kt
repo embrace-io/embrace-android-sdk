@@ -1,16 +1,20 @@
 package io.embrace.android.embracesdk.internal.instrumentation.navigation
 
+import android.app.Activity
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import io.embrace.android.embracesdk.fakes.FakeInstrumentationArgs
 import io.embrace.android.embracesdk.internal.arch.navigation.CurrentScreen
+import io.embrace.android.embracesdk.internal.arch.navigation.NavigationSignal
 import io.embrace.android.embracesdk.internal.arch.navigation.ScreenAttributesSource
 import io.embrace.android.embracesdk.internal.arch.schema.SchemaType.NavigationState.Screen
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotEquals
+import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
+import org.robolectric.Robolectric
 
 @RunWith(AndroidJUnit4::class)
 internal class NavigationStateDataSourceTest {
@@ -169,6 +173,19 @@ internal class NavigationStateDataSourceTest {
         }
 
         assertEquals(1000, token.transitions.size)
+    }
+
+    @Test
+    fun `activity lifecycle callbacks are unregistered when data capture is disabled`() {
+        val signals = mutableListOf<NavigationSignal>()
+        args.eventBus.addHandler(NavigationSignal.KEY) { signals.add(it) }
+        val tracker = ActivityNavigationTracker(args.clock, args.eventBus, args.navigationTrackingService)
+        args.application.registerActivityLifecycleCallbacks(tracker)
+        val source = NavigationStateDataSource(args, tracker).apply { onDataCaptureEnabled() }
+
+        source.onDataCaptureDisabled()
+        Robolectric.buildActivity(Activity::class.java).setup()
+        assertTrue(signals.isEmpty())
     }
 
     private class CountingScreenAttributesSource : ScreenAttributesSource {

@@ -91,6 +91,12 @@ internal class VitalsDataSource(
     @Volatile
     private var focalTracker: FocalMomentTracker? = null
 
+    @Volatile
+    private var vitalsScheduler: HandlerVitalsScheduler? = null
+
+    @Volatile
+    private var activityListener: VitalsActivityListener? = null
+
     private val processStateListener = object : ProcessStateListener {
         override fun onBackground() {
             focalTracker?.onAppBackgrounded()
@@ -102,6 +108,7 @@ internal class VitalsDataSource(
     override fun onDataCaptureEnabled() {
         startSessionPart()
         val vitalsScheduler = HandlerVitalsScheduler().apply { start() }
+        this.vitalsScheduler = vitalsScheduler
         val handler = vitalsScheduler.handler
 
         // Below API 31 the budget comes from [refreshRate]; track refresh-rate changes to keep it live.
@@ -141,9 +148,24 @@ internal class VitalsDataSource(
             frameMetricsHandler = handler,
             frameMetricsStrategy = frameMetricsStrategy,
         )
+        activityListener = listener
         args.application.registerActivityLifecycleCallbacks(listener)
         args.processStateTracker.addListener(processStateListener)
         args.navigationTrackingService.addScreenAttributesSource(screenAttributesSource)
+    }
+
+    override fun onDataCaptureDisabled() {
+        activityListener?.let { listener ->
+            args.application.unregisterActivityLifecycleCallbacks(listener)
+            listener.close()
+        }
+        activityListener = null
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.S) {
+            args.systemService<DisplayManager>(Context.DISPLAY_SERVICE)?.unregisterDisplayListener(displayListener)
+        }
+        vitalsScheduler?.stop()
+        vitalsScheduler = null
+        focalTracker = null
     }
 
     override fun onPreSessionEnd() {

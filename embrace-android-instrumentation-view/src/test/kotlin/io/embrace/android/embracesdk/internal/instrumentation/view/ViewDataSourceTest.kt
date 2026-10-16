@@ -20,12 +20,14 @@ import java.util.concurrent.atomic.AtomicInteger
 internal class ViewDataSourceTest {
 
     private lateinit var dataSource: ViewDataSource
+    private lateinit var application: FakeApplication
     private lateinit var args: FakeInstrumentationArgs
     private lateinit var activity: Activity
 
     @Before
     fun setUp() {
-        args = FakeInstrumentationArgs()
+        application = FakeApplication()
+        args = FakeInstrumentationArgs(application = application)
         dataSource = ViewDataSource(args)
         activity = Activity()
     }
@@ -284,6 +286,21 @@ internal class ViewDataSourceTest {
 
         val span = args.destination.createdSpans.single { it.type == EmbType.Ux.View }
         verifyManualViewSpan(span, false)
+    }
+
+    @Test
+    fun `activity lifecycle callbacks are registered when data capture is enabled`() {
+        dataSource.onDataCaptureEnabled()
+        application.lifecycleCallbacks.forEach { it.onActivityStarted(activity) }
+        assertEquals(EmbType.Ux.View, args.destination.createdSpans.single().type)
+    }
+
+    @Test
+    fun `activity lifecycle callbacks are unregistered when data capture is disabled`() {
+        dataSource.onDataCaptureEnabled()
+        dataSource.onDataCaptureDisabled()
+        application.lifecycleCallbacks.forEach { it.onActivityStarted(activity) }
+        assertTrue(args.destination.createdSpans.isEmpty())
     }
 
     private fun verifyManualViewSpan(span: FakeSpanToken, isRecording: Boolean) {

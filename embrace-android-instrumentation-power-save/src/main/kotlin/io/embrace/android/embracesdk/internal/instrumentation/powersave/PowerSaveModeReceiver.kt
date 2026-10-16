@@ -14,6 +14,11 @@ internal class PowerSaveModeReceiver(
     private val callback: (powerSaveMode: Boolean) -> Unit,
 ) : BroadcastReceiver() {
 
+    // avoid synthetic accessors
+    val lock = Any()
+    var registered = false
+    var closed = false
+
     override fun onReceive(context: Context, intent: Intent) {
         runCatching {
             if (intent.action == PowerManager.ACTION_POWER_SAVE_MODE_CHANGED) {
@@ -28,8 +33,25 @@ internal class PowerSaveModeReceiver(
                 runCatching {
                     if (powerManagerProvider() != null) {
                         val filter = IntentFilter(PowerManager.ACTION_POWER_SAVE_MODE_CHANGED)
-                        context.registerReceiver(this, filter)
+                        synchronized(lock) {
+                            if (!closed) {
+                                context.registerReceiver(this, filter)
+                                registered = true
+                            }
+                        }
                     }
+                }
+            }
+        }
+    }
+
+    fun unregister(context: Context) {
+        synchronized(lock) {
+            closed = true
+            if (registered) {
+                registered = false
+                runCatching {
+                    context.unregisterReceiver(this)
                 }
             }
         }

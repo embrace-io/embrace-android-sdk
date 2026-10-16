@@ -33,6 +33,10 @@ class PowerStateDataSource(
         }
     }
 
+    override fun onDataCaptureDisabled() {
+        receiver.unregister(args.context)
+    }
+
     private fun onPowerSaveModeChanged(powerSaveMode: Boolean) {
         val timestamp = clock.now()
         if (getCurrentStateValue() != PowerMode.UNKNOWN || powerSaveMode) {

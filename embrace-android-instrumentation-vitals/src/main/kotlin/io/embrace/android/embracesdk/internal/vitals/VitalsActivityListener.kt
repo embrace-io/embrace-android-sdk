@@ -26,6 +26,9 @@ internal class VitalsActivityListener(
 
     private val frameListeners = WeakHashMap<Window, VitalsFrameMetricsListener>()
 
+    @Volatile
+    private var closed = false
+
     /**
      * Windows that already have a [VitalsWindowCallback] installed so that we don't attempt to double-install our `Callback` delegate.
      */
@@ -75,17 +78,33 @@ internal class VitalsActivityListener(
     }
 
     private fun installFrameMetricsListener(window: Window) {
-        if (frameListeners.containsKey(window)) {
-            return
+        synchronized(frameListeners) {
+            if (closed || frameListeners.containsKey(window)) {
+                return
+            }
+            val listener = VitalsFrameMetricsListener(focalCallbacks, frameMetricsStrategy)
+            frameListeners[window] = listener
+            window.addOnFrameMetricsAvailableListener(listener, frameMetricsHandler)
         }
-        val listener = VitalsFrameMetricsListener(focalCallbacks, frameMetricsStrategy)
-        frameListeners[window] = listener
-        window.addOnFrameMetricsAvailableListener(listener, frameMetricsHandler)
     }
 
     private fun removeFrameMetricsListener(window: Window) {
-        frameListeners.remove(window)?.let { listener ->
-            window.removeOnFrameMetricsAvailableListener(listener)
+        synchronized(frameListeners) {
+            frameListeners.remove(window)?.let { listener ->
+                window.removeOnFrameMetricsAvailableListener(listener)
+            }
+        }
+    }
+
+    /**
+     * Removes the frame-metrics listeners from every window that still has one.
+     */
+    fun close() {
+        synchronized(frameListeners) {
+            closed = true
+            frameListeners.keys.toList().forEach { window ->
+                runCatching { removeFrameMetricsListener(window) }
+            }
         }
     }
 

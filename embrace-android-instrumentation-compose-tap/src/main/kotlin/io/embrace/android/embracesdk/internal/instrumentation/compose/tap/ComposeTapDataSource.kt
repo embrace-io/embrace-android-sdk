@@ -20,7 +20,13 @@ internal class ComposeTapDataSource(
         args.eventBus.emit(TapSignal.KEY, TapSignal(tag, coords.first, coords.second))
     }
 
+    private val activityListener = ComposeActivityListener(logger, this)
+
     override fun onDataCaptureEnabled() {
-        args.application.registerActivityLifecycleCallbacks(ComposeActivityListener(logger, this))
+        args.application.registerActivityLifecycleCallbacks(activityListener)
+    }
+
+    override fun onDataCaptureDisabled() {
+        args.application.unregisterActivityLifecycleCallbacks(activityListener)
     }
 }

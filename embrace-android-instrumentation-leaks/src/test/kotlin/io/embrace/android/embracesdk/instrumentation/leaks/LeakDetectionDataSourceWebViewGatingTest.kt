@@ -62,6 +62,23 @@ internal class LeakDetectionDataSourceWebViewGatingTest {
         )
     }
 
+    @Test
+    fun `activity lifecycle callbacks are unregistered when data capture is disabled`() {
+        val args = FakeInstrumentationArgs(RuntimeEnvironment.getApplication())
+        args.configService.config = EmbraceConfig(autoDataCapture = {
+            AutoDataCaptureConfig(webViewLeakDetectionEnabled = { true })
+        })
+        dataSource = LeakDetectionDataSource(args)
+        dataSource.onDataCaptureEnabled()
+        dataSource.onDataCaptureDisabled()
+
+        val webView = resumeActivityWithWebView()
+        assertNull(
+            "resuming an activity should not open a sentinel once data capture is disabled",
+            dataSource.leakDetector.trackClosed(webView, LeakContext(WebViewLeakScanner.WEBVIEW_OBJECT_TYPE, SESSION_IDS)),
+        )
+    }
+
     /**
      * Builds and resumes an [Activity] with a [WebView] as its content, dispatching through the real
      * [android.app.Application.ActivityLifecycleCallbacks] registered by [LeakDetectionDataSource.onDataCaptureEnabled].

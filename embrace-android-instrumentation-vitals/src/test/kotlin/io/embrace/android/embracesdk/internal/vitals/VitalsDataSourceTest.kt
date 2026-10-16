@@ -1,5 +1,6 @@
 package io.embrace.android.embracesdk.internal.vitals
 
+import android.app.Activity
 import android.app.Application
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
@@ -12,9 +13,11 @@ import io.embrace.android.embracesdk.internal.config.resolved.VitalsConfig
 import io.embrace.android.embracesdk.internal.telemetry.AppliedLimitType
 import io.embrace.android.embracesdk.semconv.EmbFrameCountsAttributes
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Test
 import org.junit.runner.RunWith
+import org.robolectric.Robolectric.buildActivity
 
 @RunWith(AndroidJUnit4::class)
 internal class VitalsDataSourceTest {
@@ -156,6 +159,25 @@ internal class VitalsDataSourceTest {
         VitalsDataSource(args).onDataCaptureEnabled()
 
         assertEquals(1, args.navigationTrackingService.screenAttributesSources.size)
+    }
+
+    @Test
+    fun `window callbacks are installed when data capture is enabled`() {
+        val (dataSource, _) = createDataSource(spanLimit = 1)
+        dataSource.onDataCaptureEnabled()
+        val activity = buildActivity(Activity::class.java).setup().get()
+
+        assertTrue(activity.window.callback is VitalsWindowCallback)
+        dataSource.onDataCaptureDisabled()
+    }
+
+    @Test
+    fun `activity lifecycle callbacks are unregistered when data capture is disabled`() {
+        val (dataSource, _) = createDataSource(spanLimit = 1)
+        dataSource.onDataCaptureEnabled()
+        dataSource.onDataCaptureDisabled()
+        val activity = buildActivity(Activity::class.java).setup().get()
+        assertFalse(activity.window.callback is VitalsWindowCallback)
     }
 
     private fun FakeInstrumentationArgs.collectScreenAttributes(): Map<String, String> {

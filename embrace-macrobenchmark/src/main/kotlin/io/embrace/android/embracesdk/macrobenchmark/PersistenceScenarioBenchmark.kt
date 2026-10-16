@@ -11,8 +11,11 @@ import androidx.benchmark.macro.TraceSectionMetric
 import androidx.benchmark.macro.junit4.MacrobenchmarkRule
 import androidx.benchmark.perfetto.ExperimentalPerfettoCaptureApi
 import androidx.benchmark.perfetto.PerfettoConfig
+import androidx.test.platform.app.InstrumentationRegistry
 import androidx.test.uiautomator.By
 import androidx.test.uiautomator.Until
+import io.embrace.android.embracesdk.benchmark.capture.CAPTURE_PROFILE_ARGUMENT
+import io.embrace.android.embracesdk.benchmark.capture.captureProfileWithKey
 import io.embrace.android.embracesdk.benchmark.scenario.PersistenceScenarios
 import io.embrace.android.embracesdk.benchmark.scenario.ScenarioProtocol.EXTRA_SCENARIO_ID
 import io.embrace.android.embracesdk.benchmark.scenario.ScenarioProtocol.STATUS_AWAIT
@@ -40,6 +43,9 @@ internal class PersistenceScenarioBenchmark(
     @get:Rule
     val otelSdkModeRule = OtelSdkModeRule(otelSdkMode)
 
+    private val captureProfile =
+        captureProfileWithKey(InstrumentationRegistry.getArguments().getString(CAPTURE_PROFILE_ARGUMENT))
+
     @OptIn(ExperimentalBenchmarkConfigApi::class, ExperimentalPerfettoCaptureApi::class, ExperimentalMetricApi::class)
     @Test
     fun scenario() {
@@ -53,7 +59,7 @@ internal class PersistenceScenarioBenchmark(
                 TraceSectionMetric("session-end", mode = TraceSectionMetric.Mode.Sum),
             ),
             iterations = ITERATIONS,
-            experimentalConfig = ExperimentalConfig(perfettoConfig = PerfettoConfig.Text(traceConfig())),
+            experimentalConfig = ExperimentalConfig(perfettoConfig = PerfettoConfig.Text(captureProfile.traceConfig)),
             startupMode = StartupMode.COLD,
             setupBlock = {
                 device.executeShellCommand("pm clear $packageName")
@@ -92,10 +98,6 @@ internal class PersistenceScenarioBenchmark(
         setClassName(PACKAGE_NAME, "$PACKAGE_NAME.ScenarioActivity")
         putExtra(EXTRA_SCENARIO_ID, scenarioId)
     }
-
-    private fun traceConfig(): String =
-        checkNotNull(javaClass.getResourceAsStream("/perfetto-config.pbtx"))
-            .use { it.reader().readText() }
 
     companion object {
 

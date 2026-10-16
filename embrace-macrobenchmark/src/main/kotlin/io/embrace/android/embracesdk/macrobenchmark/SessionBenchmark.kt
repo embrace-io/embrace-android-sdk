@@ -8,8 +8,11 @@ import androidx.benchmark.macro.TraceSectionMetric
 import androidx.benchmark.macro.junit4.MacrobenchmarkRule
 import androidx.benchmark.perfetto.ExperimentalPerfettoCaptureApi
 import androidx.benchmark.perfetto.PerfettoConfig
+import androidx.test.platform.app.InstrumentationRegistry
 import androidx.test.uiautomator.By
 import androidx.test.uiautomator.Until
+import io.embrace.android.embracesdk.benchmark.capture.CAPTURE_PROFILE_ARGUMENT
+import io.embrace.android.embracesdk.benchmark.capture.captureProfileWithKey
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -27,6 +30,9 @@ internal class SessionBenchmark(otelSdkMode: OtelSdkMode) {
     @get:Rule
     val otelSdkModeRule = OtelSdkModeRule(otelSdkMode)
 
+    private val captureProfile =
+        captureProfileWithKey(InstrumentationRegistry.getArguments().getString(CAPTURE_PROFILE_ARGUMENT))
+
     @OptIn(ExperimentalBenchmarkConfigApi::class, ExperimentalPerfettoCaptureApi::class, ExperimentalMetricApi::class)
     @Test
     fun sessionEnd() {
@@ -39,7 +45,7 @@ internal class SessionBenchmark(otelSdkMode: OtelSdkMode) {
                 TraceSectionMetric("emb-sf-%", mode = TraceSectionMetric.Mode.Sum, label = "emb-sf-sections"),
             ),
             iterations = 10,
-            experimentalConfig = ExperimentalConfig(perfettoConfig = PerfettoConfig.Text(traceConfig())),
+            experimentalConfig = ExperimentalConfig(perfettoConfig = PerfettoConfig.Text(captureProfile.traceConfig)),
             startupMode = StartupMode.COLD,
             setupBlock = {
                 device.executeShellCommand("pm clear $packageName")
@@ -56,10 +62,6 @@ internal class SessionBenchmark(otelSdkMode: OtelSdkMode) {
             }
         }
     }
-
-    private fun traceConfig(): String =
-        checkNotNull(javaClass.getResourceAsStream("/perfetto-config.pbtx"))
-            .use { it.reader().readText() }
 
     companion object {
 

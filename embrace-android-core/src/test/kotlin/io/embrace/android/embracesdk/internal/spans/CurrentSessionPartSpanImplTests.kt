@@ -25,13 +25,10 @@ import io.embrace.android.embracesdk.internal.config.behavior.DEFAULT_MAX_INTERN
 import io.embrace.android.embracesdk.internal.config.behavior.DEFAULT_MAX_NETWORK_SPANS_PER_SESSION_PART
 import io.embrace.android.embracesdk.internal.config.behavior.OtelBehavior
 import io.embrace.android.embracesdk.internal.config.behavior.OtelBehavior.Companion.DEFAULT_MAX_SPAN_EVENTS_PER_SESSION_PART
-import io.embrace.android.embracesdk.internal.config.behavior.SensitiveKeysBehavior
 import io.embrace.android.embracesdk.internal.config.instrumented.schema.OtelLimitsConfig
 import io.embrace.android.embracesdk.internal.config.remote.DataRemoteConfig
 import io.embrace.android.embracesdk.internal.config.remote.RemoteConfig
 import io.embrace.android.embracesdk.internal.config.resolved.BreadcrumbConfig
-import io.embrace.android.embracesdk.internal.config.resolved.SensitiveKeysConfig
-import io.embrace.android.embracesdk.internal.injection.OpenTelemetryModule
 import io.embrace.android.embracesdk.internal.otel.sdk.DataValidator
 import io.embrace.android.embracesdk.internal.otel.sdk.id.OtelIds
 import io.embrace.android.embracesdk.internal.otel.spans.EmbraceSpanFactoryImpl
@@ -75,7 +72,6 @@ internal class CurrentSessionPartSpanImplTests(
     private lateinit var telemetryService: FakeInternalTelemetryService
     private lateinit var currentSessionPartSpan: CurrentSessionPartSpanImpl
     private lateinit var spanService: SpanService
-    private lateinit var otelModule: OpenTelemetryModule
     private lateinit var tracer: Tracer
     private lateinit var openTelemetry: OpenTelemetry
     private val clock = FakeClock(1000L)
@@ -85,7 +81,6 @@ internal class CurrentSessionPartSpanImplTests(
         telemetryService = FakeInternalTelemetryService()
         val initModule =
             FakeInitModule(clock = clock, fakeTelemetryService = telemetryService, otelSdkMode = otelSdkMode)
-        otelModule = initModule.openTelemetryModule
         spanRepository = initModule.openTelemetryModule.spanRepository
         currentSessionPartSpan = initModule.openTelemetryModule.currentSessionPartSpan as CurrentSessionPartSpanImpl
         tracer = initModule.openTelemetryModule.otelSdkWrapper.sdkTracer
@@ -291,7 +286,7 @@ internal class CurrentSessionPartSpanImplTests(
 
     @Test
     fun `remote config overrides the network span limit`() {
-        otelModule.applyRemoteConfig(DataRemoteConfig(maxNetworkSpansPerSession = 2))
+        useRemoteConfig(DataRemoteConfig(maxNetworkSpansPerSession = 2))
 
         repeat(2) { assertNotEquals(NoopEmbraceSdkSpan, createNetworkSpan(it)) }
         assertEquals(NoopEmbraceSdkSpan, createNetworkSpan(2))
@@ -303,7 +298,7 @@ internal class CurrentSessionPartSpanImplTests(
 
     @Test
     fun `remote config overrides the internal span limit`() {
-        otelModule.applyRemoteConfig(DataRemoteConfig(maxInternalSpansPerSession = 3))
+        useRemoteConfig(DataRemoteConfig(maxInternalSpansPerSession = 3))
 
         repeat(3) { assertNotEquals(NoopEmbraceSdkSpan, createInternalSpan(it)) }
         assertEquals(NoopEmbraceSdkSpan, createInternalSpan(3))
@@ -314,7 +309,7 @@ internal class CurrentSessionPartSpanImplTests(
 
     @Test
     fun `remote config overrides the non-internal span limit`() {
-        otelModule.applyRemoteConfig(DataRemoteConfig(maxCustomSpansPerSession = 1))
+        useRemoteConfig(DataRemoteConfig(maxCustomSpansPerSession = 1))
 
         assertNotEquals(NoopEmbraceSdkSpan, spanService.createSpan(name = "public0", internal = false))
         assertEquals(NoopEmbraceSdkSpan, spanService.createSpan(name = "public1", internal = false))
@@ -324,22 +319,8 @@ internal class CurrentSessionPartSpanImplTests(
     }
 
     @Test
-    fun `a remote span limit takes effect as soon as config is applied`() {
-        repeat(2) { assertNotEquals(NoopEmbraceSdkSpan, createNetworkSpan(it)) }
-
-        otelModule.applyRemoteConfig(DataRemoteConfig(maxNetworkSpansPerSession = 2))
-
-        assertEquals(NoopEmbraceSdkSpan, createNetworkSpan(2))
-    }
-
-    @Test
     fun `a remote span limit of zero drops every span of that type and is tracked`() {
-        val fakeTelemetryService = FakeInternalTelemetryService()
-        val initModule =
-            FakeInitModule(clock = clock, fakeTelemetryService = fakeTelemetryService, otelSdkMode = otelSdkMode)
-        spanService = initModule.openTelemetryModule.spanService
-        initModule.openTelemetryModule.currentSessionPartSpan.initializeService(clock.now())
-        initModule.openTelemetryModule.applyRemoteConfig(
+        useRemoteConfig(
             DataRemoteConfig(
                 maxCustomSpansPerSession = 0,
                 maxInternalSpansPerSession = 0,
@@ -357,21 +338,22 @@ internal class CurrentSessionPartSpanImplTests(
                 "span" to AppliedLimitType.DROP,
                 "span" to AppliedLimitType.DROP,
             ),
-            fakeTelemetryService.appliedLimits,
+            telemetryService.appliedLimits,
         )
     }
 
     /**
-     * Hands the module a remote config, mimicking how the SDK supplies config to the OTel module after it has
-     * already been constructed.
+     * Replaces [spanService] with one from a fresh module whose config was resolved from [dataConfig].
      */
-    private fun OpenTelemetryModule.applyRemoteConfig(dataConfig: DataRemoteConfig) {
-        applyConfiguration(
-            sensitiveKeysBehavior = SensitiveKeysBehavior(SensitiveKeysConfig()),
-            bypassValidation = false,
-            otelBehavior = createOtelBehavior(remoteCfg = RemoteConfig(dataConfig = dataConfig)),
-            breadcrumbConfig = BreadcrumbConfig(),
+    private fun useRemoteConfig(dataConfig: DataRemoteConfig) {
+        val initModule = FakeInitModule(
+            clock = clock,
+            fakeTelemetryService = telemetryService,
+            remoteConfig = RemoteConfig(dataConfig = dataConfig),
+            otelSdkMode = otelSdkMode,
         )
+        spanService = initModule.openTelemetryModule.spanService
+        initModule.openTelemetryModule.currentSessionPartSpan.initializeService(clock.now())
     }
 
     private fun createNetworkSpan(index: Int) =

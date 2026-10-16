@@ -8,7 +8,6 @@ import io.embrace.android.embracesdk.internal.arch.startup.StartupClassifierImpl
 import io.embrace.android.embracesdk.internal.clock.Clock
 import io.embrace.android.embracesdk.internal.clock.NormalizedIntervalClock
 import io.embrace.android.embracesdk.internal.config.behavior.BehaviorThresholdCheck
-import io.embrace.android.embracesdk.internal.config.behavior.OtelBehaviorImpl
 import io.embrace.android.embracesdk.internal.config.instrumented.InstrumentedConfigImpl
 import io.embrace.android.embracesdk.internal.config.instrumented.schema.InstrumentedConfig
 import io.embrace.android.embracesdk.internal.config.remote.OtelKotlinSdkConfig
@@ -44,16 +43,15 @@ internal class TelemetryDestinationHarness(
 ) {
 
     private val initModule = TestInitModule(clock)
-    private val otelModule = OpenTelemetryModuleImpl(initModule).apply {
-        setOtelBehavior(
-            OtelBehaviorImpl(
-                thresholdCheck = BehaviorThresholdCheck { initModule.uuidSource.createUuid() },
-                local = InstrumentedConfigImpl,
-                remote = RemoteConfig(
-                    otelKotlinSdkConfig = OtelKotlinSdkConfig(pctEnabled = if (useKotlinSdk) 100f else 0f),
-                ),
+    private val otelModule = OpenTelemetryModuleImpl(
+        initModule = initModule,
+        configService = BenchmarkConfigService(
+            thresholdCheck = BehaviorThresholdCheck { initModule.uuidSource.createUuid() },
+            remoteConfig = RemoteConfig(
+                otelKotlinSdkConfig = OtelKotlinSdkConfig(pctEnabled = if (useKotlinSdk) 100f else 0f),
             ),
-        )
+        ),
+    ).apply {
         currentSessionPartSpan.initializeService(0)
     }
 

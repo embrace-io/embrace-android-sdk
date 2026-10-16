@@ -10,12 +10,7 @@ import io.embrace.android.embracesdk.fakes.config.FakeBaseUrlConfig
 import io.embrace.android.embracesdk.fakes.config.FakeInstrumentedConfig
 import io.embrace.android.embracesdk.fakes.injection.FakeCoreModule
 import io.embrace.android.embracesdk.internal.config.PersistedConfig
-import io.embrace.android.embracesdk.internal.config.behavior.BehaviorThresholdCheck
-import io.embrace.android.embracesdk.internal.config.behavior.OtelBehaviorImpl
-import io.embrace.android.embracesdk.internal.config.behavior.SensitiveKeysBehavior
 import io.embrace.android.embracesdk.internal.config.remote.RemoteConfig
-import io.embrace.android.embracesdk.internal.config.resolved.resolveBreadcrumb
-import io.embrace.android.embracesdk.internal.config.resolved.resolveSensitiveKeys
 import io.embrace.android.embracesdk.internal.delivery.debug.DeliveryTracer
 import io.embrace.android.embracesdk.internal.injection.ConfigLoadServicesSupplier
 import io.embrace.android.embracesdk.internal.injection.CoreModule
@@ -199,12 +194,6 @@ internal class SdkIntegrationTestRule(
 
             // persist config here before the SDK starts up: the SDK reads it during start()
             persistConfig(persistedConfig)
-            setup.openTelemetryModule.applyConfiguration(
-                sensitiveKeysBehavior = SensitiveKeysBehavior(resolveSensitiveKeys(localConfig)),
-                bypassValidation = false,
-                otelBehavior = OtelBehaviorImpl(BehaviorThresholdCheck { "123456" }, localConfig, persistedConfig),
-                breadcrumbConfig = resolveBreadcrumb(localConfig, persistedConfig)
-            )
 
             if (startSdk) {
                 sdkStateHolder.api.start(ApplicationProvider.getApplicationContext())
@@ -238,7 +227,7 @@ internal class SdkIntegrationTestRule(
     }
 
     private fun drainExternalExports() {
-        val otelSdkConfig = setup.openTelemetryModule.otelSdkConfig
+        val otelSdkConfig = setup.openTelemetryModuleOrNull?.otelSdkConfig ?: return
         runBlocking {
             otelSdkConfig.spanProcessor.forceFlush()
             otelSdkConfig.logRecordProcessor.forceFlush()

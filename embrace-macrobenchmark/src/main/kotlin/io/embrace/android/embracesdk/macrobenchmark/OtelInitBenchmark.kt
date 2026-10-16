@@ -29,7 +29,7 @@ internal class OtelInitBenchmark(otelSdkMode: OtelSdkMode) {
     @Test
     fun otelInit() {
         benchmarkRule.measureRepeated(
-            packageName = PACKAGE_NAME,
+            packageName = TARGET_PACKAGE,
             metrics = listOf(
                 TraceSectionMetric("emb-sdk-start", mode = TraceSectionMetric.Mode.Sum),
                 TraceSectionMetric("emb-otel-sdk-wrapper-init", mode = TraceSectionMetric.Mode.Sum),
@@ -60,7 +60,6 @@ internal class OtelInitBenchmark(otelSdkMode: OtelSdkMode) {
         @Parameterized.Parameters(name = "{0}")
         fun modes(): List<OtelSdkMode> = OtelSdkMode.entries
 
-        private const val PACKAGE_NAME = "io.embrace.android.embracesdk.macrobenchmark.app"
         private const val ITERATIONS = 10
         private const val STATUS_TIMEOUT_MS = 10_000L
     }

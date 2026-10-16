@@ -2,6 +2,7 @@ package io.embrace.android.embracesdk.macrobenchmark
 
 import androidx.test.platform.app.InstrumentationRegistry
 import androidx.test.uiautomator.UiDevice
+import io.embrace.android.embracesdk.benchmark.scenario.ScenarioProtocol.OTEL_KOTLIN_SDK_SETTING
 import org.junit.rules.ExternalResource
 
 /**
@@ -22,16 +23,14 @@ internal enum class OtelSdkMode(private val pctEnabled: Int) {
     ;
 
     fun select(device: UiDevice) {
-        device.executeShellCommand("settings put global $SETTING $pctEnabled")
+        device.executeShellCommand("settings put global $OTEL_KOTLIN_SDK_SETTING $pctEnabled")
     }
 
     override fun toString(): String = name.lowercase()
 
     companion object {
-        private const val SETTING = "embrace_pct_otel_kotlin_sdk"
-
         fun clear(device: UiDevice) {
-            device.executeShellCommand("settings delete global $SETTING")
+            device.executeShellCommand("settings delete global $OTEL_KOTLIN_SDK_SETTING")
         }
     }
 }

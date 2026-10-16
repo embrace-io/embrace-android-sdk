@@ -3,18 +3,17 @@ package io.embrace.android.embracesdk.internal.config
 import io.embrace.android.embracesdk.fakes.FakeClock
 import io.embrace.android.embracesdk.fakes.FakeInternalLogger
 import io.embrace.android.embracesdk.fakes.FakeKeyValueStore
+import io.embrace.android.embracesdk.fakes.FakeRemoteConfigSource
 import io.embrace.android.embracesdk.fakes.TestPlatformSerializer
 import io.embrace.android.embracesdk.fakes.TestUuidSource
 import io.embrace.android.embracesdk.fakes.config.FakeInstrumentedConfig
 import io.embrace.android.embracesdk.fakes.config.FakeProjectConfig
 import io.embrace.android.embracesdk.fakes.fakeBackgroundWorker
-import io.embrace.android.embracesdk.internal.config.behavior.BehaviorThresholdCheck
 import io.embrace.android.embracesdk.internal.config.remote.OtelKotlinSdkConfig
 import io.embrace.android.embracesdk.internal.config.remote.RemoteConfig
 import io.embrace.android.embracesdk.internal.config.source.ConfigHttpResponse
 import io.embrace.android.embracesdk.internal.config.store.RemoteConfigStoreImpl
 import io.embrace.android.embracesdk.internal.payload.AppFramework
-import okhttp3.OkHttpClient
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNotNull
@@ -26,10 +25,8 @@ import java.nio.file.Files
 
 internal class ConfigServiceImplTest {
 
-    private val okHttpClient = OkHttpClient()
     private val serializer = TestPlatformSerializer()
     private lateinit var service: ConfigServiceImpl
-    private lateinit var thresholdCheck: BehaviorThresholdCheck
     private lateinit var remoteConfig: RemoteConfig
 
     /**
@@ -40,67 +37,6 @@ internal class ConfigServiceImplTest {
         remoteConfig = RemoteConfig()
         service = createService()
         assertFalse(service.isOnlyUsingOtelExporters())
-    }
-
-    @Test
-    fun `test new normalized DeviceId`() {
-        thresholdCheck = BehaviorThresholdCheck { "07D85B44E4E245F4A30E559BFC000000" }
-        assertEquals(0.0, thresholdCheck.getNormalizedDeviceId().toDouble(), 0.01)
-
-        thresholdCheck = BehaviorThresholdCheck { "07D85B44E4E245F4A30E559BFCFFFFFF" }
-        assertEquals(100.0, thresholdCheck.getNormalizedDeviceId().toDouble(), 0.01)
-
-        thresholdCheck = BehaviorThresholdCheck { "07D85B44E4E245F4A30E559BFC0D0739" }
-        assertEquals(5.08, thresholdCheck.getNormalizedDeviceId().toDouble(), 0.01)
-
-        thresholdCheck = BehaviorThresholdCheck { "07D85B44E4E245F4A30E559BFCED0739" }
-        assertEquals(92.58, thresholdCheck.getNormalizedDeviceId().toDouble(), 0.01)
-    }
-
-    @Test
-    fun `test isBehaviourEnabled`() {
-        thresholdCheck = BehaviorThresholdCheck { "07D85B44E4E245F4A30E559BFC000000" }
-        assertFalse(thresholdCheck.isBehaviorEnabled(0.0f))
-        assertTrue(thresholdCheck.isBehaviorEnabled(0.1f))
-        assertTrue(thresholdCheck.isBehaviorEnabled(100.0f))
-        assertTrue(thresholdCheck.isBehaviorEnabled(99.9f))
-        assertTrue(thresholdCheck.isBehaviorEnabled(34.9f))
-
-        thresholdCheck = BehaviorThresholdCheck { "07D85B44E4E245F4A30E559BFCFFFFFF" }
-        assertFalse(thresholdCheck.isBehaviorEnabled(99.9f))
-        assertTrue(thresholdCheck.isBehaviorEnabled(100.0f))
-
-        thresholdCheck = BehaviorThresholdCheck { "07D85B44E4E245F4A30E559BFC0D0739" }
-        assertFalse(thresholdCheck.isBehaviorEnabled(0.0f))
-        assertFalse(thresholdCheck.isBehaviorEnabled(2.0f))
-        assertFalse(thresholdCheck.isBehaviorEnabled(5.0f))
-        assertFalse(thresholdCheck.isBehaviorEnabled(5.07f))
-        assertTrue(thresholdCheck.isBehaviorEnabled(5.09f))
-        assertTrue(thresholdCheck.isBehaviorEnabled(47.92f))
-        assertTrue(thresholdCheck.isBehaviorEnabled(100.0f))
-    }
-
-    @Test
-    fun `test normalized DeviceId is only calculated once`() {
-        var resolutions = 0
-        thresholdCheck = BehaviorThresholdCheck {
-            resolutions++
-            "07D85B44E4E245F4A30E559BFC0D0739"
-        }
-        val expected = thresholdCheck.getNormalizedDeviceId()
-
-        repeat(5) {
-            assertEquals(expected, thresholdCheck.getNormalizedDeviceId())
-            assertTrue(thresholdCheck.isBehaviorEnabled(50f))
-        }
-        assertEquals(1, resolutions)
-    }
-
-    @Test
-    fun `test isBehaviourEnabled with bad input`() {
-        thresholdCheck = BehaviorThresholdCheck { "07D85B44E4E245F4A30E559BFCFFFFFF" }
-        assertFalse(thresholdCheck.isBehaviorEnabled(1000f))
-        assertFalse(thresholdCheck.isBehaviorEnabled(-1000f))
     }
 
     @Test
@@ -170,10 +106,8 @@ internal class ConfigServiceImplTest {
             ),
             worker = fakeBackgroundWorker(),
             serializer = serializer,
-            okHttpClient = lazyOf(okHttpClient),
+            remoteConfigSource = FakeRemoteConfigSource(),
             primaryAbi = "arm64-v8a",
-            sdkVersion = "1.2.3",
-            apiLevel = 36,
             logger = FakeInternalLogger(),
             hasConfiguredOtlpExport = hasConfiguredExporters,
         )

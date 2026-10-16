@@ -1,5 +1,6 @@
 package io.embrace.android.embracesdk.internal.config.source
 
+import io.embrace.android.embracesdk.internal.config.instrumented.schema.InstrumentedConfig
 import io.embrace.android.embracesdk.internal.config.remote.RemoteConfig
 import io.embrace.android.embracesdk.internal.serialization.PlatformSerializer
 import okhttp3.OkHttpClient
@@ -8,11 +9,38 @@ import okhttp3.Response
 import okio.GzipSource
 import okio.buffer
 
-internal class OkHttpRemoteConfigSource(
+class OkHttpRemoteConfigSource internal constructor(
     private val okhttpClient: Lazy<OkHttpClient>,
     private val serializer: PlatformSerializer,
-    private val configEndpoint: ConfigEndpoint,
+    configEndpoint: Lazy<ConfigEndpoint>,
 ) : RemoteConfigSource {
+
+    /**
+     * The endpoint is resolved on the first request, so constructing the source neither reads the
+     * device ID nor requires an app ID.
+     */
+    constructor(
+        okhttpClient: Lazy<OkHttpClient>,
+        serializer: PlatformSerializer,
+        instrumentedConfig: InstrumentedConfig,
+        deviceIdProvider: () -> String,
+        sdkVersion: String,
+        apiLevel: Int,
+    ) : this(
+        okhttpClient,
+        serializer,
+        lazy {
+            ConfigEndpoint(
+                deviceIdProvider(),
+                instrumentedConfig.project.getVersionName() ?: "UNKNOWN",
+                instrumentedConfig,
+                sdkVersion,
+                apiLevel,
+            )
+        },
+    )
+
+    private val configEndpoint: ConfigEndpoint by configEndpoint
 
     override fun getConfig(): ConfigHttpResponse? = runCatching {
         fetchConfigImpl()

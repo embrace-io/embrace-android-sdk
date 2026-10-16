@@ -2,11 +2,8 @@ package io.embrace.android.embracesdk.internal.injection
 
 import android.app.ActivityManager
 import android.content.Context
-import android.os.Build
-import io.embrace.android.embracesdk.core.BuildConfig
 import io.embrace.android.embracesdk.internal.capture.connectivity.NetworkConnectivityService
 import io.embrace.android.embracesdk.internal.config.ConfigService
-import io.embrace.android.embracesdk.internal.config.ConfigServiceImpl
 import io.embrace.android.embracesdk.internal.config.PersistedConfig
 import io.embrace.android.embracesdk.internal.instrumentation.startup.DataCaptureServiceModule
 import io.embrace.android.embracesdk.internal.instrumentation.startup.DataCaptureServiceModuleImpl
@@ -71,18 +68,7 @@ internal class InitializedModuleGraph(
             workerThreadModule,
             persistedConfig,
         ) ?: EmbTrace.trace(sectionName = "config-service-init", recordDuration = true) {
-            ConfigServiceImpl(
-                instrumentedConfig = initModule.instrumentedConfig,
-                persistedConfig = persistedConfig,
-                worker = workerThreadModule.backgroundWorker(Worker.Background.HttpRequestWorker),
-                serializer = initModule.jsonSerializer,
-                okHttpClient = initModule.okHttpClient,
-                hasConfiguredOtlpExport = openTelemetryModule.otelSdkConfig.externalConfig::hasConfiguredOtlpExport,
-                sdkVersion = BuildConfig.VERSION_NAME,
-                apiLevel = Build.VERSION.SDK_INT,
-                primaryAbi = initModule.systemInfo.primaryAbi,
-                logger = initModule.logger,
-            )
+            createConfigService(initModule, openTelemetryModule, workerThreadModule, persistedConfig)
         }
     }.apply {
         EmbTrace.trace("sdk-disable-check") {

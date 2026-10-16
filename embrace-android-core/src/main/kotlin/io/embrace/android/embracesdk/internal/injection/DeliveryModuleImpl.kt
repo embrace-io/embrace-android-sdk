@@ -37,6 +37,7 @@ class DeliveryModuleImpl(
     payloadStorageServiceProvider: Provider<PayloadStorageService>?,
     cacheStorageServiceProvider: Provider<PayloadStorageService>?,
     override val deliveryTracer: DeliveryTracer? = null,
+    payloadStorageLimit: Int = PayloadStorageServiceImpl.DEFAULT_STORAGE_LIMIT,
 ) : DeliveryModule {
 
     private val processIdProvider = { otelModule.otelSdkConfig.processIdentifier }
@@ -59,6 +60,7 @@ class DeliveryModuleImpl(
             initModule.logger,
             initModule.clock,
             deliveryTracer,
+            payloadStorageLimit,
         )
 
     override val cacheStorageService: PayloadStorageService =

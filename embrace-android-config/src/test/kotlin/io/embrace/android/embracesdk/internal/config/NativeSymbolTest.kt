@@ -3,13 +3,13 @@ package io.embrace.android.embracesdk.internal.config
 import io.embrace.android.embracesdk.fakes.FakeClock
 import io.embrace.android.embracesdk.fakes.FakeInternalLogger
 import io.embrace.android.embracesdk.fakes.FakeKeyValueStore
+import io.embrace.android.embracesdk.fakes.FakeRemoteConfigSource
 import io.embrace.android.embracesdk.fakes.TestPlatformSerializer
 import io.embrace.android.embracesdk.fakes.TestUuidSource
 import io.embrace.android.embracesdk.fakes.config.FakeBase64SharedObjectFilesMap
 import io.embrace.android.embracesdk.fakes.config.FakeInstrumentedConfig
 import io.embrace.android.embracesdk.fakes.fakeBackgroundWorker
 import io.embrace.android.embracesdk.internal.payload.NativeSymbols
-import okhttp3.OkHttpClient
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
 import org.junit.Test
@@ -27,7 +27,6 @@ class NativeSymbolTest {
     )
 
     private val serializer = TestPlatformSerializer()
-    private val okHttpClient = OkHttpClient()
 
     private val limitedMap = symbolMap.filter { it.key != "arm64-v8a" }
 
@@ -86,10 +85,8 @@ class NativeSymbolTest {
             ),
             worker = fakeBackgroundWorker(),
             serializer = serializer,
-            okHttpClient = lazyOf(okHttpClient),
+            remoteConfigSource = FakeRemoteConfigSource(),
             primaryAbi = arch,
-            sdkVersion = "1.2.3",
-            apiLevel = 36,
             logger = FakeInternalLogger(),
             hasConfiguredOtlpExport = { false },
         )

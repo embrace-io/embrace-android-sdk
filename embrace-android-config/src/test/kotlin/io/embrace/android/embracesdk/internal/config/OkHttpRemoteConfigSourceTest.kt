@@ -48,16 +48,18 @@ class OkHttpRemoteConfigSourceTest {
         source = OkHttpRemoteConfigSource(
             lazyOf(client),
             TestPlatformSerializer(),
-            ConfigEndpoint(
-                "deviceId",
-                "1.0.0",
-                FakeInstrumentedConfig(
-                    baseUrls = FakeBaseUrlConfig(
-                        configImpl = baseUrl,
+            lazyOf(
+                ConfigEndpoint(
+                    "deviceId",
+                    "1.0.0",
+                    FakeInstrumentedConfig(
+                        baseUrls = FakeBaseUrlConfig(
+                            configImpl = baseUrl,
+                        ),
                     ),
+                    "1.0.0",
+                    36,
                 ),
-                "1.0.0",
-                36,
             ),
         )
     }

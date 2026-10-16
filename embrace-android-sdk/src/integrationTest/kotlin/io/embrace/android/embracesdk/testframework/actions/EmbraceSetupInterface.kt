@@ -2,12 +2,10 @@ package io.embrace.android.embracesdk.testframework.actions
 
 import android.app.ActivityManager
 import android.content.Context
-import android.os.Build
 import android.os.Looper
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.testing.TestLifecycleOwner
 import io.embrace.android.embracesdk.concurrency.BlockingScheduledExecutorService
-import io.embrace.android.embracesdk.core.BuildConfig
 import io.embrace.android.embracesdk.fakes.FakeClock
 import io.embrace.android.embracesdk.fakes.FakeInternalLogger
 import io.embrace.android.embracesdk.fakes.FakeJniDelegate
@@ -28,8 +26,8 @@ import io.embrace.android.embracesdk.internal.arch.InstrumentationRegistry
 import io.embrace.android.embracesdk.internal.clock.millisToNanos
 import io.embrace.android.embracesdk.internal.config.BuildInfo
 import io.embrace.android.embracesdk.internal.config.ConfigService
-import io.embrace.android.embracesdk.internal.config.ConfigServiceImpl
 import io.embrace.android.embracesdk.internal.delivery.debug.DeliveryTracer
+import io.embrace.android.embracesdk.internal.delivery.storage.PayloadStorageServiceImpl
 import io.embrace.android.embracesdk.internal.delivery.storage.StorageLocation
 import io.embrace.android.embracesdk.internal.delivery.storage.asFile
 import io.embrace.android.embracesdk.internal.injection.BootstrapServices
@@ -43,6 +41,7 @@ import io.embrace.android.embracesdk.internal.injection.LogModuleImpl
 import io.embrace.android.embracesdk.internal.injection.ModuleGraphFactory
 import io.embrace.android.embracesdk.internal.injection.WorkerThreadModule
 import io.embrace.android.embracesdk.internal.injection.WorkerThreadModuleImpl
+import io.embrace.android.embracesdk.internal.injection.createConfigService
 import io.embrace.android.embracesdk.internal.instrumentation.crash.ndk.jniDelegateTestOverride
 import io.embrace.android.embracesdk.internal.instrumentation.crash.ndk.sharedObjectLoaderTestOverride
 import io.embrace.android.embracesdk.internal.instrumentation.startup.DataCaptureServiceModuleImpl
@@ -103,6 +102,7 @@ internal class EmbraceSetupInterface(
     val fakeClock: FakeClock = FakeClock(currentTime = SdkIntegrationTestRule.DEFAULT_SDK_START_TIME_MS),
     private val uuidSource: UuidSource = TestUuidSource(Random.nextInt()),
     simulatedSdkInt: Int? = null,
+    private val payloadStorageLimit: Int = PayloadStorageServiceImpl.DEFAULT_STORAGE_LIMIT,
 ) {
     private val processIdentifier: String = uuidSource.createUuid()
 
@@ -183,19 +183,7 @@ internal class EmbraceSetupInterface(
         },
         workerThreadModuleSupplier = { workerThreadModule },
         configServiceSupplier = { initModule, _, openTelemetryModule, workerThreadModule, persistedConfig ->
-            val impl = ConfigServiceImpl(
-                instrumentedConfig = initModule.instrumentedConfig,
-                persistedConfig = persistedConfig,
-                worker = workerThreadModule.backgroundWorker(Worker.Background.HttpRequestWorker),
-                serializer = initModule.jsonSerializer,
-                okHttpClient = initModule.okHttpClient,
-                hasConfiguredOtlpExport = openTelemetryModule.otelSdkConfig.externalConfig::hasConfiguredOtlpExport,
-                sdkVersion = BuildConfig.VERSION_NAME,
-                apiLevel = Build.VERSION.SDK_INT,
-                primaryAbi = initModule.systemInfo.primaryAbi,
-                logger = initModule.logger,
-            )
-            DecoratedConfigService(impl)
+            DecoratedConfigService(createConfigService(initModule, openTelemetryModule, workerThreadModule, persistedConfig))
         },
         essentialServiceModuleSupplier = { initModule, configService, openTelemetryModule, coreModule, workerThreadModule, startupContext, _, _, sessionOrchestratorProvider ->
             EssentialServiceModuleImpl(
@@ -221,7 +209,8 @@ internal class EmbraceSetupInterface(
                 requestExecutionServiceProvider = null,
                 payloadStorageServiceProvider = fakePayloadStorageService?.let { { it } },
                 cacheStorageServiceProvider = fakeCacheStorageService?.let { { it } },
-                deliveryTracer = deliveryTracer
+                deliveryTracer = deliveryTracer,
+                payloadStorageLimit = payloadStorageLimit,
             )
         },
         threadBlockageServiceSupplier = { args ->

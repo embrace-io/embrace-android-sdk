@@ -16,8 +16,8 @@ import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.ParameterizedRobolectricTestRunner
 
-private const val STORAGE_LIMIT = 500
-private const val OVERAGE = 100
+private const val STORAGE_LIMIT = 5
+private const val OVERAGE = 2
 
 @RunWith(ParameterizedRobolectricTestRunner::class)
 internal class PruningFeatureTest(
@@ -27,7 +27,7 @@ internal class PruningFeatureTest(
     @Rule
     @JvmField
     val testRule: SdkIntegrationTestRule = SdkIntegrationTestRule(otelSdkMode) {
-        EmbraceSetupInterface().apply {
+        EmbraceSetupInterface(payloadStorageLimit = STORAGE_LIMIT).apply {
             getEmbLogger().throwOnInternalError = false
         }
     }

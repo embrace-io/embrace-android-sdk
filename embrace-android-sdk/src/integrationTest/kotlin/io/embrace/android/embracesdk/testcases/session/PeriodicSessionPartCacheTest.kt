@@ -12,6 +12,7 @@ import io.embrace.android.embracesdk.internal.payload.Envelope
 import io.embrace.android.embracesdk.internal.payload.SessionPartPayload
 import io.embrace.android.embracesdk.PropertyScope
 import io.embrace.android.embracesdk.internal.session.getSessionProperty
+import io.embrace.android.embracesdk.internal.worker.Worker
 import io.embrace.android.embracesdk.testframework.OtelSdkMode
 import io.embrace.android.embracesdk.testframework.SdkIntegrationTestRule
 import io.embrace.android.embracesdk.testframework.actions.EmbraceSetupInterface
@@ -37,7 +38,12 @@ internal class PeriodicPartCacheTest(
     @Rule
     @JvmField
     val testRule: SdkIntegrationTestRule = SdkIntegrationTestRule(otelSdkMode) {
-        EmbraceSetupInterface(fakeStorageLayer = true).also {
+        EmbraceSetupInterface(
+            fakeStorageLayer = true,
+            workersToFake = listOf(Worker.Background.PeriodicCacheWorker),
+        ).apply {
+            getFakedWorkerExecutor(Worker.Background.PeriodicCacheWorker).blockingMode = false
+        }.also {
             cacheStorageService = checkNotNull(it.fakeCacheStorageService)
         }
     }
@@ -49,8 +55,10 @@ internal class PeriodicPartCacheTest(
             testCaseAction = {
                 recordSession {
                     embrace.addUserSessionProperty("Test", "Test", PropertyScope.PERMANENT)
+                    testRule.setup.getFakedWorkerExecutor(Worker.Background.PeriodicCacheWorker)
+                        .moveForwardAndRunBlocked(PERIODIC_CACHE_INTERVAL_MS)
                     snapshot = returnIfConditionMet(
-                        waitTimeMs = 10000,
+                        waitTimeMs = 1000,
                         desiredValueSupplier = { cacheStorageService.getLastCachedPart() },
                         dataProvider = { cacheStorageService.getLastCachedPart() },
                         condition = { data ->
@@ -91,7 +99,7 @@ internal class PeriodicPartCacheTest(
                 return if (sessions.isEmpty()) {
                     null
                 } else {
-                    // the periodic cache may delete this payload between listing and loading; poll again if so
+                    // payload can be deleted by a newer snapshot between listing and loading
                     val stream = loadPayloadAsStream(sessions.last()) ?: return null
                     return TestPlatformSerializer().fromJson(
                         GZIPInputStream(stream),
@@ -101,6 +109,8 @@ internal class PeriodicPartCacheTest(
             }
 
     internal companion object {
+        private const val PERIODIC_CACHE_INTERVAL_MS = 2000L
+
         @JvmStatic
         @ParameterizedRobolectricTestRunner.Parameters(name = "{0}")
         fun modes(): List<Array<Any>> = OtelSdkMode.parameters()

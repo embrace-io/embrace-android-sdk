@@ -205,7 +205,8 @@ internal class RealSdkInstance(
             val rootDir = moduleGraph.coreModule.context.filesDir
             val fallbackDir = moduleGraph.coreModule.context.cacheDir
             val workerThreadModule = moduleGraph.workerThreadModule
-            moduleGraph.essentialServiceModule.networkConnectivityService.close()
+            moduleGraph.essentialServiceModule.close()
+            moduleGraph.dataCaptureServiceModule.startupTracker.close()
             moduleGraph.openTelemetryModule.otelSdkConfig.shutdownExport()
             workerThreadModule.close()
 
@@ -336,7 +337,7 @@ internal class RealSdkInstance(
         safeInit {
             EmbTrace.trace("service-registration") {
                 val ctx = coreModule.application
-                ctx.registerActivityLifecycleCallbacks(dataCaptureServiceModule.startupTracker)
+                dataCaptureServiceModule.startupTracker.register(ctx)
 
                 // periodically fail any in-flight spans that have exceeded their timeout, so leaked spans
                 // are terminated and their memory released even during a long-running session.

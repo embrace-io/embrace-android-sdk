@@ -15,4 +15,10 @@ class FakeProcessStateTracker(
     }
 
     override fun getAppState(): ProcessState = state
+
+    var closed: Boolean = false
+
+    override fun close() {
+        closed = true
+    }
 }

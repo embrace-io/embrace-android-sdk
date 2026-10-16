@@ -15,4 +15,11 @@ internal class FakeLifecycleTracker(
     override fun register(listener: ProcessStateListener) {
         this.listener = listener
     }
+
+    var closed = false
+
+    override fun close() {
+        closed = true
+        listener = null
+    }
 }

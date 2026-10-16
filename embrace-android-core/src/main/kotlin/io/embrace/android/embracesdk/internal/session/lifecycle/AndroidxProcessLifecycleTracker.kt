@@ -26,15 +26,34 @@ class AndroidxProcessLifecycleTracker(
         else -> ProcessState.BACKGROUND
     }
 
+    @Volatile
+    private var closed = false
+
     override fun register(listener: ProcessStateListener) {
         this.listener = listener
-
-        // add lifecycle observer on main thread to avoid IllegalStateExceptions with
-        // androidx.lifecycle
-        val wrappedRunnable = Runnable {
-            runCatching {
+        runOnMainThread {
+            // close() may have been called before a posted registration ran
+            if (!closed) {
                 lifecycleOwner.lifecycle.addObserver(this)
             }
+        }
+    }
+
+    override fun close() {
+        closed = true
+        listener = null
+        runOnMainThread {
+            lifecycleOwner.lifecycle.removeObserver(this)
+        }
+    }
+
+    /**
+     * Lifecycle observers must be added and removed on the main thread to avoid IllegalStateExceptions with
+     * androidx.lifecycle.
+     */
+    private fun runOnMainThread(action: () -> Unit) {
+        val wrappedRunnable = Runnable {
+            runCatching(action)
         }
         if (Thread.currentThread() !== mainThread) {
             val mainHandler = Handler(mainLooper)

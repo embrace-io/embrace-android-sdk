@@ -68,6 +68,21 @@ internal class JvmCrashDataSourceImplTest {
     }
 
     @Test
+    fun `disabling data capture detaches the handler but still delegates to the previous one`() {
+        val previous = EmbraceUncaughtExceptionHandlerTest.TestUncaughtExceptionHandler()
+        Thread.setDefaultUncaughtExceptionHandler(previous)
+        setupForHandleCrash(true)
+        val handler = Thread.getDefaultUncaughtExceptionHandler() as EmbraceUncaughtExceptionHandler
+        crashDataSource.onDataCaptureDisabled()
+
+        // left installed so that handlers which wrap it are not clobbered
+        assertSame(handler, Thread.getDefaultUncaughtExceptionHandler())
+        handler.uncaughtException(Thread.currentThread(), testException)
+        assertEquals(0, args.destination.logEvents.size)
+        assertSame(testException, previous.throwable)
+    }
+
+    @Test
     fun `test exception handler sends telemetry with config option enabled`() {
         setupForHandleCrash(true)
         assert(Thread.getDefaultUncaughtExceptionHandler() is EmbraceUncaughtExceptionHandler)

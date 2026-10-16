@@ -6,6 +6,7 @@ import android.os.Bundle
 import io.embrace.android.embracesdk.annotation.IgnoreForStartup
 import io.embrace.android.embracesdk.internal.instrumentation.startup.activity.traceInstanceId
 import io.embrace.android.embracesdk.internal.instrumentation.startup.ui.DrawEventEmitter
+import java.io.Closeable
 import java.util.concurrent.atomic.AtomicBoolean
 
 /**
@@ -31,7 +32,12 @@ class StartupTracker(
     private val appStartupDataCollector: AppStartupDataCollector,
     private val activityLoadEventEmitter: Application.ActivityLifecycleCallbacks?,
     private val drawEventEmitter: DrawEventEmitter?,
-) : Application.ActivityLifecycleCallbacks {
+) : Application.ActivityLifecycleCallbacks, Closeable {
+
+    private val lock = Any()
+
+    @Volatile
+    private var application: Application? = null
 
     private val startupDataCollectionComplete = AtomicBoolean(false)
     private val firstActivitySeen = AtomicBoolean(false)
@@ -94,10 +100,35 @@ class StartupTracker(
     }
 
     private fun startupComplete(application: Application) {
-        if (!startupDataCollectionComplete.getAndSet(true)) {
+        synchronized(lock) {
+            if (!startupDataCollectionComplete.getAndSet(true)) {
+                application.unregisterActivityLifecycleCallbacks(this)
+                if (activityLoadEventEmitter != null) {
+                    application.registerActivityLifecycleCallbacks(activityLoadEventEmitter)
+                }
+            }
+        }
+    }
+
+    /**
+     * Starts observing activities in [application].
+     */
+    fun register(application: Application) {
+        this.application = application
+        application.registerActivityLifecycleCallbacks(this)
+    }
+
+    /**
+     * Unregisters this tracker and the activity load event emitter that replaces it once startup completes. The emitter
+     * is not registered if startup completes afterwards.
+     */
+    override fun close() {
+        synchronized(lock) {
+            startupDataCollectionComplete.set(true)
+            val application = application ?: return
             application.unregisterActivityLifecycleCallbacks(this)
             if (activityLoadEventEmitter != null) {
-                application.registerActivityLifecycleCallbacks(activityLoadEventEmitter)
+                application.unregisterActivityLifecycleCallbacks(activityLoadEventEmitter)
             }
         }
     }

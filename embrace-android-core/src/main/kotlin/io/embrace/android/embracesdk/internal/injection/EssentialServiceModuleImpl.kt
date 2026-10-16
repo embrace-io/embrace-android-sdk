@@ -123,4 +123,9 @@ class EssentialServiceModuleImpl(
             telemetryDestination = telemetryDestination,
         )
     }
+
+    override fun close() {
+        processStateTracker.close()
+        networkConnectivityService.close()
+    }
 }

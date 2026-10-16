@@ -10,8 +10,7 @@ import io.embrace.android.embracesdk.fakes.OtelSdkMode
 import io.embrace.android.embracesdk.fakes.config.FakeBaseUrlConfig
 import io.embrace.android.embracesdk.fakes.config.FakeEnabledFeatureConfig
 import io.embrace.android.embracesdk.fakes.config.FakeInstrumentedConfig
-import io.embrace.android.embracesdk.internal.injection.InitModule
-import io.embrace.android.embracesdk.internal.injection.InitModuleImpl
+import io.embrace.android.embracesdk.internal.injection.ConfigLoadServices
 import io.embrace.android.embracesdk.internal.injection.InitializedModuleGraph
 import io.embrace.android.embracesdk.internal.injection.PreStartServices
 import io.embrace.android.embracesdk.internal.instance.SdkStateHolder
@@ -73,13 +72,17 @@ internal class StrictModeStartupTest(
 
             sdkStateHolder = createSdkStateHolder(
                 preStartServices = PreStartServices(),
-                moduleGraphSupplier = { ctx, preStartServices, sdkStartTimeMs, sdkInitResourceUsageTracker ->
-                    InitializedModuleGraph(
+                configLoadServicesSupplier = { ctx, preStartServices ->
+                    ConfigLoadServices(
                         context = ctx,
                         preStartServices = preStartServices,
-                        sdkStartTimeMs = sdkStartTimeMs,
-                        sdkInitResourceUsageTracker = sdkInitResourceUsageTracker,
-                        initModuleSupplier = { TestInitModule(InitModuleImpl(it), otelSdkMode) },
+                        instrumentedConfig = FakeInstrumentedConfig(
+                            enabledFeatures = FakeEnabledFeatureConfig(otelKotlinSdkEnabled = otelSdkMode.useKotlinSdk),
+                            baseUrls = FakeBaseUrlConfig(
+                                configImpl = "http://localhost:1",
+                                dataImpl = "http://localhost:1",
+                            ),
+                        ),
                     )
                 },
                 onModuleGraphCreated = { moduleGraph = it },
@@ -134,17 +137,4 @@ internal class StrictModeStartupTest(
         @Parameterized.Parameters(name = "{0}")
         fun modes(): List<Array<Any>> = OtelSdkMode.parameters()
     }
-}
-
-private class TestInitModule(
-    base: InitModule,
-    otelSdkMode: OtelSdkMode,
-) : InitModule by base {
-    override val instrumentedConfig = FakeInstrumentedConfig(
-        enabledFeatures = FakeEnabledFeatureConfig(otelKotlinSdkEnabled = otelSdkMode.useKotlinSdk),
-        baseUrls = FakeBaseUrlConfig(
-            configImpl = "http://localhost:1",
-            dataImpl = "http://localhost:1",
-        ),
-    )
 }

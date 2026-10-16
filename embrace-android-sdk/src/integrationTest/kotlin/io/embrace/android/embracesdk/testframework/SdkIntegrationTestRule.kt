@@ -17,6 +17,7 @@ import io.embrace.android.embracesdk.internal.config.remote.RemoteConfig
 import io.embrace.android.embracesdk.internal.config.resolved.resolveBreadcrumb
 import io.embrace.android.embracesdk.internal.config.resolved.resolveSensitiveKeys
 import io.embrace.android.embracesdk.internal.delivery.debug.DeliveryTracer
+import io.embrace.android.embracesdk.internal.injection.ConfigLoadServicesSupplier
 import io.embrace.android.embracesdk.internal.injection.CoreModule
 import io.embrace.android.embracesdk.internal.injection.DeliveryModule
 import io.embrace.android.embracesdk.internal.injection.EssentialServiceModule
@@ -123,6 +124,7 @@ internal class SdkIntegrationTestRule(
     private lateinit var sdkStateHolder: SdkStateHolder
     private lateinit var baseUrl: String
 
+    private lateinit var configLoadServicesSupplier: ConfigLoadServicesSupplier
     private lateinit var moduleGraphSupplier: ModuleGraphSupplier
     private var createdModuleGraph: InitializedModuleGraph? = null
 
@@ -165,12 +167,12 @@ internal class SdkIntegrationTestRule(
 
         preSdkStart = EmbracePreSdkStartInterface(setup) { sdkStateHolder.api }
         createdModuleGraph = null
-        moduleGraphSupplier = setup.createModuleGraphSupplier(
+        configLoadServicesSupplier = setup.createConfigLoadServicesSupplier(
             localConfig.copy(
                 baseUrls = FakeBaseUrlConfig(configImpl = baseUrl, dataImpl = baseUrl)
             ),
-            deliveryTracer
         )
+        moduleGraphSupplier = setup.createModuleGraphSupplier(deliveryTracer)
         action = EmbraceActionInterface(
             setup,
             { moduleGraph.instrumentationModule.instrumentationRegistry },
@@ -221,8 +223,9 @@ internal class SdkIntegrationTestRule(
                         otelSdkMode.useKotlinSdk,
                         setup.openTelemetryModule.otelSdkWrapper.useKotlinSdk,
                     )
+                    // a start that fails releases the worker threads, so there is nothing to await
+                    awaitAsyncInstrumentation()
                 }
-                awaitAsyncInstrumentation()
             }
         }
         testCaseAction(action)
@@ -277,6 +280,7 @@ internal class SdkIntegrationTestRule(
     private fun createStateHolder(): SdkStateHolder {
         return createSdkStateHolder(
             preStartServices = setup.preStartServices,
+            configLoadServicesSupplier = configLoadServicesSupplier,
             moduleGraphSupplier = moduleGraphSupplier,
             sdkInitResourceUsageTrackerSupplier = setup::fakeSdkInitResourceUsageTracker,
             onModuleGraphCreated = { createdModuleGraph = it },

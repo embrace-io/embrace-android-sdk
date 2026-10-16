@@ -51,12 +51,22 @@ sealed interface HostTask {
     }
 
     /**
+     * Waits for the SDK to resurrect the session parts that were on disk when it started, which a previous
+     * launch restored.
+     */
+    data object AwaitResurrection : HostTask {
+        override val key: Key = Key.AWAIT_RESURRECTION
+        override val arguments: Map<String, String> = emptyMap()
+    }
+
+    /**
      * Identifies each kind of task, one entry per task. [value] is the string that the launch intent carries.
      */
     enum class Key(val value: String) {
         RUN_PERSISTENCE_SCENARIO("run_persistence_scenario"),
         RECORD_FIXTURE("record_fixture"),
         RESTORE_FIXTURE("restore_fixture"),
+        AWAIT_RESURRECTION("await_resurrection"),
     }
 }
 
@@ -80,6 +90,9 @@ fun hostTaskFrom(stringExtraLookup: (String) -> String?): HostTask {
 
         HostTask.Key.RESTORE_FIXTURE ->
             HostTask.RestoreFixture
+
+        HostTask.Key.AWAIT_RESURRECTION ->
+            HostTask.AwaitResurrection
     }
 }
 

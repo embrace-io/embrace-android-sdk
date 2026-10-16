@@ -75,6 +75,7 @@ class DataCaptureServiceModuleImpl(
                 autoTraceEnabled = configService.config.autoDataCapture.uiLoadTracingTraceAll,
                 clock = clock,
                 versionChecker = versionChecker,
+                logger = logger,
             )
         }
 
@@ -82,5 +83,6 @@ class DataCaptureServiceModuleImpl(
         appStartupDataCollector = appStartupDataCollector,
         activityLoadEventEmitter = activityLoadEventEmitter,
         drawEventEmitter = createDrawEventEmitter(versionChecker, logger),
+        logger = logger,
     )
 }

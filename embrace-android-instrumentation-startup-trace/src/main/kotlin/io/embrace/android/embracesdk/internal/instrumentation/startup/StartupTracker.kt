@@ -6,6 +6,8 @@ import android.os.Bundle
 import io.embrace.android.embracesdk.annotation.IgnoreForStartup
 import io.embrace.android.embracesdk.internal.instrumentation.startup.activity.traceInstanceId
 import io.embrace.android.embracesdk.internal.instrumentation.startup.ui.DrawEventEmitter
+import io.embrace.android.embracesdk.internal.logging.InternalErrorType
+import io.embrace.android.embracesdk.internal.logging.InternalLogger
 import java.io.Closeable
 import java.util.concurrent.atomic.AtomicBoolean
 
@@ -32,6 +34,7 @@ class StartupTracker(
     private val appStartupDataCollector: AppStartupDataCollector,
     private val activityLoadEventEmitter: Application.ActivityLifecycleCallbacks?,
     private val drawEventEmitter: DrawEventEmitter?,
+    private val logger: InternalLogger,
 ) : Application.ActivityLifecycleCallbacks, Closeable {
 
     private val lock = Any()
@@ -44,43 +47,63 @@ class StartupTracker(
     private var startupActivityId: Int? = null
 
     override fun onActivityPreCreated(activity: Activity, savedInstanceState: Bundle?) {
-        firstActivityInit(activity)
-        if (activity.useAsStartupActivity()) {
-            appStartupDataCollector.startupActivityPreCreated()
+        try {
+            firstActivityInit(activity)
+            if (activity.useAsStartupActivity()) {
+                appStartupDataCollector.startupActivityPreCreated()
+            }
+        } catch (exc: Throwable) {
+            logger.trackInternalError(InternalErrorType.UiCallbackFail, exc)
         }
     }
 
     override fun onActivityCreated(activity: Activity, savedInstanceState: Bundle?) {
-        firstActivityInit(activity)
-        if (activity.useAsStartupActivity()) {
-            appStartupDataCollector.startupActivityInitStart()
-            val activityName = activity.localClassName
-            val callback = {
-                appStartupDataCollector.firstFrameRendered(
-                    activityName = activityName,
-                )
+        try {
+            firstActivityInit(activity)
+            if (activity.useAsStartupActivity()) {
+                appStartupDataCollector.startupActivityInitStart()
+                val activityName = activity.localClassName
+                val callback = {
+                    appStartupDataCollector.firstFrameRendered(
+                        activityName = activityName,
+                    )
+                }
+                drawEventEmitter?.registerFirstDrawCallback(activity, {}, callback)
             }
-            drawEventEmitter?.registerFirstDrawCallback(activity, {}, callback)
+        } catch (exc: Throwable) {
+            logger.trackInternalError(InternalErrorType.UiCallbackFail, exc)
         }
     }
 
     override fun onActivityPostCreated(activity: Activity, savedInstanceState: Bundle?) {
-        if (activity.useAsStartupActivity()) {
-            appStartupDataCollector.startupActivityPostCreated()
+        try {
+            if (activity.useAsStartupActivity()) {
+                appStartupDataCollector.startupActivityPostCreated()
+            }
+        } catch (exc: Throwable) {
+            logger.trackInternalError(InternalErrorType.UiCallbackFail, exc)
         }
     }
 
     override fun onActivityStarted(activity: Activity) {
-        if (activity.isStartupActivity()) {
-            appStartupDataCollector.startupActivityInitEnd()
+        try {
+            if (activity.isStartupActivity()) {
+                appStartupDataCollector.startupActivityInitEnd()
+            }
+        } catch (exc: Throwable) {
+            logger.trackInternalError(InternalErrorType.UiCallbackFail, exc)
         }
     }
 
     override fun onActivityResumed(activity: Activity) {
-        if (activity.observeForStartup()) {
-            appStartupDataCollector.startupActivityResumed(
-                activityName = activity.localClassName,
-            )
+        try {
+            if (activity.observeForStartup()) {
+                appStartupDataCollector.startupActivityResumed(
+                    activityName = activity.localClassName,
+                )
+            }
+        } catch (exc: Throwable) {
+            logger.trackInternalError(InternalErrorType.UiCallbackFail, exc)
         }
     }
 

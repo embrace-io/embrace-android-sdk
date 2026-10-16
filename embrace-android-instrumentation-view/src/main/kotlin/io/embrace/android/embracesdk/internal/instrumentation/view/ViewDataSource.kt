@@ -8,6 +8,7 @@ import io.embrace.android.embracesdk.internal.arch.datasource.DataSourceImpl
 import io.embrace.android.embracesdk.internal.arch.datasource.SpanToken
 import io.embrace.android.embracesdk.internal.arch.limits.UpToLimitStrategy
 import io.embrace.android.embracesdk.internal.arch.schema.SchemaType
+import io.embrace.android.embracesdk.internal.logging.InternalErrorType
 
 /**
  * Captures fragment views.
@@ -87,14 +88,22 @@ class ViewDataSource(
     }
 
     override fun onActivityStarted(activity: Activity) {
-        changeView(activity.javaClass.name)
+        try {
+            changeView(activity.javaClass.name)
+        } catch (exc: Throwable) {
+            logger.trackInternalError(InternalErrorType.UiCallbackFail, exc)
+        }
     }
 
     /**
      * Close all open fragments when the activity closes
      */
     override fun onActivityStopped(activity: Activity) {
-        onViewClose()
+        try {
+            onViewClose()
+        } catch (exc: Throwable) {
+            logger.trackInternalError(InternalErrorType.UiCallbackFail, exc)
+        }
     }
 
     override fun onActivityCreated(p0: Activity, p1: Bundle?) {

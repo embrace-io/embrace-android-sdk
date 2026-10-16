@@ -179,7 +179,7 @@ internal class NavigationStateDataSourceTest {
     fun `activity lifecycle callbacks are unregistered when data capture is disabled`() {
         val signals = mutableListOf<NavigationSignal>()
         args.eventBus.addHandler(NavigationSignal.KEY) { signals.add(it) }
-        val tracker = ActivityNavigationTracker(args.clock, args.eventBus, args.navigationTrackingService)
+        val tracker = ActivityNavigationTracker(args.clock, args.eventBus, args.navigationTrackingService, args.logger)
         args.application.registerActivityLifecycleCallbacks(tracker)
         val source = NavigationStateDataSource(args, tracker).apply { onDataCaptureEnabled() }
 

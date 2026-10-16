@@ -5,7 +5,7 @@ import io.embrace.android.embracesdk.fakes.FakeClock
 import io.embrace.android.embracesdk.fakes.FakeConfigService
 import io.embrace.android.embracesdk.fakes.FakeInstrumentationArgs
 import io.embrace.android.embracesdk.fakes.FakeInternalLogger
-import io.embrace.android.embracesdk.fakes.FakeProcessStateTracker
+import io.embrace.android.embracesdk.internal.arch.lifecycle.ProcessChannels
 import io.embrace.android.embracesdk.internal.arch.state.ProcessState
 import io.embrace.android.embracesdk.internal.config.resolved.EmbraceConfig
 import io.embrace.android.embracesdk.internal.config.resolved.ThreadBlockageConfig
@@ -28,7 +28,6 @@ internal class ThreadBlockageServiceRule<T : ScheduledExecutorService>(
     val logger = FakeInternalLogger()
 
     lateinit var fakeConfigService: FakeConfigService
-    lateinit var fakeAppStateTracker: FakeProcessStateTracker
     lateinit var service: ThreadBlockageServiceImpl
     lateinit var blockedThreadDetector: BlockedThreadDetector
     lateinit var config: ThreadBlockageConfig
@@ -47,7 +46,6 @@ internal class ThreadBlockageServiceRule<T : ScheduledExecutorService>(
         config = ThreadBlockageConfig(sampleIntervalMs = { 5 })
         watchdogMonitorThread = AtomicReference(Thread.currentThread())
         fakeConfigService = FakeConfigService(config = EmbraceConfig(threadBlockage = { config }))
-        fakeAppStateTracker = FakeProcessStateTracker(ProcessState.FOREGROUND)
         watchdogExecutorService = scheduledExecutorSupplier.invoke()
         worker = BackgroundWorker(watchdogExecutorService)
         stacktraceSampler = ThreadBlockageSampler(
@@ -71,7 +69,6 @@ internal class ThreadBlockageServiceRule<T : ScheduledExecutorService>(
             configService = fakeConfigService,
             logger = logger,
             clock = clock,
-            processStateTracker = fakeAppStateTracker,
         )
         service = ThreadBlockageServiceImpl(
             args = args,
@@ -79,6 +76,13 @@ internal class ThreadBlockageServiceRule<T : ScheduledExecutorService>(
             watchdogWorker = worker,
             stacktraceSampler = stacktraceSampler,
         ).apply { scheduleStartupBackgroundCheck() }
+    }
+
+    /**
+     * Emits [state] as the app's process state.
+     */
+    fun setProcessState(state: ProcessState) {
+        args.eventBus.emitState(ProcessChannels.ProcessState, state)
     }
 
     /**

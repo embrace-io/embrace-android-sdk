@@ -11,14 +11,15 @@ import io.embrace.android.embracesdk.internal.arch.InstrumentationArgs
 import io.embrace.android.embracesdk.internal.arch.SessionPartChangeListener
 import io.embrace.android.embracesdk.internal.arch.SessionPartEndListener
 import io.embrace.android.embracesdk.internal.arch.datasource.DataSourceImpl
+import io.embrace.android.embracesdk.internal.arch.lifecycle.ProcessChannels
 import io.embrace.android.embracesdk.internal.arch.limits.UpToLimitStrategy
 import io.embrace.android.embracesdk.internal.arch.navigation.ScreenAttributesSource
 import io.embrace.android.embracesdk.internal.arch.schema.EmbType
 import io.embrace.android.embracesdk.internal.arch.schema.SchemaType
 import io.embrace.android.embracesdk.internal.arch.state.ProcessState
-import io.embrace.android.embracesdk.internal.arch.state.ProcessStateListener
 import io.embrace.android.embracesdk.internal.utils.BuildVersionChecker
 import io.embrace.android.embracesdk.internal.utils.VersionChecker
+import io.embrace.android.embracesdk.internal.utils.event.EventHandler
 import io.embrace.android.embracesdk.internal.vitals.screenload.ScreenLoadResult
 import io.embrace.android.embracesdk.internal.vitals.screenload.ScreenLoadTracker
 import io.embrace.android.embracesdk.internal.vitals.smoothness.FocalMomentTracker
@@ -97,12 +98,10 @@ internal class VitalsDataSource(
     @Volatile
     private var activityListener: VitalsActivityListener? = null
 
-    private val processStateListener = object : ProcessStateListener {
-        override fun onBackground() {
+    private val processStateHandler = EventHandler<ProcessState> { state ->
+        if (state == ProcessState.BACKGROUND) {
             focalTracker?.onAppBackgrounded()
         }
-
-        override fun onForeground() {}
     }
 
     override fun onDataCaptureEnabled() {
@@ -150,7 +149,7 @@ internal class VitalsDataSource(
         )
         activityListener = listener
         args.application.registerActivityLifecycleCallbacks(listener)
-        args.processStateTracker.addListener(processStateListener)
+        args.eventBus.addStateHandler(ProcessChannels.ProcessState, replay = false, handler = processStateHandler)
         args.navigationTrackingService.addScreenAttributesSource(screenAttributesSource)
     }
 
@@ -191,7 +190,7 @@ internal class VitalsDataSource(
     // Decided when the part starts: by the time it ends, the process state may already reflect the next part.
     private fun startSessionPart() {
         sessionPartStart = frameCounts
-        foregroundSessionPart = args.processStateTracker.getAppState() == ProcessState.FOREGROUND
+        foregroundSessionPart = args.eventBus.currentState(ProcessChannels.ProcessState) == ProcessState.FOREGROUND
     }
 
     private fun emitSmoothnessResult(result: SmoothnessResult) {

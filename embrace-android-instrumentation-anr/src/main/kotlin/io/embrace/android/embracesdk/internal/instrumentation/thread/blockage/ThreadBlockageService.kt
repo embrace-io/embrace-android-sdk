@@ -2,7 +2,6 @@ package io.embrace.android.embracesdk.internal.instrumentation.thread.blockage
 
 import io.embrace.android.embracesdk.internal.arch.CrashTeardownHandler
 import io.embrace.android.embracesdk.internal.arch.SessionPartChangeListener
-import io.embrace.android.embracesdk.internal.arch.state.ProcessStateListener
 import io.embrace.android.embracesdk.internal.envelope.session.OtelPayloadMapper
 
 /**
@@ -11,13 +10,22 @@ import io.embrace.android.embracesdk.internal.envelope.session.OtelPayloadMapper
 interface ThreadBlockageService :
     SessionPartChangeListener,
     CrashTeardownHandler,
-    ProcessStateListener,
     OtelPayloadMapper {
 
     /**
      * Initializes capture of ANRs
      */
     fun startCapture()
+
+    /**
+     * Called when the app enters the foreground.
+     */
+    fun onForeground()
+
+    /**
+     * Called when the app enters the background.
+     */
+    fun onBackground()
 
     /**
      * Test hook not intended for production use. This simulates the target thread responding to messages

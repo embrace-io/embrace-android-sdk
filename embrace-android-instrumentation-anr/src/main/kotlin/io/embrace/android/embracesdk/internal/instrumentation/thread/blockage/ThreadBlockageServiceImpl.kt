@@ -1,6 +1,7 @@
 package io.embrace.android.embracesdk.internal.instrumentation.thread.blockage
 
 import io.embrace.android.embracesdk.internal.arch.InstrumentationArgs
+import io.embrace.android.embracesdk.internal.arch.lifecycle.ProcessChannels
 import io.embrace.android.embracesdk.internal.arch.schema.EmbType
 import io.embrace.android.embracesdk.internal.arch.state.ProcessState
 import io.embrace.android.embracesdk.internal.payload.Span
@@ -26,8 +27,8 @@ internal class ThreadBlockageServiceImpl(
 ) : ThreadBlockageService {
 
     private val clock = args.clock
-    private val appStateTracker = args.processStateTracker
     private val telemetryDestination = args.destination
+    private val eventBus = args.eventBus
     private var delayedBackgroundCheckTask: ScheduledFuture<*>? = null
 
     /**
@@ -35,7 +36,7 @@ internal class ThreadBlockageServiceImpl(
      * straight after construction.
      */
     fun scheduleStartupBackgroundCheck() {
-        if (appStateTracker.getAppState() == ProcessState.BACKGROUND) {
+        if (eventBus.currentState(ProcessChannels.ProcessState) == ProcessState.BACKGROUND) {
             scheduleDelayedBackgroundCheck()
         }
     }
@@ -119,7 +120,7 @@ internal class ThreadBlockageServiceImpl(
      * Called after a 10-second delay to handle slow startup scenarios.
      */
     private fun stopMonitoringIfStillInBackground() {
-        if (appStateTracker.getAppState() == ProcessState.BACKGROUND) {
+        if (eventBus.currentState(ProcessChannels.ProcessState) == ProcessState.BACKGROUND) {
             blockedThreadDetector.stop()
         }
         delayedBackgroundCheckTask = null

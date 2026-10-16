@@ -6,6 +6,7 @@ import io.embrace.android.embracesdk.internal.arch.datasource.DataSource
 import io.embrace.android.embracesdk.internal.arch.datasource.DataSourceFactory
 
 // retain a reference for use in bytecode instrumentation
+@Volatile
 internal var webViewUrlDataSource: WebViewUrlDataSource? = null
 
 class WebviewInstrumentationProvider : InstrumentationProvider {

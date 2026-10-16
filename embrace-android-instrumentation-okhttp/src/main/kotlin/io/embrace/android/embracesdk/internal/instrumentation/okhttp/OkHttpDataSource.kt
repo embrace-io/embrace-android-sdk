@@ -54,6 +54,12 @@ internal class OkHttpDataSource(
     private val networkCaptureDataSource: NetworkCaptureDataSource?
         get() = networkCaptureDataSourceProvider()
 
+    override fun onDataCaptureDisabled() {
+        if (okhttpDataSource === this) {
+            okhttpDataSource = null
+        }
+    }
+
     internal fun interceptRequest(chain: Interceptor.Chain, type: InterceptorType): Response? {
         val call = chain.call()
         val callData = activeCalls[call] ?: startRequestInstrumentation(chain.request(), call)

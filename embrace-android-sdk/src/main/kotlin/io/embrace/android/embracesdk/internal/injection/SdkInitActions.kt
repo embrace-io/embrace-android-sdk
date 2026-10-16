@@ -7,10 +7,10 @@ import io.embrace.android.embracesdk.core.BuildConfig
 import io.embrace.android.embracesdk.internal.arch.InstrumentationArgs
 import io.embrace.android.embracesdk.internal.arch.InstrumentationProvider
 import io.embrace.android.embracesdk.internal.arch.attrs.toEmbraceAttributeName
+import io.embrace.android.embracesdk.internal.arch.lifecycle.CrashTeardownOrder
 import io.embrace.android.embracesdk.internal.arch.lifecycle.ProcessChannels
 import io.embrace.android.embracesdk.internal.arch.state.ProcessState
 import io.embrace.android.embracesdk.internal.config.behavior.SensitiveKeysBehavior
-import io.embrace.android.embracesdk.internal.instrumentation.crash.jvm.JvmCrashDataSource
 import io.embrace.android.embracesdk.internal.instrumentation.crash.ndk.NativeCrashDataSource
 import io.embrace.android.embracesdk.internal.instrumentation.network.NetworkCaptureDataSource
 import io.embrace.android.embracesdk.internal.instrumentation.network.NetworkRequestDataSource
@@ -210,15 +210,15 @@ private fun ModuleGraph.initializeHucInstrumentation() {
  * Performs post-load instrumentation tasks such as setting listeners.
  */
 internal fun ModuleGraph.postLoadInstrumentation() = safeInit {
-    // setup crash teardown handlers
-    val registry = instrumentationModule.instrumentationRegistry
-    registry.findByType(JvmCrashDataSource::class)?.apply {
-        threadBlockageService?.let(::addCrashTeardownHandler)
-        addCrashTeardownHandler(logModule.logOrchestrator)
-        addCrashTeardownHandler(userSessionOrchestrationModule.sessionOrchestrator)
-        addCrashTeardownHandler(featureModule.crashMarker)
-        deliveryModule?.payloadStore?.let(::addCrashTeardownHandler)
+    with(coreModule.eventBus) {
+        val key = ProcessChannels.CrashTeardown
+        threadBlockageService?.let { addHandler(key, CrashTeardownOrder.STOP_CAPTURE, it::handleCrash) }
+        addHandler(key, CrashTeardownOrder.FLUSH, logModule.logOrchestrator::handleCrash)
+        addHandler(key, CrashTeardownOrder.END_SESSION, userSessionOrchestrationModule.sessionOrchestrator::handleCrash)
+        addHandler(key, CrashTeardownOrder.MARK, featureModule.crashMarker::handleCrash)
+        deliveryModule?.payloadStore?.let { addHandler(key, CrashTeardownOrder.PERSIST, it::handleCrash) }
     }
+    val registry = instrumentationModule.instrumentationRegistry
     workerThreadModule.backgroundWorker(Worker.Background.NonIoRegWorker).submit {
         with(essentialServiceModule.networkConnectivityService) {
             registry.findByType(NetworkStatusDataSource::class)?.let(::addNetworkConnectivityListener)

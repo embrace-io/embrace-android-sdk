@@ -1,6 +1,5 @@
 package io.embrace.android.embracesdk.internal.instrumentation.thread.blockage
 
-import io.embrace.android.embracesdk.internal.arch.CrashTeardownHandler
 import io.embrace.android.embracesdk.internal.arch.SessionPartChangeListener
 import io.embrace.android.embracesdk.internal.envelope.session.OtelPayloadMapper
 
@@ -9,13 +8,17 @@ import io.embrace.android.embracesdk.internal.envelope.session.OtelPayloadMapper
  */
 interface ThreadBlockageService :
     SessionPartChangeListener,
-    CrashTeardownHandler,
     OtelPayloadMapper {
 
     /**
      * Initializes capture of ANRs
      */
     fun startCapture()
+
+    /**
+     * Stops capture after the JVM crash identified by [crashId].
+     */
+    fun handleCrash(crashId: String)
 
     /**
      * Called when the app enters the foreground.

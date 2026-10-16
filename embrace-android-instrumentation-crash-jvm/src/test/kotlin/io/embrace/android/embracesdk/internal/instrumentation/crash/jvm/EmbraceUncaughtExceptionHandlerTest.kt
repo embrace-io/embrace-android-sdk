@@ -1,7 +1,6 @@
 package io.embrace.android.embracesdk.internal.instrumentation.crash.jvm
 
 import io.embrace.android.embracesdk.fakes.FakeInternalLogger
-import io.embrace.android.embracesdk.internal.arch.CrashTeardownHandler
 import io.embrace.android.embracesdk.internal.arch.datasource.TelemetryDestination
 import io.embrace.android.embracesdk.internal.arch.schema.SchemaType
 import io.embrace.android.embracesdk.internal.arch.schema.TelemetryAttributes
@@ -76,9 +75,6 @@ internal class EmbraceUncaughtExceptionHandlerTest {
         }
 
         override var telemetryModifier: ((TelemetryAttributes) -> SchemaType)? = null
-
-        override fun addCrashTeardownHandler(handler: CrashTeardownHandler) {
-        }
 
         override fun onDataCaptureEnabled() {
         }

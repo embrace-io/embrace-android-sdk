@@ -1,9 +1,9 @@
 package io.embrace.android.embracesdk.internal.instrumentation.crash.jvm
 
-import io.embrace.android.embracesdk.internal.arch.CrashTeardownHandler
 import io.embrace.android.embracesdk.internal.arch.InstrumentationArgs
 import io.embrace.android.embracesdk.internal.arch.datasource.DataSourceImpl
 import io.embrace.android.embracesdk.internal.arch.datasource.LogSeverity
+import io.embrace.android.embracesdk.internal.arch.lifecycle.ProcessChannels
 import io.embrace.android.embracesdk.internal.arch.limits.NoopLimitStrategy
 import io.embrace.android.embracesdk.internal.arch.schema.EmbType
 import io.embrace.android.embracesdk.internal.arch.schema.SchemaType
@@ -19,7 +19,6 @@ import io.embrace.android.embracesdk.semconv.EmbAndroidAttributes
 import io.opentelemetry.kotlin.semconv.ExceptionAttributes
 import io.opentelemetry.kotlin.semconv.LogAttributes
 import kotlinx.serialization.builtins.ListSerializer
-import java.util.concurrent.CopyOnWriteArrayList
 import java.util.concurrent.atomic.AtomicBoolean
 
 /**
@@ -36,7 +35,6 @@ class JvmCrashDataSourceImpl(
 
     private val serializer: PlatformSerializer = args.serializer
     private val mainCrashHandled = AtomicBoolean(false)
-    private val handlers: CopyOnWriteArrayList<CrashTeardownHandler> = CopyOnWriteArrayList()
 
     init {
         // we always register so that crash teardown can happen. We check whether telemetry
@@ -94,13 +92,9 @@ class JvmCrashDataSourceImpl(
                 addLog(schemaType, LogSeverity.ERROR, "")
 
                 // finally, notify other services that need to perform tear down
-                handlers.forEach { it.handleCrash(crashId) }
+                args.eventBus.emit(ProcessChannels.CrashTeardown, crashId)
             }
         }
-    }
-
-    override fun addCrashTeardownHandler(handler: CrashTeardownHandler) {
-        handlers.add(handler)
     }
 
     /**

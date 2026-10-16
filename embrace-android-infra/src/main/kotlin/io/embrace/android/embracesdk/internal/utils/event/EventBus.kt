@@ -124,14 +124,20 @@ class EventBus(private val internalErrorHandler: InternalErrorHandler) {
     }
 
     /**
+     * Returns the value most recently emitted against [key], or `null` if nothing has been emitted against it.
+     */
+    fun <E : Any> currentState(key: StateKey<E>): E? {
+        val current = retainedStateValues
+
+        @Suppress("UNCHECKED_CAST") // emitState is the only writer, and it pairs a key with a value of that key's own type
+        return (if (key.id < current.length()) current.get(key.id) else null) as E?
+    }
+
+    /**
      * Replays the value retained against [key], if there is one, to a newly registered [handler].
      */
     private fun <E : Any> replayState(key: StateKey<E>, handler: EventHandler<E>) {
-        val current = retainedStateValues
-        val retained = (if (key.id < current.length()) current.get(key.id) else null) ?: return
-
-        @Suppress("UNCHECKED_CAST") // emitState is the only writer, and it pairs a key with a value of that key's own type
-        val value = retained as E
+        val value = currentState(key) ?: return
         try {
             handler.onEvent(value)
         } catch (failure: Exception) {

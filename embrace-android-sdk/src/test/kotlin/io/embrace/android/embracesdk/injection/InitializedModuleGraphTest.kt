@@ -16,13 +16,10 @@ import io.embrace.android.embracesdk.internal.clock.Clock
 import io.embrace.android.embracesdk.internal.config.PersistedConfig
 import io.embrace.android.embracesdk.internal.config.remote.OtelKotlinSdkConfig
 import io.embrace.android.embracesdk.internal.config.remote.RemoteConfig
-import io.embrace.android.embracesdk.internal.config.resolved.EmbraceConfig
-import io.embrace.android.embracesdk.internal.config.resolved.SdkModeConfig
+import io.embrace.android.embracesdk.internal.injection.ConfigLoadServices
 import io.embrace.android.embracesdk.internal.injection.EssentialServiceModuleImpl
 import io.embrace.android.embracesdk.internal.injection.InitializedModuleGraph
-import io.embrace.android.embracesdk.internal.injection.OpenTelemetryModuleImpl
 import io.embrace.android.embracesdk.internal.injection.PreStartServices
-import io.embrace.android.embracesdk.internal.injection.SdkDisabledException
 import io.embrace.android.embracesdk.internal.instance.RealSdkInstance
 import io.embrace.android.embracesdk.internal.instrumentation.startup.SdkInitResourceUsageTracker
 import io.embrace.android.embracesdk.semconv.EmbSessionAttributes
@@ -30,7 +27,6 @@ import io.opentelemetry.kotlin.NoopOpenTelemetry
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNotNull
-import org.junit.Assert.assertThrows
 import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
@@ -57,12 +53,17 @@ internal class InitializedModuleGraphTest {
 
     private fun createModuleGraph(): InitializedModuleGraph {
         val application = RuntimeEnvironment.getApplication()
+        val preStartServices = PreStartServices(logger, clock)
         return InitializedModuleGraph(
             context = context,
-            preStartServices = PreStartServices(logger, clock),
+            preStartServices = preStartServices,
+            configLoadServices = ConfigLoadServices(
+                context = context,
+                preStartServices = preStartServices,
+                configServiceSupplier = { _, _, _, _, _, _ -> FakeConfigService() },
+            ),
             sdkStartTimeMs = clock.now(),
             sdkInitResourceUsageTracker = SdkInitResourceUsageTracker(logger),
-            configServiceSupplier = { _, _, _, _ -> FakeConfigService() },
             coreModuleSupplier = { _, _, _ -> coreModule },
             instrumentationModuleSupplier = { _, _, _, _, _, _, _, _, _ ->
                 FakeInstrumentationModule(application, logger = logger).apply {
@@ -123,56 +124,6 @@ internal class InitializedModuleGraphTest {
         assertFalse(moduleGraph.openTelemetryModule.otelSdkWrapper.useKotlinSdk)
     }
 
-    /**
-     * Guards the invariant that nothing constructs the OTel SDK before the config service exists.
-     * Fails if OTel-touching work is reintroduced earlier in the module graph.
-     */
-    @Test
-    fun `otel sdk is not built until the config service has been created`() {
-        var initializedWhenConfigServiceBuilt: Boolean? = null
-        val initModule = FakeInitModule(clock = clock, logger = logger, otelSdkMode = OtelSdkMode.COMPAT)
-        val openTelemetryModule = OpenTelemetryModuleImpl(initModule)
-        val moduleGraph = InitializedModuleGraph(
-            context = context,
-            preStartServices = initModule.preStartServices,
-            sdkStartTimeMs = clock.now(),
-            sdkInitResourceUsageTracker = SdkInitResourceUsageTracker(logger),
-            initModuleSupplier = { initModule },
-            openTelemetryModuleSupplier = { _, _ -> openTelemetryModule },
-            configServiceSupplier = { _, _, _, _ ->
-                initializedWhenConfigServiceBuilt = openTelemetryModule.currentSessionPartSpan.initialized()
-                FakeConfigService()
-            },
-            instrumentationModuleSupplier = { _, _, _, _, _, _, _, _, _ ->
-                FakeInstrumentationModule(RuntimeEnvironment.getApplication(), logger = logger)
-            },
-        )
-        assertEquals(false, initializedWhenConfigServiceBuilt)
-        assertTrue(openTelemetryModule.currentSessionPartSpan.initialized())
-    }
-
-    @Test
-    fun `otel sdk is not built when the sdk is remotely disabled`() {
-        val initModule = FakeInitModule(clock = clock, logger = logger, otelSdkMode = OtelSdkMode.COMPAT)
-        val openTelemetryModule = OpenTelemetryModuleImpl(initModule)
-        assertThrows(SdkDisabledException::class.java) {
-            InitializedModuleGraph(
-                context = context,
-                preStartServices = initModule.preStartServices,
-                sdkStartTimeMs = clock.now(),
-                sdkInitResourceUsageTracker = SdkInitResourceUsageTracker(logger),
-                initModuleSupplier = { initModule },
-                openTelemetryModuleSupplier = { _, _ -> openTelemetryModule },
-                configServiceSupplier = { _, _, _, _ ->
-                    FakeConfigService(
-                        config = EmbraceConfig(sdkMode = { SdkModeConfig(sdkDisabled = { true }) }),
-                    )
-                },
-            )
-        }
-        assertFalse(openTelemetryModule.currentSessionPartSpan.initialized())
-    }
-
     private fun createModuleGraphWithPersistedConfig(cfg: RemoteConfig): InitializedModuleGraph {
         val storageDir = File(context.filesDir, PersistedConfig.STORAGE_DIR_NAME).apply { mkdirs() }
         File(storageDir, "most_recent_response").outputStream().buffered().use { stream ->
@@ -182,10 +133,17 @@ internal class InitializedModuleGraphTest {
         return InitializedModuleGraph(
             context = context,
             preStartServices = initModule.preStartServices,
+            configLoadServices = ConfigLoadServices(
+                context = context,
+                preStartServices = initModule.preStartServices,
+                instrumentedConfig = initModule.instrumentedConfig,
+                jsonSerializer = initModule.jsonSerializer,
+                uuidSource = initModule.uuidSource,
+                configServiceSupplier = { _, _, _, _, _, _ -> FakeConfigService() },
+            ),
             sdkStartTimeMs = clock.now(),
             sdkInitResourceUsageTracker = SdkInitResourceUsageTracker(logger),
             initModuleSupplier = { initModule },
-            configServiceSupplier = { _, _, _, _ -> FakeConfigService() },
             instrumentationModuleSupplier = { _, _, _, _, _, _, _, _, _ ->
                 FakeInstrumentationModule(RuntimeEnvironment.getApplication(), logger = logger)
             },

@@ -30,6 +30,8 @@ import io.embrace.android.embracesdk.internal.delivery.debug.DeliveryTracer
 import io.embrace.android.embracesdk.internal.delivery.storage.PayloadStorageServiceImpl
 import io.embrace.android.embracesdk.internal.delivery.storage.StorageLocation
 import io.embrace.android.embracesdk.internal.delivery.storage.asFile
+import io.embrace.android.embracesdk.internal.injection.ConfigLoadServices
+import io.embrace.android.embracesdk.internal.injection.ConfigLoadServicesSupplier
 import io.embrace.android.embracesdk.internal.injection.CoreModule
 import io.embrace.android.embracesdk.internal.injection.CoreModuleImpl
 import io.embrace.android.embracesdk.internal.injection.DeliveryModuleImpl
@@ -183,25 +185,42 @@ internal class EmbraceSetupInterface(
         setupPlatformShadows()
     }
 
-    fun createModuleGraphSupplier(
-        instrumentedConfig: FakeInstrumentedConfig,
-        deliveryTracer: DeliveryTracer,
-    ): ModuleGraphSupplier {
+    fun createConfigLoadServicesSupplier(instrumentedConfig: FakeInstrumentedConfig): ConfigLoadServicesSupplier {
         fakeInitModule.instrumentedConfig = instrumentedConfig
-        return { context, preStartServices, sdkStartTimeMs, sdkInitResourceUsageTracker ->
-            createModuleGraph(context, preStartServices, sdkStartTimeMs, sdkInitResourceUsageTracker, deliveryTracer)
+        return { context, preStartServices ->
+            ConfigLoadServices(
+                context = context,
+                preStartServices = preStartServices,
+                instrumentedConfig = fakeInitModule.instrumentedConfig,
+                jsonSerializer = fakeInitModule.jsonSerializer,
+                okHttpClient = fakeInitModule.okHttpClient,
+                uuidSource = fakeInitModule.uuidSource,
+                workerThreadPoolSupplier = { workerThreadPool },
+                configServiceSupplier = { preStartServices, instrumentedConfig, serializer, okHttpClient, workerThreadPool, persistedConfig ->
+                    DecoratedConfigService(
+                        createConfigService(preStartServices, instrumentedConfig, serializer, okHttpClient, workerThreadPool, persistedConfig)
+                    )
+                },
+            )
         }
     }
+
+    fun createModuleGraphSupplier(deliveryTracer: DeliveryTracer): ModuleGraphSupplier =
+        { context, preStartServices, configLoadServices, sdkStartTimeMs, sdkInitResourceUsageTracker ->
+            createModuleGraph(context, preStartServices, configLoadServices, sdkStartTimeMs, sdkInitResourceUsageTracker, deliveryTracer)
+        }
 
     private fun createModuleGraph(
         context: Context,
         preStartServices: PreStartServices,
+        configLoadServices: ConfigLoadServices,
         sdkStartTimeMs: Long,
         sdkInitResourceUsageTracker: SdkInitResourceUsageTracker,
         deliveryTracer: DeliveryTracer,
     ): InitializedModuleGraph = InitializedModuleGraph(
         context = context,
         preStartServices = preStartServices,
+        configLoadServices = configLoadServices,
         sdkStartTimeMs = sdkStartTimeMs,
         sdkInitResourceUsageTracker = sdkInitResourceUsageTracker,
         initModuleSupplier = { fakeInitModule },
@@ -210,10 +229,6 @@ internal class EmbraceSetupInterface(
         coreModuleSupplier = { _, _, suppliedStore ->
             moduleGraphFailure?.let { throw it }
             CoreModuleImpl(fakeCoreModule.context, fakeInitModule, suppliedStore)
-        },
-        workerThreadPoolSupplier = { workerThreadPool },
-        configServiceSupplier = { initModule, preStartServices, workerThreadPool, persistedConfig ->
-            DecoratedConfigService(createConfigService(initModule, preStartServices, workerThreadPool, persistedConfig))
         },
         essentialServiceModuleSupplier = { initModule, configService, openTelemetryModule, coreModule, workerThreadPool, startupContext, _, _, sessionOrchestratorProvider ->
             EssentialServiceModuleImpl(

@@ -42,6 +42,9 @@ class FakeConfigService(
 ) : ConfigService {
     override fun isOnlyUsingOtelExporters(): Boolean = onlyUsingOtelExporters
 
+    var scheduleConfigRequestsCount: Int = 0
+
     override fun scheduleConfigRequests() {
+        scheduleConfigRequestsCount++
     }
 }

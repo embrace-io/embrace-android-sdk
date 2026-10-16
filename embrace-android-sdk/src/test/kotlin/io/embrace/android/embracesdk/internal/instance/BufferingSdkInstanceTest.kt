@@ -224,6 +224,25 @@ internal class BufferingSdkInstanceTest {
     }
 
     @Test
+    fun `calls are ignored after close`() {
+        instance.drainOTelConfig(target)
+        instance.recordCompletedSpan("buffered", 1, 2)
+        instance.trackExperiment("buffered", startedAt = 1L)
+        instance.close()
+
+        instance.setResourceAttribute("key", "value")
+        assertFalse(instance.recordCompletedSpan("span", 1, 2))
+        instance.trackExperiment("exp1", startedAt = 1L)
+        instance.applicationInitStart()
+        instance.drainCompletedSpans(target)
+        drainExperiments()
+
+        assertTrue(target.calls.isEmpty())
+        assertTrue(replayed.isEmpty())
+        assertNull(instance.applicationInitStartMs)
+    }
+
+    @Test
     fun `groups drain independently`() {
         instance.setResourceAttribute("key", "value")
         instance.recordCompletedSpan("span", 1, 2)

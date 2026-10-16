@@ -162,7 +162,7 @@ internal class SdkApiDispatcherTest {
 
     private class RecordSpanSdkApi(
         private val impl: (() -> Any?) -> Any?,
-    ) : InternalSdkApi by throwingSdkApi() {
+    ) : SdkInstance by throwingSdkApi() {
         @Suppress("UNCHECKED_CAST")
         override fun <T> recordSpan(
             name: String,
@@ -175,20 +175,20 @@ internal class SdkApiDispatcherTest {
     }
 }
 
-private fun throwingSdkApi(): InternalSdkApi = Proxy.newProxyInstance(
-    InternalSdkApi::class.java.classLoader,
-    arrayOf(InternalSdkApi::class.java),
+private fun throwingSdkApi(): SdkInstance = Proxy.newProxyInstance(
+    SdkInstance::class.java.classLoader,
+    arrayOf(SdkInstance::class.java),
 ) { _, method, _ ->
     throw IllegalStateException(method.name)
-} as InternalSdkApi
+} as SdkInstance
 
 /**
- * An [InternalSdkApi] that records each call as `name/argumentCount`, so that overloads are told apart. Internal
+ * An [SdkInstance] that records each call as `name/argumentCount`, so that overloads are told apart. Internal
  * interfaces are served by [NoopInternalInterfaceApi].
  */
-internal fun recordingSdkApi(calls: MutableList<String>, prefix: String = ""): InternalSdkApi = Proxy.newProxyInstance(
-    InternalSdkApi::class.java.classLoader,
-    arrayOf(InternalSdkApi::class.java),
+internal fun recordingSdkApi(calls: MutableList<String>, prefix: String = ""): SdkInstance = Proxy.newProxyInstance(
+    SdkInstance::class.java.classLoader,
+    arrayOf(SdkInstance::class.java),
 ) { _, method, _ ->
     calls += "$prefix${method.name}/${method.parameterCount}"
     when {
@@ -196,4 +196,4 @@ internal fun recordingSdkApi(calls: MutableList<String>, prefix: String = ""): I
         method.returnType == Boolean::class.javaPrimitiveType -> false
         else -> null
     }
-} as InternalSdkApi
+} as SdkInstance

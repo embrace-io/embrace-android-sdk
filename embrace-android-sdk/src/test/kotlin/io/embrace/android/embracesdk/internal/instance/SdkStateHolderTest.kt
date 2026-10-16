@@ -5,12 +5,17 @@ import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import io.embrace.android.embracesdk.fakes.FakeInternalLogger
 import io.embrace.android.embracesdk.fakes.FakeInternalTelemetryService
+import io.embrace.android.embracesdk.fakes.FakeTelemetryDestination
 import io.embrace.android.embracesdk.internal.EmbraceInternalApi
 import io.embrace.android.embracesdk.internal.NoopInternalInterfaceApi
+import io.embrace.android.embracesdk.internal.logging.BufferedInternalErrorHandler
+import io.embrace.android.embracesdk.internal.logging.InternalErrorType
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertSame
+import org.junit.Assert.assertTrue
 import org.junit.Test
 import org.junit.runner.RunWith
+import kotlin.concurrent.thread
 
 @RunWith(AndroidJUnit4::class)
 internal class SdkStateHolderTest {
@@ -18,7 +23,8 @@ internal class SdkStateHolderTest {
     private val context = ApplicationProvider.getApplicationContext<Context>()
     private val calls = mutableListOf<String>()
     private val logger = FakeInternalLogger(throwOnInternalError = false)
-    private val buffer = BufferingSdkInstance({ 0 }, logger)
+    private val bufferedErrorHandler = BufferedInternalErrorHandler({ 0 })
+    private val buffer = BufferingSdkInstance({ 0 }, logger, bufferedErrorHandler)
     private val failed = FakeInstance(calls, prefix = "failed:")
     private val disabled = FakeInstance(calls, prefix = "disabled:")
 
@@ -167,7 +173,7 @@ internal class SdkStateHolderTest {
         instance.startSucceeds = true
         holder.start(context)
         assertEquals(SdkState.DISABLED, holder.state)
-        assertEquals(listOf("instantiate", "start", "close", "failed:onPostStart"), calls)
+        assertEquals(listOf("instantiate", "start", "close", "failed:onPostStart", "failed:close"), calls)
     }
 
     @Test
@@ -307,6 +313,37 @@ internal class SdkStateHolderTest {
         assertEquals("post start failed", logger.internalErrorMessages.single().throwable?.message)
     }
 
+    @Test
+    fun `concurrent starts instantiate the instance once`() {
+        val holder = createHolder(FakeInstance(calls))
+        val threads = List(8) { thread { holder.start(context) } }
+        threads.forEach(Thread::join)
+        assertEquals(SdkState.STARTED, holder.state)
+        assertEquals(listOf("instantiate", "start", "onPostStart"), calls)
+    }
+
+    @Test
+    fun `internal error handler is closed when the sdk is disabled`() {
+        val holder = createHolder(FakeInstance(calls))
+        holder.start(context)
+        val destination = FakeTelemetryDestination()
+        bufferedErrorHandler.drainTo(destination, true)
+        holder.close()
+        bufferedErrorHandler.trackInternalError(InternalErrorType.PublicApiFail, IllegalStateException())
+        assertTrue(destination.logEvents.isEmpty())
+    }
+
+    @Test
+    fun `internal error handler is closed when the sdk fails to start`() {
+        val holder = createHolder(FakeInstance(calls, startSucceeds = false))
+        val destination = FakeTelemetryDestination()
+        bufferedErrorHandler.drainTo(destination, true)
+        holder.start(context)
+        assertEquals(SdkState.FAILED, holder.state)
+        bufferedErrorHandler.trackInternalError(InternalErrorType.PublicApiFail, IllegalStateException())
+        assertTrue(destination.logEvents.isEmpty())
+    }
+
     private fun createHolder(instance: SdkInstance) = createHolder { instance }
 
     private fun createHolder(instanceFactory: () -> SdkInstance?) = SdkStateHolder(
@@ -314,11 +351,12 @@ internal class SdkStateHolderTest {
             calls += "instantiate"
             instanceFactory()
         },
-        preStart = { buffer },
+        preStart = buffer,
         failed = { failed },
         disabled = { disabled },
         telemetryService = FakeInternalTelemetryService(),
         errorHandler = logger,
+        bufferedErrorHandler = bufferedErrorHandler,
     )
 
     private class FakeInstance(
@@ -351,7 +389,7 @@ internal class SdkStateHolderTest {
         }
 
         override fun close() {
-            calls += "close"
+            calls += "${prefix}close"
             check(!closeThrows) { "close failed" }
             started = false
         }

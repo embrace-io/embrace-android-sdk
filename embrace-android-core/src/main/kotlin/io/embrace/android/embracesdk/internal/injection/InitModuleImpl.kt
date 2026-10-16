@@ -11,17 +11,17 @@ import io.embrace.android.embracesdk.internal.logging.InternalLogger
 import io.embrace.android.embracesdk.internal.serialization.EmbraceSerializer
 import io.embrace.android.embracesdk.internal.serialization.PlatformSerializer
 import io.embrace.android.embracesdk.internal.telemetry.InternalTelemetryService
-import io.embrace.android.embracesdk.internal.utils.EmbTrace
 import io.embrace.android.embracesdk.internal.utils.UuidSource
 import io.embrace.android.embracesdk.internal.utils.UuidSourceImpl
 import okhttp3.OkHttpClient
-import okhttp3.Protocol
-import java.util.concurrent.TimeUnit
 
 class InitModuleImpl(
     preStartServices: PreStartServices = PreStartServices(),
     override val uuidSource: UuidSource = UuidSourceImpl(),
     override val startupClassifier: StartupClassifier = StartupClassifierImpl(),
+    override val instrumentedConfig: InstrumentedConfig = InstrumentedConfigImpl,
+    override val jsonSerializer: PlatformSerializer = EmbraceSerializer(),
+    override val okHttpClient: Lazy<OkHttpClient> = lazyOkHttpClient(),
 ) : InitModule {
 
     override val logger: InternalLogger = preStartServices.logger
@@ -29,26 +29,4 @@ class InitModuleImpl(
     override val systemInfo: SystemInfo = preStartServices.systemInfo
     override val telemetryService: InternalTelemetryService = preStartServices.telemetryService
     override val internalErrorHandler: BufferedInternalErrorHandler = preStartServices.internalErrorHandler
-
-    override val jsonSerializer: PlatformSerializer by lazy {
-        EmbraceSerializer()
-    }
-
-    override val instrumentedConfig: InstrumentedConfig = InstrumentedConfigImpl
-
-    override val okHttpClient: Lazy<OkHttpClient> = lazy(LazyThreadSafetyMode.SYNCHRONIZED) {
-        EmbTrace.trace("okhttp-client-init") {
-            OkHttpClient()
-                .newBuilder()
-                .protocols(listOf(Protocol.HTTP_2, Protocol.HTTP_1_1))
-                .connectTimeout(DEFAULT_CONNECTION_TIMEOUT_SECONDS, TimeUnit.SECONDS)
-                .readTimeout(DEFAULT_READ_TIMEOUT_SECONDS, TimeUnit.SECONDS)
-                .build()
-        }
-    }
-
-    companion object {
-        private const val DEFAULT_CONNECTION_TIMEOUT_SECONDS = 10L
-        private const val DEFAULT_READ_TIMEOUT_SECONDS = 60L
-    }
 }

@@ -22,7 +22,7 @@ internal data class KnownViolation(
 @RequiresApi(Build.VERSION_CODES.P)
 internal val KNOWN_VIOLATIONS: List<KnownViolation> = listOf(
     KnownViolation(
-        signature = "internal.injection.InitializedModuleGraph.<init>",
+        signature = "internal.injection.ConfigLoadServices.<init>",
         violation = DiskReadViolation::class,
         reason = "context.filesDir is passed to PersistedConfig as a ctor arg, and ContextImpl.getFilesDir " +
             "stats the directory on every call",
@@ -51,7 +51,7 @@ internal val KNOWN_VIOLATIONS: List<KnownViolation> = listOf(
         signature = "internal.prefs.SharedPrefsStore.getString",
         violation = DiskReadViolation::class,
         reason = "A binary cache miss makes DeviceIdProvider read the device ID out of SharedPreferences. " +
-            "Only fires when it beats InitializedModuleGraph.prewarmSharedPreferences and has to block in " +
+            "Only fires when it beats ConfigLoadServices.prewarmSharedPreferences and has to block in " +
             "awaitLoadedLocked",
     ),
     KnownViolation(

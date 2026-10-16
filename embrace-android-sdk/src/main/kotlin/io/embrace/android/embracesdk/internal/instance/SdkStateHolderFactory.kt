@@ -2,13 +2,16 @@ package io.embrace.android.embracesdk.internal.instance
 
 import android.content.Context
 import io.embrace.android.embracesdk.internal.api.delegate.PreStartOTelApi
+import io.embrace.android.embracesdk.internal.injection.ConfigLoadServices
+import io.embrace.android.embracesdk.internal.injection.ConfigLoadServicesSupplier
 import io.embrace.android.embracesdk.internal.injection.InitializedModuleGraph
 import io.embrace.android.embracesdk.internal.injection.ModuleGraphSupplier
 import io.embrace.android.embracesdk.internal.injection.PreStartServices
-import io.embrace.android.embracesdk.internal.injection.SdkDisabledException
 import io.embrace.android.embracesdk.internal.instrumentation.startup.SdkInitResourceUsageTracker
+import io.embrace.android.embracesdk.internal.utils.AndroidSectionRecorder
 import io.embrace.android.embracesdk.internal.utils.EmbTrace
 import io.embrace.android.embracesdk.internal.utils.Provider
+import io.embrace.android.embracesdk.internal.utils.SystemTrace
 
 /**
  * Assembles the [SdkStateHolder] that backs the public `Embrace` object. Production code and integration tests both
@@ -16,6 +19,7 @@ import io.embrace.android.embracesdk.internal.utils.Provider
  */
 internal fun createSdkStateHolder(
     preStartServices: PreStartServices = PreStartServices(),
+    configLoadServicesSupplier: ConfigLoadServicesSupplier? = null,
     moduleGraphSupplier: ModuleGraphSupplier? = null,
     sdkInitResourceUsageTrackerSupplier: Provider<SdkInitResourceUsageTracker>? = null,
     onModuleGraphCreated: ((InitializedModuleGraph) -> Unit)? = null,
@@ -30,18 +34,14 @@ internal fun createSdkStateHolder(
     return SdkStateHolder(
         instanceFactory = { context ->
             EmbTrace.trace(sectionName = "modules-init", recordDuration = true) {
-                try {
-                    createModuleGraph(
-                        context,
-                        preStartServices,
-                        buffer,
-                        moduleGraphSupplier,
-                        sdkInitResourceUsageTrackerSupplier,
-                    )
-                } catch (ignored: SdkDisabledException) {
-                    // do nothing - avoid instantiating SDK code any more than necessary.
-                    null
-                }
+                createModuleGraph(
+                    context,
+                    preStartServices,
+                    buffer,
+                    configLoadServicesSupplier,
+                    moduleGraphSupplier,
+                    sdkInitResourceUsageTrackerSupplier,
+                )
             }?.let { moduleGraph ->
                 onModuleGraphCreated?.invoke(moduleGraph)
                 RealSdkInstance(
@@ -58,23 +58,64 @@ internal fun createSdkStateHolder(
     )
 }
 
+/**
+ * Returns the [InitializedModuleGraph], or null if the SDK is disabled. A disabled SDK never
+ * constructs the module graph to reduce SDK init cost.
+ */
 private fun createModuleGraph(
     context: Context,
     preStartServices: PreStartServices,
     buffer: BufferingSdkInstance,
+    configLoadServicesSupplier: ConfigLoadServicesSupplier?,
     moduleGraphSupplier: ModuleGraphSupplier?,
     sdkInitResourceUsageTrackerSupplier: Provider<SdkInitResourceUsageTracker>?,
-): InitializedModuleGraph {
+): InitializedModuleGraph? {
+    SystemTrace.recorder = AndroidSectionRecorder
+
     // stamped before anything else so that the SDK init span covers all the work below,
     // and the perf samples cover the same interval as the span
     val sdkStartTimeMs = preStartServices.clock.now()
 
-    // drain before the OTel SDK is built
+    // drained before the config service is created, as it checks whether OTLP export has been configured
     buffer.drainOTelConfig(PreStartOTelApi(preStartServices.externalOtelConfig))
     val sdkInitResourceUsageTracker =
         (sdkInitResourceUsageTrackerSupplier?.invoke() ?: SdkInitResourceUsageTracker(preStartServices.logger)).apply {
             captureStart()
         }
-    return moduleGraphSupplier?.invoke(context, preStartServices, sdkStartTimeMs, sdkInitResourceUsageTracker)
-        ?: InitializedModuleGraph(context, preStartServices, sdkStartTimeMs, sdkInitResourceUsageTracker)
+
+    val configLoadServices = configLoadServicesSupplier?.invoke(context, preStartServices)
+        ?: ConfigLoadServices(context, preStartServices)
+
+    val moduleGraph = try {
+        configLoadServices.start()
+        val sdkDisabled = EmbTrace.trace("sdk-disable-check") {
+            configLoadServices.configService.config.sdkMode.sdkDisabled
+        }
+        if (sdkDisabled) {
+            null
+        } else {
+            moduleGraphSupplier?.invoke(
+                context,
+                preStartServices,
+                configLoadServices,
+                sdkStartTimeMs,
+                sdkInitResourceUsageTracker,
+            ) ?: InitializedModuleGraph(
+                context,
+                preStartServices,
+                configLoadServices,
+                sdkStartTimeMs,
+                sdkInitResourceUsageTracker,
+            )
+        }
+    } catch (exc: Throwable) {
+        configLoadServices.close()
+        throw exc
+    }
+
+    // the module graph owns the config load services' resources once constructed
+    if (moduleGraph == null) {
+        configLoadServices.close()
+    }
+    return moduleGraph
 }

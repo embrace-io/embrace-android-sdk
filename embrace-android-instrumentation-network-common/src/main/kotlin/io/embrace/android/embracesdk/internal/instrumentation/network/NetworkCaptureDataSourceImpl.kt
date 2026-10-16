@@ -161,7 +161,7 @@ class NetworkCaptureDataSourceImpl(
         val now = clock.now()
         val applicableRules = networkCaptureRules.filter { rule ->
             rule.method.contains(method) &&
-                rule.urlRegex.toRegex().containsMatchIn(url) &&
+                runCatching { rule.urlRegex.toRegex().containsMatchIn(url) }.getOrDefault(false) &&
                 rule.expiresIn > 0 &&
                 now < configDeliveredAt + TimeUnit.SECONDS.toMillis(rule.expiresIn)
         }.toMutableSet()

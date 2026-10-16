@@ -11,14 +11,14 @@ import java.net.URLStreamHandlerFactory
 internal class InstrumentedUrlStreamHandlerFactory(
     private val httpsHandler: URLStreamHandler,
     private val clock: Clock,
-    private val hucLiteDataSource: HucLiteDataSource,
+    private val dataSourceProvider: () -> HucLiteDataSource?,
 ) : URLStreamHandlerFactory {
     override fun createURLStreamHandler(protocol: String?): InstrumentedHttpsURLStreamHandler? {
         return if (protocol?.lowercase() == "https") {
             InstrumentedHttpsURLStreamHandler(
                 delegatedHandler = httpsHandler,
                 clock = clock,
-                hucLiteDataSource = hucLiteDataSource,
+                dataSourceProvider = dataSourceProvider,
             )
         } else {
             null

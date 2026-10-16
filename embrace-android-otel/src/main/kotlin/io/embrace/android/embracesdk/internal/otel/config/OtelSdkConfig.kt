@@ -36,7 +36,7 @@ class OtelSdkConfig(
     private val userIdProvider: () -> String? = { null },
     private val eventMetadataProvider: () -> Map<String, String> = { emptyMap() },
     private val processIdentifierProvider: () -> String = IdGenerator.Companion::generateLaunchInstanceId,
-    private val externalExportDispatcher: ExternalExportDispatcher = ExternalExportDispatcher(),
+    private val externalExportDispatcher: ExternalExportDispatcher,
     val externalConfig: ExternalOtelConfig = ExternalOtelConfig(),
 ) {
 

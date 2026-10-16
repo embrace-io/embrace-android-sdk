@@ -7,6 +7,7 @@ import io.embrace.android.embracesdk.internal.config.behavior.SensitiveKeysBehav
 import io.embrace.android.embracesdk.internal.config.resolved.BreadcrumbConfig
 import io.embrace.android.embracesdk.internal.otel.config.ExternalOtelConfig
 import io.embrace.android.embracesdk.internal.otel.config.OtelSdkConfig
+import io.embrace.android.embracesdk.internal.otel.export.ExternalExportDispatcher
 import io.embrace.android.embracesdk.internal.otel.impl.EmbClock
 import io.embrace.android.embracesdk.internal.otel.logs.LogSink
 import io.embrace.android.embracesdk.internal.otel.logs.LogSinkImpl
@@ -63,6 +64,7 @@ class OpenTelemetryModuleImpl(
             userIdProvider = { storedUserIdProvider?.invoke() },
             eventMetadataProvider = { storedEventMetadataProvider?.invoke() ?: emptyMap() },
             processIdentifierProvider = processIdentifierProvider,
+            externalExportDispatcher = ExternalExportDispatcher(initModule.logger),
             externalConfig = externalOtelConfig,
         )
     }

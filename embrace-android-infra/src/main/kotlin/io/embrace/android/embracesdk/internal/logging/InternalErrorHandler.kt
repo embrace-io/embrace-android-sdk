@@ -1,6 +1,6 @@
 package io.embrace.android.embracesdk.internal.logging
 
-interface InternalErrorHandler {
+fun interface InternalErrorHandler {
 
     /**
      * Tracks an internal error. This is sent to our own telemetry so should be used sparingly

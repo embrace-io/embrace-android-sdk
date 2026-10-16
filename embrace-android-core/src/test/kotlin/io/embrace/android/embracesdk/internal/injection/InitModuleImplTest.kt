@@ -36,6 +36,6 @@ internal class InitModuleImplTest {
         assertSame(systemInfo, initModule.systemInfo)
         assertSame(bootstrapServices.logger, initModule.logger)
         assertSame(bootstrapServices.telemetryService, initModule.telemetryService)
-        assertSame(bootstrapServices.internalErrorHandler, initModule.internalErrorHandler)
+        assertSame(bootstrapServices.errorHandler, initModule.errorHandler)
     }
 }

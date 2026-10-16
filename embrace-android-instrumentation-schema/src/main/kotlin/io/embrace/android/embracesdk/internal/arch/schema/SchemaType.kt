@@ -319,7 +319,7 @@ sealed class SchemaType(
         )
     }
 
-    class InternalError(throwable: Throwable) : SchemaType(
+    class SdkError(throwable: Throwable) : SchemaType(
         telemetryType = EmbType.System.InternalError,
         fixedObjectName = "internal-error",
     ) {

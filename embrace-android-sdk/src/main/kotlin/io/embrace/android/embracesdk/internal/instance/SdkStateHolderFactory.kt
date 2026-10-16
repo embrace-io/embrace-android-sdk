@@ -36,7 +36,7 @@ internal fun createSdkStateHolder(
     val buffer = BufferingSdkInstance(
         clock = clock::now,
         logger = logger,
-        internalErrorHandler = bootstrapServices.internalErrorHandler,
+        errorHandler = bootstrapServices.errorHandler,
     )
     return SdkStateHolder(
         instanceFactory = { context ->

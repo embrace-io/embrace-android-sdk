@@ -278,6 +278,7 @@ internal class SdkIntegrationTestRule(
         return createSdkStateHolder(
             preStartServices = setup.preStartServices,
             moduleGraphSupplier = moduleGraphSupplier,
+            sdkInitResourceUsageTrackerSupplier = setup::fakeSdkInitResourceUsageTracker,
             onModuleGraphCreated = { createdModuleGraph = it },
         )
     }

@@ -1,8 +1,6 @@
 package io.embrace.android.embracesdk.internal.instrumentation.crash
 
-import io.embrace.android.embracesdk.internal.arch.CrashTeardownHandler
-
-interface CrashFileMarker : CrashTeardownHandler {
+interface CrashFileMarker {
 
     /**
      * Creates a file in the cache directory to indicate that a crash has occurred.
@@ -26,4 +24,9 @@ interface CrashFileMarker : CrashTeardownHandler {
      * Returns true if the crash marker file in the cache directory exists and deletes it.
      */
     fun getAndCleanMarker(): Boolean
+
+    /**
+     * Marks that the JVM crash identified by [crashId] happened.
+     */
+    fun handleCrash(crashId: String)
 }

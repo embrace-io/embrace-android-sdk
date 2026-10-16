@@ -12,6 +12,8 @@ import io.embrace.android.embracesdk.fakes.TestPlatformSerializer
 import io.embrace.android.embracesdk.fakes.injection.FakeCoreModule
 import io.embrace.android.embracesdk.fakes.injection.FakeInitModule
 import io.embrace.android.embracesdk.internal.arch.InstrumentationRegistry
+import io.embrace.android.embracesdk.internal.arch.lifecycle.CrashTeardownOrder
+import io.embrace.android.embracesdk.internal.arch.lifecycle.ProcessChannels
 import io.embrace.android.embracesdk.internal.clock.Clock
 import io.embrace.android.embracesdk.internal.config.PersistedConfig
 import io.embrace.android.embracesdk.internal.config.remote.OtelKotlinSdkConfig
@@ -187,22 +189,18 @@ internal class InitializedModuleGraphTest {
     }
 
     @Test
-    fun `post load instrumentation hooks up listeners`() {
+    fun `post load instrumentation registers crash teardown on the bus`() {
         val moduleGraph = createModuleGraph()
-        val registry = moduleGraph.instrumentationModule.instrumentationRegistry
-        val dataSource = CrashHandlerDataSource()
-        registry.add { dataSource }
-
         RealSdkInstance(moduleGraph, clock).postLoadInstrumentation()
 
-        val handlers = dataSource.handlers
-        val expected = listOf(
-            moduleGraph.threadBlockageService,
-            moduleGraph.logModule.logOrchestrator,
-            moduleGraph.userSessionOrchestrationModule.sessionOrchestrator,
-            moduleGraph.featureModule.crashMarker,
-            moduleGraph.deliveryModule?.payloadStore,
-        )
-        assertEquals(expected, handlers)
+        val crashMarker = moduleGraph.featureModule.crashMarker
+        val markedAfterTier = mutableListOf<Boolean>()
+        with(coreModule.eventBus) {
+            addHandler(ProcessChannels.CrashTeardown, CrashTeardownOrder.END_SESSION) { markedAfterTier += crashMarker.isMarked() }
+            addHandler(ProcessChannels.CrashTeardown, CrashTeardownOrder.MARK) { markedAfterTier += crashMarker.isMarked() }
+            emit(ProcessChannels.CrashTeardown, "crash-id")
+        }
+
+        assertEquals(listOf(false, true), markedAfterTier)
     }
 }

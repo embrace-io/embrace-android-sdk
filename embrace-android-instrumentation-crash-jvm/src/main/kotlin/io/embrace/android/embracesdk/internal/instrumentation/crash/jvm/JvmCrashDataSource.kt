@@ -1,16 +1,10 @@
 package io.embrace.android.embracesdk.internal.instrumentation.crash.jvm
 
-import io.embrace.android.embracesdk.internal.arch.CrashTeardownHandler
 import io.embrace.android.embracesdk.internal.arch.datasource.DataSource
 import io.embrace.android.embracesdk.internal.arch.schema.SchemaType
 import io.embrace.android.embracesdk.internal.arch.schema.TelemetryAttributes
 
 interface JvmCrashDataSource : DataSource {
-
-    /**
-     * Registers a callback that will be invoked after a JVM crash.
-     */
-    fun addCrashTeardownHandler(handler: CrashTeardownHandler)
 
     /**
      * Logs an unhandled JVM throwable

@@ -39,13 +39,17 @@ class BufferedInternalErrorHandler(
     }
 
     fun drainTo(destination: TelemetryDestination, enabled: Boolean) {
-        this.enabled = enabled
         if (enabled) {
             this.destination = destination
             drain(destination)
         } else {
-            buffer.clear()
+            discard()
         }
+    }
+
+    fun discard() {
+        enabled = false
+        buffer.clear()
     }
 
     fun resetLimit() {

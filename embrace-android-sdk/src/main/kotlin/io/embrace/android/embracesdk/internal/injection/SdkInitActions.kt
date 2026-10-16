@@ -55,11 +55,6 @@ internal fun ModuleGraph.postInit() = EmbTrace.trace(sectionName = "post-init", 
     openTelemetryModule.logSink.registerLogStoredCallback {
         logModule.logOrchestrator.onLogsAdded()
     }
-    initModule.internalErrorHandler.drainTo(
-        essentialServiceModule.telemetryDestination,
-        configService.config.dataCaptureEvent.internalExceptionCaptureEnabled,
-    )
-
     essentialServiceModule.telemetryDestination.sessionUpdateAction =
         userSessionOrchestrationModule.sessionOrchestrator::onSessionDataUpdate
     essentialServiceModule.telemetryDestination.currentStatesProvider =

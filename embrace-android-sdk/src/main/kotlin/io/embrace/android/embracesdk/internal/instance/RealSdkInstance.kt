@@ -150,6 +150,12 @@ internal class RealSdkInstance(
         }
         // the buffered value was recorded first, so takes precedence
         buffer.applicationInitStartMs?.let { applicationInitStartMs = it }
+
+        // drained last so errors raised by the drains above are captured
+        buffer.drainInternalErrors(
+            moduleGraph.essentialServiceModule.telemetryDestination,
+            moduleGraph.configService.config.dataCaptureEvent.internalExceptionCaptureEnabled,
+        )
     }
 
     override fun start(context: Context) {

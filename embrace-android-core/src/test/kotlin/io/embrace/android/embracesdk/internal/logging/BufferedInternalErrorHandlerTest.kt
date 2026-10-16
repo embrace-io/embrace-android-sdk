@@ -56,6 +56,15 @@ internal class BufferedInternalErrorHandlerTest {
     }
 
     @Test
+    fun `discard drops buffered errors and stops capture`() {
+        handler.trackInternalError(InternalErrorType.DeliverySchedulingFail, IllegalStateException())
+        handler.discard()
+        handler.trackInternalError(InternalErrorType.DeliverySchedulingFail, IllegalStateException())
+        handler.drainTo(destination, true)
+        assertTrue(destination.logEvents.isEmpty())
+    }
+
+    @Test
     fun `limit applies to buffered and sent errors until reset`() {
         repeat(8) {
             handler.trackInternalError(InternalErrorType.DeliverySchedulingFail, IllegalStateException())

@@ -3,6 +3,7 @@ package io.embrace.android.embracesdk.internal.instance
 import android.content.Context
 import android.util.Log
 import io.embrace.android.embracesdk.internal.api.SdkApi
+import io.embrace.android.embracesdk.internal.logging.BufferedInternalErrorHandler
 import io.embrace.android.embracesdk.internal.logging.InternalErrorHandler
 import io.embrace.android.embracesdk.internal.logging.InternalErrorType
 import io.embrace.android.embracesdk.internal.telemetry.InternalTelemetryService
@@ -30,21 +31,21 @@ import java.io.Closeable
  * can be started again. Exceptions are reported to [errorHandler] rather than thrown.
  */
 internal class SdkStateHolder(
-    private val instanceFactory: (Context) -> SdkInstance?,
-    preStart: Provider<BufferingSdkInstance>,
+    instanceFactory: (Context) -> SdkInstance?,
+    preStart: BufferingSdkInstance,
     private val failed: Provider<SdkInstance>,
     private val disabled: Provider<SdkInstance>,
     telemetryService: InternalTelemetryService,
     private val errorHandler: InternalErrorHandler,
+    private val bufferedErrorHandler: BufferedInternalErrorHandler,
 ) : Closeable {
 
     private val lock = Any()
 
-    private var instance: SdkInstance? = null
+    // released once used, so the static `Embrace` object does not keep the module graph reachable through it
+    private var instanceFactory: ((Context) -> SdkInstance?)? = instanceFactory
 
-    private val preStart: BufferingSdkInstance = preStart()
-
-    val dispatcher: SdkApiDispatcher = SdkApiDispatcher(this.preStart, telemetryService, errorHandler)
+    val dispatcher: SdkApiDispatcher = SdkApiDispatcher(preStart, telemetryService, errorHandler)
 
     /**
      * The [SdkApi] that backs the public `Embrace` object. Calls that change SDK state are handled here and
@@ -65,33 +66,27 @@ internal class SdkStateHolder(
     fun start(context: Context) {
         EmbTrace.trace("sdk-start") {
             synchronized(lock) {
+                // guarantees the factory is invoked at most once
                 if (state != SdkState.NOT_STARTED) {
                     return
                 }
-                val started = try {
-                    val next = instanceFactory(context)?.also { instance = it }
-                    next != null && drainBufferedCalls(next) {
-                        next.start(context)
-                        next.isStarted.also { started ->
-                            if (started) {
-                                // swap before onPostStart invocation
-                                dispatcher.target = next
-                            }
-                        }
-                    }
+                val factory = checkNotNull(instanceFactory)
+                instanceFactory = null
+                val next = try {
+                    factory(context)
                 } catch (exc: Throwable) {
-                    Log.w("Embrace", "Failed to start the Embrace SDK", exc)
-                    errorHandler.trackInternalError(InternalErrorType.PublicApiFail, exc)
-                    false
+                    reportStartFailure(exc)
+                    null
                 }
-                if (started) {
+                if (next != null && tryStart(next, context)) {
                     state = SdkState.STARTED
+                    swapTarget(next)
                 } else {
-                    instance?.let { guard { it.close() } }
-                    val next = failed()
-                    dispatcher.target = next
-                    guard { drainBufferedCalls(next) { true } }
-                    state = SdkState.FAILED
+                    // tear down buffered instance
+                    dispatcher.target.close()
+                    next?.let { guard { it.close() } }
+                    transition(failed(), SdkState.FAILED)
+                    guard { bufferedErrorHandler.close() }
                 }
             }
         }
@@ -102,34 +97,47 @@ internal class SdkStateHolder(
      */
     override fun close() {
         synchronized(lock) {
-            when (state) {
-                SdkState.DISABLED -> return
-                SdkState.NOT_STARTED -> {
-                    val next = disabled()
-                    dispatcher.target = next
-                    guard { drainBufferedCalls(next) { true } }
-                    state = SdkState.DISABLED
-                }
-                SdkState.FAILED -> {
-                    dispatcher.target = disabled()
-                    state = SdkState.DISABLED
-                }
-                SdkState.STARTED -> {
-                    // disabling is terminal even if teardown fails partway
-                    guard { instance?.close() }
-                    dispatcher.target = disabled()
-                    state = SdkState.DISABLED
-                }
+            if (state == SdkState.DISABLED) {
+                return
             }
+            instanceFactory = null
+            // disabling is terminal even if teardown fails partway
+            guard { dispatcher.target.close() }
+            transition(disabled(), SdkState.DISABLED)
+            guard { bufferedErrorHandler.close() }
         }
     }
 
-    private inline fun drainBufferedCalls(next: SdkInstance, start: () -> Boolean): Boolean {
-        if (!start()) {
+    private fun tryStart(next: SdkInstance, context: Context): Boolean {
+        try {
+            next.start(context)
+            if (!next.isStarted) {
+                return false
+            }
+        } catch (exc: Throwable) {
+            reportStartFailure(exc)
             return false
         }
-        guard { next.onPostStart(preStart) }
         return true
+    }
+
+    private fun transition(next: SdkInstance, nextState: SdkState) {
+        swapTarget(next)
+        state = nextState
+    }
+
+    private fun swapTarget(next: SdkInstance) {
+        val previous = dispatcher.target
+        dispatcher.target = next
+        if (previous is BufferingSdkInstance) {
+            guard { next.onPostStart(previous) }
+            guard { previous.close() }
+        }
+    }
+
+    private fun reportStartFailure(exc: Throwable) {
+        Log.w("Embrace", "Failed to start the Embrace SDK", exc)
+        errorHandler.trackInternalError(InternalErrorType.PublicApiFail, exc)
     }
 
     inline fun guard(call: () -> Unit) {

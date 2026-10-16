@@ -1,5 +1,7 @@
 package io.embrace.android.embracesdk.internal.session.orchestrator
 
+import io.embrace.android.embracesdk.internal.arch.lifecycle.CrashTeardownOrder
+import io.embrace.android.embracesdk.internal.arch.lifecycle.ProcessChannels
 import io.embrace.android.embracesdk.internal.arch.schema.EmbType.System.Crash
 import io.embrace.android.embracesdk.internal.arch.schema.EmbType.System.NativeCrash
 import io.embrace.android.embracesdk.internal.arch.schema.EmbType.System.NetworkCapturedRequest
@@ -17,6 +19,7 @@ import io.embrace.android.embracesdk.internal.payload.LogPayload
 import io.embrace.android.embracesdk.internal.payload.SessionPartPayload
 import io.embrace.android.embracesdk.internal.session.id.SessionIdsSnapshot
 import io.embrace.android.embracesdk.internal.utils.UuidSource
+import io.embrace.android.embracesdk.internal.utils.event.EventBus
 
 internal class PayloadStoreImpl(
     private val intakeService: IntakeService,
@@ -24,7 +27,12 @@ internal class PayloadStoreImpl(
     private val processIdProvider: () -> String,
     private val uuidSource: UuidSource,
     private val sessionIdsProvider: () -> SessionIdsSnapshot,
+    eventBus: EventBus,
 ) : PayloadStore {
+
+    init {
+        eventBus.addHandler(ProcessChannels.CrashTeardown, CrashTeardownOrder.PERSIST) { intakeService.shutdown() }
+    }
 
     override fun storeSessionPartPayload(envelope: Envelope<SessionPartPayload>) {
         intakeService.take(
@@ -80,10 +88,6 @@ internal class PayloadStoreImpl(
                 payloadType = PayloadType.UNKNOWN,
             ),
         )
-    }
-
-    override fun handleCrash(crashId: String) {
-        intakeService.shutdown()
     }
 
     private fun findSupportedEnvelopeType(logs: List<Log>?): SupportedEnvelopeType {

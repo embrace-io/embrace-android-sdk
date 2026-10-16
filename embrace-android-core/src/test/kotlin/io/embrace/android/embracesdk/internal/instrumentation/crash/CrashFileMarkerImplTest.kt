@@ -1,7 +1,11 @@
 package io.embrace.android.embracesdk.internal.instrumentation.crash
 
+import io.embrace.android.embracesdk.fakes.FakeInternalLogger
+import io.embrace.android.embracesdk.internal.arch.lifecycle.ProcessChannels
+import io.embrace.android.embracesdk.internal.utils.event.EventBus
 import org.junit.After
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
@@ -32,12 +36,22 @@ internal class CrashFileMarkerImplTest {
      */
     private lateinit var crashMarker: CrashFileMarkerImpl
 
+    private lateinit var eventBus: EventBus
+
     @Before
     fun setUp() {
         testFile = File(tempFolder.root.path, CrashFileMarkerImpl.Companion.CRASH_MARKER_FILE_NAME)
         mockFile = testFile
         markerLazyFile = lazy { mockFile }
-        crashMarker = CrashFileMarkerImpl(markerLazyFile)
+        eventBus = EventBus(FakeInternalLogger())
+        crashMarker = CrashFileMarkerImpl(markerLazyFile, eventBus)
+    }
+
+    @Test
+    fun `a crash teardown marks the crash`() {
+        eventBus.emit(ProcessChannels.CrashTeardown, "crash-id")
+
+        assertTrue(crashMarker.isMarked())
     }
 
     @After

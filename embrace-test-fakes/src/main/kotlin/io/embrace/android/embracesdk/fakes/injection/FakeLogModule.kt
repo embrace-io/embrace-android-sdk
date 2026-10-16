@@ -35,10 +35,6 @@ private class FakeLogOrchestrator : LogOrchestrator {
         flushCalled = true
     }
 
-    override fun handleCrash(crashId: String) {
-        flush(true)
-    }
-
     override fun onLogsAdded() {
     }
 }

@@ -8,6 +8,7 @@ import io.embrace.android.embracesdk.fakes.FakeInternalLogger
 import io.embrace.android.embracesdk.fakes.FakeProcessInfo
 import io.embrace.android.embracesdk.fakes.FakeSpanToken
 import io.embrace.android.embracesdk.fakes.FakeTelemetryDestination
+import io.embrace.android.embracesdk.internal.arch.lifecycle.ProcessChannels
 import io.embrace.android.embracesdk.internal.arch.schema.ErrorCodeAttribute
 import io.embrace.android.embracesdk.internal.arch.schema.PrivateSpan
 import io.embrace.android.embracesdk.internal.arch.startup.MAX_COLD_STARTUP_INIT_GAP_MS
@@ -33,6 +34,7 @@ import io.embrace.android.embracesdk.internal.instrumentation.startup.toSdkInitD
 import io.embrace.android.embracesdk.internal.instrumentation.startup.ui.hasRenderEvent
 import io.embrace.android.embracesdk.internal.instrumentation.startup.ui.supportFrameCommitCallback
 import io.embrace.android.embracesdk.internal.utils.VersionChecker
+import io.embrace.android.embracesdk.internal.utils.event.EventBus
 import io.embrace.android.embracesdk.semconv.EmbAppAttributes
 import io.embrace.android.embracesdk.semconv.EmbSessionAttributes
 import io.embrace.android.embracesdk.semconv.EmbSessionAttributes.EmbStartupLaunchReasonValues
@@ -69,6 +71,7 @@ internal class AppStartupTraceEmitterTest {
     private lateinit var destination: FakeTelemetryDestination
     private lateinit var logger: FakeInternalLogger
     private lateinit var versionChecker: VersionChecker
+    private lateinit var eventBus: EventBus
 
     @Before
     fun setUp() {
@@ -77,6 +80,7 @@ internal class AppStartupTraceEmitterTest {
         startupService = StartupServiceImpl(destination) { APP_VERSION_STARTUP_COUNTER }
         clock.tick(100L)
         logger = FakeInternalLogger(false)
+        eventBus = EventBus(logger)
     }
 
     /**
@@ -184,7 +188,7 @@ internal class AppStartupTraceEmitterTest {
     @Test
     fun `abandon cold start after app init`() {
         simulateApi(VERSION_CODES.TIRAMISU)
-        val emitter = createTraceEmitter().apply {
+        createTraceEmitter().apply {
             initApp(
                 hasAppInitEvents = true,
                 isColdStart = true,
@@ -192,7 +196,7 @@ internal class AppStartupTraceEmitterTest {
             preActivityInit(false)
         }
         val abandonTime = clock.tick()
-        emitter.onBackground()
+        eventBus.emitState(ProcessChannels.ProcessState, ProcessState.BACKGROUND)
         val spanMap = destination.completedSpans().associateBy { it.name }
         with(checkNotNull(spanMap.coldAppStartupRootSpan())) {
             assertEquals(ErrorCodeAttribute.UserAbandon, errorCode)
@@ -208,7 +212,7 @@ internal class AppStartupTraceEmitterTest {
     @Test
     fun `abandon cold start after activity init`() {
         simulateApi(VERSION_CODES.TIRAMISU)
-        val emitter = createTraceEmitter().apply {
+        createTraceEmitter().apply {
             initApp(
                 hasAppInitEvents = true,
                 isColdStart = true,
@@ -220,7 +224,7 @@ internal class AppStartupTraceEmitterTest {
         }
 
         val abandonTime = clock.tick()
-        emitter.onBackground()
+        eventBus.emitState(ProcessChannels.ProcessState, ProcessState.BACKGROUND)
         with(destination.completedSpans().associateBy { it.name }) {
             with(checkNotNull(coldAppStartupRootSpan())) {
                 assertEquals(ErrorCodeAttribute.UserAbandon, errorCode)
@@ -237,7 +241,7 @@ internal class AppStartupTraceEmitterTest {
     @Test
     fun `abandon cold start after before manual end`() {
         simulateApi(VERSION_CODES.TIRAMISU)
-        val emitter = createTraceEmitter(manualEnd = true).apply {
+        createTraceEmitter(manualEnd = true).apply {
             initApp(
                 hasAppInitEvents = true,
                 isColdStart = true,
@@ -249,7 +253,7 @@ internal class AppStartupTraceEmitterTest {
             )
         }
         val abandonTime = clock.tick()
-        emitter.onBackground()
+        eventBus.emitState(ProcessChannels.ProcessState, ProcessState.BACKGROUND)
         with(destination.completedSpans().associateBy { it.name }) {
             with(checkNotNull(coldAppStartupRootSpan())) {
                 assertEquals(ErrorCodeAttribute.UserAbandon, errorCode)
@@ -267,7 +271,7 @@ internal class AppStartupTraceEmitterTest {
     @Test
     fun `abandon warm start after app init`() {
         simulateApi(VERSION_CODES.TIRAMISU)
-        val emitter = createTraceEmitter().apply {
+        createTraceEmitter().apply {
             initApp(
                 hasAppInitEvents = true,
                 isColdStart = false,
@@ -275,7 +279,7 @@ internal class AppStartupTraceEmitterTest {
             preActivityInit(false)
         }
         val abandonTime = clock.tick()
-        emitter.onBackground()
+        eventBus.emitState(ProcessChannels.ProcessState, ProcessState.BACKGROUND)
         val spanMap = destination.completedSpans().associateBy { it.name }
         with(checkNotNull(spanMap.warmAppStartupRootSpan())) {
             assertEquals(ErrorCodeAttribute.UserAbandon, errorCode)
@@ -286,7 +290,7 @@ internal class AppStartupTraceEmitterTest {
     @Test
     fun `abandon warm start after before manual end`() {
         simulateApi(VERSION_CODES.TIRAMISU)
-        val emitter = createTraceEmitter(manualEnd = true).apply {
+        createTraceEmitter(manualEnd = true).apply {
             initApp(
                 hasAppInitEvents = true,
                 isColdStart = false,
@@ -298,7 +302,7 @@ internal class AppStartupTraceEmitterTest {
             )
         }
         val abandonTime = clock.tick()
-        emitter.onBackground()
+        eventBus.emitState(ProcessChannels.ProcessState, ProcessState.BACKGROUND)
         with(destination.completedSpans().associateBy { it.name }) {
             with(checkNotNull(warmAppStartupRootSpan())) {
                 assertEquals(ErrorCodeAttribute.UserAbandon, errorCode)
@@ -658,6 +662,7 @@ internal class AppStartupTraceEmitterTest {
                 },
                 fakeLaunchReason = launchReason,
             ),
+            eventBus = eventBus,
         )
 
     private fun AppStartupTraceEmitter.simulateAppStartup(

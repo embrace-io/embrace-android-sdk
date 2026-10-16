@@ -17,11 +17,6 @@ interface SessionOrchestrator : ProcessStateListener {
     fun start()
 
     /**
-     * Ends the current session part with the JVM crash identified by [crashId].
-     */
-    fun handleCrash(crashId: String)
-
-    /**
      * Ends the current session (if any) manually. This has no effect on background activities.
      */
     fun endSessionWithManual()

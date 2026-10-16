@@ -12,7 +12,6 @@ class FakePayloadStore : PayloadStore {
     val storedAttachments = mutableListOf<Envelope<Pair<String, ByteArray>>>()
     val cachedSessionPartPayloads = mutableListOf<Envelope<SessionPartPayload>>()
     val cachedEmptyCrashPayloads = mutableListOf<Envelope<LogPayload>>()
-    var crashCount: Int = 0
 
     override fun storeSessionPartPayload(envelope: Envelope<SessionPartPayload>) {
         storedSessionPartPayloads.add(envelope)
@@ -32,9 +31,5 @@ class FakePayloadStore : PayloadStore {
 
     override fun cacheEmptyCrashEnvelope(envelope: Envelope<LogPayload>) {
         cachedEmptyCrashPayloads.add(envelope)
-    }
-
-    override fun handleCrash(crashId: String) {
-        crashCount++
     }
 }

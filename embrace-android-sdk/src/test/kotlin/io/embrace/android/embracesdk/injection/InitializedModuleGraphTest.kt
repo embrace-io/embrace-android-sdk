@@ -189,9 +189,8 @@ internal class InitializedModuleGraphTest {
     }
 
     @Test
-    fun `post load instrumentation registers crash teardown on the bus`() {
+    fun `modules register their crash teardown on the bus as they are built`() {
         val moduleGraph = createModuleGraph()
-        RealSdkInstance(moduleGraph, clock).postLoadInstrumentation()
 
         val crashMarker = moduleGraph.featureModule.crashMarker
         val markedAfterTier = mutableListOf<Boolean>()

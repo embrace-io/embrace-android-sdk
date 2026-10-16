@@ -44,6 +44,7 @@ import io.embrace.android.embracesdk.internal.session.id.SessionIdsSnapshot
 import io.embrace.android.embracesdk.internal.session.id.SessionPartTracker
 import io.embrace.android.embracesdk.internal.session.id.SessionPartTrackerImpl
 import io.embrace.android.embracesdk.internal.session.message.PayloadFactoryImpl
+import io.embrace.android.embracesdk.internal.utils.event.EventBus
 import io.embrace.android.embracesdk.internal.worker.BackgroundWorker
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
@@ -61,6 +62,7 @@ internal class SessionOrchestratorListenerTest {
     private lateinit var payloadCollator: FakePayloadMessageCollator
     private lateinit var logEnvelopeSource: FakeLogEnvelopeSource
     private lateinit var appStateTracker: FakeProcessStateTracker
+    private lateinit var eventBus: EventBus
     private lateinit var clock: FakeClock
     private lateinit var configService: FakeConfigService
     private lateinit var userService: FakeUserService
@@ -339,6 +341,7 @@ internal class SessionOrchestratorListenerTest {
     ) {
         store = FakePayloadStore()
         appStateTracker = FakeProcessStateTracker(state)
+        eventBus = EventBus(FakeInternalLogger())
         currentSessionPartSpan = FakeCurrentSessionPartSpan(clock).apply { initializeService(clock.now()) }
         destination = FakeTelemetryDestination()
         payloadCollator = FakePayloadMessageCollator(currentSessionPartSpan = currentSessionPartSpan)
@@ -408,6 +411,7 @@ internal class SessionOrchestratorListenerTest {
             TestUuidSource(),
             startupClassifier,
             null,
+            eventBus,
         ).apply {
             attach()
             start()

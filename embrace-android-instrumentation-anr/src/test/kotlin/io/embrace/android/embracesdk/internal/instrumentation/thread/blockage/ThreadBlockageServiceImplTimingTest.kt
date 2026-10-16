@@ -43,7 +43,7 @@ internal class ThreadBlockageServiceImplTimingTest {
             watchdogExecutorService.runCurrentlyBlocked()
             watchdogExecutorService.runCurrentlyBlocked()
             assertEquals(1, watchdogExecutorService.scheduledTasksCount())
-            service.onForeground()
+            setProcessState(ProcessState.FOREGROUND)
             watchdogExecutorService.runCurrentlyBlocked()
             watchdogExecutorService.runCurrentlyBlocked()
             assertEquals(1, watchdogExecutorService.scheduledTasksCount())
@@ -85,7 +85,6 @@ internal class ThreadBlockageServiceImplTimingTest {
 
             // Transition to foreground before the 10-second delay
             setProcessState(ProcessState.FOREGROUND)
-            service.onForeground()
             watchdogExecutorService.runCurrentlyBlocked()
 
             // Advance time by 5 more seconds to reach the 10-second mark

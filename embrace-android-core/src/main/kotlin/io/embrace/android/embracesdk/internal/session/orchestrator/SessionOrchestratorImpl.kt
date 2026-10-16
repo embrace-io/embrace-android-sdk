@@ -7,6 +7,8 @@ import io.embrace.android.embracesdk.SessionStateEvent.UserSessionActive
 import io.embrace.android.embracesdk.SessionStateEvent.UserSessionEnded
 import io.embrace.android.embracesdk.internal.arch.InstrumentationRegistry
 import io.embrace.android.embracesdk.internal.arch.datasource.TelemetryDestination
+import io.embrace.android.embracesdk.internal.arch.lifecycle.CrashTeardownOrder
+import io.embrace.android.embracesdk.internal.arch.lifecycle.ProcessChannels
 import io.embrace.android.embracesdk.internal.arch.startup.StartupClassifier
 import io.embrace.android.embracesdk.internal.arch.startup.StartupType
 import io.embrace.android.embracesdk.internal.arch.state.ProcessState
@@ -33,6 +35,7 @@ import io.embrace.android.embracesdk.internal.store.OrdinalStore
 import io.embrace.android.embracesdk.internal.utils.EmbTrace
 import io.embrace.android.embracesdk.internal.utils.Provider
 import io.embrace.android.embracesdk.internal.utils.UuidSource
+import io.embrace.android.embracesdk.internal.utils.event.EventBus
 import io.embrace.android.embracesdk.internal.worker.BackgroundWorker
 import io.embrace.android.embracesdk.semconv.EmbSessionAttributes
 import io.embrace.android.embracesdk.semconv.EmbSessionAttributes.EmbUserSessionTerminationReasonValues
@@ -61,6 +64,7 @@ internal class SessionOrchestratorImpl(
     private val uuidSource: UuidSource,
     private val startupClassifier: StartupClassifier,
     private val sessionPartWriter: SessionPartWriter?,
+    private val eventBus: EventBus,
 ) : SessionOrchestrator {
 
     /**
@@ -96,6 +100,7 @@ internal class SessionOrchestratorImpl(
         processStateTracker.addListener(this)
         sessionTracker.addSessionPartEndListener(instrumentationRegistry)
         sessionTracker.addSessionPartChangeListener(instrumentationRegistry)
+        eventBus.addHandler(ProcessChannels.CrashTeardown, CrashTeardownOrder.END_SESSION, ::handleCrash)
     }
 
     override fun start() {
@@ -273,7 +278,7 @@ internal class SessionOrchestratorImpl(
         )
     }
 
-    override fun handleCrash(crashId: String) {
+    private fun handleCrash(crashId: String) {
         val timestamp = clock.now()
         transitionState(
             transitionType = TransitionType.CRASH,

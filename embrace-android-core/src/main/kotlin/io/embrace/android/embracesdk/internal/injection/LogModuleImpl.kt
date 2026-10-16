@@ -12,6 +12,7 @@ import io.embrace.android.embracesdk.internal.worker.Worker
 
 class LogModuleImpl(
     initModule: InitModule,
+    coreModule: CoreModule,
     openTelemetryModule: OpenTelemetryModule,
     essentialServiceModule: EssentialServiceModule,
     configService: ConfigService,
@@ -30,6 +31,7 @@ class LogModuleImpl(
         openTelemetryModule.logSink,
         deliveryModule?.payloadStore,
         payloadSourceModule.logEnvelopeSource,
+        coreModule.eventBus,
     )
 
     override val attachmentService: AttachmentService = AttachmentService()

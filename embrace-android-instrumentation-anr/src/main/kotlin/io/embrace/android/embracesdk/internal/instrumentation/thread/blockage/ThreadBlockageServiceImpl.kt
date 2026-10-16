@@ -1,6 +1,7 @@
 package io.embrace.android.embracesdk.internal.instrumentation.thread.blockage
 
 import io.embrace.android.embracesdk.internal.arch.InstrumentationArgs
+import io.embrace.android.embracesdk.internal.arch.lifecycle.CrashTeardownOrder
 import io.embrace.android.embracesdk.internal.arch.lifecycle.ProcessChannels
 import io.embrace.android.embracesdk.internal.arch.schema.EmbType
 import io.embrace.android.embracesdk.internal.arch.state.ProcessState
@@ -39,6 +40,15 @@ internal class ThreadBlockageServiceImpl(
         if (eventBus.currentState(ProcessChannels.ProcessState) == ProcessState.BACKGROUND) {
             scheduleDelayedBackgroundCheck()
         }
+        eventBus.addStateHandler(ProcessChannels.ProcessState, replay = false) { state ->
+            when (state) {
+                ProcessState.FOREGROUND -> onForeground()
+                ProcessState.BACKGROUND -> onBackground()
+            }
+        }
+        eventBus.addHandler(ProcessChannels.CrashTeardown, CrashTeardownOrder.STOP_CAPTURE) {
+            blockedThreadDetector.stop()
+        }
     }
 
     override fun startCapture() {
@@ -49,10 +59,6 @@ internal class ThreadBlockageServiceImpl(
         blockedThreadDetector.onTargetThreadProcessedMessage(clock.now())
     }
 
-    override fun handleCrash(crashId: String) {
-        blockedThreadDetector.stop()
-    }
-
     override fun onPostSessionChange() {
         stacktraceSampler.onPostSessionChange()
     }
@@ -61,7 +67,7 @@ internal class ThreadBlockageServiceImpl(
      * When app goes to foreground, we need to monitor the target thread again to
      * capture stacktrace samples.
      */
-    override fun onForeground() {
+    private fun onForeground() {
         // Cancel any pending delayed background check since we're now in foreground
         cancelDelayedBackgroundCheck()
         blockedThreadDetector.start()
@@ -72,7 +78,7 @@ internal class ThreadBlockageServiceImpl(
      * because we don't need to sample stacktraces on background and we don't
      * want to affect customer's app performance.
      */
-    override fun onBackground() {
+    private fun onBackground() {
         blockedThreadDetector.stop()
     }
 

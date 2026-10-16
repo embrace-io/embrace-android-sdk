@@ -1,5 +1,8 @@
 package io.embrace.android.embracesdk.internal.instrumentation.crash
 
+import io.embrace.android.embracesdk.internal.arch.lifecycle.CrashTeardownOrder
+import io.embrace.android.embracesdk.internal.arch.lifecycle.ProcessChannels
+import io.embrace.android.embracesdk.internal.utils.event.EventBus
 import java.io.File
 
 /**
@@ -8,9 +11,14 @@ import java.io.File
  */
 class CrashFileMarkerImpl(
     private val markerFile: Lazy<File>,
+    eventBus: EventBus,
 ) : CrashFileMarker {
 
     private val lock = Any()
+
+    init {
+        eventBus.addHandler(ProcessChannels.CrashTeardown, CrashTeardownOrder.MARK) { mark() }
+    }
 
     override fun mark() {
         synchronized(lock) {
@@ -44,10 +52,6 @@ class CrashFileMarkerImpl(
             removeMark()
             return isMarked
         }
-    }
-
-    override fun handleCrash(crashId: String) {
-        mark()
     }
 
     private fun createMarkerFile(): Boolean {

@@ -56,6 +56,7 @@ typealias EssentialServiceModuleSupplier = (
 ) -> EssentialServiceModule
 
 typealias FeatureModuleSupplier = (
+    coreModule: CoreModule,
     instrumentationModule: InstrumentationModule,
     storageService: StorageService,
 ) -> FeatureModule
@@ -78,6 +79,7 @@ typealias InstrumentationModuleSupplier = (
 
 typealias LogModuleSupplier = (
     initModule: InitModule,
+    coreModule: CoreModule,
     openTelemetryModule: OpenTelemetryModule,
     essentialServiceModule: EssentialServiceModule,
     configService: ConfigService,

@@ -276,10 +276,11 @@ internal class EmbraceSetupInterface(
                 override val instrumentationArgs: InstrumentationArgs = impl.instrumentationArgs
             }
         },
-        logModuleSupplier = { initModule, openTelemetryModule, essentialServiceModule, configService, deliveryModule, workerThreadModule, payloadSourceModule ->
+        logModuleSupplier = { initModule, coreModule, openTelemetryModule, essentialServiceModule, configService, deliveryModule, workerThreadModule, payloadSourceModule ->
             val logWorker = BackgroundWorker(logOrchestratorExecutor)
             LogModuleImpl(
                 initModule,
+                coreModule,
                 openTelemetryModule,
                 essentialServiceModule,
                 configService,
@@ -291,7 +292,7 @@ internal class EmbraceSetupInterface(
             )
         },
         dataCaptureServiceModuleSupplier = simulatedVersionChecker?.let { versionChecker ->
-            { clock, logger, destination, configService, appVersionStartupCounterProvider, startupClassifier, _, activityManager, backgroundWorker ->
+            { clock, logger, destination, configService, appVersionStartupCounterProvider, startupClassifier, _, activityManager, backgroundWorker, eventBus ->
                 DataCaptureServiceModuleImpl(
                     clock = clock,
                     logger = logger,
@@ -302,6 +303,7 @@ internal class EmbraceSetupInterface(
                     versionChecker = versionChecker,
                     activityManager = activityManager,
                     backgroundWorker = backgroundWorker,
+                    eventBus = eventBus,
                 )
             }
         },

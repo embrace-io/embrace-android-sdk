@@ -2,6 +2,8 @@ package io.embrace.android.embracesdk.internal.instrumentation.thread.blockage
 
 import io.embrace.android.embracesdk.concurrency.SingleThreadTestScheduledExecutor
 import io.embrace.android.embracesdk.fakes.FakeConfigService
+import io.embrace.android.embracesdk.internal.arch.lifecycle.ProcessChannels
+import io.embrace.android.embracesdk.internal.arch.state.ProcessState
 import io.embrace.android.embracesdk.internal.clock.nanosToMillis
 import io.embrace.android.embracesdk.internal.instrumentation.thread.blockage.ThreadBlockageEvent.BLOCKED
 import io.embrace.android.embracesdk.internal.instrumentation.thread.blockage.ThreadBlockageEvent.BLOCKED_INTERVAL
@@ -171,10 +173,10 @@ internal class ThreadBlockageServiceImplTest {
         val endTs = 15023000L
         with(rule) {
             clock.setCurrentTime(startTs)
-            service.onForeground()
-            service.onBackground()
+            setProcessState(ProcessState.FOREGROUND)
+            setProcessState(ProcessState.BACKGROUND)
             clock.setCurrentTime(endTs)
-            service.onForeground()
+            setProcessState(ProcessState.FOREGROUND)
             // Since Looper is a mock, we execute this operation to
             // ensure onMainThreadUnblocked runs and lastTargetThreadResponseMs gets updated
             simulateMainThreadRecovery()
@@ -194,10 +196,10 @@ internal class ThreadBlockageServiceImplTest {
 
         with(rule) {
             clock.setCurrentTime(startTs)
-            service.onForeground()
-            service.onBackground()
+            setProcessState(ProcessState.FOREGROUND)
+            setProcessState(ProcessState.BACKGROUND)
             clock.setCurrentTime(endTs)
-            service.onForeground()
+            setProcessState(ProcessState.FOREGROUND)
             simulateMainThreadRecovery()
             val intervals = service.snapshotSpans()
             assertEquals(0, intervals.size)
@@ -299,15 +301,15 @@ internal class ThreadBlockageServiceImplTest {
     }
 
     @Test
-    fun `test handleCrash stops tracking but samples can still be retrieved`() {
+    fun `a crash teardown stops tracking but samples can still be retrieved`() {
         with(rule) {
             clock.setCurrentTime(14000000L)
             watchdogExecutorService.submit {
-                service.onForeground()
+                setProcessState(ProcessState.FOREGROUND)
                 repeat(5) {
                     createThreadBlockageInterval()
                 }
-                service.handleCrash("")
+                args.eventBus.emit(ProcessChannels.CrashTeardown, "")
             }.get(1L, TimeUnit.SECONDS)
             val intervals = service.snapshotSpans()
             assertEquals(5, intervals.size)

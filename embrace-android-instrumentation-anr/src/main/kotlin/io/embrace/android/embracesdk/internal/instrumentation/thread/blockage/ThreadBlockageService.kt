@@ -16,21 +16,6 @@ interface ThreadBlockageService :
     fun startCapture()
 
     /**
-     * Stops capture after the JVM crash identified by [crashId].
-     */
-    fun handleCrash(crashId: String)
-
-    /**
-     * Called when the app enters the foreground.
-     */
-    fun onForeground()
-
-    /**
-     * Called when the app enters the background.
-     */
-    fun onBackground()
-
-    /**
      * Test hook not intended for production use. This simulates the target thread responding to messages
      * again (and therefore ending an ANR).
      */

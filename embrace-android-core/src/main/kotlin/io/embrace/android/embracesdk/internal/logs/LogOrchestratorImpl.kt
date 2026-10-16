@@ -1,9 +1,12 @@
 package io.embrace.android.embracesdk.internal.logs
 
+import io.embrace.android.embracesdk.internal.arch.lifecycle.CrashTeardownOrder
+import io.embrace.android.embracesdk.internal.arch.lifecycle.ProcessChannels
 import io.embrace.android.embracesdk.internal.clock.Clock
 import io.embrace.android.embracesdk.internal.envelope.log.LogEnvelopeSource
 import io.embrace.android.embracesdk.internal.otel.logs.LogSink
 import io.embrace.android.embracesdk.internal.session.orchestrator.PayloadStore
+import io.embrace.android.embracesdk.internal.utils.event.EventBus
 import io.embrace.android.embracesdk.internal.worker.BackgroundWorker
 import java.lang.Long.min
 import java.util.concurrent.ScheduledFuture
@@ -16,6 +19,7 @@ internal class LogOrchestratorImpl(
     private val sink: LogSink,
     private val payloadStore: PayloadStore?,
     private val logEnvelopeSource: LogEnvelopeSource,
+    eventBus: EventBus,
 ) : LogOrchestrator {
 
     @Volatile
@@ -27,6 +31,10 @@ internal class LogOrchestratorImpl(
     @Volatile
     private var scheduledCheckFuture: ScheduledFuture<*>? = null
 
+    init {
+        eventBus.addHandler(ProcessChannels.CrashTeardown, CrashTeardownOrder.FLUSH) { flush(true) }
+    }
+
     override fun flush(saveOnly: Boolean) {
         scheduledCheckFuture?.cancel(false)
         scheduledCheckFuture = null
@@ -36,10 +44,6 @@ internal class LogOrchestratorImpl(
         if (!envelope.data.logs.isNullOrEmpty()) {
             payloadStore?.storeLogPayload(envelope)
         }
-    }
-
-    override fun handleCrash(crashId: String) {
-        flush(true)
     }
 
     override fun onLogsAdded() {

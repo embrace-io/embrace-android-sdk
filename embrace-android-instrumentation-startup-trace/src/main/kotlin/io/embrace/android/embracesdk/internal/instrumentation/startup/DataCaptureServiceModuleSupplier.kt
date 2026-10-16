@@ -7,6 +7,7 @@ import io.embrace.android.embracesdk.internal.clock.Clock
 import io.embrace.android.embracesdk.internal.config.ConfigService
 import io.embrace.android.embracesdk.internal.logging.InternalLogger
 import io.embrace.android.embracesdk.internal.utils.VersionChecker
+import io.embrace.android.embracesdk.internal.utils.event.EventBus
 import io.embrace.android.embracesdk.internal.worker.BackgroundWorker
 
 /**
@@ -23,4 +24,5 @@ typealias DataCaptureServiceModuleSupplier = (
     versionChecker: VersionChecker,
     activityManager: ActivityManager?,
     backgroundWorker: BackgroundWorker?,
+    eventBus: EventBus,
 ) -> DataCaptureServiceModule

@@ -4,9 +4,11 @@ import android.os.Build.VERSION_CODES
 import io.embrace.android.embracesdk.internal.arch.datasource.SpanEvent
 import io.embrace.android.embracesdk.internal.arch.datasource.SpanToken
 import io.embrace.android.embracesdk.internal.arch.datasource.TelemetryDestination
+import io.embrace.android.embracesdk.internal.arch.lifecycle.ProcessChannels
 import io.embrace.android.embracesdk.internal.arch.schema.ErrorCodeAttribute
 import io.embrace.android.embracesdk.internal.arch.startup.StartupClassifier
 import io.embrace.android.embracesdk.internal.arch.startup.StartupType
+import io.embrace.android.embracesdk.internal.arch.state.ProcessState
 import io.embrace.android.embracesdk.internal.clock.Clock
 import io.embrace.android.embracesdk.internal.instrumentation.startup.ui.hasRenderEvent
 import io.embrace.android.embracesdk.internal.instrumentation.startup.ui.supportFrameCommitCallback
@@ -15,6 +17,7 @@ import io.embrace.android.embracesdk.internal.logging.InternalLogger
 import io.embrace.android.embracesdk.internal.utils.EmbTrace
 import io.embrace.android.embracesdk.internal.utils.Provider
 import io.embrace.android.embracesdk.internal.utils.VersionChecker
+import io.embrace.android.embracesdk.internal.utils.event.EventBus
 import io.embrace.android.embracesdk.semconv.EmbAppAttributes
 import io.embrace.android.embracesdk.semconv.EmbSessionAttributes
 import java.util.concurrent.ConcurrentHashMap
@@ -51,6 +54,7 @@ internal class AppStartupTraceEmitter(
     private val startupClassifier: StartupClassifier,
     manualEnd: Boolean,
     private val processInfo: ProcessInfo,
+    eventBus: EventBus,
 ) : AppStartupDataCollector {
     private val additionalTrackedIntervals = ConcurrentLinkedQueue<TrackedInterval>()
     private val customAttributes: MutableMap<String, String> = ConcurrentHashMap()
@@ -103,6 +107,14 @@ internal class AppStartupTraceEmitter(
 
     private val recordColdStart: Boolean
         get() = startupClassifier.startupType() == StartupType.COLD
+
+    init {
+        eventBus.addStateHandler(ProcessChannels.ProcessState, replay = false) { state ->
+            if (state == ProcessState.BACKGROUND) {
+                dataCollectionComplete(clock.now(), false)
+            }
+        }
+    }
 
     override fun applicationInitStart(timestampMs: Long?) {
         applicationInitStartMs = timestampMs ?: nowMs()
@@ -203,13 +215,6 @@ internal class AppStartupTraceEmitter(
 
     override fun addAttribute(key: String, value: String) {
         customAttributes[key] = value
-    }
-
-    override fun onBackground() {
-        dataCollectionComplete(clock.now(), false)
-    }
-
-    override fun onForeground() {
     }
 
     /**

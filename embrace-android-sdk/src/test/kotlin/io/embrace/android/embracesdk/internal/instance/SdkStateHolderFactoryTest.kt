@@ -5,7 +5,6 @@ import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import io.embrace.android.embracesdk.fakes.FakeInternalLogger
 import io.embrace.android.embracesdk.fakes.FakeSpanExporter
-import io.embrace.android.embracesdk.internal.injection.InitializedModuleGraph
 import io.embrace.android.embracesdk.internal.injection.PreStartServices
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
@@ -20,17 +19,10 @@ internal class SdkStateHolderFactoryTest {
     private val preStartServices = PreStartServices(logger = FakeInternalLogger(throwOnInternalError = false))
 
     @Test
-    fun `otel config set before start is applied to bootstrap services`() {
+    fun `otel config set before start is applied to pre-start services`() {
         val holder = createSdkStateHolder(
             preStartServices = preStartServices,
-            moduleGraphSupplier = { context, preStartServices, buffer ->
-                InitializedModuleGraph(
-                    context = context,
-                    preStartServices = preStartServices,
-                    buffer = buffer,
-                    sdkInitResourceUsageTrackerSupplier = { error("failed to init") },
-                )
-            },
+            sdkInitResourceUsageTrackerSupplier = { error("failed to init") },
         )
         holder.api.addSpanExporter(FakeSpanExporter())
         assertFalse(preStartServices.externalOtelConfig.hasConfiguredOtlpExport())

@@ -45,7 +45,6 @@ import io.embrace.android.embracesdk.internal.injection.PreStartServices
 import io.embrace.android.embracesdk.internal.injection.WorkerThreadPool
 import io.embrace.android.embracesdk.internal.injection.WorkerThreadPoolImpl
 import io.embrace.android.embracesdk.internal.injection.createConfigService
-import io.embrace.android.embracesdk.internal.instance.BufferingSdkInstance
 import io.embrace.android.embracesdk.internal.instrumentation.crash.ndk.jniDelegateTestOverride
 import io.embrace.android.embracesdk.internal.instrumentation.crash.ndk.sharedObjectLoaderTestOverride
 import io.embrace.android.embracesdk.internal.instrumentation.startup.DataCaptureServiceModuleImpl
@@ -189,20 +188,22 @@ internal class EmbraceSetupInterface(
         deliveryTracer: DeliveryTracer,
     ): ModuleGraphSupplier {
         fakeInitModule.instrumentedConfig = instrumentedConfig
-        return { context, preStartServices, buffer ->
-            createModuleGraph(context, preStartServices, buffer, deliveryTracer)
+        return { context, preStartServices, sdkStartTimeMs, sdkInitResourceUsageTracker ->
+            createModuleGraph(context, preStartServices, sdkStartTimeMs, sdkInitResourceUsageTracker, deliveryTracer)
         }
     }
 
     private fun createModuleGraph(
         context: Context,
         preStartServices: PreStartServices,
-        buffer: BufferingSdkInstance,
+        sdkStartTimeMs: Long,
+        sdkInitResourceUsageTracker: SdkInitResourceUsageTracker,
         deliveryTracer: DeliveryTracer,
     ): InitializedModuleGraph = InitializedModuleGraph(
         context = context,
         preStartServices = preStartServices,
-        buffer = buffer,
+        sdkStartTimeMs = sdkStartTimeMs,
+        sdkInitResourceUsageTracker = sdkInitResourceUsageTracker,
         initModuleSupplier = { fakeInitModule },
         openTelemetryModuleSupplier = { _, _ -> fakeInitModule.openTelemetryModule },
         // forwards the supplied store so the module shares one instance with PersistedConfig, as in production
@@ -211,8 +212,8 @@ internal class EmbraceSetupInterface(
             CoreModuleImpl(fakeCoreModule.context, fakeInitModule, suppliedStore)
         },
         workerThreadPoolSupplier = { workerThreadPool },
-        configServiceSupplier = { initModule, _, openTelemetryModule, workerThreadPool, persistedConfig ->
-            DecoratedConfigService(createConfigService(initModule, openTelemetryModule, workerThreadPool, persistedConfig))
+        configServiceSupplier = { initModule, preStartServices, workerThreadPool, persistedConfig ->
+            DecoratedConfigService(createConfigService(initModule, preStartServices, workerThreadPool, persistedConfig))
         },
         essentialServiceModuleSupplier = { initModule, configService, openTelemetryModule, coreModule, workerThreadPool, startupContext, _, _, sessionOrchestratorProvider ->
             EssentialServiceModuleImpl(
@@ -305,7 +306,6 @@ internal class EmbraceSetupInterface(
                 )
             }
         },
-        sdkInitResourceUsageTrackerSupplier = { fakeSdkInitResourceUsageTracker() },
     )
 
     /**
@@ -557,7 +557,7 @@ internal class EmbraceSetupInterface(
      * Creates an [SdkInitResourceUsageTracker] with faked providers of system data so that the attributes
      * that are recorded as a result are deterministic and can be hardcoded into the tests and golden files.
      */
-    private fun fakeSdkInitResourceUsageTracker(): SdkInitResourceUsageTracker {
+    fun fakeSdkInitResourceUsageTracker(): SdkInitResourceUsageTracker {
         val elapsedMs = statProvider(INIT_WINDOW_MS)
         val cpuMs = statProvider(INIT_CPU_MS)
         val runDelayNs = statProvider(INIT_RUN_DELAY_MS.millisToNanos())

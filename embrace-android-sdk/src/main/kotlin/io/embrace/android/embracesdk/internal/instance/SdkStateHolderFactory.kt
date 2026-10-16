@@ -1,10 +1,14 @@
 package io.embrace.android.embracesdk.internal.instance
 
+import android.content.Context
+import io.embrace.android.embracesdk.internal.api.delegate.PreStartOTelApi
 import io.embrace.android.embracesdk.internal.injection.InitializedModuleGraph
 import io.embrace.android.embracesdk.internal.injection.ModuleGraphSupplier
 import io.embrace.android.embracesdk.internal.injection.PreStartServices
 import io.embrace.android.embracesdk.internal.injection.SdkDisabledException
+import io.embrace.android.embracesdk.internal.instrumentation.startup.SdkInitResourceUsageTracker
 import io.embrace.android.embracesdk.internal.utils.EmbTrace
+import io.embrace.android.embracesdk.internal.utils.Provider
 
 /**
  * Assembles the [SdkStateHolder] that backs the public `Embrace` object. Production code and integration tests both
@@ -13,6 +17,7 @@ import io.embrace.android.embracesdk.internal.utils.EmbTrace
 internal fun createSdkStateHolder(
     preStartServices: PreStartServices = PreStartServices(),
     moduleGraphSupplier: ModuleGraphSupplier? = null,
+    sdkInitResourceUsageTrackerSupplier: Provider<SdkInitResourceUsageTracker>? = null,
     onModuleGraphCreated: ((InitializedModuleGraph) -> Unit)? = null,
 ): SdkStateHolder {
     val logger = preStartServices.logger
@@ -26,8 +31,13 @@ internal fun createSdkStateHolder(
         instanceFactory = { context ->
             EmbTrace.trace(sectionName = "modules-init", recordDuration = true) {
                 try {
-                    moduleGraphSupplier?.invoke(context, preStartServices, buffer)
-                        ?: InitializedModuleGraph(context, preStartServices, buffer)
+                    createModuleGraph(
+                        context,
+                        preStartServices,
+                        buffer,
+                        moduleGraphSupplier,
+                        sdkInitResourceUsageTrackerSupplier,
+                    )
                 } catch (ignored: SdkDisabledException) {
                     // do nothing - avoid instantiating SDK code any more than necessary.
                     null
@@ -46,4 +56,25 @@ internal fun createSdkStateHolder(
         telemetryService = preStartServices.telemetryService,
         errorHandler = logger,
     )
+}
+
+private fun createModuleGraph(
+    context: Context,
+    preStartServices: PreStartServices,
+    buffer: BufferingSdkInstance,
+    moduleGraphSupplier: ModuleGraphSupplier?,
+    sdkInitResourceUsageTrackerSupplier: Provider<SdkInitResourceUsageTracker>?,
+): InitializedModuleGraph {
+    // stamped before anything else so that the SDK init span covers all the work below,
+    // and the perf samples cover the same interval as the span
+    val sdkStartTimeMs = preStartServices.clock.now()
+
+    // drain before the OTel SDK is built
+    buffer.drainOTelConfig(PreStartOTelApi(preStartServices.externalOtelConfig))
+    val sdkInitResourceUsageTracker =
+        (sdkInitResourceUsageTrackerSupplier?.invoke() ?: SdkInitResourceUsageTracker(preStartServices.logger)).apply {
+            captureStart()
+        }
+    return moduleGraphSupplier?.invoke(context, preStartServices, sdkStartTimeMs, sdkInitResourceUsageTracker)
+        ?: InitializedModuleGraph(context, preStartServices, sdkStartTimeMs, sdkInitResourceUsageTracker)
 }

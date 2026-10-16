@@ -272,8 +272,8 @@ internal class SdkStateIntegrationTest(
                 }
             },
             assertAction = {
-                assertNoInternalErrors(logger)
                 awaitStorageDeleted()
+                assertNoInternalErrors(logger)
                 assertEquals(0, getLogEnvelopes(0).size)
                 assertEquals(0, getSessionEnvelopes(0).size)
             },

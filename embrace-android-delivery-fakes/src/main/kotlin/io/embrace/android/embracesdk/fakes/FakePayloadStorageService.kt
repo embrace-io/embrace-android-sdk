@@ -131,7 +131,7 @@ class FakePayloadStorageService(
     fun storedPayloads(): List<ByteArray> = cachedPayloads.values.toList()
 
     fun storedPayloadMetadata(): List<StoredTelemetryMetadata> {
-        return cachedPayloads.keys.toList()
+        return synchronized(cachedPayloads) { cachedPayloads.keys.toList() }
     }
 
     fun storedPayloadCount() = cachedPayloads.size

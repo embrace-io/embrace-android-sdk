@@ -91,9 +91,10 @@ internal class PeriodicPartCacheTest(
                 return if (sessions.isEmpty()) {
                     null
                 } else {
-                    val lastSessionMetadata = sessions.last()
+                    // the periodic cache may delete this payload between listing and loading; poll again if so
+                    val stream = loadPayloadAsStream(sessions.last()) ?: return null
                     return TestPlatformSerializer().fromJson(
-                        GZIPInputStream(loadPayloadAsStream(lastSessionMetadata)),
+                        GZIPInputStream(stream),
                         Envelope.sessionEnvelopeSerializer
                     )
                 }

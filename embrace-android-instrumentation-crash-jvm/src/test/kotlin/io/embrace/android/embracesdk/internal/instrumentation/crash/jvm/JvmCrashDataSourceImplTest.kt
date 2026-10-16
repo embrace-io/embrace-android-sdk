@@ -4,11 +4,13 @@ import android.app.Application
 import io.embrace.android.embracesdk.fakes.FakeConfigService
 import io.embrace.android.embracesdk.fakes.FakeInstrumentationArgs
 import io.embrace.android.embracesdk.fakes.FakeInternalLogger
+import io.embrace.android.embracesdk.internal.arch.lifecycle.ProcessChannels
 import io.embrace.android.embracesdk.internal.arch.schema.SchemaType
 import io.embrace.android.embracesdk.internal.arch.schema.TelemetryAttributes
 import io.embrace.android.embracesdk.internal.config.resolved.AutoDataCaptureConfig
 import io.embrace.android.embracesdk.internal.config.resolved.EmbraceConfig
 import io.embrace.android.embracesdk.internal.logging.InternalLogger
+import io.opentelemetry.kotlin.semconv.LogAttributes
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertSame
 import org.junit.Before
@@ -45,21 +47,25 @@ internal class JvmCrashDataSourceImplTest {
     }
 
     @Test
-    fun `test crash handler order`() {
+    fun `crash id is emitted once, after the crash log`() {
         setupForHandleCrash(true)
-        val observedOrder = mutableListOf<Int>()
-        crashDataSource.addCrashTeardownHandler { observedOrder.add(1) }
-        crashDataSource.addCrashTeardownHandler { observedOrder.add(2) }
-        crashDataSource.addCrashTeardownHandler { observedOrder.add(3) }
+        val emitted = mutableListOf<Pair<String, Int>>()
+        args.eventBus.addHandler(ProcessChannels.CrashTeardown) { crashId ->
+            emitted += crashId to args.destination.logEvents.size
+        }
+
         crashDataSource.logUnhandledJvmThrowable(testException)
-        assertEquals(listOf(1, 2, 3), observedOrder)
+        crashDataSource.logUnhandledJvmThrowable(testException)
+
+        val crashId = args.destination.logEvents.single().schemaType.attributes()[LogAttributes.LOG_RECORD_UID]
+        assertEquals(listOf(crashId to 1), emitted)
     }
 
     @Test
     fun `crash after data capture disabled is neither captured nor torn down`() {
         setupForHandleCrash(true)
         val observedOrder = mutableListOf<Int>()
-        crashDataSource.addCrashTeardownHandler { observedOrder.add(1) }
+        args.eventBus.addHandler(ProcessChannels.CrashTeardown) { observedOrder.add(1) }
         crashDataSource.onDataCaptureDisabled()
 
         crashDataSource.logUnhandledJvmThrowable(testException)

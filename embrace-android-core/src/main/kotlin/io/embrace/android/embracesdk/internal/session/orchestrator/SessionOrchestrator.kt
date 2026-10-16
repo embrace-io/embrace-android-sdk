@@ -1,6 +1,5 @@
 package io.embrace.android.embracesdk.internal.session.orchestrator
 
-import io.embrace.android.embracesdk.internal.arch.CrashTeardownHandler
 import io.embrace.android.embracesdk.internal.arch.state.ProcessStateListener
 import io.embrace.android.embracesdk.internal.session.UserSessionListener
 import io.embrace.android.embracesdk.internal.session.UserSessionMetadata
@@ -10,12 +9,17 @@ import io.embrace.android.embracesdk.internal.session.UserSessionRestoreDecision
  * Orchestrates the session and background activities in response to state changes and manual
  * requests to end sessions.
  */
-interface SessionOrchestrator : ProcessStateListener, CrashTeardownHandler {
+interface SessionOrchestrator : ProcessStateListener {
 
     /**
      * Start the orchestrator after all dependencies have finished initialization
      */
     fun start()
+
+    /**
+     * Ends the current session part with the JVM crash identified by [crashId].
+     */
+    fun handleCrash(crashId: String)
 
     /**
      * Ends the current session (if any) manually. This has no effect on background activities.

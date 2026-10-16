@@ -30,7 +30,6 @@ dependencies {
 
     testImplementation(project(":embrace-android-instrumentation-api-fakes"))
     testImplementation(project(":embrace-test-fakes")) // TODO: remove this dependency after full modularisation
-    testImplementation(libs.robolectric)
 
     androidTestImplementation(libs.androidx.test.core)
     androidTestImplementation(libs.androidx.test.runner)

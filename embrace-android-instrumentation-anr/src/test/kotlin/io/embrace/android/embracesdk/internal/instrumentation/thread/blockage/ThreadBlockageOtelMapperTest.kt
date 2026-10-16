@@ -1,6 +1,5 @@
 package io.embrace.android.embracesdk.internal.instrumentation.thread.blockage
 
-import androidx.test.ext.junit.runners.AndroidJUnit4
 import io.embrace.android.embracesdk.fakes.FakeClock
 import io.embrace.android.embracesdk.internal.arch.stacktrace.ThreadSample
 import io.embrace.android.embracesdk.internal.clock.millisToNanos
@@ -16,7 +15,6 @@ import org.junit.Assert.assertNotEquals
 import org.junit.Assert.assertNotNull
 import org.junit.Before
 import org.junit.Test
-import org.junit.runner.RunWith
 import kotlin.random.Random
 
 private const val END_TIME_MS = 2000L
@@ -27,7 +25,6 @@ private const val SECOND_SAMPLE_MS: Long = 15000100L
 private const val FIRST_SAMPLE_OVERHEAD_MS = 3L
 private const val SECOND_SAMPLE_OVERHEAD_MS = 5L
 
-@RunWith(AndroidJUnit4::class)
 internal class ThreadBlockageOtelMapperTest {
 
     private val threadSample = ThreadSample(

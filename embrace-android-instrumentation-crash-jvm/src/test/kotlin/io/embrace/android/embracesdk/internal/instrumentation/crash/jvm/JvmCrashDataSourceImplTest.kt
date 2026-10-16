@@ -1,8 +1,6 @@
 package io.embrace.android.embracesdk.internal.instrumentation.crash.jvm
 
 import android.app.Application
-import androidx.test.core.app.ApplicationProvider
-import androidx.test.ext.junit.runners.AndroidJUnit4
 import io.embrace.android.embracesdk.fakes.FakeConfigService
 import io.embrace.android.embracesdk.fakes.FakeInstrumentationArgs
 import io.embrace.android.embracesdk.fakes.FakeInternalLogger
@@ -15,9 +13,7 @@ import org.junit.Assert.assertEquals
 import org.junit.Assert.assertSame
 import org.junit.Before
 import org.junit.Test
-import org.junit.runner.RunWith
 
-@RunWith(AndroidJUnit4::class)
 internal class JvmCrashDataSourceImplTest {
 
     private lateinit var crashDataSource: JvmCrashDataSourceImpl
@@ -29,7 +25,7 @@ internal class JvmCrashDataSourceImplTest {
 
     @Before
     fun setUp() {
-        ctx = ApplicationProvider.getApplicationContext()
+        ctx = Application()
         args = FakeInstrumentationArgs(ctx)
         logger = FakeInternalLogger()
         testException = RuntimeException("Test exception")

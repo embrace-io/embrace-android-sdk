@@ -1,6 +1,5 @@
 package io.embrace.android.embracesdk.internal.instrumentation.network
 
-import androidx.test.core.app.ApplicationProvider
 import io.embrace.android.embracesdk.fakes.FakeConfigService
 import io.embrace.android.embracesdk.fakes.FakeDomainCountLimiter
 import io.embrace.android.embracesdk.fakes.FakeInstrumentationArgs
@@ -17,7 +16,6 @@ internal class NetworkRequestDataSourceTestHarness {
     val telemetryService: FakeInternalTelemetryService = FakeInternalTelemetryService()
     val networkSpanForwardingBehavior = FakeNetworkSpanForwardingBehavior()
     val args: FakeInstrumentationArgs = FakeInstrumentationArgs(
-        application = ApplicationProvider.getApplicationContext(),
         configService = FakeConfigService(
             networkBehavior = FakeNetworkBehavior(domainCountLimiter = domainCountLimiter),
             networkSpanForwardingBehavior = networkSpanForwardingBehavior,

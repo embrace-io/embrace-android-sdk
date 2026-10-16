@@ -1,7 +1,5 @@
 package io.embrace.android.embracesdk.internal.instrumentation.crash.ndk
 
-import androidx.test.core.app.ApplicationProvider
-import androidx.test.ext.junit.runners.AndroidJUnit4
 import io.embrace.android.embracesdk.fakes.FakeInstrumentationArgs
 import io.embrace.android.embracesdk.fakes.FakeNativeCrashProcessor
 import io.embrace.android.embracesdk.internal.arch.attrs.toEmbraceAttributeName
@@ -19,9 +17,7 @@ import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
 import org.junit.Before
 import org.junit.Test
-import org.junit.runner.RunWith
 
-@RunWith(AndroidJUnit4::class)
 internal class NativeCrashDataSourceImplTest {
 
     private lateinit var crashProcessor: FakeNativeCrashProcessor
@@ -31,7 +27,7 @@ internal class NativeCrashDataSourceImplTest {
     @Before
     fun setUp() {
         crashProcessor = FakeNativeCrashProcessor()
-        args = FakeInstrumentationArgs(ApplicationProvider.getApplicationContext())
+        args = FakeInstrumentationArgs()
         nativeCrashDataSource = NativeCrashDataSourceImpl(
             nativeCrashProcessor = crashProcessor,
             args = args,

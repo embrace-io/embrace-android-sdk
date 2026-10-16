@@ -1,7 +1,5 @@
 package io.embrace.android.embracesdk.internal.instrumentation.crash.ndk
 
-import androidx.test.core.app.ApplicationProvider
-import androidx.test.ext.junit.runners.AndroidJUnit4
 import io.embrace.android.embracesdk.concurrency.BlockingScheduledExecutorService
 import io.embrace.android.embracesdk.fakes.FakeClock
 import io.embrace.android.embracesdk.fakes.FakeInstrumentationArgs
@@ -20,10 +18,8 @@ import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
 import org.junit.rules.TemporaryFolder
-import org.junit.runner.RunWith
 import java.io.File
 
-@RunWith(AndroidJUnit4::class)
 internal class NativeCrashProcessorImplTest {
 
     @get:Rule
@@ -37,7 +33,7 @@ internal class NativeCrashProcessorImplTest {
 
     @Before
     fun setUp() {
-        args = FakeInstrumentationArgs(ApplicationProvider.getApplicationContext())
+        args = FakeInstrumentationArgs()
         jniDelegate = FakeJniDelegate()
         outputDir = tempFolder.newFolder("native")
         executor = BlockingScheduledExecutorService(blockingMode = false)

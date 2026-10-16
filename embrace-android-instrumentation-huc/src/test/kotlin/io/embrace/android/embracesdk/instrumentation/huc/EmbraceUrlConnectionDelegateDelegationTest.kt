@@ -1,16 +1,13 @@
 package io.embrace.android.embracesdk.instrumentation.huc
 
-import androidx.test.ext.junit.runners.AndroidJUnit4
 import io.mockk.mockk
 import io.mockk.verify
 import org.junit.Before
 import org.junit.Test
-import org.junit.runner.RunWith
 import javax.net.ssl.HostnameVerifier
 import javax.net.ssl.HttpsURLConnection
 import javax.net.ssl.SSLSocketFactory
 
-@RunWith(AndroidJUnit4::class)
 internal class EmbraceUrlConnectionDelegateDelegationTest {
     private lateinit var mockConnection: HttpsURLConnection
     private lateinit var connectionDelegate: EmbraceUrlConnectionDelegate<HttpsURLConnection>

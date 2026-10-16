@@ -1,7 +1,5 @@
 package io.embrace.android.embracesdk.internal.instrumentation.webview
 
-import androidx.test.core.app.ApplicationProvider
-import androidx.test.ext.junit.runners.AndroidJUnit4
 import io.embrace.android.embracesdk.fakes.FakeConfigService
 import io.embrace.android.embracesdk.fakes.FakeInstrumentationArgs
 import io.embrace.android.embracesdk.internal.arch.schema.EmbType
@@ -13,16 +11,14 @@ import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
-import org.junit.runner.RunWith
 
-@RunWith(AndroidJUnit4::class)
 internal class WebViewUrlDataSourceTest {
 
     private lateinit var args: FakeInstrumentationArgs
 
     @Before
     fun setUp() {
-        args = FakeInstrumentationArgs(ApplicationProvider.getApplicationContext())
+        args = FakeInstrumentationArgs()
     }
 
     private fun createSource(
@@ -30,7 +26,6 @@ internal class WebViewUrlDataSourceTest {
         fragmentCapture: WebViewFragmentCapture = WebViewFragmentCapture.KEEP,
     ): WebViewUrlDataSource {
         args = FakeInstrumentationArgs(
-            ApplicationProvider.getApplicationContext(),
             configService = FakeConfigService(
                 config = EmbraceConfig(
                     breadcrumb = {

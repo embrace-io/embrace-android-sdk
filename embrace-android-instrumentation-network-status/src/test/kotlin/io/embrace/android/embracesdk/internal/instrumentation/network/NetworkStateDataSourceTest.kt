@@ -1,23 +1,19 @@
 package io.embrace.android.embracesdk.internal.instrumentation.network
 
-import androidx.test.core.app.ApplicationProvider
-import androidx.test.ext.junit.runners.AndroidJUnit4
 import io.embrace.android.embracesdk.fakes.FakeInstrumentationArgs
 import io.embrace.android.embracesdk.internal.arch.schema.SchemaType.NetworkState.Status
 import io.embrace.android.embracesdk.internal.capture.connectivity.ConnectivityStatus
 import org.junit.Assert.assertEquals
 import org.junit.Before
 import org.junit.Test
-import org.junit.runner.RunWith
 
-@RunWith(AndroidJUnit4::class)
 internal class NetworkStateDataSourceTest {
 
     private lateinit var dataSource: NetworkStateDataSource
 
     @Before
     fun setUp() {
-        val args = FakeInstrumentationArgs(ApplicationProvider.getApplicationContext())
+        val args = FakeInstrumentationArgs()
         dataSource = NetworkStateDataSource(args)
     }
 

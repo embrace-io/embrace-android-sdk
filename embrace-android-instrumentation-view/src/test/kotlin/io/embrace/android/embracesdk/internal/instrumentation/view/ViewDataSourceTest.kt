@@ -1,8 +1,6 @@
 package io.embrace.android.embracesdk.internal.instrumentation.view
 
 import android.app.Activity
-import androidx.test.core.app.ApplicationProvider
-import androidx.test.ext.junit.runners.AndroidJUnit4
 import io.embrace.android.embracesdk.fakes.FakeInstrumentationArgs
 import io.embrace.android.embracesdk.fakes.FakeSpanToken
 import io.embrace.android.embracesdk.internal.arch.attrs.asPair
@@ -15,12 +13,10 @@ import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
-import org.junit.runner.RunWith
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicInteger
 
-@RunWith(AndroidJUnit4::class)
 internal class ViewDataSourceTest {
 
     private lateinit var dataSource: ViewDataSource
@@ -29,7 +25,7 @@ internal class ViewDataSourceTest {
 
     @Before
     fun setUp() {
-        args = FakeInstrumentationArgs(ApplicationProvider.getApplicationContext())
+        args = FakeInstrumentationArgs()
         dataSource = ViewDataSource(args)
         activity = Activity()
     }

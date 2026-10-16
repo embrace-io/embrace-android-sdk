@@ -8,7 +8,7 @@ import io.embrace.android.embracesdk.internal.instance.NoopInternalTelemetryServ
 import io.embrace.android.embracesdk.internal.instance.NoopSdkInstance
 import io.embrace.android.embracesdk.internal.instance.SdkStateHolder
 import io.embrace.android.embracesdk.internal.instance.createSdkStateHolder
-import io.embrace.android.embracesdk.internal.logging.BufferedInternalErrorHandler
+import io.embrace.android.embracesdk.internal.logging.ErrorHandlerImpl
 import io.embrace.android.embracesdk.internal.logging.InternalLoggerImpl
 import io.embrace.android.embracesdk.internal.utils.EmbTrace
 
@@ -25,7 +25,7 @@ private val sdkStateHolder = try {
     )
     val logger = InternalLoggerImpl()
     val instance = NoopSdkInstance(logger, NoopSdkInstance.SDK_NOT_INITIALIZED)
-    val bufferedErrorHandler = BufferedInternalErrorHandler(System::currentTimeMillis)
+    val bufferedErrorHandler = ErrorHandlerImpl(System::currentTimeMillis)
     SdkStateHolder(
         instanceFactory = { instance },
         preStart = BufferingSdkInstance(System::currentTimeMillis, logger, bufferedErrorHandler),

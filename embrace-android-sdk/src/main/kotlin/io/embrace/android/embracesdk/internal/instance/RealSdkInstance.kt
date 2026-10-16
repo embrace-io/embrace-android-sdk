@@ -165,9 +165,10 @@ internal class RealSdkInstance(
         buffer.applicationInitStartMs?.let { applicationInitStartMs = it }
 
         // drained last so errors raised by the drains above are captured
-        buffer.drainInternalErrors(
-            moduleGraph.essentialServiceModule.telemetryDestination,
-            moduleGraph.configService.config.dataCaptureEvent.internalExceptionCaptureEnabled,
+        buffer.drainSdkErrors(
+            moduleGraph.essentialServiceModule.telemetryDestination.takeIf {
+                moduleGraph.configService.config.dataCaptureEvent.internalExceptionCaptureEnabled
+            },
         )
     }
 
@@ -198,6 +199,7 @@ internal class RealSdkInstance(
      */
     override fun close() {
         started = false
+        runCatching { moduleGraph.initModule.errorHandler.close() }
         runCatching { moduleGraph.openTelemetryModule.otelSdkConfig.disableDataExport() }
         runCatching { moduleGraph.instrumentationModule.instrumentationRegistry.close() }
         runCatching { resetHucInstrumentation() }
@@ -341,7 +343,7 @@ internal class RealSdkInstance(
 
                 sessionPartTracker.addSessionPartChangeListener(logModule.attachmentService)
                 sessionPartTracker.addSessionPartChangeListener(logModule.logLimitingService)
-                sessionPartTracker.addSessionPartChangeListener(initModule.internalErrorHandler::resetLimit)
+                sessionPartTracker.addSessionPartChangeListener(initModule.errorHandler::resetLimit)
             }
         }
     }

@@ -49,10 +49,6 @@ import io.embrace.android.embracesdk.internal.worker.Worker
 import io.embrace.android.embracesdk.semconv.EmbCommonAttributes
 import io.embrace.android.embracesdk.semconv.EmbSessionAttributes
 import io.embrace.android.embracesdk.semconv.ExperimentalSemconv
-import io.embrace.android.embracesdk.spans.AutoTerminationMode
-import io.embrace.android.embracesdk.spans.EmbraceSpan
-import io.embrace.android.embracesdk.spans.EmbraceSpanEvent
-import io.embrace.android.embracesdk.spans.ErrorCode
 import io.embrace.android.embracesdk.spans.TracingApi
 import io.opentelemetry.kotlin.NoopOpenTelemetry
 import io.opentelemetry.kotlin.OpenTelemetry
@@ -130,6 +126,7 @@ internal class RealSdkInstance(
         clock = moduleGraph.initModule.clock,
         experimentTrackingService = lazy { moduleGraph.essentialServiceModule.experimentTrackingService },
     ),
+    private val tracingApi: TracingApi = moduleGraph.openTelemetryModule.tracingApi,
 ) : SdkInstance,
     LogsApi by logsApiDelegate,
     NetworkRequestApi by networkRequestApiDelegate,
@@ -141,9 +138,8 @@ internal class RealSdkInstance(
     BreadcrumbApi by breadcrumbApiDelegate,
     InstrumentationApi by instrumentationApiDelegate,
     ExperimentApi by experimentApiDelegate,
-    InternalInterfaceApi by hostedSdkInternalInterface {
-
-    private val tracingApi: TracingApi get() = moduleGraph.openTelemetryModule.tracingApi
+    InternalInterfaceApi by hostedSdkInternalInterface,
+    TracingApi by tracingApi {
 
     @Volatile
     private var applicationInitStartMs: Long? = null
@@ -240,40 +236,6 @@ internal class RealSdkInstance(
         // lets the queued deletion finish, then releases the worker thread
         executor.shutdown()
     }
-
-    override fun createSpan(
-        name: String,
-        parent: EmbraceSpan?,
-        autoTerminationMode: AutoTerminationMode,
-    ): EmbraceSpan = tracingApi.createSpan(name, parent, autoTerminationMode)
-
-    override fun startSpan(
-        name: String,
-        parent: EmbraceSpan?,
-        startTimeMs: Long?,
-        autoTerminationMode: AutoTerminationMode,
-    ): EmbraceSpan = tracingApi.startSpan(name, parent, startTimeMs, autoTerminationMode)
-
-    override fun <T> recordSpan(
-        name: String,
-        parent: EmbraceSpan?,
-        attributes: Map<String, String>,
-        events: List<EmbraceSpanEvent>,
-        autoTerminationMode: AutoTerminationMode,
-        code: () -> T,
-    ): T = tracingApi.recordSpan(name, parent, attributes, events, autoTerminationMode, code)
-
-    override fun getSpan(spanId: String): EmbraceSpan? = tracingApi.getSpan(spanId)
-
-    override fun recordCompletedSpan(
-        name: String,
-        startTimeMs: Long,
-        endTimeMs: Long,
-        errorCode: ErrorCode?,
-        parent: EmbraceSpan?,
-        attributes: Map<String, String>,
-        events: List<EmbraceSpanEvent>,
-    ): Boolean = tracingApi.recordCompletedSpan(name, startTimeMs, endTimeMs, errorCode, parent, attributes, events)
 
     override fun applicationInitStart() {
         if (applicationInitStartMs == null) {

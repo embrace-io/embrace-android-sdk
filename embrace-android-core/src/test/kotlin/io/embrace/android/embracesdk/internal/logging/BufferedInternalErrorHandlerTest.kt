@@ -56,6 +56,19 @@ internal class BufferedInternalErrorHandlerTest {
     }
 
     @Test
+    fun `close drops buffered errors and ignores later errors and drains`() {
+        handler.drainTo(destination, true)
+        handler.close()
+        handler.trackInternalError(InternalErrorType.DeliverySchedulingFail, IllegalStateException())
+
+        val other = FakeTelemetryDestination()
+        handler.drainTo(other, true)
+        handler.trackInternalError(InternalErrorType.DeliverySchedulingFail, IllegalStateException())
+        assertTrue(destination.logEvents.isEmpty())
+        assertTrue(other.logEvents.isEmpty())
+    }
+
+    @Test
     fun `discard drops buffered errors and stops capture`() {
         handler.trackInternalError(InternalErrorType.DeliverySchedulingFail, IllegalStateException())
         handler.discard()

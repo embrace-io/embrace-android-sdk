@@ -35,6 +35,10 @@ internal class NativeCrashHandlerInstallerImpl(
         args.backgroundWorker(Worker.Background.IoRegWorker)
     private val clock: Clock = args.clock
 
+    private val lock = Any()
+    private var disabled = false
+    private var signalHandlersInstalled = false
+
     override fun install() {
         backgroundWorker.submit {
             EmbTrace.trace("install-native-crash-signal-handlers") {
@@ -61,15 +65,29 @@ internal class NativeCrashHandlerInstallerImpl(
         }
     }
 
+    override fun disable() {
+        synchronized(lock) {
+            disabled = true
+            if (signalHandlersInstalled) {
+                delegate.disableCrashCapture()
+            }
+        }
+    }
+
     private fun updateSessionIds() {
-        val ids = args.activeSessionIds()
-        val sessionPartId = sanitizeId(ids.sessionPartId)
-        val userSessionId = sanitizeId(ids.userSessionId)
-        delegate.onSessionChange(
-            sessionPartId,
-            userSessionId,
-            createNativeReportPath(sessionPartId, userSessionId),
-        )
+        synchronized(lock) {
+            if (disabled) {
+                return
+            }
+            val ids = args.activeSessionIds()
+            val sessionPartId = sanitizeId(ids.sessionPartId)
+            val userSessionId = sanitizeId(ids.userSessionId)
+            delegate.onSessionChange(
+                sessionPartId,
+                userSessionId,
+                createNativeReportPath(sessionPartId, userSessionId),
+            )
+        }
     }
 
     private fun sanitizeId(sid: String?) =
@@ -80,13 +98,15 @@ internal class NativeCrashHandlerInstallerImpl(
         }
 
     private fun checkSignalHandlersOverwritten() {
-        if (configService.config.autoDataCapture.thirdPartySigHandlerDetectionEnabled) {
-            val culprit = delegate.checkForOverwrittenHandlers()
-            if (culprit != null) {
-                if (shouldIgnoreOverriddenHandler(culprit)) {
-                    return
+        synchronized(lock) {
+            if (!disabled && configService.config.autoDataCapture.thirdPartySigHandlerDetectionEnabled) {
+                val culprit = delegate.checkForOverwrittenHandlers()
+                if (culprit != null) {
+                    if (shouldIgnoreOverriddenHandler(culprit)) {
+                        return
+                    }
+                    delegate.reinstallSignalHandlers()
                 }
-                delegate.reinstallSignalHandlers()
             }
         }
     }
@@ -104,12 +124,18 @@ internal class NativeCrashHandlerInstallerImpl(
     }
 
     private fun installSignals(markerFilePath: String) {
-        EmbTrace.trace("native-install-handlers") {
-            delegate.installSignalHandlers(
-                markerFilePath,
-                reportId,
-                devLogging,
-            )
+        synchronized(lock) {
+            if (disabled) {
+                return
+            }
+            EmbTrace.trace("native-install-handlers") {
+                delegate.installSignalHandlers(
+                    markerFilePath,
+                    reportId,
+                    devLogging,
+                )
+            }
+            signalHandlersInstalled = true
         }
     }
 

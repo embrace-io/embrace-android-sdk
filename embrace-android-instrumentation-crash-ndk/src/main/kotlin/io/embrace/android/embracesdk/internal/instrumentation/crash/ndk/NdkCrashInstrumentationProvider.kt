@@ -49,6 +49,7 @@ class NdkCrashInstrumentationProvider : InstrumentationProvider {
             nativeCrashHandlerInstaller.install()
             NativeCrashDataSourceImpl(
                 nativeCrashProcessor = processor,
+                nativeCrashHandlerInstaller = nativeCrashHandlerInstaller,
                 args = args,
             )
         }

@@ -5,4 +5,5 @@ package io.embrace.android.embracesdk.internal.instrumentation.crash.ndk
  */
 internal interface NativeCrashHandlerInstaller {
     fun install()
+    fun disable()
 }

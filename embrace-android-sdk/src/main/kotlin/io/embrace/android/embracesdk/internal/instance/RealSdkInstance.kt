@@ -198,18 +198,23 @@ internal class RealSdkInstance(
 
     override fun close() {
         try {
+            started = false
             moduleGraph.openTelemetryModule.otelSdkConfig.disableDataExport()
+            moduleGraph.instrumentationModule.instrumentationRegistry.close()
+
             val rootDir = moduleGraph.coreModule.context.filesDir
             val fallbackDir = moduleGraph.coreModule.context.cacheDir
             val workerThreadModule = moduleGraph.workerThreadModule
-            started = false
             moduleGraph.essentialServiceModule.networkConnectivityService.close()
             moduleGraph.openTelemetryModule.otelSdkConfig.shutdownExport()
             workerThreadModule.close()
+
             val executor = Executors.newSingleThreadExecutor()
             executor.execute {
-                workerThreadModule.awaitTermination(Worker.Priority.DataPersistenceWorker, WORKER_TERMINATION_TIMEOUT_MS)
                 runCatching {
+                    if (!workerThreadModule.awaitTermination(WORKER_TERMINATION_TIMEOUT_MS)) {
+                        Log.w("[Embrace]", "Timed out waiting for Embrace workers to finish before deleting data.")
+                    }
                     StorageLocation.entries.map {
                         it.asFile(
                             logger = null,

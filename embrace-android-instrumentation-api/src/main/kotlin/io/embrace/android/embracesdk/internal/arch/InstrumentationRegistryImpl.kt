@@ -19,6 +19,8 @@ class InstrumentationRegistryImpl(
 ) : InstrumentationRegistry {
 
     private val dataSources = CopyOnWriteArrayList<DataSource>()
+    private val lock = Any()
+    private var closed = false
 
     override fun onPreSessionEnd() {
         dataSources
@@ -39,10 +41,31 @@ class InstrumentationRegistryImpl(
 
     override fun <T : DataSource> add(state: DataSourceFactory<T>): T? {
         val dataSource = state() ?: return null
-        dataSources.add(dataSource)
-        // enable data capture once the data source is registered
-        dataSource.onDataCaptureEnabled()
-        return dataSource
+        synchronized(lock) {
+            if (!closed) {
+                dataSources.add(dataSource)
+                // enable data capture once the data source is registered
+                dataSource.onDataCaptureEnabled()
+                return dataSource
+            }
+        }
+        disable(dataSource)
+        return null
+    }
+
+    override fun close() {
+        synchronized(lock) {
+            closed = true
+        }
+        dataSources.forEach(::disable)
+    }
+
+    private fun disable(dataSource: DataSource) {
+        try {
+            dataSource.onDataCaptureDisabled()
+        } catch (exc: Throwable) {
+            logger.trackInternalError(InternalErrorType.InstrumentationDisableFail, exc)
+        }
     }
 
     override fun <T : DataSource> findByType(clazz: KClass<T>): T? {

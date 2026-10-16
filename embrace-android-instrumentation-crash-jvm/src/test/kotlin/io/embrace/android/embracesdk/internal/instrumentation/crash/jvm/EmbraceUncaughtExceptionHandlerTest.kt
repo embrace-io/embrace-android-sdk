@@ -83,6 +83,9 @@ internal class EmbraceUncaughtExceptionHandlerTest {
         override fun onDataCaptureEnabled() {
         }
 
+        override fun onDataCaptureDisabled() {
+        }
+
         override fun resetDataCaptureLimits() {
         }
 

@@ -72,6 +72,22 @@ internal class InstrumentationRegistryTest {
     }
 
     @Test
+    fun `close disables registered data sources`() {
+        registry.add { dataSource }
+        registry.close()
+        assertEquals(1, dataSource.disableDataCaptureCount)
+    }
+
+    @Test
+    fun `data source added after close is disabled and not registered`() {
+        registry.close()
+        assertNull(registry.add { dataSource })
+        assertNull(registry.findByType(FakeDataSource::class))
+        assertEquals(0, dataSource.enableDataCaptureCount)
+        assertEquals(1, dataSource.disableDataCaptureCount)
+    }
+
+    @Test
     fun `verify session lifecycle listeners`() {
         val provider =
             FakeInstrumentationProvider(
@@ -219,6 +235,7 @@ internal class InstrumentationRegistryTest {
         override val instrumentationName: String = "blocking_test_data_source"
 
         override fun onDataCaptureEnabled() {}
+        override fun onDataCaptureDisabled() {}
         override fun resetDataCaptureLimits() {}
         override fun <T> captureTelemetry(
             inputValidation: () -> Boolean,

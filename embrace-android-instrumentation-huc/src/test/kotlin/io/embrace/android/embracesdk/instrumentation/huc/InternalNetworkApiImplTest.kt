@@ -86,6 +86,9 @@ internal class InternalNetworkApiImplTest {
         override fun onDataCaptureEnabled() {
         }
 
+        override fun onDataCaptureDisabled() {
+        }
+
         override fun resetDataCaptureLimits() {
         }
 

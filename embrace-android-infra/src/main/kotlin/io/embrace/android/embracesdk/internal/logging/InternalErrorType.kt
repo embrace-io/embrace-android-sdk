@@ -51,6 +51,7 @@ sealed class InternalErrorType(private val severity: Severity) {
     object AppLaunchTraceFail : InternalErrorType(Severity.WARNING)
     object UiCallbackFail : InternalErrorType(ERROR)
     object InstrumentationRegFail : InternalErrorType(ERROR)
+    object InstrumentationDisableFail : InternalErrorType(ERROR)
     object UrlStreamHandlerFactoryInstallFail : InternalErrorType(ERROR)
     object SessionStateCreationFail : InternalErrorType(ERROR)
     object ConnectivityUpdateFailure : InternalErrorType(ERROR)

@@ -56,6 +56,18 @@ internal class JvmCrashDataSourceImplTest {
     }
 
     @Test
+    fun `crash after data capture disabled is neither captured nor torn down`() {
+        setupForHandleCrash(true)
+        val observedOrder = mutableListOf<Int>()
+        crashDataSource.addCrashTeardownHandler { observedOrder.add(1) }
+        crashDataSource.onDataCaptureDisabled()
+
+        crashDataSource.logUnhandledJvmThrowable(testException)
+        assertEquals(0, args.destination.logEvents.size)
+        assertEquals(emptyList<Int>(), observedOrder)
+    }
+
+    @Test
     fun `test exception handler sends telemetry with config option enabled`() {
         setupForHandleCrash(true)
         assert(Thread.getDefaultUncaughtExceptionHandler() is EmbraceUncaughtExceptionHandler)

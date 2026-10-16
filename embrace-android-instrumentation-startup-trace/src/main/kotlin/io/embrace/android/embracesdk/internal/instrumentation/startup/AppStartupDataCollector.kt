@@ -11,16 +11,6 @@ import io.embrace.android.embracesdk.internal.arch.schema.ErrorCodeAttribute
  */
 interface AppStartupDataCollector {
     /**
-     * Called when the app enters the foreground.
-     */
-    fun onForeground()
-
-    /**
-     * Called when the app enters the background.
-     */
-    fun onBackground()
-
-    /**
      *  Set the time when the application object initialization was started
      */
     fun applicationInitStart(timestampMs: Long? = null)

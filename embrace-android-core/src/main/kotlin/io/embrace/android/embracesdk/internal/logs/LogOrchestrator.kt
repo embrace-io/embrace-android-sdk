@@ -7,9 +7,4 @@ interface LogOrchestrator {
      */
     fun flush(saveOnly: Boolean)
     fun onLogsAdded()
-
-    /**
-     * Saves any log still in the sink after the JVM crash identified by [crashId].
-     */
-    fun handleCrash(crashId: String)
 }

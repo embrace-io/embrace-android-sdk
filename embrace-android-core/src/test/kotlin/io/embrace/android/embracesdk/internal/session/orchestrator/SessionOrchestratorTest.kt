@@ -26,6 +26,7 @@ import io.embrace.android.embracesdk.fakes.behavior.FakeUserSessionBehavior
 import io.embrace.android.embracesdk.fakes.injection.FakePayloadSourceModule
 import io.embrace.android.embracesdk.internal.arch.InstrumentationRegistry
 import io.embrace.android.embracesdk.internal.arch.InstrumentationRegistryImpl
+import io.embrace.android.embracesdk.internal.arch.lifecycle.ProcessChannels
 import io.embrace.android.embracesdk.internal.arch.startup.StartupClassifierImpl
 import io.embrace.android.embracesdk.internal.arch.startup.StartupType
 import io.embrace.android.embracesdk.internal.arch.state.ProcessState
@@ -57,6 +58,7 @@ import io.embrace.android.embracesdk.internal.store.KeyValueStore
 import io.embrace.android.embracesdk.internal.store.KeyValueStoreEditor
 import io.embrace.android.embracesdk.internal.store.OrdinalStore
 import io.embrace.android.embracesdk.internal.store.OrdinalStoreImpl
+import io.embrace.android.embracesdk.internal.utils.event.EventBus
 import io.embrace.android.embracesdk.internal.worker.BackgroundWorker
 import io.embrace.android.embracesdk.semconv.EmbSessionAttributes
 import io.embrace.android.embracesdk.semconv.EmbSessionAttributes.EmbUserSessionTerminationReasonValues
@@ -84,6 +86,7 @@ internal class SessionOrchestratorTest {
     private lateinit var payloadCollator: FakePayloadMessageCollator
     private lateinit var logEnvelopeSource: FakeLogEnvelopeSource
     private lateinit var appStateTracker: FakeProcessStateTracker
+    private lateinit var eventBus: EventBus
     private lateinit var clock: FakeClock
     private lateinit var store: FakePayloadStore
     private lateinit var userSessionPropertiesService: UserSessionPropertiesService
@@ -417,7 +420,7 @@ internal class SessionOrchestratorTest {
     @Test
     fun `end with crash in background`() {
         createOrchestrator(ProcessState.BACKGROUND)
-        orchestrator.handleCrash("crashId")
+        eventBus.emit(ProcessChannels.CrashTeardown, "crashId")
         assertEquals("crashId", destination.attributes[EmbSessionAttributes.EMB_CRASH_ID])
         assertTrue(store.cachedEmptyCrashPayloads.isEmpty())
     }
@@ -425,7 +428,7 @@ internal class SessionOrchestratorTest {
     @Test
     fun `end with crash in foreground`() {
         createOrchestrator(ProcessState.FOREGROUND)
-        orchestrator.handleCrash("crashId")
+        eventBus.emit(ProcessChannels.CrashTeardown, "crashId")
         assertEquals("crashId", destination.attributes[EmbSessionAttributes.EMB_CRASH_ID])
         assertTrue(store.cachedEmptyCrashPayloads.isEmpty())
     }
@@ -457,7 +460,7 @@ internal class SessionOrchestratorTest {
     fun `test session part span with crash`() {
         createOrchestrator(ProcessState.BACKGROUND)
         orchestrator.onForeground()
-        orchestrator.handleCrash("my-crash-id")
+        eventBus.emit(ProcessChannels.CrashTeardown, "my-crash-id")
         checkNotNull(store.storedSessionPartPayloads.last())
     }
 
@@ -757,7 +760,7 @@ internal class SessionOrchestratorTest {
         )
 
         val initialId = activeUserSession().userSessionId
-        orchestrator.handleCrash("crash-id")
+        eventBus.emit(ProcessChannels.CrashTeardown, "crash-id")
         // crash does not produce a new session part, so user session is unchanged
         assertEquals(initialId, orchestrator.currentUserSession()?.userSessionId)
     }
@@ -1027,7 +1030,7 @@ internal class SessionOrchestratorTest {
         val initial = sessionPartDirs().single()
 
         clock.tick(10000)
-        orchestrator.handleCrash("crash-id")
+        eventBus.emit(ProcessChannels.CrashTeardown, "crash-id")
 
         assertEquals(listOf(initial), partDirs())
         assertNoInternalErrors()
@@ -1051,7 +1054,7 @@ internal class SessionOrchestratorTest {
         createOrchestrator(ProcessState.FOREGROUND, multiFilePersistenceConfigService())
         val sessionPartId = checkNotNull(sessionTracker.getActiveSessionPartId())
         clock.tick(10000)
-        orchestrator.handleCrash("crash-id")
+        eventBus.emit(ProcessChannels.CrashTeardown, "crash-id")
 
         assertEquals(clock.now().millisToNanos(), sessionSpanOnDisk(sessionPartId)?.end_time_unix_nano)
         assertNoInternalErrors()
@@ -1129,6 +1132,7 @@ internal class SessionOrchestratorTest {
     ) {
         store = FakePayloadStore()
         appStateTracker = FakeProcessStateTracker(startingProcessState)
+        eventBus = EventBus(FakeInternalLogger())
         currentSessionPartSpan = FakeCurrentSessionPartSpan(clock).apply { initializeService(clock.now()) }
         destination = FakeTelemetryDestination()
         payloadCollator = FakePayloadMessageCollator(currentSessionPartSpan = currentSessionPartSpan)
@@ -1214,6 +1218,7 @@ internal class SessionOrchestratorTest {
             TestUuidSource(),
             startupClassifier,
             sessionPartWriter,
+            eventBus,
         ).apply {
             attach()
             start()
@@ -1837,7 +1842,7 @@ internal class SessionOrchestratorTest {
         )
         val initialUserSession = activeUserSession()
 
-        orchestrator.handleCrash("crash-id")
+        eventBus.emit(ProcessChannels.CrashTeardown, "crash-id")
 
         assertEquals(initialUserSession.userSessionId, activeUserSession().userSessionId)
         assertEquals(true, checkNotNull(store.load()).isBackgroundOnly)

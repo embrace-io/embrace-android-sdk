@@ -36,10 +36,4 @@ interface PayloadStore {
      * exist at one time.
      */
     fun cacheEmptyCrashEnvelope(envelope: Envelope<LogPayload>)
-
-    /**
-     * Handles graceful shutdown on a crash. This should be called _after_ any payloads for the
-     * crash have been added.
-     */
-    fun handleCrash(crashId: String)
 }

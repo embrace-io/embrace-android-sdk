@@ -7,7 +7,6 @@ import io.embrace.android.embracesdk.internal.session.orchestrator.SessionOrches
 
 class FakeSessionOrchestrator : SessionOrchestrator {
 
-    var crashId: String? = null
     var manualEndCount: Int = 0
     var stateChangeCount: Int = 0
     var startCount: Int = 0
@@ -21,10 +20,6 @@ class FakeSessionOrchestrator : SessionOrchestrator {
 
     override fun endSessionWithManual() {
         manualEndCount++
-    }
-
-    override fun handleCrash(crashId: String) {
-        this.crashId = crashId
     }
 
     override fun onSessionDataUpdate() {

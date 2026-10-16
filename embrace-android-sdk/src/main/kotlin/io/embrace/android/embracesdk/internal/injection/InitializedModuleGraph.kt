@@ -222,9 +222,11 @@ internal class InitializedModuleGraph(
 
     val featureModule: FeatureModule = init("feature") {
         featureModuleSupplier?.invoke(
+            coreModule,
             instrumentationModule,
             storageService,
         ) ?: FeatureModuleImpl(
+            coreModule = coreModule,
             instrumentationModule = instrumentationModule,
             storageService = storageService,
         )
@@ -245,6 +247,7 @@ internal class InitializedModuleGraph(
             versionChecker,
             activityManager,
             backgroundWorker,
+            coreModule.eventBus,
         ) ?: DataCaptureServiceModuleImpl(
             initModule.clock,
             initModule.logger,
@@ -255,6 +258,7 @@ internal class InitializedModuleGraph(
             versionChecker,
             activityManager,
             backgroundWorker,
+            coreModule.eventBus,
         )
     }
 
@@ -321,6 +325,7 @@ internal class InitializedModuleGraph(
     val logModule: LogModule = init("log") {
         logModuleSupplier?.invoke(
             initModule,
+            coreModule,
             openTelemetryModule,
             essentialServiceModule,
             configService,
@@ -329,6 +334,7 @@ internal class InitializedModuleGraph(
             payloadSourceModule,
         ) ?: LogModuleImpl(
             initModule,
+            coreModule,
             openTelemetryModule,
             essentialServiceModule,
             configService,

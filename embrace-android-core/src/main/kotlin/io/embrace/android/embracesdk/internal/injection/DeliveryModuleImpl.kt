@@ -120,6 +120,7 @@ class DeliveryModuleImpl(
         processIdProvider,
         initModule.uuidSource,
         essentialServiceModule.sessionIdsProvider::getActiveSessionIds,
+        coreModule.eventBus,
     )
 
     private val partCacher: PeriodicSessionPartCacher = PeriodicSessionPartCacher(

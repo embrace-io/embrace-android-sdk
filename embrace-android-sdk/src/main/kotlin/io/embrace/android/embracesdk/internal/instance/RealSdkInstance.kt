@@ -28,9 +28,6 @@ import io.embrace.android.embracesdk.internal.api.delegate.ViewTrackingApiDelega
 import io.embrace.android.embracesdk.internal.arch.InstrumentationArgs
 import io.embrace.android.embracesdk.internal.arch.InstrumentationProvider
 import io.embrace.android.embracesdk.internal.arch.attrs.toEmbraceAttributeName
-import io.embrace.android.embracesdk.internal.arch.lifecycle.CrashTeardownOrder
-import io.embrace.android.embracesdk.internal.arch.lifecycle.ProcessChannels
-import io.embrace.android.embracesdk.internal.arch.state.ProcessState
 import io.embrace.android.embracesdk.internal.clock.Clock
 import io.embrace.android.embracesdk.internal.config.behavior.SensitiveKeysBehavior
 import io.embrace.android.embracesdk.internal.delivery.storage.StorageLocation
@@ -360,29 +357,12 @@ internal class RealSdkInstance(
                 )
 
                 val sessionPartTracker = essentialServiceModule.sessionPartTracker
-                val eventBus = coreModule.eventBus
 
                 sessionPartTracker.addSessionPartChangeListener {
                     configService.networkBehavior.domainCountLimiter.reset()
                 }
 
-                val appStartupDataCollector = dataCaptureServiceModule.appStartupDataCollector
-                eventBus.addStateHandler(ProcessChannels.ProcessState, replay = false) { state ->
-                    when (state) {
-                        ProcessState.FOREGROUND -> appStartupDataCollector.onForeground()
-                        ProcessState.BACKGROUND -> appStartupDataCollector.onBackground()
-                    }
-                }
-
-                threadBlockageService?.let { service ->
-                    eventBus.addStateHandler(ProcessChannels.ProcessState, replay = false) { state ->
-                        when (state) {
-                            ProcessState.FOREGROUND -> service.onForeground()
-                            ProcessState.BACKGROUND -> service.onBackground()
-                        }
-                    }
-                    sessionPartTracker.addSessionPartChangeListener(service)
-                }
+                threadBlockageService?.let(sessionPartTracker::addSessionPartChangeListener)
 
                 sessionPartTracker.addSessionPartChangeListener(logModule.attachmentService)
                 sessionPartTracker.addSessionPartChangeListener(logModule.logLimitingService)
@@ -464,14 +444,6 @@ internal class RealSdkInstance(
      */
     internal fun postLoadInstrumentation() = with(moduleGraph) {
         safeInit {
-            with(coreModule.eventBus) {
-                val key = ProcessChannels.CrashTeardown
-                threadBlockageService?.let { addHandler(key, CrashTeardownOrder.STOP_CAPTURE, it::handleCrash) }
-                addHandler(key, CrashTeardownOrder.FLUSH, logModule.logOrchestrator::handleCrash)
-                addHandler(key, CrashTeardownOrder.END_SESSION, userSessionOrchestrationModule.sessionOrchestrator::handleCrash)
-                addHandler(key, CrashTeardownOrder.MARK, featureModule.crashMarker::handleCrash)
-                deliveryModule?.payloadStore?.let { addHandler(key, CrashTeardownOrder.PERSIST, it::handleCrash) }
-            }
             val registry = instrumentationModule.instrumentationRegistry
             workerThreadModule.backgroundWorker(Worker.Background.NonIoRegWorker).submit {
                 with(essentialServiceModule.networkConnectivityService) {

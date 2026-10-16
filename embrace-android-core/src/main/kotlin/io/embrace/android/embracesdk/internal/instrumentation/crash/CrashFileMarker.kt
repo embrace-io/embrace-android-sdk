@@ -24,9 +24,4 @@ interface CrashFileMarker {
      * Returns true if the crash marker file in the cache directory exists and deletes it.
      */
     fun getAndCleanMarker(): Boolean
-
-    /**
-     * Marks that the JVM crash identified by [crashId] happened.
-     */
-    fun handleCrash(crashId: String)
 }

@@ -154,6 +154,7 @@ class UserSessionOrchestrationModuleImpl(
             initModule.uuidSource,
             initModule.startupClassifier,
             sessionPartWriter,
+            coreModule.eventBus,
         ).apply { attach() }
     }
 }

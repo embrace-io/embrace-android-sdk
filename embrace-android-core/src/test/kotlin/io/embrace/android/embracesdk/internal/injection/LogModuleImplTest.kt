@@ -4,6 +4,7 @@ import io.embrace.android.embracesdk.fakes.FakeConfigService
 import io.embrace.android.embracesdk.fakes.FakeDeliveryModule
 import io.embrace.android.embracesdk.fakes.FakeOpenTelemetryModule
 import io.embrace.android.embracesdk.fakes.OtelSdkMode
+import io.embrace.android.embracesdk.fakes.injection.FakeCoreModule
 import io.embrace.android.embracesdk.fakes.injection.FakeEssentialServiceModule
 import io.embrace.android.embracesdk.fakes.injection.FakeInitModule
 import io.embrace.android.embracesdk.fakes.injection.FakePayloadSourceModule
@@ -18,6 +19,7 @@ internal class LogModuleImplTest {
         val initModule = FakeInitModule(otelSdkMode = OtelSdkMode.COMPAT)
         val module = LogModuleImpl(
             initModule,
+            FakeCoreModule(),
             FakeOpenTelemetryModule(otelSdkMode = OtelSdkMode.REGULAR),
             FakeEssentialServiceModule(),
             FakeConfigService(),

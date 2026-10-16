@@ -7,6 +7,7 @@ import io.embrace.android.embracesdk.internal.instrumentation.crash.LastRunCrash
 import io.embrace.android.embracesdk.internal.storage.StorageService
 
 class FeatureModuleImpl(
+    coreModule: CoreModule,
     instrumentationModule: InstrumentationModule,
     storageService: StorageService,
 ) : FeatureModule {
@@ -19,6 +20,7 @@ class FeatureModuleImpl(
 
     override val crashMarker: CrashFileMarker = CrashFileMarkerImpl(
         lazy { storageService.getFileForWrite(CrashFileMarkerImpl.CRASH_MARKER_FILE_NAME) },
+        coreModule.eventBus,
     )
 
     override val lastRunCrashVerifier: LastRunCrashVerifier = LastRunCrashVerifier(crashMarker)

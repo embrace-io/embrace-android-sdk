@@ -16,7 +16,7 @@ class LogModuleImpl(
     essentialServiceModule: EssentialServiceModule,
     configService: ConfigService,
     deliveryModule: DeliveryModule?,
-    workerThreadModule: WorkerThreadModule,
+    workerThreadPool: WorkerThreadPool,
     payloadSourceModule: PayloadSourceModule,
 ) : LogModule {
 
@@ -25,7 +25,7 @@ class LogModuleImpl(
     )
 
     override val logOrchestrator: LogOrchestrator = LogOrchestratorImpl(
-        workerThreadModule.backgroundWorker(Worker.Background.NonIoRegWorker),
+        workerThreadPool.backgroundWorker(Worker.Background.NonIoRegWorker),
         initModule.clock,
         openTelemetryModule.logSink,
         deliveryModule?.payloadStore,

@@ -11,7 +11,7 @@ import io.embrace.android.embracesdk.internal.storage.StorageService
 class InstrumentationModuleImpl(
     initModule: InitModule,
     openTelemetryModule: OpenTelemetryModule,
-    workerThreadModule: WorkerThreadModule,
+    workerThreadPool: WorkerThreadPool,
     configService: ConfigService,
     essentialServiceModule: EssentialServiceModule,
     coreModule: CoreModule,
@@ -31,7 +31,7 @@ class InstrumentationModuleImpl(
         context = coreModule.context,
         application = coreModule.application,
         destination = essentialServiceModule.telemetryDestination,
-        workerThreadModule = workerThreadModule,
+        workerThreadPool = workerThreadPool,
         storeProvider = { coreModule.store },
         serializer = initModule.jsonSerializer,
         uuidSource = initModule.uuidSource,

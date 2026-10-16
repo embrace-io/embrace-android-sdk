@@ -30,7 +30,7 @@ class DeliveryModuleImpl(
     configService: ConfigService,
     initModule: InitModule,
     otelModule: OpenTelemetryModule,
-    workerThreadModule: WorkerThreadModule,
+    workerThreadPool: WorkerThreadPool,
     coreModule: CoreModule,
     essentialServiceModule: EssentialServiceModule,
     requestExecutionServiceProvider: Provider<RequestExecutionService>?,
@@ -46,7 +46,7 @@ class DeliveryModuleImpl(
     private val fallbackDirSupplier = { coreModule.context.cacheDir }
 
     private val dataPersistenceWorker: PriorityWorker<StoredTelemetryMetadata> =
-        workerThreadModule.priorityWorker(Worker.Priority.DataPersistenceWorker)
+        workerThreadPool.priorityWorker(Worker.Priority.DataPersistenceWorker)
 
     override val payloadStorageService: PayloadStorageService =
         payloadStorageServiceProvider?.invoke() ?: PayloadStorageServiceImpl(
@@ -97,8 +97,8 @@ class DeliveryModuleImpl(
     override val schedulingService: SchedulingService = SchedulingServiceImpl(
         payloadStorageService,
         requestExecutionService,
-        workerThreadModule.backgroundWorker(Worker.Background.DeliverySchedulingWorker),
-        workerThreadModule.backgroundWorker(Worker.Background.HttpRequestWorker),
+        workerThreadPool.backgroundWorker(Worker.Background.DeliverySchedulingWorker),
+        workerThreadPool.backgroundWorker(Worker.Background.HttpRequestWorker),
         initModule.clock,
         initModule.logger,
         deliveryTracer,
@@ -123,7 +123,7 @@ class DeliveryModuleImpl(
     )
 
     private val partCacher: PeriodicSessionPartCacher = PeriodicSessionPartCacher(
-        workerThreadModule.backgroundWorker(Worker.Background.PeriodicCacheWorker),
+        workerThreadPool.backgroundWorker(Worker.Background.PeriodicCacheWorker),
         initModule.logger,
         configService.otelBehavior.getPeriodicCacheIntervalMs(),
     )

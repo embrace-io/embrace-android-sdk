@@ -11,11 +11,11 @@ import io.embrace.android.embracesdk.internal.clock.Clock
 import io.embrace.android.embracesdk.internal.config.instrumented.schema.InstrumentedConfig
 import io.embrace.android.embracesdk.internal.config.remote.OtelKotlinSdkConfig
 import io.embrace.android.embracesdk.internal.config.remote.RemoteConfig
-import io.embrace.android.embracesdk.internal.injection.BootstrapServices
 import io.embrace.android.embracesdk.internal.injection.InitModule
 import io.embrace.android.embracesdk.internal.injection.InitModuleImpl
 import io.embrace.android.embracesdk.internal.injection.OpenTelemetryModule
 import io.embrace.android.embracesdk.internal.injection.OpenTelemetryModuleImpl
+import io.embrace.android.embracesdk.internal.injection.PreStartServices
 import io.embrace.android.embracesdk.internal.logging.InternalLogger
 import io.embrace.android.embracesdk.internal.telemetry.InternalTelemetryService
 import io.embrace.android.embracesdk.internal.telemetry.InternalTelemetryServiceImpl
@@ -31,14 +31,14 @@ class FakeInitModule(
     ),
     fakeTelemetryService: InternalTelemetryService? = null,
     override val uuidSource: UuidSource = TestUuidSource(),
-    val bootstrapServices: BootstrapServices = BootstrapServices(
+    val preStartServices: PreStartServices = PreStartServices(
         logger = logger,
         clock = clock,
         systemInfo = systemInfo,
         telemetryService = fakeTelemetryService ?: InternalTelemetryServiceImpl(systemInfo = systemInfo),
     ),
     private val initModule: InitModule = InitModuleImpl(
-        bootstrapServices = bootstrapServices,
+        preStartServices = preStartServices,
         uuidSource = uuidSource,
     ),
     override var instrumentedConfig: InstrumentedConfig = FakeInstrumentedConfig(),
@@ -51,7 +51,7 @@ class FakeInitModule(
     val openTelemetryModule: OpenTelemetryModule by lazy {
         OpenTelemetryModuleImpl(
             initModule = this,
-            externalOtelConfig = bootstrapServices.externalOtelConfig,
+            externalOtelConfig = preStartServices.externalOtelConfig,
         ).apply {
             setOtelBehavior(
                 createOtelBehavior(

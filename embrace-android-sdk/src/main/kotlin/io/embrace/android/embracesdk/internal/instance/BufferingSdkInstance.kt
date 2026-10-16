@@ -10,14 +10,17 @@ import io.embrace.android.embracesdk.internal.NoopInternalInterfaceApi
 import io.embrace.android.embracesdk.internal.api.ExperimentApi
 import io.embrace.android.embracesdk.internal.api.OTelApi
 import io.embrace.android.embracesdk.internal.api.SdkApi
+import io.embrace.android.embracesdk.internal.arch.datasource.LogSeverity
 import io.embrace.android.embracesdk.internal.arch.datasource.TelemetryDestination
+import io.embrace.android.embracesdk.internal.arch.schema.SchemaType.SdkError
 import io.embrace.android.embracesdk.internal.capture.experiment.ExperimentApiCall
 import io.embrace.android.embracesdk.internal.capture.experiment.ExperimentKind
 import io.embrace.android.embracesdk.internal.capture.experiment.TrackedData
 import io.embrace.android.embracesdk.internal.clock.Clock
 import io.embrace.android.embracesdk.internal.config.resolved.ExperimentConfig
 import io.embrace.android.embracesdk.internal.instrumentation.network.DefaultTraceparentGenerator
-import io.embrace.android.embracesdk.internal.logging.BufferedInternalErrorHandler
+import io.embrace.android.embracesdk.internal.logging.ErrorHandler
+import io.embrace.android.embracesdk.internal.logging.ErrorHandlerImpl
 import io.embrace.android.embracesdk.internal.logging.InternalErrorType
 import io.embrace.android.embracesdk.internal.logging.InternalLogger
 import io.embrace.android.embracesdk.spans.EmbraceSpan
@@ -41,7 +44,7 @@ import java.util.concurrent.TimeUnit
 internal class BufferingSdkInstance(
     private val clock: Clock,
     private val logger: InternalLogger,
-    private val internalErrorHandler: BufferedInternalErrorHandler = BufferedInternalErrorHandler(clock),
+    private val errorHandler: ErrorHandler = ErrorHandlerImpl(clock),
 ) : InternalSdkApi,
     SdkApi by NoopSdkInstance(logger, NoopSdkInstance.SDK_NOT_INITIALIZED),
     InternalInterfaceApi by NoopInternalInterfaceApi {
@@ -96,12 +99,23 @@ internal class BufferingSdkInstance(
         experimentCalls.drain(target) { calls -> guard { replay(calls) } }
     }
 
-    fun drainInternalErrors(destination: TelemetryDestination, enabled: Boolean) {
-        internalErrorHandler.drainTo(destination, enabled)
-    }
-
-    fun discardInternalErrors() {
-        internalErrorHandler.discard()
+    /**
+     * Sends buffered SDK errors to [destination], or discards them & stops capture if it is null.
+     */
+    fun drainSdkErrors(destination: TelemetryDestination?) {
+        errorHandler.drain(
+            destination?.let {
+                { throwable: Throwable, timestampMs: Long ->
+                    it.addLog(
+                        schemaType = SdkError(throwable),
+                        severity = LogSeverity.ERROR,
+                        message = "",
+                        isPrivate = true,
+                        timestampMs = timestampMs,
+                    )
+                }
+            },
+        )
     }
 
     override fun addSpanExporter(spanExporter: SpanExporter) {

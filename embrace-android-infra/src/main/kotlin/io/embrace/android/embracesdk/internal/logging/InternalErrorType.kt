@@ -65,4 +65,9 @@ sealed class InternalErrorType(private val severity: Severity) {
     object OtelSdkCodeError : InternalErrorType(ERROR)
     object OtelExternalExportFail : InternalErrorType(ERROR)
     object EventBusHandlerFail : InternalErrorType(ERROR)
+
+    /**
+     * A failure that can be ignored.
+     */
+    object Ignored : InternalErrorType(Severity.INFO)
 }

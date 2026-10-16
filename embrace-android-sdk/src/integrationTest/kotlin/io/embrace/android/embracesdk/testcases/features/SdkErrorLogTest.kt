@@ -16,7 +16,7 @@ import org.junit.runner.RunWith
 import org.robolectric.ParameterizedRobolectricTestRunner
 
 @RunWith(ParameterizedRobolectricTestRunner::class)
-internal class InternalErrorLogTest(
+internal class SdkErrorLogTest(
     private val otelSdkMode: OtelSdkMode,
 ) {
 

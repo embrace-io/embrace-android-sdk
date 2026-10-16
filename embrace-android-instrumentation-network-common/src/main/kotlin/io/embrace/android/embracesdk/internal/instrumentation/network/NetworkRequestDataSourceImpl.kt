@@ -42,6 +42,12 @@ class NetworkRequestDataSourceImpl(
     private val domainCountLimiter: DomainCountLimiter = args.configService.networkBehavior.domainCountLimiter
     private val httpRequestInfoModifierChain = args.httpRequestInfoModifierChain
 
+    override fun onDataCaptureDisabled() {
+        if (networkRequestDataSource === this) {
+            networkRequestDataSource = null
+        }
+    }
+
     override fun recordNetworkRequest(request: HttpNetworkRequest) {
         // Apply any registered modifiers so the reported url/method reflect the consumer's changes.
         // The underlying HTTP request is not affected.

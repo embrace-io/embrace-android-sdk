@@ -4,8 +4,10 @@ import io.embrace.android.embracesdk.internal.arch.InstrumentationArgs
 import io.embrace.android.embracesdk.internal.arch.InstrumentationProvider
 import io.embrace.android.embracesdk.internal.arch.datasource.DataSource
 import io.embrace.android.embracesdk.internal.arch.datasource.DataSourceFactory
+import kotlin.concurrent.Volatile
 
 // retain a reference for use in bytecode instrumentation
+@Volatile
 var fcmDataSource: PushNotificationDataSource? = null
 
 class PushNotificationInstrumentationProvider : InstrumentationProvider {

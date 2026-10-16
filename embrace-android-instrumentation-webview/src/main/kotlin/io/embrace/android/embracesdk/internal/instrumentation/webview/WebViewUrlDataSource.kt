@@ -20,6 +20,12 @@ class WebViewUrlDataSource(
 
     private val breadcrumbConfig: BreadcrumbConfig = args.configService.config.breadcrumb
 
+    override fun onDataCaptureDisabled() {
+        if (webViewUrlDataSource === this) {
+            webViewUrlDataSource = null
+        }
+    }
+
     fun logWebView(url: String?) {
         captureTelemetry(inputValidation = { url != null }) {
             addSessionPartEvent(SchemaType.WebViewUrl(sanitizeUrl(url ?: "")), clock.now())

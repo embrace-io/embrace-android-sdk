@@ -1,5 +1,6 @@
 package io.embrace.android.embracesdk.internal.otel.export
 
+import io.embrace.android.embracesdk.fakes.FakeInternalLogger
 import kotlinx.coroutines.Dispatchers
 
 /**
@@ -7,4 +8,4 @@ import kotlinx.coroutines.Dispatchers
  * what reached an external exporter doesn't have to drain anything first.
  */
 internal fun immediateExportDispatcher(): ExternalExportDispatcher =
-    ExternalExportDispatcher { Dispatchers.Unconfined }
+    ExternalExportDispatcher(FakeInternalLogger()) { Dispatchers.Unconfined }

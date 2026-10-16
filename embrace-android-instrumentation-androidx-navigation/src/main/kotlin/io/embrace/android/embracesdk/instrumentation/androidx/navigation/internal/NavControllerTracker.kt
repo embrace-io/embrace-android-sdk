@@ -49,7 +49,11 @@ internal class NavControllerTracker(
         val activityId = activity.getId()
         eventBus.emit(NavigationSignal.KEY, ScreenSourceAttached(activityId, clock.now()))
         addOnDestinationChangedListener { _, destination, _ ->
-            eventBus.emit(NavigationSignal.KEY, ScreenChanged(activityId, extractScreenName(destination), clock.now()))
+            try {
+                eventBus.emit(NavigationSignal.KEY, ScreenChanged(activityId, extractScreenName(destination), clock.now()))
+            } catch (exc: Throwable) {
+                logger.trackInternalError(InternalErrorType.UiCallbackFail, exc)
+            }
         }
         trackAttemptStatus[activityId] = true
     }

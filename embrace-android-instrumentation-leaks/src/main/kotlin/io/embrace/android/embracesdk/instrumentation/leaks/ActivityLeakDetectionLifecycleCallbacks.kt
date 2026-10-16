@@ -4,6 +4,7 @@ import android.app.Activity
 import android.app.Application
 import android.os.Build
 import android.os.Bundle
+import io.embrace.android.embracesdk.internal.logging.InternalErrorType
 import io.embrace.android.embracesdk.internal.logging.InternalLogger
 import io.embrace.android.embracesdk.internal.session.id.SessionIdsSnapshot
 
@@ -16,34 +17,50 @@ internal class ActivityLeakDetectionLifecycleCallbacks(
 ) : Application.ActivityLifecycleCallbacks {
 
     override fun onActivityPreCreated(activity: Activity, savedInstanceState: Bundle?) {
-        leakDetector.trackOpened(activity)
+        try {
+            leakDetector.trackOpened(activity)
+        } catch (exc: Throwable) {
+            logger.trackInternalError(InternalErrorType.UiCallbackFail, exc)
+        }
     }
 
     override fun onActivityCreated(activity: Activity, savedInstanceState: Bundle?) {
-        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.Q) {
-            leakDetector.trackOpened(activity)
+        try {
+            if (Build.VERSION.SDK_INT < Build.VERSION_CODES.Q) {
+                leakDetector.trackOpened(activity)
+            }
+            fragmentSupport.onActivityCreated(activity)
+        } catch (exc: Throwable) {
+            logger.trackInternalError(InternalErrorType.UiCallbackFail, exc)
         }
-        fragmentSupport.onActivityCreated(activity)
     }
 
     override fun onActivityDestroyed(activity: Activity) {
-        val sessionIds = activeSessionIdsProvider()
-        leakDetector.trackClosed(activity, LeakContext(OBJECT_TYPE, sessionIds))
+        try {
+            val sessionIds = activeSessionIdsProvider()
+            leakDetector.trackClosed(activity, LeakContext(OBJECT_TYPE, sessionIds))
 
-        if (webViewLeakDetectionEnabled) {
-            WebViewLeakScanner.scan(activity.window?.decorView, logger) { webView ->
-                leakDetector.trackClosed(webView, LeakContext(WebViewLeakScanner.WEBVIEW_OBJECT_TYPE, sessionIds))
+            if (webViewLeakDetectionEnabled) {
+                WebViewLeakScanner.scan(activity.window?.decorView, logger) { webView ->
+                    leakDetector.trackClosed(webView, LeakContext(WebViewLeakScanner.WEBVIEW_OBJECT_TYPE, sessionIds))
+                }
             }
+        } catch (exc: Throwable) {
+            logger.trackInternalError(InternalErrorType.UiCallbackFail, exc)
         }
     }
 
     override fun onActivityPaused(activity: Activity) = Unit
 
     override fun onActivityResumed(activity: Activity) {
-        if (webViewLeakDetectionEnabled) {
-            WebViewLeakScanner.scan(activity.window?.decorView, logger) { webView ->
-                leakDetector.trackOpened(webView)
+        try {
+            if (webViewLeakDetectionEnabled) {
+                WebViewLeakScanner.scan(activity.window?.decorView, logger) { webView ->
+                    leakDetector.trackOpened(webView)
+                }
             }
+        } catch (exc: Throwable) {
+            logger.trackInternalError(InternalErrorType.UiCallbackFail, exc)
         }
     }
 

@@ -9,6 +9,7 @@ import io.embrace.android.embracesdk.fakes.FakeClock
 import io.embrace.android.embracesdk.fakes.FakeClock.Companion.DEFAULT_FAKE_CURRENT_TIME
 import io.embrace.android.embracesdk.fakes.FakeCustomTracedActivity
 import io.embrace.android.embracesdk.fakes.FakeDrawEventEmitter
+import io.embrace.android.embracesdk.fakes.FakeInternalLogger
 import io.embrace.android.embracesdk.fakes.FakeNotTracedActivity
 import io.embrace.android.embracesdk.fakes.FakeTracedActivity
 import io.embrace.android.embracesdk.fakes.FakeUiLoadEventListener
@@ -152,6 +153,7 @@ internal class UiLoadExtTest {
             autoTraceEnabled = autoTraceEnabled,
             clock = clock,
             versionChecker = versionChecker,
+            logger = FakeInternalLogger(),
         ).apply {
             application.registerActivityLifecycleCallbacks(asDispatchedOn(sdkInt))
             activityController = Robolectric.buildActivity(activityClass.java)

@@ -2,6 +2,7 @@ package io.embrace.android.embracesdk.internal.utils.event
 
 import io.embrace.android.embracesdk.internal.logging.InternalErrorHandler
 import io.embrace.android.embracesdk.internal.logging.InternalErrorType
+import java.util.BitSet
 import java.util.Collections
 import java.util.IdentityHashMap
 import java.util.concurrent.atomic.AtomicReferenceArray
@@ -52,6 +53,33 @@ class EventBus(private val internalErrorHandler: InternalErrorHandler) {
      * Handlers already reported as having thrown, so that each is reported once. Identity keyed, as registration is.
      */
     private val loggedFailures = Collections.synchronizedSet(Collections.newSetFromMap(IdentityHashMap<Any, Boolean>()))
+
+    /**
+     * Guards [ensuredProducers], held while a producer factory runs so that no caller returns before its key's producer exists.
+     */
+    private val producerLock = Any()
+
+    /**
+     * The ids of the keys whose producer factory has been run, written and read only under [producerLock].
+     */
+    private val ensuredProducers = BitSet()
+
+    /**
+     * Runs [factory] to create the producer of [key] unless a factory has already been run for it, returning only once it has.
+     */
+    fun ensureEventProducer(key: BusKey, factory: () -> Unit) {
+        synchronized(producerLock) {
+            if (ensuredProducers.get(key.id)) {
+                return
+            }
+            ensuredProducers.set(key.id)
+            try {
+                factory()
+            } catch (failure: Exception) {
+                internalErrorHandler.trackInternalError(InternalErrorType.EventBusProducerFail, failure)
+            }
+        }
+    }
 
     /**
      * Registers [handler] against [key] with [DEFAULT_ORDER]. Registering a handler already registered against [key] does nothing.

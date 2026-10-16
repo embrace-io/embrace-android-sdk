@@ -139,7 +139,7 @@ internal class ModuleGraphFactoryTest {
             initModule = initModule,
             openTelemetryModule = OpenTelemetryModuleImpl(initModule),
             configServiceSupplier = { _, _, openTelemetryModule, _, _ ->
-                initializedWhenConfigServiceBuilt = openTelemetryModule.spanService.initialized()
+                initializedWhenConfigServiceBuilt = openTelemetryModule.currentSessionPartSpan.initialized()
                 FakeConfigService()
             },
             instrumentationModuleSupplier = { _, _, _, _, _, _, _, _, _ ->
@@ -148,7 +148,7 @@ internal class ModuleGraphFactoryTest {
         )
         assertNotNull(factory.init(context))
         assertEquals(false, initializedWhenConfigServiceBuilt)
-        assertTrue(factory.openTelemetryModule.spanService.initialized())
+        assertTrue(factory.openTelemetryModule.currentSessionPartSpan.initialized())
     }
 
     @Test
@@ -164,7 +164,7 @@ internal class ModuleGraphFactoryTest {
             },
         )
         assertNull(factory.init(context))
-        assertFalse(factory.openTelemetryModule.spanService.initialized())
+        assertFalse(factory.openTelemetryModule.currentSessionPartSpan.initialized())
     }
 
     private fun createFactoryWithPersistedConfig(cfg: RemoteConfig): ModuleGraphFactory {

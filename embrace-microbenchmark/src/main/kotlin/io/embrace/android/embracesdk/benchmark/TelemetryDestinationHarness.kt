@@ -53,7 +53,7 @@ internal class TelemetryDestinationHarness(
                 ),
             ),
         )
-        this.spanService.initializeService(0)
+        currentSessionPartSpan.initializeService(0)
     }
 
     val logSink: LogSink = otelModule.logSink
@@ -84,11 +84,10 @@ internal class TelemetryDestinationHarness(
             spanRepository = otelModule.spanRepository,
             dataValidator = validator,
             canStartNewSpan = { _, _, _ -> true },
-            initCallback = {},
             embraceSpanFactory = factory,
-            tracerSupplier = { otelModule.otelSdkWrapper.sdkTracer },
-            openTelemetrySupplier = { otelModule.otelSdkWrapper.openTelemetryKotlin },
-        ).apply { initializeService(0) }
+            tracer = otelModule.otelSdkWrapper.sdkTracer,
+            openTelemetry = otelModule.otelSdkWrapper.openTelemetryKotlin,
+        )
     }
 
     private class TestInitModule(override val clock: Clock) : InitModule {

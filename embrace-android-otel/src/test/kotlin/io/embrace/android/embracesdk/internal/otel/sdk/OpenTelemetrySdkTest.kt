@@ -187,7 +187,7 @@ internal class OpenTelemetrySdkTest(
         return OtelSdkWrapper(
             otelClock = FakeOtelKotlinClock(FakeClock()),
             configuration = configuration,
-            spanService = FakeSpanService(),
+            spanServiceProvider = ::FakeSpanService,
             errorHandler = FakeInternalLogger(),
             useKotlinSdk = otelSdkMode.useKotlinSdk,
         )

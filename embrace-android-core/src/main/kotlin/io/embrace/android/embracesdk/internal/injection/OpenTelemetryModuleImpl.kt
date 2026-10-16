@@ -72,7 +72,7 @@ class OpenTelemetryModuleImpl(
             OtelSdkWrapper(
                 otelClock = openTelemetryClock,
                 configuration = otelSdkConfig,
-                spanService = spanService,
+                spanServiceProvider = { spanService },
                 errorHandler = initModule.logger,
                 // adding guard in case this is accessed before we fetch the config
                 useKotlinSdk = otelBehavior?.shouldUseKotlinSdk() ?: false,
@@ -137,20 +137,22 @@ class OpenTelemetryModuleImpl(
         internalSpanStopCallback = it::spanStopCallback
     }
 
-    override val spanService: SpanService = SpanServiceImpl(
-        spanRepository = spanRepository,
-        canStartNewSpan = currentSessionPartSpan::canStartNewSpan,
-        initCallback = currentSessionPartSpan::initializeService,
-        dataValidator = dataValidator,
-        embraceSpanFactory = embraceSpanFactory,
-        // supplied lazily (otelSdkWrapper is constructed with a reference to this service)
-        tracerSupplier = { otelSdkWrapper.sdkTracer },
-        openTelemetrySupplier = { otelSdkWrapper.openTelemetryKotlin },
-    )
+    override val spanService: SpanService by lazy {
+        SpanServiceImpl(
+            spanRepository = spanRepository,
+            canStartNewSpan = currentSessionPartSpan::canStartNewSpan,
+            dataValidator = dataValidator,
+            embraceSpanFactory = embraceSpanFactory,
+            tracer = otelSdkWrapper.sdkTracer,
+            openTelemetry = otelSdkWrapper.openTelemetryKotlin,
+        )
+    }
 
-    override val tracingApi: TracingApi = TracingApiDelegate(
-        spanService = spanService,
-    )
+    override val tracingApi: TracingApi by lazy {
+        TracingApiDelegate(
+            spanService = spanService,
+        )
+    }
 
     fun redactionFunction(key: String, value: String): String {
         return if (sensitiveKeysBehavior?.isSensitiveKey(key) == true) {

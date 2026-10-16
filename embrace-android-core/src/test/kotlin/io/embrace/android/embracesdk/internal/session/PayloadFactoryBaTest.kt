@@ -21,7 +21,6 @@ import io.embrace.android.embracesdk.internal.config.resolved.EmbraceConfig
 import io.embrace.android.embracesdk.internal.envelope.session.SessionPartPayloadSourceImpl
 import io.embrace.android.embracesdk.internal.logging.InternalLoggerImpl
 import io.embrace.android.embracesdk.internal.otel.spans.SpanRepository
-import io.embrace.android.embracesdk.internal.otel.spans.SpanService
 import io.embrace.android.embracesdk.internal.session.message.PayloadFactoryImpl
 import io.embrace.android.embracesdk.internal.session.message.PayloadMessageCollatorImpl
 import io.embrace.android.embracesdk.internal.spans.CurrentSessionPartSpan
@@ -52,7 +51,6 @@ internal class PayloadFactoryBaTest(
     private lateinit var configService: FakeConfigService
     private lateinit var spanRepository: SpanRepository
     private lateinit var currentSessionPartSpan: CurrentSessionPartSpan
-    private lateinit var spanService: SpanService
     private lateinit var blockingExecutorService: BlockingScheduledExecutorService
 
     @Before
@@ -65,7 +63,6 @@ internal class PayloadFactoryBaTest(
         val initModule = FakeInitModule(clock = clock, otelSdkMode = otelSdkMode)
         spanRepository = initModule.openTelemetryModule.spanRepository
         currentSessionPartSpan = initModule.openTelemetryModule.currentSessionPartSpan
-        spanService = initModule.openTelemetryModule.spanService
         configService = FakeConfigService(
             config = EmbraceConfig(
                 backgroundActivity = { BackgroundActivityConfig(captureEnabled = { true }) },
@@ -80,7 +77,7 @@ internal class PayloadFactoryBaTest(
         blockingExecutorService = BlockingScheduledExecutorService(blockingMode = true)
         service = createService()
         val now = clock.now()
-        spanService.initializeService(now)
+        currentSessionPartSpan.initializeService(now)
         val msg = service.endPayloadWithCrash(ProcessState.BACKGROUND, now, initial, "crashId")
 
         // there should be 1 completed span: the session part span
@@ -92,7 +89,7 @@ internal class PayloadFactoryBaTest(
     @Test
     fun `foregrounding will flush the current completed spans`() {
         service = createService()
-        spanService.initializeService(clock.now())
+        currentSessionPartSpan.initializeService(clock.now())
         val msg = service.endPayloadWithState(ProcessState.BACKGROUND, clock.now(), initial)
 
         // there should be 1 completed span: the session part span
@@ -104,7 +101,7 @@ internal class PayloadFactoryBaTest(
     @Test
     fun `sending background activity will flush the current completed spans`() {
         service = createService()
-        spanService.initializeService(clock.now())
+        currentSessionPartSpan.initializeService(clock.now())
         clock.tick(1000L)
         val msg = service.endPayloadWithState(ProcessState.BACKGROUND, clock.now(), initial)
 

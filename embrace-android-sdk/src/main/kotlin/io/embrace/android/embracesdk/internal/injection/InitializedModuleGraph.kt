@@ -83,7 +83,7 @@ internal class InitializedModuleGraph(
         // configService so that the otel behavior set in ModuleGraphFactory.init has been read
         // from the same persisted config this service uses.
         EmbTrace.trace(sectionName = "span-service-init", recordDuration = true) {
-            openTelemetryModule.spanService.initializeService(sdkStartTimeMs)
+            openTelemetryModule.currentSessionPartSpan.initializeService(sdkStartTimeMs)
         }
     }
 

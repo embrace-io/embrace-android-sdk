@@ -43,7 +43,7 @@ class FakeOpenTelemetryModule(
         OtelSdkWrapper(
             otelClock = FakeOtelKotlinClock(),
             configuration = otelSdkConfig,
-            spanService = spanService,
+            spanServiceProvider = { spanService },
             errorHandler = FakeInternalLogger(),
             useKotlinSdk = otelSdkMode.useKotlinSdk,
         )

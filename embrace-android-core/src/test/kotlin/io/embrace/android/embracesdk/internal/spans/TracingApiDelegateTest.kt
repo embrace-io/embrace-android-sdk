@@ -49,7 +49,7 @@ internal class TracingApiDelegateTest(
         val initModule = FakeInitModule(clock = clock, otelSdkMode = otelSdkMode)
         spanRepository = initModule.openTelemetryModule.spanRepository
         spanService = initModule.openTelemetryModule.spanService
-        spanService.initializeService(clock.now())
+        initModule.openTelemetryModule.currentSessionPartSpan.initializeService(clock.now())
         tracer = initModule.openTelemetryModule.tracingApi
         spanRepository.flushOtelSpans()
     }

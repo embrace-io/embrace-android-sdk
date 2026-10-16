@@ -25,7 +25,7 @@ internal class EmbTracerProviderTest {
         val otel = EmbOpenTelemetry(NoopOpenTelemetry, ::sdkTracerProvider)
         embTracerProvider = EmbTracerProvider(
             impl = otel,
-            spanService = spanService,
+            spanServiceProvider = { spanService },
             clock = openTelemetryClock,
         )
     }

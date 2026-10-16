@@ -91,7 +91,7 @@ internal class CurrentSessionPartSpanImplTests(
         tracer = initModule.openTelemetryModule.otelSdkWrapper.sdkTracer
         openTelemetry = initModule.openTelemetryModule.otelSdkWrapper.openTelemetryKotlin
         spanService = initModule.openTelemetryModule.spanService
-        spanService.initializeService(clock.now())
+        currentSessionPartSpan.initializeService(clock.now())
         otelLimitsConfig = initModule.instrumentedConfig.otelLimits
     }
 
@@ -274,7 +274,7 @@ internal class CurrentSessionPartSpanImplTests(
         val initModule =
             FakeInitModule(clock = clock, fakeTelemetryService = fakeTelemetryService, otelSdkMode = otelSdkMode)
         spanService = initModule.openTelemetryModule.spanService
-        spanService.initializeService(clock.now())
+        initModule.openTelemetryModule.currentSessionPartSpan.initializeService(clock.now())
 
         exhaustNetworkSpanBudget()
         createNetworkSpan(DEFAULT_MAX_NETWORK_SPANS_PER_SESSION_PART)
@@ -338,7 +338,7 @@ internal class CurrentSessionPartSpanImplTests(
         val initModule =
             FakeInitModule(clock = clock, fakeTelemetryService = fakeTelemetryService, otelSdkMode = otelSdkMode)
         spanService = initModule.openTelemetryModule.spanService
-        spanService.initializeService(clock.now())
+        initModule.openTelemetryModule.currentSessionPartSpan.initializeService(clock.now())
         initModule.openTelemetryModule.applyRemoteConfig(
             DataRemoteConfig(
                 maxCustomSpansPerSession = 0,
@@ -735,7 +735,7 @@ internal class CurrentSessionPartSpanImplTests(
             val cause = checkNotNull(it.objectInstance)
             val module = FakeInitModule(clock = clock, otelSdkMode = otelSdkMode)
             val sessionPartSpan = module.openTelemetryModule.currentSessionPartSpan
-            module.openTelemetryModule.spanService.initializeService(clock.now())
+            sessionPartSpan.initializeService(clock.now())
             val flushedSpans = sessionPartSpan.endSession(true, cause)
             assertEquals(1, flushedSpans.size)
 

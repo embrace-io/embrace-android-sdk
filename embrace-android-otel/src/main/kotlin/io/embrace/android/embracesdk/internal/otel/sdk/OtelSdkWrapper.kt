@@ -14,6 +14,7 @@ import io.embrace.android.embracesdk.internal.otel.logs.PrivateTelemetryFilterin
 import io.embrace.android.embracesdk.internal.otel.spans.PrivateTelemetryFilteringSpanProcessor
 import io.embrace.android.embracesdk.internal.otel.spans.SpanService
 import io.embrace.android.embracesdk.internal.utils.EmbTrace
+import io.embrace.android.embracesdk.internal.utils.Provider
 import io.opentelemetry.kotlin.Clock
 import io.opentelemetry.kotlin.OpenTelemetry
 import io.opentelemetry.kotlin.logging.Logger
@@ -29,7 +30,7 @@ import io.opentelemetry.kotlin.tracing.export.compositeSpanProcessor
 class OtelSdkWrapper(
     otelClock: Clock,
     configuration: OtelSdkConfig,
-    spanService: SpanService,
+    spanServiceProvider: Provider<SpanService>,
     errorHandler: InternalErrorHandler,
     limits: OtelLimitsConfig = InstrumentedConfigImpl.otelLimits,
     val useKotlinSdk: Boolean,
@@ -113,7 +114,7 @@ class OtelSdkWrapper(
     val openTelemetryKotlin: OpenTelemetry by lazy {
         EmbOpenTelemetry(
             impl = kotlinApi,
-            traceProviderSupplier = { EmbTracerProvider(kotlinApi, spanService, otelClock) },
+            traceProviderSupplier = { EmbTracerProvider(kotlinApi, spanServiceProvider, otelClock) },
         )
     }
 }

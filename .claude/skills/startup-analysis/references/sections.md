@@ -17,7 +17,7 @@ sdk-start                    wraps the whole Embrace.start() call — the SDK-in
 │  ├─ essential-service-init
 │  ├─ delivery-init
 │  └─ payload-source-init
-├─ post-init                 SdkInitActions.postInit()
+├─ post-init                 RealSdkInstance.postInit()
 └─ post-services-setup       tail of EmbraceImpl.start()
    └─ load-instrumentation
 ```

@@ -204,6 +204,7 @@ internal class RealSdkInstance(
         started = false
         runCatching { moduleGraph.openTelemetryModule.otelSdkConfig.disableDataExport() }
         runCatching { moduleGraph.instrumentationModule.instrumentationRegistry.close() }
+        runCatching { moduleGraph.threadBlockageService?.close() }
 
         val rootDir = runCatching { moduleGraph.coreModule.context.filesDir }.getOrNull()
         val fallbackDir = runCatching { moduleGraph.coreModule.context.cacheDir }.getOrNull()

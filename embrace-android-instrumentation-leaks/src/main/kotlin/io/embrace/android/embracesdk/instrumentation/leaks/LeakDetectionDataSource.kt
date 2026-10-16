@@ -47,6 +47,7 @@ class LeakDetectionDataSource(args: InstrumentationArgs) :
 
     override fun onDataCaptureDisabled() {
         application.unregisterActivityLifecycleCallbacks(callbacks)
+        fragmentSupport.close()
         leakDetector.stop()
     }
 

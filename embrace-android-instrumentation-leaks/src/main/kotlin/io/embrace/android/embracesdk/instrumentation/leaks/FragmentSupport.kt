@@ -3,6 +3,7 @@ package io.embrace.android.embracesdk.instrumentation.leaks
 import android.app.Activity
 import io.embrace.android.embracesdk.internal.logging.InternalLogger
 import io.embrace.android.embracesdk.internal.session.id.SessionIdsSnapshot
+import java.io.Closeable
 
 /**
  * Attaches Fragment and Fragment View leak tracking to an Activity, if the host app includes the Fragment library.
@@ -11,7 +12,7 @@ import io.embrace.android.embracesdk.internal.session.id.SessionIdsSnapshot
  * types, must never be referenced by a statically-typed field or property outside this file. Everywhere else in this module
  * only ever holds a reference of this interface's type, which is always resolvable.
  */
-internal interface FragmentSupport {
+internal interface FragmentSupport : Closeable {
     fun onActivityCreated(activity: Activity)
 }
 
@@ -21,6 +22,7 @@ internal interface FragmentSupport {
  */
 internal object NoOpFragmentSupport : FragmentSupport {
     override fun onActivityCreated(activity: Activity) = Unit
+    override fun close() = Unit
 }
 
 /**

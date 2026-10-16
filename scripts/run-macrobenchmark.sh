@@ -1,9 +1,10 @@
 #!/bin/sh
 # Runs the :embrace-macrobenchmark benchmark on a connected device.
 #
-# Usage: scripts/run-macrobenchmark.sh [--test CLASS] [--serial SERIAL] [--no-publish]
-#            [--suppress-errors LIST] [--gradle-arg ARG] [--dry-run]
+# Usage: scripts/run-macrobenchmark.sh [--test CLASS] [--serial SERIAL] [--capture app-only|with-context]
+#            [--no-publish] [--suppress-errors LIST] [--gradle-arg ARG] [--dry-run]
 #
+# --capture picks the perfetto config (see the README's capture profiles); app-only is the default.
 # Two gradle invocations are needed: the app resolves the Embrace gradle plugin on its buildscript
 # classpath, so the plugin must be in build/integration-repo before the benchmark configures.
 # Exit codes: 2 preflight, 3 publish, 4 benchmark.
@@ -14,6 +15,7 @@ die() { printf '%b\n' "$2" >&2; exit "$1"; }
 
 test_filter=io.embrace.android.embracesdk.macrobenchmark.SessionBenchmark
 serial=${ANDROID_SERIAL:-}
+capture=app-only
 publish=true
 suppress=""
 extra=""
@@ -23,14 +25,20 @@ while [ $# -gt 0 ]; do
     case $1 in
         --test) test_filter=${2:?--test needs a value}; shift 2 ;;
         --serial) serial=${2:?--serial needs a value}; shift 2 ;;
+        --capture) capture=${2:?--capture needs a value}; shift 2 ;;
         --suppress-errors) suppress=${2:?needs a value}; shift 2 ;;
         --gradle-arg) extra="$extra ${2:?--gradle-arg needs a value}"; shift 2 ;;
         --no-publish) publish=false; shift ;;
         --dry-run) dry_run=true; shift ;;
-        -h|--help) sed -n '2,9p' "$0" | sed 's/^# \{0,1\}//'; exit 0 ;;
+        -h|--help) sed -n '2,10p' "$0" | sed 's/^# \{0,1\}//'; exit 0 ;;
         *) die 1 "unknown option: $1" ;;
     esac
 done
+
+case $capture in
+    app-only|with-context) ;;
+    *) die 1 "unknown --capture '$capture'; one of app-only, with-context" ;;
+esac
 
 root=$(CDPATH= cd -- "$(dirname -- "$0")/.." && pwd)
 
@@ -77,7 +85,8 @@ pub=""
 
 set -- :embrace-macrobenchmark:connectedBenchmarkAndroidTest \
     "-Pandroid.testInstrumentationRunnerArguments.androidx.benchmark.suppressErrors=$suppress" \
-    "-Pandroid.testInstrumentationRunnerArguments.class=$test_filter"
+    "-Pandroid.testInstrumentationRunnerArguments.class=$test_filter" \
+    "-Pandroid.testInstrumentationRunnerArguments.embrace.capture=$capture"
 set -- "$@" $extra
 
 if [ "$dry_run" = true ]; then

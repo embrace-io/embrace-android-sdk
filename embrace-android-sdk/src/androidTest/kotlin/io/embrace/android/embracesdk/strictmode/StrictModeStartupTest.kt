@@ -65,7 +65,7 @@ internal class StrictModeStartupTest(
 
     @After
     fun tearDown() {
-        sdkStateHolder.disable()
+        sdkStateHolder.close()
     }
 
     @Test

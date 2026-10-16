@@ -8,6 +8,7 @@ import io.embrace.android.embracesdk.internal.logging.InternalErrorType
 import io.embrace.android.embracesdk.internal.telemetry.InternalTelemetryService
 import io.embrace.android.embracesdk.internal.utils.EmbTrace
 import io.embrace.android.embracesdk.internal.utils.Provider
+import java.io.Closeable
 
 /**
  * Holds the [SdkApi] instance that backs the public `Embrace` object, and the lifecycle state of the SDK.
@@ -15,10 +16,10 @@ import io.embrace.android.embracesdk.internal.utils.Provider
  * All lifecycle transitions happen under a single lock and follow [SdkState]:
  *
  * ```
- * NOT_STARTED --start() succeeds--> STARTED --disable()--> DISABLED
+ * NOT_STARTED --start() succeeds--> STARTED --close()----> DISABLED
  *      |   |                                                ^  ^
- *      |   +--start() fails--> FAILED --disable()-----------+  |
- *      +----------------------disable()------------------------+
+ *      |   +--start() fails--> FAILED --close()-------------+  |
+ *      +-----------------------close()-------------------------+
  * ```
  *
  * The [SdkInstance] is created by [instanceFactory] when the SDK starts. A null instance means the SDK could not be
@@ -35,7 +36,7 @@ internal class SdkStateHolder(
     private val disabled: Provider<SdkInstance>,
     telemetryService: InternalTelemetryService,
     private val errorHandler: InternalErrorHandler,
-) {
+) : Closeable {
 
     private val lock = Any()
 
@@ -51,7 +52,7 @@ internal class SdkStateHolder(
      */
     val api: SdkApi = object : SdkApi by dispatcher {
         override fun start(context: Context) = guard { this@SdkStateHolder.start(context) }
-        override fun disable() = guard { this@SdkStateHolder.disable() }
+        override fun disable() = guard { this@SdkStateHolder.close() }
     }
 
     @Volatile
@@ -86,7 +87,7 @@ internal class SdkStateHolder(
                 if (started) {
                     state = SdkState.STARTED
                 } else {
-                    instance?.let { guard { it.disable() } }
+                    instance?.let { guard { it.close() } }
                     val next = failed()
                     dispatcher.target = next
                     guard { drainBufferedCalls(next) { true } }
@@ -99,7 +100,7 @@ internal class SdkStateHolder(
     /**
      * Disables the SDK. Has no effect if the SDK is already in [SdkState.DISABLED].
      */
-    fun disable() {
+    override fun close() {
         synchronized(lock) {
             when (state) {
                 SdkState.DISABLED -> return
@@ -115,7 +116,7 @@ internal class SdkStateHolder(
                 }
                 SdkState.STARTED -> {
                     try {
-                        instance?.disable()
+                        instance?.close()
                         dispatcher.target = disabled()
                         state = SdkState.DISABLED
                     } catch (exc: Throwable) {

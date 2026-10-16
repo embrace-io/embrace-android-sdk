@@ -19,6 +19,12 @@ class TapDataSource(
     instrumentationName = "tap_data_source",
 ) {
 
+    override fun onDataCaptureDisabled() {
+        if (tapDataSource === this) {
+            tapDataSource = null
+        }
+    }
+
     companion object {
         private const val UNKNOWN_ELEMENT_NAME = "Unknown element"
     }

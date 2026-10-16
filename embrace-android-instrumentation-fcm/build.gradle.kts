@@ -14,5 +14,6 @@ dependencies {
     compileOnly(libs.firebase.messaging)
 
     testImplementation(project(":embrace-test-common"))
+    testImplementation(project(":embrace-android-instrumentation-api-fakes"))
     testImplementation(libs.mockk)
 }

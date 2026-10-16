@@ -1,10 +1,9 @@
 package io.embrace.android.embracesdk.internal.injection
 
 import io.embrace.android.embracesdk.core.BuildConfig
-import io.embrace.android.embracesdk.internal.config.behavior.OtelBehavior
+import io.embrace.android.embracesdk.internal.config.ConfigService
 import io.embrace.android.embracesdk.internal.config.behavior.REDACTED_LABEL
 import io.embrace.android.embracesdk.internal.config.behavior.SensitiveKeysBehavior
-import io.embrace.android.embracesdk.internal.config.resolved.BreadcrumbConfig
 import io.embrace.android.embracesdk.internal.otel.config.ExternalOtelConfig
 import io.embrace.android.embracesdk.internal.otel.config.OtelSdkConfig
 import io.embrace.android.embracesdk.internal.otel.impl.EmbClock
@@ -27,23 +26,17 @@ import io.embrace.android.embracesdk.spans.TracingApi
 
 class OpenTelemetryModuleImpl(
     private val initModule: InitModule,
+    private val configService: ConfigService,
     private val externalOtelConfig: ExternalOtelConfig = ExternalOtelConfig(),
+    private val sessionIdsProvider: () -> SessionIdsProvider? = { null },
+    private val userIdProvider: () -> String? = { null },
+    private val eventMetadataProvider: () -> Map<String, String> = { emptyMap() },
     private val openTelemetryClock: EmbClock = EmbClock(
         embraceClock = initModule.clock,
     ),
 ) : OpenTelemetryModule {
 
-    private val processIdentifierProvider: () -> String = IdGenerator.Companion::generateLaunchInstanceId
-    private var storedSessionIdsProvider: SessionIdsProvider? = null
-    private var storedUserIdProvider: (() -> String?)? = null
-    private var storedEventMetadataProvider: (() -> Map<String, String>)? = null
-
-    @Volatile
-    private var otelBehavior: OtelBehavior? = null
-    private var sensitiveKeysBehavior: SensitiveKeysBehavior? = null
-    private var breadcrumbConfig: BreadcrumbConfig? = null
-    private var internalSpanStopCallback: ((spanId: String) -> Unit)? = null
-    private var bypassLimitsValidation: Boolean = false
+    private val sensitiveKeysBehavior = SensitiveKeysBehavior(configService.config.sensitiveKeys)
 
     override val spanRepository: SpanRepository = SpanRepository()
 
@@ -59,10 +52,10 @@ class OpenTelemetryModuleImpl(
             packageName = initModule.instrumentedConfig.project.getPackageName() ?: "UNKNOWN",
             systemInfo = initModule.systemInfo,
             uuidSource = initModule.uuidSource,
-            sessionIdsProvider = { storedSessionIdsProvider },
-            userIdProvider = { storedUserIdProvider?.invoke() },
-            eventMetadataProvider = { storedEventMetadataProvider?.invoke() ?: emptyMap() },
-            processIdentifierProvider = processIdentifierProvider,
+            sessionIdsProvider = sessionIdsProvider,
+            userIdProvider = userIdProvider,
+            eventMetadataProvider = eventMetadataProvider,
+            processIdentifierProvider = IdGenerator.Companion::generateLaunchInstanceId,
             externalConfig = externalOtelConfig,
         )
     }
@@ -74,55 +67,17 @@ class OpenTelemetryModuleImpl(
                 configuration = otelSdkConfig,
                 spanServiceProvider = { spanService },
                 errorHandler = initModule.logger,
-                // adding guard in case this is accessed before we fetch the config
-                useKotlinSdk = otelBehavior?.shouldUseKotlinSdk() ?: false,
+                useKotlinSdk = configService.otelBehavior.shouldUseKotlinSdk(),
             )
         }
     }
 
-    override fun applyConfiguration(
-        sensitiveKeysBehavior: SensitiveKeysBehavior,
-        bypassValidation: Boolean,
-        otelBehavior: OtelBehavior,
-        breadcrumbConfig: BreadcrumbConfig,
-    ) {
-        this.sensitiveKeysBehavior = sensitiveKeysBehavior
-        this.bypassLimitsValidation = bypassValidation
-        this.otelBehavior = otelBehavior
-        this.breadcrumbConfig = breadcrumbConfig
-    }
-
-    override fun setOtelBehavior(otelBehavior: OtelBehavior) {
-        this.otelBehavior = otelBehavior
-    }
-
-    override fun setSessionIdsProvider(sessionIdsProvider: SessionIdsProvider) {
-        storedSessionIdsProvider = sessionIdsProvider
-    }
-
-    override fun setUserIdProvider(userIdProvider: () -> String?) {
-        storedUserIdProvider = userIdProvider
-    }
-
-    override fun setEventMetadataProvider(eventMetadataProvider: () -> Map<String, String>) {
-        storedEventMetadataProvider = eventMetadataProvider
-    }
-
     private val dataValidator: DataValidator = DataValidator(
-        bypassValidation = ::bypassLimitsValidation,
+        bypassValidation = configService::isOnlyUsingOtelExporters,
         telemetryService = initModule.telemetryService,
     )
 
-    private val embraceSpanFactory: EmbraceSpanFactory = EmbraceSpanFactoryImpl(
-        openTelemetryClock = openTelemetryClock,
-        spanRepository = spanRepository,
-        dataValidator = dataValidator,
-        stopCallback = ::spanStopCallbackWrapper,
-        redactionFunction = ::redactionFunction,
-        telemetryService = initModule.telemetryService,
-    )
-
-    override val currentSessionPartSpan: CurrentSessionPartSpan = CurrentSessionPartSpanImpl(
+    private val currentSessionPartSpanImpl: CurrentSessionPartSpanImpl = CurrentSessionPartSpanImpl(
         openTelemetryClock = openTelemetryClock,
         telemetryService = initModule.telemetryService,
         spanRepository = spanRepository,
@@ -130,12 +85,20 @@ class OpenTelemetryModuleImpl(
         openTelemetrySupplier = { otelSdkWrapper.openTelemetryKotlin },
         embraceSpanFactorySupplier = { embraceSpanFactory },
         uuidSource = initModule.uuidSource,
-        otelBehaviorSupplier = { otelBehavior },
-        // adding guard in case this is accessed before we fetch the config
-        customBreadcrumbLimitSupplier = { breadcrumbConfig?.customLimit ?: BreadcrumbConfig.DEFAULT_LIMIT },
-    ).also {
-        internalSpanStopCallback = it::spanStopCallback
-    }
+        otelBehaviorSupplier = { configService.otelBehavior },
+        customBreadcrumbLimitSupplier = { configService.config.breadcrumb.customLimit },
+    )
+
+    override val currentSessionPartSpan: CurrentSessionPartSpan = currentSessionPartSpanImpl
+
+    private val embraceSpanFactory: EmbraceSpanFactory = EmbraceSpanFactoryImpl(
+        openTelemetryClock = openTelemetryClock,
+        spanRepository = spanRepository,
+        dataValidator = dataValidator,
+        stopCallback = currentSessionPartSpanImpl::spanStopCallback,
+        redactionFunction = ::redact,
+        telemetryService = initModule.telemetryService,
+    )
 
     override val spanService: SpanService by lazy {
         SpanServiceImpl(
@@ -154,15 +117,11 @@ class OpenTelemetryModuleImpl(
         )
     }
 
-    fun redactionFunction(key: String, value: String): String {
-        return if (sensitiveKeysBehavior?.isSensitiveKey(key) == true) {
+    private fun redact(key: String, value: String): String {
+        return if (sensitiveKeysBehavior.isSensitiveKey(key)) {
             REDACTED_LABEL
         } else {
             value
         }
-    }
-
-    fun spanStopCallbackWrapper(spanId: String) {
-        internalSpanStopCallback?.invoke(spanId)
     }
 }

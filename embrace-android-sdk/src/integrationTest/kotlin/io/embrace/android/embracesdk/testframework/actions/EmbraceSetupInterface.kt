@@ -43,6 +43,7 @@ import io.embrace.android.embracesdk.internal.injection.InstrumentationModuleImp
 import io.embrace.android.embracesdk.internal.injection.LogModuleImpl
 import io.embrace.android.embracesdk.internal.injection.ModuleGraphSupplier
 import io.embrace.android.embracesdk.internal.injection.OpenTelemetryModule
+import io.embrace.android.embracesdk.internal.injection.OpenTelemetryModuleImpl
 import io.embrace.android.embracesdk.internal.injection.PreStartServices
 import io.embrace.android.embracesdk.internal.injection.WorkerThreadPool
 import io.embrace.android.embracesdk.internal.injection.WorkerThreadPoolImpl
@@ -148,7 +149,7 @@ internal class EmbraceSetupInterface(
         clock = fakeClock,
         logger = FakeInternalLogger(ignoredErrors = ignoredInternalErrors),
         uuidSource = uuidSource,
-        // SdkIntegrationTestRule replaces this with its own OtelSdkMode via applyConfiguration() before start()
+        // unused: the module graph builds its OTel module from the SDK's ConfigService
         otelSdkMode = OtelSdkMode.COMPAT,
     )
 
@@ -158,8 +159,14 @@ internal class EmbraceSetupInterface(
     val initModule: InitModule
         get() = fakeInitModule
 
+    /**
+     * The OTel module built by the module graph, or null if the graph has not reached it.
+     */
+    var openTelemetryModuleOrNull: OpenTelemetryModule? = null
+        private set
+
     val openTelemetryModule: OpenTelemetryModule
-        get() = fakeInitModule.openTelemetryModule
+        get() = checkNotNull(openTelemetryModuleOrNull) { "OTel module has not been created." }
 
     private val workerThreadPool: WorkerThreadPool = initWorkerThreadPool(
         fakeInitModule = fakeInitModule,
@@ -224,7 +231,16 @@ internal class EmbraceSetupInterface(
         sdkStartTimeMs = sdkStartTimeMs,
         sdkInitResourceUsageTracker = sdkInitResourceUsageTracker,
         initModuleSupplier = { fakeInitModule },
-        openTelemetryModuleSupplier = { _, _ -> fakeInitModule.openTelemetryModule },
+        openTelemetryModuleSupplier = { initModule, configService, externalOtelConfig, sessionIdsProvider, userIdProvider, eventMetadataProvider ->
+            OpenTelemetryModuleImpl(
+                initModule = initModule,
+                configService = configService,
+                externalOtelConfig = externalOtelConfig,
+                sessionIdsProvider = sessionIdsProvider,
+                userIdProvider = userIdProvider,
+                eventMetadataProvider = eventMetadataProvider,
+            ).also { openTelemetryModuleOrNull = it }
+        },
         // forwards the supplied store so the module shares one instance with PersistedConfig, as in production
         coreModuleSupplier = { _, _, suppliedStore ->
             moduleGraphFailure?.let { throw it }
@@ -528,9 +544,9 @@ internal class EmbraceSetupInterface(
             ),
         )
 
-    fun getSpanRepository(): SpanRepository = fakeInitModule.openTelemetryModule.spanRepository
+    fun getSpanRepository(): SpanRepository = openTelemetryModule.spanRepository
 
-    fun getCurrentSessionPartSpan(): CurrentSessionPartSpan = fakeInitModule.openTelemetryModule.currentSessionPartSpan
+    fun getCurrentSessionPartSpan(): CurrentSessionPartSpan = openTelemetryModule.currentSessionPartSpan
 
     fun getEmbLogger(): FakeInternalLogger = fakeInitModule.logger as FakeInternalLogger
 

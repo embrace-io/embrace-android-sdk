@@ -1,9 +1,6 @@
 package io.embrace.android.embracesdk.fakes
 
 import io.embrace.android.embracesdk.internal.SystemInfo
-import io.embrace.android.embracesdk.internal.config.behavior.OtelBehavior
-import io.embrace.android.embracesdk.internal.config.behavior.SensitiveKeysBehavior
-import io.embrace.android.embracesdk.internal.config.resolved.BreadcrumbConfig
 import io.embrace.android.embracesdk.internal.injection.OpenTelemetryModule
 import io.embrace.android.embracesdk.internal.otel.config.OtelSdkConfig
 import io.embrace.android.embracesdk.internal.otel.logs.LogSink
@@ -11,7 +8,6 @@ import io.embrace.android.embracesdk.internal.otel.logs.LogSinkImpl
 import io.embrace.android.embracesdk.internal.otel.sdk.OtelSdkWrapper
 import io.embrace.android.embracesdk.internal.otel.spans.SpanRepository
 import io.embrace.android.embracesdk.internal.otel.spans.SpanService
-import io.embrace.android.embracesdk.internal.session.id.SessionIdsProvider
 import io.embrace.android.embracesdk.internal.spans.CurrentSessionPartSpan
 import io.embrace.android.embracesdk.spans.TracingApi
 
@@ -50,29 +46,4 @@ class FakeOpenTelemetryModule(
 
     override val tracingApi: TracingApi
         get() = TODO()
-
-    override fun applyConfiguration(
-        sensitiveKeysBehavior: SensitiveKeysBehavior,
-        bypassValidation: Boolean,
-        otelBehavior: OtelBehavior,
-        breadcrumbConfig: BreadcrumbConfig,
-    ) {
-        // no-op
-    }
-
-    override fun setOtelBehavior(otelBehavior: OtelBehavior) {
-        // no-op
-    }
-
-    override fun setSessionIdsProvider(sessionIdsProvider: SessionIdsProvider) {
-        // no-op
-    }
-
-    override fun setUserIdProvider(userIdProvider: () -> String?) {
-        // no-op
-    }
-
-    override fun setEventMetadataProvider(eventMetadataProvider: () -> Map<String, String>) {
-        // no-op
-    }
 }

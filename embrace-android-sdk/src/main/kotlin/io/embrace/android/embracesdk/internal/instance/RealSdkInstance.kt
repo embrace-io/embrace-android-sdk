@@ -27,9 +27,7 @@ import io.embrace.android.embracesdk.internal.api.delegate.UserSessionApiDelegat
 import io.embrace.android.embracesdk.internal.api.delegate.ViewTrackingApiDelegate
 import io.embrace.android.embracesdk.internal.arch.InstrumentationArgs
 import io.embrace.android.embracesdk.internal.arch.InstrumentationProvider
-import io.embrace.android.embracesdk.internal.arch.attrs.toEmbraceAttributeName
 import io.embrace.android.embracesdk.internal.clock.Clock
-import io.embrace.android.embracesdk.internal.config.behavior.SensitiveKeysBehavior
 import io.embrace.android.embracesdk.internal.delivery.storage.StorageLocation
 import io.embrace.android.embracesdk.internal.delivery.storage.asFile
 import io.embrace.android.embracesdk.internal.injection.InitializedModuleGraph
@@ -44,15 +42,10 @@ import io.embrace.android.embracesdk.internal.instrumentation.startup.sdkInitEnv
 import io.embrace.android.embracesdk.internal.instrumentation.startup.toSdkInitDurationAttributes
 import io.embrace.android.embracesdk.internal.logging.InternalErrorType
 import io.embrace.android.embracesdk.internal.utils.EmbTrace
-import io.embrace.android.embracesdk.internal.utils.Provider
 import io.embrace.android.embracesdk.internal.worker.Worker
-import io.embrace.android.embracesdk.semconv.EmbCommonAttributes
-import io.embrace.android.embracesdk.semconv.EmbSessionAttributes
-import io.embrace.android.embracesdk.semconv.ExperimentalSemconv
 import io.embrace.android.embracesdk.spans.TracingApi
 import io.opentelemetry.kotlin.NoopOpenTelemetry
 import io.opentelemetry.kotlin.OpenTelemetry
-import io.opentelemetry.kotlin.semconv.UserAttributes
 import java.io.File
 import java.util.ServiceLoader
 import java.util.concurrent.Executors
@@ -250,17 +243,6 @@ internal class RealSdkInstance(
      */
     internal fun postInit() = with(moduleGraph) {
         EmbTrace.trace(sectionName = "post-init", recordDuration = true) {
-            openTelemetryModule.setEventMetadataProvider(eventMetadataSupplierProvider())
-
-            // note: otelBehavior is not applied here - it decides which OTel SDK is built, so it is set
-            // right after the persisted config is read in InitializedModuleGraph.
-            openTelemetryModule.applyConfiguration(
-                sensitiveKeysBehavior = SensitiveKeysBehavior(configService.config.sensitiveKeys),
-                bypassValidation = configService.isOnlyUsingOtelExporters(),
-                otelBehavior = configService.otelBehavior,
-                breadcrumbConfig = configService.config.breadcrumb,
-            )
-
             deliveryModule?.payloadCachingService?.run {
                 openTelemetryModule.spanRepository.addSpanChangeListener { reportBackgroundActivityStateChange() }
             }
@@ -275,9 +257,6 @@ internal class RealSdkInstance(
                 userSessionOrchestrationModule.sessionOrchestrator::onSessionDataUpdate
             essentialServiceModule.telemetryDestination.currentStatesProvider =
                 instrumentationModule.instrumentationRegistry::getCurrentStates
-
-            openTelemetryModule.setSessionIdsProvider(userSessionOrchestrationModule.sessionIdsProvider)
-            openTelemetryModule.setUserIdProvider { essentialServiceModule.userService.getUserInfo().userId }
 
             // Start the orchestrator and create the first session part once all the module dependencies have been created and wired up
             userSessionOrchestrationModule.sessionOrchestrator.start()
@@ -534,37 +513,6 @@ internal class RealSdkInstance(
             val startMsg = "Embrace SDK version ${BuildConfig.VERSION_NAME} started" +
                 (appId?.let { " for appId = $it" } ?: " without an app ID")
             initModule.logger.logInfo(startMsg)
-        }
-    }
-
-    @OptIn(ExperimentalSemconv::class)
-    private fun eventMetadataSupplierProvider(): Provider<Map<String, String>> = with(moduleGraph) {
-        {
-            mutableMapOf<String, String>().apply {
-                val sessionPart = essentialServiceModule.sessionPartTracker.getActiveSessionPart()
-                val sessionState = sessionPart?.processState ?: essentialServiceModule.processStateTracker.getAppState()
-                val sessionIds = userSessionOrchestrationModule.sessionIdsProvider.getActiveSessionIds()
-
-                put(EmbSessionAttributes.EMB_SESSION_PART_ID, sessionIds.sessionPartId)
-                put(EmbSessionAttributes.EMB_USER_SESSION_ID, sessionIds.userSessionId)
-                put(EmbSessionAttributes.EMB_STATE, sessionState.description)
-                essentialServiceModule.userService.getUserInfo().userId?.let {
-                    put(UserAttributes.USER_ID, it)
-                }
-                essentialServiceModule.experimentTrackingService.getRecords()?.let {
-                    put(EmbCommonAttributes.EMB_EXPERIMENTS, it)
-                }
-                putAll(
-                    essentialServiceModule.userSessionPropertiesService
-                        .getProperties()
-                        .mapKeys { property ->
-                            property.key.toEmbraceAttributeName()
-                        },
-                )
-                instrumentationModule.instrumentationRegistry.getCurrentStates().forEach {
-                    put(it.key, it.value.toString())
-                }
-            }
         }
     }
 

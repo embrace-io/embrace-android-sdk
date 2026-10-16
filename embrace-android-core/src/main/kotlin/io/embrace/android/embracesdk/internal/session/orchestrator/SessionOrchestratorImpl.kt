@@ -42,7 +42,7 @@ import java.util.concurrent.TimeUnit
 import kotlin.math.max
 
 internal class SessionOrchestratorImpl(
-    processStateTracker: ProcessStateTracker,
+    private val processStateTracker: ProcessStateTracker,
     private val payloadFactory: PayloadFactory,
     private val clock: Clock,
     private val configService: ConfigService,
@@ -50,7 +50,7 @@ internal class SessionOrchestratorImpl(
     private val boundaryDelegate: OrchestratorBoundaryDelegate,
     private val payloadStore: PayloadStore?,
     private val payloadCachingService: PayloadCachingService?,
-    instrumentationRegistry: InstrumentationRegistry,
+    private val instrumentationRegistry: InstrumentationRegistry,
     private val destination: TelemetryDestination,
     private val sessionPartSpanAttrPopulator: SessionPartSpanAttrPopulator,
     private val ordinalStore: OrdinalStore,
@@ -88,7 +88,10 @@ internal class SessionOrchestratorImpl(
     override var userSessionRestoreDecision: UserSessionRestoreDecision? = null
         private set
 
-    init {
+    /**
+     * Loads any persisted user session and registers the orchestrator's listeners. Must be called once, straight after construction.
+     */
+    fun attach() {
         loadPersistedUserSession()
         processStateTracker.addListener(this)
         sessionTracker.addSessionPartEndListener(instrumentationRegistry)

@@ -55,7 +55,7 @@ internal class EmbraceRnBundleIdTrackerTest {
         configService,
         store,
         fakeBackgroundWorker(),
-    )
+    ).apply { startAsyncRetrieval() }
 
     @Test
     fun `test React Native bundle ID setting as a default value`() {
@@ -221,7 +221,9 @@ internal class EmbraceRnBundleIdTrackerTest {
     @Test
     fun `listener is notified once the bundle ID has been computed in the background`() {
         val executor = BlockingScheduledExecutorService(blockingMode = true)
-        val tracker = RnBundleIdTrackerImpl(context, configService, store, BackgroundWorker(executor))
+        val tracker = RnBundleIdTrackerImpl(context, configService, store, BackgroundWorker(executor)).apply {
+            startAsyncRetrieval()
+        }
         val observed = mutableListOf<String?>()
         tracker.addChangeListener { observed.add(tracker.getReactNativeBundleId()) }
         assertEquals(0, observed.size)
@@ -235,7 +237,9 @@ internal class EmbraceRnBundleIdTrackerTest {
     @Test
     fun `listener is notified when the JavaScript bundle URL changes`() {
         val executor = BlockingScheduledExecutorService(blockingMode = true)
-        val tracker = RnBundleIdTrackerImpl(context, configService, store, BackgroundWorker(executor))
+        val tracker = RnBundleIdTrackerImpl(context, configService, store, BackgroundWorker(executor)).apply {
+            startAsyncRetrieval()
+        }
         executor.runCurrentlyBlocked()
 
         val observed = mutableListOf<String?>()

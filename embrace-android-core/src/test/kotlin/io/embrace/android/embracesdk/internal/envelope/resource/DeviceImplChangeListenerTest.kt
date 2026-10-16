@@ -64,5 +64,5 @@ internal class DeviceImplChangeListenerTest {
         backgroundWorker = BackgroundWorker(executor),
         systemInfo = SystemInfo(),
         logger = FakeInternalLogger(),
-    )
+    ).apply { startAsyncRetrieval() }
 }

@@ -50,7 +50,7 @@ class PayloadSourceModuleImpl(
             configService,
             coreModule.store,
             workerThreadModule.backgroundWorker(Worker.Background.NonIoRegWorker),
-        )
+        ).apply { startAsyncRetrieval() }
     }
 
     private val partPayloadSource = EmbTrace.trace("session-payload-source") {
@@ -90,7 +90,7 @@ class PayloadSourceModuleImpl(
             backgroundWorker = workerThreadModule.backgroundWorker(Worker.Background.NonIoRegWorker),
             systemInfo = initModule.systemInfo,
             logger = initModule.logger,
-        )
+        ).apply { startAsyncRetrieval() }
     }
 
     private val resourceSourceImpl = EmbTrace.trace("resource-source") {

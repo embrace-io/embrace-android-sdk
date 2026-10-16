@@ -132,6 +132,8 @@ internal class InitializedModuleGraph(
             createConfigService(initModule, openTelemetryModule, workerThreadModule, persistedConfig)
         }
     }.apply {
+        // kick off config HTTP request early so the SDK can't get in a permanently disabled state.
+        scheduleConfigRequests()
         EmbTrace.trace("sdk-disable-check") {
             EmbTrace.trace("behavior-check") {
                 if (config.sdkMode.sdkDisabled) {

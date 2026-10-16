@@ -60,12 +60,6 @@ class ConfigServiceImpl(
 
     private val remoteConfig: RemoteConfig? = persistedConfig.remoteConfig
 
-    // kick off config HTTP request early so the SDK can't get in a permanently disabled state.
-    // scheduled only after deviceId is resolved, since the request reads it.
-    init {
-        combinedRemoteConfigSource?.scheduleConfigRequests()
-    }
-
     private val thresholdCheck: BehaviorThresholdCheck = persistedConfig.thresholdCheck
 
     override val config: EmbraceConfig =
@@ -97,6 +91,10 @@ class ConfigServiceImpl(
     }
 
     override fun isOnlyUsingOtelExporters(): Boolean = appId.isNullOrEmpty()
+
+    override fun scheduleConfigRequests() {
+        combinedRemoteConfigSource?.scheduleConfigRequests()
+    }
 
     override val appFramework: AppFramework = instrumentedConfig.project.getAppFramework()?.let {
         AppFramework.fromString(it)

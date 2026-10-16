@@ -81,4 +81,10 @@ interface ConfigService {
      * The current native symbols.
      */
     val nativeSymbolMap: Map<String, String>?
+
+    /**
+     * Schedules requests for remote config. Called once, as early as possible, so the SDK can't get in a
+     * permanently disabled state.
+     */
+    fun scheduleConfigRequests()
 }

@@ -20,7 +20,7 @@ public enum class HttpMethod {
 
     public companion object {
         /**
-         * Given the string representation of the HTTP request method, returns the corresponding HttpMethod enum.
+         * Given the string representation of the HTTP request method, returns the corresponding HttpMethod enum, or GET if unrecognised.
          */
         @JvmStatic
         public fun fromString(method: String): HttpMethod {
@@ -35,7 +35,7 @@ public enum class HttpMethod {
                 "OPTIONS" -> OPTIONS
                 "TRACE" -> TRACE
                 "PATCH" -> PATCH
-                else -> error("Invalid HTTP method: $method")
+                else -> GET
             }
         }
     }

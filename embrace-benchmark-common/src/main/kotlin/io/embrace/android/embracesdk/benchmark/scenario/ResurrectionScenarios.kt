@@ -72,7 +72,7 @@ object ResurrectionScenarios {
 /**
  * How much a dead session part holds. Its [inFlightSpans] are still running when the app instance dies.
  */
-private class PartContents(
+internal class PartContents(
     val requests: Int,
     val breadcrumbs: Int,
     val completedSpans: Int,
@@ -85,7 +85,7 @@ private class PartContents(
  * have just ended when they are recorded, each after a duration of its own, so that recording the part takes no
  * real time, and no two put the same numbers in the payload, which then compresses no better than a real app's.
  */
-private fun deadSessionPart(id: String, contents: PartContents): ScenarioSpec = ScenarioSpec(
+internal fun deadSessionPart(id: String, contents: PartContents): ScenarioSpec = ScenarioSpec(
     id = id,
     description = "${contents.requests} requests, ${contents.completedSpans} completed spans, " +
         "${contents.breadcrumbs} breadcrumbs and ${contents.sessionProperties} session properties, then " +

@@ -76,5 +76,5 @@ tasks.matching {
         it.name == "connectedBaselineProfileAndroidTest" ||
         it.name == "pixel6Api34BaselineProfileAndroidTest"
 }.configureEach {
-    dependsOn(":embrace-gradle-plugin:publishToMavenLocal")
+    dependsOn(":embrace-gradle-plugin:publishAllPublicationsToIntegrationTestRepository")
 }

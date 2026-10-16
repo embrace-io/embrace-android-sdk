@@ -20,6 +20,10 @@ class PluginIntegrationTestRule : ExternalResource() {
     private val uniqueDirName: AtomicInteger = AtomicInteger(0)
     private val rootDir: File = File(System.getProperty("user.dir")).parentFile
 
+    // TestKit's Gradle user home lives outside build/ so that `./gradlew clean` doesn't discard warm caches
+    private val testKitDir: File = System.getenv("EMBRACE_TESTKIT_DIR")?.let(::File)
+        ?: File(System.getProperty("user.home"), ".gradle/embrace-testkit")
+
     private var tmpDir: File? = null
     private lateinit var server: MockWebServer
     private lateinit var apiServer: FakeApiServer
@@ -203,6 +207,7 @@ class PluginIntegrationTestRule : ExternalResource() {
     ): BuildResult {
         val runner = GradleRunner.create()
             .withProjectDir(tmpDir)
+            .withTestKitDir(testKitDir)
             .withArguments(args)
             .withGradleVersion(gradleVersion)
             .forwardStdOutput(System.out.writer())

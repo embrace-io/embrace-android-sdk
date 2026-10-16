@@ -36,6 +36,7 @@ import io.embrace.android.embracesdk.internal.injection.postLoadInstrumentation
 import io.embrace.android.embracesdk.internal.injection.registerListeners
 import io.embrace.android.embracesdk.internal.injection.triggerPayloadSend
 import io.embrace.android.embracesdk.internal.utils.EmbTrace
+import io.embrace.android.embracesdk.internal.worker.Worker
 import io.embrace.android.embracesdk.spans.AutoTerminationMode
 import io.embrace.android.embracesdk.spans.EmbraceSpan
 import io.embrace.android.embracesdk.spans.EmbraceSpanEvent
@@ -44,6 +45,8 @@ import io.embrace.android.embracesdk.spans.TracingApi
 import io.opentelemetry.kotlin.NoopOpenTelemetry
 import io.opentelemetry.kotlin.OpenTelemetry
 import java.util.concurrent.Executors
+
+private const val WORKER_TERMINATION_TIMEOUT_MS = 2_000L
 
 /**
  * Implementation class of the SDK. Embrace.java forms our public API and calls functions in this
@@ -173,12 +176,14 @@ internal class RealSdkInstance(
             moduleGraph.openTelemetryModule.otelSdkConfig.disableDataExport()
             val rootDir = moduleGraph.coreModule.context.filesDir
             val fallbackDir = moduleGraph.coreModule.context.cacheDir
+            val workerThreadModule = moduleGraph.workerThreadModule
             started = false
             moduleGraph.essentialServiceModule.networkConnectivityService.close()
             moduleGraph.openTelemetryModule.otelSdkConfig.shutdownExport()
-            moduleGraph.workerThreadModule.close()
+            workerThreadModule.close()
             val executor = Executors.newSingleThreadExecutor()
             executor.execute {
+                workerThreadModule.awaitTermination(Worker.Priority.DataPersistenceWorker, WORKER_TERMINATION_TIMEOUT_MS)
                 runCatching {
                     StorageLocation.entries.map {
                         it.asFile(

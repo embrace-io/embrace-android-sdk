@@ -12,6 +12,7 @@ import io.embrace.android.embracesdk.internal.payload.SpanEvent
 import io.embrace.android.embracesdk.semconv.EmbFrameCountsAttributes
 import io.embrace.android.embracesdk.testframework.OtelSdkMode
 import io.embrace.android.embracesdk.testframework.SdkIntegrationTestRule
+import io.embrace.android.embracesdk.testframework.actions.EmbraceSetupInterface
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
 import org.junit.Rule
@@ -20,17 +21,15 @@ import org.junit.runner.RunWith
 import org.robolectric.ParameterizedRobolectricTestRunner
 import org.robolectric.Robolectric
 import org.robolectric.Shadows.shadowOf
-import org.robolectric.annotation.Config
 import org.robolectric.shadows.FrameMetricsBuilder
 
 /**
  * Frames rendered on each screen are counted by the vitals instrumentation and recorded on the navigation transition that leaves the
  * screen, and in total on the foreground session part.
  *
- * Runs on API 30, where the jank budget is the 60Hz refresh interval (16.67ms) times the default 2x multiplier: Robolectric's
- * [FrameMetricsBuilder] can't set the API 31+ `DEADLINE`.
+ * Vitals takes its API 30 branch, where the jank budget is the 60Hz refresh interval (16.67ms) times the default 2x multiplier:
+ * Robolectric's [FrameMetricsBuilder] can't set the API 31+ `DEADLINE`.
  */
-@Config(sdk = [Build.VERSION_CODES.R])
 @RunWith(ParameterizedRobolectricTestRunner::class)
 internal class FrameCountsFeatureTest(
     private val otelSdkMode: OtelSdkMode,
@@ -38,7 +37,9 @@ internal class FrameCountsFeatureTest(
 
     @Rule
     @JvmField
-    val testRule: SdkIntegrationTestRule = SdkIntegrationTestRule(otelSdkMode = otelSdkMode)
+    val testRule: SdkIntegrationTestRule = SdkIntegrationTestRule(otelSdkMode = otelSdkMode) {
+        EmbraceSetupInterface(simulatedSdkInt = Build.VERSION_CODES.R)
+    }
 
     private val remoteConfig = RemoteConfig(
         pctNavigationStateCaptureEnabled = 100.0f,

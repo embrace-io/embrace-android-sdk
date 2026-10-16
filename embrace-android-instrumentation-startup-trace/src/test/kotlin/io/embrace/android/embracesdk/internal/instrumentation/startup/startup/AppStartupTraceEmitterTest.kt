@@ -32,7 +32,7 @@ import io.embrace.android.embracesdk.internal.instrumentation.startup.activity.h
 import io.embrace.android.embracesdk.internal.instrumentation.startup.toSdkInitDurationAttributes
 import io.embrace.android.embracesdk.internal.instrumentation.startup.ui.hasRenderEvent
 import io.embrace.android.embracesdk.internal.instrumentation.startup.ui.supportFrameCommitCallback
-import io.embrace.android.embracesdk.internal.utils.BuildVersionChecker
+import io.embrace.android.embracesdk.internal.utils.VersionChecker
 import io.embrace.android.embracesdk.semconv.EmbAppAttributes
 import io.embrace.android.embracesdk.semconv.EmbSessionAttributes
 import io.embrace.android.embracesdk.semconv.EmbSessionAttributes.EmbStartupLaunchReasonValues
@@ -43,7 +43,6 @@ import org.junit.Assert.assertNull
 import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
-import org.robolectric.annotation.Config
 
 /**
  * The various combinations of OS capabilities mean we have to test the following Android versions:
@@ -69,6 +68,7 @@ internal class AppStartupTraceEmitterTest {
     private lateinit var clock: FakeClock
     private lateinit var destination: FakeTelemetryDestination
     private lateinit var logger: FakeInternalLogger
+    private lateinit var versionChecker: VersionChecker
 
     @Before
     fun setUp() {
@@ -77,72 +77,79 @@ internal class AppStartupTraceEmitterTest {
         startupService = StartupServiceImpl(destination) { APP_VERSION_STARTUP_COUNTER }
         clock.tick(100L)
         logger = FakeInternalLogger(false)
-        firePreAndPostCreate = hasPrePostEvents(BuildVersionChecker)
-        trackProcessStart = BuildVersionChecker.isAtLeast(VERSION_CODES.N)
-        hasRenderEvent = hasRenderEvent(BuildVersionChecker)
-        hasFrameCommitEvent = supportFrameCommitCallback(BuildVersionChecker)
     }
 
-    @Config(sdk = [VERSION_CODES.TIRAMISU])
+    /**
+     * Simulates running on [sdkInt] by driving both the emitter under test and the expectations from the same [VersionChecker].
+     */
+    private fun simulateApi(sdkInt: Int) {
+        versionChecker = VersionChecker { min -> sdkInt >= min }
+        firePreAndPostCreate = hasPrePostEvents(versionChecker)
+        trackProcessStart = versionChecker.isAtLeast(VERSION_CODES.N)
+        hasRenderEvent = hasRenderEvent(versionChecker)
+        hasFrameCommitEvent = supportFrameCommitCallback(versionChecker)
+    }
+
     @Test
     fun `no crashes if startup service not available in T`() {
+        simulateApi(VERSION_CODES.TIRAMISU)
         startupService = null
         createTraceEmitter().simulateAppStartup(verifyTrace = false)
     }
 
-    @Config(sdk = [VERSION_CODES.TIRAMISU])
     @Test
     fun `verify cold start trace with every event triggered in T`() {
+        simulateApi(VERSION_CODES.TIRAMISU)
         createTraceEmitter().simulateAppStartup()
     }
 
-    @Config(sdk = [VERSION_CODES.TIRAMISU])
     @Test
     fun `verify launch reason reported by the platform is recorded on the trace`() {
+        simulateApi(VERSION_CODES.TIRAMISU)
         launchReason = EmbStartupLaunchReasonValues.PUSH
         createTraceEmitter().simulateAppStartup()
     }
 
-    @Config(sdk = [VERSION_CODES.TIRAMISU])
     @Test
     fun `verify launch reason omitted from the trace when the platform does not report one`() {
+        simulateApi(VERSION_CODES.TIRAMISU)
         launchReason = null
         createTraceEmitter().simulateAppStartup()
     }
 
-    @Config(sdk = [VERSION_CODES.TIRAMISU])
     @Test
     fun `verify cold start trace without application init start and end triggered in T`() {
+        simulateApi(VERSION_CODES.TIRAMISU)
         createTraceEmitter().simulateAppStartup(hasAppInitEvents = false)
     }
 
-    @Config(sdk = [VERSION_CODES.TIRAMISU])
     @Test
     fun `verify cold start trace aborted activity creation in T`() {
+        simulateApi(VERSION_CODES.TIRAMISU)
         createTraceEmitter().simulateAppStartup(abortFirstActivityLoad = true)
     }
 
-    @Config(sdk = [VERSION_CODES.TIRAMISU])
     @Test
     fun `verify cold start trace with splash screen in T`() {
+        simulateApi(VERSION_CODES.TIRAMISU)
         createTraceEmitter().simulateAppStartup(loadSplashScreen = true)
     }
 
-    @Config(sdk = [VERSION_CODES.TIRAMISU])
     @Test
     fun `verify cold start trace with manual end in T`() {
+        simulateApi(VERSION_CODES.TIRAMISU)
         createTraceEmitter(manualEnd = true).simulateAppStartup(manualEnd = true)
     }
 
-    @Config(sdk = [VERSION_CODES.TIRAMISU])
     @Test
     fun `verify warm start trace without application init start and end triggered in T`() {
+        simulateApi(VERSION_CODES.TIRAMISU)
         createTraceEmitter().simulateAppStartup(isColdStart = false, hasAppInitEvents = false)
     }
 
-    @Config(sdk = [VERSION_CODES.TIRAMISU])
     @Test
     fun `startup already classified as background records a warm trace even with a cold-sized init gap`() {
+        simulateApi(VERSION_CODES.TIRAMISU)
         // The session orchestrator's background-startup window elapsed before any activity was created, so it resolved the
         // shared classification to BACKGROUND. When an activity is eventually created with a gap that would otherwise be a cold
         // start, the trace is recorded as warm rather than cold - the accepted consequence of treating a slow process start as a
@@ -156,15 +163,15 @@ internal class AppStartupTraceEmitterTest {
         assertEquals(StartupType.BACKGROUND, classifier.startupType())
     }
 
-    @Config(sdk = [VERSION_CODES.TIRAMISU])
     @Test
     fun `verify warm start trace with manual end in T`() {
+        simulateApi(VERSION_CODES.TIRAMISU)
         createTraceEmitter(manualEnd = true).simulateAppStartup(isColdStart = false, manualEnd = true)
     }
 
-    @Config(sdk = [VERSION_CODES.TIRAMISU])
     @Test
     fun `trace end callback will not be invoked twice`() {
+        simulateApi(VERSION_CODES.TIRAMISU)
         startupService = null
         createTraceEmitter().run {
             firstActivityInit(startupCompleteCallback = { dataCollectionCompletedCallbackInvokedCount++ })
@@ -174,9 +181,9 @@ internal class AppStartupTraceEmitterTest {
         assertEquals(1, dataCollectionCompletedCallbackInvokedCount)
     }
 
-    @Config(sdk = [VERSION_CODES.TIRAMISU])
     @Test
     fun `abandon cold start after app init`() {
+        simulateApi(VERSION_CODES.TIRAMISU)
         val emitter = createTraceEmitter().apply {
             initApp(
                 hasAppInitEvents = true,
@@ -198,9 +205,9 @@ internal class AppStartupTraceEmitterTest {
         assertNull(spanMap.activityInitSpan())
     }
 
-    @Config(sdk = [VERSION_CODES.TIRAMISU])
     @Test
     fun `abandon cold start after activity init`() {
+        simulateApi(VERSION_CODES.TIRAMISU)
         val emitter = createTraceEmitter().apply {
             initApp(
                 hasAppInitEvents = true,
@@ -227,9 +234,9 @@ internal class AppStartupTraceEmitterTest {
         }
     }
 
-    @Config(sdk = [VERSION_CODES.TIRAMISU])
     @Test
     fun `abandon cold start after before manual end`() {
+        simulateApi(VERSION_CODES.TIRAMISU)
         val emitter = createTraceEmitter(manualEnd = true).apply {
             initApp(
                 hasAppInitEvents = true,
@@ -257,9 +264,9 @@ internal class AppStartupTraceEmitterTest {
         }
     }
 
-    @Config(sdk = [VERSION_CODES.TIRAMISU])
     @Test
     fun `abandon warm start after app init`() {
+        simulateApi(VERSION_CODES.TIRAMISU)
         val emitter = createTraceEmitter().apply {
             initApp(
                 hasAppInitEvents = true,
@@ -276,9 +283,9 @@ internal class AppStartupTraceEmitterTest {
         }
     }
 
-    @Config(sdk = [VERSION_CODES.TIRAMISU])
     @Test
     fun `abandon warm start after before manual end`() {
+        simulateApi(VERSION_CODES.TIRAMISU)
         val emitter = createTraceEmitter(manualEnd = true).apply {
             initApp(
                 hasAppInitEvents = true,
@@ -303,70 +310,70 @@ internal class AppStartupTraceEmitterTest {
         }
     }
 
-    @Config(sdk = [VERSION_CODES.S])
     @Test
     fun `no crashes if startup service not available in S`() {
+        simulateApi(VERSION_CODES.S)
         startupService = null
         createTraceEmitter().simulateAppStartup(verifyTrace = false)
     }
 
-    @Config(sdk = [VERSION_CODES.S])
     @Test
     fun `verify cold start trace with every event triggered in S`() {
+        simulateApi(VERSION_CODES.S)
         createTraceEmitter().simulateAppStartup()
     }
 
-    @Config(sdk = [VERSION_CODES.S])
     @Test
     fun `verify cold start trace without application init start and end triggered in S`() {
+        simulateApi(VERSION_CODES.S)
         createTraceEmitter().simulateAppStartup(hasAppInitEvents = false)
     }
 
-    @Config(sdk = [VERSION_CODES.S])
     @Test
     fun `verify cold start trace aborted activity creation in S`() {
+        simulateApi(VERSION_CODES.S)
         createTraceEmitter().simulateAppStartup(abortFirstActivityLoad = true)
     }
 
-    @Config(sdk = [VERSION_CODES.S])
     @Test
     fun `verify cold start trace with splash screen in S`() {
+        simulateApi(VERSION_CODES.S)
         createTraceEmitter().simulateAppStartup(loadSplashScreen = true)
     }
 
-    @Config(sdk = [VERSION_CODES.S])
     @Test
     fun `verify cold start trace with manual end in S`() {
+        simulateApi(VERSION_CODES.S)
         createTraceEmitter(manualEnd = true).simulateAppStartup(manualEnd = true)
     }
 
-    @Config(sdk = [VERSION_CODES.S])
     @Test
     fun `verify cold start trace with missing activity init events in S`() {
+        simulateApi(VERSION_CODES.S)
         createTraceEmitter().simulateAppStartup(activityInitOptions = ActivityInitOptions.OMIT)
     }
 
-    @Config(sdk = [VERSION_CODES.S])
     @Test
     fun `verify cold start trace with missing activity init end event in S`() {
+        simulateApi(VERSION_CODES.S)
         createTraceEmitter().simulateAppStartup(activityInitOptions = ActivityInitOptions.OMIT_END)
     }
 
-    @Config(sdk = [VERSION_CODES.S])
     @Test
     fun `verify cold start trace with delayed activity init events in S`() {
+        simulateApi(VERSION_CODES.S)
         createTraceEmitter().simulateAppStartup(activityInitOptions = ActivityInitOptions.DELAY)
     }
 
-    @Config(sdk = [VERSION_CODES.S])
     @Test
     fun `verify cold start trace with delayed activity init end event in S`() {
+        simulateApi(VERSION_CODES.S)
         createTraceEmitter().simulateAppStartup(activityInitOptions = ActivityInitOptions.DELAY_END)
     }
 
-    @Config(sdk = [VERSION_CODES.S])
     @Test
     fun `verify warm start trace without application init start and end triggered in S`() {
+        simulateApi(VERSION_CODES.S)
         createTraceEmitter()
             .simulateAppStartup(
                 isColdStart = false,
@@ -374,9 +381,9 @@ internal class AppStartupTraceEmitterTest {
             )
     }
 
-    @Config(sdk = [VERSION_CODES.S])
     @Test
     fun `verify warm start trace aborted activity creation S`() {
+        simulateApi(VERSION_CODES.S)
         createTraceEmitter()
             .simulateAppStartup(
                 isColdStart = false,
@@ -385,67 +392,67 @@ internal class AppStartupTraceEmitterTest {
             )
     }
 
-    @Config(sdk = [VERSION_CODES.S])
     @Test
     fun `verify warm start trace with manual end in S`() {
+        simulateApi(VERSION_CODES.S)
         createTraceEmitter(manualEnd = true).simulateAppStartup(isColdStart = false, manualEnd = true)
     }
 
-    @Config(sdk = [VERSION_CODES.P])
     @Test
     fun `no crashes if startup service not available in P`() {
+        simulateApi(VERSION_CODES.P)
         startupService = null
         createTraceEmitter().simulateAppStartup(
             verifyTrace = false,
         )
     }
 
-    @Config(sdk = [VERSION_CODES.P])
     @Test
     fun `verify cold start trace with every event triggered in P`() {
+        simulateApi(VERSION_CODES.P)
         createTraceEmitter()
             .simulateAppStartup()
     }
 
-    @Config(sdk = [VERSION_CODES.P])
     @Test
     fun `verify cold start trace without application init start and end triggered in P`() {
+        simulateApi(VERSION_CODES.P)
         createTraceEmitter()
             .simulateAppStartup(
                 hasAppInitEvents = false,
             )
     }
 
-    @Config(sdk = [VERSION_CODES.P])
     @Test
     fun `verify cold start trace aborted activity creation in P`() {
+        simulateApi(VERSION_CODES.P)
         createTraceEmitter()
             .simulateAppStartup(
                 abortFirstActivityLoad = true,
             )
     }
 
-    @Config(sdk = [VERSION_CODES.P])
     @Test
     fun `verify cold start trace with splash screen in P`() {
+        simulateApi(VERSION_CODES.P)
         createTraceEmitter()
             .simulateAppStartup(
                 loadSplashScreen = true,
             )
     }
 
-    @Config(sdk = [VERSION_CODES.P])
     @Test
     fun `verify cold start trace with manual end in P`() {
+        simulateApi(VERSION_CODES.P)
         createTraceEmitter(manualEnd = true)
             .simulateAppStartup(
                 manualEnd = true,
             )
     }
 
-    @Config(sdk = [VERSION_CODES.P])
     @Test
     fun `verify warm start trace without application init start and end triggered in P`() {
+        simulateApi(VERSION_CODES.P)
         createTraceEmitter()
             .simulateAppStartup(
                 isColdStart = false,
@@ -453,9 +460,9 @@ internal class AppStartupTraceEmitterTest {
             )
     }
 
-    @Config(sdk = [VERSION_CODES.P])
     @Test
     fun `verify warm start trace with manual end in P`() {
+        simulateApi(VERSION_CODES.P)
         createTraceEmitter(manualEnd = true)
             .simulateAppStartup(
                 isColdStart = false,
@@ -463,85 +470,85 @@ internal class AppStartupTraceEmitterTest {
             )
     }
 
-    @Config(sdk = [VERSION_CODES.M])
     @Test
     fun `no crashes if startup service not available in M`() {
+        simulateApi(VERSION_CODES.M)
         startupService = null
         createTraceEmitter().simulateAppStartup(
             verifyTrace = false,
         )
     }
 
-    @Config(sdk = [VERSION_CODES.M])
     @Test
     fun `verify cold start trace with every event triggered in M`() {
+        simulateApi(VERSION_CODES.M)
         createTraceEmitter()
             .simulateAppStartup()
     }
 
-    @Config(sdk = [VERSION_CODES.M])
     @Test
     fun `verify cold start trace without application init start and end triggered in M`() {
+        simulateApi(VERSION_CODES.M)
         createTraceEmitter()
             .simulateAppStartup(
                 hasAppInitEvents = false,
             )
     }
 
-    @Config(sdk = [VERSION_CODES.M])
     @Test
     fun `verify cold start trace aborted activity creation in M`() {
+        simulateApi(VERSION_CODES.M)
         createTraceEmitter()
             .simulateAppStartup(
                 abortFirstActivityLoad = true,
             )
     }
 
-    @Config(sdk = [VERSION_CODES.M])
     @Test
     fun `verify cold start trace with splash screen in M`() {
+        simulateApi(VERSION_CODES.M)
         createTraceEmitter()
             .simulateAppStartup(
                 loadSplashScreen = true,
             )
     }
 
-    @Config(sdk = [VERSION_CODES.M])
     @Test
     fun `verify cold start trace with manual end in M`() {
+        simulateApi(VERSION_CODES.M)
         createTraceEmitter(manualEnd = true)
             .simulateAppStartup(
                 manualEnd = true,
             )
     }
 
-    @Config(sdk = [VERSION_CODES.M])
     @Test
     fun `verify cold start trace with missing activity init events in M`() {
+        simulateApi(VERSION_CODES.M)
         createTraceEmitter().simulateAppStartup(activityInitOptions = ActivityInitOptions.OMIT)
     }
 
-    @Config(sdk = [VERSION_CODES.M])
     @Test
     fun `verify cold start trace with missing activity init end event in M`() {
+        simulateApi(VERSION_CODES.M)
         createTraceEmitter().simulateAppStartup(activityInitOptions = ActivityInitOptions.OMIT_END)
     }
 
-    @Config(sdk = [VERSION_CODES.M])
     @Test
     fun `verify cold start trace with delayed activity init events in M`() {
+        simulateApi(VERSION_CODES.M)
         createTraceEmitter().simulateAppStartup(activityInitOptions = ActivityInitOptions.DELAY)
     }
 
-    @Config(sdk = [VERSION_CODES.M])
     @Test
     fun `verify cold start trace with delayed activity init end event in M`() {
+        simulateApi(VERSION_CODES.M)
         createTraceEmitter().simulateAppStartup(activityInitOptions = ActivityInitOptions.DELAY_END)
     }
 
-    @Config(sdk = [VERSION_CODES.M])
     @Test
     fun `verify warm start trace without application init start and end triggered in M`() {
+        simulateApi(VERSION_CODES.M)
         createTraceEmitter()
             .simulateAppStartup(
                 isColdStart = false,
@@ -549,9 +556,9 @@ internal class AppStartupTraceEmitterTest {
             )
     }
 
-    @Config(sdk = [VERSION_CODES.M])
     @Test
     fun `verify warm start trace with manual end in M`() {
+        simulateApi(VERSION_CODES.M)
         createTraceEmitter(manualEnd = true)
             .simulateAppStartup(
                 isColdStart = false,
@@ -559,61 +566,61 @@ internal class AppStartupTraceEmitterTest {
             )
     }
 
-    @Config(sdk = [VERSION_CODES.LOLLIPOP])
     @Test
     fun `no crashes if startup service not available in L`() {
+        simulateApi(VERSION_CODES.LOLLIPOP)
         startupService = null
         createTraceEmitter().simulateAppStartup(
             verifyTrace = false,
         )
     }
 
-    @Config(sdk = [VERSION_CODES.LOLLIPOP])
     @Test
     fun `verify cold start trace with every event triggered in L`() {
+        simulateApi(VERSION_CODES.LOLLIPOP)
         createTraceEmitter()
             .simulateAppStartup()
     }
 
-    @Config(sdk = [VERSION_CODES.LOLLIPOP])
     @Test
     fun `verify cold start trace without application init start and end triggered in L`() {
+        simulateApi(VERSION_CODES.LOLLIPOP)
         createTraceEmitter()
             .simulateAppStartup(
                 hasAppInitEvents = false,
             )
     }
 
-    @Config(sdk = [VERSION_CODES.LOLLIPOP])
     @Test
     fun `verify cold start trace aborted activity creation in L`() {
+        simulateApi(VERSION_CODES.LOLLIPOP)
         createTraceEmitter()
             .simulateAppStartup(
                 abortFirstActivityLoad = true,
             )
     }
 
-    @Config(sdk = [VERSION_CODES.LOLLIPOP])
     @Test
     fun `verify cold start trace with splash screen in L`() {
+        simulateApi(VERSION_CODES.LOLLIPOP)
         createTraceEmitter()
             .simulateAppStartup(
                 loadSplashScreen = true,
             )
     }
 
-    @Config(sdk = [VERSION_CODES.LOLLIPOP])
     @Test
     fun `verify cold start trace with manual end in L`() {
+        simulateApi(VERSION_CODES.LOLLIPOP)
         createTraceEmitter(manualEnd = true)
             .simulateAppStartup(
                 manualEnd = true,
             )
     }
 
-    @Config(sdk = [VERSION_CODES.LOLLIPOP])
     @Test
     fun `verify warm start trace without application init start and end triggered in L`() {
+        simulateApi(VERSION_CODES.LOLLIPOP)
         createTraceEmitter()
             .simulateAppStartup(
                 isColdStart = false,
@@ -621,9 +628,9 @@ internal class AppStartupTraceEmitterTest {
             )
     }
 
-    @Config(sdk = [VERSION_CODES.LOLLIPOP])
     @Test
     fun `verify warm start trace with manual end in L`() {
+        simulateApi(VERSION_CODES.LOLLIPOP)
         createTraceEmitter(manualEnd = true)
             .simulateAppStartup(
                 isColdStart = false,
@@ -639,12 +646,12 @@ internal class AppStartupTraceEmitterTest {
             clock = clock,
             startupServiceProvider = { startupService },
             destination = destination,
-            versionChecker = BuildVersionChecker,
+            versionChecker = versionChecker,
             logger = logger,
             startupClassifier = startupClassifier,
             manualEnd = manualEnd,
             processInfo = FakeProcessInfo(
-                if (BuildVersionChecker.isAtLeast(VERSION_CODES.N)) {
+                if (versionChecker.isAtLeast(VERSION_CODES.N)) {
                     DEFAULT_FAKE_CURRENT_TIME
                 } else {
                     null

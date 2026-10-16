@@ -1,5 +1,6 @@
 package io.embrace.android.embracesdk.internal.session.persistence
 
+import io.embrace.android.embracesdk.fakes.FakeClock
 import io.embrace.android.embracesdk.fakes.FakeInternalLogger
 import io.embrace.android.embracesdk.internal.payload.Span
 import org.junit.Assert.assertEquals
@@ -77,7 +78,7 @@ internal class SessionReconstructionServiceSpanSnapshotsTest {
         append(listOf(secondSnapshot))
         append(listOf(updated))
 
-        val payload = checkNotNull(service.reconstruct(partDirectory)?.data)
+        val payload = checkNotNull(service.reconstruct(partDirectory)?.envelope?.data)
         assertEquals(listOf(updated, secondSnapshot), payload.spanSnapshots)
         assertNoInternalErrors()
     }
@@ -88,7 +89,7 @@ internal class SessionReconstructionServiceSpanSnapshotsTest {
         append(listOf(secondSnapshot))
         assertTrue(snapshotsWriter.write(listOf(endedSnapshot)))
 
-        val payload = checkNotNull(service.reconstruct(partDirectory)?.data)
+        val payload = checkNotNull(service.reconstruct(partDirectory)?.envelope?.data)
         assertEquals(listOf(endedSnapshot), payload.spanSnapshots)
         assertNoInternalErrors()
     }
@@ -98,7 +99,7 @@ internal class SessionReconstructionServiceSpanSnapshotsTest {
         write(snapshots = listOf(inFlightSpan))
         append(listOf(fullyPopulatedSpan))
 
-        val payload = checkNotNull(service.reconstruct(partDirectory)?.data)
+        val payload = checkNotNull(service.reconstruct(partDirectory)?.envelope?.data)
         assertEquals(listOf(inFlightSpan), payload.spanSnapshots)
         assertEquals(listOf(fullyPopulatedSpan), payload.spans)
         assertNoInternalErrors()
@@ -108,7 +109,7 @@ internal class SessionReconstructionServiceSpanSnapshotsTest {
     fun `span snapshots are reconstructed in the order they were written`() {
         write(snapshots = listOf(inFlightSpan, secondSnapshot))
 
-        val payload = checkNotNull(service.reconstruct(partDirectory)?.data)
+        val payload = checkNotNull(service.reconstruct(partDirectory)?.envelope?.data)
         assertEquals(listOf(inFlightSpan, secondSnapshot), payload.spanSnapshots)
         assertNoInternalErrors()
     }
@@ -117,7 +118,7 @@ internal class SessionReconstructionServiceSpanSnapshotsTest {
     fun `a finished session span leaves the persisted snapshots alone`() {
         write(snapshots = listOf(inFlightSpan))
 
-        val payload = checkNotNull(service.reconstruct(partDirectory)?.data)
+        val payload = checkNotNull(service.reconstruct(partDirectory)?.envelope?.data)
         assertEquals(listOf(inFlightSpan), payload.spanSnapshots)
         assertEquals(listOf(fullyPopulatedSpan), payload.spans)
         assertNoInternalErrors()
@@ -127,7 +128,7 @@ internal class SessionReconstructionServiceSpanSnapshotsTest {
     fun `an empty snapshots file reconstructs no snapshots`() {
         write()
 
-        val payload = checkNotNull(service.reconstruct(partDirectory)?.data)
+        val payload = checkNotNull(service.reconstruct(partDirectory)?.envelope?.data)
         assertEquals(emptyList<Span>(), payload.spanSnapshots)
         assertEquals(listOf(fullyPopulatedSpan), payload.spans)
         assertNoInternalErrors()
@@ -137,7 +138,7 @@ internal class SessionReconstructionServiceSpanSnapshotsTest {
     fun `a snapshot carrying an end time is still reconstructed as a snapshot`() {
         write(snapshots = listOf(endedSnapshot))
 
-        val payload = checkNotNull(service.reconstruct(partDirectory)?.data)
+        val payload = checkNotNull(service.reconstruct(partDirectory)?.envelope?.data)
         assertEquals(listOf(endedSnapshot), payload.spanSnapshots)
         assertEquals(listOf(fullyPopulatedSpan), payload.spans)
         assertNoInternalErrors()
@@ -148,7 +149,7 @@ internal class SessionReconstructionServiceSpanSnapshotsTest {
         write(snapshots = listOf(inFlightSpan))
         writeSpanSnapshots(snapshots = listOf(secondSnapshot))
 
-        assertEquals(listOf(secondSnapshot), service.reconstruct(partDirectory)?.data?.spanSnapshots)
+        assertEquals(listOf(secondSnapshot), service.reconstruct(partDirectory)?.envelope?.data?.spanSnapshots)
         assertNoInternalErrors()
     }
 
@@ -164,8 +165,8 @@ internal class SessionReconstructionServiceSpanSnapshotsTest {
         write(snapshots = listOf(inFlightSpan))
         write(other, snapshots = listOf(secondSnapshot))
 
-        assertEquals(listOf(inFlightSpan), service.reconstruct(partDirectory)?.data?.spanSnapshots)
-        assertEquals(listOf(secondSnapshot), service.reconstruct(other)?.data?.spanSnapshots)
+        assertEquals(listOf(inFlightSpan), service.reconstruct(partDirectory)?.envelope?.data?.spanSnapshots)
+        assertEquals(listOf(secondSnapshot), service.reconstruct(other)?.envelope?.data?.spanSnapshots)
         assertNoInternalErrors()
     }
 
@@ -174,7 +175,7 @@ internal class SessionReconstructionServiceSpanSnapshotsTest {
         writeMetadata()
         writeCompletedSpans()
 
-        val payload = checkNotNull(service.reconstruct(partDirectory)?.data)
+        val payload = checkNotNull(service.reconstruct(partDirectory)?.envelope?.data)
         assertEquals(emptyList<Span>(), payload.spanSnapshots)
         assertEquals(listOf(fullyPopulatedSpan), payload.spans)
         assertNoInternalErrors()
@@ -187,7 +188,7 @@ internal class SessionReconstructionServiceSpanSnapshotsTest {
         File(partDir(), "completed_spans.pb").writeBytes(completedSpansLog(emptyList()))
         writeSpanSnapshots(snapshots = listOf(incomplete))
 
-        val payload = checkNotNull(service.reconstruct(partDirectory)?.data)
+        val payload = checkNotNull(service.reconstruct(partDirectory)?.envelope?.data)
         assertEquals(listOf(incomplete), payload.spanSnapshots)
         assertEquals(emptyList<Span>(), payload.spans)
         assertNoInternalErrors()
@@ -199,7 +200,7 @@ internal class SessionReconstructionServiceSpanSnapshotsTest {
         writeCompletedSpans()
         snapshotsFile().mkdirs()
 
-        val payload = checkNotNull(service.reconstruct(partDirectory)?.data)
+        val payload = checkNotNull(service.reconstruct(partDirectory)?.envelope?.data)
         assertEquals(listOf(fullyPopulatedSpan), payload.spans)
         assertEquals(emptyList<Span>(), payload.spanSnapshots)
         assertReconstructionFailureTracked()
@@ -211,7 +212,7 @@ internal class SessionReconstructionServiceSpanSnapshotsTest {
         val bytes = snapshotsFile().readBytes()
         snapshotsFile().writeBytes(bytes.copyOf(bytes.size / 2))
 
-        val payload = checkNotNull(service.reconstruct(partDirectory)?.data)
+        val payload = checkNotNull(service.reconstruct(partDirectory)?.envelope?.data)
         assertEquals(emptyList<Span>(), payload.spanSnapshots)
         assertNoInternalErrors()
     }
@@ -222,7 +223,7 @@ internal class SessionReconstructionServiceSpanSnapshotsTest {
         snapshotsFile().appendBytes(INVALID_FIELD_ENCODING)
         append(listOf(secondSnapshot))
 
-        val payload = checkNotNull(service.reconstruct(partDirectory)?.data)
+        val payload = checkNotNull(service.reconstruct(partDirectory)?.envelope?.data)
         assertEquals(listOf(fullyPopulatedSpan), payload.spans)
         assertEquals(listOf(inFlightSpan), payload.spanSnapshots)
         assertReconstructionFailureTracked()
@@ -233,7 +234,7 @@ internal class SessionReconstructionServiceSpanSnapshotsTest {
         write()
         snapshotsFile().writeBytes(byteArrayOf(-1, -1, -1, -1, -1, -1))
 
-        val payload = checkNotNull(service.reconstruct(partDirectory)?.data)
+        val payload = checkNotNull(service.reconstruct(partDirectory)?.envelope?.data)
         assertEquals(listOf(fullyPopulatedSpan), payload.spans)
         assertEquals(emptyList<Span>(), payload.spanSnapshots)
         assertReconstructionFailureTracked()
@@ -244,7 +245,7 @@ internal class SessionReconstructionServiceSpanSnapshotsTest {
         write()
         snapshotsFile().writeBytes(byteArrayOf())
 
-        val payload = checkNotNull(service.reconstruct(partDirectory)?.data)
+        val payload = checkNotNull(service.reconstruct(partDirectory)?.envelope?.data)
         assertEquals(listOf(fullyPopulatedSpan), payload.spans)
         assertEquals(emptyList<Span>(), payload.spanSnapshots)
         assertReconstructionFailureTracked()
@@ -255,7 +256,7 @@ internal class SessionReconstructionServiceSpanSnapshotsTest {
         write()
         writeSnapshotsBytes(fullyPopulatedSpanSnapshotsProto.copy(format_version = 0))
 
-        val payload = checkNotNull(service.reconstruct(partDirectory)?.data)
+        val payload = checkNotNull(service.reconstruct(partDirectory)?.envelope?.data)
         assertEquals(listOf(fullyPopulatedSpan), payload.spans)
         assertEquals(emptyList<Span>(), payload.spanSnapshots)
         assertReconstructionFailureTracked()
@@ -266,14 +267,14 @@ internal class SessionReconstructionServiceSpanSnapshotsTest {
         write()
         writeSnapshotsBytes(fullyPopulatedSpanSnapshotsProto.copy(format_version = FORMAT_VERSION + 1))
 
-        val payload = checkNotNull(service.reconstruct(partDirectory)?.data)
+        val payload = checkNotNull(service.reconstruct(partDirectory)?.envelope?.data)
         assertEquals(listOf(fullyPopulatedSpan), payload.spans)
         assertEquals(emptyList<Span>(), payload.spanSnapshots)
         assertReconstructionFailureTracked()
     }
 
     private fun target(): SessionPartWriteTarget =
-        SessionPartWriteTarget(lazy { sessionsDir }) { activePart }
+        SessionPartWriteTarget(lazy { sessionsDir }, FakeClock()) { activePart }
 
     private fun createPartDir(directory: SessionPartDirectory): File =
         File(sessionsDir, directory.dirName).apply { mkdirs() }

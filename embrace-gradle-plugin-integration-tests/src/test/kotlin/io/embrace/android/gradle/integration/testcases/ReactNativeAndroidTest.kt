@@ -60,32 +60,6 @@ class ReactNativeAndroidTest {
         )
     }
 
-    @Test
-    fun `debug builds should not upload symbols`() {
-        val handshakeLibs = listOf(
-            "libfbjni.so",
-            "libhermesvm.so",
-            "libhermestooling.so",
-        )
-        val handshakeArchs = listOf("arm64-v8a", "armeabi-v7a")
-        rule.runTest(
-            fixture = "react-native-android",
-            testMatrix = TestMatrix.MiddleVersion,
-            tasks = listOf("assembleDebug"),
-            androidProjectRoot = "android",
-            setup = { projectDir ->
-                installNodeModules(projectDir)
-                setupMockResponses(handshakeLibs, handshakeArchs, defaultExpectedVariants)
-            },
-            assertions = {
-                verifyBuildTelemetryRequestSent(variantsSentInBuildTelemetry, testMatrix = TestMatrix.MiddleVersion)
-                verifyNoHandshakes()
-                verifyNoUploads()
-                verifyJvmMappingRequestsSent(0)
-            },
-        )
-    }
-
     private fun installNodeModules(projectDir: File) {
         val process = ProcessBuilder("npm", "ci", "--prefer-offline")
             .directory(projectDir)

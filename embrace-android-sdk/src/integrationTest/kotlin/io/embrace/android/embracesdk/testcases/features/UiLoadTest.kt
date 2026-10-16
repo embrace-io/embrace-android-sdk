@@ -18,6 +18,7 @@ import io.embrace.android.embracesdk.internal.payload.Span
 import io.embrace.android.embracesdk.spans.ErrorCode
 import io.embrace.android.embracesdk.testframework.OtelSdkMode
 import io.embrace.android.embracesdk.testframework.SdkIntegrationTestRule
+import io.embrace.android.embracesdk.testframework.actions.EmbraceSetupInterface
 import io.embrace.android.embracesdk.testframework.actions.EmbraceActionInterface.Companion.ACTIVITY_GAP
 import io.embrace.android.embracesdk.testframework.actions.EmbraceActionInterface.Companion.LIFECYCLE_EVENT_GAP
 import io.embrace.android.embracesdk.testframework.actions.EmbraceActionInterface.Companion.POST_ACTIVITY_ACTION_DWELL
@@ -30,7 +31,6 @@ import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.ParameterizedRobolectricTestRunner
 import org.robolectric.Robolectric
-import org.robolectric.annotation.Config
 
 @RunWith(ParameterizedRobolectricTestRunner::class)
 internal class UiLoadTest(
@@ -39,9 +39,10 @@ internal class UiLoadTest(
 
     @Rule
     @JvmField
-    val testRule = SdkIntegrationTestRule(otelSdkMode = otelSdkMode)
+    val testRule = SdkIntegrationTestRule(otelSdkMode = otelSdkMode) {
+        EmbraceSetupInterface(simulatedSdkInt = Build.VERSION_CODES.LOLLIPOP)
+    }
 
-    @Config(sdk = [Build.VERSION_CODES.LOLLIPOP])
     @Test
     fun `activity open create a trace by default`() {
         testRule.runTest(
@@ -58,7 +59,6 @@ internal class UiLoadTest(
         )
     }
 
-    @Config(sdk = [Build.VERSION_CODES.LOLLIPOP])
     @Test
     fun `activity open creates a trace by default if remote config is enabled`() {
         testRule.runTest(
@@ -75,7 +75,6 @@ internal class UiLoadTest(
         )
     }
 
-    @Config(sdk = [Build.VERSION_CODES.LOLLIPOP])
     @Test
     fun `activity open does not create a trace if feature flag is disabled`() {
         testRule.runTest(
@@ -92,7 +91,6 @@ internal class UiLoadTest(
         )
     }
 
-    @Config(sdk = [Build.VERSION_CODES.LOLLIPOP])
     @Test
     fun `activity open creates a trace for unannotated activity if auto capture enabled`() {
         testRule.runTest(
@@ -113,7 +111,6 @@ internal class UiLoadTest(
         )
     }
 
-    @Config(sdk = [Build.VERSION_CODES.LOLLIPOP])
     @Test
     fun `activity open creates a trace for manually ended load with custom attribute and child span`() {
         var preLaunchTimeMs = 0L
@@ -166,7 +163,6 @@ internal class UiLoadTest(
         )
     }
 
-    @Config(sdk = [Build.VERSION_CODES.LOLLIPOP])
     @Test
     fun `opening activity configured to be ended manually creates an abandoned trace if activityLoaded not invoked`() {
         var preLaunchTimeMs = 0L
@@ -211,7 +207,6 @@ internal class UiLoadTest(
         )
     }
 
-    @Config(sdk = [Build.VERSION_CODES.LOLLIPOP])
     @Test
     fun `activity open does not create a trace for explicitly disabled activity even if auto capture enabled`() {
         testRule.runTest(
@@ -236,7 +231,6 @@ internal class UiLoadTest(
         )
     }
 
-    @Config(sdk = [Build.VERSION_CODES.LOLLIPOP])
     @Test
     fun `opening first non-startup activity creates cold ui load trace in L`() {
         var preLaunchTimeMs = 0L
@@ -291,7 +285,6 @@ internal class UiLoadTest(
         )
     }
 
-    @Config(sdk = [Build.VERSION_CODES.LOLLIPOP])
     @Test
     fun `foregrounding and initializing new activity creates cold ui load trace in L`() {
         var preLaunchTimeMs = 0L
@@ -346,7 +339,6 @@ internal class UiLoadTest(
         )
     }
 
-    @Config(sdk = [Build.VERSION_CODES.LOLLIPOP])
     @Test
     fun `foregrounding already-created activity creates hot ui load trace in L`() {
         var preLaunchTimeMs = 0L

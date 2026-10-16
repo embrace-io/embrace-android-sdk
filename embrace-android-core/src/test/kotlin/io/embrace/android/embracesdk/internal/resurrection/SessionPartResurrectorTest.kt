@@ -14,6 +14,7 @@ import io.embrace.android.embracesdk.fixtures.FAKE_SESSION_PART_ID_2
 import io.embrace.android.embracesdk.internal.arch.attrs.toEmbraceAttributeName
 import io.embrace.android.embracesdk.internal.arch.schema.AppTerminationCause
 import io.embrace.android.embracesdk.internal.arch.schema.EmbType
+import io.embrace.android.embracesdk.internal.clock.millisToNanos
 import io.embrace.android.embracesdk.internal.clock.nanosToMillis
 import io.embrace.android.embracesdk.internal.otel.sdk.findAttributeValue
 import io.embrace.android.embracesdk.internal.otel.spans.hasEmbraceAttribute
@@ -81,6 +82,53 @@ internal class SessionPartResurrectorTest {
         val resurrected = checkNotNull(resurrect(withLateEvent))
         checkNotNull(resurrected.data.spans).forEach { span ->
             assertEquals(latestSnapshotStart.nanosToMillis(), span.endTimeMs())
+        }
+    }
+
+    @Test
+    fun `a failed span ends when the part was last written if that is later than every span start and end`() {
+        val deadPart = incompleteEnvelope()
+        val latestSnapshotStart = checkNotNull(deadPart.data.spanSnapshots).maxOf { checkNotNull(it.startTimeNanos) }
+        val lastWrittenMs = latestSnapshotStart.nanosToMillis() + 7_000L
+        val resurrected = checkNotNull(resurrect(deadPart, lastWrittenMs = lastWrittenMs))
+        checkNotNull(resurrected.data.spans).forEach { span ->
+            assertEquals(lastWrittenMs, span.endTimeMs())
+        }
+    }
+
+    @Test
+    fun `a span end or event later than the last written time does not move the end`() {
+        val deadPart = incompleteEnvelope()
+        val snapshots = checkNotNull(deadPart.data.spanSnapshots)
+        val lastWrittenMs = snapshots.maxOf { checkNotNull(it.startTimeNanos) }.nanosToMillis() + 7_000L
+        val lateNanos = (lastWrittenMs + 60_000L).millisToNanos()
+        val lateCompleted = snapshots.last().copy(spanId = "late-completed-span-id", endTimeNanos = lateNanos)
+        val withLateTelemetry = deadPart
+            .withSessionSpanEvent(SpanEvent(name = "breadcrumb", timestampNanos = lateNanos))
+            .let { it.copy(data = it.data.copy(spans = listOf(lateCompleted))) }
+
+        val resurrected = checkNotNull(resurrect(withLateTelemetry, lastWrittenMs = lastWrittenMs))
+        val spans = checkNotNull(resurrected.data.spans)
+        assertEquals(lateNanos, spans.single { it.spanId == lateCompleted.spanId }.endTimeNanos)
+        spans.filter { it.spanId != lateCompleted.spanId }.forEach { span ->
+            assertEquals(lastWrittenMs, span.endTimeMs())
+        }
+    }
+
+    @Test
+    fun `a span that started after the last written time ends when it started and does not move the end`() {
+        val deadPart = incompleteEnvelope()
+        val snapshots = checkNotNull(deadPart.data.spanSnapshots)
+        val lastWrittenMs = snapshots.maxOf { checkNotNull(it.startTimeNanos) }.nanosToMillis() + 7_000L
+        val lateStartNanos = (lastWrittenMs + 60_000L).millisToNanos()
+        val lateStarted = snapshots.last().copy(spanId = "late-started-span-id", startTimeNanos = lateStartNanos)
+        val withLateStart = deadPart.copy(data = deadPart.data.copy(spanSnapshots = snapshots + lateStarted))
+
+        val resurrected = checkNotNull(resurrect(withLateStart, lastWrittenMs = lastWrittenMs))
+        val spans = checkNotNull(resurrected.data.spans)
+        assertEquals(lateStartNanos, spans.single { it.spanId == lateStarted.spanId }.endTimeNanos)
+        spans.filter { it.spanId != lateStarted.spanId }.forEach { span ->
+            assertEquals(lastWrittenMs, span.endTimeMs())
         }
     }
 
@@ -233,6 +281,7 @@ internal class SessionPartResurrectorTest {
         crash: NativeCrashData? = null,
         userSessionTerminationReason: String? = null,
         isBackgroundOnly: Boolean = false,
+        lastWrittenMs: Long? = null,
     ): Envelope<SessionPartPayload>? {
         val processed = mutableListOf<NativeCrashData>()
         val resurrected = resurrector.resurrect(
@@ -243,6 +292,7 @@ internal class SessionPartResurrectorTest {
             onNativeCrashProcessed = processed::add,
             userSessionTerminationReason = userSessionTerminationReason,
             isBackgroundOnly = isBackgroundOnly,
+            lastWrittenMs = lastWrittenMs,
         )
         assertEquals(listOfNotNull(crash.takeIf { nativeCrashService.nativeCrashesSent.isNotEmpty() }), processed)
         return resurrected

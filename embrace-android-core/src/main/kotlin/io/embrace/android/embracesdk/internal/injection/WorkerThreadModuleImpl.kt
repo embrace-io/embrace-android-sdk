@@ -44,6 +44,10 @@ class WorkerThreadModuleImpl(
         executors.values.forEach(ExecutorService::shutdown)
     }
 
+    override fun awaitTermination(worker: Worker, timeoutMs: Long) {
+        runCatching { executors[worker]?.awaitTermination(timeoutMs, TimeUnit.MILLISECONDS) }
+    }
+
     private fun fetchExecutor(worker: Worker): ExecutorService {
         return executors.getOrPut(worker) {
             val threadFactory = createThreadFactory(worker)

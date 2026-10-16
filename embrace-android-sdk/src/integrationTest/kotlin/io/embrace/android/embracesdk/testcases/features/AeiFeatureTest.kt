@@ -3,7 +3,6 @@
 package io.embrace.android.embracesdk.testcases.features
 
 import android.app.ApplicationExitInfo
-import android.os.Build
 import android.preference.PreferenceManager
 import androidx.test.core.app.ApplicationProvider
 import io.embrace.android.embracesdk.assertions.assertMatches
@@ -32,7 +31,7 @@ import org.robolectric.ParameterizedRobolectricTestRunner
 import org.robolectric.annotation.Config
 import org.robolectric.shadows.ShadowActivityManager
 
-@Config(sdk = [Build.VERSION_CODES.R], shadows = [ShadowActivityManager::class])
+@Config(shadows = [ShadowActivityManager::class])
 @RunWith(ParameterizedRobolectricTestRunner::class)
 internal class AeiFeatureTest(
     private val otelSdkMode: OtelSdkMode,

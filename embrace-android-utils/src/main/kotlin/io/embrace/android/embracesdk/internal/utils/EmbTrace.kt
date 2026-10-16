@@ -1,7 +1,6 @@
 package io.embrace.android.embracesdk.internal.utils
 
 import android.annotation.SuppressLint
-import android.os.Build
 import android.os.Build.VERSION_CODES
 import android.os.SystemClock
 import android.os.Trace
@@ -19,6 +18,10 @@ object EmbTrace {
      */
     val durationTracker: SectionDurationTracker = SectionDurationTracker()
 
+    @PublishedApi
+    @JvmField
+    internal var versionChecker: VersionChecker = BuildVersionChecker
+
     /**
      * Create a trace section around the lambda passed in and return the result.
      * The name of the section will be [sectionName] prefixed by "emb-" and truncated to 127 characters.
@@ -34,7 +37,7 @@ object EmbTrace {
      */
     @SuppressLint("UnclosedTrace")
     inline fun <T> trace(sectionName: String, recordDuration: Boolean = false, code: Provider<T>): T {
-        val enabled = Build.VERSION.SDK_INT >= VERSION_CODES.Q && Trace.isEnabled()
+        val enabled = versionChecker.isAtLeast(VERSION_CODES.Q) && Trace.isEnabled()
         if (enabled) {
             // android.os.Trace rejects section names longer than 127 chars, so only pay for the
             // extra substring allocation when the name actually exceeds that limit.
@@ -68,7 +71,7 @@ object EmbTrace {
      * [name] prefixed by "emb-" and truncated to 127 characters.
      */
     fun counter(name: String, value: Long) {
-        if (Build.VERSION.SDK_INT < VERSION_CODES.Q || !Trace.isEnabled()) {
+        if (!versionChecker.isAtLeast(VERSION_CODES.Q) || !Trace.isEnabled()) {
             return
         }
         Trace.setCounter(prefixedTraceName(name), value)

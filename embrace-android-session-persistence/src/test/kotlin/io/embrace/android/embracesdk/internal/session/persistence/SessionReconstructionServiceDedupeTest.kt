@@ -1,5 +1,6 @@
 package io.embrace.android.embracesdk.internal.session.persistence
 
+import io.embrace.android.embracesdk.fakes.FakeClock
 import io.embrace.android.embracesdk.fakes.FakeInternalLogger
 import io.embrace.android.embracesdk.internal.payload.Span
 import org.junit.Assert.assertEquals
@@ -88,7 +89,7 @@ internal class SessionReconstructionServiceDedupeTest {
     fun `a completed span supersedes a snapshot of the same span`() {
         write(spans = listOf(earlySpanProto), snapshots = listOf(inFlightSpan))
 
-        val payload = checkNotNull(service.reconstruct(partDirectory)?.data)
+        val payload = checkNotNull(service.reconstruct(partDirectory)?.envelope?.data)
         assertEquals(listOf(earlySpan, fullyPopulatedSpan), payload.spans)
         assertEquals(emptyList<Span>(), payload.spanSnapshots)
         assertNoInternalErrors()
@@ -98,7 +99,7 @@ internal class SessionReconstructionServiceDedupeTest {
     fun `a completed span wins over a snapshot that ended later`() {
         write(spans = listOf(earlySpanProto), snapshots = listOf(lateSpan))
 
-        val payload = checkNotNull(service.reconstruct(partDirectory)?.data)
+        val payload = checkNotNull(service.reconstruct(partDirectory)?.envelope?.data)
         assertEquals(listOf(earlySpan, fullyPopulatedSpan), payload.spans)
         assertEquals(emptyList<Span>(), payload.spanSnapshots)
         assertNoInternalErrors()
@@ -108,7 +109,7 @@ internal class SessionReconstructionServiceDedupeTest {
     fun `duplicates in the completed spans log keep the one that ended last`() {
         write(spans = listOf(lateSpanProto, earlySpanProto))
 
-        assertEquals(listOf(lateSpan, fullyPopulatedSpan), service.reconstruct(partDirectory)?.data?.spans)
+        assertEquals(listOf(lateSpan, fullyPopulatedSpan), service.reconstruct(partDirectory)?.envelope?.data?.spans)
         assertDuplicatesTracked()
     }
 
@@ -116,7 +117,7 @@ internal class SessionReconstructionServiceDedupeTest {
     fun `a later snapshot record supersedes an earlier one for the same span`() {
         write(snapshots = listOf(earlySpan, lateSpan))
 
-        assertEquals(listOf(lateSpan), service.reconstruct(partDirectory)?.data?.spanSnapshots)
+        assertEquals(listOf(lateSpan), service.reconstruct(partDirectory)?.envelope?.data?.spanSnapshots)
         assertNoInternalErrors()
     }
 
@@ -126,7 +127,7 @@ internal class SessionReconstructionServiceDedupeTest {
             spans = listOf(earlySpanProto, otherSpanProto),
             snapshots = listOf(inFlightSpan, otherSnapshot),
         )
-        val payload = checkNotNull(service.reconstruct(partDirectory)?.data)
+        val payload = checkNotNull(service.reconstruct(partDirectory)?.envelope?.data)
         assertEquals(listOf(earlySpan, otherSpan, fullyPopulatedSpan), payload.spans)
         assertEquals(listOf(otherSnapshot), payload.spanSnapshots)
         assertNoInternalErrors()
@@ -139,7 +140,7 @@ internal class SessionReconstructionServiceDedupeTest {
             snapshots = listOf(inFlightSpan, otherSnapshot),
         )
 
-        val payload = checkNotNull(service.reconstruct(partDirectory)?.data)
+        val payload = checkNotNull(service.reconstruct(partDirectory)?.envelope?.data)
         assertEquals(listOf(otherSpan, lateSpan, fullyPopulatedSpan), payload.spans)
         assertEquals(listOf(otherSnapshot), payload.spanSnapshots)
         assertDuplicatesTracked()
@@ -152,7 +153,7 @@ internal class SessionReconstructionServiceDedupeTest {
             snapshots = listOf(inFlightSpan, otherSnapshot, otherSnapshot),
         )
 
-        val payload = checkNotNull(service.reconstruct(partDirectory)?.data)
+        val payload = checkNotNull(service.reconstruct(partDirectory)?.envelope?.data)
         assertEquals(listOf(earlySpan, otherSpan, fullyPopulatedSpan), payload.spans)
         assertEquals(listOf(otherSnapshot), payload.spanSnapshots)
         assertDuplicatesTracked()
@@ -162,7 +163,7 @@ internal class SessionReconstructionServiceDedupeTest {
     fun `spans with no span id are not treated as duplicates`() {
         write(spans = listOf(anonymousSpanProto, anonymousSpanProto))
 
-        val payload = checkNotNull(service.reconstruct(partDirectory)?.data)
+        val payload = checkNotNull(service.reconstruct(partDirectory)?.envelope?.data)
         assertEquals(listOf(anonymousSpan, anonymousSpan, fullyPopulatedSpan), payload.spans)
         assertNoInternalErrors()
     }
@@ -171,14 +172,14 @@ internal class SessionReconstructionServiceDedupeTest {
     fun `a payload with no duplicates logs no internal error`() {
         write(spans = listOf(earlySpanProto, otherSpanProto), snapshots = listOf(otherSnapshot))
 
-        val payload = checkNotNull(service.reconstruct(partDirectory)?.data)
+        val payload = checkNotNull(service.reconstruct(partDirectory)?.envelope?.data)
         assertEquals(listOf(earlySpan, otherSpan, fullyPopulatedSpan), payload.spans)
         assertEquals(listOf(otherSnapshot), payload.spanSnapshots)
         assertNoInternalErrors()
     }
 
     private fun target(): SessionPartWriteTarget =
-        SessionPartWriteTarget(lazy { sessionsDir }) { activePart }
+        SessionPartWriteTarget(lazy { sessionsDir }, FakeClock()) { activePart }
 
     private fun createPartDir(directory: SessionPartDirectory): File =
         File(sessionsDir, directory.dirName).apply { mkdirs() }

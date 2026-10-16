@@ -169,14 +169,19 @@ class SessionPartReader(
         performingResurrection: Boolean,
     ): Boolean {
         val intake = incomplete.remove(directory) ?: run {
-            val envelope = reconstructionService.reconstruct(directory)
-            if (envelope == null) {
+            val part = reconstructionService.reconstruct(directory)
+            if (part == null) {
                 // No need to log as the failed construction is recorded elsewhere
                 directoryStore.delete(directory)
                 return true
             }
-            val deliverable = deliverable(envelope, directory, isLastPartOfUserSession, performingResurrection)
-                ?: return true
+            val deliverable = deliverable(
+                envelope = part.envelope,
+                directory = directory,
+                isLastPartOfUserSession = isLastPartOfUserSession,
+                performingResurrection = performingResurrection,
+                lastWrittenMs = part.lastWrittenMs,
+            ) ?: return true
             val task = intakeService.take(
                 intake = deliverable.envelope,
                 metadata = directory.createMetadata(deliverable.processIdentifier),
@@ -267,13 +272,15 @@ class SessionPartReader(
     /**
      * What to hand over for the part [envelope] was reconstructed from: the envelope itself for a part
      * this process persisted, or the resurrected envelope for a dead part. Returns null if a dead part
-     * could not be resurrected, in which case it has been deleted.
+     * could not be resurrected, in which case it has been deleted. [lastWrittenMs] is only used to
+     * resurrect a dead part.
      */
     private fun deliverable(
         envelope: Envelope<SessionPartPayload>,
         directory: SessionPartDirectory,
         isLastPartOfUserSession: Boolean,
         performingResurrection: Boolean,
+        lastWrittenMs: Long?,
     ): Deliverable? {
         val recordedProcessIdentifier = envelope.findProcessIdentifier()
         val processIdentifier = recordedProcessIdentifier ?: processIdProvider()
@@ -283,7 +290,7 @@ class SessionPartReader(
             recordedProcessIdentifier != processIdProvider()
         }
         return if (isDead) {
-            resurrect(envelope, directory, processIdentifier, isLastPartOfUserSession)?.let {
+            resurrect(envelope, directory, processIdentifier, isLastPartOfUserSession, lastWrittenMs)?.let {
                 Deliverable(it.envelope, processIdentifier, it.afterStored)
             }
         } else {
@@ -292,16 +299,24 @@ class SessionPartReader(
     }
 
     /**
-     * Resurrects [deadPart], or deletes it and returns null if it cannot be resurrected.
+     * Resurrects [deadPart], or deletes it and returns null if it cannot be resurrected. [lastWrittenMs] is
+     * when its files were last written, if they record it.
      */
     private fun resurrect(
         deadPart: Envelope<SessionPartPayload>,
         directory: SessionPartDirectory,
         processIdentifier: String,
         isLastPartOfUserSession: Boolean,
+        lastWrittenMs: Long?,
     ): MultiFileDeadPartResurrector.ResurrectedPart? {
         val resurrected = runCatching {
-            deadPartResurrector.resurrect(deadPart, directory, processIdentifier, isLastPartOfUserSession)
+            deadPartResurrector.resurrect(
+                deadPart = deadPart,
+                directory = directory,
+                processIdentifier = processIdentifier,
+                isLastPartOfUserSession = isLastPartOfUserSession,
+                lastWrittenMs = lastWrittenMs,
+            )
         }.onFailure {
             logger.trackInternalError(InternalErrorType.PayloadResurrectionPayloadFail, it)
         }.getOrNull()

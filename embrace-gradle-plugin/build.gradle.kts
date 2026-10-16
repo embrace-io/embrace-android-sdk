@@ -1,7 +1,6 @@
 plugins {
     id("embrace-jvm-conventions")
     id("java-gradle-plugin")
-    id("groovy")
     id("com.vanniktech.maven.publish")
     id("embrace-integration-test-repo-conventions")
     id("org.jetbrains.kotlin.plugin.serialization")

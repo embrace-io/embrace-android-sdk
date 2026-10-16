@@ -51,15 +51,19 @@ tasks.withType<Test>().configureEach {
         )
     }
 
-    // avoid default behavior of parallelisation as it can lead to resource exhaustion on CI (and locally)
-    maxParallelForks = 1
+    systemProperty("embrace.maxVersion.agp", findVersion("agp"))
+    systemProperty("embrace.maxVersion.gradle", gradle.gradleVersion)
+    systemProperty("embrace.maxVersion.kotlin", findVersion("kotlinGradlePlugin"))
+    systemProperty("embrace.maxVersion.compileSdk", findVersion("compileSdk"))
+
+    maxParallelForks = providers.gradleProperty("integrationTestForks").map(String::toInt).getOrElse(2)
 }
 
 // A single end-to-end build of an Android app that applies the plugin, used by the root 'verify' task.
 tasks.register<Test>("sanityTest") {
     testClassesDirs = sourceSets.test.get().output.classesDirs
     classpath = sourceSets.test.get().runtimeClasspath
-    filter.includeTestsMatching("io.embrace.android.gradle.integration.testcases.AndroidSimpleTest.assembleRelease")
+    filter.includeTestsMatching("io.embrace.android.gradle.integration.testcases.AndroidSimpleTest.smoke")
 }
 
 group = "io.embrace"

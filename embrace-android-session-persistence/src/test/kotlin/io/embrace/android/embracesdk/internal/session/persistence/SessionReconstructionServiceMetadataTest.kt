@@ -1,5 +1,6 @@
 package io.embrace.android.embracesdk.internal.session.persistence
 
+import io.embrace.android.embracesdk.fakes.FakeClock
 import io.embrace.android.embracesdk.fakes.FakeInternalLogger
 import io.embrace.android.embracesdk.internal.payload.EnvelopeMetadata
 import io.embrace.android.embracesdk.internal.payload.EnvelopeResource
@@ -61,7 +62,7 @@ internal class SessionReconstructionServiceMetadataTest {
         symbolProvider = { null }
         activePart = partDirectory
         writer = SessionMetadataWriter(
-            target = SessionPartWriteTarget(lazy { sessionsDir }) { activePart },
+            target = SessionPartWriteTarget(lazy { sessionsDir }, FakeClock()) { activePart },
             metadataSource = { metadataProvider() },
             resourceSource = { resourceProvider() },
             envelopeVersion = ENVELOPE_VERSION,
@@ -77,7 +78,7 @@ internal class SessionReconstructionServiceMetadataTest {
     fun `the envelope is reconstructed from the metadata`() {
         write()
 
-        val envelope = checkNotNull(service.reconstruct(partDirectory))
+        val envelope = checkNotNull(service.reconstruct(partDirectory)?.envelope)
         assertEquals(fullyPopulatedResource, envelope.resource)
         assertEquals(fullyPopulatedMetadata, envelope.metadata)
         assertEquals(ENVELOPE_VERSION, envelope.version)
@@ -89,7 +90,7 @@ internal class SessionReconstructionServiceMetadataTest {
     fun `every persisted file contributes to the reconstructed telemetry`() {
         write()
 
-        val envelope = checkNotNull(service.reconstruct(partDirectory))
+        val envelope = checkNotNull(service.reconstruct(partDirectory)?.envelope)
         assertEquals(listOf(fullyPopulatedSpan), envelope.data.spans)
         assertEquals(listOf(inFlightSpan), envelope.data.spanSnapshots)
     }
@@ -98,7 +99,7 @@ internal class SessionReconstructionServiceMetadataTest {
     fun `metadata with no populated fields is reconstructed`() {
         metadataProvider = { EnvelopeMetadata() }
         write()
-        assertEquals(EnvelopeMetadata(), service.reconstruct(partDirectory)?.metadata)
+        assertEquals(EnvelopeMetadata(), service.reconstruct(partDirectory)?.envelope?.metadata)
         assertNoInternalErrors()
     }
 
@@ -106,7 +107,7 @@ internal class SessionReconstructionServiceMetadataTest {
     fun `a resource with no populated fields is reconstructed`() {
         resourceProvider = { EnvelopeResource() }
         write()
-        assertEquals(EnvelopeResource(), service.reconstruct(partDirectory)?.resource)
+        assertEquals(EnvelopeResource(), service.reconstruct(partDirectory)?.envelope?.resource)
         assertNoInternalErrors()
     }
 
@@ -116,7 +117,7 @@ internal class SessionReconstructionServiceMetadataTest {
         metadataProvider = { fullyPopulatedMetadata.copy(userId = "newUserId", personas = linkedSetOf("payer")) }
         assertTrue(writer.write())
 
-        with(checkNotNull(service.reconstruct(partDirectory)?.metadata)) {
+        with(checkNotNull(service.reconstruct(partDirectory)?.envelope?.metadata)) {
             assertEquals("newUserId", userId)
             assertEquals(setOf("payer"), personas)
         }
@@ -127,14 +128,14 @@ internal class SessionReconstructionServiceMetadataTest {
     fun `absent symbol mapping is reconstructed as null`() {
         symbolProvider = { null }
         write()
-        assertNull(service.reconstruct(partDirectory)?.data?.sharedLibSymbolMapping)
+        assertNull(service.reconstruct(partDirectory)?.envelope?.data?.sharedLibSymbolMapping)
     }
 
     @Test
     fun `empty symbol mapping is reconstructed as an empty map`() {
         symbolProvider = { emptyMap() }
         write()
-        assertEquals(emptyMap<String, String>(), service.reconstruct(partDirectory)?.data?.sharedLibSymbolMapping)
+        assertEquals(emptyMap<String, String>(), service.reconstruct(partDirectory)?.envelope?.data?.sharedLibSymbolMapping)
     }
 
     @Test
@@ -142,7 +143,7 @@ internal class SessionReconstructionServiceMetadataTest {
         val symbols = mapOf("armeabi-v7a" to "my-symbols", "x86" to "other-symbols")
         symbolProvider = { symbols }
         write()
-        assertEquals(symbols, service.reconstruct(partDirectory)?.data?.sharedLibSymbolMapping)
+        assertEquals(symbols, service.reconstruct(partDirectory)?.envelope?.data?.sharedLibSymbolMapping)
     }
 
     @Test
@@ -170,11 +171,11 @@ internal class SessionReconstructionServiceMetadataTest {
         metadataProvider = { fullyPopulatedMetadata.copy(userId = "otherUserId") }
         write(other)
 
-        with(checkNotNull(service.reconstruct(partDirectory))) {
+        with(checkNotNull(service.reconstruct(partDirectory)?.envelope)) {
             assertEquals(fullyPopulatedResource, resource)
             assertEquals("userId", metadata?.userId)
         }
-        with(checkNotNull(service.reconstruct(other))) {
+        with(checkNotNull(service.reconstruct(other)?.envelope)) {
             assertEquals(EnvelopeResource(appVersion = "9.9.9"), resource)
             assertEquals("otherUserId", metadata?.userId)
         }

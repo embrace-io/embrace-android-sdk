@@ -1,5 +1,6 @@
 package io.embrace.android.embracesdk.internal.session.persistence
 
+import io.embrace.android.embracesdk.fakes.FakeClock
 import io.embrace.android.embracesdk.fakes.FakeInternalLogger
 import io.embrace.android.embracesdk.internal.payload.Attribute
 import io.embrace.android.embracesdk.internal.payload.Span
@@ -35,7 +36,10 @@ internal class CompletedSpansWriterTest {
         private val oversized = paddedSpan("aaaaaaaaaaaaaaa2", padding = 4096)
 
         private val twoSpanBudget = spanCollectionHeader().size + 2L * SpanCollection.ADAPTER.encode(
-            SpanCollection(spans = listOf(span("aaaaaaaaaaaaaaa1").toProto())),
+            SpanCollection(
+                spans = listOf(span("aaaaaaaaaaaaaaa1").toProto()),
+                written_at_ms = FakeClock.DEFAULT_FAKE_CURRENT_TIME,
+            ),
         ).size
 
         private fun span(id: String, name: String = "emb-network-request") =
@@ -46,6 +50,7 @@ internal class CompletedSpansWriterTest {
     val tempFolder: TemporaryFolder = TemporaryFolder()
 
     private lateinit var sessionsDir: File
+    private lateinit var clock: FakeClock
     private lateinit var logger: FakeInternalLogger
     private lateinit var writer: CompletedSpansWriter
 
@@ -55,6 +60,7 @@ internal class CompletedSpansWriterTest {
     @Before
     fun setUp() {
         sessionsDir = tempFolder.newFolder("embrace_sessions")
+        clock = FakeClock()
         logger = FakeInternalLogger(throwOnInternalError = false)
         activePart = partDirectory
         writer = CompletedSpansWriter(target { activePart }, logger)
@@ -89,13 +95,16 @@ internal class CompletedSpansWriterTest {
     @Test
     fun `later writes append to the log rather than replacing it`() {
         assertTrue(write(spans = listOf(span("aaaaaaaaaaaaaaa1"))))
+        clock.tick(1000)
         assertTrue(write(spans = listOf(span("aaaaaaaaaaaaaaa2"), span("aaaaaaaaaaaaaaa3"))))
+        clock.tick(1000)
         assertTrue(write(spans = listOf(span("aaaaaaaaaaaaaaa4"))))
 
         assertEquals(
             listOf("aaaaaaaaaaaaaaa1", "aaaaaaaaaaaaaaa2", "aaaaaaaaaaaaaaa3", "aaaaaaaaaaaaaaa4"),
             readLog().map { it.span_id },
         )
+        assertEquals(clock.now(), decodeLog().lastWrittenMs)
         assertNoInternalErrors()
     }
 
@@ -412,7 +421,8 @@ internal class CompletedSpansWriterTest {
             ),
         )
         assertEquals(listOf("aaaaaaaaaaaaaaa1", "aaaaaaaaaaaaaaa2"), readLog().map(SpanProto::span_id))
-        assertEquals(twoSpanBudget, logFile().length())
+        // one append, so the log ends with one write time where the budget allows for two
+        assertEquals(twoSpanBudget - writtenAtSize(clock.now()), logFile().length())
         assertWriteFailureTracked()
     }
 
@@ -428,7 +438,11 @@ internal class CompletedSpansWriterTest {
         CompletedSpansWriter(target { activePart }, logger, twoSpanBudget)
 
     private fun target(source: () -> SessionPartDirectory?): SessionPartWriteTarget =
-        SessionPartWriteTarget(lazy { sessionsDir }, source)
+        SessionPartWriteTarget(
+            sessionsDir = lazy { sessionsDir },
+            clock = clock,
+            sessionPartDirectorySource = source,
+        )
 
     private fun createPartDir(directory: SessionPartDirectory): File =
         File(sessionsDir, directory.dirName).apply { mkdirs() }
@@ -440,7 +454,10 @@ internal class CompletedSpansWriterTest {
         File(partDir(directory), COMPLETED_SPANS_FILE_NAME)
 
     private fun readLog(directory: SessionPartDirectory = partDirectory): List<SpanProto> =
-        logFile(directory).source().buffer().use(::readCompletedSpans).spans
+        decodeLog(directory).spans
+
+    private fun decodeLog(directory: SessionPartDirectory = partDirectory): DecodedSpans =
+        logFile(directory).source().buffer().use(::readCompletedSpans)
 
     private fun write(
         directory: SessionPartDirectory? = partDirectory,

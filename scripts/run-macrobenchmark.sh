@@ -2,10 +2,10 @@
 # Runs the :embrace-macrobenchmark benchmark on a connected device.
 #
 # Usage: scripts/run-macrobenchmark.sh [--test CLASS] [--serial SERIAL] [--no-publish]
-#            [--fast-publish] [--suppress-errors LIST] [--gradle-arg ARG] [--dry-run]
+#            [--suppress-errors LIST] [--gradle-arg ARG] [--dry-run]
 #
 # Two gradle invocations are needed: the app resolves the Embrace gradle plugin on its buildscript
-# classpath, so the plugin must be in mavenLocal before the benchmark configures.
+# classpath, so the plugin must be in build/integration-repo before the benchmark configures.
 # Exit codes: 2 preflight, 3 publish, 4 benchmark.
 
 set -eu
@@ -14,7 +14,7 @@ die() { printf '%b\n' "$2" >&2; exit "$1"; }
 
 test_filter=io.embrace.android.embracesdk.macrobenchmark.SessionBenchmark
 serial=${ANDROID_SERIAL:-}
-publish=repo
+publish=true
 suppress=""
 extra=""
 dry_run=false
@@ -25,8 +25,7 @@ while [ $# -gt 0 ]; do
         --serial) serial=${2:?--serial needs a value}; shift 2 ;;
         --suppress-errors) suppress=${2:?needs a value}; shift 2 ;;
         --gradle-arg) extra="$extra ${2:?--gradle-arg needs a value}"; shift 2 ;;
-        --no-publish) publish=none; shift ;;
-        --fast-publish) publish=plugin; shift ;;
+        --no-publish) publish=false; shift ;;
         --dry-run) dry_run=true; shift ;;
         -h|--help) sed -n '2,9p' "$0" | sed 's/^# \{0,1\}//'; exit 0 ;;
         *) die 1 "unknown option: $1" ;;
@@ -73,11 +72,8 @@ if "$adb" -s "$serial" shell ss -lptn 2>/dev/null | grep -q ':9001'; then
     die 2 "port 9001 busy on $serial: another benchmark is running, or an orphan is left over.\nIf nothing is running: adb -s $serial shell pkill -f trace_processor_shell"
 fi
 
-case $publish in
-    repo) pub=publishToMavenLocal ;;
-    plugin) pub=:embrace-gradle-plugin:publishToMavenLocal ;;
-    none) pub="" ;;
-esac
+pub=""
+[ "$publish" = false ] || pub=:embrace-gradle-plugin:publishAllPublicationsToIntegrationTestRepository
 
 set -- :embrace-macrobenchmark:connectedBenchmarkAndroidTest \
     "-Pandroid.testInstrumentationRunnerArguments.androidx.benchmark.suppressErrors=$suppress" \

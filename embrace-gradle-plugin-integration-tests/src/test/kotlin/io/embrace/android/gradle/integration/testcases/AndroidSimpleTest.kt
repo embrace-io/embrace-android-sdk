@@ -2,7 +2,6 @@ package io.embrace.android.gradle.integration.testcases
 
 import io.embrace.android.gradle.integration.framework.PluginIntegrationTestRule
 import io.embrace.android.gradle.integration.framework.ProjectType
-import io.embrace.android.gradle.plugin.network.EmbraceEndpoint
 import org.junit.Rule
 import org.junit.Test
 
@@ -15,94 +14,36 @@ class AndroidSimpleTest {
     private val variants = listOf("debug", "release")
 
     @Test
-    fun assemble() {
+    fun smoke() {
         rule.runTest(
             fixture = "android-simple",
-            tasks = listOf("assemble"),
+            tasks = listOf("assembleDebug", "assembleRelease"),
             projectType = ProjectType.ANDROID,
             assertions = { projectDir ->
                 verifyBuildTelemetryRequestSent(variants)
                 verifyJvmMappingRequestsSent(1)
+                verifyNoHandshakes()
+                verifyNoUploads()
                 verifyNoBuildInfoExported(projectDir, "release")
             },
         )
+
+        // each assemble/bundle entry point uploads only for the release variant.
+        // Tasks share a build only when they select disjoint variants, so each upload is attributable.
+        verifyEntryPoints(listOf("assemble"), expectedUploads = 1)
+        verifyEntryPoints(listOf("bundle"), expectedUploads = 1)
+        verifyEntryPoints(listOf("assembleDebug", "bundleRelease"), expectedUploads = 1)
+        verifyEntryPoints(listOf("bundleDebug", "assembleRelease"), expectedUploads = 1)
     }
 
-    @Test
-    fun `debug builds should not upload symbols`() {
+    private fun verifyEntryPoints(tasks: List<String>, expectedUploads: Int) {
         rule.runTest(
             fixture = "android-simple",
-            tasks = listOf("assembleDebug"),
-            projectType = ProjectType.ANDROID,
-            assertions = {
-                verifyNoHandshakes()
-                verifyNoUploads()
-                verifyJvmMappingRequestsSent(0)
-            },
-        )
-    }
-
-    @Test
-    fun assembleRelease() {
-        rule.runTest(
-            fixture = "android-simple",
-            tasks = listOf("assembleRelease"),
+            tasks = listOf("clean") + tasks,
             projectType = ProjectType.ANDROID,
             assertions = {
                 verifyBuildTelemetryRequestSent(variants)
-                verifyJvmMappingRequestsSent(1)
-            },
-        )
-    }
-
-    @Test
-    fun assembleDebug() {
-        rule.runTest(
-            fixture = "android-simple",
-            tasks = listOf("assembleDebug"),
-            projectType = ProjectType.ANDROID,
-            assertions = {
-                verifyBuildTelemetryRequestSent(variants)
-                verifyNoRequestsSent(EmbraceEndpoint.PROGUARD)
-            },
-        )
-    }
-
-    @Test
-    fun bundle() {
-        rule.runTest(
-            fixture = "android-simple",
-            tasks = listOf("bundle"),
-            projectType = ProjectType.ANDROID,
-            assertions = {
-                verifyBuildTelemetryRequestSent(variants)
-                verifyJvmMappingRequestsSent(1)
-            },
-        )
-    }
-
-    @Test
-    fun bundleRelease() {
-        rule.runTest(
-            fixture = "android-simple",
-            tasks = listOf("bundleRelease"),
-            projectType = ProjectType.ANDROID,
-            assertions = {
-                verifyBuildTelemetryRequestSent(variants)
-                verifyJvmMappingRequestsSent(1)
-            },
-        )
-    }
-
-    @Test
-    fun bundleDebug() {
-        rule.runTest(
-            fixture = "android-simple",
-            tasks = listOf("bundleDebug"),
-            projectType = ProjectType.ANDROID,
-            assertions = {
-                verifyBuildTelemetryRequestSent(variants)
-                verifyNoRequestsSent(EmbraceEndpoint.PROGUARD)
+                verifyJvmMappingRequestsSent(expectedUploads)
             },
         )
     }

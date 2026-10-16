@@ -5,12 +5,16 @@ import io.embrace.android.gradle.integration.framework.ProjectType
 import io.embrace.android.gradle.integration.framework.smali.SmaliConfigReader
 import io.embrace.android.gradle.integration.framework.smali.SmaliMethod
 import io.embrace.android.gradle.integration.framework.smali.SmaliParser
+import io.embrace.android.gradle.plugin.tasks.ndk.ArchitecturesToHashedSharedObjectFilesMap
 import io.embrace.android.gradle.plugin.util.INVALID_BUILD_ID
+import io.embrace.android.gradle.plugin.util.serialization.JsonSerializer
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotEquals
+import org.junit.Assert.assertTrue
 import org.junit.Rule
 import org.junit.Test
 import java.io.File
+import java.util.Base64
 
 class ConfigInstrumentationTest {
 
@@ -35,6 +39,7 @@ class ConfigInstrumentationTest {
      * - default config values are instrumented on the minified `release` build type
      * - non-default values from `src/overrides/embrace-config.json` are instrumented on the `overrides` build type
      * - the instrumented build ID on `release` matches the one sent with the mapping file upload
+     * - hashes of native libs built with CMake are instrumented on `release`
      */
     @Test
     fun `config instrumentation`() {
@@ -50,8 +55,31 @@ class ConfigInstrumentationTest {
                 val buildId = verifyInstrumentedConfig(projectDir, "release", "instrumented-config-default.json")
                 verifyJvmMappingRequestsSent(appIds = listOf("abcde"), buildIds = listOf(buildId))
                 verifyInstrumentedConfig(projectDir, "overrides", "instrumented-config-overrides.json")
+                verifyInstrumentedSharedObjectFiles(projectDir)
             },
         )
+    }
+
+    /**
+     * Asserts the base64-encoded map of native lib hashes was instrumented on `release` for every ABI and lib.
+     */
+    private fun verifyInstrumentedSharedObjectFiles(projectDir: File) {
+        val smaliFile = SmaliConfigReader().readSmaliFiles(
+            projectDir,
+            listOf("/io/embrace/android/embracesdk/internal/config/instrumented/Base64SharedObjectFilesMapImpl"),
+        ).single()
+        val method = SmaliParser().parse(
+            smaliFile,
+            listOf(SmaliMethod("getBase64SharedObjectFilesMap()Ljava/lang/String;")),
+        ).methods.single()
+
+        val json = Base64.getDecoder().decode(method.returnValue).toString(Charsets.UTF_8)
+        val symbols = JsonSerializer().fromJson(json, ArchitecturesToHashedSharedObjectFilesMap.serializer()).symbols
+        listOf("x86_64", "arm64-v8a").forEach { arch ->
+            listOf("libemb-donuts.so", "libemb-crisps.so").forEach { lib ->
+                assertTrue("Missing $lib for $arch", symbols[arch]?.containsKey(lib) == true)
+            }
+        }
     }
 
     /**

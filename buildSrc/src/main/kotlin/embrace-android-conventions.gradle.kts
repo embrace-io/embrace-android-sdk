@@ -1,3 +1,4 @@
+import com.android.build.api.variant.DeviceTestBuilder
 import org.gradle.api.tasks.testing.logging.TestExceptionFormat
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 import org.jetbrains.kotlin.gradle.dsl.KotlinVersion
@@ -30,6 +31,9 @@ android {
         disable.addAll(setOf("GradleDependency", "NewerVersionAvailable", "AndroidGradlePluginVersion"))
     }
 
+    val forkCount = project.testForkCount()
+    val heapSize = project.testHeapSize()
+
     testOptions {
         // Calling Android logging methods will throw exceptions if this is false
         // see: http://tools.android.com/tech-docs/unit-testing-support#TOC-Method-...-not-mocked.-
@@ -41,8 +45,8 @@ android {
                 test.testLogging {
                     this.exceptionFormat = TestExceptionFormat.FULL
                 }
-                test.maxParallelForks = (Runtime.getRuntime().availableProcessors() / 3) + 1
-                test.maxHeapSize = "2g"
+                test.maxParallelForks = forkCount
+                test.maxHeapSize = heapSize
 
                 // Disable test discovery failure for modules without test sources
                 test.failOnNoDiscoveredTests.set(false)
@@ -63,6 +67,13 @@ android {
                 optIn.add("io.embrace.android.embracesdk.semconv.ExperimentalSemconv")
             }
         }
+    }
+}
+
+// skip empty androidTest APKs for modules that don't have device tests.
+if (!file("src/androidTest").exists()) {
+    androidComponents.beforeVariants { variant ->
+        variant.deviceTests[DeviceTestBuilder.ANDROID_TEST_TYPE]?.enable = false
     }
 }
 

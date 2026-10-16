@@ -177,6 +177,7 @@ tasks.matching { connectedTestTask.matches(it.name) }.configureEach {
 }
 
 androidComponents {
+    beforeVariants { it.enable = it.buildType == "minified" }
     onVariants { variant ->
         variant.androidTest?.sources?.assets?.addGeneratedSourceDirectory(
             generateExpectedNames,

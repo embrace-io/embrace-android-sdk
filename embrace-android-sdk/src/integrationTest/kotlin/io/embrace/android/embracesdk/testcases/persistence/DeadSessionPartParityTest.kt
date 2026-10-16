@@ -41,8 +41,11 @@ import org.robolectric.ParameterizedRobolectricTestRunner
  * under both persistence modes.
  *
  * Neither mode ends the part at the death of the process: a user idle in the foreground before a kill
- * does not lengthen the session. Both end it at the latest time a span in it started or ended, which
- * neither a breadcrumb nor a session property moves.
+ * does not lengthen the session. The multi-file mode ends it when the part's files were last written,
+ * which follows the last change by up to one write interval, whether the change records a time of its
+ * own, such as a breadcrumb, or not, such as a session property. The single-file mode has no such
+ * record, so it ends the part at the latest time a span in it started or ended, which neither change
+ * moves.
  *
  * These tests pin down what each mode persisted before the process died, and that the delivered end
  * follows from it. The rules that pick the end from a part's data are covered by SessionPartResurrectorTest.
@@ -71,23 +74,26 @@ internal class DeadSessionPartParityTest(
     }
 
     @Test
-    fun `a breadcrumb does not move the estimated end time`() {
+    fun `a breadcrumb moves the estimated end time only under the multi-file mode`() {
         var breadcrumbMs = 0L
+        var lastWriteMs = 0L
         killActiveSessionPart {
             clock.tick(5_000)
             breadcrumbMs = clock.now()
             embrace.addBreadcrumb("last-thing-the-user-did")
             persistAfterOneInterval()
+            lastWriteMs = clock.now()
         }
         relaunch {
             assertEquals(listOf(breadcrumbMs), deliveredBreadcrumbTimesMs())
-            assertDeliveredPartEnd()
+            assertDeliveredPartEnd(multiFileEndMs = lastWriteMs)
         }
     }
 
     @Test
-    fun `a session property update does not move the estimated end time`() {
+    fun `a session property update moves the estimated end time only under the multi-file mode`() {
         var breadcrumbMs = 0L
+        var lastWriteMs = 0L
         killActiveSessionPart {
             clock.tick(5_000)
             breadcrumbMs = clock.now()
@@ -97,11 +103,12 @@ internal class DeadSessionPartParityTest(
             clock.tick(10_000)
             embrace.addUserSessionProperty("late", "value", PropertyScope.USER_SESSION)
             persistAfterOneInterval()
+            lastWriteMs = clock.now()
         }
         relaunch {
             assertEquals(listOf(breadcrumbMs), deliveredBreadcrumbTimesMs())
             assertEquals("value", deliveredSessionSpan().getSessionProperty("late"))
-            assertDeliveredPartEnd()
+            assertDeliveredPartEnd(multiFileEndMs = lastWriteMs)
         }
     }
 

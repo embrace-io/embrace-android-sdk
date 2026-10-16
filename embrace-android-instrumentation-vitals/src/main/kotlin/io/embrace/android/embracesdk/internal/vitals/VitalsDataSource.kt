@@ -17,6 +17,8 @@ import io.embrace.android.embracesdk.internal.arch.schema.EmbType
 import io.embrace.android.embracesdk.internal.arch.schema.SchemaType
 import io.embrace.android.embracesdk.internal.arch.state.ProcessState
 import io.embrace.android.embracesdk.internal.arch.state.ProcessStateListener
+import io.embrace.android.embracesdk.internal.utils.BuildVersionChecker
+import io.embrace.android.embracesdk.internal.utils.VersionChecker
 import io.embrace.android.embracesdk.internal.vitals.screenload.ScreenLoadResult
 import io.embrace.android.embracesdk.internal.vitals.screenload.ScreenLoadTracker
 import io.embrace.android.embracesdk.internal.vitals.smoothness.FocalMomentTracker
@@ -33,6 +35,7 @@ import io.embrace.android.embracesdk.semconv.EmbFrameCountsAttributes
 @RequiresApi(Build.VERSION_CODES.N)
 internal class VitalsDataSource(
     private val args: InstrumentationArgs,
+    private val versionChecker: VersionChecker = BuildVersionChecker,
 ) : DataSourceImpl(
     args = args,
     // Vitals emits a span per gesture and per navigation, so it needs a ceiling: an unlimited source would
@@ -70,6 +73,7 @@ internal class VitalsDataSource(
     private val frameMetricsStrategy: FrameMetricsStrategy = FrameMetricsStrategy.create(
         refreshIntervalNanos = displayRefreshIntervalNanos(),
         jankHeuristicMultiplier = args.configService.config.vitals.jankHeuristicMultiplier,
+        versionChecker = versionChecker,
     )
 
     private val displayListener = object : DisplayManager.DisplayListener {
@@ -101,7 +105,7 @@ internal class VitalsDataSource(
         val handler = vitalsScheduler.handler
 
         // Below API 31 the budget comes from [refreshRate]; track refresh-rate changes to keep it live.
-        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.S) {
+        if (!versionChecker.isAtLeast(Build.VERSION_CODES.S)) {
             args.systemService<DisplayManager>(Context.DISPLAY_SERVICE)
                 ?.registerDisplayListener(displayListener, handler)
         }

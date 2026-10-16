@@ -9,7 +9,7 @@ import io.embrace.android.embracesdk.internal.arch.datasource.SpanEvent
 import io.embrace.android.embracesdk.internal.arch.datasource.SpanEventImpl
 import io.embrace.android.embracesdk.internal.arch.schema.ErrorCodeAttribute
 import io.embrace.android.embracesdk.internal.clock.millisToNanos
-import io.embrace.android.embracesdk.internal.utils.BuildVersionChecker
+import io.embrace.android.embracesdk.internal.utils.VersionChecker
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotEquals
 import org.junit.Assert.assertNull
@@ -17,7 +17,6 @@ import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
-import org.robolectric.annotation.Config
 import kotlin.math.max
 import kotlin.math.min
 
@@ -34,27 +33,31 @@ internal class UiLoadTraceEmitterTest {
     fun setUp() {
         clock = FakeClock()
         hasRenderEvent = false
-        hasPreAndPostEvents = hasPrePostEvents(BuildVersionChecker)
         destination = FakeTelemetryDestination()
         clock.tick(100L)
+    }
+
+    private fun simulateApi(sdkInt: Int) {
+        val versionChecker = VersionChecker { min -> sdkInt >= min }
+        hasPreAndPostEvents = hasPrePostEvents(versionChecker)
         traceEmitter = UiLoadTraceEmitter(
             destination = destination,
-            versionChecker = BuildVersionChecker,
+            versionChecker = versionChecker,
         )
     }
 
-    @Config(sdk = [VERSION_CODES.UPSIDE_DOWN_CAKE])
     @Test
     fun `verify cold ui load trace from another activity in U`() {
+        simulateApi(VERSION_CODES.UPSIDE_DOWN_CAKE)
         verifyOpen(
             previousState = PreviousState.FROM_ACTIVITY,
             uiLoadType = UiLoadType.COLD,
         )
     }
 
-    @Config(sdk = [VERSION_CODES.UPSIDE_DOWN_CAKE])
     @Test
     fun `verify cold ui load trace from the same activity in U`() {
+        simulateApi(VERSION_CODES.UPSIDE_DOWN_CAKE)
         verifyOpen(
             lastActivityName = ACTIVITY_NAME,
             previousState = PreviousState.FROM_ACTIVITY,
@@ -62,18 +65,18 @@ internal class UiLoadTraceEmitterTest {
         )
     }
 
-    @Config(sdk = [VERSION_CODES.UPSIDE_DOWN_CAKE])
     @Test
     fun `verify cold ui load trace from an interrupted opening of another activity in U`() {
+        simulateApi(VERSION_CODES.UPSIDE_DOWN_CAKE)
         verifyOpen(
             previousState = PreviousState.FROM_INTERRUPTED_LOAD,
             uiLoadType = UiLoadType.COLD,
         )
     }
 
-    @Config(sdk = [VERSION_CODES.UPSIDE_DOWN_CAKE])
     @Test
     fun `verify cold ui load trace from an interrupted opening of the same activity in U`() {
+        simulateApi(VERSION_CODES.UPSIDE_DOWN_CAKE)
         verifyOpen(
             lastActivityName = ACTIVITY_NAME,
             previousState = PreviousState.FROM_INTERRUPTED_LOAD,
@@ -81,27 +84,27 @@ internal class UiLoadTraceEmitterTest {
         )
     }
 
-    @Config(sdk = [VERSION_CODES.UPSIDE_DOWN_CAKE])
     @Test
     fun `verify cold open trace from background in U`() {
+        simulateApi(VERSION_CODES.UPSIDE_DOWN_CAKE)
         verifyOpen(
             previousState = PreviousState.FROM_BACKGROUND,
             uiLoadType = UiLoadType.COLD,
         )
     }
 
-    @Config(sdk = [VERSION_CODES.UPSIDE_DOWN_CAKE])
     @Test
     fun `verify hot ui load trace in from background in U`() {
+        simulateApi(VERSION_CODES.UPSIDE_DOWN_CAKE)
         verifyOpen(
             previousState = PreviousState.FROM_BACKGROUND,
             uiLoadType = UiLoadType.HOT,
         )
     }
 
-    @Config(sdk = [VERSION_CODES.UPSIDE_DOWN_CAKE])
     @Test
     fun `verify cold ui load trace to be ended manually in U`() {
+        simulateApi(VERSION_CODES.UPSIDE_DOWN_CAKE)
         verifyOpen(
             previousState = PreviousState.FROM_ACTIVITY,
             uiLoadType = UiLoadType.COLD,
@@ -109,9 +112,9 @@ internal class UiLoadTraceEmitterTest {
         )
     }
 
-    @Config(sdk = [VERSION_CODES.UPSIDE_DOWN_CAKE])
     @Test
     fun `verify hot ui load trace to be ended manually in U`() {
+        simulateApi(VERSION_CODES.UPSIDE_DOWN_CAKE)
         verifyOpen(
             previousState = PreviousState.FROM_ACTIVITY,
             uiLoadType = UiLoadType.HOT,
@@ -119,27 +122,27 @@ internal class UiLoadTraceEmitterTest {
         )
     }
 
-    @Config(sdk = [VERSION_CODES.LOLLIPOP])
     @Test
     fun `verify cold ui load trace in from another activity L`() {
+        simulateApi(VERSION_CODES.LOLLIPOP)
         verifyOpen(
             previousState = PreviousState.FROM_ACTIVITY,
             uiLoadType = UiLoadType.COLD,
         )
     }
 
-    @Config(sdk = [VERSION_CODES.LOLLIPOP])
     @Test
     fun `verify cold ui load trace from an interrupted opening of another activity in L`() {
+        simulateApi(VERSION_CODES.LOLLIPOP)
         verifyOpen(
             previousState = PreviousState.FROM_INTERRUPTED_LOAD,
             uiLoadType = UiLoadType.COLD,
         )
     }
 
-    @Config(sdk = [VERSION_CODES.LOLLIPOP])
     @Test
     fun `verify cold ui load trace from an interrupted opening of the same activity in L`() {
+        simulateApi(VERSION_CODES.LOLLIPOP)
         verifyOpen(
             lastActivityName = ACTIVITY_NAME,
             previousState = PreviousState.FROM_INTERRUPTED_LOAD,
@@ -147,27 +150,27 @@ internal class UiLoadTraceEmitterTest {
         )
     }
 
-    @Config(sdk = [VERSION_CODES.LOLLIPOP])
     @Test
     fun `verify cold ui load trace from background in L`() {
+        simulateApi(VERSION_CODES.LOLLIPOP)
         verifyOpen(
             previousState = PreviousState.FROM_BACKGROUND,
             uiLoadType = UiLoadType.COLD,
         )
     }
 
-    @Config(sdk = [VERSION_CODES.LOLLIPOP])
     @Test
     fun `verify hot ui load trace in L from background`() {
+        simulateApi(VERSION_CODES.LOLLIPOP)
         verifyOpen(
             previousState = PreviousState.FROM_BACKGROUND,
             uiLoadType = UiLoadType.HOT,
         )
     }
 
-    @Config(sdk = [VERSION_CODES.LOLLIPOP])
     @Test
     fun `verify cold ui load trace to be ended manually in L`() {
+        simulateApi(VERSION_CODES.LOLLIPOP)
         verifyOpen(
             previousState = PreviousState.FROM_ACTIVITY,
             uiLoadType = UiLoadType.COLD,
@@ -175,9 +178,9 @@ internal class UiLoadTraceEmitterTest {
         )
     }
 
-    @Config(sdk = [VERSION_CODES.LOLLIPOP])
     @Test
     fun `verify hot ui load trace to be ended manually in L`() {
+        simulateApi(VERSION_CODES.LOLLIPOP)
         verifyOpen(
             previousState = PreviousState.FROM_ACTIVITY,
             uiLoadType = UiLoadType.HOT,

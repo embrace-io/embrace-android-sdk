@@ -48,17 +48,19 @@ Needs one connected device on API 29+.
 
 The app needs the Embrace gradle plugin applied, as that is the only thing that can instrument it
 with the `app_id` in `embrace-macrobenchmark-app/src/main/embrace-config.json`, and the SDK refuses
-to start without one. The plugin is a subproject of this build, so it has to come from mavenLocal:
-the benchmark task publishes it there itself, and the app applies it whenever a copy is present.
+to start without one. The plugin is a subproject of this build, so it has to come from a published
+copy in `build/integration-repo`: the benchmark task publishes it there itself, and the app applies
+it whenever a copy is present.
 
 A buildscript classpath is resolved before any task runs, so that publish lands in time for the
 *next* build. On a checkout that has never published, the first run therefore builds an
 un-instrumented app and fails with `done: sdk-not-started`; run it again and it works. From then on
 it stays current on its own.
 
-Running from Android Studio works once mavenLocal has a copy, which either command above puts there.
-Studio never publishes one itself, so if it reports `done: sdk-not-started`, run
-`./gradlew :embrace-gradle-plugin:publishToMavenLocal` and build again. `MacrobenchmarkRunner`
+Running from Android Studio works once `build/integration-repo` has a copy, which either command
+above puts there. Studio never publishes one itself, so if it reports `done: sdk-not-started`, run
+`./gradlew :embrace-gradle-plugin:publishAllPublicationsToIntegrationTestRepository` and build again.
+A `./gradlew clean` deletes the copy. `MacrobenchmarkRunner`
 handles the other Studio pitfall: `MacrobenchmarkRule` skips every test unless
 `androidx.benchmark.enabledRules` names Macrobenchmark, and Studio builds its own `am instrument`
 command rather than passing the module's `testInstrumentationRunnerArguments`.

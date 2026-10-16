@@ -31,4 +31,9 @@ interface WorkerThreadModule : Closeable {
      * SDK will not be functional afterwards.
      */
     override fun close()
+
+    /**
+     * Blocks until [worker] has finished its in-flight and queued tasks after [close], or until [timeoutMs] elapses.
+     */
+    fun awaitTermination(worker: Worker, timeoutMs: Long)
 }

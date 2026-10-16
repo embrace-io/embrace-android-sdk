@@ -221,6 +221,13 @@ internal fun ModuleGraph.postLoadInstrumentation() = safeInit {
 internal fun ModuleGraph.triggerPayloadSend() = safeInit {
     val worker = workerThreadModule.backgroundWorker(Worker.Background.IoRegWorker)
     worker.submit {
+        // Get real network status as soon as we can on the worker.
+        // This allows the delivery triggered by resurrection to get the most accurate network status as possible
+        // so that it won't waste time trying to send when the device is known to be offline.
+        deliveryModule?.schedulingService?.let(
+            essentialServiceModule.networkConnectivityService::addNetworkConnectivityListener,
+        )
+
         // process multi-file session part directories before resurrection can run. The reader resurrects
         // dead parts itself, so a part this pass doesn't reach is still resurrected by a later pass
         userSessionOrchestrationModule.sessionPartReader?.readPersistedSessionParts(true)
@@ -253,16 +260,10 @@ internal fun ModuleGraph.triggerPayloadSend() = safeInit {
             )
         }
 
-        // Unblock scheduler if no resurrection was attempted
+        // Unblock scheduler and attempt to send undelivered payloads if no resurrection was attempted
         if (!resurrectionAttempted) {
             deliveryModule?.schedulingService?.onResurrectionComplete()
         }
-    }
-    worker.submit { // potentially trigger first delivery attempt by firing network status callback
-        deliveryModule?.schedulingService?.let(
-            essentialServiceModule.networkConnectivityService::addNetworkConnectivityListener,
-        )
-        deliveryModule?.schedulingService?.onPayloadIntake()
     }
 }
 

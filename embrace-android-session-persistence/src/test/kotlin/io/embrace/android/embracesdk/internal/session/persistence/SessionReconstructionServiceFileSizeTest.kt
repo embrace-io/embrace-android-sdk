@@ -2,6 +2,7 @@ package io.embrace.android.embracesdk.internal.session.persistence
 
 import com.squareup.wire.ProtoAdapter
 import com.squareup.wire.ProtoWriter
+import io.embrace.android.embracesdk.fakes.FakeClock
 import io.embrace.android.embracesdk.fakes.FakeInternalLogger
 import io.embrace.android.embracesdk.internal.payload.Span
 import okio.Buffer
@@ -87,7 +88,7 @@ internal class SessionReconstructionServiceFileSizeTest {
     @Test
     fun `oversized span snapshots are reported and read up to the limit`() {
         padToSize(SPAN_SNAPSHOTS_FILE_NAME, MAX_PART_FILE_BYTES + 1)
-        val payload = checkNotNull(service.reconstruct(partDirectory)?.data)
+        val payload = checkNotNull(service.reconstruct(partDirectory)?.envelope?.data)
         assertEquals(listOf(inFlightSpan), payload.spanSnapshots)
         assertEquals(1, logger.internalErrorMessages.size)
         assertEquals("SessionReconstructionFail", logger.internalErrorMessages.single().msg)
@@ -118,7 +119,7 @@ internal class SessionReconstructionServiceFileSizeTest {
         partFile(COMPLETED_SPANS_FILE_NAME).writeBytes(completedSpansLog(listOf(logged)))
         padToSize(COMPLETED_SPANS_FILE_NAME, MAX_PART_FILE_BYTES + 1)
 
-        val envelope = checkNotNull(service.reconstruct(partDirectory))
+        val envelope = checkNotNull(service.reconstruct(partDirectory)?.envelope)
         assertEquals(listOf(paddedSpan(paddedSpanId(0), padding = 1)), envelope.data.spans)
     }
 
@@ -130,7 +131,7 @@ internal class SessionReconstructionServiceFileSizeTest {
         val logged = List(fitting + 5) { paddedSpanProto(paddedSpanId(it), PADDED_SPAN_BYTES) }
         partFile(COMPLETED_SPANS_FILE_NAME).writeBytes(completedSpansLog(logged))
 
-        val envelope = checkNotNull(service.reconstruct(partDirectory))
+        val envelope = checkNotNull(service.reconstruct(partDirectory)?.envelope)
         assertEquals(fitting, envelope.data.spans?.size)
         val ids = envelope.data.spans?.mapNotNull(Span::spanId)
         assertEquals(logged.take(fitting).map(SpanProto::span_id), ids)
@@ -144,7 +145,7 @@ internal class SessionReconstructionServiceFileSizeTest {
         )
         partFile(COMPLETED_SPANS_FILE_NAME).writeBytes(completedSpansLog(logged))
 
-        val envelope = checkNotNull(service.reconstruct(partDirectory))
+        val envelope = checkNotNull(service.reconstruct(partDirectory)?.envelope)
         assertEquals(listOf(paddedSpanId(0)), envelope.data.spans?.map(Span::spanId))
         assertEquals(1, logger.internalErrorMessages.size)
         assertEquals("SessionReconstructionFail", logger.internalErrorMessages.single().msg)
@@ -164,7 +165,7 @@ internal class SessionReconstructionServiceFileSizeTest {
         assertTrue(writer.write(logged))
         writer.close()
 
-        val envelope = checkNotNull(service.reconstruct(partDirectory))
+        val envelope = checkNotNull(service.reconstruct(partDirectory)?.envelope)
         assertEquals(listOf(paddedSpanId(0), paddedSpanId(2)), envelope.data.spans?.map(Span::spanId))
         assertEquals(1, logger.internalErrorMessages.size)
         assertEquals("CompletedSpansWriteFail", logger.internalErrorMessages.single().msg)
@@ -174,7 +175,7 @@ internal class SessionReconstructionServiceFileSizeTest {
     fun `spans past the persisted span limit are dropped`() {
         val logged = List(MAX_PERSISTED_SPANS + 5) { paddedSpanProto(paddedSpanId(it), padding = 1) }
         partFile(COMPLETED_SPANS_FILE_NAME).writeBytes(completedSpansLog(logged))
-        val envelope = checkNotNull(service.reconstruct(partDirectory))
+        val envelope = checkNotNull(service.reconstruct(partDirectory)?.envelope)
         val spans = checkNotNull(envelope.data.spans)
 
         assertEquals(MAX_PERSISTED_SPANS, spans.size)
@@ -193,7 +194,7 @@ internal class SessionReconstructionServiceFileSizeTest {
         val stale = paddedSpan(logged.first().span_id, padding = 1)
         assertTrue(snapshotsWriter.write(listOf(stale, inFlightSpan)))
 
-        val envelope = checkNotNull(service.reconstruct(partDirectory))
+        val envelope = checkNotNull(service.reconstruct(partDirectory)?.envelope)
         assertEquals(listOf(inFlightSpan), envelope.data.spanSnapshots)
         assertNoInternalErrors()
     }
@@ -203,7 +204,7 @@ internal class SessionReconstructionServiceFileSizeTest {
         val logged = List(MAX_PERSISTED_SPANS - 1) { paddedSpanProto(paddedSpanId(it), padding = 1) }
         partFile(COMPLETED_SPANS_FILE_NAME).writeBytes(completedSpansLog(logged))
 
-        val envelope = checkNotNull(service.reconstruct(partDirectory))
+        val envelope = checkNotNull(service.reconstruct(partDirectory)?.envelope)
         assertEquals(MAX_PERSISTED_SPANS - 1, envelope.data.spans?.size)
         assertEquals(listOf(inFlightSpan), envelope.data.spanSnapshots)
         assertNoInternalErrors()
@@ -265,7 +266,7 @@ internal class SessionReconstructionServiceFileSizeTest {
     }
 
     private fun target(): SessionPartWriteTarget =
-        SessionPartWriteTarget(lazy { sessionsDir }) { activePart }
+        SessionPartWriteTarget(lazy { sessionsDir }, FakeClock()) { activePart }
 
     private fun partFile(fileName: String): File = File(File(sessionsDir, partDirectory.dirName), fileName)
 

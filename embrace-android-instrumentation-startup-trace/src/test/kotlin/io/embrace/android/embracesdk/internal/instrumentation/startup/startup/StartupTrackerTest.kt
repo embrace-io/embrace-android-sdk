@@ -12,9 +12,11 @@ import io.embrace.android.embracesdk.fakes.FakeDrawEventEmitter
 import io.embrace.android.embracesdk.fakes.FakeInternalLogger
 import io.embrace.android.embracesdk.fakes.FakeSplashScreenActivity
 import io.embrace.android.embracesdk.internal.instrumentation.startup.StartupTracker
+import io.embrace.android.embracesdk.internal.instrumentation.startup.asDispatchedOn
 import io.embrace.android.embracesdk.internal.instrumentation.startup.ui.hasRenderEvent
 import io.embrace.android.embracesdk.internal.logging.InternalLogger
 import io.embrace.android.embracesdk.internal.utils.BuildVersionChecker
+import io.embrace.android.embracesdk.internal.utils.VersionChecker
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotEquals
 import org.junit.Assert.assertNotNull
@@ -25,7 +27,6 @@ import org.junit.runner.RunWith
 import org.robolectric.Robolectric
 import org.robolectric.RuntimeEnvironment
 import org.robolectric.android.controller.ActivityController
-import org.robolectric.annotation.Config
 
 @RunWith(AndroidJUnit4::class)
 internal class StartupTrackerTest {
@@ -37,6 +38,7 @@ internal class StartupTrackerTest {
     private lateinit var drawEventEmitter: FakeDrawEventEmitter
     private lateinit var startupTracker: StartupTracker
     private lateinit var defaultActivityController: ActivityController<Activity>
+    private var versionChecker: VersionChecker = BuildVersionChecker
 
     @Before
     fun setUp() {
@@ -55,9 +57,9 @@ internal class StartupTrackerTest {
         defaultActivityController = Robolectric.buildActivity(Activity::class.java)
     }
 
-    @Config(sdk = [Build.VERSION_CODES.UPSIDE_DOWN_CAKE])
     @Test
     fun `cold start in U`() {
+        simulateApi(Build.VERSION_CODES.UPSIDE_DOWN_CAKE)
         with(launchActivity()) {
             assertEquals("android.app.Activity", dataCollector.startupActivityName)
             verifyLifecycle(
@@ -72,9 +74,9 @@ internal class StartupTrackerTest {
         }
     }
 
-    @Config(sdk = [Build.VERSION_CODES.Q])
     @Test
     fun `cold start in Q`() {
+        simulateApi(Build.VERSION_CODES.Q)
         with(launchActivity()) {
             verifyLifecycle(
                 firstActivityInitTime = createTime,
@@ -88,9 +90,9 @@ internal class StartupTrackerTest {
         }
     }
 
-    @Config(sdk = [Build.VERSION_CODES.P])
     @Test
     fun `cold start in P`() {
+        simulateApi(Build.VERSION_CODES.P)
         with(launchActivity()) {
             verifyLifecycle(
                 firstActivityInitTime = createTime,
@@ -102,9 +104,9 @@ internal class StartupTrackerTest {
         }
     }
 
-    @Config(sdk = [Build.VERSION_CODES.LOLLIPOP])
     @Test
     fun `cold start in L`() {
+        simulateApi(Build.VERSION_CODES.LOLLIPOP)
         with(launchActivity()) {
             verifyLifecycle(
                 firstActivityInitTime = createTime,
@@ -209,6 +211,12 @@ internal class StartupTrackerTest {
         assertEquals(1, activityLifecycleListener.onCreateInvokedCount)
     }
 
+    private fun simulateApi(sdkInt: Int) {
+        versionChecker = VersionChecker { min -> sdkInt >= min }
+        application.unregisterActivityLifecycleCallbacks(startupTracker)
+        application.registerActivityLifecycleCallbacks(startupTracker.asDispatchedOn(sdkInt))
+    }
+
     private fun launchActivity(controller: ActivityController<*> = defaultActivityController): ActivityTiming {
         clock.tick()
         val createTime = clock.now()
@@ -220,7 +228,7 @@ internal class StartupTrackerTest {
         val resumeTime = clock.now()
         controller.resume()
         clock.tick()
-        val renderTime = if (hasRenderEvent(BuildVersionChecker)) {
+        val renderTime = if (hasRenderEvent(versionChecker)) {
             drawEventEmitter.draw(controller.get()) {
                 clock.tick()
             }

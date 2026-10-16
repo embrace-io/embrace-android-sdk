@@ -13,6 +13,8 @@ import io.embrace.android.embracesdk.internal.arch.navigation.NavigationTracking
 import io.embrace.android.embracesdk.internal.arch.navigation.getId
 import io.embrace.android.embracesdk.internal.arch.state.ProcessStateListener
 import io.embrace.android.embracesdk.internal.clock.Clock
+import io.embrace.android.embracesdk.internal.utils.BuildVersionChecker
+import io.embrace.android.embracesdk.internal.utils.VersionChecker
 import io.embrace.android.embracesdk.internal.utils.event.EventBus
 
 /**
@@ -25,9 +27,10 @@ internal class ActivityNavigationTracker(
     private val clock: Clock,
     private val eventBus: EventBus,
     private val navigationTrackingService: NavigationTrackingService,
+    versionChecker: VersionChecker = BuildVersionChecker,
 ) : Application.ActivityLifecycleCallbacks, ProcessStateListener {
 
-    private val usePrePostCallbacks = Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q
+    private val usePrePostCallbacks = versionChecker.isAtLeast(Build.VERSION_CODES.Q)
 
     override fun onActivityPreStarted(activity: Activity) {
         if (usePrePostCallbacks) {

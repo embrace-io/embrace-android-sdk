@@ -203,6 +203,7 @@ class AssertionInterface(
         val handshakes = fetchRequests(EmbraceEndpoint.NDK_HANDSHAKE).map {
             deserializeRequestBody<NdkUploadHandshakeRequest>(it)
         }
+        assertEquals(expectedVariants.sorted(), handshakes.mapNotNull { it.variant }.sorted())
 
         expectedVariants.forEach { variant ->
             val handshake = handshakes.find { it.variant == variant }

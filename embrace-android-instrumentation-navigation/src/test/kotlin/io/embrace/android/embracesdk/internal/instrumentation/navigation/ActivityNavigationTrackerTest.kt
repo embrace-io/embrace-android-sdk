@@ -12,6 +12,7 @@ import io.embrace.android.embracesdk.internal.arch.navigation.NavigationSignal.A
 import io.embrace.android.embracesdk.internal.arch.navigation.NavigationSignal.ActivityStarted
 import io.embrace.android.embracesdk.internal.arch.navigation.NavigationSignal.Backgrounded
 import io.embrace.android.embracesdk.internal.arch.navigation.getId
+import io.embrace.android.embracesdk.internal.utils.VersionChecker
 import io.embrace.android.embracesdk.internal.utils.event.EventBus
 import org.junit.Assert.assertEquals
 import org.junit.Before
@@ -20,7 +21,6 @@ import org.junit.runner.RunWith
 import org.robolectric.Robolectric
 import org.robolectric.RuntimeEnvironment
 import org.robolectric.android.controller.ActivityController
-import org.robolectric.annotation.Config
 
 @RunWith(AndroidJUnit4::class)
 internal class ActivityNavigationTrackerTest {
@@ -44,27 +44,23 @@ internal class ActivityNavigationTrackerTest {
     }
 
     @Test
-    @Config(sdk = [Build.VERSION_CODES.P])
     fun `activity transitions produce the right signals in P`() {
-        createTracker().assertPlainActivityNavigation()
+        createTracker(Build.VERSION_CODES.P).assertPlainActivityNavigation()
     }
 
     @Test
-    @Config(sdk = [Build.VERSION_CODES.Q])
     fun `activity transitions produce the right signals in Q`() {
-        createTracker().assertPlainActivityNavigation()
+        createTracker(Build.VERSION_CODES.Q).assertPlainActivityNavigation()
     }
 
     @Test
-    @Config(sdk = [Build.VERSION_CODES.P])
     fun `concurrent activities produce the right signals in P`() {
-        createTracker().assertConcurrentPlainActivityNavigation()
+        createTracker(Build.VERSION_CODES.P).assertConcurrentPlainActivityNavigation()
     }
 
     @Test
-    @Config(sdk = [Build.VERSION_CODES.Q])
     fun `concurrent activities produce the right signals in Q`() {
-        createTracker().assertConcurrentPlainActivityNavigation()
+        createTracker(Build.VERSION_CODES.Q).assertConcurrentPlainActivityNavigation()
     }
 
     private fun ActivityNavigationTracker.assertPlainActivityNavigation() {
@@ -128,8 +124,13 @@ internal class ActivityNavigationTrackerTest {
         return times
     }
 
-    private fun createTracker(): ActivityNavigationTracker {
-        return ActivityNavigationTracker(clock, eventBus, navigationTrackingService).apply {
+    private fun createTracker(sdkInt: Int): ActivityNavigationTracker {
+        return ActivityNavigationTracker(
+            clock,
+            eventBus,
+            navigationTrackingService,
+            VersionChecker { min -> sdkInt >= min },
+        ).apply {
             RuntimeEnvironment.getApplication().registerActivityLifecycleCallbacks(this)
         }
     }

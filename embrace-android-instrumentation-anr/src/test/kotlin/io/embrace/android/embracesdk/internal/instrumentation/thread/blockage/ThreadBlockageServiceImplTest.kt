@@ -302,11 +302,13 @@ internal class ThreadBlockageServiceImplTest {
     fun `test handleCrash stops tracking but samples can still be retrieved`() {
         with(rule) {
             clock.setCurrentTime(14000000L)
-            service.onForeground()
-            repeat(5) {
-                createThreadBlockageInterval()
-            }
-            service.handleCrash("")
+            watchdogExecutorService.submit {
+                service.onForeground()
+                repeat(5) {
+                    createThreadBlockageInterval()
+                }
+                service.handleCrash("")
+            }.get(1L, TimeUnit.SECONDS)
             val intervals = service.snapshotSpans()
             assertEquals(5, intervals.size)
         }

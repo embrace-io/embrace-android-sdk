@@ -107,6 +107,13 @@ class UploadSharedObjectFilesTaskTest {
     }
 
     @Test
+    fun `no files are uploaded when the backend requests no symbols`() {
+        enqueueHandshake("""{"archs":{}}""")
+        task.onRun()
+        assertOnlyHandshakeSent()
+    }
+
+    @Test
     fun `no files are uploaded when the backend returns an error and failBuildOnUploadErrors is disabled`() {
         server.enqueue(MockResponse().setResponseCode(400))
         task.failBuildOnUploadErrors.set(false)

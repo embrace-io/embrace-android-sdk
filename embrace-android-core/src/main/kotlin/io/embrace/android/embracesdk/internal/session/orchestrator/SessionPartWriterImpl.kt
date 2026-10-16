@@ -344,7 +344,7 @@ class SessionPartWriterImpl(
         @Volatile
         var sealed: Boolean = false
 
-        private val target = SessionPartWriteTarget(sessionsDir) { directory }
+        private val target = SessionPartWriteTarget(sessionsDir, clock) { directory }
 
         /**
          * Whether nothing more should be written for this part: it has either been fully written,

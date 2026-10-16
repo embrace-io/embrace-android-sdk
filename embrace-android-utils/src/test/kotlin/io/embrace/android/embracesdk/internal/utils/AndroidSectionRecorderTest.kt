@@ -8,7 +8,6 @@ import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
-import org.robolectric.annotation.Config
 import org.robolectric.shadows.ShadowTrace
 
 @RunWith(AndroidJUnit4::class)
@@ -23,6 +22,7 @@ internal class AndroidSectionRecorderTest {
     @After
     fun tearDown() {
         ShadowTrace.reset()
+        AndroidSectionRecorder.versionChecker = BuildVersionChecker
     }
 
     @Test
@@ -42,9 +42,9 @@ internal class AndroidSectionRecorderTest {
         assertTrue(ShadowTrace.getCounters().isEmpty())
     }
 
-    @Config(sdk = [VERSION_CODES.P])
     @Test
     fun `no counter is recorded below the supported API version`() {
+        AndroidSectionRecorder.versionChecker = VersionChecker { min -> VERSION_CODES.P >= min }
         AndroidSectionRecorder.setCounter("sf-bytes-written", 4096)
         assertTrue(ShadowTrace.getCounters().isEmpty())
     }

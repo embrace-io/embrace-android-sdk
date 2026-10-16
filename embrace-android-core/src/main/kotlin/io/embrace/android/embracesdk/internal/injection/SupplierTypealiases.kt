@@ -20,7 +20,7 @@ typealias ConfigServiceSupplier = (
     initModule: InitModule,
     coreModule: CoreModule,
     openTelemetryModule: OpenTelemetryModule,
-    workerThreadModule: WorkerThreadModule,
+    workerThreadPool: WorkerThreadPool,
     persistedConfig: PersistedConfig,
 ) -> ConfigService
 
@@ -34,7 +34,7 @@ typealias DeliveryModuleSupplier = (
     configService: ConfigService,
     initModule: InitModule,
     otelModule: OpenTelemetryModule,
-    workerThreadModule: WorkerThreadModule,
+    workerThreadPool: WorkerThreadPool,
     coreModule: CoreModule,
     essentialServiceModule: EssentialServiceModule,
     payloadStorageServiceProvider: Provider<PayloadStorageService>?,
@@ -48,7 +48,7 @@ typealias EssentialServiceModuleSupplier = (
     configService: ConfigService,
     openTelemetryModule: OpenTelemetryModule,
     coreModule: CoreModule,
-    workerThreadModule: WorkerThreadModule,
+    workerThreadPool: WorkerThreadPool,
     startupContext: Context?,
     lifecycleTrackerProvider: Provider<LifecycleTracker?>,
     networkConnectivityServiceProvider: Provider<NetworkConnectivityService?>,
@@ -61,13 +61,13 @@ typealias FeatureModuleSupplier = (
 ) -> FeatureModule
 
 typealias InitModuleSupplier = (
-    bootstrapServices: BootstrapServices,
+    preStartServices: PreStartServices,
 ) -> InitModule
 
 typealias InstrumentationModuleSupplier = (
     initModule: InitModule,
     openTelemetryModule: OpenTelemetryModule,
-    workerThreadModule: WorkerThreadModule,
+    workerThreadPool: WorkerThreadPool,
     configService: ConfigService,
     essentialServiceModule: EssentialServiceModule,
     coreModule: CoreModule,
@@ -82,7 +82,7 @@ typealias LogModuleSupplier = (
     essentialServiceModule: EssentialServiceModule,
     configService: ConfigService,
     deliveryModule: DeliveryModule?,
-    workerThreadModule: WorkerThreadModule,
+    workerThreadPool: WorkerThreadPool,
     payloadSourceModule: PayloadSourceModule,
 ) -> LogModule
 
@@ -94,7 +94,7 @@ typealias OpenTelemetryModuleSupplier = (
 typealias PayloadSourceModuleSupplier = (
     initModule: InitModule,
     coreModule: CoreModule,
-    workerThreadModule: WorkerThreadModule,
+    workerThreadPool: WorkerThreadPool,
     essentialServiceModule: EssentialServiceModule,
     configService: ConfigService,
     otelModule: OpenTelemetryModule,
@@ -114,13 +114,13 @@ typealias UserSessionOrchestrationModuleSupplier = (
     startupDurationProvider: () -> Long?,
     appVersionStartupCounterProvider: () -> Int?,
     logModule: LogModule,
-    workerThreadModule: WorkerThreadModule,
+    workerThreadPool: WorkerThreadPool,
 ) -> UserSessionOrchestrationModule
 
 typealias StorageServiceSupplier = (
     initModule: InitModule,
     coreModule: CoreModule,
-    workerThreadModule: WorkerThreadModule,
+    workerThreadPool: WorkerThreadPool,
 ) -> StorageService
 
-typealias WorkerThreadModuleSupplier = () -> WorkerThreadModule
+typealias WorkerThreadPoolSupplier = () -> WorkerThreadPool

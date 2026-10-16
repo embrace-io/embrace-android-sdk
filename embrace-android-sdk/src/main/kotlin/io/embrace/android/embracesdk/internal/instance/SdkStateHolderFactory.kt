@@ -1,8 +1,8 @@
 package io.embrace.android.embracesdk.internal.instance
 
-import io.embrace.android.embracesdk.internal.injection.BootstrapServices
 import io.embrace.android.embracesdk.internal.injection.InitializedModuleGraph
 import io.embrace.android.embracesdk.internal.injection.ModuleGraphSupplier
+import io.embrace.android.embracesdk.internal.injection.PreStartServices
 import io.embrace.android.embracesdk.internal.injection.SdkDisabledException
 import io.embrace.android.embracesdk.internal.utils.EmbTrace
 
@@ -11,23 +11,23 @@ import io.embrace.android.embracesdk.internal.utils.EmbTrace
  * build the SDK through here so that its wiring only needs to change in one place.
  */
 internal fun createSdkStateHolder(
-    bootstrapServices: BootstrapServices = BootstrapServices(),
+    preStartServices: PreStartServices = PreStartServices(),
     moduleGraphSupplier: ModuleGraphSupplier? = null,
     onModuleGraphCreated: ((InitializedModuleGraph) -> Unit)? = null,
 ): SdkStateHolder {
-    val logger = bootstrapServices.logger
-    val clock = bootstrapServices.clock
+    val logger = preStartServices.logger
+    val clock = preStartServices.clock
     val buffer = BufferingSdkInstance(
         clock = clock::now,
         logger = logger,
-        internalErrorHandler = bootstrapServices.internalErrorHandler,
+        internalErrorHandler = preStartServices.internalErrorHandler,
     )
     return SdkStateHolder(
         instanceFactory = { context ->
             EmbTrace.trace(sectionName = "modules-init", recordDuration = true) {
                 try {
-                    moduleGraphSupplier?.invoke(context, bootstrapServices, buffer)
-                        ?: InitializedModuleGraph(context, bootstrapServices, buffer)
+                    moduleGraphSupplier?.invoke(context, preStartServices, buffer)
+                        ?: InitializedModuleGraph(context, preStartServices, buffer)
                 } catch (ignored: SdkDisabledException) {
                     // do nothing - avoid instantiating SDK code any more than necessary.
                     null
@@ -43,7 +43,7 @@ internal fun createSdkStateHolder(
         preStart = { buffer },
         failed = { NoopSdkInstance(logger, NoopSdkInstance.SDK_START_FAILED) },
         disabled = { NoopSdkInstance(logger, NoopSdkInstance.SDK_DISABLED) },
-        telemetryService = bootstrapServices.telemetryService,
+        telemetryService = preStartServices.telemetryService,
         errorHandler = logger,
     )
 }

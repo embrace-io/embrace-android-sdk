@@ -19,16 +19,16 @@ import okhttp3.Protocol
 import java.util.concurrent.TimeUnit
 
 class InitModuleImpl(
-    bootstrapServices: BootstrapServices = BootstrapServices(),
+    preStartServices: PreStartServices = PreStartServices(),
     override val uuidSource: UuidSource = UuidSourceImpl(),
     override val startupClassifier: StartupClassifier = StartupClassifierImpl(),
 ) : InitModule {
 
-    override val logger: InternalLogger = bootstrapServices.logger
-    override val clock: Clock = bootstrapServices.clock
-    override val systemInfo: SystemInfo = bootstrapServices.systemInfo
-    override val telemetryService: InternalTelemetryService = bootstrapServices.telemetryService
-    override val internalErrorHandler: BufferedInternalErrorHandler = bootstrapServices.internalErrorHandler
+    override val logger: InternalLogger = preStartServices.logger
+    override val clock: Clock = preStartServices.clock
+    override val systemInfo: SystemInfo = preStartServices.systemInfo
+    override val telemetryService: InternalTelemetryService = preStartServices.telemetryService
+    override val internalErrorHandler: BufferedInternalErrorHandler = preStartServices.internalErrorHandler
 
     override val jsonSerializer: PlatformSerializer by lazy {
         EmbraceSerializer()

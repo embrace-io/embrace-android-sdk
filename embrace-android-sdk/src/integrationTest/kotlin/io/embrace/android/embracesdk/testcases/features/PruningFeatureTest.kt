@@ -67,9 +67,9 @@ internal class PruningFeatureTest(
      * pruning logic.
      */
     private fun EmbraceActionInterface.submitNetworkChange() {
-        val workerThreadModule = testRule.moduleGraph.workerThreadModule
+        val workerThreadPool = testRule.moduleGraph.workerThreadPool
         val worker =
-            workerThreadModule.priorityWorker<StoredTelemetryMetadata>(DataPersistenceWorker)
+            workerThreadPool.priorityWorker<StoredTelemetryMetadata>(DataPersistenceWorker)
         worker.submit(fakeSessionStoredTelemetryMetadata) {
             simulateConnectionTypeChange(ConnectionType.WIFI)
         }

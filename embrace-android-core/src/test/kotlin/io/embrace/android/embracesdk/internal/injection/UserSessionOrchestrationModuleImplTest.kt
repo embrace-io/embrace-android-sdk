@@ -12,7 +12,7 @@ import io.embrace.android.embracesdk.fakes.injection.FakeEssentialServiceModule
 import io.embrace.android.embracesdk.fakes.injection.FakeInitModule
 import io.embrace.android.embracesdk.fakes.injection.FakeLogModule
 import io.embrace.android.embracesdk.fakes.injection.FakePayloadSourceModule
-import io.embrace.android.embracesdk.fakes.injection.FakeWorkerThreadModule
+import io.embrace.android.embracesdk.fakes.injection.FakeWorkerThreadPool
 import io.embrace.android.embracesdk.internal.config.resolved.EmbraceConfig
 import io.embrace.android.embracesdk.internal.config.resolved.PersistenceConfig
 import io.embrace.android.embracesdk.internal.payload.Span
@@ -49,7 +49,7 @@ internal class UserSessionOrchestrationModuleImplTest {
 
     private fun createModule(deliveryModule: DeliveryModule?): UserSessionOrchestrationModuleImpl {
         val initModule = FakeInitModule(otelSdkMode = OtelSdkMode.COMPAT)
-        val workerThreadModule = FakeWorkerThreadModule(fakeInitModule = initModule)
+        val workerThreadPool = FakeWorkerThreadPool(fakeInitModule = initModule)
         val configService = FakeConfigService(
             config = EmbraceConfig(persistence = { PersistenceConfig(multiFileEnabled = { true }) }),
         )
@@ -65,7 +65,7 @@ internal class UserSessionOrchestrationModuleImplTest {
             instrumentationModule = InstrumentationModuleImpl(
                 initModule = initModule,
                 openTelemetryModule = openTelemetryModule,
-                workerThreadModule = workerThreadModule,
+                workerThreadPool = workerThreadPool,
                 configService = configService,
                 essentialServiceModule = essentialServiceModule,
                 coreModule = coreModule,
@@ -77,7 +77,7 @@ internal class UserSessionOrchestrationModuleImplTest {
             startupDurationProvider = { null },
             appVersionStartupCounterProvider = { null },
             logModule = FakeLogModule(),
-            workerThreadModule = workerThreadModule,
+            workerThreadPool = workerThreadPool,
         )
     }
 }

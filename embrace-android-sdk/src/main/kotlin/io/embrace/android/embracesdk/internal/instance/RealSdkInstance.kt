@@ -204,16 +204,16 @@ internal class RealSdkInstance(
 
             val rootDir = moduleGraph.coreModule.context.filesDir
             val fallbackDir = moduleGraph.coreModule.context.cacheDir
-            val workerThreadModule = moduleGraph.workerThreadModule
+            val workerThreadPool = moduleGraph.workerThreadPool
             moduleGraph.essentialServiceModule.close()
             moduleGraph.dataCaptureServiceModule.startupTracker.close()
             moduleGraph.openTelemetryModule.otelSdkConfig.shutdownExport()
-            workerThreadModule.close()
+            workerThreadPool.close()
 
             val executor = Executors.newSingleThreadExecutor()
             executor.execute {
                 runCatching {
-                    if (!workerThreadModule.awaitTermination(WORKER_TERMINATION_TIMEOUT_MS)) {
+                    if (!workerThreadPool.awaitTermination(WORKER_TERMINATION_TIMEOUT_MS)) {
                         Log.w("[Embrace]", "Timed out waiting for Embrace workers to finish before deleting data.")
                     }
                     StorageLocation.entries.map {
@@ -344,7 +344,7 @@ internal class RealSdkInstance(
                 val spanRepository = openTelemetryModule.spanRepository
                 val clock = initModule.clock
                 val logger = initModule.logger
-                workerThreadModule.backgroundWorker(Worker.Background.NonIoRegWorker).scheduleWithFixedDelay(
+                workerThreadPool.backgroundWorker(Worker.Background.NonIoRegWorker).scheduleWithFixedDelay(
                     {
                         try {
                             spanRepository.stopTimedOutSpans(clock.now())
@@ -389,7 +389,7 @@ internal class RealSdkInstance(
 
                 threadBlockageService?.startCapture()
                 featureModule.lastRunCrashVerifier.readAndCleanMarkerAsync(
-                    workerThreadModule.backgroundWorker(Worker.Background.IoRegWorker),
+                    workerThreadPool.backgroundWorker(Worker.Background.IoRegWorker),
                 )
             }
 
@@ -460,7 +460,7 @@ internal class RealSdkInstance(
                 addCrashTeardownHandler(featureModule.crashMarker)
                 deliveryModule?.payloadStore?.let(::addCrashTeardownHandler)
             }
-            workerThreadModule.backgroundWorker(Worker.Background.NonIoRegWorker).submit {
+            workerThreadPool.backgroundWorker(Worker.Background.NonIoRegWorker).submit {
                 with(essentialServiceModule.networkConnectivityService) {
                     registry.findByType(NetworkStatusDataSource::class)?.let(::addNetworkConnectivityListener)
                     registry.findByType(NetworkStateDataSource::class)?.let(::addNetworkConnectivityListener)
@@ -475,7 +475,7 @@ internal class RealSdkInstance(
      */
     private fun triggerPayloadSend() = with(moduleGraph) {
         safeInit {
-            val worker = workerThreadModule.backgroundWorker(Worker.Background.IoRegWorker)
+            val worker = workerThreadPool.backgroundWorker(Worker.Background.IoRegWorker)
             worker.submit {
                 // Get real network status as soon as we can on the worker.
                 // This allows the delivery triggered by resurrection to get the most accurate network status as possible
@@ -565,7 +565,7 @@ internal class RealSdkInstance(
                     },
                 )
             }
-            workerThreadModule.backgroundWorker(Worker.Background.NonIoRegWorker).submit {
+            workerThreadPool.backgroundWorker(Worker.Background.NonIoRegWorker).submit {
                 startupService.recordSdkInitSpan()
             }
             val appId = configService.appId

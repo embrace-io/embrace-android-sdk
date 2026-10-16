@@ -8,7 +8,7 @@ import io.embrace.android.embracesdk.fakes.FakeRequestExecutionService
 import io.embrace.android.embracesdk.fakes.OtelSdkMode
 import io.embrace.android.embracesdk.fakes.injection.FakeEssentialServiceModule
 import io.embrace.android.embracesdk.fakes.injection.FakeInitModule
-import io.embrace.android.embracesdk.fakes.injection.FakeWorkerThreadModule
+import io.embrace.android.embracesdk.fakes.injection.FakeWorkerThreadPool
 import org.junit.Assert.assertNotNull
 import org.junit.Before
 import org.junit.Test
@@ -28,7 +28,7 @@ class DeliveryModuleImplTest {
             configService,
             initModule,
             FakeOpenTelemetryModule(otelSdkMode = OtelSdkMode.REGULAR),
-            FakeWorkerThreadModule(),
+            FakeWorkerThreadPool(),
             CoreModuleImpl(ApplicationProvider.getApplicationContext(), initModule),
             FakeEssentialServiceModule(),
             ::FakeRequestExecutionService,

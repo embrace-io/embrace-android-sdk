@@ -18,7 +18,7 @@ import io.embrace.android.embracesdk.fakes.config.FakeInstrumentedConfig
 import io.embrace.android.embracesdk.fakes.fakeIncompleteSessionEnvelope
 import io.embrace.android.embracesdk.fakes.injection.FakeCoreModule
 import io.embrace.android.embracesdk.fakes.injection.FakeInitModule
-import io.embrace.android.embracesdk.fakes.injection.FakeWorkerThreadModule
+import io.embrace.android.embracesdk.fakes.injection.FakeWorkerThreadPool
 import io.embrace.android.embracesdk.fixtures.fakeCachedSessionStoredTelemetryMetadata
 import io.embrace.android.embracesdk.internal.arch.InstrumentationArgs
 import io.embrace.android.embracesdk.internal.arch.InstrumentationProvider
@@ -30,7 +30,6 @@ import io.embrace.android.embracesdk.internal.delivery.debug.DeliveryTracer
 import io.embrace.android.embracesdk.internal.delivery.storage.PayloadStorageServiceImpl
 import io.embrace.android.embracesdk.internal.delivery.storage.StorageLocation
 import io.embrace.android.embracesdk.internal.delivery.storage.asFile
-import io.embrace.android.embracesdk.internal.injection.BootstrapServices
 import io.embrace.android.embracesdk.internal.injection.CoreModule
 import io.embrace.android.embracesdk.internal.injection.CoreModuleImpl
 import io.embrace.android.embracesdk.internal.injection.DeliveryModuleImpl
@@ -42,8 +41,9 @@ import io.embrace.android.embracesdk.internal.injection.InstrumentationModuleImp
 import io.embrace.android.embracesdk.internal.injection.LogModuleImpl
 import io.embrace.android.embracesdk.internal.injection.ModuleGraphSupplier
 import io.embrace.android.embracesdk.internal.injection.OpenTelemetryModule
-import io.embrace.android.embracesdk.internal.injection.WorkerThreadModule
-import io.embrace.android.embracesdk.internal.injection.WorkerThreadModuleImpl
+import io.embrace.android.embracesdk.internal.injection.PreStartServices
+import io.embrace.android.embracesdk.internal.injection.WorkerThreadPool
+import io.embrace.android.embracesdk.internal.injection.WorkerThreadPoolImpl
 import io.embrace.android.embracesdk.internal.injection.createConfigService
 import io.embrace.android.embracesdk.internal.instance.BufferingSdkInstance
 import io.embrace.android.embracesdk.internal.instrumentation.crash.ndk.jniDelegateTestOverride
@@ -151,8 +151,8 @@ internal class EmbraceSetupInterface(
         otelSdkMode = OtelSdkMode.COMPAT,
     )
 
-    val bootstrapServices: BootstrapServices
-        get() = fakeInitModule.bootstrapServices
+    val preStartServices: PreStartServices
+        get() = fakeInitModule.preStartServices
 
     val initModule: InitModule
         get() = fakeInitModule
@@ -160,7 +160,7 @@ internal class EmbraceSetupInterface(
     val openTelemetryModule: OpenTelemetryModule
         get() = fakeInitModule.openTelemetryModule
 
-    private val workerThreadModule: WorkerThreadModule = initWorkerThreadModule(
+    private val workerThreadPool: WorkerThreadPool = initWorkerThreadPool(
         fakeInitModule = fakeInitModule,
         workersToFake = workersToFake,
         threadBlockageWatchdogThread = threadBlockageWatchdogThread
@@ -189,19 +189,19 @@ internal class EmbraceSetupInterface(
         deliveryTracer: DeliveryTracer,
     ): ModuleGraphSupplier {
         fakeInitModule.instrumentedConfig = instrumentedConfig
-        return { context, bootstrapServices, buffer ->
-            createModuleGraph(context, bootstrapServices, buffer, deliveryTracer)
+        return { context, preStartServices, buffer ->
+            createModuleGraph(context, preStartServices, buffer, deliveryTracer)
         }
     }
 
     private fun createModuleGraph(
         context: Context,
-        bootstrapServices: BootstrapServices,
+        preStartServices: PreStartServices,
         buffer: BufferingSdkInstance,
         deliveryTracer: DeliveryTracer,
     ): InitializedModuleGraph = InitializedModuleGraph(
         context = context,
-        bootstrapServices = bootstrapServices,
+        preStartServices = preStartServices,
         buffer = buffer,
         initModuleSupplier = { fakeInitModule },
         openTelemetryModuleSupplier = { _, _ -> fakeInitModule.openTelemetryModule },
@@ -210,29 +210,29 @@ internal class EmbraceSetupInterface(
             moduleGraphFailure?.let { throw it }
             CoreModuleImpl(fakeCoreModule.context, fakeInitModule, suppliedStore)
         },
-        workerThreadModuleSupplier = { workerThreadModule },
-        configServiceSupplier = { initModule, _, openTelemetryModule, workerThreadModule, persistedConfig ->
-            DecoratedConfigService(createConfigService(initModule, openTelemetryModule, workerThreadModule, persistedConfig))
+        workerThreadPoolSupplier = { workerThreadPool },
+        configServiceSupplier = { initModule, _, openTelemetryModule, workerThreadPool, persistedConfig ->
+            DecoratedConfigService(createConfigService(initModule, openTelemetryModule, workerThreadPool, persistedConfig))
         },
-        essentialServiceModuleSupplier = { initModule, configService, openTelemetryModule, coreModule, workerThreadModule, startupContext, _, _, sessionOrchestratorProvider ->
+        essentialServiceModuleSupplier = { initModule, configService, openTelemetryModule, coreModule, workerThreadPool, startupContext, _, _, sessionOrchestratorProvider ->
             EssentialServiceModuleImpl(
                 initModule = initModule,
                 configService = configService,
                 openTelemetryModule = openTelemetryModule,
                 coreModule = coreModule,
-                workerThreadModule = workerThreadModule,
+                workerThreadPool = workerThreadPool,
                 startupContext = startupContext,
                 lifecycleTrackerProvider = { AndroidxProcessLifecycleTracker(fakeLifecycleOwner) },
                 networkConnectivityServiceProvider = { fakeNetworkConnectivityService },
                 sessionOrchestratorProvider = sessionOrchestratorProvider,
             )
         },
-        deliveryModuleSupplier = { configService, initModule, otelModule, workerThreadModule, coreModule, essentialServiceModule, _, _, _, _ ->
+        deliveryModuleSupplier = { configService, initModule, otelModule, workerThreadPool, coreModule, essentialServiceModule, _, _, _, _ ->
             DeliveryModuleImpl(
                 configService = configService,
                 initModule = initModule,
                 otelModule = otelModule,
-                workerThreadModule = workerThreadModule,
+                workerThreadPool = workerThreadPool,
                 coreModule = coreModule,
                 essentialServiceModule = essentialServiceModule,
                 requestExecutionServiceProvider = null,
@@ -252,7 +252,7 @@ internal class EmbraceSetupInterface(
         instrumentationModuleSupplier = {
                 initModule,
                 openTelemetryModule,
-                workerThreadModule,
+                workerThreadPool,
                 configModule,
                 essentialServiceModule,
                 coreModule,
@@ -263,7 +263,7 @@ internal class EmbraceSetupInterface(
             val impl = InstrumentationModuleImpl(
                 initModule,
                 openTelemetryModule,
-                workerThreadModule,
+                workerThreadPool,
                 configModule,
                 essentialServiceModule,
                 coreModule,
@@ -276,7 +276,7 @@ internal class EmbraceSetupInterface(
                 override val instrumentationArgs: InstrumentationArgs = impl.instrumentationArgs
             }
         },
-        logModuleSupplier = { initModule, openTelemetryModule, essentialServiceModule, configService, deliveryModule, workerThreadModule, payloadSourceModule ->
+        logModuleSupplier = { initModule, openTelemetryModule, essentialServiceModule, configService, deliveryModule, workerThreadPool, payloadSourceModule ->
             val logWorker = BackgroundWorker(logOrchestratorExecutor)
             LogModuleImpl(
                 initModule,
@@ -284,7 +284,7 @@ internal class EmbraceSetupInterface(
                 essentialServiceModule,
                 configService,
                 deliveryModule,
-                object : WorkerThreadModule by workerThreadModule {
+                object : WorkerThreadPool by workerThreadPool {
                     override fun backgroundWorker(worker: Worker.Background): BackgroundWorker = logWorker
                 },
                 payloadSourceModule,
@@ -520,7 +520,7 @@ internal class EmbraceSetupInterface(
     fun getEmbLogger(): FakeInternalLogger = fakeInitModule.logger as FakeInternalLogger
 
     fun getFakedWorkerExecutor(worker: Worker.Background): BlockingScheduledExecutorService =
-        (workerThreadModule as FakeWorkerThreadModule).executorFor(worker)
+        (workerThreadPool as FakeWorkerThreadPool).executorFor(worker)
 
     fun getStore(): KeyValueStore = keyValueStore
 
@@ -532,7 +532,7 @@ internal class EmbraceSetupInterface(
         if (NonIoRegWorker in workersToFake) {
             return
         }
-        val worker = workerThreadModule.backgroundWorker(NonIoRegWorker)
+        val worker = workerThreadPool.backgroundWorker(NonIoRegWorker)
         repeat(2) {
             worker.submit {}.get(ASYNC_INSTRUMENTATION_TIMEOUT_MS, MILLISECONDS)
         }
@@ -604,15 +604,15 @@ internal class EmbraceSetupInterface(
             }
         }
 
-        fun initWorkerThreadModule(
+        fun initWorkerThreadPool(
             fakeInitModule: FakeInitModule,
             workersToFake: List<Worker.Background>,
             threadBlockageWatchdogThread: Thread?,
-        ): WorkerThreadModule =
+        ): WorkerThreadPool =
             if (workersToFake.isEmpty()) {
-                WorkerThreadModuleImpl()
+                WorkerThreadPoolImpl()
             } else {
-                FakeWorkerThreadModule(
+                FakeWorkerThreadPool(
                     fakeInitModule = fakeInitModule,
                     testWorkers = workersToFake,
                     threadBlockageMonitoringThread = threadBlockageWatchdogThread

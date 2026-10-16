@@ -10,10 +10,10 @@ import io.embrace.android.embracesdk.fakes.OtelSdkMode
 import io.embrace.android.embracesdk.fakes.config.FakeBaseUrlConfig
 import io.embrace.android.embracesdk.fakes.config.FakeEnabledFeatureConfig
 import io.embrace.android.embracesdk.fakes.config.FakeInstrumentedConfig
-import io.embrace.android.embracesdk.internal.injection.BootstrapServices
 import io.embrace.android.embracesdk.internal.injection.InitModule
 import io.embrace.android.embracesdk.internal.injection.InitModuleImpl
 import io.embrace.android.embracesdk.internal.injection.InitializedModuleGraph
+import io.embrace.android.embracesdk.internal.injection.PreStartServices
 import io.embrace.android.embracesdk.internal.instance.SdkStateHolder
 import io.embrace.android.embracesdk.internal.instance.createSdkStateHolder
 import io.embrace.android.embracesdk.internal.worker.Worker
@@ -72,11 +72,11 @@ internal class StrictModeStartupTest(
             recorder.install()
 
             sdkStateHolder = createSdkStateHolder(
-                bootstrapServices = BootstrapServices(),
-                moduleGraphSupplier = { ctx, bootstrapServices, buffer ->
+                preStartServices = PreStartServices(),
+                moduleGraphSupplier = { ctx, preStartServices, buffer ->
                     InitializedModuleGraph(
                         context = ctx,
-                        bootstrapServices = bootstrapServices,
+                        preStartServices = preStartServices,
                         buffer = buffer,
                         initModuleSupplier = { TestInitModule(InitModuleImpl(it), otelSdkMode) },
                     )
@@ -100,7 +100,7 @@ internal class StrictModeStartupTest(
         repeat(2) {
             BACKGROUND_WORKERS.forEach { worker ->
                 runCatching {
-                    checkNotNull(moduleGraph).workerThreadModule.backgroundWorker(worker).submit {}.get(DRAIN_TIMEOUT_MS, MILLISECONDS)
+                    checkNotNull(moduleGraph).workerThreadPool.backgroundWorker(worker).submit {}.get(DRAIN_TIMEOUT_MS, MILLISECONDS)
                 }
             }
             instrumentation.waitForIdleSync()

@@ -9,7 +9,7 @@ import java.util.concurrent.atomic.AtomicReference
 /**
  * A set of shared executors to be used throughout the SDK
  */
-interface WorkerThreadModule : Closeable {
+interface WorkerThreadPool : Closeable {
 
     /**
      * Return a [BackgroundWorker] matching the [worker]

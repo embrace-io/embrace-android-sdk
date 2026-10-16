@@ -18,9 +18,9 @@ import java.util.concurrent.atomic.AtomicReference
 
 // This lint error seems spurious as it only flags methods annotated with @JvmStatic even though the accessor is generated regardless
 // for lazily initialized members
-class WorkerThreadModuleImpl(
+class WorkerThreadPoolImpl(
     private val watchdogIdleTimeoutMs: Long = WATCHDOG_IDLE_TIMEOUT_MS,
-) : WorkerThreadModule, RejectedExecutionHandler {
+) : WorkerThreadPool, RejectedExecutionHandler {
 
     private val executors: MutableMap<Worker, ExecutorService> = ConcurrentHashMap()
     private val priorityWorkers: MutableMap<Worker, PriorityWorker<*>> = ConcurrentHashMap()
@@ -97,7 +97,7 @@ class WorkerThreadModuleImpl(
     /**
      * Handles a rejected task ignoring the task. Generally speaking
      * the executor will either have been shutdown directly (which should not happen outside of)
-     * [WorkerThreadModuleImpl] or the process is terminating.
+     * [WorkerThreadPoolImpl] or the process is terminating.
      *
      * The difference with this policy is that a Future will be returned when the executor is
      * shut down, and the caller must handle any TimeoutExceptions for the Future (that will)

@@ -157,7 +157,7 @@ internal class DeadSessionPartParityTest(
             if (process > 1) {
                 testRule.moduleGraph.essentialServiceModule.networkConnectivityService.close()
                 testRule.moduleGraph.openTelemetryModule.otelSdkConfig.shutdownExport()
-                testRule.moduleGraph.workerThreadModule.close()
+                testRule.moduleGraph.workerThreadPool.close()
             }
             lateinit var deadPart: SessionIdsSnapshot
             killActiveSessionPart(killBeforeResurrection = true) {
@@ -216,7 +216,7 @@ internal class DeadSessionPartParityTest(
     ) {
         testRule.moduleGraph.essentialServiceModule.networkConnectivityService.close()
         testRule.moduleGraph.openTelemetryModule.otelSdkConfig.shutdownExport()
-        testRule.moduleGraph.workerThreadModule.close()
+        testRule.moduleGraph.workerThreadPool.close()
         testRule.runTest(
             instrumentedConfig = instrumentedConfig,
             persistedRemoteConfig = remoteConfig(),

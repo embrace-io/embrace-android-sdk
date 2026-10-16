@@ -13,7 +13,9 @@ import io.embrace.android.embracesdk.internal.capture.session.UserSessionPropert
 import io.embrace.android.embracesdk.internal.clock.Clock
 import io.embrace.android.embracesdk.internal.config.ConfigService
 import io.embrace.android.embracesdk.internal.injection.WorkerThreadModule
+import io.embrace.android.embracesdk.internal.logging.InternalErrorType
 import io.embrace.android.embracesdk.internal.logging.InternalLogger
+import io.embrace.android.embracesdk.internal.logging.guardSdkCode
 import io.embrace.android.embracesdk.internal.network.http.HttpRequestInfoModifierChain
 import io.embrace.android.embracesdk.internal.serialization.PlatformSerializer
 import io.embrace.android.embracesdk.internal.session.id.SessionIdsSnapshot
@@ -94,7 +96,9 @@ internal class InstrumentationArgsImpl(
     }
 
     @Suppress("UNCHECKED_CAST")
-    private fun <T> Context.getSystemServiceSafe(name: String): T? = runCatching {
+    private fun <T> Context.getSystemServiceSafe(
+        name: String,
+    ): T? = logger.guardSdkCode(InternalErrorType.Ignored, null) {
         getSystemService(name)
-    }.getOrNull() as T?
+    } as T?
 }

@@ -17,6 +17,7 @@ import io.embrace.android.embracesdk.internal.api.delegate.TrackedExperimentImpl
 import io.embrace.android.embracesdk.internal.api.delegate.TrackedFeatureFlagImpl
 import io.embrace.android.embracesdk.internal.logging.InternalErrorHandler
 import io.embrace.android.embracesdk.internal.logging.InternalErrorType
+import io.embrace.android.embracesdk.internal.logging.guardSdkCode
 import io.embrace.android.embracesdk.internal.otel.spans.NoopEmbraceSdkSpan
 import io.embrace.android.embracesdk.internal.telemetry.InternalTelemetryService
 import io.embrace.android.embracesdk.network.EmbraceNetworkRequest
@@ -341,12 +342,8 @@ internal class SdkApiDispatcher(
     /**
      * Performs [call], reporting anything it throws as an internal error and returning [fallback] instead.
      */
-    private inline fun <T> guard(fallback: T, call: () -> T): T = try {
-        call()
-    } catch (exc: Throwable) {
-        trackError(exc)
-        fallback
-    }
+    private inline fun <T> guard(fallback: T, call: () -> T): T =
+        errorHandler.guardSdkCode(InternalErrorType.PublicApiFail, fallback, call)
 
     private inline fun guard(call: () -> Unit) = guard(Unit, call)
 

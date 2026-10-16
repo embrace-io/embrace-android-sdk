@@ -9,7 +9,9 @@ import io.embrace.android.embracesdk.internal.instrumentation.startup.SdkInitAtt
 import io.embrace.android.embracesdk.internal.instrumentation.startup.SdkInitAttributeKeys.INIT_GC_COUNT_MIN_API
 import io.embrace.android.embracesdk.internal.instrumentation.startup.SdkInitAttributeKeys.INIT_RUN_DELAY_PCT
 import io.embrace.android.embracesdk.internal.instrumentation.startup.SdkInitAttributeKeys.NUMERIC_ERROR
+import io.embrace.android.embracesdk.internal.logging.InternalErrorType
 import io.embrace.android.embracesdk.internal.logging.InternalLogger
+import io.embrace.android.embracesdk.internal.logging.guardSdkCode
 import io.embrace.android.embracesdk.internal.utils.BuildVersionChecker
 import io.embrace.android.embracesdk.internal.utils.VersionChecker
 import java.io.FileInputStream
@@ -217,7 +219,7 @@ class SdkInitResourceUsageTracker(
 
     private fun wholePercent(part: Long, whole: Long): Long = (100.0 * part / whole).roundToLong()
 
-    private fun <T> safeRead(read: () -> T): T? = runCatching { read() }.getOrNull()
+    private fun <T> safeRead(read: () -> T): T? = logger.guardSdkCode(InternalErrorType.Ignored, null, read)
 }
 
 /**

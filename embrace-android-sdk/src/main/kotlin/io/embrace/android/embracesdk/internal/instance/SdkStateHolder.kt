@@ -5,6 +5,7 @@ import android.util.Log
 import io.embrace.android.embracesdk.internal.api.SdkApi
 import io.embrace.android.embracesdk.internal.logging.InternalErrorHandler
 import io.embrace.android.embracesdk.internal.logging.InternalErrorType
+import io.embrace.android.embracesdk.internal.logging.guardSdkCode
 import io.embrace.android.embracesdk.internal.telemetry.InternalTelemetryService
 import io.embrace.android.embracesdk.internal.utils.EmbTrace
 import io.embrace.android.embracesdk.internal.utils.Provider
@@ -135,11 +136,5 @@ internal class SdkStateHolder(
         return true
     }
 
-    inline fun guard(call: () -> Unit) {
-        try {
-            call()
-        } catch (exc: Throwable) {
-            errorHandler.trackInternalError(InternalErrorType.PublicApiFail, exc)
-        }
-    }
+    inline fun guard(call: () -> Unit) = errorHandler.guardSdkCode(InternalErrorType.PublicApiFail, call)
 }

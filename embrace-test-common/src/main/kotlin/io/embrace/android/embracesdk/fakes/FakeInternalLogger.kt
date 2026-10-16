@@ -21,6 +21,7 @@ class FakeInternalLogger(
     var errorMessages: MutableList<LogMessage> = mutableListOf()
     var sdkNotInitializedMessages: MutableList<LogMessage> = mutableListOf()
     var internalErrorMessages: MutableList<LogMessage> = mutableListOf()
+    var userCodeErrorMessages: MutableList<LogMessage> = mutableListOf()
 
     override fun logInfo(msg: String, throwable: Throwable?) {
         infoMessages.add(LogMessage(msg, throwable))
@@ -50,5 +51,9 @@ class FakeInternalLogger(
                 errorHandlerProvider()?.trackInternalError(type, throwable)
             }
         }
+    }
+
+    override fun trackUserCodeError(type: InternalErrorType, throwable: Throwable) {
+        userCodeErrorMessages.add(LogMessage(type.toString(), throwable))
     }
 }

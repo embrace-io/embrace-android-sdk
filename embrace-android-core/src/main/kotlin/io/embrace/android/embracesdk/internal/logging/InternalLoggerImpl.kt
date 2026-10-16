@@ -43,6 +43,10 @@ class InternalLoggerImpl : InternalLogger {
         }
     }
 
+    override fun trackUserCodeError(type: InternalErrorType, throwable: Throwable) {
+        logWarning("App-supplied code threw an exception ($type)", throwable)
+    }
+
     /**
      * Logs a message.
      *

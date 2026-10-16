@@ -5,6 +5,7 @@ import io.embrace.android.embracesdk.internal.arch.state.ProcessStateListener
 import io.embrace.android.embracesdk.internal.arch.state.ProcessStateTracker
 import io.embrace.android.embracesdk.internal.logging.InternalErrorType
 import io.embrace.android.embracesdk.internal.logging.InternalLogger
+import io.embrace.android.embracesdk.internal.logging.guardSdkCode
 import io.embrace.android.embracesdk.internal.session.orchestrator.SessionOrchestrator
 import java.util.concurrent.CopyOnWriteArrayList
 
@@ -57,13 +58,8 @@ internal class ProcessStateTrackerImpl(
         invokeCallbackSafely { sessionOrchestrator?.onBackground() }
     }
 
-    private inline fun invokeCallbackSafely(action: () -> Unit) {
-        try {
-            action()
-        } catch (ex: Exception) {
-            logger.trackInternalError(InternalErrorType.AppStateCallbackFail, ex)
-        }
-    }
+    private inline fun invokeCallbackSafely(action: () -> Unit) =
+        logger.guardSdkCode(InternalErrorType.AppStateCallbackFail, action)
 
     override fun addListener(listener: ProcessStateListener) {
         when (listener) {

@@ -11,6 +11,7 @@ import android.os.Build
 import androidx.annotation.RequiresApi
 import io.embrace.android.embracesdk.internal.logging.InternalErrorType
 import io.embrace.android.embracesdk.internal.logging.InternalLogger
+import io.embrace.android.embracesdk.internal.logging.guardSdkCode
 import io.embrace.android.embracesdk.internal.worker.BackgroundWorker
 import java.util.concurrent.CopyOnWriteArrayList
 import java.util.concurrent.atomic.AtomicBoolean
@@ -115,10 +116,5 @@ internal class NetworkCallbackConnectivityService(
         }
     }
 
-    private fun updateSafely(action: () -> Unit) =
-        runCatching {
-            action()
-        }.onFailure {
-            logger.trackInternalError(InternalErrorType.ConnectivityUpdateFailure, it)
-        }
+    private fun updateSafely(action: () -> Unit) = logger.guardSdkCode(InternalErrorType.ConnectivityUpdateFailure, action)
 }

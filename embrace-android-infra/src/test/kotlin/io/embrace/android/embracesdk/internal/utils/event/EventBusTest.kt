@@ -83,6 +83,57 @@ internal class EventBusTest {
     }
 
     @Test
+    fun `handlers are invoked in ascending order, whatever order they were registered in`() {
+        val delivered = mutableListOf<String>()
+        bus.addHandler(appKey, 300) { delivered.add("last") }
+        bus.addHandler(appKey, -100) { delivered.add("first") }
+        bus.addHandler(appKey) { delivered.add("default") }
+        bus.addHandler(appKey, 100) { delivered.add("later") }
+
+        bus.emit(appKey, ForegroundEvent())
+
+        assertEquals(listOf("first", "default", "later", "last"), delivered)
+    }
+
+    @Test
+    fun `handlers with the same order are invoked in registration order`() {
+        val delivered = mutableListOf<String>()
+        bus.addHandler(appKey, 100) { delivered.add("first at 100") }
+        bus.addHandler(appKey) { delivered.add("default") }
+        bus.addHandler(appKey, 100) { delivered.add("second at 100") }
+
+        bus.emit(appKey, ForegroundEvent())
+
+        assertEquals(listOf("default", "first at 100", "second at 100"), delivered)
+    }
+
+    @Test
+    fun `removing a handler keeps the order of the rest`() {
+        val delivered = mutableListOf<String>()
+        val removed = EventHandler<AppEvent> { delivered.add("removed") }
+        bus.addHandler(appKey, 200) { delivered.add("last") }
+        bus.addHandler(appKey, 100, removed)
+        bus.addHandler(appKey, 0) { delivered.add("first") }
+        bus.removeHandler(appKey, removed)
+        bus.addHandler(appKey, 100) { delivered.add("middle") }
+
+        bus.emit(appKey, ForegroundEvent())
+
+        assertEquals(listOf("first", "middle", "last"), delivered)
+    }
+
+    @Test
+    fun `state handlers are delivered live values in ascending order`() {
+        val delivered = mutableListOf<String>()
+        bus.addStateHandler(screenKey, order = 100) { delivered.add("later ${it.name}") }
+        bus.addStateHandler(screenKey, order = -100) { delivered.add("first ${it.name}") }
+
+        bus.emitState(screenKey, ScreenState("home"))
+
+        assertEquals(listOf("first home", "later home"), delivered)
+    }
+
+    @Test
     fun `handler does not receive events emitted against another key of the same type`() {
         val received = AtomicInteger()
         bus.addHandler(appKey) { received.incrementAndGet() }

@@ -171,19 +171,16 @@ internal class SdkStateHolderTest {
     }
 
     @Test
-    fun `failed close can be retried`() {
+    fun `failed close is still terminal`() {
         val instance = FakeInstance(calls, closeThrows = true)
         val holder = createHolder(instance)
         holder.start(context)
         holder.close()
-        assertEquals(SdkState.STARTED, holder.state)
-        assertSame(instance, holder.dispatcher.target)
-        assertEquals("close failed", logger.internalErrorMessages.single().throwable?.message)
-        instance.closeThrows = false
-        holder.close()
         assertEquals(SdkState.DISABLED, holder.state)
         assertSame(disabled, holder.dispatcher.target)
-        assertEquals(listOf("instantiate", "start", "onPostStart", "close", "close"), calls)
+        assertEquals("close failed", logger.internalErrorMessages.single().throwable?.message)
+        holder.close()
+        assertEquals(listOf("instantiate", "start", "onPostStart", "close"), calls)
     }
 
     @Test
@@ -328,7 +325,7 @@ internal class SdkStateHolderTest {
         private val calls: MutableList<String>,
         var startSucceeds: Boolean = true,
         private val startThrows: Boolean = false,
-        var closeThrows: Boolean = false,
+        val closeThrows: Boolean = false,
         var postStartThrows: Boolean = false,
         private val prefix: String = "",
     ) : SdkInstance, InternalSdkApi by recordingSdkApi(calls, prefix) {

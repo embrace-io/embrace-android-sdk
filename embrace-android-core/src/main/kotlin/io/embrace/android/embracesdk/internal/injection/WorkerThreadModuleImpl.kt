@@ -45,7 +45,7 @@ class WorkerThreadModuleImpl(
 
     override fun close() {
         closed = true
-        executors.values.forEach(::shutdown)
+        executors.values.forEach { runCatching { shutdown(it) } }
     }
 
     private fun shutdown(executor: ExecutorService) {

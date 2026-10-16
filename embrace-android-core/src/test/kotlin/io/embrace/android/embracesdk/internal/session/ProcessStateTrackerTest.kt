@@ -6,6 +6,7 @@ import io.embrace.android.embracesdk.fakes.FakeProcessStateListener
 import io.embrace.android.embracesdk.fakes.FakeSessionOrchestrator
 import io.embrace.android.embracesdk.internal.arch.state.ProcessState
 import io.embrace.android.embracesdk.internal.arch.state.ProcessStateListener
+import io.embrace.android.embracesdk.internal.session.lifecycle.LifecycleTracker
 import io.embrace.android.embracesdk.internal.session.lifecycle.ProcessStateTrackerImpl
 import io.embrace.android.embracesdk.internal.session.orchestrator.SessionOrchestrator
 import org.junit.Assert.assertEquals
@@ -72,6 +73,21 @@ internal class ProcessStateTrackerTest {
 
         assertTrue(lifecycleTracker.closed)
         assertNull(lifecycleTracker.listener)
+        assertTrue(invocations.isEmpty())
+    }
+
+    @Test
+    fun `close drops listeners even if the lifecycle tracker fails to close`() {
+        val throwingTracker = object : LifecycleTracker by lifecycleTracker {
+            override fun close() = error("close failed")
+        }
+        val invocations = mutableListOf<String>()
+        stateService = ProcessStateTrackerImpl(fakeEmbLogger, throwingTracker)
+        stateService.addListener(DecoratedListener(invocations))
+        stateService.addListener(DecoratedSessionOrchestrator(invocations))
+        stateService.close()
+        stateService.onForeground()
+        stateService.onBackground()
         assertTrue(invocations.isEmpty())
     }
 

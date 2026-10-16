@@ -13,8 +13,13 @@ import io.embrace.android.embracesdk.internal.session.id.SessionIdsSnapshot
  * [sessionIds] are the IDs current when the object's lifecycle ended. They are captured then rather than read when the leak
  * is reported, because confirmation happens later - and by then the current session part may not be the one the leak
  * belongs to.
+ *
+ * [reportedClass] is supplied by the instrumentation for the same reason as [objectType]: it is usually the tracked object's
+ * own class, but not always - a Fragment's root view is reported under its Fragment, and a WebView under the Activity or
+ * Fragment that owns it, since the view's class alone rarely identifies the leak.
  */
 internal class LeakContext(
     val objectType: String,
     val sessionIds: SessionIdsSnapshot,
+    val reportedClass: Class<*>,
 )

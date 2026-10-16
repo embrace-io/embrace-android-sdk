@@ -42,7 +42,7 @@ internal class LeakDetectionDataSourceFragmentGatingTest {
 
         assertNull(
             "fragment tracking should be a no-op when the RemoteConfig flag is off",
-            dataSource.leakDetector.trackClosed(fragment, LeakContext("fragment", SESSION_IDS)),
+            dataSource.leakDetector.trackClosed(fragment, OWNER, FRAGMENT_CONTEXT),
         )
     }
 
@@ -61,11 +61,13 @@ internal class LeakDetectionDataSourceFragmentGatingTest {
 
         assertNotNull(
             "attaching a fragment should have opened a sentinel once fragment leak detection is enabled",
-            dataSource.leakDetector.trackClosed(fragment, LeakContext("fragment", SESSION_IDS)),
+            dataSource.leakDetector.trackClosed(fragment, OWNER, FRAGMENT_CONTEXT),
         )
     }
 
     private companion object {
+        val OWNER = TrackingSource.FRAGMENT
         val SESSION_IDS = SessionIdsSnapshot(userSessionId = "session-1", sessionPartId = "part-1")
+        val FRAGMENT_CONTEXT = LeakContext("fragment", SESSION_IDS, Fragment::class.java)
     }
 }

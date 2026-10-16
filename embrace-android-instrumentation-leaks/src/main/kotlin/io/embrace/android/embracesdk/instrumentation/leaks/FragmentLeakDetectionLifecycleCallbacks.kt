@@ -30,22 +30,28 @@ internal class FragmentLeakDetectionLifecycleCallbacks(
     }
 
     override fun onFragmentAttached(fm: FragmentManager, f: Fragment, context: Context) {
-        leakDetector.trackOpened(f)
+        leakDetector.trackOpened(f, TrackingSource.FRAGMENT)
     }
 
     override fun onFragmentDestroyed(fm: FragmentManager, f: Fragment) {
-        leakDetector.trackClosed(f, LeakContext(FRAGMENT_OBJECT_TYPE, activeSessionIdsProvider()))
+        leakDetector.trackClosed(
+            f,
+            TrackingSource.FRAGMENT,
+            LeakContext(FRAGMENT_OBJECT_TYPE, activeSessionIdsProvider(), f.javaClass),
+        )
     }
 
     override fun onFragmentViewCreated(fm: FragmentManager, f: Fragment, v: View, savedInstanceState: Bundle?) {
         pendingViews.opened(f, v)
-        leakDetector.trackOpened(v)
+        leakDetector.trackOpened(v, TrackingSource.FRAGMENT)
     }
 
-    override fun onFragmentResumed(fm: FragmentManager, f: Fragment) {
+    // started rather than resumed: Fragments start before their Activity's onActivityResumed, so this opens their WebViews
+    // ahead of the Activity's own scan, and owns them
+    override fun onFragmentStarted(fm: FragmentManager, f: Fragment) {
         if (webViewLeakDetectionEnabled) {
             WebViewLeakScanner.scan(f.view, logger) { webView ->
-                leakDetector.trackOpened(webView)
+                leakDetector.trackOpened(webView, TrackingSource.FRAGMENT)
             }
         }
     }
@@ -53,11 +59,15 @@ internal class FragmentLeakDetectionLifecycleCallbacks(
     override fun onFragmentViewDestroyed(fm: FragmentManager, f: Fragment) {
         val view = pendingViews.closed(f) ?: return
         val sessionIds = activeSessionIdsProvider()
-        leakDetector.trackClosed(view, LeakContext(FRAGMENT_VIEW_OBJECT_TYPE, sessionIds))
+        leakDetector.trackClosed(view, TrackingSource.FRAGMENT, LeakContext(FRAGMENT_VIEW_OBJECT_TYPE, sessionIds, f.javaClass))
 
         if (webViewLeakDetectionEnabled) {
             WebViewLeakScanner.scan(view, logger) { webView ->
-                leakDetector.trackClosed(webView, LeakContext(WebViewLeakScanner.WEBVIEW_OBJECT_TYPE, sessionIds))
+                leakDetector.trackClosed(
+                    webView,
+                    TrackingSource.FRAGMENT,
+                    LeakContext(WebViewLeakScanner.WEBVIEW_OBJECT_TYPE, sessionIds, f.javaClass),
+                )
             }
         }
     }

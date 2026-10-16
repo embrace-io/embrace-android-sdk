@@ -41,7 +41,7 @@ internal class LeakDetectionDataSourceWebViewGatingTest {
 
         assertNull(
             "webview tracking should be a no-op when the RemoteConfig flag is off",
-            dataSource.leakDetector.trackClosed(webView, LeakContext(WebViewLeakScanner.WEBVIEW_OBJECT_TYPE, SESSION_IDS)),
+            dataSource.leakDetector.trackClosed(webView, OWNER, WEBVIEW_CONTEXT),
         )
     }
 
@@ -58,7 +58,7 @@ internal class LeakDetectionDataSourceWebViewGatingTest {
 
         assertNotNull(
             "resuming an activity with a webview should have opened a sentinel once webview leak detection is enabled",
-            dataSource.leakDetector.trackClosed(webView, LeakContext(WebViewLeakScanner.WEBVIEW_OBJECT_TYPE, SESSION_IDS)),
+            dataSource.leakDetector.trackClosed(webView, OWNER, WEBVIEW_CONTEXT),
         )
     }
 
@@ -80,7 +80,7 @@ internal class LeakDetectionDataSourceWebViewGatingTest {
     }
 
     /**
-     * Builds and resumes an [Activity] with a [WebView] as its content, dispatching through the real
+     * Builds and resumes an `Activity` with a [WebView] as its content, dispatching through the real
      * [android.app.Application.ActivityLifecycleCallbacks] registered by [LeakDetectionDataSource.onDataCaptureEnabled].
      */
     private fun resumeActivityWithWebView(): WebView {
@@ -93,6 +93,8 @@ internal class LeakDetectionDataSourceWebViewGatingTest {
     }
 
     private companion object {
+        val OWNER = TrackingSource.ACTIVITY
         val SESSION_IDS = SessionIdsSnapshot(userSessionId = "session-1", sessionPartId = "part-1")
+        val WEBVIEW_CONTEXT = LeakContext(WebViewLeakScanner.WEBVIEW_OBJECT_TYPE, SESSION_IDS, WebView::class.java)
     }
 }

@@ -131,10 +131,13 @@ internal class LeakDetector(
      * that lifecycle as possible. A sentinel allocated well after [referent] may be reclaimed by collections that could not
      * have reclaimed [referent], which would confirm [referent] as leaked when it is not.
      *
-     * Calling this more than once for the same object has no effect after the first call.
+     * [owner] identifies the instrumentation whose lifecycle this is. More than one instrumentation can see the same object,
+     * such as a WebView inside a Fragment inside an Activity, and the first to open it owns it: only that owner's
+     * [trackClosed] ends its tracked lifecycle. Calling this again for an object that is already open has no effect,
+     * whichever owner calls it.
      */
-    fun trackOpened(referent: Any) {
-        openSentinel(referent)
+    fun trackOpened(referent: Any, owner: TrackingSource) {
+        openSentinel(referent, owner)
     }
 
     /**
@@ -142,11 +145,12 @@ internal class LeakDetector(
      * of [referent] ends. [token] is carried through to [suspects] if [referent] is confirmed as a leak, and must not hold a
      * reference to [referent], following the same rules as a `WeakHashMap` value.
      *
-     * Returns the reference now being watched. Returns null if no sentinel is held for [referent], either because
-     * [trackOpened] was not called for it or because its lifecycle has already ended, in which case it is not tracked.
+     * Returns the reference now being watched. Returns null if no sentinel is held for [referent] by [owner] - because
+     * [trackOpened] was not called for it, because its lifecycle has already ended, or because a different owner opened
+     * it - in which case nothing changes.
      */
-    fun trackClosed(referent: Any, token: Any? = null): TrackedReference? {
-        val sentinel = releaseSentinel(referent) ?: return null
+    fun trackClosed(referent: Any, owner: TrackingSource, token: Any? = null): TrackedReference? {
+        val sentinel = releaseSentinel(referent, owner) ?: return null
 
         val ref = TrackedReference(sentinel, queue, WeakReference(referent), clock.now(), token)
         watch(ref)
@@ -187,7 +191,15 @@ internal class LeakDetector(
             return null
         }
 
-        val confirmation = TrackedReference(Sentinel(), queue, ref.target, ref.trackedAtMs, ref.token, suspected = true)
+        val confirmation = TrackedReference(
+            // never added to sentinels, so its owner is never compared against
+            Sentinel(TrackingSource.DETECTOR),
+            queue,
+            ref.target,
+            ref.trackedAtMs,
+            ref.token,
+            suspected = true,
+        )
         watch(confirmation)
         return confirmation
     }
@@ -205,8 +217,8 @@ internal class LeakDetector(
 
     /**
      * A snapshot of every confirmed suspect still reachable, safe to hand outside the detector: it never carries the tracked
-     * object itself, only what [trackClosed] was given, its class name read fresh from the still-live object, and how many
-     * GC cycles it has survived since being confirmed.
+     * object itself, only what [trackClosed] was given, its identity, and how many GC cycles it has survived since being
+     * confirmed.
      */
     fun suspects(): List<LeakSnapshot> {
         val cycleCount = currentGcCycleCount()
@@ -220,7 +232,6 @@ internal class LeakDetector(
                     suspect.trackedAtMs,
                     suspect.token,
                     cyclesSurvived,
-                    referent.javaClass.name,
                     System.identityHashCode(referent),
                 )
             }
@@ -241,16 +252,23 @@ internal class LeakDetector(
      * happens on the thread that begins or ends a lifecycle, and reclamation is delivered on the detector thread.
      */
 
-    private fun openSentinel(referent: Any) {
+    private fun openSentinel(referent: Any, owner: TrackingSource) {
         synchronized(sentinels) {
             if (!sentinels.containsKey(referent)) {
-                sentinels[referent] = Sentinel()
+                sentinels[referent] = Sentinel(owner)
             }
         }
     }
 
-    private fun releaseSentinel(referent: Any): Sentinel? = synchronized(sentinels) {
-        sentinels.remove(referent)
+    private fun releaseSentinel(referent: Any, owner: TrackingSource): Sentinel? = synchronized(sentinels) {
+        // removed up front so that the common case - the owner closing - costs one lookup; a close from any other owner
+        // is rare, and puts the same sentinel straight back
+        val sentinel = sentinels.remove(referent) ?: return null
+        if (sentinel.owner != owner) {
+            sentinels[referent] = sentinel
+            return null
+        }
+        sentinel
     }
 
     private fun watch(ref: TrackedReference) {
@@ -293,12 +311,16 @@ internal class LeakDetector(
 
     /**
      * Allocated alongside a tracked object and released at the same time, so that its reclamation indicates that a collection
-     * capable of reclaiming that object has run. Holds no state.
+     * capable of reclaiming that object has run. Holds only the [owner] that opened it.
+     *
+     * A sentinel is held as a `WeakHashMap` value keyed by the tracked object, and a value that can reach its own key keeps
+     * that entry - and so the tracked object - alive forever. [owner] is a [TrackingSource], stored as a plain `Int`, so it can
+     * reach nothing at all. Nothing else should ever be added here.
      *
      * This is a named type rather than an [Any] so that it can be identified in a heap dump, where anonymous objects retained
      * by the SDK would look like a bug in it.
      */
-    internal class Sentinel
+    internal class Sentinel(val owner: TrackingSource)
 
     /**
      * Watches the [Sentinel] belonging to a tracked object, and carries what is needed to confirm or re-watch it. The tracked
@@ -324,7 +346,7 @@ internal class LeakDetector(
      * finalization as well, and would hold the referent's memory alive until explicitly cleared; neither is needed here,
      * since nothing but bookkeeping happens once a suspect is gone.
      *
-     * [get] doubles as the live read [suspects] uses for the class name, since unlike a [PhantomReference] a
+     * [get] doubles as the live read [suspects] uses for the identity hashcode, since unlike a [PhantomReference] a
      * [WeakReference] hands the referent back for as long as it is still reachable.
      */
     internal class ConfirmedSuspect(
@@ -348,7 +370,6 @@ internal class LeakDetector(
         val trackedAtMs: Long,
         val token: Any?,
         val cyclesSurvived: Long,
-        val className: String,
         val id: Int,
     )
 

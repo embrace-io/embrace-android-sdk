@@ -58,8 +58,10 @@ internal class LeakDetectionDataSourceTest {
     fun `an object that has only outlived one sentinel is not reported`() {
         val leaked = Any()
         val detector = dataSource.leakDetector
-        detector.trackOpened(leaked)
-        val ref = checkNotNull(detector.trackClosed(leaked, LeakContext(OBJECT_TYPE, SESSION_IDS)))
+        detector.trackOpened(leaked, OWNER)
+        val ref = checkNotNull(
+            detector.trackClosed(leaked, OWNER, LeakContext(OBJECT_TYPE, SESSION_IDS, leaked.javaClass)),
+        )
 
         detector.onSentinelReclaimed(ref)
         dataSource.onPreSessionEnd()
@@ -84,8 +86,10 @@ internal class LeakDetectionDataSourceTest {
      */
     private fun confirmLeak(referent: Any, sessionIds: SessionIdsSnapshot) {
         val detector = dataSource.leakDetector
-        detector.trackOpened(referent)
-        val ref = checkNotNull(detector.trackClosed(referent, LeakContext(OBJECT_TYPE, sessionIds)))
+        detector.trackOpened(referent, OWNER)
+        val ref = checkNotNull(
+            detector.trackClosed(referent, OWNER, LeakContext(OBJECT_TYPE, sessionIds, referent.javaClass)),
+        )
 
         val confirmation = checkNotNull(detector.onSentinelReclaimed(ref))
         detector.onSentinelReclaimed(confirmation)
@@ -93,6 +97,7 @@ internal class LeakDetectionDataSourceTest {
 
     private companion object {
         const val OBJECT_TYPE = "activity"
+        val OWNER = TrackingSource.ACTIVITY
         val SESSION_IDS = SessionIdsSnapshot(userSessionId = "session-1", sessionPartId = "part-1")
     }
 }

@@ -27,7 +27,7 @@ internal class ActivityLeakDetectionLifecycleCallbacksTest {
 
         assertNotNull(
             "onActivityResumed should have opened a sentinel for the webview found in the decor view",
-            leakDetector.trackClosed(activity.webView, LeakContext(WebViewLeakScanner.WEBVIEW_OBJECT_TYPE, SESSION_IDS)),
+            leakDetector.trackClosed(activity.webView, OWNER, WEBVIEW_CONTEXT),
         )
     }
 
@@ -40,7 +40,7 @@ internal class ActivityLeakDetectionLifecycleCallbacksTest {
 
         assertNull(
             "no sentinel should have been opened when webview leak detection is disabled (the default)",
-            leakDetector.trackClosed(activity.webView, LeakContext(WebViewLeakScanner.WEBVIEW_OBJECT_TYPE, SESSION_IDS)),
+            leakDetector.trackClosed(activity.webView, OWNER, WEBVIEW_CONTEXT),
         )
     }
 
@@ -54,7 +54,7 @@ internal class ActivityLeakDetectionLifecycleCallbacksTest {
 
         assertNull(
             "onActivityDestroyed should already have released the sentinel opened on resume",
-            leakDetector.trackClosed(activity.webView, LeakContext(WebViewLeakScanner.WEBVIEW_OBJECT_TYPE, SESSION_IDS)),
+            leakDetector.trackClosed(activity.webView, OWNER, WEBVIEW_CONTEXT),
         )
     }
 
@@ -74,7 +74,9 @@ internal class ActivityLeakDetectionLifecycleCallbacksTest {
     }
 
     private companion object {
+        val OWNER = TrackingSource.ACTIVITY
         val SESSION_IDS = SessionIdsSnapshot(userSessionId = "session-1", sessionPartId = "part-1")
+        val WEBVIEW_CONTEXT = LeakContext(WebViewLeakScanner.WEBVIEW_OBJECT_TYPE, SESSION_IDS, WebView::class.java)
     }
 }
 

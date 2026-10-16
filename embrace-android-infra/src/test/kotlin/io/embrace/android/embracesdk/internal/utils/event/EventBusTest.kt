@@ -254,17 +254,69 @@ internal class EventBusTest {
 
         val received = mutableListOf<String>()
         val handler = EventHandler<ScreenState> { received.add(it.name) }
-        bus.addStateHandler(screenKey, handler)
-        bus.addStateHandler(screenKey, handler)
+        bus.addStateHandler(screenKey, handler = handler)
+        bus.addStateHandler(screenKey, handler = handler)
 
         assertEquals(listOf("home"), received)
+    }
+
+    @Test
+    fun `a handler registered without replay is not given the retained value`() {
+        bus.emitState(screenKey, ScreenState("home"))
+
+        val received = mutableListOf<String>()
+        bus.addStateHandler(screenKey, replay = false) { received.add(it.name) }
+
+        assertEquals(emptyList<String>(), received)
+    }
+
+    @Test
+    fun `a handler registered without replay receives values emitted afterwards`() {
+        bus.emitState(screenKey, ScreenState("home"))
+
+        val received = mutableListOf<String>()
+        bus.addStateHandler(screenKey, replay = false) { received.add(it.name) }
+        bus.emitState(screenKey, ScreenState("details"))
+        bus.emitState(screenKey, ScreenState("settings"))
+
+        assertEquals(listOf("details", "settings"), received)
+    }
+
+    @Test
+    fun `a handler registered without replay against a key never emitted receives the first value`() {
+        val received = mutableListOf<String>()
+        bus.addStateHandler(screenKey, replay = false) { received.add(it.name) }
+        bus.emitState(screenKey, ScreenState("home"))
+
+        assertEquals(listOf("home"), received)
+    }
+
+    @Test
+    fun `registering without replay leaves the retained value readable`() {
+        val home = ScreenState("home")
+        bus.emitState(screenKey, home)
+        bus.addStateHandler(screenKey, replay = false) { }
+
+        assertSame(home, bus.currentState(screenKey))
+    }
+
+    @Test
+    fun `registering a handler again with replay does not replay once it is already registered`() {
+        bus.emitState(screenKey, ScreenState("home"))
+
+        val received = mutableListOf<String>()
+        val handler = EventHandler<ScreenState> { received.add(it.name) }
+        bus.addStateHandler(screenKey, replay = false, handler = handler)
+        bus.addStateHandler(screenKey, handler = handler)
+
+        assertEquals(emptyList<String>(), received)
     }
 
     @Test
     fun `a handler removed from a key stops receiving values`() {
         val received = AtomicInteger()
         val handler = EventHandler<ScreenState> { received.incrementAndGet() }
-        bus.addStateHandler(screenKey, handler)
+        bus.addStateHandler(screenKey, handler = handler)
 
         bus.emitState(screenKey, ScreenState("home"))
         bus.removeStateHandler(screenKey, handler)

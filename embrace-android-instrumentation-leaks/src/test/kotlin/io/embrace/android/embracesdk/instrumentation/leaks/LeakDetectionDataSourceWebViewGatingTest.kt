@@ -75,7 +75,7 @@ internal class LeakDetectionDataSourceWebViewGatingTest {
         val webView = resumeActivityWithWebView()
         assertNull(
             "resuming an activity should not open a sentinel once data capture is disabled",
-            dataSource.leakDetector.trackClosed(webView, LeakContext(WebViewLeakScanner.WEBVIEW_OBJECT_TYPE, SESSION_IDS)),
+            dataSource.leakDetector.trackClosed(webView, OWNER, WEBVIEW_CONTEXT),
         )
     }
 

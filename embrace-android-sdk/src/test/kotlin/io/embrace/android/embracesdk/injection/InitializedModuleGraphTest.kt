@@ -18,10 +18,10 @@ import io.embrace.android.embracesdk.internal.config.remote.OtelKotlinSdkConfig
 import io.embrace.android.embracesdk.internal.config.remote.RemoteConfig
 import io.embrace.android.embracesdk.internal.config.resolved.EmbraceConfig
 import io.embrace.android.embracesdk.internal.config.resolved.SdkModeConfig
-import io.embrace.android.embracesdk.internal.injection.BootstrapServices
 import io.embrace.android.embracesdk.internal.injection.EssentialServiceModuleImpl
 import io.embrace.android.embracesdk.internal.injection.InitializedModuleGraph
 import io.embrace.android.embracesdk.internal.injection.OpenTelemetryModuleImpl
+import io.embrace.android.embracesdk.internal.injection.PreStartServices
 import io.embrace.android.embracesdk.internal.injection.SdkDisabledException
 import io.embrace.android.embracesdk.internal.instance.BufferingSdkInstance
 import io.embrace.android.embracesdk.internal.instance.RealSdkInstance
@@ -59,7 +59,7 @@ internal class InitializedModuleGraphTest {
         val application = RuntimeEnvironment.getApplication()
         return InitializedModuleGraph(
             context = context,
-            bootstrapServices = BootstrapServices(logger, clock),
+            preStartServices = PreStartServices(logger, clock),
             buffer = BufferingSdkInstance({ 0 }, logger),
             configServiceSupplier = { _, _, _, _, _ -> FakeConfigService() },
             coreModuleSupplier = { _, _, _ -> coreModule },
@@ -76,7 +76,7 @@ internal class InitializedModuleGraphTest {
         with(createModuleGraph()) {
             assertNotNull(initModule)
             assertNotNull(openTelemetryModule)
-            assertNotNull(workerThreadModule)
+            assertNotNull(workerThreadPool)
             assertTrue(essentialServiceModule is EssentialServiceModuleImpl)
             assertNotNull(dataCaptureServiceModule)
             assertNotNull(deliveryModule)
@@ -132,7 +132,7 @@ internal class InitializedModuleGraphTest {
         val initModule = FakeInitModule(clock = clock, logger = logger, otelSdkMode = OtelSdkMode.COMPAT)
         val moduleGraph = InitializedModuleGraph(
             context = context,
-            bootstrapServices = initModule.bootstrapServices,
+            preStartServices = initModule.preStartServices,
             buffer = BufferingSdkInstance({ 0 }, logger),
             initModuleSupplier = { initModule },
             configServiceSupplier = { _, _, openTelemetryModule, _, _ ->
@@ -154,7 +154,7 @@ internal class InitializedModuleGraphTest {
         assertThrows(SdkDisabledException::class.java) {
             InitializedModuleGraph(
                 context = context,
-                bootstrapServices = initModule.bootstrapServices,
+                preStartServices = initModule.preStartServices,
                 buffer = BufferingSdkInstance({ 0 }, logger),
                 initModuleSupplier = { initModule },
                 openTelemetryModuleSupplier = { _, _ -> openTelemetryModule },
@@ -176,7 +176,7 @@ internal class InitializedModuleGraphTest {
         val initModule = FakeInitModule(clock = clock, logger = logger, otelSdkMode = OtelSdkMode.COMPAT)
         return InitializedModuleGraph(
             context = context,
-            bootstrapServices = initModule.bootstrapServices,
+            preStartServices = initModule.preStartServices,
             buffer = BufferingSdkInstance({ 0 }, logger),
             initModuleSupplier = { initModule },
             configServiceSupplier = { _, _, _, _, _ -> FakeConfigService() },

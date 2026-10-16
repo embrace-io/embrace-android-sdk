@@ -34,7 +34,7 @@ class UserSessionOrchestrationModuleImpl(
     startupDurationProvider: () -> Long?,
     appVersionStartupCounterProvider: () -> Int?,
     logModule: LogModule,
-    workerThreadModule: WorkerThreadModule,
+    workerThreadPool: WorkerThreadPool,
 ) : UserSessionOrchestrationModule {
 
     override val sessionIdsProvider: SessionIdsProvider get() = essentialServiceModule.sessionIdsProvider
@@ -45,9 +45,9 @@ class UserSessionOrchestrationModuleImpl(
         fallbackDirSupplier = { coreModule.context.cacheDir },
     )
 
-    private val sessionPersistenceWorker = workerThreadModule.backgroundWorker(Worker.Background.SessionPersistenceWorker)
+    private val sessionPersistenceWorker = workerThreadPool.backgroundWorker(Worker.Background.SessionPersistenceWorker)
 
-    private val sessionReadWorker = workerThreadModule.backgroundWorker(Worker.Background.IoRegWorker)
+    private val sessionReadWorker = workerThreadPool.backgroundWorker(Worker.Background.IoRegWorker)
 
     private val sessionPartDirectoryStore = SessionPartDirectoryStore(
         sessionsDir,
@@ -150,7 +150,7 @@ class UserSessionOrchestrationModuleImpl(
             coreModule.store,
             UserSessionMetadataStore(coreModule.store),
             initModule.logger,
-            workerThreadModule.backgroundWorker(Worker.Background.NonIoRegWorker),
+            workerThreadPool.backgroundWorker(Worker.Background.NonIoRegWorker),
             initModule.uuidSource,
             initModule.startupClassifier,
             sessionPartWriter,

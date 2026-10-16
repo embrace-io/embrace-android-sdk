@@ -276,7 +276,7 @@ internal class SdkIntegrationTestRule(
 
     private fun createStateHolder(): SdkStateHolder {
         return createSdkStateHolder(
-            bootstrapServices = setup.bootstrapServices,
+            preStartServices = setup.preStartServices,
             moduleGraphSupplier = moduleGraphSupplier,
             onModuleGraphCreated = { createdModuleGraph = it },
         )

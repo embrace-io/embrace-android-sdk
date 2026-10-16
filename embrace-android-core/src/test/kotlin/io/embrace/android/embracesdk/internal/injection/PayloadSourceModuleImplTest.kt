@@ -8,7 +8,7 @@ import io.embrace.android.embracesdk.fakes.FakeOtelPayloadMapper
 import io.embrace.android.embracesdk.fakes.OtelSdkMode
 import io.embrace.android.embracesdk.fakes.injection.FakeEssentialServiceModule
 import io.embrace.android.embracesdk.fakes.injection.FakeInitModule
-import io.embrace.android.embracesdk.fakes.injection.FakeWorkerThreadModule
+import io.embrace.android.embracesdk.fakes.injection.FakeWorkerThreadPool
 import io.embrace.android.embracesdk.internal.capture.metadata.EmbraceMetadataService
 import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertTrue
@@ -25,7 +25,7 @@ internal class PayloadSourceModuleImplTest {
         val module = PayloadSourceModuleImpl(
             initModule,
             CoreModuleImpl(RuntimeEnvironment.getApplication(), initModule),
-            FakeWorkerThreadModule(),
+            FakeWorkerThreadPool(),
             FakeEssentialServiceModule(),
             FakeConfigService(),
             FakeOpenTelemetryModule(otelSdkMode = OtelSdkMode.REGULAR),

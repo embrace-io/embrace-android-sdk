@@ -36,7 +36,7 @@ import io.embrace.android.embracesdk.internal.worker.Worker
 class PayloadSourceModuleImpl(
     initModule: InitModule,
     coreModule: CoreModule,
-    workerThreadModule: WorkerThreadModule,
+    workerThreadPool: WorkerThreadPool,
     essentialServiceModule: EssentialServiceModule,
     configService: ConfigService,
     otelModule: OpenTelemetryModule,
@@ -49,7 +49,7 @@ class PayloadSourceModuleImpl(
             coreModule.context,
             configService,
             coreModule.store,
-            workerThreadModule.backgroundWorker(Worker.Background.NonIoRegWorker),
+            workerThreadPool.backgroundWorker(Worker.Background.NonIoRegWorker),
         ).apply { startAsyncRetrieval() }
     }
 
@@ -87,7 +87,7 @@ class PayloadSourceModuleImpl(
     private val device = EmbTrace.trace("deviceImpl") {
         DeviceImpl(
             windowManagerProvider = { coreModule.context.getSystemServiceSafe(Context.WINDOW_SERVICE) },
-            backgroundWorker = workerThreadModule.backgroundWorker(Worker.Background.NonIoRegWorker),
+            backgroundWorker = workerThreadPool.backgroundWorker(Worker.Background.NonIoRegWorker),
             systemInfo = initModule.systemInfo,
             logger = initModule.logger,
         ).apply { startAsyncRetrieval() }
@@ -132,7 +132,7 @@ class PayloadSourceModuleImpl(
             configService,
             coreModule.store,
             initModule.clock,
-            workerThreadModule.backgroundWorker(Worker.Background.NonIoRegWorker),
+            workerThreadPool.backgroundWorker(Worker.Background.NonIoRegWorker),
         )
     }
 

@@ -119,7 +119,7 @@ class IntakeServiceImplTest {
             try {
                 take(sessionEnvelope, sessionMetadata)
             } catch (_: RejectedExecutionException) {
-                // this is an artifact of testing - WorkerThreadModule typically passes in an
+                // this is an artifact of testing - WorkerThreadPool typically passes in an
                 // executor that has a custom rejection handler
             }
         }

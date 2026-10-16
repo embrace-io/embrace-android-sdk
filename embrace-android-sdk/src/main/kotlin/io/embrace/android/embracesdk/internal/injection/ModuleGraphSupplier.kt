@@ -5,6 +5,6 @@ import io.embrace.android.embracesdk.internal.instance.BufferingSdkInstance
 
 internal typealias ModuleGraphSupplier = (
     context: Context,
-    bootstrapServices: BootstrapServices,
+    preStartServices: PreStartServices,
     buffer: BufferingSdkInstance,
 ) -> InitializedModuleGraph

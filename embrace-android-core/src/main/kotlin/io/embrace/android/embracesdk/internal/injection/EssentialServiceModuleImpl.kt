@@ -36,7 +36,7 @@ class EssentialServiceModuleImpl(
     configService: ConfigService,
     openTelemetryModule: OpenTelemetryModule,
     coreModule: CoreModule,
-    workerThreadModule: WorkerThreadModule,
+    workerThreadPool: WorkerThreadPool,
     startupContext: Context?,
     lifecycleTrackerProvider: Provider<LifecycleTracker?>,
     networkConnectivityServiceProvider: Provider<NetworkConnectivityService?>,
@@ -58,7 +58,7 @@ class EssentialServiceModuleImpl(
 
     override val networkConnectivityService: NetworkConnectivityService =
         networkConnectivityServiceProvider() ?: EmbTrace.trace("network-connectivity-service-init") {
-            val worker = workerThreadModule.backgroundWorker(Worker.Background.NonIoRegWorker)
+            val worker = workerThreadPool.backgroundWorker(Worker.Background.NonIoRegWorker)
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N &&
                 configService.config.autoDataCapture.networkCallbackConnectivityServiceEnabled
             ) {

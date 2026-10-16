@@ -5,8 +5,8 @@ import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import io.embrace.android.embracesdk.fakes.FakeInternalLogger
 import io.embrace.android.embracesdk.fakes.FakeSpanExporter
-import io.embrace.android.embracesdk.internal.injection.BootstrapServices
 import io.embrace.android.embracesdk.internal.injection.InitializedModuleGraph
+import io.embrace.android.embracesdk.internal.injection.PreStartServices
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
@@ -17,25 +17,25 @@ import org.junit.runner.RunWith
 internal class SdkStateHolderFactoryTest {
 
     private val context = ApplicationProvider.getApplicationContext<Context>()
-    private val bootstrapServices = BootstrapServices(logger = FakeInternalLogger(throwOnInternalError = false))
+    private val preStartServices = PreStartServices(logger = FakeInternalLogger(throwOnInternalError = false))
 
     @Test
     fun `otel config set before start is applied to bootstrap services`() {
         val holder = createSdkStateHolder(
-            bootstrapServices = bootstrapServices,
-            moduleGraphSupplier = { context, bootstrapServices, buffer ->
+            preStartServices = preStartServices,
+            moduleGraphSupplier = { context, preStartServices, buffer ->
                 InitializedModuleGraph(
                     context = context,
-                    bootstrapServices = bootstrapServices,
+                    preStartServices = preStartServices,
                     buffer = buffer,
                     sdkInitResourceUsageTrackerSupplier = { error("failed to init") },
                 )
             },
         )
         holder.api.addSpanExporter(FakeSpanExporter())
-        assertFalse(bootstrapServices.externalOtelConfig.hasConfiguredOtlpExport())
+        assertFalse(preStartServices.externalOtelConfig.hasConfiguredOtlpExport())
         holder.start(context)
-        assertTrue(bootstrapServices.externalOtelConfig.hasConfiguredOtlpExport())
+        assertTrue(preStartServices.externalOtelConfig.hasConfiguredOtlpExport())
         assertEquals(SdkState.FAILED, holder.state)
     }
 }

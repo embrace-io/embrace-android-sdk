@@ -130,7 +130,7 @@ InitModule -> CoreModule -> EssentialServiceModule -> ...
 
 - **No coroutines** in the SDK codebase - concurrency uses `ScheduledExecutorService`
 - `BackgroundWorker` (in `embrace-android-infra`) wraps `ScheduledExecutorService` to limit API surface
-- `WorkerThreadModule` manages thread pools
+- `WorkerThreadPool` manages thread pools
 - Tests use `FakeWorkers` for deterministic scheduling
 
 ---

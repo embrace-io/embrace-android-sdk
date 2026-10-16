@@ -4,13 +4,14 @@ import io.embrace.android.embracesdk.internal.arch.datasource.LogSeverity
 import io.embrace.android.embracesdk.internal.arch.datasource.TelemetryDestination
 import io.embrace.android.embracesdk.internal.arch.schema.SchemaType
 import io.embrace.android.embracesdk.internal.clock.Clock
+import java.io.Closeable
 import java.util.concurrent.ConcurrentLinkedQueue
 import java.util.concurrent.atomic.AtomicInteger
 
 class BufferedInternalErrorHandler(
     private val clock: Clock,
     private val limit: Int = 10,
-) : InternalErrorHandler {
+) : InternalErrorHandler, Closeable {
 
     private class BufferedError(val timestampMs: Long, val throwable: Throwable)
 
@@ -22,6 +23,9 @@ class BufferedInternalErrorHandler(
 
     @Volatile
     private var enabled = true
+
+    @Volatile
+    private var closed = false
 
     override fun trackInternalError(type: InternalErrorType, throwable: Throwable) {
         runCatching {
@@ -39,6 +43,9 @@ class BufferedInternalErrorHandler(
     }
 
     fun drainTo(destination: TelemetryDestination, enabled: Boolean) {
+        if (closed) {
+            return
+        }
         if (enabled) {
             this.destination = destination
             drain(destination)
@@ -54,6 +61,12 @@ class BufferedInternalErrorHandler(
 
     fun resetLimit() {
         count.set(0)
+    }
+
+    override fun close() {
+        closed = true
+        discard()
+        destination = null
     }
 
     private fun drain(destination: TelemetryDestination) {

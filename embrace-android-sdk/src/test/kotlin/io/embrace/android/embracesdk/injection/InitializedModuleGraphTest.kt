@@ -88,25 +88,18 @@ internal class InitializedModuleGraphTest {
     }
 
     @Test
-    fun `postInit installs metadata provider before instrumentation loads`() {
+    fun `metadata provider is installed before instrumentation loads`() {
         val moduleGraph = createModuleGraph()
         val processor = moduleGraph.openTelemetryModule.otelSdkConfig.logRecordProcessor
 
-        val preLog = FakeReadWriteLogRecord()
-        processor.onEmit(preLog, NoopOpenTelemetry.context.implicit())
-        assertFalse(preLog.attributes.containsKey(EmbSessionAttributes.EMB_STATE))
-
-        RealSdkInstance(moduleGraph, clock).postInit()
-
-        val postLog = FakeReadWriteLogRecord()
-        processor.onEmit(postLog, NoopOpenTelemetry.context.implicit())
-        assertTrue(postLog.attributes.containsKey(EmbSessionAttributes.EMB_STATE))
+        val log = FakeReadWriteLogRecord()
+        processor.onEmit(log, NoopOpenTelemetry.context.implicit())
+        assertTrue(log.attributes.containsKey(EmbSessionAttributes.EMB_STATE))
     }
 
     /**
      * The persisted config decides which OTel SDK implementation is built, so it has to be read
-     * before that construction happens. Note that [RealSdkInstance.postInit] is deliberately not called:
-     * if the flag were still applied there, this would fail.
+     * before that construction happens. Note that [RealSdkInstance.postInit] is deliberately not called.
      */
     @Test
     fun `kotlin otel sdk selected from persisted config during init`() {
@@ -139,7 +132,9 @@ internal class InitializedModuleGraphTest {
                 instrumentedConfig = initModule.instrumentedConfig,
                 jsonSerializer = initModule.jsonSerializer,
                 uuidSource = initModule.uuidSource,
-                configServiceSupplier = { _, _, _, _, _, _ -> FakeConfigService() },
+                configServiceSupplier = { _, _, _, _, _, persistedConfig ->
+                    FakeConfigService(otelBehavior = persistedConfig.otelBehavior)
+                },
             ),
             sdkStartTimeMs = clock.now(),
             sdkInitResourceUsageTracker = SdkInitResourceUsageTracker(logger),

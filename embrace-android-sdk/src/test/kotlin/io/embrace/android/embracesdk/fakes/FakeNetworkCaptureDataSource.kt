@@ -15,17 +15,11 @@ class FakeNetworkCaptureDataSource : NetworkCaptureDataSource {
 
     override fun shouldCaptureNetworkBody(url: String, method: String): Boolean = true
 
-    override fun onDataCaptureEnabled() {
-        TODO("Not yet implemented")
-    }
+    override fun onDataCaptureEnabled() = Unit
 
-    override fun onDataCaptureDisabled() {
-        TODO("Not yet implemented")
-    }
+    override fun onDataCaptureDisabled() = Unit
 
-    override fun resetDataCaptureLimits() {
-        TODO("Not yet implemented")
-    }
+    override fun resetDataCaptureLimits() = Unit
 
     override fun <T> captureTelemetry(
         inputValidation: () -> Boolean,

@@ -20,6 +20,7 @@ import javax.net.ssl.HttpsURLConnection
  */
 @InternalApi
 internal object HttpUrlConnectionTracker {
+    @Volatile
     private var internalNetworkApi: InternalNetworkApi = NoopInternalNetworkApi
     private val factoryField: Field
         /**
@@ -63,6 +64,13 @@ internal object HttpUrlConnectionTracker {
     }
 
     fun getInternalNetworkApi(): InternalNetworkApi = internalNetworkApi
+
+    /**
+     * Stops capture by connections opened after this call.
+     */
+    fun reset() {
+        internalNetworkApi = NoopInternalNetworkApi
+    }
 
     /**
      * Registers either a [EmbraceUrlStreamHandlerFactory] or a [WrappingFactory]

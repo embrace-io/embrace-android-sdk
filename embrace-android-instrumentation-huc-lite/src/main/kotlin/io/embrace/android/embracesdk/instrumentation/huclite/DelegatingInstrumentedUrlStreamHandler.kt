@@ -15,7 +15,7 @@ import javax.net.ssl.HttpsURLConnection
 internal class DelegatingInstrumentedUrlStreamHandler(
     private val delegateHandler: URLStreamHandler,
     private val clock: Clock,
-    private val hucLiteDataSource: HucLiteDataSource,
+    private val dataSourceProvider: () -> HucLiteDataSource?,
 ) : URLStreamHandler() {
     private val openProxyConnectionMethod by LazyMethodLookup(
         delegateHandler::class.java,
@@ -53,11 +53,12 @@ internal class DelegatingInstrumentedUrlStreamHandler(
      * Return URLConnection with instrumented wrapper if it is an HttpsURLConnection
      */
     private fun wrapInstrumentedConnection(wrappedConnection: URLConnection?): URLConnection? {
-        return if (wrappedConnection is HttpsURLConnection) {
+        val dataSource = dataSourceProvider()
+        return if (wrappedConnection is HttpsURLConnection && dataSource != null) {
             InstrumentedHttpsURLConnection(
                 wrappedConnection = wrappedConnection,
                 clock = clock,
-                hucLiteDataSource = hucLiteDataSource,
+                hucLiteDataSource = dataSource,
             )
         } else {
             wrappedConnection

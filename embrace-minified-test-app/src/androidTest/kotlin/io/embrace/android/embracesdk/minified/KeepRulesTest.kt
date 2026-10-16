@@ -25,6 +25,9 @@ private val MANUAL_NAMES = listOf(
     Field(HUC_TRACKER, "INSTANCE"),
     Method(HUC_TRACKER, "registerUrlStreamHandlerFactory", 4),
 
+    // RealSdkInstance.resetHucInstrumentation()
+    Method(HUC_TRACKER, "reset", 0),
+
     // OkHttpReflectionFacade
     Class("okhttp3.OkHttpClient"),
     Field("okhttp3.OkHttp", "VERSION"),

@@ -13,11 +13,13 @@ import javax.net.ssl.HttpsURLConnection
 /**
  * [URLStreamHandler] that adds an instrumentation wrapper around the [URLConnection] created by [delegatedHandler]. Note that
  * [delegatedHandler] must produce an [HttpsURLConnection], or an exception will be thrown when the connection is opened.
+ *
+ * The connection is returned unwrapped if [dataSourceProvider] returns null, i.e. capture has been disabled.
  */
 internal class InstrumentedHttpsURLStreamHandler(
     private val delegatedHandler: URLStreamHandler,
     private val clock: Clock,
-    private val hucLiteDataSource: HucLiteDataSource,
+    private val dataSourceProvider: () -> HucLiteDataSource?,
 ) : URLStreamHandler() {
     private val openProxyConnectionMethod by LazyMethodLookup(
         delegatedHandler::class.java,
@@ -50,11 +52,14 @@ internal class InstrumentedHttpsURLStreamHandler(
         }
     }
 
-    private fun HttpsURLConnection.toWrappedConnection(): InstrumentedHttpsURLConnection = InstrumentedHttpsURLConnection(
-        wrappedConnection = this,
-        clock = clock,
-        hucLiteDataSource = hucLiteDataSource,
-    )
+    private fun HttpsURLConnection.toWrappedConnection(): HttpsURLConnection {
+        val dataSource = dataSourceProvider() ?: return this
+        return InstrumentedHttpsURLConnection(
+            wrappedConnection = this,
+            clock = clock,
+            hucLiteDataSource = dataSource,
+        )
+    }
 
     private fun Throwable.toInstrumentedConnectionException(): IOException =
         InstrumentedConnectionException("Failed to instrumented HTTPS connection", this)

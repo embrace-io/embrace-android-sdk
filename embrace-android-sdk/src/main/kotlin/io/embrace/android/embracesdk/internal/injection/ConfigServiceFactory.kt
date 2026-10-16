@@ -14,7 +14,7 @@ import io.embrace.android.embracesdk.internal.worker.Worker
  */
 internal fun createConfigService(
     initModule: InitModule,
-    openTelemetryModule: OpenTelemetryModule,
+    preStartServices: PreStartServices,
     workerThreadPool: WorkerThreadPool,
     persistedConfig: PersistedConfig,
     remoteConfigSource: RemoteConfigSource = OkHttpRemoteConfigSource(
@@ -31,7 +31,7 @@ internal fun createConfigService(
     worker = workerThreadPool.backgroundWorker(Worker.Background.HttpRequestWorker),
     serializer = initModule.jsonSerializer,
     remoteConfigSource = remoteConfigSource,
-    hasConfiguredOtlpExport = openTelemetryModule.otelSdkConfig.externalConfig::hasConfiguredOtlpExport,
+    hasConfiguredOtlpExport = preStartServices.externalOtelConfig::hasConfiguredOtlpExport,
     primaryAbi = initModule.systemInfo.primaryAbi,
     logger = initModule.logger,
 )

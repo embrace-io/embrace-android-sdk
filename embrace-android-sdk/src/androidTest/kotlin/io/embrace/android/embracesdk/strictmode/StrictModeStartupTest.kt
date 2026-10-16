@@ -73,11 +73,12 @@ internal class StrictModeStartupTest(
 
             sdkStateHolder = createSdkStateHolder(
                 preStartServices = PreStartServices(),
-                moduleGraphSupplier = { ctx, preStartServices, buffer ->
+                moduleGraphSupplier = { ctx, preStartServices, sdkStartTimeMs, sdkInitResourceUsageTracker ->
                     InitializedModuleGraph(
                         context = ctx,
                         preStartServices = preStartServices,
-                        buffer = buffer,
+                        sdkStartTimeMs = sdkStartTimeMs,
+                        sdkInitResourceUsageTracker = sdkInitResourceUsageTracker,
                         initModuleSupplier = { TestInitModule(InitModuleImpl(it), otelSdkMode) },
                     )
                 },

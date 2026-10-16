@@ -5,11 +5,9 @@ package io.embrace.android.embracesdk.internal.injection
 import android.app.ActivityManager
 import android.content.Context
 import android.preference.PreferenceManager
-import io.embrace.android.embracesdk.internal.api.delegate.PreStartOTelApi
 import io.embrace.android.embracesdk.internal.capture.connectivity.NetworkConnectivityService
 import io.embrace.android.embracesdk.internal.config.ConfigService
 import io.embrace.android.embracesdk.internal.config.PersistedConfig
-import io.embrace.android.embracesdk.internal.instance.BufferingSdkInstance
 import io.embrace.android.embracesdk.internal.instrumentation.startup.DataCaptureServiceModule
 import io.embrace.android.embracesdk.internal.instrumentation.startup.DataCaptureServiceModuleImpl
 import io.embrace.android.embracesdk.internal.instrumentation.startup.DataCaptureServiceModuleSupplier
@@ -43,7 +41,8 @@ import java.util.concurrent.TimeUnit
 internal class InitializedModuleGraph(
     context: Context,
     preStartServices: PreStartServices,
-    buffer: BufferingSdkInstance,
+    val sdkStartTimeMs: Long,
+    val sdkInitResourceUsageTracker: SdkInitResourceUsageTracker,
     versionChecker: VersionChecker = BuildVersionChecker,
     private val initModuleSupplier: InitModuleSupplier? = null,
     private val openTelemetryModuleSupplier: OpenTelemetryModuleSupplier? = null,
@@ -60,7 +59,6 @@ internal class InitializedModuleGraph(
     private val logModuleSupplier: LogModuleSupplier? = null,
     private val userSessionOrchestrationModuleSupplier: UserSessionOrchestrationModuleSupplier? = null,
     private val payloadSourceModuleSupplier: PayloadSourceModuleSupplier? = null,
-    private val sdkInitResourceUsageTrackerSupplier: Provider<SdkInitResourceUsageTracker>? = null,
 ) {
 
     init {
@@ -77,20 +75,6 @@ internal class InitializedModuleGraph(
         openTelemetryModuleSupplier?.invoke(initModule, preStartServices.externalOtelConfig)
             ?: OpenTelemetryModuleImpl(initModule, preStartServices.externalOtelConfig)
     }
-
-    init {
-        // drain before the OTel SDK is built
-        buffer.drainOTelConfig(PreStartOTelApi(openTelemetryModule.otelSdkConfig.externalConfig))
-    }
-
-    // stamped before anything else so that the SDK init span covers all the work below,
-    // and the perf samples cover the same interval as the span
-    val sdkStartTimeMs: Long = initModule.clock.now()
-
-    val sdkInitResourceUsageTracker: SdkInitResourceUsageTracker =
-        (sdkInitResourceUsageTrackerSupplier?.invoke() ?: SdkInitResourceUsageTracker(initModule.logger)).apply {
-            captureStart()
-        }
 
     private val keyValueStore: Lazy<KeyValueStore> = lazy { createKeyValueStore(context, initModule.jsonSerializer) }
 
@@ -124,12 +108,11 @@ internal class InitializedModuleGraph(
     val configService: ConfigService = init("config") {
         configServiceSupplier?.invoke(
             initModule,
-            coreModule,
-            openTelemetryModule,
+            preStartServices,
             workerThreadPool,
             persistedConfig,
         ) ?: EmbTrace.trace(sectionName = "config-service-init", recordDuration = true) {
-            createConfigService(initModule, openTelemetryModule, workerThreadPool, persistedConfig)
+            createConfigService(initModule, preStartServices, workerThreadPool, persistedConfig)
         }
     }.apply {
         // kick off config HTTP request early so the SDK can't get in a permanently disabled state.

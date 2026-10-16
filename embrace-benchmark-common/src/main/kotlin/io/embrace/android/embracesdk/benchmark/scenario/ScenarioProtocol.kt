@@ -17,6 +17,12 @@ object ScenarioProtocol {
     const val OTEL_KOTLIN_SDK_SETTING: String = "embrace_pct_otel_kotlin_sdk"
 
     /**
+     * Global setting that, while set, makes a launch restore the recorded fixture instead of starting the
+     * SDK, so that nothing of its own lands on disk.
+     */
+    const val RESTORE_FIXTURE_SETTING: String = "embrace_benchmark_restore_fixture"
+
+    /**
      * Published while the task is running and needs nothing from the benchmark.
      */
     const val STATUS_RUNNING: String = "running"

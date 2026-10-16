@@ -11,6 +11,7 @@ import io.embrace.android.embracesdk.internal.instrumentation.thread.blockage.Th
 import io.embrace.android.embracesdk.internal.logging.InternalErrorType
 import io.embrace.android.embracesdk.internal.logging.InternalLogger
 import io.embrace.android.embracesdk.internal.worker.BackgroundWorker
+import java.io.Closeable
 import java.util.concurrent.ScheduledFuture
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicBoolean
@@ -32,7 +33,7 @@ class BlockedThreadDetector(
     private val listener: ThreadBlockageListener,
     private val intervalMs: Long,
     private val blockedDurationThreshold: Int,
-) {
+) : Closeable {
 
     private val targetThreadHandler: TargetThreadHandler = TargetThreadHandler(
         looper = looper,
@@ -41,6 +42,7 @@ class BlockedThreadDetector(
         action = ::onTargetThreadProcessedMessage,
     )
     private val started: AtomicBoolean = AtomicBoolean(false)
+    private val closed: AtomicBoolean = AtomicBoolean(false)
     private val blocked: AtomicBoolean = AtomicBoolean(false)
     private val lastWatchdogThreadResponse: AtomicLong = AtomicLong(clock.now())
     private val lastTargetThreadResponse: AtomicLong = AtomicLong(clock.now())
@@ -50,6 +52,9 @@ class BlockedThreadDetector(
      * Starts monitoring the target thread for blockages.
      */
     fun start() {
+        if (closed.get()) {
+            return
+        }
         if (!started.getAndSet(true)) {
             blocked.set(false)
             lastWatchdogThreadResponse.set(clock.now())
@@ -72,6 +77,12 @@ class BlockedThreadDetector(
                 }
             }
         }
+    }
+
+    override fun close() {
+        closed.set(true)
+        stop()
+        targetThreadHandler.removeMessages(HEARTBEAT_REQUEST)
     }
 
     /**

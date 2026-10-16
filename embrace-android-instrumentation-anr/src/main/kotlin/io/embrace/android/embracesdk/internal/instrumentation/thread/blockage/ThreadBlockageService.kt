@@ -4,6 +4,7 @@ import io.embrace.android.embracesdk.internal.arch.CrashTeardownHandler
 import io.embrace.android.embracesdk.internal.arch.SessionPartChangeListener
 import io.embrace.android.embracesdk.internal.arch.state.ProcessStateListener
 import io.embrace.android.embracesdk.internal.envelope.session.OtelPayloadMapper
+import java.io.Closeable
 
 /**
  * Service which detects when the application is not responding.
@@ -12,7 +13,8 @@ interface ThreadBlockageService :
     SessionPartChangeListener,
     CrashTeardownHandler,
     ProcessStateListener,
-    OtelPayloadMapper {
+    OtelPayloadMapper,
+    Closeable {
 
     /**
      * Initializes capture of ANRs

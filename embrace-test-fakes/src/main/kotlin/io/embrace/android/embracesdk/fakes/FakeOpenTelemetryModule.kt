@@ -6,6 +6,7 @@ import io.embrace.android.embracesdk.internal.config.behavior.SensitiveKeysBehav
 import io.embrace.android.embracesdk.internal.config.resolved.BreadcrumbConfig
 import io.embrace.android.embracesdk.internal.injection.OpenTelemetryModule
 import io.embrace.android.embracesdk.internal.otel.config.OtelSdkConfig
+import io.embrace.android.embracesdk.internal.otel.export.ExternalExportDispatcher
 import io.embrace.android.embracesdk.internal.otel.logs.LogSink
 import io.embrace.android.embracesdk.internal.otel.logs.LogSinkImpl
 import io.embrace.android.embracesdk.internal.otel.sdk.OtelSdkWrapper
@@ -35,6 +36,7 @@ class FakeOpenTelemetryModule(
             packageName = "com.test.app",
             systemInfo = systemInfo,
             uuidSource = TestUuidSource(),
+            externalExportDispatcher = ExternalExportDispatcher(FakeInternalLogger()),
         )
 
     override val spanService: SpanService = FakeSpanService()

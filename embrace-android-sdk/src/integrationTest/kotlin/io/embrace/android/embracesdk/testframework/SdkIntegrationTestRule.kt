@@ -22,9 +22,11 @@ import io.embrace.android.embracesdk.internal.injection.DeliveryModule
 import io.embrace.android.embracesdk.internal.injection.EssentialServiceModule
 import io.embrace.android.embracesdk.internal.injection.EssentialServiceModuleImpl
 import io.embrace.android.embracesdk.internal.injection.InitModule
-import io.embrace.android.embracesdk.internal.injection.ModuleInitBootstrapper
+import io.embrace.android.embracesdk.internal.injection.ModuleGraph
+import io.embrace.android.embracesdk.internal.injection.ModuleGraphFactory
 import io.embrace.android.embracesdk.internal.instance.SdkState
 import io.embrace.android.embracesdk.internal.instance.SdkStateHolder
+import io.embrace.android.embracesdk.internal.instance.createSdkStateHolder
 import io.embrace.android.embracesdk.internal.utils.EmbTrace
 import io.embrace.android.embracesdk.internal.utils.Provider
 import io.embrace.android.embracesdk.testframework.actions.EmbraceActionInterface
@@ -37,12 +39,12 @@ import io.embrace.android.embracesdk.testframework.export.FilteredSpanExporter
 import io.embrace.android.embracesdk.testframework.server.FakeApiServer
 import io.opentelemetry.kotlin.logging.export.toOtelKotlinLogRecordExporter
 import io.opentelemetry.kotlin.tracing.export.toOtelKotlinSpanExporter
-import java.io.File
 import kotlinx.coroutines.runBlocking
 import okhttp3.Protocol
 import okhttp3.mockwebserver.MockWebServer
 import org.junit.Assert.assertEquals
 import org.junit.rules.ExternalResource
+import java.io.File
 
 /**
  * A [org.junit.Rule] that is responsible for setting up and tearing down the Embrace SDK for use in
@@ -121,7 +123,14 @@ internal class SdkIntegrationTestRule(
     private lateinit var sdkStateHolder: SdkStateHolder
     private lateinit var baseUrl: String
 
-    lateinit var bootstrapper: ModuleInitBootstrapper
+    private lateinit var moduleGraphFactory: ModuleGraphFactory
+    private var createdModuleGraph: ModuleGraph? = null
+
+    /**
+     * The module graph created when the SDK under test started.
+     */
+    val moduleGraph: ModuleGraph
+        get() = checkNotNull(createdModuleGraph) { "SDK not initialized" }
 
     /**
      * Runs a test case. The test case should be separated into 3 parts: setup, action, and
@@ -155,21 +164,31 @@ internal class SdkIntegrationTestRule(
         baseUrl = server.url("api").toString()
 
         preSdkStart = EmbracePreSdkStartInterface(setup) { sdkStateHolder.api }
-        bootstrapper = setup.createBootstrapper(
+        createdModuleGraph = null
+        moduleGraphFactory = setup.createModuleGraphFactory(
             localConfig.copy(
                 baseUrls = FakeBaseUrlConfig(configImpl = baseUrl, dataImpl = baseUrl)
             ),
             deliveryTracer
         )
-        action = EmbraceActionInterface(setup, bootstrapper, { sdkStateHolder.api }, { sdkStateHolder.state })
-        payloadAssertion = EmbracePayloadAssertionInterface(bootstrapper, apiServer) { sdkStateHolder.state }
+        action = EmbraceActionInterface(
+            setup,
+            { moduleGraph.instrumentationModule.instrumentationRegistry },
+            { sdkStateHolder.api },
+            { sdkStateHolder.state },
+        )
+        payloadAssertion = EmbracePayloadAssertionInterface(
+            moduleGraphFactory.initModule,
+            deliveryTracer,
+            apiServer,
+        ) { sdkStateHolder.state }
         spanExporter = FilteredSpanExporter()
         logExporter = FilteredLogExporter()
         otelAssertion = EmbraceOtelExportAssertionInterface(spanExporter, logExporter)
 
         setupAction(setup)
         with(setup) {
-            sdkStateHolder = createStateHolder(bootstrapper)
+            sdkStateHolder = createStateHolder()
             preSdkStartAction(preSdkStart)
             //TODO: Filtered span and log exporters should be migrated to Kotlin.
             sdkStateHolder.api.addSpanExporter(spanExporter.toOtelKotlinSpanExporter())
@@ -177,7 +196,7 @@ internal class SdkIntegrationTestRule(
 
             // persist config here before the SDK starts up: the SDK reads it during start()
             persistConfig(persistedConfig)
-            bootstrapper.openTelemetryModule.applyConfiguration(
+            moduleGraphFactory.openTelemetryModule.applyConfiguration(
                 sensitiveKeysBehavior = SensitiveKeysBehavior(resolveSensitiveKeys(localConfig)),
                 bypassValidation = false,
                 otelBehavior = OtelBehaviorImpl(BehaviorThresholdCheck { "123456" }, localConfig, persistedConfig),
@@ -193,14 +212,14 @@ internal class SdkIntegrationTestRule(
                 )
                 assertEquals(
                     "SDK state holder did not reach the expected state.",
-                    if (expectSdkToStart) SdkState.STARTED else SdkState.NOT_STARTED,
+                    if (expectSdkToStart) SdkState.STARTED else SdkState.FAILED,
                     sdkStateHolder.state
                 )
                 if (sdkStateHolder.api.isStarted) {
                     assertEquals(
                         "SDK did not select the $otelSdkMode opentelemetry-kotlin implementation.",
                         otelSdkMode.useKotlinSdk,
-                        bootstrapper.openTelemetryModule.otelSdkWrapper.useKotlinSdk,
+                        moduleGraphFactory.openTelemetryModule.otelSdkWrapper.useKotlinSdk,
                     )
                 }
                 awaitAsyncInstrumentation()
@@ -215,7 +234,7 @@ internal class SdkIntegrationTestRule(
     }
 
     private fun drainExternalExports() {
-        val otelSdkConfig = bootstrapper.openTelemetryModule.otelSdkConfig
+        val otelSdkConfig = moduleGraphFactory.openTelemetryModule.otelSdkConfig
         runBlocking {
             otelSdkConfig.spanProcessor.forceFlush()
             otelSdkConfig.logRecordProcessor.forceFlush()
@@ -253,6 +272,14 @@ internal class SdkIntegrationTestRule(
         if (::sdkStateHolder.isInitialized) {
             sdkStateHolder.disable()
         }
+    }
+
+    private fun createStateHolder(): SdkStateHolder {
+        return createSdkStateHolder(
+            bootstrapServices = setup.bootstrapServices,
+            moduleGraphFactoryProvider = { moduleGraphFactory },
+            onModuleGraphCreated = { createdModuleGraph = it },
+        )
     }
 
     companion object {

@@ -1,19 +1,15 @@
 package io.embrace.android.embracesdk.internal.api.delegate
 
-import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import io.embrace.android.embracesdk.fakes.FakeClock
-import io.embrace.android.embracesdk.fakes.FakeConfigService
 import io.embrace.android.embracesdk.fakes.FakeExperimentTrackingService
 import io.embrace.android.embracesdk.fakes.FakeInternalLogger
 import io.embrace.android.embracesdk.fakes.OtelSdkMode
-import io.embrace.android.embracesdk.fakes.injection.FakeEssentialServiceModule
 import io.embrace.android.embracesdk.fakes.injection.FakeInitModule
 import io.embrace.android.embracesdk.internal.capture.experiment.ExperimentApiCall
 import io.embrace.android.embracesdk.internal.capture.experiment.ExperimentKind
 import io.embrace.android.embracesdk.internal.capture.experiment.TrackedData
 import io.embrace.android.embracesdk.internal.config.resolved.ExperimentConfig
-import io.embrace.android.embracesdk.internal.injection.ModuleInitBootstrapper
 import io.embrace.android.embracesdk.internal.instance.BufferingSdkInstance
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
@@ -312,15 +308,10 @@ internal class ExperimentApiDelegateTest {
     }
 
     private fun createDelegate(): ExperimentApiDelegate {
-        val moduleInitBootstrapper = ModuleInitBootstrapper(
-            initModule,
-            configServiceSupplier = { _, _, _, _, _ -> FakeConfigService() },
-            essentialServiceModuleSupplier = { _, _, _, _, _, _, _, _, _ ->
-                FakeEssentialServiceModule(experimentTrackingService = fakeExperimentTrackingService)
-            },
+        return ExperimentApiDelegate(
+            clock = initModule.clock,
+            experimentTrackingService = lazy { fakeExperimentTrackingService },
         )
-        moduleInitBootstrapper.init(ApplicationProvider.getApplicationContext())
-        return ExperimentApiDelegate(lazyOf(moduleInitBootstrapper))
     }
 
     private fun startAndDrain() {

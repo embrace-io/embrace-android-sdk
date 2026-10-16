@@ -84,7 +84,7 @@ internal class UserSessionGoldenFileTest(
             testCaseAction = {
                 embrace.logMessage("Hi", Severity.INFO, mapOf(EmbSessionAttributes.EMB_PRIVATE_SEND_MODE to "immediate"))
                 pendingUserSessionId = checkNotNull(
-                    testRule.bootstrapper.userSessionOrchestrationModule.sessionOrchestrator.currentUserSession()
+                    testRule.moduleGraph.userSessionOrchestrationModule.sessionOrchestrator.currentUserSession()
                 ).userSessionId
             },
             assertAction = {

@@ -2,28 +2,24 @@ package io.embrace.android.embracesdk.internal.instance
 
 import android.content.Context
 import android.util.Log
-import io.embrace.android.embracesdk.internal.EmbraceInternalInterface
-import io.embrace.android.embracesdk.internal.FlutterInternalInterface
-import io.embrace.android.embracesdk.internal.ReactNativeInternalInterface
-import io.embrace.android.embracesdk.internal.UnityInternalInterface
+import io.embrace.android.embracesdk.internal.InternalInterfaceApi
 import io.embrace.android.embracesdk.internal.api.BreadcrumbApi
 import io.embrace.android.embracesdk.internal.api.ExperimentApi
 import io.embrace.android.embracesdk.internal.api.InstrumentationApi
 import io.embrace.android.embracesdk.internal.api.LogsApi
 import io.embrace.android.embracesdk.internal.api.NetworkRequestApi
 import io.embrace.android.embracesdk.internal.api.OTelApi
-import io.embrace.android.embracesdk.internal.api.SdkApi
 import io.embrace.android.embracesdk.internal.api.SdkStateApi
 import io.embrace.android.embracesdk.internal.api.UserApi
 import io.embrace.android.embracesdk.internal.api.UserSessionApi
 import io.embrace.android.embracesdk.internal.api.ViewTrackingApi
 import io.embrace.android.embracesdk.internal.api.delegate.BreadcrumbApiDelegate
 import io.embrace.android.embracesdk.internal.api.delegate.ExperimentApiDelegate
+import io.embrace.android.embracesdk.internal.api.delegate.HostedSdkInternalInterfaceImpl
 import io.embrace.android.embracesdk.internal.api.delegate.InstrumentationApiDelegate
 import io.embrace.android.embracesdk.internal.api.delegate.LogsApiDelegate
 import io.embrace.android.embracesdk.internal.api.delegate.NetworkRequestApiDelegate
 import io.embrace.android.embracesdk.internal.api.delegate.OTelApiDelegate
-import io.embrace.android.embracesdk.internal.api.delegate.PreStartOTelApi
 import io.embrace.android.embracesdk.internal.api.delegate.SdkStateApiDelegate
 import io.embrace.android.embracesdk.internal.api.delegate.UserApiDelegate
 import io.embrace.android.embracesdk.internal.api.delegate.UserSessionApiDelegate
@@ -31,9 +27,7 @@ import io.embrace.android.embracesdk.internal.api.delegate.ViewTrackingApiDelega
 import io.embrace.android.embracesdk.internal.clock.Clock
 import io.embrace.android.embracesdk.internal.delivery.storage.StorageLocation
 import io.embrace.android.embracesdk.internal.delivery.storage.asFile
-import io.embrace.android.embracesdk.internal.injection.InternalInterfaceModule
-import io.embrace.android.embracesdk.internal.injection.InternalInterfaceModuleImpl
-import io.embrace.android.embracesdk.internal.injection.ModuleInitBootstrapper
+import io.embrace.android.embracesdk.internal.injection.ModuleGraph
 import io.embrace.android.embracesdk.internal.injection.applyCustomMetadata
 import io.embrace.android.embracesdk.internal.injection.loadInstrumentation
 import io.embrace.android.embracesdk.internal.injection.markSdkInitComplete
@@ -42,7 +36,6 @@ import io.embrace.android.embracesdk.internal.injection.postLoadInstrumentation
 import io.embrace.android.embracesdk.internal.injection.registerListeners
 import io.embrace.android.embracesdk.internal.injection.triggerPayloadSend
 import io.embrace.android.embracesdk.internal.utils.EmbTrace
-import io.embrace.android.embracesdk.internal.utils.Provider
 import io.embrace.android.embracesdk.internal.worker.Worker
 import io.embrace.android.embracesdk.spans.AutoTerminationMode
 import io.embrace.android.embracesdk.spans.EmbraceSpan
@@ -63,22 +56,63 @@ private const val WORKER_TERMINATION_TIMEOUT_MS = 2_000L
  * here instead.
  */
 internal class RealSdkInstance(
-    private val bootstrapper: ModuleInitBootstrapper,
-    private val hostedSdkApiProvider: Provider<SdkApi>, // handles dropped calls etc for internal interface
+    private val moduleGraph: ModuleGraph,
     private val clock: Clock,
-    private val userApiDelegate: UserApiDelegate = UserApiDelegate(lazyOf(bootstrapper)),
-    private val sessionApiDelegate: UserSessionApiDelegate = UserSessionApiDelegate(lazyOf(bootstrapper)),
-    private val networkRequestApiDelegate: NetworkRequestApiDelegate =
-        NetworkRequestApiDelegate(lazyOf(bootstrapper)),
-    private val logsApiDelegate: LogsApiDelegate = LogsApiDelegate(lazyOf(bootstrapper)),
-    private val viewTrackingApiDelegate: ViewTrackingApiDelegate =
-        ViewTrackingApiDelegate(lazyOf(bootstrapper)),
-    private val sdkStateApiDelegate: SdkStateApiDelegate = SdkStateApiDelegate(lazyOf(bootstrapper)),
-    private val otelApiDelegate: OTelApiDelegate = OTelApiDelegate(lazyOf(bootstrapper)),
-    private val breadcrumbApiDelegate: BreadcrumbApiDelegate = BreadcrumbApiDelegate(lazyOf(bootstrapper)),
-    private val instrumentationApiDelegate: InstrumentationApiDelegate =
-        InstrumentationApiDelegate(lazyOf(bootstrapper)),
-    private val experimentApiDelegate: ExperimentApiDelegate = ExperimentApiDelegate(lazyOf(bootstrapper)),
+    private val userApiDelegate: UserApiDelegate = UserApiDelegate(
+        userService = lazy { moduleGraph.essentialServiceModule.userService },
+    ),
+    private val sessionApiDelegate: UserSessionApiDelegate = UserSessionApiDelegate(
+        userSessionPropertiesService = moduleGraph.essentialServiceModule.userSessionPropertiesService,
+        sessionOrchestrator = moduleGraph.userSessionOrchestrationModule.sessionOrchestrator,
+    ),
+    private val networkRequestApiDelegate: NetworkRequestApiDelegate = NetworkRequestApiDelegate(
+        registry = moduleGraph.instrumentationModule.instrumentationRegistry,
+        httpRequestInfoModifierChain = moduleGraph.instrumentationModule.instrumentationArgs.httpRequestInfoModifierChain,
+        sessionOrchestrator = moduleGraph.userSessionOrchestrationModule.sessionOrchestrator,
+    ),
+    private val logsApiDelegate: LogsApiDelegate = LogsApiDelegate(
+        logService = lazy { moduleGraph.logModule.logService },
+        attachmentService = moduleGraph.logModule.attachmentService,
+        logger = moduleGraph.initModule.logger,
+        payloadStore = moduleGraph.deliveryModule?.payloadStore,
+        serializer = moduleGraph.initModule.jsonSerializer,
+        telemetryService = moduleGraph.initModule.telemetryService,
+    ),
+    private val hostedSdkInternalInterface: HostedSdkInternalInterfaceImpl = HostedSdkInternalInterfaceImpl(
+        logsApi = logsApiDelegate,
+        configService = moduleGraph.configService,
+        resourceSource = moduleGraph.payloadSourceModule.resourceSource,
+        instrumentationRegistry = moduleGraph.instrumentationModule.instrumentationRegistry,
+        serializer = moduleGraph.initModule.jsonSerializer,
+        rnBundleIdTracker = lazy { moduleGraph.payloadSourceModule.rnBundleIdTracker },
+        hostedSdkVersionInfo = moduleGraph.payloadSourceModule.hostedSdkVersionInfo,
+        logger = moduleGraph.initModule.logger,
+    ),
+    private val viewTrackingApiDelegate: ViewTrackingApiDelegate = ViewTrackingApiDelegate(
+        registry = moduleGraph.instrumentationModule.instrumentationRegistry,
+    ),
+    private val sdkStateApiDelegate: SdkStateApiDelegate = SdkStateApiDelegate(
+        deviceIdentifier = lazy { moduleGraph.configService.deviceId },
+        sessionIdsProvider = moduleGraph.userSessionOrchestrationModule.sessionIdsProvider,
+        crashVerifier = moduleGraph.featureModule.lastRunCrashVerifier,
+    ),
+    private val otelApiDelegate: OTelApiDelegate = OTelApiDelegate(
+        otelSdkWrapper = lazy { moduleGraph.openTelemetryModule.otelSdkWrapper },
+    ),
+    private val breadcrumbApiDelegate: BreadcrumbApiDelegate = BreadcrumbApiDelegate(
+        clock = moduleGraph.initModule.clock,
+        breadcrumbDataSource = lazy { moduleGraph.featureModule.breadcrumbDataSource },
+    ),
+    private val instrumentationApiDelegate: InstrumentationApiDelegate = InstrumentationApiDelegate(
+        clock = moduleGraph.initModule.clock,
+        uiLoadTraceEmitter = moduleGraph.dataCaptureServiceModule.uiLoadDataListener,
+        appStartupDataCollector = moduleGraph.dataCaptureServiceModule.appStartupDataCollector,
+        navigationTrackingService = moduleGraph.essentialServiceModule.navigationTrackingService,
+    ),
+    private val experimentApiDelegate: ExperimentApiDelegate = ExperimentApiDelegate(
+        clock = moduleGraph.initModule.clock,
+        experimentTrackingService = lazy { moduleGraph.essentialServiceModule.experimentTrackingService },
+    ),
 ) : SdkInstance,
     LogsApi by logsApiDelegate,
     NetworkRequestApi by networkRequestApiDelegate,
@@ -89,11 +123,10 @@ internal class RealSdkInstance(
     ViewTrackingApi by viewTrackingApiDelegate,
     BreadcrumbApi by breadcrumbApiDelegate,
     InstrumentationApi by instrumentationApiDelegate,
-    ExperimentApi by experimentApiDelegate {
+    ExperimentApi by experimentApiDelegate,
+    InternalInterfaceApi by hostedSdkInternalInterface {
 
-    private val tracingApi: TracingApi get() = bootstrapper.openTelemetryModule.tracingApi
-
-    private var internalInterfaceModule: InternalInterfaceModule? = null
+    private val tracingApi: TracingApi get() = moduleGraph.openTelemetryModule.tracingApi
 
     @Volatile
     private var applicationInitStartMs: Long? = null
@@ -110,16 +143,9 @@ internal class RealSdkInstance(
         NoopOpenTelemetry
     }
 
-    override fun onPreStart(buffer: BufferingSdkInstance) {
-        // drain before building OTel SDK
-        buffer.drainOTelConfig(
-            PreStartOTelApi(bootstrapper.openTelemetryModule.otelSdkConfig.externalConfig, otelApiDelegate),
-        )
-    }
-
     override fun onPostStart(buffer: BufferingSdkInstance) {
         buffer.drainCompletedSpans(tracingApi)
-        bootstrapper.applyCustomMetadata {
+        moduleGraph.applyCustomMetadata {
             buffer.drainExperimentCalls(experimentApiDelegate, experimentApiDelegate::replay)
         }
         // the buffered value was recorded first, so takes precedence
@@ -127,88 +153,56 @@ internal class RealSdkInstance(
     }
 
     override fun start(context: Context) {
-        EmbTrace.trace("sdk-start") {
-            try {
-                if (!bootstrapper.init(context)) {
-                    return
-                }
-                bootstrapper.postInit()
+        try {
+            moduleGraph.postInit()
 
-                EmbTrace.trace(sectionName = "post-services-setup", recordDuration = true) {
-                    internalInterfaceModule = InternalInterfaceModuleImpl(
-                        bootstrapper.initModule,
-                        bootstrapper.configService,
-                        bootstrapper.payloadSourceModule,
-                        hostedSdkApiProvider(),
-                        bootstrapper,
-                    )
-
-                    // not fully initialized, but the SDK shouldn't catastrophically throw after this point,
-                    // so we allow external calls.
-                    started = true
-                    bootstrapper.registerListeners()
-                    bootstrapper.loadInstrumentation()
-                    bootstrapper.postLoadInstrumentation()
-                    bootstrapper.triggerPayloadSend()
-                }
-                bootstrapper.markSdkInitComplete(EmbTrace.durationTracker::flush)
-            } catch (ignored: Throwable) {
-                Log.w("Embrace", "Failed to initialize Embrace SDK", ignored)
+            EmbTrace.trace(sectionName = "post-services-setup", recordDuration = true) {
+                // not fully initialized, but the SDK shouldn't catastrophically throw after this point,
+                // so we allow external calls.
+                started = true
+                moduleGraph.registerListeners()
+                moduleGraph.loadInstrumentation()
+                moduleGraph.postLoadInstrumentation()
+                moduleGraph.triggerPayloadSend()
             }
+            moduleGraph.markSdkInitComplete(EmbTrace.durationTracker::flush)
+        } catch (ignored: Throwable) {
+            Log.w("Embrace", "Failed to initialize Embrace SDK", ignored)
         }
     }
 
     override fun disable() {
-        bootstrapper.openTelemetryModule.otelSdkConfig.disableDataExport()
-        val rootDir = bootstrapper.coreModule.context.filesDir
-        val fallbackDir = bootstrapper.coreModule.context.cacheDir
-        val workerThreadModule = bootstrapper.workerThreadModule
-        started = false
-        bootstrapper.stop()
-        val executor = Executors.newSingleThreadExecutor()
-        executor.execute {
-            workerThreadModule.awaitTermination(Worker.Priority.DataPersistenceWorker, WORKER_TERMINATION_TIMEOUT_MS)
-            runCatching {
-                StorageLocation.entries.map {
-                    it.asFile(
-                        logger = null,
-                        rootDirSupplier = { rootDir },
-                        fallbackDirSupplier = { fallbackDir },
-                    ).value
-                }.forEach {
-                    it.deleteRecursively()
+        try {
+            moduleGraph.openTelemetryModule.otelSdkConfig.disableDataExport()
+            val rootDir = moduleGraph.coreModule.context.filesDir
+            val fallbackDir = moduleGraph.coreModule.context.cacheDir
+            val workerThreadModule = moduleGraph.workerThreadModule
+            started = false
+            moduleGraph.essentialServiceModule.networkConnectivityService.close()
+            moduleGraph.openTelemetryModule.otelSdkConfig.shutdownExport()
+            workerThreadModule.close()
+            val executor = Executors.newSingleThreadExecutor()
+            executor.execute {
+                workerThreadModule.awaitTermination(Worker.Priority.DataPersistenceWorker, WORKER_TERMINATION_TIMEOUT_MS)
+                runCatching {
+                    StorageLocation.entries.map {
+                        it.asFile(
+                            logger = null,
+                            rootDirSupplier = { rootDir },
+                            fallbackDirSupplier = { fallbackDir },
+                        ).value
+                    }.forEach {
+                        it.deleteRecursively()
+                    }
+                }.onFailure { exception ->
+                    Log.e("[Embrace]", "An error occurred while trying to disable Embrace SDK.", exception)
                 }
-            }.onFailure { exception ->
-                Log.e("[Embrace]", "An error occurred while trying to disable Embrace SDK.", exception)
             }
+            // lets the queued deletion finish, then releases the worker thread
+            executor.shutdown()
+        } catch (ignored: Throwable) {
         }
-        // lets the queued deletion finish, then releases the worker thread
-        executor.shutdown()
     }
-
-    /**
-     * Gets the [io.embrace.android.embracesdk.internal.EmbraceInternalInterface] that should be used as the sole source of
-     * communication with other Android SDK modules.
-     */
-    override val internalInterface: EmbraceInternalInterface
-        get() {
-            return checkNotNull(internalInterfaceModule?.embraceInternalInterface)
-        }
-
-    override val reactNativeInternalInterface: ReactNativeInternalInterface
-        get() {
-            return checkNotNull(internalInterfaceModule?.reactNativeInternalInterface)
-        }
-
-    override val unityInternalInterface: UnityInternalInterface
-        get() {
-            return checkNotNull(internalInterfaceModule?.unityInternalInterface)
-        }
-
-    override val flutterInternalInterface: FlutterInternalInterface
-        get() {
-            return checkNotNull(internalInterfaceModule?.flutterInternalInterface)
-        }
 
     override fun createSpan(
         name: String,
@@ -251,7 +245,7 @@ internal class RealSdkInstance(
     }
 
     override fun applicationInitEnd() {
-        bootstrapper.dataCaptureServiceModule.appStartupDataCollector.run {
+        moduleGraph.dataCaptureServiceModule.appStartupDataCollector.run {
             this@RealSdkInstance.applicationInitStartMs?.let { applicationInitStart(it) }
             applicationInitEnd()
         }

@@ -14,7 +14,8 @@ import io.embrace.android.embracesdk.internal.arch.state.ProcessState
 import io.embrace.android.embracesdk.internal.clock.nanosToMillis
 import io.embrace.android.embracesdk.internal.config.remote.RemoteConfig
 import io.embrace.android.embracesdk.internal.config.source.ConfigHttpResponse
-import io.embrace.android.embracesdk.internal.injection.ModuleInitBootstrapper
+import io.embrace.android.embracesdk.internal.delivery.debug.DeliveryTracer
+import io.embrace.android.embracesdk.internal.injection.InitModule
 import io.embrace.android.embracesdk.internal.instance.SdkState
 import io.embrace.android.embracesdk.internal.otel.sdk.findAttributeValue
 import io.embrace.android.embracesdk.internal.payload.Envelope
@@ -48,7 +49,8 @@ import java.util.concurrent.TimeoutException
  * specifically in what its payload looks like.
  */
 internal class EmbracePayloadAssertionInterface(
-    bootstrapper: ModuleInitBootstrapper,
+    initModule: InitModule,
+    private val deliveryTracer: DeliveryTracer,
     private val apiServer: FakeApiServer?,
     private val sdkStateSupplier: () -> SdkState,
 ) {
@@ -63,10 +65,7 @@ internal class EmbracePayloadAssertionInterface(
     val sdkState: SdkState
         get() = sdkStateSupplier()
 
-    internal val serializer by lazy { bootstrapper.initModule.jsonSerializer }
-    private val deliveryTracer by lazy {
-        checkNotNull(bootstrapper.deliveryModule?.deliveryTracer)
-    }
+    internal val serializer by lazy { initModule.jsonSerializer }
 
     /*** LOGS ***/
 

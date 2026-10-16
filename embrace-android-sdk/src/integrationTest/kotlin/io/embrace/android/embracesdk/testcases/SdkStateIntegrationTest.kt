@@ -137,7 +137,7 @@ internal class SdkStateIntegrationTest(
                 assertEquals("value", span.attributes?.findAttributeValue("key"))
                 assertEquals(
                     calls.experimentRecords,
-                    testRule.bootstrapper.essentialServiceModule.experimentTrackingService.getRecords(),
+                    testRule.moduleGraph.essentialServiceModule.experimentTrackingService.getRecords(),
                 )
                 assertEquals(listOf(LOG_2), getSingleLogEnvelope().data.logs?.map { it.body })
             },
@@ -190,7 +190,7 @@ internal class SdkStateIntegrationTest(
     }
 
     @Test
-    fun `NOT_STARTED to NOT_STARTED - start is rejected when remote config disables the SDK`() {
+    fun `NOT_STARTED to FAILED - start is rejected when remote config disables the SDK`() {
         lateinit var logger: FakeInternalLogger
         testRule.runTest(
             persistedRemoteConfig = sdkDisabledConfig,
@@ -201,7 +201,7 @@ internal class SdkStateIntegrationTest(
                 }
             },
             testCaseAction = {
-                assertEquals(SdkState.NOT_STARTED, sdkState)
+                assertEquals(SdkState.FAILED, sdkState)
                 assertFalse(embrace.isStarted)
                 recordSession {
                     embrace.logInfo(LOG_1)
@@ -210,8 +210,8 @@ internal class SdkStateIntegrationTest(
             assertAction = {
                 assertNoInternalErrors(logger)
                 assertEquals(
-                    listOf("Embrace SDK is not initialized yet, cannot log_message."),
-                    logger.warningMessages.map { it.msg },
+                    listOf("Embrace SDK failed to start, cannot log_message. Subsequent dropped calls will not be logged."),
+                    logger.infoMessages.map { it.msg }.filter { it.startsWith("Embrace SDK failed to start") },
                 )
                 assertEquals(0, getLogEnvelopes(0).size)
                 assertEquals(0, getSessionEnvelopes(0).size)
@@ -394,14 +394,46 @@ internal class SdkStateIntegrationTest(
     }
 
     @Test
-    fun `NOT_STARTED to NOT_STARTED - internal API stays noop when start is rejected`() {
+    fun `NOT_STARTED to FAILED - internal API stays noop when start is rejected`() {
         testRule.runTest(
             persistedRemoteConfig = sdkDisabledConfig,
             expectSdkToStart = false,
             testCaseAction = {
                 assertInternalApiIsNoop()
                 embrace.start(context)
-                assertEquals(SdkState.NOT_STARTED, sdkState)
+                assertEquals(SdkState.FAILED, sdkState)
+                assertInternalApiIsNoop()
+            },
+        )
+    }
+
+    @Test
+    fun `FAILED - start is not retried`() {
+        testRule.runTest(
+            persistedRemoteConfig = sdkDisabledConfig,
+            expectSdkToStart = false,
+            testCaseAction = {
+                embrace.start(context)
+                assertEquals(SdkState.FAILED, sdkState)
+                assertFalse(embrace.isStarted)
+            },
+            assertAction = {
+                assertConfigRequested(1)
+            },
+        )
+    }
+
+    @Test
+    fun `FAILED to DISABLED - start is ignored`() {
+        testRule.runTest(
+            persistedRemoteConfig = sdkDisabledConfig,
+            expectSdkToStart = false,
+            testCaseAction = {
+                embrace.disable()
+                assertEquals(SdkState.DISABLED, sdkState)
+                embrace.start(context)
+                assertEquals(SdkState.DISABLED, sdkState)
+                assertFalse(embrace.isStarted)
                 assertInternalApiIsNoop()
             },
         )

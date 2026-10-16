@@ -40,7 +40,7 @@ internal class UserSessionClockAnomalyTest(
             assertAction = {
                 val sessions = getSessionEnvelopes(2, assertOrdering = false)
                 assertDistinctUserSessions(sessions[0], sessions[1])
-                val logger = testRule.bootstrapper.initModule.logger as FakeInternalLogger
+                val logger = testRule.moduleGraph.initModule.logger as FakeInternalLogger
 
                 assertTrue(logger.internalErrorMessages.any {
                     it.msg == InternalErrorType.ClockBackwardsShift.toString()
@@ -55,7 +55,7 @@ internal class UserSessionClockAnomalyTest(
         val staleUserSessionId = "stale-session-id"
         testRule.runTest(
             setupAction = {
-                val futureStartMs = testRule.bootstrapper.initModule.clock.now() + 100_000L
+                val futureStartMs = fakeClock.now() + 100_000L
                 persistUserSession(
                     userSessionId = staleUserSessionId,
                     startMs = futureStartMs,
@@ -69,7 +69,7 @@ internal class UserSessionClockAnomalyTest(
                 val session = getSingleSessionEnvelope()
                 assertNotEquals(staleUserSessionId, session.getUserSessionId())
 
-                val logger = testRule.bootstrapper.initModule.logger as FakeInternalLogger
+                val logger = testRule.moduleGraph.initModule.logger as FakeInternalLogger
                 assertTrue(logger.internalErrorMessages.any {
                     it.msg == InternalErrorType.ClockBackwardsShift.toString()
                 })

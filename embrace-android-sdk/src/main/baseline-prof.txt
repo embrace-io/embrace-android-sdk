@@ -2789,9 +2789,6 @@ HSPLio/embrace/android/embracesdk/internal/injection/SdkInitActionsKt;->triggerP
 HSPLio/embrace/android/embracesdk/internal/injection/SdkInitActionsKt;->triggerPayloadSend(Lio/embrace/android/embracesdk/internal/injection/ModuleGraph;)V
 Lio/embrace/android/embracesdk/internal/injection/SystemServiceSafeKt;
 HSPLio/embrace/android/embracesdk/internal/injection/SystemServiceSafeKt;->getSystemServiceSafe(Landroid/content/Context;Ljava/lang/String;)Ljava/lang/Object;
-Lio/embrace/android/embracesdk/internal/injection/UninitializedModuleGraph;
-HSPLio/embrace/android/embracesdk/internal/injection/UninitializedModuleGraph;-><clinit>()V
-HSPLio/embrace/android/embracesdk/internal/injection/UninitializedModuleGraph;-><init>()V
 Lio/embrace/android/embracesdk/internal/injection/UserSessionOrchestrationModule;
 Lio/embrace/android/embracesdk/internal/injection/UserSessionOrchestrationModuleImpl$$ExternalSyntheticLambda1;
 HSPLio/embrace/android/embracesdk/internal/injection/UserSessionOrchestrationModuleImpl$$ExternalSyntheticLambda1;-><init>(Lio/embrace/android/embracesdk/internal/injection/CoreModule;)V

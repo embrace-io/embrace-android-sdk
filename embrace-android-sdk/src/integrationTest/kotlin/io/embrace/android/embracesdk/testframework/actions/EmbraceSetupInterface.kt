@@ -40,11 +40,9 @@ import io.embrace.android.embracesdk.internal.injection.EssentialServiceModuleIm
 import io.embrace.android.embracesdk.internal.injection.InstrumentationModule
 import io.embrace.android.embracesdk.internal.injection.InstrumentationModuleImpl
 import io.embrace.android.embracesdk.internal.injection.LogModuleImpl
-import io.embrace.android.embracesdk.internal.injection.ModuleInitBootstrapper
+import io.embrace.android.embracesdk.internal.injection.ModuleGraphFactory
 import io.embrace.android.embracesdk.internal.injection.WorkerThreadModule
 import io.embrace.android.embracesdk.internal.injection.WorkerThreadModuleImpl
-import io.embrace.android.embracesdk.internal.instance.SdkStateHolder
-import io.embrace.android.embracesdk.internal.instance.createSdkStateHolder
 import io.embrace.android.embracesdk.internal.instrumentation.crash.ndk.jniDelegateTestOverride
 import io.embrace.android.embracesdk.internal.instrumentation.crash.ndk.sharedObjectLoaderTestOverride
 import io.embrace.android.embracesdk.internal.instrumentation.startup.DataCaptureServiceModuleImpl
@@ -159,7 +157,7 @@ internal class EmbraceSetupInterface(
     private val fakeCoreModule: CoreModule = FakeCoreModule()
 
     /**
-     * The SDK's store, backed by the same `SharedPreferences` the bootstrapper will use. Owned here
+     * The SDK's store, backed by the same `SharedPreferences` the module graph will use. Owned here
      * rather than read off [CoreModule] because tests write to it in `setupAction`, before the module
      * graph exists.
      */
@@ -171,10 +169,10 @@ internal class EmbraceSetupInterface(
         setupPlatformShadows()
     }
 
-    fun createBootstrapper(
+    fun createModuleGraphFactory(
         instrumentedConfig: FakeInstrumentedConfig,
         deliveryTracer: DeliveryTracer,
-    ): ModuleInitBootstrapper = ModuleInitBootstrapper(
+    ): ModuleGraphFactory = ModuleGraphFactory(
         initModule = fakeInitModule.apply {
             this.instrumentedConfig = instrumentedConfig
         },
@@ -502,11 +500,6 @@ internal class EmbraceSetupInterface(
     fun getCurrentSessionPartSpan(): CurrentSessionPartSpan = fakeInitModule.openTelemetryModule.currentSessionPartSpan
 
     fun getEmbLogger(): FakeInternalLogger = fakeInitModule.logger as FakeInternalLogger
-
-    fun createStateHolder(bootstrapper: ModuleInitBootstrapper): SdkStateHolder = createSdkStateHolder(
-        bootstrapServices = bootstrapServices,
-        bootstrapperProvider = { bootstrapper },
-    )
 
     fun getFakedWorkerExecutor(worker: Worker.Background): BlockingScheduledExecutorService =
         (workerThreadModule as FakeWorkerThreadModule).executorFor(worker)

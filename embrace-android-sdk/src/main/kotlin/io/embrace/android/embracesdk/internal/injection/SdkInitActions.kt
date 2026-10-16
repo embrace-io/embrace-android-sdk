@@ -37,7 +37,7 @@ internal fun ModuleGraph.postInit() = EmbTrace.trace(sectionName = "post-init", 
     openTelemetryModule.setEventMetadataProvider(eventMetadataSupplierProvider())
 
     // note: otelBehavior is not applied here - it decides which OTel SDK is built, so it is set
-    // right after the persisted config is read in ModuleInitBootstrapper.init.
+    // right after the persisted config is read in ModuleGraphFactory.init.
     openTelemetryModule.applyConfiguration(
         sensitiveKeysBehavior = SensitiveKeysBehavior(configService.config.sensitiveKeys),
         bypassValidation = configService.isOnlyUsingOtelExporters(),

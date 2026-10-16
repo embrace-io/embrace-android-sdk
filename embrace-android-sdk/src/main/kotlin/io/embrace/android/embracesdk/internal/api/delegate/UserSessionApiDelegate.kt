@@ -4,17 +4,14 @@ import io.embrace.android.embracesdk.PropertyScope
 import io.embrace.android.embracesdk.SessionStateEvent
 import io.embrace.android.embracesdk.UserSessionListener
 import io.embrace.android.embracesdk.internal.api.UserSessionApi
-import io.embrace.android.embracesdk.internal.injection.ModuleInitBootstrapper
+import io.embrace.android.embracesdk.internal.capture.session.UserSessionPropertiesService
+import io.embrace.android.embracesdk.internal.session.orchestrator.SessionOrchestrator
 import io.embrace.android.embracesdk.internal.session.UserSessionListener as InternalUserSessionListener
 
 internal class UserSessionApiDelegate(
-    lazyBootstrapper: Lazy<ModuleInitBootstrapper>,
+    private val userSessionPropertiesService: UserSessionPropertiesService,
+    private val sessionOrchestrator: SessionOrchestrator,
 ) : UserSessionApi {
-
-    private val bootstrapper by lazyBootstrapper
-
-    private val userSessionPropertiesService get() = bootstrapper.essentialServiceModule.userSessionPropertiesService
-    private val sessionOrchestrator get() = bootstrapper.userSessionOrchestrationModule.sessionOrchestrator
 
     /**
      * Adds a property to the current session.

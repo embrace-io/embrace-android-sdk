@@ -7,7 +7,7 @@ import io.embrace.android.embracesdk.fakes.FakeInternalLogger
 import io.embrace.android.embracesdk.fakes.FakeSpanExporter
 import io.embrace.android.embracesdk.internal.injection.BootstrapServices
 import io.embrace.android.embracesdk.internal.injection.InitModuleImpl
-import io.embrace.android.embracesdk.internal.injection.ModuleInitBootstrapper
+import io.embrace.android.embracesdk.internal.injection.ModuleGraphFactory
 import io.embrace.android.embracesdk.internal.injection.OpenTelemetryModuleImpl
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
@@ -25,9 +25,9 @@ internal class SdkStateHolderFactoryTest {
     fun `otel config set before start is applied to bootstrap services`() {
         val holder = createSdkStateHolder(
             bootstrapServices = bootstrapServices,
-            bootstrapperProvider = {
+            moduleGraphFactoryProvider = {
                 val initModule = InitModuleImpl(bootstrapServices)
-                ModuleInitBootstrapper(
+                ModuleGraphFactory(
                     initModule = initModule,
                     openTelemetryModule = OpenTelemetryModuleImpl(initModule, bootstrapServices.externalOtelConfig),
                     sdkInitResourceUsageTrackerSupplier = { error("failed to init") },
@@ -38,6 +38,6 @@ internal class SdkStateHolderFactoryTest {
         assertFalse(bootstrapServices.externalOtelConfig.hasConfiguredOtlpExport())
         holder.start(context)
         assertTrue(bootstrapServices.externalOtelConfig.hasConfiguredOtlpExport())
-        assertEquals(SdkState.NOT_STARTED, holder.state)
+        assertEquals(SdkState.FAILED, holder.state)
     }
 }

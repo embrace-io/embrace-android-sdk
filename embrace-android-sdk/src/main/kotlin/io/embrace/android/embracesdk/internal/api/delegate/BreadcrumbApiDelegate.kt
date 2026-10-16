@@ -1,18 +1,15 @@
 package io.embrace.android.embracesdk.internal.api.delegate
 
 import io.embrace.android.embracesdk.internal.api.BreadcrumbApi
-import io.embrace.android.embracesdk.internal.injection.ModuleInitBootstrapper
+import io.embrace.android.embracesdk.internal.capture.crumbs.BreadcrumbDataSource
+import io.embrace.android.embracesdk.internal.clock.Clock
 
 internal class BreadcrumbApiDelegate(
-    lazyBootstrapper: Lazy<ModuleInitBootstrapper>,
+    private val clock: Clock,
+    private val breadcrumbDataSource: Lazy<BreadcrumbDataSource?>,
 ) : BreadcrumbApi {
 
-    private val bootstrapper by lazyBootstrapper
-
-    private val sdkClock get() = bootstrapper.initModule.clock
-    private val breadcrumbDataSource get() = bootstrapper.featureModule.breadcrumbDataSource
-
     override fun addBreadcrumb(message: String) {
-        breadcrumbDataSource?.logCustom(message, sdkClock.now())
+        breadcrumbDataSource.value?.logCustom(message, clock.now())
     }
 }

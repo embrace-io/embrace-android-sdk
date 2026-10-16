@@ -1,23 +1,21 @@
 package io.embrace.android.embracesdk.internal.api.delegate
 
 import io.embrace.android.embracesdk.internal.api.NetworkRequestApi
-import io.embrace.android.embracesdk.internal.injection.ModuleInitBootstrapper
+import io.embrace.android.embracesdk.internal.arch.InstrumentationRegistry
 import io.embrace.android.embracesdk.internal.instrumentation.network.DefaultTraceparentGenerator
 import io.embrace.android.embracesdk.internal.instrumentation.network.HttpNetworkRequest
 import io.embrace.android.embracesdk.internal.instrumentation.network.NetworkCaptureDataSource
 import io.embrace.android.embracesdk.internal.instrumentation.network.NetworkRequestDataSource
+import io.embrace.android.embracesdk.internal.network.http.HttpRequestInfoModifierChain
+import io.embrace.android.embracesdk.internal.session.orchestrator.SessionOrchestrator
 import io.embrace.android.embracesdk.network.EmbraceNetworkRequest
 import io.embrace.android.embracesdk.network.http.HttpRequestInfoModifier
 
 internal class NetworkRequestApiDelegate(
-    lazyBootstrapper: Lazy<ModuleInitBootstrapper>,
+    private val registry: InstrumentationRegistry,
+    private val httpRequestInfoModifierChain: HttpRequestInfoModifierChain,
+    private val sessionOrchestrator: SessionOrchestrator,
 ) : NetworkRequestApi {
-
-    private val bootstrapper by lazyBootstrapper
-
-    private val registry get() = bootstrapper.instrumentationModule.instrumentationRegistry
-    private val httpRequestInfoModifierChain get() = bootstrapper.instrumentationModule.instrumentationArgs.httpRequestInfoModifierChain
-    private val sessionOrchestrator get() = bootstrapper.userSessionOrchestrationModule.sessionOrchestrator
 
     override fun recordNetworkRequest(networkRequest: EmbraceNetworkRequest) {
         logNetworkRequest(networkRequest)

@@ -5,6 +5,7 @@ import androidx.test.ext.junit.runners.AndroidJUnit4
 import io.embrace.android.embracesdk.PropertyScope
 import io.embrace.android.embracesdk.fakes.FakeInternalLogger
 import io.embrace.android.embracesdk.fakes.FakeInternalTelemetryService
+import io.embrace.android.embracesdk.internal.EmbraceInternalApi
 import io.embrace.android.embracesdk.internal.InternalInterfaceApi
 import io.embrace.android.embracesdk.internal.NoopInternalInterfaceApi
 import io.embrace.android.embracesdk.internal.otel.spans.NoopEmbraceSdkSpan
@@ -124,31 +125,11 @@ internal class SdkApiDispatcherTest {
     }
 
     @Test
-    fun `internal interfaces are forwarded to the target`() {
-        sdk.internalInterface
-        sdk.reactNativeInternalInterface
-        sdk.unityInternalInterface
-        sdk.flutterInternalInterface
-        assertEquals(
-            listOf(
-                "getInternalInterface/0",
-                "getReactNativeInternalInterface/0",
-                "getUnityInternalInterface/0",
-                "getFlutterInternalInterface/0",
-            ),
-            calls,
-        )
-        assertEquals(emptyList<String>(), telemetryService.apiCalls)
-    }
-
-    @Test
-    fun `internal interface exceptions are reported and a no-op is returned`() {
-        sdk.target = throwingSdkApi()
-        assertSame(NoopInternalInterfaceApi.internalInterface, sdk.internalInterface)
-        assertSame(NoopInternalInterfaceApi.reactNativeInternalInterface, sdk.reactNativeInternalInterface)
-        assertSame(NoopInternalInterfaceApi.unityInternalInterface, sdk.unityInternalInterface)
-        assertSame(NoopInternalInterfaceApi.flutterInternalInterface, sdk.flutterInternalInterface)
-        assertEquals(4, logger.internalErrorMessages.size)
+    fun `internal interface api follows the target`() {
+        assertSame(sdk.target, EmbraceInternalApi.internalInterfaceApi)
+        val replacement = recordingSdkApi(mutableListOf())
+        sdk.target = replacement
+        assertSame(replacement, EmbraceInternalApi.internalInterfaceApi)
     }
 
     @Test

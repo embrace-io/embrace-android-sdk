@@ -7,7 +7,8 @@ import io.embrace.android.embracesdk.fakes.FakeInternalLogger
 import io.embrace.android.embracesdk.fakes.OtelSdkMode
 import io.embrace.android.embracesdk.fakes.behavior.FakeNetworkSpanForwardingBehavior
 import io.embrace.android.embracesdk.fakes.injection.FakeInitModule
-import io.embrace.android.embracesdk.internal.api.delegate.EmbraceInternalInterfaceImpl
+import io.embrace.android.embracesdk.internal.api.delegate.HostedSdkInternalInterfaceImpl
+import io.mockk.mockk
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
@@ -16,7 +17,7 @@ import org.junit.Test
 
 internal class EmbraceInternalInterfaceImplTest {
 
-    private lateinit var internalImpl: EmbraceInternalInterfaceImpl
+    private lateinit var internalImpl: HostedSdkInternalInterfaceImpl
     private lateinit var fakeClock: FakeClock
     private lateinit var initModule: FakeInitModule
     private lateinit var fakeConfigService: FakeConfigService
@@ -28,7 +29,16 @@ internal class EmbraceInternalInterfaceImplTest {
         initModule = FakeInitModule(clock = fakeClock, logger = FakeInternalLogger(false), otelSdkMode = OtelSdkMode.COMPAT)
         fakeConfigService = FakeConfigService()
         resourceSource = FakeEnvelopeResourceSource()
-        internalImpl = EmbraceInternalInterfaceImpl(fakeConfigService, resourceSource)
+        internalImpl = HostedSdkInternalInterfaceImpl(
+            logsApi = mockk(),
+            configService = fakeConfigService,
+            resourceSource = resourceSource,
+            instrumentationRegistry = mockk(),
+            serializer = mockk(),
+            rnBundleIdTracker = lazy { mockk() },
+            hostedSdkVersionInfo = mockk(),
+            logger = mockk(),
+        )
     }
 
     @Test

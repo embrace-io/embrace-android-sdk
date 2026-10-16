@@ -10,11 +10,8 @@ import io.embrace.android.embracesdk.Severity
 import io.embrace.android.embracesdk.UserSessionListener
 import io.embrace.android.embracesdk.experiments.TrackedExperiment
 import io.embrace.android.embracesdk.experiments.TrackedFeatureFlag
-import io.embrace.android.embracesdk.internal.EmbraceInternalInterface
-import io.embrace.android.embracesdk.internal.FlutterInternalInterface
-import io.embrace.android.embracesdk.internal.NoopInternalInterfaceApi
-import io.embrace.android.embracesdk.internal.ReactNativeInternalInterface
-import io.embrace.android.embracesdk.internal.UnityInternalInterface
+import io.embrace.android.embracesdk.internal.EmbraceInternalApi
+import io.embrace.android.embracesdk.internal.api.SdkApi
 import io.embrace.android.embracesdk.internal.api.delegate.LateBindingOpenTelemetry
 import io.embrace.android.embracesdk.internal.api.delegate.TrackedExperimentImpl
 import io.embrace.android.embracesdk.internal.api.delegate.TrackedFeatureFlagImpl
@@ -36,14 +33,26 @@ import io.opentelemetry.kotlin.tracing.export.SpanExporter
 import io.opentelemetry.kotlin.tracing.export.SpanProcessor
 
 /**
- * An [InternalSdkApi] implementation that forwards every call to [target]. [target] is volatile and read fresh on
- * every call; it must only ever be changed by [SdkStateHolder].
+ * An [SdkApi] implementation that forwards every call to [target]. [target] is volatile and read fresh on
+ * every call; it must only ever be changed by [SdkStateHolder]. Setting [target] also points [EmbraceInternalApi] at
+ * it, so hosted SDKs always reach the current instance's internal interfaces.
  */
 internal class SdkApiDispatcher(
-    @Volatile var target: InternalSdkApi,
+    initialTarget: InternalSdkApi,
     private val telemetryService: InternalTelemetryService,
     private val errorHandler: InternalErrorHandler,
-) : InternalSdkApi {
+) : SdkApi {
+
+    @Volatile
+    var target: InternalSdkApi = initialTarget
+        set(value) {
+            field = value
+            EmbraceInternalApi.internalInterfaceApi = value
+        }
+
+    init {
+        EmbraceInternalApi.internalInterfaceApi = initialTarget
+    }
 
     private val openTelemetryKotlin = LateBindingOpenTelemetry {
         guard(NoopOpenTelemetry) { target.getOpenTelemetryKotlin() }
@@ -318,18 +327,6 @@ internal class SdkApiDispatcher(
 
     override fun untrackFeatureFlags(ids: List<String>, endedAt: Long?) =
         record("untrack_feature_flag") { target.untrackFeatureFlags(ids, endedAt) }
-
-    override val internalInterface: EmbraceInternalInterface
-        get() = guard(NoopInternalInterfaceApi.internalInterface) { target.internalInterface }
-
-    override val reactNativeInternalInterface: ReactNativeInternalInterface
-        get() = guard(NoopInternalInterfaceApi.reactNativeInternalInterface) { target.reactNativeInternalInterface }
-
-    override val unityInternalInterface: UnityInternalInterface
-        get() = guard(NoopInternalInterfaceApi.unityInternalInterface) { target.unityInternalInterface }
-
-    override val flutterInternalInterface: FlutterInternalInterface
-        get() = guard(NoopInternalInterfaceApi.flutterInternalInterface) { target.flutterInternalInterface }
 
     /**
      * Records usage of the public API [name] then performs [call], returning [fallback] if the SDK throws.

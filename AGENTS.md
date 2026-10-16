@@ -122,7 +122,7 @@ InitModule -> CoreModule -> EssentialServiceModule -> ...
 - Each DI module is defined as an **interface** in `embrace-android-core/.../injection/`
 - Implementations are `*Impl` classes (e.g., `InitModuleImpl`)
 - Fake implementations exist in `embrace-test-fakes` for testing (e.g., `FakeInitModule`)
-- The `ModuleGraphFactory` in `embrace-android-sdk` wires all modules together
+- `InitializedModuleGraph` in `embrace-android-sdk` wires all modules together
 
 ---
 

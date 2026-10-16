@@ -22,8 +22,8 @@ import io.embrace.android.embracesdk.internal.injection.DeliveryModule
 import io.embrace.android.embracesdk.internal.injection.EssentialServiceModule
 import io.embrace.android.embracesdk.internal.injection.EssentialServiceModuleImpl
 import io.embrace.android.embracesdk.internal.injection.InitModule
-import io.embrace.android.embracesdk.internal.injection.ModuleGraph
-import io.embrace.android.embracesdk.internal.injection.ModuleGraphFactory
+import io.embrace.android.embracesdk.internal.injection.InitializedModuleGraph
+import io.embrace.android.embracesdk.internal.injection.ModuleGraphSupplier
 import io.embrace.android.embracesdk.internal.instance.SdkState
 import io.embrace.android.embracesdk.internal.instance.SdkStateHolder
 import io.embrace.android.embracesdk.internal.instance.createSdkStateHolder
@@ -123,13 +123,13 @@ internal class SdkIntegrationTestRule(
     private lateinit var sdkStateHolder: SdkStateHolder
     private lateinit var baseUrl: String
 
-    private lateinit var moduleGraphFactory: ModuleGraphFactory
-    private var createdModuleGraph: ModuleGraph? = null
+    private lateinit var moduleGraphSupplier: ModuleGraphSupplier
+    private var createdModuleGraph: InitializedModuleGraph? = null
 
     /**
      * The module graph created when the SDK under test started.
      */
-    val moduleGraph: ModuleGraph
+    val moduleGraph: InitializedModuleGraph
         get() = checkNotNull(createdModuleGraph) { "SDK not initialized" }
 
     /**
@@ -165,7 +165,7 @@ internal class SdkIntegrationTestRule(
 
         preSdkStart = EmbracePreSdkStartInterface(setup) { sdkStateHolder.api }
         createdModuleGraph = null
-        moduleGraphFactory = setup.createModuleGraphFactory(
+        moduleGraphSupplier = setup.createModuleGraphSupplier(
             localConfig.copy(
                 baseUrls = FakeBaseUrlConfig(configImpl = baseUrl, dataImpl = baseUrl)
             ),
@@ -178,7 +178,7 @@ internal class SdkIntegrationTestRule(
             { sdkStateHolder.state },
         )
         payloadAssertion = EmbracePayloadAssertionInterface(
-            moduleGraphFactory.initModule,
+            setup.initModule,
             deliveryTracer,
             apiServer,
         ) { sdkStateHolder.state }
@@ -196,7 +196,7 @@ internal class SdkIntegrationTestRule(
 
             // persist config here before the SDK starts up: the SDK reads it during start()
             persistConfig(persistedConfig)
-            moduleGraphFactory.openTelemetryModule.applyConfiguration(
+            setup.openTelemetryModule.applyConfiguration(
                 sensitiveKeysBehavior = SensitiveKeysBehavior(resolveSensitiveKeys(localConfig)),
                 bypassValidation = false,
                 otelBehavior = OtelBehaviorImpl(BehaviorThresholdCheck { "123456" }, localConfig, persistedConfig),
@@ -219,7 +219,7 @@ internal class SdkIntegrationTestRule(
                     assertEquals(
                         "SDK did not select the $otelSdkMode opentelemetry-kotlin implementation.",
                         otelSdkMode.useKotlinSdk,
-                        moduleGraphFactory.openTelemetryModule.otelSdkWrapper.useKotlinSdk,
+                        setup.openTelemetryModule.otelSdkWrapper.useKotlinSdk,
                     )
                 }
                 awaitAsyncInstrumentation()
@@ -234,7 +234,7 @@ internal class SdkIntegrationTestRule(
     }
 
     private fun drainExternalExports() {
-        val otelSdkConfig = moduleGraphFactory.openTelemetryModule.otelSdkConfig
+        val otelSdkConfig = setup.openTelemetryModule.otelSdkConfig
         runBlocking {
             otelSdkConfig.spanProcessor.forceFlush()
             otelSdkConfig.logRecordProcessor.forceFlush()
@@ -277,7 +277,7 @@ internal class SdkIntegrationTestRule(
     private fun createStateHolder(): SdkStateHolder {
         return createSdkStateHolder(
             bootstrapServices = setup.bootstrapServices,
-            moduleGraphFactoryProvider = { moduleGraphFactory },
+            moduleGraphSupplier = moduleGraphSupplier,
             onModuleGraphCreated = { createdModuleGraph = it },
         )
     }

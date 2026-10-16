@@ -35,13 +35,17 @@ import io.embrace.android.embracesdk.internal.injection.CoreModule
 import io.embrace.android.embracesdk.internal.injection.CoreModuleImpl
 import io.embrace.android.embracesdk.internal.injection.DeliveryModuleImpl
 import io.embrace.android.embracesdk.internal.injection.EssentialServiceModuleImpl
+import io.embrace.android.embracesdk.internal.injection.InitModule
+import io.embrace.android.embracesdk.internal.injection.InitializedModuleGraph
 import io.embrace.android.embracesdk.internal.injection.InstrumentationModule
 import io.embrace.android.embracesdk.internal.injection.InstrumentationModuleImpl
 import io.embrace.android.embracesdk.internal.injection.LogModuleImpl
-import io.embrace.android.embracesdk.internal.injection.ModuleGraphFactory
+import io.embrace.android.embracesdk.internal.injection.ModuleGraphSupplier
+import io.embrace.android.embracesdk.internal.injection.OpenTelemetryModule
 import io.embrace.android.embracesdk.internal.injection.WorkerThreadModule
 import io.embrace.android.embracesdk.internal.injection.WorkerThreadModuleImpl
 import io.embrace.android.embracesdk.internal.injection.createConfigService
+import io.embrace.android.embracesdk.internal.instance.BufferingSdkInstance
 import io.embrace.android.embracesdk.internal.instrumentation.crash.ndk.jniDelegateTestOverride
 import io.embrace.android.embracesdk.internal.instrumentation.crash.ndk.sharedObjectLoaderTestOverride
 import io.embrace.android.embracesdk.internal.instrumentation.startup.DataCaptureServiceModuleImpl
@@ -134,6 +138,11 @@ internal class EmbraceSetupInterface(
     val shadowMainLooper: ShadowLooper = Shadows.shadowOf(Looper.getMainLooper())
     val unblockMainLooperOnNavigation: Boolean = threadBlockageWatchdogThread == null
 
+    /**
+     * When set, module graph construction throws this partway through, as the core module is created.
+     */
+    var moduleGraphFailure: Throwable? = null
+
     private val fakeInitModule: FakeInitModule = FakeInitModule(
         clock = fakeClock,
         logger = FakeInternalLogger(ignoredErrors = ignoredInternalErrors),
@@ -144,6 +153,12 @@ internal class EmbraceSetupInterface(
 
     val bootstrapServices: BootstrapServices
         get() = fakeInitModule.bootstrapServices
+
+    val initModule: InitModule
+        get() = fakeInitModule
+
+    val openTelemetryModule: OpenTelemetryModule
+        get() = fakeInitModule.openTelemetryModule
 
     private val workerThreadModule: WorkerThreadModule = initWorkerThreadModule(
         fakeInitModule = fakeInitModule,
@@ -169,16 +184,30 @@ internal class EmbraceSetupInterface(
         setupPlatformShadows()
     }
 
-    fun createModuleGraphFactory(
+    fun createModuleGraphSupplier(
         instrumentedConfig: FakeInstrumentedConfig,
         deliveryTracer: DeliveryTracer,
-    ): ModuleGraphFactory = ModuleGraphFactory(
-        initModule = fakeInitModule.apply {
-            this.instrumentedConfig = instrumentedConfig
-        },
-        openTelemetryModule = fakeInitModule.openTelemetryModule,
+    ): ModuleGraphSupplier {
+        fakeInitModule.instrumentedConfig = instrumentedConfig
+        return { context, bootstrapServices, buffer ->
+            createModuleGraph(context, bootstrapServices, buffer, deliveryTracer)
+        }
+    }
+
+    private fun createModuleGraph(
+        context: Context,
+        bootstrapServices: BootstrapServices,
+        buffer: BufferingSdkInstance,
+        deliveryTracer: DeliveryTracer,
+    ): InitializedModuleGraph = InitializedModuleGraph(
+        context = context,
+        bootstrapServices = bootstrapServices,
+        buffer = buffer,
+        initModuleSupplier = { fakeInitModule },
+        openTelemetryModuleSupplier = { _, _ -> fakeInitModule.openTelemetryModule },
         // forwards the supplied store so the module shares one instance with PersistedConfig, as in production
         coreModuleSupplier = { _, _, suppliedStore ->
+            moduleGraphFailure?.let { throw it }
             CoreModuleImpl(fakeCoreModule.context, fakeInitModule, suppliedStore)
         },
         workerThreadModuleSupplier = { workerThreadModule },

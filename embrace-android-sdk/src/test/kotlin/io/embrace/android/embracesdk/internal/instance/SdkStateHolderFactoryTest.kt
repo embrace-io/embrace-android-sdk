@@ -6,9 +6,7 @@ import androidx.test.ext.junit.runners.AndroidJUnit4
 import io.embrace.android.embracesdk.fakes.FakeInternalLogger
 import io.embrace.android.embracesdk.fakes.FakeSpanExporter
 import io.embrace.android.embracesdk.internal.injection.BootstrapServices
-import io.embrace.android.embracesdk.internal.injection.InitModuleImpl
-import io.embrace.android.embracesdk.internal.injection.ModuleGraphFactory
-import io.embrace.android.embracesdk.internal.injection.OpenTelemetryModuleImpl
+import io.embrace.android.embracesdk.internal.injection.InitializedModuleGraph
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
@@ -25,11 +23,11 @@ internal class SdkStateHolderFactoryTest {
     fun `otel config set before start is applied to bootstrap services`() {
         val holder = createSdkStateHolder(
             bootstrapServices = bootstrapServices,
-            moduleGraphFactoryProvider = {
-                val initModule = InitModuleImpl(bootstrapServices)
-                ModuleGraphFactory(
-                    initModule = initModule,
-                    openTelemetryModule = OpenTelemetryModuleImpl(initModule, bootstrapServices.externalOtelConfig),
+            moduleGraphSupplier = { context, bootstrapServices, buffer ->
+                InitializedModuleGraph(
+                    context = context,
+                    bootstrapServices = bootstrapServices,
+                    buffer = buffer,
                     sdkInitResourceUsageTrackerSupplier = { error("failed to init") },
                 )
             },

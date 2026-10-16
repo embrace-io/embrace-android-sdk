@@ -81,6 +81,7 @@
         "attributes": [
           { "key": "app-image-at-init", "value": "false" },
           { "key": "art-compiler-filter", "value": "NOT_FOUND" },
+          { "key": "bootstrapper-init-duration-ms", "value": "0" },
           { "key": "delivery-init-duration-ms", "value": "0" },
           { "key": "emb.app.version_startup_counter", "value": "1" },
           { "key": "emb.process_identifier", "value": "__EMBRACE_TEST_IGNORE__" },

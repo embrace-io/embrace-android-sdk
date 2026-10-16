@@ -24,6 +24,7 @@ import io.embrace.android.embracesdk.internal.config.remote.RemoteConfig
 import io.embrace.android.embracesdk.internal.delivery.storage.StorageLocation
 import io.embrace.android.embracesdk.internal.delivery.storage.asFile
 import io.embrace.android.embracesdk.internal.instance.SdkState
+import io.embrace.android.embracesdk.internal.logging.InternalErrorType
 import io.embrace.android.embracesdk.internal.otel.sdk.findAttributeValue
 import io.embrace.android.embracesdk.internal.otel.spans.NoopEmbraceSdkSpan
 import io.embrace.android.embracesdk.internal.toStringMap
@@ -209,6 +210,46 @@ internal class SdkStateIntegrationTest(
             },
             assertAction = {
                 assertNoInternalErrors(logger)
+                assertEquals(
+                    listOf("Embrace SDK failed to start, cannot log_message. Subsequent dropped calls will not be logged."),
+                    logger.infoMessages.map { it.msg }.filter { it.startsWith("Embrace SDK failed to start") },
+                )
+                assertEquals(0, getLogEnvelopes(0).size)
+                assertEquals(0, getSessionEnvelopes(0).size)
+            },
+        )
+    }
+
+    @Test
+    fun `NOT_STARTED to FAILED - start is rejected when module graph construction throws`() {
+        lateinit var logger: FakeInternalLogger
+        val failure = IllegalStateException("module graph failure")
+        testRule.runTest(
+            expectSdkToStart = false,
+            setupAction = {
+                logger = getEmbLogger().apply {
+                    throwOnInternalError = false
+                }
+                moduleGraphFailure = failure
+            },
+            testCaseAction = {
+                assertEquals(SdkState.FAILED, sdkState)
+                assertFalse(embrace.isStarted)
+                assertInternalApiIsNoop()
+                recordSession {
+                    embrace.logInfo(LOG_1)
+                }
+
+                // a failed start is not retried
+                embrace.start(context)
+                assertEquals(SdkState.FAILED, sdkState)
+            },
+            assertAction = {
+                assertEquals(
+                    listOf(InternalErrorType.PublicApiFail.toString()),
+                    logger.internalErrorMessages.map { it.msg },
+                )
+                assertSame(failure, logger.internalErrorMessages.single().throwable)
                 assertEquals(
                     listOf("Embrace SDK failed to start, cannot log_message. Subsequent dropped calls will not be logged."),
                     logger.infoMessages.map { it.msg }.filter { it.startsWith("Embrace SDK failed to start") },

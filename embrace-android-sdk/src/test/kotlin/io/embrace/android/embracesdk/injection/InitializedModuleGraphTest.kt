@@ -20,16 +20,17 @@ import io.embrace.android.embracesdk.internal.config.resolved.EmbraceConfig
 import io.embrace.android.embracesdk.internal.config.resolved.SdkModeConfig
 import io.embrace.android.embracesdk.internal.injection.BootstrapServices
 import io.embrace.android.embracesdk.internal.injection.EssentialServiceModuleImpl
-import io.embrace.android.embracesdk.internal.injection.InitModuleImpl
-import io.embrace.android.embracesdk.internal.injection.ModuleGraphFactory
+import io.embrace.android.embracesdk.internal.injection.InitializedModuleGraph
 import io.embrace.android.embracesdk.internal.injection.OpenTelemetryModuleImpl
+import io.embrace.android.embracesdk.internal.injection.SdkDisabledException
+import io.embrace.android.embracesdk.internal.instance.BufferingSdkInstance
 import io.embrace.android.embracesdk.internal.instance.RealSdkInstance
 import io.embrace.android.embracesdk.semconv.EmbSessionAttributes
 import io.opentelemetry.kotlin.NoopOpenTelemetry
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNotNull
-import org.junit.Assert.assertNull
+import org.junit.Assert.assertThrows
 import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
@@ -38,9 +39,8 @@ import org.robolectric.RuntimeEnvironment
 import java.io.File
 
 @RunWith(AndroidJUnit4::class)
-internal class ModuleGraphFactoryTest {
+internal class InitializedModuleGraphTest {
 
-    private lateinit var factory: ModuleGraphFactory
     private lateinit var logger: FakeInternalLogger
     private lateinit var clock: Clock
     private lateinit var coreModule: FakeCoreModule
@@ -52,12 +52,15 @@ internal class ModuleGraphFactoryTest {
         logger = FakeInternalLogger(false)
         clock = FakeClock()
         coreModule = FakeCoreModule()
+        context = RuntimeEnvironment.getApplication().applicationContext
+    }
+
+    private fun createModuleGraph(): InitializedModuleGraph {
         val application = RuntimeEnvironment.getApplication()
-        context = application.applicationContext
-        val initModule = InitModuleImpl(BootstrapServices(logger, clock))
-        factory = ModuleGraphFactory(
-            initModule = initModule,
-            openTelemetryModule = OpenTelemetryModuleImpl(initModule),
+        return InitializedModuleGraph(
+            context = context,
+            bootstrapServices = BootstrapServices(logger, clock),
+            buffer = BufferingSdkInstance({ 0 }, logger),
             configServiceSupplier = { _, _, _, _, _ -> FakeConfigService() },
             coreModuleSupplier = { _, _, _ -> coreModule },
             instrumentationModuleSupplier = { _, _, _, _, _, _, _, _, _ ->
@@ -70,7 +73,7 @@ internal class ModuleGraphFactoryTest {
 
     @Test
     fun `test default implementation`() {
-        with(checkNotNull(factory.init(context))) {
+        with(createModuleGraph()) {
             assertNotNull(initModule)
             assertNotNull(openTelemetryModule)
             assertNotNull(workerThreadModule)
@@ -83,13 +86,8 @@ internal class ModuleGraphFactoryTest {
     }
 
     @Test
-    fun `init returns normally and without failure`() {
-        assertNotNull(factory.init(context))
-    }
-
-    @Test
     fun `postInit installs metadata provider before instrumentation loads`() {
-        val moduleGraph = checkNotNull(factory.init(context))
+        val moduleGraph = createModuleGraph()
         val processor = moduleGraph.openTelemetryModule.otelSdkConfig.logRecordProcessor
 
         val preLog = FakeReadWriteLogRecord()
@@ -110,20 +108,18 @@ internal class ModuleGraphFactoryTest {
      */
     @Test
     fun `kotlin otel sdk selected from persisted config during init`() {
-        val factory = createFactoryWithPersistedConfig(
+        val moduleGraph = createModuleGraphWithPersistedConfig(
             RemoteConfig(otelKotlinSdkConfig = OtelKotlinSdkConfig(pctEnabled = 100f)),
         )
-        assertNotNull(factory.init(context))
-        assertTrue(factory.openTelemetryModule.otelSdkWrapper.useKotlinSdk)
+        assertTrue(moduleGraph.openTelemetryModule.otelSdkWrapper.useKotlinSdk)
     }
 
     @Test
     fun `kotlin otel sdk not selected when disabled by persisted config`() {
-        val factory = createFactoryWithPersistedConfig(
+        val moduleGraph = createModuleGraphWithPersistedConfig(
             RemoteConfig(otelKotlinSdkConfig = OtelKotlinSdkConfig(pctEnabled = 0f)),
         )
-        assertNotNull(factory.init(context))
-        assertFalse(factory.openTelemetryModule.otelSdkWrapper.useKotlinSdk)
+        assertFalse(moduleGraph.openTelemetryModule.otelSdkWrapper.useKotlinSdk)
     }
 
     /**
@@ -134,9 +130,11 @@ internal class ModuleGraphFactoryTest {
     fun `otel sdk is not built until the config service has been created`() {
         var initializedWhenConfigServiceBuilt: Boolean? = null
         val initModule = FakeInitModule(clock = clock, logger = logger, otelSdkMode = OtelSdkMode.COMPAT)
-        val factory = ModuleGraphFactory(
-            initModule = initModule,
-            openTelemetryModule = OpenTelemetryModuleImpl(initModule),
+        val moduleGraph = InitializedModuleGraph(
+            context = context,
+            bootstrapServices = initModule.bootstrapServices,
+            buffer = BufferingSdkInstance({ 0 }, logger),
+            initModuleSupplier = { initModule },
             configServiceSupplier = { _, _, openTelemetryModule, _, _ ->
                 initializedWhenConfigServiceBuilt = openTelemetryModule.currentSessionPartSpan.initialized()
                 FakeConfigService()
@@ -145,36 +143,42 @@ internal class ModuleGraphFactoryTest {
                 FakeInstrumentationModule(RuntimeEnvironment.getApplication(), logger = logger)
             },
         )
-        assertNotNull(factory.init(context))
         assertEquals(false, initializedWhenConfigServiceBuilt)
-        assertTrue(factory.openTelemetryModule.currentSessionPartSpan.initialized())
+        assertTrue(moduleGraph.openTelemetryModule.currentSessionPartSpan.initialized())
     }
 
     @Test
     fun `otel sdk is not built when the sdk is remotely disabled`() {
         val initModule = FakeInitModule(clock = clock, logger = logger, otelSdkMode = OtelSdkMode.COMPAT)
-        val factory = ModuleGraphFactory(
-            initModule = initModule,
-            openTelemetryModule = OpenTelemetryModuleImpl(initModule),
-            configServiceSupplier = { _, _, _, _, _ ->
-                FakeConfigService(
-                    config = EmbraceConfig(sdkMode = { SdkModeConfig(sdkDisabled = { true }) }),
-                )
-            },
-        )
-        assertNull(factory.init(context))
-        assertFalse(factory.openTelemetryModule.currentSessionPartSpan.initialized())
+        val openTelemetryModule = OpenTelemetryModuleImpl(initModule)
+        assertThrows(SdkDisabledException::class.java) {
+            InitializedModuleGraph(
+                context = context,
+                bootstrapServices = initModule.bootstrapServices,
+                buffer = BufferingSdkInstance({ 0 }, logger),
+                initModuleSupplier = { initModule },
+                openTelemetryModuleSupplier = { _, _ -> openTelemetryModule },
+                configServiceSupplier = { _, _, _, _, _ ->
+                    FakeConfigService(
+                        config = EmbraceConfig(sdkMode = { SdkModeConfig(sdkDisabled = { true }) }),
+                    )
+                },
+            )
+        }
+        assertFalse(openTelemetryModule.currentSessionPartSpan.initialized())
     }
 
-    private fun createFactoryWithPersistedConfig(cfg: RemoteConfig): ModuleGraphFactory {
+    private fun createModuleGraphWithPersistedConfig(cfg: RemoteConfig): InitializedModuleGraph {
         val storageDir = File(context.filesDir, PersistedConfig.STORAGE_DIR_NAME).apply { mkdirs() }
         File(storageDir, "most_recent_response").outputStream().buffered().use { stream ->
             TestPlatformSerializer().toJson(cfg, RemoteConfig.serializer(), stream)
         }
         val initModule = FakeInitModule(clock = clock, logger = logger, otelSdkMode = OtelSdkMode.COMPAT)
-        return ModuleGraphFactory(
-            initModule = initModule,
-            openTelemetryModule = OpenTelemetryModuleImpl(initModule),
+        return InitializedModuleGraph(
+            context = context,
+            bootstrapServices = initModule.bootstrapServices,
+            buffer = BufferingSdkInstance({ 0 }, logger),
+            initModuleSupplier = { initModule },
             configServiceSupplier = { _, _, _, _, _ -> FakeConfigService() },
             instrumentationModuleSupplier = { _, _, _, _, _, _, _, _, _ ->
                 FakeInstrumentationModule(RuntimeEnvironment.getApplication(), logger = logger)
@@ -184,7 +188,7 @@ internal class ModuleGraphFactoryTest {
 
     @Test
     fun `post load instrumentation hooks up listeners`() {
-        val moduleGraph = checkNotNull(factory.init(context))
+        val moduleGraph = createModuleGraph()
         val registry = moduleGraph.instrumentationModule.instrumentationRegistry
         val dataSource = CrashHandlerDataSource()
         registry.add { dataSource }

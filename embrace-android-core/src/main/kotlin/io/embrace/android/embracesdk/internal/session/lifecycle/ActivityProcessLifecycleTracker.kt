@@ -43,7 +43,9 @@ import io.embrace.android.embracesdk.internal.injection.getSystemServiceSafe
 class ActivityProcessLifecycleTracker(
     private val application: Application,
     startupContext: Context?,
-    private val handler: Handler = Handler(Looper.getMainLooper()),
+    handler: Handler = Handler(Looper.getMainLooper()),
+    private val postDelayed: (Runnable, Long) -> Unit = handler::postDelayed,
+    private val removeCallbacks: (Runnable) -> Unit = handler::removeCallbacks,
 ) : LifecycleTracker, Application.ActivityLifecycleCallbacks {
 
     private val lock = Any()
@@ -110,11 +112,11 @@ class ActivityProcessLifecycleTracker(
         runCatching {
             application.unregisterActivityLifecycleCallbacks(this)
         }
-        runCatching { handler.removeCallbacks(backgroundRunnable) }
+        runCatching { removeCallbacks(backgroundRunnable) }
     }
 
     override fun onActivityStarted(activity: Activity) {
-        handler.removeCallbacks(backgroundRunnable)
+        removeCallbacks(backgroundRunnable)
 
         val transitioned = synchronized(lock) {
             startedCounter++
@@ -137,7 +139,7 @@ class ActivityProcessLifecycleTracker(
             foreground && startedActivityCount() == 0
         }
         if (debounce) {
-            handler.postDelayed(backgroundRunnable, BACKGROUND_DEBOUNCE_MS)
+            postDelayed(backgroundRunnable, BACKGROUND_DEBOUNCE_MS)
         }
     }
 

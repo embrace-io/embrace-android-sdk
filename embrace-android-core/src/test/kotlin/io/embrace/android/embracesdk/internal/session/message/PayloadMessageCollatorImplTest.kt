@@ -8,8 +8,6 @@ import io.embrace.android.embracesdk.fakes.OtelSdkMode
 import io.embrace.android.embracesdk.fakes.injection.FakeInitModule
 import io.embrace.android.embracesdk.internal.arch.state.ProcessState
 import io.embrace.android.embracesdk.internal.envelope.session.SessionPartEnvelopeSourceImpl
-import io.embrace.android.embracesdk.internal.injection.CoreModule
-import io.embrace.android.embracesdk.internal.injection.CoreModuleImpl
 import io.embrace.android.embracesdk.internal.payload.Envelope
 import io.embrace.android.embracesdk.internal.payload.SessionPartPayload
 import io.embrace.android.embracesdk.internal.session.LifeEventType
@@ -22,22 +20,20 @@ import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
-import org.robolectric.ParameterizedRobolectricTestRunner
-import org.robolectric.RuntimeEnvironment
+import org.junit.runners.Parameterized
 
-@RunWith(ParameterizedRobolectricTestRunner::class)
+@RunWith(Parameterized::class)
 internal class PayloadMessageCollatorImplTest(
     private val otelSdkMode: OtelSdkMode,
 ) {
 
     companion object {
         @JvmStatic
-        @ParameterizedRobolectricTestRunner.Parameters(name = "{0}")
+        @Parameterized.Parameters(name = "{0}")
         fun modes(): List<Array<Any>> = OtelSdkMode.parameters()
     }
 
     private lateinit var initModule: FakeInitModule
-    private lateinit var coreModule: CoreModule
     private lateinit var currentSessionPartSpan: CurrentSessionPartSpan
     private lateinit var collator: PayloadMessageCollatorImpl
     private lateinit var partPayloadSource: FakeSessionPartPayloadSource
@@ -45,7 +41,6 @@ internal class PayloadMessageCollatorImplTest(
     @Before
     fun setUp() {
         initModule = FakeInitModule(otelSdkMode = otelSdkMode)
-        coreModule = CoreModuleImpl(RuntimeEnvironment.getApplication(), initModule)
         partPayloadSource = FakeSessionPartPayloadSource()
         val sessionPartEnvelopeSource = SessionPartEnvelopeSourceImpl(
             metadataSource = FakeEnvelopeMetadataSource(),

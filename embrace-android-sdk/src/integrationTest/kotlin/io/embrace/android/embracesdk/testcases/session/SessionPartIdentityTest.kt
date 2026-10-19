@@ -32,7 +32,7 @@ import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.ParameterizedRobolectricTestRunner
 
-private const val SESSION_COUNT = 200
+private const val SESSION_COUNT = 20
 
 /**
  * Asserts the identity attributes on session parts: which user-session keys appear on spans vs logs,

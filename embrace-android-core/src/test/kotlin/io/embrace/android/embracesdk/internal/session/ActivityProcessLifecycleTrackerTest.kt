@@ -3,38 +3,39 @@ package io.embrace.android.embracesdk.internal.session
 import android.app.Activity
 import android.app.ActivityManager
 import android.app.ActivityManager.RunningAppProcessInfo
-import android.app.Application
 import android.content.Context
 import android.content.ContextWrapper
 import android.os.Process
-import androidx.test.ext.junit.runners.AndroidJUnit4
+import io.embrace.android.embracesdk.fakes.FakeApplication
 import io.embrace.android.embracesdk.fakes.FakeProcessStateListener
 import io.embrace.android.embracesdk.internal.arch.state.ProcessState
 import io.embrace.android.embracesdk.internal.session.lifecycle.ActivityProcessLifecycleTracker
+import io.mockk.every
+import io.mockk.mockk
 import org.junit.Assert.assertEquals
 import org.junit.Before
 import org.junit.Test
-import org.junit.runner.RunWith
-import org.robolectric.Robolectric
-import org.robolectric.RuntimeEnvironment
-import org.robolectric.Shadows.shadowOf
-import org.robolectric.android.controller.ActivityController
-import java.time.Duration
 
 /**
  * Covers the ActivityLifecycleCallbacks-based implementation, i.e. deciding when a transition
  * happened by counting started activities, and guessing the state the process is already in when
  * the SDK starts too late to observe it.
  */
-@RunWith(AndroidJUnit4::class)
 internal class ActivityProcessLifecycleTrackerTest {
 
-    private lateinit var application: Application
+    private lateinit var application: FakeApplication
     private lateinit var listener: FakeProcessStateListener
+    private lateinit var processes: List<RunningAppProcessInfo>
+    private lateinit var pendingTasks: MutableList<Pair<Runnable, Long>>
 
     @Before
     fun before() {
-        application = RuntimeEnvironment.getApplication()
+        application = FakeApplication()
+        val activityManager = mockk<ActivityManager> {
+            every { runningAppProcesses } answers { processes }
+        }
+        application.systemServices[Context.ACTIVITY_SERVICE] = activityManager
+        pendingTasks = mutableListOf()
         listener = FakeProcessStateListener()
         setProcessImportance(RunningAppProcessInfo.IMPORTANCE_CACHED)
     }
@@ -58,7 +59,7 @@ internal class ActivityProcessLifecycleTrackerTest {
     @Test
     fun `an activity wrapped in a ContextWrapper counts as foreground`() {
         val activity = buildActivity().get()
-        val tracker = createTracker(startupContext = ContextWrapper(ContextWrapper(activity)))
+        val tracker = createTracker(startupContext = TestContextWrapper(TestContextWrapper(activity)))
 
         assertEquals(ProcessState.FOREGROUND, tracker.getProcessState())
     }
@@ -66,7 +67,7 @@ internal class ActivityProcessLifecycleTrackerTest {
     @Test
     fun `a finishing activity does not count as foreground`() {
         val controller = buildActivity()
-        controller.get().finish()
+        controller.get().finishing = true
 
         val tracker = createTracker(startupContext = controller.get())
 
@@ -77,7 +78,7 @@ internal class ActivityProcessLifecycleTrackerTest {
     fun `a destroyed activity does not count as foreground`() {
         val controller = buildActivity()
         val activity = controller.get()
-        controller.destroy()
+        controller.get().destroyed = true
 
         val tracker = createTracker(startupContext = activity)
 
@@ -104,7 +105,7 @@ internal class ActivityProcessLifecycleTrackerTest {
 
     @Test
     fun `a missing ActivityManager counts as background`() {
-        shadowOf(activityManager()).setProcesses(emptyList())
+        processes = emptyList()
 
         val tracker = createTracker()
 
@@ -153,7 +154,7 @@ internal class ActivityProcessLifecycleTrackerTest {
         controller.start()
 
         controller.stop()
-        shadowOf(application.mainLooper).idle()
+        elapse(0)
 
         assertEquals(0, listener.backgroundCount.get())
         assertEquals(ProcessState.FOREGROUND, tracker.getProcessState())
@@ -296,28 +297,54 @@ internal class ActivityProcessLifecycleTrackerTest {
     private fun createTracker(
         startupContext: Context? = application,
         registerTracker: Boolean = true,
-    ): ActivityProcessLifecycleTracker = ActivityProcessLifecycleTracker(application, startupContext).apply {
+    ): ActivityProcessLifecycleTracker = ActivityProcessLifecycleTracker(
+        application,
+        startupContext,
+        postDelayed = { runnable, delayMs -> pendingTasks.add(runnable to delayMs) },
+        removeCallbacks = { runnable -> pendingTasks.removeAll { it.first === runnable } },
+    ).apply {
         if (registerTracker) {
             register(listener)
         }
     }
 
-    private fun buildActivity(): ActivityController<TestActivity> =
-        Robolectric.buildActivity(TestActivity::class.java).create()
+    private fun buildActivity(): TestActivityController = TestActivityController(TestActivity())
 
-    private fun elapseDebounce() {
-        shadowOf(application.mainLooper)
-            .idleFor(Duration.ofMillis(ActivityProcessLifecycleTracker.BACKGROUND_DEBOUNCE_MS))
+    private fun elapseDebounce() = elapse(ActivityProcessLifecycleTracker.BACKGROUND_DEBOUNCE_MS)
+
+    private fun elapse(ms: Long) {
+        val due = pendingTasks.filter { it.second <= ms }
+        pendingTasks.removeAll(due)
+        due.forEach { it.first.run() }
     }
-
-    private fun activityManager(): ActivityManager =
-        checkNotNull(application.getSystemService(Context.ACTIVITY_SERVICE) as? ActivityManager)
 
     private fun setProcessImportance(importance: Int) {
-        val info = RunningAppProcessInfo(application.packageName, Process.myPid(), emptyArray())
-        info.importance = importance
-        shadowOf(activityManager()).setProcesses(listOf(info))
+        processes = listOf(
+            RunningAppProcessInfo().also {
+                it.pid = Process.myPid()
+                it.importance = importance
+            },
+        )
     }
 
-    private class TestActivity : Activity()
+    private inner class TestActivityController(private val activity: TestActivity) {
+        fun get(): TestActivity = activity
+
+        fun start() = apply { application.lifecycleCallbacks.toList().forEach { it.onActivityStarted(activity) } }
+
+        fun stop() = apply { application.lifecycleCallbacks.toList().forEach { it.onActivityStopped(activity) } }
+    }
+
+    private class TestActivity : Activity() {
+        var finishing = false
+        var destroyed = false
+
+        override fun isFinishing(): Boolean = finishing
+
+        override fun isDestroyed(): Boolean = destroyed
+    }
+
+    private class TestContextWrapper(private val base: Context) : ContextWrapper(base) {
+        override fun getBaseContext(): Context = base
+    }
 }

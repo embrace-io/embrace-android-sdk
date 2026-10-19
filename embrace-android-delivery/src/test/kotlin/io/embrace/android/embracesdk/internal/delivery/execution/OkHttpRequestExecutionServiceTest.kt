@@ -14,7 +14,7 @@ import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
-import java.net.SocketTimeoutException
+import java.io.IOException
 import java.net.UnknownHostException
 import java.util.concurrent.TimeUnit
 
@@ -152,8 +152,8 @@ class OkHttpRequestExecutionServiceTest {
 
     @Test
     fun `return incomplete with no internal error logged if the execution throws IOException`() {
-        // given a server that times out
-        server.enqueue(MockResponse().setSocketPolicy(SocketPolicy.NO_RESPONSE))
+        // given a server that drops the connection
+        server.enqueue(MockResponse().setSocketPolicy(SocketPolicy.DISCONNECT_AT_START))
 
         // when attempting to make a request
         val result = requestExecutionService.attemptHttpRequest(
@@ -165,7 +165,7 @@ class OkHttpRequestExecutionServiceTest {
         // then the result should be incomplete
         check(result is ExecutionResult.Incomplete)
         assertTrue(result.retry)
-        assertTrue(result.exception is SocketTimeoutException)
+        assertTrue(result.exception is IOException)
         assertEquals(0, logger.internalErrorMessages.size)
     }
 

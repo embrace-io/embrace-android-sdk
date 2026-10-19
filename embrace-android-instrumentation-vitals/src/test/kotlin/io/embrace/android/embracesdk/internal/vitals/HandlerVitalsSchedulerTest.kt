@@ -25,12 +25,14 @@ internal class HandlerVitalsSchedulerTest {
     @Test
     fun `work scheduled after stop is dropped`() {
         val scheduler = HandlerVitalsScheduler(FakeInternalLogger()).apply { start() }
+        val thread = scheduler.handler.looper.thread
         scheduler.stop()
         val latch = CountDownLatch(1)
 
         scheduler.post { latch.countDown() }
         scheduler.scheduleSettle(0) { latch.countDown() }
-        assertFalse(latch.await(100, TimeUnit.MILLISECONDS))
+        thread.join(TIMEOUT_MS)
+        assertEquals(1, latch.count)
     }
 
     @Test

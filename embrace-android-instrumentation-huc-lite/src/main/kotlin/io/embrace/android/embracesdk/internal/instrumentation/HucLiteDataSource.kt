@@ -41,6 +41,7 @@ class HucLiteDataSource(
     private val args: InstrumentationArgs,
     private val streamHandlerFactoryFieldProvider: () -> Field? = ::defaultFactoryFieldProvider,
     private val factoryInstaller: (URLStreamHandlerFactory) -> Unit = URL::setURLStreamHandlerFactory,
+    private val httpsHandlerClassProvider: () -> Class<*> = ::defaultHttpsHandlerClass,
 ) : DataSourceImpl(
     args = args,
     limitStrategy = NoopLimitStrategy,
@@ -101,8 +102,7 @@ class HucLiteDataSource(
         logger: InternalLogger,
     ) {
         runCatching {
-            @SuppressLint("PrivateApi")
-            val httpsHandlerClass = Class.forName("com.android.okhttp.HttpsHandler")
+            val httpsHandlerClass = httpsHandlerClassProvider()
             val dataSourceProvider = dataSourceRef::get
             val instrumentedUrlStreamHandlerFactoryProvider = {
                 InstrumentedUrlStreamHandlerFactory(
@@ -286,6 +286,9 @@ class HucLiteDataSource(
         cause: Throwable,
     ) : RuntimeException("Unexpected error during HUC instrumentation", cause)
 }
+
+@SuppressLint("PrivateApi")
+private fun defaultHttpsHandlerClass(): Class<*> = Class.forName("com.android.okhttp.HttpsHandler")
 
 private fun defaultFactoryFieldProvider(): Field? {
     val fields = URL::class.java.declaredFields

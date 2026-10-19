@@ -2,7 +2,6 @@ package io.embrace.android.embracesdk.internal.instrumentation.navigation
 
 import android.app.Activity
 import android.os.Build
-import androidx.test.ext.junit.runners.AndroidJUnit4
 import io.embrace.android.embracesdk.fakes.FakeClock
 import io.embrace.android.embracesdk.fakes.FakeInternalLogger
 import io.embrace.android.embracesdk.fakes.FakeNavigationTrackingService
@@ -17,20 +16,16 @@ import io.embrace.android.embracesdk.internal.utils.event.EventBus
 import org.junit.Assert.assertEquals
 import org.junit.Before
 import org.junit.Test
-import org.junit.runner.RunWith
-import org.robolectric.Robolectric
-import org.robolectric.RuntimeEnvironment
-import org.robolectric.android.controller.ActivityController
 
-@RunWith(AndroidJUnit4::class)
 internal class ActivityNavigationTrackerTest {
 
     private lateinit var clock: FakeClock
     private lateinit var eventBus: EventBus
     private lateinit var signals: MutableList<NavigationSignal>
     private lateinit var navigationTrackingService: FakeNavigationTrackingService
-    private lateinit var activityController: ActivityController<DopeActivity>
-    private lateinit var anotherController: ActivityController<CoolActivity>
+    private lateinit var application: FakeApplication
+    private lateinit var first: Activity
+    private lateinit var second: Activity
 
     @Before
     fun setUp() {
@@ -39,8 +34,9 @@ internal class ActivityNavigationTrackerTest {
         eventBus = EventBus(FakeInternalLogger())
         eventBus.addHandler(NavigationSignal.KEY) { signals.add(it) }
         navigationTrackingService = FakeNavigationTrackingService()
-        activityController = Robolectric.buildActivity(DopeActivity::class.java).create()
-        anotherController = Robolectric.buildActivity(CoolActivity::class.java).create()
+        application = FakeApplication()
+        first = DopeActivity()
+        second = CoolActivity()
     }
 
     @Test
@@ -64,9 +60,7 @@ internal class ActivityNavigationTrackerTest {
     }
 
     private fun ActivityNavigationTracker.assertPlainActivityNavigation() {
-        val times = transitionBetweenActivities(activityController, anotherController)
-        val first = activityController.get()
-        val second = anotherController.get()
+        val times = transitionBetweenActivities()
         assertEquals(7, times.size)
         assertSignals(
             ActivityStarted(first.getId(), times[0]),
@@ -82,9 +76,7 @@ internal class ActivityNavigationTrackerTest {
     }
 
     private fun ActivityNavigationTracker.assertConcurrentPlainActivityNavigation() {
-        val times = openConcurrentActivities(activityController, anotherController)
-        val first = activityController.get()
-        val second = anotherController.get()
+        val times = openConcurrentActivities()
         assertEquals(7, times.size)
         assertSignals(
             ActivityStarted(first.getId(), times[0]),
@@ -97,25 +89,35 @@ internal class ActivityNavigationTrackerTest {
         )
     }
 
-    private fun ActivityNavigationTracker.transitionBetweenActivities(
-        first: ActivityController<out Activity>,
-        second: ActivityController<out Activity>,
-    ): List<Long> {
-        return invokeCallbacks(
-            listOf(first::start, first::resume, first::pause, second::start, second::resume, second::pause, ::onBackground),
+    private fun ActivityNavigationTracker.transitionBetweenActivities(): List<Long> = with(application) {
+        invokeCallbacks(
+            listOf(
+                { start(first) },
+                { resume(first) },
+                { pause(first) },
+                { start(second) },
+                { resume(second) },
+                { pause(second) },
+                ::onBackground,
+            ),
         )
     }
 
-    private fun ActivityNavigationTracker.openConcurrentActivities(
-        first: ActivityController<out Activity>,
-        second: ActivityController<out Activity>,
-    ): List<Long> {
-        return invokeCallbacks(
-            listOf(first::start, first::resume, second::start, second::resume, first::pause, second::pause, ::onBackground),
+    private fun ActivityNavigationTracker.openConcurrentActivities(): List<Long> = with(application) {
+        invokeCallbacks(
+            listOf(
+                { start(first) },
+                { resume(first) },
+                { start(second) },
+                { resume(second) },
+                { pause(first) },
+                { pause(second) },
+                ::onBackground,
+            ),
         )
     }
 
-    private fun invokeCallbacks(callbacks: List<Function0<Any>>): List<Long> {
+    private fun invokeCallbacks(callbacks: List<() -> Unit>): List<Long> {
         val times = mutableListOf<Long>()
         callbacks.forEach {
             times.add(clock.tick())
@@ -132,7 +134,7 @@ internal class ActivityNavigationTrackerTest {
             FakeInternalLogger(),
             VersionChecker { min -> sdkInt >= min },
         ).apply {
-            RuntimeEnvironment.getApplication().registerActivityLifecycleCallbacks(this)
+            application.registerActivityLifecycleCallbacks(this)
         }
     }
 
@@ -140,6 +142,11 @@ internal class ActivityNavigationTrackerTest {
         assertEquals(expected.toList(), signals)
     }
 
-    private class DopeActivity : Activity()
-    private class CoolActivity : Activity()
+    private class DopeActivity : Activity() {
+        override fun getLocalClassName(): String = "DopeActivity"
+    }
+
+    private class CoolActivity : Activity() {
+        override fun getLocalClassName(): String = "CoolActivity"
+    }
 }

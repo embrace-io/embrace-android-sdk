@@ -5,19 +5,20 @@ import org.gradle.api.GradleException
 import org.gradle.api.Project
 
 /**
- * Publish without javadoc/source jars when `-PintegrationPublish` is set, which speeds up execution time
- * as tests never read these
+ * Publish without javadoc/source jars unless publishing to Maven Central or `-PfullPublish` is set, as integration
+ * tests never read them.
  */
 fun MavenPublishBaseExtension.configureIntegrationPublish(project: Project) {
-    if (!project.providers.gradleProperty("integrationPublish").isPresent) {
+    val mavenCentralRequested = project.gradle.startParameter.taskNames.any { it.contains("MavenCentral") }
+    if (mavenCentralRequested || project.providers.gradleProperty("fullPublish").isPresent) {
         return
     }
     configureBasedOnAppliedPlugins(javadocJar = JavadocJar.None(), sourcesJar = SourcesJar.None())
 
-    // fail loudly if we're somehow attempting to publish...
+    // fail loudly if a Maven Central publish is reached indirectly
     project.gradle.taskGraph.whenReady {
         if (allTasks.any { it.project == project && it.name.contains("MavenCentral") }) {
-            throw GradleException("-PintegrationPublish must not be used when publishing to Maven Central")
+            throw GradleException("Pass -PfullPublish when publishing to Maven Central")
         }
     }
 }

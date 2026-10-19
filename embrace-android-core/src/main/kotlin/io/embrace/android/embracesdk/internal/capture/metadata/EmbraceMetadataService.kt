@@ -1,5 +1,6 @@
 package io.embrace.android.embracesdk.internal.capture.metadata
 
+import android.annotation.SuppressLint
 import android.app.usage.StorageStatsManager
 import android.content.Context
 import android.os.Build
@@ -71,7 +72,10 @@ internal class EmbraceMetadataService(
             if (diskUsage == null) {
                 diskUsage = DiskUsage(null, free)
             }
-            clockDrift = computeClockDrift()
+            clockDrift = computeClockDrift(
+                gnssTimeMillis = @SuppressLint("NewApi") { SystemClock.currentGnssTimeClock().millis() },
+                networkTimeMillis = @SuppressLint("NewApi") { SystemClock.currentNetworkTimeClock().millis() },
+            )
         }
     }
 
@@ -98,20 +102,20 @@ internal class EmbraceMetadataService(
 
     override fun getClockDrift(): ClockDrift? = clockDrift
 
-    private fun computeClockDrift(): ClockDrift? {
+    internal fun computeClockDrift(gnssTimeMillis: () -> Long, networkTimeMillis: () -> Long): ClockDrift? {
         if (!versionChecker.isAtLeast(Build.VERSION_CODES.Q)) {
             return null
         }
 
         val gnssDrift = runCatching {
-            val gnss = SystemClock.currentGnssTimeClock().millis()
+            val gnss = gnssTimeMillis()
             ClockDrift.calculateDrift(wallTimeMillis = clock.now(), auxTimeMillis = gnss)
         }.getOrNull()
 
         val networkDrift =
             if (versionChecker.isAtLeast(Build.VERSION_CODES.TIRAMISU)) {
                 runCatching {
-                    val network = SystemClock.currentNetworkTimeClock().millis()
+                    val network = networkTimeMillis()
                     ClockDrift.calculateDrift(wallTimeMillis = clock.now(), auxTimeMillis = network)
                 }.getOrNull()
             } else {

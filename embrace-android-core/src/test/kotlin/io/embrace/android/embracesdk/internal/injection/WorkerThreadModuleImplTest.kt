@@ -104,7 +104,7 @@ internal class WorkerThreadModuleImplTest {
 
         val thread = worker.submit<Thread> { Thread.currentThread() }.get(1, TimeUnit.SECONDS)
         val future = worker.scheduleAtFixedRate({}, 0, IDLE_TIMEOUT_MS / 2, TimeUnit.MILLISECONDS)
-        thread.join(JOIN_TIMEOUT_MS)
+        thread.join(ALIVE_CHECK_MS)
         assertTrue(thread.isAlive)
 
         future.cancel(false)
@@ -119,7 +119,7 @@ internal class WorkerThreadModuleImplTest {
         val worker = module.backgroundWorker(Worker.Background.NonIoRegWorker)
 
         val thread = worker.submit<Thread> { Thread.currentThread() }.get(1, TimeUnit.SECONDS)
-        thread.join(JOIN_TIMEOUT_MS)
+        thread.join(ALIVE_CHECK_MS)
         assertTrue(thread.isAlive)
         module.close()
     }
@@ -127,5 +127,6 @@ internal class WorkerThreadModuleImplTest {
     private companion object {
         const val IDLE_TIMEOUT_MS = 50L
         const val JOIN_TIMEOUT_MS = 500L
+        const val ALIVE_CHECK_MS = IDLE_TIMEOUT_MS * 4
     }
 }

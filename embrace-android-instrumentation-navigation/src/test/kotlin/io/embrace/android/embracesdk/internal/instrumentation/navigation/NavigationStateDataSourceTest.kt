@@ -1,8 +1,6 @@
 package io.embrace.android.embracesdk.internal.instrumentation.navigation
 
 import android.app.Activity
-import androidx.test.core.app.ApplicationProvider
-import androidx.test.ext.junit.runners.AndroidJUnit4
 import io.embrace.android.embracesdk.fakes.FakeInstrumentationArgs
 import io.embrace.android.embracesdk.internal.arch.navigation.CurrentScreen
 import io.embrace.android.embracesdk.internal.arch.navigation.NavigationSignal
@@ -13,18 +11,17 @@ import org.junit.Assert.assertNotEquals
 import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
-import org.junit.runner.RunWith
-import org.robolectric.Robolectric
 
-@RunWith(AndroidJUnit4::class)
 internal class NavigationStateDataSourceTest {
     private lateinit var dataSource: NavigationStateDataSource
     private lateinit var args: FakeInstrumentationArgs
+    private lateinit var application: FakeApplication
 
     @Before
     fun setUp() {
+        application = FakeApplication()
         args = FakeInstrumentationArgs(
-            application = ApplicationProvider.getApplicationContext(),
+            application = application,
             sessionPartIdSupplier = { "session-part-id" },
         )
         dataSource = NavigationStateDataSource(args).apply { onDataCaptureEnabled() }
@@ -184,7 +181,9 @@ internal class NavigationStateDataSourceTest {
         val source = NavigationStateDataSource(args, tracker).apply { onDataCaptureEnabled() }
 
         source.onDataCaptureDisabled()
-        Robolectric.buildActivity(Activity::class.java).setup()
+        val activity = Activity()
+        application.start(activity)
+        application.resume(activity)
         assertTrue(signals.isEmpty())
     }
 

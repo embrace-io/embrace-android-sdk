@@ -1,6 +1,7 @@
 package io.embrace.android.embracesdk.internal.vitals
 
 import androidx.test.ext.junit.runners.AndroidJUnit4
+import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Test
@@ -23,12 +24,14 @@ internal class HandlerVitalsSchedulerTest {
     @Test
     fun `work scheduled after stop is dropped`() {
         val scheduler = HandlerVitalsScheduler().apply { start() }
+        val thread = scheduler.handler.looper.thread
         scheduler.stop()
         val latch = CountDownLatch(1)
 
         scheduler.post { latch.countDown() }
         scheduler.scheduleSettle(0) { latch.countDown() }
-        assertFalse(latch.await(100, TimeUnit.MILLISECONDS))
+        thread.join(TIMEOUT_MS)
+        assertEquals(1, latch.count)
     }
 
     @Test

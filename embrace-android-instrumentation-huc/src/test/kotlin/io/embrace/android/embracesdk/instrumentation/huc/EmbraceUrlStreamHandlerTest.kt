@@ -1,16 +1,13 @@
 package io.embrace.android.embracesdk.instrumentation.huc
 
-import androidx.test.ext.junit.runners.AndroidJUnit4
 import io.embrace.android.embracesdk.internal.config.behavior.NetworkSpanForwardingBehaviorImpl.Companion.TRACEPARENT_HEADER_NAME
 import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
-import org.junit.runner.RunWith
 import java.net.URL
 
-@RunWith(AndroidJUnit4::class)
 internal class EmbraceUrlStreamHandlerTest {
 
     private lateinit var internalApi: FakeInternalNetworkApi
@@ -119,9 +116,7 @@ internal class EmbraceUrlStreamHandlerTest {
     }
 
     companion object {
-        private val httpUrlStreamHandler =
-            HttpUrlConnectionTracker.EmbraceUrlStreamHandlerFactory.newUrlStreamHandler("com.android.okhttp.HttpHandler")
-        private val httpsUrlStreamHandler =
-            HttpUrlConnectionTracker.EmbraceUrlStreamHandlerFactory.newUrlStreamHandler("com.android.okhttp.HttpsHandler")
+        private val httpUrlStreamHandler = FakeURLStreamHandler()
+        private val httpsUrlStreamHandler = FakeHttpsURLStreamHandler()
     }
 }

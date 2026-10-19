@@ -1,7 +1,6 @@
 package io.embrace.android.embracesdk.internal.envelope.resource
 
 import android.view.WindowManager
-import androidx.test.ext.junit.runners.AndroidJUnit4
 import io.embrace.android.embracesdk.concurrency.BlockingScheduledExecutorService
 import io.embrace.android.embracesdk.fakes.FakeInternalLogger
 import io.embrace.android.embracesdk.internal.SystemInfo
@@ -9,13 +8,11 @@ import io.embrace.android.embracesdk.internal.worker.BackgroundWorker
 import io.mockk.mockk
 import org.junit.Assert.assertEquals
 import org.junit.Test
-import org.junit.runner.RunWith
 
 /**
  * The values [DeviceImpl] retrieves asynchronously start out as placeholders, so anything holding
  * a resource built before they land needs to be told when they change.
  */
-@RunWith(AndroidJUnit4::class)
 internal class DeviceImplChangeListenerTest {
 
     @Test
@@ -64,5 +61,6 @@ internal class DeviceImplChangeListenerTest {
         backgroundWorker = BackgroundWorker(executor),
         systemInfo = SystemInfo(),
         logger = FakeInternalLogger(),
+        isEmulator = { false },
     ).apply { startAsyncRetrieval() }
 }

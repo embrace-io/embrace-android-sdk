@@ -368,6 +368,7 @@ internal class EmbracePayloadAssertionInterface(
             else ->
                 returnIfConditionMet(
                     waitTimeMs = waitTimeMs,
+                    checkIntervalMs = 1,
                     desiredValueSupplier = supplier,
                     dataProvider = supplier,
                     condition = { data ->

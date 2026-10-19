@@ -1,6 +1,7 @@
 package io.embrace.android.embracesdk.instrumentation.huc
 
 import java.net.HttpURLConnection
+import java.net.Proxy
 import java.net.URL
 import java.net.URLConnection
 import java.net.URLStreamHandler
@@ -10,6 +11,8 @@ internal open class FakeURLStreamHandler : URLStreamHandler() {
     override fun openConnection(url: URL): URLConnection {
         return TestURLConnection(url)
     }
+
+    override fun openConnection(url: URL, proxy: Proxy): URLConnection = openConnection(url)
 
     private open class TestURLConnection(url: URL) : HttpURLConnection(url) {
         override fun disconnect() {

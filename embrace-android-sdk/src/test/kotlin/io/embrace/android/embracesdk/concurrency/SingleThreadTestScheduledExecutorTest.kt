@@ -1,5 +1,6 @@
 package io.embrace.android.embracesdk.concurrency
 
+import io.embrace.android.embracesdk.assertions.waitUntilConditionMet
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertThrows
 import org.junit.Assert.assertTrue
@@ -19,7 +20,7 @@ internal class SingleThreadTestScheduledExecutorTest {
     @Test
     fun `last throwable from execution captured and executor can be reset`() {
         val f1 = executorService.submit { throw RuntimeException() }
-        Thread.sleep(50L)
+        waitUntilConditionMet(dataProvider = executorService::lastThrowable, condition = { it != null })
         assertThrows(ExecutionException::class.java) {
             f1.get(1L, TimeUnit.SECONDS)
         }
@@ -32,7 +33,7 @@ internal class SingleThreadTestScheduledExecutorTest {
         assertNull(executorService.lastThrowable())
 
         val f2 = executorService.submit { throw NotImplementedError() }
-        Thread.sleep(50L)
+        waitUntilConditionMet(dataProvider = executorService::lastThrowable, condition = { it != null })
         assertThrows(ExecutionException::class.java) {
             f2.get(1L, TimeUnit.SECONDS)
         }

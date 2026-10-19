@@ -13,10 +13,9 @@ import io.embrace.android.embracesdk.internal.arch.state.ProcessStateListener
  */
 class AndroidxProcessLifecycleTracker(
     private val lifecycleOwner: LifecycleOwner,
+    private val isMainThread: () -> Boolean = { Thread.currentThread() === Looper.getMainLooper().thread },
+    private val postToMainThread: (Runnable) -> Unit = { Handler(Looper.getMainLooper()).post(it) },
 ) : LifecycleTracker, LifecycleEventObserver {
-
-    private val mainLooper = Looper.getMainLooper()
-    private val mainThread = mainLooper.thread
 
     @Volatile
     private var listener: ProcessStateListener? = null
@@ -55,9 +54,8 @@ class AndroidxProcessLifecycleTracker(
         val wrappedRunnable = Runnable {
             runCatching(action)
         }
-        if (Thread.currentThread() !== mainThread) {
-            val mainHandler = Handler(mainLooper)
-            mainHandler.post(wrappedRunnable)
+        if (!isMainThread()) {
+            postToMainThread(wrappedRunnable)
         } else {
             wrappedRunnable.run()
         }

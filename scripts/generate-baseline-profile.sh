@@ -31,7 +31,7 @@ generator=io.embrace.android.embracesdk.macrobenchmark.BaselineProfileGenerator
 dest=$root/embrace-android-sdk/src/main/baseline-prof.txt
 
 pub=:embrace-gradle-plugin:publishAllPublicationsToIntegrationTestRepository
-set -- :embrace-macrobenchmark:pixel6Api34BaselineProfileAndroidTest \
+set -- :embrace-macrobenchmark:pixel6Api34BaselineProfileAndroidTest -Pembrace.baselineProfile \
     "-Pandroid.testInstrumentationRunnerArguments.androidx.benchmark.enabledRules=BaselineProfile" \
     "-Pandroid.testInstrumentationRunnerArguments.class=$generator"
 # shellcheck disable=SC2086 # extra holds whitespace-separated gradle args

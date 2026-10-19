@@ -142,6 +142,18 @@ internal class FragmentLeakDetectionLifecycleCallbacksTest {
     }
 
     @Test
+    fun `close unregisters from every fragment manager registered on`() {
+        val activity = registerOn(buildActivity(FragmentActivity::class.java).setup().get())
+        callbacks.close()
+        val fragment = Fragment()
+        activity.supportFragmentManager.beginTransaction().add(fragment, "tag").commitNow()
+
+        assertNull(
+            leakDetector.trackClosed(fragment, OWNER, FRAGMENT_CONTEXT),
+        )
+    }
+
+    @Test
     fun `a webview nested in a fragment's view is tracked as opened once started, when enabled`() {
         val webViewCallbacks = FragmentLeakDetectionLifecycleCallbacks(
             leakDetector,

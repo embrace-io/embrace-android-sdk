@@ -65,6 +65,26 @@ internal class LeakDetectionDataSourceFragmentGatingTest {
         )
     }
 
+    @Test
+    fun `fragment callbacks are unregistered when data capture is disabled`() {
+        val args = FakeInstrumentationArgs(RuntimeEnvironment.getApplication())
+        args.configService.config = EmbraceConfig(autoDataCapture = {
+            AutoDataCaptureConfig(fragmentLeakDetectionEnabled = { true })
+        })
+        dataSource = LeakDetectionDataSource(args)
+        dataSource.onDataCaptureEnabled()
+        val activity = buildActivity(FragmentActivity::class.java).setup().get()
+        dataSource.onDataCaptureDisabled()
+
+        // restart the detector
+        dataSource.leakDetector.start()
+        val fragment = Fragment()
+        activity.supportFragmentManager.beginTransaction().add(fragment, "tag").commitNow()
+        assertNull(
+            dataSource.leakDetector.trackClosed(fragment, OWNER, FRAGMENT_CONTEXT),
+        )
+    }
+
     private companion object {
         val OWNER = TrackingSource.FRAGMENT
         val SESSION_IDS = SessionIdsSnapshot(userSessionId = "session-1", sessionPartId = "part-1")

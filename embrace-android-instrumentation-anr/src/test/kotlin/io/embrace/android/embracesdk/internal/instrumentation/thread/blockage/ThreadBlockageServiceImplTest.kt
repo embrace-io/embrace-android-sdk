@@ -20,6 +20,7 @@ import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
 import java.lang.Thread.currentThread
+import java.util.concurrent.Future
 import java.util.concurrent.TimeUnit
 
 internal class ThreadBlockageServiceImplTest {
@@ -311,6 +312,18 @@ internal class ThreadBlockageServiceImplTest {
             }.get(1L, TimeUnit.SECONDS)
             val intervals = service.snapshotSpans()
             assertEquals(5, intervals.size)
+        }
+    }
+
+    @Test
+    fun `close stops monitoring and foregrounding does not restart it`() {
+        with(rule) {
+            watchdogExecutorService.submit {
+                service.startCapture()
+                service.close()
+                service.onForeground()
+            }.get(1L, TimeUnit.SECONDS)
+            assertTrue(watchdogExecutorService.queue.all { (it as Future<*>).isCancelled })
         }
     }
 

@@ -110,6 +110,14 @@ internal class BlockedThreadDetectorTest {
     }
 
     @Test
+    fun `start after close schedules nothing`() {
+        detector.close()
+        detector.start()
+        watchdogExecutorService.runCurrentlyBlocked()
+        assertEquals(0, watchdogExecutorService.scheduledTasksCount())
+    }
+
+    @Test
     fun `starting monitoring thread twice does not result in multiple recurring tasks`() {
         repeat(2) {
             detector.start()

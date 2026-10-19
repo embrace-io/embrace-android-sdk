@@ -2,6 +2,7 @@ package io.embrace.android.embracesdk.internal.utils.event
 
 import io.embrace.android.embracesdk.internal.logging.InternalErrorHandler
 import io.embrace.android.embracesdk.internal.logging.InternalErrorType
+import io.embrace.android.embracesdk.internal.utils.event.EventBus.Companion.DEFAULT_ORDER
 import java.util.BitSet
 import java.util.Collections
 import java.util.IdentityHashMap
@@ -33,10 +34,11 @@ class EventBus(private val internalErrorHandler: InternalErrorHandler) {
     private var registrations = AtomicReferenceArray<Registrations?>(INITIAL_CAPACITY)
 
     /**
-     * The value most recently emitted against each [StateKey], indexed by [BusKey.id], replaced only by [retainStateUnderLock].
+     * The value most recently emitted against each [StateKey], indexed by [BusKey.id], replaced only by [retainStateUnderLock] and
+     * [stop].
      *
-     * Nothing is ever evicted, so a retained value must not reference anything shorter lived than the process - an `Activity` or
-     * `View` reachable from one leaks for the rest of it.
+     * Nothing is evicted before [stop], so a retained value must not reference anything shorter lived than the process - an
+     * `Activity` or `View` reachable from one leaks for the rest of it.
      */
     @Volatile
     private var retainedStateValues = AtomicReferenceArray<Any?>(INITIAL_CAPACITY)
@@ -50,12 +52,19 @@ class EventBus(private val internalErrorHandler: InternalErrorHandler) {
     private var currentlyGrowingRetainedStates = false
 
     /**
+     * Set once by [stop], under [lock], before [registrations] and [retainedStateValues] are emptied, so that neither can grow again.
+     */
+    @Volatile
+    private var stopped = false
+
+    /**
      * Handlers already reported as having thrown, so that each is reported once. Identity keyed, as registration is.
      */
     private val loggedFailures = Collections.synchronizedSet(Collections.newSetFromMap(IdentityHashMap<Any, Boolean>()))
 
     /**
-     * Guards [ensuredProducers], held while a producer factory runs so that no caller returns before its key's producer exists.
+     * Guards [ensuredProducers] and [producers], held while a producer factory runs so that no caller returns before its key's
+     * producer exists.
      */
     private val producerLock = Any()
 
@@ -65,18 +74,34 @@ class EventBus(private val internalErrorHandler: InternalErrorHandler) {
     private val ensuredProducers = BitSet()
 
     /**
-     * Runs [factory] to create the producer of [key] unless a factory has already been run for it, returning only once it has.
+     * What each producer factory returned, in creation order, written and read only under [producerLock].
      */
-    fun ensureEventProducer(key: BusKey, factory: () -> Unit) {
+    private val producers = ArrayList<AutoCloseable>()
+
+    /**
+     * Runs [factory] to create the producer of [key] unless a factory has already been run for it or the bus has been stopped,
+     * returning only once it has, and closes what [factory] returns when the bus is stopped.
+     *
+     * A factory must not start or disable the SDK, as [stop] waits for a running factory while the SDK's own lock is held.
+     */
+    fun ensureEventProducer(key: BusKey, factory: () -> AutoCloseable) {
         synchronized(producerLock) {
-            if (ensuredProducers.get(key.id)) {
+            if (stopped || ensuredProducers.get(key.id)) {
                 return
             }
             ensuredProducers.set(key.id)
-            try {
+            val producer = try {
                 factory()
             } catch (failure: Exception) {
                 internalErrorHandler.trackInternalError(InternalErrorType.EventBusProducerFail, failure)
+                return
+            }
+
+            // a stop while the factory ran may already have taken the producers to close
+            if (stopped) {
+                closeProducer(producer)
+            } else {
+                producers.add(producer)
             }
         }
     }
@@ -153,7 +178,7 @@ class EventBus(private val internalErrorHandler: InternalErrorHandler) {
             if (currentlyGrowingRetainedStates || retainedStateValues !== current) {
                 retainStateUnderLock(key.id, value)
             }
-        } else {
+        } else if (!stopped) {
             retainStateUnderLock(key.id, value)
         }
 
@@ -162,13 +187,43 @@ class EventBus(private val internalErrorHandler: InternalErrorHandler) {
     }
 
     /**
-     * Returns the value most recently emitted against [key], or `null` if nothing has been emitted against it.
+     * Returns the value most recently emitted against [key], or `null` if nothing has been emitted against it or the bus is stopped.
      */
     fun <E : Any> currentState(key: StateKey<E>): E? {
         val current = retainedStateValues
 
         @Suppress("UNCHECKED_CAST") // emitState is the only writer, and it pairs a key with a value of that key's own type
         return (if (key.id < current.length()) current.get(key.id) else null) as E?
+    }
+
+    /**
+     * Releases every handler and retained value and closes every producer in reverse creation order, after which emitting delivers
+     * and retains nothing, and registering does nothing.
+     */
+    fun stop() {
+        synchronized(lock) {
+            // set before the arrays are emptied, so that anything reading an emptied array also reads it set
+            stopped = true
+            registrations = AtomicReferenceArray(0)
+            retainedStateValues = AtomicReferenceArray(0)
+        }
+        loggedFailures.clear()
+
+        // taken separately from lock, waiting out any running factory so that what it returns is closed
+        val toClose = synchronized(producerLock) {
+            producers.toTypedArray().also { producers.clear() }
+        }
+        for (i in toClose.lastIndex downTo 0) {
+            closeProducer(toClose[i])
+        }
+    }
+
+    private fun closeProducer(producer: AutoCloseable) {
+        try {
+            producer.close()
+        } catch (failure: Exception) {
+            internalErrorHandler.trackInternalError(InternalErrorType.EventBusProducerFail, failure)
+        }
     }
 
     /**
@@ -198,6 +253,11 @@ class EventBus(private val internalErrorHandler: InternalErrorHandler) {
     private fun reportFailure(registrant: Any, failure: Exception) {
         if (loggedFailures.add(registrant)) {
             internalErrorHandler.trackInternalError(InternalErrorType.EventBusHandlerFail, failure)
+
+            // a dispatch in flight across stop may have added after its clear
+            if (stopped) {
+                loggedFailures.remove(registrant)
+            }
         }
     }
 
@@ -215,6 +275,9 @@ class EventBus(private val internalErrorHandler: InternalErrorHandler) {
      */
     private fun addTo(key: BusKey, handler: EventHandler<*>, order: Int): Boolean {
         synchronized(lock) {
+            if (stopped) {
+                return false
+            }
             var current = registrations
             if (key.id >= current.length()) {
                 current = grownToHold(current, key.id)
@@ -248,10 +311,13 @@ class EventBus(private val internalErrorHandler: InternalErrorHandler) {
     }
 
     /**
-     * Writes [value] against [id] under [lock], first growing [retainedStateValues] to hold [id] if it can't.
+     * Writes [value] against [id] under [lock], first growing [retainedStateValues] to hold [id] if it can't, unless stopped.
      */
     private fun retainStateUnderLock(id: Int, value: Any) {
         synchronized(lock) {
+            if (stopped) {
+                return
+            }
             var current = retainedStateValues
             if (id >= current.length()) {
                 currentlyGrowingRetainedStates = true

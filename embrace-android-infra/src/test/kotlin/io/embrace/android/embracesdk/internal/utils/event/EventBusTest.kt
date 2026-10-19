@@ -11,6 +11,12 @@ import java.util.concurrent.CyclicBarrier
 import java.util.concurrent.atomic.AtomicInteger
 import kotlin.concurrent.thread
 
+/**
+ * Creates keys until one has an id beyond any capacity an array could have been sized to while holding [key].
+ */
+internal fun <K : BusKey> keyBeyondCapacityFor(key: BusKey, create: () -> K): K =
+    generateSequence(create).first { it.id >= INITIAL_CAPACITY && it.id > key.id * 2 }
+
 internal class EventBusTest {
 
     private sealed interface AppEvent
@@ -42,12 +48,6 @@ internal class EventBusTest {
     private val otherScreenKey = StateKey<ScreenState>()
 
     private val connectionKey = StateKey<ConnectionState>()
-
-    /**
-     * Creates keys until one has an id beyond any capacity an array could have been sized to while holding [key].
-     */
-    private fun <K : BusKey> keyBeyondCapacityFor(key: BusKey, create: () -> K): K =
-        generateSequence(create).first { it.id >= INITIAL_CAPACITY && it.id > key.id * 2 }
 
     @Test
     fun `handler receives events emitted against its key`() {
@@ -500,7 +500,12 @@ internal class EventBusTest {
     fun `a producer is created once however many times it is ensured`() {
         val created = AtomicInteger()
 
-        repeat(3) { bus.ensureEventProducer(appKey) { created.incrementAndGet() } }
+        repeat(3) {
+            bus.ensureEventProducer(appKey) {
+                created.incrementAndGet()
+                AutoCloseable {}
+            }
+        }
 
         assertEquals(1, created.get())
     }
@@ -509,9 +514,18 @@ internal class EventBusTest {
     fun `producers of different keys are created independently`() {
         val created = mutableListOf<String>()
 
-        bus.ensureEventProducer(appKey) { created.add("app") }
-        bus.ensureEventProducer(screenKey) { created.add("screen") }
-        bus.ensureEventProducer(appKey) { created.add("app again") }
+        bus.ensureEventProducer(appKey) {
+            created.add("app")
+            AutoCloseable {}
+        }
+        bus.ensureEventProducer(screenKey) {
+            created.add("screen")
+            AutoCloseable {}
+        }
+        bus.ensureEventProducer(appKey) {
+            created.add("app again")
+            AutoCloseable {}
+        }
 
         assertEquals(listOf("app", "screen"), created)
     }
@@ -521,8 +535,12 @@ internal class EventBusTest {
         val created = AtomicInteger()
         val laterKey = keyBeyondCapacityFor(appKey) { EventKey<AppEvent>() }
 
-        bus.ensureEventProducer(laterKey) { created.incrementAndGet() }
-        bus.ensureEventProducer(laterKey) { created.incrementAndGet() }
+        repeat(2) {
+            bus.ensureEventProducer(laterKey) {
+                created.incrementAndGet()
+                AutoCloseable {}
+            }
+        }
 
         assertEquals(1, created.get())
     }
@@ -534,6 +552,7 @@ internal class EventBusTest {
         bus.ensureEventProducer(screenKey) {
             bus.addStateHandler(screenKey) { received.add(it.name) }
             bus.emitState(screenKey, ScreenState("home"))
+            AutoCloseable {}
         }
         bus.emitState(screenKey, ScreenState("details"))
 
@@ -546,7 +565,11 @@ internal class EventBusTest {
 
         bus.ensureEventProducer(appKey) {
             created.incrementAndGet()
-            bus.ensureEventProducer(appKey) { created.incrementAndGet() }
+            bus.ensureEventProducer(appKey) {
+                created.incrementAndGet()
+                AutoCloseable {}
+            }
+            AutoCloseable {}
         }
 
         assertEquals(1, created.get())
@@ -580,6 +603,7 @@ internal class EventBusTest {
                 bus.ensureEventProducer(appKey) {
                     Thread.sleep(PRODUCER_CREATION_MS)
                     created.incrementAndGet()
+                    AutoCloseable {}
                 }
                 createdOnReturn.add(created.get())
             }

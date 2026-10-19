@@ -1,11 +1,5 @@
 package io.embrace.android.embracesdk.benchmark.scenario
 
-import io.embrace.android.embracesdk.internal.api.SdkApi
-import io.embrace.android.embracesdk.network.EmbraceNetworkRequest
-import io.embrace.android.embracesdk.spans.AutoTerminationMode
-import io.embrace.android.embracesdk.spans.EmbraceSpan
-import io.embrace.android.embracesdk.spans.EmbraceSpanEvent
-import io.mockk.mockk
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertThrows
 import org.junit.Assert.assertTrue
@@ -95,64 +89,9 @@ internal class PersistenceScenariosTest {
         assertThrows(IllegalStateException::class.java) { PersistenceScenarios.byId("not_a_scenario") }
     }
 
-    private fun scope() = RecordingScope(mockk<SdkApi>(relaxed = true))
-
-    private class RecordingScope(delegate: SdkApi) : ScenarioScope {
-
-        var elapsedMs: Long = 0
-            private set
-
-        var backgroundTransitions: Int = 0
-            private set
-
-        var apiCalls: Int = 0
-            private set
-
-        override val embrace: SdkApi = CountingSdkApi(delegate) { apiCalls++ }
-
-        override val nowMs: Long
-            get() = START_TIME_MS + elapsedMs
-
-        override fun advanceTime(ms: Long) {
-            elapsedMs += ms
-        }
-
-        override fun backgroundAndReturn(ms: Long) {
-            backgroundTransitions++
-            elapsedMs += ms
-        }
-    }
-
-    private class CountingSdkApi(
-        private val delegate: SdkApi,
-        private val onCall: () -> Unit,
-    ) : SdkApi by delegate {
-
-        override fun <T> recordSpan(
-            name: String,
-            parent: EmbraceSpan?,
-            attributes: Map<String, String>,
-            events: List<EmbraceSpanEvent>,
-            autoTerminationMode: AutoTerminationMode,
-            code: () -> T,
-        ): T {
-            onCall()
-            return code()
-        }
-
-        override fun recordNetworkRequest(networkRequest: EmbraceNetworkRequest) = onCall()
-
-        override fun addBreadcrumb(message: String) = onCall()
-
-        override fun logInfo(message: String) = onCall()
-
-        override fun logWarning(message: String) = onCall()
-
-        override fun logError(message: String) = onCall()
-    }
+    private fun scope() = RecordingScope()
 
     private companion object {
-        const val START_TIME_MS = 1_692_201_601_000L
         const val MINUTE_MS = 60_000L
         const val MIN_SESSION_MS = 10_000L
         const val MAX_SESSION_MS = 30_000L

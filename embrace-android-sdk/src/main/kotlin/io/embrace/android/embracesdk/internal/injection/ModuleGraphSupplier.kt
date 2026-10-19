@@ -6,6 +6,7 @@ import io.embrace.android.embracesdk.internal.instrumentation.startup.SdkInitRes
 internal typealias ModuleGraphSupplier = (
     context: Context,
     preStartServices: PreStartServices,
+    configLoadServices: ConfigLoadServices,
     sdkStartTimeMs: Long,
     sdkInitResourceUsageTracker: SdkInitResourceUsageTracker,
 ) -> InitializedModuleGraph

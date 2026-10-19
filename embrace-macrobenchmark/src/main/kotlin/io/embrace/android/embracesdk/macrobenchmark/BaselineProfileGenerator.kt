@@ -61,10 +61,10 @@ internal class BaselineProfileGenerator {
         otelSdkMode.select(device)
         try {
             baselineProfileRule.collect(
-                packageName = PACKAGE_NAME,
+                packageName = TARGET_PACKAGE,
                 filterPredicate = ::isShippedRule,
                 profileBlock = {
-                    startActivityAndWait(Intent().setClassName(PACKAGE_NAME, "$PACKAGE_NAME.ProfileActivity"))
+                    startActivityAndWait(Intent().setClassName(TARGET_PACKAGE, "$TARGET_PACKAGE.ProfileActivity"))
                     val status = device.wait(Until.findObject(By.textStartsWith("done:")), STATUS_TIMEOUT_MS)
                     checkNotNull(status) { "the profile journey reported no outcome within ${STATUS_TIMEOUT_MS}ms" }
                     check(status.text == "done: ok" || status.text == "done: end-declined") {
@@ -78,7 +78,6 @@ internal class BaselineProfileGenerator {
     }
 
     private companion object {
-        const val PACKAGE_NAME = "io.embrace.android.embracesdk.macrobenchmark.app"
         const val STATUS_TIMEOUT_MS = 30_000L
     }
 }

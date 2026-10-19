@@ -38,7 +38,6 @@ android {
         // Calling Android logging methods will throw exceptions if this is false
         // see: http://tools.android.com/tech-docs/unit-testing-support#TOC-Method-...-not-mocked.-
         unitTests.isReturnDefaultValues = true
-        unitTests.isIncludeAndroidResources = true
 
         unitTests {
             all { test ->

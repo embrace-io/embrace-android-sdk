@@ -40,10 +40,11 @@ internal fun createSdkStateHolder(
                 )
             }
         },
-        preStart = { buffer },
+        preStart = buffer,
         failed = { NoopSdkInstance(logger, NoopSdkInstance.SDK_START_FAILED) },
         disabled = { NoopSdkInstance(logger, NoopSdkInstance.SDK_DISABLED) },
         telemetryService = bootstrapServices.telemetryService,
         errorHandler = logger,
+        bufferedErrorHandler = bootstrapServices.internalErrorHandler,
     )
 }

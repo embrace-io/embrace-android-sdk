@@ -38,13 +38,13 @@ import io.opentelemetry.kotlin.tracing.export.SpanProcessor
  * it, so hosted SDKs always reach the current instance's internal interfaces.
  */
 internal class SdkApiDispatcher(
-    initialTarget: InternalSdkApi,
+    initialTarget: SdkInstance,
     private val telemetryService: InternalTelemetryService,
     private val errorHandler: InternalErrorHandler,
 ) : SdkApi {
 
     @Volatile
-    var target: InternalSdkApi = initialTarget
+    var target: SdkInstance = initialTarget
         set(value) {
             field = value
             EmbraceInternalApi.internalInterfaceApi = value

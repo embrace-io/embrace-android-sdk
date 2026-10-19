@@ -30,6 +30,7 @@ import io.opentelemetry.kotlin.logging.export.LogRecordExporter
 import io.opentelemetry.kotlin.logging.export.LogRecordProcessor
 import io.opentelemetry.kotlin.tracing.export.SpanExporter
 import io.opentelemetry.kotlin.tracing.export.SpanProcessor
+import java.io.Closeable
 import java.util.concurrent.TimeUnit
 
 /**
@@ -42,7 +43,7 @@ internal class BufferingSdkInstance(
     private val clock: Clock,
     private val logger: InternalLogger,
     private val internalErrorHandler: BufferedInternalErrorHandler = BufferedInternalErrorHandler(clock),
-) : InternalSdkApi,
+) : SdkInstance,
     SdkApi by NoopSdkInstance(logger, NoopSdkInstance.SDK_NOT_INITIALIZED),
     InternalInterfaceApi by NoopInternalInterfaceApi {
 
@@ -57,6 +58,9 @@ internal class BufferingSdkInstance(
     @Volatile
     var applicationInitStartMs: Long? = null
         private set
+
+    @Volatile
+    private var closed = false
 
     fun drainOTelConfig(target: OTelApi) {
         otelConfigCalls.drain(target) { calls ->
@@ -97,11 +101,22 @@ internal class BufferingSdkInstance(
     }
 
     fun drainInternalErrors(destination: TelemetryDestination, enabled: Boolean) {
-        internalErrorHandler.drainTo(destination, enabled)
+        if (!closed) {
+            internalErrorHandler.drainTo(destination, enabled)
+        }
     }
 
     fun discardInternalErrors() {
         internalErrorHandler.discard()
+    }
+
+    override fun onPostStart(buffer: BufferingSdkInstance) {}
+
+    override fun close() {
+        closed = true
+        otelConfigCalls.close()
+        completedSpanCalls.close()
+        experimentCalls.close()
     }
 
     override fun addSpanExporter(spanExporter: SpanExporter) {
@@ -168,11 +183,11 @@ internal class BufferingSdkInstance(
                 }
             },
             forward = { it.recordCompletedSpan(name, startTimeMs, endTimeMs, errorCode, parent, attributes, events) },
-        )
+        ) ?: false
     }
 
     override fun applicationInitStart() {
-        if (applicationInitStartMs == null) {
+        if (!closed && applicationInitStartMs == null) {
             applicationInitStartMs = clock.now()
         }
     }
@@ -309,7 +324,7 @@ internal class BufferingSdkInstance(
      * Buffers calls of type [C] until [drain] supplies a target of type [T], after which calls are forwarded to that
      * instead.
      */
-    private class CallBuffer<T : Any, C : Any> {
+    private class CallBuffer<T : Any, C : Any> : Closeable {
         // properties not private to avoid synthetic accessors
         val lock = Any()
 
@@ -320,22 +335,36 @@ internal class BufferingSdkInstance(
         var target: T? = null
             private set
 
+        @Volatile
+        var closed: Boolean = false
+            private set
+
         /**
          * Calls [forward] with the target if one has been set. Otherwise, calls [buffer] with the buffered calls.
+         * Returns null without calling either once closed.
          */
-        inline fun <R> submit(buffer: (MutableList<C>) -> R, forward: (T) -> R): R {
+        inline fun <R> submit(buffer: (MutableList<C>) -> R, forward: (T) -> R): R? {
+            if (closed) {
+                return null
+            }
             val current = target ?: synchronized(lock) {
+                if (closed) {
+                    return null
+                }
                 target ?: return buffer(calls)
             }
             return forward(current)
         }
 
         /**
-         * Passes the buffered calls to [replay], then forwards all later calls to [target].
+         * Passes the buffered calls to [replay], then forwards all later calls to [target]. Has no effect once closed.
          */
         fun drain(target: T, replay: (List<C>) -> Unit) {
             while (true) {
                 val batch = synchronized(lock) {
+                    if (closed) {
+                        return
+                    }
                     if (calls.isEmpty()) {
                         this.target = target
                         return
@@ -343,6 +372,14 @@ internal class BufferingSdkInstance(
                     calls.also { calls = mutableListOf() }
                 }
                 replay(batch)
+            }
+        }
+
+        override fun close() {
+            synchronized(lock) {
+                closed = true
+                target = null
+                calls = mutableListOf()
             }
         }
     }

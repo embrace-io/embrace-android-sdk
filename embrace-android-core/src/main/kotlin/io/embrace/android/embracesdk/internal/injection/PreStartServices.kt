@@ -11,9 +11,9 @@ import io.embrace.android.embracesdk.internal.telemetry.InternalTelemetryService
 import io.embrace.android.embracesdk.internal.telemetry.InternalTelemetryServiceImpl
 
 /**
- * Services that are absolutely required before the SDK has been initialized
+ * Services created when the Embrace object is first loaded, before start() is called
  */
-class BootstrapServices(
+class PreStartServices(
     val logger: InternalLogger = InternalLoggerImpl(),
     val clock: Clock = NormalizedIntervalClock(logger = logger),
     val systemInfo: SystemInfo = SystemInfo(),

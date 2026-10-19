@@ -42,14 +42,14 @@ import java.util.concurrent.TimeUnit
 @Suppress("UseCheckOrError")
 internal class InitializedModuleGraph(
     context: Context,
-    bootstrapServices: BootstrapServices,
+    preStartServices: PreStartServices,
     buffer: BufferingSdkInstance,
     versionChecker: VersionChecker = BuildVersionChecker,
     private val initModuleSupplier: InitModuleSupplier? = null,
     private val openTelemetryModuleSupplier: OpenTelemetryModuleSupplier? = null,
     private val coreModuleSupplier: CoreModuleSupplier? = null,
     private val configServiceSupplier: ConfigServiceSupplier? = null,
-    private val workerThreadModuleSupplier: WorkerThreadModuleSupplier? = null,
+    private val workerThreadPoolSupplier: WorkerThreadPoolSupplier? = null,
     private val storageServiceSupplier: StorageServiceSupplier? = null,
     private val essentialServiceModuleSupplier: EssentialServiceModuleSupplier? = null,
     private val featureModuleSupplier: FeatureModuleSupplier? = null,
@@ -68,14 +68,14 @@ internal class InitializedModuleGraph(
     }
 
     val initModule: InitModule = EmbTrace.trace(sectionName = "bootstrapper-init", recordDuration = true) {
-        initModuleSupplier?.invoke(bootstrapServices) ?: EmbTrace.trace("init-module") {
-            InitModuleImpl(bootstrapServices)
+        initModuleSupplier?.invoke(preStartServices) ?: EmbTrace.trace("init-module") {
+            InitModuleImpl(preStartServices)
         }
     }
 
     val openTelemetryModule: OpenTelemetryModule = EmbTrace.trace("otel-module") {
-        openTelemetryModuleSupplier?.invoke(initModule, bootstrapServices.externalOtelConfig)
-            ?: OpenTelemetryModuleImpl(initModule, bootstrapServices.externalOtelConfig)
+        openTelemetryModuleSupplier?.invoke(initModule, preStartServices.externalOtelConfig)
+            ?: OpenTelemetryModuleImpl(initModule, preStartServices.externalOtelConfig)
     }
 
     init {
@@ -110,8 +110,8 @@ internal class InitializedModuleGraph(
         openTelemetryModule.setOtelBehavior(it.otelBehavior)
     }
 
-    val workerThreadModule: WorkerThreadModule = EmbTrace.trace("workerthread-init") {
-        workerThreadModuleSupplier?.invoke() ?: WorkerThreadModuleImpl()
+    val workerThreadPool: WorkerThreadPool = EmbTrace.trace("workerthread-init") {
+        workerThreadPoolSupplier?.invoke() ?: WorkerThreadPoolImpl()
     }.also {
         prewarmSharedPreferences(context, it)
     }
@@ -126,10 +126,10 @@ internal class InitializedModuleGraph(
             initModule,
             coreModule,
             openTelemetryModule,
-            workerThreadModule,
+            workerThreadPool,
             persistedConfig,
         ) ?: EmbTrace.trace(sectionName = "config-service-init", recordDuration = true) {
-            createConfigService(initModule, openTelemetryModule, workerThreadModule, persistedConfig)
+            createConfigService(initModule, openTelemetryModule, workerThreadPool, persistedConfig)
         }
     }.apply {
         // kick off config HTTP request early so the SDK can't get in a permanently disabled state.
@@ -161,7 +161,7 @@ internal class InitializedModuleGraph(
                 configService,
                 openTelemetryModule,
                 coreModule,
-                workerThreadModule,
+                workerThreadPool,
                 context,
                 lifecycleTrackerProvider,
                 networkConnectivityServiceProvider,
@@ -171,7 +171,7 @@ internal class InitializedModuleGraph(
                 configService,
                 openTelemetryModule,
                 coreModule,
-                workerThreadModule,
+                workerThreadPool,
                 context,
                 lifecycleTrackerProvider,
                 networkConnectivityServiceProvider,
@@ -180,13 +180,13 @@ internal class InitializedModuleGraph(
         }
 
     val storageService: StorageService = init("storage") {
-        storageServiceSupplier?.invoke(initModule, coreModule, workerThreadModule)
+        storageServiceSupplier?.invoke(initModule, coreModule, workerThreadPool)
             ?: EmbraceStorageService(
                 coreModule.context,
                 initModule.telemetryService,
                 StatFsAvailabilityChecker(coreModule.context),
             ).also { storageService ->
-                workerThreadModule
+                workerThreadPool
                     .backgroundWorker(Worker.Background.IoRegWorker)
                     .schedule<Unit>({ storageService.logStorageTelemetry() }, 1, TimeUnit.MINUTES)
             }
@@ -200,7 +200,7 @@ internal class InitializedModuleGraph(
         instrumentationModuleSupplier?.invoke(
             initModule,
             openTelemetryModule,
-            workerThreadModule,
+            workerThreadPool,
             configService,
             essentialServiceModule,
             coreModule,
@@ -210,7 +210,7 @@ internal class InitializedModuleGraph(
         ) ?: InstrumentationModuleImpl(
             initModule,
             openTelemetryModule,
-            workerThreadModule,
+            workerThreadPool,
             configService,
             essentialServiceModule,
             coreModule,
@@ -234,7 +234,7 @@ internal class InitializedModuleGraph(
         val instrumentationArgs = instrumentationModule.instrumentationArgs
         val destination = instrumentationArgs.destination
         val activityManager = instrumentationArgs.systemService<ActivityManager>(Context.ACTIVITY_SERVICE)
-        val backgroundWorker = workerThreadModule.backgroundWorker(Worker.Background.NonIoRegWorker)
+        val backgroundWorker = workerThreadPool.backgroundWorker(Worker.Background.NonIoRegWorker)
         dataCaptureServiceModuleSupplier?.invoke(
             initModule.clock,
             initModule.logger,
@@ -266,7 +266,7 @@ internal class InitializedModuleGraph(
                 configService,
                 initModule,
                 openTelemetryModule,
-                workerThreadModule,
+                workerThreadPool,
                 coreModule,
                 essentialServiceModule,
                 null,
@@ -277,7 +277,7 @@ internal class InitializedModuleGraph(
                 configService = configService,
                 initModule = initModule,
                 otelModule = openTelemetryModule,
-                workerThreadModule = workerThreadModule,
+                workerThreadPool = workerThreadPool,
                 coreModule = coreModule,
                 essentialServiceModule = essentialServiceModule,
                 requestExecutionServiceProvider = null,
@@ -300,7 +300,7 @@ internal class InitializedModuleGraph(
         payloadSourceModuleSupplier?.invoke(
             initModule,
             coreModule,
-            workerThreadModule,
+            workerThreadPool,
             essentialServiceModule,
             configService,
             openTelemetryModule,
@@ -309,7 +309,7 @@ internal class InitializedModuleGraph(
         ) ?: PayloadSourceModuleImpl(
             initModule,
             coreModule,
-            workerThreadModule,
+            workerThreadPool,
             essentialServiceModule,
             configService,
             openTelemetryModule,
@@ -325,7 +325,7 @@ internal class InitializedModuleGraph(
             essentialServiceModule,
             configService,
             deliveryModule,
-            workerThreadModule,
+            workerThreadPool,
             payloadSourceModule,
         ) ?: LogModuleImpl(
             initModule,
@@ -333,7 +333,7 @@ internal class InitializedModuleGraph(
             essentialServiceModule,
             configService,
             deliveryModule,
-            workerThreadModule,
+            workerThreadPool,
             payloadSourceModule,
         )
     }
@@ -354,7 +354,7 @@ internal class InitializedModuleGraph(
                 startupDurationProvider,
                 appVersionStartupCounterProvider,
                 logModule,
-                workerThreadModule,
+                workerThreadPool,
             ) ?: UserSessionOrchestrationModuleImpl(
                 initModule,
                 openTelemetryModule,
@@ -367,7 +367,7 @@ internal class InitializedModuleGraph(
                 startupDurationProvider,
                 appVersionStartupCounterProvider,
                 logModule,
-                workerThreadModule,
+                workerThreadPool,
             )
         }
 
@@ -378,8 +378,8 @@ internal class InitializedModuleGraph(
      * Touches the default `SharedPreferences` on a background worker as early as possible to speculatively
      * attempt to reduce the amount of time Android blocks with `awaitLoadedLocked` later on in SDK init.
      */
-    private fun prewarmSharedPreferences(context: Context, workerThreadModule: WorkerThreadModule) {
-        workerThreadModule.backgroundWorker(Worker.Background.IoRegWorker).submit {
+    private fun prewarmSharedPreferences(context: Context, workerThreadPool: WorkerThreadPool) {
+        workerThreadPool.backgroundWorker(Worker.Background.IoRegWorker).submit {
             try {
                 PreferenceManager.getDefaultSharedPreferences(context)
             } catch (ignored: Throwable) {

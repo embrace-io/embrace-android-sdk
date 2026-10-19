@@ -12,7 +12,7 @@ import io.embrace.android.embracesdk.internal.arch.state.ProcessStateTracker
 import io.embrace.android.embracesdk.internal.capture.session.UserSessionPropertiesService
 import io.embrace.android.embracesdk.internal.clock.Clock
 import io.embrace.android.embracesdk.internal.config.ConfigService
-import io.embrace.android.embracesdk.internal.injection.WorkerThreadModule
+import io.embrace.android.embracesdk.internal.injection.WorkerThreadPool
 import io.embrace.android.embracesdk.internal.logging.InternalLogger
 import io.embrace.android.embracesdk.internal.network.http.HttpRequestInfoModifierChain
 import io.embrace.android.embracesdk.internal.serialization.PlatformSerializer
@@ -44,7 +44,7 @@ internal class InstrumentationArgsImpl(
     override val processStateTracker: ProcessStateTracker,
     override val navigationTrackingService: NavigationTrackingService,
     override val telemetryService: InternalTelemetryService,
-    private val workerThreadModule: WorkerThreadModule,
+    private val workerThreadPool: WorkerThreadPool,
     private val sessionPartTracker: SessionPartTracker,
     private val userSessionPropertiesService: UserSessionPropertiesService,
     private val userSessionIdsProvider: () -> String?,
@@ -63,10 +63,10 @@ internal class InstrumentationArgsImpl(
 
     override val httpRequestInfoModifierChain: HttpRequestInfoModifierChain = HttpRequestInfoModifierChain(logger)
 
-    override fun backgroundWorker(worker: Worker.Background): BackgroundWorker = workerThreadModule.backgroundWorker(worker)
+    override fun backgroundWorker(worker: Worker.Background): BackgroundWorker = workerThreadPool.backgroundWorker(worker)
     override fun <T> priorityWorker(
         worker: Worker.Priority,
-    ): PriorityWorker<T> = workerThreadModule.priorityWorker(worker)
+    ): PriorityWorker<T> = workerThreadPool.priorityWorker(worker)
 
     private val memo = ConcurrentHashMap<String, Any>()
 

@@ -207,7 +207,7 @@ internal class ResurrectionFeatureTest(
         testRule.setup.getFakedWorkerExecutor(Worker.Background.SessionPersistenceWorker).shutdown()
         testRule.moduleGraph.essentialServiceModule.networkConnectivityService.close()
         testRule.moduleGraph.openTelemetryModule.otelSdkConfig.shutdownExport()
-        testRule.moduleGraph.workerThreadModule.close()
+        testRule.moduleGraph.workerThreadPool.close()
     }
 
     private fun obtainSessionPartDirectory(

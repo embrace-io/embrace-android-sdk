@@ -10,6 +10,8 @@ class FakeSpanExporter : SpanExporter, InlineExporter<SpanData> {
     val exportedSpans: MutableList<SpanData> = mutableListOf()
     var forceFlushCount: Int = 0
         private set
+    var shutdownCount: Int = 0
+        private set
 
     override fun exportInline(telemetry: List<SpanData>): OperationResultCode {
         exportedSpans += telemetry
@@ -22,5 +24,8 @@ class FakeSpanExporter : SpanExporter, InlineExporter<SpanData> {
         forceFlushCount++
         return OperationResultCode.Success
     }
-    override suspend fun shutdown(): OperationResultCode = OperationResultCode.Success
+    override suspend fun shutdown(): OperationResultCode {
+        shutdownCount++
+        return OperationResultCode.Success
+    }
 }

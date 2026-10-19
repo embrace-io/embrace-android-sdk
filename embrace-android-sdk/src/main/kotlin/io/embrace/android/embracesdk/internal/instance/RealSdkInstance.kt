@@ -223,7 +223,7 @@ internal class RealSdkInstance(
         runCatching { processStateTracker.close() }
         runCatching { networkConnectivityService.close() }
         runCatching { startupTracker.close() }
-        runCatching { otelSdkConfig.value.shutdownExport() }
+        runCatching { otelSdkConfig.value.close() }
         runCatching { workerThreadPool.close() }
 
         if (!deleteData || rootDir == null || fallbackDir == null) {

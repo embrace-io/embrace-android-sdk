@@ -7,14 +7,15 @@ import io.opentelemetry.kotlin.logging.model.ReadWriteLogRecord
 
 /**
  * Wraps a [LogRecordProcessor] supplied by the SDK user so that it never sees log records that are private
- * to Embrace.
+ * to Embrace, and sees nothing at all once [exportCheck] fails.
  */
 internal class PrivateTelemetryFilteringLogRecordProcessor(
     private val delegate: LogRecordProcessor,
+    private val exportCheck: () -> Boolean,
 ) : LogRecordProcessor by delegate {
 
     override fun onEmit(log: ReadWriteLogRecord, context: Context) {
-        if (!log.attributes.containsKey(PrivateSpan.key)) {
+        if (exportCheck() && !log.attributes.containsKey(PrivateSpan.key)) {
             delegate.onEmit(log, context)
         }
     }

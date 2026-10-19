@@ -14,6 +14,8 @@ class FakeSpanProcessor(
     val startedSpanNames = mutableListOf<String>()
     val endingSpanNames = mutableListOf<String>()
     val endedSpanNames = mutableListOf<String>()
+    var shutdownCount: Int = 0
+        private set
 
     override fun isEndRequired(): Boolean = true
     override fun isStartRequired(): Boolean = true
@@ -37,5 +39,8 @@ class FakeSpanProcessor(
     }
 
     override suspend fun forceFlush(): OperationResultCode = OperationResultCode.Success
-    override suspend fun shutdown(): OperationResultCode = OperationResultCode.Success
+    override suspend fun shutdown(): OperationResultCode {
+        shutdownCount++
+        return OperationResultCode.Success
+    }
 }

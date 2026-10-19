@@ -45,6 +45,7 @@ import io.embrace.android.embracesdk.internal.injection.ModuleGraphSupplier
 import io.embrace.android.embracesdk.internal.injection.OpenTelemetryModule
 import io.embrace.android.embracesdk.internal.injection.OpenTelemetryModuleImpl
 import io.embrace.android.embracesdk.internal.injection.PreStartServices
+import io.embrace.android.embracesdk.internal.injection.SdkOverrides
 import io.embrace.android.embracesdk.internal.injection.WorkerThreadPool
 import io.embrace.android.embracesdk.internal.injection.WorkerThreadPoolImpl
 import io.embrace.android.embracesdk.internal.injection.createConfigService
@@ -213,8 +214,8 @@ internal class EmbraceSetupInterface(
     }
 
     fun createModuleGraphSupplier(deliveryTracer: DeliveryTracer): ModuleGraphSupplier =
-        { context, preStartServices, configLoadServices, sdkStartTimeMs, sdkInitResourceUsageTracker ->
-            createModuleGraph(context, preStartServices, configLoadServices, sdkStartTimeMs, sdkInitResourceUsageTracker, deliveryTracer)
+        { context, preStartServices, configLoadServices, sdkStartTimeMs, sdkInitResourceUsageTracker, overrides ->
+            createModuleGraph(context, preStartServices, configLoadServices, sdkStartTimeMs, sdkInitResourceUsageTracker, overrides, deliveryTracer)
         }
 
     private fun createModuleGraph(
@@ -223,6 +224,7 @@ internal class EmbraceSetupInterface(
         configLoadServices: ConfigLoadServices,
         sdkStartTimeMs: Long,
         sdkInitResourceUsageTracker: SdkInitResourceUsageTracker,
+        overrides: SdkOverrides?,
         deliveryTracer: DeliveryTracer,
     ): InitializedModuleGraph = InitializedModuleGraph(
         context = context,
@@ -230,6 +232,7 @@ internal class EmbraceSetupInterface(
         configLoadServices = configLoadServices,
         sdkStartTimeMs = sdkStartTimeMs,
         sdkInitResourceUsageTracker = sdkInitResourceUsageTracker,
+        overrides = overrides,
         initModuleSupplier = { fakeInitModule },
         openTelemetryModuleSupplier = { initModule, configService, externalOtelConfig, sessionIdsProvider, userIdProvider, eventMetadataProvider ->
             OpenTelemetryModuleImpl(

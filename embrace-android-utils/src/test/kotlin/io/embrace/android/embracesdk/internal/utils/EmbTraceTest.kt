@@ -33,6 +33,13 @@ internal class EmbTraceTest {
     }
 
     @Test
+    fun `trace allows a val to be assigned inside the section`() {
+        val value: Int
+        EmbTrace.trace("test") { value = 1 }
+        assertEquals(1, value)
+    }
+
+    @Test
     fun `trace records a section prefixed with emb-`() {
         EmbTrace.trace(sectionName = "test 屈福特", recordDuration = true) { }
         assertEquals("emb-test 屈福特", ShadowTrace.getPreviousSections().single())

@@ -47,7 +47,7 @@ internal class SdkStateHolderFactoryTest {
         var moduleGraphCreated = false
         val holder = createStateHolder(
             configServiceSupplier = { _, _, _, _, _, _ -> disabledConfigService() },
-            moduleGraphSupplier = { _, _, _, _, _ ->
+            moduleGraphSupplier = { _, _, _, _, _, _ ->
                 moduleGraphCreated = true
                 error("module graph should not be created")
             },
@@ -81,7 +81,7 @@ internal class SdkStateHolderFactoryTest {
     fun `worker threads are released when the module graph cannot be constructed`() {
         val holder = createStateHolder(
             configServiceSupplier = { _, _, _, _, _, _ -> FakeConfigService() },
-            moduleGraphSupplier = { _, _, _, _, _ -> error("failed to init") },
+            moduleGraphSupplier = { _, _, _, _, _, _ -> error("failed to init") },
         )
         holder.start(context)
         assertEquals(SdkState.FAILED, holder.state)

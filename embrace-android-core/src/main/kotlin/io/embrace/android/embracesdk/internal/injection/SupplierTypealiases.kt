@@ -18,8 +18,7 @@ import io.embrace.android.embracesdk.internal.utils.Provider
 
 typealias ConfigServiceSupplier = (
     initModule: InitModule,
-    coreModule: CoreModule,
-    openTelemetryModule: OpenTelemetryModule,
+    preStartServices: PreStartServices,
     workerThreadPool: WorkerThreadPool,
     persistedConfig: PersistedConfig,
 ) -> ConfigService

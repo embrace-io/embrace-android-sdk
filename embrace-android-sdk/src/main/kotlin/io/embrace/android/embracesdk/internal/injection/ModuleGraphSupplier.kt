@@ -1,10 +1,11 @@
 package io.embrace.android.embracesdk.internal.injection
 
 import android.content.Context
-import io.embrace.android.embracesdk.internal.instance.BufferingSdkInstance
+import io.embrace.android.embracesdk.internal.instrumentation.startup.SdkInitResourceUsageTracker
 
 internal typealias ModuleGraphSupplier = (
     context: Context,
     preStartServices: PreStartServices,
-    buffer: BufferingSdkInstance,
+    sdkStartTimeMs: Long,
+    sdkInitResourceUsageTracker: SdkInitResourceUsageTracker,
 ) -> InitializedModuleGraph

@@ -23,8 +23,8 @@ import io.embrace.android.embracesdk.internal.injection.InitializedModuleGraph
 import io.embrace.android.embracesdk.internal.injection.OpenTelemetryModuleImpl
 import io.embrace.android.embracesdk.internal.injection.PreStartServices
 import io.embrace.android.embracesdk.internal.injection.SdkDisabledException
-import io.embrace.android.embracesdk.internal.instance.BufferingSdkInstance
 import io.embrace.android.embracesdk.internal.instance.RealSdkInstance
+import io.embrace.android.embracesdk.internal.instrumentation.startup.SdkInitResourceUsageTracker
 import io.embrace.android.embracesdk.semconv.EmbSessionAttributes
 import io.opentelemetry.kotlin.NoopOpenTelemetry
 import org.junit.Assert.assertEquals
@@ -60,8 +60,9 @@ internal class InitializedModuleGraphTest {
         return InitializedModuleGraph(
             context = context,
             preStartServices = PreStartServices(logger, clock),
-            buffer = BufferingSdkInstance({ 0 }, logger),
-            configServiceSupplier = { _, _, _, _, _ -> FakeConfigService() },
+            sdkStartTimeMs = clock.now(),
+            sdkInitResourceUsageTracker = SdkInitResourceUsageTracker(logger),
+            configServiceSupplier = { _, _, _, _ -> FakeConfigService() },
             coreModuleSupplier = { _, _, _ -> coreModule },
             instrumentationModuleSupplier = { _, _, _, _, _, _, _, _, _ ->
                 FakeInstrumentationModule(application, logger = logger).apply {
@@ -130,12 +131,15 @@ internal class InitializedModuleGraphTest {
     fun `otel sdk is not built until the config service has been created`() {
         var initializedWhenConfigServiceBuilt: Boolean? = null
         val initModule = FakeInitModule(clock = clock, logger = logger, otelSdkMode = OtelSdkMode.COMPAT)
+        val openTelemetryModule = OpenTelemetryModuleImpl(initModule)
         val moduleGraph = InitializedModuleGraph(
             context = context,
             preStartServices = initModule.preStartServices,
-            buffer = BufferingSdkInstance({ 0 }, logger),
+            sdkStartTimeMs = clock.now(),
+            sdkInitResourceUsageTracker = SdkInitResourceUsageTracker(logger),
             initModuleSupplier = { initModule },
-            configServiceSupplier = { _, _, openTelemetryModule, _, _ ->
+            openTelemetryModuleSupplier = { _, _ -> openTelemetryModule },
+            configServiceSupplier = { _, _, _, _ ->
                 initializedWhenConfigServiceBuilt = openTelemetryModule.currentSessionPartSpan.initialized()
                 FakeConfigService()
             },
@@ -144,7 +148,7 @@ internal class InitializedModuleGraphTest {
             },
         )
         assertEquals(false, initializedWhenConfigServiceBuilt)
-        assertTrue(moduleGraph.openTelemetryModule.currentSessionPartSpan.initialized())
+        assertTrue(openTelemetryModule.currentSessionPartSpan.initialized())
     }
 
     @Test
@@ -155,10 +159,11 @@ internal class InitializedModuleGraphTest {
             InitializedModuleGraph(
                 context = context,
                 preStartServices = initModule.preStartServices,
-                buffer = BufferingSdkInstance({ 0 }, logger),
+                sdkStartTimeMs = clock.now(),
+                sdkInitResourceUsageTracker = SdkInitResourceUsageTracker(logger),
                 initModuleSupplier = { initModule },
                 openTelemetryModuleSupplier = { _, _ -> openTelemetryModule },
-                configServiceSupplier = { _, _, _, _, _ ->
+                configServiceSupplier = { _, _, _, _ ->
                     FakeConfigService(
                         config = EmbraceConfig(sdkMode = { SdkModeConfig(sdkDisabled = { true }) }),
                     )
@@ -177,9 +182,10 @@ internal class InitializedModuleGraphTest {
         return InitializedModuleGraph(
             context = context,
             preStartServices = initModule.preStartServices,
-            buffer = BufferingSdkInstance({ 0 }, logger),
+            sdkStartTimeMs = clock.now(),
+            sdkInitResourceUsageTracker = SdkInitResourceUsageTracker(logger),
             initModuleSupplier = { initModule },
-            configServiceSupplier = { _, _, _, _, _ -> FakeConfigService() },
+            configServiceSupplier = { _, _, _, _ -> FakeConfigService() },
             instrumentationModuleSupplier = { _, _, _, _, _, _, _, _, _ ->
                 FakeInstrumentationModule(RuntimeEnvironment.getApplication(), logger = logger)
             },

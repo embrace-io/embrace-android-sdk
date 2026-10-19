@@ -3,6 +3,7 @@ package io.embrace.android.embracesdk.internal.otel.spans
 import io.embrace.android.embracesdk.fakes.FakeClock
 import io.embrace.android.embracesdk.fakes.FakeInternalTelemetryService
 import io.embrace.android.embracesdk.fakes.FakeOtelKotlinClock
+import io.embrace.android.embracesdk.fakes.FakeSpanProcessor
 import io.embrace.android.embracesdk.fakes.OtelSdkMode
 import io.embrace.android.embracesdk.fakes.fakeOpenTelemetry
 import io.embrace.android.embracesdk.internal.arch.schema.EmbType
@@ -43,7 +44,13 @@ internal class EmbraceSpanFactoryImplTest(
         spanRepository = SpanRepository().apply {
             addSpanChangeListener { updateNotified = true }
         }
-        tracer = createSdkOtelInstance(clock = openTelemetryClock, useKotlinSdk = otelSdkMode.useKotlinSdk).getTracer("my_tracer")
+        tracer = createSdkOtelInstance(
+            clock = openTelemetryClock,
+            useKotlinSdk = otelSdkMode.useKotlinSdk,
+            tracerProvider = {
+                export { FakeSpanProcessor() }
+            },
+        ).getTracer("my_tracer")
         embraceSpanFactory = EmbraceSpanFactoryImpl(
             openTelemetryClock = openTelemetryClock,
             spanRepository = spanRepository,

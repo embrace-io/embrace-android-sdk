@@ -69,6 +69,7 @@ class OtelSdkConfig(
         EmbTrace.trace(sectionName = "process-identifier-init", code = processIdentifierProvider)
     }
 
+    @Volatile
     private var exportEnabled: Boolean = true
     private val exportCheck: () -> Boolean = { exportEnabled }
 

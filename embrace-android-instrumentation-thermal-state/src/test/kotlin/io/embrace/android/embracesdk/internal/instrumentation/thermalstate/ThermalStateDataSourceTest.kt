@@ -1,10 +1,13 @@
 package io.embrace.android.embracesdk.internal.instrumentation.thermalstate
 
 import android.os.PowerManager
+import io.embrace.android.embracesdk.concurrency.BlockingScheduledExecutorService
 import io.embrace.android.embracesdk.fakes.FakeInstrumentationArgs
 import io.embrace.android.embracesdk.internal.arch.schema.EmbType
+import io.embrace.android.embracesdk.internal.worker.BackgroundWorker
 import io.embrace.android.embracesdk.semconv.EmbThermalStateAttributes
 import io.mockk.mockk
+import io.mockk.slot
 import io.mockk.verify
 import org.junit.Assert.assertEquals
 import org.junit.Before
@@ -73,5 +76,35 @@ internal class ThermalStateDataSourceTest {
         verify(exactly = 0) { mockPowerManager.addThermalStatusListener(any(), any()) }
         dataSource.onDataCaptureEnabled()
         verify(exactly = 1) { mockPowerManager.addThermalStatusListener(any(), any()) }
+    }
+
+    @Test
+    fun `disable removes the registered listener`() {
+        val listener = slot<PowerManager.OnThermalStatusChangedListener>()
+        dataSource.onDataCaptureEnabled()
+        verify(exactly = 1) { mockPowerManager.addThermalStatusListener(any(), capture(listener)) }
+
+        dataSource.onDataCaptureDisabled()
+        verify(exactly = 1) { mockPowerManager.removeThermalStatusListener(listener.captured) }
+
+        dataSource.onDataCaptureDisabled()
+        verify(exactly = 1) { mockPowerManager.removeThermalStatusListener(any()) }
+    }
+
+    @Test
+    fun `disable before queued registration runs prevents registration`() {
+        val executor = BlockingScheduledExecutorService(blockingMode = true)
+        val blockingArgs = FakeInstrumentationArgs(
+            mockk(),
+            backgroundWorkerSupplier = { BackgroundWorker(executor) },
+            systemServiceSupplier = { mockPowerManager },
+        )
+        val source = ThermalStateDataSource(blockingArgs)
+        source.onDataCaptureEnabled()
+        source.onDataCaptureDisabled()
+        executor.runCurrentlyBlocked()
+
+        verify(exactly = 0) { mockPowerManager.addThermalStatusListener(any(), any()) }
+        verify(exactly = 0) { mockPowerManager.removeThermalStatusListener(any()) }
     }
 }

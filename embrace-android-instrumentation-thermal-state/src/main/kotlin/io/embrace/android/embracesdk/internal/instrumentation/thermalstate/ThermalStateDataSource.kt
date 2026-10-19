@@ -33,6 +33,10 @@ class ThermalStateDataSource(
 
     private var span: SpanToken? = null
 
+    private val lock = Any()
+    private var closed = false
+    private var registration: Pair<PowerManager, PowerManager.OnThermalStatusChangedListener>? = null
+
     override fun onDataCaptureEnabled() {
         backgroundWorker.submit {
             EmbTrace.trace("thermal-service-registration") {
@@ -47,7 +51,24 @@ class ThermalStateDataSource(
                 val executor = Executor {
                     backgroundWorker.submit(runnable = it)
                 }
-                pm.addThermalStatusListener(executor, listener)
+                synchronized(lock) {
+                    if (!closed && registration == null) {
+                        pm.addThermalStatusListener(executor, listener)
+                        registration = Pair(pm, listener)
+                    }
+                }
+            }
+        }
+    }
+
+    override fun onDataCaptureDisabled() {
+        synchronized(lock) {
+            closed = true
+            registration?.let { (pm, listener) ->
+                registration = null
+                runCatching {
+                    pm.removeThermalStatusListener(listener)
+                }
             }
         }
     }

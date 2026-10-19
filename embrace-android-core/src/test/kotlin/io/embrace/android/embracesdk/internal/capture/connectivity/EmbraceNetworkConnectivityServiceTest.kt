@@ -4,6 +4,7 @@ import android.annotation.SuppressLint
 import android.content.Context
 import android.content.Intent
 import android.net.ConnectivityManager
+import io.embrace.android.embracesdk.concurrency.BlockingScheduledExecutorService
 import io.embrace.android.embracesdk.fakes.FakeClock
 import io.embrace.android.embracesdk.fakes.fakeBackgroundWorker
 import io.embrace.android.embracesdk.internal.logging.InternalLogger
@@ -173,6 +174,23 @@ internal class EmbraceNetworkConnectivityServiceTest {
     fun `close without register does not unregister the receiver`() {
         val service = createService(lazyOf<ConnectivityManager?>(mockConnectivityManager))
         service.close()
+        verify(exactly = 0) { context.unregisterReceiver(service) }
+    }
+
+    @Test
+    fun `close before queued register runs prevents registration`() {
+        val executor = BlockingScheduledExecutorService(blockingMode = true)
+        val service = EmbraceNetworkConnectivityService(
+            context,
+            BackgroundWorker(executor),
+            logger,
+            lazyOf<ConnectivityManager?>(mockConnectivityManager),
+        )
+        service.register()
+        service.close()
+        executor.runCurrentlyBlocked()
+
+        verify(exactly = 0) { context.registerReceiver(service, any()) }
         verify(exactly = 0) { context.unregisterReceiver(service) }
     }
 

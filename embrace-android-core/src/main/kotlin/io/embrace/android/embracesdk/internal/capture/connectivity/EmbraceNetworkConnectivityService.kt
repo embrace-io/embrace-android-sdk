@@ -9,7 +9,6 @@ import io.embrace.android.embracesdk.internal.logging.InternalErrorType
 import io.embrace.android.embracesdk.internal.logging.InternalLogger
 import io.embrace.android.embracesdk.internal.worker.BackgroundWorker
 import java.util.concurrent.CopyOnWriteArrayList
-import java.util.concurrent.atomic.AtomicBoolean
 
 @Suppress("DEPRECATION") // uses deprecated APIs for backwards compat
 internal class EmbraceNetworkConnectivityService(
@@ -22,7 +21,9 @@ internal class EmbraceNetworkConnectivityService(
     private val intentFilter = IntentFilter(ConnectivityManager.CONNECTIVITY_ACTION)
     private var lastConnectivityStatus: ConnectivityStatus = ConnectivityStatus.Unverified
     private val networkConnectivityListeners = CopyOnWriteArrayList<NetworkConnectivityListener>()
-    private val registered = AtomicBoolean(false)
+    private val lock = Any()
+    private var registered = false
+    private var closed = false
 
     override fun onReceive(context: Context, intent: Intent) {
         try {
@@ -60,20 +61,27 @@ internal class EmbraceNetworkConnectivityService(
 
     override fun register() {
         backgroundWorker.submit {
-            if (connectivityManager.value != null && !registered.getAndSet(true)) {
-                runCatching {
-                    context.registerReceiver(this, intentFilter)
-                }.onFailure {
-                    registered.set(false)
+            if (connectivityManager.value != null) {
+                synchronized(lock) {
+                    if (!closed && !registered) {
+                        runCatching {
+                            context.registerReceiver(this, intentFilter)
+                            registered = true
+                        }
+                    }
                 }
             }
         }
     }
 
     override fun close() {
-        if (registered.getAndSet(false)) {
-            runCatching {
-                context.unregisterReceiver(this)
+        synchronized(lock) {
+            closed = true
+            if (registered) {
+                registered = false
+                runCatching {
+                    context.unregisterReceiver(this)
+                }
             }
         }
     }

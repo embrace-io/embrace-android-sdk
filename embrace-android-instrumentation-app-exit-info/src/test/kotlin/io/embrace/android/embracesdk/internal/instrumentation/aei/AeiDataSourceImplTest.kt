@@ -2,6 +2,7 @@ package io.embrace.android.embracesdk.internal.instrumentation.aei
 
 import android.app.ActivityManager
 import android.app.ApplicationExitInfo
+import io.embrace.android.embracesdk.concurrency.BlockingScheduledExecutorService
 import io.embrace.android.embracesdk.fakes.FakeConfigService
 import io.embrace.android.embracesdk.fakes.FakeInstrumentationArgs
 import io.embrace.android.embracesdk.fakes.FakeInternalLogger
@@ -17,6 +18,7 @@ import io.embrace.android.embracesdk.internal.logging.InternalErrorType
 import io.embrace.android.embracesdk.internal.utils.BuildVersionChecker
 import io.embrace.android.embracesdk.internal.utils.Provider
 import io.embrace.android.embracesdk.internal.utils.VersionChecker
+import io.embrace.android.embracesdk.internal.worker.BackgroundWorker
 import io.embrace.android.embracesdk.semconv.EmbAeiAttributes
 import io.embrace.android.embracesdk.semconv.EmbSessionAttributes
 import io.mockk.every
@@ -493,6 +495,32 @@ internal class AeiDataSourceImplTest {
 
         // each AEI object with a trace should be sent in a separate payload
         assertEquals(16, args.destination.logEvents.size)
+    }
+
+    @Test
+    fun `disable before queued processing runs does not mark records as delivered`() {
+        every {
+            mockActivityManager.getHistoricalProcessExitReasons(
+                any(),
+                any(),
+                any(),
+            )
+        } returns listOf(mockAppExitInfo)
+
+        val executor = BlockingScheduledExecutorService(blockingMode = true)
+        args = FakeInstrumentationArgs(mockk(), configService = configService)
+        val source = AeiDataSourceImpl(
+            args,
+            BackgroundWorker(executor),
+            { mockActivityManager },
+            store,
+            FakeOrdinalStore(),
+        )
+        source.onDataCaptureEnabled()
+        source.onDataCaptureDisabled()
+        executor.runCurrentlyBlocked()
+        assertTrue(args.destination.logEvents.isEmpty())
+        assertNull(store.getStringSet("io.embrace.aeiHashCode"))
     }
 
     private fun getAeiLogAttrs(): Map<String, Any> {

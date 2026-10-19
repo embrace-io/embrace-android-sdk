@@ -129,6 +129,7 @@ internal class ActivityNavigationTrackerTest {
             clock,
             eventBus,
             navigationTrackingService,
+            FakeInternalLogger(),
             VersionChecker { min -> sdkInt >= min },
         ).apply {
             RuntimeEnvironment.getApplication().registerActivityLifecycleCallbacks(this)

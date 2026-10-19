@@ -107,7 +107,7 @@ internal class VitalsDataSource(
 
     override fun onDataCaptureEnabled() {
         startSessionPart()
-        val vitalsScheduler = HandlerVitalsScheduler().apply { start() }
+        val vitalsScheduler = HandlerVitalsScheduler(args.logger).apply { start() }
         this.vitalsScheduler = vitalsScheduler
         val handler = vitalsScheduler.handler
 

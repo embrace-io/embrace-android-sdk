@@ -10,6 +10,8 @@ import io.embrace.android.embracesdk.annotation.LoadTracedActivity
 import io.embrace.android.embracesdk.annotation.NotTracedActivity
 import io.embrace.android.embracesdk.internal.clock.Clock
 import io.embrace.android.embracesdk.internal.instrumentation.startup.ui.DrawEventEmitter
+import io.embrace.android.embracesdk.internal.logging.InternalErrorType
+import io.embrace.android.embracesdk.internal.logging.InternalLogger
 import io.embrace.android.embracesdk.internal.utils.VersionChecker
 import java.util.concurrent.ConcurrentHashMap
 
@@ -26,12 +28,14 @@ internal fun createActivityLoadEventEmitter(
     autoTraceEnabled: Boolean,
     clock: Clock,
     versionChecker: VersionChecker,
+    logger: InternalLogger,
 ): Application.ActivityLifecycleCallbacks {
     val lifecycleEventEmitter = LifecycleEventEmitter(
         uiLoadEventListener = uiLoadEventListener,
         drawEventEmitter = firstDrawDetector,
         autoTraceEnabled = autoTraceEnabled,
         clock = clock,
+        logger = logger,
     )
     return if (hasPrePostEvents(versionChecker)) {
         ActivityLoadEventEmitter(lifecycleEventEmitter)
@@ -140,98 +144,127 @@ private class LifecycleEventEmitter(
     private val drawEventEmitter: DrawEventEmitter?,
     private val autoTraceEnabled: Boolean,
     private val clock: Clock,
+    private val logger: InternalLogger,
 ) {
 
     private val instanceStartTime: MutableMap<Int, Long> = ConcurrentHashMap()
 
     fun create(activity: Activity) {
-        if (activity.traceLoad()) {
-            uiLoadEventListener.create(
-                instanceId = traceInstanceId(activity),
-                activityName = activity.localClassName,
-                timestampMs = nowMs(),
-                manualEnd = activity.isManualEnd(),
-            )
+        try {
+            if (activity.traceLoad()) {
+                uiLoadEventListener.create(
+                    instanceId = traceInstanceId(activity),
+                    activityName = activity.localClassName,
+                    timestampMs = nowMs(),
+                    manualEnd = activity.isManualEnd(),
+                )
+            }
+        } catch (exc: Throwable) {
+            logger.trackInternalError(InternalErrorType.UiCallbackFail, exc)
         }
     }
 
     fun createEnd(activity: Activity) {
-        if (activity.traceLoad()) {
-            uiLoadEventListener.createEnd(
-                instanceId = traceInstanceId(activity),
-                timestampMs = nowMs(),
-            )
+        try {
+            if (activity.traceLoad()) {
+                uiLoadEventListener.createEnd(
+                    instanceId = traceInstanceId(activity),
+                    timestampMs = nowMs(),
+                )
+            }
+        } catch (exc: Throwable) {
+            logger.trackInternalError(InternalErrorType.UiCallbackFail, exc)
         }
     }
 
     fun start(activity: Activity) {
-        if (activity.traceLoad()) {
-            val instanceId = traceInstanceId(activity)
-            if (drawEventEmitter != null) {
-                val renderStartCallback = {
-                    uiLoadEventListener.render(
-                        instanceId = instanceId,
-                        timestampMs = nowMs(),
-                    )
-                }
+        try {
+            if (activity.traceLoad()) {
+                val instanceId = traceInstanceId(activity)
+                if (drawEventEmitter != null) {
+                    val renderStartCallback = {
+                        uiLoadEventListener.render(
+                            instanceId = instanceId,
+                            timestampMs = nowMs(),
+                        )
+                    }
 
-                // this callback will be cached, so it should not directly reference the Activity instance
-                val renderEndCallback = {
-                    uiLoadEventListener.renderEnd(
-                        instanceId = instanceId,
-                        timestampMs = nowMs(),
-                    )
+                    // this callback will be cached, so it should not directly reference the Activity instance
+                    val renderEndCallback = {
+                        uiLoadEventListener.renderEnd(
+                            instanceId = instanceId,
+                            timestampMs = nowMs(),
+                        )
+                    }
+                    drawEventEmitter.registerFirstDrawCallback(activity, renderStartCallback, renderEndCallback)
                 }
-                drawEventEmitter.registerFirstDrawCallback(activity, renderStartCallback, renderEndCallback)
+                instanceStartTime[instanceId] = nowMs()
             }
-            instanceStartTime[instanceId] = nowMs()
+        } catch (exc: Throwable) {
+            logger.trackInternalError(InternalErrorType.UiCallbackFail, exc)
         }
     }
 
     fun startEnd(activity: Activity) {
-        if (activity.traceLoad()) {
-            val instanceId = traceInstanceId(activity)
-            uiLoadEventListener.start(
-                instanceId = instanceId,
-                activityName = activity.localClassName,
-                timestampMs = instanceStartTime.remove(instanceId) ?: nowMs(),
-                manualEnd = activity.isManualEnd(),
-            )
-            uiLoadEventListener.startEnd(
-                instanceId = instanceId,
-                timestampMs = nowMs(),
-            )
+        try {
+            if (activity.traceLoad()) {
+                val instanceId = traceInstanceId(activity)
+                uiLoadEventListener.start(
+                    instanceId = instanceId,
+                    activityName = activity.localClassName,
+                    timestampMs = instanceStartTime.remove(instanceId) ?: nowMs(),
+                    manualEnd = activity.isManualEnd(),
+                )
+                uiLoadEventListener.startEnd(
+                    instanceId = instanceId,
+                    timestampMs = nowMs(),
+                )
+            }
+        } catch (exc: Throwable) {
+            logger.trackInternalError(InternalErrorType.UiCallbackFail, exc)
         }
     }
 
     fun resume(activity: Activity) {
-        if (activity.traceLoad()) {
-            uiLoadEventListener.resume(
-                instanceId = traceInstanceId(activity),
-                timestampMs = nowMs(),
-            )
+        try {
+            if (activity.traceLoad()) {
+                uiLoadEventListener.resume(
+                    instanceId = traceInstanceId(activity),
+                    timestampMs = nowMs(),
+                )
+            }
+        } catch (exc: Throwable) {
+            logger.trackInternalError(InternalErrorType.UiCallbackFail, exc)
         }
     }
 
     fun resumeEnd(activity: Activity) {
-        if (activity.traceLoad()) {
-            val now = nowMs()
-            uiLoadEventListener.resumeEnd(
-                instanceId = traceInstanceId(activity),
-                timestampMs = now,
-            )
+        try {
+            if (activity.traceLoad()) {
+                val now = nowMs()
+                uiLoadEventListener.resumeEnd(
+                    instanceId = traceInstanceId(activity),
+                    timestampMs = now,
+                )
+            }
+        } catch (exc: Throwable) {
+            logger.trackInternalError(InternalErrorType.UiCallbackFail, exc)
         }
     }
 
     fun pause(activity: Activity) {
-        if (activity.traceLoad()) {
-            val instanceId = traceInstanceId(activity)
-            instanceStartTime.remove(instanceId)
-            uiLoadEventListener.discard(
-                instanceId = instanceId,
-                timestampMs = nowMs(),
-            )
-            drawEventEmitter?.unregisterFirstDrawCallback(activity)
+        try {
+            if (activity.traceLoad()) {
+                val instanceId = traceInstanceId(activity)
+                instanceStartTime.remove(instanceId)
+                uiLoadEventListener.discard(
+                    instanceId = instanceId,
+                    timestampMs = nowMs(),
+                )
+                drawEventEmitter?.unregisterFirstDrawCallback(activity)
+            }
+        } catch (exc: Throwable) {
+            logger.trackInternalError(InternalErrorType.UiCallbackFail, exc)
         }
     }
 

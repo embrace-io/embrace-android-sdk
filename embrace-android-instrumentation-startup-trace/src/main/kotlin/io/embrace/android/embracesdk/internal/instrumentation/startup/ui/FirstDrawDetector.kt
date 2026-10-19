@@ -48,7 +48,7 @@ internal class FirstDrawDetector(
                         if (pendingDraws.remove(instanceId, registrationToken) && !trackingLoad(instanceId)) {
                             drawBeginCallback()
                             // the same instance must be registered and stored so that it can be unregistered later
-                            val frameCommitCallback = Runnable { drawCompleteCallback() }
+                            val frameCommitCallback = Runnable { invokeSafely(drawCompleteCallback) }
                             loadingActivities[instanceId] = frameCommitCallback
                             decorView.viewTreeObserver.registerFrameCommitCallback(frameCommitCallback)
                         }
@@ -88,9 +88,17 @@ internal class FirstDrawDetector(
 
     private fun trackingLoad(instanceId: Int): Boolean = loadingActivities.containsKey(instanceId)
 
+    private fun invokeSafely(callback: () -> Unit) {
+        try {
+            callback()
+        } catch (exc: Throwable) {
+            logger.trackInternalError(InternalErrorType.UiCallbackFail, exc)
+        }
+    }
+
     private fun View.onNextDraw(onDrawCallback: () -> Unit) {
         viewTreeObserver.addOnDrawListener(
-            PyNextDrawListener(this, onDrawCallback),
+            PyNextDrawListener(this) { invokeSafely(onDrawCallback) },
         )
     }
 
@@ -98,7 +106,7 @@ internal class FirstDrawDetector(
         if (callback != null) {
             if (peekDecorView() == null) {
                 onContentChanged {
-                    onDecorViewReady()
+                    invokeSafely(onDecorViewReady)
                     return@onContentChanged false
                 }
             } else {

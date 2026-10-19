@@ -2,8 +2,6 @@ package io.embrace.android.embracesdk.injection
 
 import io.embrace.android.embracesdk.fakes.FakeSessionIdsProvider
 import io.embrace.android.embracesdk.fakes.FakeUserService
-import io.embrace.android.embracesdk.fakes.injection.FakeEssentialServiceModule
-import io.embrace.android.embracesdk.fakes.injection.FakeUserSessionOrchestrationModule
 import io.embrace.android.embracesdk.internal.injection.OtelSignalContext
 import io.embrace.android.embracesdk.internal.payload.UserInfo
 import org.junit.Assert.assertEquals
@@ -16,9 +14,13 @@ internal class OtelSignalContextTest {
     @Test
     fun `no context is supplied before ready`() {
         val context = OtelSignalContext(
-            essentialServiceModuleProvider = { error("not constructed") },
-            userSessionOrchestrationModuleProvider = { error("not constructed") },
-            instrumentationModuleProvider = { error("not constructed") },
+            sessionIdsProvider = { error("not constructed") },
+            userServiceProvider = { error("not constructed") },
+            sessionPartTrackerProvider = { error("not constructed") },
+            processStateTrackerProvider = { error("not constructed") },
+            experimentTrackingServiceProvider = { error("not constructed") },
+            userSessionPropertiesServiceProvider = { error("not constructed") },
+            instrumentationRegistryProvider = { error("not constructed") },
         )
         assertNull(context.getSessionIdsProvider())
         assertNull(context.getUserId())
@@ -30,11 +32,13 @@ internal class OtelSignalContextTest {
         val sessionIdsProvider = FakeSessionIdsProvider()
         val userService = FakeUserService().apply { obj = UserInfo(userId = "user-id") }
         val context = OtelSignalContext(
-            essentialServiceModuleProvider = { FakeEssentialServiceModule(userService = userService) },
-            userSessionOrchestrationModuleProvider = {
-                FakeUserSessionOrchestrationModule(sessionIdsProvider = sessionIdsProvider)
-            },
-            instrumentationModuleProvider = { error("unused") },
+            sessionIdsProvider = { sessionIdsProvider },
+            userServiceProvider = { userService },
+            sessionPartTrackerProvider = { error("unused") },
+            processStateTrackerProvider = { error("unused") },
+            experimentTrackingServiceProvider = { error("unused") },
+            userSessionPropertiesServiceProvider = { error("unused") },
+            instrumentationRegistryProvider = { error("unused") },
         )
         context.markReady()
         assertSame(sessionIdsProvider, context.getSessionIdsProvider())

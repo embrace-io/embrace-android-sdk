@@ -21,6 +21,7 @@ import io.embrace.android.embracesdk.internal.injection.EssentialServiceModuleIm
 import io.embrace.android.embracesdk.internal.injection.InitializedModuleGraph
 import io.embrace.android.embracesdk.internal.injection.PreStartServices
 import io.embrace.android.embracesdk.internal.instance.RealSdkInstance
+import io.embrace.android.embracesdk.internal.instance.createRealSdkInstance
 import io.embrace.android.embracesdk.internal.instrumentation.startup.SdkInitResourceUsageTracker
 import io.embrace.android.embracesdk.semconv.EmbSessionAttributes
 import io.opentelemetry.kotlin.NoopOpenTelemetry
@@ -152,7 +153,7 @@ internal class InitializedModuleGraphTest {
         val dataSource = CrashHandlerDataSource()
         registry.add { dataSource }
 
-        RealSdkInstance(moduleGraph, clock).postLoadInstrumentation()
+        createRealSdkInstance(moduleGraph, clock).postLoadInstrumentation()
 
         val handlers = dataSource.handlers
         val expected = listOf(

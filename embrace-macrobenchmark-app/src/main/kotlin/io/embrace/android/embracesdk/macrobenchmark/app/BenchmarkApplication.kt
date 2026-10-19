@@ -3,6 +3,7 @@ package io.embrace.android.embracesdk.macrobenchmark.app
 import android.app.Application
 import android.provider.Settings
 import io.embrace.android.embracesdk.Embrace
+import io.embrace.android.embracesdk.macrobenchmark.app.storage.SdkStorage
 import java.io.File
 
 /**
@@ -12,7 +13,7 @@ class BenchmarkApplication : Application() {
 
     override fun onCreate() {
         super.onCreate()
-        seedRemoteConfig()
+        seedRemoteConfig(SdkStorage(File(applicationInfo.dataDir)))
         Embrace.start(this)
     }
 
@@ -25,10 +26,9 @@ class BenchmarkApplication : Application() {
      * adb shell settings put global embrace_pct_otel_kotlin_sdk 100
      * ```
      *
-     * This is required as the APK is non-debuggable in typical conditions. The binary config cache
-     * takes priority over the JSON response, so it is deleted for the seeded config to be read.
+     * This is required as the APK is non-debuggable in typical conditions.
      */
-    private fun seedRemoteConfig() {
+    private fun seedRemoteConfig(storage: SdkStorage) {
         val fields = listOfNotNull(
             globalSetting("embrace_pct_multi_file_persistence")?.let { "\"pct_multi_file_persistence_enabled\":$it" },
             globalSetting("embrace_pct_otel_kotlin_sdk")?.let { "\"otel_kotlin_sdk\":{\"pct_enabled\":$it}" },
@@ -36,9 +36,7 @@ class BenchmarkApplication : Application() {
         if (fields.isEmpty()) {
             return
         }
-        val dir = File(filesDir, "embrace_remote_config").apply { mkdirs() }
-        File(dir, "cached_config").delete()
-        File(dir, "most_recent_response").writeText(fields.joinToString(",", "{", "}"))
+        storage.writeRemoteConfig(fields.joinToString(",", "{", "}"))
     }
 
     private fun globalSetting(name: String): String? = Settings.Global.getString(contentResolver, name)

@@ -3,7 +3,11 @@ package io.embrace.android.embracesdk.internal.injection
 import android.app.ActivityManager
 import android.content.Context
 import io.embrace.android.embracesdk.internal.capture.connectivity.NetworkConnectivityService
+import io.embrace.android.embracesdk.internal.capture.crumbs.BreadcrumbDataSource
 import io.embrace.android.embracesdk.internal.config.ConfigService
+import io.embrace.android.embracesdk.internal.instrumentation.crash.CrashFileMarker
+import io.embrace.android.embracesdk.internal.instrumentation.crash.CrashFileMarkerImpl
+import io.embrace.android.embracesdk.internal.instrumentation.crash.LastRunCrashVerifier
 import io.embrace.android.embracesdk.internal.instrumentation.startup.DataCaptureServiceModule
 import io.embrace.android.embracesdk.internal.instrumentation.startup.DataCaptureServiceModuleImpl
 import io.embrace.android.embracesdk.internal.instrumentation.startup.DataCaptureServiceModuleSupplier
@@ -11,6 +15,12 @@ import io.embrace.android.embracesdk.internal.instrumentation.startup.SdkInitRes
 import io.embrace.android.embracesdk.internal.instrumentation.thread.blockage.ThreadBlockageService
 import io.embrace.android.embracesdk.internal.instrumentation.thread.blockage.ThreadBlockageServiceSupplier
 import io.embrace.android.embracesdk.internal.instrumentation.thread.blockage.createThreadBlockageService
+import io.embrace.android.embracesdk.internal.logs.LogLimitingService
+import io.embrace.android.embracesdk.internal.logs.LogLimitingServiceImpl
+import io.embrace.android.embracesdk.internal.logs.LogOrchestrator
+import io.embrace.android.embracesdk.internal.logs.LogService
+import io.embrace.android.embracesdk.internal.logs.LogServiceImpl
+import io.embrace.android.embracesdk.internal.logs.attachments.AttachmentService
 import io.embrace.android.embracesdk.internal.session.lifecycle.LifecycleTracker
 import io.embrace.android.embracesdk.internal.storage.EmbraceStorageService
 import io.embrace.android.embracesdk.internal.storage.StatFsAvailabilityChecker
@@ -36,19 +46,16 @@ internal class InitializedModuleGraph(
     val sdkStartTimeMs: Long,
     val sdkInitResourceUsageTracker: SdkInitResourceUsageTracker,
     versionChecker: VersionChecker = BuildVersionChecker,
-    @Suppress("UnusedPrivateProperty")
     overrides: SdkOverrides? = null,
     private val initModuleSupplier: InitModuleSupplier? = null,
     private val openTelemetryModuleSupplier: OpenTelemetryModuleSupplier? = null,
     private val coreModuleSupplier: CoreModuleSupplier? = null,
     private val storageServiceSupplier: StorageServiceSupplier? = null,
     private val essentialServiceModuleSupplier: EssentialServiceModuleSupplier? = null,
-    private val featureModuleSupplier: FeatureModuleSupplier? = null,
     private val instrumentationModuleSupplier: InstrumentationModuleSupplier? = null,
     private val dataCaptureServiceModuleSupplier: DataCaptureServiceModuleSupplier? = null,
     private val deliveryModuleSupplier: DeliveryModuleSupplier? = null,
     private val threadBlockageServiceSupplier: ThreadBlockageServiceSupplier? = null,
-    private val logModuleSupplier: LogModuleSupplier? = null,
     private val userSessionOrchestrationModuleSupplier: UserSessionOrchestrationModuleSupplier? = null,
     private val payloadSourceModuleSupplier: PayloadSourceModuleSupplier? = null,
 ) {
@@ -167,15 +174,19 @@ internal class InitializedModuleGraph(
         )
     }
 
-    val featureModule: FeatureModule = init("feature") {
-        featureModuleSupplier?.invoke(
-            instrumentationModule,
-            storageService,
-        ) ?: FeatureModuleImpl(
-            instrumentationModule = instrumentationModule,
-            storageService = storageService,
+    val breadcrumbDataSource: Lazy<BreadcrumbDataSource?> = lazy {
+        instrumentationModule.instrumentationRegistry.add {
+            BreadcrumbDataSource(instrumentationModule.instrumentationArgs)
+        }
+    }
+
+    val crashMarker: CrashFileMarker = init("feature") {
+        CrashFileMarkerImpl(
+            lazy { storageService.getFileForWrite(CrashFileMarkerImpl.CRASH_MARKER_FILE_NAME) },
         )
     }
+
+    val lastRunCrashVerifier: LastRunCrashVerifier = LastRunCrashVerifier(crashMarker)
 
     val dataCaptureServiceModule: DataCaptureServiceModule = init("data-capture-service") {
         val instrumentationArgs = instrumentationModule.instrumentationArgs
@@ -265,23 +276,31 @@ internal class InitializedModuleGraph(
         )
     }
 
-    val logModule: LogModule = init("log") {
-        logModuleSupplier?.invoke(
-            initModule,
-            openTelemetryModule,
-            essentialServiceModule,
+    val logLimitingService: LogLimitingService = LogLimitingServiceImpl(configService)
+
+    val logOrchestrator: LogOrchestrator = init("log") {
+        createLogOrchestrator(
+            worker = overrides?.logOrchestratorWorker.resolve {
+                workerThreadPool.backgroundWorker(Worker.Background.NonIoRegWorker)
+            },
+            clock = initModule.clock,
+            sink = openTelemetryModule.logSink,
+            payloadStore = deliveryModule?.payloadStore,
+            logEnvelopeSource = payloadSourceModule.logEnvelopeSource,
+        )
+    }
+
+    val attachmentService: AttachmentService = AttachmentService()
+
+    /**
+     * Deferred: only reached via the public logging API, never during SDK init.
+     */
+    val logService: Lazy<LogService> = lazy(LazyThreadSafetyMode.PUBLICATION) {
+        LogServiceImpl(
+            essentialServiceModule.telemetryDestination,
             configService,
-            deliveryModule,
-            workerThreadPool,
-            payloadSourceModule,
-        ) ?: LogModuleImpl(
-            initModule,
-            openTelemetryModule,
-            essentialServiceModule,
-            configService,
-            deliveryModule,
-            workerThreadPool,
-            payloadSourceModule,
+            logLimitingService,
+            initModule.telemetryService,
         )
     }
 
@@ -300,7 +319,7 @@ internal class InitializedModuleGraph(
                 payloadSourceModule,
                 startupDurationProvider,
                 appVersionStartupCounterProvider,
-                logModule,
+                logLimitingService,
                 workerThreadPool,
             ) ?: UserSessionOrchestrationModuleImpl(
                 initModule,
@@ -313,7 +332,7 @@ internal class InitializedModuleGraph(
                 payloadSourceModule,
                 startupDurationProvider,
                 appVersionStartupCounterProvider,
-                logModule,
+                logLimitingService,
                 workerThreadPool,
             )
         }

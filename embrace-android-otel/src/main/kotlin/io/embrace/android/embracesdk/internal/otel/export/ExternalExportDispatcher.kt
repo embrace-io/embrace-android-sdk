@@ -1,7 +1,10 @@
 package io.embrace.android.embracesdk.internal.otel.export
 
+import io.embrace.android.embracesdk.internal.logging.InternalErrorHandler
+import io.embrace.android.embracesdk.internal.logging.InternalErrorType
 import io.embrace.android.embracesdk.internal.utils.EmbTrace
 import kotlinx.coroutines.CoroutineDispatcher
+import kotlinx.coroutines.CoroutineExceptionHandler
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.ExecutorCoroutineDispatcher
 import kotlinx.coroutines.SupervisorJob
@@ -9,6 +12,7 @@ import kotlinx.coroutines.asCoroutineDispatcher
 import kotlinx.coroutines.job
 import kotlinx.coroutines.joinAll
 import kotlinx.coroutines.launch
+import java.io.IOException
 import java.util.concurrent.Executors
 
 /**
@@ -18,11 +22,15 @@ import java.util.concurrent.Executors
  * exporting inline would block whichever thread ended a span or emitted a log.
  */
 class ExternalExportDispatcher(
+    private val errorHandler: InternalErrorHandler,
     dispatcherProvider: () -> CoroutineDispatcher = ::singleThreadedDispatcher,
 ) {
 
     private val lazyDispatcher = lazy(dispatcherProvider)
-    private val lazyScope = lazy { CoroutineScope(SupervisorJob() + lazyDispatcher.value) }
+    private val lazyScope = lazy {
+        val handler = CoroutineExceptionHandler { _, exc -> onUncaught(exc) }
+        CoroutineScope(SupervisorJob() + lazyDispatcher.value + handler)
+    }
 
     /**
      * Exports to every exporter in [exporters] on the export thread and returns immediately. Each
@@ -59,6 +67,12 @@ class ExternalExportDispatcher(
             return
         }
         (lazyDispatcher.value as? ExecutorCoroutineDispatcher)?.close()
+    }
+
+    private fun onUncaught(exc: Throwable) {
+        if (exc !is IOException && exc !is VirtualMachineError) {
+            errorHandler.trackInternalError(InternalErrorType.OtelExternalExportFail, exc)
+        }
     }
 
     private companion object {

@@ -46,6 +46,8 @@ android {
                 }
                 test.maxParallelForks = forkCount
                 test.maxHeapSize = heapSize
+                // Test forks are short-lived, so C2 compilation costs more than it saves
+                test.jvmArgs("-XX:TieredStopAtLevel=1")
 
                 // Disable test discovery failure for modules without test sources
                 test.failOnNoDiscoveredTests.set(false)

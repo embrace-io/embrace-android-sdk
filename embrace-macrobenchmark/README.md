@@ -5,11 +5,13 @@ starting the next one on each. Each iteration fills the session with telemetry (
 calls `Embrace.endUserSession()` (`session-end`), then waits ~2s for the SDK's queued persistence
 writes so they land in the trace.
 
-Every benchmark runs once per opentelemetry-kotlin implementation (`compat` and `regular`), which
-appear as a suffix on the test name, e.g. `sessionEnd[compat]`.
+Every benchmark except `ResurrectionBenchmark` runs once per opentelemetry-kotlin implementation
+(`compat` and `regular`), which appear as a suffix on the test name, e.g. `sessionEnd[compat]`.
+`ResurrectionBenchmark` runs in `compat` mode only, and its test names carry the fixture instead,
+e.g. `resurrect[large_part]`.
 
-It wipes app data per iteration because the SDK restores a persisted user session in a new process
-and declines a manual end for an iteration that inherits one. The app depends on
+`SessionBenchmark` wipes app data per iteration because the SDK restores a persisted user session in a
+new process and declines a manual end for an iteration that inherits one. The app depends on
 `:embrace-android-sdk` as a project dependency, so benchmarks measure the working tree.
 
 ## Running
@@ -33,6 +35,36 @@ compare what assembling the OTel SDK costs in each:
 ```bash
 scripts/macrobenchmark.sh --out perf/macrobenchmark/otel-init \
     --test io.embrace.android.embracesdk.macrobenchmark.OtelInitBenchmark
+```
+
+`ResurrectionBenchmark` measures what resurrecting the session part a dead app instance left on disk costs
+the next launch, in multi-file persistence mode. What that costs grows with how much the part holds, so each
+of `ResurrectionScenarios` leaves one dead part of a different size: `small_part`, `medium_part`, `large_part`, and
+`capped_part`, which fills the SDK's default limits per session part (500 spans created through its API, 2000
+network requests and 100 each of breadcrumbs and session properties). Each part records requests through
+the manual network API and completed spans with times of their own, adds breadcrumbs and session properties,
+and leaves spans running when its app instance dies. The benchmark records the fixture once, with the SDK under test: a launch
+that runs the scenario and is killed once the SDK has written it. Before every iteration, a launch that does
+not start the SDK restores the recorded part; the measured launch then cold-starts the SDK and waits until
+the part has been resurrected. It reports `emb-sdk-start` (the SDK's start on the main
+thread), `emb-mf-read-session-parts` and `emb-resurrect-payloads` (the background worker's reading and
+resurrecting, whose sum is its wall clock time), and the app's peak Java heap and resident memory. The
+memory figures need the `memory` capture profile, so the benchmark refuses to run under any other. It
+runs 10 iterations a fixture, a pass; a
+comparison should take its repetition from several passes (see the campaign below) rather than from
+more iterations in one. Pass `-e resurrection.iterations N` to `am instrument`, or
+`--gradle-arg -Pandroid.testInstrumentationRunnerArguments.resurrection.iterations=N`, to change it:
+
+```bash
+scripts/macrobenchmark.sh --out perf/macrobenchmark/resurrection --capture memory \
+    --test io.embrace.android.embracesdk.macrobenchmark.ResurrectionBenchmark
+```
+
+Several passes on one device, with a cool-down between them and the traces of each pass kept apart:
+
+```bash
+tools/startup fleet-campaign --serial SERIAL --out OUT --passes 4 --harness macrobenchmark \
+    --method ResurrectionBenchmark --capture memory
 ```
 
 The two halves are usable separately: `scripts/run-macrobenchmark.sh --help` and
@@ -92,10 +124,17 @@ argument when running Gradle directly; `tools/startup fleet-campaign --harness m
 what makes two runs comparable, and the trace records the config it was captured with, so the
 analysis reads which one it has rather than being told.
 
+`SessionBenchmark` and `PersistenceScenarioBenchmark` take any profile, `ResurrectionBenchmark` only
+`memory`, and `OtelInitBenchmark` always captures `perfetto-config-app-only.pbtx` (the `app-only` config).
+The profiles and their configs live in `embrace-benchmark-common` (`CaptureProfile`).
+
 | profile | config | holds | per iteration |
 |---|---|---|---|
 | `app-only` (default) | `perfetto-config-app-only.pbtx` | the app's sections and counters, thread names | ~120 KB |
 | `with-context` | `perfetto-config-with-context.pbtx` | the same, plus every thread's scheduling (switches, wakings, blocked reasons, compact-encoded), cpu frequency and limits, binder transactions, ART's class-load and GC sections (`dalvik`) from every process, and memory available / swap once a second | ~2 MB |
+| `memory` | `perfetto-config-memory.pbtx` | the `app-only` contents plus what `MemoryUsageMetric` reads: the app's resident set size (`kmem/rss_stat`) and ART's heap size counter (the `dalvik` category), and the `task_newtask` / `task_rename` events without which a process named before it renames itself from `zygote64` is invisible | ~0.8–2.1 MB |
+
+The `memory` profile leaves out `proc_stats_poll_ms`, which makes that early naming far more likely.
 
 `with-context` is what explaining an outlier needs: which thread state a section spent its time in and on
 which cpus, what else was running, and whether the clock had been throttled. Scheduling events arrive for
@@ -137,3 +176,5 @@ adb shell settings delete global embrace_pct_otel_kotlin_sdk           # SDK def
 The app turns those into a remote config on disk, which the SDK reads at startup, and deletes the
 binary config cache that would otherwise take priority. Every benchmark and `BaselineProfileGenerator`
 set and clear `embrace_pct_otel_kotlin_sdk` themselves, so setting it by hand has no effect on them.
+`ResurrectionBenchmark` likewise sets and clears `embrace_pct_multi_file_persistence` itself (and the
+`embrace_benchmark_restore_fixture` setting that drives its fixture).

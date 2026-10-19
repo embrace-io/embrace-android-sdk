@@ -10,6 +10,7 @@ internal class HostTaskTest {
         HostTask.RunPersistenceScenario(PersistenceScenarios.all.first()),
         HostTask.RecordFixture(ResurrectionScenarios.largePart),
         HostTask.RestoreFixture,
+        HostTask.AwaitResurrection,
     )
 
     @Test

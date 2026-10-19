@@ -122,6 +122,7 @@ internal class SdkIntegrationTestRule(
     private lateinit var logExporter: FilteredLogExporter
     private lateinit var sdkStateHolder: SdkStateHolder
     private lateinit var baseUrl: String
+    private lateinit var server: MockWebServer
 
     private lateinit var moduleGraphSupplier: ModuleGraphSupplier
     private var createdModuleGraph: InitializedModuleGraph? = null
@@ -156,7 +157,7 @@ internal class SdkIntegrationTestRule(
         setup = embraceSetupInterfaceSupplier()
         val deliveryTracer = DeliveryTracer()
         val apiServer = FakeApiServer(serverConfig, deliveryTracer, serverResponseConfigJson)
-        val server: MockWebServer = MockWebServer().apply {
+        server = MockWebServer().apply {
             protocols = listOf(Protocol.HTTP_2, Protocol.HTTP_1_1)
             dispatcher = apiServer
             start()
@@ -271,6 +272,9 @@ internal class SdkIntegrationTestRule(
     override fun after() {
         if (::sdkStateHolder.isInitialized) {
             sdkStateHolder.close()
+        }
+        if (::server.isInitialized) {
+            server.shutdown()
         }
     }
 

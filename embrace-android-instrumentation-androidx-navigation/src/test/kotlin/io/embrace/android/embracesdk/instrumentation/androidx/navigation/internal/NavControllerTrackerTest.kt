@@ -131,6 +131,29 @@ internal class NavControllerTrackerTest {
     }
 
     @Test
+    fun `destination changes are not reported after capture is disabled`() {
+        val controller = createTestNavController("foo", "bar")
+        tracker.trackNavigation(activity, controller)
+        assertEquals(listOf("foo"), screenChanges.map { it.name })
+
+        tracker.onDataCaptureDisabled()
+        controller.navigate("bar")
+        assertEquals(listOf("foo"), screenChanges.map { it.name })
+
+        tracker.onDataCaptureEnabled()
+        controller.navigate("foo")
+        assertEquals(listOf("foo", "foo"), screenChanges.map { it.name })
+    }
+
+    @Test
+    fun `tracking is ignored after capture is disabled`() {
+        tracker.onDataCaptureDisabled()
+        tracker.trackNavigation(activity)
+        tracker.trackNavigation(activity, createTestNavController())
+        assertTrue(signals.isEmpty())
+    }
+
+    @Test
     fun `error during tracking is logged and does not crash`() {
         val errorLogger = FakeInternalLogger(throwOnInternalError = false)
         tracker = NavControllerTracker(eventBus, clock, errorLogger)
@@ -209,11 +232,16 @@ internal class NavControllerTrackerTest {
         }
     }
 
-    private fun createTestNavController(startDestination: String = "home"): NavController =
+    private fun createTestNavController(
+        startDestination: String = "home",
+        vararg otherDestinations: String,
+    ): NavController =
         TestNavHostController(ApplicationProvider.getApplicationContext()).apply {
             val graphNavigator = navigatorProvider.getNavigator(NavGraphNavigator::class.java)
             graph = graphNavigator.createDestination().apply {
-                addDestination(NavDestination("testNavDestination").apply { route = startDestination })
+                (listOf(startDestination) + otherDestinations).forEach { destination ->
+                    addDestination(NavDestination("testNavDestination").apply { route = destination })
+                }
                 setStartDestination(startDestination)
             }
         }

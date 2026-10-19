@@ -15,6 +15,7 @@ import io.embrace.android.embracesdk.internal.clock.Clock
 import io.embrace.android.embracesdk.internal.logging.InternalErrorType
 import io.embrace.android.embracesdk.internal.logging.InternalLogger
 import io.embrace.android.embracesdk.internal.utils.event.EventBus
+import java.util.concurrent.atomic.AtomicReference
 
 /**
  * Discovers and attaches [NavController.OnDestinationChangedListener] instances to Activities that use a [NavController].
@@ -28,7 +29,24 @@ internal class NavControllerTracker(
 
     private val trackAttemptStatus = mutableMapOf<Int, Boolean>()
 
+    /**
+     * Listeners registered on a [NavController] hold this reference rather than the tracker to allow
+     * making listeners inert when the SDK is disabled.
+     */
+    private val trackerRef = AtomicReference<NavControllerTracker?>(this)
+
+    fun onDataCaptureEnabled() {
+        trackerRef.set(this)
+    }
+
+    fun onDataCaptureDisabled() {
+        trackerRef.set(null)
+    }
+
     override fun trackNavigation(activity: Activity, controller: Any?) {
+        if (trackerRef.get() == null) {
+            return
+        }
         runCatching {
             val activityId = activity.getId()
             if (trackAttemptStatus[activityId] != true) {
@@ -48,10 +66,15 @@ internal class NavControllerTracker(
     private fun NavController.trackForActivity(activity: Activity) {
         val activityId = activity.getId()
         eventBus.emit(NavigationSignal.KEY, ScreenSourceAttached(activityId, clock.now()))
+        val ref = trackerRef
         addOnDestinationChangedListener { _, destination, _ ->
-            eventBus.emit(NavigationSignal.KEY, ScreenChanged(activityId, extractScreenName(destination), clock.now()))
+            ref.get()?.onDestinationChanged(activityId, destination)
         }
         trackAttemptStatus[activityId] = true
+    }
+
+    private fun onDestinationChanged(activityId: Int, destination: NavDestination) {
+        eventBus.emit(NavigationSignal.KEY, ScreenChanged(activityId, extractScreenName(destination), clock.now()))
     }
 
     private fun findNavController(activity: Activity): NavController? {

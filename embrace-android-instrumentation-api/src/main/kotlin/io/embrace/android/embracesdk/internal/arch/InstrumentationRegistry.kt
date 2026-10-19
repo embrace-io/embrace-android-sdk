@@ -2,13 +2,12 @@ package io.embrace.android.embracesdk.internal.arch
 
 import io.embrace.android.embracesdk.internal.arch.datasource.DataSource
 import io.embrace.android.embracesdk.internal.arch.datasource.DataSourceFactory
-import java.io.Closeable
 import kotlin.reflect.KClass
 
 /**
  * Registry for all features whose instrumentation should be orchestrated by the Embrace SDK.
  */
-interface InstrumentationRegistry : SessionPartEndListener, SessionPartChangeListener, Closeable {
+interface InstrumentationRegistry : SessionPartEndListener, SessionPartChangeListener, AutoCloseable {
 
     /**
      * Creates a data source from [state] and adds it to the registry, enabling data capture.

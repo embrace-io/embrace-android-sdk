@@ -11,7 +11,6 @@ import io.embrace.android.embracesdk.internal.instrumentation.thread.blockage.Th
 import io.embrace.android.embracesdk.internal.logging.InternalErrorType
 import io.embrace.android.embracesdk.internal.logging.InternalLogger
 import io.embrace.android.embracesdk.internal.worker.BackgroundWorker
-import java.io.Closeable
 import java.util.concurrent.ScheduledFuture
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicBoolean
@@ -33,7 +32,7 @@ class BlockedThreadDetector(
     private val listener: ThreadBlockageListener,
     private val intervalMs: Long,
     private val blockedDurationThreshold: Int,
-) : Closeable {
+) : AutoCloseable {
 
     private val targetThreadHandler: TargetThreadHandler = TargetThreadHandler(
         looper = looper,

@@ -1,11 +1,9 @@
 package io.embrace.android.embracesdk.internal.capture.connectivity
 
-import java.io.Closeable
-
 /**
  * Detects and records which network the device is connected to.
  */
-interface NetworkConnectivityService : Closeable {
+interface NetworkConnectivityService : AutoCloseable {
 
     /**
      * Adds a listener for changes in the connectivity status.

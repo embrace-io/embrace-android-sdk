@@ -3,13 +3,12 @@ package io.embrace.android.embracesdk.internal.injection
 import io.embrace.android.embracesdk.internal.worker.BackgroundWorker
 import io.embrace.android.embracesdk.internal.worker.PriorityWorker
 import io.embrace.android.embracesdk.internal.worker.Worker
-import java.io.Closeable
 import java.util.concurrent.atomic.AtomicReference
 
 /**
  * A set of shared executors to be used throughout the SDK
  */
-interface WorkerThreadPool : Closeable {
+interface WorkerThreadPool : AutoCloseable {
 
     /**
      * Return a [BackgroundWorker] matching the [worker]

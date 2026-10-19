@@ -33,7 +33,6 @@ import io.opentelemetry.kotlin.logging.export.LogRecordExporter
 import io.opentelemetry.kotlin.logging.export.LogRecordProcessor
 import io.opentelemetry.kotlin.tracing.export.SpanExporter
 import io.opentelemetry.kotlin.tracing.export.SpanProcessor
-import java.io.Closeable
 import java.util.concurrent.TimeUnit
 
 /**
@@ -340,7 +339,7 @@ internal class BufferingSdkInstance(
      * Buffers calls of type [C] until [drain] supplies a target of type [T], after which calls are forwarded to that
      * instead.
      */
-    private class CallBuffer<T : Any, C : Any> : Closeable {
+    private class CallBuffer<T : Any, C : Any> : AutoCloseable {
         // properties not private to avoid synthetic accessors
         val lock = Any()
 

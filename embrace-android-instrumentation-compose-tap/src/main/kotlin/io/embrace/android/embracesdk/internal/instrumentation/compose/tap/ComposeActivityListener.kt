@@ -6,14 +6,13 @@ import android.os.Bundle
 import android.view.GestureDetector
 import android.view.Window
 import io.embrace.android.embracesdk.internal.logging.InternalLogger
-import java.io.Closeable
 import java.lang.ref.WeakReference
 import java.util.WeakHashMap
 
 internal class ComposeActivityListener(
     private val logger: InternalLogger,
     private val dataSource: ComposeTapDataSource,
-) : ActivityLifecycleCallbacks, Closeable {
+) : ActivityLifecycleCallbacks, AutoCloseable {
 
     /**
      * Windows that already have an [EmbraceWindowCallback] installed so that we don't attempt to double-install our `Callback` delegate.

@@ -24,7 +24,6 @@ import io.opentelemetry.kotlin.semconv.OsAttributes
 import io.opentelemetry.kotlin.semconv.ServiceAttributes
 import io.opentelemetry.kotlin.semconv.TelemetryAttributes
 import io.opentelemetry.kotlin.tracing.export.SpanProcessor
-import java.io.Closeable
 
 class OtelSdkConfig(
     spanRepository: SpanRepository,
@@ -41,7 +40,7 @@ class OtelSdkConfig(
     private val processIdentifierProvider: () -> String = IdGenerator.Companion::generateLaunchInstanceId,
     private val externalExportDispatcher: ExternalExportDispatcher,
     val externalConfig: ExternalOtelConfig = ExternalOtelConfig(),
-) : Closeable {
+) : AutoCloseable {
 
     val resourceAction: AttributesMutator.() -> Unit
         get() = {

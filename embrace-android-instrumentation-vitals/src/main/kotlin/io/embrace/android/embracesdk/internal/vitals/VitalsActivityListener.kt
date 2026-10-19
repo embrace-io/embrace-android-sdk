@@ -8,7 +8,6 @@ import android.os.Handler
 import android.os.SystemClock
 import android.view.Window
 import androidx.annotation.RequiresApi
-import java.io.Closeable
 import java.lang.ref.WeakReference
 import java.util.WeakHashMap
 
@@ -23,7 +22,7 @@ internal class VitalsActivityListener(
     private val navSource: ActivityNavigationSource,
     private val frameMetricsHandler: Handler,
     private val frameMetricsStrategy: FrameMetricsStrategy,
-) : ActivityLifecycleCallbacks, Closeable {
+) : ActivityLifecycleCallbacks, AutoCloseable {
 
     private val frameListeners = WeakHashMap<Window, VitalsFrameMetricsListener>()
 

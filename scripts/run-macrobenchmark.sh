@@ -1,10 +1,11 @@
 #!/bin/sh
 # Runs the :embrace-macrobenchmark benchmark on a connected device.
 #
-# Usage: scripts/run-macrobenchmark.sh [--test CLASS] [--serial SERIAL] [--capture app-only|with-context]
+# Usage: scripts/run-macrobenchmark.sh [--test CLASS] [--serial SERIAL] [--capture app-only|with-context|memory]
 #            [--no-publish] [--suppress-errors LIST] [--gradle-arg ARG] [--dry-run]
 #
 # --capture picks the perfetto config (see the README's capture profiles); app-only is the default.
+# ResurrectionBenchmark needs --capture memory.
 # Two gradle invocations are needed: the app resolves the Embrace gradle plugin on its buildscript
 # classpath, so the plugin must be in build/integration-repo before the benchmark configures.
 # Exit codes: 2 preflight, 3 publish, 4 benchmark.
@@ -30,14 +31,14 @@ while [ $# -gt 0 ]; do
         --gradle-arg) extra="$extra ${2:?--gradle-arg needs a value}"; shift 2 ;;
         --no-publish) publish=false; shift ;;
         --dry-run) dry_run=true; shift ;;
-        -h|--help) sed -n '2,10p' "$0" | sed 's/^# \{0,1\}//'; exit 0 ;;
+        -h|--help) sed -n '2,11p' "$0" | sed 's/^# \{0,1\}//'; exit 0 ;;
         *) die 1 "unknown option: $1" ;;
     esac
 done
 
 case $capture in
-    app-only|with-context) ;;
-    *) die 1 "unknown --capture '$capture'; one of app-only, with-context" ;;
+    app-only|with-context|memory) ;;
+    *) die 1 "unknown --capture '$capture'; one of app-only, with-context, memory" ;;
 esac
 
 root=$(CDPATH= cd -- "$(dirname -- "$0")/.." && pwd)

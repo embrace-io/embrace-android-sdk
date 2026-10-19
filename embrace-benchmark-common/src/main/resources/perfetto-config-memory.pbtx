@@ -1,0 +1,41 @@
+# Field reference, at Perfetto v46.0: the version this config was last validated against.
+#   trace config:  https://github.com/google/perfetto/blob/v46.0/protos/perfetto/config/trace_config.proto
+#   ftrace config: https://github.com/google/perfetto/blob/v46.0/protos/perfetto/config/ftrace/ftrace_config.proto
+#   process stats: https://github.com/google/perfetto/blob/v46.0/protos/perfetto/config/process_stats/process_stats_config.proto
+#
+# perfetto-config-app-only.pbtx plus what MemoryUsageMetric reads: the app's resident set size, from rss_stat
+# events, and ART's "Heap size (KB)" counter, which ART only emits while the dalvik atrace category is
+# on. The app's process can be named before it renames itself from zygote64, which hides it from every
+# metric unless the trace also records the rename (task_rename). Do not add proc_stats_poll_ms, which
+# makes that early naming far more likely.
+buffers {
+  size_kb: 65536
+  fill_policy: RING_BUFFER
+}
+data_sources {
+  config {
+    name: "linux.ftrace"
+    target_buffer: 0
+    ftrace_config {
+      atrace_apps: "io.embrace.android.embracesdk.macrobenchmark.app"
+      atrace_categories: "dalvik"
+      ftrace_events: "kmem/rss_stat"
+      ftrace_events: "task/task_newtask"
+      ftrace_events: "task/task_rename"
+    }
+  }
+}
+data_sources {
+  config {
+    name: "linux.process_stats"
+    target_buffer: 0
+    process_stats_config {
+      scan_all_processes_on_start: true
+      record_thread_names: true
+    }
+  }
+}
+write_into_file: true
+file_write_period_ms: 2500
+flush_period_ms: 5000
+data_source_stop_timeout_ms: 30000

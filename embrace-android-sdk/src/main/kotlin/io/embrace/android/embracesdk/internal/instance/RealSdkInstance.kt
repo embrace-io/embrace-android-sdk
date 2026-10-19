@@ -203,13 +203,14 @@ internal class RealSdkInstance(
         }
     }
 
-    override fun disable() = close()
+    override fun disable() = tearDown(deleteData = true)
+    override fun close() = tearDown(deleteData = false)
 
     /**
      * Tears down the SDK. Each step tolerates failure independently so that a failing step does not prevent
      * the remaining steps from running.
      */
-    override fun close() {
+    private fun tearDown(deleteData: Boolean) {
         started = false
         runCatching { errorHandler.close() }
         runCatching { otelSdkConfig.value.disableDataExport() }
@@ -225,7 +226,7 @@ internal class RealSdkInstance(
         runCatching { otelSdkConfig.value.shutdownExport() }
         runCatching { workerThreadPool.close() }
 
-        if (rootDir == null || fallbackDir == null) {
+        if (!deleteData || rootDir == null || fallbackDir == null) {
             return
         }
         val executor = runCatching { Executors.newSingleThreadExecutor() }.getOrNull() ?: return

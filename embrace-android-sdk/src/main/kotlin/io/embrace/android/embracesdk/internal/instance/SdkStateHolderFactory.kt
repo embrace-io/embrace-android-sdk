@@ -95,19 +95,21 @@ private fun createModuleGraph(
         if (sdkDisabled) {
             null
         } else {
-            moduleGraphSupplier?.invoke(
-                context,
-                preStartServices,
-                configLoadServices,
-                sdkStartTimeMs,
-                sdkInitResourceUsageTracker,
-            ) ?: InitializedModuleGraph(
-                context,
-                preStartServices,
-                configLoadServices,
-                sdkStartTimeMs,
-                sdkInitResourceUsageTracker,
-            )
+            (
+                moduleGraphSupplier?.invoke(
+                    context,
+                    preStartServices,
+                    configLoadServices,
+                    sdkStartTimeMs,
+                    sdkInitResourceUsageTracker,
+                ) ?: InitializedModuleGraph(
+                    context,
+                    preStartServices,
+                    configLoadServices,
+                    sdkStartTimeMs,
+                    sdkInitResourceUsageTracker,
+                )
+                ).apply { start() }
         }
     } catch (exc: Throwable) {
         configLoadServices.close()

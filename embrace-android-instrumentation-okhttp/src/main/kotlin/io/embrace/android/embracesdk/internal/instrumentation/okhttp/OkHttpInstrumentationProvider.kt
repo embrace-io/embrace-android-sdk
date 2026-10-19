@@ -8,6 +8,7 @@ import io.embrace.android.embracesdk.internal.instrumentation.network.retrieveNe
 import io.embrace.android.embracesdk.internal.instrumentation.network.retrieveNetworkRequestDataSource
 
 // retain a reference for use in bytecode instrumentation
+@Volatile
 internal var okhttpDataSource: OkHttpDataSource? = null
 
 class OkHttpInstrumentationProvider : InstrumentationProvider {

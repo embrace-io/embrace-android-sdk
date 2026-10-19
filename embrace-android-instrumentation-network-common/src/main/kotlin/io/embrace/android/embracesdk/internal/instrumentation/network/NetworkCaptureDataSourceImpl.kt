@@ -31,6 +31,12 @@ class NetworkCaptureDataSourceImpl(
         private const val EMB_DATA_URL: String = "data.emb-api.com"
     }
 
+    override fun onDataCaptureDisabled() {
+        if (networkCaptureDataSource === this) {
+            networkCaptureDataSource = null
+        }
+    }
+
     override fun recordNetworkRequest(request: HttpNetworkRequest) {
         val body = request.body
         if (body == null || !configService.networkBehavior.isUrlEnabled(request.url)) {

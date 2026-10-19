@@ -19,6 +19,12 @@ class PushNotificationDataSource(
     instrumentationName = "push_notification_data_source",
 ) {
 
+    override fun onDataCaptureDisabled() {
+        if (fcmDataSource === this) {
+            fcmDataSource = null
+        }
+    }
+
     fun logPushNotification(
         message: RemoteMessage,
     ) {

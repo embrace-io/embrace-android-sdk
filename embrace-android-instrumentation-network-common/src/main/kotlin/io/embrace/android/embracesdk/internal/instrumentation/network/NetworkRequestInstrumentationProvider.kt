@@ -6,7 +6,7 @@ import io.embrace.android.embracesdk.internal.arch.datasource.DataSource
 import io.embrace.android.embracesdk.internal.arch.datasource.DataSourceFactory
 
 @Volatile
-private var networkRequestDataSource: NetworkRequestDataSource? = null
+internal var networkRequestDataSource: NetworkRequestDataSource? = null
 
 fun retrieveNetworkRequestDataSource(): NetworkRequestDataSource? {
     return networkRequestDataSource

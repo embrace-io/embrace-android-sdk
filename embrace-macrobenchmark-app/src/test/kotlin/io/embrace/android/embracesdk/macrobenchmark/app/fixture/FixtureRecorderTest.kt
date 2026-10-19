@@ -75,7 +75,7 @@ internal class FixtureRecorderTest {
 
         assertEquals(FixtureOutcome.Restored, recorder.restore())
         assertEquals(listOf("1000_a"), sdk.sessionPartDirs())
-        assertFalse(File(dataDir, "files/embrace_remote_config").exists())
+        assertFalse(sdk.remoteConfigDir.exists())
     }
 
     @Test

@@ -100,6 +100,8 @@ kotlin {
 
 dependencies {
     implementation(project(":embrace-android-sdk"))
+    implementation(project(":embrace-android-config"))
+    implementation(project(":embrace-android-telemetry-persistence"))
     implementation(project(":embrace-benchmark-common"))
     implementation(project(":embrace-android-otel-java"))
     implementation(libs.opentelemetry.kotlin.api)

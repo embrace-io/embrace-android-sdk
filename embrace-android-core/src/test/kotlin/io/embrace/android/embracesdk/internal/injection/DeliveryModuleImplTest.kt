@@ -1,7 +1,6 @@
 package io.embrace.android.embracesdk.internal.injection
 
-import androidx.test.core.app.ApplicationProvider
-import androidx.test.ext.junit.runners.AndroidJUnit4
+import android.app.Application
 import io.embrace.android.embracesdk.fakes.FakeConfigService
 import io.embrace.android.embracesdk.fakes.FakeOpenTelemetryModule
 import io.embrace.android.embracesdk.fakes.FakeRequestExecutionService
@@ -12,9 +11,7 @@ import io.embrace.android.embracesdk.fakes.injection.FakeWorkerThreadModule
 import org.junit.Assert.assertNotNull
 import org.junit.Before
 import org.junit.Test
-import org.junit.runner.RunWith
 
-@RunWith(AndroidJUnit4::class)
 class DeliveryModuleImplTest {
 
     private lateinit var module: DeliveryModule
@@ -29,7 +26,7 @@ class DeliveryModuleImplTest {
             initModule,
             FakeOpenTelemetryModule(otelSdkMode = OtelSdkMode.REGULAR),
             FakeWorkerThreadModule(),
-            CoreModuleImpl(ApplicationProvider.getApplicationContext(), initModule),
+            CoreModuleImpl(Application(), initModule),
             FakeEssentialServiceModule(),
             ::FakeRequestExecutionService,
             null,

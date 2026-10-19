@@ -1,11 +1,11 @@
 package io.embrace.android.embracesdk.internal.injection
 
-import androidx.test.ext.junit.runners.AndroidJUnit4
 import io.embrace.android.embracesdk.fakes.FakeConfigService
 import io.embrace.android.embracesdk.fakes.FakeDeliveryModule
 import io.embrace.android.embracesdk.fakes.FakeOpenTelemetryModule
 import io.embrace.android.embracesdk.fakes.FakeOtelPayloadMapper
 import io.embrace.android.embracesdk.fakes.OtelSdkMode
+import io.embrace.android.embracesdk.fakes.injection.FakeCoreModule
 import io.embrace.android.embracesdk.fakes.injection.FakeEssentialServiceModule
 import io.embrace.android.embracesdk.fakes.injection.FakeInitModule
 import io.embrace.android.embracesdk.fakes.injection.FakeWorkerThreadModule
@@ -13,10 +13,7 @@ import io.embrace.android.embracesdk.internal.capture.metadata.EmbraceMetadataSe
 import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
-import org.junit.runner.RunWith
-import org.robolectric.RuntimeEnvironment
 
-@RunWith(AndroidJUnit4::class)
 internal class PayloadSourceModuleImplTest {
 
     @Test
@@ -24,7 +21,7 @@ internal class PayloadSourceModuleImplTest {
         val initModule = FakeInitModule(otelSdkMode = OtelSdkMode.COMPAT)
         val module = PayloadSourceModuleImpl(
             initModule,
-            CoreModuleImpl(RuntimeEnvironment.getApplication(), initModule),
+            FakeCoreModule(),
             FakeWorkerThreadModule(),
             FakeEssentialServiceModule(),
             FakeConfigService(),

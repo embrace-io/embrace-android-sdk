@@ -1,6 +1,5 @@
 package io.embrace.android.embracesdk.internal.injection
 
-import androidx.test.ext.junit.runners.AndroidJUnit4
 import io.embrace.android.embracesdk.fakes.FakeConfigService
 import io.embrace.android.embracesdk.fakes.FakeDeliveryModule
 import io.embrace.android.embracesdk.fakes.FakeOpenTelemetryModule
@@ -20,9 +19,7 @@ import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertNull
 import org.junit.Test
-import org.junit.runner.RunWith
 
-@RunWith(AndroidJUnit4::class)
 internal class UserSessionOrchestrationModuleImplTest {
 
     private val openTelemetryModule = FakeOpenTelemetryModule(otelSdkMode = OtelSdkMode.REGULAR)

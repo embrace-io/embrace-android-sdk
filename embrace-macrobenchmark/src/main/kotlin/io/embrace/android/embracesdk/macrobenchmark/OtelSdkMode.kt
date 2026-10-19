@@ -7,7 +7,7 @@ import org.junit.rules.ExternalResource
 
 /**
  * The opentelemetry-kotlin implementation the benchmark app starts the SDK with. It is selected via a
- * global setting that `BenchmarkApplication` turns into a remote config before starting the SDK.
+ * global setting that the app's `ScenarioHost` turns into a remote config before starting the SDK.
  */
 internal enum class OtelSdkMode(private val pctEnabled: Int) {
 

@@ -23,10 +23,10 @@
             </intent-filter>
         </activity>
 
-        <!-- singleTop so that the benchmark relaunching it after a background cycle resumes the
-             running scenario rather than stacking a second instance on top of it -->
+        <!-- the one activity every benchmark task launches: singleTop so that the benchmark relaunching it
+             after a background cycle resumes the running task rather than stacking a second instance -->
         <activity
-            android:name=".ScenarioActivity"
+            android:name=".ScenarioHostActivity"
             android:exported="true"
             android:launchMode="singleTop" />
     </application>

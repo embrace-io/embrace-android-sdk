@@ -1,9 +1,12 @@
-# Field reference: https://perfetto.dev/docs/reference/trace-config-proto
-# atrace_apps: https://perfetto.dev/docs/data-sources/atrace
+# Field reference, at Perfetto v46.0: the version this config was last validated against.
+#   trace config: https://github.com/google/perfetto/blob/v46.0/protos/perfetto/config/trace_config.proto
+#   ftrace config: https://github.com/google/perfetto/blob/v46.0/protos/perfetto/config/ftrace/ftrace_config.proto
+#   process stats: https://github.com/google/perfetto/blob/v46.0/protos/perfetto/config/process_stats/process_stats_config.proto
+#   atrace_apps:   https://github.com/google/perfetto/blob/v46.0/docs/data-sources/atrace.md
 #
 # Records the benchmark app's trace sections and nothing else. The default macrobenchmark config
 # enables atrace for every process plus a list of kernel events, which is what makes its traces tens
-# of megabytes; without them a run is ~140 KB. Process stats stay on so that threads such as
+# of megabytes; without them an iteration is ~120 KB. Process stats stay on so that threads such as
 # emb-session-persistence resolve to a name rather than a bare pid.
 buffers {
   size_kb: 32768

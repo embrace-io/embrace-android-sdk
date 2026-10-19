@@ -1,0 +1,81 @@
+# Field reference, at Perfetto v46.0: the version this config was last validated against.
+#   trace config:     https://github.com/google/perfetto/blob/v46.0/protos/perfetto/config/trace_config.proto
+#   ftrace config:     https://github.com/google/perfetto/blob/v46.0/protos/perfetto/config/ftrace/ftrace_config.proto
+#   process stats:     https://github.com/google/perfetto/blob/v46.0/protos/perfetto/config/process_stats/process_stats_config.proto
+#   sys stats:         https://github.com/google/perfetto/blob/v46.0/protos/perfetto/config/sys_stats/sys_stats_config.proto
+#   scheduling events: https://github.com/google/perfetto/blob/v46.0/docs/data-sources/cpu-scheduling.md
+#
+# The `with-context` capture profile: the benchmark app's trace sections and counters as in
+# perfetto-config-app-only.pbtx, plus what is needed to explain an outlier - which thread state each section
+# spent its time in and on which cpus, the cpu frequency actually delivered, binder traffic, the
+# runtime's class loading and garbage collection, and memory pressure. Scheduling events arrive for
+# every task on every cpu, which the kernel cannot filter, so an iteration is megabytes rather than
+# ~120 KB; embrace-macrobenchmark's README gives each profile's approximate size.
+#
+# The app's sections get a buffer of their own (0). The kernel events go to buffer 1, so that a burst
+# of scheduling cannot wrap the ring buffer the sections live in and evict the start of the launch.
+buffers {
+  size_kb: 32768
+  fill_policy: RING_BUFFER
+}
+buffers {
+  size_kb: 65536
+  fill_policy: RING_BUFFER
+}
+data_sources {
+  config {
+    name: "linux.ftrace"
+    target_buffer: 0
+    ftrace_config {
+      atrace_apps: "io.embrace.android.embracesdk.macrobenchmark.app"
+      # ART's class-load, verification and GC sections, from every process
+      atrace_categories: "dalvik"
+    }
+  }
+}
+data_sources {
+  config {
+    name: "linux.ftrace"
+    target_buffer: 1
+    ftrace_config {
+      ftrace_events: "sched/sched_switch"
+      ftrace_events: "sched/sched_waking"
+      ftrace_events: "sched/sched_blocked_reason"
+      ftrace_events: "power/cpu_frequency"
+      ftrace_events: "power/cpu_frequency_limits"
+      ftrace_events: "binder/binder_transaction"
+      # the process stats only describe what existed when they looked; a process that starts during
+      # the capture, and every thread it creates, is known through these
+      ftrace_events: "task/task_newtask"
+      ftrace_events: "task/task_rename"
+      compact_sched {
+        enabled: true
+      }
+    }
+  }
+}
+data_sources {
+  config {
+    name: "linux.process_stats"
+    target_buffer: 0
+    process_stats_config {
+      scan_all_processes_on_start: true
+      record_thread_names: true
+    }
+  }
+}
+data_sources {
+  config {
+    name: "linux.sys_stats"
+    target_buffer: 1
+    sys_stats_config {
+      meminfo_period_ms: 1000
+      meminfo_counters: MEMINFO_MEM_AVAILABLE
+      meminfo_counters: MEMINFO_SWAP_FREE
+    }
+  }
+}
+write_into_file: true
+file_write_period_ms: 2500
+flush_period_ms: 5000
+data_source_stop_timeout_ms: 30000

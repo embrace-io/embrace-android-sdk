@@ -6,6 +6,7 @@ import android.os.Handler
 import android.os.Looper
 import android.os.SystemClock
 import android.view.FrameMetrics
+import android.view.MotionEvent
 import android.view.Window
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
@@ -79,6 +80,31 @@ internal class VitalsActivityListenerTest {
         listener.onActivityResumed(activity)
 
         assertSame(foreign, activity.window.callback)
+    }
+
+    @Test
+    fun `close makes installed window callbacks inert`() {
+        val activity = buildActivity(Activity::class.java).setup().get()
+        listener.onActivityResumed(activity)
+
+        listener.close()
+        val event = MotionEvent.obtain(0L, 0L, MotionEvent.ACTION_DOWN, 1f, 1f, 0)
+        try {
+            activity.window.callback.dispatchTouchEvent(event)
+        } finally {
+            event.recycle()
+        }
+
+        assertEquals(0, focalCallbacks.interactionStartCount)
+    }
+
+    @Test
+    fun `onActivityResumed does not wrap the window callback after close`() {
+        val activity = buildActivity(Activity::class.java).setup().get()
+        val original = activity.window.callback
+        listener.close()
+        listener.onActivityResumed(activity)
+        assertSame(original, activity.window.callback)
     }
 
     @Test

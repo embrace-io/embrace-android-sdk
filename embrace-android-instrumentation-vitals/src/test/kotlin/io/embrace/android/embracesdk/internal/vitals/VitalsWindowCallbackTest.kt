@@ -95,6 +95,23 @@ internal class VitalsWindowCallbackTest {
         assertEquals(1, delegateCalls)
     }
 
+    @Test
+    fun `closed callback reports nothing but still forwards to the delegate`() {
+        callback.close()
+        assertTrue(dispatch(MotionEvent.ACTION_DOWN))
+        dispatch(MotionEvent.ACTION_MOVE)
+        dispatch(MotionEvent.ACTION_UP)
+        callback.onWindowFocusChanged(true)
+
+        assertEquals(3, delegateCalls)
+        assertEquals(1, delegateFocusChanges)
+        assertEquals(0, focalCallbacks.interactionStartCount)
+        assertEquals(0, focalCallbacks.interactionMoveCount)
+        assertEquals(0, focalCallbacks.interactionEndCount)
+        assertEquals(0, focalCallbacks.tapCount)
+        assertEquals(0, focalCallbacks.windowFocusedCount)
+    }
+
     private fun dispatch(action: Int): Boolean {
         val event = MotionEvent.obtain(0L, 0L, action, 1f, 1f, 0)
         try {

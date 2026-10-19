@@ -159,6 +159,70 @@ internal class FirstDrawDetectorTest {
         assertEquals(2, drawCompleteCount)
     }
 
+    @Test
+    fun `closing before first draw means callbacks are never invoked`() {
+        register()
+        detector.close()
+
+        drawFrame()
+        assertEquals(0, drawBeginCount)
+        assertEquals(0, drawCompleteCount)
+    }
+
+    @Test
+    fun `closing after draw begins but before frame commit means complete callback is never invoked`() {
+        register()
+        dispatchOnDraw()
+        assertEquals(1, drawBeginCount)
+
+        detector.close()
+        commitFrame()
+        assertEquals(1, drawBeginCount)
+        assertEquals(0, drawCompleteCount)
+    }
+
+    @Test
+    fun `registering after close is ignored`() {
+        detector.close()
+        register()
+
+        drawFrame()
+        assertEquals(0, drawBeginCount)
+        assertEquals(0, drawCompleteCount)
+    }
+
+    @Test
+    fun `closing before content is set leaves a window callback that only delegates`() {
+        val controller = Robolectric.buildActivity(Activity::class.java)
+        val newActivity = controller.get()
+        register(newActivity)
+        detector.close()
+
+        controller.create()
+        newActivity.setContentView(View(newActivity))
+        controller.start().resume().visible()
+        drawFrame(newActivity)
+        assertEquals(0, drawBeginCount)
+        assertEquals(0, drawCompleteCount)
+    }
+
+    @Test
+    fun `a new detector does not reuse the window callback of a closed detector`() {
+        val controller = Robolectric.buildActivity(Activity::class.java)
+        val newActivity = controller.get()
+        register(newActivity)
+        detector.close()
+
+        detector = FirstDrawDetector(logger)
+        register(newActivity)
+        controller.create()
+        newActivity.setContentView(View(newActivity))
+        controller.start().resume().visible()
+        drawFrame(newActivity)
+        assertEquals(1, drawBeginCount)
+        assertEquals(1, drawCompleteCount)
+    }
+
     private fun register(target: Activity = activity) {
         detector.registerFirstDrawCallback(
             activity = target,

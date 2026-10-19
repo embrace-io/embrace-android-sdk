@@ -11,6 +11,7 @@ class FakeDrawEventEmitter : DrawEventEmitter {
     var lastRegisteredActivity: Activity? = null
     var lastUnregisteredActivity: Activity? = null
     var lastFirstFrameDeliveredCallback: (() -> Unit)? = null
+    var closed = false
 
     override fun registerFirstDrawCallback(
         activity: Activity,
@@ -25,6 +26,10 @@ class FakeDrawEventEmitter : DrawEventEmitter {
     override fun unregisterFirstDrawCallback(activity: Activity) {
         registeredActivities.remove(traceInstanceId(activity))
         lastUnregisteredActivity = activity
+    }
+
+    override fun close() {
+        closed = true
     }
 
     fun draw(activity: Activity, gapCallback: () -> Unit = {}) {

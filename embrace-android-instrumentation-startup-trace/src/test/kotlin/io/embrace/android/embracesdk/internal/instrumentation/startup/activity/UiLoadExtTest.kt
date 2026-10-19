@@ -30,6 +30,7 @@ import org.junit.runner.RunWith
 import org.robolectric.Robolectric
 import org.robolectric.RuntimeEnvironment
 import org.robolectric.android.controller.ActivityController
+import java.io.Closeable
 import kotlin.reflect.KClass
 
 @RunWith(AndroidJUnit4::class)
@@ -139,6 +140,20 @@ internal class UiLoadExtTest {
         stepThroughActivityLifecycle()
         uiLoadEventListener.events.assertEventData(legacyColdOpenEvents)
         assertDrawEvents()
+    }
+
+    @Test
+    fun `closing the event emitter closes the draw event emitter in U`() {
+        createEventEmitter(sdkInt = UPSIDE_DOWN_CAKE, autoTraceEnabled = true, activityClass = Activity::class)
+        (eventEmitter as Closeable).close()
+        assertTrue(drawEventEmitter.closed)
+    }
+
+    @Test
+    fun `closing the event emitter closes the draw event emitter in L`() {
+        createEventEmitter(sdkInt = LOLLIPOP, autoTraceEnabled = true, activityClass = Activity::class)
+        (eventEmitter as Closeable).close()
+        assertTrue(drawEventEmitter.closed)
     }
 
     private fun <T : Activity> createEventEmitter(sdkInt: Int, autoTraceEnabled: Boolean, activityClass: KClass<T>) {

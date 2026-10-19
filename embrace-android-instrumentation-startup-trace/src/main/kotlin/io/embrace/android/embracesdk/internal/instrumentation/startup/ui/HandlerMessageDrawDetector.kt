@@ -11,19 +11,33 @@ internal class HandlerMessageDrawDetector(
     private val handler: MainThreadHandler,
 ) : DrawEventEmitter {
 
+    @Volatile
+    private var closed = false
+
     override fun registerFirstDrawCallback(
         activity: Activity,
         drawBeginCallback: () -> Unit,
         drawCompleteCallback: () -> Unit,
     ) {
+        if (closed) {
+            return
+        }
         drawBeginCallback()
         handler.sendMessageAtFrontOfQueue(
-            Message.obtain(handler.wrappedHandler, drawCompleteCallback).apply {
+            Message.obtain(handler.wrappedHandler) {
+                if (!closed) {
+                    drawCompleteCallback()
+                }
+            }.apply {
                 isAsynchronous = true
             },
         )
     }
 
     override fun unregisterFirstDrawCallback(activity: Activity) {
+    }
+
+    override fun close() {
+        closed = true
     }
 }

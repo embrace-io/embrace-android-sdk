@@ -8,7 +8,8 @@ import android.os.Handler
 import android.os.SystemClock
 import android.view.Window
 import androidx.annotation.RequiresApi
-import java.util.Collections
+import java.io.Closeable
+import java.lang.ref.WeakReference
 import java.util.WeakHashMap
 
 /**
@@ -22,7 +23,7 @@ internal class VitalsActivityListener(
     private val navSource: ActivityNavigationSource,
     private val frameMetricsHandler: Handler,
     private val frameMetricsStrategy: FrameMetricsStrategy,
-) : ActivityLifecycleCallbacks {
+) : ActivityLifecycleCallbacks, Closeable {
 
     private val frameListeners = WeakHashMap<Window, VitalsFrameMetricsListener>()
 
@@ -31,8 +32,10 @@ internal class VitalsActivityListener(
 
     /**
      * Windows that already have a [VitalsWindowCallback] installed so that we don't attempt to double-install our `Callback` delegate.
+     * The callback is weakly referenced because it strongly references its window via the delegate, which would stop the
+     * window key from ever being collected.
      */
-    private val interactionCallbacks: MutableSet<Window> = Collections.newSetFromMap(WeakHashMap())
+    private val interactionCallbacks = WeakHashMap<Window, WeakReference<VitalsWindowCallback>>()
 
     override fun onActivityCreated(activity: Activity, bundle: Bundle?) {
         // captured first so the navigation-start timestamp reflects this event, not the delay until it's processed
@@ -68,13 +71,17 @@ internal class VitalsActivityListener(
     }
 
     private fun installInteractionCallback(window: Window) {
-        if (!interactionCallbacks.add(window)) {
-            return
+        synchronized(interactionCallbacks) {
+            if (closed || interactionCallbacks.containsKey(window)) {
+                return
+            }
+            val callback = VitalsWindowCallback(
+                delegate = window.callback,
+                focalCallbacks = focalCallbacks,
+            )
+            interactionCallbacks[window] = WeakReference(callback)
+            window.callback = callback
         }
-        window.callback = VitalsWindowCallback(
-            delegate = window.callback,
-            focalCallbacks = focalCallbacks,
-        )
     }
 
     private fun installFrameMetricsListener(window: Window) {
@@ -97,14 +104,19 @@ internal class VitalsActivityListener(
     }
 
     /**
-     * Removes the frame-metrics listeners from every window that still has one.
+     * Removes the frame-metrics listeners from every window that still has one, and closes every installed
+     * [VitalsWindowCallback] so it only calls through to the original callback.
      */
-    fun close() {
+    override fun close() {
         synchronized(frameListeners) {
             closed = true
             frameListeners.keys.toList().forEach { window ->
                 runCatching { removeFrameMetricsListener(window) }
             }
+        }
+        synchronized(interactionCallbacks) {
+            interactionCallbacks.values.forEach { it.get()?.close() }
+            interactionCallbacks.clear()
         }
     }
 

@@ -40,4 +40,6 @@ project.tasks.withType<Test>().configureEach {
         exceptionFormat = TestExceptionFormat.FULL
     }
     maxParallelForks = forkCount
+    // Test forks are short-lived, so C2 compilation costs more than it saves
+    jvmArgs("-XX:TieredStopAtLevel=1")
 }

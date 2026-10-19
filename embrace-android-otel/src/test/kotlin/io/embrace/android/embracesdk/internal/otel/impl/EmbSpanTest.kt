@@ -4,6 +4,7 @@ import io.embrace.android.embracesdk.fakes.FakeClock
 import io.embrace.android.embracesdk.fakes.FakeEmbraceSdkSpan
 import io.embrace.android.embracesdk.fakes.FakeInternalTelemetryService
 import io.embrace.android.embracesdk.fakes.FakeOtelKotlinClock
+import io.embrace.android.embracesdk.fakes.FakeSpanProcessor
 import io.embrace.android.embracesdk.fakes.OtelSdkMode
 import io.embrace.android.embracesdk.fakes.fakeOpenTelemetry
 import io.embrace.android.embracesdk.internal.arch.schema.EmbType
@@ -161,8 +162,13 @@ internal class EmbSpanTest(
     @Test
     fun `event attributes over the limit are truncated to the max event attribute count`() {
         val dataValidator = DataValidator(telemetryService = FakeInternalTelemetryService())
-        val tracer = createSdkOtelInstance(useKotlinSdk = otelSdkMode.useKotlinSdk, clock = openTelemetryClock)
-            .getTracer("test-tracer")
+        val tracer = createSdkOtelInstance(
+            useKotlinSdk = otelSdkMode.useKotlinSdk,
+            tracerProvider = {
+                export { FakeSpanProcessor() }
+            },
+            clock = openTelemetryClock,
+        ).getTracer("test-tracer")
         val realSpan = EmbraceSpanFactoryImpl(
             openTelemetryClock = openTelemetryClock,
             spanRepository = SpanRepository(),

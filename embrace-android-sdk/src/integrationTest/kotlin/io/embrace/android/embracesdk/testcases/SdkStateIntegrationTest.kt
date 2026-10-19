@@ -28,6 +28,7 @@ import io.embrace.android.embracesdk.internal.logging.InternalErrorType
 import io.embrace.android.embracesdk.internal.otel.sdk.findAttributeValue
 import io.embrace.android.embracesdk.internal.otel.spans.NoopEmbraceSdkSpan
 import io.embrace.android.embracesdk.internal.toStringMap
+import io.embrace.android.embracesdk.internal.utils.event.EventKey
 import io.embrace.android.embracesdk.network.EmbraceNetworkRequest
 import io.embrace.android.embracesdk.network.http.HttpMethod
 import io.embrace.android.embracesdk.network.http.HttpRequestInfoModifier
@@ -358,6 +359,25 @@ internal class SdkStateIntegrationTest(
                 )
                 assertEquals(listOf(SPAN_1), spanProcessor.endedSpanNames.filter { it.startsWith(TEST_PREFIX) })
                 assertEquals(listOf(LOG_1), logRecordProcessor.processedLogBodies.filter { it.startsWith(TEST_PREFIX) })
+            },
+        )
+    }
+
+    @Test
+    fun `STARTED to DISABLED - event bus is stopped`() {
+        testRule.runTest(
+            testCaseAction = {
+                val key = EventKey<Unit>()
+                var delivered = 0
+                var producerClosed = false
+                eventBus.ensureEventProducer(key) { AutoCloseable { producerClosed = true } }
+                eventBus.addHandler(key) { delivered++ }
+
+                embrace.disable()
+                eventBus.emit(key, Unit)
+
+                assertEquals(0, delivered)
+                assertTrue(producerClosed)
             },
         )
     }

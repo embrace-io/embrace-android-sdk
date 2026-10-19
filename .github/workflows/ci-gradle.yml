@@ -98,7 +98,7 @@ jobs:
 
       - name: Gradle (embrace-gradle-plugin-integration-tests:test)
         if: ${{ matrix.gradle-task == 'test' }}
-        run: ./gradlew embrace-gradle-plugin-integration-tests:test -PintegrationPublish --stacktrace
+        run: ./gradlew embrace-gradle-plugin-integration-tests:test --stacktrace
 
       - name: Check TestKit caches changed
         id: testkit-changed

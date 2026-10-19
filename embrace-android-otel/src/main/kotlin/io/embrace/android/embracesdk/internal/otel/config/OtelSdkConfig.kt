@@ -17,14 +17,12 @@ import io.embrace.android.embracesdk.internal.session.id.SessionIdsProvider
 import io.embrace.android.embracesdk.internal.utils.EmbTrace
 import io.embrace.android.embracesdk.internal.utils.UuidSource
 import io.opentelemetry.kotlin.attributes.AttributesMutator
-import io.opentelemetry.kotlin.logging.export.LogRecordExporter
 import io.opentelemetry.kotlin.logging.export.LogRecordProcessor
 import io.opentelemetry.kotlin.semconv.AndroidAttributes
 import io.opentelemetry.kotlin.semconv.DeviceAttributes
 import io.opentelemetry.kotlin.semconv.OsAttributes
 import io.opentelemetry.kotlin.semconv.ServiceAttributes
 import io.opentelemetry.kotlin.semconv.TelemetryAttributes
-import io.opentelemetry.kotlin.tracing.export.SpanExporter
 import io.opentelemetry.kotlin.tracing.export.SpanProcessor
 import java.io.Closeable
 
@@ -88,12 +86,7 @@ class OtelSdkConfig(
         }
         if (components.isNotEmpty()) {
             externalExportDispatcher.dispatch(components) { component ->
-                when (component) {
-                    is SpanExporter -> component.shutdown()
-                    is LogRecordExporter -> component.shutdown()
-                    is SpanProcessor -> component.shutdown()
-                    is LogRecordProcessor -> component.shutdown()
-                }
+                component.shutdown()
             }
         }
         externalExportDispatcher.shutdown()

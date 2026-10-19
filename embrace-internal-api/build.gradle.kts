@@ -13,5 +13,4 @@ dependencies {
     compileOnly(project(":embrace-android-api"))
     testImplementation(project(":embrace-android-api"))
     testImplementation(project(":embrace-test-common"))
-    testImplementation(libs.robolectric)
 }

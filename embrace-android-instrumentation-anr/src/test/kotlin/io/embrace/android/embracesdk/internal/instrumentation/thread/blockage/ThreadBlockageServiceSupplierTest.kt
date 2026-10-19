@@ -1,27 +1,38 @@
 package io.embrace.android.embracesdk.internal.instrumentation.thread.blockage
 
-import android.app.Application
-import androidx.test.core.app.ApplicationProvider
-import androidx.test.ext.junit.runners.AndroidJUnit4
+import android.os.Looper
 import io.embrace.android.embracesdk.fakes.FakeConfigService
 import io.embrace.android.embracesdk.fakes.FakeInstrumentationArgs
 import io.embrace.android.embracesdk.internal.config.resolved.AutoDataCaptureConfig
 import io.embrace.android.embracesdk.internal.config.resolved.EmbraceConfig
 import io.embrace.android.embracesdk.internal.config.resolved.ThreadBlockageConfig
+import io.mockk.every
+import io.mockk.mockk
+import io.mockk.mockkStatic
+import io.mockk.unmockkStatic
+import org.junit.After
 import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertNull
+import org.junit.Before
 import org.junit.Test
-import org.junit.runner.RunWith
 
-@RunWith(AndroidJUnit4::class)
 internal class ThreadBlockageServiceSupplierTest {
+
+    @Before
+    fun setUp() {
+        mockkStatic(Looper::class)
+        every { Looper.getMainLooper() } returns mockk { every { thread } returns Thread.currentThread() }
+    }
+
+    @After
+    fun tearDown() {
+        unmockkStatic(Looper::class)
+    }
 
     @Test
     fun testDefaultImplementations() {
-        val application = ApplicationProvider.getApplicationContext<Application>()
         val service = createThreadBlockageService(
             FakeInstrumentationArgs(
-                application,
                 configService = FakeConfigService(),
             ),
         )
@@ -30,10 +41,8 @@ internal class ThreadBlockageServiceSupplierTest {
 
     @Test
     fun testBehaviorDisabled() {
-        val application = ApplicationProvider.getApplicationContext<Application>()
         val service = createThreadBlockageService(
             FakeInstrumentationArgs(
-                application,
                 configService = FakeConfigService(
                     config = EmbraceConfig(autoDataCapture = { AutoDataCaptureConfig(threadBlockageCaptureEnabled = { false }) }),
                 ),
@@ -44,10 +53,8 @@ internal class ThreadBlockageServiceSupplierTest {
 
     @Test
     fun testRemoteBehaviorDisabled() {
-        val application = ApplicationProvider.getApplicationContext<Application>()
         val service = createThreadBlockageService(
             FakeInstrumentationArgs(
-                application,
                 configService = FakeConfigService(
                     config = EmbraceConfig(threadBlockage = { ThreadBlockageConfig(captureEnabled = { false }) }),
                 ),

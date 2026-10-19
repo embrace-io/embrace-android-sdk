@@ -1,16 +1,13 @@
 package io.embrace.android.embracesdk.internal.capture.crumbs
 
-import androidx.test.core.app.ApplicationProvider
-import androidx.test.ext.junit.runners.AndroidJUnit4
+import android.app.Application
 import io.embrace.android.embracesdk.fakes.FakeInstrumentationArgs
 import io.embrace.android.embracesdk.internal.arch.schema.EmbType
 import io.embrace.android.embracesdk.semconv.EmbBreadcrumbAttributes
 import org.junit.Assert.assertEquals
 import org.junit.Before
 import org.junit.Test
-import org.junit.runner.RunWith
 
-@RunWith(AndroidJUnit4::class)
 internal class BreadcrumbDataSourceTest {
 
     private lateinit var source: BreadcrumbDataSource
@@ -18,7 +15,7 @@ internal class BreadcrumbDataSourceTest {
 
     @Before
     fun setUp() {
-        args = FakeInstrumentationArgs(ApplicationProvider.getApplicationContext())
+        args = FakeInstrumentationArgs(Application())
         source = BreadcrumbDataSource(args)
     }
 

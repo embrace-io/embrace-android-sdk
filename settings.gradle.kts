@@ -3,7 +3,6 @@ include(
     ":embrace-internal-api",
     ":embrace-android-sdk",
     ":embrace-android-core",
-    ":embrace-android-session",
     ":embrace-android-config",
     ":embrace-android-config-fakes",
     ":embrace-android-envelope",

@@ -11,6 +11,7 @@ import io.embrace.android.embracesdk.Embrace
 import io.embrace.android.embracesdk.benchmark.scenario.HostTask
 import io.embrace.android.embracesdk.benchmark.scenario.ScenarioProtocol.MULTI_FILE_PERSISTENCE_SETTING
 import io.embrace.android.embracesdk.benchmark.scenario.ScenarioProtocol.OTEL_KOTLIN_SDK_SETTING
+import io.embrace.android.embracesdk.benchmark.scenario.ScenarioProtocol.RESTORE_FIXTURE_SETTING
 import io.embrace.android.embracesdk.benchmark.scenario.ScenarioProtocol.STATUS_AWAIT
 import io.embrace.android.embracesdk.benchmark.scenario.ScenarioProtocol.STATUS_ERROR
 import io.embrace.android.embracesdk.benchmark.scenario.ScenarioProtocol.STATUS_NOT_STARTED
@@ -19,6 +20,9 @@ import io.embrace.android.embracesdk.benchmark.scenario.ScenarioProtocol.STATUS_
 import io.embrace.android.embracesdk.benchmark.scenario.ScenarioProtocol.STATUS_RUNNING
 import io.embrace.android.embracesdk.benchmark.scenario.ScenarioSpec
 import io.embrace.android.embracesdk.benchmark.scenario.hostTaskFrom
+import io.embrace.android.embracesdk.macrobenchmark.app.fixture.FixtureOutcome
+import io.embrace.android.embracesdk.macrobenchmark.app.fixture.FixtureRecorder
+import io.embrace.android.embracesdk.macrobenchmark.app.storage.FixtureStorage
 import io.embrace.android.embracesdk.macrobenchmark.app.storage.SdkStorage
 import java.io.File
 import java.lang.ref.WeakReference
@@ -50,10 +54,14 @@ internal class ScenarioHost(private val app: Application) : ActivityLifecycleCal
      * Readies this process for what the benchmark launched it to do, then starts the SDK under test through
      * [startSdk]. The app calls it from `Application.onCreate`, before anything else that touches the SDK. It
      * registers the host for activity lifecycle callbacks and writes the remote config the benchmark's global
-     * settings select, before the SDK reads it.
+     * settings select, before the SDK reads it. A launch that restores a fixture leaves the SDK stopped, so that
+     * nothing of its own lands on disk.
      */
     fun start(startSdk: () -> Unit) {
         app.registerActivityLifecycleCallbacks(this)
+        if (globalSetting(RESTORE_FIXTURE_SETTING) != null) {
+            return
+        }
         seedRemoteConfig(SdkStorage(File(app.applicationInfo.dataDir)))
         startSdk()
     }
@@ -100,6 +108,8 @@ internal class ScenarioHost(private val app: Application) : ActivityLifecycleCal
         val outcome = try {
             when (val task = hostTaskFrom(intent::getStringExtra)) {
                 is HostTask.RunPersistenceScenario -> runPersistenceScenario(task.scenario)
+                is HostTask.RecordFixture -> status(fixtureRecorder().record { runScenario(task.scenario) })
+                HostTask.RestoreFixture -> status(fixtureRecorder().restore())
             }
         } catch (exc: Exception) {
             STATUS_ERROR + (exc.message ?: exc.javaClass.simpleName)
@@ -113,8 +123,7 @@ internal class ScenarioHost(private val app: Application) : ActivityLifecycleCal
     private fun runPersistenceScenario(scenario: ScenarioSpec): String {
         try {
             val started = Embrace.isStarted
-            val scope = AppScenarioScope(Embrace, this)
-            trace(SECTION_RUN) { scenario.action(scope) }
+            trace(SECTION_RUN) { runScenario(scenario) }
 
             val previousSessionId = Embrace.currentUserSessionId
             trace(SECTION_SESSION_END, Embrace::endUserSession)
@@ -128,6 +137,31 @@ internal class ScenarioHost(private val app: Application) : ActivityLifecycleCal
             // the SDK persists on its own workers, so give this run's writes time to land in the trace
             Thread.sleep(SCENARIO_SETTLE_MS)
         }
+    }
+
+    /**
+     * Runs [scenario] against the SDK under test.
+     */
+    private fun runScenario(scenario: ScenarioSpec) {
+        scenario.action(AppScenarioScope(Embrace, this))
+    }
+
+    private fun fixtureRecorder(): FixtureRecorder {
+        val dataDir = File(app.applicationInfo.dataDir)
+        return FixtureRecorder(
+            sdk = SdkStorage(dataDir),
+            fixture = FixtureStorage(dataDir),
+            sdkStarted = { Embrace.isStarted },
+        )
+    }
+
+    private fun status(outcome: FixtureOutcome): String = when (outcome) {
+        FixtureOutcome.Recorded, FixtureOutcome.Restored -> STATUS_OK
+        FixtureOutcome.SdkNotStarted -> STATUS_NOT_STARTED
+        FixtureOutcome.SdkRunning ->
+            STATUS_ERROR + "the SDK is running, so this launch did not start a process with " +
+                "$RESTORE_FIXTURE_SETTING set"
+        FixtureOutcome.NothingToRestore -> STATUS_ERROR + "there is no recorded fixture to restore"
     }
 
     /**

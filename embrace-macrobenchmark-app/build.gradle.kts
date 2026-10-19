@@ -100,6 +100,8 @@ kotlin {
 
 dependencies {
     implementation(project(":embrace-android-sdk"))
+    implementation(project(":embrace-android-config"))
+    implementation(project(":embrace-android-telemetry-persistence"))
     implementation(project(":embrace-benchmark-common"))
     implementation(project(":embrace-android-otel-java"))
     implementation(libs.opentelemetry.kotlin.api)
@@ -109,4 +111,6 @@ dependencies {
     // macrobenchmark needs 1.4.0+ to install a baseline profile on API 34+, overriding the
     // older version the SDK pins for its own build
     implementation(libs.profileinstaller.benchmark)
+
+    testImplementation(libs.junit)
 }

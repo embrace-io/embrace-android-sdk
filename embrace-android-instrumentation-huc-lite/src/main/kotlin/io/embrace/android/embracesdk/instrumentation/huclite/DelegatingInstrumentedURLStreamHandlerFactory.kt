@@ -15,7 +15,7 @@ internal class DelegatingInstrumentedURLStreamHandlerFactory(
     private val delegateHandlerFactory: URLStreamHandlerFactory,
     private val instrumentedHandlerFactory: () -> InstrumentedUrlStreamHandlerFactory,
     private val clock: Clock,
-    private val hucLiteDataSource: HucLiteDataSource,
+    private val dataSourceProvider: () -> HucLiteDataSource?,
 ) : URLStreamHandlerFactory {
     override fun createURLStreamHandler(protocol: String?): URLStreamHandler? {
         val delegateHandler: URLStreamHandler? = try {
@@ -28,7 +28,7 @@ internal class DelegatingInstrumentedURLStreamHandlerFactory(
             DelegatingInstrumentedUrlStreamHandler(
                 delegateHandler = delegateHandler,
                 clock = clock,
-                hucLiteDataSource = hucLiteDataSource,
+                dataSourceProvider = dataSourceProvider,
             )
         } else {
             instrumentedHandlerFactory().createURLStreamHandler(protocol)

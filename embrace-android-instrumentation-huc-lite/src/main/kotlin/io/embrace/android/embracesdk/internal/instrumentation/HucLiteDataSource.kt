@@ -34,6 +34,7 @@ import java.net.URLStreamHandler
 import java.net.URLStreamHandlerFactory
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicLong
+import java.util.concurrent.atomic.AtomicReference
 import javax.net.ssl.HttpsURLConnection
 
 class HucLiteDataSource(
@@ -50,7 +51,10 @@ class HucLiteDataSource(
     private val recordForUrl = args.configService.networkBehavior::isUrlEnabled
     private var initializationAttempted = false
 
+    private val dataSourceRef = AtomicReference<HucLiteDataSource?>(this)
+
     override fun onDataCaptureEnabled() {
+        dataSourceRef.set(this)
         if (!initializationAttempted) {
             try {
                 installURLStreamHandlerFactory(
@@ -61,6 +65,10 @@ class HucLiteDataSource(
                 initializationAttempted = true
             }
         }
+    }
+
+    override fun onDataCaptureDisabled() {
+        dataSourceRef.set(null)
     }
 
     fun createRequestData(
@@ -95,11 +103,12 @@ class HucLiteDataSource(
         runCatching {
             @SuppressLint("PrivateApi")
             val httpsHandlerClass = Class.forName("com.android.okhttp.HttpsHandler")
+            val dataSourceProvider = dataSourceRef::get
             val instrumentedUrlStreamHandlerFactoryProvider = {
                 InstrumentedUrlStreamHandlerFactory(
                     httpsHandler = httpsHandlerClass.getDeclaredConstructor().newInstance() as URLStreamHandler,
                     clock = clock,
-                    hucLiteDataSource = this,
+                    dataSourceProvider = dataSourceProvider,
                 )
             }
 
@@ -112,7 +121,7 @@ class HucLiteDataSource(
                             delegateHandlerFactory = existingFactory,
                             instrumentedHandlerFactory = instrumentedUrlStreamHandlerFactoryProvider,
                             clock = clock,
-                            hucLiteDataSource = this,
+                            dataSourceProvider = dataSourceProvider,
                         )
                     } else {
                         null

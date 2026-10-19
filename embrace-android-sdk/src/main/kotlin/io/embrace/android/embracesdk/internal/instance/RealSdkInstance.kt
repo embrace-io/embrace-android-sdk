@@ -204,6 +204,7 @@ internal class RealSdkInstance(
         started = false
         runCatching { moduleGraph.openTelemetryModule.otelSdkConfig.disableDataExport() }
         runCatching { moduleGraph.instrumentationModule.instrumentationRegistry.close() }
+        runCatching { resetHucInstrumentation() }
         runCatching { moduleGraph.threadBlockageService?.close() }
 
         val rootDir = runCatching { moduleGraph.coreModule.context.filesDir }.getOrNull()
@@ -448,6 +449,14 @@ internal class RealSdkInstance(
             }
         } catch (t: Throwable) {
             initModule.logger.trackInternalError(InternalErrorType.InstrumentationRegFail, t)
+        }
+    }
+
+    private fun resetHucInstrumentation() {
+        if (moduleGraph.configService.networkBehavior.isHttpUrlConnectionCaptureEnabled()) {
+            val trackerClass = Class.forName("io.embrace.android.embracesdk.instrumentation.huc.HttpUrlConnectionTracker")
+            val trackerObject = trackerClass.getDeclaredField("INSTANCE").get(null)
+            trackerClass.getDeclaredMethod("reset").invoke(trackerObject)
         }
     }
 

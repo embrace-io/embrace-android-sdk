@@ -159,7 +159,7 @@ internal class InitializedModuleGraphTest {
         val expected = listOf(
             moduleGraph.threadBlockageService,
             moduleGraph.logOrchestrator,
-            moduleGraph.userSessionOrchestrationModule.sessionOrchestrator,
+            moduleGraph.sessionOrchestrator,
             moduleGraph.crashMarker,
             moduleGraph.deliveryModule?.payloadStore,
         )

@@ -8,6 +8,7 @@ import io.embrace.android.embracesdk.internal.config.ConfigService
 import io.embrace.android.embracesdk.internal.instrumentation.crash.CrashFileMarker
 import io.embrace.android.embracesdk.internal.instrumentation.crash.CrashFileMarkerImpl
 import io.embrace.android.embracesdk.internal.instrumentation.crash.LastRunCrashVerifier
+import io.embrace.android.embracesdk.internal.instrumentation.crash.ndk.NativeCrashDataSource
 import io.embrace.android.embracesdk.internal.instrumentation.startup.AppStartupDataCollector
 import io.embrace.android.embracesdk.internal.instrumentation.startup.SdkInitResourceUsageTracker
 import io.embrace.android.embracesdk.internal.instrumentation.startup.StartupService
@@ -26,7 +27,9 @@ import io.embrace.android.embracesdk.internal.logs.LogOrchestrator
 import io.embrace.android.embracesdk.internal.logs.LogService
 import io.embrace.android.embracesdk.internal.logs.LogServiceImpl
 import io.embrace.android.embracesdk.internal.logs.attachments.AttachmentService
+import io.embrace.android.embracesdk.internal.resurrection.SessionPartReader
 import io.embrace.android.embracesdk.internal.session.lifecycle.LifecycleTracker
+import io.embrace.android.embracesdk.internal.session.orchestrator.SessionOrchestrator
 import io.embrace.android.embracesdk.internal.storage.EmbraceStorageService
 import io.embrace.android.embracesdk.internal.storage.StatFsAvailabilityChecker
 import io.embrace.android.embracesdk.internal.storage.StorageService
@@ -59,7 +62,6 @@ internal class InitializedModuleGraph(
     private val instrumentationModuleSupplier: InstrumentationModuleSupplier? = null,
     private val deliveryModuleSupplier: DeliveryModuleSupplier? = null,
     private val threadBlockageServiceSupplier: ThreadBlockageServiceSupplier? = null,
-    private val userSessionOrchestrationModuleSupplier: UserSessionOrchestrationModuleSupplier? = null,
     private val payloadSourceModuleSupplier: PayloadSourceModuleSupplier? = null,
 ) {
 
@@ -78,7 +80,7 @@ internal class InitializedModuleGraph(
 
     private val otelSignalContext: OtelSignalContext = init("otel-signal-context") {
         OtelSignalContext(
-            sessionIdsProvider = { userSessionOrchestrationModule.sessionIdsProvider },
+            sessionIdsProvider = { essentialServiceModule.sessionIdsProvider },
             userServiceProvider = { essentialServiceModule.userService },
             sessionPartTrackerProvider = { essentialServiceModule.sessionPartTracker },
             processStateTrackerProvider = { essentialServiceModule.processStateTracker },
@@ -115,7 +117,7 @@ internal class InitializedModuleGraph(
         init(name = "essential-service-module", recordDuration = true) {
             val lifecycleTrackerProvider: Provider<LifecycleTracker?> = { null }
             val networkConnectivityServiceProvider: Provider<NetworkConnectivityService?> = { null }
-            val sessionOrchestratorProvider = { userSessionOrchestrationModule.sessionOrchestrator }
+            val sessionOrchestratorProvider = { sessionOrchestrator }
 
             essentialServiceModuleSupplier?.invoke(
                 initModule,
@@ -150,9 +152,8 @@ internal class InitializedModuleGraph(
     }
 
     val instrumentationModule: InstrumentationModule = init(name = "instrumentation-module", recordDuration = true) {
-        // Forward references: break the instrumentation <-> userSessionOrchestration cycle.
-        val userSessionIdsProvider = { userSessionOrchestrationModule.sessionIdsProvider.getCurrentUserSessionId() }
-        val activeSessionIdsProvider = { userSessionOrchestrationModule.sessionIdsProvider.getActiveSessionIds() }
+        val userSessionIdsProvider = { essentialServiceModule.sessionIdsProvider.getCurrentUserSessionId() }
+        val activeSessionIdsProvider = { essentialServiceModule.sessionIdsProvider.getActiveSessionIds() }
 
         instrumentationModuleSupplier?.invoke(
             initModule,
@@ -326,37 +327,64 @@ internal class InitializedModuleGraph(
         )
     }
 
-    val userSessionOrchestrationModule: UserSessionOrchestrationModule =
-        init(name = "user-session-orchestration-module", recordDuration = true) {
-            val startupDurationProvider = startupService::getSdkStartupDuration
-            val appVersionStartupCounterProvider = startupService::getAppVersionStartupCounter
-            userSessionOrchestrationModuleSupplier?.invoke(
-                initModule,
-                openTelemetryModule,
-                coreModule,
-                essentialServiceModule,
-                configService,
-                deliveryModule,
-                instrumentationModule,
-                payloadSourceModule,
-                startupDurationProvider,
-                appVersionStartupCounterProvider,
-                logLimitingService,
-                workerThreadPool,
-            ) ?: UserSessionOrchestrationModuleImpl(
-                initModule,
-                openTelemetryModule,
-                coreModule,
-                essentialServiceModule,
-                configService,
-                deliveryModule,
-                instrumentationModule,
-                payloadSourceModule,
-                startupDurationProvider,
-                appVersionStartupCounterProvider,
-                logLimitingService,
-                workerThreadPool,
+    val sessionPartReader: SessionPartReader? = init("session-part-reader") {
+        deliveryModule?.let { delivery ->
+            createSessionPartReader(
+                context = coreModule.context,
+                clock = initModule.clock,
+                errorHandler = initModule.errorHandler,
+                configService = configService,
+                sessionPersistenceWorker = workerThreadPool.backgroundWorker(Worker.Background.SessionPersistenceWorker),
+                intakeService = delivery.intakeService,
+                cachedLogEnvelopeStore = delivery.cachedLogEnvelopeStore,
+                nativeCrashServiceProvider = {
+                    instrumentationModule.instrumentationRegistry.findByType(NativeCrashDataSource::class)
+                },
+                restoreDecisionProvider = { sessionOrchestrator.userSessionRestoreDecision },
+                processIdProvider = { openTelemetryModule.otelSdkConfig.processIdentifier },
             )
+        }
+    }
+
+    val sessionOrchestrator: SessionOrchestrator =
+        init(name = "user-session-orchestration-module", recordDuration = true) {
+            overrides?.sessionOrchestrator.resolve {
+                createSessionOrchestrator(
+                    clock = initModule.clock,
+                    errorHandler = initModule.errorHandler,
+                    uuidSource = initModule.uuidSource,
+                    startupClassifier = initModule.startupClassifier,
+                    telemetryService = initModule.telemetryService,
+                    configService = configService,
+                    processStateTracker = essentialServiceModule.processStateTracker,
+                    sessionPartTracker = essentialServiceModule.sessionPartTracker,
+                    sessionIdsProvider = essentialServiceModule.sessionIdsProvider,
+                    userService = essentialServiceModule.userService,
+                    userSessionPropertiesService = essentialServiceModule.userSessionPropertiesService,
+                    telemetryDestination = essentialServiceModule.telemetryDestination,
+                    experimentRecordsProvider = { essentialServiceModule.experimentTrackingService.getRecords() },
+                    currentSessionPartSpan = openTelemetryModule.currentSessionPartSpan,
+                    spanRepository = openTelemetryModule.spanRepository,
+                    processIdentifier = openTelemetryModule.otelSdkConfig.processIdentifier,
+                    sessionPartEnvelopeSource = payloadSourceModule.sessionPartEnvelopeSource,
+                    logEnvelopeSource = payloadSourceModule.logEnvelopeSource,
+                    metadataService = payloadSourceModule.metadataService,
+                    resourceSource = payloadSourceModule.resourceSource,
+                    envelopeMetadataSource = payloadSourceModule.envelopeMetadataSource,
+                    payloadStore = deliveryModule?.payloadStore,
+                    payloadCachingService = deliveryModule?.payloadCachingService,
+                    instrumentationRegistry = instrumentationModule.instrumentationRegistry,
+                    startupDurationProvider = startupService::getSdkStartupDuration,
+                    appVersionStartupCounterProvider = startupService::getAppVersionStartupCounter,
+                    logLimitingService = logLimitingService,
+                    ordinalStore = coreModule.ordinalStore,
+                    store = coreModule.store,
+                    backgroundWorker = workerThreadPool.backgroundWorker(Worker.Background.NonIoRegWorker),
+                    sessionPersistenceWorker = workerThreadPool.backgroundWorker(Worker.Background.SessionPersistenceWorker),
+                    sessionReadWorker = workerThreadPool.backgroundWorker(Worker.Background.IoRegWorker),
+                    sessionPartReader = sessionPartReader,
+                )
+            }
         }
 
     /**

@@ -47,8 +47,8 @@ internal fun createRealSdkInstance(
         telemetryDestination = moduleGraph.essentialServiceModule.telemetryDestination,
         instrumentationRegistry = moduleGraph.instrumentationModule.instrumentationRegistry,
         instrumentationArgs = moduleGraph.instrumentationModule.instrumentationArgs,
-        sessionOrchestrator = moduleGraph.userSessionOrchestrationModule.sessionOrchestrator,
-        sessionPartReader = moduleGraph.userSessionOrchestrationModule.sessionPartReader,
+        sessionOrchestrator = moduleGraph.sessionOrchestrator,
+        sessionPartReader = moduleGraph.sessionPartReader,
         logOrchestrator = moduleGraph.logOrchestrator,
         attachmentService = moduleGraph.attachmentService,
         logLimitingService = moduleGraph.logLimitingService,
@@ -71,12 +71,12 @@ internal fun createRealSdkInstance(
         ),
         sessionApiDelegate = UserSessionApiDelegate(
             userSessionPropertiesService = moduleGraph.essentialServiceModule.userSessionPropertiesService,
-            sessionOrchestrator = moduleGraph.userSessionOrchestrationModule.sessionOrchestrator,
+            sessionOrchestrator = moduleGraph.sessionOrchestrator,
         ),
         networkRequestApiDelegate = NetworkRequestApiDelegate(
             registry = moduleGraph.instrumentationModule.instrumentationRegistry,
             httpRequestInfoModifierChain = moduleGraph.instrumentationModule.instrumentationArgs.httpRequestInfoModifierChain,
-            sessionOrchestrator = moduleGraph.userSessionOrchestrationModule.sessionOrchestrator,
+            sessionOrchestrator = moduleGraph.sessionOrchestrator,
         ),
         logsApiDelegate = logsApiDelegate,
         hostedSdkInternalInterface = HostedSdkInternalInterfaceImpl(
@@ -95,7 +95,7 @@ internal fun createRealSdkInstance(
         ),
         sdkStateApiDelegate = SdkStateApiDelegate(
             deviceIdentifier = lazy { moduleGraph.configService.deviceId },
-            sessionIdsProvider = moduleGraph.userSessionOrchestrationModule.sessionIdsProvider,
+            sessionIdsProvider = moduleGraph.essentialServiceModule.sessionIdsProvider,
             crashVerifier = moduleGraph.lastRunCrashVerifier,
         ),
         otelApiDelegate = OTelApiDelegate(

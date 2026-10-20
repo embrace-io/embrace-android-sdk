@@ -70,3 +70,7 @@ claude-output/
 # Perfetto traces (large binary artifacts) and collected benchmark output
 perf/
 *.perfetto-trace
+
+# machine-local root to store client side state used for skills that can be relied on to exist across
+# claude session and cache purges.
+.claude/skills/_shared/local/

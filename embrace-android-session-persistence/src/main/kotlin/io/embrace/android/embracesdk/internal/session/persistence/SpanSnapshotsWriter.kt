@@ -41,12 +41,7 @@ class SpanSnapshotsWriter(
      * Writes the state of all in-flight spans, discarding any previous persisted info.
      */
     fun write(spans: List<Span>): Boolean = SystemTrace.trace("mf-write-span-snapshots") {
-        try {
-            writeImpl(spans)
-        } catch (exc: Throwable) {
-            trackFailure(exc)
-            false
-        }
+        errorHandler.guardSdkCode(SdkErrorType.SpanSnapshotsWriteFail, false) { writeImpl(spans) }
     }
 
     /**
@@ -131,11 +126,7 @@ class SpanSnapshotsWriter(
         val open = file ?: return
         file = null
         records = 0
-        try {
-            open.close()
-        } catch (exc: IOException) {
-            trackFailure(exc)
-        }
+        errorHandler.guardSdkCode(SdkErrorType.SpanSnapshotsWriteFail, open::close)
     }
 
     private fun reportDrop() {

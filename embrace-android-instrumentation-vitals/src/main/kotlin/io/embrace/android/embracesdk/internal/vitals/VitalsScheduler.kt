@@ -35,11 +35,7 @@ internal class HandlerVitalsScheduler(private val errorHandler: ErrorHandler) : 
         this.thread = thread
         handler = object : Handler(thread.looper) {
             override fun dispatchMessage(msg: Message) {
-                try {
-                    super.dispatchMessage(msg)
-                } catch (exc: Throwable) {
-                    errorHandler.trackSdkError(SdkErrorType.UiCallbackFail, exc)
-                }
+                errorHandler.guardSdkCode(SdkErrorType.UiCallbackFail) { super.dispatchMessage(msg) }
             }
         }
     }

@@ -48,7 +48,7 @@ internal class HostedSdkInternalInterfaceImpl(
     override val unityInternalInterface: UnityInternalInterface = this
     override val flutterInternalInterface: FlutterInternalInterface = this
 
-    override fun isNetworkSpanForwardingEnabled(): Boolean = guard(false) {
+    override fun isNetworkSpanForwardingEnabled(): Boolean = errorHandler.guardSdkCode(SdkErrorType.PublicApiFail, false) {
         configService.networkSpanForwardingBehavior.isNetworkSpanForwardingEnabled()
     }
 
@@ -169,18 +169,8 @@ internal class HostedSdkInternalInterfaceImpl(
     /**
      * Records usage of the internal API [name] then performs [call], reporting anything it throws as an SDK error.
      */
-    private inline fun record(name: String, call: () -> Unit) = guard(Unit) {
+    private fun record(name: String, call: () -> Unit) = errorHandler.guardSdkCode(SdkErrorType.PublicApiFail) {
         telemetryService.onPublicApiCalled(name)
         call()
-    }
-
-    /**
-     * Performs [call], reporting anything it throws as an SDK error and returning [fallback] instead.
-     */
-    private inline fun <T> guard(fallback: T, call: () -> T): T = try {
-        call()
-    } catch (exc: Throwable) {
-        errorHandler.trackSdkError(SdkErrorType.PublicApiFail, exc)
-        fallback
     }
 }

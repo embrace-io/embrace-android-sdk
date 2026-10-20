@@ -138,7 +138,7 @@ class IntakeServiceImpl(
         onStored: (() -> Unit)?,
     ): IntakeResult {
         var result = IntakeResult.NOT_ATTEMPTED
-        try {
+        errorHandler.guardSdkCode(SdkErrorType.IntakeFail) {
             val service = when {
                 metadata.complete -> payloadStorageService
                 else -> cacheStorageService
@@ -161,16 +161,13 @@ class IntakeServiceImpl(
 
             // Return non-successful outcomes early.
             // A payload storage rejected may succeed in a later attempt, but one that failed won't.
-            when (outcome) {
-                StorageOutcome.REJECTED -> {
-                    return IntakeResult.RETRYABLE_FAILURE
-                }
-                StorageOutcome.FAILED -> {
-                    return IntakeResult.PERMANENT_FAILURE
-                }
-                StorageOutcome.STORED -> {
-                    result = IntakeResult.STORED
-                }
+            result = when (outcome) {
+                StorageOutcome.REJECTED -> IntakeResult.RETRYABLE_FAILURE
+                StorageOutcome.FAILED -> IntakeResult.PERMANENT_FAILURE
+                StorageOutcome.STORED -> IntakeResult.STORED
+            }
+            if (result != IntakeResult.STORED) {
+                return@guardSdkCode
             }
 
             // the payload is now on disk, so any other copy the caller holds is safe to discard
@@ -207,8 +204,6 @@ class IntakeServiceImpl(
             entryToCleanup?.let {
                 cacheStorageService.delete(it)
             }
-        } catch (exc: Throwable) {
-            errorHandler.trackSdkError(SdkErrorType.IntakeFail, exc)
         }
         return result
     }

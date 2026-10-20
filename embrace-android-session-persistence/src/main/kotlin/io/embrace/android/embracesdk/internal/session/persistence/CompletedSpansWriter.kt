@@ -109,11 +109,7 @@ class CompletedSpansWriter(
     private fun closeFile() {
         val open = file ?: return
         file = null
-        try {
-            open.close()
-        } catch (exc: IOException) {
-            trackFailure(exc)
-        }
+        errorHandler.guardSdkCode(SdkErrorType.CompletedSpansWriteFail, open::close)
     }
 
     private fun reportDrop() {

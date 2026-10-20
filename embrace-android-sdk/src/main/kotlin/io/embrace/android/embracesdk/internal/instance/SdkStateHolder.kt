@@ -50,8 +50,13 @@ internal class SdkStateHolder(
      * everything else is delegated to [dispatcher].
      */
     val api: SdkApi = object : SdkApi by dispatcher {
-        override fun start(context: Context) = guard { this@SdkStateHolder.start(context) }
-        override fun disable() = guard { this@SdkStateHolder.close() }
+        override fun start(context: Context) {
+            errorHandler.guardSdkCode(SdkErrorType.PublicApiFail) { this@SdkStateHolder.start(context) }
+        }
+
+        override fun disable() {
+            errorHandler.guardSdkCode(SdkErrorType.PublicApiFail) { this@SdkStateHolder.close() }
+        }
     }
 
     @Volatile
@@ -82,9 +87,9 @@ internal class SdkStateHolder(
                 } else {
                     // tear down buffered instance
                     dispatcher.target.close()
-                    next?.let { guard { it.close() } }
+                    next?.let { errorHandler.guardSdkCode(SdkErrorType.PublicApiFail) { it.close() } }
                     transition(failed(), SdkState.FAILED)
-                    guard { errorHandler.close() }
+                    errorHandler.guardSdkCode(SdkErrorType.PublicApiFail) { errorHandler.close() }
                 }
             }
         }
@@ -100,9 +105,9 @@ internal class SdkStateHolder(
             }
             instanceFactory = null
             // disabling is terminal even if teardown fails partway. Unlike a failed start, this deletes persisted data.
-            guard { dispatcher.target.disable() }
+            errorHandler.guardSdkCode(SdkErrorType.PublicApiFail) { dispatcher.target.disable() }
             transition(disabled(), SdkState.DISABLED)
-            guard { errorHandler.close() }
+            errorHandler.guardSdkCode(SdkErrorType.PublicApiFail) { errorHandler.close() }
         }
     }
 
@@ -128,21 +133,13 @@ internal class SdkStateHolder(
         val previous = dispatcher.target
         dispatcher.target = next
         if (previous is BufferingSdkInstance) {
-            guard { next.onPostStart(previous) }
-            guard { previous.close() }
+            errorHandler.guardSdkCode(SdkErrorType.PublicApiFail) { next.onPostStart(previous) }
+            errorHandler.guardSdkCode(SdkErrorType.PublicApiFail) { previous.close() }
         }
     }
 
     private fun reportStartFailure(exc: Throwable) {
         Log.w("Embrace", "Failed to start the Embrace SDK", exc)
         errorHandler.trackSdkError(SdkErrorType.PublicApiFail, exc)
-    }
-
-    inline fun guard(call: () -> Unit) {
-        try {
-            call()
-        } catch (exc: Throwable) {
-            errorHandler.trackSdkError(SdkErrorType.PublicApiFail, exc)
-        }
     }
 }

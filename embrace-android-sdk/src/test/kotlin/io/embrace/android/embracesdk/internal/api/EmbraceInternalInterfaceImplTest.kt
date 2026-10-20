@@ -38,7 +38,7 @@ internal class EmbraceInternalInterfaceImplTest {
             serializer = mockk(),
             rnBundleIdTracker = lazy { mockk() },
             hostedSdkVersionInfo = mockk(),
-            errorHandler = mockk(),
+            errorHandler = FakeErrorHandler(),
             telemetryService = FakeInternalTelemetryService(),
         )
     }

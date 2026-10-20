@@ -44,19 +44,16 @@ abstract class DataSourceImpl(
         inputValidation: () -> Boolean,
         invalidInputCallback: () -> Unit,
         action: TelemetryDestination.() -> T?,
-    ): T? {
-        try {
-            if (!inputValidation()) {
-                invalidInputCallback()
-            } else if (limitStrategy.shouldCapture()) {
-                return destination.action()
-            } else {
-                // Track that a limit was exceeded
-                telemetryService.trackAppliedLimit(instrumentationName, AppliedLimitType.DROP)
-            }
-        } catch (exc: Throwable) {
-            errorHandler.trackSdkError(SdkErrorType.DataSourceDataCaptureFail, exc)
+    ): T? = errorHandler.guardSdkCode(SdkErrorType.DataSourceDataCaptureFail, null) {
+        if (!inputValidation()) {
+            invalidInputCallback()
+            null
+        } else if (limitStrategy.shouldCapture()) {
+            destination.action()
+        } else {
+            // Track that a limit was exceeded
+            telemetryService.trackAppliedLimit(instrumentationName, AppliedLimitType.DROP)
+            null
         }
-        return null
     }
 }

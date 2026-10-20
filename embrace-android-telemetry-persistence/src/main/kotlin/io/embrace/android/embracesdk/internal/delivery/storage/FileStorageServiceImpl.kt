@@ -96,13 +96,12 @@ class FileStorageServiceImpl(
     }
 
     override fun loadPayloadAsStream(metadata: StoredTelemetryMetadata): InputStream? {
-        return try {
-            index.fileFor(metadata).inputStream().buffered()
-        } catch (_: FileNotFoundException) {
-            null
-        } catch (exc: Throwable) {
-            errorHandler.trackSdkError(SdkErrorType.PayloadStorageFail, exc)
-            null
+        return errorHandler.guardSdkCode(SdkErrorType.PayloadStorageFail, null) {
+            try {
+                index.fileFor(metadata).inputStream().buffered()
+            } catch (_: FileNotFoundException) {
+                null
+            }
         }
     }
 

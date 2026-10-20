@@ -23,20 +23,13 @@ class SessionReconstructionService(
      */
     fun reconstruct(directory: SessionPartDirectory): DecodedSessionPart? =
         SystemTrace.trace("mf-session-reconstruct") {
-            try {
+            errorHandler.guardSdkCode(SdkErrorType.SessionReconstructionFail, null) {
                 val partDir = File(sessionsDir.value, directory.dirName)
                 if (!partDir.isDirectory) {
-                    trackFailure(IOException(MISSING_PART_DIR_MSG))
-                    return@trace null
+                    errorHandler.trackSdkError(SdkErrorType.SessionReconstructionFail, IOException(MISSING_PART_DIR_MSG))
+                    return@guardSdkCode null
                 }
                 decoder.decode(FileSessionPartSource(partDir))
-            } catch (exc: Throwable) {
-                trackFailure(exc)
-                null
             }
         }
-
-    private fun trackFailure(exc: Throwable) {
-        errorHandler.trackSdkError(SdkErrorType.SessionReconstructionFail, exc)
-    }
 }

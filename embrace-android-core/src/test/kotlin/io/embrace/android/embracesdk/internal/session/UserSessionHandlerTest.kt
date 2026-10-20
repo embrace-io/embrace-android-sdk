@@ -88,9 +88,9 @@ internal class UserSessionHandlerTest(
             sessionBehavior = createSessionBehavior(),
         )
         val initModule = FakeInitModule(clock = clock, otelSdkMode = otelSdkMode)
-        spanService = initModule.openTelemetryModule.spanService
-        spanRepository = initModule.openTelemetryModule.spanRepository
-        currentSessionPartSpan = initModule.openTelemetryModule.currentSessionPartSpan
+        spanService = initModule.otelStack.spanService
+        spanRepository = initModule.otelStack.spanRepository
+        currentSessionPartSpan = initModule.otelStack.currentSessionPartSpan
         val partPayloadSource = SessionPartPayloadSourceImpl(
             null,
             currentSessionPartSpan,

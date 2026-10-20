@@ -559,13 +559,13 @@ internal class MultiFilePersistenceParityTest(
             },
             assertAction = {
                 crashedProcessId =
-                    testRule.moduleGraph.openTelemetryModule.otelSdkConfig.processIdentifier
+                    testRule.moduleGraph.otelSdkConfig.value.processIdentifier
             },
         )
 
         // tear the crashed process down so the next launch reads the shared storage from scratch
         testRule.moduleGraph.networkConnectivityService.close()
-        testRule.moduleGraph.openTelemetryModule.otelSdkConfig.close()
+        testRule.moduleGraph.otelSdkConfig.value.close()
         testRule.moduleGraph.workerThreadPool.close()
 
         testRule.runTest(
@@ -631,7 +631,7 @@ internal class MultiFilePersistenceParityTest(
         )
 
         testRule.moduleGraph.networkConnectivityService.close()
-        testRule.moduleGraph.openTelemetryModule.otelSdkConfig.close()
+        testRule.moduleGraph.otelSdkConfig.value.close()
         testRule.moduleGraph.workerThreadPool.close()
 
         // Verify the real payload gets delivered in a new process with an unblocked worker if we are in multi-file mode.
@@ -918,7 +918,7 @@ internal class MultiFilePersistenceParityTest(
      */
     private fun relaunchAndAssertDeliveredMetadata(token: String) {
         testRule.moduleGraph.networkConnectivityService.close()
-        testRule.moduleGraph.openTelemetryModule.otelSdkConfig.close()
+        testRule.moduleGraph.otelSdkConfig.value.close()
         testRule.moduleGraph.workerThreadPool.close()
         testRule.runTest(
             instrumentedConfig = hostedSdkConfig,

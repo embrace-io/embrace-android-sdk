@@ -209,7 +209,7 @@ internal class SdkIntegrationTestRule(
                     assertEquals(
                         "SDK did not select the $otelSdkMode opentelemetry-kotlin implementation.",
                         otelSdkMode.useKotlinSdk,
-                        setup.openTelemetryModule.otelSdkWrapper.useKotlinSdk,
+                        moduleGraph.otelSdkWrapper.value.useKotlinSdk,
                     )
                     // a start that fails releases the worker threads, so there is nothing to await
                     awaitAsyncInstrumentation()
@@ -225,7 +225,7 @@ internal class SdkIntegrationTestRule(
     }
 
     private fun drainExternalExports() {
-        val otelSdkConfig = setup.openTelemetryModuleOrNull?.otelSdkConfig ?: return
+        val otelSdkConfig = createdModuleGraph?.otelSdkConfig?.value ?: return
         runBlocking {
             otelSdkConfig.spanProcessor.forceFlush()
             otelSdkConfig.logRecordProcessor.forceFlush()

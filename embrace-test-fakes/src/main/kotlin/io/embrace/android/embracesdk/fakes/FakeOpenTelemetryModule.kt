@@ -1,7 +1,6 @@
 package io.embrace.android.embracesdk.fakes
 
 import io.embrace.android.embracesdk.internal.SystemInfo
-import io.embrace.android.embracesdk.internal.injection.OpenTelemetryModule
 import io.embrace.android.embracesdk.internal.otel.config.OtelSdkConfig
 import io.embrace.android.embracesdk.internal.otel.export.ExternalExportDispatcher
 import io.embrace.android.embracesdk.internal.otel.logs.LogSink
@@ -10,19 +9,18 @@ import io.embrace.android.embracesdk.internal.otel.sdk.OtelSdkWrapper
 import io.embrace.android.embracesdk.internal.otel.spans.SpanRepository
 import io.embrace.android.embracesdk.internal.otel.spans.SpanService
 import io.embrace.android.embracesdk.internal.spans.CurrentSessionPartSpan
-import io.embrace.android.embracesdk.spans.TracingApi
 
 class FakeOpenTelemetryModule(
-    override val currentSessionPartSpan: CurrentSessionPartSpan = FakeCurrentSessionPartSpan(),
-    override val logSink: LogSink = LogSinkImpl(),
-    override val spanRepository: SpanRepository = SpanRepository(),
+    val currentSessionPartSpan: CurrentSessionPartSpan = FakeCurrentSessionPartSpan(),
+    val logSink: LogSink = LogSinkImpl(),
+    val spanRepository: SpanRepository = SpanRepository(),
     otelSdkMode: OtelSdkMode,
-) : OpenTelemetryModule {
+) {
     private val sdkName = "sdk"
     private val sdkVersion = "1.0"
     private val systemInfo = SystemInfo()
 
-    override val otelSdkConfig: OtelSdkConfig =
+    val otelSdkConfig: OtelSdkConfig =
         OtelSdkConfig(
             spanRepository = spanRepository,
             logSink = logSink,
@@ -35,9 +33,9 @@ class FakeOpenTelemetryModule(
             externalExportDispatcher = ExternalExportDispatcher(FakeErrorHandler()),
         )
 
-    override val spanService: SpanService = FakeSpanService()
+    val spanService: SpanService = FakeSpanService()
 
-    override val otelSdkWrapper: OtelSdkWrapper =
+    val otelSdkWrapper: OtelSdkWrapper =
         OtelSdkWrapper(
             otelClock = FakeOtelKotlinClock(),
             configuration = otelSdkConfig,
@@ -45,7 +43,4 @@ class FakeOpenTelemetryModule(
             errorHandler = FakeErrorHandler(),
             useKotlinSdk = otelSdkMode.useKotlinSdk,
         )
-
-    override val tracingApi: TracingApi
-        get() = TODO()
 }

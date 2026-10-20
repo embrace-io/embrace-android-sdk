@@ -37,9 +37,9 @@ internal fun createRealSdkInstance(
         workerThreadPool = moduleGraph.workerThreadPool,
         eventBus = moduleGraph.eventBus,
         appContext = moduleGraph.appContext,
-        spanRepository = moduleGraph.openTelemetryModule.spanRepository,
-        logSink = moduleGraph.openTelemetryModule.logSink,
-        otelSdkConfig = lazy { moduleGraph.openTelemetryModule.otelSdkConfig },
+        spanRepository = moduleGraph.spanRepository,
+        logSink = moduleGraph.logSink,
+        otelSdkConfig = moduleGraph.otelSdkConfig,
         processStateTracker = moduleGraph.processStateTracker,
         sessionPartTracker = moduleGraph.sessionPartTracker,
         networkConnectivityService = moduleGraph.networkConnectivityService,
@@ -98,7 +98,7 @@ internal fun createRealSdkInstance(
             crashVerifier = moduleGraph.lastRunCrashVerifier,
         ),
         otelApiDelegate = OTelApiDelegate(
-            otelSdkWrapper = lazy { moduleGraph.openTelemetryModule.otelSdkWrapper },
+            otelSdkWrapper = moduleGraph.otelSdkWrapper,
         ),
         breadcrumbApiDelegate = BreadcrumbApiDelegate(
             clock = moduleGraph.initModule.clock,
@@ -114,6 +114,6 @@ internal fun createRealSdkInstance(
             clock = moduleGraph.initModule.clock,
             experimentTrackingService = moduleGraph.experimentTrackingService,
         ),
-        tracingApi = moduleGraph.openTelemetryModule.tracingApi,
+        tracingApi = moduleGraph.tracingApi,
     )
 }

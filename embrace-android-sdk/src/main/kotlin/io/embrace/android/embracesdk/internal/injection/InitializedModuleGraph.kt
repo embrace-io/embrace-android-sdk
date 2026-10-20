@@ -18,6 +18,7 @@ import io.embrace.android.embracesdk.internal.capture.metadata.RnBundleIdTracker
 import io.embrace.android.embracesdk.internal.capture.session.UserSessionPropertiesService
 import io.embrace.android.embracesdk.internal.capture.user.UserService
 import io.embrace.android.embracesdk.internal.config.ConfigService
+import io.embrace.android.embracesdk.internal.config.behavior.SensitiveKeysBehavior
 import io.embrace.android.embracesdk.internal.delivery.StoredTelemetryMetadata
 import io.embrace.android.embracesdk.internal.delivery.caching.PayloadCachingService
 import io.embrace.android.embracesdk.internal.delivery.debug.DeliveryTracer
@@ -58,6 +59,17 @@ import io.embrace.android.embracesdk.internal.logs.LogOrchestrator
 import io.embrace.android.embracesdk.internal.logs.LogService
 import io.embrace.android.embracesdk.internal.logs.LogServiceImpl
 import io.embrace.android.embracesdk.internal.logs.attachments.AttachmentService
+import io.embrace.android.embracesdk.internal.otel.config.OtelSdkConfig
+import io.embrace.android.embracesdk.internal.otel.impl.EmbClock
+import io.embrace.android.embracesdk.internal.otel.logs.LogSink
+import io.embrace.android.embracesdk.internal.otel.logs.LogSinkImpl
+import io.embrace.android.embracesdk.internal.otel.sdk.DataValidator
+import io.embrace.android.embracesdk.internal.otel.sdk.OtelSdkWrapper
+import io.embrace.android.embracesdk.internal.otel.spans.EmbraceSpanFactory
+import io.embrace.android.embracesdk.internal.otel.spans.EmbraceSpanFactoryImpl
+import io.embrace.android.embracesdk.internal.otel.spans.SpanRepository
+import io.embrace.android.embracesdk.internal.otel.spans.SpanService
+import io.embrace.android.embracesdk.internal.otel.spans.SpanServiceImpl
 import io.embrace.android.embracesdk.internal.resurrection.PayloadResurrectionService
 import io.embrace.android.embracesdk.internal.resurrection.SessionPartReader
 import io.embrace.android.embracesdk.internal.session.id.SessionIdsProvider
@@ -65,6 +77,8 @@ import io.embrace.android.embracesdk.internal.session.id.SessionPartTracker
 import io.embrace.android.embracesdk.internal.session.lifecycle.createLifecycleTracker
 import io.embrace.android.embracesdk.internal.session.orchestrator.PayloadStore
 import io.embrace.android.embracesdk.internal.session.orchestrator.SessionOrchestrator
+import io.embrace.android.embracesdk.internal.spans.CurrentSessionPartSpan
+import io.embrace.android.embracesdk.internal.spans.TracingApiDelegate
 import io.embrace.android.embracesdk.internal.storage.EmbraceStorageService
 import io.embrace.android.embracesdk.internal.storage.StatFsAvailabilityChecker
 import io.embrace.android.embracesdk.internal.storage.StorageService
@@ -78,6 +92,7 @@ import io.embrace.android.embracesdk.internal.utils.VersionChecker
 import io.embrace.android.embracesdk.internal.utils.event.EventBus
 import io.embrace.android.embracesdk.internal.worker.PriorityWorker
 import io.embrace.android.embracesdk.internal.worker.Worker
+import io.embrace.android.embracesdk.spans.TracingApi
 import java.util.concurrent.TimeUnit
 
 /**
@@ -95,7 +110,6 @@ internal class InitializedModuleGraph(
     val sdkInitResourceUsageTracker: SdkInitResourceUsageTracker,
     overrides: SdkOverrides? = null,
     private val initModuleSupplier: InitModuleSupplier? = null,
-    private val openTelemetryModuleSupplier: OpenTelemetryModuleSupplier? = null,
     private val threadBlockageServiceSupplier: ThreadBlockageServiceSupplier? = null,
 ) {
 
@@ -124,22 +138,96 @@ internal class InitializedModuleGraph(
         )
     }
 
-    val openTelemetryModule: OpenTelemetryModule = init("open-telemetry-module") {
-        openTelemetryModuleSupplier?.invoke(
-            initModule,
-            configService,
-            preStartServices.externalOtelConfig,
-            otelSignalContext::getSessionIdsProvider,
-            otelSignalContext::getUserId,
-            otelSignalContext::getEventMetadata,
-        ) ?: OpenTelemetryModuleImpl(
-            initModule = initModule,
-            configService = configService,
-            externalOtelConfig = preStartServices.externalOtelConfig,
-            sessionIdsProvider = otelSignalContext::getSessionIdsProvider,
-            userIdProvider = otelSignalContext::getUserId,
-            eventMetadataProvider = otelSignalContext::getEventMetadata,
+    private val openTelemetryClock: EmbClock = init("open-telemetry-clock") { EmbClock(initModule.clock) }
+
+    private val sensitiveKeysBehavior: SensitiveKeysBehavior = init("sensitive-keys-behavior") {
+        SensitiveKeysBehavior(configService.config.sensitiveKeys)
+    }
+
+    val spanRepository: SpanRepository = init("span-repository") { SpanRepository() }
+
+    val logSink: LogSink = init("log-sink") { LogSinkImpl() }
+
+    val otelSdkConfig: Lazy<OtelSdkConfig> = lazy {
+        EmbTrace.trace("otel-sdk-config-init") {
+            overrides?.otelSdkConfig.resolve {
+                createOtelSdkConfig(
+                    spanRepository = spanRepository,
+                    logSink = logSink,
+                    instrumentedConfig = initModule.instrumentedConfig,
+                    systemInfo = initModule.systemInfo,
+                    uuidSource = initModule.uuidSource,
+                    errorHandler = initModule.errorHandler,
+                    externalOtelConfig = preStartServices.externalOtelConfig,
+                    sessionIdsProvider = otelSignalContext::getSessionIdsProvider,
+                    userIdProvider = otelSignalContext::getUserId,
+                    eventMetadataProvider = otelSignalContext::getEventMetadata,
+                )
+            }
+        }
+    }
+
+    val otelSdkWrapper: Lazy<OtelSdkWrapper> = lazy {
+        EmbTrace.trace("otel-sdk-wrapper-init") {
+            overrides?.otelSdkWrapper.resolve {
+                OtelSdkWrapper(
+                    otelClock = openTelemetryClock,
+                    configuration = otelSdkConfig.value,
+                    spanServiceProvider = { spanService },
+                    errorHandler = initModule.errorHandler,
+                    useKotlinSdk = configService.otelBehavior.shouldUseKotlinSdk(),
+                )
+            }
+        }
+    }
+
+    private val dataValidator: DataValidator = init("data-validator") {
+        DataValidator(
+            bypassValidation = configService::isOnlyUsingOtelExporters,
+            telemetryService = initModule.telemetryService,
         )
+    }
+
+    val currentSessionPartSpan: CurrentSessionPartSpan = init("current-session-part-span-impl") {
+        createCurrentSessionPartSpan(
+            openTelemetryClock = openTelemetryClock,
+            telemetryService = initModule.telemetryService,
+            spanRepository = spanRepository,
+            tracerSupplier = { otelSdkWrapper.value.sdkTracer },
+            openTelemetrySupplier = { otelSdkWrapper.value.openTelemetryKotlin },
+            embraceSpanFactorySupplier = { embraceSpanFactory },
+            uuidSource = initModule.uuidSource,
+            otelBehaviorSupplier = { configService.otelBehavior },
+            customBreadcrumbLimitSupplier = { configService.config.breadcrumb.customLimit },
+        )
+    }
+
+    private val embraceSpanFactory: EmbraceSpanFactory = init("embrace-span-factory") {
+        EmbraceSpanFactoryImpl(
+            openTelemetryClock = openTelemetryClock,
+            spanRepository = spanRepository,
+            dataValidator = dataValidator,
+            stopCallback = currentSessionPartSpan::spanStopCallback,
+            redactionFunction = createRedactionFunction(sensitiveKeysBehavior),
+            telemetryService = initModule.telemetryService,
+        )
+    }
+
+    val spanService: SpanService by lazy {
+        EmbTrace.trace("span-service-init") {
+            SpanServiceImpl(
+                spanRepository = spanRepository,
+                canStartNewSpan = currentSessionPartSpan::canStartNewSpan,
+                dataValidator = dataValidator,
+                embraceSpanFactory = embraceSpanFactory,
+                tracer = otelSdkWrapper.value.sdkTracer,
+                openTelemetry = otelSdkWrapper.value.openTelemetryKotlin,
+            )
+        }
+    }
+
+    val tracingApi: TracingApi by lazy {
+        EmbTrace.trace("tracing-api-init") { TracingApiDelegate(spanService) }
     }
 
     val appContext: Context = init("context") {
@@ -203,9 +291,9 @@ internal class InitializedModuleGraph(
     val telemetryDestination: TelemetryDestination = init("telemetry-destination") {
         TelemetryDestinationImpl(
             clock = initModule.clock,
-            spanService = openTelemetryModule.spanService,
-            loggerSupplier = { openTelemetryModule.otelSdkWrapper.sdkLogger },
-            currentSessionPartSpan = openTelemetryModule.currentSessionPartSpan,
+            spanService = spanService,
+            loggerSupplier = { otelSdkWrapper.value.sdkLogger },
+            currentSessionPartSpan = currentSessionPartSpan,
         )
     }
 
@@ -256,7 +344,7 @@ internal class InitializedModuleGraph(
             serializer = initModule.jsonSerializer,
             uuidSource = initModule.uuidSource,
             ordinalStore = ordinalStore,
-            processIdentifier = openTelemetryModule.otelSdkConfig.processIdentifier,
+            processIdentifier = otelSdkConfig.value.processIdentifier,
             processStateTracker = processStateTracker,
             navigationTrackingService = navigationTrackingService,
             telemetryService = initModule.telemetryService,
@@ -331,7 +419,7 @@ internal class InitializedModuleGraph(
 
     private val deliveryTracer: DeliveryTracer? = overrides?.deliveryTracer.resolve { null }
 
-    private val processIdProvider: () -> String = { openTelemetryModule.otelSdkConfig.processIdentifier }
+    private val processIdProvider: () -> String = { otelSdkConfig.value.processIdentifier }
 
     private val dataPersistenceWorker: PriorityWorker<StoredTelemetryMetadata>? = init("data-persistence-worker") {
         when {
@@ -496,7 +584,7 @@ internal class InitializedModuleGraph(
             errorHandler = initModule.errorHandler,
             hostedSdkVersionInfo = hostedSdkVersionInfo,
             rnBundleIdTracker = rnBundleIdTracker,
-            useKotlinSdkProvider = { openTelemetryModule.otelSdkWrapper.useKotlinSdk },
+            useKotlinSdkProvider = { otelSdkWrapper.value.useKotlinSdk },
         )
     }
 
@@ -507,8 +595,8 @@ internal class InitializedModuleGraph(
     val sessionPartEnvelopeSource: SessionPartEnvelopeSource = init("session-part-envelope-source") {
         createSessionPartEnvelopeSource(
             symbolMap = configService.nativeSymbolMap,
-            currentSessionPartSpan = openTelemetryModule.currentSessionPartSpan,
-            spanRepository = openTelemetryModule.spanRepository,
+            currentSessionPartSpan = currentSessionPartSpan,
+            spanRepository = spanRepository,
             otelPayloadMapper = threadBlockageService,
             processStateTracker = processStateTracker,
             clock = initModule.clock,
@@ -520,7 +608,7 @@ internal class InitializedModuleGraph(
 
     val logEnvelopeSource: LogEnvelopeSource = init("log-envelope-source") {
         createLogEnvelopeSource(
-            logSink = openTelemetryModule.logSink,
+            logSink = logSink,
             envelopeMetadataSource = envelopeMetadataSource,
             resourceSource = resourceSource,
             cachedLogEnvelopeStore = cachedLogEnvelopeStore,
@@ -565,7 +653,7 @@ internal class InitializedModuleGraph(
                 workerThreadPool.backgroundWorker(Worker.Background.NonIoRegWorker)
             },
             clock = initModule.clock,
-            sink = openTelemetryModule.logSink,
+            sink = logSink,
             payloadStore = payloadStore,
             logEnvelopeSource = logEnvelopeSource,
         )
@@ -623,9 +711,9 @@ internal class InitializedModuleGraph(
                     userSessionPropertiesService = userSessionPropertiesService,
                     telemetryDestination = telemetryDestination,
                     experimentRecordsProvider = { experimentTrackingService.value.getRecords() },
-                    currentSessionPartSpan = openTelemetryModule.currentSessionPartSpan,
-                    spanRepository = openTelemetryModule.spanRepository,
-                    processIdentifier = openTelemetryModule.otelSdkConfig.processIdentifier,
+                    currentSessionPartSpan = currentSessionPartSpan,
+                    spanRepository = spanRepository,
+                    processIdentifier = otelSdkConfig.value.processIdentifier,
                     sessionPartEnvelopeSource = sessionPartEnvelopeSource,
                     logEnvelopeSource = logEnvelopeSource,
                     metadataService = metadataService,
@@ -652,7 +740,7 @@ internal class InitializedModuleGraph(
      */
     fun start() {
         EmbTrace.trace(sectionName = "span-service-init", recordDuration = true) {
-            openTelemetryModule.currentSessionPartSpan.initializeService(sdkStartTimeMs)
+            currentSessionPartSpan.initializeService(sdkStartTimeMs)
         }
         EmbTrace.trace("storage-telemetry-schedule") {
             workerThreadPool

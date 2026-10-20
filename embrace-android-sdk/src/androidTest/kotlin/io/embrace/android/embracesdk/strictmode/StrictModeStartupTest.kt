@@ -93,7 +93,7 @@ internal class StrictModeStartupTest(
 
         drainInitWork()
         assertTrue("SDK did not start.", sdkStateHolder.api.isStarted)
-        assertEquals(otelSdkMode.useKotlinSdk, checkNotNull(moduleGraph).openTelemetryModule.otelSdkWrapper.useKotlinSdk)
+        assertEquals(otelSdkMode.useKotlinSdk, checkNotNull(moduleGraph).otelSdkWrapper.value.useKotlinSdk)
         assertNoUnexpectedViolations(recorder.violations())
     }
 

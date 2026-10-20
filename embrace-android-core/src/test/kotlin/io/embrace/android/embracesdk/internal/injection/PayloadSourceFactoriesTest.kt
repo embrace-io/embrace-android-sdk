@@ -2,17 +2,21 @@ package io.embrace.android.embracesdk.internal.injection
 
 import io.embrace.android.embracesdk.fakes.FakeCachedLogEnvelopeStore
 import io.embrace.android.embracesdk.fakes.FakeConfigService
+import io.embrace.android.embracesdk.fakes.FakeCurrentSessionPartSpan
 import io.embrace.android.embracesdk.fakes.FakeEnvelopeMetadataSource
 import io.embrace.android.embracesdk.fakes.FakeIntakeService
-import io.embrace.android.embracesdk.fakes.FakeOpenTelemetryModule
+import io.embrace.android.embracesdk.fakes.FakeKeyValueStore
 import io.embrace.android.embracesdk.fakes.FakeOtelPayloadMapper
 import io.embrace.android.embracesdk.fakes.FakePayloadStorageService
+import io.embrace.android.embracesdk.fakes.FakeProcessStateTracker
 import io.embrace.android.embracesdk.fakes.OtelSdkMode
-import io.embrace.android.embracesdk.fakes.injection.FakeCoreModule
-import io.embrace.android.embracesdk.fakes.injection.FakeEssentialServiceModule
-import io.embrace.android.embracesdk.fakes.injection.FakeInitModule
+import io.embrace.android.embracesdk.fakes.fakeApplication
+import io.embrace.android.embracesdk.fakes.fakeContext
 import io.embrace.android.embracesdk.fakes.injection.FakeWorkerThreadPool
+import io.embrace.android.embracesdk.fakes.injection.TestInitServices
 import io.embrace.android.embracesdk.internal.capture.metadata.EmbraceMetadataService
+import io.embrace.android.embracesdk.internal.otel.logs.LogSinkImpl
+import io.embrace.android.embracesdk.internal.otel.spans.SpanRepository
 import io.embrace.android.embracesdk.internal.payload.AppFramework
 import io.embrace.android.embracesdk.internal.worker.Worker
 import org.junit.Assert.assertNotNull
@@ -23,49 +27,51 @@ internal class PayloadSourceFactoriesTest {
 
     @Test
     fun `factory default values`() {
-        val initModule = FakeInitModule(otelSdkMode = OtelSdkMode.COMPAT)
-        val coreModule = FakeCoreModule()
+        val initServices = TestInitServices(otelSdkMode = OtelSdkMode.COMPAT)
+        val application = fakeApplication()
+        val context = fakeContext(application)
+        val store = FakeKeyValueStore()
         val configService = FakeConfigService()
-        val otelModule = FakeOpenTelemetryModule(otelSdkMode = OtelSdkMode.REGULAR)
+        val spanRepository = SpanRepository()
         val cachedLogEnvelopeStore = FakeCachedLogEnvelopeStore()
         val worker = FakeWorkerThreadPool().backgroundWorker(Worker.Background.NonIoRegWorker)
         val envelopeMetadataSource = FakeEnvelopeMetadataSource()
 
         val resourceSource = createEnvelopeResourceSource(
-            context = coreModule.context,
+            context = context,
             configService = configService,
             worker = worker,
-            systemInfo = initModule.systemInfo,
-            errorHandler = initModule.errorHandler,
-            hostedSdkVersionInfo = createHostedSdkVersionInfo(AppFramework.NATIVE, coreModule.store),
-            rnBundleIdTracker = lazy { createRnBundleIdTracker(coreModule.context, configService, coreModule.store, worker) },
+            systemInfo = initServices.systemInfo,
+            errorHandler = initServices.errorHandler,
+            hostedSdkVersionInfo = createHostedSdkVersionInfo(AppFramework.NATIVE, store),
+            rnBundleIdTracker = lazy { createRnBundleIdTracker(context, configService, store, worker) },
             useKotlinSdkProvider = { false },
         )
         val metadataService = createMetadataService(
             resourceSource,
-            coreModule.context,
+            context,
             configService,
-            coreModule.store,
-            initModule.clock,
+            store,
+            initServices.clock,
             worker,
         )
         assertTrue(metadataService is EmbraceMetadataService)
         assertNotNull(
             createSessionPartEnvelopeSource(
                 symbolMap = null,
-                currentSessionPartSpan = otelModule.currentSessionPartSpan,
-                spanRepository = otelModule.spanRepository,
+                currentSessionPartSpan = FakeCurrentSessionPartSpan(),
+                spanRepository = spanRepository,
                 otelPayloadMapper = FakeOtelPayloadMapper(),
-                processStateTracker = FakeEssentialServiceModule().processStateTracker,
-                clock = initModule.clock,
-                errorHandler = initModule.errorHandler,
+                processStateTracker = FakeProcessStateTracker(),
+                clock = initServices.clock,
+                errorHandler = initServices.errorHandler,
                 envelopeMetadataSource = envelopeMetadataSource,
                 resourceSource = resourceSource,
             ),
         )
         assertNotNull(
             createLogEnvelopeSource(
-                otelModule.logSink,
+                LogSinkImpl(),
                 envelopeMetadataSource,
                 resourceSource,
                 cachedLogEnvelopeStore,
@@ -77,8 +83,8 @@ internal class PayloadSourceFactoriesTest {
                 FakePayloadStorageService(),
                 FakePayloadStorageService(),
                 cachedLogEnvelopeStore,
-                initModule.errorHandler,
-                initModule.jsonSerializer,
+                initServices.errorHandler,
+                initServices.jsonSerializer,
             ),
         )
     }

@@ -119,7 +119,8 @@ The SDK uses **manual dependency injection** without module objects:
 - Service implementations stay `internal` to their module; `embrace-android-core/.../injection/*Factories.kt`
   expose top-level `create*` functions that return the interface type
 - Test seams are `SdkOverrides` fields, null in production and resolved with `resolve` (`override ?: real`)
-- `FakeInitModule` and other `Fake*Module` classes in `embrace-test-fakes` are plain bundles of fakes for tests
+- Tests construct services with individual fakes; `TestInitServices` and `TestOtelStack` in `embrace-test-fakes`
+  provide the pre-start services and a real OTel stack
 
 ---
 

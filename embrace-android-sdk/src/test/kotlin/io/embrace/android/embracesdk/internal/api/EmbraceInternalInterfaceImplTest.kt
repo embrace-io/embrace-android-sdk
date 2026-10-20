@@ -7,7 +7,7 @@ import io.embrace.android.embracesdk.fakes.FakeErrorHandler
 import io.embrace.android.embracesdk.fakes.FakeInternalTelemetryService
 import io.embrace.android.embracesdk.fakes.OtelSdkMode
 import io.embrace.android.embracesdk.fakes.behavior.FakeNetworkSpanForwardingBehavior
-import io.embrace.android.embracesdk.fakes.injection.FakeInitModule
+import io.embrace.android.embracesdk.fakes.injection.TestInitServices
 import io.embrace.android.embracesdk.internal.api.delegate.HostedSdkInternalInterfaceImpl
 import io.mockk.mockk
 import org.junit.Assert.assertEquals
@@ -20,14 +20,14 @@ internal class EmbraceInternalInterfaceImplTest {
 
     private lateinit var internalImpl: HostedSdkInternalInterfaceImpl
     private lateinit var fakeClock: FakeClock
-    private lateinit var initModule: FakeInitModule
+    private lateinit var initServices: TestInitServices
     private lateinit var fakeConfigService: FakeConfigService
     private lateinit var resourceSource: FakeEnvelopeResourceSource
 
     @Before
     fun setUp() {
         fakeClock = FakeClock(currentTime = beforeObjectInitTime)
-        initModule = FakeInitModule(clock = fakeClock, errorHandler = FakeErrorHandler(false), otelSdkMode = OtelSdkMode.COMPAT)
+        initServices = TestInitServices(clock = fakeClock, errorHandler = FakeErrorHandler(false), otelSdkMode = OtelSdkMode.COMPAT)
         fakeConfigService = FakeConfigService()
         resourceSource = FakeEnvelopeResourceSource()
         internalImpl = HostedSdkInternalInterfaceImpl(

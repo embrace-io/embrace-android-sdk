@@ -16,8 +16,8 @@ import io.embrace.android.embracesdk.fakes.OtelSdkMode
 import io.embrace.android.embracesdk.fakes.TestUuidSource
 import io.embrace.android.embracesdk.fakes.config.FakeInstrumentedConfig
 import io.embrace.android.embracesdk.fakes.fakeIncompleteSessionEnvelope
-import io.embrace.android.embracesdk.fakes.injection.FakeCoreModule
-import io.embrace.android.embracesdk.fakes.injection.FakeInitModule
+import io.embrace.android.embracesdk.fakes.fakeContext
+import io.embrace.android.embracesdk.fakes.injection.TestInitServices
 import io.embrace.android.embracesdk.fakes.injection.FakeWorkerThreadPool
 import io.embrace.android.embracesdk.fixtures.fakeCachedSessionStoredTelemetryMetadata
 import io.embrace.android.embracesdk.internal.arch.InstrumentationProvider
@@ -132,22 +132,22 @@ internal class EmbraceSetupInterface(
      */
     var moduleGraphFailure: Throwable? = null
 
-    private val fakeInitModule: FakeInitModule = FakeInitModule(
+    private val fakeInitServices: TestInitServices = TestInitServices(
         clock = fakeClock,
         errorHandler = FakeErrorHandler(ignoredErrors = ignoredSdkErrors, delegate = ErrorHandlerImpl(fakeClock)),
         uuidSource = uuidSource,
-        // unused: the module graph builds its OTel module from the SDK's ConfigService
+        // unused: the module graph builds its OTel stack from the SDK's ConfigService
         otelSdkMode = OtelSdkMode.COMPAT,
     )
 
     val preStartServices: PreStartServices
-        get() = fakeInitModule.preStartServices
+        get() = fakeInitServices.preStartServices
 
-    val initModule: FakeInitModule
-        get() = fakeInitModule
+    val initServices: TestInitServices
+        get() = fakeInitServices
 
     private val workerThreadPool: WorkerThreadPool = initWorkerThreadPool(
-        fakeInitModule = fakeInitModule,
+        fakeInitServices = fakeInitServices,
         workersToFake = workersToFake,
         threadBlockageWatchdogThread = threadBlockageWatchdogThread
     )
@@ -155,7 +155,7 @@ internal class EmbraceSetupInterface(
     /** Runs the log orchestrator's batch checks on the fake clock rather than after real delays. */
     private val logOrchestratorExecutor = BlockingScheduledExecutorService(fakeClock, blockingMode = false)
 
-    private val fakeCoreModule: FakeCoreModule = FakeCoreModule()
+    private val fakeContext: Context = fakeContext()
 
     /**
      * The SDK's store, backed by the same `SharedPreferences` the module graph will use. Owned here
@@ -163,7 +163,7 @@ internal class EmbraceSetupInterface(
      * graph exists.
      */
     private val keyValueStore: KeyValueStore by lazy {
-        createKeyValueStore(fakeCoreModule.context, fakeInitModule.jsonSerializer)
+        createKeyValueStore(fakeContext, fakeInitServices.jsonSerializer)
     }
 
     init {
@@ -171,15 +171,15 @@ internal class EmbraceSetupInterface(
     }
 
     fun createConfigLoadServicesSupplier(instrumentedConfig: FakeInstrumentedConfig): ConfigLoadServicesSupplier {
-        fakeInitModule.instrumentedConfig = instrumentedConfig
+        fakeInitServices.instrumentedConfig = instrumentedConfig
         return { context, preStartServices ->
             ConfigLoadServices(
                 context = context,
                 preStartServices = preStartServices,
-                instrumentedConfig = fakeInitModule.instrumentedConfig,
-                jsonSerializer = fakeInitModule.jsonSerializer,
-                okHttpClient = fakeInitModule.okHttpClient,
-                uuidSource = fakeInitModule.uuidSource,
+                instrumentedConfig = fakeInitServices.instrumentedConfig,
+                jsonSerializer = fakeInitServices.jsonSerializer,
+                okHttpClient = fakeInitServices.okHttpClient,
+                uuidSource = fakeInitServices.uuidSource,
                 workerThreadPoolSupplier = { workerThreadPool },
                 configServiceSupplier = { preStartServices, instrumentedConfig, serializer, okHttpClient, workerThreadPool, persistedConfig ->
                     DecoratedConfigService(
@@ -202,7 +202,7 @@ internal class EmbraceSetupInterface(
         networkConnectivityService = { fakeNetworkConnectivityService },
         appContext = {
             moduleGraphFailure?.let { throw it }
-            fakeCoreModule.context
+            fakeContext
         },
     )
 
@@ -273,9 +273,9 @@ internal class EmbraceSetupInterface(
             sessionPartId = sessionPartId,
         )
         val sessionsDir = StorageLocation.SESSION_SPLIT.asFile(
-            errorHandler = fakeInitModule.errorHandler,
-            rootDirSupplier = { fakeCoreModule.context.filesDir },
-            fallbackDirSupplier = { fakeCoreModule.context.cacheDir },
+            errorHandler = fakeInitServices.errorHandler,
+            rootDirSupplier = { fakeContext.filesDir },
+            fallbackDirSupplier = { fakeContext.cacheDir },
         )
         check(File(sessionsDir.value, directory.dirName).mkdirs()) {
             "Could not create session part directory ${directory.dirName}"
@@ -289,9 +289,9 @@ internal class EmbraceSetupInterface(
             envelopeVersion = "0.1.0",
             envelopeType = "spans",
             sharedLibSymbolMappingSource = { null },
-            errorHandler = fakeInitModule.errorHandler,
+            errorHandler = fakeInitServices.errorHandler,
         ).write()
-        CompletedSpansWriter(target, fakeInitModule.errorHandler).write(
+        CompletedSpansWriter(target, fakeInitServices.errorHandler).write(
             listOf(persistedSessionSpan(userSessionId, sessionPartId, timestamp, processIdentifier)),
         )
     }
@@ -439,7 +439,7 @@ internal class EmbraceSetupInterface(
             ),
         )
 
-    fun getFakeErrorHandler(): FakeErrorHandler = fakeInitModule.errorHandler as FakeErrorHandler
+    fun getFakeErrorHandler(): FakeErrorHandler = fakeInitServices.errorHandler as FakeErrorHandler
 
     fun getFakedWorkerExecutor(worker: Worker.Background): BlockingScheduledExecutorService =
         (workerThreadPool as FakeWorkerThreadPool).executorFor(worker)
@@ -461,7 +461,7 @@ internal class EmbraceSetupInterface(
     }
 
     private fun setupPlatformShadows() {
-        val context = fakeCoreModule.context
+        val context = fakeContext
         Shadows.shadowOf(context.packageManager).getInternalMutablePackageInfo(context.packageName).apply {
             firstInstallTime = SdkIntegrationTestRule.DEFAULT_SDK_START_TIME_MS - 5.days.inWholeMilliseconds
             lastUpdateTime = SdkIntegrationTestRule.DEFAULT_SDK_START_TIME_MS - 1.days.inWholeMilliseconds
@@ -486,7 +486,7 @@ internal class EmbraceSetupInterface(
         val readBytes = statProvider(INIT_DISK_READ_KB * 1024L)
         val gcCount = statProvider(INIT_GC_COUNT)
         return SdkInitResourceUsageTracker(
-            errorHandler = fakeInitModule.errorHandler,
+            errorHandler = fakeInitServices.errorHandler,
             versionChecker = { true },
             threadCpuTimeMs = cpuMs,
             elapsedRealtimeMs = elapsedMs,
@@ -527,7 +527,7 @@ internal class EmbraceSetupInterface(
         }
 
         fun initWorkerThreadPool(
-            fakeInitModule: FakeInitModule,
+            fakeInitServices: TestInitServices,
             workersToFake: List<Worker.Background>,
             threadBlockageWatchdogThread: Thread?,
         ): WorkerThreadPool =
@@ -535,7 +535,7 @@ internal class EmbraceSetupInterface(
                 WorkerThreadPoolImpl()
             } else {
                 FakeWorkerThreadPool(
-                    fakeInitModule = fakeInitModule,
+                    fakeInitServices = fakeInitServices,
                     testWorkers = workersToFake,
                     threadBlockageMonitoringThread = threadBlockageWatchdogThread
                 )

@@ -3,14 +3,15 @@ package io.embrace.android.embracesdk.internal.session
 import io.embrace.android.embracesdk.concurrency.BlockingScheduledExecutorService
 import io.embrace.android.embracesdk.fakes.FakeClock
 import io.embrace.android.embracesdk.fakes.FakeConfigService
+import io.embrace.android.embracesdk.fakes.FakeLogEnvelopeSource
 import io.embrace.android.embracesdk.fakes.FakeMetadataService
 import io.embrace.android.embracesdk.fakes.FakeProcessStateTracker
 import io.embrace.android.embracesdk.fakes.FakeSessionIdsProvider
+import io.embrace.android.embracesdk.fakes.FakeSessionPartEnvelopeSource
 import io.embrace.android.embracesdk.fakes.FakeSessionPartTracker
 import io.embrace.android.embracesdk.fakes.FakeUserService
 import io.embrace.android.embracesdk.fakes.OtelSdkMode
-import io.embrace.android.embracesdk.fakes.injection.FakeInitModule
-import io.embrace.android.embracesdk.fakes.injection.FakePayloadSourceModule
+import io.embrace.android.embracesdk.fakes.injection.TestInitServices
 import io.embrace.android.embracesdk.internal.arch.state.ProcessState
 import io.embrace.android.embracesdk.internal.capture.metadata.MetadataService
 import io.embrace.android.embracesdk.internal.capture.user.UserService
@@ -80,10 +81,10 @@ internal class PayloadFactorySessionPartTest(
         sessionTracker = FakeSessionPartTracker()
         activityService = FakeProcessStateTracker(ProcessState.BACKGROUND)
         userService = FakeUserService()
-        val initModule = FakeInitModule(clock = clock, otelSdkMode = otelSdkMode)
-        spanRepository = initModule.otelStack.spanRepository
-        currentSessionPartSpan = initModule.otelStack.currentSessionPartSpan
-        spanService = initModule.otelStack.spanService
+        val initServices = TestInitServices(clock = clock, otelSdkMode = otelSdkMode)
+        spanRepository = initServices.otelStack.spanRepository
+        currentSessionPartSpan = initServices.otelStack.currentSessionPartSpan
+        spanService = initServices.otelStack.spanService
         blockingExecutorService = BlockingScheduledExecutorService(blockingMode = false)
     }
 
@@ -101,13 +102,12 @@ internal class PayloadFactorySessionPartTest(
     private fun initializeSessionService() {
         appStateTracker.state = ProcessState.BACKGROUND
 
-        val payloadSourceModule = FakePayloadSourceModule()
         val errorHandler = ErrorHandlerImpl()
         val collator = PayloadMessageCollatorImpl(
-            payloadSourceModule.sessionPartEnvelopeSource,
+            FakeSessionPartEnvelopeSource(),
             currentSessionPartSpan,
             FakeSessionIdsProvider(),
         )
-        service = PayloadFactoryImpl(collator, payloadSourceModule.logEnvelopeSource, FakeConfigService(), errorHandler)
+        service = PayloadFactoryImpl(collator, FakeLogEnvelopeSource(), FakeConfigService(), errorHandler)
     }
 }

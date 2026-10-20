@@ -6,7 +6,7 @@ import io.embrace.android.embracesdk.assertions.assertNotPrivateSpan
 import io.embrace.android.embracesdk.assertions.assertSuccessful
 import io.embrace.android.embracesdk.fakes.FakeClock
 import io.embrace.android.embracesdk.fakes.OtelSdkMode
-import io.embrace.android.embracesdk.fakes.injection.FakeInitModule
+import io.embrace.android.embracesdk.fakes.injection.TestInitServices
 import io.embrace.android.embracesdk.fixtures.TOO_LONG_SPAN_NAME
 import io.embrace.android.embracesdk.internal.clock.millisToNanos
 import io.embrace.android.embracesdk.internal.clock.nanosToMillis
@@ -46,11 +46,11 @@ internal class TracingApiDelegateTest(
 
     @Before
     fun setup() {
-        val initModule = FakeInitModule(clock = clock, otelSdkMode = otelSdkMode)
-        spanRepository = initModule.otelStack.spanRepository
-        spanService = initModule.otelStack.spanService
-        initModule.otelStack.currentSessionPartSpan.initializeService(clock.now())
-        tracer = initModule.otelStack.tracingApi
+        val initServices = TestInitServices(clock = clock, otelSdkMode = otelSdkMode)
+        spanRepository = initServices.otelStack.spanRepository
+        spanService = initServices.otelStack.spanService
+        initServices.otelStack.currentSessionPartSpan.initializeService(clock.now())
+        tracer = initServices.otelStack.tracingApi
         spanRepository.flushOtelSpans()
     }
 

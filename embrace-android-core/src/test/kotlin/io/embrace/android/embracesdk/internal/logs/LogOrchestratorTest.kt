@@ -3,8 +3,8 @@ package io.embrace.android.embracesdk.internal.logs
 import io.embrace.android.embracesdk.concurrency.BlockingScheduledExecutorService
 import io.embrace.android.embracesdk.concurrency.SingleThreadTestScheduledExecutor
 import io.embrace.android.embracesdk.fakes.FakeClock
+import io.embrace.android.embracesdk.fakes.FakeLogEnvelopeSource
 import io.embrace.android.embracesdk.fakes.FakePayloadStore
-import io.embrace.android.embracesdk.fakes.injection.FakePayloadSourceModule
 import io.embrace.android.embracesdk.fixtures.deferredLog
 import io.embrace.android.embracesdk.fixtures.sendImmediatelyLog
 import io.embrace.android.embracesdk.internal.envelope.log.LogPayloadSourceImpl
@@ -48,9 +48,7 @@ internal class LogOrchestratorTest {
             clock,
             logSink,
             store,
-            FakePayloadSourceModule(
-                logPayloadSource = LogPayloadSourceImpl(logSink),
-            ).logEnvelopeSource,
+            FakeLogEnvelopeSource(logPayloadSource = LogPayloadSourceImpl(logSink)),
         )
         logSink.registerLogStoredCallback(logOrchestrator::onLogsAdded)
     }

@@ -1,13 +1,21 @@
 package io.embrace.android.embracesdk.internal.injection
 
 import io.embrace.android.embracesdk.fakes.FakeConfigService
+import io.embrace.android.embracesdk.fakes.FakeKeyValueStore
+import io.embrace.android.embracesdk.fakes.FakeNavigationTrackingService
+import io.embrace.android.embracesdk.fakes.FakeOrdinalStore
+import io.embrace.android.embracesdk.fakes.FakeProcessStateTracker
 import io.embrace.android.embracesdk.fakes.FakeSessionIdsProvider
+import io.embrace.android.embracesdk.fakes.FakeSessionPartTracker
 import io.embrace.android.embracesdk.fakes.FakeStorageService
+import io.embrace.android.embracesdk.fakes.FakeTelemetryDestination
+import io.embrace.android.embracesdk.fakes.FakeUserSessionPropertiesService
 import io.embrace.android.embracesdk.fakes.OtelSdkMode
-import io.embrace.android.embracesdk.fakes.injection.FakeCoreModule
-import io.embrace.android.embracesdk.fakes.injection.FakeEssentialServiceModule
-import io.embrace.android.embracesdk.fakes.injection.FakeInitModule
+import io.embrace.android.embracesdk.fakes.fakeApplication
+import io.embrace.android.embracesdk.fakes.fakeContext
 import io.embrace.android.embracesdk.fakes.injection.FakeWorkerThreadPool
+import io.embrace.android.embracesdk.fakes.injection.TestInitServices
+import io.embrace.android.embracesdk.internal.utils.event.EventBus
 import io.embrace.android.embracesdk.internal.worker.Worker
 import org.junit.Assert.assertSame
 import org.junit.Test
@@ -16,39 +24,41 @@ internal class InstrumentationFactoriesTest {
 
     @Test
     fun `test default behavior`() {
-        val initModule = FakeInitModule(otelSdkMode = OtelSdkMode.COMPAT)
+        val initServices = TestInitServices(otelSdkMode = OtelSdkMode.COMPAT)
         val configService = FakeConfigService()
-        val essentialServiceModule = FakeEssentialServiceModule()
-        val coreModule = FakeCoreModule()
+        val destination = FakeTelemetryDestination()
+        val application = fakeApplication()
+        val context = fakeContext(application)
+        val store = FakeKeyValueStore()
         val storageService = FakeStorageService()
         val args = createInstrumentationArgs(
             configService = configService,
-            destination = essentialServiceModule.telemetryDestination,
-            errorHandler = initModule.errorHandler,
-            clock = initModule.clock,
-            context = coreModule.context,
-            application = coreModule.application,
-            storeProvider = { coreModule.store },
-            serializer = initModule.jsonSerializer,
-            uuidSource = initModule.uuidSource,
-            ordinalStore = coreModule.ordinalStore,
+            destination = destination,
+            errorHandler = initServices.errorHandler,
+            clock = initServices.clock,
+            context = context,
+            application = application,
+            storeProvider = { store },
+            serializer = initServices.jsonSerializer,
+            uuidSource = initServices.uuidSource,
+            ordinalStore = FakeOrdinalStore(),
             processIdentifier = "pid",
-            processStateTracker = essentialServiceModule.processStateTracker,
-            navigationTrackingService = essentialServiceModule.navigationTrackingService,
-            telemetryService = initModule.telemetryService,
+            processStateTracker = FakeProcessStateTracker(),
+            navigationTrackingService = FakeNavigationTrackingService(),
+            telemetryService = initServices.telemetryService,
             workerThreadPool = FakeWorkerThreadPool(
-                fakeInitModule = initModule,
+                fakeInitServices = initServices,
                 testWorkers = listOf(Worker.Background.NonIoRegWorker),
             ),
-            sessionPartTracker = essentialServiceModule.sessionPartTracker,
-            userSessionPropertiesService = essentialServiceModule.userSessionPropertiesService,
+            sessionPartTracker = FakeSessionPartTracker(),
+            userSessionPropertiesService = FakeUserSessionPropertiesService(),
             userSessionIdsProvider = { null },
             activeSessionIdsProvider = { FakeSessionIdsProvider().getActiveSessionIds() },
             crashMarkerFileProvider = { storageService.getFileForWrite("embrace_crash_marker") },
-            eventBus = coreModule.eventBus,
+            eventBus = EventBus(initServices.errorHandler),
         )
         assertSame(configService, args.configService)
-        assertSame(essentialServiceModule.telemetryDestination, args.destination)
-        assertSame(coreModule.store, args.store)
+        assertSame(destination, args.destination)
+        assertSame(store, args.store)
     }
 }

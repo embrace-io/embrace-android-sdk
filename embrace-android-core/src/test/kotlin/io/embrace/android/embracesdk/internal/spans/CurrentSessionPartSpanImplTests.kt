@@ -15,7 +15,7 @@ import io.embrace.android.embracesdk.fakes.FakeTracer
 import io.embrace.android.embracesdk.fakes.OtelSdkMode
 import io.embrace.android.embracesdk.fakes.TestUuidSource
 import io.embrace.android.embracesdk.fakes.createOtelBehavior
-import io.embrace.android.embracesdk.fakes.injection.FakeInitModule
+import io.embrace.android.embracesdk.fakes.injection.TestInitServices
 import io.embrace.android.embracesdk.internal.arch.attrs.asPair
 import io.embrace.android.embracesdk.internal.arch.schema.AppTerminationCause
 import io.embrace.android.embracesdk.internal.arch.schema.EmbType
@@ -79,15 +79,15 @@ internal class CurrentSessionPartSpanImplTests(
     @Before
     fun setup() {
         telemetryService = FakeInternalTelemetryService()
-        val initModule =
-            FakeInitModule(clock = clock, fakeTelemetryService = telemetryService, otelSdkMode = otelSdkMode)
-        spanRepository = initModule.otelStack.spanRepository
-        currentSessionPartSpan = initModule.otelStack.currentSessionPartSpan as CurrentSessionPartSpanImpl
-        tracer = initModule.otelStack.otelSdkWrapper.sdkTracer
-        openTelemetry = initModule.otelStack.otelSdkWrapper.openTelemetryKotlin
-        spanService = initModule.otelStack.spanService
+        val initServices =
+            TestInitServices(clock = clock, fakeTelemetryService = telemetryService, otelSdkMode = otelSdkMode)
+        spanRepository = initServices.otelStack.spanRepository
+        currentSessionPartSpan = initServices.otelStack.currentSessionPartSpan as CurrentSessionPartSpanImpl
+        tracer = initServices.otelStack.otelSdkWrapper.sdkTracer
+        openTelemetry = initServices.otelStack.otelSdkWrapper.openTelemetryKotlin
+        spanService = initServices.otelStack.spanService
         currentSessionPartSpan.initializeService(clock.now())
-        otelLimitsConfig = initModule.instrumentedConfig.otelLimits
+        otelLimitsConfig = initServices.instrumentedConfig.otelLimits
     }
 
     @Test
@@ -98,14 +98,14 @@ internal class CurrentSessionPartSpanImplTests(
 
     @Test
     fun `cannot create span before session is created`() {
-        val uninitialized = FakeInitModule(clock = clock, otelSdkMode = otelSdkMode).otelStack.currentSessionPartSpan
+        val uninitialized = TestInitServices(clock = clock, otelSdkMode = otelSdkMode).otelStack.currentSessionPartSpan
         assertFalse(uninitialized.initialized())
         uninitialized.assertNoSessionPartSpan()
     }
 
     @Test
     fun `initializeService does not clobber a session part span already started by readySession`() {
-        val sessionPartSpan = FakeInitModule(clock = clock, otelSdkMode = otelSdkMode).otelStack.currentSessionPartSpan
+        val sessionPartSpan = TestInitServices(clock = clock, otelSdkMode = otelSdkMode).otelStack.currentSessionPartSpan
         assertFalse(sessionPartSpan.initialized())
 
         assertTrue(sessionPartSpan.readySession())
@@ -266,10 +266,10 @@ internal class CurrentSessionPartSpanImplTests(
     @Test
     fun `dropped network spans are tracked separately from other dropped spans`() {
         val fakeTelemetryService = FakeInternalTelemetryService()
-        val initModule =
-            FakeInitModule(clock = clock, fakeTelemetryService = fakeTelemetryService, otelSdkMode = otelSdkMode)
-        spanService = initModule.otelStack.spanService
-        initModule.otelStack.currentSessionPartSpan.initializeService(clock.now())
+        val initServices =
+            TestInitServices(clock = clock, fakeTelemetryService = fakeTelemetryService, otelSdkMode = otelSdkMode)
+        spanService = initServices.otelStack.spanService
+        initServices.otelStack.currentSessionPartSpan.initializeService(clock.now())
 
         exhaustNetworkSpanBudget()
         createNetworkSpan(DEFAULT_MAX_NETWORK_SPANS_PER_SESSION_PART)
@@ -346,14 +346,14 @@ internal class CurrentSessionPartSpanImplTests(
      * Replaces [spanService] with one from a fresh module whose config was resolved from [dataConfig].
      */
     private fun useRemoteConfig(dataConfig: DataRemoteConfig) {
-        val initModule = FakeInitModule(
+        val initServices = TestInitServices(
             clock = clock,
             fakeTelemetryService = telemetryService,
             remoteConfig = RemoteConfig(dataConfig = dataConfig),
             otelSdkMode = otelSdkMode,
         )
-        spanService = initModule.otelStack.spanService
-        initModule.otelStack.currentSessionPartSpan.initializeService(clock.now())
+        spanService = initServices.otelStack.spanService
+        initServices.otelStack.currentSessionPartSpan.initializeService(clock.now())
     }
 
     private fun createNetworkSpan(index: Int) =
@@ -715,7 +715,7 @@ internal class CurrentSessionPartSpanImplTests(
     fun `flushing with app termination and termination reason flushes session part span with right termination type`() {
         AppTerminationCause::class.sealedSubclasses.forEach {
             val cause = checkNotNull(it.objectInstance)
-            val module = FakeInitModule(clock = clock, otelSdkMode = otelSdkMode)
+            val module = TestInitServices(clock = clock, otelSdkMode = otelSdkMode)
             val sessionPartSpan = module.otelStack.currentSessionPartSpan
             sessionPartSpan.initializeService(clock.now())
             val flushedSpans = sessionPartSpan.endSession(true, cause)

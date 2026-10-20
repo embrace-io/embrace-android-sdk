@@ -61,8 +61,8 @@ internal class PayloadFactoryBaTest(
         activityService = FakeProcessStateTracker(ProcessState.BACKGROUND)
         userService = FakeUserService()
         val initModule = FakeInitModule(clock = clock, otelSdkMode = otelSdkMode)
-        spanRepository = initModule.openTelemetryModule.spanRepository
-        currentSessionPartSpan = initModule.openTelemetryModule.currentSessionPartSpan
+        spanRepository = initModule.otelStack.spanRepository
+        currentSessionPartSpan = initModule.otelStack.currentSessionPartSpan
         configService = FakeConfigService(
             config = EmbraceConfig(
                 backgroundActivity = { BackgroundActivityConfig(captureEnabled = { true }) },

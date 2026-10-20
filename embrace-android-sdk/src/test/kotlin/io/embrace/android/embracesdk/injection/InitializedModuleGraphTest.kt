@@ -64,7 +64,7 @@ internal class InitializedModuleGraphTest {
     fun `test default implementation`() {
         with(createModuleGraph()) {
             assertNotNull(initModule)
-            assertNotNull(openTelemetryModule)
+            assertNotNull(spanService)
             assertNotNull(workerThreadPool)
             assertNotNull(processStateTracker)
             assertNotNull(startupTracker)
@@ -77,7 +77,7 @@ internal class InitializedModuleGraphTest {
     @Test
     fun `metadata provider is installed before instrumentation loads`() {
         val moduleGraph = createModuleGraph()
-        val processor = moduleGraph.openTelemetryModule.otelSdkConfig.logRecordProcessor
+        val processor = moduleGraph.otelSdkConfig.value.logRecordProcessor
 
         val log = FakeReadWriteLogRecord()
         processor.onEmit(log, NoopOpenTelemetry.context.implicit())
@@ -93,7 +93,7 @@ internal class InitializedModuleGraphTest {
         val moduleGraph = createModuleGraphWithPersistedConfig(
             RemoteConfig(otelKotlinSdkConfig = OtelKotlinSdkConfig(pctEnabled = 100f)),
         )
-        assertTrue(moduleGraph.openTelemetryModule.otelSdkWrapper.useKotlinSdk)
+        assertTrue(moduleGraph.otelSdkWrapper.value.useKotlinSdk)
     }
 
     @Test
@@ -101,7 +101,7 @@ internal class InitializedModuleGraphTest {
         val moduleGraph = createModuleGraphWithPersistedConfig(
             RemoteConfig(otelKotlinSdkConfig = OtelKotlinSdkConfig(pctEnabled = 0f)),
         )
-        assertFalse(moduleGraph.openTelemetryModule.otelSdkWrapper.useKotlinSdk)
+        assertFalse(moduleGraph.otelSdkWrapper.value.useKotlinSdk)
     }
 
     private fun createModuleGraphWithPersistedConfig(cfg: RemoteConfig): InitializedModuleGraph {

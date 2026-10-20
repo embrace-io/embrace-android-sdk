@@ -13,7 +13,13 @@ import io.embrace.android.embracesdk.internal.config.instrumented.schema.Instrum
 import io.embrace.android.embracesdk.internal.config.remote.OtelKotlinSdkConfig
 import io.embrace.android.embracesdk.internal.config.remote.RemoteConfig
 import io.embrace.android.embracesdk.internal.injection.InitModule
-import io.embrace.android.embracesdk.internal.injection.OpenTelemetryModuleImpl
+import io.embrace.android.embracesdk.internal.config.behavior.SensitiveKeysBehavior
+import io.embrace.android.embracesdk.internal.injection.createCurrentSessionPartSpan
+import io.embrace.android.embracesdk.internal.injection.createOtelSdkConfig
+import io.embrace.android.embracesdk.internal.injection.createRedactionFunction
+import io.embrace.android.embracesdk.internal.otel.logs.LogSinkImpl
+import io.embrace.android.embracesdk.internal.otel.sdk.OtelSdkWrapper
+import io.embrace.android.embracesdk.internal.spans.CurrentSessionPartSpan
 import io.embrace.android.embracesdk.internal.logging.ErrorHandler
 import io.embrace.android.embracesdk.internal.logging.ErrorHandlerImpl
 import io.embrace.android.embracesdk.internal.otel.impl.EmbClock
@@ -41,28 +47,80 @@ internal class TelemetryDestinationHarness(
 ) {
 
     private val initModule = TestInitModule(clock)
-    private val otelModule = OpenTelemetryModuleImpl(
-        initModule = initModule,
-        configService = BenchmarkConfigService(
-            thresholdCheck = BehaviorThresholdCheck { initModule.uuidSource.createUuid() },
-            remoteConfig = RemoteConfig(
-                otelKotlinSdkConfig = OtelKotlinSdkConfig(pctEnabled = if (useKotlinSdk) 100f else 0f),
-            ),
+    private val configService = BenchmarkConfigService(
+        thresholdCheck = BehaviorThresholdCheck { initModule.uuidSource.createUuid() },
+        remoteConfig = RemoteConfig(
+            otelKotlinSdkConfig = OtelKotlinSdkConfig(pctEnabled = if (useKotlinSdk) 100f else 0f),
         ),
-    ).apply {
-        currentSessionPartSpan.initializeService(0)
+    )
+    private val openTelemetryClock = EmbClock(initModule.clock)
+
+    val logSink: LogSink = LogSinkImpl()
+    val spanRepository: SpanRepository = SpanRepository()
+
+    private val otelSdkWrapper: OtelSdkWrapper by lazy {
+        OtelSdkWrapper(
+            otelClock = openTelemetryClock,
+            configuration = createOtelSdkConfig(
+                spanRepository = spanRepository,
+                logSink = logSink,
+                instrumentedConfig = initModule.instrumentedConfig,
+                systemInfo = initModule.systemInfo,
+                uuidSource = initModule.uuidSource,
+                errorHandler = initModule.errorHandler,
+            ),
+            spanServiceProvider = { spanService },
+            errorHandler = initModule.errorHandler,
+            useKotlinSdk = configService.otelBehavior.shouldUseKotlinSdk(),
+        )
     }
 
-    val logSink: LogSink = otelModule.logSink
-    val spanRepository: SpanRepository = otelModule.spanRepository
-    val spanService = otelModule.spanService
-    val currentSessionPartSpan = otelModule.currentSessionPartSpan
+    private val dataValidator = DataValidator(
+        bypassValidation = configService::isOnlyUsingOtelExporters,
+        telemetryService = initModule.telemetryService,
+    )
+
+    val currentSessionPartSpan: CurrentSessionPartSpan = createCurrentSessionPartSpan(
+        openTelemetryClock = openTelemetryClock,
+        telemetryService = initModule.telemetryService,
+        spanRepository = spanRepository,
+        tracerSupplier = { otelSdkWrapper.sdkTracer },
+        openTelemetrySupplier = { otelSdkWrapper.openTelemetryKotlin },
+        embraceSpanFactorySupplier = { embraceSpanFactory },
+        uuidSource = initModule.uuidSource,
+        otelBehaviorSupplier = { configService.otelBehavior },
+        customBreadcrumbLimitSupplier = { configService.config.breadcrumb.customLimit },
+    )
+
+    private val embraceSpanFactory = EmbraceSpanFactoryImpl(
+        openTelemetryClock = openTelemetryClock,
+        spanRepository = spanRepository,
+        dataValidator = dataValidator,
+        stopCallback = currentSessionPartSpan::spanStopCallback,
+        redactionFunction = createRedactionFunction(SensitiveKeysBehavior(configService.config.sensitiveKeys)),
+        telemetryService = initModule.telemetryService,
+    )
+
+    val spanService: SpanService by lazy {
+        SpanServiceImpl(
+            spanRepository = spanRepository,
+            canStartNewSpan = currentSessionPartSpan::canStartNewSpan,
+            dataValidator = dataValidator,
+            embraceSpanFactory = embraceSpanFactory,
+            tracer = otelSdkWrapper.sdkTracer,
+            openTelemetry = otelSdkWrapper.openTelemetryKotlin,
+        )
+    }
+
+    init {
+        currentSessionPartSpan.initializeService(0)
+    }
 
     val destination: TelemetryDestination = TelemetryDestinationImpl(
         clock = initModule.clock,
         spanService = spanService,
-        loggerSupplier = { otelModule.otelSdkWrapper.sdkLogger },
-        currentSessionPartSpan = otelModule.currentSessionPartSpan,
+        loggerSupplier = { otelSdkWrapper.sdkLogger },
+        currentSessionPartSpan = currentSessionPartSpan,
     )
 
     /**
@@ -73,17 +131,17 @@ internal class TelemetryDestinationHarness(
         val validator = DataValidator(telemetryService = NoopInternalTelemetryService)
         val factory = EmbraceSpanFactoryImpl(
             openTelemetryClock = EmbClock(initModule.clock),
-            spanRepository = otelModule.spanRepository,
+            spanRepository = spanRepository,
             dataValidator = validator,
             telemetryService = NoopInternalTelemetryService,
         )
         return SpanServiceImpl(
-            spanRepository = otelModule.spanRepository,
+            spanRepository = spanRepository,
             dataValidator = validator,
             canStartNewSpan = { _, _, _ -> true },
             embraceSpanFactory = factory,
-            tracer = otelModule.otelSdkWrapper.sdkTracer,
-            openTelemetry = otelModule.otelSdkWrapper.openTelemetryKotlin,
+            tracer = otelSdkWrapper.sdkTracer,
+            openTelemetry = otelSdkWrapper.openTelemetryKotlin,
         )
     }
 

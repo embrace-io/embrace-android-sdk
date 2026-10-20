@@ -14,8 +14,6 @@ import io.embrace.android.embracesdk.internal.config.remote.OtelKotlinSdkConfig
 import io.embrace.android.embracesdk.internal.config.remote.RemoteConfig
 import io.embrace.android.embracesdk.internal.injection.InitModule
 import io.embrace.android.embracesdk.internal.injection.InitModuleImpl
-import io.embrace.android.embracesdk.internal.injection.OpenTelemetryModule
-import io.embrace.android.embracesdk.internal.injection.OpenTelemetryModuleImpl
 import io.embrace.android.embracesdk.internal.injection.PreStartServices
 import io.embrace.android.embracesdk.internal.logging.ErrorHandler
 import io.embrace.android.embracesdk.internal.logging.ErrorHandlerImpl
@@ -51,8 +49,8 @@ class FakeInitModule(
     /**
      * Resolves the OTel behavior from [remoteConfig], with the OTel SDK implementation selected by [otelSdkMode].
      */
-    val openTelemetryModule: OpenTelemetryModule by lazy {
-        OpenTelemetryModuleImpl(
+    val otelStack: TestOtelStack by lazy {
+        TestOtelStack(
             initModule = this,
             configService = FakeConfigService(
                 otelBehavior = createOtelBehavior(

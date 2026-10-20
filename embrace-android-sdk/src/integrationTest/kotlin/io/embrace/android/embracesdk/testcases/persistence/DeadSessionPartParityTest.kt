@@ -156,7 +156,7 @@ internal class DeadSessionPartParityTest(
         val deadPartIds = (1..deadProcesses).map { process ->
             if (process > 1) {
                 testRule.moduleGraph.networkConnectivityService.close()
-                testRule.moduleGraph.openTelemetryModule.otelSdkConfig.close()
+                testRule.moduleGraph.otelSdkConfig.value.close()
                 testRule.moduleGraph.workerThreadPool.close()
             }
             lateinit var deadPart: SessionIdsSnapshot
@@ -215,7 +215,7 @@ internal class DeadSessionPartParityTest(
         assertAction: EmbracePayloadAssertionInterface.() -> Unit,
     ) {
         testRule.moduleGraph.networkConnectivityService.close()
-        testRule.moduleGraph.openTelemetryModule.otelSdkConfig.close()
+        testRule.moduleGraph.otelSdkConfig.value.close()
         testRule.moduleGraph.workerThreadPool.close()
         testRule.runTest(
             instrumentedConfig = instrumentedConfig,

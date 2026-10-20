@@ -33,8 +33,6 @@ import io.embrace.android.embracesdk.internal.injection.ConfigLoadServicesSuppli
 import io.embrace.android.embracesdk.internal.injection.InitModule
 import io.embrace.android.embracesdk.internal.injection.InitializedModuleGraph
 import io.embrace.android.embracesdk.internal.injection.ModuleGraphSupplier
-import io.embrace.android.embracesdk.internal.injection.OpenTelemetryModule
-import io.embrace.android.embracesdk.internal.injection.OpenTelemetryModuleImpl
 import io.embrace.android.embracesdk.internal.injection.PreStartServices
 import io.embrace.android.embracesdk.internal.injection.SdkOverrides
 import io.embrace.android.embracesdk.internal.injection.WorkerThreadPool
@@ -46,7 +44,6 @@ import io.embrace.android.embracesdk.internal.instrumentation.startup.SdkInitRes
 import io.embrace.android.embracesdk.internal.instrumentation.thread.blockage.createThreadBlockageService
 import io.embrace.android.embracesdk.internal.logging.ErrorHandlerImpl
 import io.embrace.android.embracesdk.internal.logging.SdkErrorType
-import io.embrace.android.embracesdk.internal.otel.spans.SpanRepository
 import io.embrace.android.embracesdk.internal.payload.Attribute
 import io.embrace.android.embracesdk.internal.payload.Envelope
 import io.embrace.android.embracesdk.internal.payload.EnvelopeMetadata
@@ -61,7 +58,6 @@ import io.embrace.android.embracesdk.internal.session.persistence.CompletedSpans
 import io.embrace.android.embracesdk.internal.session.persistence.SessionMetadataWriter
 import io.embrace.android.embracesdk.internal.session.persistence.SessionPartDirectory
 import io.embrace.android.embracesdk.internal.session.persistence.SessionPartWriteTarget
-import io.embrace.android.embracesdk.internal.spans.CurrentSessionPartSpan
 import io.embrace.android.embracesdk.internal.store.KeyValueStore
 import io.embrace.android.embracesdk.internal.utils.UuidSource
 import io.embrace.android.embracesdk.internal.utils.VersionChecker
@@ -151,15 +147,6 @@ internal class EmbraceSetupInterface(
     val initModule: InitModule
         get() = fakeInitModule
 
-    /**
-     * The OTel module built by the module graph, or null if the graph has not reached it.
-     */
-    var openTelemetryModuleOrNull: OpenTelemetryModule? = null
-        private set
-
-    val openTelemetryModule: OpenTelemetryModule
-        get() = checkNotNull(openTelemetryModuleOrNull) { "OTel module has not been created." }
-
     private val workerThreadPool: WorkerThreadPool = initWorkerThreadPool(
         fakeInitModule = fakeInitModule,
         workersToFake = workersToFake,
@@ -240,16 +227,6 @@ internal class EmbraceSetupInterface(
         sdkInitResourceUsageTracker = sdkInitResourceUsageTracker,
         overrides = overrides,
         initModuleSupplier = { fakeInitModule },
-        openTelemetryModuleSupplier = { initModule, configService, externalOtelConfig, sessionIdsProvider, userIdProvider, eventMetadataProvider ->
-            OpenTelemetryModuleImpl(
-                initModule = initModule,
-                configService = configService,
-                externalOtelConfig = externalOtelConfig,
-                sessionIdsProvider = sessionIdsProvider,
-                userIdProvider = userIdProvider,
-                eventMetadataProvider = eventMetadataProvider,
-            ).also { openTelemetryModuleOrNull = it }
-        },
         threadBlockageServiceSupplier = { args ->
             if (threadBlockageWatchdogThread != null) {
                 createThreadBlockageService(args)
@@ -463,10 +440,6 @@ internal class EmbraceSetupInterface(
                 },
             ),
         )
-
-    fun getSpanRepository(): SpanRepository = openTelemetryModule.spanRepository
-
-    fun getCurrentSessionPartSpan(): CurrentSessionPartSpan = openTelemetryModule.currentSessionPartSpan
 
     fun getFakeErrorHandler(): FakeErrorHandler = fakeInitModule.errorHandler as FakeErrorHandler
 

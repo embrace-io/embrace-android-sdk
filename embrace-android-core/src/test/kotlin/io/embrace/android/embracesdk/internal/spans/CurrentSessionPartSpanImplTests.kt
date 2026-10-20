@@ -81,11 +81,11 @@ internal class CurrentSessionPartSpanImplTests(
         telemetryService = FakeInternalTelemetryService()
         val initModule =
             FakeInitModule(clock = clock, fakeTelemetryService = telemetryService, otelSdkMode = otelSdkMode)
-        spanRepository = initModule.openTelemetryModule.spanRepository
-        currentSessionPartSpan = initModule.openTelemetryModule.currentSessionPartSpan as CurrentSessionPartSpanImpl
-        tracer = initModule.openTelemetryModule.otelSdkWrapper.sdkTracer
-        openTelemetry = initModule.openTelemetryModule.otelSdkWrapper.openTelemetryKotlin
-        spanService = initModule.openTelemetryModule.spanService
+        spanRepository = initModule.otelStack.spanRepository
+        currentSessionPartSpan = initModule.otelStack.currentSessionPartSpan as CurrentSessionPartSpanImpl
+        tracer = initModule.otelStack.otelSdkWrapper.sdkTracer
+        openTelemetry = initModule.otelStack.otelSdkWrapper.openTelemetryKotlin
+        spanService = initModule.otelStack.spanService
         currentSessionPartSpan.initializeService(clock.now())
         otelLimitsConfig = initModule.instrumentedConfig.otelLimits
     }
@@ -98,14 +98,14 @@ internal class CurrentSessionPartSpanImplTests(
 
     @Test
     fun `cannot create span before session is created`() {
-        val uninitialized = FakeInitModule(clock = clock, otelSdkMode = otelSdkMode).openTelemetryModule.currentSessionPartSpan
+        val uninitialized = FakeInitModule(clock = clock, otelSdkMode = otelSdkMode).otelStack.currentSessionPartSpan
         assertFalse(uninitialized.initialized())
         uninitialized.assertNoSessionPartSpan()
     }
 
     @Test
     fun `initializeService does not clobber a session part span already started by readySession`() {
-        val sessionPartSpan = FakeInitModule(clock = clock, otelSdkMode = otelSdkMode).openTelemetryModule.currentSessionPartSpan
+        val sessionPartSpan = FakeInitModule(clock = clock, otelSdkMode = otelSdkMode).otelStack.currentSessionPartSpan
         assertFalse(sessionPartSpan.initialized())
 
         assertTrue(sessionPartSpan.readySession())
@@ -268,8 +268,8 @@ internal class CurrentSessionPartSpanImplTests(
         val fakeTelemetryService = FakeInternalTelemetryService()
         val initModule =
             FakeInitModule(clock = clock, fakeTelemetryService = fakeTelemetryService, otelSdkMode = otelSdkMode)
-        spanService = initModule.openTelemetryModule.spanService
-        initModule.openTelemetryModule.currentSessionPartSpan.initializeService(clock.now())
+        spanService = initModule.otelStack.spanService
+        initModule.otelStack.currentSessionPartSpan.initializeService(clock.now())
 
         exhaustNetworkSpanBudget()
         createNetworkSpan(DEFAULT_MAX_NETWORK_SPANS_PER_SESSION_PART)
@@ -352,8 +352,8 @@ internal class CurrentSessionPartSpanImplTests(
             remoteConfig = RemoteConfig(dataConfig = dataConfig),
             otelSdkMode = otelSdkMode,
         )
-        spanService = initModule.openTelemetryModule.spanService
-        initModule.openTelemetryModule.currentSessionPartSpan.initializeService(clock.now())
+        spanService = initModule.otelStack.spanService
+        initModule.otelStack.currentSessionPartSpan.initializeService(clock.now())
     }
 
     private fun createNetworkSpan(index: Int) =
@@ -716,7 +716,7 @@ internal class CurrentSessionPartSpanImplTests(
         AppTerminationCause::class.sealedSubclasses.forEach {
             val cause = checkNotNull(it.objectInstance)
             val module = FakeInitModule(clock = clock, otelSdkMode = otelSdkMode)
-            val sessionPartSpan = module.openTelemetryModule.currentSessionPartSpan
+            val sessionPartSpan = module.otelStack.currentSessionPartSpan
             sessionPartSpan.initializeService(clock.now())
             val flushedSpans = sessionPartSpan.endSession(true, cause)
             assertEquals(1, flushedSpans.size)
@@ -729,7 +729,7 @@ internal class CurrentSessionPartSpanImplTests(
                 assertHasEmbraceAttribute(cause)
             }
 
-            assertEquals(0, module.openTelemetryModule.spanRepository.completedOtelSpans().size)
+            assertEquals(0, module.otelStack.spanRepository.completedOtelSpans().size)
         }
     }
 

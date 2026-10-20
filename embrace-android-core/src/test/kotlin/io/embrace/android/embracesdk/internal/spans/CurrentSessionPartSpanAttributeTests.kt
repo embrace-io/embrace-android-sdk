@@ -32,8 +32,8 @@ internal class CurrentSessionPartSpanAttributeTests(
     @Before
     fun setup() {
         val initModule = FakeInitModule(clock = clock, otelSdkMode = otelSdkMode)
-        spanRepository = initModule.openTelemetryModule.spanRepository
-        currentSessionPartSpan = initModule.openTelemetryModule.currentSessionPartSpan
+        spanRepository = initModule.otelStack.spanRepository
+        currentSessionPartSpan = initModule.otelStack.currentSessionPartSpan
         currentSessionPartSpan.initializeService(clock.now())
     }
 

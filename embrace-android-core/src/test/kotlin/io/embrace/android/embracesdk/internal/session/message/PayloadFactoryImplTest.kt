@@ -46,7 +46,7 @@ internal class PayloadFactoryImplTest(
         )
         val collator = PayloadMessageCollatorImpl(
             sessionPartEnvelopeSource = payloadSourceModule.sessionPartEnvelopeSource,
-            currentSessionPartSpan = initModule.openTelemetryModule.currentSessionPartSpan,
+            currentSessionPartSpan = initModule.otelStack.currentSessionPartSpan,
             sessionIdsProvider = FakeSessionIdsProvider(),
         )
         factory = PayloadFactoryImpl(

@@ -47,7 +47,7 @@ internal class PayloadMessageCollatorImplTest(
             resourceSource = FakeEnvelopeResourceSource(),
             payloadSource = partPayloadSource,
         )
-        currentSessionPartSpan = initModule.openTelemetryModule.currentSessionPartSpan
+        currentSessionPartSpan = initModule.otelStack.currentSessionPartSpan
         collator = PayloadMessageCollatorImpl(
             sessionPartEnvelopeSource = sessionPartEnvelopeSource,
             currentSessionPartSpan = currentSessionPartSpan,

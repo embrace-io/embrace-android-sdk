@@ -8,7 +8,6 @@ import io.embrace.android.embracesdk.fakes.FakeErrorHandler
 import io.embrace.android.embracesdk.fakes.FakeReadWriteLogRecord
 import io.embrace.android.embracesdk.fakes.OtelSdkMode
 import io.embrace.android.embracesdk.fakes.TestPlatformSerializer
-import io.embrace.android.embracesdk.fakes.injection.FakeCoreModule
 import io.embrace.android.embracesdk.fakes.injection.FakeInitModule
 import io.embrace.android.embracesdk.internal.clock.Clock
 import io.embrace.android.embracesdk.internal.config.PersistedConfig
@@ -37,14 +36,12 @@ internal class InitializedModuleGraphTest {
 
     private lateinit var errorHandler: FakeErrorHandler
     private lateinit var clock: Clock
-    private lateinit var coreModule: FakeCoreModule
     private lateinit var context: Context
 
     @Before
     fun setup() {
         errorHandler = FakeErrorHandler(false)
         clock = FakeClock()
-        coreModule = FakeCoreModule()
         context = RuntimeEnvironment.getApplication().applicationContext
     }
 
@@ -60,7 +57,6 @@ internal class InitializedModuleGraphTest {
             ),
             sdkStartTimeMs = clock.now(),
             sdkInitResourceUsageTracker = SdkInitResourceUsageTracker(errorHandler),
-            coreModuleSupplier = { _, _, _ -> coreModule },
         ).apply { start() }
     }
 

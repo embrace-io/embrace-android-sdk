@@ -13,7 +13,6 @@ import io.embrace.android.embracesdk.internal.config.PersistedConfig
 import io.embrace.android.embracesdk.internal.config.remote.RemoteConfig
 import io.embrace.android.embracesdk.internal.delivery.debug.DeliveryTracer
 import io.embrace.android.embracesdk.internal.injection.ConfigLoadServicesSupplier
-import io.embrace.android.embracesdk.internal.injection.CoreModule
 import io.embrace.android.embracesdk.internal.injection.SdkOverrides
 import io.embrace.android.embracesdk.internal.injection.InitModule
 import io.embrace.android.embracesdk.internal.injection.InitializedModuleGraph
@@ -47,7 +46,7 @@ import java.io.File
  * The SDK instance exposed is almost like the one used in production other than the 3 modules that have
  * to faked at least in part in order for this to be useful in tests:
  *
- * 1) [CoreModule]: Requires [FakeCoreModule] to fake Android system objects like [Application], [Context],
+ * 1) Core: uses the context from [FakeCoreModule] to fake Android system objects like [Application], [Context],
  * and resources that are normally not available in a JUnit test environment. Also, a [FakeClock] is used
  * so we can control time to control timing and execution manually rather than waiting for normal
  * time to pass.
@@ -170,7 +169,7 @@ internal class SdkIntegrationTestRule(
         action = EmbraceActionInterface(
             setup,
             { moduleGraph.instrumentationRegistry },
-            { moduleGraph.coreModule.eventBus },
+            { moduleGraph.eventBus },
             { sdkStateHolder.api },
             { sdkStateHolder.state },
         )

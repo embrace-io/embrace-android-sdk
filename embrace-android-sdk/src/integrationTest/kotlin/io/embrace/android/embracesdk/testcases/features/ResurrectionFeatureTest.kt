@@ -112,7 +112,7 @@ internal class ResurrectionFeatureTest(
                 symbols = symbols,
             ),
             testCaseAction = {
-                filesDir = testRule.moduleGraph.coreModule.context.filesDir
+                filesDir = testRule.moduleGraph.appContext.filesDir
                 recordSession(isBackgroundActivityEnabled = true, endInBackground = false)
                 shutdownSdkWithIncompleteSession()
             },
@@ -158,7 +158,7 @@ internal class ResurrectionFeatureTest(
                 symbols = symbols,
             ),
             testCaseAction = {
-                filesDir = testRule.moduleGraph.coreModule.context.filesDir
+                filesDir = testRule.moduleGraph.appContext.filesDir
                 recordSession(isBackgroundActivityEnabled = true, endInBackground = false)
                 shutdownSdkWithIncompleteSession()
             },

@@ -1,6 +1,7 @@
 package io.embrace.android.embracesdk.internal.injection
 
 import android.app.ActivityManager
+import android.app.Application
 import android.content.Context
 import io.embrace.android.embracesdk.internal.arch.InstrumentationArgs
 import io.embrace.android.embracesdk.internal.arch.InstrumentationRegistry
@@ -67,9 +68,14 @@ import io.embrace.android.embracesdk.internal.session.orchestrator.SessionOrches
 import io.embrace.android.embracesdk.internal.storage.EmbraceStorageService
 import io.embrace.android.embracesdk.internal.storage.StatFsAvailabilityChecker
 import io.embrace.android.embracesdk.internal.storage.StorageService
+import io.embrace.android.embracesdk.internal.store.KeyValueStore
+import io.embrace.android.embracesdk.internal.store.Ordinal
+import io.embrace.android.embracesdk.internal.store.OrdinalStore
+import io.embrace.android.embracesdk.internal.store.OrdinalStoreImpl
 import io.embrace.android.embracesdk.internal.utils.BuildVersionChecker
 import io.embrace.android.embracesdk.internal.utils.EmbTrace
 import io.embrace.android.embracesdk.internal.utils.VersionChecker
+import io.embrace.android.embracesdk.internal.utils.event.EventBus
 import io.embrace.android.embracesdk.internal.worker.PriorityWorker
 import io.embrace.android.embracesdk.internal.worker.Worker
 import java.util.concurrent.TimeUnit
@@ -90,8 +96,6 @@ internal class InitializedModuleGraph(
     overrides: SdkOverrides? = null,
     private val initModuleSupplier: InitModuleSupplier? = null,
     private val openTelemetryModuleSupplier: OpenTelemetryModuleSupplier? = null,
-    private val coreModuleSupplier: CoreModuleSupplier? = null,
-    private val storageServiceSupplier: StorageServiceSupplier? = null,
     private val threadBlockageServiceSupplier: ThreadBlockageServiceSupplier? = null,
 ) {
 
@@ -138,16 +142,37 @@ internal class InitializedModuleGraph(
         )
     }
 
-    val coreModule: CoreModule = init("core-module") {
-        coreModuleSupplier?.invoke(context, initModule, configLoadServices.keyValueStore)
-            ?: CoreModuleImpl(context, initModule, configLoadServices.keyValueStore)
+    val appContext: Context = init("context") {
+        overrides?.appContext.resolve { context.applicationContextOrSelf() }
+    }
+
+    val application: Application
+        get() = appContext as Application
+
+    val store: KeyValueStore by configLoadServices.keyValueStore
+
+    val ordinalStore: OrdinalStore by lazy {
+        EmbTrace.trace("ordinal-store-init") { OrdinalStoreImpl(store) }
+    }
+
+    val eventBus: EventBus by lazy {
+        EmbTrace.trace("event-bus-init") { EventBus(initModule.errorHandler) }
+    }
+
+    val appVersionStartupCounter: Int by lazy {
+        EmbTrace.trace("app-version-startup-counter-init") {
+            ordinalStore.incrementAndGet(
+                ordinal = Ordinal.APP_VERSION_STARTUP,
+                scope = initModule.instrumentedConfig.project.getVersionName() ?: "UNKNOWN",
+            )
+        }
     }
 
     val processStateTracker: ProcessStateTracker = init(name = "essential-service-module", recordDuration = true) {
         createProcessStateTracker(
             errorHandler = initModule.errorHandler,
             lifecycleTracker = overrides?.lifecycleTracker.resolve {
-                createLifecycleTracker(configService, coreModule.application, context)
+                createLifecycleTracker(configService, application, context)
             },
         )
     }
@@ -159,7 +184,7 @@ internal class InitializedModuleGraph(
     val networkConnectivityService: NetworkConnectivityService = init("network-connectivity-service") {
         overrides?.networkConnectivityService.resolve {
             createNetworkConnectivityService(
-                context = coreModule.context,
+                context = appContext,
                 configService = configService,
                 worker = workerThreadPool.backgroundWorker(Worker.Background.NonIoRegWorker),
                 errorHandler = initModule.errorHandler,
@@ -168,7 +193,7 @@ internal class InitializedModuleGraph(
     }
 
     val sessionPartTracker: SessionPartTracker = init("session-part-tracker") {
-        createSessionPartTracker(coreModule.context, initModule.errorHandler)
+        createSessionPartTracker(appContext, initModule.errorHandler)
     }
 
     val sessionIdsProvider: SessionIdsProvider = init("session-ids-provider") {
@@ -186,7 +211,7 @@ internal class InitializedModuleGraph(
 
     val userSessionPropertiesService: UserSessionPropertiesService = init("user-session-properties-service") {
         createUserSessionPropertiesService(
-            store = lazy { coreModule.store },
+            store = lazy { store },
             configService = configService,
             destination = telemetryDestination,
             telemetryService = initModule.telemetryService,
@@ -195,7 +220,7 @@ internal class InitializedModuleGraph(
 
     val userService: Lazy<UserService> = lazy {
         EmbTrace.trace("user-service-init") {
-            createUserService(coreModule.store, initModule.clock, initModule.errorHandler)
+            createUserService(store, initModule.clock, initModule.errorHandler)
         }
     }
 
@@ -208,12 +233,11 @@ internal class InitializedModuleGraph(
     }
 
     val storageService: StorageService = init("storage-service") {
-        storageServiceSupplier?.invoke(initModule, coreModule, workerThreadPool)
-            ?: EmbraceStorageService(
-                coreModule.context,
-                initModule.telemetryService,
-                StatFsAvailabilityChecker(coreModule.context),
-            )
+        EmbraceStorageService(
+            appContext,
+            initModule.telemetryService,
+            StatFsAvailabilityChecker(appContext),
+        )
     }
 
     val instrumentationRegistry: InstrumentationRegistry = init("instrumentation-registry") {
@@ -226,12 +250,12 @@ internal class InitializedModuleGraph(
             destination = telemetryDestination,
             errorHandler = initModule.errorHandler,
             clock = initModule.clock,
-            context = coreModule.context,
-            application = coreModule.application,
-            storeProvider = { coreModule.store },
+            context = appContext,
+            application = application,
+            storeProvider = { store },
             serializer = initModule.jsonSerializer,
             uuidSource = initModule.uuidSource,
-            ordinalStore = coreModule.ordinalStore,
+            ordinalStore = ordinalStore,
             processIdentifier = openTelemetryModule.otelSdkConfig.processIdentifier,
             processStateTracker = processStateTracker,
             navigationTrackingService = navigationTrackingService,
@@ -242,7 +266,7 @@ internal class InitializedModuleGraph(
             userSessionIdsProvider = { sessionIdsProvider.getCurrentUserSessionId() },
             activeSessionIdsProvider = { sessionIdsProvider.getActiveSessionIds() },
             crashMarkerFileProvider = { storageService.getFileForWrite("embrace_crash_marker") },
-            eventBus = coreModule.eventBus,
+            eventBus = eventBus,
         )
     }
 
@@ -267,7 +291,7 @@ internal class InitializedModuleGraph(
     val startupService: StartupService = init("startup-service") {
         createStartupService(
             destination = instrumentationArgs.destination,
-            appVersionStartupCounterProvider = { coreModule.appVersionStartupCounter },
+            appVersionStartupCounterProvider = { appVersionStartupCounter },
         )
     }
 
@@ -321,7 +345,7 @@ internal class InitializedModuleGraph(
             overrides?.payloadStorageService.resolve {
                 createPayloadStorageService(
                     location = StorageLocation.PAYLOAD,
-                    context = coreModule.context,
+                    context = appContext,
                     worker = worker,
                     processIdProvider = processIdProvider,
                     errorHandler = initModule.errorHandler,
@@ -338,7 +362,7 @@ internal class InitializedModuleGraph(
             overrides?.cacheStorageService.resolve {
                 createPayloadStorageService(
                     location = StorageLocation.CACHE,
-                    context = coreModule.context,
+                    context = appContext,
                     worker = worker,
                     processIdProvider = processIdProvider,
                     errorHandler = initModule.errorHandler,
@@ -430,7 +454,7 @@ internal class InitializedModuleGraph(
     val cachedLogEnvelopeStore: CachedLogEnvelopeStore? = init("cached-log-envelope-store") {
         dataPersistenceWorker?.let { worker ->
             createCachedLogEnvelopeStore(
-                context = coreModule.context,
+                context = appContext,
                 worker = worker,
                 errorHandler = initModule.errorHandler,
                 serializer = initModule.jsonSerializer,
@@ -451,21 +475,21 @@ internal class InitializedModuleGraph(
     val rnBundleIdTracker: Lazy<RnBundleIdTracker> = lazy {
         EmbTrace.trace("rn-bundle-id-tracker-init") {
             createRnBundleIdTracker(
-                context = coreModule.context,
+                context = appContext,
                 configService = configService,
-                store = coreModule.store,
+                store = store,
                 worker = workerThreadPool.backgroundWorker(Worker.Background.NonIoRegWorker),
             )
         }
     }
 
     val hostedSdkVersionInfo: ObservableHostedSdkVersionInfo = init("observable-hosted-sdk-version-info") {
-        createHostedSdkVersionInfo(configService.appFramework, coreModule.store)
+        createHostedSdkVersionInfo(configService.appFramework, store)
     }
 
     val resourceSource: EnvelopeResourceSource = init(name = "payload-source-module", recordDuration = true) {
         createEnvelopeResourceSource(
-            context = coreModule.context,
+            context = appContext,
             configService = configService,
             worker = workerThreadPool.backgroundWorker(Worker.Background.NonIoRegWorker),
             systemInfo = initModule.systemInfo,
@@ -506,9 +530,9 @@ internal class InitializedModuleGraph(
     val metadataService: MetadataService = init("metadata-service") {
         createMetadataService(
             resourceSource = resourceSource,
-            context = coreModule.context,
+            context = appContext,
             configService = configService,
-            store = coreModule.store,
+            store = store,
             clock = initModule.clock,
             worker = workerThreadPool.backgroundWorker(Worker.Background.NonIoRegWorker),
         )
@@ -564,7 +588,7 @@ internal class InitializedModuleGraph(
     val sessionPartReader: SessionPartReader? = init("session-part-reader") {
         if (intakeService != null && cachedLogEnvelopeStore != null) {
             createSessionPartReader(
-                context = coreModule.context,
+                context = appContext,
                 clock = initModule.clock,
                 errorHandler = initModule.errorHandler,
                 configService = configService,
@@ -613,8 +637,8 @@ internal class InitializedModuleGraph(
                     startupDurationProvider = startupService::getSdkStartupDuration,
                     appVersionStartupCounterProvider = startupService::getAppVersionStartupCounter,
                     logLimitingService = logLimitingService,
-                    ordinalStore = coreModule.ordinalStore,
-                    store = coreModule.store,
+                    ordinalStore = ordinalStore,
+                    store = store,
                     backgroundWorker = workerThreadPool.backgroundWorker(Worker.Background.NonIoRegWorker),
                     sessionPersistenceWorker = workerThreadPool.backgroundWorker(Worker.Background.SessionPersistenceWorker),
                     sessionReadWorker = workerThreadPool.backgroundWorker(Worker.Background.IoRegWorker),

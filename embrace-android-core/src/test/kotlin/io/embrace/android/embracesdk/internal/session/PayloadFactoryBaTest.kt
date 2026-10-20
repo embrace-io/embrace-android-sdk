@@ -3,16 +3,17 @@ package io.embrace.android.embracesdk.internal.session
 import io.embrace.android.embracesdk.concurrency.BlockingScheduledExecutorService
 import io.embrace.android.embracesdk.fakes.FakeClock
 import io.embrace.android.embracesdk.fakes.FakeConfigService
+import io.embrace.android.embracesdk.fakes.FakeLogEnvelopeSource
 import io.embrace.android.embracesdk.fakes.FakeMetadataService
 import io.embrace.android.embracesdk.fakes.FakeOtelPayloadMapper
 import io.embrace.android.embracesdk.fakes.FakeProcessStateTracker
 import io.embrace.android.embracesdk.fakes.FakeSessionIdsProvider
+import io.embrace.android.embracesdk.fakes.FakeSessionPartEnvelopeSource
 import io.embrace.android.embracesdk.fakes.FakeSessionPartTracker
 import io.embrace.android.embracesdk.fakes.FakeUserService
 import io.embrace.android.embracesdk.fakes.OtelSdkMode
 import io.embrace.android.embracesdk.fakes.fakeSessionPartToken
-import io.embrace.android.embracesdk.fakes.injection.FakeInitModule
-import io.embrace.android.embracesdk.fakes.injection.FakePayloadSourceModule
+import io.embrace.android.embracesdk.fakes.injection.TestInitServices
 import io.embrace.android.embracesdk.internal.arch.state.ProcessState
 import io.embrace.android.embracesdk.internal.capture.metadata.MetadataService
 import io.embrace.android.embracesdk.internal.capture.user.UserService
@@ -60,9 +61,9 @@ internal class PayloadFactoryBaTest(
         sessionTracker = FakeSessionPartTracker()
         activityService = FakeProcessStateTracker(ProcessState.BACKGROUND)
         userService = FakeUserService()
-        val initModule = FakeInitModule(clock = clock, otelSdkMode = otelSdkMode)
-        spanRepository = initModule.otelStack.spanRepository
-        currentSessionPartSpan = initModule.otelStack.currentSessionPartSpan
+        val initServices = TestInitServices(clock = clock, otelSdkMode = otelSdkMode)
+        spanRepository = initServices.otelStack.spanRepository
+        currentSessionPartSpan = initServices.otelStack.currentSessionPartSpan
         configService = FakeConfigService(
             config = EmbraceConfig(
                 backgroundActivity = { BackgroundActivityConfig(captureEnabled = { true }) },
@@ -113,7 +114,7 @@ internal class PayloadFactoryBaTest(
 
     private fun createService(createInitialSession: Boolean = true): PayloadFactoryImpl {
         val errorHandler = ErrorHandlerImpl()
-        val payloadSourceModule = FakePayloadSourceModule(
+        val sessionPartEnvelopeSource = FakeSessionPartEnvelopeSource(
             partPayloadSource = SessionPartPayloadSourceImpl(
                 null,
                 currentSessionPartSpan,
@@ -125,11 +126,11 @@ internal class PayloadFactoryBaTest(
             ),
         )
         val collator = PayloadMessageCollatorImpl(
-            payloadSourceModule.sessionPartEnvelopeSource,
+            sessionPartEnvelopeSource,
             currentSessionPartSpan,
             FakeSessionIdsProvider(),
         )
-        return PayloadFactoryImpl(collator, payloadSourceModule.logEnvelopeSource, configService, errorHandler).apply {
+        return PayloadFactoryImpl(collator, FakeLogEnvelopeSource(), configService, errorHandler).apply {
             if (createInitialSession) {
                 startPayloadWithState(ProcessState.BACKGROUND, clock.now(), true, { 1 }, { 1 })
             }

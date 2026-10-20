@@ -25,40 +25,42 @@ import io.embrace.android.embracesdk.internal.telemetry.InternalTelemetryService
 import io.embrace.android.embracesdk.internal.utils.UuidSource
 import okhttp3.OkHttpClient
 
-class FakeInitModule(
+/**
+ * The services the SDK is given before it starts, built from fakes where tests need control over them.
+ */
+class TestInitServices(
     clock: Clock = FakeClock(),
     errorHandler: ErrorHandler = FakeErrorHandler(delegate = ErrorHandlerImpl(clock)),
-    systemInfo: SystemInfo = SystemInfo(
+    fakeTelemetryService: InternalTelemetryService? = null,
+    val uuidSource: UuidSource = TestUuidSource(),
+    private val remoteConfig: RemoteConfig = RemoteConfig(),
+    private val otelSdkMode: OtelSdkMode,
+) {
+    val systemInfo: SystemInfo = SystemInfo(
         osVersion = "99.0.0",
         deviceManufacturer = "Fake Manufacturer",
         deviceModel = "Phake Phone Phive"
-    ),
-    fakeTelemetryService: InternalTelemetryService? = null,
-    val uuidSource: UuidSource = TestUuidSource(),
+    )
     val preStartServices: PreStartServices = PreStartServices(
         errorHandler = errorHandler,
         clock = clock,
         systemInfo = systemInfo,
         telemetryService = fakeTelemetryService ?: InternalTelemetryServiceImpl(systemInfo = systemInfo),
-    ),
-    var instrumentedConfig: InstrumentedConfig = FakeInstrumentedConfig(),
-    private val remoteConfig: RemoteConfig = RemoteConfig(),
-    private val otelSdkMode: OtelSdkMode,
-) {
+    )
     val clock: Clock = preStartServices.clock
-    val systemInfo: SystemInfo = preStartServices.systemInfo
-    val telemetryService: InternalTelemetryService = preStartServices.telemetryService
     val errorHandler: ErrorHandler = preStartServices.errorHandler
+    val telemetryService: InternalTelemetryService = preStartServices.telemetryService
     val startupClassifier: StartupClassifier = StartupClassifierImpl()
     val jsonSerializer: PlatformSerializer = EmbraceSerializer()
     val okHttpClient: Lazy<OkHttpClient> = lazyOkHttpClient()
+    var instrumentedConfig: InstrumentedConfig = FakeInstrumentedConfig()
 
     /**
      * Resolves the OTel behavior from [remoteConfig], with the OTel SDK implementation selected by [otelSdkMode].
      */
     val otelStack: TestOtelStack by lazy {
         TestOtelStack(
-            initModule = this,
+            initServices = this,
             configService = FakeConfigService(
                 otelBehavior = createOtelBehavior(
                     remoteCfg = remoteConfig.copy(

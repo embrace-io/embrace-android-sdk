@@ -40,14 +40,14 @@ internal class TelemetryDestinationHarness(
     clock: Clock = NormalizedIntervalClock(),
 ) {
 
-    private val initModule = TestInitModule(clock)
+    private val initServices = TestInitServices(clock)
     private val configService = BenchmarkConfigService(
-        thresholdCheck = BehaviorThresholdCheck { initModule.uuidSource.createUuid() },
+        thresholdCheck = BehaviorThresholdCheck { initServices.uuidSource.createUuid() },
         remoteConfig = RemoteConfig(
             otelKotlinSdkConfig = OtelKotlinSdkConfig(pctEnabled = if (useKotlinSdk) 100f else 0f),
         ),
     )
-    private val openTelemetryClock = EmbClock(initModule.clock)
+    private val openTelemetryClock = EmbClock(initServices.clock)
 
     val logSink: LogSink = LogSinkImpl()
     val spanRepository: SpanRepository = SpanRepository()
@@ -58,30 +58,30 @@ internal class TelemetryDestinationHarness(
             configuration = createOtelSdkConfig(
                 spanRepository = spanRepository,
                 logSink = logSink,
-                instrumentedConfig = initModule.instrumentedConfig,
-                systemInfo = initModule.systemInfo,
-                uuidSource = initModule.uuidSource,
-                errorHandler = initModule.errorHandler,
+                instrumentedConfig = initServices.instrumentedConfig,
+                systemInfo = initServices.systemInfo,
+                uuidSource = initServices.uuidSource,
+                errorHandler = initServices.errorHandler,
             ),
             spanServiceProvider = { spanService },
-            errorHandler = initModule.errorHandler,
+            errorHandler = initServices.errorHandler,
             useKotlinSdk = configService.otelBehavior.shouldUseKotlinSdk(),
         )
     }
 
     private val dataValidator = DataValidator(
         bypassValidation = configService::isOnlyUsingOtelExporters,
-        telemetryService = initModule.telemetryService,
+        telemetryService = initServices.telemetryService,
     )
 
     val currentSessionPartSpan: CurrentSessionPartSpan = createCurrentSessionPartSpan(
         openTelemetryClock = openTelemetryClock,
-        telemetryService = initModule.telemetryService,
+        telemetryService = initServices.telemetryService,
         spanRepository = spanRepository,
         tracerSupplier = { otelSdkWrapper.sdkTracer },
         openTelemetrySupplier = { otelSdkWrapper.openTelemetryKotlin },
         embraceSpanFactorySupplier = { embraceSpanFactory },
-        uuidSource = initModule.uuidSource,
+        uuidSource = initServices.uuidSource,
         otelBehaviorSupplier = { configService.otelBehavior },
         customBreadcrumbLimitSupplier = { configService.config.breadcrumb.customLimit },
     )
@@ -92,7 +92,7 @@ internal class TelemetryDestinationHarness(
         dataValidator = dataValidator,
         stopCallback = currentSessionPartSpan::spanStopCallback,
         redactionFunction = createRedactionFunction(SensitiveKeysBehavior(configService.config.sensitiveKeys)),
-        telemetryService = initModule.telemetryService,
+        telemetryService = initServices.telemetryService,
     )
 
     val spanService: SpanService by lazy {
@@ -111,7 +111,7 @@ internal class TelemetryDestinationHarness(
     }
 
     val destination: TelemetryDestination = TelemetryDestinationImpl(
-        clock = initModule.clock,
+        clock = initServices.clock,
         spanService = spanService,
         loggerSupplier = { otelSdkWrapper.sdkLogger },
         currentSessionPartSpan = currentSessionPartSpan,
@@ -124,7 +124,7 @@ internal class TelemetryDestinationHarness(
     fun createUncappedSpanService(): SpanService {
         val validator = DataValidator(telemetryService = NoopInternalTelemetryService)
         val factory = EmbraceSpanFactoryImpl(
-            openTelemetryClock = EmbClock(initModule.clock),
+            openTelemetryClock = EmbClock(initServices.clock),
             spanRepository = spanRepository,
             dataValidator = validator,
             telemetryService = NoopInternalTelemetryService,
@@ -139,7 +139,7 @@ internal class TelemetryDestinationHarness(
         )
     }
 
-    private class TestInitModule(val clock: Clock) {
+    private class TestInitServices(val clock: Clock) {
         val telemetryService: InternalTelemetryService = NoopInternalTelemetryService
         val errorHandler: ErrorHandler = ErrorHandlerImpl(clock)
         val systemInfo: SystemInfo = SystemInfo()

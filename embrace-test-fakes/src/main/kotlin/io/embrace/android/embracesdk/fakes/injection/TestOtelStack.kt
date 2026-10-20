@@ -22,11 +22,11 @@ import io.embrace.android.embracesdk.internal.spans.TracingApiDelegate
 import io.embrace.android.embracesdk.spans.TracingApi
 
 class TestOtelStack(
-    initModule: FakeInitModule,
+    initServices: TestInitServices,
     configService: ConfigService,
     externalOtelConfig: ExternalOtelConfig = ExternalOtelConfig(),
 ) {
-    private val openTelemetryClock = EmbClock(initModule.clock)
+    private val openTelemetryClock = EmbClock(initServices.clock)
 
     val spanRepository: SpanRepository = SpanRepository()
 
@@ -36,10 +36,10 @@ class TestOtelStack(
         createOtelSdkConfig(
             spanRepository = spanRepository,
             logSink = logSink,
-            instrumentedConfig = initModule.instrumentedConfig,
-            systemInfo = initModule.systemInfo,
-            uuidSource = initModule.uuidSource,
-            errorHandler = initModule.errorHandler,
+            instrumentedConfig = initServices.instrumentedConfig,
+            systemInfo = initServices.systemInfo,
+            uuidSource = initServices.uuidSource,
+            errorHandler = initServices.errorHandler,
             externalOtelConfig = externalOtelConfig,
         )
     }
@@ -49,24 +49,24 @@ class TestOtelStack(
             otelClock = openTelemetryClock,
             configuration = otelSdkConfig,
             spanServiceProvider = { spanService },
-            errorHandler = initModule.errorHandler,
+            errorHandler = initServices.errorHandler,
             useKotlinSdk = configService.otelBehavior.shouldUseKotlinSdk(),
         )
     }
 
     private val dataValidator = DataValidator(
         bypassValidation = configService::isOnlyUsingOtelExporters,
-        telemetryService = initModule.telemetryService,
+        telemetryService = initServices.telemetryService,
     )
 
     val currentSessionPartSpan: CurrentSessionPartSpan = createCurrentSessionPartSpan(
         openTelemetryClock = openTelemetryClock,
-        telemetryService = initModule.telemetryService,
+        telemetryService = initServices.telemetryService,
         spanRepository = spanRepository,
         tracerSupplier = { otelSdkWrapper.sdkTracer },
         openTelemetrySupplier = { otelSdkWrapper.openTelemetryKotlin },
         embraceSpanFactorySupplier = { embraceSpanFactory },
-        uuidSource = initModule.uuidSource,
+        uuidSource = initServices.uuidSource,
         otelBehaviorSupplier = { configService.otelBehavior },
         customBreadcrumbLimitSupplier = { configService.config.breadcrumb.customLimit },
     )
@@ -77,7 +77,7 @@ class TestOtelStack(
         dataValidator = dataValidator,
         stopCallback = currentSessionPartSpan::spanStopCallback,
         redactionFunction = createRedactionFunction(SensitiveKeysBehavior(configService.config.sensitiveKeys)),
-        telemetryService = initModule.telemetryService,
+        telemetryService = initServices.telemetryService,
     )
 
     val spanService: SpanService by lazy {

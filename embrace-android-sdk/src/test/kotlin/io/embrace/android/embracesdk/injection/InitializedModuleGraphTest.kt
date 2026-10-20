@@ -8,7 +8,7 @@ import io.embrace.android.embracesdk.fakes.FakeErrorHandler
 import io.embrace.android.embracesdk.fakes.FakeReadWriteLogRecord
 import io.embrace.android.embracesdk.fakes.OtelSdkMode
 import io.embrace.android.embracesdk.fakes.TestPlatformSerializer
-import io.embrace.android.embracesdk.fakes.injection.FakeInitModule
+import io.embrace.android.embracesdk.fakes.injection.TestInitServices
 import io.embrace.android.embracesdk.internal.clock.Clock
 import io.embrace.android.embracesdk.internal.config.PersistedConfig
 import io.embrace.android.embracesdk.internal.config.remote.OtelKotlinSdkConfig
@@ -109,16 +109,16 @@ internal class InitializedModuleGraphTest {
         File(storageDir, PersistedConfig.CONFIG_RESPONSE_FILE_NAME).outputStream().buffered().use { stream ->
             TestPlatformSerializer().toJson(cfg, RemoteConfig.serializer(), stream)
         }
-        val initModule = FakeInitModule(clock = clock, errorHandler = errorHandler, otelSdkMode = OtelSdkMode.COMPAT)
+        val initServices = TestInitServices(clock = clock, errorHandler = errorHandler, otelSdkMode = OtelSdkMode.COMPAT)
         return InitializedModuleGraph(
             context = context,
-            preStartServices = initModule.preStartServices,
+            preStartServices = initServices.preStartServices,
             configLoadServices = ConfigLoadServices(
                 context = context,
-                preStartServices = initModule.preStartServices,
-                instrumentedConfig = initModule.instrumentedConfig,
-                jsonSerializer = initModule.jsonSerializer,
-                uuidSource = initModule.uuidSource,
+                preStartServices = initServices.preStartServices,
+                instrumentedConfig = initServices.instrumentedConfig,
+                jsonSerializer = initServices.jsonSerializer,
+                uuidSource = initServices.uuidSource,
                 configServiceSupplier = { _, _, _, _, _, persistedConfig ->
                     FakeConfigService(otelBehavior = persistedConfig.otelBehavior)
                 },

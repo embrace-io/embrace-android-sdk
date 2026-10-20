@@ -11,14 +11,14 @@ import io.embrace.android.embracesdk.internal.worker.Worker
 import java.util.concurrent.atomic.AtomicReference
 
 class FakeWorkerThreadPool(
-    fakeInitModule: FakeInitModule = FakeInitModule(otelSdkMode = OtelSdkMode.COMPAT),
+    fakeInitServices: TestInitServices = TestInitServices(otelSdkMode = OtelSdkMode.COMPAT),
     threadBlockageMonitoringThread: Thread? = null,
     testWorkers: List<Worker.Background> = emptyList(),
     private val testPriorityWorker: Worker.Priority? = null,
     private val base: WorkerThreadPool = WorkerThreadPoolImpl(),
 ) : WorkerThreadPool by base {
 
-    val executorClock: FakeClock = fakeInitModule.getFakeClock() ?: FakeClock()
+    val executorClock: FakeClock = fakeInitServices.getFakeClock() ?: FakeClock()
     val priorityWorkerExecutor: BlockingScheduledExecutorService =
         BlockingScheduledExecutorService(fakeClock = executorClock)
 

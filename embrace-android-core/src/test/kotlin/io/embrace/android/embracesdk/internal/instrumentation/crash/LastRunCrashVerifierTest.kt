@@ -2,8 +2,8 @@ package io.embrace.android.embracesdk.internal.instrumentation.crash
 
 import io.embrace.android.embracesdk.concurrency.BlockingScheduledExecutorService
 import io.embrace.android.embracesdk.fakes.OtelSdkMode
-import io.embrace.android.embracesdk.fakes.injection.FakeInitModule
 import io.embrace.android.embracesdk.fakes.injection.FakeWorkerThreadPool
+import io.embrace.android.embracesdk.fakes.injection.TestInitServices
 import io.embrace.android.embracesdk.internal.worker.BackgroundWorker
 import io.embrace.android.embracesdk.internal.worker.Worker
 import io.mockk.every
@@ -30,7 +30,7 @@ internal class LastRunCrashVerifierTest {
         lastRunCrashVerifier = LastRunCrashVerifier(mockCrashFileMarker)
         fakeWorkerThreadPool =
             FakeWorkerThreadPool(
-                fakeInitModule = FakeInitModule(otelSdkMode = OtelSdkMode.COMPAT),
+                fakeInitServices = TestInitServices(otelSdkMode = OtelSdkMode.COMPAT),
                 testWorkers = listOf(Worker.Background.NonIoRegWorker),
             )
         worker = fakeWorkerThreadPool.backgroundWorker(Worker.Background.NonIoRegWorker)

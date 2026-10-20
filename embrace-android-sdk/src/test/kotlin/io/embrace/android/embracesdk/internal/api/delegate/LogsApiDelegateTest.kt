@@ -5,7 +5,7 @@ import io.embrace.android.embracesdk.Severity
 import io.embrace.android.embracesdk.fakes.FakeInternalTelemetryService
 import io.embrace.android.embracesdk.fakes.FakeLogService
 import io.embrace.android.embracesdk.fakes.OtelSdkMode
-import io.embrace.android.embracesdk.fakes.injection.FakeInitModule
+import io.embrace.android.embracesdk.fakes.injection.TestInitServices
 import io.embrace.android.embracesdk.internal.arch.datasource.LogSeverity
 import io.embrace.android.embracesdk.internal.logs.attachments.AttachmentService
 import io.embrace.android.embracesdk.internal.telemetry.AppliedLimitType
@@ -28,13 +28,13 @@ internal class LogsApiDelegateTest {
     fun setUp() {
         logService = FakeLogService()
         telemetryService = FakeInternalTelemetryService()
-        val initModule = FakeInitModule(fakeTelemetryService = telemetryService, otelSdkMode = OtelSdkMode.COMPAT)
+        val initServices = TestInitServices(fakeTelemetryService = telemetryService, otelSdkMode = OtelSdkMode.COMPAT)
         delegate = LogsApiDelegate(
             logService = lazy { logService },
             attachmentService = AttachmentService(),
-            errorHandler = initModule.errorHandler,
+            errorHandler = initServices.errorHandler,
             payloadStore = null,
-            serializer = initModule.jsonSerializer,
+            serializer = initServices.jsonSerializer,
             telemetryService = telemetryService,
         )
     }

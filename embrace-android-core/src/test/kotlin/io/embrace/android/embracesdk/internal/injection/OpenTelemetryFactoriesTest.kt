@@ -2,7 +2,7 @@ package io.embrace.android.embracesdk.internal.injection
 
 import io.embrace.android.embracesdk.fakes.FakeConfigService
 import io.embrace.android.embracesdk.fakes.OtelSdkMode
-import io.embrace.android.embracesdk.fakes.injection.FakeInitModule
+import io.embrace.android.embracesdk.fakes.injection.TestInitServices
 import io.embrace.android.embracesdk.internal.config.behavior.REDACTED_LABEL
 import io.embrace.android.embracesdk.internal.config.behavior.SensitiveKeysBehavior
 import io.embrace.android.embracesdk.internal.config.resolved.SensitiveKeysConfig
@@ -17,7 +17,7 @@ import org.junit.Test
 
 internal class OpenTelemetryFactoriesTest {
 
-    private val initModule = FakeInitModule(otelSdkMode = OtelSdkMode.COMPAT)
+    private val initServices = TestInitServices(otelSdkMode = OtelSdkMode.COMPAT)
     private val configService = FakeConfigService()
 
     @Test
@@ -27,20 +27,20 @@ internal class OpenTelemetryFactoriesTest {
             createOtelSdkConfig(
                 spanRepository = spanRepository,
                 logSink = LogSinkImpl(),
-                instrumentedConfig = initModule.instrumentedConfig,
-                systemInfo = initModule.systemInfo,
-                uuidSource = initModule.uuidSource,
-                errorHandler = initModule.errorHandler,
+                instrumentedConfig = initServices.instrumentedConfig,
+                systemInfo = initServices.systemInfo,
+                uuidSource = initServices.uuidSource,
+                errorHandler = initServices.errorHandler,
             ),
         )
         val span = createCurrentSessionPartSpan(
-            openTelemetryClock = EmbClock(initModule.clock),
-            telemetryService = initModule.telemetryService,
+            openTelemetryClock = EmbClock(initServices.clock),
+            telemetryService = initServices.telemetryService,
             spanRepository = spanRepository,
             tracerSupplier = { error("unused") },
             openTelemetrySupplier = { error("unused") },
             embraceSpanFactorySupplier = { error("unused") },
-            uuidSource = initModule.uuidSource,
+            uuidSource = initServices.uuidSource,
             otelBehaviorSupplier = { configService.otelBehavior },
             customBreadcrumbLimitSupplier = { 100 },
         )

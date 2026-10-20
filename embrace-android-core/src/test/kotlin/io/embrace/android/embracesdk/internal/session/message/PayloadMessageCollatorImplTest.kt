@@ -5,7 +5,7 @@ import io.embrace.android.embracesdk.fakes.FakeEnvelopeResourceSource
 import io.embrace.android.embracesdk.fakes.FakeSessionIdsProvider
 import io.embrace.android.embracesdk.fakes.FakeSessionPartPayloadSource
 import io.embrace.android.embracesdk.fakes.OtelSdkMode
-import io.embrace.android.embracesdk.fakes.injection.FakeInitModule
+import io.embrace.android.embracesdk.fakes.injection.TestInitServices
 import io.embrace.android.embracesdk.internal.arch.state.ProcessState
 import io.embrace.android.embracesdk.internal.envelope.session.SessionPartEnvelopeSourceImpl
 import io.embrace.android.embracesdk.internal.payload.Envelope
@@ -33,21 +33,21 @@ internal class PayloadMessageCollatorImplTest(
         fun modes(): List<Array<Any>> = OtelSdkMode.parameters()
     }
 
-    private lateinit var initModule: FakeInitModule
+    private lateinit var initServices: TestInitServices
     private lateinit var currentSessionPartSpan: CurrentSessionPartSpan
     private lateinit var collator: PayloadMessageCollatorImpl
     private lateinit var partPayloadSource: FakeSessionPartPayloadSource
 
     @Before
     fun setUp() {
-        initModule = FakeInitModule(otelSdkMode = otelSdkMode)
+        initServices = TestInitServices(otelSdkMode = otelSdkMode)
         partPayloadSource = FakeSessionPartPayloadSource()
         val sessionPartEnvelopeSource = SessionPartEnvelopeSourceImpl(
             metadataSource = FakeEnvelopeMetadataSource(),
             resourceSource = FakeEnvelopeResourceSource(),
             payloadSource = partPayloadSource,
         )
-        currentSessionPartSpan = initModule.otelStack.currentSessionPartSpan
+        currentSessionPartSpan = initServices.otelStack.currentSessionPartSpan
         collator = PayloadMessageCollatorImpl(
             sessionPartEnvelopeSource = sessionPartEnvelopeSource,
             currentSessionPartSpan = currentSessionPartSpan,
@@ -105,7 +105,7 @@ internal class PayloadMessageCollatorImplTest(
             FinalEnvelopeParams(
                 initial = startMsg,
                 endType = SessionPartSnapshotType.NORMAL_END,
-                errorHandler = initModule.errorHandler,
+                errorHandler = initServices.errorHandler,
                 continueMonitoring = true,
                 crashId = "crashId",
             ),
@@ -133,7 +133,7 @@ internal class PayloadMessageCollatorImplTest(
             FinalEnvelopeParams(
                 initial = startMsg,
                 endType = SessionPartSnapshotType.NORMAL_END,
-                errorHandler = initModule.errorHandler,
+                errorHandler = initServices.errorHandler,
                 continueMonitoring = true,
                 crashId = "crashId",
             ),
@@ -157,7 +157,7 @@ internal class PayloadMessageCollatorImplTest(
             FinalEnvelopeParams(
                 initial = startMsg,
                 endType = SessionPartSnapshotType.NORMAL_END,
-                errorHandler = initModule.errorHandler,
+                errorHandler = initServices.errorHandler,
                 continueMonitoring = true,
                 crashId = "crashId",
             ),

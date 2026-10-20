@@ -1,11 +1,12 @@
 package io.embrace.android.embracesdk.internal.session.message
 
 import io.embrace.android.embracesdk.fakes.FakeConfigService
+import io.embrace.android.embracesdk.fakes.FakeLogEnvelopeSource
 import io.embrace.android.embracesdk.fakes.FakeSessionIdsProvider
+import io.embrace.android.embracesdk.fakes.FakeSessionPartEnvelopeSource
 import io.embrace.android.embracesdk.fakes.FakeSessionPartPayloadSource
 import io.embrace.android.embracesdk.fakes.OtelSdkMode
-import io.embrace.android.embracesdk.fakes.injection.FakeInitModule
-import io.embrace.android.embracesdk.fakes.injection.FakePayloadSourceModule
+import io.embrace.android.embracesdk.fakes.injection.TestInitServices
 import io.embrace.android.embracesdk.internal.arch.state.ProcessState
 import io.embrace.android.embracesdk.internal.arch.state.ProcessState.BACKGROUND
 import io.embrace.android.embracesdk.internal.arch.state.ProcessState.FOREGROUND
@@ -38,22 +39,19 @@ internal class PayloadFactoryImplTest(
 
     @Before
     fun setUp() {
-        val initModule = FakeInitModule(otelSdkMode = otelSdkMode)
+        val initServices = TestInitServices(otelSdkMode = otelSdkMode)
         configService = FakeConfigService()
         partPayloadSource = FakeSessionPartPayloadSource()
-        val payloadSourceModule = FakePayloadSourceModule(
-            partPayloadSource = partPayloadSource,
-        )
         val collator = PayloadMessageCollatorImpl(
-            sessionPartEnvelopeSource = payloadSourceModule.sessionPartEnvelopeSource,
-            currentSessionPartSpan = initModule.otelStack.currentSessionPartSpan,
+            sessionPartEnvelopeSource = FakeSessionPartEnvelopeSource(partPayloadSource = partPayloadSource),
+            currentSessionPartSpan = initServices.otelStack.currentSessionPartSpan,
             sessionIdsProvider = FakeSessionIdsProvider(),
         )
         factory = PayloadFactoryImpl(
             payloadMessageCollator = collator,
-            logEnvelopeSource = payloadSourceModule.logEnvelopeSource,
+            logEnvelopeSource = FakeLogEnvelopeSource(),
             configService = configService,
-            errorHandler = initModule.errorHandler,
+            errorHandler = initServices.errorHandler,
         )
     }
 

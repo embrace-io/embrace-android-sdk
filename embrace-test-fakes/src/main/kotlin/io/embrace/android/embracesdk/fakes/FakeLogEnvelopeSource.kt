@@ -10,9 +10,9 @@ import io.embrace.android.embracesdk.internal.payload.Envelope.Companion.createL
 import io.embrace.android.embracesdk.internal.payload.LogPayload
 
 class FakeLogEnvelopeSource(
-    private val metadataSource: EnvelopeMetadataSource,
-    private val resourceSource: EnvelopeResourceSource,
-    private val logPayloadSource: LogPayloadSource,
+    private val metadataSource: EnvelopeMetadataSource = FakeEnvelopeMetadataSource(),
+    private val resourceSource: EnvelopeResourceSource = FakeEnvelopeResourceSource(),
+    private val logPayloadSource: LogPayloadSource = FakeLogPayloadSource(),
 ) : LogEnvelopeSource {
 
     override fun getBatchedLogEnvelope(): Envelope<LogPayload> = getLogEnvelope(logPayloadSource.getBatchedLogPayload())

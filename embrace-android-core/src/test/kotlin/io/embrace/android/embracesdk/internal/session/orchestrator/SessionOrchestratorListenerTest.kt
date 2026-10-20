@@ -23,7 +23,6 @@ import io.embrace.android.embracesdk.fakes.FakeUserSessionPropertiesService
 import io.embrace.android.embracesdk.fakes.TestUuidSource
 import io.embrace.android.embracesdk.fakes.behavior.FakeUserSessionBehavior
 import io.embrace.android.embracesdk.fakes.fakeBackgroundWorker
-import io.embrace.android.embracesdk.fakes.injection.FakePayloadSourceModule
 import io.embrace.android.embracesdk.internal.arch.InstrumentationRegistry
 import io.embrace.android.embracesdk.internal.arch.InstrumentationRegistryImpl
 import io.embrace.android.embracesdk.internal.arch.startup.StartupClassifierImpl
@@ -339,11 +338,10 @@ internal class SessionOrchestratorListenerTest {
         currentSessionPartSpan = FakeCurrentSessionPartSpan(clock).apply { initializeService(clock.now()) }
         destination = FakeTelemetryDestination()
         payloadCollator = FakePayloadMessageCollator(currentSessionPartSpan = currentSessionPartSpan)
-        val payloadSourceModule = FakePayloadSourceModule()
-        logEnvelopeSource = payloadSourceModule.logEnvelopeSource
+        logEnvelopeSource = FakeLogEnvelopeSource()
         payloadFactory = PayloadFactoryImpl(
             payloadMessageCollator = payloadCollator,
-            logEnvelopeSource = payloadSourceModule.logEnvelopeSource,
+            logEnvelopeSource = logEnvelopeSource,
             configService = configService,
             errorHandler = errorHandler,
         )

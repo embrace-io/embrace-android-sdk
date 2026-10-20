@@ -8,7 +8,7 @@ import io.embrace.android.embracesdk.fakes.FakeConfigService
 import io.embrace.android.embracesdk.fakes.TestPlatformSerializer
 import io.embrace.android.embracesdk.fakes.config.FakeBaseUrlConfig
 import io.embrace.android.embracesdk.fakes.config.FakeInstrumentedConfig
-import io.embrace.android.embracesdk.fakes.injection.FakeCoreModule
+import io.embrace.android.embracesdk.fakes.fakeContext
 import io.embrace.android.embracesdk.internal.config.PersistedConfig
 import io.embrace.android.embracesdk.internal.config.remote.RemoteConfig
 import io.embrace.android.embracesdk.internal.delivery.debug.DeliveryTracer
@@ -42,25 +42,25 @@ import java.io.File
  * A [org.junit.Rule] that is responsible for setting up and tearing down the Embrace SDK for use in
  * component/integration testing. Test cases must be run with a test runner that is compatible with Robolectric.
  *
- * The SDK instance exposed is almost like the one used in production other than the 3 modules that have
- * to faked at least in part in order for this to be useful in tests:
+ * The SDK instance exposed is almost like the one used in production other than the 3 areas that have
+ * to be faked at least in part in order for this to be useful in tests:
  *
- * 1) Core: uses the context from [FakeCoreModule] to fake Android system objects like [Application], [Context],
+ * 1) Core: uses [fakeContext] to fake Android system objects like [Application], [Context],
  * and resources that are normally not available in a JUnit test environment. Also, a [FakeClock] is used
  * so we can control time to control timing and execution manually rather than waiting for normal
  * time to pass.
  *
  * 2) Essential services: these use a [FakeConfigService] to allow the appropriate feature flags be set to suit
  * the test case. The lifecycle tracker and network connectivity service are replaced via [SdkOverrides], and
- * everything else is otherwise real unless provided by [FakeCoreModule]
+ * everything else is otherwise real
  *
  * 3) Delivery: payloads are sent to a local [MockWebServer] and recorded by a [DeliveryTracer], so that
  * payloads normally sent to the server can be inspected to verify the correctness of the data produced.
  * The delivery services are otherwise real unless replaced via [SdkOverrides].
  *
- * The modules instantiated by default reference each other, e.g. the same instance of [FakeCoreModule] is used
- * in all the other modules. This means modifications of one object within a module will be reflected in the
- * other modules, e.g. the [FakeClock]. This allows the system to behave as one unit.
+ * The services instantiated by default reference each other, e.g. the same context is used
+ * by all the other services. This means modifications of one object will be reflected in the
+ * other services, e.g. the [FakeClock]. This allows the system to behave as one unit.
  *
  * While it is possible to override the default behavior of the [Embrace] instance in the Rule by passing in
  * a custom supplier to create an instance of [EmbraceSetupInterface] with custom overridden constructor parameters, be
@@ -173,7 +173,7 @@ internal class SdkIntegrationTestRule(
             { sdkStateHolder.state },
         )
         payloadAssertion = EmbracePayloadAssertionInterface(
-            setup.initModule.jsonSerializer,
+            setup.initServices.jsonSerializer,
             deliveryTracer,
             apiServer,
         ) { sdkStateHolder.state }

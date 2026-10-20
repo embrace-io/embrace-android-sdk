@@ -30,8 +30,6 @@ import io.embrace.android.embracesdk.internal.delivery.storage.StorageLocation
 import io.embrace.android.embracesdk.internal.delivery.storage.asFile
 import io.embrace.android.embracesdk.internal.injection.ConfigLoadServices
 import io.embrace.android.embracesdk.internal.injection.ConfigLoadServicesSupplier
-import io.embrace.android.embracesdk.internal.injection.InitializedModuleGraph
-import io.embrace.android.embracesdk.internal.injection.ModuleGraphSupplier
 import io.embrace.android.embracesdk.internal.injection.PreStartServices
 import io.embrace.android.embracesdk.internal.injection.SdkOverrides
 import io.embrace.android.embracesdk.internal.injection.WorkerThreadPool
@@ -40,7 +38,6 @@ import io.embrace.android.embracesdk.internal.injection.createConfigService
 import io.embrace.android.embracesdk.internal.instrumentation.crash.ndk.jniDelegateTestOverride
 import io.embrace.android.embracesdk.internal.instrumentation.crash.ndk.sharedObjectLoaderTestOverride
 import io.embrace.android.embracesdk.internal.instrumentation.startup.SdkInitResourceUsageTracker
-import io.embrace.android.embracesdk.internal.instrumentation.thread.blockage.createThreadBlockageService
 import io.embrace.android.embracesdk.internal.logging.ErrorHandlerImpl
 import io.embrace.android.embracesdk.internal.logging.SdkErrorType
 import io.embrace.android.embracesdk.internal.payload.Attribute
@@ -67,6 +64,7 @@ import io.embrace.android.embracesdk.internal.worker.Worker.Background.NonIoRegW
 import io.embrace.android.embracesdk.semconv.EmbCommonAttributes
 import io.embrace.android.embracesdk.semconv.EmbSessionAttributes
 import io.embrace.android.embracesdk.semconv.ExperimentalSemconv
+import io.embrace.android.embracesdk.testframework.CapturedServices
 import io.embrace.android.embracesdk.testframework.SdkIntegrationTestRule
 import org.robolectric.Shadows
 import org.robolectric.shadows.ShadowLooper
@@ -128,9 +126,9 @@ internal class EmbraceSetupInterface(
     val unblockMainLooperOnNavigation: Boolean = threadBlockageWatchdogThread == null
 
     /**
-     * When set, module graph construction throws this partway through, as the core module is created.
+     * When set, SDK construction throws this partway through, as the app context is resolved.
      */
-    var moduleGraphFailure: Throwable? = null
+    var constructionFailure: Throwable? = null
 
     private val fakeInitServices: TestInitServices = TestInitServices(
         clock = fakeClock,
@@ -156,6 +154,16 @@ internal class EmbraceSetupInterface(
     private val logOrchestratorExecutor = BlockingScheduledExecutorService(fakeClock, blockingMode = false)
 
     private val fakeContext: Context = fakeContext()
+
+    /**
+     * The SDK services that tests inspect, captured as the SDK constructs them.
+     */
+    val services: CapturedServices = CapturedServices(
+        workerThreadPool = workerThreadPool,
+        networkConnectivityService = fakeNetworkConnectivityService,
+        errorHandler = fakeInitServices.errorHandler,
+        appContext = fakeContext,
+    )
 
     /**
      * The SDK's store, backed by the same `SharedPreferences` the module graph will use. Owned here
@@ -184,7 +192,7 @@ internal class EmbraceSetupInterface(
                 configServiceSupplier = { preStartServices, instrumentedConfig, serializer, okHttpClient, workerThreadPool, persistedConfig ->
                     DecoratedConfigService(
                         createConfigService(preStartServices, instrumentedConfig, serializer, okHttpClient, workerThreadPool, persistedConfig)
-                    )
+                    ).also { services.configService = it }
                 },
             )
         }
@@ -193,45 +201,28 @@ internal class EmbraceSetupInterface(
     fun createSdkOverrides(deliveryTracer: DeliveryTracer): SdkOverrides = SdkOverrides(
         logOrchestratorWorker = { BackgroundWorker(logOrchestratorExecutor) },
         versionChecker = simulatedVersionChecker?.let { versionChecker -> { versionChecker } },
-        instrumentationRegistry = { FakeInstrumentationRegistry(it()) },
+        instrumentationRegistry = { real -> FakeInstrumentationRegistry(real()).also { services.instrumentationRegistry = it } },
         deliveryTracer = { deliveryTracer },
-        payloadStorageService = fakePayloadStorageService?.let { fake -> { fake } },
+        payloadStorageService = { real -> (fakePayloadStorageService ?: real()).also { services.payloadStorageService = it } },
         cacheStorageService = fakeCacheStorageService?.let { fake -> { fake } },
         payloadStorageLimit = { payloadStorageLimit },
         lifecycleTracker = { AndroidxProcessLifecycleTracker(fakeLifecycleOwner) },
         networkConnectivityService = { fakeNetworkConnectivityService },
         appContext = {
-            moduleGraphFailure?.let { throw it }
+            constructionFailure?.let { throw it }
             fakeContext
         },
-    )
-
-    fun createModuleGraphSupplier(): ModuleGraphSupplier =
-        { context, preStartServices, configLoadServices, sdkStartTimeMs, sdkInitResourceUsageTracker, overrides ->
-            createModuleGraph(context, preStartServices, configLoadServices, sdkStartTimeMs, sdkInitResourceUsageTracker, overrides)
-        }
-
-    private fun createModuleGraph(
-        context: Context,
-        preStartServices: PreStartServices,
-        configLoadServices: ConfigLoadServices,
-        sdkStartTimeMs: Long,
-        sdkInitResourceUsageTracker: SdkInitResourceUsageTracker,
-        overrides: SdkOverrides?,
-    ): InitializedModuleGraph = InitializedModuleGraph(
-        context = context,
-        preStartServices = preStartServices,
-        configLoadServices = configLoadServices,
-        sdkStartTimeMs = sdkStartTimeMs,
-        sdkInitResourceUsageTracker = sdkInitResourceUsageTracker,
-        overrides = overrides,
-        threadBlockageServiceSupplier = { args ->
-            if (threadBlockageWatchdogThread != null) {
-                createThreadBlockageService(args)
-            } else {
-                null
-            }
+        threadBlockageService = { real ->
+            (if (threadBlockageWatchdogThread != null) real() else null).also { services.threadBlockageService = it }
         },
+        spanRepository = { real -> real().also { services.spanRepository = it } },
+        otelSdkConfig = { real -> real().also { services.otelSdkConfig = it } },
+        otelSdkWrapper = { real -> real().also { services.otelSdkWrapper = it } },
+        sessionIdsProvider = { real -> real().also { services.sessionIdsProvider = it } },
+        sessionOrchestrator = { real -> real().also { services.sessionOrchestrator = it } },
+        experimentTrackingService = { real -> real().also { services.experimentTrackingService = it } },
+        intakeService = { real -> real().also { services.intakeService = it } },
+        eventBus = { real -> real().also { services.eventBus = it } },
     )
 
     /**

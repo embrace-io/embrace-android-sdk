@@ -56,7 +56,6 @@ import io.embrace.android.embracesdk.internal.instrumentation.startup.createStar
 import io.embrace.android.embracesdk.internal.instrumentation.startup.createStartupTracker
 import io.embrace.android.embracesdk.internal.instrumentation.startup.createUiLoadDataListener
 import io.embrace.android.embracesdk.internal.instrumentation.thread.blockage.ThreadBlockageService
-import io.embrace.android.embracesdk.internal.instrumentation.thread.blockage.ThreadBlockageServiceSupplier
 import io.embrace.android.embracesdk.internal.instrumentation.thread.blockage.createThreadBlockageService
 import io.embrace.android.embracesdk.internal.logging.ErrorHandler
 import io.embrace.android.embracesdk.internal.logs.LogLimitingService
@@ -119,7 +118,6 @@ internal class InitializedModuleGraph(
     val sdkStartTimeMs: Long,
     val sdkInitResourceUsageTracker: SdkInitResourceUsageTracker,
     overrides: SdkOverrides? = null,
-    private val threadBlockageServiceSupplier: ThreadBlockageServiceSupplier? = null,
 ) {
 
     val clock: Clock = preStartServices.clock
@@ -156,7 +154,9 @@ internal class InitializedModuleGraph(
         SensitiveKeysBehavior(configService.config.sensitiveKeys)
     }
 
-    val spanRepository: SpanRepository = init("span-repository") { SpanRepository() }
+    val spanRepository: SpanRepository = init("span-repository") {
+        overrides?.spanRepository.resolve { SpanRepository() }
+    }
 
     val logSink: LogSink = init("log-sink") { LogSinkImpl() }
 
@@ -256,7 +256,7 @@ internal class InitializedModuleGraph(
     }
 
     val eventBus: EventBus by lazy {
-        EmbTrace.trace("event-bus-init") { EventBus(errorHandler) }
+        EmbTrace.trace("event-bus-init") { overrides?.eventBus.resolve { EventBus(errorHandler) } }
     }
 
     val appVersionStartupCounter: Int by lazy {
@@ -297,7 +297,7 @@ internal class InitializedModuleGraph(
     }
 
     val sessionIdsProvider: SessionIdsProvider = init("session-ids-provider") {
-        createSessionIdsProvider({ sessionOrchestrator }, sessionPartTracker)
+        overrides?.sessionIdsProvider.resolve { createSessionIdsProvider({ sessionOrchestrator }, sessionPartTracker) }
     }
 
     val telemetryDestination: TelemetryDestination = init("telemetry-destination") {
@@ -564,12 +564,8 @@ internal class InitializedModuleGraph(
     }
 
     val threadBlockageService: ThreadBlockageService? = init("thread-blockage-service") {
-        val args = instrumentationArgs
-        // Only create the thread blockage service if the provider is null, not when the provider returns null
-        when (threadBlockageServiceSupplier) {
-            null -> createThreadBlockageService(args)
-            else -> threadBlockageServiceSupplier.invoke(args)
-        }
+        // An override that returns null disables the service: it is not replaced by the real construction
+        overrides?.threadBlockageService.resolve { createThreadBlockageService(instrumentationArgs) }
     }
 
     val rnBundleIdTracker: Lazy<RnBundleIdTracker> = lazy {

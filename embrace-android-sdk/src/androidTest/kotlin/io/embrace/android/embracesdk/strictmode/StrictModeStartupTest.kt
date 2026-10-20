@@ -12,7 +12,8 @@ import io.embrace.android.embracesdk.fakes.config.FakeEnabledFeatureConfig
 import io.embrace.android.embracesdk.fakes.config.FakeInstrumentedConfig
 import io.embrace.android.embracesdk.internal.config.PersistedConfig
 import io.embrace.android.embracesdk.internal.injection.ConfigLoadServices
-import io.embrace.android.embracesdk.internal.injection.InitializedModuleGraph
+import io.embrace.android.embracesdk.internal.injection.SdkOverrides
+import io.embrace.android.embracesdk.internal.otel.sdk.OtelSdkWrapper
 import io.embrace.android.embracesdk.internal.injection.PreStartServices
 import io.embrace.android.embracesdk.internal.instance.SdkStateHolder
 import io.embrace.android.embracesdk.internal.instance.createSdkStateHolder
@@ -53,7 +54,8 @@ internal class StrictModeStartupTest(
     private val instrumentation = InstrumentationRegistry.getInstrumentation()
     private val context = ApplicationProvider.getApplicationContext<Context>()
     private val recorder = StrictModeRecorder()
-    private var moduleGraph: InitializedModuleGraph? = null
+    private var configLoadServices: ConfigLoadServices? = null
+    private var otelSdkWrapper: OtelSdkWrapper? = null
     private lateinit var sdkStateHolder: SdkStateHolder
 
     @Before
@@ -84,16 +86,16 @@ internal class StrictModeStartupTest(
                                 dataImpl = "http://localhost:1",
                             ),
                         ),
-                    )
+                    ).also { configLoadServices = it }
                 },
-                onModuleGraphCreated = { moduleGraph = it },
+                overrides = SdkOverrides(otelSdkWrapper = { real -> real().also { otelSdkWrapper = it } }),
             )
             sdkStateHolder.api.start(context)
         }
 
         drainInitWork()
         assertTrue("SDK did not start.", sdkStateHolder.api.isStarted)
-        assertEquals(otelSdkMode.useKotlinSdk, checkNotNull(moduleGraph).otelSdkWrapper.value.useKotlinSdk)
+        assertEquals(otelSdkMode.useKotlinSdk, checkNotNull(otelSdkWrapper).useKotlinSdk)
         assertNoUnexpectedViolations(recorder.violations())
     }
 
@@ -105,7 +107,7 @@ internal class StrictModeStartupTest(
         repeat(2) {
             BACKGROUND_WORKERS.forEach { worker ->
                 runCatching {
-                    checkNotNull(moduleGraph).workerThreadPool.backgroundWorker(worker).submit {}.get(DRAIN_TIMEOUT_MS, MILLISECONDS)
+                    checkNotNull(configLoadServices).workerThreadPool.backgroundWorker(worker).submit {}.get(DRAIN_TIMEOUT_MS, MILLISECONDS)
                 }
             }
             instrumentation.waitForIdleSync()

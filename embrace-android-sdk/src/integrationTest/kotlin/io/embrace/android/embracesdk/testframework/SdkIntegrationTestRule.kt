@@ -14,8 +14,6 @@ import io.embrace.android.embracesdk.internal.config.remote.RemoteConfig
 import io.embrace.android.embracesdk.internal.delivery.debug.DeliveryTracer
 import io.embrace.android.embracesdk.internal.injection.ConfigLoadServicesSupplier
 import io.embrace.android.embracesdk.internal.injection.SdkOverrides
-import io.embrace.android.embracesdk.internal.injection.InitializedModuleGraph
-import io.embrace.android.embracesdk.internal.injection.ModuleGraphSupplier
 import io.embrace.android.embracesdk.internal.instance.SdkState
 import io.embrace.android.embracesdk.internal.instance.SdkStateHolder
 import io.embrace.android.embracesdk.internal.instance.createSdkStateHolder
@@ -72,7 +70,7 @@ import java.io.File
  * without the pain of dealing with a singleton in parallelized unit tests.
  *
  * It is also possible to access internal modules & dependencies that are not exposed via the public API.
- * For example, it is possible to access [moduleGraph] to inspect the delivery services the SDK used.
+ * For example, it is possible to access [services] to inspect the delivery services the SDK used.
  *
  * In general, it is recommended to use functions declared in PayloadRetrievalExtensions.kt that retrieve
  * this useful information for you. If it's not possible to get information from the SDK and you
@@ -117,14 +115,11 @@ internal class SdkIntegrationTestRule(
     private lateinit var server: MockWebServer
 
     private lateinit var configLoadServicesSupplier: ConfigLoadServicesSupplier
-    private lateinit var moduleGraphSupplier: ModuleGraphSupplier
-    private var createdModuleGraph: InitializedModuleGraph? = null
-
     /**
-     * The module graph created when the SDK under test started.
+     * The SDK services that tests inspect, captured as the SDK under test constructs them.
      */
-    val moduleGraph: InitializedModuleGraph
-        get() = checkNotNull(createdModuleGraph) { "SDK not initialized" }
+    val services: CapturedServices
+        get() = setup.services
 
     /**
      * Runs a test case. The test case should be separated into 3 parts: setup, action, and
@@ -158,17 +153,15 @@ internal class SdkIntegrationTestRule(
         baseUrl = server.url("api").toString()
 
         preSdkStart = EmbracePreSdkStartInterface(setup) { sdkStateHolder.api }
-        createdModuleGraph = null
         configLoadServicesSupplier = setup.createConfigLoadServicesSupplier(
             localConfig.copy(
                 baseUrls = FakeBaseUrlConfig(configImpl = baseUrl, dataImpl = baseUrl)
             ),
         )
-        moduleGraphSupplier = setup.createModuleGraphSupplier()
         action = EmbraceActionInterface(
             setup,
-            { moduleGraph.instrumentationRegistry },
-            { moduleGraph.eventBus },
+            { services.instrumentationRegistry },
+            { services.eventBus },
             { sdkStateHolder.api },
             { sdkStateHolder.state },
         )
@@ -208,7 +201,7 @@ internal class SdkIntegrationTestRule(
                     assertEquals(
                         "SDK did not select the $otelSdkMode opentelemetry-kotlin implementation.",
                         otelSdkMode.useKotlinSdk,
-                        moduleGraph.otelSdkWrapper.value.useKotlinSdk,
+                        services.otelSdkWrapper.useKotlinSdk,
                     )
                     // a start that fails releases the worker threads, so there is nothing to await
                     awaitAsyncInstrumentation()
@@ -224,7 +217,7 @@ internal class SdkIntegrationTestRule(
     }
 
     private fun drainExternalExports() {
-        val otelSdkConfig = createdModuleGraph?.otelSdkConfig?.value ?: return
+        val otelSdkConfig = services.otelSdkConfigOrNull ?: return
         runBlocking {
             otelSdkConfig.spanProcessor.forceFlush()
             otelSdkConfig.logRecordProcessor.forceFlush()
@@ -271,9 +264,7 @@ internal class SdkIntegrationTestRule(
         return createSdkStateHolder(
             preStartServices = setup.preStartServices,
             configLoadServicesSupplier = configLoadServicesSupplier,
-            moduleGraphSupplier = moduleGraphSupplier,
             sdkInitResourceUsageTrackerSupplier = setup::fakeSdkInitResourceUsageTracker,
-            onModuleGraphCreated = { createdModuleGraph = it },
             overrides = setup.createSdkOverrides(deliveryTracer),
         )
     }

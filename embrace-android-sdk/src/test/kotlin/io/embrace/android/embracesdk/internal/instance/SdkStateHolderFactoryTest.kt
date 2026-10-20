@@ -11,8 +11,8 @@ import io.embrace.android.embracesdk.internal.config.resolved.EmbraceConfig
 import io.embrace.android.embracesdk.internal.config.resolved.SdkModeConfig
 import io.embrace.android.embracesdk.internal.injection.ConfigLoadServices
 import io.embrace.android.embracesdk.internal.injection.ConfigServiceSupplier
-import io.embrace.android.embracesdk.internal.injection.ModuleGraphSupplier
 import io.embrace.android.embracesdk.internal.injection.PreStartServices
+import io.embrace.android.embracesdk.internal.injection.SdkOverrides
 import io.embrace.android.embracesdk.internal.worker.Worker
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
@@ -43,17 +43,19 @@ internal class SdkStateHolderFactoryTest {
     }
 
     @Test
-    fun `module graph is not constructed when the sdk is remotely disabled`() {
-        var moduleGraphCreated = false
+    fun `sdk services are not constructed when the sdk is remotely disabled`() {
+        var servicesCreated = false
         val holder = createStateHolder(
             configServiceSupplier = { _, _, _, _, _, _ -> disabledConfigService() },
-            moduleGraphSupplier = { _, _, _, _, _, _ ->
-                moduleGraphCreated = true
-                error("module graph should not be created")
-            },
+            overrides = SdkOverrides(
+                appContext = {
+                    servicesCreated = true
+                    error("sdk services should not be created")
+                },
+            ),
         )
         holder.start(context)
-        assertFalse(moduleGraphCreated)
+        assertFalse(servicesCreated)
         assertFalse(holder.api.isStarted)
     }
 
@@ -78,10 +80,10 @@ internal class SdkStateHolderFactoryTest {
     }
 
     @Test
-    fun `worker threads are released when the module graph cannot be constructed`() {
+    fun `worker threads are released when the sdk services cannot be constructed`() {
         val holder = createStateHolder(
             configServiceSupplier = { _, _, _, _, _, _ -> FakeConfigService() },
-            moduleGraphSupplier = { _, _, _, _, _, _ -> error("failed to init") },
+            overrides = SdkOverrides(appContext = { error("failed to init") }),
         )
         holder.start(context)
         assertEquals(SdkState.FAILED, holder.state)
@@ -90,7 +92,7 @@ internal class SdkStateHolderFactoryTest {
 
     private fun createStateHolder(
         configServiceSupplier: ConfigServiceSupplier,
-        moduleGraphSupplier: ModuleGraphSupplier? = null,
+        overrides: SdkOverrides? = null,
     ): SdkStateHolder = createSdkStateHolder(
         preStartServices = preStartServices,
         configLoadServicesSupplier = { ctx, preStartServices ->
@@ -101,7 +103,7 @@ internal class SdkStateHolderFactoryTest {
                 configServiceSupplier = configServiceSupplier,
             )
         },
-        moduleGraphSupplier = moduleGraphSupplier,
+        overrides = overrides,
     )
 
     private fun disabledConfigService(): ConfigService = FakeConfigService(

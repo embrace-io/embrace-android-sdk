@@ -112,7 +112,7 @@ internal class ResurrectionFeatureTest(
                 symbols = symbols,
             ),
             testCaseAction = {
-                filesDir = testRule.moduleGraph.appContext.filesDir
+                filesDir = testRule.services.appContext.filesDir
                 recordSession(isBackgroundActivityEnabled = true, endInBackground = false)
                 shutdownSdkWithIncompleteSession()
             },
@@ -158,7 +158,7 @@ internal class ResurrectionFeatureTest(
                 symbols = symbols,
             ),
             testCaseAction = {
-                filesDir = testRule.moduleGraph.appContext.filesDir
+                filesDir = testRule.services.appContext.filesDir
                 recordSession(isBackgroundActivityEnabled = true, endInBackground = false)
                 shutdownSdkWithIncompleteSession()
             },
@@ -205,9 +205,9 @@ internal class ResurrectionFeatureTest(
     private fun shutdownSdkWithIncompleteSession() {
         // the fake runs writes still waiting on the snapshot debounce when it shuts down, without a real-time wait
         testRule.setup.getFakedWorkerExecutor(Worker.Background.SessionPersistenceWorker).shutdown()
-        testRule.moduleGraph.networkConnectivityService.close()
-        testRule.moduleGraph.otelSdkConfig.value.close()
-        testRule.moduleGraph.workerThreadPool.close()
+        testRule.services.networkConnectivityService.close()
+        testRule.services.otelSdkConfig.close()
+        testRule.services.workerThreadPool.close()
     }
 
     private fun obtainSessionPartDirectory(

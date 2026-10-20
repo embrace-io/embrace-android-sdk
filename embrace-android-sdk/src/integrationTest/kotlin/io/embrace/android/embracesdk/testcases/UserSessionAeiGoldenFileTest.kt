@@ -69,7 +69,7 @@ internal class UserSessionAeiGoldenFileTest(
             testCaseAction = {
                 drainAeiInstrumentation()
                 pendingUserSessionId = checkNotNull(
-                    testRule.moduleGraph.sessionOrchestrator.currentUserSession()
+                    testRule.services.sessionOrchestrator.currentUserSession()
                 ).userSessionId
             },
             assertAction = {

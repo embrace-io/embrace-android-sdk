@@ -85,7 +85,7 @@ internal class ExperimentTrackingFoundationTest(
                         "e:promo::$variantlessExperimentStartMs"
                 assertEquals(
                     expectedRecords,
-                    testRule.moduleGraph.experimentTrackingService.value.getRecords(),
+                    testRule.services.experimentTrackingService.getRecords(),
                 )
 
                 val envelopes = getSessionEnvelopes(2)

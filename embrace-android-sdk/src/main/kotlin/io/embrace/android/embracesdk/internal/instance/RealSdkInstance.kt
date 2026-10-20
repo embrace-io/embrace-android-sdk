@@ -1,5 +1,6 @@
 package io.embrace.android.embracesdk.internal.instance
 
+import android.app.Application
 import android.content.Context
 import android.util.Log
 import io.embrace.android.embracesdk.core.BuildConfig
@@ -27,20 +28,49 @@ import io.embrace.android.embracesdk.internal.api.delegate.UserSessionApiDelegat
 import io.embrace.android.embracesdk.internal.api.delegate.ViewTrackingApiDelegate
 import io.embrace.android.embracesdk.internal.arch.InstrumentationArgs
 import io.embrace.android.embracesdk.internal.arch.InstrumentationProvider
+import io.embrace.android.embracesdk.internal.arch.InstrumentationRegistry
+import io.embrace.android.embracesdk.internal.arch.datasource.TelemetryDestination
+import io.embrace.android.embracesdk.internal.arch.state.ProcessStateTracker
+import io.embrace.android.embracesdk.internal.capture.connectivity.NetworkConnectivityService
+import io.embrace.android.embracesdk.internal.capture.metadata.MetadataService
 import io.embrace.android.embracesdk.internal.clock.Clock
+import io.embrace.android.embracesdk.internal.config.ConfigService
+import io.embrace.android.embracesdk.internal.delivery.caching.PayloadCachingService
+import io.embrace.android.embracesdk.internal.delivery.scheduling.SchedulingService
+import io.embrace.android.embracesdk.internal.delivery.storage.PayloadStorageService
 import io.embrace.android.embracesdk.internal.delivery.storage.StorageLocation
 import io.embrace.android.embracesdk.internal.delivery.storage.asFile
-import io.embrace.android.embracesdk.internal.injection.InitializedModuleGraph
+import io.embrace.android.embracesdk.internal.injection.WorkerThreadPool
+import io.embrace.android.embracesdk.internal.instrumentation.crash.CrashFileMarker
+import io.embrace.android.embracesdk.internal.instrumentation.crash.LastRunCrashVerifier
 import io.embrace.android.embracesdk.internal.instrumentation.crash.jvm.JvmCrashDataSource
 import io.embrace.android.embracesdk.internal.instrumentation.crash.ndk.NativeCrashDataSource
 import io.embrace.android.embracesdk.internal.instrumentation.network.NetworkCaptureDataSource
 import io.embrace.android.embracesdk.internal.instrumentation.network.NetworkRequestDataSource
 import io.embrace.android.embracesdk.internal.instrumentation.network.NetworkStateDataSource
 import io.embrace.android.embracesdk.internal.instrumentation.network.NetworkStatusDataSource
+import io.embrace.android.embracesdk.internal.instrumentation.startup.AppStartupDataCollector
 import io.embrace.android.embracesdk.internal.instrumentation.startup.ArtOptimizationState
+import io.embrace.android.embracesdk.internal.instrumentation.startup.SdkInitResourceUsageTracker
+import io.embrace.android.embracesdk.internal.instrumentation.startup.StartupService
+import io.embrace.android.embracesdk.internal.instrumentation.startup.StartupTracker
 import io.embrace.android.embracesdk.internal.instrumentation.startup.sdkInitEnvironmentAttributes
 import io.embrace.android.embracesdk.internal.instrumentation.startup.toSdkInitDurationAttributes
+import io.embrace.android.embracesdk.internal.instrumentation.thread.blockage.ThreadBlockageService
+import io.embrace.android.embracesdk.internal.logging.ErrorHandler
 import io.embrace.android.embracesdk.internal.logging.InternalErrorType
+import io.embrace.android.embracesdk.internal.logging.InternalLogger
+import io.embrace.android.embracesdk.internal.logs.LogLimitingService
+import io.embrace.android.embracesdk.internal.logs.LogOrchestrator
+import io.embrace.android.embracesdk.internal.logs.attachments.AttachmentService
+import io.embrace.android.embracesdk.internal.otel.config.OtelSdkConfig
+import io.embrace.android.embracesdk.internal.otel.logs.LogSink
+import io.embrace.android.embracesdk.internal.otel.spans.SpanRepository
+import io.embrace.android.embracesdk.internal.resurrection.PayloadResurrectionService
+import io.embrace.android.embracesdk.internal.resurrection.SessionPartReader
+import io.embrace.android.embracesdk.internal.session.id.SessionPartTracker
+import io.embrace.android.embracesdk.internal.session.orchestrator.PayloadStore
+import io.embrace.android.embracesdk.internal.session.orchestrator.SessionOrchestrator
 import io.embrace.android.embracesdk.internal.utils.EmbTrace
 import io.embrace.android.embracesdk.internal.worker.Worker
 import io.embrace.android.embracesdk.spans.TracingApi
@@ -60,9 +90,43 @@ private const val WORKER_TERMINATION_TIMEOUT_MS = 2_000L
  * Any non-public APIs or functionality related to the Embrace.java client should ideally be put
  * here instead.
  */
+@Suppress("LongParameterList")
 internal class RealSdkInstance(
-    private val moduleGraph: InitializedModuleGraph,
     private val clock: Clock,
+    private val logger: InternalLogger,
+    private val errorHandler: ErrorHandler,
+    private val primaryAbi: String,
+    private val configService: ConfigService,
+    private val workerThreadPool: WorkerThreadPool,
+    private val appContext: Context,
+    private val spanRepository: SpanRepository,
+    private val logSink: LogSink,
+    private val otelSdkConfig: Lazy<OtelSdkConfig>,
+    private val processStateTracker: ProcessStateTracker,
+    private val sessionPartTracker: SessionPartTracker,
+    private val networkConnectivityService: NetworkConnectivityService,
+    private val telemetryDestination: TelemetryDestination,
+    private val instrumentationRegistry: InstrumentationRegistry,
+    private val instrumentationArgs: InstrumentationArgs,
+    private val sessionOrchestrator: SessionOrchestrator,
+    private val sessionPartReader: SessionPartReader?,
+    private val logOrchestrator: LogOrchestrator,
+    private val attachmentService: AttachmentService,
+    private val logLimitingService: LogLimitingService,
+    private val metadataService: MetadataService,
+    private val payloadResurrectionService: PayloadResurrectionService?,
+    private val payloadCachingService: PayloadCachingService?,
+    private val payloadStore: PayloadStore?,
+    private val schedulingService: SchedulingService?,
+    private val cacheStorageService: PayloadStorageService?,
+    private val threadBlockageService: ThreadBlockageService?,
+    private val lastRunCrashVerifier: LastRunCrashVerifier,
+    private val crashMarker: CrashFileMarker,
+    private val startupTracker: StartupTracker,
+    private val startupService: StartupService,
+    private val appStartupDataCollector: AppStartupDataCollector,
+    private val sdkStartTimeMs: Long,
+    private val sdkInitResourceUsageTracker: SdkInitResourceUsageTracker,
     userApiDelegate: UserApiDelegate,
     sessionApiDelegate: UserSessionApiDelegate,
     networkRequestApiDelegate: NetworkRequestApiDelegate,
@@ -114,8 +178,8 @@ internal class RealSdkInstance(
 
         // drained last so errors raised by the drains above are captured
         buffer.drainSdkErrors(
-            moduleGraph.essentialServiceModule.telemetryDestination.takeIf {
-                moduleGraph.configService.config.dataCaptureEvent.internalExceptionCaptureEnabled
+            telemetryDestination.takeIf {
+                configService.config.dataCaptureEvent.internalExceptionCaptureEnabled
             },
         )
     }
@@ -142,24 +206,24 @@ internal class RealSdkInstance(
     override fun disable() = close()
 
     /**
-     * Tears down the SDK. Each step tolerates failure independently so that a partially initialized module graph
-     * does not prevent the remaining steps from running.
+     * Tears down the SDK. Each step tolerates failure independently so that a failing step does not prevent
+     * the remaining steps from running.
      */
     override fun close() {
         started = false
-        runCatching { moduleGraph.initModule.errorHandler.close() }
-        runCatching { moduleGraph.openTelemetryModule.otelSdkConfig.disableDataExport() }
-        runCatching { moduleGraph.instrumentationModule.instrumentationRegistry.close() }
+        runCatching { errorHandler.close() }
+        runCatching { otelSdkConfig.value.disableDataExport() }
+        runCatching { instrumentationRegistry.close() }
         runCatching { resetHucInstrumentation() }
-        runCatching { moduleGraph.threadBlockageService?.close() }
+        runCatching { threadBlockageService?.close() }
 
-        val rootDir = runCatching { moduleGraph.coreModule.context.filesDir }.getOrNull()
-        val fallbackDir = runCatching { moduleGraph.coreModule.context.cacheDir }.getOrNull()
-        val workerThreadPool = runCatching { moduleGraph.workerThreadPool }.getOrNull()
-        runCatching { moduleGraph.essentialServiceModule.close() }
-        runCatching { moduleGraph.dataCaptureServiceModule.startupTracker.close() }
-        runCatching { moduleGraph.openTelemetryModule.otelSdkConfig.shutdownExport() }
-        runCatching { workerThreadPool?.close() }
+        val rootDir = runCatching { appContext.filesDir }.getOrNull()
+        val fallbackDir = runCatching { appContext.cacheDir }.getOrNull()
+        runCatching { processStateTracker.close() }
+        runCatching { networkConnectivityService.close() }
+        runCatching { startupTracker.close() }
+        runCatching { otelSdkConfig.value.shutdownExport() }
+        runCatching { workerThreadPool.close() }
 
         if (rootDir == null || fallbackDir == null) {
             return
@@ -167,7 +231,7 @@ internal class RealSdkInstance(
         val executor = runCatching { Executors.newSingleThreadExecutor() }.getOrNull() ?: return
         executor.execute {
             runCatching {
-                if (workerThreadPool?.awaitTermination(WORKER_TERMINATION_TIMEOUT_MS) == false) {
+                if (!workerThreadPool.awaitTermination(WORKER_TERMINATION_TIMEOUT_MS)) {
                     Log.w("[Embrace]", "Timed out waiting for Embrace workers to finish before deleting data.")
                 }
                 StorageLocation.entries.map {
@@ -194,7 +258,7 @@ internal class RealSdkInstance(
     }
 
     override fun applicationInitEnd() {
-        moduleGraph.dataCaptureServiceModule.appStartupDataCollector.run {
+        appStartupDataCollector.run {
             this@RealSdkInstance.applicationInitStartMs?.let { applicationInitStart(it) }
             applicationInitEnd()
         }
@@ -204,25 +268,23 @@ internal class RealSdkInstance(
      * Performs bootstrapping by setting required values where there is an interdependency
      * between modules.
      */
-    internal fun postInit() = with(moduleGraph) {
+    internal fun postInit() {
         EmbTrace.trace(sectionName = "post-init", recordDuration = true) {
-            deliveryModule?.payloadCachingService?.run {
-                openTelemetryModule.spanRepository.addSpanChangeListener { reportBackgroundActivityStateChange() }
+            payloadCachingService?.run {
+                spanRepository.addSpanChangeListener { reportBackgroundActivityStateChange() }
             }
 
-            payloadSourceModule.metadataService.precomputeValues()
+            metadataService.precomputeValues()
 
             // Start the log orchestrator
-            openTelemetryModule.logSink.registerLogStoredCallback {
-                logModule.logOrchestrator.onLogsAdded()
+            logSink.registerLogStoredCallback {
+                logOrchestrator.onLogsAdded()
             }
-            essentialServiceModule.telemetryDestination.sessionUpdateAction =
-                userSessionOrchestrationModule.sessionOrchestrator::onSessionDataUpdate
-            essentialServiceModule.telemetryDestination.currentStatesProvider =
-                instrumentationModule.instrumentationRegistry::getCurrentStates
+            telemetryDestination.sessionUpdateAction = sessionOrchestrator::onSessionDataUpdate
+            telemetryDestination.currentStatesProvider = instrumentationRegistry::getCurrentStates
 
-            // Start the orchestrator and create the first session part once all the module dependencies have been created and wired up
-            userSessionOrchestrationModule.sessionOrchestrator.start()
+            // Start the orchestrator and create the first session part once all the dependencies have been created and wired up
+            sessionOrchestrator.start()
         }
     }
 
@@ -237,17 +299,13 @@ internal class RealSdkInstance(
     /**
      * Registers listeners for various lifecycle/system callbacks.
      */
-    private fun registerListeners() = with(moduleGraph) {
+    private fun registerListeners() {
         safeInit {
             EmbTrace.trace("service-registration") {
-                val ctx = coreModule.application
-                dataCaptureServiceModule.startupTracker.register(ctx)
+                startupTracker.register(appContext as Application)
 
                 // periodically fail any in-flight spans that have exceeded their timeout, so leaked spans
                 // are terminated and their memory released even during a long-running session.
-                val spanRepository = openTelemetryModule.spanRepository
-                val clock = initModule.clock
-                val logger = initModule.logger
                 workerThreadPool.backgroundWorker(Worker.Background.NonIoRegWorker).scheduleWithFixedDelay(
                     {
                         try {
@@ -261,23 +319,20 @@ internal class RealSdkInstance(
                     TimeUnit.MILLISECONDS,
                 )
 
-                val sessionPartTracker = essentialServiceModule.sessionPartTracker
-                val appStateTracker = essentialServiceModule.processStateTracker
-
                 sessionPartTracker.addSessionPartChangeListener {
                     configService.networkBehavior.domainCountLimiter.reset()
                 }
 
-                appStateTracker.addListener(dataCaptureServiceModule.appStartupDataCollector)
+                processStateTracker.addListener(appStartupDataCollector)
 
                 threadBlockageService?.let {
-                    appStateTracker.addListener(it)
+                    processStateTracker.addListener(it)
                     sessionPartTracker.addSessionPartChangeListener(it)
                 }
 
-                sessionPartTracker.addSessionPartChangeListener(logModule.attachmentService)
-                sessionPartTracker.addSessionPartChangeListener(logModule.logLimitingService)
-                sessionPartTracker.addSessionPartChangeListener(initModule.errorHandler::resetLimit)
+                sessionPartTracker.addSessionPartChangeListener(attachmentService)
+                sessionPartTracker.addSessionPartChangeListener(logLimitingService)
+                sessionPartTracker.addSessionPartChangeListener(errorHandler::resetLimit)
             }
         }
     }
@@ -285,14 +340,13 @@ internal class RealSdkInstance(
     /**
      * Loads instrumentation via SPI and legacy methods.
      */
-    private fun loadInstrumentation() = with(moduleGraph) {
+    private fun loadInstrumentation() {
         safeInit {
             EmbTrace.trace(sectionName = "load-instrumentation", recordDuration = true) {
-                val registry = instrumentationModule.instrumentationRegistry
-                registry.loadInstrumentations(loadInstrumentationProviders(), instrumentationModule.instrumentationArgs)
+                instrumentationRegistry.loadInstrumentations(loadInstrumentationProviders(), instrumentationArgs)
 
                 threadBlockageService?.startCapture()
-                featureModule.lastRunCrashVerifier.readAndCleanMarkerAsync(
+                lastRunCrashVerifier.readAndCleanMarkerAsync(
                     workerThreadPool.backgroundWorker(Worker.Background.IoRegWorker),
                 )
             }
@@ -320,7 +374,7 @@ internal class RealSdkInstance(
     /**
      * Initializes HttpUrlConnection instrumentation via reflection, if the module is present and capture is enabled.
      */
-    private fun initializeHucInstrumentation() = with(moduleGraph) {
+    private fun initializeHucInstrumentation() {
         val networkBehavior = configService.networkBehavior
         try {
             if (networkBehavior.isHttpUrlConnectionCaptureEnabled()) {
@@ -335,23 +389,22 @@ internal class RealSdkInstance(
                         NetworkRequestDataSource::class.java,
                         NetworkCaptureDataSource::class.java,
                     )
-                    val module = instrumentationModule
                     initMethod.invoke(
                         trackerObject,
                         networkBehavior.isRequestContentLengthCaptureEnabled(),
-                        module.instrumentationArgs,
-                        module.instrumentationRegistry.findByType(NetworkRequestDataSource::class),
-                        module.instrumentationRegistry.findByType(NetworkCaptureDataSource::class),
+                        instrumentationArgs,
+                        instrumentationRegistry.findByType(NetworkRequestDataSource::class),
+                        instrumentationRegistry.findByType(NetworkCaptureDataSource::class),
                     )
                 }
             }
         } catch (t: Throwable) {
-            initModule.logger.trackInternalError(InternalErrorType.InstrumentationRegFail, t)
+            logger.trackInternalError(InternalErrorType.InstrumentationRegFail, t)
         }
     }
 
     private fun resetHucInstrumentation() {
-        if (moduleGraph.configService.networkBehavior.isHttpUrlConnectionCaptureEnabled()) {
+        if (configService.networkBehavior.isHttpUrlConnectionCaptureEnabled()) {
             val trackerClass = Class.forName("io.embrace.android.embracesdk.instrumentation.huc.HttpUrlConnectionTracker")
             val trackerObject = trackerClass.getDeclaredField("INSTANCE").get(null)
             trackerClass.getDeclaredMethod("reset").invoke(trackerObject)
@@ -361,19 +414,19 @@ internal class RealSdkInstance(
     /**
      * Performs post-load instrumentation tasks such as setting listeners.
      */
-    internal fun postLoadInstrumentation() = with(moduleGraph) {
+    internal fun postLoadInstrumentation() {
         safeInit {
             // setup crash teardown handlers
-            val registry = instrumentationModule.instrumentationRegistry
+            val registry = instrumentationRegistry
             registry.findByType(JvmCrashDataSource::class)?.apply {
                 threadBlockageService?.let(::addCrashTeardownHandler)
-                addCrashTeardownHandler(logModule.logOrchestrator)
-                addCrashTeardownHandler(userSessionOrchestrationModule.sessionOrchestrator)
-                addCrashTeardownHandler(featureModule.crashMarker)
-                deliveryModule?.payloadStore?.let(::addCrashTeardownHandler)
+                addCrashTeardownHandler(logOrchestrator)
+                addCrashTeardownHandler(sessionOrchestrator)
+                addCrashTeardownHandler(crashMarker)
+                payloadStore?.let(::addCrashTeardownHandler)
             }
             workerThreadPool.backgroundWorker(Worker.Background.NonIoRegWorker).submit {
-                with(essentialServiceModule.networkConnectivityService) {
+                with(networkConnectivityService) {
                     registry.findByType(NetworkStatusDataSource::class)?.let(::addNetworkConnectivityListener)
                     registry.findByType(NetworkStateDataSource::class)?.let(::addNetworkConnectivityListener)
                     register()
@@ -385,42 +438,40 @@ internal class RealSdkInstance(
     /**
      * Trigger sending cached data on disk.
      */
-    private fun triggerPayloadSend() = with(moduleGraph) {
+    private fun triggerPayloadSend() {
         safeInit {
             val worker = workerThreadPool.backgroundWorker(Worker.Background.IoRegWorker)
             worker.submit {
                 // Get real network status as soon as we can on the worker.
                 // This allows the delivery triggered by resurrection to get the most accurate network status as possible
                 // so that it won't waste time trying to send when the device is known to be offline.
-                deliveryModule?.schedulingService?.let(
-                    essentialServiceModule.networkConnectivityService::addNetworkConnectivityListener,
-                )
+                schedulingService?.let(networkConnectivityService::addNetworkConnectivityListener)
 
                 // process multi-file session part directories before resurrection can run. The reader resurrects
                 // dead parts itself, so a part this pass doesn't reach is still resurrected by a later pass
-                userSessionOrchestrationModule.sessionPartReader?.readPersistedSessionParts(true)
+                sessionPartReader?.readPersistedSessionParts(true)
 
-                val resurrectionService = payloadSourceModule.payloadResurrectionService
+                val resurrectionService = payloadResurrectionService
                 var resurrectionAttempted = false
                 if (resurrectionService != null) {
-                    deliveryModule?.schedulingService?.let { scheduler ->
+                    schedulingService?.let { scheduler ->
                         resurrectionService.addResurrectionCompleteListener(scheduler::onResurrectionComplete)
                     }
                     resurrectionService.resurrectOldPayloads(
                         nativeCrashServiceProvider = {
-                            instrumentationModule.instrumentationRegistry.findByType(NativeCrashDataSource::class)
+                            instrumentationRegistry.findByType(NativeCrashDataSource::class)
                         },
                         userSessionRestoreDecisionProvider = {
-                            userSessionOrchestrationModule.sessionOrchestrator.userSessionRestoreDecision
+                            sessionOrchestrator.userSessionRestoreDecision
                         },
                         pendingSessionPartIdsProvider = {
-                            userSessionOrchestrationModule.sessionPartReader?.storedSessionPartIds() ?: emptySet()
+                            sessionPartReader?.storedSessionPartIds() ?: emptySet()
                         },
                     )
                     resurrectionAttempted = true
                 } else {
-                    val payloadCount = deliveryModule?.cacheStorageService?.getUndeliveredPayloads()?.size ?: 0
-                    initModule.logger.trackInternalError(
+                    val payloadCount = cacheStorageService?.getUndeliveredPayloads()?.size ?: 0
+                    logger.trackInternalError(
                         type = InternalErrorType.PayloadResurrectionFail,
                         throwable = IllegalStateException(
                             "Resurrection service not found. Undelivered payloads not processed: $payloadCount",
@@ -430,7 +481,7 @@ internal class RealSdkInstance(
 
                 // Unblock scheduler and attempt to send undelivered payloads if no resurrection was attempted
                 if (!resurrectionAttempted) {
-                    deliveryModule?.schedulingService?.onResurrectionComplete()
+                    schedulingService?.onResurrectionComplete()
                 }
             }
         }
@@ -439,38 +490,37 @@ internal class RealSdkInstance(
     /**
      * Mark SDK initialization as complete.
      */
-    private fun markSdkInitComplete(sdkInitDurationsProvider: () -> Map<String, Long>) = with(moduleGraph) {
+    private fun markSdkInitComplete(sdkInitDurationsProvider: () -> Map<String, Long>) {
         safeInit {
-            val startupService = dataCaptureServiceModule.startupService
             EmbTrace.trace("startup-tracking") {
                 val sdkInitDurations = sdkInitDurationsProvider()
                 val resourceUsageTracker = sdkInitResourceUsageTracker
                 resourceUsageTracker.captureEnd()
                 startupService.setSdkStartupInfo(
                     startTimeMs = sdkStartTimeMs,
-                    endTimeMs = initModule.clock.now(),
-                    endState = essentialServiceModule.processStateTracker.getAppState(),
+                    endTimeMs = clock.now(),
+                    endState = processStateTracker.getAppState(),
                     threadName = Thread.currentThread().name,
                     attributesProvider = {
                         sdkInitDurations.toSdkInitDurationAttributes() +
                             resourceUsageTracker.buildAttributes() +
                             sdkInitEnvironmentAttributes(
-                                nowMs = initModule.clock.now(),
-                                logger = initModule.logger,
-                                packageInfo = instrumentationModule.instrumentationArgs.packageInfo,
+                                nowMs = clock.now(),
+                                logger = logger,
+                                packageInfo = instrumentationArgs.packageInfo,
                                 powerManagerProvider = {
-                                    instrumentationModule.instrumentationArgs.systemService(Context.POWER_SERVICE)
+                                    instrumentationArgs.systemService(Context.POWER_SERVICE)
                                 },
                                 activityManagerProvider = {
-                                    instrumentationModule.instrumentationArgs.systemService(Context.ACTIVITY_SERVICE)
+                                    instrumentationArgs.systemService(Context.ACTIVITY_SERVICE)
                                 },
-                                prefsFileSizeProvider = { defaultPrefsFile(coreModule.context)?.length() },
+                                prefsFileSizeProvider = { defaultPrefsFile(appContext)?.length() },
                             ) {
-                                coreModule.context.applicationInfo?.sourceDir?.let { sourceDir ->
+                                appContext.applicationInfo?.sourceDir?.let { sourceDir ->
                                     ArtOptimizationState.create(
                                         apkPath = sourceDir,
-                                        primaryAbi = initModule.systemInfo.primaryAbi,
-                                        logger = initModule.logger,
+                                        primaryAbi = primaryAbi,
+                                        logger = logger,
                                     )
                                 }
                             }
@@ -483,7 +533,7 @@ internal class RealSdkInstance(
             val appId = configService.appId
             val startMsg = "Embrace SDK version ${BuildConfig.VERSION_NAME} started" +
                 (appId?.let { " for appId = $it" } ?: " without an app ID")
-            initModule.logger.logInfo(startMsg)
+            logger.logInfo(startMsg)
         }
     }
 
@@ -496,7 +546,7 @@ internal class RealSdkInstance(
         try {
             init()
         } catch (t: Throwable) {
-            moduleGraph.initModule.logger.trackInternalError(InternalErrorType.SdkInitPhaseFail, t)
+            logger.trackInternalError(InternalErrorType.SdkInitPhaseFail, t)
         }
     }
 

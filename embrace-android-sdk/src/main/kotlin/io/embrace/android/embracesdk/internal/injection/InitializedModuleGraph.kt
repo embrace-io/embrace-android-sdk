@@ -69,9 +69,13 @@ internal class InitializedModuleGraph(
     val configService: ConfigService = configLoadServices.configService
 
     private val otelSignalContext = OtelSignalContext(
-        essentialServiceModuleProvider = { essentialServiceModule },
-        userSessionOrchestrationModuleProvider = { userSessionOrchestrationModule },
-        instrumentationModuleProvider = { instrumentationModule },
+        sessionIdsProvider = { userSessionOrchestrationModule.sessionIdsProvider },
+        userServiceProvider = { essentialServiceModule.userService },
+        sessionPartTrackerProvider = { essentialServiceModule.sessionPartTracker },
+        processStateTrackerProvider = { essentialServiceModule.processStateTracker },
+        experimentTrackingServiceProvider = { essentialServiceModule.experimentTrackingService },
+        userSessionPropertiesServiceProvider = { essentialServiceModule.userSessionPropertiesService },
+        instrumentationRegistryProvider = { instrumentationModule.instrumentationRegistry },
     )
 
     val openTelemetryModule: OpenTelemetryModule = EmbTrace.trace("otel-module") {

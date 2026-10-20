@@ -126,7 +126,7 @@ internal class InitializedModuleGraphTest {
 
     private fun createModuleGraphWithPersistedConfig(cfg: RemoteConfig): InitializedModuleGraph {
         val storageDir = File(context.filesDir, PersistedConfig.STORAGE_DIR_NAME).apply { mkdirs() }
-        File(storageDir, "most_recent_response").outputStream().buffered().use { stream ->
+        File(storageDir, PersistedConfig.CONFIG_RESPONSE_FILE_NAME).outputStream().buffered().use { stream ->
             TestPlatformSerializer().toJson(cfg, RemoteConfig.serializer(), stream)
         }
         val initModule = FakeInitModule(clock = clock, logger = logger, otelSdkMode = OtelSdkMode.COMPAT)

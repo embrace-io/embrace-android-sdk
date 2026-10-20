@@ -252,8 +252,8 @@ internal class SdkIntegrationTestRule(
         val storageDir = File(ctx.filesDir, PersistedConfig.STORAGE_DIR_NAME).apply {
             mkdirs()
         }
-        File(storageDir, "etag").writeText("persisted_etag")
-        val responseFile = File(storageDir, "most_recent_response")
+        File(storageDir, PersistedConfig.ETAG_FILE_NAME).writeText("persisted_etag")
+        val responseFile = File(storageDir, PersistedConfig.CONFIG_RESPONSE_FILE_NAME)
 
         responseFile.outputStream().buffered().use { stream ->
             TestPlatformSerializer().toJson(persistedRemoteConfig, RemoteConfig.serializer(), stream)

@@ -1,5 +1,6 @@
 package io.embrace.android.embracesdk.internal.config.store
 
+import io.embrace.android.embracesdk.internal.config.PersistedConfig
 import io.embrace.android.embracesdk.internal.config.cache.CachedConfiguration
 import io.embrace.android.embracesdk.internal.config.remote.RemoteConfig
 import io.embrace.android.embracesdk.internal.config.source.ConfigHttpResponse
@@ -15,12 +16,12 @@ internal class RemoteConfigStoreImpl(
     private val deviceIdProvider: () -> String,
 ) : RemoteConfigStore {
 
-    private val configFile by lazy { File(storageDir, "most_recent_response") }
-    private val etagFile by lazy { File(storageDir, "etag") }
+    private val configFile by lazy { File(storageDir, PersistedConfig.CONFIG_RESPONSE_FILE_NAME) }
+    private val etagFile by lazy { File(storageDir, PersistedConfig.ETAG_FILE_NAME) }
 
     // binary fast-path cache. Not created up-front: its absence is a clean cache miss that falls
     // back to [configFile]/[etagFile].
-    private val cachedConfigFile by lazy { File(storageDir, "cached_config") }
+    private val cachedConfigFile by lazy { File(storageDir, PersistedConfig.CACHED_CONFIG_FILE_NAME) }
 
     override fun loadResponse(): StoredConfigResponse? = loadFromCache() ?: loadFromJson()
 

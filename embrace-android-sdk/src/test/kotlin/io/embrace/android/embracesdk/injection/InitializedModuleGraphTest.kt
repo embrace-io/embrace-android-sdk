@@ -15,7 +15,6 @@ import io.embrace.android.embracesdk.internal.config.PersistedConfig
 import io.embrace.android.embracesdk.internal.config.remote.OtelKotlinSdkConfig
 import io.embrace.android.embracesdk.internal.config.remote.RemoteConfig
 import io.embrace.android.embracesdk.internal.injection.ConfigLoadServices
-import io.embrace.android.embracesdk.internal.injection.EssentialServiceModuleImpl
 import io.embrace.android.embracesdk.internal.injection.InitializedModuleGraph
 import io.embrace.android.embracesdk.internal.injection.PreStartServices
 import io.embrace.android.embracesdk.internal.instance.RealSdkInstance
@@ -71,7 +70,7 @@ internal class InitializedModuleGraphTest {
             assertNotNull(initModule)
             assertNotNull(openTelemetryModule)
             assertNotNull(workerThreadPool)
-            assertTrue(essentialServiceModule is EssentialServiceModuleImpl)
+            assertNotNull(processStateTracker)
             assertNotNull(startupTracker)
             assertNotNull(intakeService)
             assertNotNull(metadataService)

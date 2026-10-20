@@ -1,18 +1,14 @@
 package io.embrace.android.embracesdk.internal.injection
 
 import android.content.Context
-import io.embrace.android.embracesdk.internal.capture.connectivity.NetworkConnectivityService
 import io.embrace.android.embracesdk.internal.config.ConfigService
 import io.embrace.android.embracesdk.internal.config.PersistedConfig
 import io.embrace.android.embracesdk.internal.config.instrumented.schema.InstrumentedConfig
 import io.embrace.android.embracesdk.internal.otel.config.ExternalOtelConfig
 import io.embrace.android.embracesdk.internal.serialization.PlatformSerializer
 import io.embrace.android.embracesdk.internal.session.id.SessionIdsProvider
-import io.embrace.android.embracesdk.internal.session.lifecycle.LifecycleTracker
-import io.embrace.android.embracesdk.internal.session.orchestrator.SessionOrchestrator
 import io.embrace.android.embracesdk.internal.storage.StorageService
 import io.embrace.android.embracesdk.internal.store.KeyValueStore
-import io.embrace.android.embracesdk.internal.utils.Provider
 import okhttp3.OkHttpClient
 
 typealias ConfigServiceSupplier = (
@@ -29,18 +25,6 @@ typealias CoreModuleSupplier = (
     initModule: InitModule,
     keyValueStore: Lazy<KeyValueStore>,
 ) -> CoreModule
-
-typealias EssentialServiceModuleSupplier = (
-    initModule: InitModule,
-    configService: ConfigService,
-    openTelemetryModule: OpenTelemetryModule,
-    coreModule: CoreModule,
-    workerThreadPool: WorkerThreadPool,
-    startupContext: Context?,
-    lifecycleTrackerProvider: Provider<LifecycleTracker?>,
-    networkConnectivityServiceProvider: Provider<NetworkConnectivityService?>,
-    sessionOrchestratorProvider: Provider<SessionOrchestrator>,
-) -> EssentialServiceModule
 
 typealias InitModuleSupplier = (
     preStartServices: PreStartServices,

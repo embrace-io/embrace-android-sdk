@@ -32,7 +32,6 @@ import io.embrace.android.embracesdk.internal.injection.ConfigLoadServices
 import io.embrace.android.embracesdk.internal.injection.ConfigLoadServicesSupplier
 import io.embrace.android.embracesdk.internal.injection.CoreModule
 import io.embrace.android.embracesdk.internal.injection.CoreModuleImpl
-import io.embrace.android.embracesdk.internal.injection.EssentialServiceModuleImpl
 import io.embrace.android.embracesdk.internal.injection.InitModule
 import io.embrace.android.embracesdk.internal.injection.InitializedModuleGraph
 import io.embrace.android.embracesdk.internal.injection.ModuleGraphSupplier
@@ -215,6 +214,8 @@ internal class EmbraceSetupInterface(
         payloadStorageService = fakePayloadStorageService?.let { fake -> { fake } },
         cacheStorageService = fakeCacheStorageService?.let { fake -> { fake } },
         payloadStorageLimit = { payloadStorageLimit },
+        lifecycleTracker = { AndroidxProcessLifecycleTracker(fakeLifecycleOwner) },
+        networkConnectivityService = { fakeNetworkConnectivityService },
     )
 
     fun createModuleGraphSupplier(): ModuleGraphSupplier =
@@ -251,19 +252,6 @@ internal class EmbraceSetupInterface(
         coreModuleSupplier = { _, _, suppliedStore ->
             moduleGraphFailure?.let { throw it }
             CoreModuleImpl(fakeCoreModule.context, fakeInitModule, suppliedStore)
-        },
-        essentialServiceModuleSupplier = { initModule, configService, openTelemetryModule, coreModule, workerThreadPool, startupContext, _, _, sessionOrchestratorProvider ->
-            EssentialServiceModuleImpl(
-                initModule = initModule,
-                configService = configService,
-                openTelemetryModule = openTelemetryModule,
-                coreModule = coreModule,
-                workerThreadPool = workerThreadPool,
-                startupContext = startupContext,
-                lifecycleTrackerProvider = { AndroidxProcessLifecycleTracker(fakeLifecycleOwner) },
-                networkConnectivityServiceProvider = { fakeNetworkConnectivityService },
-                sessionOrchestratorProvider = sessionOrchestratorProvider,
-            )
         },
         threadBlockageServiceSupplier = { args ->
             if (threadBlockageWatchdogThread != null) {

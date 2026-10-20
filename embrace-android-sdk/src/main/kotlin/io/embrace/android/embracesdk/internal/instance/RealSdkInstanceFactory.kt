@@ -40,10 +40,10 @@ internal fun createRealSdkInstance(
         spanRepository = moduleGraph.openTelemetryModule.spanRepository,
         logSink = moduleGraph.openTelemetryModule.logSink,
         otelSdkConfig = lazy { moduleGraph.openTelemetryModule.otelSdkConfig },
-        processStateTracker = moduleGraph.essentialServiceModule.processStateTracker,
-        sessionPartTracker = moduleGraph.essentialServiceModule.sessionPartTracker,
-        networkConnectivityService = moduleGraph.essentialServiceModule.networkConnectivityService,
-        telemetryDestination = moduleGraph.essentialServiceModule.telemetryDestination,
+        processStateTracker = moduleGraph.processStateTracker,
+        sessionPartTracker = moduleGraph.sessionPartTracker,
+        networkConnectivityService = moduleGraph.networkConnectivityService,
+        telemetryDestination = moduleGraph.telemetryDestination,
         instrumentationRegistry = moduleGraph.instrumentationRegistry,
         instrumentationArgs = moduleGraph.instrumentationArgs,
         sessionOrchestrator = moduleGraph.sessionOrchestrator,
@@ -66,10 +66,10 @@ internal fun createRealSdkInstance(
         sdkStartTimeMs = moduleGraph.sdkStartTimeMs,
         sdkInitResourceUsageTracker = moduleGraph.sdkInitResourceUsageTracker,
         userApiDelegate = UserApiDelegate(
-            userService = lazy { moduleGraph.essentialServiceModule.userService },
+            userService = moduleGraph.userService,
         ),
         sessionApiDelegate = UserSessionApiDelegate(
-            userSessionPropertiesService = moduleGraph.essentialServiceModule.userSessionPropertiesService,
+            userSessionPropertiesService = moduleGraph.userSessionPropertiesService,
             sessionOrchestrator = moduleGraph.sessionOrchestrator,
         ),
         networkRequestApiDelegate = NetworkRequestApiDelegate(
@@ -94,7 +94,7 @@ internal fun createRealSdkInstance(
         ),
         sdkStateApiDelegate = SdkStateApiDelegate(
             deviceIdentifier = lazy { moduleGraph.configService.deviceId },
-            sessionIdsProvider = moduleGraph.essentialServiceModule.sessionIdsProvider,
+            sessionIdsProvider = moduleGraph.sessionIdsProvider,
             crashVerifier = moduleGraph.lastRunCrashVerifier,
         ),
         otelApiDelegate = OTelApiDelegate(
@@ -108,11 +108,11 @@ internal fun createRealSdkInstance(
             clock = moduleGraph.initModule.clock,
             uiLoadTraceEmitter = moduleGraph.uiLoadDataListener,
             appStartupDataCollector = moduleGraph.appStartupDataCollector,
-            navigationTrackingService = moduleGraph.essentialServiceModule.navigationTrackingService,
+            navigationTrackingService = moduleGraph.navigationTrackingService,
         ),
         experimentApiDelegate = ExperimentApiDelegate(
             clock = moduleGraph.initModule.clock,
-            experimentTrackingService = lazy { moduleGraph.essentialServiceModule.experimentTrackingService },
+            experimentTrackingService = moduleGraph.experimentTrackingService,
         ),
         tracingApi = moduleGraph.openTelemetryModule.tracingApi,
     )

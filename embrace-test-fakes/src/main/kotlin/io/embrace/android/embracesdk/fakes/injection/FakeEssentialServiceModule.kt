@@ -14,25 +14,17 @@ import io.embrace.android.embracesdk.internal.arch.navigation.NavigationTracking
 import io.embrace.android.embracesdk.internal.arch.state.ProcessStateTracker
 import io.embrace.android.embracesdk.internal.capture.connectivity.NetworkConnectivityService
 import io.embrace.android.embracesdk.internal.capture.user.UserService
-import io.embrace.android.embracesdk.internal.injection.EssentialServiceModule
 import io.embrace.android.embracesdk.internal.session.id.SessionIdsProvider
 import io.embrace.android.embracesdk.internal.session.id.SessionPartTracker
 
 class FakeEssentialServiceModule(
-    override val processStateTracker: ProcessStateTracker = FakeProcessStateTracker(),
-    override val navigationTrackingService: NavigationTrackingService = FakeNavigationTrackingService(),
-    override val sessionPartTracker: SessionPartTracker = FakeSessionPartTracker(),
-    override val sessionIdsProvider: SessionIdsProvider = FakeSessionIdsProvider(),
-    override val userService: UserService = FakeUserService(),
-    override val networkConnectivityService: NetworkConnectivityService = FakeNetworkConnectivityService(),
-    override val telemetryDestination: TelemetryDestination = FakeTelemetryDestination(),
-    override val userSessionPropertiesService: FakeUserSessionPropertiesService = FakeUserSessionPropertiesService(),
-    override val experimentTrackingService: FakeExperimentTrackingService = FakeExperimentTrackingService(),
-) : EssentialServiceModule {
-
-    var closed: Boolean = false
-
-    override fun close() {
-        closed = true
-    }
-}
+    val processStateTracker: ProcessStateTracker = FakeProcessStateTracker(),
+    val navigationTrackingService: NavigationTrackingService = FakeNavigationTrackingService(),
+    val sessionPartTracker: SessionPartTracker = FakeSessionPartTracker(),
+    val sessionIdsProvider: SessionIdsProvider = FakeSessionIdsProvider(),
+    val userService: UserService = FakeUserService(),
+    val networkConnectivityService: NetworkConnectivityService = FakeNetworkConnectivityService(),
+    val telemetryDestination: TelemetryDestination = FakeTelemetryDestination(),
+    val userSessionPropertiesService: FakeUserSessionPropertiesService = FakeUserSessionPropertiesService(),
+    val experimentTrackingService: FakeExperimentTrackingService = FakeExperimentTrackingService(),
+)

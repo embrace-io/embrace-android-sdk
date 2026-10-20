@@ -205,7 +205,7 @@ internal class ResurrectionFeatureTest(
     private fun shutdownSdkWithIncompleteSession() {
         // the fake runs writes still waiting on the snapshot debounce when it shuts down, without a real-time wait
         testRule.setup.getFakedWorkerExecutor(Worker.Background.SessionPersistenceWorker).shutdown()
-        testRule.moduleGraph.essentialServiceModule.networkConnectivityService.close()
+        testRule.moduleGraph.networkConnectivityService.close()
         testRule.moduleGraph.openTelemetryModule.otelSdkConfig.close()
         testRule.moduleGraph.workerThreadPool.close()
     }

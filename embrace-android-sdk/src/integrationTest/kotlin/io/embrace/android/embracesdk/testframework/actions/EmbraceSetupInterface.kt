@@ -50,7 +50,6 @@ import io.embrace.android.embracesdk.internal.injection.WorkerThreadPoolImpl
 import io.embrace.android.embracesdk.internal.injection.createConfigService
 import io.embrace.android.embracesdk.internal.instrumentation.crash.ndk.jniDelegateTestOverride
 import io.embrace.android.embracesdk.internal.instrumentation.crash.ndk.sharedObjectLoaderTestOverride
-import io.embrace.android.embracesdk.internal.instrumentation.startup.DataCaptureServiceModuleImpl
 import io.embrace.android.embracesdk.internal.instrumentation.startup.SdkInitResourceUsageTracker
 import io.embrace.android.embracesdk.internal.instrumentation.thread.blockage.createThreadBlockageService
 import io.embrace.android.embracesdk.internal.logging.ErrorHandlerImpl
@@ -215,6 +214,7 @@ internal class EmbraceSetupInterface(
 
     fun createSdkOverrides(): SdkOverrides = SdkOverrides(
         logOrchestratorWorker = { BackgroundWorker(logOrchestratorExecutor) },
+        versionChecker = simulatedVersionChecker?.let { versionChecker -> { versionChecker } },
     )
 
     fun createModuleGraphSupplier(deliveryTracer: DeliveryTracer): ModuleGraphSupplier =
@@ -313,21 +313,6 @@ internal class EmbraceSetupInterface(
             object : InstrumentationModule {
                 override val instrumentationRegistry: InstrumentationRegistry = FakeInstrumentationRegistry(impl.instrumentationRegistry)
                 override val instrumentationArgs: InstrumentationArgs = impl.instrumentationArgs
-            }
-        },
-        dataCaptureServiceModuleSupplier = simulatedVersionChecker?.let { versionChecker ->
-            { clock, errorHandler, destination, configService, appVersionStartupCounterProvider, startupClassifier, _, activityManager, backgroundWorker ->
-                DataCaptureServiceModuleImpl(
-                    clock = clock,
-                    errorHandler = errorHandler,
-                    destination = destination,
-                    configService = configService,
-                    appVersionStartupCounterProvider = appVersionStartupCounterProvider,
-                    startupClassifier = startupClassifier,
-                    versionChecker = versionChecker,
-                    activityManager = activityManager,
-                    backgroundWorker = backgroundWorker,
-                )
             }
         },
     )

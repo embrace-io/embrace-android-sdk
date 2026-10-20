@@ -61,11 +61,7 @@ class InstrumentationRegistryImpl(
     }
 
     private fun disable(dataSource: DataSource) {
-        try {
-            dataSource.onDataCaptureDisabled()
-        } catch (exc: Throwable) {
-            errorHandler.trackSdkError(SdkErrorType.InstrumentationDisableFail, exc)
-        }
+        errorHandler.guardSdkCode(SdkErrorType.InstrumentationDisableFail, dataSource::onDataCaptureDisabled)
     }
 
     override fun <T : DataSource> findByType(clazz: KClass<T>): T? {
@@ -92,10 +88,8 @@ class InstrumentationRegistryImpl(
     }
 
     private fun registerProvider(provider: InstrumentationProvider, args: InstrumentationArgs) {
-        try {
+        errorHandler.guardSdkCode(SdkErrorType.InstrumentationRegFail) {
             provider.register(args)?.let { add(it) }
-        } catch (exc: Throwable) {
-            errorHandler.trackSdkError(SdkErrorType.InstrumentationRegFail, exc)
         }
     }
 

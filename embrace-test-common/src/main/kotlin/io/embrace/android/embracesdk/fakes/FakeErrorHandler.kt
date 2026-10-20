@@ -62,7 +62,7 @@ class FakeErrorHandler(
         if (delegate != null) {
             delegate.guardSdkCodeEach(type, items, action)
         } else {
-            items.forEach { item -> guardSdkCode(type, Unit) { action(item) } }
+            items.forEach { item -> guardSdkCode(type) { action(item) } }
         }
     }
 

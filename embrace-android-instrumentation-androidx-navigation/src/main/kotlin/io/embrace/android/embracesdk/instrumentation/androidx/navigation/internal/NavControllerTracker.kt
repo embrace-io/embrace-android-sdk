@@ -47,7 +47,7 @@ internal class NavControllerTracker(
         if (trackerRef.get() == null) {
             return
         }
-        runCatching {
+        errorHandler.guardSdkCode(SdkErrorType.NavControllerTrackingFail) {
             val activityId = activity.getId()
             if (trackAttemptStatus[activityId] != true) {
                 synchronized(trackAttemptStatus) {
@@ -58,8 +58,6 @@ internal class NavControllerTracker(
                     }
                 }
             }
-        }.onFailure {
-            errorHandler.trackSdkError(SdkErrorType.NavControllerTrackingFail, it)
         }
     }
 
@@ -74,10 +72,8 @@ internal class NavControllerTracker(
     }
 
     private fun onDestinationChanged(activityId: Int, destination: NavDestination) {
-        try {
+        errorHandler.guardSdkCode(SdkErrorType.UiCallbackFail) {
             eventBus.emit(NavigationSignal.KEY, ScreenChanged(activityId, extractScreenName(destination), clock.now()))
-        } catch (exc: Throwable) {
-            errorHandler.trackSdkError(SdkErrorType.UiCallbackFail, exc)
         }
     }
 

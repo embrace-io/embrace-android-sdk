@@ -118,9 +118,5 @@ internal class NetworkCallbackConnectivityService(
     }
 
     private fun updateSafely(action: () -> Unit) =
-        runCatching {
-            action()
-        }.onFailure {
-            errorHandler.trackSdkError(SdkErrorType.ConnectivityUpdateFailure, it)
-        }
+        errorHandler.guardSdkCode(SdkErrorType.ConnectivityUpdateFailure, action)
 }

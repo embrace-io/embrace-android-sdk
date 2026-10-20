@@ -310,10 +310,8 @@ internal class RealSdkInstance(
                 // are terminated and their memory released even during a long-running session.
                 workerThreadPool.backgroundWorker(Worker.Background.NonIoRegWorker).scheduleWithFixedDelay(
                     {
-                        try {
+                        errorHandler.guardSdkCode(SdkErrorType.SpanTimeoutSweepFail) {
                             spanRepository.stopTimedOutSpans(clock.now())
-                        } catch (exc: Throwable) {
-                            errorHandler.trackSdkError(SdkErrorType.SpanTimeoutSweepFail, exc)
                         }
                     },
                     SPAN_TIMEOUT_SWEEP_INTERVAL_MS,
@@ -378,7 +376,7 @@ internal class RealSdkInstance(
      */
     private fun initializeHucInstrumentation() {
         val networkBehavior = configService.networkBehavior
-        try {
+        errorHandler.guardSdkCode(SdkErrorType.InstrumentationRegFail) {
             if (networkBehavior.isHttpUrlConnectionCaptureEnabled()) {
                 EmbTrace.trace(sectionName = "huc-init", recordDuration = true) {
                     val trackerClass = Class.forName("io.embrace.android.embracesdk.instrumentation.huc.HttpUrlConnectionTracker")
@@ -400,8 +398,6 @@ internal class RealSdkInstance(
                     )
                 }
             }
-        } catch (t: Throwable) {
-            errorHandler.trackSdkError(SdkErrorType.InstrumentationRegFail, t)
         }
     }
 

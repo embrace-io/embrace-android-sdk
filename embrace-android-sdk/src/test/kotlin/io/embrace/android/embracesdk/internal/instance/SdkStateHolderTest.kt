@@ -344,7 +344,7 @@ internal class SdkStateHolderTest {
     }
 
     private fun trackError() {
-        bufferedErrorHandler.guardSdkCode(SdkErrorType.PublicApiFail, Unit) { throw IllegalStateException() }
+        bufferedErrorHandler.guardSdkCode(SdkErrorType.PublicApiFail) { throw IllegalStateException() }
     }
 
     private fun createHolder(instance: SdkInstance) = createHolder { instance }

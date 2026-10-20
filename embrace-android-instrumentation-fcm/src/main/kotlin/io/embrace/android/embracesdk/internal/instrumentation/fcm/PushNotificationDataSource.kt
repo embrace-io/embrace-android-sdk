@@ -28,7 +28,7 @@ class PushNotificationDataSource(
     fun logPushNotification(
         message: RemoteMessage,
     ) {
-        try {
+        errorHandler.guardSdkCode(SdkErrorType.DataSourceDataCaptureFail) {
             val notification: RemoteMessage.Notification? = message.notification
             val type = notificationTypeFor(message.data.isNotEmpty(), notification != null)
 
@@ -40,8 +40,6 @@ class PushNotificationDataSource(
                 type = type,
                 notificationPriority = notification?.notificationPriority,
             )
-        } catch (e: Exception) {
-            errorHandler.trackSdkError(SdkErrorType.DataSourceDataCaptureFail, e)
         }
     }
 

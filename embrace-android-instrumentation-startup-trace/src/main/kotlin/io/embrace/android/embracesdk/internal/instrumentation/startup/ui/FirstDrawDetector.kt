@@ -60,7 +60,7 @@ internal class FirstDrawDetector(
                             // the same instance must be registered and stored so that it can be unregistered later
                             val frameCommitCallback = Runnable {
                                 if (!closed) {
-                                    invokeSafely(drawCompleteCallback)
+                                    errorHandler.guardSdkCode(SdkErrorType.UiCallbackFail, drawCompleteCallback)
                                 }
                             }
                             loadingActivities[instanceId] = frameCommitCallback
@@ -112,17 +112,9 @@ internal class FirstDrawDetector(
 
     private fun trackingLoad(instanceId: Int): Boolean = loadingActivities.containsKey(instanceId)
 
-    private fun invokeSafely(callback: () -> Unit) {
-        try {
-            callback()
-        } catch (exc: Throwable) {
-            errorHandler.trackSdkError(SdkErrorType.UiCallbackFail, exc)
-        }
-    }
-
     private fun View.onNextDraw(onDrawCallback: () -> Unit) {
         viewTreeObserver.addOnDrawListener(
-            PyNextDrawListener(this) { invokeSafely(onDrawCallback) },
+            PyNextDrawListener(this) { errorHandler.guardSdkCode(SdkErrorType.UiCallbackFail, onDrawCallback) },
         )
     }
 
@@ -130,7 +122,7 @@ internal class FirstDrawDetector(
         if (callback != null) {
             if (peekDecorView() == null) {
                 onContentChanged {
-                    invokeSafely(onDecorViewReady)
+                    errorHandler.guardSdkCode(SdkErrorType.UiCallbackFail, onDecorViewReady)
                     return@onContentChanged false
                 }
             } else {

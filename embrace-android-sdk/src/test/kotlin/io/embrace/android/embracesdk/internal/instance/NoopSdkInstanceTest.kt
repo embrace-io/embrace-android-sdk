@@ -69,9 +69,9 @@ internal class NoopSdkInstanceTest {
     fun `onPostStart discards buffered SDK errors`() {
         val handler = ErrorHandlerImpl(FakeClock())
         val buffer = BufferingSdkInstance({ 0 }, handler)
-        handler.guardSdkCode(SdkErrorType.DeliverySchedulingFail, Unit) { throw IllegalStateException() }
+        handler.guardSdkCode(SdkErrorType.DeliverySchedulingFail) { throw IllegalStateException() }
         instance.onPostStart(buffer)
-        handler.guardSdkCode(SdkErrorType.DeliverySchedulingFail, Unit) { throw IllegalStateException() }
+        handler.guardSdkCode(SdkErrorType.DeliverySchedulingFail) { throw IllegalStateException() }
 
         val destination = FakeTelemetryDestination()
         buffer.drainSdkErrors(destination)

@@ -154,14 +154,12 @@ abstract class StateDataSource<T : Any>(
 
     private fun createSessionStateSpan(initialValue: T) {
         if (stateCaptureActive.get() && args.sessionPartId() != null) {
-            try {
+            errorHandler.guardSdkCode(SdkErrorType.SessionStateCreationFail) {
                 partStateToken.set(
                     args.destination.startSessionPartStateCapture(
                         state = stateTypeFactory(initialValue),
                     ),
                 )
-            } catch (t: Throwable) {
-                errorHandler.trackSdkError(SdkErrorType.SessionStateCreationFail, t)
             }
         }
     }

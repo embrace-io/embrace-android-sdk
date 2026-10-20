@@ -130,15 +130,13 @@ class BlockedThreadDetector(
      * main thread that is used to check whether it is live or not.
      */
     private fun checkHeartbeat() {
-        try {
+        errorHandler.guardSdkCode(SdkErrorType.ThreadBlockageHeartbeatCheckFail) {
             val now = clock.now()
             if (!targetThreadHandler.hasMessages(HEARTBEAT_REQUEST)) {
                 val heartbeatMessage = Message.obtain(targetThreadHandler, HEARTBEAT_REQUEST)
                 targetThreadHandler.sendMessage(heartbeatMessage)
             }
             onMonitorThreadInterval(now)
-        } catch (exc: Exception) {
-            errorHandler.trackSdkError(SdkErrorType.ThreadBlockageHeartbeatCheckFail, exc)
         }
     }
 

@@ -251,12 +251,7 @@ class SessionPartWriterImpl(
      * through [PartWriters.spanSnapshotWrites], which can only append what it drains.
      */
     private fun queueSpanSnapshotsSeed(writers: PartWriters) = EmbTrace.trace("mf-queue-span-snapshots") {
-        val spans = try {
-            inFlightSpanSource()
-        } catch (exc: Throwable) {
-            errorHandler.trackSdkError(SdkErrorType.SpanSnapshotsWriteFail, exc)
-            return@trace
-        }
+        val spans = errorHandler.guardSdkCode(SdkErrorType.SpanSnapshotsWriteFail, null, inFlightSpanSource) ?: return@trace
         execute(writers, SdkErrorType.SpanSnapshotsWriteFail, { worker.submit(it) }) {
             writers.spanSnapshots.write(writers.snapshotsOf(spans))
         }
@@ -309,11 +304,7 @@ class SessionPartWriterImpl(
     ): (Runnable) -> Runnable = { task ->
         Runnable {
             if (!abandoned()) {
-                try {
-                    task.run()
-                } catch (exc: Throwable) {
-                    errorHandler.trackSdkError(errorType, exc)
-                }
+                errorHandler.guardSdkCode(errorType, task::run)
             }
         }
     }
@@ -322,11 +313,7 @@ class SessionPartWriterImpl(
      * Signals that a session part is fully written.
      */
     private fun notifyWritesComplete() {
-        try {
-            onWritesComplete()
-        } catch (exc: Throwable) {
-            errorHandler.trackSdkError(SdkErrorType.SessionPartWritesCompleteFail, exc)
-        }
+        errorHandler.guardSdkCode(SdkErrorType.SessionPartWritesCompleteFail) { onWritesComplete() }
     }
 
     private fun persistenceEnabled(): Boolean =

@@ -82,29 +82,23 @@ internal class ActivityNavigationTracker(
     override fun onForeground() {}
 
     private fun handleActivityStarted(activity: Activity) {
-        try {
+        errorHandler.guardSdkCode(SdkErrorType.UiCallbackFail) {
             eventBus.emit(NavigationSignal.KEY, ActivityStarted(activity.getId(), clock.now()))
-        } catch (exc: Throwable) {
-            errorHandler.trackSdkError(SdkErrorType.UiCallbackFail, exc)
         }
     }
 
     private fun handleActivityResumed(activity: Activity) {
-        try {
+        errorHandler.guardSdkCode(SdkErrorType.UiCallbackFail) {
             eventBus.emit(NavigationSignal.KEY, ActivityResumed(activity.getId(), activity.localClassName, clock.now()))
 
             // Add screen source tracking after the resume signal is emitted to mimic how the rememberNavController Composable will do it.
             navigationTrackingService.trackNavigation(activity)
-        } catch (exc: Throwable) {
-            errorHandler.trackSdkError(SdkErrorType.UiCallbackFail, exc)
         }
     }
 
     private fun handleActivityPaused(activity: Activity) {
-        try {
+        errorHandler.guardSdkCode(SdkErrorType.UiCallbackFail) {
             eventBus.emit(NavigationSignal.KEY, ActivityPaused(activity.getId(), clock.now()))
-        } catch (exc: Throwable) {
-            errorHandler.trackSdkError(SdkErrorType.UiCallbackFail, exc)
         }
     }
 }

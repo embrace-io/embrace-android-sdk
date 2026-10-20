@@ -53,10 +53,8 @@ class SessionPartDirectoryStore(
      * the directory is on disk, or once the attempt has failed.
      */
     fun create(directory: SessionPartDirectory): Future<*> = worker.submit {
-        try {
+        errorHandler.guardSdkCode(SdkErrorType.SessionPartDirectoryStoreFail) {
             createImpl(directory)
-        } catch (exc: Throwable) {
-            errorHandler.trackSdkError(SdkErrorType.SessionPartDirectoryStoreFail, exc)
         }
     }
 

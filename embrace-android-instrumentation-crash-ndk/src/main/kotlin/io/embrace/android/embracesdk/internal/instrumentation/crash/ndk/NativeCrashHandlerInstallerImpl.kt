@@ -49,7 +49,7 @@ internal class NativeCrashHandlerInstallerImpl(
     }
 
     private fun startNativeCrashMonitoring() {
-        try {
+        errorHandler.guardSdkCode(SdkErrorType.NativeHandlerInstallFail) {
             if (sharedObjectLoader.loadEmbraceNative()) {
                 val markerFilePath = args.crashMarkerFile.absolutePath
                 updateSessionIds()
@@ -60,8 +60,6 @@ internal class NativeCrashHandlerInstallerImpl(
                 )
                 args.registerSessionPartChangeListener { updateSessionIds() }
             }
-        } catch (ex: Exception) {
-            errorHandler.trackSdkError(SdkErrorType.NativeHandlerInstallFail, ex)
         }
     }
 

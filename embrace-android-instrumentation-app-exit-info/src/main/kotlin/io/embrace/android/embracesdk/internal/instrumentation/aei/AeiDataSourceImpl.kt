@@ -44,11 +44,7 @@ internal class AeiDataSourceImpl(
 
     override fun onDataCaptureEnabled() {
         backgroundWorker.submit {
-            try {
-                processAeiRecords()
-            } catch (exc: Throwable) {
-                errorHandler.trackSdkError(SdkErrorType.ProcessAeiRecords, exc)
-            }
+            errorHandler.guardSdkCode(SdkErrorType.ProcessAeiRecords, ::processAeiRecords)
         }
     }
 

@@ -31,6 +31,12 @@ interface ErrorHandler : AutoCloseable {
     fun <T> guardSdkCode(type: SdkErrorType, default: T, action: () -> T): T
 
     /**
+     * Runs SDK code safely, ignoring any result. The [Throwable] is tracked as an SDK error of [type].
+     * [SdkErrorType.Ignored] reports nothing.
+     */
+    fun guardSdkCode(type: SdkErrorType, action: () -> Unit): Unit = guardSdkCode(type, Unit, action)
+
+    /**
      * Runs [action] for each of [items], guarding each call separately so one failure doesn't skip the rest.
      * [ConcurrentModificationException] thrown whilst iterating is also guarded.
      */

@@ -125,7 +125,7 @@ class SchedulingServiceImpl(
      * Find the next eligible payload with the highest priority and attempt to deliver it if the connection is ready.
      */
     private fun findAndDeliverNextPayload() {
-        try {
+        errorHandler.guardSdkCode(SdkErrorType.DeliverySchedulingFail) {
             connectionStatus.unblockIfWaitTimeExceeded(clock.now())
             if (connectionStatus.ready()) {
                 findNextPayload()?.let { payload ->
@@ -134,8 +134,6 @@ class SchedulingServiceImpl(
                     executeDelivery(payload)
                 }
             }
-        } catch (t: Throwable) {
-            errorHandler.trackSdkError(SdkErrorType.DeliverySchedulingFail, t)
         }
     }
 

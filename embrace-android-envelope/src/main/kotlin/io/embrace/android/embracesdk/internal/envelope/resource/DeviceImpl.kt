@@ -86,7 +86,7 @@ class DeviceImpl(
 
     @Suppress("DEPRECATION")
     private fun getScreenResolution(windowManager: WindowManager?): String {
-        return try {
+        return errorHandler.guardSdkCode(SdkErrorType.ScreenResCaptureFail, "") {
             val display = windowManager?.defaultDisplay
             val displayMetrics = DisplayMetrics()
             display?.getMetrics(displayMetrics)
@@ -96,9 +96,6 @@ class DeviceImpl(
                 displayMetrics.widthPixels,
                 displayMetrics.heightPixels,
             )
-        } catch (ex: Exception) {
-            errorHandler.trackSdkError(SdkErrorType.ScreenResCaptureFail, ex)
-            ""
         }
     }
 

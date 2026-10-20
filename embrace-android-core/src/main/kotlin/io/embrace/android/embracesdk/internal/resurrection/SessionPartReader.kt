@@ -89,7 +89,7 @@ class SessionPartReader(
             return
         }
         EmbTrace.trace("mf-read-session-parts") {
-            runCatching {
+            errorHandler.guardSdkCode(SdkErrorType.SessionPartReadFail) {
                 val stored = directoryStore.storedDirectories()
 
                 // Forget failed and incomplete parts that have since left the disk some other way, so these only hold
@@ -110,22 +110,18 @@ class SessionPartReader(
                     .mapNotNullTo(HashSet()) { parts -> parts.maxWithOrNull(SessionPartDirectory.comparator) }
 
                 for (directory in directories) {
-                    val proceed = runCatching {
+                    val proceed = errorHandler.guardSdkCode(SdkErrorType.SessionPartReadFail, true) {
                         deliver(
                             directory = directory,
                             isLastPartOfUserSession = directory in lastPartsOfUserSessions,
                             performingResurrection = performingResurrection,
                         )
-                    }.onFailure {
-                        errorHandler.trackSdkError(SdkErrorType.SessionPartReadFail, it)
-                    }.getOrDefault(true)
+                    }
 
                     if (!proceed) {
                         break
                     }
                 }
-            }.onFailure {
-                errorHandler.trackSdkError(SdkErrorType.SessionPartReadFail, it)
             }
         }
     }
@@ -141,10 +137,8 @@ class SessionPartReader(
 
     private fun deletePersistedSessionParts() {
         EmbTrace.trace("mf-delete-session-parts") {
-            runCatching {
+            errorHandler.guardSdkCode(SdkErrorType.SessionPartReadFail) {
                 sessionsDir.value.deleteRecursively()
-            }.onFailure {
-                errorHandler.trackSdkError(SdkErrorType.SessionPartReadFail, it)
             }
         }
     }
@@ -254,9 +248,7 @@ class SessionPartReader(
      */
     private fun runAfterStored(intake: PendingIntake, result: IntakeResult) {
         if (result == IntakeResult.STORED) {
-            runCatching(intake.afterStored).onFailure {
-                errorHandler.trackSdkError(SdkErrorType.PayloadResurrectionPayloadFail, it)
-            }
+            errorHandler.guardSdkCode(SdkErrorType.PayloadResurrectionPayloadFail, intake.afterStored)
         }
     }
 
@@ -309,7 +301,7 @@ class SessionPartReader(
         isLastPartOfUserSession: Boolean,
         lastWrittenMs: Long?,
     ): MultiFileDeadPartResurrector.ResurrectedPart? {
-        val resurrected = runCatching {
+        val resurrected = errorHandler.guardSdkCode(SdkErrorType.PayloadResurrectionPayloadFail, null) {
             deadPartResurrector.resurrect(
                 deadPart = deadPart,
                 directory = directory,
@@ -317,9 +309,7 @@ class SessionPartReader(
                 isLastPartOfUserSession = isLastPartOfUserSession,
                 lastWrittenMs = lastWrittenMs,
             )
-        }.onFailure {
-            errorHandler.trackSdkError(SdkErrorType.PayloadResurrectionPayloadFail, it)
-        }.getOrNull()
+        }
         if (resurrected == null) {
             deleteSessionPartData(directory, "dead session part could not be resurrected")
         }

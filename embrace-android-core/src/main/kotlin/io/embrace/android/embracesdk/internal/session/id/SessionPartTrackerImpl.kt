@@ -53,10 +53,8 @@ internal class SessionPartTrackerImpl(
 
     override fun setProcessStateSummary(sessionPartId: String, userSessionId: String) {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
-            try {
+            errorHandler.guardSdkCode(SdkErrorType.ProcessStateSummaryFail) {
                 activityManager.value?.setProcessStateSummary("${sessionPartId}_$userSessionId".toByteArray())
-            } catch (e: Throwable) {
-                errorHandler.trackSdkError(SdkErrorType.ProcessStateSummaryFail, e)
             }
         }
     }

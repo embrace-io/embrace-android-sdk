@@ -118,16 +118,10 @@ class ConfigServiceImpl(
         }
     }
 
-    private fun getNativeSymbols(): NativeSymbols? {
-        try {
-            val encodedSymbols = instrumentedConfig.symbols.getBase64SharedObjectFilesMap() ?: return null
-            val decodedSymbols: String = encodedSymbols.decodeBase64()?.utf8() ?: return null
-            return serializer.fromJson(decodedSymbols, NativeSymbols.serializer())
-        } catch (ex: Exception) {
-            errorHandler.trackSdkError(SdkErrorType.InvalidNativeSymbols, ex)
-        }
-
-        return null
+    private fun getNativeSymbols(): NativeSymbols? = errorHandler.guardSdkCode(SdkErrorType.InvalidNativeSymbols, null) {
+        val encodedSymbols = instrumentedConfig.symbols.getBase64SharedObjectFilesMap() ?: return@guardSdkCode null
+        val decodedSymbols: String = encodedSymbols.decodeBase64()?.utf8() ?: return@guardSdkCode null
+        serializer.fromJson(decodedSymbols, NativeSymbols.serializer())
     }
 
     private companion object {

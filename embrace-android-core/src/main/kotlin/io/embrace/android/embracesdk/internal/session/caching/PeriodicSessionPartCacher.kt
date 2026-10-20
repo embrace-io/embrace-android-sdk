@@ -39,11 +39,7 @@ class PeriodicSessionPartCacher(
             return@Runnable
         }
         EmbTrace.trace("sf-periodic-cache-tick") {
-            try {
-                provider()
-            } catch (ex: Exception) {
-                errorHandler.trackSdkError(SdkErrorType.PeriodicSessionCacheFail, ex)
-            }
+            errorHandler.guardSdkCode(SdkErrorType.PeriodicSessionCacheFail, null, provider)
         }
     }
 

@@ -101,7 +101,7 @@ class HucLiteDataSource(
         clock: Clock,
         errorHandler: ErrorHandler,
     ) {
-        runCatching {
+        errorHandler.guardSdkCode(SdkErrorType.UrlStreamHandlerFactoryInstallFail) {
             val httpsHandlerClass = httpsHandlerClassProvider()
             val dataSourceProvider = dataSourceRef::get
             val instrumentedUrlStreamHandlerFactoryProvider = {
@@ -129,8 +129,6 @@ class HucLiteDataSource(
                 }
 
             factoryInstaller(newFactory ?: instrumentedUrlStreamHandlerFactoryProvider())
-        }.onFailure {
-            errorHandler.trackSdkError(SdkErrorType.UrlStreamHandlerFactoryInstallFail, it)
         }
     }
 

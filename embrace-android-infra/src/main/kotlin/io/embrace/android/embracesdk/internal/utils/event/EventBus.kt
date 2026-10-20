@@ -90,12 +90,7 @@ class EventBus(private val errorHandler: ErrorHandler) {
                 return
             }
             ensuredProducers.set(key.id)
-            val producer = try {
-                factory()
-            } catch (failure: Exception) {
-                errorHandler.trackSdkError(SdkErrorType.EventBusProducerFail, failure)
-                return
-            }
+            val producer = errorHandler.guardSdkCode(SdkErrorType.EventBusProducerFail, null, factory) ?: return
 
             // a stop while the factory ran may already have taken the producers to close
             if (stopped) {
@@ -219,11 +214,7 @@ class EventBus(private val errorHandler: ErrorHandler) {
     }
 
     private fun closeProducer(producer: AutoCloseable) {
-        try {
-            producer.close()
-        } catch (failure: Exception) {
-            errorHandler.trackSdkError(SdkErrorType.EventBusProducerFail, failure)
-        }
+        errorHandler.guardSdkCode(SdkErrorType.EventBusProducerFail, producer::close)
     }
 
     /**

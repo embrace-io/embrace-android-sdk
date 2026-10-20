@@ -88,10 +88,8 @@ class ViewDataSource(
     }
 
     override fun onActivityStarted(activity: Activity) {
-        try {
+        errorHandler.guardSdkCode(SdkErrorType.UiCallbackFail) {
             changeView(activity.javaClass.name)
-        } catch (exc: Throwable) {
-            errorHandler.trackSdkError(SdkErrorType.UiCallbackFail, exc)
         }
     }
 
@@ -99,11 +97,7 @@ class ViewDataSource(
      * Close all open fragments when the activity closes
      */
     override fun onActivityStopped(activity: Activity) {
-        try {
-            onViewClose()
-        } catch (exc: Throwable) {
-            errorHandler.trackSdkError(SdkErrorType.UiCallbackFail, exc)
-        }
+        errorHandler.guardSdkCode(SdkErrorType.UiCallbackFail, ::onViewClose)
     }
 
     override fun onActivityCreated(p0: Activity, p1: Bundle?) {

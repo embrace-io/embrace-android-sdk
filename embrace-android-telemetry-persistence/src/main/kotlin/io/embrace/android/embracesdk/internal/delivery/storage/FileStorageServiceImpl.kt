@@ -40,13 +40,10 @@ class FileStorageServiceImpl(
     )
 
     override fun store(metadata: StoredTelemetryMetadata, action: SerializationAction): StorageOutcome {
-        return try {
+        // If building the payload or writing it fails, a file system in trouble, such as a full disk, is
+        // not expected to recover soon, so this is not worth retrying.
+        return errorHandler.guardSdkCode(SdkErrorType.PayloadStorageFail, StorageOutcome.FAILED) {
             storeImpl(metadata, action)
-        } catch (t: Throwable) {
-            // Building the payload or writing it failed. A file system in trouble, such as a full disk, is
-            // not expected to recover soon, so this is not worth retrying.
-            errorHandler.trackSdkError(SdkErrorType.PayloadStorageFail, t)
-            StorageOutcome.FAILED
         }
     }
 

@@ -57,14 +57,14 @@ internal class ErrorHandlerImplTest {
     @Test
     fun `user code errors are not tracked`() {
         handler.drain(sink)
-        handler.guardSdkCode(type, Unit) { handler.guardUserCode { throw IllegalStateException() } }
+        handler.guardSdkCode(type) { handler.guardUserCode { throw IllegalStateException() } }
         assertTrue(errors.isEmpty())
     }
 
     @Test
     fun `Ignored type is not tracked`() {
         handler.drain(sink)
-        handler.guardSdkCode(SdkErrorType.Ignored, Unit) { throw IllegalStateException() }
+        handler.guardSdkCode(SdkErrorType.Ignored) { throw IllegalStateException() }
         assertTrue(errors.isEmpty())
     }
 
@@ -132,6 +132,6 @@ internal class ErrorHandlerImplTest {
     }
 
     private fun fail(exc: Throwable = IllegalStateException()) {
-        handler.guardSdkCode(type, Unit) { throw exc }
+        handler.guardSdkCode(type) { throw exc }
     }
 }

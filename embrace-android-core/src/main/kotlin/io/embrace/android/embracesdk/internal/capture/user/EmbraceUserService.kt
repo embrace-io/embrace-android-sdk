@@ -63,12 +63,7 @@ internal class EmbraceUserService(
     }
 
     override fun loadUserInfoFromDisk(): UserInfo? {
-        return try {
-            getStoredUserInfo()
-        } catch (ex: Exception) {
-            errorHandler.trackSdkError(SdkErrorType.UserLoadFail, ex)
-            null
-        }
+        return errorHandler.guardSdkCode(SdkErrorType.UserLoadFail, null, ::getStoredUserInfo)
     }
 
     override fun getUserInfo(): UserInfo = userInfo().copy()
@@ -193,11 +188,7 @@ internal class EmbraceUserService(
         synchronized(userInfoReference) {
             userInfoReference.set(newUserInfo)
         }
-        listeners.forEach { listener ->
-            runCatching(listener).onFailure {
-                errorHandler.trackSdkError(SdkErrorType.UserInfoCallbackFail, it)
-            }
-        }
+        errorHandler.guardSdkCodeEach(SdkErrorType.UserInfoCallbackFail, listeners) { listener -> listener() }
     }
 
     /**

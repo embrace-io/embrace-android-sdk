@@ -17,26 +17,22 @@ internal class ActivityLeakDetectionLifecycleCallbacks(
 ) : Application.ActivityLifecycleCallbacks {
 
     override fun onActivityPreCreated(activity: Activity, savedInstanceState: Bundle?) {
-        try {
+        errorHandler.guardSdkCode(SdkErrorType.UiCallbackFail) {
             leakDetector.trackOpened(activity, TrackingSource.ACTIVITY)
-        } catch (exc: Throwable) {
-            errorHandler.trackSdkError(SdkErrorType.UiCallbackFail, exc)
         }
     }
 
     override fun onActivityCreated(activity: Activity, savedInstanceState: Bundle?) {
-        try {
+        errorHandler.guardSdkCode(SdkErrorType.UiCallbackFail) {
             if (Build.VERSION.SDK_INT < Build.VERSION_CODES.Q) {
                 leakDetector.trackOpened(activity, TrackingSource.ACTIVITY)
             }
             fragmentSupport.onActivityCreated(activity)
-        } catch (exc: Throwable) {
-            errorHandler.trackSdkError(SdkErrorType.UiCallbackFail, exc)
         }
     }
 
     override fun onActivityDestroyed(activity: Activity) {
-        try {
+        errorHandler.guardSdkCode(SdkErrorType.UiCallbackFail) {
             val sessionIds = activeSessionIdsProvider()
             leakDetector.trackClosed(activity, TrackingSource.ACTIVITY, LeakContext(OBJECT_TYPE, sessionIds, activity.javaClass))
 
@@ -50,22 +46,18 @@ internal class ActivityLeakDetectionLifecycleCallbacks(
                     )
                 }
             }
-        } catch (exc: Throwable) {
-            errorHandler.trackSdkError(SdkErrorType.UiCallbackFail, exc)
         }
     }
 
     override fun onActivityPaused(activity: Activity) = Unit
 
     override fun onActivityResumed(activity: Activity) {
-        try {
+        errorHandler.guardSdkCode(SdkErrorType.UiCallbackFail) {
             if (webViewLeakDetectionEnabled) {
                 WebViewLeakScanner.scan(activity.window?.decorView, errorHandler) { webView ->
                     leakDetector.trackOpened(webView, TrackingSource.ACTIVITY)
                 }
             }
-        } catch (exc: Throwable) {
-            errorHandler.trackSdkError(SdkErrorType.UiCallbackFail, exc)
         }
     }
 

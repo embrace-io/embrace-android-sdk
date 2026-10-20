@@ -46,18 +46,16 @@ class StartupTracker(
     private var startupActivityId: Int? = null
 
     override fun onActivityPreCreated(activity: Activity, savedInstanceState: Bundle?) {
-        try {
+        errorHandler.guardSdkCode(SdkErrorType.UiCallbackFail) {
             firstActivityInit(activity)
             if (activity.useAsStartupActivity()) {
                 appStartupDataCollector.startupActivityPreCreated()
             }
-        } catch (exc: Throwable) {
-            errorHandler.trackSdkError(SdkErrorType.UiCallbackFail, exc)
         }
     }
 
     override fun onActivityCreated(activity: Activity, savedInstanceState: Bundle?) {
-        try {
+        errorHandler.guardSdkCode(SdkErrorType.UiCallbackFail) {
             firstActivityInit(activity)
             if (activity.useAsStartupActivity()) {
                 appStartupDataCollector.startupActivityInitStart()
@@ -69,40 +67,32 @@ class StartupTracker(
                 }
                 drawEventEmitter?.registerFirstDrawCallback(activity, {}, callback)
             }
-        } catch (exc: Throwable) {
-            errorHandler.trackSdkError(SdkErrorType.UiCallbackFail, exc)
         }
     }
 
     override fun onActivityPostCreated(activity: Activity, savedInstanceState: Bundle?) {
-        try {
+        errorHandler.guardSdkCode(SdkErrorType.UiCallbackFail) {
             if (activity.useAsStartupActivity()) {
                 appStartupDataCollector.startupActivityPostCreated()
             }
-        } catch (exc: Throwable) {
-            errorHandler.trackSdkError(SdkErrorType.UiCallbackFail, exc)
         }
     }
 
     override fun onActivityStarted(activity: Activity) {
-        try {
+        errorHandler.guardSdkCode(SdkErrorType.UiCallbackFail) {
             if (activity.isStartupActivity()) {
                 appStartupDataCollector.startupActivityInitEnd()
             }
-        } catch (exc: Throwable) {
-            errorHandler.trackSdkError(SdkErrorType.UiCallbackFail, exc)
         }
     }
 
     override fun onActivityResumed(activity: Activity) {
-        try {
+        errorHandler.guardSdkCode(SdkErrorType.UiCallbackFail) {
             if (activity.observeForStartup()) {
                 appStartupDataCollector.startupActivityResumed(
                     activityName = activity.localClassName,
                 )
             }
-        } catch (exc: Throwable) {
-            errorHandler.trackSdkError(SdkErrorType.UiCallbackFail, exc)
         }
     }
 

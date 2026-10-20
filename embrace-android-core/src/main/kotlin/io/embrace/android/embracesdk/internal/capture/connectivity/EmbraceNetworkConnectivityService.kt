@@ -26,21 +26,19 @@ internal class EmbraceNetworkConnectivityService(
     private var closed = false
 
     override fun onReceive(context: Context, intent: Intent) {
-        try {
+        errorHandler.guardSdkCode(SdkErrorType.NetworkStatusCaptureFail) {
             val connectivityStatus = getCurrentConnectivityStatus()
             if (lastConnectivityStatus != connectivityStatus) {
                 lastConnectivityStatus = connectivityStatus
                 notifyNetworkConnectivityListeners(connectivityStatus)
             }
-        } catch (ex: Exception) {
-            errorHandler.trackSdkError(SdkErrorType.NetworkStatusCaptureFail, ex)
         }
     }
 
     private fun getCurrentConnectivityStatus(): ConnectivityStatus {
-        return try {
+        return errorHandler.guardSdkCode(SdkErrorType.NetworkStatusCaptureFail, OptimisticUnknown) {
             // if ConnectivityManager is unavailable, assume the network is reachable
-            val manager = connectivityManager.value ?: return ConnectivityStatus.Unverified
+            val manager = connectivityManager.value ?: return@guardSdkCode ConnectivityStatus.Unverified
             val networkInfo = manager.activeNetworkInfo
             if (networkInfo != null && networkInfo.isConnected) {
                 // Network is reachable
@@ -53,9 +51,6 @@ internal class EmbraceNetworkConnectivityService(
                 // Network is not reachable
                 ConnectivityStatus.None
             }
-        } catch (e: Exception) {
-            errorHandler.trackSdkError(SdkErrorType.NetworkStatusCaptureFail, e)
-            OptimisticUnknown
         }
     }
 

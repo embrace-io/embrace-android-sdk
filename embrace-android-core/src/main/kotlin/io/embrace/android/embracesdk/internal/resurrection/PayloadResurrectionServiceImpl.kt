@@ -54,19 +54,11 @@ internal class PayloadResurrectionServiceImpl(
         pendingSessionPartIdsProvider: Provider<Set<String>>,
     ) {
         EmbTrace.trace("resurrect-payloads") {
-            runCatching {
+            errorHandler.guardSdkCode(SdkErrorType.PayloadResurrectionFail) {
                 processTombstones(nativeCrashServiceProvider, userSessionRestoreDecisionProvider(), pendingSessionPartIdsProvider)
-            }.onFailure {
-                errorHandler.trackSdkError(SdkErrorType.PayloadResurrectionFail, it)
             }
         }
-        completionListeners.forEach { listener ->
-            runCatching {
-                listener()
-            }.onFailure {
-                errorHandler.trackSdkError(SdkErrorType.PayloadResurrectionFail, it)
-            }
-        }
+        errorHandler.guardSdkCodeEach(SdkErrorType.PayloadResurrectionFail, completionListeners) { listener -> listener() }
     }
 
     private fun processTombstones(
@@ -98,18 +90,13 @@ internal class PayloadResurrectionServiceImpl(
                 null
             }
 
-            runCatching {
+            errorHandler.guardSdkCode(SdkErrorType.PayloadResurrectionPayloadFail) {
                 payload.processUndeliveredPayload(
                     nativeCrashService = nativeCrashService,
                     nativeCrashProvider = nativeCrashes::get,
                     postNativeCrashProcessingCallback = processedCrashes::add,
                     userSessionTerminationReason = userSessionTerminationReason,
                     isBackgroundOnly = restoreDecision?.takeIf { it.userSessionId == payload.userSessionId }?.backgroundOnly == true,
-                )
-            }.onFailure {
-                errorHandler.trackSdkError(
-                    type = SdkErrorType.PayloadResurrectionPayloadFail,
-                    throwable = it,
                 )
             }
 

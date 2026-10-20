@@ -49,7 +49,7 @@ class ErrorHandlerImpl(
 
     override fun <T> guardSdkCodeEach(type: SdkErrorType, items: Iterable<T>, action: (T) -> Unit) {
         try {
-            items.forEach { item -> guardSdkCode(type, Unit) { action(item) } }
+            items.forEach { item -> guardSdkCode(type) { action(item) } }
         } catch (exc: ConcurrentModificationException) {
             report(type, exc)
         }

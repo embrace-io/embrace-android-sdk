@@ -154,7 +154,7 @@ private class LifecycleEventEmitter(
     }
 
     fun create(activity: Activity) {
-        try {
+        errorHandler.guardSdkCode(SdkErrorType.UiCallbackFail) {
             if (activity.traceLoad()) {
                 uiLoadEventListener.create(
                     instanceId = traceInstanceId(activity),
@@ -163,26 +163,22 @@ private class LifecycleEventEmitter(
                     manualEnd = activity.isManualEnd(),
                 )
             }
-        } catch (exc: Throwable) {
-            errorHandler.trackSdkError(SdkErrorType.UiCallbackFail, exc)
         }
     }
 
     fun createEnd(activity: Activity) {
-        try {
+        errorHandler.guardSdkCode(SdkErrorType.UiCallbackFail) {
             if (activity.traceLoad()) {
                 uiLoadEventListener.createEnd(
                     instanceId = traceInstanceId(activity),
                     timestampMs = nowMs(),
                 )
             }
-        } catch (exc: Throwable) {
-            errorHandler.trackSdkError(SdkErrorType.UiCallbackFail, exc)
         }
     }
 
     fun start(activity: Activity) {
-        try {
+        errorHandler.guardSdkCode(SdkErrorType.UiCallbackFail) {
             if (activity.traceLoad()) {
                 val instanceId = traceInstanceId(activity)
                 if (drawEventEmitter != null) {
@@ -204,13 +200,11 @@ private class LifecycleEventEmitter(
                 }
                 instanceStartTime[instanceId] = nowMs()
             }
-        } catch (exc: Throwable) {
-            errorHandler.trackSdkError(SdkErrorType.UiCallbackFail, exc)
         }
     }
 
     fun startEnd(activity: Activity) {
-        try {
+        errorHandler.guardSdkCode(SdkErrorType.UiCallbackFail) {
             if (activity.traceLoad()) {
                 val instanceId = traceInstanceId(activity)
                 uiLoadEventListener.start(
@@ -224,26 +218,22 @@ private class LifecycleEventEmitter(
                     timestampMs = nowMs(),
                 )
             }
-        } catch (exc: Throwable) {
-            errorHandler.trackSdkError(SdkErrorType.UiCallbackFail, exc)
         }
     }
 
     fun resume(activity: Activity) {
-        try {
+        errorHandler.guardSdkCode(SdkErrorType.UiCallbackFail) {
             if (activity.traceLoad()) {
                 uiLoadEventListener.resume(
                     instanceId = traceInstanceId(activity),
                     timestampMs = nowMs(),
                 )
             }
-        } catch (exc: Throwable) {
-            errorHandler.trackSdkError(SdkErrorType.UiCallbackFail, exc)
         }
     }
 
     fun resumeEnd(activity: Activity) {
-        try {
+        errorHandler.guardSdkCode(SdkErrorType.UiCallbackFail) {
             if (activity.traceLoad()) {
                 val now = nowMs()
                 uiLoadEventListener.resumeEnd(
@@ -251,13 +241,11 @@ private class LifecycleEventEmitter(
                     timestampMs = now,
                 )
             }
-        } catch (exc: Throwable) {
-            errorHandler.trackSdkError(SdkErrorType.UiCallbackFail, exc)
         }
     }
 
     fun pause(activity: Activity) {
-        try {
+        errorHandler.guardSdkCode(SdkErrorType.UiCallbackFail) {
             if (activity.traceLoad()) {
                 val instanceId = traceInstanceId(activity)
                 instanceStartTime.remove(instanceId)
@@ -267,8 +255,6 @@ private class LifecycleEventEmitter(
                 )
                 drawEventEmitter?.unregisterFirstDrawCallback(activity)
             }
-        } catch (exc: Throwable) {
-            errorHandler.trackSdkError(SdkErrorType.UiCallbackFail, exc)
         }
     }
 

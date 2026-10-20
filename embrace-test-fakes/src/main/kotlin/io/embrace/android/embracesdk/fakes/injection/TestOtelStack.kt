@@ -2,7 +2,6 @@ package io.embrace.android.embracesdk.fakes.injection
 
 import io.embrace.android.embracesdk.internal.config.ConfigService
 import io.embrace.android.embracesdk.internal.config.behavior.SensitiveKeysBehavior
-import io.embrace.android.embracesdk.internal.injection.InitModule
 import io.embrace.android.embracesdk.internal.injection.createCurrentSessionPartSpan
 import io.embrace.android.embracesdk.internal.injection.createOtelSdkConfig
 import io.embrace.android.embracesdk.internal.injection.createRedactionFunction
@@ -23,7 +22,7 @@ import io.embrace.android.embracesdk.internal.spans.TracingApiDelegate
 import io.embrace.android.embracesdk.spans.TracingApi
 
 class TestOtelStack(
-    initModule: InitModule,
+    initModule: FakeInitModule,
     configService: ConfigService,
     externalOtelConfig: ExternalOtelConfig = ExternalOtelConfig(),
 ) {

@@ -14,7 +14,6 @@ import io.embrace.android.embracesdk.internal.config.remote.RemoteConfig
 import io.embrace.android.embracesdk.internal.delivery.debug.DeliveryTracer
 import io.embrace.android.embracesdk.internal.injection.ConfigLoadServicesSupplier
 import io.embrace.android.embracesdk.internal.injection.SdkOverrides
-import io.embrace.android.embracesdk.internal.injection.InitModule
 import io.embrace.android.embracesdk.internal.injection.InitializedModuleGraph
 import io.embrace.android.embracesdk.internal.injection.ModuleGraphSupplier
 import io.embrace.android.embracesdk.internal.instance.SdkState
@@ -61,7 +60,7 @@ import java.io.File
  *
  * The modules instantiated by default reference each other, e.g. the same instance of [FakeCoreModule] is used
  * in all the other modules. This means modifications of one object within a module will be reflected in the
- * other modules, e.g. [InitModule.clock]. This allows the system to behave as one unit.
+ * other modules, e.g. the [FakeClock]. This allows the system to behave as one unit.
  *
  * While it is possible to override the default behavior of the [Embrace] instance in the Rule by passing in
  * a custom supplier to create an instance of [EmbraceSetupInterface] with custom overridden constructor parameters, be
@@ -174,7 +173,7 @@ internal class SdkIntegrationTestRule(
             { sdkStateHolder.state },
         )
         payloadAssertion = EmbracePayloadAssertionInterface(
-            setup.initModule,
+            setup.initModule.jsonSerializer,
             deliveryTracer,
             apiServer,
         ) { sdkStateHolder.state }

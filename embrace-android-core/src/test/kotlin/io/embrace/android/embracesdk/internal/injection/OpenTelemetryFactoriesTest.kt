@@ -1,6 +1,8 @@
 package io.embrace.android.embracesdk.internal.injection
 
 import io.embrace.android.embracesdk.fakes.FakeConfigService
+import io.embrace.android.embracesdk.fakes.OtelSdkMode
+import io.embrace.android.embracesdk.fakes.injection.FakeInitModule
 import io.embrace.android.embracesdk.internal.config.behavior.REDACTED_LABEL
 import io.embrace.android.embracesdk.internal.config.behavior.SensitiveKeysBehavior
 import io.embrace.android.embracesdk.internal.config.resolved.SensitiveKeysConfig
@@ -15,7 +17,7 @@ import org.junit.Test
 
 internal class OpenTelemetryFactoriesTest {
 
-    private val initModule = InitModuleImpl()
+    private val initModule = FakeInitModule(otelSdkMode = OtelSdkMode.COMPAT)
     private val configService = FakeConfigService()
 
     @Test

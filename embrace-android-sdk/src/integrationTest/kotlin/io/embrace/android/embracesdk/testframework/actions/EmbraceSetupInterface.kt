@@ -30,7 +30,6 @@ import io.embrace.android.embracesdk.internal.delivery.storage.StorageLocation
 import io.embrace.android.embracesdk.internal.delivery.storage.asFile
 import io.embrace.android.embracesdk.internal.injection.ConfigLoadServices
 import io.embrace.android.embracesdk.internal.injection.ConfigLoadServicesSupplier
-import io.embrace.android.embracesdk.internal.injection.InitModule
 import io.embrace.android.embracesdk.internal.injection.InitializedModuleGraph
 import io.embrace.android.embracesdk.internal.injection.ModuleGraphSupplier
 import io.embrace.android.embracesdk.internal.injection.PreStartServices
@@ -144,7 +143,7 @@ internal class EmbraceSetupInterface(
     val preStartServices: PreStartServices
         get() = fakeInitModule.preStartServices
 
-    val initModule: InitModule
+    val initModule: FakeInitModule
         get() = fakeInitModule
 
     private val workerThreadPool: WorkerThreadPool = initWorkerThreadPool(
@@ -226,7 +225,6 @@ internal class EmbraceSetupInterface(
         sdkStartTimeMs = sdkStartTimeMs,
         sdkInitResourceUsageTracker = sdkInitResourceUsageTracker,
         overrides = overrides,
-        initModuleSupplier = { fakeInitModule },
         threadBlockageServiceSupplier = { args ->
             if (threadBlockageWatchdogThread != null) {
                 createThreadBlockageService(args)

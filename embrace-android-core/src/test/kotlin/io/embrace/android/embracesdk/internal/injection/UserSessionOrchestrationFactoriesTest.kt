@@ -1,7 +1,8 @@
 package io.embrace.android.embracesdk.internal.injection
 
+import io.embrace.android.embracesdk.fakes.FakeCachedLogEnvelopeStore
 import io.embrace.android.embracesdk.fakes.FakeConfigService
-import io.embrace.android.embracesdk.fakes.FakeDeliveryModule
+import io.embrace.android.embracesdk.fakes.FakeIntakeService
 import io.embrace.android.embracesdk.fakes.FakeLogLimitingService
 import io.embrace.android.embracesdk.fakes.FakeOpenTelemetryModule
 import io.embrace.android.embracesdk.fakes.OtelSdkMode
@@ -33,7 +34,7 @@ internal class UserSessionOrchestrationFactoriesTest {
 
     @Test
     fun `session parts are written when they can be read back`() {
-        createSessionOrchestrator(createSessionPartReader(FakeDeliveryModule()))
+        createSessionOrchestrator(createSessionPartReader())
         storeCompletedSpan()
         assertEquals(0, openTelemetryModule.spanRepository.completedOtelSpans().size)
     }
@@ -49,14 +50,14 @@ internal class UserSessionOrchestrationFactoriesTest {
         openTelemetryModule.spanRepository.storeCompletedOtelSpans(listOf(Span(name = "completed-span")))
     }
 
-    private fun createSessionPartReader(deliveryModule: DeliveryModule): SessionPartReader = createSessionPartReader(
+    private fun createSessionPartReader(): SessionPartReader = createSessionPartReader(
         context = coreModule.context,
         clock = initModule.clock,
         errorHandler = initModule.errorHandler,
         configService = configService,
         sessionPersistenceWorker = workerThreadPool.backgroundWorker(Worker.Background.SessionPersistenceWorker),
-        intakeService = deliveryModule.intakeService,
-        cachedLogEnvelopeStore = deliveryModule.cachedLogEnvelopeStore,
+        intakeService = FakeIntakeService(),
+        cachedLogEnvelopeStore = FakeCachedLogEnvelopeStore(),
         nativeCrashServiceProvider = { null },
         restoreDecisionProvider = { null },
         processIdProvider = { openTelemetryModule.otelSdkConfig.processIdentifier },

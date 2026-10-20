@@ -73,7 +73,7 @@ internal class InitializedModuleGraphTest {
             assertNotNull(workerThreadPool)
             assertTrue(essentialServiceModule is EssentialServiceModuleImpl)
             assertNotNull(startupTracker)
-            assertNotNull(deliveryModule)
+            assertNotNull(intakeService)
             assertNotNull(metadataService)
             assertEquals(clock, initModule.clock)
         }
@@ -149,7 +149,7 @@ internal class InitializedModuleGraphTest {
             moduleGraph.logOrchestrator,
             moduleGraph.sessionOrchestrator,
             moduleGraph.crashMarker,
-            moduleGraph.deliveryModule?.payloadStore,
+            moduleGraph.payloadStore,
         )
         assertEquals(expected, handlers)
     }

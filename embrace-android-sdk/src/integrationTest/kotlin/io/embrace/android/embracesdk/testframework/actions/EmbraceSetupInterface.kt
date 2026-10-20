@@ -32,7 +32,6 @@ import io.embrace.android.embracesdk.internal.injection.ConfigLoadServices
 import io.embrace.android.embracesdk.internal.injection.ConfigLoadServicesSupplier
 import io.embrace.android.embracesdk.internal.injection.CoreModule
 import io.embrace.android.embracesdk.internal.injection.CoreModuleImpl
-import io.embrace.android.embracesdk.internal.injection.DeliveryModuleImpl
 import io.embrace.android.embracesdk.internal.injection.EssentialServiceModuleImpl
 import io.embrace.android.embracesdk.internal.injection.InitModule
 import io.embrace.android.embracesdk.internal.injection.InitializedModuleGraph
@@ -208,15 +207,19 @@ internal class EmbraceSetupInterface(
         }
     }
 
-    fun createSdkOverrides(): SdkOverrides = SdkOverrides(
+    fun createSdkOverrides(deliveryTracer: DeliveryTracer): SdkOverrides = SdkOverrides(
         logOrchestratorWorker = { BackgroundWorker(logOrchestratorExecutor) },
         versionChecker = simulatedVersionChecker?.let { versionChecker -> { versionChecker } },
         instrumentationRegistry = { FakeInstrumentationRegistry(it()) },
+        deliveryTracer = { deliveryTracer },
+        payloadStorageService = fakePayloadStorageService?.let { fake -> { fake } },
+        cacheStorageService = fakeCacheStorageService?.let { fake -> { fake } },
+        payloadStorageLimit = { payloadStorageLimit },
     )
 
-    fun createModuleGraphSupplier(deliveryTracer: DeliveryTracer): ModuleGraphSupplier =
+    fun createModuleGraphSupplier(): ModuleGraphSupplier =
         { context, preStartServices, configLoadServices, sdkStartTimeMs, sdkInitResourceUsageTracker, overrides ->
-            createModuleGraph(context, preStartServices, configLoadServices, sdkStartTimeMs, sdkInitResourceUsageTracker, overrides, deliveryTracer)
+            createModuleGraph(context, preStartServices, configLoadServices, sdkStartTimeMs, sdkInitResourceUsageTracker, overrides)
         }
 
     private fun createModuleGraph(
@@ -226,7 +229,6 @@ internal class EmbraceSetupInterface(
         sdkStartTimeMs: Long,
         sdkInitResourceUsageTracker: SdkInitResourceUsageTracker,
         overrides: SdkOverrides?,
-        deliveryTracer: DeliveryTracer,
     ): InitializedModuleGraph = InitializedModuleGraph(
         context = context,
         preStartServices = preStartServices,
@@ -261,21 +263,6 @@ internal class EmbraceSetupInterface(
                 lifecycleTrackerProvider = { AndroidxProcessLifecycleTracker(fakeLifecycleOwner) },
                 networkConnectivityServiceProvider = { fakeNetworkConnectivityService },
                 sessionOrchestratorProvider = sessionOrchestratorProvider,
-            )
-        },
-        deliveryModuleSupplier = { configService, initModule, otelModule, workerThreadPool, coreModule, essentialServiceModule, _, _, _, _ ->
-            DeliveryModuleImpl(
-                configService = configService,
-                initModule = initModule,
-                otelModule = otelModule,
-                workerThreadPool = workerThreadPool,
-                coreModule = coreModule,
-                essentialServiceModule = essentialServiceModule,
-                requestExecutionServiceProvider = null,
-                payloadStorageServiceProvider = fakePayloadStorageService?.let { { it } },
-                cacheStorageServiceProvider = fakeCacheStorageService?.let { { it } },
-                deliveryTracer = deliveryTracer,
-                payloadStorageLimit = payloadStorageLimit,
             )
         },
         threadBlockageServiceSupplier = { args ->

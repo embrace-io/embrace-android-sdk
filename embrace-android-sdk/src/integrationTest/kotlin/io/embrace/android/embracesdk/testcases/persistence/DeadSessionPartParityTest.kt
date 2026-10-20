@@ -281,7 +281,7 @@ internal class DeadSessionPartParityTest(
                 shutdownNow()
             }
         }
-        checkNotNull(testRule.moduleGraph.deliveryModule).intakeService.shutdown()
+        checkNotNull(testRule.moduleGraph.intakeService).shutdown()
     }
 
     private fun remoteConfig() = RemoteConfig(

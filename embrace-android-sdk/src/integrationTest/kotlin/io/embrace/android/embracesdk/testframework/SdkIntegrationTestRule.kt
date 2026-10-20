@@ -14,7 +14,7 @@ import io.embrace.android.embracesdk.internal.config.remote.RemoteConfig
 import io.embrace.android.embracesdk.internal.delivery.debug.DeliveryTracer
 import io.embrace.android.embracesdk.internal.injection.ConfigLoadServicesSupplier
 import io.embrace.android.embracesdk.internal.injection.CoreModule
-import io.embrace.android.embracesdk.internal.injection.DeliveryModule
+import io.embrace.android.embracesdk.internal.injection.SdkOverrides
 import io.embrace.android.embracesdk.internal.injection.EssentialServiceModule
 import io.embrace.android.embracesdk.internal.injection.EssentialServiceModuleImpl
 import io.embrace.android.embracesdk.internal.injection.InitModule
@@ -58,9 +58,9 @@ import java.io.File
  * to allow the appropriate feature flags be set to suit the test case. Everything else in the
  * module is otherwise real unless provided by [FakeCoreModule]
  *
- * 3) [DeliveryModule]: Requires [FakeDeliveryModule] so that a [FakeDeliveryService] can be used in order
- * for payloads normally sent to the server to be inspected to verify the correctness of the data produced.
- * Everything else in [FakeDeliveryModule] is otherwise real unless provided by [FakeCoreModule]
+ * 3) Delivery: payloads are sent to a local [MockWebServer] and recorded by a [DeliveryTracer], so that
+ * payloads normally sent to the server can be inspected to verify the correctness of the data produced.
+ * The delivery services are otherwise real unless replaced via [SdkOverrides].
  *
  * The modules instantiated by default reference each other, e.g. the same instance of [FakeCoreModule] is used
  * in all the other modules. This means modifications of one object within a module will be reflected in the
@@ -76,7 +76,7 @@ import java.io.File
  * without the pain of dealing with a singleton in parallelized unit tests.
  *
  * It is also possible to access internal modules & dependencies that are not exposed via the public API.
- * For example, it is possible to access the [FakeDeliveryModule] to get event/session payloads the SDK sent.
+ * For example, it is possible to access [moduleGraph] to inspect the delivery services the SDK used.
  *
  * In general, it is recommended to use functions declared in PayloadRetrievalExtensions.kt that retrieve
  * this useful information for you. If it's not possible to get information from the SDK and you
@@ -168,7 +168,7 @@ internal class SdkIntegrationTestRule(
                 baseUrls = FakeBaseUrlConfig(configImpl = baseUrl, dataImpl = baseUrl)
             ),
         )
-        moduleGraphSupplier = setup.createModuleGraphSupplier(deliveryTracer)
+        moduleGraphSupplier = setup.createModuleGraphSupplier()
         action = EmbraceActionInterface(
             setup,
             { moduleGraph.instrumentationRegistry },
@@ -187,7 +187,7 @@ internal class SdkIntegrationTestRule(
 
         setupAction(setup)
         with(setup) {
-            sdkStateHolder = createStateHolder()
+            sdkStateHolder = createStateHolder(deliveryTracer)
             preSdkStartAction(preSdkStart)
             //TODO: Filtered span and log exporters should be migrated to Kotlin.
             sdkStateHolder.api.addSpanExporter(spanExporter.toOtelKotlinSpanExporter())
@@ -271,14 +271,14 @@ internal class SdkIntegrationTestRule(
         }
     }
 
-    private fun createStateHolder(): SdkStateHolder {
+    private fun createStateHolder(deliveryTracer: DeliveryTracer): SdkStateHolder {
         return createSdkStateHolder(
             preStartServices = setup.preStartServices,
             configLoadServicesSupplier = configLoadServicesSupplier,
             moduleGraphSupplier = moduleGraphSupplier,
             sdkInitResourceUsageTrackerSupplier = setup::fakeSdkInitResourceUsageTracker,
             onModuleGraphCreated = { createdModuleGraph = it },
-            overrides = setup.createSdkOverrides(),
+            overrides = setup.createSdkOverrides(deliveryTracer),
         )
     }
 

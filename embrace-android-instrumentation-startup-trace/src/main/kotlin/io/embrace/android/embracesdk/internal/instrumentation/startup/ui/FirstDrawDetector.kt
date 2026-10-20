@@ -11,6 +11,9 @@ import androidx.annotation.RequiresApi
 import io.embrace.android.embracesdk.internal.instrumentation.startup.activity.traceInstanceId
 import io.embrace.android.embracesdk.internal.logging.InternalErrorType
 import io.embrace.android.embracesdk.internal.logging.InternalLogger
+import java.io.Closeable
+import java.util.Collections
+import java.util.WeakHashMap
 import java.util.concurrent.ConcurrentHashMap
 
 /**
@@ -30,12 +33,19 @@ internal class FirstDrawDetector(
     // Registrations waiting for their first draw, keyed by instance ID. The token lets a draw listener tell whether
     // its registration is still current, so unregistering or reregistering before the first draw stops it.
     private val pendingDraws: ConcurrentHashMap<Int, Any> = ConcurrentHashMap()
+    private val windowCallbacks: MutableSet<PyWindowDelegateCallback> = Collections.newSetFromMap(WeakHashMap())
+
+    @Volatile
+    private var closed = false
 
     override fun registerFirstDrawCallback(
         activity: Activity,
         drawBeginCallback: () -> Unit,
         drawCompleteCallback: () -> Unit,
     ) {
+        if (closed) {
+            return
+        }
         val instanceId = traceInstanceId(activity)
         if (!trackingLoad(instanceId)) {
             val window = activity.window
@@ -45,10 +55,15 @@ internal class FirstDrawDetector(
                 window.onDecorViewReady {
                     val decorView = window.decorView
                     decorView.onNextDraw {
-                        if (pendingDraws.remove(instanceId, registrationToken) && !trackingLoad(instanceId)) {
+                        // closed is checked as close() may have run before the registration token was stored
+                        if (!closed && pendingDraws.remove(instanceId, registrationToken) && !trackingLoad(instanceId)) {
                             drawBeginCallback()
                             // the same instance must be registered and stored so that it can be unregistered later
-                            val frameCommitCallback = Runnable { invokeSafely(drawCompleteCallback) }
+                            val frameCommitCallback = Runnable {
+                                if (!closed) {
+                                    invokeSafely(drawCompleteCallback)
+                                }
+                            }
                             loadingActivities[instanceId] = frameCommitCallback
                             decorView.viewTreeObserver.registerFrameCommitCallback(frameCommitCallback)
                         }
@@ -86,6 +101,16 @@ internal class FirstDrawDetector(
         }
     }
 
+    override fun close() {
+        closed = true
+        pendingDraws.clear()
+        loadingActivities.clear()
+        synchronized(windowCallbacks) {
+            windowCallbacks.forEach(PyWindowDelegateCallback::close)
+            windowCallbacks.clear()
+        }
+    }
+
     private fun trackingLoad(instanceId: Int): Boolean = loadingActivities.containsKey(instanceId)
 
     private fun invokeSafely(callback: () -> Unit) {
@@ -116,15 +141,21 @@ internal class FirstDrawDetector(
     }
 
     private fun Window.onContentChanged(onDrawCallbackInvocation: () -> Boolean) {
-        val currentCallback = callback
-        val callback = if (currentCallback is PyWindowDelegateCallback) {
-            currentCallback
-        } else {
-            val newCallback = PyWindowDelegateCallback(currentCallback)
-            callback = newCallback
-            newCallback
+        synchronized(windowCallbacks) {
+            if (closed) {
+                return
+            }
+            val currentCallback = callback
+            val callback = if (currentCallback is PyWindowDelegateCallback && currentCallback in windowCallbacks) {
+                currentCallback
+            } else {
+                val newCallback = PyWindowDelegateCallback(currentCallback)
+                windowCallbacks += newCallback
+                callback = newCallback
+                newCallback
+            }
+            callback.onContentChangedCallbacks += onDrawCallbackInvocation
         }
-        callback.onContentChangedCallbacks += onDrawCallbackInvocation
     }
 
     private class PyNextDrawListener(
@@ -149,13 +180,24 @@ internal class FirstDrawDetector(
 
     private class PyWindowDelegateCallback(
         private val delegate: Window.Callback,
-    ) : Window.Callback by delegate {
+    ) : Window.Callback by delegate, Closeable {
 
+        // only accessed on the main thread
         val onContentChangedCallbacks = mutableListOf<() -> Boolean>()
 
+        @Volatile
+        private var closed = false
+
+        // the callbacks are skipped rather than cleared, as close() may run off the main thread while they are iterated
+        override fun close() {
+            closed = true
+        }
+
         override fun onContentChanged() {
-            onContentChangedCallbacks.removeAll { callback ->
-                !callback()
+            if (!closed) {
+                onContentChangedCallbacks.removeAll { callback ->
+                    !callback()
+                }
             }
             delegate.onContentChanged()
         }

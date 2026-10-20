@@ -21,6 +21,7 @@ import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotEquals
 import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertNull
+import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -235,6 +236,13 @@ internal class StartupTrackerTest {
         drawEventEmitter.draw(defaultActivityController.get())
         Robolectric.buildActivity(Activity::class.java).create()
         assertEquals(0, activityLifecycleListener.onCreateInvokedCount)
+    }
+
+    @Test
+    fun `closing closes the draw event emitter`() {
+        defaultActivityController.create(null)
+        startupTracker.close()
+        assertTrue(drawEventEmitter.closed)
     }
 
     private fun simulateApi(sdkInt: Int) {

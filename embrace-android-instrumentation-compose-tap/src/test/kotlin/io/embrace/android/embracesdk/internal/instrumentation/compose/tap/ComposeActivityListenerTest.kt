@@ -65,4 +65,13 @@ internal class ComposeActivityListenerTest {
         assertSame(foreign, activity.window.callback)
         assertTrue(args.logger.errorMessages.isEmpty())
     }
+
+    @Test
+    fun `onActivityResumed does not wrap the window callback after close`() {
+        val activity = buildActivity(Activity::class.java).setup().get()
+        val original = activity.window.callback
+        listener.close()
+        listener.onActivityResumed(activity)
+        assertSame(original, activity.window.callback)
+    }
 }

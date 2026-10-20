@@ -5,6 +5,7 @@ import android.view.KeyboardShortcutGroup
 import android.view.Menu
 import android.view.MotionEvent
 import android.view.Window
+import java.io.Closeable
 
 /**
  * Wraps a [Window.Callback] to report the signals captured from touch dispatch and window focus.
@@ -13,9 +14,19 @@ import android.view.Window
 internal class VitalsWindowCallback(
     private val delegate: Window.Callback,
     private val focalCallbacks: FocalInteractionCallbacks,
-) : Window.Callback by delegate {
+) : Window.Callback by delegate, Closeable {
+
+    @Volatile
+    private var closed = false
+
+    override fun close() {
+        closed = true
+    }
 
     override fun dispatchTouchEvent(event: MotionEvent): Boolean {
+        if (closed) {
+            return delegate.dispatchTouchEvent(event)
+        }
         try {
             when (event.actionMasked) {
                 MotionEvent.ACTION_DOWN -> focalCallbacks.onInteractionStart()
@@ -36,6 +47,10 @@ internal class VitalsWindowCallback(
     }
 
     override fun onWindowFocusChanged(hasFocus: Boolean) {
+        if (closed) {
+            delegate.onWindowFocusChanged(hasFocus)
+            return
+        }
         try {
             // gaining focus marks the end of the open transition; extends an in-flight screen load past the animation tail
             if (hasFocus) {

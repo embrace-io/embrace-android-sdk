@@ -148,6 +148,8 @@ class StartupTracker(
     override fun close() {
         synchronized(lock) {
             startupDataCollectionComplete.set(true)
+            runCatching { drawEventEmitter?.close() }
+            runCatching { (activityLoadEventEmitter as? Closeable)?.close() }
             val application = application ?: return
             runCatching { application.unregisterActivityLifecycleCallbacks(this) }
             if (activityLoadEventEmitter != null) {

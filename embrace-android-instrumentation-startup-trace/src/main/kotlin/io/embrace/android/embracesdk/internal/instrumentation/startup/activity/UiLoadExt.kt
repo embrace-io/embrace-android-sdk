@@ -13,6 +13,7 @@ import io.embrace.android.embracesdk.internal.instrumentation.startup.ui.DrawEve
 import io.embrace.android.embracesdk.internal.logging.InternalErrorType
 import io.embrace.android.embracesdk.internal.logging.InternalLogger
 import io.embrace.android.embracesdk.internal.utils.VersionChecker
+import java.io.Closeable
 import java.util.concurrent.ConcurrentHashMap
 
 /**
@@ -60,7 +61,7 @@ internal fun hasPrePostEvents(versionChecker: VersionChecker) = versionChecker.i
 @RequiresApi(VERSION_CODES.Q)
 private class ActivityLoadEventEmitter(
     private val lifecycleEventEmitter: LifecycleEventEmitter,
-) : Application.ActivityLifecycleCallbacks {
+) : Application.ActivityLifecycleCallbacks, Closeable by lifecycleEventEmitter {
 
     override fun onActivityPreCreated(activity: Activity, savedInstanceState: Bundle?) {
         lifecycleEventEmitter.create(activity)
@@ -109,7 +110,7 @@ private class ActivityLoadEventEmitter(
  */
 private class LegacyActivityLoadEventEmitter(
     private val lifecycleEventEmitter: LifecycleEventEmitter,
-) : Application.ActivityLifecycleCallbacks {
+) : Application.ActivityLifecycleCallbacks, Closeable by lifecycleEventEmitter {
 
     override fun onActivityCreated(activity: Activity, bundle: Bundle?) {
         lifecycleEventEmitter.create(activity)
@@ -145,9 +146,13 @@ private class LifecycleEventEmitter(
     private val autoTraceEnabled: Boolean,
     private val clock: Clock,
     private val logger: InternalLogger,
-) {
+) : Closeable {
 
     private val instanceStartTime: MutableMap<Int, Long> = ConcurrentHashMap()
+
+    override fun close() {
+        drawEventEmitter?.close()
+    }
 
     fun create(activity: Activity) {
         try {

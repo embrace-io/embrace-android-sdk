@@ -5,11 +5,12 @@ import android.os.Build.VERSION_CODES
 import io.embrace.android.embracesdk.internal.handler.AndroidMainThreadHandler
 import io.embrace.android.embracesdk.internal.logging.InternalLogger
 import io.embrace.android.embracesdk.internal.utils.VersionChecker
+import java.io.Closeable
 
 /**
- * Interface that allows callbacks to be registered and invoked when UI draw events happen
+ * Interface that allows callbacks to be registered and invoked when UI draw events happen.
  */
-interface DrawEventEmitter {
+interface DrawEventEmitter : Closeable {
     /**
      * Register the given callback to the UI inside of the given activity instance to be invoked when the first frame
      * has drawn.

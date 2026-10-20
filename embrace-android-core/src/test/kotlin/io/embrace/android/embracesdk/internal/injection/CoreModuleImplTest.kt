@@ -1,6 +1,7 @@
 package io.embrace.android.embracesdk.internal.injection
 
-import androidx.test.ext.junit.runners.AndroidJUnit4
+import android.app.Application
+import android.content.ContextWrapper
 import io.embrace.android.embracesdk.fakes.OtelSdkMode
 import io.embrace.android.embracesdk.fakes.injection.FakeInitModule
 import io.embrace.android.embracesdk.internal.capture.metadata.AppEnvironment
@@ -8,17 +9,14 @@ import io.embrace.android.embracesdk.internal.capture.metadata.AppEnvironment.En
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertSame
 import org.junit.Test
-import org.junit.runner.RunWith
-import org.robolectric.RuntimeEnvironment
 
-@RunWith(AndroidJUnit4::class)
 internal class CoreModuleImplTest {
 
     private val initModule = FakeInitModule(otelSdkMode = OtelSdkMode.COMPAT)
 
     @Test
     fun testApplicationObject() {
-        val ctx = RuntimeEnvironment.getApplication().applicationContext
+        val ctx = Application()
         val module = CoreModuleImpl(ctx, initModule)
         assertSame(ctx, module.context)
         assertSame(ctx, module.application)
@@ -26,8 +24,10 @@ internal class CoreModuleImplTest {
 
     @Test
     fun testContextObject() {
-        val application = RuntimeEnvironment.getApplication()
-        val ctx = application.applicationContext
+        val application = Application()
+        val ctx = object : ContextWrapper(null) {
+            override fun getApplicationContext() = application
+        }
         val module = CoreModuleImpl(ctx, initModule)
         assertSame(application, module.application)
     }

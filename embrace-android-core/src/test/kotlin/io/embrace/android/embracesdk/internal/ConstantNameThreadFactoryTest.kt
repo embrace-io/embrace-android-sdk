@@ -6,7 +6,6 @@ import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotEquals
 import org.junit.Assert.assertNotNull
 import org.junit.Test
-import java.util.concurrent.CountDownLatch
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicReference
 
@@ -42,7 +41,6 @@ internal class ConstantNameThreadFactoryTest {
     }
 
     private fun verifyThreadNames(expectedName: String) {
-        val countDownLatch = CountDownLatch(1)
         executor.setKeepAliveTime(1L, TimeUnit.MILLISECONDS)
         executor.allowCoreThreadTimeOut(true)
         val firstThread = AtomicReference<Thread>()
@@ -51,8 +49,7 @@ internal class ConstantNameThreadFactoryTest {
         assertNotNull(firstThread.get())
         assertEquals(expectedName, firstThread.get().name)
 
-        // Wait long enough for the existing thread in the executor to time out. A better way to do this would be nice...
-        countDownLatch.await(100L, TimeUnit.MILLISECONDS)
+        firstThread.get().join(1000L)
         executor.submit { secondThread.set(Thread.currentThread()) }.get(1L, TimeUnit.SECONDS)
         assertNotNull(secondThread.get())
         assertEquals(firstThread.get().name, secondThread.get().name)

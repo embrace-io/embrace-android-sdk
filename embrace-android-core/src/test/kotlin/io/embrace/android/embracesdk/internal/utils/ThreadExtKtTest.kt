@@ -1,15 +1,12 @@
 package io.embrace.android.embracesdk.internal.utils
 
-import androidx.test.ext.junit.runners.AndroidJUnit4
 import io.embrace.android.embracesdk.internal.arch.stacktrace.compatThreadId
 import io.embrace.android.embracesdk.internal.arch.stacktrace.truncateStacktrace
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Test
-import org.junit.runner.RunWith
 import java.lang.Thread.currentThread
 
-@RunWith(AndroidJUnit4::class)
 class ThreadExtKtTest {
 
     private val fakeBigStackTrace = Array(700) {
@@ -25,7 +22,7 @@ class ThreadExtKtTest {
             maxStacktraceSize = 4,
         )
         with(threadInfo) {
-            assertEquals(true, name?.contains("Main"))
+            assertEquals(targetThread.name, name)
             assertEquals(Thread.State.RUNNABLE, state)
             assertTrue(priority > 0)
             assertEquals(4, lines?.size)

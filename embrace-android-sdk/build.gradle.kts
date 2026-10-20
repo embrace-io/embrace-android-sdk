@@ -11,6 +11,7 @@ android {
         namespace = "io.embrace.android.embracesdk"
         consumerProguardFiles("embrace-proguard.cfg")
     }
+    testOptions.unitTests.isIncludeAndroidResources = true
 }
 
 dependencies {

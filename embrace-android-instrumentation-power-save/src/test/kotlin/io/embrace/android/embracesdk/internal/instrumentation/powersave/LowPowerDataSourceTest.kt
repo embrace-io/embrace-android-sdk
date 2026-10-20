@@ -1,41 +1,36 @@
 package io.embrace.android.embracesdk.internal.instrumentation.powersave
 
-import android.content.Context
 import android.content.Intent
 import android.os.PowerManager
-import androidx.test.core.app.ApplicationProvider
-import androidx.test.ext.junit.runners.AndroidJUnit4
 import io.embrace.android.embracesdk.concurrency.BlockingScheduledExecutorService
 import io.embrace.android.embracesdk.fakes.FakeInstrumentationArgs
 import io.embrace.android.embracesdk.fakes.fakeBackgroundWorker
 import io.embrace.android.embracesdk.internal.arch.attrs.asPair
 import io.embrace.android.embracesdk.internal.arch.schema.EmbType
 import io.embrace.android.embracesdk.internal.worker.BackgroundWorker
+import io.mockk.every
 import io.mockk.mockk
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
-import org.junit.runner.RunWith
-import org.robolectric.RuntimeEnvironment
-import org.robolectric.Shadows.shadowOf
 
-@RunWith(AndroidJUnit4::class)
 internal class LowPowerDataSourceTest {
 
     private lateinit var dataSource: LowPowerDataSource
     private lateinit var args: FakeInstrumentationArgs
+    private lateinit var application: FakeApplication
+    private var powerSaveMode = false
 
     @Before
     fun setUp() {
-        args = FakeInstrumentationArgs(
-            application = ApplicationProvider.getApplicationContext(),
-        )
+        application = FakeApplication()
+        args = FakeInstrumentationArgs(application = application)
         dataSource = LowPowerDataSource(
             args,
             fakeBackgroundWorker(),
-        ) { mockk(relaxed = true) }.apply(LowPowerDataSource::onDataCaptureEnabled)
+        ) { mockk { every { isPowerSaveMode } answers { powerSaveMode } } }.apply(LowPowerDataSource::onDataCaptureEnabled)
     }
 
     @Test
@@ -70,11 +65,14 @@ internal class LowPowerDataSourceTest {
     }
 
     @Test
-    fun `send intent`() {
-        val ctx: Context = ApplicationProvider.getApplicationContext()
-        val intent = Intent(PowerManager.ACTION_POWER_SAVE_MODE_CHANGED)
-        RuntimeEnvironment.getApplication().sendBroadcast(intent)
-        ctx.sendBroadcast(intent)
+    fun `receive intent`() {
+        val intent = mockk<Intent> { every { action } returns PowerManager.ACTION_POWER_SAVE_MODE_CHANGED }
+        val receiver = application.receivers.single()
+        powerSaveMode = true
+        receiver.onReceive(application, intent)
+        powerSaveMode = false
+        receiver.onReceive(application, intent)
+        assertSpanAdded()
     }
 
     private fun assertSpanAdded() {
@@ -98,7 +96,7 @@ internal class LowPowerDataSourceTest {
     fun `pending registration is dropped when data capture is disabled first`() {
         val executor = BlockingScheduledExecutorService()
         val pending = LowPowerDataSource(
-            FakeInstrumentationArgs(application = ApplicationProvider.getApplicationContext()),
+            FakeInstrumentationArgs(application = application),
             BackgroundWorker(executor),
         ) { mockk(relaxed = true) }
         dataSource.onDataCaptureDisabled()
@@ -109,6 +107,5 @@ internal class LowPowerDataSourceTest {
         assertFalse(hasPowerSaveReceiver())
     }
 
-    private fun hasPowerSaveReceiver(): Boolean =
-        shadowOf(RuntimeEnvironment.getApplication()).registeredReceivers.any { it.broadcastReceiver is PowerSaveModeReceiver }
+    private fun hasPowerSaveReceiver(): Boolean = application.receivers.any { it is PowerSaveModeReceiver }
 }

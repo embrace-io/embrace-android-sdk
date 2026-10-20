@@ -1,7 +1,7 @@
 package io.embrace.android.embracesdk.internal.session.orchestrator
 
 import android.app.ActivityManager
-import androidx.test.ext.junit.runners.AndroidJUnit4
+import android.app.Application
 import io.embrace.android.embracesdk.SessionStateEvent
 import io.embrace.android.embracesdk.concurrency.BlockingScheduledExecutorService
 import io.embrace.android.embracesdk.fakes.FakeClock
@@ -49,11 +49,8 @@ import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
-import org.junit.runner.RunWith
-import org.robolectric.RuntimeEnvironment
 import java.util.concurrent.TimeUnit
 
-@RunWith(AndroidJUnit4::class)
 internal class SessionOrchestratorListenerTest {
 
     private lateinit var orchestrator: SessionOrchestratorImpl
@@ -371,7 +368,7 @@ internal class SessionOrchestratorListenerTest {
             },
             store,
         )
-        fakeDataSource = FakeDataSource(RuntimeEnvironment.getApplication())
+        fakeDataSource = FakeDataSource(Application())
         instrumentationRegistry = InstrumentationRegistryImpl(
             logger,
         ).apply {

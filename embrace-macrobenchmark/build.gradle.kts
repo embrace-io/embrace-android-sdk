@@ -71,9 +71,11 @@ configurations.configureEach {
     }
 }
 
+val baselineProfile = providers.gradleProperty("embrace.baselineProfile").isPresent
+
 androidComponents {
     beforeVariants(selector().all()) {
-        it.enable = it.buildType == "benchmark" || it.buildType == "baselineProfile"
+        it.enable = it.buildType == "benchmark" || (baselineProfile && it.buildType == "baselineProfile")
     }
 }
 

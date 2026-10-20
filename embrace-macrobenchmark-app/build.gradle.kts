@@ -92,6 +92,14 @@ android {
     }
 }
 
+val baselineProfile = providers.gradleProperty("embrace.baselineProfile").isPresent
+
+androidComponents {
+    beforeVariants(selector().all()) {
+        it.enable = it.buildType == "benchmark" || (baselineProfile && it.buildType == "baselineProfile")
+    }
+}
+
 kotlin {
     compilerOptions {
         jvmTarget.set(JvmTarget.JVM_11)

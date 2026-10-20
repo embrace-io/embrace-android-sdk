@@ -1,13 +1,12 @@
 package io.embrace.android.embracesdk.internal.instrumentation
 
-import androidx.test.core.app.ApplicationProvider
-import androidx.test.ext.junit.runners.AndroidJUnit4
 import io.embrace.android.embracesdk.fakes.FakeClock
 import io.embrace.android.embracesdk.fakes.FakeConfigService
 import io.embrace.android.embracesdk.fakes.FakeInstrumentationArgs
 import io.embrace.android.embracesdk.fakes.FakeInternalLogger
 import io.embrace.android.embracesdk.fakes.FakeInternalTelemetryService
 import io.embrace.android.embracesdk.fakes.FakeTelemetryDestination
+import io.embrace.android.embracesdk.fakes.FakeURLStreamHandler
 import io.embrace.android.embracesdk.fakes.FakeURLStreamHandlerFactory
 import io.embrace.android.embracesdk.fakes.behavior.FakeNetworkBehavior
 import io.embrace.android.embracesdk.instrumentation.huclite.DelegatingInstrumentedURLStreamHandlerFactory
@@ -26,13 +25,11 @@ import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
-import org.junit.runner.RunWith
 import java.lang.reflect.Field
 import java.net.URL
 import java.net.URLStreamHandlerFactory
 import javax.net.ssl.HttpsURLConnection
 
-@RunWith(AndroidJUnit4::class)
 class HucLiteDataSourceTest {
     private lateinit var factoryFieldRef: Field
     private lateinit var fakeTelemetryDestination: FakeTelemetryDestination
@@ -75,7 +72,6 @@ class HucLiteDataSourceTest {
         configureModifiers: (HttpRequestInfoModifierChain) -> Unit = {},
     ): HucLiteDataSource = HucLiteDataSource(
         args = FakeInstrumentationArgs(
-            application = ApplicationProvider.getApplicationContext(),
             configService = FakeConfigService(networkBehavior = networkBehavior),
             destination = fakeTelemetryDestination,
             logger = fakeEmbLogger,
@@ -87,6 +83,7 @@ class HucLiteDataSourceTest {
             factoryField = it
             attemptToSetURLStreamHandlerFactory(it)
         },
+        httpsHandlerClassProvider = { FakeURLStreamHandler::class.java },
     )
 
     @Test

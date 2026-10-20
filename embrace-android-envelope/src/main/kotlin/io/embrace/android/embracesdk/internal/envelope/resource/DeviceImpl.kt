@@ -20,6 +20,7 @@ class DeviceImpl(
     private val backgroundWorker: BackgroundWorker,
     override val systemInfo: SystemInfo,
     private val logger: InternalLogger,
+    private val isEmulator: () -> Boolean = { systemInfo.isEmulator() },
 ) : Device {
 
     @Volatile
@@ -115,7 +116,7 @@ class DeviceImpl(
      * @return true if the device is jailbroken and not an emulator, false otherwise
      */
     private fun checkIfIsJailbroken(): Boolean {
-        if (systemInfo.isEmulator()) {
+        if (isEmulator()) {
             return false
         }
         for (location in jailbreakLocations) {

@@ -27,9 +27,10 @@ class ExternalExportDispatcher(
 ) {
 
     private val lazyDispatcher = lazy(dispatcherProvider)
+    private val job = SupervisorJob()
     private val lazyScope = lazy {
         val handler = CoroutineExceptionHandler { _, exc -> onUncaught(exc) }
-        CoroutineScope(SupervisorJob() + lazyDispatcher.value + handler)
+        CoroutineScope(job + lazyDispatcher.value + handler)
     }
 
     /**
@@ -60,13 +61,15 @@ class ExternalExportDispatcher(
     }
 
     /**
-     * Releases the export thread once the exports already queued have run.
+     * Releases the export thread once the exports already dispatched have finished, including any that suspend.
      */
     fun shutdown() {
+        job.complete()
         if (!lazyDispatcher.isInitialized()) {
             return
         }
-        (lazyDispatcher.value as? ExecutorCoroutineDispatcher)?.close()
+        val dispatcher = lazyDispatcher.value as? ExecutorCoroutineDispatcher ?: return
+        job.invokeOnCompletion { dispatcher.close() }
     }
 
     private fun onUncaught(exc: Throwable) {

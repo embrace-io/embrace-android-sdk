@@ -251,13 +251,25 @@ internal class NetworkCallbackConnectivityServiceTest {
     }
 
     @Test
-    fun `close then register re-registers`() {
+    fun `register after close is a no-op`() {
         service.register()
-        assertTrue(shadowConnectivityManager.networkCallbacks.contains(service))
         service.close()
-        assertFalse(shadowConnectivityManager.networkCallbacks.contains(service))
         service.register()
-        assertTrue(shadowConnectivityManager.networkCallbacks.contains(service))
+        assertFalse(shadowConnectivityManager.networkCallbacks.contains(service))
+    }
+
+    @Test
+    fun `close before queued register runs prevents registration`() {
+        val executor = BlockingScheduledExecutorService(blockingMode = true)
+        val service = NetworkCallbackConnectivityService(
+            BackgroundWorker(executor),
+            ErrorHandlerImpl(),
+            lazyConnectivityManager,
+        )
+        service.register()
+        service.close()
+        executor.runCurrentlyBlocked()
+        assertFalse(shadowConnectivityManager.networkCallbacks.contains(service))
     }
 
     @Test

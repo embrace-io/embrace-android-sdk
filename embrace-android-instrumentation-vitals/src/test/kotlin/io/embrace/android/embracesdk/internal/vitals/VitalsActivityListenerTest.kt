@@ -11,6 +11,9 @@ import android.view.Window
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import io.embrace.android.embracesdk.fakes.FakeInstrumentationArgs
+import io.mockk.every
+import io.mockk.mockk
+import io.mockk.verify
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertSame
 import org.junit.Assert.assertTrue
@@ -18,6 +21,8 @@ import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.Robolectric.buildActivity
+import org.robolectric.Shadows.shadowOf
+import kotlin.concurrent.thread
 
 @RunWith(AndroidJUnit4::class)
 internal class VitalsActivityListenerTest {
@@ -105,6 +110,19 @@ internal class VitalsActivityListenerTest {
         listener.close()
         listener.onActivityResumed(activity)
         assertSame(original, activity.window.callback)
+    }
+
+    @Test
+    fun `close off the main thread removes frame-metrics listeners on the main thread`() {
+        val window = mockk<Window>(relaxed = true)
+        val activity = mockk<Activity>(relaxed = true) { every { this@mockk.window } returns window }
+        listener.onActivityResumed(activity)
+
+        thread { listener.close() }.join()
+        verify(exactly = 0) { window.removeOnFrameMetricsAvailableListener(any()) }
+
+        shadowOf(Looper.getMainLooper()).idle()
+        verify(exactly = 1) { window.removeOnFrameMetricsAvailableListener(any()) }
     }
 
     @Test

@@ -14,7 +14,6 @@ import io.embrace.android.embracesdk.internal.logging.SdkErrorType
 import io.embrace.android.embracesdk.internal.logging.guardSdkCode
 import io.embrace.android.embracesdk.internal.worker.BackgroundWorker
 import java.util.concurrent.CopyOnWriteArrayList
-import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicReference
 
 @RequiresApi(Build.VERSION_CODES.N)
@@ -27,7 +26,9 @@ internal class NetworkCallbackConnectivityService(
     private var currentNetwork: AtomicReference<Network?> = AtomicReference(null)
     private val currentStatus = AtomicReference<ConnectivityStatus>(ConnectivityStatus.Unverified)
     private val listeners = CopyOnWriteArrayList<NetworkConnectivityListener>()
-    private val registered = AtomicBoolean(false)
+    private val lock = Any()
+    private var registered = false
+    private var closed = false
 
     override fun onAvailable(network: Network) {
         updateNetwork(network)
@@ -46,31 +47,34 @@ internal class NetworkCallbackConnectivityService(
 
     override fun register() {
         backgroundWorker.submit {
-            val manager = connectivityManager.value
-            if (manager != null && !registered.getAndSet(true)) {
-                errorHandler.guardSdkCode(SdkErrorType.ConnectivityUpdateFailure) {
-                    manager.activeNetwork?.let { defaultNetwork ->
-                        synchronized(currentNetwork) {
-                            updateNetwork(defaultNetwork)
-                            updateStatus(
-                                updatedNetwork = defaultNetwork,
-                                networkCapabilities = manager.getNetworkCapabilities(defaultNetwork),
-                            )
+            val manager = connectivityManager.value ?: return@submit
+            synchronized(lock) {
+                if (!closed && !registered) {
+                    errorHandler.guardSdkCode(SdkErrorType.ConnectivityUpdateFailure) {
+                        manager.activeNetwork?.let { defaultNetwork ->
+                            synchronized(currentNetwork) {
+                                updateNetwork(defaultNetwork)
+                                updateStatus(
+                                    updatedNetwork = defaultNetwork,
+                                    networkCapabilities = manager.getNetworkCapabilities(defaultNetwork),
+                                )
+                            }
                         }
+                        manager.registerDefaultNetworkCallback(this)
+                        registered = true
                     }
-                    manager.registerDefaultNetworkCallback(this)
                 }
             }
         }
     }
 
     override fun close() {
-        errorHandler.guardSdkCode(SdkErrorType.ConnectivityUpdateFailure) {
-            backgroundWorker.submit {
+        synchronized(lock) {
+            closed = true
+            if (registered) {
+                registered = false
                 errorHandler.guardSdkCode(SdkErrorType.ConnectivityUpdateFailure) {
-                    if (registered.getAndSet(false)) {
-                        connectivityManager.value?.unregisterNetworkCallback(this)
-                    }
+                    connectivityManager.value?.unregisterNetworkCallback(this)
                 }
             }
         }

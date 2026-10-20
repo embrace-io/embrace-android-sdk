@@ -274,6 +274,10 @@ internal class SessionOrchestratorImpl(
         )
     }
 
+    override fun close() {
+        sessionPartWriter?.close()
+    }
+
     override fun handleCrash(crashId: String) {
         val timestamp = clock.now()
         transitionState(

@@ -69,20 +69,22 @@ internal class AeiDataSourceImpl(
         // update persisted state on what records were sent
         val unsentRecords = records.filter { !deliveredIds.contains(it.getAeiId()) }
         val sentRecords = records.minus(unsentRecords.toSet())
-        store.deliveredAeiIds = sentRecords.map { it.getAeiId() }.toSet()
+        synchronized(lock) {
+            if (closed) {
+                return
+            }
+            store.deliveredAeiIds = sentRecords.map { it.getAeiId() }.toSet()
+        }
 
         unsentRecords.forEach {
-            val obj = it.constructAeiObject(versionChecker, configService.config.aei.traceMaxLimit)
-            val crashNumber = obj?.getOrdinal { ordinalStore.incrementAndGet(Ordinal.CRASH) }
-            val aeiNumber = obj?.getOrdinal { ordinalStore.incrementAndGet(Ordinal.AEI_CRASH) }
-            if (obj == null) {
-                return@forEach
-            }
-            // hold the lock so a record can't be marked as delivered after the SDK has been disabled
+            val obj = it.constructAeiObject(versionChecker, configService.config.aei.traceMaxLimit) ?: return@forEach
+            // hold the lock so nothing is persisted after the SDK has been disabled
             synchronized(lock) {
                 if (closed) {
                     return
                 }
+                val crashNumber = obj.getOrdinal { ordinalStore.incrementAndGet(Ordinal.CRASH) }
+                val aeiNumber = obj.getOrdinal { ordinalStore.incrementAndGet(Ordinal.AEI_CRASH) }
                 captureRecord(obj, crashNumber, aeiNumber)
             }
         }

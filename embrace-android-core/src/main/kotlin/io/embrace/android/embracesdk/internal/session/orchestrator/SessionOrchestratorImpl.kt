@@ -104,11 +104,11 @@ internal class SessionOrchestratorImpl(
 
     private fun loadPersistedUserSession() {
         synchronized(lock) {
-            try {
+            userSessionState = errorHandler.guardSdkCode(SdkErrorType.UserSessionLoadFail, UserSessionState.NoActiveSession) {
                 val stored = metadataStore.load()
                 val overMaxDuration = stored?.isOverMaxDuration(clock) ?: false
                 val inactive = stored?.isInactive(clock) ?: false
-                userSessionState = when {
+                when {
                     stored == null -> UserSessionState.NoActiveSession
 
                     // Current timestamp not congruent with stored user session's timestamp, so clear the cache
@@ -151,8 +151,6 @@ internal class SessionOrchestratorImpl(
                         UserSessionState.NoActiveSession
                     }
                 }
-            } catch (e: Exception) {
-                userSessionState = UserSessionState.NoActiveSession
             }
         }
     }

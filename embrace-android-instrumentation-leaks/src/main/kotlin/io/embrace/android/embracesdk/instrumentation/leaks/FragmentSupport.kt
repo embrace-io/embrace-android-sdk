@@ -2,6 +2,7 @@ package io.embrace.android.embracesdk.instrumentation.leaks
 
 import android.app.Activity
 import io.embrace.android.embracesdk.internal.logging.ErrorHandler
+import io.embrace.android.embracesdk.internal.logging.SdkErrorType
 import io.embrace.android.embracesdk.internal.session.id.SessionIdsSnapshot
 
 /**
@@ -40,7 +41,7 @@ internal fun createFragmentSupport(
     errorHandler: ErrorHandler,
     webViewLeakDetectionEnabled: Boolean = false,
 ): FragmentSupport {
-    return runCatching {
+    return errorHandler.guardSdkCode(SdkErrorType.Ignored, NoOpFragmentSupport) {
         FragmentLeakDetectionLifecycleCallbacks(leakDetector, activeSessionIdsProvider, errorHandler, webViewLeakDetectionEnabled)
-    }.getOrDefault(NoOpFragmentSupport)
+    }
 }

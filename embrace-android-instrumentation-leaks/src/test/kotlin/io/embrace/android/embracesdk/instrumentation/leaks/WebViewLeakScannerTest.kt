@@ -5,6 +5,7 @@ import android.view.View
 import android.webkit.WebView
 import android.widget.FrameLayout
 import io.embrace.android.embracesdk.fakes.FakeErrorHandler
+import io.embrace.android.embracesdk.internal.logging.SdkErrorType
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Test
@@ -62,14 +63,14 @@ internal class WebViewLeakScannerTest {
     }
 
     @Test
-    fun `an exception during traversal is caught and logged, not thrown`() {
+    fun `an exception during traversal is caught and reported, not thrown`() {
         val root = ThrowingViewGroup(context)
         val found = mutableListOf<WebView>()
 
         WebViewLeakScanner.scan(root, errorHandler) { found.add(it) }
 
         assertTrue(found.isEmpty())
-        assertEquals(1, errorHandler.errorMessages.size)
+        assertEquals(SdkErrorType.UiCallbackFail.toString(), errorHandler.sdkErrorMessages.single().msg)
     }
 }
 

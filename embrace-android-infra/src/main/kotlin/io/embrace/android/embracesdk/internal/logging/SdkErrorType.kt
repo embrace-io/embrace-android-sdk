@@ -66,6 +66,10 @@ sealed class SdkErrorType(private val severity: Severity) {
     object OtelExternalExportFail : SdkErrorType(ERROR)
     object EventBusHandlerFail : SdkErrorType(ERROR)
     object EventBusProducerFail : SdkErrorType(ERROR)
+    object SessionPartListenerFail : SdkErrorType(ERROR)
+    object DeviceChangeListenerFail : SdkErrorType(ERROR)
+    object UserSessionLoadFail : SdkErrorType(ERROR)
+    object ResourceCloseFail : SdkErrorType(ERROR)
 
     /**
      * A failure that can be ignored.

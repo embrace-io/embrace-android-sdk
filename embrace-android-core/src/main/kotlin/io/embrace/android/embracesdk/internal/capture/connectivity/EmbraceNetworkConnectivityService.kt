@@ -59,7 +59,7 @@ internal class EmbraceNetworkConnectivityService(
             if (connectivityManager.value != null) {
                 synchronized(lock) {
                     if (!closed && !registered) {
-                        runCatching {
+                        errorHandler.guardSdkCode(SdkErrorType.ConnectivityUpdateFailure) {
                             context.registerReceiver(this, intentFilter)
                             registered = true
                         }
@@ -74,7 +74,7 @@ internal class EmbraceNetworkConnectivityService(
             closed = true
             if (registered) {
                 registered = false
-                runCatching {
+                errorHandler.guardSdkCode(SdkErrorType.ConnectivityUpdateFailure) {
                     context.unregisterReceiver(this)
                 }
             }

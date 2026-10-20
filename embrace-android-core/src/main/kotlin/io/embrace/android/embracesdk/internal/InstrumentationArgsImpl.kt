@@ -14,6 +14,7 @@ import io.embrace.android.embracesdk.internal.clock.Clock
 import io.embrace.android.embracesdk.internal.config.ConfigService
 import io.embrace.android.embracesdk.internal.injection.WorkerThreadPool
 import io.embrace.android.embracesdk.internal.logging.ErrorHandler
+import io.embrace.android.embracesdk.internal.logging.SdkErrorType
 import io.embrace.android.embracesdk.internal.network.http.HttpRequestInfoModifierChain
 import io.embrace.android.embracesdk.internal.serialization.PlatformSerializer
 import io.embrace.android.embracesdk.internal.session.id.SessionIdsSnapshot
@@ -58,7 +59,7 @@ internal class InstrumentationArgsImpl(
     override val store: KeyValueStore by lazy { storeProvider() }
 
     override val packageInfo: PackageInfo? by lazy {
-        runCatching { context.packageManager.getPackageInfo(context.packageName, 0) }.getOrNull()
+        errorHandler.guardSdkCode(SdkErrorType.Ignored, null) { context.packageManager.getPackageInfo(context.packageName, 0) }
     }
 
     override val httpRequestInfoModifierChain: HttpRequestInfoModifierChain = HttpRequestInfoModifierChain(errorHandler)
@@ -94,7 +95,6 @@ internal class InstrumentationArgsImpl(
     }
 
     @Suppress("UNCHECKED_CAST")
-    private fun <T> Context.getSystemServiceSafe(name: String): T? = runCatching {
-        getSystemService(name)
-    }.getOrNull() as T?
+    private fun <T> Context.getSystemServiceSafe(name: String): T? =
+        errorHandler.guardSdkCode(SdkErrorType.Ignored, null) { getSystemService(name) } as T?
 }

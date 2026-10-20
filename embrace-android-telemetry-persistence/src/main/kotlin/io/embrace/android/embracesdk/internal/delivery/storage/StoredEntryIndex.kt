@@ -32,14 +32,14 @@ class StoredEntryIndex<T>(
     }
 
     private val entries: CopyOnWriteArraySet<T> by lazy {
-        val result = runCatching { rootDir.listFiles() }.getOrNull()
+        val result = errorHandler.guardSdkCode(SdkErrorType.Ignored, null) { rootDir.listFiles() }
         val files = result?.toList() ?: emptyList()
         val parsed = files.mapNotNull { file ->
             val entry = layout.fromName(file.name)
             if (entry == null) {
                 // discard anything that can't be parsed (e.g. leftover .tmp files from killed
                 // processes, or data written by an SDK using a different layout)
-                runCatching { layout.delete(file) }
+                errorHandler.guardSdkCode(errorType) { layout.delete(file) }
             }
             entry
         }

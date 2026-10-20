@@ -37,15 +37,15 @@ internal class SessionPartTrackerImpl(
         postTransitionProcessState: ProcessState,
     ): SessionPartToken? {
         activeSession?.let { endingSession ->
-            runCatching {
-                sessionEndListeners.forEach(SessionPartEndListener::onPreSessionEnd)
+            errorHandler.guardSdkCodeEach(SdkErrorType.SessionPartListenerFail, sessionEndListeners) {
+                it.onPreSessionEnd()
             }
             endingSession.endSessionPartCallback()
         }
 
         activeSession = startSessionPartCallback()
-        runCatching {
-            sessionChangeListeners.forEach(SessionPartChangeListener::onPostSessionChange)
+        errorHandler.guardSdkCodeEach(SdkErrorType.SessionPartListenerFail, sessionChangeListeners) {
+            it.onPostSessionChange()
         }
 
         return activeSession

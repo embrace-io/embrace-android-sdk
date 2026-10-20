@@ -603,10 +603,12 @@ class PayloadResurrectionServiceImplTest {
         assertEquals(1, nativeCrashService.nativeCrashesSent.size)
         assertEquals(deadSessionCrashData, nativeCrashService.nativeCrashesSent.single().first)
 
-        assertEquals(1, errorHandler.sdkErrorMessages.size)
         assertEquals(
-            SdkErrorType.NativeCrashResurrectionError.toString(),
-            errorHandler.sdkErrorMessages.single().msg,
+            listOf(
+                SdkErrorType.PayloadResurrectionPayloadFail.toString(),
+                SdkErrorType.NativeCrashResurrectionError.toString(),
+            ),
+            errorHandler.sdkErrorMessages.map { it.msg },
         )
     }
 

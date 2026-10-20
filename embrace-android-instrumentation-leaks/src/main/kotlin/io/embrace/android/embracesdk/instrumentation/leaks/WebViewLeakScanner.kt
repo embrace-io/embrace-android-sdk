@@ -4,6 +4,7 @@ import android.view.View
 import android.view.ViewGroup
 import android.webkit.WebView
 import io.embrace.android.embracesdk.internal.logging.ErrorHandler
+import io.embrace.android.embracesdk.internal.logging.SdkErrorType
 
 internal object WebViewLeakScanner {
 
@@ -20,7 +21,7 @@ internal object WebViewLeakScanner {
 
     fun scan(root: View?, errorHandler: ErrorHandler, onFound: (WebView) -> Unit) {
         root ?: return
-        try {
+        errorHandler.guardSdkCode(SdkErrorType.UiCallbackFail) {
             var currentLevel: List<View> = listOf(root)
             var depth = 0
             while (currentLevel.isNotEmpty()) {
@@ -37,8 +38,6 @@ internal object WebViewLeakScanner {
                 currentLevel = nextLevel ?: emptyList()
                 depth++
             }
-        } catch (e: Throwable) {
-            errorHandler.log("Failed to scan view tree for WebView leak detection", e, severity = ErrorHandler.Severity.ERROR)
         }
     }
 }

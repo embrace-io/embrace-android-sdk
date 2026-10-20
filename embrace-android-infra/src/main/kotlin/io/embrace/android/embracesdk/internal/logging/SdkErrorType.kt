@@ -13,6 +13,7 @@ sealed class SdkErrorType(private val severity: Severity) {
     override fun toString(): String = javaClass.simpleName
 
     object UncaughtExceptionHandler : SdkErrorType(ERROR)
+    object CrashTeardownFail : SdkErrorType(ERROR)
     object ProcessAeiRecords : SdkErrorType(ERROR)
     object NetworkStatusCaptureFail : SdkErrorType(ERROR)
     object ScreenResCaptureFail : SdkErrorType(ERROR)

@@ -6,6 +6,7 @@ import io.embrace.android.embracesdk.internal.arch.datasource.StateDataSource
 import io.embrace.android.embracesdk.internal.logging.ErrorHandler
 import io.embrace.android.embracesdk.internal.logging.SdkErrorType
 import io.embrace.android.embracesdk.internal.logging.guardSdkCode
+import io.embrace.android.embracesdk.internal.logging.guardSdkCodeEach
 import io.embrace.android.embracesdk.internal.worker.Worker
 import java.util.concurrent.CopyOnWriteArrayList
 import kotlin.reflect.KClass
@@ -77,7 +78,7 @@ class InstrumentationRegistryImpl(
         args: InstrumentationArgs,
     ) {
         val loader = instrumentationProviders.sortedBy { it.priority }
-        loader.forEach { provider ->
+        errorHandler.guardSdkCodeEach(SdkErrorType.InstrumentationRegFail, loader) { provider ->
             if (provider.asyncInit) {
                 args.backgroundWorker(Worker.Background.NonIoRegWorker).submit {
                     registerProvider(provider, args)

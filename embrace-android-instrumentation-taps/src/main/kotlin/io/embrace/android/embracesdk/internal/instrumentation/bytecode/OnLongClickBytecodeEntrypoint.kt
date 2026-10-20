@@ -14,7 +14,9 @@ object OnLongClickBytecodeEntrypoint {
     @Suppress("unused")
     @Keep
     @JvmStatic
-    fun onLongClick(view: View) {
+    fun onLongClick(view: View?) {
+        // apps commonly call listener.onLongClick(null) directly
+        view ?: return
         tapDataSource?.logTouchEvent(view, TapBreadcrumbType.LONG_PRESS)
     }
 }

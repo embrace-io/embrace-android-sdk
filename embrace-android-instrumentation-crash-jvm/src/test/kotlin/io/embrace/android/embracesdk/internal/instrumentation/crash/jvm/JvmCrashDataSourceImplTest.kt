@@ -8,7 +8,7 @@ import io.embrace.android.embracesdk.internal.arch.schema.SchemaType
 import io.embrace.android.embracesdk.internal.arch.schema.TelemetryAttributes
 import io.embrace.android.embracesdk.internal.config.resolved.AutoDataCaptureConfig
 import io.embrace.android.embracesdk.internal.config.resolved.EmbraceConfig
-import io.embrace.android.embracesdk.internal.logging.ErrorHandler
+import io.embrace.android.embracesdk.internal.logging.SdkErrorType
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertSame
 import org.junit.Before
@@ -18,7 +18,7 @@ internal class JvmCrashDataSourceImplTest {
 
     private lateinit var crashDataSource: JvmCrashDataSourceImpl
     private lateinit var args: FakeInstrumentationArgs
-    private lateinit var errorHandler: ErrorHandler
+    private lateinit var errorHandler: FakeErrorHandler
     private lateinit var testException: Exception
     private lateinit var ctx: Application
     private var modifier: ((TelemetryAttributes) -> SchemaType)? = null
@@ -27,7 +27,7 @@ internal class JvmCrashDataSourceImplTest {
     fun setUp() {
         ctx = Application()
         args = FakeInstrumentationArgs(ctx)
-        errorHandler = FakeErrorHandler()
+        errorHandler = FakeErrorHandler(throwOnSdkError = false)
         testException = RuntimeException("Test exception")
         Thread.setDefaultUncaughtExceptionHandler(null)
     }
@@ -35,6 +35,7 @@ internal class JvmCrashDataSourceImplTest {
     private fun setupForHandleCrash(crashHandlerEnabled: Boolean = false) {
         args = FakeInstrumentationArgs(
             ctx,
+            errorHandler = errorHandler,
             configService = FakeConfigService(
                 config = EmbraceConfig(autoDataCapture = { AutoDataCaptureConfig(jvmCrashCaptureEnabled = { crashHandlerEnabled }) }),
             ),
@@ -53,6 +54,41 @@ internal class JvmCrashDataSourceImplTest {
         crashDataSource.addCrashTeardownHandler { observedOrder.add(3) }
         crashDataSource.logUnhandledJvmThrowable(testException)
         assertEquals(listOf(1, 2, 3), observedOrder)
+    }
+
+    @Test
+    fun `a throwing teardown handler does not skip the handlers after it`() {
+        setupForHandleCrash(true)
+        val observedOrder = mutableListOf<Int>()
+        crashDataSource.addCrashTeardownHandler { observedOrder.add(1) }
+        crashDataSource.addCrashTeardownHandler { error("boom") }
+        crashDataSource.addCrashTeardownHandler { observedOrder.add(3) }
+        crashDataSource.logUnhandledJvmThrowable(testException)
+        assertEquals(listOf(1, 3), observedOrder)
+        assertEquals(1, args.destination.logEvents.size)
+        assertEquals(listOf(SdkErrorType.CrashTeardownFail.toString()), errorHandler.sdkErrorMessages.map { it.msg })
+    }
+
+    @Test
+    fun `teardown runs when capturing the crash fails`() {
+        modifier = { throw OutOfMemoryError("boom") }
+        setupForHandleCrash(true)
+        val crashIds = mutableListOf<String>()
+        crashDataSource.addCrashTeardownHandler { crashIds.add(it) }
+        crashDataSource.logUnhandledJvmThrowable(testException)
+        assertEquals(0, args.destination.logEvents.size)
+        assertEquals(1, crashIds.size)
+        assertEquals(listOf(SdkErrorType.DataSourceDataCaptureFail.toString()), errorHandler.sdkErrorMessages.map { it.msg })
+    }
+
+    @Test
+    fun `teardown runs when crash capture is disabled by config`() {
+        setupForHandleCrash(false)
+        val crashIds = mutableListOf<String>()
+        crashDataSource.addCrashTeardownHandler { crashIds.add(it) }
+        crashDataSource.logUnhandledJvmThrowable(testException)
+        assertEquals(0, args.destination.logEvents.size)
+        assertEquals(1, crashIds.size)
     }
 
     @Test

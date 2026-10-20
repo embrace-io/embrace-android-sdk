@@ -9,6 +9,8 @@ import io.embrace.android.embracesdk.internal.arch.schema.EmbType
 import io.embrace.android.embracesdk.internal.arch.schema.SchemaType
 import io.embrace.android.embracesdk.internal.arch.schema.TelemetryAttributes
 import io.embrace.android.embracesdk.internal.arch.stacktrace.truncateStacktrace
+import io.embrace.android.embracesdk.internal.logging.SdkErrorType
+import io.embrace.android.embracesdk.internal.logging.guardSdkCodeEach
 import io.embrace.android.embracesdk.internal.payload.LegacyExceptionInfo
 import io.embrace.android.embracesdk.internal.payload.ThreadInfo
 import io.embrace.android.embracesdk.internal.serialization.PlatformSerializer
@@ -64,8 +66,8 @@ class JvmCrashDataSourceImpl(
      */
     override fun logUnhandledJvmThrowable(exception: Throwable) {
         if (!mainCrashHandled.getAndSet(true)) {
+            val crashId = args.uuidSource.createUuid()
             captureTelemetry(inputValidation = configService.config.autoDataCapture::jvmCrashCaptureEnabled) {
-                val crashId = args.uuidSource.createUuid()
                 val attrs = TelemetryAttributes().apply {
                     val crashException = LegacyExceptionInfo.ofThrowable(exception)
                     setAttribute(
@@ -101,10 +103,10 @@ class JvmCrashDataSourceImpl(
 
                 val schemaType = telemetryModifier?.invoke(attrs) ?: SchemaType.JvmCrash(attrs)
                 addLog(schemaType, LogSeverity.ERROR, "")
-
-                // finally, notify other services that need to perform tear down
-                handlers.forEach { it.handleCrash(crashId) }
             }
+
+            // finally, notify other services that need to perform tear down
+            errorHandler.guardSdkCodeEach(SdkErrorType.CrashTeardownFail, handlers) { it.handleCrash(crashId) }
         }
     }
 

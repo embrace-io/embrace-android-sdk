@@ -145,7 +145,7 @@ internal fun createRealSdkInstance(
     lateinit var embraceSpanFactory: EmbraceSpanFactory
     lateinit var sessionOrchestrator: SessionOrchestrator
 
-    val startupClassifier = init(name = "init-module", recordDuration = true) {
+    val startupClassifier = init(name = "startup-classifier", recordDuration = true) {
         StartupClassifierImpl()
     }
 
@@ -216,7 +216,7 @@ internal fun createRealSdkInstance(
         )
     }
 
-    val currentSessionPartSpan = init("current-session-part-span-impl") {
+    val currentSessionPartSpan = init("current-session-part-span") {
         createCurrentSessionPartSpan(
             openTelemetryClock = openTelemetryClock,
             telemetryService = telemetryService,
@@ -258,7 +258,7 @@ internal fun createRealSdkInstance(
         EmbTrace.trace("tracing-api-init") { TracingApiDelegate(spanService.value) }
     }
 
-    val appContext = init("context") {
+    val appContext = init("app-context") {
         overrides?.appContext.resolve { context.applicationContextOrSelf() }
     }
 
@@ -281,7 +281,7 @@ internal fun createRealSdkInstance(
         }
     }
 
-    processStateTracker = init(name = "essential-service-module", recordDuration = true) {
+    processStateTracker = init(name = "process-state-tracker", recordDuration = true) {
         createProcessStateTracker(
             errorHandler = errorHandler,
             lifecycleTracker = overrides?.lifecycleTracker.resolve {
@@ -357,7 +357,7 @@ internal fun createRealSdkInstance(
         overrides?.instrumentationRegistry.resolve { InstrumentationRegistryImpl(errorHandler) }
     }
 
-    val instrumentationArgs = init(name = "instrumentation-module", recordDuration = true) {
+    val instrumentationArgs = init(name = "instrumentation-args", recordDuration = true) {
         createInstrumentationArgs(
             configService = configService,
             destination = telemetryDestination,
@@ -452,7 +452,7 @@ internal fun createRealSdkInstance(
         }
     }
 
-    val payloadStorageService = init(name = "delivery-module", recordDuration = true) {
+    val payloadStorageService = init(name = "payload-storage-service", recordDuration = true) {
         dataPersistenceWorker?.let { worker ->
             overrides?.payloadStorageService.resolve {
                 createPayloadStorageService(
@@ -591,11 +591,11 @@ internal fun createRealSdkInstance(
         }
     }
 
-    val hostedSdkVersionInfo = init("observable-hosted-sdk-version-info") {
+    val hostedSdkVersionInfo = init("hosted-sdk-version-info") {
         createHostedSdkVersionInfo(configService.appFramework, store)
     }
 
-    val resourceSource = init(name = "payload-source-module", recordDuration = true) {
+    val resourceSource = init(name = "resource-source", recordDuration = true) {
         createEnvelopeResourceSource(
             context = appContext,
             configService = configService,
@@ -712,7 +712,7 @@ internal fun createRealSdkInstance(
         }
     }
 
-    sessionOrchestrator = init(name = "user-session-orchestration-module", recordDuration = true) {
+    sessionOrchestrator = init(name = "session-orchestrator", recordDuration = true) {
         overrides?.sessionOrchestrator.resolve {
             createSessionOrchestrator(
                 clock = clock,
@@ -754,7 +754,7 @@ internal fun createRealSdkInstance(
 
     // the side effects of initialization, once every service is constructed
     EmbTrace.trace("sdk-services-start") {
-        EmbTrace.trace(sectionName = "span-service-init", recordDuration = true) {
+        EmbTrace.trace(sectionName = "current-session-part-span-initialize-service", recordDuration = true) {
             currentSessionPartSpan.initializeService(sdkStartTimeMs)
         }
         EmbTrace.trace("storage-telemetry-schedule") {

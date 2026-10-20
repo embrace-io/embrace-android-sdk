@@ -130,7 +130,11 @@ internal class RealSdkInstanceFactoryTest {
         File(storageDir, PersistedConfig.CONFIG_RESPONSE_FILE_NAME).outputStream().buffered().use { stream ->
             TestPlatformSerializer().toJson(cfg, RemoteConfig.serializer(), stream)
         }
-        val initServices = TestInitServices(clock = clock, errorHandler = errorHandler, otelSdkMode = OtelSdkMode.COMPAT)
+        val initServices = TestInitServices(
+            clock = clock,
+            errorHandler = errorHandler,
+            otelSdkMode = OtelSdkMode.COMPAT,
+        )
         return createRealSdkInstance(
             context = context,
             preStartServices = initServices.preStartServices,

@@ -11,6 +11,7 @@ import io.mockk.verify
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertThrows
+import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
 import java.io.ByteArrayInputStream
@@ -335,6 +336,19 @@ internal class EmbraceUrlConnectionDelegateTest {
             assertEquals(HTTP_OK, responseCode)
             assertNull(errorType)
         }
+    }
+
+    @Test
+    fun `SDK failures during the app's calls are reported rather than thrown to the app`() {
+        val failure = IllegalStateException("sdk failure")
+        val connection = createMockGzipConnection()
+        // the SDK starts failing once the app has opened the connection, so each of the app's later calls must keep it
+        every { connection.connect() } answers { internalApi.failure = failure }
+
+        executeRequest(connection = connection, wrappedIoStream = true)
+
+        assertTrue(internalApi.loggedErrors.isNotEmpty())
+        assertTrue(internalApi.loggedErrors.all { it === failure })
     }
 
     @Test

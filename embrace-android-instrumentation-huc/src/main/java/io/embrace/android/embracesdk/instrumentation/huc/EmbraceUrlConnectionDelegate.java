@@ -502,8 +502,12 @@ class EmbraceUrlConnectionDelegate<T extends HttpURLConnection> implements Embra
     public void setRequestProperty(@NonNull String key, @Nullable String value) {
         this.connection.setRequestProperty(key, value);
 
-        if (hasNetworkCaptureRules()) {
-            this.requestHeaders = getProcessedHeaders(getRequestProperties());
+        try {
+            if (hasNetworkCaptureRules()) {
+                this.requestHeaders = getProcessedHeaders(getRequestProperties());
+            }
+        } catch (Throwable t) {
+            logError(t);
         }
     }
 
@@ -528,11 +532,10 @@ class EmbraceUrlConnectionDelegate<T extends HttpURLConnection> implements Embra
             // We are proactive with setting this flag so that we don't get nested calls to log the network call by virtue of
             // extracting the data we need to log the network call.
             this.didLogNetworkCall = true;  // TODO: Wouldn't this mean that the network call might not be logged
-            long endTime = internalNetworkApi.getSdkCurrentTimeMs();
-
-            String url = EmbraceHttpPathOverrideKt.getOverriddenURLString(new EmbraceHttpUrlConnectionOverride(this.connection));
 
             try {
+                long endTime = internalNetworkApi.getSdkCurrentTimeMs();
+                String url = EmbraceHttpPathOverrideKt.getOverriddenURLString(new EmbraceHttpUrlConnectionOverride(this.connection));
                 long bytesOut = this.outputStream == null ? 0 : Math.max(this.outputStream.getCount(), 0);
                 long contentLength = Math.max(0, responseSize.get());
 
@@ -581,8 +584,8 @@ class EmbraceUrlConnectionDelegate<T extends HttpURLConnection> implements Embra
                         )
                     );
                 }
-            } catch (Exception e) {
-                logError(e);
+            } catch (Throwable t) {
+                logError(t);
             }
         }
     }
@@ -749,7 +752,11 @@ class EmbraceUrlConnectionDelegate<T extends HttpURLConnection> implements Embra
     @Nullable
     private InputStream getWrappedInputStream(InputStream connectionInputStream) {
         identifyTraceId();
-        setStartTime(internalNetworkApi.getSdkCurrentTimeMs());
+        try {
+            setStartTime(internalNetworkApi.getSdkCurrentTimeMs());
+        } catch (Throwable t) {
+            logError(t);
+        }
         InputStream in = null;
         if (shouldUncompressGzip()) {
             try {
@@ -817,6 +824,14 @@ class EmbraceUrlConnectionDelegate<T extends HttpURLConnection> implements Embra
      * is not available.
      */
     private void cacheNetworkCallData(@Nullable byte[] responseBody) {
+        try {
+            cacheNetworkCallDataUnguarded(responseBody);
+        } catch (Throwable t) {
+            logError(t);
+        }
+    }
+
+    private void cacheNetworkCallDataUnguarded(@Nullable byte[] responseBody) {
         setStartTime(internalNetworkApi.getSdkCurrentTimeMs());
 
         if (headerFields.get() == null) {

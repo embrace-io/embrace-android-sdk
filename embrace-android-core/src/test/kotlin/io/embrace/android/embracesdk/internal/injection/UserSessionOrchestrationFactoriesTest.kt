@@ -4,14 +4,13 @@ import io.embrace.android.embracesdk.fakes.FakeConfigService
 import io.embrace.android.embracesdk.fakes.FakeDeliveryModule
 import io.embrace.android.embracesdk.fakes.FakeLogLimitingService
 import io.embrace.android.embracesdk.fakes.FakeOpenTelemetryModule
-import io.embrace.android.embracesdk.fakes.FakeSessionIdsProvider
-import io.embrace.android.embracesdk.fakes.FakeStorageService
 import io.embrace.android.embracesdk.fakes.OtelSdkMode
 import io.embrace.android.embracesdk.fakes.injection.FakeCoreModule
 import io.embrace.android.embracesdk.fakes.injection.FakeEssentialServiceModule
 import io.embrace.android.embracesdk.fakes.injection.FakeInitModule
 import io.embrace.android.embracesdk.fakes.injection.FakePayloadSourceModule
 import io.embrace.android.embracesdk.fakes.injection.FakeWorkerThreadPool
+import io.embrace.android.embracesdk.internal.arch.InstrumentationRegistryImpl
 import io.embrace.android.embracesdk.internal.config.resolved.EmbraceConfig
 import io.embrace.android.embracesdk.internal.config.resolved.PersistenceConfig
 import io.embrace.android.embracesdk.internal.payload.Span
@@ -64,17 +63,6 @@ internal class UserSessionOrchestrationFactoriesTest {
     )
 
     private fun createSessionOrchestrator(sessionPartReader: SessionPartReader?) {
-        val instrumentationModule = InstrumentationModuleImpl(
-            initModule = initModule,
-            openTelemetryModule = openTelemetryModule,
-            workerThreadPool = workerThreadPool,
-            configService = configService,
-            essentialServiceModule = essentialServiceModule,
-            coreModule = coreModule,
-            storageService = FakeStorageService(),
-            userSessionIdsProvider = { null },
-            activeSessionIdsProvider = { FakeSessionIdsProvider().getActiveSessionIds() },
-        )
         createSessionOrchestrator(
             clock = initModule.clock,
             errorHandler = initModule.errorHandler,
@@ -99,7 +87,7 @@ internal class UserSessionOrchestrationFactoriesTest {
             envelopeMetadataSource = payloadSourceModule.envelopeMetadataSource,
             payloadStore = null,
             payloadCachingService = null,
-            instrumentationRegistry = instrumentationModule.instrumentationRegistry,
+            instrumentationRegistry = InstrumentationRegistryImpl(initModule.errorHandler),
             startupDurationProvider = { null },
             appVersionStartupCounterProvider = { null },
             logLimitingService = FakeLogLimitingService(),

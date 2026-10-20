@@ -20,9 +20,7 @@ import io.embrace.android.embracesdk.fakes.injection.FakeCoreModule
 import io.embrace.android.embracesdk.fakes.injection.FakeInitModule
 import io.embrace.android.embracesdk.fakes.injection.FakeWorkerThreadPool
 import io.embrace.android.embracesdk.fixtures.fakeCachedSessionStoredTelemetryMetadata
-import io.embrace.android.embracesdk.internal.arch.InstrumentationArgs
 import io.embrace.android.embracesdk.internal.arch.InstrumentationProvider
-import io.embrace.android.embracesdk.internal.arch.InstrumentationRegistry
 import io.embrace.android.embracesdk.internal.clock.millisToNanos
 import io.embrace.android.embracesdk.internal.config.BuildInfo
 import io.embrace.android.embracesdk.internal.config.ConfigService
@@ -38,8 +36,6 @@ import io.embrace.android.embracesdk.internal.injection.DeliveryModuleImpl
 import io.embrace.android.embracesdk.internal.injection.EssentialServiceModuleImpl
 import io.embrace.android.embracesdk.internal.injection.InitModule
 import io.embrace.android.embracesdk.internal.injection.InitializedModuleGraph
-import io.embrace.android.embracesdk.internal.injection.InstrumentationModule
-import io.embrace.android.embracesdk.internal.injection.InstrumentationModuleImpl
 import io.embrace.android.embracesdk.internal.injection.ModuleGraphSupplier
 import io.embrace.android.embracesdk.internal.injection.OpenTelemetryModule
 import io.embrace.android.embracesdk.internal.injection.OpenTelemetryModuleImpl
@@ -215,6 +211,7 @@ internal class EmbraceSetupInterface(
     fun createSdkOverrides(): SdkOverrides = SdkOverrides(
         logOrchestratorWorker = { BackgroundWorker(logOrchestratorExecutor) },
         versionChecker = simulatedVersionChecker?.let { versionChecker -> { versionChecker } },
+        instrumentationRegistry = { FakeInstrumentationRegistry(it()) },
     )
 
     fun createModuleGraphSupplier(deliveryTracer: DeliveryTracer): ModuleGraphSupplier =
@@ -286,33 +283,6 @@ internal class EmbraceSetupInterface(
                 createThreadBlockageService(args)
             } else {
                 null
-            }
-        },
-        instrumentationModuleSupplier = {
-                initModule,
-                openTelemetryModule,
-                workerThreadPool,
-                configModule,
-                essentialServiceModule,
-                coreModule,
-                storageModule,
-                userSessionIdsProvider,
-                activeSessionIdsProvider,
-            ->
-            val impl = InstrumentationModuleImpl(
-                initModule,
-                openTelemetryModule,
-                workerThreadPool,
-                configModule,
-                essentialServiceModule,
-                coreModule,
-                storageModule,
-                userSessionIdsProvider,
-                activeSessionIdsProvider,
-            )
-            object : InstrumentationModule {
-                override val instrumentationRegistry: InstrumentationRegistry = FakeInstrumentationRegistry(impl.instrumentationRegistry)
-                override val instrumentationArgs: InstrumentationArgs = impl.instrumentationArgs
             }
         },
     )

@@ -5,13 +5,11 @@ import androidx.test.ext.junit.runners.AndroidJUnit4
 import io.embrace.android.embracesdk.fakes.FakeClock
 import io.embrace.android.embracesdk.fakes.FakeConfigService
 import io.embrace.android.embracesdk.fakes.FakeErrorHandler
-import io.embrace.android.embracesdk.fakes.FakeInstrumentationModule
 import io.embrace.android.embracesdk.fakes.FakeReadWriteLogRecord
 import io.embrace.android.embracesdk.fakes.OtelSdkMode
 import io.embrace.android.embracesdk.fakes.TestPlatformSerializer
 import io.embrace.android.embracesdk.fakes.injection.FakeCoreModule
 import io.embrace.android.embracesdk.fakes.injection.FakeInitModule
-import io.embrace.android.embracesdk.internal.arch.InstrumentationRegistry
 import io.embrace.android.embracesdk.internal.clock.Clock
 import io.embrace.android.embracesdk.internal.config.PersistedConfig
 import io.embrace.android.embracesdk.internal.config.remote.OtelKotlinSdkConfig
@@ -42,7 +40,6 @@ internal class InitializedModuleGraphTest {
     private lateinit var clock: Clock
     private lateinit var coreModule: FakeCoreModule
     private lateinit var context: Context
-    private lateinit var registry: InstrumentationRegistry
 
     @Before
     fun setup() {
@@ -53,7 +50,6 @@ internal class InitializedModuleGraphTest {
     }
 
     private fun createModuleGraph(): InitializedModuleGraph {
-        val application = RuntimeEnvironment.getApplication()
         val preStartServices = PreStartServices(errorHandler, clock)
         return InitializedModuleGraph(
             context = context,
@@ -66,11 +62,6 @@ internal class InitializedModuleGraphTest {
             sdkStartTimeMs = clock.now(),
             sdkInitResourceUsageTracker = SdkInitResourceUsageTracker(errorHandler),
             coreModuleSupplier = { _, _, _ -> coreModule },
-            instrumentationModuleSupplier = { _, _, _, _, _, _, _, _, _ ->
-                FakeInstrumentationModule(application, errorHandler = errorHandler).apply {
-                    registry = instrumentationRegistry
-                }
-            },
         ).apply { start() }
     }
 
@@ -140,16 +131,13 @@ internal class InitializedModuleGraphTest {
             sdkStartTimeMs = clock.now(),
             sdkInitResourceUsageTracker = SdkInitResourceUsageTracker(errorHandler),
             initModuleSupplier = { initModule },
-            instrumentationModuleSupplier = { _, _, _, _, _, _, _, _, _ ->
-                FakeInstrumentationModule(RuntimeEnvironment.getApplication(), errorHandler = errorHandler)
-            },
         )
     }
 
     @Test
     fun `post load instrumentation hooks up listeners`() {
         val moduleGraph = createModuleGraph()
-        val registry = moduleGraph.instrumentationModule.instrumentationRegistry
+        val registry = moduleGraph.instrumentationRegistry
         val dataSource = CrashHandlerDataSource()
         registry.add { dataSource }
 

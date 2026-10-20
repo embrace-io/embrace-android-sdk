@@ -2,6 +2,9 @@ package io.embrace.android.embracesdk.internal.injection
 
 import android.app.ActivityManager
 import android.content.Context
+import io.embrace.android.embracesdk.internal.arch.InstrumentationArgs
+import io.embrace.android.embracesdk.internal.arch.InstrumentationRegistry
+import io.embrace.android.embracesdk.internal.arch.InstrumentationRegistryImpl
 import io.embrace.android.embracesdk.internal.capture.connectivity.NetworkConnectivityService
 import io.embrace.android.embracesdk.internal.capture.crumbs.BreadcrumbDataSource
 import io.embrace.android.embracesdk.internal.config.ConfigService
@@ -59,7 +62,6 @@ internal class InitializedModuleGraph(
     private val coreModuleSupplier: CoreModuleSupplier? = null,
     private val storageServiceSupplier: StorageServiceSupplier? = null,
     private val essentialServiceModuleSupplier: EssentialServiceModuleSupplier? = null,
-    private val instrumentationModuleSupplier: InstrumentationModuleSupplier? = null,
     private val deliveryModuleSupplier: DeliveryModuleSupplier? = null,
     private val threadBlockageServiceSupplier: ThreadBlockageServiceSupplier? = null,
     private val payloadSourceModuleSupplier: PayloadSourceModuleSupplier? = null,
@@ -86,7 +88,7 @@ internal class InitializedModuleGraph(
             processStateTrackerProvider = { essentialServiceModule.processStateTracker },
             experimentTrackingServiceProvider = { essentialServiceModule.experimentTrackingService },
             userSessionPropertiesServiceProvider = { essentialServiceModule.userSessionPropertiesService },
-            instrumentationRegistryProvider = { instrumentationModule.instrumentationRegistry },
+            instrumentationRegistryProvider = { instrumentationRegistry },
         )
     }
 
@@ -151,36 +153,39 @@ internal class InitializedModuleGraph(
             )
     }
 
-    val instrumentationModule: InstrumentationModule = init(name = "instrumentation-module", recordDuration = true) {
-        val userSessionIdsProvider = { essentialServiceModule.sessionIdsProvider.getCurrentUserSessionId() }
-        val activeSessionIdsProvider = { essentialServiceModule.sessionIdsProvider.getActiveSessionIds() }
+    val instrumentationRegistry: InstrumentationRegistry = init("instrumentation-registry") {
+        overrides?.instrumentationRegistry.resolve { InstrumentationRegistryImpl(initModule.errorHandler) }
+    }
 
-        instrumentationModuleSupplier?.invoke(
-            initModule,
-            openTelemetryModule,
-            workerThreadPool,
-            configService,
-            essentialServiceModule,
-            coreModule,
-            storageService,
-            userSessionIdsProvider,
-            activeSessionIdsProvider,
-        ) ?: InstrumentationModuleImpl(
-            initModule,
-            openTelemetryModule,
-            workerThreadPool,
-            configService,
-            essentialServiceModule,
-            coreModule,
-            storageService,
-            userSessionIdsProvider,
-            activeSessionIdsProvider,
+    val instrumentationArgs: InstrumentationArgs = init(name = "instrumentation-module", recordDuration = true) {
+        createInstrumentationArgs(
+            configService = configService,
+            destination = essentialServiceModule.telemetryDestination,
+            errorHandler = initModule.errorHandler,
+            clock = initModule.clock,
+            context = coreModule.context,
+            application = coreModule.application,
+            storeProvider = { coreModule.store },
+            serializer = initModule.jsonSerializer,
+            uuidSource = initModule.uuidSource,
+            ordinalStore = coreModule.ordinalStore,
+            processIdentifier = openTelemetryModule.otelSdkConfig.processIdentifier,
+            processStateTracker = essentialServiceModule.processStateTracker,
+            navigationTrackingService = essentialServiceModule.navigationTrackingService,
+            telemetryService = initModule.telemetryService,
+            workerThreadPool = workerThreadPool,
+            sessionPartTracker = essentialServiceModule.sessionPartTracker,
+            userSessionPropertiesService = essentialServiceModule.userSessionPropertiesService,
+            userSessionIdsProvider = { essentialServiceModule.sessionIdsProvider.getCurrentUserSessionId() },
+            activeSessionIdsProvider = { essentialServiceModule.sessionIdsProvider.getActiveSessionIds() },
+            crashMarkerFileProvider = { storageService.getFileForWrite("embrace_crash_marker") },
+            eventBus = coreModule.eventBus,
         )
     }
 
     val breadcrumbDataSource: Lazy<BreadcrumbDataSource?> = lazy {
-        instrumentationModule.instrumentationRegistry.add {
-            BreadcrumbDataSource(instrumentationModule.instrumentationArgs)
+        instrumentationRegistry.add {
+            BreadcrumbDataSource(instrumentationArgs)
         }
     }
 
@@ -198,13 +203,13 @@ internal class InitializedModuleGraph(
 
     val startupService: StartupService = init("startup-service") {
         createStartupService(
-            destination = instrumentationModule.instrumentationArgs.destination,
+            destination = instrumentationArgs.destination,
             appVersionStartupCounterProvider = { coreModule.appVersionStartupCounter },
         )
     }
 
     val appStartupDataCollector: AppStartupDataCollector = init("app-startup-data-collector") {
-        val instrumentationArgs = instrumentationModule.instrumentationArgs
+        val instrumentationArgs = instrumentationArgs
         createAppStartupDataCollector(
             clock = initModule.clock,
             errorHandler = initModule.errorHandler,
@@ -220,7 +225,7 @@ internal class InitializedModuleGraph(
 
     val uiLoadDataListener: UiLoadDataListener? = init("ui-load-data-listener") {
         createUiLoadDataListener(
-            destination = instrumentationModule.instrumentationArgs.destination,
+            destination = instrumentationArgs.destination,
             configService = configService,
             versionChecker = versionChecker,
         )
@@ -267,7 +272,7 @@ internal class InitializedModuleGraph(
     }
 
     val threadBlockageService: ThreadBlockageService? = init("thread-blockage-service") {
-        val args = instrumentationModule.instrumentationArgs
+        val args = instrumentationArgs
         // Only create the thread blockage service if the provider is null, not when the provider returns null
         when (threadBlockageServiceSupplier) {
             null -> createThreadBlockageService(args)
@@ -338,7 +343,7 @@ internal class InitializedModuleGraph(
                 intakeService = delivery.intakeService,
                 cachedLogEnvelopeStore = delivery.cachedLogEnvelopeStore,
                 nativeCrashServiceProvider = {
-                    instrumentationModule.instrumentationRegistry.findByType(NativeCrashDataSource::class)
+                    instrumentationRegistry.findByType(NativeCrashDataSource::class)
                 },
                 restoreDecisionProvider = { sessionOrchestrator.userSessionRestoreDecision },
                 processIdProvider = { openTelemetryModule.otelSdkConfig.processIdentifier },
@@ -373,7 +378,7 @@ internal class InitializedModuleGraph(
                     envelopeMetadataSource = payloadSourceModule.envelopeMetadataSource,
                     payloadStore = deliveryModule?.payloadStore,
                     payloadCachingService = deliveryModule?.payloadCachingService,
-                    instrumentationRegistry = instrumentationModule.instrumentationRegistry,
+                    instrumentationRegistry = instrumentationRegistry,
                     startupDurationProvider = startupService::getSdkStartupDuration,
                     appVersionStartupCounterProvider = startupService::getAppVersionStartupCounter,
                     logLimitingService = logLimitingService,

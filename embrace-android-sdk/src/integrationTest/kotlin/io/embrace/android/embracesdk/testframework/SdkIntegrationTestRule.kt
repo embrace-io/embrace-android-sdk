@@ -171,7 +171,7 @@ internal class SdkIntegrationTestRule(
         moduleGraphSupplier = setup.createModuleGraphSupplier(deliveryTracer)
         action = EmbraceActionInterface(
             setup,
-            { moduleGraph.instrumentationModule.instrumentationRegistry },
+            { moduleGraph.instrumentationRegistry },
             { moduleGraph.coreModule.eventBus },
             { sdkStateHolder.api },
             { sdkStateHolder.state },

@@ -6,13 +6,16 @@ import androidx.test.ext.junit.runners.AndroidJUnit4
 import io.embrace.android.embracesdk.fakes.FakeConfigService
 import io.embrace.android.embracesdk.fakes.FakeEnvelopeResourceSource
 import io.embrace.android.embracesdk.fakes.FakeErrorHandler
-import io.embrace.android.embracesdk.fakes.FakeInstrumentationModule
+import io.embrace.android.embracesdk.fakes.FakeInstrumentationArgs
 import io.embrace.android.embracesdk.fakes.FakeInternalTelemetryService
 import io.embrace.android.embracesdk.fakes.FakeKeyValueStore
 import io.embrace.android.embracesdk.fakes.FakeRnBundleIdTracker
 import io.embrace.android.embracesdk.fakes.FakeTelemetryDestination
 import io.embrace.android.embracesdk.fakes.TestPlatformSerializer
 import io.embrace.android.embracesdk.internal.api.delegate.HostedSdkInternalInterfaceImpl
+import io.embrace.android.embracesdk.internal.arch.InstrumentationArgs
+import io.embrace.android.embracesdk.internal.arch.InstrumentationRegistry
+import io.embrace.android.embracesdk.internal.arch.InstrumentationRegistryImpl
 import io.embrace.android.embracesdk.internal.arch.schema.EmbType
 import io.embrace.android.embracesdk.internal.arch.schema.EmbType.System.ReactNativeCrash.embAndroidReactNativeCrashJsException
 import io.embrace.android.embracesdk.internal.envelope.metadata.HostedSdkVersionInfo
@@ -30,7 +33,8 @@ internal class ReactNativeInternalInterfaceImplTest {
 
     private lateinit var impl: HostedSdkInternalInterfaceImpl
     private lateinit var store: FakeKeyValueStore
-    private lateinit var instrumentationModule: FakeInstrumentationModule
+    private lateinit var instrumentationRegistry: InstrumentationRegistry
+    private lateinit var instrumentationArgs: InstrumentationArgs
     private lateinit var rnBundleIdTracker: FakeRnBundleIdTracker
     private lateinit var errorHandler: FakeErrorHandler
     private lateinit var context: Context
@@ -43,12 +47,13 @@ internal class ReactNativeInternalInterfaceImplTest {
         hostedSdkVersionInfo = ReactNativeSdkVersionInfo(store)
         errorHandler = FakeErrorHandler(false)
         context = ApplicationProvider.getApplicationContext()
-        instrumentationModule = FakeInstrumentationModule(ApplicationProvider.getApplicationContext())
+        instrumentationRegistry = InstrumentationRegistryImpl(FakeErrorHandler())
+        instrumentationArgs = FakeInstrumentationArgs(ApplicationProvider.getApplicationContext())
         impl = HostedSdkInternalInterfaceImpl(
             logsApi = mockk(),
             configService = FakeConfigService(),
             resourceSource = FakeEnvelopeResourceSource(),
-            instrumentationRegistry = instrumentationModule.instrumentationRegistry,
+            instrumentationRegistry = instrumentationRegistry,
             serializer = TestPlatformSerializer(),
             rnBundleIdTracker = lazyOf(rnBundleIdTracker),
             hostedSdkVersionInfo = hostedSdkVersionInfo,
@@ -97,7 +102,7 @@ internal class ReactNativeInternalInterfaceImplTest {
             logsApi = mockk(),
             configService = FakeConfigService(),
             resourceSource = FakeEnvelopeResourceSource(),
-            instrumentationRegistry = instrumentationModule.instrumentationRegistry,
+            instrumentationRegistry = instrumentationRegistry,
             serializer = TestPlatformSerializer(),
             rnBundleIdTracker = lazyOf(rnBundleIdTracker),
             hostedSdkVersionInfo = hostedSdkVersionInfo,
@@ -113,8 +118,8 @@ internal class ReactNativeInternalInterfaceImplTest {
 
     @Test
     fun `test RN crash by calling logUnhandledJsException() before handleCrash()`() {
-        val registry = instrumentationModule.instrumentationRegistry
-        val args = instrumentationModule.instrumentationArgs
+        val registry = instrumentationRegistry
+        val args = instrumentationArgs
         val dataSource = JvmCrashDataSourceImpl(args)
         registry.add { dataSource }
 

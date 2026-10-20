@@ -66,13 +66,29 @@ internal class InitializedModuleGraph(
     val workerThreadPool: WorkerThreadPool = configLoadServices.workerThreadPool
     val configService: ConfigService = configLoadServices.configService
 
+    private val otelSignalContext = OtelSignalContext(
+        essentialServiceModuleProvider = { essentialServiceModule },
+        userSessionOrchestrationModuleProvider = { userSessionOrchestrationModule },
+        instrumentationModuleProvider = { instrumentationModule },
+    )
+
     val openTelemetryModule: OpenTelemetryModule = EmbTrace.trace("otel-module") {
-        openTelemetryModuleSupplier?.invoke(initModule, preStartServices.externalOtelConfig)
-            ?: OpenTelemetryModuleImpl(initModule, preStartServices.externalOtelConfig)
+        openTelemetryModuleSupplier?.invoke(
+            initModule,
+            configService,
+            preStartServices.externalOtelConfig,
+            otelSignalContext::getSessionIdsProvider,
+            otelSignalContext::getUserId,
+            otelSignalContext::getEventMetadata,
+        ) ?: OpenTelemetryModuleImpl(
+            initModule = initModule,
+            configService = configService,
+            externalOtelConfig = preStartServices.externalOtelConfig,
+            sessionIdsProvider = otelSignalContext::getSessionIdsProvider,
+            userIdProvider = otelSignalContext::getUserId,
+            eventMetadataProvider = otelSignalContext::getEventMetadata,
+        )
     }.apply {
-        // the persisted config decides which OTel SDK implementation is built, so it is applied
-        // before anything below can build the OTel SDK
-        setOtelBehavior(configLoadServices.persistedConfig.otelBehavior)
         EmbTrace.trace(sectionName = "span-service-init", recordDuration = true) {
             currentSessionPartSpan.initializeService(sdkStartTimeMs)
         }
@@ -303,6 +319,10 @@ internal class InitializedModuleGraph(
                 workerThreadPool,
             )
         }
+
+    init {
+        otelSignalContext.markReady()
+    }
 
     private inline fun <T> init(name: String, recordDuration: Boolean = false, supplier: () -> T): T =
         EmbTrace.trace("$name-init", recordDuration) { supplier() }

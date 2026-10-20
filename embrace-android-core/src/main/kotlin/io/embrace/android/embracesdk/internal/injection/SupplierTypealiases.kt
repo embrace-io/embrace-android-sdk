@@ -11,6 +11,7 @@ import io.embrace.android.embracesdk.internal.delivery.storage.PayloadStorageSer
 import io.embrace.android.embracesdk.internal.envelope.session.OtelPayloadMapper
 import io.embrace.android.embracesdk.internal.otel.config.ExternalOtelConfig
 import io.embrace.android.embracesdk.internal.serialization.PlatformSerializer
+import io.embrace.android.embracesdk.internal.session.id.SessionIdsProvider
 import io.embrace.android.embracesdk.internal.session.id.SessionIdsSnapshot
 import io.embrace.android.embracesdk.internal.session.lifecycle.LifecycleTracker
 import io.embrace.android.embracesdk.internal.session.orchestrator.SessionOrchestrator
@@ -92,7 +93,11 @@ typealias LogModuleSupplier = (
 
 typealias OpenTelemetryModuleSupplier = (
     initModule: InitModule,
+    configService: ConfigService,
     externalOtelConfig: ExternalOtelConfig,
+    sessionIdsProvider: () -> SessionIdsProvider?,
+    userIdProvider: () -> String?,
+    eventMetadataProvider: () -> Map<String, String>,
 ) -> OpenTelemetryModule
 
 typealias PayloadSourceModuleSupplier = (

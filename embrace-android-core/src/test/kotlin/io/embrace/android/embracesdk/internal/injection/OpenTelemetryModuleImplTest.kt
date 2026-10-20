@@ -1,5 +1,6 @@
 package io.embrace.android.embracesdk.internal.injection
 
+import io.embrace.android.embracesdk.fakes.FakeConfigService
 import io.embrace.android.embracesdk.internal.otel.logs.LogSinkImpl
 import io.embrace.android.embracesdk.internal.otel.spans.SpanServiceImpl
 import io.embrace.android.embracesdk.internal.spans.CurrentSessionPartSpanImpl
@@ -9,7 +10,7 @@ import org.junit.Test
 internal class OpenTelemetryModuleImplTest {
     @Test
     fun testInitModuleImplDefaults() {
-        val openTelemetryModule: OpenTelemetryModule = OpenTelemetryModuleImpl(InitModuleImpl())
+        val openTelemetryModule: OpenTelemetryModule = OpenTelemetryModuleImpl(InitModuleImpl(), FakeConfigService())
         assertTrue(openTelemetryModule.spanService is SpanServiceImpl)
         assertTrue(openTelemetryModule.currentSessionPartSpan is CurrentSessionPartSpanImpl)
         assertTrue(openTelemetryModule.logSink is LogSinkImpl)

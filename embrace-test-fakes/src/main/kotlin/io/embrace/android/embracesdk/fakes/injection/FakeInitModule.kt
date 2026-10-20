@@ -1,6 +1,7 @@
 package io.embrace.android.embracesdk.fakes.injection
 
 import io.embrace.android.embracesdk.fakes.FakeClock
+import io.embrace.android.embracesdk.fakes.FakeConfigService
 import io.embrace.android.embracesdk.fakes.FakeInternalLogger
 import io.embrace.android.embracesdk.fakes.OtelSdkMode
 import io.embrace.android.embracesdk.fakes.TestUuidSource
@@ -42,25 +43,25 @@ class FakeInitModule(
         uuidSource = uuidSource,
     ),
     override var instrumentedConfig: InstrumentedConfig = FakeInstrumentedConfig(),
+    private val remoteConfig: RemoteConfig = RemoteConfig(),
     private val otelSdkMode: OtelSdkMode,
 ) : InitModule by initModule {
 
     /**
-     * Selects the OTel SDK implementation from [otelSdkMode] before SDK init.
+     * Resolves the OTel behavior from [remoteConfig], with the OTel SDK implementation selected by [otelSdkMode].
      */
     val openTelemetryModule: OpenTelemetryModule by lazy {
         OpenTelemetryModuleImpl(
             initModule = this,
-            externalOtelConfig = preStartServices.externalOtelConfig,
-        ).apply {
-            setOtelBehavior(
-                createOtelBehavior(
-                    remoteCfg = RemoteConfig(
+            configService = FakeConfigService(
+                otelBehavior = createOtelBehavior(
+                    remoteCfg = remoteConfig.copy(
                         otelKotlinSdkConfig = OtelKotlinSdkConfig(pctEnabled = if (otelSdkMode.useKotlinSdk) 100f else 0f),
                     ),
                 ),
-            )
-        }
+            ),
+            externalOtelConfig = preStartServices.externalOtelConfig,
+        )
     }
 
     fun getFakeClock(): FakeClock? = clock as? FakeClock

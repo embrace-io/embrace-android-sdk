@@ -6,7 +6,7 @@ import io.embrace.android.embracesdk.fakes.FakeClock
 import io.embrace.android.embracesdk.fakes.FakeInternalLogger
 import io.embrace.android.embracesdk.fakes.FakeTelemetryDestination
 import io.embrace.android.embracesdk.internal.api.SdkApi
-import io.embrace.android.embracesdk.internal.logging.BufferedInternalErrorHandler
+import io.embrace.android.embracesdk.internal.logging.ErrorHandlerImpl
 import io.embrace.android.embracesdk.internal.logging.InternalErrorType
 import io.embrace.android.embracesdk.internal.otel.spans.NoopEmbraceSdkSpan
 import io.embrace.android.embracesdk.spans.EmbraceSpan
@@ -67,14 +67,14 @@ internal class NoopSdkInstanceTest {
 
     @Test
     fun `onPostStart discards buffered internal errors`() {
-        val handler = BufferedInternalErrorHandler(FakeClock())
+        val handler = ErrorHandlerImpl(FakeClock())
         val buffer = BufferingSdkInstance({ 0 }, logger, handler)
-        handler.trackInternalError(InternalErrorType.DeliverySchedulingFail, IllegalStateException())
+        handler.guardSdkCode(InternalErrorType.DeliverySchedulingFail, Unit) { throw IllegalStateException() }
         instance.onPostStart(buffer)
-        handler.trackInternalError(InternalErrorType.DeliverySchedulingFail, IllegalStateException())
+        handler.guardSdkCode(InternalErrorType.DeliverySchedulingFail, Unit) { throw IllegalStateException() }
 
         val destination = FakeTelemetryDestination()
-        handler.drainTo(destination, true)
+        buffer.drainSdkErrors(destination)
         assertTrue(destination.logEvents.isEmpty())
     }
 

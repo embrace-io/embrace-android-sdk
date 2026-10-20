@@ -5,10 +5,9 @@ import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import io.embrace.android.embracesdk.fakes.FakeInternalLogger
 import io.embrace.android.embracesdk.fakes.FakeInternalTelemetryService
-import io.embrace.android.embracesdk.fakes.FakeTelemetryDestination
 import io.embrace.android.embracesdk.internal.EmbraceInternalApi
 import io.embrace.android.embracesdk.internal.NoopInternalInterfaceApi
-import io.embrace.android.embracesdk.internal.logging.BufferedInternalErrorHandler
+import io.embrace.android.embracesdk.internal.logging.ErrorHandlerImpl
 import io.embrace.android.embracesdk.internal.logging.InternalErrorType
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertSame
@@ -23,7 +22,7 @@ internal class SdkStateHolderTest {
     private val context = ApplicationProvider.getApplicationContext<Context>()
     private val calls = mutableListOf<String>()
     private val logger = FakeInternalLogger(throwOnInternalError = false)
-    private val bufferedErrorHandler = BufferedInternalErrorHandler({ 0 })
+    private val bufferedErrorHandler = ErrorHandlerImpl({ 0 })
     private val buffer = BufferingSdkInstance({ 0 }, logger, bufferedErrorHandler)
     private val failed = FakeInstance(calls, prefix = "failed:")
     private val disabled = FakeInstance(calls, prefix = "disabled:")
@@ -326,22 +325,26 @@ internal class SdkStateHolderTest {
     fun `internal error handler is closed when the sdk is disabled`() {
         val holder = createHolder(FakeInstance(calls))
         holder.start(context)
-        val destination = FakeTelemetryDestination()
-        bufferedErrorHandler.drainTo(destination, true)
+        val errors = mutableListOf<Throwable>()
+        bufferedErrorHandler.drain { throwable, _ -> errors += throwable }
         holder.close()
-        bufferedErrorHandler.trackInternalError(InternalErrorType.PublicApiFail, IllegalStateException())
-        assertTrue(destination.logEvents.isEmpty())
+        trackError()
+        assertTrue(errors.isEmpty())
     }
 
     @Test
     fun `internal error handler is closed when the sdk fails to start`() {
         val holder = createHolder(FakeInstance(calls, startSucceeds = false))
-        val destination = FakeTelemetryDestination()
-        bufferedErrorHandler.drainTo(destination, true)
+        val errors = mutableListOf<Throwable>()
+        bufferedErrorHandler.drain { throwable, _ -> errors += throwable }
         holder.start(context)
         assertEquals(SdkState.FAILED, holder.state)
-        bufferedErrorHandler.trackInternalError(InternalErrorType.PublicApiFail, IllegalStateException())
-        assertTrue(destination.logEvents.isEmpty())
+        trackError()
+        assertTrue(errors.isEmpty())
+    }
+
+    private fun trackError() {
+        bufferedErrorHandler.guardSdkCode(InternalErrorType.PublicApiFail, Unit) { throw IllegalStateException() }
     }
 
     private fun createHolder(instance: SdkInstance) = createHolder { instance }

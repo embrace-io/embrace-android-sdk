@@ -29,7 +29,7 @@ internal fun createSdkStateHolder(
     val buffer = BufferingSdkInstance(
         clock = clock::now,
         logger = logger,
-        internalErrorHandler = preStartServices.internalErrorHandler,
+        errorHandler = preStartServices.errorHandler,
     )
     return SdkStateHolder(
         instanceFactory = { context ->
@@ -55,7 +55,7 @@ internal fun createSdkStateHolder(
         disabled = { NoopSdkInstance(logger, NoopSdkInstance.SDK_DISABLED) },
         telemetryService = preStartServices.telemetryService,
         errorHandler = logger,
-        bufferedErrorHandler = preStartServices.internalErrorHandler,
+        bufferedErrorHandler = preStartServices.errorHandler,
     )
 }
 

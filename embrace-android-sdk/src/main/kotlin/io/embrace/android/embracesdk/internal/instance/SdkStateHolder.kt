@@ -3,7 +3,7 @@ package io.embrace.android.embracesdk.internal.instance
 import android.content.Context
 import android.util.Log
 import io.embrace.android.embracesdk.internal.api.SdkApi
-import io.embrace.android.embracesdk.internal.logging.BufferedInternalErrorHandler
+import io.embrace.android.embracesdk.internal.logging.ErrorHandler
 import io.embrace.android.embracesdk.internal.logging.InternalErrorHandler
 import io.embrace.android.embracesdk.internal.logging.InternalErrorType
 import io.embrace.android.embracesdk.internal.telemetry.InternalTelemetryService
@@ -37,7 +37,7 @@ internal class SdkStateHolder(
     private val disabled: Provider<SdkInstance>,
     telemetryService: InternalTelemetryService,
     private val errorHandler: InternalErrorHandler,
-    private val bufferedErrorHandler: BufferedInternalErrorHandler,
+    private val bufferedErrorHandler: ErrorHandler,
 ) : Closeable {
 
     private val lock = Any()

@@ -953,7 +953,7 @@ internal class MultiFilePersistenceParityTest(
                 shutdownNow()
             }
         }
-        checkNotNull(testRule.moduleGraph.deliveryModule).intakeService.shutdown()
+        checkNotNull(testRule.moduleGraph.intakeService).shutdown()
     }
 
     /**
@@ -1006,7 +1006,7 @@ internal class MultiFilePersistenceParityTest(
      * next launch to send again.
      */
     private fun awaitDeliveredSessionPayloadsDeleted() {
-        val storage = checkNotNull(testRule.moduleGraph.deliveryModule).payloadStorageService
+        val storage = checkNotNull(testRule.moduleGraph.payloadStorageService)
         waitUntilConditionMet(
             dataProvider = { storage.getPayloadsByPriority().count { it.envelopeType == SupportedEnvelopeType.SESSION } },
             condition = { it == 0 },
@@ -1050,7 +1050,7 @@ internal class MultiFilePersistenceParityTest(
      * storage service, which keeps its index in step with the disk.
      */
     private fun freePayloadStorage(entries: List<StoredTelemetryMetadata>) {
-        val storage = checkNotNull(testRule.moduleGraph.deliveryModule).payloadStorageService
+        val storage = checkNotNull(testRule.moduleGraph.payloadStorageService)
         val deleted = CountDownLatch(entries.size)
         entries.forEach { storage.delete(it) { deleted.countDown() } }
         assertTrue("the payload storage was not freed", deleted.await(5, TimeUnit.SECONDS))

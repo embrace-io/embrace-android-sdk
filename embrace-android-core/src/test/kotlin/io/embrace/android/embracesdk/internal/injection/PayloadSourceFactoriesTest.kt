@@ -1,10 +1,12 @@
 package io.embrace.android.embracesdk.internal.injection
 
+import io.embrace.android.embracesdk.fakes.FakeCachedLogEnvelopeStore
 import io.embrace.android.embracesdk.fakes.FakeConfigService
-import io.embrace.android.embracesdk.fakes.FakeDeliveryModule
 import io.embrace.android.embracesdk.fakes.FakeEnvelopeMetadataSource
+import io.embrace.android.embracesdk.fakes.FakeIntakeService
 import io.embrace.android.embracesdk.fakes.FakeOpenTelemetryModule
 import io.embrace.android.embracesdk.fakes.FakeOtelPayloadMapper
+import io.embrace.android.embracesdk.fakes.FakePayloadStorageService
 import io.embrace.android.embracesdk.fakes.OtelSdkMode
 import io.embrace.android.embracesdk.fakes.injection.FakeCoreModule
 import io.embrace.android.embracesdk.fakes.injection.FakeEssentialServiceModule
@@ -25,7 +27,7 @@ internal class PayloadSourceFactoriesTest {
         val coreModule = FakeCoreModule()
         val configService = FakeConfigService()
         val otelModule = FakeOpenTelemetryModule(otelSdkMode = OtelSdkMode.REGULAR)
-        val deliveryModule = FakeDeliveryModule()
+        val cachedLogEnvelopeStore = FakeCachedLogEnvelopeStore()
         val worker = FakeWorkerThreadPool().backgroundWorker(Worker.Background.NonIoRegWorker)
         val envelopeMetadataSource = FakeEnvelopeMetadataSource()
 
@@ -66,15 +68,15 @@ internal class PayloadSourceFactoriesTest {
                 otelModule.logSink,
                 envelopeMetadataSource,
                 resourceSource,
-                deliveryModule.cachedLogEnvelopeStore,
+                cachedLogEnvelopeStore,
             ),
         )
         assertNotNull(
             createPayloadResurrectionService(
-                deliveryModule.intakeService,
-                deliveryModule.payloadStorageService,
-                deliveryModule.cacheStorageService,
-                deliveryModule.cachedLogEnvelopeStore,
+                FakeIntakeService(),
+                FakePayloadStorageService(),
+                FakePayloadStorageService(),
+                cachedLogEnvelopeStore,
                 initModule.errorHandler,
                 initModule.jsonSerializer,
             ),

@@ -5,9 +5,6 @@ import io.embrace.android.embracesdk.internal.capture.connectivity.NetworkConnec
 import io.embrace.android.embracesdk.internal.config.ConfigService
 import io.embrace.android.embracesdk.internal.config.PersistedConfig
 import io.embrace.android.embracesdk.internal.config.instrumented.schema.InstrumentedConfig
-import io.embrace.android.embracesdk.internal.delivery.debug.DeliveryTracer
-import io.embrace.android.embracesdk.internal.delivery.execution.RequestExecutionService
-import io.embrace.android.embracesdk.internal.delivery.storage.PayloadStorageService
 import io.embrace.android.embracesdk.internal.otel.config.ExternalOtelConfig
 import io.embrace.android.embracesdk.internal.serialization.PlatformSerializer
 import io.embrace.android.embracesdk.internal.session.id.SessionIdsProvider
@@ -32,19 +29,6 @@ typealias CoreModuleSupplier = (
     initModule: InitModule,
     keyValueStore: Lazy<KeyValueStore>,
 ) -> CoreModule
-
-typealias DeliveryModuleSupplier = (
-    configService: ConfigService,
-    initModule: InitModule,
-    otelModule: OpenTelemetryModule,
-    workerThreadPool: WorkerThreadPool,
-    coreModule: CoreModule,
-    essentialServiceModule: EssentialServiceModule,
-    payloadStorageServiceProvider: Provider<PayloadStorageService>?,
-    cacheStorageServiceProvider: Provider<PayloadStorageService>?,
-    requestExecutionServiceProvider: Provider<RequestExecutionService>?,
-    deliveryTracer: DeliveryTracer?,
-) -> DeliveryModule?
 
 typealias EssentialServiceModuleSupplier = (
     initModule: InitModule,

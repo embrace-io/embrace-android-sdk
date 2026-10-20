@@ -25,11 +25,10 @@ internal fun createRealSdkInstance(
         logService = moduleGraph.logService,
         attachmentService = moduleGraph.attachmentService,
         errorHandler = moduleGraph.initModule.errorHandler,
-        payloadStore = moduleGraph.deliveryModule?.payloadStore,
+        payloadStore = moduleGraph.payloadStore,
         serializer = moduleGraph.initModule.jsonSerializer,
         telemetryService = moduleGraph.initModule.telemetryService,
     )
-    val deliveryModule = moduleGraph.deliveryModule
     return RealSdkInstance(
         clock = clock,
         errorHandler = moduleGraph.initModule.errorHandler,
@@ -54,10 +53,10 @@ internal fun createRealSdkInstance(
         logLimitingService = moduleGraph.logLimitingService,
         metadataService = moduleGraph.metadataService,
         payloadResurrectionService = moduleGraph.payloadResurrectionService,
-        payloadCachingService = deliveryModule?.payloadCachingService,
-        payloadStore = deliveryModule?.payloadStore,
-        schedulingService = deliveryModule?.schedulingService,
-        cacheStorageService = deliveryModule?.cacheStorageService,
+        payloadCachingService = moduleGraph.payloadCachingService,
+        payloadStore = moduleGraph.payloadStore,
+        schedulingService = moduleGraph.schedulingService,
+        cacheStorageService = moduleGraph.cacheStorageService,
         threadBlockageService = moduleGraph.threadBlockageService,
         lastRunCrashVerifier = moduleGraph.lastRunCrashVerifier,
         crashMarker = moduleGraph.crashMarker,

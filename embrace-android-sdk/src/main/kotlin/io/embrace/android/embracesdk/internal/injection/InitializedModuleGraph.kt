@@ -10,6 +10,18 @@ import io.embrace.android.embracesdk.internal.capture.crumbs.BreadcrumbDataSourc
 import io.embrace.android.embracesdk.internal.capture.metadata.MetadataService
 import io.embrace.android.embracesdk.internal.capture.metadata.RnBundleIdTracker
 import io.embrace.android.embracesdk.internal.config.ConfigService
+import io.embrace.android.embracesdk.internal.delivery.StoredTelemetryMetadata
+import io.embrace.android.embracesdk.internal.delivery.caching.PayloadCachingService
+import io.embrace.android.embracesdk.internal.delivery.debug.DeliveryTracer
+import io.embrace.android.embracesdk.internal.delivery.execution.RequestExecutionService
+import io.embrace.android.embracesdk.internal.delivery.intake.IntakeService
+import io.embrace.android.embracesdk.internal.delivery.intake.IntakeServiceImpl
+import io.embrace.android.embracesdk.internal.delivery.scheduling.SchedulingService
+import io.embrace.android.embracesdk.internal.delivery.scheduling.SchedulingServiceImpl
+import io.embrace.android.embracesdk.internal.delivery.storage.CachedLogEnvelopeStore
+import io.embrace.android.embracesdk.internal.delivery.storage.PayloadStorageService
+import io.embrace.android.embracesdk.internal.delivery.storage.PayloadStorageServiceImpl
+import io.embrace.android.embracesdk.internal.delivery.storage.StorageLocation
 import io.embrace.android.embracesdk.internal.envelope.log.LogEnvelopeSource
 import io.embrace.android.embracesdk.internal.envelope.metadata.EnvelopeMetadataSource
 import io.embrace.android.embracesdk.internal.envelope.metadata.EnvelopeMetadataSourceImpl
@@ -41,6 +53,7 @@ import io.embrace.android.embracesdk.internal.logs.attachments.AttachmentService
 import io.embrace.android.embracesdk.internal.resurrection.PayloadResurrectionService
 import io.embrace.android.embracesdk.internal.resurrection.SessionPartReader
 import io.embrace.android.embracesdk.internal.session.lifecycle.LifecycleTracker
+import io.embrace.android.embracesdk.internal.session.orchestrator.PayloadStore
 import io.embrace.android.embracesdk.internal.session.orchestrator.SessionOrchestrator
 import io.embrace.android.embracesdk.internal.storage.EmbraceStorageService
 import io.embrace.android.embracesdk.internal.storage.StatFsAvailabilityChecker
@@ -49,6 +62,7 @@ import io.embrace.android.embracesdk.internal.utils.BuildVersionChecker
 import io.embrace.android.embracesdk.internal.utils.EmbTrace
 import io.embrace.android.embracesdk.internal.utils.Provider
 import io.embrace.android.embracesdk.internal.utils.VersionChecker
+import io.embrace.android.embracesdk.internal.worker.PriorityWorker
 import io.embrace.android.embracesdk.internal.worker.Worker
 import java.util.concurrent.TimeUnit
 
@@ -71,7 +85,6 @@ internal class InitializedModuleGraph(
     private val coreModuleSupplier: CoreModuleSupplier? = null,
     private val storageServiceSupplier: StorageServiceSupplier? = null,
     private val essentialServiceModuleSupplier: EssentialServiceModuleSupplier? = null,
-    private val deliveryModuleSupplier: DeliveryModuleSupplier? = null,
     private val threadBlockageServiceSupplier: ThreadBlockageServiceSupplier? = null,
 ) {
 
@@ -250,31 +263,136 @@ internal class InitializedModuleGraph(
         )
     }
 
-    val deliveryModule: DeliveryModule? = init(name = "delivery-module", recordDuration = true) {
-        if (configService.isOnlyUsingOtelExporters()) {
-            null
+    private val deliveryTracer: DeliveryTracer? = overrides?.deliveryTracer.resolve { null }
+
+    private val processIdProvider: () -> String = { openTelemetryModule.otelSdkConfig.processIdentifier }
+
+    private val dataPersistenceWorker: PriorityWorker<StoredTelemetryMetadata>? = init("data-persistence-worker") {
+        when {
+            !configService.isOnlyUsingOtelExporters() -> workerThreadPool.priorityWorker(Worker.Priority.DataPersistenceWorker)
+            else -> null
+        }
+    }
+
+    val payloadStorageService: PayloadStorageService? = init(name = "delivery-module", recordDuration = true) {
+        dataPersistenceWorker?.let { worker ->
+            overrides?.payloadStorageService.resolve {
+                createPayloadStorageService(
+                    location = StorageLocation.PAYLOAD,
+                    context = coreModule.context,
+                    worker = worker,
+                    processIdProvider = processIdProvider,
+                    errorHandler = initModule.errorHandler,
+                    clock = initModule.clock,
+                    deliveryTracer = deliveryTracer,
+                    limit = overrides?.payloadStorageLimit.resolve { PayloadStorageServiceImpl.DEFAULT_STORAGE_LIMIT },
+                )
+            }
+        }
+    }
+
+    val cacheStorageService: PayloadStorageService? = init("cache-storage-service") {
+        dataPersistenceWorker?.let { worker ->
+            overrides?.cacheStorageService.resolve {
+                createPayloadStorageService(
+                    location = StorageLocation.CACHE,
+                    context = coreModule.context,
+                    worker = worker,
+                    processIdProvider = processIdProvider,
+                    errorHandler = initModule.errorHandler,
+                    clock = initModule.clock,
+                    deliveryTracer = deliveryTracer,
+                )
+            }
+        }
+    }
+
+    private val requestExecutionService: RequestExecutionService? = init("request-execution-service") {
+        if (dataPersistenceWorker != null) {
+            overrides?.requestExecutionService.resolve {
+                createRequestExecutionService(
+                    configService = configService,
+                    instrumentedConfig = initModule.instrumentedConfig,
+                    okHttpClient = initModule.okHttpClient,
+                    errorHandler = initModule.errorHandler,
+                    deliveryTracer = deliveryTracer,
+                )
+            }
         } else {
-            deliveryModuleSupplier?.invoke(
-                configService,
-                initModule,
-                openTelemetryModule,
-                workerThreadPool,
-                coreModule,
-                essentialServiceModule,
-                null,
-                null,
-                null,
-                null,
-            ) ?: DeliveryModuleImpl(
-                configService = configService,
-                initModule = initModule,
-                otelModule = openTelemetryModule,
-                workerThreadPool = workerThreadPool,
-                coreModule = coreModule,
-                essentialServiceModule = essentialServiceModule,
-                requestExecutionServiceProvider = null,
-                payloadStorageServiceProvider = null,
-                cacheStorageServiceProvider = null,
+            null
+        }
+    }
+
+    val schedulingService: SchedulingService? = init("scheduling-service") {
+        if (payloadStorageService != null && requestExecutionService != null) {
+            SchedulingServiceImpl(
+                payloadStorageService,
+                requestExecutionService,
+                workerThreadPool.backgroundWorker(Worker.Background.DeliverySchedulingWorker),
+                workerThreadPool.backgroundWorker(Worker.Background.HttpRequestWorker),
+                initModule.clock,
+                initModule.errorHandler,
+                deliveryTracer,
+            )
+        } else {
+            null
+        }
+    }
+
+    val intakeService: IntakeService? = init("intake-service") {
+        dataPersistenceWorker?.let { worker ->
+            if (schedulingService != null && payloadStorageService != null && cacheStorageService != null) {
+                overrides?.intakeService.resolve {
+                    IntakeServiceImpl(
+                        schedulingService,
+                        payloadStorageService,
+                        cacheStorageService,
+                        initModule.errorHandler,
+                        initModule.jsonSerializer,
+                        worker,
+                        deliveryTracer,
+                    )
+                }
+            } else {
+                null
+            }
+        }
+    }
+
+    val payloadStore: PayloadStore? = init("payload-store") {
+        intakeService?.let {
+            createPayloadStore(
+                intakeService = it,
+                clock = initModule.clock,
+                processIdProvider = processIdProvider,
+                uuidSource = initModule.uuidSource,
+                sessionIdsProvider = essentialServiceModule.sessionIdsProvider::getActiveSessionIds,
+            )
+        }
+    }
+
+    val payloadCachingService: PayloadCachingService? = init("payload-caching-service") {
+        payloadStore?.let {
+            createPayloadCachingService(
+                worker = workerThreadPool.backgroundWorker(Worker.Background.PeriodicCacheWorker),
+                errorHandler = initModule.errorHandler,
+                periodicCacheIntervalMs = configService.otelBehavior.getPeriodicCacheIntervalMs(),
+                clock = initModule.clock,
+                sessionIdsProvider = essentialServiceModule.sessionIdsProvider,
+                payloadStore = it,
+                deliveryTracer = deliveryTracer,
+            )
+        }
+    }
+
+    val cachedLogEnvelopeStore: CachedLogEnvelopeStore? = init("cached-log-envelope-store") {
+        dataPersistenceWorker?.let { worker ->
+            createCachedLogEnvelopeStore(
+                context = coreModule.context,
+                worker = worker,
+                errorHandler = initModule.errorHandler,
+                serializer = initModule.jsonSerializer,
+                clock = initModule.clock,
             )
         }
     }
@@ -339,7 +457,7 @@ internal class InitializedModuleGraph(
             logSink = openTelemetryModule.logSink,
             envelopeMetadataSource = envelopeMetadataSource,
             resourceSource = resourceSource,
-            cachedLogEnvelopeStore = deliveryModule?.cachedLogEnvelopeStore,
+            cachedLogEnvelopeStore = cachedLogEnvelopeStore,
         )
     }
 
@@ -355,15 +473,19 @@ internal class InitializedModuleGraph(
     }
 
     val payloadResurrectionService: PayloadResurrectionService? = init("payload-resurrection-service") {
-        deliveryModule?.let { delivery ->
-            createPayloadResurrectionService(
-                intakeService = delivery.intakeService,
-                payloadStorageService = delivery.payloadStorageService,
-                cacheStorageService = delivery.cacheStorageService,
-                cachedLogEnvelopeStore = delivery.cachedLogEnvelopeStore,
-                errorHandler = initModule.errorHandler,
-                serializer = initModule.jsonSerializer,
-            )
+        intakeService?.let { intake ->
+            if (payloadStorageService != null && cacheStorageService != null && cachedLogEnvelopeStore != null) {
+                createPayloadResurrectionService(
+                    intakeService = intake,
+                    payloadStorageService = payloadStorageService,
+                    cacheStorageService = cacheStorageService,
+                    cachedLogEnvelopeStore = cachedLogEnvelopeStore,
+                    errorHandler = initModule.errorHandler,
+                    serializer = initModule.jsonSerializer,
+                )
+            } else {
+                null
+            }
         }
     }
 
@@ -378,7 +500,7 @@ internal class InitializedModuleGraph(
             },
             clock = initModule.clock,
             sink = openTelemetryModule.logSink,
-            payloadStore = deliveryModule?.payloadStore,
+            payloadStore = payloadStore,
             logEnvelopeSource = logEnvelopeSource,
         )
     }
@@ -398,21 +520,23 @@ internal class InitializedModuleGraph(
     }
 
     val sessionPartReader: SessionPartReader? = init("session-part-reader") {
-        deliveryModule?.let { delivery ->
+        if (intakeService != null && cachedLogEnvelopeStore != null) {
             createSessionPartReader(
                 context = coreModule.context,
                 clock = initModule.clock,
                 errorHandler = initModule.errorHandler,
                 configService = configService,
                 sessionPersistenceWorker = workerThreadPool.backgroundWorker(Worker.Background.SessionPersistenceWorker),
-                intakeService = delivery.intakeService,
-                cachedLogEnvelopeStore = delivery.cachedLogEnvelopeStore,
+                intakeService = intakeService,
+                cachedLogEnvelopeStore = cachedLogEnvelopeStore,
                 nativeCrashServiceProvider = {
                     instrumentationRegistry.findByType(NativeCrashDataSource::class)
                 },
                 restoreDecisionProvider = { sessionOrchestrator.userSessionRestoreDecision },
-                processIdProvider = { openTelemetryModule.otelSdkConfig.processIdentifier },
+                processIdProvider = processIdProvider,
             )
+        } else {
+            null
         }
     }
 
@@ -441,8 +565,8 @@ internal class InitializedModuleGraph(
                     metadataService = metadataService,
                     resourceSource = resourceSource,
                     envelopeMetadataSource = envelopeMetadataSource,
-                    payloadStore = deliveryModule?.payloadStore,
-                    payloadCachingService = deliveryModule?.payloadCachingService,
+                    payloadStore = payloadStore,
+                    payloadCachingService = payloadCachingService,
                     instrumentationRegistry = instrumentationRegistry,
                     startupDurationProvider = startupService::getSdkStartupDuration,
                     appVersionStartupCounterProvider = startupService::getAppVersionStartupCounter,

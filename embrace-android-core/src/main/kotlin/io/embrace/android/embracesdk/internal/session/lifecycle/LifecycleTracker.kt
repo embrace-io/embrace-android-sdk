@@ -2,12 +2,11 @@ package io.embrace.android.embracesdk.internal.session.lifecycle
 
 import io.embrace.android.embracesdk.internal.arch.state.ProcessState
 import io.embrace.android.embracesdk.internal.arch.state.ProcessStateListener
-import java.io.Closeable
 
 /**
  * Detects when the app process moves between the foreground and the background by observing and reporting transitions.
  */
-interface LifecycleTracker : Closeable {
+interface LifecycleTracker : AutoCloseable {
 
     /**
      * Returns the process state as currently reported by the platform.

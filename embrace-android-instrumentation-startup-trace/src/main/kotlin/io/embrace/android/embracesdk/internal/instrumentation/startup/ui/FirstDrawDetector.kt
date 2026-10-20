@@ -11,7 +11,6 @@ import androidx.annotation.RequiresApi
 import io.embrace.android.embracesdk.internal.instrumentation.startup.activity.traceInstanceId
 import io.embrace.android.embracesdk.internal.logging.InternalErrorType
 import io.embrace.android.embracesdk.internal.logging.InternalLogger
-import java.io.Closeable
 import java.util.Collections
 import java.util.WeakHashMap
 import java.util.concurrent.ConcurrentHashMap
@@ -180,7 +179,7 @@ internal class FirstDrawDetector(
 
     private class PyWindowDelegateCallback(
         private val delegate: Window.Callback,
-    ) : Window.Callback by delegate, Closeable {
+    ) : Window.Callback by delegate, AutoCloseable {
 
         // only accessed on the main thread
         val onContentChangedCallbacks = mutableListOf<() -> Boolean>()

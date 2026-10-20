@@ -5,7 +5,6 @@ import android.view.KeyboardShortcutGroup
 import android.view.Menu
 import android.view.MotionEvent
 import android.view.Window
-import java.io.Closeable
 
 /**
  * Wraps a [Window.Callback] to report the signals captured from touch dispatch and window focus.
@@ -14,7 +13,7 @@ import java.io.Closeable
 internal class VitalsWindowCallback(
     private val delegate: Window.Callback,
     private val focalCallbacks: FocalInteractionCallbacks,
-) : Window.Callback by delegate, Closeable {
+) : Window.Callback by delegate, AutoCloseable {
 
     @Volatile
     private var closed = false

@@ -7,7 +7,6 @@ import android.view.Menu
 import android.view.MotionEvent
 import android.view.Window
 import io.embrace.android.embracesdk.internal.logging.InternalLogger
-import java.io.Closeable
 
 /**
  * Custom Window callback that triggers onTouch event
@@ -17,7 +16,7 @@ internal class EmbraceWindowCallback(
     private val delegate: Window.Callback,
     private val gestureDetector: GestureDetector,
     private val logger: InternalLogger,
-) : Window.Callback by delegate, Closeable {
+) : Window.Callback by delegate, AutoCloseable {
 
     @Volatile
     private var closed = false

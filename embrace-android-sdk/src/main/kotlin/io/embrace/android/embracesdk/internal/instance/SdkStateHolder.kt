@@ -9,7 +9,6 @@ import io.embrace.android.embracesdk.internal.logging.InternalErrorType
 import io.embrace.android.embracesdk.internal.telemetry.InternalTelemetryService
 import io.embrace.android.embracesdk.internal.utils.EmbTrace
 import io.embrace.android.embracesdk.internal.utils.Provider
-import java.io.Closeable
 
 /**
  * Holds the [SdkApi] instance that backs the public `Embrace` object, and the lifecycle state of the SDK.
@@ -39,7 +38,7 @@ internal class SdkStateHolder(
     telemetryService: InternalTelemetryService,
     private val errorHandler: InternalErrorHandler,
     private val bufferedErrorHandler: ErrorHandler,
-) : Closeable {
+) : AutoCloseable {
 
     private val lock = Any()
 

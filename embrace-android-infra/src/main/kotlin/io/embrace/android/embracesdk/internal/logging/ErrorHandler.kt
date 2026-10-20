@@ -1,7 +1,5 @@
 package io.embrace.android.embracesdk.internal.logging
 
-import java.io.Closeable
-
 /**
  * Handles errors for all code in the SDK. It achieves this by wrapping operations in try-catch. If [Throwable] is thrown unexpectedly
  * then for SDK code [guardSdkCode] will report internal diagnostics, and for user-supplied code [guardUserCode] will log a warning.
@@ -9,7 +7,7 @@ import java.io.Closeable
  * A fixed number of SDK errors are sent per session part. This class buffers errors that happen during SDK init for delivery if the
  * SDK successfully initializes. Once the SDK is disabled, no SDK errors are reported.
  */
-interface ErrorHandler : Closeable {
+interface ErrorHandler : AutoCloseable {
 
     enum class Severity {
         INFO, WARNING, ERROR

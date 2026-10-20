@@ -8,7 +8,6 @@ import io.embrace.android.embracesdk.internal.instrumentation.startup.activity.t
 import io.embrace.android.embracesdk.internal.instrumentation.startup.ui.DrawEventEmitter
 import io.embrace.android.embracesdk.internal.logging.InternalErrorType
 import io.embrace.android.embracesdk.internal.logging.InternalLogger
-import java.io.Closeable
 import java.util.concurrent.atomic.AtomicBoolean
 
 /**
@@ -35,7 +34,7 @@ class StartupTracker(
     private val activityLoadEventEmitter: Application.ActivityLifecycleCallbacks?,
     private val drawEventEmitter: DrawEventEmitter?,
     private val logger: InternalLogger,
-) : Application.ActivityLifecycleCallbacks, Closeable {
+) : Application.ActivityLifecycleCallbacks, AutoCloseable {
 
     private val lock = Any()
 
@@ -149,7 +148,7 @@ class StartupTracker(
         synchronized(lock) {
             startupDataCollectionComplete.set(true)
             runCatching { drawEventEmitter?.close() }
-            runCatching { (activityLoadEventEmitter as? Closeable)?.close() }
+            runCatching { (activityLoadEventEmitter as? AutoCloseable)?.close() }
             val application = application ?: return
             runCatching { application.unregisterActivityLifecycleCallbacks(this) }
             if (activityLoadEventEmitter != null) {

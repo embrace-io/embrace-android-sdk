@@ -4,11 +4,13 @@ import io.embrace.android.embracesdk.fakes.FakeErrorHandler
 import io.embrace.android.embracesdk.fakes.FakeLifecycleTracker
 import io.embrace.android.embracesdk.fakes.FakeProcessStateListener
 import io.embrace.android.embracesdk.fakes.FakeSessionOrchestrator
+import io.embrace.android.embracesdk.internal.arch.lifecycle.ProcessChannels
 import io.embrace.android.embracesdk.internal.arch.state.ProcessState
 import io.embrace.android.embracesdk.internal.arch.state.ProcessStateListener
 import io.embrace.android.embracesdk.internal.session.lifecycle.LifecycleTracker
 import io.embrace.android.embracesdk.internal.session.lifecycle.ProcessStateTrackerImpl
 import io.embrace.android.embracesdk.internal.session.orchestrator.SessionOrchestrator
+import io.embrace.android.embracesdk.internal.utils.event.EventBus
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertSame
@@ -21,12 +23,14 @@ internal class ProcessStateTrackerTest {
     private lateinit var stateService: ProcessStateTrackerImpl
     private lateinit var lifecycleTracker: FakeLifecycleTracker
     private lateinit var fakeErrorHandler: FakeErrorHandler
+    private lateinit var eventBus: EventBus
 
     @Before
     fun before() {
         fakeErrorHandler = FakeErrorHandler()
         lifecycleTracker = FakeLifecycleTracker()
-        stateService = ProcessStateTrackerImpl(fakeErrorHandler, lifecycleTracker)
+        eventBus = EventBus(fakeErrorHandler)
+        stateService = ProcessStateTrackerImpl(fakeErrorHandler, lifecycleTracker, eventBus)
     }
 
     @Test
@@ -83,13 +87,58 @@ internal class ProcessStateTrackerTest {
         }
         val invocations = mutableListOf<String>()
         fakeErrorHandler.throwOnSdkError = false
-        stateService = ProcessStateTrackerImpl(fakeErrorHandler, throwingTracker)
+        stateService = ProcessStateTrackerImpl(fakeErrorHandler, throwingTracker, eventBus)
         stateService.addListener(DecoratedListener(invocations))
         stateService.addListener(DecoratedSessionOrchestrator(invocations))
         stateService.close()
         stateService.onForeground()
         stateService.onBackground()
         assertTrue(invocations.isEmpty())
+    }
+
+    @Test
+    fun `register emits the initial state on the bus`() {
+        lifecycleTracker.state = ProcessState.BACKGROUND
+        stateService.register()
+        assertEquals(ProcessState.BACKGROUND, eventBus.currentState(ProcessChannels.ProcessState))
+    }
+
+    @Test
+    fun `each transition is emitted on the bus`() {
+        stateService.onForeground()
+        assertEquals(ProcessState.FOREGROUND, eventBus.currentState(ProcessChannels.ProcessState))
+
+        stateService.onBackground()
+        assertEquals(ProcessState.BACKGROUND, eventBus.currentState(ProcessChannels.ProcessState))
+    }
+
+    @Test
+    fun `a repeated state is emitted on the bus once`() {
+        val emitted = mutableListOf<ProcessState>()
+        eventBus.addStateHandler(ProcessChannels.ProcessState, replay = false) { emitted.add(it) }
+        lifecycleTracker.state = ProcessState.FOREGROUND
+        stateService.register()
+        stateService.onForeground()
+        stateService.onBackground()
+        stateService.onBackground()
+        assertEquals(listOf(ProcessState.FOREGROUND, ProcessState.BACKGROUND), emitted)
+    }
+
+    @Test
+    fun `the state is emitted on the bus before listeners are notified`() {
+        val observed = mutableListOf<ProcessState?>()
+        stateService.addListener(object : ProcessStateListener {
+            override fun onForeground() {
+                observed.add(eventBus.currentState(ProcessChannels.ProcessState))
+            }
+
+            override fun onBackground() {
+                observed.add(eventBus.currentState(ProcessChannels.ProcessState))
+            }
+        })
+        stateService.onForeground()
+        stateService.onBackground()
+        assertEquals(listOf(ProcessState.FOREGROUND, ProcessState.BACKGROUND), observed)
     }
 
     @Test

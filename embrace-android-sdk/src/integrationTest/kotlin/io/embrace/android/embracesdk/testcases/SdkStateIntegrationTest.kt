@@ -139,7 +139,7 @@ internal class SdkStateIntegrationTest(
                 assertEquals("value", span.attributes?.findAttributeValue("key"))
                 assertEquals(
                     calls.experimentRecords,
-                    testRule.moduleGraph.essentialServiceModule.experimentTrackingService.getRecords(),
+                    testRule.moduleGraph.experimentTrackingService.value.getRecords(),
                 )
                 assertEquals(listOf(LOG_2), getSingleLogEnvelope().data.logs?.map { it.body })
             },

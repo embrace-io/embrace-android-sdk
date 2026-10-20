@@ -5,7 +5,6 @@ import io.embrace.android.embracesdk.PropertyScope
 import io.embrace.android.embracesdk.UserSessionListener
 import io.embrace.android.embracesdk.fakes.FakeSessionOrchestrator
 import io.embrace.android.embracesdk.fakes.FakeUserSessionPropertiesService
-import io.embrace.android.embracesdk.fakes.injection.FakeEssentialServiceModule
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
@@ -23,8 +22,7 @@ internal class UserSessionApiDelegateTest {
     @Before
     fun setUp() {
         sessionOrchestrator = FakeSessionOrchestrator()
-        val essentialServiceModule = FakeEssentialServiceModule()
-        userSessionPropertiesService = essentialServiceModule.userSessionPropertiesService
+        userSessionPropertiesService = FakeUserSessionPropertiesService()
         delegate = UserSessionApiDelegate(
             userSessionPropertiesService = userSessionPropertiesService,
             sessionOrchestrator = sessionOrchestrator,

@@ -564,7 +564,7 @@ internal class MultiFilePersistenceParityTest(
         )
 
         // tear the crashed process down so the next launch reads the shared storage from scratch
-        testRule.moduleGraph.essentialServiceModule.networkConnectivityService.close()
+        testRule.moduleGraph.networkConnectivityService.close()
         testRule.moduleGraph.openTelemetryModule.otelSdkConfig.close()
         testRule.moduleGraph.workerThreadPool.close()
 
@@ -630,7 +630,7 @@ internal class MultiFilePersistenceParityTest(
             },
         )
 
-        testRule.moduleGraph.essentialServiceModule.networkConnectivityService.close()
+        testRule.moduleGraph.networkConnectivityService.close()
         testRule.moduleGraph.openTelemetryModule.otelSdkConfig.close()
         testRule.moduleGraph.workerThreadPool.close()
 
@@ -917,7 +917,7 @@ internal class MultiFilePersistenceParityTest(
      * carries the expected set of metadata prefixed by [token].
      */
     private fun relaunchAndAssertDeliveredMetadata(token: String) {
-        testRule.moduleGraph.essentialServiceModule.networkConnectivityService.close()
+        testRule.moduleGraph.networkConnectivityService.close()
         testRule.moduleGraph.openTelemetryModule.otelSdkConfig.close()
         testRule.moduleGraph.workerThreadPool.close()
         testRule.runTest(

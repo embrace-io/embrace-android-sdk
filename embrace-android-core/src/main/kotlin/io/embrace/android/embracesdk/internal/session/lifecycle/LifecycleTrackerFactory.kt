@@ -14,7 +14,7 @@ import io.embrace.android.embracesdk.internal.config.ConfigService
  * @param startupContext the context the SDK was started with. This may be an activity, which is a
  * useful signal when guessing the initial process state, so it must not be the application context.
  */
-internal fun createLifecycleTracker(
+fun createLifecycleTracker(
     configService: ConfigService,
     application: Application,
     startupContext: Context?,

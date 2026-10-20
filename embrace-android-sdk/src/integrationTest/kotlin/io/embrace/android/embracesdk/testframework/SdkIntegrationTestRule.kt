@@ -15,8 +15,6 @@ import io.embrace.android.embracesdk.internal.delivery.debug.DeliveryTracer
 import io.embrace.android.embracesdk.internal.injection.ConfigLoadServicesSupplier
 import io.embrace.android.embracesdk.internal.injection.CoreModule
 import io.embrace.android.embracesdk.internal.injection.SdkOverrides
-import io.embrace.android.embracesdk.internal.injection.EssentialServiceModule
-import io.embrace.android.embracesdk.internal.injection.EssentialServiceModuleImpl
 import io.embrace.android.embracesdk.internal.injection.InitModule
 import io.embrace.android.embracesdk.internal.injection.InitializedModuleGraph
 import io.embrace.android.embracesdk.internal.injection.ModuleGraphSupplier
@@ -54,9 +52,9 @@ import java.io.File
  * so we can control time to control timing and execution manually rather than waiting for normal
  * time to pass.
  *
- * 2) [EssentialServiceModule]: Requires an instance of [EssentialServiceModuleImpl] that uses a [FakeConfigService]
- * to allow the appropriate feature flags be set to suit the test case. Everything else in the
- * module is otherwise real unless provided by [FakeCoreModule]
+ * 2) Essential services: these use a [FakeConfigService] to allow the appropriate feature flags be set to suit
+ * the test case. The lifecycle tracker and network connectivity service are replaced via [SdkOverrides], and
+ * everything else is otherwise real unless provided by [FakeCoreModule]
  *
  * 3) Delivery: payloads are sent to a local [MockWebServer] and recorded by a [DeliveryTracer], so that
  * payloads normally sent to the server can be inspected to verify the correctness of the data produced.

@@ -128,7 +128,7 @@ internal class DeadSessionPartParityTest(
     fun `a native crash in the part the process died in is attached to it during the next launch`() {
         lateinit var deadPart: SessionIdsSnapshot
         killActiveSessionPart(instrumentedConfig = nativeCrashConfig) {
-            deadPart = testRule.moduleGraph.essentialServiceModule.sessionIdsProvider.getActiveSessionIds()
+            deadPart = testRule.moduleGraph.sessionIdsProvider.getActiveSessionIds()
         }
         val crash = NativeCrashData(
             nativeCrashId = "dead-process-crash",
@@ -155,13 +155,13 @@ internal class DeadSessionPartParityTest(
         val deadProcesses = 3
         val deadPartIds = (1..deadProcesses).map { process ->
             if (process > 1) {
-                testRule.moduleGraph.essentialServiceModule.networkConnectivityService.close()
+                testRule.moduleGraph.networkConnectivityService.close()
                 testRule.moduleGraph.openTelemetryModule.otelSdkConfig.close()
                 testRule.moduleGraph.workerThreadPool.close()
             }
             lateinit var deadPart: SessionIdsSnapshot
             killActiveSessionPart(killBeforeResurrection = true) {
-                deadPart = testRule.moduleGraph.essentialServiceModule.sessionIdsProvider.getActiveSessionIds()
+                deadPart = testRule.moduleGraph.sessionIdsProvider.getActiveSessionIds()
             }
             deadPart.sessionPartId
         }
@@ -214,7 +214,7 @@ internal class DeadSessionPartParityTest(
         setupAction: EmbraceSetupInterface.() -> Unit = {},
         assertAction: EmbracePayloadAssertionInterface.() -> Unit,
     ) {
-        testRule.moduleGraph.essentialServiceModule.networkConnectivityService.close()
+        testRule.moduleGraph.networkConnectivityService.close()
         testRule.moduleGraph.openTelemetryModule.otelSdkConfig.close()
         testRule.moduleGraph.workerThreadPool.close()
         testRule.runTest(

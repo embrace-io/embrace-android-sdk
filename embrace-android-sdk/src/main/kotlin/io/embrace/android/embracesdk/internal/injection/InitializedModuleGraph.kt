@@ -5,10 +5,17 @@ import android.content.Context
 import io.embrace.android.embracesdk.internal.arch.InstrumentationArgs
 import io.embrace.android.embracesdk.internal.arch.InstrumentationRegistry
 import io.embrace.android.embracesdk.internal.arch.InstrumentationRegistryImpl
+import io.embrace.android.embracesdk.internal.arch.datasource.TelemetryDestination
+import io.embrace.android.embracesdk.internal.arch.destination.TelemetryDestinationImpl
+import io.embrace.android.embracesdk.internal.arch.navigation.NavigationTrackingService
+import io.embrace.android.embracesdk.internal.arch.state.ProcessStateTracker
 import io.embrace.android.embracesdk.internal.capture.connectivity.NetworkConnectivityService
 import io.embrace.android.embracesdk.internal.capture.crumbs.BreadcrumbDataSource
+import io.embrace.android.embracesdk.internal.capture.experiment.ExperimentTrackingService
 import io.embrace.android.embracesdk.internal.capture.metadata.MetadataService
 import io.embrace.android.embracesdk.internal.capture.metadata.RnBundleIdTracker
+import io.embrace.android.embracesdk.internal.capture.session.UserSessionPropertiesService
+import io.embrace.android.embracesdk.internal.capture.user.UserService
 import io.embrace.android.embracesdk.internal.config.ConfigService
 import io.embrace.android.embracesdk.internal.delivery.StoredTelemetryMetadata
 import io.embrace.android.embracesdk.internal.delivery.caching.PayloadCachingService
@@ -52,7 +59,9 @@ import io.embrace.android.embracesdk.internal.logs.LogServiceImpl
 import io.embrace.android.embracesdk.internal.logs.attachments.AttachmentService
 import io.embrace.android.embracesdk.internal.resurrection.PayloadResurrectionService
 import io.embrace.android.embracesdk.internal.resurrection.SessionPartReader
-import io.embrace.android.embracesdk.internal.session.lifecycle.LifecycleTracker
+import io.embrace.android.embracesdk.internal.session.id.SessionIdsProvider
+import io.embrace.android.embracesdk.internal.session.id.SessionPartTracker
+import io.embrace.android.embracesdk.internal.session.lifecycle.createLifecycleTracker
 import io.embrace.android.embracesdk.internal.session.orchestrator.PayloadStore
 import io.embrace.android.embracesdk.internal.session.orchestrator.SessionOrchestrator
 import io.embrace.android.embracesdk.internal.storage.EmbraceStorageService
@@ -60,7 +69,6 @@ import io.embrace.android.embracesdk.internal.storage.StatFsAvailabilityChecker
 import io.embrace.android.embracesdk.internal.storage.StorageService
 import io.embrace.android.embracesdk.internal.utils.BuildVersionChecker
 import io.embrace.android.embracesdk.internal.utils.EmbTrace
-import io.embrace.android.embracesdk.internal.utils.Provider
 import io.embrace.android.embracesdk.internal.utils.VersionChecker
 import io.embrace.android.embracesdk.internal.worker.PriorityWorker
 import io.embrace.android.embracesdk.internal.worker.Worker
@@ -84,7 +92,6 @@ internal class InitializedModuleGraph(
     private val openTelemetryModuleSupplier: OpenTelemetryModuleSupplier? = null,
     private val coreModuleSupplier: CoreModuleSupplier? = null,
     private val storageServiceSupplier: StorageServiceSupplier? = null,
-    private val essentialServiceModuleSupplier: EssentialServiceModuleSupplier? = null,
     private val threadBlockageServiceSupplier: ThreadBlockageServiceSupplier? = null,
 ) {
 
@@ -103,12 +110,12 @@ internal class InitializedModuleGraph(
 
     private val otelSignalContext: OtelSignalContext = init("otel-signal-context") {
         OtelSignalContext(
-            sessionIdsProvider = { essentialServiceModule.sessionIdsProvider },
-            userServiceProvider = { essentialServiceModule.userService },
-            sessionPartTrackerProvider = { essentialServiceModule.sessionPartTracker },
-            processStateTrackerProvider = { essentialServiceModule.processStateTracker },
-            experimentTrackingServiceProvider = { essentialServiceModule.experimentTrackingService },
-            userSessionPropertiesServiceProvider = { essentialServiceModule.userSessionPropertiesService },
+            sessionIdsProvider = { sessionIdsProvider },
+            userServiceProvider = { userService.value },
+            sessionPartTrackerProvider = { sessionPartTracker },
+            processStateTrackerProvider = { processStateTracker },
+            experimentTrackingServiceProvider = { experimentTrackingService.value },
+            userSessionPropertiesServiceProvider = { userSessionPropertiesService },
             instrumentationRegistryProvider = { instrumentationRegistry },
         )
     }
@@ -136,34 +143,69 @@ internal class InitializedModuleGraph(
             ?: CoreModuleImpl(context, initModule, configLoadServices.keyValueStore)
     }
 
-    val essentialServiceModule: EssentialServiceModule =
-        init(name = "essential-service-module", recordDuration = true) {
-            val lifecycleTrackerProvider: Provider<LifecycleTracker?> = { null }
-            val networkConnectivityServiceProvider: Provider<NetworkConnectivityService?> = { null }
-            val sessionOrchestratorProvider = { sessionOrchestrator }
+    val processStateTracker: ProcessStateTracker = init(name = "essential-service-module", recordDuration = true) {
+        createProcessStateTracker(
+            errorHandler = initModule.errorHandler,
+            lifecycleTracker = overrides?.lifecycleTracker.resolve {
+                createLifecycleTracker(configService, coreModule.application, context)
+            },
+        )
+    }
 
-            essentialServiceModuleSupplier?.invoke(
-                initModule,
-                configService,
-                openTelemetryModule,
-                coreModule,
-                workerThreadPool,
-                context,
-                lifecycleTrackerProvider,
-                networkConnectivityServiceProvider,
-                sessionOrchestratorProvider,
-            ) ?: EssentialServiceModuleImpl(
-                initModule,
-                configService,
-                openTelemetryModule,
-                coreModule,
-                workerThreadPool,
-                context,
-                lifecycleTrackerProvider,
-                networkConnectivityServiceProvider,
-                sessionOrchestratorProvider,
+    val navigationTrackingService: NavigationTrackingService = init("navigation-tracking-service") {
+        createNavigationTrackingService()
+    }
+
+    val networkConnectivityService: NetworkConnectivityService = init("network-connectivity-service") {
+        overrides?.networkConnectivityService.resolve {
+            createNetworkConnectivityService(
+                context = coreModule.context,
+                configService = configService,
+                worker = workerThreadPool.backgroundWorker(Worker.Background.NonIoRegWorker),
+                errorHandler = initModule.errorHandler,
             )
         }
+    }
+
+    val sessionPartTracker: SessionPartTracker = init("session-part-tracker") {
+        createSessionPartTracker(coreModule.context, initModule.errorHandler)
+    }
+
+    val sessionIdsProvider: SessionIdsProvider = init("session-ids-provider") {
+        createSessionIdsProvider({ sessionOrchestrator }, sessionPartTracker)
+    }
+
+    val telemetryDestination: TelemetryDestination = init("telemetry-destination") {
+        TelemetryDestinationImpl(
+            clock = initModule.clock,
+            spanService = openTelemetryModule.spanService,
+            loggerSupplier = { openTelemetryModule.otelSdkWrapper.sdkLogger },
+            currentSessionPartSpan = openTelemetryModule.currentSessionPartSpan,
+        )
+    }
+
+    val userSessionPropertiesService: UserSessionPropertiesService = init("user-session-properties-service") {
+        createUserSessionPropertiesService(
+            store = lazy { coreModule.store },
+            configService = configService,
+            destination = telemetryDestination,
+            telemetryService = initModule.telemetryService,
+        )
+    }
+
+    val userService: Lazy<UserService> = lazy {
+        EmbTrace.trace("user-service-init") {
+            createUserService(coreModule.store, initModule.clock, initModule.errorHandler)
+        }
+    }
+
+    val experimentTrackingService: Lazy<ExperimentTrackingService> = lazy {
+        EmbTrace.trace("experiment-tracking-service-init") {
+            overrides?.experimentTrackingService.resolve {
+                createExperimentTrackingService(configService, initModule.telemetryService, telemetryDestination)
+            }
+        }
+    }
 
     val storageService: StorageService = init("storage-service") {
         storageServiceSupplier?.invoke(initModule, coreModule, workerThreadPool)
@@ -181,7 +223,7 @@ internal class InitializedModuleGraph(
     val instrumentationArgs: InstrumentationArgs = init(name = "instrumentation-module", recordDuration = true) {
         createInstrumentationArgs(
             configService = configService,
-            destination = essentialServiceModule.telemetryDestination,
+            destination = telemetryDestination,
             errorHandler = initModule.errorHandler,
             clock = initModule.clock,
             context = coreModule.context,
@@ -191,14 +233,14 @@ internal class InitializedModuleGraph(
             uuidSource = initModule.uuidSource,
             ordinalStore = coreModule.ordinalStore,
             processIdentifier = openTelemetryModule.otelSdkConfig.processIdentifier,
-            processStateTracker = essentialServiceModule.processStateTracker,
-            navigationTrackingService = essentialServiceModule.navigationTrackingService,
+            processStateTracker = processStateTracker,
+            navigationTrackingService = navigationTrackingService,
             telemetryService = initModule.telemetryService,
             workerThreadPool = workerThreadPool,
-            sessionPartTracker = essentialServiceModule.sessionPartTracker,
-            userSessionPropertiesService = essentialServiceModule.userSessionPropertiesService,
-            userSessionIdsProvider = { essentialServiceModule.sessionIdsProvider.getCurrentUserSessionId() },
-            activeSessionIdsProvider = { essentialServiceModule.sessionIdsProvider.getActiveSessionIds() },
+            sessionPartTracker = sessionPartTracker,
+            userSessionPropertiesService = userSessionPropertiesService,
+            userSessionIdsProvider = { sessionIdsProvider.getCurrentUserSessionId() },
+            activeSessionIdsProvider = { sessionIdsProvider.getActiveSessionIds() },
             crashMarkerFileProvider = { storageService.getFileForWrite("embrace_crash_marker") },
             eventBus = coreModule.eventBus,
         )
@@ -366,7 +408,7 @@ internal class InitializedModuleGraph(
                 clock = initModule.clock,
                 processIdProvider = processIdProvider,
                 uuidSource = initModule.uuidSource,
-                sessionIdsProvider = essentialServiceModule.sessionIdsProvider::getActiveSessionIds,
+                sessionIdsProvider = sessionIdsProvider::getActiveSessionIds,
             )
         }
     }
@@ -378,7 +420,7 @@ internal class InitializedModuleGraph(
                 errorHandler = initModule.errorHandler,
                 periodicCacheIntervalMs = configService.otelBehavior.getPeriodicCacheIntervalMs(),
                 clock = initModule.clock,
-                sessionIdsProvider = essentialServiceModule.sessionIdsProvider,
+                sessionIdsProvider = sessionIdsProvider,
                 payloadStore = it,
                 deliveryTracer = deliveryTracer,
             )
@@ -435,7 +477,7 @@ internal class InitializedModuleGraph(
     }
 
     val envelopeMetadataSource: EnvelopeMetadataSource = init("envelope-metadata-source") {
-        EnvelopeMetadataSourceImpl { essentialServiceModule.userService.getUserInfo() }
+        EnvelopeMetadataSourceImpl { userService.value.getUserInfo() }
     }
 
     val sessionPartEnvelopeSource: SessionPartEnvelopeSource = init("session-part-envelope-source") {
@@ -444,7 +486,7 @@ internal class InitializedModuleGraph(
             currentSessionPartSpan = openTelemetryModule.currentSessionPartSpan,
             spanRepository = openTelemetryModule.spanRepository,
             otelPayloadMapper = threadBlockageService,
-            processStateTracker = essentialServiceModule.processStateTracker,
+            processStateTracker = processStateTracker,
             clock = initModule.clock,
             errorHandler = initModule.errorHandler,
             envelopeMetadataSource = envelopeMetadataSource,
@@ -512,7 +554,7 @@ internal class InitializedModuleGraph(
      */
     val logService: Lazy<LogService> = lazy(LazyThreadSafetyMode.PUBLICATION) {
         LogServiceImpl(
-            essentialServiceModule.telemetryDestination,
+            telemetryDestination,
             configService,
             logLimitingService,
             initModule.telemetryService,
@@ -550,13 +592,13 @@ internal class InitializedModuleGraph(
                     startupClassifier = initModule.startupClassifier,
                     telemetryService = initModule.telemetryService,
                     configService = configService,
-                    processStateTracker = essentialServiceModule.processStateTracker,
-                    sessionPartTracker = essentialServiceModule.sessionPartTracker,
-                    sessionIdsProvider = essentialServiceModule.sessionIdsProvider,
-                    userService = essentialServiceModule.userService,
-                    userSessionPropertiesService = essentialServiceModule.userSessionPropertiesService,
-                    telemetryDestination = essentialServiceModule.telemetryDestination,
-                    experimentRecordsProvider = { essentialServiceModule.experimentTrackingService.getRecords() },
+                    processStateTracker = processStateTracker,
+                    sessionPartTracker = sessionPartTracker,
+                    sessionIdsProvider = sessionIdsProvider,
+                    userService = userService.value,
+                    userSessionPropertiesService = userSessionPropertiesService,
+                    telemetryDestination = telemetryDestination,
+                    experimentRecordsProvider = { experimentTrackingService.value.getRecords() },
                     currentSessionPartSpan = openTelemetryModule.currentSessionPartSpan,
                     spanRepository = openTelemetryModule.spanRepository,
                     processIdentifier = openTelemetryModule.otelSdkConfig.processIdentifier,

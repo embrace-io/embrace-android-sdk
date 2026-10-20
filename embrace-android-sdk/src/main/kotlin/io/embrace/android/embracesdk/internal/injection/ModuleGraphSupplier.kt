@@ -9,4 +9,5 @@ internal typealias ModuleGraphSupplier = (
     configLoadServices: ConfigLoadServices,
     sdkStartTimeMs: Long,
     sdkInitResourceUsageTracker: SdkInitResourceUsageTracker,
+    overrides: SdkOverrides?,
 ) -> InitializedModuleGraph

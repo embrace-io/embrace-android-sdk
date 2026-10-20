@@ -5,6 +5,9 @@ import android.os.Build.VERSION_CODES
 import android.os.SystemClock
 import android.os.Trace
 import io.embrace.android.embracesdk.internal.utils.EmbTrace.durationTracker
+import kotlin.contracts.ExperimentalContracts
+import kotlin.contracts.InvocationKind
+import kotlin.contracts.contract
 
 /**
  * Shim to add custom events to system traces for API 29+. Basic alternative to using androidx.tracing that is safe to interleave.
@@ -34,9 +37,13 @@ object EmbTrace {
      * If [recordDuration] is true, the total elapsed time of the section is also accumulated
      * in [durationTracker] under the unprefixed [sectionName]. This is recorded even when the actual
      * trace section isn't recorded because we are running in an old Android version.
+     *
+     * [code] is invoked exactly once, so a `val` declared outside the section can be assigned inside it.
      */
+    @OptIn(ExperimentalContracts::class)
     @SuppressLint("UnclosedTrace")
     inline fun <T> trace(sectionName: String, recordDuration: Boolean = false, code: Provider<T>): T {
+        contract { callsInPlace(code, InvocationKind.EXACTLY_ONCE) }
         val enabled = versionChecker.isAtLeast(VERSION_CODES.Q) && Trace.isEnabled()
         if (enabled) {
             // android.os.Trace rejects section names longer than 127 chars, so only pay for the

@@ -36,6 +36,8 @@ internal class InitializedModuleGraph(
     val sdkStartTimeMs: Long,
     val sdkInitResourceUsageTracker: SdkInitResourceUsageTracker,
     versionChecker: VersionChecker = BuildVersionChecker,
+    @Suppress("UnusedPrivateProperty")
+    overrides: SdkOverrides? = null,
     private val initModuleSupplier: InitModuleSupplier? = null,
     private val openTelemetryModuleSupplier: OpenTelemetryModuleSupplier? = null,
     private val coreModuleSupplier: CoreModuleSupplier? = null,

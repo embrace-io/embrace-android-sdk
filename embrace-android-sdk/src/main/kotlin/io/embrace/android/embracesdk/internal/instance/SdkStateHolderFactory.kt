@@ -7,6 +7,7 @@ import io.embrace.android.embracesdk.internal.injection.ConfigLoadServicesSuppli
 import io.embrace.android.embracesdk.internal.injection.InitializedModuleGraph
 import io.embrace.android.embracesdk.internal.injection.ModuleGraphSupplier
 import io.embrace.android.embracesdk.internal.injection.PreStartServices
+import io.embrace.android.embracesdk.internal.injection.SdkOverrides
 import io.embrace.android.embracesdk.internal.instrumentation.startup.SdkInitResourceUsageTracker
 import io.embrace.android.embracesdk.internal.utils.AndroidSectionRecorder
 import io.embrace.android.embracesdk.internal.utils.EmbTrace
@@ -23,6 +24,7 @@ internal fun createSdkStateHolder(
     moduleGraphSupplier: ModuleGraphSupplier? = null,
     sdkInitResourceUsageTrackerSupplier: Provider<SdkInitResourceUsageTracker>? = null,
     onModuleGraphCreated: ((InitializedModuleGraph) -> Unit)? = null,
+    overrides: SdkOverrides? = null,
 ): SdkStateHolder {
     val logger = preStartServices.logger
     val clock = preStartServices.clock
@@ -41,6 +43,7 @@ internal fun createSdkStateHolder(
                     configLoadServicesSupplier,
                     moduleGraphSupplier,
                     sdkInitResourceUsageTrackerSupplier,
+                    overrides,
                 )
             }?.let { moduleGraph ->
                 onModuleGraphCreated?.invoke(moduleGraph)
@@ -70,6 +73,7 @@ private fun createModuleGraph(
     configLoadServicesSupplier: ConfigLoadServicesSupplier?,
     moduleGraphSupplier: ModuleGraphSupplier?,
     sdkInitResourceUsageTrackerSupplier: Provider<SdkInitResourceUsageTracker>?,
+    overrides: SdkOverrides?,
 ): InitializedModuleGraph? {
     SystemTrace.recorder = AndroidSectionRecorder
 
@@ -102,12 +106,14 @@ private fun createModuleGraph(
                     configLoadServices,
                     sdkStartTimeMs,
                     sdkInitResourceUsageTracker,
+                    overrides,
                 ) ?: InitializedModuleGraph(
                     context,
                     preStartServices,
                     configLoadServices,
                     sdkStartTimeMs,
                     sdkInitResourceUsageTracker,
+                    overrides = overrides,
                 )
                 ).apply { start() }
         }

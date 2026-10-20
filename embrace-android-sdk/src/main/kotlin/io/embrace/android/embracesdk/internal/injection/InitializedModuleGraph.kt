@@ -60,32 +60,32 @@ internal class InitializedModuleGraph(
     private val payloadSourceModuleSupplier: PayloadSourceModuleSupplier? = null,
 ) {
 
-    val initModule: InitModule = EmbTrace.trace(sectionName = "bootstrapper-init", recordDuration = true) {
-        initModuleSupplier?.invoke(preStartServices) ?: EmbTrace.trace("init-module") {
-            InitModuleImpl(
-                preStartServices = preStartServices,
-                uuidSource = configLoadServices.uuidSource,
-                instrumentedConfig = configLoadServices.instrumentedConfig,
-                jsonSerializer = configLoadServices.jsonSerializer,
-                okHttpClient = configLoadServices.okHttpClient,
-            )
-        }
+    val initModule: InitModule = init(name = "init-module", recordDuration = true) {
+        initModuleSupplier?.invoke(preStartServices) ?: InitModuleImpl(
+            preStartServices = preStartServices,
+            uuidSource = configLoadServices.uuidSource,
+            instrumentedConfig = configLoadServices.instrumentedConfig,
+            jsonSerializer = configLoadServices.jsonSerializer,
+            okHttpClient = configLoadServices.okHttpClient,
+        )
     }
 
-    val workerThreadPool: WorkerThreadPool = configLoadServices.workerThreadPool
-    val configService: ConfigService = configLoadServices.configService
+    val workerThreadPool: WorkerThreadPool = init("worker-thread-pool") { configLoadServices.workerThreadPool }
+    val configService: ConfigService = init("config-service") { configLoadServices.configService }
 
-    private val otelSignalContext = OtelSignalContext(
-        sessionIdsProvider = { userSessionOrchestrationModule.sessionIdsProvider },
-        userServiceProvider = { essentialServiceModule.userService },
-        sessionPartTrackerProvider = { essentialServiceModule.sessionPartTracker },
-        processStateTrackerProvider = { essentialServiceModule.processStateTracker },
-        experimentTrackingServiceProvider = { essentialServiceModule.experimentTrackingService },
-        userSessionPropertiesServiceProvider = { essentialServiceModule.userSessionPropertiesService },
-        instrumentationRegistryProvider = { instrumentationModule.instrumentationRegistry },
-    )
+    private val otelSignalContext: OtelSignalContext = init("otel-signal-context") {
+        OtelSignalContext(
+            sessionIdsProvider = { userSessionOrchestrationModule.sessionIdsProvider },
+            userServiceProvider = { essentialServiceModule.userService },
+            sessionPartTrackerProvider = { essentialServiceModule.sessionPartTracker },
+            processStateTrackerProvider = { essentialServiceModule.processStateTracker },
+            experimentTrackingServiceProvider = { essentialServiceModule.experimentTrackingService },
+            userSessionPropertiesServiceProvider = { essentialServiceModule.userSessionPropertiesService },
+            instrumentationRegistryProvider = { instrumentationModule.instrumentationRegistry },
+        )
+    }
 
-    val openTelemetryModule: OpenTelemetryModule = EmbTrace.trace("otel-module") {
+    val openTelemetryModule: OpenTelemetryModule = init("open-telemetry-module") {
         openTelemetryModuleSupplier?.invoke(
             initModule,
             configService,
@@ -103,13 +103,13 @@ internal class InitializedModuleGraph(
         )
     }
 
-    val coreModule: CoreModule = init("core") {
+    val coreModule: CoreModule = init("core-module") {
         coreModuleSupplier?.invoke(context, initModule, configLoadServices.keyValueStore)
             ?: CoreModuleImpl(context, initModule, configLoadServices.keyValueStore)
     }
 
     val essentialServiceModule: EssentialServiceModule =
-        init(name = "essential-service", recordDuration = true) {
+        init(name = "essential-service-module", recordDuration = true) {
             val lifecycleTrackerProvider: Provider<LifecycleTracker?> = { null }
             val networkConnectivityServiceProvider: Provider<NetworkConnectivityService?> = { null }
             val sessionOrchestratorProvider = { userSessionOrchestrationModule.sessionOrchestrator }
@@ -137,7 +137,7 @@ internal class InitializedModuleGraph(
             )
         }
 
-    val storageService: StorageService = init("storage") {
+    val storageService: StorageService = init("storage-service") {
         storageServiceSupplier?.invoke(initModule, coreModule, workerThreadPool)
             ?: EmbraceStorageService(
                 coreModule.context,
@@ -146,7 +146,7 @@ internal class InitializedModuleGraph(
             )
     }
 
-    val instrumentationModule: InstrumentationModule = init(name = "instrumentation", recordDuration = true) {
+    val instrumentationModule: InstrumentationModule = init(name = "instrumentation-module", recordDuration = true) {
         // Forward references: break the instrumentation <-> userSessionOrchestration cycle.
         val userSessionIdsProvider = { userSessionOrchestrationModule.sessionIdsProvider.getCurrentUserSessionId() }
         val activeSessionIdsProvider = { userSessionOrchestrationModule.sessionIdsProvider.getActiveSessionIds() }
@@ -180,15 +180,17 @@ internal class InitializedModuleGraph(
         }
     }
 
-    val crashMarker: CrashFileMarker = init("feature") {
+    val crashMarker: CrashFileMarker = init("crash-marker") {
         CrashFileMarkerImpl(
             lazy { storageService.getFileForWrite(CrashFileMarkerImpl.CRASH_MARKER_FILE_NAME) },
         )
     }
 
-    val lastRunCrashVerifier: LastRunCrashVerifier = LastRunCrashVerifier(crashMarker)
+    val lastRunCrashVerifier: LastRunCrashVerifier = init("last-run-crash-verifier") {
+        LastRunCrashVerifier(crashMarker)
+    }
 
-    val dataCaptureServiceModule: DataCaptureServiceModule = init("data-capture-service") {
+    val dataCaptureServiceModule: DataCaptureServiceModule = init("data-capture-service-module") {
         val instrumentationArgs = instrumentationModule.instrumentationArgs
         val destination = instrumentationArgs.destination
         val activityManager = instrumentationArgs.systemService<ActivityManager>(Context.ACTIVITY_SERVICE)
@@ -216,7 +218,7 @@ internal class InitializedModuleGraph(
         )
     }
 
-    val deliveryModule: DeliveryModule? = init(name = "delivery", recordDuration = true) {
+    val deliveryModule: DeliveryModule? = init(name = "delivery-module", recordDuration = true) {
         if (configService.isOnlyUsingOtelExporters()) {
             null
         } else {
@@ -245,7 +247,7 @@ internal class InitializedModuleGraph(
         }
     }
 
-    val threadBlockageService: ThreadBlockageService? = init("thread-blockage") {
+    val threadBlockageService: ThreadBlockageService? = init("thread-blockage-service") {
         val args = instrumentationModule.instrumentationArgs
         // Only create the thread blockage service if the provider is null, not when the provider returns null
         when (threadBlockageServiceSupplier) {
@@ -254,7 +256,7 @@ internal class InitializedModuleGraph(
         }
     }
 
-    val payloadSourceModule: PayloadSourceModule = init(name = "payload-source", recordDuration = true) {
+    val payloadSourceModule: PayloadSourceModule = init(name = "payload-source-module", recordDuration = true) {
         payloadSourceModuleSupplier?.invoke(
             initModule,
             coreModule,
@@ -276,9 +278,11 @@ internal class InitializedModuleGraph(
         )
     }
 
-    val logLimitingService: LogLimitingService = LogLimitingServiceImpl(configService)
+    val logLimitingService: LogLimitingService = init("log-limiting-service") {
+        LogLimitingServiceImpl(configService)
+    }
 
-    val logOrchestrator: LogOrchestrator = init("log") {
+    val logOrchestrator: LogOrchestrator = init("log-orchestrator") {
         createLogOrchestrator(
             worker = overrides?.logOrchestratorWorker.resolve {
                 workerThreadPool.backgroundWorker(Worker.Background.NonIoRegWorker)
@@ -290,7 +294,7 @@ internal class InitializedModuleGraph(
         )
     }
 
-    val attachmentService: AttachmentService = AttachmentService()
+    val attachmentService: AttachmentService = init("attachment-service") { AttachmentService() }
 
     /**
      * Deferred: only reached via the public logging API, never during SDK init.
@@ -305,7 +309,7 @@ internal class InitializedModuleGraph(
     }
 
     val userSessionOrchestrationModule: UserSessionOrchestrationModule =
-        init(name = "user-session-orchestration", recordDuration = true) {
+        init(name = "user-session-orchestration-module", recordDuration = true) {
             val startupDurationProvider = dataCaptureServiceModule.startupService::getSdkStartupDuration
             val appVersionStartupCounterProvider = dataCaptureServiceModule.startupService::getAppVersionStartupCounter
             userSessionOrchestrationModuleSupplier?.invoke(
@@ -344,10 +348,14 @@ internal class InitializedModuleGraph(
         EmbTrace.trace(sectionName = "span-service-init", recordDuration = true) {
             openTelemetryModule.currentSessionPartSpan.initializeService(sdkStartTimeMs)
         }
-        workerThreadPool
-            .backgroundWorker(Worker.Background.IoRegWorker)
-            .schedule<Unit>({ storageService.logStorageTelemetry() }, 1, TimeUnit.MINUTES)
-        otelSignalContext.markReady()
+        EmbTrace.trace("storage-telemetry-schedule") {
+            workerThreadPool
+                .backgroundWorker(Worker.Background.IoRegWorker)
+                .schedule<Unit>({ storageService.logStorageTelemetry() }, 1, TimeUnit.MINUTES)
+        }
+        EmbTrace.trace("otel-signal-context-mark-ready") {
+            otelSignalContext.markReady()
+        }
     }
 
     private inline fun <T> init(name: String, recordDuration: Boolean = false, supplier: () -> T): T =

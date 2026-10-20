@@ -46,17 +46,20 @@ class EssentialServiceModuleImpl(
 
     private val errorHandler = initModule.errorHandler
 
-    override val processStateTracker: ProcessStateTracker = EmbTrace.trace("process-state-service-init") {
+    override val processStateTracker: ProcessStateTracker = EmbTrace.trace("process-state-tracker-init") {
         val lifecycleTracker = lifecycleTrackerProvider()
             ?: createLifecycleTracker(configService, coreModule.application, startupContext)
         ProcessStateTrackerImpl(initModule.errorHandler, lifecycleTracker)
             .apply { register() }
     }
 
-    override val navigationTrackingService: NavigationTrackingService = NavigationTrackingServiceImpl()
+    override val navigationTrackingService: NavigationTrackingService =
+        EmbTrace.trace("navigation-tracking-service-init") { NavigationTrackingServiceImpl() }
 
     private val connectivityManager: Lazy<ConnectivityManager?> = lazy {
-        coreModule.context.getSystemServiceSafe<ConnectivityManager>(Context.CONNECTIVITY_SERVICE)
+        EmbTrace.trace("connectivity-manager-init") {
+            coreModule.context.getSystemServiceSafe<ConnectivityManager>(Context.CONNECTIVITY_SERVICE)
+        }
     }
 
     override val networkConnectivityService: NetworkConnectivityService =
@@ -81,26 +84,33 @@ class EssentialServiceModuleImpl(
         }
 
     private val activityManager: Lazy<ActivityManager?> = lazy {
-        coreModule.context.getSystemServiceSafe<ActivityManager>(Context.ACTIVITY_SERVICE)
+        EmbTrace.trace("activity-manager-init") {
+            coreModule.context.getSystemServiceSafe<ActivityManager>(Context.ACTIVITY_SERVICE)
+        }
     }
 
-    override val sessionPartTracker: SessionPartTracker = SessionPartTrackerImpl(
-        activityManager,
-        initModule.errorHandler,
-    )
+    override val sessionPartTracker: SessionPartTracker = EmbTrace.trace("session-part-tracker-init") {
+        SessionPartTrackerImpl(
+            activityManager,
+            initModule.errorHandler,
+        )
+    }
 
-    override val sessionIdsProvider: SessionIdsProvider =
+    override val sessionIdsProvider: SessionIdsProvider = EmbTrace.trace("session-ids-provider-init") {
         SessionIdsProviderImpl(sessionOrchestratorProvider, sessionPartTracker)
+    }
 
-    override val telemetryDestination: TelemetryDestination = TelemetryDestinationImpl(
-        clock = initModule.clock,
-        spanService = openTelemetryModule.spanService,
-        loggerSupplier = { openTelemetryModule.otelSdkWrapper.sdkLogger },
-        currentSessionPartSpan = openTelemetryModule.currentSessionPartSpan,
-    )
+    override val telemetryDestination: TelemetryDestination = EmbTrace.trace("telemetry-destination-init") {
+        TelemetryDestinationImpl(
+            clock = initModule.clock,
+            spanService = openTelemetryModule.spanService,
+            loggerSupplier = { openTelemetryModule.otelSdkWrapper.sdkLogger },
+            currentSessionPartSpan = openTelemetryModule.currentSessionPartSpan,
+        )
+    }
 
     override val userSessionPropertiesService: UserSessionPropertiesService =
-        EmbTrace.trace("session-properties-init") {
+        EmbTrace.trace("user-session-properties-service-init") {
             UserSessionPropertiesServiceImpl(
                 store = lazy { coreModule.store },
                 configService = configService,
@@ -120,11 +130,13 @@ class EssentialServiceModuleImpl(
     }
 
     override val experimentTrackingService: ExperimentTrackingService by lazy {
-        ExperimentTrackingServiceImpl(
-            configService = configService,
-            telemetryService = initModule.telemetryService,
-            telemetryDestination = telemetryDestination,
-        )
+        EmbTrace.trace("experiment-tracking-service-init") {
+            ExperimentTrackingServiceImpl(
+                configService = configService,
+                telemetryService = initModule.telemetryService,
+                telemetryDestination = telemetryDestination,
+            )
+        }
     }
 
     override fun close() {

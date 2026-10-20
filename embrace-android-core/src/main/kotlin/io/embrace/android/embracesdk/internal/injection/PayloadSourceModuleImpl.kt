@@ -45,15 +45,17 @@ class PayloadSourceModuleImpl(
 ) : PayloadSourceModule {
 
     override val rnBundleIdTracker: RnBundleIdTracker by lazy {
-        RnBundleIdTrackerImpl(
-            coreModule.context,
-            configService,
-            coreModule.store,
-            workerThreadPool.backgroundWorker(Worker.Background.NonIoRegWorker),
-        ).apply { startAsyncRetrieval() }
+        EmbTrace.trace("rn-bundle-id-tracker-init") {
+            RnBundleIdTrackerImpl(
+                coreModule.context,
+                configService,
+                coreModule.store,
+                workerThreadPool.backgroundWorker(Worker.Background.NonIoRegWorker),
+            ).apply { startAsyncRetrieval() }
+        }
     }
 
-    private val partPayloadSource = EmbTrace.trace("session-payload-source") {
+    private val partPayloadSource = EmbTrace.trace("part-payload-source-init") {
         SessionPartPayloadSourceImpl(
             configService.nativeSymbolMap,
             otelModule.currentSessionPartSpan,
@@ -65,26 +67,32 @@ class PayloadSourceModuleImpl(
         )
     }
 
-    private val logPayloadSource = LogPayloadSourceImpl(otelModule.logSink)
+    private val logPayloadSource = EmbTrace.trace("log-payload-source-init") {
+        LogPayloadSourceImpl(otelModule.logSink)
+    }
 
-    private val observableHostedSdkVersionInfo = ObservableHostedSdkVersionInfo(
-        when (configService.appFramework) {
-            AppFramework.REACT_NATIVE -> ReactNativeSdkVersionInfo(coreModule.store)
-            AppFramework.UNITY -> UnitySdkVersionInfo(coreModule.store)
-            AppFramework.FLUTTER -> FlutterSdkVersionInfo(coreModule.store)
-            else -> NativeSdkVersionInfo()
-        },
-    )
+    private val observableHostedSdkVersionInfo = EmbTrace.trace("observable-hosted-sdk-version-info-init") {
+        ObservableHostedSdkVersionInfo(
+            when (configService.appFramework) {
+                AppFramework.REACT_NATIVE -> ReactNativeSdkVersionInfo(coreModule.store)
+                AppFramework.UNITY -> UnitySdkVersionInfo(coreModule.store)
+                AppFramework.FLUTTER -> FlutterSdkVersionInfo(coreModule.store)
+                else -> NativeSdkVersionInfo()
+            },
+        )
+    }
 
     override val hostedSdkVersionInfo: HostedSdkVersionInfo = observableHostedSdkVersionInfo
 
-    private val appEnvironment: AppEnvironment = AppEnvironment(
-        isDebug = with(coreModule.context.applicationInfo) {
-            flags and ApplicationInfo.FLAG_DEBUGGABLE != 0
-        },
-    )
+    private val appEnvironment: AppEnvironment = EmbTrace.trace("app-environment-init") {
+        AppEnvironment(
+            isDebug = with(coreModule.context.applicationInfo) {
+                flags and ApplicationInfo.FLAG_DEBUGGABLE != 0
+            },
+        )
+    }
 
-    private val device = EmbTrace.trace("deviceImpl") {
+    private val device = EmbTrace.trace("device-init") {
         DeviceImpl(
             windowManagerProvider = { coreModule.context.getSystemServiceSafe(Context.WINDOW_SERVICE) },
             backgroundWorker = workerThreadPool.backgroundWorker(Worker.Background.NonIoRegWorker),
@@ -93,7 +101,7 @@ class PayloadSourceModuleImpl(
         ).apply { startAsyncRetrieval() }
     }
 
-    private val resourceSourceImpl = EmbTrace.trace("resource-source") {
+    private val resourceSourceImpl = EmbTrace.trace("resource-source-impl-init") {
         EnvelopeResourceSourceImpl(
             hosted = hostedSdkVersionInfo,
             environment = appEnvironment.environment,
@@ -115,15 +123,23 @@ class PayloadSourceModuleImpl(
 
     override val resourceSource: EnvelopeResourceSource = resourceSourceImpl
 
-    override val envelopeMetadataSource: EnvelopeMetadataSource = EmbTrace.trace("metadata-source") {
+    override val envelopeMetadataSource: EnvelopeMetadataSource = EmbTrace.trace("envelope-metadata-source-init") {
         EnvelopeMetadataSourceImpl { essentialServiceModule.userService.getUserInfo() }
     }
 
     override val sessionPartEnvelopeSource: SessionPartEnvelopeSource =
-        SessionPartEnvelopeSourceImpl(envelopeMetadataSource, resourceSource, partPayloadSource)
+        EmbTrace.trace("session-part-envelope-source-init") {
+            SessionPartEnvelopeSourceImpl(envelopeMetadataSource, resourceSource, partPayloadSource)
+        }
 
-    override val logEnvelopeSource: LogEnvelopeSource =
-        LogEnvelopeSourceImpl(envelopeMetadataSource, resourceSource, logPayloadSource, deliveryModule?.cachedLogEnvelopeStore)
+    override val logEnvelopeSource: LogEnvelopeSource = EmbTrace.trace("log-envelope-source-init") {
+        LogEnvelopeSourceImpl(
+            envelopeMetadataSource,
+            resourceSource,
+            logPayloadSource,
+            deliveryModule?.cachedLogEnvelopeStore,
+        )
+    }
 
     override val metadataService: MetadataService = EmbTrace.trace("metadata-service-init") {
         EmbraceMetadataService(
@@ -136,16 +152,19 @@ class PayloadSourceModuleImpl(
         )
     }
 
-    override val payloadResurrectionService: PayloadResurrectionService? = if (deliveryModule == null) {
-        null
-    } else {
-        PayloadResurrectionServiceImpl(
-            intakeService = deliveryModule.intakeService,
-            payloadStorageService = deliveryModule.payloadStorageService,
-            cacheStorageService = deliveryModule.cacheStorageService,
-            cachedLogEnvelopeStore = deliveryModule.cachedLogEnvelopeStore,
-            errorHandler = initModule.errorHandler,
-            serializer = initModule.jsonSerializer,
-        )
-    }
+    override val payloadResurrectionService: PayloadResurrectionService? =
+        EmbTrace.trace("payload-resurrection-service-init") {
+            if (deliveryModule == null) {
+                null
+            } else {
+                PayloadResurrectionServiceImpl(
+                    intakeService = deliveryModule.intakeService,
+                    payloadStorageService = deliveryModule.payloadStorageService,
+                    cacheStorageService = deliveryModule.cacheStorageService,
+                    cachedLogEnvelopeStore = deliveryModule.cachedLogEnvelopeStore,
+                    errorHandler = initModule.errorHandler,
+                    serializer = initModule.jsonSerializer,
+                )
+            }
+        }
 }

@@ -13,6 +13,7 @@ import io.embrace.android.embracesdk.internal.instrumentation.startup.activity.c
 import io.embrace.android.embracesdk.internal.instrumentation.startup.ui.createDrawEventEmitter
 import io.embrace.android.embracesdk.internal.logging.ErrorHandler
 import io.embrace.android.embracesdk.internal.utils.BuildVersionChecker
+import io.embrace.android.embracesdk.internal.utils.EmbTrace
 import io.embrace.android.embracesdk.internal.utils.VersionChecker
 import io.embrace.android.embracesdk.internal.worker.BackgroundWorker
 
@@ -28,36 +29,42 @@ class DataCaptureServiceModuleImpl(
     backgroundWorker: BackgroundWorker? = null,
 ) : DataCaptureServiceModule {
 
-    override val startupService: StartupService = StartupServiceImpl(
-        destination = destination,
-        appVersionStartupCounterProvider = appVersionStartupCounterProvider,
-    )
+    override val startupService: StartupService = EmbTrace.trace("startup-service-init") {
+        StartupServiceImpl(
+            destination = destination,
+            appVersionStartupCounterProvider = appVersionStartupCounterProvider,
+        )
+    }
 
-    private val processInfo: ProcessInfo = ProcessInfoImpl(
-        deviceStartTimeMs = clock.now() - SystemClock.elapsedRealtime(),
-        versionChecker = versionChecker,
-        activityManager = activityManager,
-    ).apply {
-        // resolve the launch reason as close to the process starting as we can, but off the thread the app is starting up on
-        if (backgroundWorker != null) {
-            backgroundWorker.submit { prefetchLaunchReason() }
-        } else {
-            prefetchLaunchReason()
+    private val processInfo: ProcessInfo = EmbTrace.trace("process-info-init") {
+        ProcessInfoImpl(
+            deviceStartTimeMs = clock.now() - SystemClock.elapsedRealtime(),
+            versionChecker = versionChecker,
+            activityManager = activityManager,
+        ).apply {
+            // resolve the launch reason as close to the process starting as we can, but off the thread the app is starting up on
+            if (backgroundWorker != null) {
+                backgroundWorker.submit { prefetchLaunchReason() }
+            } else {
+                prefetchLaunchReason()
+            }
         }
     }
 
-    override val appStartupDataCollector: AppStartupDataCollector = AppStartupTraceEmitter(
-        clock = clock,
-        startupServiceProvider = { startupService },
-        destination = destination,
-        versionChecker = versionChecker,
-        errorHandler = errorHandler,
-        startupClassifier = startupClassifier,
-        manualEnd = configService.config.autoDataCapture.endStartupWithAppReadyEnabled,
-        processInfo = processInfo,
-    )
+    override val appStartupDataCollector: AppStartupDataCollector = EmbTrace.trace("app-startup-data-collector-init") {
+        AppStartupTraceEmitter(
+            clock = clock,
+            startupServiceProvider = { startupService },
+            destination = destination,
+            versionChecker = versionChecker,
+            errorHandler = errorHandler,
+            startupClassifier = startupClassifier,
+            manualEnd = configService.config.autoDataCapture.endStartupWithAppReadyEnabled,
+            processInfo = processInfo,
+        )
+    }
 
-    override val uiLoadDataListener: UiLoadDataListener? =
+    override val uiLoadDataListener: UiLoadDataListener? = EmbTrace.trace("ui-load-data-listener-init") {
         if (configService.config.autoDataCapture.uiLoadTracingEnabled) {
             UiLoadTraceEmitter(
                 destination = destination,
@@ -66,8 +73,9 @@ class DataCaptureServiceModuleImpl(
         } else {
             null
         }
+    }
 
-    override val activityLoadEventEmitter: Application.ActivityLifecycleCallbacks? =
+    override val activityLoadEventEmitter: Application.ActivityLifecycleCallbacks? = EmbTrace.trace("activity-load-event-emitter-init") {
         uiLoadDataListener?.let { uiLoadEventListener ->
             createActivityLoadEventEmitter(
                 uiLoadEventListener = uiLoadEventListener,
@@ -78,11 +86,14 @@ class DataCaptureServiceModuleImpl(
                 errorHandler = errorHandler,
             )
         }
+    }
 
-    override val startupTracker: StartupTracker = StartupTracker(
-        appStartupDataCollector = appStartupDataCollector,
-        activityLoadEventEmitter = activityLoadEventEmitter,
-        drawEventEmitter = createDrawEventEmitter(versionChecker, errorHandler),
-        errorHandler = errorHandler,
-    )
+    override val startupTracker: StartupTracker = EmbTrace.trace("startup-tracker-init") {
+        StartupTracker(
+            appStartupDataCollector = appStartupDataCollector,
+            activityLoadEventEmitter = activityLoadEventEmitter,
+            drawEventEmitter = createDrawEventEmitter(versionChecker, errorHandler),
+            errorHandler = errorHandler,
+        )
+    }
 }

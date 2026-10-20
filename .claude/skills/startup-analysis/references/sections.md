@@ -7,16 +7,16 @@ follow this order.
 
 ```
 embrace-impl-init            class-load: EmbraceImpl construction (before the span window)
-└─ bootstrapper-init         class-load: createSdkStateHolder() builds InitModule + OTel module
 sdk-start                    wraps the whole Embrace.start() call — the SDK-init window proxy
 ├─ modules-init              InitializedModuleGraph ctor — opens the SDK-init span window
-│  ├─ persisted-config-load  cached-config read; most variable section
-│  ├─ config-service-init    only on the no-supplier path (always on-device, never in harness)
+│  ├─ persisted-config-init  cached-config read; most variable section (was persisted-config-load)
+│  ├─ config-service-init    ConfigService construction (recorded in the harness too)
+│  ├─ init-module-init       InitModule construction (was bootstrapper-init)
 │  ├─ span-service-init
 │  │  └─ otel-tracer-init    first touch of the OTel SDK assembly (the real OTel cost)
-│  ├─ essential-service-init
-│  ├─ delivery-init
-│  └─ payload-source-init
+│  ├─ essential-service-module-init
+│  ├─ delivery-module-init
+│  └─ payload-source-module-init
 ├─ post-init                 RealSdkInstance.postInit()
 └─ post-services-setup       tail of EmbraceImpl.start()
    └─ load-instrumentation
@@ -33,7 +33,7 @@ the window opens.
 | Environment | Sections present |
 |---|---|
 | Real device via `Embrace` entry point (this skill) | all of the above |
-| Robolectric integration harness | all EXCEPT `embrace-impl-init`, `bootstrapper-init` (harness bypasses the entry point) and `config-service-init` (harness supplies a config service). Authoritative list: `SpanAssertions.expectedSdkInitSections` in embrace-android-otel-fakes |
+| Robolectric integration harness | all EXCEPT `embrace-impl-init` (harness bypasses the entry point). Authoritative list: `SpanAssertions.expectedSdkInitSections` in embrace-android-otel-fakes |
 | Public 9.0.0 | only `embrace-impl-init`, `bootstrapper-init`, `modules-init`, `config-service-init`, `span-service-init`, `otel-tracer-init`, `post-services-setup`; no duration attributes at all |
 
 ## Reference numbers (sanity check, not baselines)

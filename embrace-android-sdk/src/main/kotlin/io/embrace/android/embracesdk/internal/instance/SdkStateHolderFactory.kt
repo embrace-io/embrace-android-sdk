@@ -28,36 +28,42 @@ internal fun createSdkStateHolder(
 ): SdkStateHolder {
     val errorHandler = preStartServices.errorHandler
     val clock = preStartServices.clock
-    val buffer = BufferingSdkInstance(
-        clock = clock::now,
-        errorHandler = errorHandler,
-    )
-    return SdkStateHolder(
-        instanceFactory = { context ->
-            EmbTrace.trace(sectionName = "modules-init", recordDuration = true) {
-                createModuleGraph(
-                    context,
-                    preStartServices,
-                    buffer,
-                    configLoadServicesSupplier,
-                    moduleGraphSupplier,
-                    sdkInitResourceUsageTrackerSupplier,
-                    overrides,
-                )
-            }?.let { moduleGraph ->
-                onModuleGraphCreated?.invoke(moduleGraph)
-                createRealSdkInstance(
-                    moduleGraph = moduleGraph,
-                    clock = clock,
-                )
-            }
-        },
-        preStart = buffer,
-        failed = { NoopSdkInstance(errorHandler, NoopSdkInstance.SDK_START_FAILED) },
-        disabled = { NoopSdkInstance(errorHandler, NoopSdkInstance.SDK_DISABLED) },
-        telemetryService = preStartServices.telemetryService,
-        errorHandler = errorHandler,
-    )
+    val buffer = EmbTrace.trace("buffering-sdk-instance-init") {
+        BufferingSdkInstance(
+            clock = clock::now,
+            errorHandler = errorHandler,
+        )
+    }
+    return EmbTrace.trace("sdk-state-holder-init") {
+        SdkStateHolder(
+            instanceFactory = { context ->
+                EmbTrace.trace(sectionName = "modules-init", recordDuration = true) {
+                    createModuleGraph(
+                        context,
+                        preStartServices,
+                        buffer,
+                        configLoadServicesSupplier,
+                        moduleGraphSupplier,
+                        sdkInitResourceUsageTrackerSupplier,
+                        overrides,
+                    )
+                }?.let { moduleGraph ->
+                    onModuleGraphCreated?.invoke(moduleGraph)
+                    EmbTrace.trace("real-sdk-instance-init") {
+                        createRealSdkInstance(
+                            moduleGraph = moduleGraph,
+                            clock = clock,
+                        )
+                    }
+                }
+            },
+            preStart = buffer,
+            failed = { NoopSdkInstance(errorHandler, NoopSdkInstance.SDK_START_FAILED) },
+            disabled = { NoopSdkInstance(errorHandler, NoopSdkInstance.SDK_DISABLED) },
+            telemetryService = preStartServices.telemetryService,
+            errorHandler = errorHandler,
+        )
+    }
 }
 
 /**
@@ -80,24 +86,31 @@ private fun createModuleGraph(
     val sdkStartTimeMs = preStartServices.clock.now()
 
     // drained before the config service is created, as it checks whether OTLP export has been configured
-    buffer.drainOTelConfig(PreStartOTelApi(preStartServices.externalOtelConfig))
-    val sdkInitResourceUsageTracker =
+    EmbTrace.trace("drain-otel-config") {
+        buffer.drainOTelConfig(PreStartOTelApi(preStartServices.externalOtelConfig))
+    }
+    val sdkInitResourceUsageTracker = EmbTrace.trace("sdk-init-resource-usage-tracker-init") {
         (sdkInitResourceUsageTrackerSupplier?.invoke() ?: SdkInitResourceUsageTracker(preStartServices.errorHandler)).apply {
             captureStart()
         }
+    }
 
-    val configLoadServices = configLoadServicesSupplier?.invoke(context, preStartServices)
-        ?: ConfigLoadServices(context, preStartServices)
+    val configLoadServices = EmbTrace.trace("config-load-services-init") {
+        configLoadServicesSupplier?.invoke(context, preStartServices)
+            ?: ConfigLoadServices(context, preStartServices)
+    }
 
     val moduleGraph = try {
-        configLoadServices.start()
+        EmbTrace.trace("config-load-services-start") {
+            configLoadServices.start()
+        }
         val sdkDisabled = EmbTrace.trace("sdk-disable-check") {
             configLoadServices.configService.config.sdkMode.sdkDisabled
         }
         if (sdkDisabled) {
             null
         } else {
-            (
+            val graph = EmbTrace.trace("initialized-module-graph-init") {
                 moduleGraphSupplier?.invoke(
                     context,
                     preStartServices,
@@ -113,7 +126,11 @@ private fun createModuleGraph(
                     sdkInitResourceUsageTracker,
                     overrides = overrides,
                 )
-                ).apply { start() }
+            }
+            EmbTrace.trace("initialized-module-graph-start") {
+                graph.start()
+            }
+            graph
         }
     } catch (exc: Throwable) {
         configLoadServices.close()

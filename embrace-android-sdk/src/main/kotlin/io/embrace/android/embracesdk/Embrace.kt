@@ -3,6 +3,7 @@ package io.embrace.android.embracesdk
 import android.annotation.SuppressLint
 import android.util.Log
 import io.embrace.android.embracesdk.internal.api.SdkApi
+import io.embrace.android.embracesdk.internal.injection.PreStartServices
 import io.embrace.android.embracesdk.internal.instance.BufferingSdkInstance
 import io.embrace.android.embracesdk.internal.instance.NoopInternalTelemetryService
 import io.embrace.android.embracesdk.internal.instance.NoopSdkInstance
@@ -13,7 +14,9 @@ import io.embrace.android.embracesdk.internal.utils.EmbTrace
 
 private val sdkStateHolder = try {
     EmbTrace.trace(sectionName = "embrace-impl-init", recordDuration = true) {
-        createSdkStateHolder()
+        createSdkStateHolder(
+            preStartServices = EmbTrace.trace("pre-start-services-init") { PreStartServices() },
+        )
     }
 } catch (exc: Throwable) {
     // not possible to report, but don't throw

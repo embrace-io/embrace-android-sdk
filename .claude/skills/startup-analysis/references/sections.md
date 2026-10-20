@@ -11,12 +11,15 @@ sdk-start                    wraps the whole Embrace.start() call — the SDK-in
 ├─ modules-init              createRealSdkInstance() — opens the SDK-init span window
 │  ├─ persisted-config-init  cached-config read; most variable section (was persisted-config-load)
 │  ├─ config-service-init    ConfigService construction (recorded in the harness too)
-│  ├─ init-module-init       InitModule construction (was bootstrapper-init)
-│  ├─ span-service-init
-│  │  └─ otel-tracer-init    first touch of the OTel SDK assembly (the real OTel cost)
-│  ├─ essential-service-module-init
-│  ├─ delivery-module-init
-│  └─ payload-source-module-init
+│  ├─ startup-classifier-init
+│  ├─ otel-tracer-init             first touch of the OTel SDK assembly (the real OTel cost), reached via
+│  │                               telemetry-destination-init → span-service-init
+│  ├─ process-state-tracker-init
+│  ├─ instrumentation-args-init
+│  ├─ payload-storage-service-init
+│  ├─ resource-source-init
+│  ├─ session-orchestrator-init
+│  └─ current-session-part-span-initialize-service
 ├─ post-init                 RealSdkInstance.postInit()
 └─ post-services-setup       tail of EmbraceImpl.start()
    └─ load-instrumentation

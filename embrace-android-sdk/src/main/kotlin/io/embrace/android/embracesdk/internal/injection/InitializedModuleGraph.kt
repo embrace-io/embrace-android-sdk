@@ -7,7 +7,15 @@ import io.embrace.android.embracesdk.internal.arch.InstrumentationRegistry
 import io.embrace.android.embracesdk.internal.arch.InstrumentationRegistryImpl
 import io.embrace.android.embracesdk.internal.capture.connectivity.NetworkConnectivityService
 import io.embrace.android.embracesdk.internal.capture.crumbs.BreadcrumbDataSource
+import io.embrace.android.embracesdk.internal.capture.metadata.MetadataService
+import io.embrace.android.embracesdk.internal.capture.metadata.RnBundleIdTracker
 import io.embrace.android.embracesdk.internal.config.ConfigService
+import io.embrace.android.embracesdk.internal.envelope.log.LogEnvelopeSource
+import io.embrace.android.embracesdk.internal.envelope.metadata.EnvelopeMetadataSource
+import io.embrace.android.embracesdk.internal.envelope.metadata.EnvelopeMetadataSourceImpl
+import io.embrace.android.embracesdk.internal.envelope.metadata.ObservableHostedSdkVersionInfo
+import io.embrace.android.embracesdk.internal.envelope.resource.EnvelopeResourceSource
+import io.embrace.android.embracesdk.internal.envelope.session.SessionPartEnvelopeSource
 import io.embrace.android.embracesdk.internal.instrumentation.crash.CrashFileMarker
 import io.embrace.android.embracesdk.internal.instrumentation.crash.CrashFileMarkerImpl
 import io.embrace.android.embracesdk.internal.instrumentation.crash.LastRunCrashVerifier
@@ -30,6 +38,7 @@ import io.embrace.android.embracesdk.internal.logs.LogOrchestrator
 import io.embrace.android.embracesdk.internal.logs.LogService
 import io.embrace.android.embracesdk.internal.logs.LogServiceImpl
 import io.embrace.android.embracesdk.internal.logs.attachments.AttachmentService
+import io.embrace.android.embracesdk.internal.resurrection.PayloadResurrectionService
 import io.embrace.android.embracesdk.internal.resurrection.SessionPartReader
 import io.embrace.android.embracesdk.internal.session.lifecycle.LifecycleTracker
 import io.embrace.android.embracesdk.internal.session.orchestrator.SessionOrchestrator
@@ -64,7 +73,6 @@ internal class InitializedModuleGraph(
     private val essentialServiceModuleSupplier: EssentialServiceModuleSupplier? = null,
     private val deliveryModuleSupplier: DeliveryModuleSupplier? = null,
     private val threadBlockageServiceSupplier: ThreadBlockageServiceSupplier? = null,
-    private val payloadSourceModuleSupplier: PayloadSourceModuleSupplier? = null,
 ) {
 
     val initModule: InitModule = init(name = "init-module", recordDuration = true) {
@@ -280,26 +288,83 @@ internal class InitializedModuleGraph(
         }
     }
 
-    val payloadSourceModule: PayloadSourceModule = init(name = "payload-source-module", recordDuration = true) {
-        payloadSourceModuleSupplier?.invoke(
-            initModule,
-            coreModule,
-            workerThreadPool,
-            essentialServiceModule,
-            configService,
-            openTelemetryModule,
-            threadBlockageService,
-            deliveryModule,
-        ) ?: PayloadSourceModuleImpl(
-            initModule,
-            coreModule,
-            workerThreadPool,
-            essentialServiceModule,
-            configService,
-            openTelemetryModule,
-            threadBlockageService,
-            deliveryModule,
+    val rnBundleIdTracker: Lazy<RnBundleIdTracker> = lazy {
+        EmbTrace.trace("rn-bundle-id-tracker-init") {
+            createRnBundleIdTracker(
+                context = coreModule.context,
+                configService = configService,
+                store = coreModule.store,
+                worker = workerThreadPool.backgroundWorker(Worker.Background.NonIoRegWorker),
+            )
+        }
+    }
+
+    val hostedSdkVersionInfo: ObservableHostedSdkVersionInfo = init("observable-hosted-sdk-version-info") {
+        createHostedSdkVersionInfo(configService.appFramework, coreModule.store)
+    }
+
+    val resourceSource: EnvelopeResourceSource = init(name = "payload-source-module", recordDuration = true) {
+        createEnvelopeResourceSource(
+            context = coreModule.context,
+            configService = configService,
+            worker = workerThreadPool.backgroundWorker(Worker.Background.NonIoRegWorker),
+            systemInfo = initModule.systemInfo,
+            errorHandler = initModule.errorHandler,
+            hostedSdkVersionInfo = hostedSdkVersionInfo,
+            rnBundleIdTracker = rnBundleIdTracker,
+            useKotlinSdkProvider = { openTelemetryModule.otelSdkWrapper.useKotlinSdk },
         )
+    }
+
+    val envelopeMetadataSource: EnvelopeMetadataSource = init("envelope-metadata-source") {
+        EnvelopeMetadataSourceImpl { essentialServiceModule.userService.getUserInfo() }
+    }
+
+    val sessionPartEnvelopeSource: SessionPartEnvelopeSource = init("session-part-envelope-source") {
+        createSessionPartEnvelopeSource(
+            symbolMap = configService.nativeSymbolMap,
+            currentSessionPartSpan = openTelemetryModule.currentSessionPartSpan,
+            spanRepository = openTelemetryModule.spanRepository,
+            otelPayloadMapper = threadBlockageService,
+            processStateTracker = essentialServiceModule.processStateTracker,
+            clock = initModule.clock,
+            errorHandler = initModule.errorHandler,
+            envelopeMetadataSource = envelopeMetadataSource,
+            resourceSource = resourceSource,
+        )
+    }
+
+    val logEnvelopeSource: LogEnvelopeSource = init("log-envelope-source") {
+        createLogEnvelopeSource(
+            logSink = openTelemetryModule.logSink,
+            envelopeMetadataSource = envelopeMetadataSource,
+            resourceSource = resourceSource,
+            cachedLogEnvelopeStore = deliveryModule?.cachedLogEnvelopeStore,
+        )
+    }
+
+    val metadataService: MetadataService = init("metadata-service") {
+        createMetadataService(
+            resourceSource = resourceSource,
+            context = coreModule.context,
+            configService = configService,
+            store = coreModule.store,
+            clock = initModule.clock,
+            worker = workerThreadPool.backgroundWorker(Worker.Background.NonIoRegWorker),
+        )
+    }
+
+    val payloadResurrectionService: PayloadResurrectionService? = init("payload-resurrection-service") {
+        deliveryModule?.let { delivery ->
+            createPayloadResurrectionService(
+                intakeService = delivery.intakeService,
+                payloadStorageService = delivery.payloadStorageService,
+                cacheStorageService = delivery.cacheStorageService,
+                cachedLogEnvelopeStore = delivery.cachedLogEnvelopeStore,
+                errorHandler = initModule.errorHandler,
+                serializer = initModule.jsonSerializer,
+            )
+        }
     }
 
     val logLimitingService: LogLimitingService = init("log-limiting-service") {
@@ -314,7 +379,7 @@ internal class InitializedModuleGraph(
             clock = initModule.clock,
             sink = openTelemetryModule.logSink,
             payloadStore = deliveryModule?.payloadStore,
-            logEnvelopeSource = payloadSourceModule.logEnvelopeSource,
+            logEnvelopeSource = logEnvelopeSource,
         )
     }
 
@@ -371,11 +436,11 @@ internal class InitializedModuleGraph(
                     currentSessionPartSpan = openTelemetryModule.currentSessionPartSpan,
                     spanRepository = openTelemetryModule.spanRepository,
                     processIdentifier = openTelemetryModule.otelSdkConfig.processIdentifier,
-                    sessionPartEnvelopeSource = payloadSourceModule.sessionPartEnvelopeSource,
-                    logEnvelopeSource = payloadSourceModule.logEnvelopeSource,
-                    metadataService = payloadSourceModule.metadataService,
-                    resourceSource = payloadSourceModule.resourceSource,
-                    envelopeMetadataSource = payloadSourceModule.envelopeMetadataSource,
+                    sessionPartEnvelopeSource = sessionPartEnvelopeSource,
+                    logEnvelopeSource = logEnvelopeSource,
+                    metadataService = metadataService,
+                    resourceSource = resourceSource,
+                    envelopeMetadataSource = envelopeMetadataSource,
                     payloadStore = deliveryModule?.payloadStore,
                     payloadCachingService = deliveryModule?.payloadCachingService,
                     instrumentationRegistry = instrumentationRegistry,

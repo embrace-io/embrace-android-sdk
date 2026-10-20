@@ -74,7 +74,7 @@ internal class InitializedModuleGraphTest {
             assertTrue(essentialServiceModule is EssentialServiceModuleImpl)
             assertNotNull(startupTracker)
             assertNotNull(deliveryModule)
-            assertNotNull(payloadSourceModule)
+            assertNotNull(metadataService)
             assertEquals(clock, initModule.clock)
         }
     }

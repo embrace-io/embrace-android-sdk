@@ -15,7 +15,6 @@ import io.embrace.android.embracesdk.internal.envelope.metadata.HostedSdkVersion
 import io.embrace.android.embracesdk.internal.envelope.resource.EnvelopeResourceSource
 import io.embrace.android.embracesdk.internal.envelope.session.SessionPartEnvelopeSource
 import io.embrace.android.embracesdk.internal.envelope.session.SessionPartPayloadSource
-import io.embrace.android.embracesdk.internal.injection.PayloadSourceModule
 import io.embrace.android.embracesdk.internal.instrumentation.crash.ndk.NativeCrashService
 import io.embrace.android.embracesdk.internal.payload.Envelope
 import io.embrace.android.embracesdk.internal.payload.SessionPartPayload
@@ -25,24 +24,24 @@ import io.embrace.android.embracesdk.internal.session.orchestrator.SessionPartSn
 import io.embrace.android.embracesdk.internal.utils.Provider
 
 class FakePayloadSourceModule(
-    override val metadataService: MetadataService = FakeMetadataService(),
-    override val hostedSdkVersionInfo: HostedSdkVersionInfo = FakeHostedSdkVersionInfo(),
-    override val rnBundleIdTracker: FakeRnBundleIdTracker = FakeRnBundleIdTracker(),
-    override val payloadResurrectionService: PayloadResurrectionService = FakePayloadResurrectionService(),
+    val metadataService: MetadataService = FakeMetadataService(),
+    val hostedSdkVersionInfo: HostedSdkVersionInfo = FakeHostedSdkVersionInfo(),
+    val rnBundleIdTracker: FakeRnBundleIdTracker = FakeRnBundleIdTracker(),
+    val payloadResurrectionService: PayloadResurrectionService = FakePayloadResurrectionService(),
     partPayloadSource: SessionPartPayloadSource = FakeSessionPartPayloadSource(),
     logPayloadSource: LogPayloadSource = FakeLogPayloadSource(),
-) : PayloadSourceModule {
+) {
 
-    override val resourceSource = FakeEnvelopeResourceSource()
-    override val envelopeMetadataSource: FakeEnvelopeMetadataSource = FakeEnvelopeMetadataSource()
+    val resourceSource = FakeEnvelopeResourceSource()
+    val envelopeMetadataSource: FakeEnvelopeMetadataSource = FakeEnvelopeMetadataSource()
 
-    override val sessionPartEnvelopeSource: SessionPartEnvelopeSource = FakeSessionPartEnvelopeSource(
+    val sessionPartEnvelopeSource: SessionPartEnvelopeSource = FakeSessionPartEnvelopeSource(
         envelopeMetadataSource,
         resourceSource,
         partPayloadSource
     )
 
-    override val logEnvelopeSource: FakeLogEnvelopeSource = FakeLogEnvelopeSource(
+    val logEnvelopeSource: FakeLogEnvelopeSource = FakeLogEnvelopeSource(
         envelopeMetadataSource,
         resourceSource,
         logPayloadSource

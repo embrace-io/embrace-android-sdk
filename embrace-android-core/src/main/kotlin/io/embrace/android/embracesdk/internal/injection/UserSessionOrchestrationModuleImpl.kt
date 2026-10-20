@@ -20,6 +20,7 @@ import io.embrace.android.embracesdk.internal.session.orchestrator.SessionPartWr
 import io.embrace.android.embracesdk.internal.session.persistence.SessionPartDirectoryStore
 import io.embrace.android.embracesdk.internal.session.persistence.SessionPartWriteTracker
 import io.embrace.android.embracesdk.internal.session.persistence.SessionReconstructionService
+import io.embrace.android.embracesdk.internal.utils.EmbTrace
 import io.embrace.android.embracesdk.internal.worker.Worker
 import java.io.File
 
@@ -40,121 +41,135 @@ class UserSessionOrchestrationModuleImpl(
 
     override val sessionIdsProvider: SessionIdsProvider get() = essentialServiceModule.sessionIdsProvider
 
-    private val sessionsDir: Lazy<File> = StorageLocation.SESSION_SPLIT.asFile(
-        errorHandler = initModule.errorHandler,
-        rootDirSupplier = { coreModule.context.filesDir },
-        fallbackDirSupplier = { coreModule.context.cacheDir },
-    )
-
-    private val sessionPersistenceWorker = workerThreadPool.backgroundWorker(Worker.Background.SessionPersistenceWorker)
-
-    private val sessionReadWorker = workerThreadPool.backgroundWorker(Worker.Background.IoRegWorker)
-
-    private val sessionPartDirectoryStore = SessionPartDirectoryStore(
-        sessionsDir,
-        sessionPersistenceWorker,
-        initModule.clock,
-        initModule.errorHandler,
-    )
-
-    private val sessionPartWriteTracker = SessionPartWriteTracker()
-
-    override val sessionPartReader: SessionPartReader? = deliveryModule?.let { delivery ->
-        SessionPartReader(
-            sessionsDir = sessionsDir,
-            directoryStore = sessionPartDirectoryStore,
-            reconstructionService = SessionReconstructionService(sessionsDir, initModule.errorHandler),
-            intakeService = delivery.intakeService,
-            writeTracker = sessionPartWriteTracker,
-            deadPartResurrector = MultiFileDeadPartResurrector(
-                resurrector = SessionPartResurrector(delivery.cachedLogEnvelopeStore),
-                nativeCrashServiceProvider = {
-                    instrumentationModule.instrumentationRegistry.findByType(NativeCrashDataSource::class)
-                },
-                restoreDecisionProvider = { sessionOrchestrator.userSessionRestoreDecision },
-            ),
-            processIdProvider = { openTelemetryModule.otelSdkConfig.processIdentifier },
-            configService = configService,
+    private val sessionsDir: Lazy<File> = EmbTrace.trace("sessions-dir-init") {
+        StorageLocation.SESSION_SPLIT.asFile(
             errorHandler = initModule.errorHandler,
+            rootDirSupplier = { coreModule.context.filesDir },
+            fallbackDirSupplier = { coreModule.context.cacheDir },
         )
     }
 
-    override val sessionOrchestrator: SessionOrchestrator = run {
-        val payloadMessageCollator = PayloadMessageCollatorImpl(
-            payloadSourceModule.sessionPartEnvelopeSource,
-            openTelemetryModule.currentSessionPartSpan,
-            essentialServiceModule.sessionIdsProvider,
-        )
+    private val sessionPersistenceWorker = EmbTrace.trace("session-persistence-worker-init") {
+        workerThreadPool.backgroundWorker(Worker.Background.SessionPersistenceWorker)
+    }
 
-        val payloadFactory = PayloadFactoryImpl(
-            payloadMessageCollator,
-            payloadSourceModule.logEnvelopeSource,
-            configService,
+    private val sessionReadWorker = EmbTrace.trace("session-read-worker-init") {
+        workerThreadPool.backgroundWorker(Worker.Background.IoRegWorker)
+    }
+
+    private val sessionPartDirectoryStore = EmbTrace.trace("session-part-directory-store-init") {
+        SessionPartDirectoryStore(
+            sessionsDir,
+            sessionPersistenceWorker,
+            initModule.clock,
             initModule.errorHandler,
         )
+    }
 
-        val boundaryDelegate = OrchestratorBoundaryDelegate(
-            essentialServiceModule.userSessionPropertiesService,
-        )
+    private val sessionPartWriteTracker = EmbTrace.trace("session-part-write-tracker-init") {
+        SessionPartWriteTracker()
+    }
 
-        val sessionPartSpanAttrPopulator = SessionPartSpanAttrPopulatorImpl(
-            essentialServiceModule.telemetryDestination,
-            startupDurationProvider,
-            appVersionStartupCounterProvider,
-            logLimitingService,
-            payloadSourceModule.metadataService,
-            openTelemetryModule.otelSdkConfig.processIdentifier,
-        ) {
-            essentialServiceModule.experimentTrackingService.getRecords()
+    override val sessionPartReader: SessionPartReader? = EmbTrace.trace("session-part-reader-init") {
+        deliveryModule?.let { delivery ->
+            SessionPartReader(
+                sessionsDir = sessionsDir,
+                directoryStore = sessionPartDirectoryStore,
+                reconstructionService = SessionReconstructionService(sessionsDir, initModule.errorHandler),
+                intakeService = delivery.intakeService,
+                writeTracker = sessionPartWriteTracker,
+                deadPartResurrector = MultiFileDeadPartResurrector(
+                    resurrector = SessionPartResurrector(delivery.cachedLogEnvelopeStore),
+                    nativeCrashServiceProvider = {
+                        instrumentationModule.instrumentationRegistry.findByType(NativeCrashDataSource::class)
+                    },
+                    restoreDecisionProvider = { sessionOrchestrator.userSessionRestoreDecision },
+                ),
+                processIdProvider = { openTelemetryModule.otelSdkConfig.processIdentifier },
+                configService = configService,
+                errorHandler = initModule.errorHandler,
+            )
         }
+    }
 
-        val sessionPartWriter: SessionPartWriterImpl? = sessionPartReader?.let { reader ->
-            SessionPartWriterImpl(
-                sessionsDir,
-                sessionPersistenceWorker,
-                configService,
-                initModule.uuidSource,
-                initModule.clock,
-                initModule.errorHandler,
-                payloadSourceModule.resourceSource,
-                payloadSourceModule.envelopeMetadataSource,
+    override val sessionOrchestrator: SessionOrchestrator = EmbTrace.trace("session-orchestrator-init") {
+        run {
+            val payloadMessageCollator = PayloadMessageCollatorImpl(
+                payloadSourceModule.sessionPartEnvelopeSource,
                 openTelemetryModule.currentSessionPartSpan,
-                openTelemetryModule.spanRepository::getActiveEmbraceSpans,
-                initModule.telemetryService,
-                sessionPartDirectoryStore,
-                sessionPartWriteTracker,
-                onWritesComplete = {
-                    sessionReadWorker.submit { reader.readPersistedSessionParts() }
-                },
-            ).also { writer ->
-                essentialServiceModule.userService.addUserInfoListener(writer::onMetadataChanged)
-                openTelemetryModule.spanRepository.addCompletedOtelSpansListener(writer::onSpanCompleted)
-                openTelemetryModule.spanRepository.addSpanChangeListener { span ->
-                    writer.onSpanSnapshotChanged(span)
+                essentialServiceModule.sessionIdsProvider,
+            )
+
+            val payloadFactory = PayloadFactoryImpl(
+                payloadMessageCollator,
+                payloadSourceModule.logEnvelopeSource,
+                configService,
+                initModule.errorHandler,
+            )
+
+            val boundaryDelegate = OrchestratorBoundaryDelegate(
+                essentialServiceModule.userSessionPropertiesService,
+            )
+
+            val sessionPartSpanAttrPopulator = SessionPartSpanAttrPopulatorImpl(
+                essentialServiceModule.telemetryDestination,
+                startupDurationProvider,
+                appVersionStartupCounterProvider,
+                logLimitingService,
+                payloadSourceModule.metadataService,
+                openTelemetryModule.otelSdkConfig.processIdentifier,
+            ) {
+                essentialServiceModule.experimentTrackingService.getRecords()
+            }
+
+            val sessionPartWriter: SessionPartWriterImpl? = sessionPartReader?.let { reader ->
+                SessionPartWriterImpl(
+                    sessionsDir,
+                    sessionPersistenceWorker,
+                    configService,
+                    initModule.uuidSource,
+                    initModule.clock,
+                    initModule.errorHandler,
+                    payloadSourceModule.resourceSource,
+                    payloadSourceModule.envelopeMetadataSource,
+                    openTelemetryModule.currentSessionPartSpan,
+                    openTelemetryModule.spanRepository::getActiveEmbraceSpans,
+                    initModule.telemetryService,
+                    sessionPartDirectoryStore,
+                    sessionPartWriteTracker,
+                    onWritesComplete = {
+                        sessionReadWorker.submit { reader.readPersistedSessionParts() }
+                    },
+                ).also { writer ->
+                    essentialServiceModule.userService.addUserInfoListener(writer::onMetadataChanged)
+                    openTelemetryModule.spanRepository.addCompletedOtelSpansListener(writer::onSpanCompleted)
+                    openTelemetryModule.spanRepository.addSpanChangeListener { span ->
+                        writer.onSpanSnapshotChanged(span)
+                    }
                 }
             }
-        }
 
-        SessionOrchestratorImpl(
-            essentialServiceModule.processStateTracker,
-            payloadFactory,
-            initModule.clock,
-            configService,
-            essentialServiceModule.sessionPartTracker,
-            boundaryDelegate,
-            deliveryModule?.payloadStore,
-            deliveryModule?.payloadCachingService,
-            instrumentationModule.instrumentationRegistry,
-            essentialServiceModule.telemetryDestination,
-            sessionPartSpanAttrPopulator,
-            coreModule.ordinalStore,
-            coreModule.store,
-            UserSessionMetadataStore(coreModule.store),
-            initModule.errorHandler,
-            workerThreadPool.backgroundWorker(Worker.Background.NonIoRegWorker),
-            initModule.uuidSource,
-            initModule.startupClassifier,
-            sessionPartWriter,
-        ).apply { attach() }
+            SessionOrchestratorImpl(
+                essentialServiceModule.processStateTracker,
+                payloadFactory,
+                initModule.clock,
+                configService,
+                essentialServiceModule.sessionPartTracker,
+                boundaryDelegate,
+                deliveryModule?.payloadStore,
+                deliveryModule?.payloadCachingService,
+                instrumentationModule.instrumentationRegistry,
+                essentialServiceModule.telemetryDestination,
+                sessionPartSpanAttrPopulator,
+                coreModule.ordinalStore,
+                coreModule.store,
+                UserSessionMetadataStore(coreModule.store),
+                initModule.errorHandler,
+                workerThreadPool.backgroundWorker(Worker.Background.NonIoRegWorker),
+                initModule.uuidSource,
+                initModule.startupClassifier,
+                sessionPartWriter,
+            ).apply { attach() }
+        }
     }
 }

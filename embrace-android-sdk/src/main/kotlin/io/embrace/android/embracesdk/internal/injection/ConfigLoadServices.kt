@@ -41,7 +41,7 @@ internal class ConfigLoadServices(
     val keyValueStore: Lazy<KeyValueStore> = lazy { createKeyValueStore(context, jsonSerializer) }
 
     val persistedConfig: PersistedConfig = EmbTrace.trace(
-        sectionName = "persisted-config-load",
+        sectionName = "persisted-config-init",
         recordDuration = true,
     ) {
         PersistedConfig(
@@ -54,11 +54,11 @@ internal class ConfigLoadServices(
         )
     }
 
-    val workerThreadPool: WorkerThreadPool = EmbTrace.trace("workerthread-init") {
+    val workerThreadPool: WorkerThreadPool = EmbTrace.trace("worker-thread-pool-init") {
         workerThreadPoolSupplier?.invoke() ?: WorkerThreadPoolImpl()
     }
 
-    val configService: ConfigService = EmbTrace.trace("config-init") {
+    val configService: ConfigService = EmbTrace.trace(sectionName = "config-service-init", recordDuration = true) {
         configServiceSupplier?.invoke(
             preStartServices,
             instrumentedConfig,
@@ -66,16 +66,14 @@ internal class ConfigLoadServices(
             okHttpClient,
             workerThreadPool,
             persistedConfig,
-        ) ?: EmbTrace.trace(sectionName = "config-service-init", recordDuration = true) {
-            createConfigService(
-                preStartServices,
-                instrumentedConfig,
-                jsonSerializer,
-                okHttpClient,
-                workerThreadPool,
-                persistedConfig,
-            )
-        }
+        ) ?: createConfigService(
+            preStartServices,
+            instrumentedConfig,
+            jsonSerializer,
+            okHttpClient,
+            workerThreadPool,
+            persistedConfig,
+        )
     }
 
     /**

@@ -10,6 +10,8 @@ class FakeLogRecordProcessor(
 ) : LogRecordProcessor {
 
     val processedLogBodies = mutableListOf<String>()
+    var shutdownCount: Int = 0
+        private set
 
     override fun onEmit(
         log: ReadWriteLogRecord,
@@ -21,5 +23,8 @@ class FakeLogRecordProcessor(
     }
 
     override suspend fun forceFlush(): OperationResultCode = OperationResultCode.Success
-    override suspend fun shutdown(): OperationResultCode = OperationResultCode.Success
+    override suspend fun shutdown(): OperationResultCode {
+        shutdownCount++
+        return OperationResultCode.Success
+    }
 }

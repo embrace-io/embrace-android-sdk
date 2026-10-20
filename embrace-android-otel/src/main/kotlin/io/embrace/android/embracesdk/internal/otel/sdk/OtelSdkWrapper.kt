@@ -10,8 +10,6 @@ import io.embrace.android.embracesdk.internal.otel.config.getMaxTotalLinkCount
 import io.embrace.android.embracesdk.internal.otel.createSdkOtelInstance
 import io.embrace.android.embracesdk.internal.otel.impl.EmbOpenTelemetry
 import io.embrace.android.embracesdk.internal.otel.impl.EmbTracerProvider
-import io.embrace.android.embracesdk.internal.otel.logs.PrivateTelemetryFilteringLogRecordProcessor
-import io.embrace.android.embracesdk.internal.otel.spans.PrivateTelemetryFilteringSpanProcessor
 import io.embrace.android.embracesdk.internal.otel.spans.SpanService
 import io.embrace.android.embracesdk.internal.utils.EmbTrace
 import io.embrace.android.embracesdk.internal.utils.Provider
@@ -91,8 +89,7 @@ class OtelSdkWrapper(
                     linkCountLimit = limits.getMaxTotalLinkCount()
                 }
                 export {
-                    val processors = listOf(configuration.spanProcessor) + configuration.externalConfig.getSpanProcessors()
-                        .map(::PrivateTelemetryFilteringSpanProcessor)
+                    val processors = listOf(configuration.spanProcessor) + configuration.externalSpanProcessors
                     compositeSpanProcessor(*processors.toTypedArray())
                 }
             },
@@ -102,8 +99,7 @@ class OtelSdkWrapper(
                     attributeCountLimit = limits.getMaxTotalAttributeCount()
                 }
                 export {
-                    val processors = listOf(configuration.logRecordProcessor) + configuration.externalConfig.getLogRecordProcessors()
-                        .map(::PrivateTelemetryFilteringLogRecordProcessor)
+                    val processors = listOf(configuration.logRecordProcessor) + configuration.externalLogRecordProcessors
                     compositeLogRecordProcessor(*processors.toTypedArray())
                 }
             },

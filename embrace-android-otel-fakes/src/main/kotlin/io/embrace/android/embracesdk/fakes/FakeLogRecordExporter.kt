@@ -10,6 +10,8 @@ class FakeLogRecordExporter : LogRecordExporter, InlineExporter<LogRecordData> {
     val exportedLogs: MutableList<LogRecordData> = mutableListOf()
     var forceFlushCount: Int = 0
         private set
+    var shutdownCount: Int = 0
+        private set
 
     override fun exportInline(telemetry: List<LogRecordData>): OperationResultCode {
         exportedLogs += telemetry
@@ -18,7 +20,10 @@ class FakeLogRecordExporter : LogRecordExporter, InlineExporter<LogRecordData> {
 
     override suspend fun export(telemetry: List<LogRecordData>): OperationResultCode = exportInline(telemetry)
 
-    override suspend fun shutdown(): OperationResultCode = OperationResultCode.Success
+    override suspend fun shutdown(): OperationResultCode {
+        shutdownCount++
+        return OperationResultCode.Success
+    }
 
     override suspend fun forceFlush(): OperationResultCode {
         forceFlushCount++

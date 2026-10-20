@@ -333,6 +333,36 @@ internal class SdkStateIntegrationTest(
     }
 
     @Test
+    fun `STARTED to DISABLED - customer processors stop receiving telemetry and are shut down`() {
+        val spanProcessor = FakeSpanProcessor()
+        val logRecordProcessor = FakeLogRecordProcessor()
+        testRule.runTest(
+            preSdkStartAction = {
+                embrace.addSpanProcessor(spanProcessor)
+                embrace.addLogRecordProcessor(logRecordProcessor)
+            },
+            testCaseAction = {
+                recordSession {
+                    val heldSpan = embrace.startSpan(SPAN_2)
+                    embrace.startSpan(SPAN_1).stop()
+                    embrace.logInfo(LOG_1)
+                    embrace.disable()
+                    heldSpan.stop()
+                }
+            },
+            assertAction = {
+                returnIfConditionMet(
+                    desiredValueSupplier = { true },
+                    dataProvider = { spanProcessor.shutdownCount == 1 && logRecordProcessor.shutdownCount == 1 },
+                    condition = { it },
+                )
+                assertEquals(listOf(SPAN_1), spanProcessor.endedSpanNames.filter { it.startsWith(TEST_PREFIX) })
+                assertEquals(listOf(LOG_1), logRecordProcessor.processedLogBodies.filter { it.startsWith(TEST_PREFIX) })
+            },
+        )
+    }
+
+    @Test
     fun `DISABLED - API calls are safe, buffered calls are dropped`() {
         lateinit var logger: FakeInternalLogger
         lateinit var calls: ApiCalls

@@ -6,10 +6,12 @@ import io.embrace.android.embracesdk.internal.otel.logs.DefaultLogRecordExporter
 import io.embrace.android.embracesdk.internal.otel.logs.EmbraceLogRecordProcessor
 import io.embrace.android.embracesdk.internal.otel.logs.LogSink
 import io.embrace.android.embracesdk.internal.otel.logs.PrivateTelemetryFilteringLogRecordExporter
+import io.embrace.android.embracesdk.internal.otel.logs.PrivateTelemetryFilteringLogRecordProcessor
 import io.embrace.android.embracesdk.internal.otel.sdk.IdGenerator
 import io.embrace.android.embracesdk.internal.otel.spans.DefaultSpanExporter
 import io.embrace.android.embracesdk.internal.otel.spans.EmbraceSpanProcessor
 import io.embrace.android.embracesdk.internal.otel.spans.PrivateTelemetryFilteringSpanExporter
+import io.embrace.android.embracesdk.internal.otel.spans.PrivateTelemetryFilteringSpanProcessor
 import io.embrace.android.embracesdk.internal.otel.spans.SpanRepository
 import io.embrace.android.embracesdk.internal.session.id.SessionIdsProvider
 import io.embrace.android.embracesdk.internal.utils.EmbTrace
@@ -22,6 +24,7 @@ import io.opentelemetry.kotlin.semconv.OsAttributes
 import io.opentelemetry.kotlin.semconv.ServiceAttributes
 import io.opentelemetry.kotlin.semconv.TelemetryAttributes
 import io.opentelemetry.kotlin.tracing.export.SpanProcessor
+import java.io.Closeable
 
 class OtelSdkConfig(
     spanRepository: SpanRepository,
@@ -38,7 +41,7 @@ class OtelSdkConfig(
     private val processIdentifierProvider: () -> String = IdGenerator.Companion::generateLaunchInstanceId,
     private val externalExportDispatcher: ExternalExportDispatcher,
     val externalConfig: ExternalOtelConfig = ExternalOtelConfig(),
-) {
+) : Closeable {
 
     val resourceAction: AttributesMutator.() -> Unit
         get() = {
@@ -77,7 +80,15 @@ class OtelSdkConfig(
         exportEnabled = false
     }
 
-    fun shutdownExport() {
+    override fun close() {
+        val components = with(externalConfig) {
+            getSpanExporters() + getLogExporters() + getSpanProcessors() + getLogRecordProcessors()
+        }
+        if (components.isNotEmpty()) {
+            externalExportDispatcher.dispatch(components) { component ->
+                component.shutdown()
+            }
+        }
         externalExportDispatcher.shutdown()
     }
 
@@ -113,5 +124,13 @@ class OtelSdkConfig(
             eventMetadataProvider,
             logRecordExporter,
         )
+    }
+
+    val externalSpanProcessors: List<SpanProcessor> by lazy {
+        externalConfig.getSpanProcessors().map { PrivateTelemetryFilteringSpanProcessor(it, exportCheck) }
+    }
+
+    val externalLogRecordProcessors: List<LogRecordProcessor> by lazy {
+        externalConfig.getLogRecordProcessors().map { PrivateTelemetryFilteringLogRecordProcessor(it, exportCheck) }
     }
 }

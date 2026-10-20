@@ -172,6 +172,7 @@ internal class SdkIntegrationTestRule(
         action = EmbraceActionInterface(
             setup,
             { moduleGraph.instrumentationModule.instrumentationRegistry },
+            { moduleGraph.coreModule.eventBus },
             { sdkStateHolder.api },
             { sdkStateHolder.state },
         )

@@ -72,6 +72,7 @@ import io.embrace.android.embracesdk.internal.session.id.SessionPartTracker
 import io.embrace.android.embracesdk.internal.session.orchestrator.PayloadStore
 import io.embrace.android.embracesdk.internal.session.orchestrator.SessionOrchestrator
 import io.embrace.android.embracesdk.internal.utils.EmbTrace
+import io.embrace.android.embracesdk.internal.utils.event.EventBus
 import io.embrace.android.embracesdk.internal.worker.Worker
 import io.embrace.android.embracesdk.spans.TracingApi
 import io.opentelemetry.kotlin.NoopOpenTelemetry
@@ -98,6 +99,7 @@ internal class RealSdkInstance(
     private val primaryAbi: String,
     private val configService: ConfigService,
     private val workerThreadPool: WorkerThreadPool,
+    private val eventBus: EventBus,
     private val appContext: Context,
     private val spanRepository: SpanRepository,
     private val logSink: LogSink,
@@ -225,6 +227,7 @@ internal class RealSdkInstance(
         runCatching { startupTracker.close() }
         runCatching { otelSdkConfig.value.close() }
         runCatching { workerThreadPool.close() }
+        runCatching { eventBus.stop() }
 
         if (!deleteData || rootDir == null || fallbackDir == null) {
             return

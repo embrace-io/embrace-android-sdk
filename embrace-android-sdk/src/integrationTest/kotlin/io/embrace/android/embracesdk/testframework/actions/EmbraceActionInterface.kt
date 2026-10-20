@@ -15,6 +15,7 @@ import io.embrace.android.embracesdk.internal.capture.connectivity.ConnectionTyp
 import io.embrace.android.embracesdk.internal.capture.connectivity.ConnectivityStatus
 import io.embrace.android.embracesdk.internal.capture.connectivity.toOptimisticStatus
 import io.embrace.android.embracesdk.internal.instance.SdkState
+import io.embrace.android.embracesdk.internal.utils.event.EventBus
 import org.robolectric.Robolectric
 import org.robolectric.android.controller.ActivityController
 
@@ -24,6 +25,7 @@ import org.robolectric.android.controller.ActivityController
 internal class EmbraceActionInterface(
     private val setup: EmbraceSetupInterface,
     private val instrumentationRegistrySupplier: () -> InstrumentationRegistry,
+    private val eventBusSupplier: () -> EventBus,
     private val embraceSupplier: () -> SdkApi,
     private val sdkStateSupplier: () -> SdkState,
 ) {
@@ -32,6 +34,12 @@ internal class EmbraceActionInterface(
      * The [Embrace] instance that can be used for testing
      */
     val embrace: SdkApi by lazy { embraceSupplier() }
+
+    /**
+     * The [EventBus] of the SDK under test.
+     */
+    val eventBus: EventBus
+        get() = eventBusSupplier()
 
     /**
      * The current lifecycle state of the SDK under test.

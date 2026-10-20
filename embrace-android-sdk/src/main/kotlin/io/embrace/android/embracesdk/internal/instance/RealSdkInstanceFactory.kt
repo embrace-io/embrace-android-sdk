@@ -37,6 +37,7 @@ internal fun createRealSdkInstance(
         primaryAbi = moduleGraph.initModule.systemInfo.primaryAbi,
         configService = moduleGraph.configService,
         workerThreadPool = moduleGraph.workerThreadPool,
+        eventBus = moduleGraph.coreModule.eventBus,
         appContext = moduleGraph.coreModule.context,
         spanRepository = moduleGraph.openTelemetryModule.spanRepository,
         logSink = moduleGraph.openTelemetryModule.logSink,

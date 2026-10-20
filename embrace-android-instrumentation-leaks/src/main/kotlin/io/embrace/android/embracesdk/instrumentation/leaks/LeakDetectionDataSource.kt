@@ -5,6 +5,8 @@ import io.embrace.android.embracesdk.internal.arch.InstrumentationArgs
 import io.embrace.android.embracesdk.internal.arch.SessionPartEndListener
 import io.embrace.android.embracesdk.internal.arch.datasource.DataSourceImpl
 import io.embrace.android.embracesdk.internal.arch.limits.NoopLimitStrategy
+import io.embrace.android.embracesdk.internal.logging.SdkErrorType
+import io.embrace.android.embracesdk.internal.logging.guardSdkCode
 import io.embrace.android.embracesdk.semconv.EmbSessionAttributes
 
 class LeakDetectionDataSource(args: InstrumentationArgs) :
@@ -46,9 +48,12 @@ class LeakDetectionDataSource(args: InstrumentationArgs) :
     }
 
     override fun onDataCaptureDisabled() {
-        application.unregisterActivityLifecycleCallbacks(callbacks)
-        fragmentSupport.close()
-        leakDetector.stop()
+        // each step is guarded on its own, so that one failing does not leave the others running
+        errorHandler.guardSdkCode(SdkErrorType.InstrumentationDisableFail) {
+            application.unregisterActivityLifecycleCallbacks(callbacks)
+        }
+        errorHandler.guardSdkCode(SdkErrorType.InstrumentationDisableFail, fragmentSupport::close)
+        errorHandler.guardSdkCode(SdkErrorType.InstrumentationDisableFail, leakDetector::stop)
     }
 
     /**

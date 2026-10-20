@@ -39,6 +39,9 @@ internal class AeiDataSourceImpl(
         private const val AEI_HASH_CODES = "io.embrace.aeiHashCode"
     }
 
+    private val lock = Any()
+    private var closed = false
+
     override fun onDataCaptureEnabled() {
         backgroundWorker.submit {
             try {
@@ -49,7 +52,18 @@ internal class AeiDataSourceImpl(
         }
     }
 
+    override fun onDataCaptureDisabled() {
+        synchronized(lock) {
+            closed = true
+        }
+    }
+
+    private fun isClosed(): Boolean = synchronized(lock) { closed }
+
     private fun processAeiRecords() {
+        if (isClosed()) {
+            return
+        }
         val activityManager = activityManagerProvider() ?: return
         val maxNum = configService.config.aei.maxNum
         val records = activityManager.getHistoricalProcessExitReasons(null, 0, maxNum).take(SDK_AEI_SEND_LIMIT)
@@ -67,30 +81,40 @@ internal class AeiDataSourceImpl(
             if (obj == null) {
                 return@forEach
             }
-            captureTelemetry {
-                val capture = configService.config.autoDataCapture.nativeCrashCaptureEnabled || !obj.hasNativeTombstone()
-                if (capture) {
-                    val schemaType = AeiLog(
-                        sessionPartId = obj.sessionPartId,
-                        sessionIdError = obj.sessionIdError,
-                        importance = obj.importance,
-                        pss = obj.pss,
-                        reason = obj.reason,
-                        rss = obj.rss,
-                        status = obj.status,
-                        timestamp = obj.timestamp,
-                        description = obj.description,
-                        traceStatus = obj.traceStatus,
-                        crashNumber = crashNumber,
-                        aeiNumber = aeiNumber,
-                        userSessionId = obj.userSessionId,
-                    )
-                    addLog(schemaType, LogSeverity.INFO, obj.trace ?: "")
+            // hold the lock so a record can't be marked as delivered after the SDK has been disabled
+            synchronized(lock) {
+                if (closed) {
+                    return
                 }
-
-                // always count AEI as delivered once we process it & submit to the OTel logging system, or discard
-                store.deliveredAeiIds = store.deliveredAeiIds.plus(obj.getAeiId())
+                captureRecord(obj, crashNumber, aeiNumber)
             }
+        }
+    }
+
+    private fun captureRecord(obj: AppExitInfoData, crashNumber: Int?, aeiNumber: Int?) {
+        captureTelemetry {
+            val capture = configService.config.autoDataCapture.nativeCrashCaptureEnabled || !obj.hasNativeTombstone()
+            if (capture) {
+                val schemaType = AeiLog(
+                    sessionPartId = obj.sessionPartId,
+                    sessionIdError = obj.sessionIdError,
+                    importance = obj.importance,
+                    pss = obj.pss,
+                    reason = obj.reason,
+                    rss = obj.rss,
+                    status = obj.status,
+                    timestamp = obj.timestamp,
+                    description = obj.description,
+                    traceStatus = obj.traceStatus,
+                    crashNumber = crashNumber,
+                    aeiNumber = aeiNumber,
+                    userSessionId = obj.userSessionId,
+                )
+                addLog(schemaType, LogSeverity.INFO, obj.trace ?: "")
+            }
+
+            // always count AEI as delivered once we process it & submit to the OTel logging system, or discard
+            store.deliveredAeiIds = store.deliveredAeiIds.plus(obj.getAeiId())
         }
     }
 

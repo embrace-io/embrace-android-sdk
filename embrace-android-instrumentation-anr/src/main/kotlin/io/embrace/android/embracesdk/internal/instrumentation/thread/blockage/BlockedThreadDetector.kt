@@ -46,22 +46,26 @@ class BlockedThreadDetector(
     private val blocked: AtomicBoolean = AtomicBoolean(false)
     private val lastWatchdogThreadResponse: AtomicLong = AtomicLong(clock.now())
     private val lastTargetThreadResponse: AtomicLong = AtomicLong(clock.now())
+
+    private val monitorLock = Any()
     private var monitorFuture: ScheduledFuture<*>? = null
 
     /**
      * Starts monitoring the target thread for blockages.
      */
     fun start() {
-        if (closed.get()) {
-            return
-        }
-        if (!started.getAndSet(true)) {
-            blocked.set(false)
-            lastWatchdogThreadResponse.set(clock.now())
-            lastTargetThreadResponse.set(clock.now())
-            val runnable = Runnable(::checkHeartbeat)
-            runCatching {
-                monitorFuture = watchdogWorker.scheduleAtFixedRate(runnable, 0, intervalMs, TimeUnit.MILLISECONDS)
+        synchronized(monitorLock) {
+            if (closed.get()) {
+                return
+            }
+            if (!started.getAndSet(true)) {
+                blocked.set(false)
+                lastWatchdogThreadResponse.set(clock.now())
+                lastTargetThreadResponse.set(clock.now())
+                val runnable = Runnable(::checkHeartbeat)
+                runCatching {
+                    monitorFuture = watchdogWorker.scheduleAtFixedRate(runnable, 0, intervalMs, TimeUnit.MILLISECONDS)
+                }
             }
         }
     }
@@ -70,10 +74,12 @@ class BlockedThreadDetector(
      * Stops monitoring the target thread.
      */
     fun stop() {
-        if (started.getAndSet(false)) {
-            monitorFuture?.let { monitorTask ->
-                if (monitorTask.cancel(false)) {
-                    monitorFuture = null
+        synchronized(monitorLock) {
+            if (started.getAndSet(false)) {
+                monitorFuture?.let { monitorTask ->
+                    if (monitorTask.cancel(false)) {
+                        monitorFuture = null
+                    }
                 }
             }
         }

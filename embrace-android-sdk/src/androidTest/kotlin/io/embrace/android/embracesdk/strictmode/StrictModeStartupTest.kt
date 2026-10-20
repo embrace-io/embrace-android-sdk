@@ -10,6 +10,7 @@ import io.embrace.android.embracesdk.fakes.OtelSdkMode
 import io.embrace.android.embracesdk.fakes.config.FakeBaseUrlConfig
 import io.embrace.android.embracesdk.fakes.config.FakeEnabledFeatureConfig
 import io.embrace.android.embracesdk.fakes.config.FakeInstrumentedConfig
+import io.embrace.android.embracesdk.internal.config.PersistedConfig
 import io.embrace.android.embracesdk.internal.injection.ConfigLoadServices
 import io.embrace.android.embracesdk.internal.injection.InitializedModuleGraph
 import io.embrace.android.embracesdk.internal.injection.PreStartServices
@@ -124,7 +125,7 @@ internal class StrictModeStartupTest(
         File(context.applicationInfo.dataDir, "shared_prefs").deleteRecursively()
 
         assertFalse(
-            File(context.filesDir, "embrace_remote_config").exists(),
+            File(context.filesDir, PersistedConfig.STORAGE_DIR_NAME).exists(),
         )
     }
 

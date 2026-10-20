@@ -115,8 +115,8 @@ internal class PersistedConfigTest {
     fun `corrupt config on disk degrades to no config rather than throwing`() {
         val filesDir = temporaryFolder.newFolder()
         val storageDir = File(filesDir, PersistedConfig.STORAGE_DIR_NAME).apply { mkdirs() }
-        File(storageDir, "most_recent_response").writeText("!!! not json !!!")
-        File(storageDir, "cached_config").writeBytes(ByteArray(8))
+        File(storageDir, PersistedConfig.CONFIG_RESPONSE_FILE_NAME).writeText("!!! not json !!!")
+        File(storageDir, PersistedConfig.CACHED_CONFIG_FILE_NAME).writeBytes(ByteArray(8))
 
         val persistedConfig = createPersistedConfig(filesDir = filesDir)
 
@@ -170,7 +170,7 @@ internal class PersistedConfigTest {
             ).saveResponse(ConfigHttpResponse(persisted, "etag"))
         } else if (persisted != null) {
             val storageDir = File(filesDir, PersistedConfig.STORAGE_DIR_NAME).apply { mkdirs() }
-            File(storageDir, "most_recent_response").outputStream().buffered().use {
+            File(storageDir, PersistedConfig.CONFIG_RESPONSE_FILE_NAME).outputStream().buffered().use {
                 serializer.toJson(persisted, RemoteConfig.serializer(), it)
             }
         }

@@ -76,5 +76,21 @@ class PersistedConfig(
          * Subdirectory of the app's files dir where the remote config is persisted.
          */
         const val STORAGE_DIR_NAME: String = "embrace_remote_config"
+
+        /**
+         * The file in [STORAGE_DIR_NAME] holding the most recent config response, as JSON.
+         */
+        const val CONFIG_RESPONSE_FILE_NAME: String = "most_recent_response"
+
+        /**
+         * The file in [STORAGE_DIR_NAME] holding the etag of the most recent config response.
+         */
+        const val ETAG_FILE_NAME: String = "etag"
+
+        /**
+         * The file in [STORAGE_DIR_NAME] holding the binary cache of the most recent config, which is read in
+         * preference to [CONFIG_RESPONSE_FILE_NAME] when present.
+         */
+        const val CACHED_CONFIG_FILE_NAME: String = "cached_config"
     }
 }

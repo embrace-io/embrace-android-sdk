@@ -40,8 +40,8 @@ internal class SdkStorage(private val dataDir: File) {
      */
     fun writeRemoteConfig(json: String) {
         remoteConfigDir.mkdirs()
-        File(remoteConfigDir, CACHED_CONFIG_FILE).delete()
-        File(remoteConfigDir, REMOTE_CONFIG_RESPONSE_FILE).writeText(json)
+        File(remoteConfigDir, PersistedConfig.CACHED_CONFIG_FILE_NAME).delete()
+        File(remoteConfigDir, PersistedConfig.CONFIG_RESPONSE_FILE_NAME).writeText(json)
     }
 
     /**
@@ -55,10 +55,10 @@ internal class SdkStorage(private val dataDir: File) {
 
     private companion object {
         const val FILES_DIR = "files"
-        const val CACHED_CONFIG_FILE = "cached_config"
-        const val REMOTE_CONFIG_RESPONSE_FILE = "most_recent_response"
 
-        // the directories under an app's data directory that the app, and so the SDK, writes to
+        // the directories under an app's data directory that a clear() will remove
+        // TODO: keep SDK-written files other than the session parts data as part of the restorable fixtures
+        //       to more closely simulate the state of the SDK files in an install which has a dead session to resurrect.
         val SDK_WRITABLE_DIRS = listOf(FILES_DIR, "cache", "shared_prefs", "databases", "no_backup")
     }
 }

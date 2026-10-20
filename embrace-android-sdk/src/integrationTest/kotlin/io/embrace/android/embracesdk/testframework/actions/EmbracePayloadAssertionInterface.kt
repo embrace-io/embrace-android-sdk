@@ -12,6 +12,7 @@ import io.embrace.android.embracesdk.assertions.waitUntilConditionMet
 import io.embrace.android.embracesdk.internal.arch.schema.EmbType
 import io.embrace.android.embracesdk.internal.arch.state.ProcessState
 import io.embrace.android.embracesdk.internal.clock.nanosToMillis
+import io.embrace.android.embracesdk.internal.config.PersistedConfig
 import io.embrace.android.embracesdk.internal.config.remote.RemoteConfig
 import io.embrace.android.embracesdk.internal.config.source.ConfigHttpResponse
 import io.embrace.android.embracesdk.internal.delivery.debug.DeliveryTracer
@@ -206,15 +207,15 @@ internal class EmbracePayloadAssertionInterface(
      */
     internal fun readPersistedConfigResponse(): ConfigHttpResponse {
         val ctx = ApplicationProvider.getApplicationContext<Context>()
-        val storageDir = File(ctx.filesDir, "embrace_remote_config")
+        val storageDir = File(ctx.filesDir, PersistedConfig.STORAGE_DIR_NAME)
         if (!storageDir.exists()) {
             throw IllegalStateException("Config storage directory does not exist.")
         }
-        val responseFile = File(storageDir, "most_recent_response")
+        val responseFile = File(storageDir, PersistedConfig.CONFIG_RESPONSE_FILE_NAME)
         if (!responseFile.exists()) {
             throw IllegalStateException("Config response file does not exist.")
         }
-        val etagFile = File(storageDir, "etag")
+        val etagFile = File(storageDir, PersistedConfig.ETAG_FILE_NAME)
         if (!etagFile.exists()) {
             throw IllegalStateException("Config etag file does not exist.")
         }

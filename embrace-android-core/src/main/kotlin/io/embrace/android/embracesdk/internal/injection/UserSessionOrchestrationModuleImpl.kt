@@ -4,6 +4,7 @@ import io.embrace.android.embracesdk.internal.config.ConfigService
 import io.embrace.android.embracesdk.internal.delivery.storage.StorageLocation
 import io.embrace.android.embracesdk.internal.delivery.storage.asFile
 import io.embrace.android.embracesdk.internal.instrumentation.crash.ndk.NativeCrashDataSource
+import io.embrace.android.embracesdk.internal.logs.LogLimitingService
 import io.embrace.android.embracesdk.internal.resurrection.MultiFileDeadPartResurrector
 import io.embrace.android.embracesdk.internal.resurrection.SessionPartReader
 import io.embrace.android.embracesdk.internal.resurrection.SessionPartResurrector
@@ -33,7 +34,7 @@ class UserSessionOrchestrationModuleImpl(
     payloadSourceModule: PayloadSourceModule,
     startupDurationProvider: () -> Long?,
     appVersionStartupCounterProvider: () -> Int?,
-    logModule: LogModule,
+    logLimitingService: LogLimitingService,
     workerThreadPool: WorkerThreadPool,
 ) : UserSessionOrchestrationModule {
 
@@ -100,7 +101,7 @@ class UserSessionOrchestrationModuleImpl(
             essentialServiceModule.telemetryDestination,
             startupDurationProvider,
             appVersionStartupCounterProvider,
-            logModule.logLimitingService,
+            logLimitingService,
             payloadSourceModule.metadataService,
             openTelemetryModule.otelSdkConfig.processIdentifier,
         ) {

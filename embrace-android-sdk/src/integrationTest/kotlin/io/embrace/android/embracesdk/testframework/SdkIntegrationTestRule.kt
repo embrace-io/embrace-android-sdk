@@ -277,6 +277,7 @@ internal class SdkIntegrationTestRule(
             moduleGraphSupplier = moduleGraphSupplier,
             sdkInitResourceUsageTrackerSupplier = setup::fakeSdkInitResourceUsageTracker,
             onModuleGraphCreated = { createdModuleGraph = it },
+            overrides = setup.createSdkOverrides(),
         )
     }
 

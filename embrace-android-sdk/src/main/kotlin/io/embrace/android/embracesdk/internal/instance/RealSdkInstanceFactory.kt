@@ -22,8 +22,8 @@ internal fun createRealSdkInstance(
     clock: Clock,
 ): RealSdkInstance {
     val logsApiDelegate = LogsApiDelegate(
-        logService = lazy { moduleGraph.logModule.logService },
-        attachmentService = moduleGraph.logModule.attachmentService,
+        logService = moduleGraph.logService,
+        attachmentService = moduleGraph.attachmentService,
         logger = moduleGraph.initModule.logger,
         payloadStore = moduleGraph.deliveryModule?.payloadStore,
         serializer = moduleGraph.initModule.jsonSerializer,
@@ -49,9 +49,9 @@ internal fun createRealSdkInstance(
         instrumentationArgs = moduleGraph.instrumentationModule.instrumentationArgs,
         sessionOrchestrator = moduleGraph.userSessionOrchestrationModule.sessionOrchestrator,
         sessionPartReader = moduleGraph.userSessionOrchestrationModule.sessionPartReader,
-        logOrchestrator = moduleGraph.logModule.logOrchestrator,
-        attachmentService = moduleGraph.logModule.attachmentService,
-        logLimitingService = moduleGraph.logModule.logLimitingService,
+        logOrchestrator = moduleGraph.logOrchestrator,
+        attachmentService = moduleGraph.attachmentService,
+        logLimitingService = moduleGraph.logLimitingService,
         metadataService = moduleGraph.payloadSourceModule.metadataService,
         payloadResurrectionService = moduleGraph.payloadSourceModule.payloadResurrectionService,
         payloadCachingService = deliveryModule?.payloadCachingService,
@@ -59,8 +59,8 @@ internal fun createRealSdkInstance(
         schedulingService = deliveryModule?.schedulingService,
         cacheStorageService = deliveryModule?.cacheStorageService,
         threadBlockageService = moduleGraph.threadBlockageService,
-        lastRunCrashVerifier = moduleGraph.featureModule.lastRunCrashVerifier,
-        crashMarker = moduleGraph.featureModule.crashMarker,
+        lastRunCrashVerifier = moduleGraph.lastRunCrashVerifier,
+        crashMarker = moduleGraph.crashMarker,
         startupTracker = moduleGraph.dataCaptureServiceModule.startupTracker,
         startupService = moduleGraph.dataCaptureServiceModule.startupService,
         appStartupDataCollector = moduleGraph.dataCaptureServiceModule.appStartupDataCollector,
@@ -96,14 +96,14 @@ internal fun createRealSdkInstance(
         sdkStateApiDelegate = SdkStateApiDelegate(
             deviceIdentifier = lazy { moduleGraph.configService.deviceId },
             sessionIdsProvider = moduleGraph.userSessionOrchestrationModule.sessionIdsProvider,
-            crashVerifier = moduleGraph.featureModule.lastRunCrashVerifier,
+            crashVerifier = moduleGraph.lastRunCrashVerifier,
         ),
         otelApiDelegate = OTelApiDelegate(
             otelSdkWrapper = lazy { moduleGraph.openTelemetryModule.otelSdkWrapper },
         ),
         breadcrumbApiDelegate = BreadcrumbApiDelegate(
             clock = moduleGraph.initModule.clock,
-            breadcrumbDataSource = lazy { moduleGraph.featureModule.breadcrumbDataSource },
+            breadcrumbDataSource = moduleGraph.breadcrumbDataSource,
         ),
         instrumentationApiDelegate = InstrumentationApiDelegate(
             clock = moduleGraph.initModule.clock,

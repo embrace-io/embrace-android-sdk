@@ -158,9 +158,9 @@ internal class InitializedModuleGraphTest {
         val handlers = dataSource.handlers
         val expected = listOf(
             moduleGraph.threadBlockageService,
-            moduleGraph.logModule.logOrchestrator,
+            moduleGraph.logOrchestrator,
             moduleGraph.userSessionOrchestrationModule.sessionOrchestrator,
-            moduleGraph.featureModule.crashMarker,
+            moduleGraph.crashMarker,
             moduleGraph.deliveryModule?.payloadStore,
         )
         assertEquals(expected, handlers)

@@ -9,6 +9,7 @@ import io.embrace.android.embracesdk.internal.delivery.debug.DeliveryTracer
 import io.embrace.android.embracesdk.internal.delivery.execution.RequestExecutionService
 import io.embrace.android.embracesdk.internal.delivery.storage.PayloadStorageService
 import io.embrace.android.embracesdk.internal.envelope.session.OtelPayloadMapper
+import io.embrace.android.embracesdk.internal.logs.LogLimitingService
 import io.embrace.android.embracesdk.internal.otel.config.ExternalOtelConfig
 import io.embrace.android.embracesdk.internal.serialization.PlatformSerializer
 import io.embrace.android.embracesdk.internal.session.id.SessionIdsProvider
@@ -60,11 +61,6 @@ typealias EssentialServiceModuleSupplier = (
     sessionOrchestratorProvider: Provider<SessionOrchestrator>,
 ) -> EssentialServiceModule
 
-typealias FeatureModuleSupplier = (
-    instrumentationModule: InstrumentationModule,
-    storageService: StorageService,
-) -> FeatureModule
-
 typealias InitModuleSupplier = (
     preStartServices: PreStartServices,
 ) -> InitModule
@@ -80,16 +76,6 @@ typealias InstrumentationModuleSupplier = (
     userSessionIdsProvider: () -> String?,
     activeSessionIdsProvider: () -> SessionIdsSnapshot,
 ) -> InstrumentationModule
-
-typealias LogModuleSupplier = (
-    initModule: InitModule,
-    openTelemetryModule: OpenTelemetryModule,
-    essentialServiceModule: EssentialServiceModule,
-    configService: ConfigService,
-    deliveryModule: DeliveryModule?,
-    workerThreadPool: WorkerThreadPool,
-    payloadSourceModule: PayloadSourceModule,
-) -> LogModule
 
 typealias OpenTelemetryModuleSupplier = (
     initModule: InitModule,
@@ -122,7 +108,7 @@ typealias UserSessionOrchestrationModuleSupplier = (
     payloadSourceModule: PayloadSourceModule,
     startupDurationProvider: () -> Long?,
     appVersionStartupCounterProvider: () -> Int?,
-    logModule: LogModule,
+    logLimitingService: LogLimitingService,
     workerThreadPool: WorkerThreadPool,
 ) -> UserSessionOrchestrationModule
 

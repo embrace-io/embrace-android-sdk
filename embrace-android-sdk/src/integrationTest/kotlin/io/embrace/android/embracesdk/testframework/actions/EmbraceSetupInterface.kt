@@ -40,7 +40,6 @@ import io.embrace.android.embracesdk.internal.injection.InitModule
 import io.embrace.android.embracesdk.internal.injection.InitializedModuleGraph
 import io.embrace.android.embracesdk.internal.injection.InstrumentationModule
 import io.embrace.android.embracesdk.internal.injection.InstrumentationModuleImpl
-import io.embrace.android.embracesdk.internal.injection.LogModuleImpl
 import io.embrace.android.embracesdk.internal.injection.ModuleGraphSupplier
 import io.embrace.android.embracesdk.internal.injection.OpenTelemetryModule
 import io.embrace.android.embracesdk.internal.injection.OpenTelemetryModuleImpl
@@ -213,6 +212,10 @@ internal class EmbraceSetupInterface(
         }
     }
 
+    fun createSdkOverrides(): SdkOverrides = SdkOverrides(
+        logOrchestratorWorker = { BackgroundWorker(logOrchestratorExecutor) },
+    )
+
     fun createModuleGraphSupplier(deliveryTracer: DeliveryTracer): ModuleGraphSupplier =
         { context, preStartServices, configLoadServices, sdkStartTimeMs, sdkInitResourceUsageTracker, overrides ->
             createModuleGraph(context, preStartServices, configLoadServices, sdkStartTimeMs, sdkInitResourceUsageTracker, overrides, deliveryTracer)
@@ -310,20 +313,6 @@ internal class EmbraceSetupInterface(
                 override val instrumentationRegistry: InstrumentationRegistry = FakeInstrumentationRegistry(impl.instrumentationRegistry)
                 override val instrumentationArgs: InstrumentationArgs = impl.instrumentationArgs
             }
-        },
-        logModuleSupplier = { initModule, openTelemetryModule, essentialServiceModule, configService, deliveryModule, workerThreadPool, payloadSourceModule ->
-            val logWorker = BackgroundWorker(logOrchestratorExecutor)
-            LogModuleImpl(
-                initModule,
-                openTelemetryModule,
-                essentialServiceModule,
-                configService,
-                deliveryModule,
-                object : WorkerThreadPool by workerThreadPool {
-                    override fun backgroundWorker(worker: Worker.Background): BackgroundWorker = logWorker
-                },
-                payloadSourceModule,
-            )
         },
         dataCaptureServiceModuleSupplier = simulatedVersionChecker?.let { versionChecker ->
             { clock, logger, destination, configService, appVersionStartupCounterProvider, startupClassifier, _, activityManager, backgroundWorker ->

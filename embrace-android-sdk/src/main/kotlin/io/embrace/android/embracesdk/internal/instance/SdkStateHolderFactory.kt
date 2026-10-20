@@ -44,7 +44,7 @@ internal fun createSdkStateHolder(
                 )
             }?.let { moduleGraph ->
                 onModuleGraphCreated?.invoke(moduleGraph)
-                RealSdkInstance(
+                createRealSdkInstance(
                     moduleGraph = moduleGraph,
                     clock = clock,
                 )

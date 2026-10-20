@@ -34,6 +34,7 @@ import io.embrace.android.embracesdk.internal.instrumentation.startup.activity.h
 import io.embrace.android.embracesdk.internal.instrumentation.startup.toSdkInitDurationAttributes
 import io.embrace.android.embracesdk.internal.instrumentation.startup.ui.hasRenderEvent
 import io.embrace.android.embracesdk.internal.instrumentation.startup.ui.supportFrameCommitCallback
+import io.embrace.android.embracesdk.internal.logging.SdkErrorType
 import io.embrace.android.embracesdk.internal.utils.VersionChecker
 import io.embrace.android.embracesdk.semconv.EmbAppAttributes
 import io.embrace.android.embracesdk.semconv.EmbSessionAttributes
@@ -198,6 +199,22 @@ internal class AppStartupTraceEmitterTest {
             assertEquals("value", this.attributes["key"])
             assertEquals("event", this.events.single().name)
         }
+    }
+
+    @Test
+    fun `trace end callback is invoked when recording startup fails`() {
+        simulateApi(VERSION_CODES.TIRAMISU)
+        startupService = null
+        createTraceEmitter().run {
+            firstActivityInit(startupCompleteCallback = { dataCollectionCompletedCallbackInvokedCount++ })
+            val real = StartupServiceImpl(destination, errorHandler) { APP_VERSION_STARTUP_COUNTER }
+            startupService = object : StartupService by real {
+                override fun getSdkInitEndMs(): Long = error("startup recording failed")
+            }
+            firstFrameRendered(STARTUP_ACTIVITY_NAME)
+        }
+        assertEquals(1, dataCollectionCompletedCallbackInvokedCount)
+        assertEquals(listOf(SdkErrorType.AppLaunchTraceFail.toString()), errorHandler.sdkErrorMessages.map { it.msg })
     }
 
     @Test

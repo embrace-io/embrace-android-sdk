@@ -4,6 +4,11 @@ import io.embrace.android.embracesdk.fakes.FakeClock
 import io.embrace.android.embracesdk.fakes.FakeErrorHandler
 import io.embrace.android.embracesdk.fakes.FakeTelemetryDestination
 import io.embrace.android.embracesdk.fakes.fakeBackgroundWorker
+import io.embrace.android.embracesdk.internal.arch.datasource.SpanEvent
+import io.embrace.android.embracesdk.internal.arch.datasource.SpanToken
+import io.embrace.android.embracesdk.internal.arch.datasource.TelemetryDestination
+import io.embrace.android.embracesdk.internal.arch.schema.EmbType
+import io.embrace.android.embracesdk.internal.arch.schema.ErrorCodeAttribute
 import io.embrace.android.embracesdk.internal.arch.state.ProcessState
 import io.embrace.android.embracesdk.internal.instrumentation.startup.SdkInitAttributeKeys
 import io.embrace.android.embracesdk.internal.instrumentation.startup.StartupService
@@ -110,6 +115,60 @@ internal class StartupServiceImplTest {
         assertEquals("main", span.attributes["thread-name"])
         assertEquals(emptyMap<String, String>(), startupService.getSdkInitAttributes())
         assertEquals(listOf(SdkErrorType.SdkInitAttributeCaptureFail.toString()), errorHandler.sdkErrorMessages.map { it.msg })
+    }
+
+    @Test
+    fun `sdk startup span is recorded without the startup counter when its provider throws`() {
+        startupService = StartupServiceImpl(
+            destination = destination,
+            errorHandler = errorHandler,
+            appVersionStartupCounterProvider = { error("boom") },
+        )
+        startupService.setSdkStartupInfo(
+            startTimeMs = 10,
+            endTimeMs = 20,
+            endState = ProcessState.BACKGROUND,
+            threadName = "main",
+        )
+        startupService.recordSdkInitSpan()
+
+        val span = destination.completedSpans().single()
+        assertEquals("main", span.attributes["thread-name"])
+        assertFalse(span.attributes.containsKey(EmbAppAttributes.EMB_APP_VERSION_STARTUP_COUNTER))
+        assertNull(startupService.getAppVersionStartupCounter())
+        assertEquals(listOf(SdkErrorType.SdkInitAttributeCaptureFail.toString()), errorHandler.sdkErrorMessages.map { it.msg })
+    }
+
+    @Test
+    fun `a failure recording the sdk startup span is reported rather than thrown`() {
+        val failingDestination = object : TelemetryDestination by destination {
+            override fun recordCompletedSpan(
+                name: String,
+                startTimeMs: Long,
+                endTimeMs: Long,
+                errorCode: ErrorCodeAttribute?,
+                parent: SpanToken?,
+                type: EmbType,
+                internal: Boolean,
+                private: Boolean,
+                attributes: Map<String, Any>,
+                events: List<SpanEvent>,
+            ) = error("boom")
+        }
+        startupService = StartupServiceImpl(
+            destination = failingDestination,
+            errorHandler = errorHandler,
+            appVersionStartupCounterProvider = { 3 },
+        )
+        startupService.setSdkStartupInfo(
+            startTimeMs = 10,
+            endTimeMs = 20,
+            endState = ProcessState.BACKGROUND,
+            threadName = "main",
+        )
+        startupService.recordSdkInitSpan()
+
+        assertEquals(listOf(SdkErrorType.SdkInitPhaseFail.toString()), errorHandler.sdkErrorMessages.map { it.msg })
     }
 
     @Test

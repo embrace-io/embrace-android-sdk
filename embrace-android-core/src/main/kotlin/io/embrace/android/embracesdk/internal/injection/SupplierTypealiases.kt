@@ -12,7 +12,6 @@ import io.embrace.android.embracesdk.internal.envelope.session.OtelPayloadMapper
 import io.embrace.android.embracesdk.internal.otel.config.ExternalOtelConfig
 import io.embrace.android.embracesdk.internal.serialization.PlatformSerializer
 import io.embrace.android.embracesdk.internal.session.id.SessionIdsProvider
-import io.embrace.android.embracesdk.internal.session.id.SessionIdsSnapshot
 import io.embrace.android.embracesdk.internal.session.lifecycle.LifecycleTracker
 import io.embrace.android.embracesdk.internal.session.orchestrator.SessionOrchestrator
 import io.embrace.android.embracesdk.internal.storage.StorageService
@@ -63,18 +62,6 @@ typealias EssentialServiceModuleSupplier = (
 typealias InitModuleSupplier = (
     preStartServices: PreStartServices,
 ) -> InitModule
-
-typealias InstrumentationModuleSupplier = (
-    initModule: InitModule,
-    openTelemetryModule: OpenTelemetryModule,
-    workerThreadPool: WorkerThreadPool,
-    configService: ConfigService,
-    essentialServiceModule: EssentialServiceModule,
-    coreModule: CoreModule,
-    storageService: StorageService,
-    userSessionIdsProvider: () -> String?,
-    activeSessionIdsProvider: () -> SessionIdsSnapshot,
-) -> InstrumentationModule
 
 typealias OpenTelemetryModuleSupplier = (
     initModule: InitModule,

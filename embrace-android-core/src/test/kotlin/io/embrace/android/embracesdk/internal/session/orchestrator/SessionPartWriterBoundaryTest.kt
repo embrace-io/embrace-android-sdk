@@ -249,6 +249,22 @@ internal class SessionPartWriterBoundaryTest {
         assertSdkErrors("SessionPartEndMissed")
     }
 
+    @Test
+    fun `close flushes pending writes then seals the current part`() {
+        startPart(FIRST_PART_ID)
+        drain()
+        writer.onMetadataChanged()
+        writer.close()
+        drain()
+        assertEquals("user1", metadataIn(FIRST_PART_ID)?.user_id)
+
+        writer.onMetadataChanged()
+        drain()
+        assertEquals("user1", metadataIn(FIRST_PART_ID)?.user_id)
+        assertEquals(2, writeCount)
+        assertNoSdkErrors()
+    }
+
     private fun activeSpans(): List<EmbraceSdkSpan> =
         listOfNotNull(currentSessionPartSpan.current()?.takeIf { it.isRecording })
 

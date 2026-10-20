@@ -15,6 +15,7 @@ import io.embrace.android.embracesdk.internal.config.resolved.AeiConfig
 import io.embrace.android.embracesdk.internal.config.resolved.AutoDataCaptureConfig
 import io.embrace.android.embracesdk.internal.config.resolved.EmbraceConfig
 import io.embrace.android.embracesdk.internal.logging.SdkErrorType
+import io.embrace.android.embracesdk.internal.store.Ordinal
 import io.embrace.android.embracesdk.internal.utils.BuildVersionChecker
 import io.embrace.android.embracesdk.internal.utils.Provider
 import io.embrace.android.embracesdk.internal.utils.VersionChecker
@@ -521,6 +522,25 @@ internal class AeiDataSourceImplTest {
         executor.runCurrentlyBlocked()
         assertTrue(args.destination.logEvents.isEmpty())
         assertNull(store.getStringSet("io.embrace.aeiHashCode"))
+    }
+
+    @Test
+    fun `disable during processing does not persist delivered ids or ordinals`() {
+        every { mockAppExitInfo.reason } returns ApplicationExitInfo.REASON_CRASH_NATIVE
+        val ordinalStore = FakeOrdinalStore()
+        args = FakeInstrumentationArgs(mockk(), configService = configService)
+        lateinit var source: AeiDataSourceImpl
+        every { mockActivityManager.getHistoricalProcessExitReasons(any(), any(), any()) } answers {
+            source.onDataCaptureDisabled()
+            listOf(mockAppExitInfo)
+        }
+        source = AeiDataSourceImpl(args, worker, { mockActivityManager }, store, ordinalStore) { true }
+        source.onDataCaptureEnabled()
+
+        assertTrue(args.destination.logEvents.isEmpty())
+        assertNull(store.getStringSet("io.embrace.aeiHashCode"))
+        assertEquals(1, ordinalStore.incrementAndGet(Ordinal.CRASH) { 1 })
+        assertEquals(1, ordinalStore.incrementAndGet(Ordinal.AEI_CRASH) { 1 })
     }
 
     private fun getAeiLogAttrs(): Map<String, Any> {

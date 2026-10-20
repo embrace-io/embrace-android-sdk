@@ -5,6 +5,7 @@ import android.app.Application.ActivityLifecycleCallbacks
 import android.os.Build
 import android.os.Bundle
 import android.os.Handler
+import android.os.Looper
 import android.os.SystemClock
 import android.view.Window
 import androidx.annotation.RequiresApi
@@ -107,11 +108,20 @@ internal class VitalsActivityListener(
      * [VitalsWindowCallback] so it only calls through to the original callback.
      */
     override fun close() {
-        synchronized(frameListeners) {
+        val installed = synchronized(frameListeners) {
             closed = true
-            frameListeners.keys.toList().forEach { window ->
-                runCatching { removeFrameMetricsListener(window) }
+            frameListeners.toMap().also { frameListeners.clear() }
+        }
+        val remove = Runnable {
+            installed.forEach { (window, listener) ->
+                runCatching { window.removeOnFrameMetricsAvailableListener(listener) }
             }
+        }
+        val mainLooper = Looper.getMainLooper()
+        if (Looper.myLooper() == mainLooper) {
+            remove.run()
+        } else {
+            Handler(mainLooper).post(remove)
         }
         synchronized(interactionCallbacks) {
             interactionCallbacks.values.forEach { it.get()?.close() }

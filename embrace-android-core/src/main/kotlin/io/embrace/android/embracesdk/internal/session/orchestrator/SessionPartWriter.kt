@@ -41,4 +41,9 @@ interface SessionPartWriter {
      * has been flushed to disk
      */
     fun onCrash()
+
+    /**
+     * The SDK is shutting down. Releases the files held open for the current session part.
+     */
+    fun close()
 }

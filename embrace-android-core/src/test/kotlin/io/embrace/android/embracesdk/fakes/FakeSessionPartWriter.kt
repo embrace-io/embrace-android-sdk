@@ -40,6 +40,9 @@ class FakeSessionPartWriter : SessionPartWriter {
         crashCount++
     }
 
+    override fun close() {
+    }
+
     data class SessionInfo(
         val timestamp: Long,
         val userSessionId: String,

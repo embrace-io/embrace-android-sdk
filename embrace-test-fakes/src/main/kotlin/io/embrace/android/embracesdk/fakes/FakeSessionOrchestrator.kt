@@ -34,6 +34,9 @@ class FakeSessionOrchestrator : SessionOrchestrator {
     override fun onBackground() {
     }
 
+    override fun close() {
+    }
+
     override fun onForeground() {
     }
 

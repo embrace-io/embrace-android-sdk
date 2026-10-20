@@ -10,7 +10,7 @@ import io.embrace.android.embracesdk.internal.session.UserSessionRestoreDecision
  * Orchestrates the session and background activities in response to state changes and manual
  * requests to end sessions.
  */
-interface SessionOrchestrator : ProcessStateListener, CrashTeardownHandler {
+interface SessionOrchestrator : ProcessStateListener, CrashTeardownHandler, AutoCloseable {
 
     /**
      * Start the orchestrator after all dependencies have finished initialization

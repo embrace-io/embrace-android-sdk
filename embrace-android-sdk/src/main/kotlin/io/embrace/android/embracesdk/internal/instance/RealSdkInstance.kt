@@ -223,6 +223,7 @@ internal class RealSdkInstance(
         runCatching { networkConnectivityService.close() }
         runCatching { startupTracker.close() }
         runCatching { otelSdkConfig.value.close() }
+        runCatching { sessionOrchestrator.close() }
         runCatching { workerThreadPool.close() }
         runCatching { eventBus.stop() }
 

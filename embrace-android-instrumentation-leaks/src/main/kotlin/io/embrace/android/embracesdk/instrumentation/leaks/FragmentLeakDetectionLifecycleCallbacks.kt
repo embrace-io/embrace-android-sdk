@@ -30,16 +30,23 @@ internal class FragmentLeakDetectionLifecycleCallbacks(
     private val fragmentManagers: MutableSet<FragmentManager> =
         Collections.synchronizedSet(Collections.newSetFromMap(WeakHashMap()))
 
+    private var closed = false
+
     override fun onActivityCreated(activity: Activity) {
         if (activity is FragmentActivity) {
             val fragmentManager = activity.supportFragmentManager
-            fragmentManager.registerFragmentLifecycleCallbacks(this, true)
-            fragmentManagers.add(fragmentManager)
+            synchronized(fragmentManagers) {
+                if (!closed) {
+                    fragmentManager.registerFragmentLifecycleCallbacks(this, true)
+                    fragmentManagers.add(fragmentManager)
+                }
+            }
         }
     }
 
     override fun close() {
         val registered = synchronized(fragmentManagers) {
+            closed = true
             fragmentManagers.toList().also { fragmentManagers.clear() }
         }
         registered.forEach { it.unregisterFragmentLifecycleCallbacks(this) }

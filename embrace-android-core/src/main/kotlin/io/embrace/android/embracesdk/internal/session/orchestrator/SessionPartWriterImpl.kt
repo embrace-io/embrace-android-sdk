@@ -221,6 +221,14 @@ class SessionPartWriterImpl(
         }
     }
 
+    override fun close() {
+        val writers = synchronized(bufferLock) { current.also { current = null } } ?: return
+        writers.flushPendingWrites()
+        if (!processTerminating) {
+            worker.submit { writers.seal() }
+        }
+    }
+
     /**
      * Subscribes to resource changes so the metadata on disk keeps up with them. Registration
      * happens at most once as the listener outlives any one session part, and is deferred to the

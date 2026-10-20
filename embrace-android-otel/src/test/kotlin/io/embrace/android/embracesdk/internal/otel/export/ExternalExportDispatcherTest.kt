@@ -3,11 +3,14 @@ package io.embrace.android.embracesdk.internal.otel.export
 import io.embrace.android.embracesdk.fakes.FakeErrorHandler
 import io.embrace.android.embracesdk.internal.logging.SdkErrorType
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.delay
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
 import java.io.IOException
+import java.util.concurrent.CountDownLatch
+import java.util.concurrent.TimeUnit
 
 internal class ExternalExportDispatcherTest {
 
@@ -40,6 +43,18 @@ internal class ExternalExportDispatcherTest {
         dispatcher.dispatch(throwingList(IOException())) {}
         dispatcher.dispatch(throwingList(OutOfMemoryError())) {}
         assertTrue(errorHandler.sdkErrorMessages.isEmpty())
+    }
+
+    @Test
+    fun `shutdown lets a suspending export finish`() {
+        val dispatcher = ExternalExportDispatcher(errorHandler)
+        val exported = CountDownLatch(1)
+        dispatcher.dispatch(listOf(1)) {
+            delay(50)
+            exported.countDown()
+        }
+        dispatcher.shutdown()
+        assertTrue(exported.await(5, TimeUnit.SECONDS))
     }
 
     private fun throwingList(exc: Throwable): List<Int> = object : AbstractList<Int>() {

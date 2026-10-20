@@ -26,8 +26,9 @@ import java.io.Closeable
  * The [SdkInstance] is created by [instanceFactory] when the SDK starts. A null instance means the SDK could not be
  * instantiated.
  *
- * Only one attempt is made to start the SDK. A start that does not succeed disables any instance that was created, moves
- * the SDK to [SdkState.FAILED], routes all subsequent calls to [failed] and discards any buffered calls. Neither [SdkState.FAILED] nor [SdkState.DISABLED]
+ * Only one attempt is made to start the SDK. A start that does not succeed closes any instance that was created without
+ * deleting its persisted data, moves the SDK to [SdkState.FAILED], routes all subsequent calls to [failed] and discards
+ * any buffered calls. Only disabling the SDK deletes persisted data. Neither [SdkState.FAILED] nor [SdkState.DISABLED]
  * can be started again. Exceptions are reported to [errorHandler] rather than thrown.
  */
 internal class SdkStateHolder(
@@ -101,8 +102,8 @@ internal class SdkStateHolder(
                 return
             }
             instanceFactory = null
-            // disabling is terminal even if teardown fails partway
-            guard { dispatcher.target.close() }
+            // disabling is terminal even if teardown fails partway. Unlike a failed start, this deletes persisted data.
+            guard { dispatcher.target.disable() }
             transition(disabled(), SdkState.DISABLED)
             guard { bufferedErrorHandler.close() }
         }

@@ -22,7 +22,7 @@ import io.embrace.android.embracesdk.internal.instrumentation.startup.SdkInitAtt
 import io.embrace.android.embracesdk.internal.instrumentation.startup.SdkInitAttributeKeys.THERMAL_STATUS
 import io.embrace.android.embracesdk.internal.instrumentation.startup.SdkInitAttributeKeys.THERMAL_STATUS_MIN_API
 import io.embrace.android.embracesdk.internal.logging.ErrorHandler
-import io.embrace.android.embracesdk.internal.logging.InternalErrorType
+import io.embrace.android.embracesdk.internal.logging.SdkErrorType
 import io.embrace.android.embracesdk.internal.utils.BuildVersionChecker
 import io.embrace.android.embracesdk.internal.utils.VersionChecker
 import kotlin.math.roundToLong
@@ -74,8 +74,8 @@ fun sdkInitEnvironmentAttributes(
  * due to the underlying [cause], if available.
  */
 internal fun ErrorHandler.trackAttributeError(key: String, cause: Throwable? = null) {
-    trackInternalError(
-        type = InternalErrorType.SdkInitAttributeCaptureFail,
+    trackSdkError(
+        type = SdkErrorType.SdkInitAttributeCaptureFail,
         throwable = IllegalStateException("Attribute failed to record: $key", cause),
     )
 }
@@ -83,7 +83,7 @@ internal fun ErrorHandler.trackAttributeError(key: String, cause: Throwable? = n
 /**
  * Runs [block] to contribute the attributes derived from one source, keeping a failure in it from costing us the
  * attributes derived from every other source. Each attribute inside the block is expected to handle its own computation
- * failure, but this provides a wrapper so internal errors can be logged for the failure of the whole block.
+ * failure, but this provides a wrapper so SDK errors can be logged for the failure of the whole block.
  */
 internal inline fun MutableMap<String, String>.safePutAttributes(
     errorHandler: ErrorHandler,

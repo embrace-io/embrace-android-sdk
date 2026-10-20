@@ -13,7 +13,7 @@ import io.embrace.android.embracesdk.internal.capture.experiment.ExperimentApiCa
 import io.embrace.android.embracesdk.internal.capture.experiment.ExperimentKind
 import io.embrace.android.embracesdk.internal.capture.experiment.TrackedData
 import io.embrace.android.embracesdk.internal.config.resolved.ExperimentConfig
-import io.embrace.android.embracesdk.internal.logging.InternalErrorType
+import io.embrace.android.embracesdk.internal.logging.SdkErrorType
 import io.embrace.android.embracesdk.spans.EmbraceSpan
 import io.embrace.android.embracesdk.spans.EmbraceSpanEvent
 import io.embrace.android.embracesdk.spans.ErrorCode
@@ -45,7 +45,7 @@ internal class BufferingSdkInstanceTest {
     @Before
     fun setUp() {
         clock = FakeClock(currentTime = 1000L)
-        errorHandler = FakeErrorHandler(throwOnInternalError = false)
+        errorHandler = FakeErrorHandler(throwOnSdkError = false)
         target = RecordingSdkApi()
         replayed = mutableListOf()
         instance = BufferingSdkInstance(clock, errorHandler)
@@ -410,7 +410,7 @@ internal class BufferingSdkInstanceTest {
         instance.drainCompletedSpans(target)
 
         assertEquals(listOf("first:1-2", "second:3-4"), target.calls)
-        assertInternalErrorReported()
+        assertSdkErrorReported()
     }
 
     @Test
@@ -419,7 +419,7 @@ internal class BufferingSdkInstanceTest {
         instance.drainExperimentCalls(target) { error("replay failed") }
         instance.trackExperiment("exp2", startedAt = 2L)
         assertEquals(listOf("track_experiments:exp2"), target.calls)
-        assertInternalErrorReported()
+        assertSdkErrorReported()
     }
 
     @Test
@@ -433,10 +433,10 @@ internal class BufferingSdkInstanceTest {
         assertTrue(target.calls.isEmpty())
     }
 
-    private fun assertInternalErrorReported() {
+    private fun assertSdkErrorReported() {
         assertEquals(
-            listOf(InternalErrorType.PublicApiFail.toString()),
-            errorHandler.internalErrorMessages.map { it.msg },
+            listOf(SdkErrorType.PublicApiFail.toString()),
+            errorHandler.sdkErrorMessages.map { it.msg },
         )
     }
 

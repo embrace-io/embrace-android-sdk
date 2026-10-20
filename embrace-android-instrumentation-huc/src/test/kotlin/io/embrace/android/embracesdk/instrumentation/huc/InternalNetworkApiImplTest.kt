@@ -36,8 +36,8 @@ internal class InternalNetworkApiImplTest {
             assertEquals(fakeCompleteEmbraceNetworkRequest.startTime, observed.startTime)
             assertEquals(fakeCompleteEmbraceNetworkRequest.endTime, observed.endTime)
             val exception = RuntimeException()
-            logInternalError(exception)
-            assertEquals(exception, args.errorHandler.internalErrorMessages.single().throwable)
+            logSdkError(exception)
+            assertEquals(exception, args.errorHandler.sdkErrorMessages.single().throwable)
         }
     }
 

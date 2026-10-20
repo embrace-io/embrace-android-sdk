@@ -26,7 +26,7 @@ interface InitModule {
     val telemetryService: InternalTelemetryService
 
     /**
-     * Guards SDK code & buffers internal errors until the SDK can send them
+     * Guards SDK code & buffers SDK errors until the SDK can send them
      */
     val errorHandler: ErrorHandler
 

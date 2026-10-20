@@ -8,7 +8,7 @@ import android.view.WindowManager
 import io.embrace.android.embracesdk.internal.SystemInfo
 import io.embrace.android.embracesdk.internal.isEmulator
 import io.embrace.android.embracesdk.internal.logging.ErrorHandler
-import io.embrace.android.embracesdk.internal.logging.InternalErrorType
+import io.embrace.android.embracesdk.internal.logging.SdkErrorType
 import io.embrace.android.embracesdk.internal.utils.Provider
 import io.embrace.android.embracesdk.internal.worker.BackgroundWorker
 import java.io.File
@@ -97,7 +97,7 @@ class DeviceImpl(
                 displayMetrics.heightPixels,
             )
         } catch (ex: Exception) {
-            errorHandler.trackInternalError(InternalErrorType.ScreenResCaptureFail, ex)
+            errorHandler.trackSdkError(SdkErrorType.ScreenResCaptureFail, ex)
             ""
         }
     }

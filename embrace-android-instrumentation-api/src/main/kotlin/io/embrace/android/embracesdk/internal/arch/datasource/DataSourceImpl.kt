@@ -6,7 +6,7 @@ import io.embrace.android.embracesdk.internal.arch.limits.LimitStrategy
 import io.embrace.android.embracesdk.internal.clock.Clock
 import io.embrace.android.embracesdk.internal.config.ConfigService
 import io.embrace.android.embracesdk.internal.logging.ErrorHandler
-import io.embrace.android.embracesdk.internal.logging.InternalErrorType
+import io.embrace.android.embracesdk.internal.logging.SdkErrorType
 import io.embrace.android.embracesdk.internal.telemetry.AppliedLimitType
 
 /**
@@ -55,7 +55,7 @@ abstract class DataSourceImpl(
                 telemetryService.trackAppliedLimit(instrumentationName, AppliedLimitType.DROP)
             }
         } catch (exc: Throwable) {
-            errorHandler.trackInternalError(InternalErrorType.DataSourceDataCaptureFail, exc)
+            errorHandler.trackSdkError(SdkErrorType.DataSourceDataCaptureFail, exc)
         }
         return null
     }

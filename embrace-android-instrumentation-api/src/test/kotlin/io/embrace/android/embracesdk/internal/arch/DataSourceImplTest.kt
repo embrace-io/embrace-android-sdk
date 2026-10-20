@@ -72,7 +72,7 @@ internal class DataSourceImplTest {
     private class FakeDataSourceImpl(
         limitStrategy: LimitStrategy = NoopLimitStrategy,
         args: FakeInstrumentationArgs = FakeInstrumentationArgs(
-            errorHandler = FakeErrorHandler(throwOnInternalError = false),
+            errorHandler = FakeErrorHandler(throwOnSdkError = false),
         ),
     ) : DataSourceImpl(
         args,

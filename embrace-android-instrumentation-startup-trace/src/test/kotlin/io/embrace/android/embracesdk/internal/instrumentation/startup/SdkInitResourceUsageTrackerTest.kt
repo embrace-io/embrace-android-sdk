@@ -41,7 +41,7 @@ internal class SdkInitResourceUsageTrackerTest {
             "art.gc.gc-count" to ArrayDeque(listOf("3", "5")),
         )
         readPaths = mutableListOf()
-        errorHandler = FakeErrorHandler(throwOnInternalError = false)
+        errorHandler = FakeErrorHandler(throwOnSdkError = false)
     }
 
     @Test
@@ -51,7 +51,7 @@ internal class SdkInitResourceUsageTrackerTest {
         attributes.assertInitRunDelayPct()
         attributes.assertInitDiskRead()
         attributes.assertInitGcCount()
-        assertNoInternalErrors()
+        assertNoSdkErrors()
     }
 
     @Test
@@ -62,7 +62,7 @@ internal class SdkInitResourceUsageTrackerTest {
         attributes.assertCpuInitPct()
         attributes.assertInitRunDelayPct()
         attributes.assertInitDiskRead()
-        assertNoInternalErrors()
+        assertNoSdkErrors()
     }
 
     @Test
@@ -76,7 +76,7 @@ internal class SdkInitResourceUsageTrackerTest {
         attributes.assertCpuInitPct()
         attributes.assertInitRunDelayPct()
         attributes.assertInitDiskRead()
-        assertNoInternalErrors()
+        assertNoSdkErrors()
     }
 
     @Test
@@ -99,7 +99,7 @@ internal class SdkInitResourceUsageTrackerTest {
         attributes.assertAbsent(SdkInitAttributeKeys.INIT_DISK_READ_KB)
         attributes.assertCpuInitPct()
         attributes.assertInitGcCount()
-        assertNoInternalErrors()
+        assertNoSdkErrors()
     }
 
     @Test
@@ -112,7 +112,7 @@ internal class SdkInitResourceUsageTrackerTest {
         attributes.assertAbsent(SdkInitAttributeKeys.INIT_DISK_READ_KB)
         attributes.assertCpuInitPct()
         attributes.assertInitGcCount()
-        assertNoInternalErrors()
+        assertNoSdkErrors()
     }
 
     @Test
@@ -137,7 +137,7 @@ internal class SdkInitResourceUsageTrackerTest {
         )
         val attributes = buildTrackerAttributes()
         attributes.assertAttribute(SdkInitAttributeKeys.INIT_RUN_DELAY_PCT, "20")
-        assertNoInternalErrors()
+        assertNoSdkErrors()
     }
 
     @Test
@@ -150,7 +150,7 @@ internal class SdkInitResourceUsageTrackerTest {
         )
         val attributes = buildTrackerAttributes()
         attributes.assertInitRunDelayPct()
-        assertNoInternalErrors()
+        assertNoSdkErrors()
     }
 
     @Test
@@ -175,7 +175,7 @@ internal class SdkInitResourceUsageTrackerTest {
         )
         val attributes = buildTrackerAttributes()
         attributes.assertAttribute(SdkInitAttributeKeys.INIT_RUN_DELAY_PCT, "20")
-        assertNoInternalErrors()
+        assertNoSdkErrors()
     }
 
     @Test
@@ -231,7 +231,7 @@ internal class SdkInitResourceUsageTrackerTest {
         attributes.assertAbsent(SdkInitAttributeKeys.INIT_RUN_DELAY_PCT)
         attributes.assertInitDiskRead()
         attributes.assertInitGcCount()
-        assertNoInternalErrors()
+        assertNoSdkErrors()
     }
 
     @Test
@@ -257,12 +257,12 @@ internal class SdkInitResourceUsageTrackerTest {
      * Asserts an attribute capture failure occurred with an optional set of expected attribute names to validate
      */
     private fun assertCaptureFailureReported(vararg keys: String) {
-        assertEquals(keys.size, errorHandler.internalErrorMessages.size)
-        assertTrue(errorHandler.internalErrorMessages.all { it.msg == "SdkInitAttributeCaptureFail" })
+        assertEquals(keys.size, errorHandler.sdkErrorMessages.size)
+        assertTrue(errorHandler.sdkErrorMessages.all { it.msg == "SdkInitAttributeCaptureFail" })
         if (keys.isNotEmpty()) {
             assertEquals(
                 keys.toList(),
-                errorHandler.internalErrorMessages.map { it.throwable?.message?.substringAfterLast(": ") },
+                errorHandler.sdkErrorMessages.map { it.throwable?.message?.substringAfterLast(": ") },
             )
         }
     }
@@ -305,8 +305,8 @@ internal class SdkInitResourceUsageTrackerTest {
         assertFalse(containsKey(key))
     }
 
-    private fun assertNoInternalErrors() {
-        assertEquals(0, errorHandler.internalErrorMessages.size)
+    private fun assertNoSdkErrors() {
+        assertEquals(0, errorHandler.sdkErrorMessages.size)
     }
 
     private companion object {

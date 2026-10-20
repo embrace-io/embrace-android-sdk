@@ -34,7 +34,7 @@ import io.embrace.android.embracesdk.internal.config.resolved.BackgroundActivity
 import io.embrace.android.embracesdk.internal.config.resolved.EmbraceConfig
 import io.embrace.android.embracesdk.internal.delivery.caching.PayloadCachingService
 import io.embrace.android.embracesdk.internal.delivery.caching.PayloadCachingServiceImpl
-import io.embrace.android.embracesdk.internal.logging.InternalErrorType
+import io.embrace.android.embracesdk.internal.logging.SdkErrorType
 import io.embrace.android.embracesdk.internal.session.UserSessionListener
 import io.embrace.android.embracesdk.internal.session.UserSessionMetadata
 import io.embrace.android.embracesdk.internal.session.UserSessionMetadataStore
@@ -80,7 +80,7 @@ internal class SessionOrchestratorListenerTest {
     @Before
     fun setUp() {
         clock = FakeClock()
-        errorHandler = FakeErrorHandler(throwOnInternalError = false)
+        errorHandler = FakeErrorHandler(throwOnSdkError = false)
         startupClassifier = StartupClassifierImpl()
         configService = FakeConfigService(
             config = EmbraceConfig(
@@ -215,7 +215,7 @@ internal class SessionOrchestratorListenerTest {
         clock.tick(10000)
         orchestrator.endSessionWithManual()
         assertTrue(secondListenerInvoked)
-        assertTrue(errorHandler.internalErrorMessages.any { it.msg == InternalErrorType.UserSessionCallbackFail.toString() })
+        assertTrue(errorHandler.sdkErrorMessages.any { it.msg == SdkErrorType.UserSessionCallbackFail.toString() })
     }
 
     @Test

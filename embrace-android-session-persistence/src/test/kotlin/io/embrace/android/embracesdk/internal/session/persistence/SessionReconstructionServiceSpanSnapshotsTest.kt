@@ -55,7 +55,7 @@ internal class SessionReconstructionServiceSpanSnapshotsTest {
     @Before
     fun setUp() {
         sessionsDir = tempFolder.newFolder("embrace_sessions")
-        errorHandler = FakeErrorHandler(throwOnInternalError = false)
+        errorHandler = FakeErrorHandler(throwOnSdkError = false)
         activePart = partDirectory
         metadataWriter = SessionMetadataWriter(
             target = target(),
@@ -80,7 +80,7 @@ internal class SessionReconstructionServiceSpanSnapshotsTest {
 
         val payload = checkNotNull(service.reconstruct(partDirectory)?.envelope?.data)
         assertEquals(listOf(updated, secondSnapshot), payload.spanSnapshots)
-        assertNoInternalErrors()
+        assertNoSdkErrors()
     }
 
     @Test
@@ -91,7 +91,7 @@ internal class SessionReconstructionServiceSpanSnapshotsTest {
 
         val payload = checkNotNull(service.reconstruct(partDirectory)?.envelope?.data)
         assertEquals(listOf(endedSnapshot), payload.spanSnapshots)
-        assertNoInternalErrors()
+        assertNoSdkErrors()
     }
 
     @Test
@@ -102,7 +102,7 @@ internal class SessionReconstructionServiceSpanSnapshotsTest {
         val payload = checkNotNull(service.reconstruct(partDirectory)?.envelope?.data)
         assertEquals(listOf(inFlightSpan), payload.spanSnapshots)
         assertEquals(listOf(fullyPopulatedSpan), payload.spans)
-        assertNoInternalErrors()
+        assertNoSdkErrors()
     }
 
     @Test
@@ -111,7 +111,7 @@ internal class SessionReconstructionServiceSpanSnapshotsTest {
 
         val payload = checkNotNull(service.reconstruct(partDirectory)?.envelope?.data)
         assertEquals(listOf(inFlightSpan, secondSnapshot), payload.spanSnapshots)
-        assertNoInternalErrors()
+        assertNoSdkErrors()
     }
 
     @Test
@@ -121,7 +121,7 @@ internal class SessionReconstructionServiceSpanSnapshotsTest {
         val payload = checkNotNull(service.reconstruct(partDirectory)?.envelope?.data)
         assertEquals(listOf(inFlightSpan), payload.spanSnapshots)
         assertEquals(listOf(fullyPopulatedSpan), payload.spans)
-        assertNoInternalErrors()
+        assertNoSdkErrors()
     }
 
     @Test
@@ -131,7 +131,7 @@ internal class SessionReconstructionServiceSpanSnapshotsTest {
         val payload = checkNotNull(service.reconstruct(partDirectory)?.envelope?.data)
         assertEquals(emptyList<Span>(), payload.spanSnapshots)
         assertEquals(listOf(fullyPopulatedSpan), payload.spans)
-        assertNoInternalErrors()
+        assertNoSdkErrors()
     }
 
     @Test
@@ -141,7 +141,7 @@ internal class SessionReconstructionServiceSpanSnapshotsTest {
         val payload = checkNotNull(service.reconstruct(partDirectory)?.envelope?.data)
         assertEquals(listOf(endedSnapshot), payload.spanSnapshots)
         assertEquals(listOf(fullyPopulatedSpan), payload.spans)
-        assertNoInternalErrors()
+        assertNoSdkErrors()
     }
 
     @Test
@@ -150,7 +150,7 @@ internal class SessionReconstructionServiceSpanSnapshotsTest {
         writeSpanSnapshots(snapshots = listOf(secondSnapshot))
 
         assertEquals(listOf(secondSnapshot), service.reconstruct(partDirectory)?.envelope?.data?.spanSnapshots)
-        assertNoInternalErrors()
+        assertNoSdkErrors()
     }
 
     @Test
@@ -167,7 +167,7 @@ internal class SessionReconstructionServiceSpanSnapshotsTest {
 
         assertEquals(listOf(inFlightSpan), service.reconstruct(partDirectory)?.envelope?.data?.spanSnapshots)
         assertEquals(listOf(secondSnapshot), service.reconstruct(other)?.envelope?.data?.spanSnapshots)
-        assertNoInternalErrors()
+        assertNoSdkErrors()
     }
 
     @Test
@@ -178,7 +178,7 @@ internal class SessionReconstructionServiceSpanSnapshotsTest {
         val payload = checkNotNull(service.reconstruct(partDirectory)?.envelope?.data)
         assertEquals(emptyList<Span>(), payload.spanSnapshots)
         assertEquals(listOf(fullyPopulatedSpan), payload.spans)
-        assertNoInternalErrors()
+        assertNoSdkErrors()
     }
 
     @Test
@@ -191,7 +191,7 @@ internal class SessionReconstructionServiceSpanSnapshotsTest {
         val payload = checkNotNull(service.reconstruct(partDirectory)?.envelope?.data)
         assertEquals(listOf(incomplete), payload.spanSnapshots)
         assertEquals(emptyList<Span>(), payload.spans)
-        assertNoInternalErrors()
+        assertNoSdkErrors()
     }
 
     @Test
@@ -214,7 +214,7 @@ internal class SessionReconstructionServiceSpanSnapshotsTest {
 
         val payload = checkNotNull(service.reconstruct(partDirectory)?.envelope?.data)
         assertEquals(emptyList<Span>(), payload.spanSnapshots)
-        assertNoInternalErrors()
+        assertNoSdkErrors()
     }
 
     @Test
@@ -327,12 +327,12 @@ internal class SessionReconstructionServiceSpanSnapshotsTest {
         snapshotsFile(directory).writeBytes(SpanCollection.ADAPTER.encode(snapshots))
     }
 
-    private fun assertNoInternalErrors() {
-        assertEquals(emptyList<FakeErrorHandler.LogMessage>(), errorHandler.internalErrorMessages)
+    private fun assertNoSdkErrors() {
+        assertEquals(emptyList<FakeErrorHandler.LogMessage>(), errorHandler.sdkErrorMessages)
     }
 
     private fun assertReconstructionFailureTracked() {
-        assertEquals(1, errorHandler.internalErrorMessages.size)
-        assertEquals("SessionReconstructionFail", errorHandler.internalErrorMessages.single().msg)
+        assertEquals(1, errorHandler.sdkErrorMessages.size)
+        assertEquals("SessionReconstructionFail", errorHandler.sdkErrorMessages.single().msg)
     }
 }

@@ -14,7 +14,7 @@ import io.embrace.android.embracesdk.internal.arch.schema.EmbType
 import io.embrace.android.embracesdk.internal.config.resolved.AeiConfig
 import io.embrace.android.embracesdk.internal.config.resolved.AutoDataCaptureConfig
 import io.embrace.android.embracesdk.internal.config.resolved.EmbraceConfig
-import io.embrace.android.embracesdk.internal.logging.InternalErrorType
+import io.embrace.android.embracesdk.internal.logging.SdkErrorType
 import io.embrace.android.embracesdk.internal.utils.BuildVersionChecker
 import io.embrace.android.embracesdk.internal.utils.Provider
 import io.embrace.android.embracesdk.internal.utils.VersionChecker
@@ -470,14 +470,14 @@ internal class AeiDataSourceImplTest {
         } throws NullPointerException()
 
         // when the service is started
-        val errorHandler = FakeErrorHandler(throwOnInternalError = false)
+        val errorHandler = FakeErrorHandler(throwOnSdkError = false)
         startApplicationExitInfoService(errorHandler = errorHandler)
 
-        // no logs were sent, and the failure was tracked as an internal error
+        // no logs were sent, and the failure was tracked as an SDK error
         assertTrue(args.destination.logEvents.isEmpty())
-        val internalError = errorHandler.internalErrorMessages.single()
-        assertEquals(InternalErrorType.ProcessAeiRecords.toString(), internalError.msg)
-        assertTrue(internalError.throwable is NullPointerException)
+        val sdkError = errorHandler.sdkErrorMessages.single()
+        assertEquals(SdkErrorType.ProcessAeiRecords.toString(), sdkError.msg)
+        assertTrue(sdkError.throwable is NullPointerException)
     }
 
     @Test

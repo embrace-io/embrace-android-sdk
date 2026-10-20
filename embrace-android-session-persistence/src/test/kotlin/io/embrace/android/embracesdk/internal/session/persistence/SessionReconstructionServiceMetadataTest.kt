@@ -56,7 +56,7 @@ internal class SessionReconstructionServiceMetadataTest {
     @Before
     fun setUp() {
         sessionsDir = tempFolder.newFolder("embrace_sessions")
-        errorHandler = FakeErrorHandler(throwOnInternalError = false)
+        errorHandler = FakeErrorHandler(throwOnSdkError = false)
         metadataProvider = { fullyPopulatedMetadata }
         resourceProvider = { fullyPopulatedResource }
         symbolProvider = { null }
@@ -83,7 +83,7 @@ internal class SessionReconstructionServiceMetadataTest {
         assertEquals(fullyPopulatedMetadata, envelope.metadata)
         assertEquals(ENVELOPE_VERSION, envelope.version)
         assertEquals(ENVELOPE_TYPE, envelope.type)
-        assertNoInternalErrors()
+        assertNoSdkErrors()
     }
 
     @Test
@@ -100,7 +100,7 @@ internal class SessionReconstructionServiceMetadataTest {
         metadataProvider = { EnvelopeMetadata() }
         write()
         assertEquals(EnvelopeMetadata(), service.reconstruct(partDirectory)?.envelope?.metadata)
-        assertNoInternalErrors()
+        assertNoSdkErrors()
     }
 
     @Test
@@ -108,7 +108,7 @@ internal class SessionReconstructionServiceMetadataTest {
         resourceProvider = { EnvelopeResource() }
         write()
         assertEquals(EnvelopeResource(), service.reconstruct(partDirectory)?.envelope?.resource)
-        assertNoInternalErrors()
+        assertNoSdkErrors()
     }
 
     @Test
@@ -121,7 +121,7 @@ internal class SessionReconstructionServiceMetadataTest {
             assertEquals("newUserId", userId)
             assertEquals(setOf("payer"), personas)
         }
-        assertNoInternalErrors()
+        assertNoSdkErrors()
     }
 
     @Test
@@ -153,7 +153,7 @@ internal class SessionReconstructionServiceMetadataTest {
         write(anonymous)
 
         assertNotNull(service.reconstruct(anonymous))
-        assertNoInternalErrors()
+        assertNoSdkErrors()
     }
 
     @Test
@@ -179,7 +179,7 @@ internal class SessionReconstructionServiceMetadataTest {
             assertEquals(EnvelopeResource(appVersion = "9.9.9"), resource)
             assertEquals("otherUserId", metadata?.userId)
         }
-        assertNoInternalErrors()
+        assertNoSdkErrors()
     }
 
     @Test
@@ -290,12 +290,12 @@ internal class SessionReconstructionServiceMetadataTest {
         metadataFile(directory).writeBytes(SessionMetadata.ADAPTER.encode(metadata))
     }
 
-    private fun assertNoInternalErrors() {
-        assertEquals(emptyList<FakeErrorHandler.LogMessage>(), errorHandler.internalErrorMessages)
+    private fun assertNoSdkErrors() {
+        assertEquals(emptyList<FakeErrorHandler.LogMessage>(), errorHandler.sdkErrorMessages)
     }
 
     private fun assertReconstructionFailureTracked() {
-        assertEquals(1, errorHandler.internalErrorMessages.size)
-        assertEquals("SessionReconstructionFail", errorHandler.internalErrorMessages.single().msg)
+        assertEquals(1, errorHandler.sdkErrorMessages.size)
+        assertEquals("SessionReconstructionFail", errorHandler.sdkErrorMessages.single().msg)
     }
 }

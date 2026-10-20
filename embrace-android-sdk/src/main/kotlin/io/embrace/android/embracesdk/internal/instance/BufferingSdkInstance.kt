@@ -21,7 +21,7 @@ import io.embrace.android.embracesdk.internal.config.resolved.ExperimentConfig
 import io.embrace.android.embracesdk.internal.instrumentation.network.DefaultTraceparentGenerator
 import io.embrace.android.embracesdk.internal.logging.ErrorHandler
 import io.embrace.android.embracesdk.internal.logging.ErrorHandlerImpl
-import io.embrace.android.embracesdk.internal.logging.InternalErrorType
+import io.embrace.android.embracesdk.internal.logging.SdkErrorType
 import io.embrace.android.embracesdk.spans.EmbraceSpan
 import io.embrace.android.embracesdk.spans.EmbraceSpanEvent
 import io.embrace.android.embracesdk.spans.ErrorCode
@@ -262,7 +262,7 @@ internal class BufferingSdkInstance(
         try {
             action()
         } catch (exc: Throwable) {
-            errorHandler.trackInternalError(InternalErrorType.PublicApiFail, exc)
+            errorHandler.trackSdkError(SdkErrorType.PublicApiFail, exc)
         }
     }
 

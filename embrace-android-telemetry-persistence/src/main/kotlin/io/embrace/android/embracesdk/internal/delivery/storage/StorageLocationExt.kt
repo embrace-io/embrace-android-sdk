@@ -1,7 +1,7 @@
 package io.embrace.android.embracesdk.internal.delivery.storage
 
 import io.embrace.android.embracesdk.internal.logging.ErrorHandler
-import io.embrace.android.embracesdk.internal.logging.InternalErrorType
+import io.embrace.android.embracesdk.internal.logging.SdkErrorType
 import java.io.File
 
 /**
@@ -15,7 +15,7 @@ fun StorageLocation.asFile(
     try {
         File(rootDirSupplier(), dir).apply(File::mkdirs)
     } catch (exc: Throwable) {
-        errorHandler?.trackInternalError(InternalErrorType.PayloadStorageFail, exc)
+        errorHandler?.trackSdkError(SdkErrorType.PayloadStorageFail, exc)
         File(fallbackDirSupplier(), dir).apply(File::mkdirs)
     }
 }

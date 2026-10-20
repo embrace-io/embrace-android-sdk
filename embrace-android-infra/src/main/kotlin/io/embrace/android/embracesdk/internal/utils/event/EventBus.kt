@@ -1,7 +1,7 @@
 package io.embrace.android.embracesdk.internal.utils.event
 
 import io.embrace.android.embracesdk.internal.logging.ErrorHandler
-import io.embrace.android.embracesdk.internal.logging.InternalErrorType
+import io.embrace.android.embracesdk.internal.logging.SdkErrorType
 import io.embrace.android.embracesdk.internal.utils.event.EventBus.Companion.DEFAULT_ORDER
 import java.util.BitSet
 import java.util.Collections
@@ -93,7 +93,7 @@ class EventBus(private val errorHandler: ErrorHandler) {
             val producer = try {
                 factory()
             } catch (failure: Exception) {
-                errorHandler.trackInternalError(InternalErrorType.EventBusProducerFail, failure)
+                errorHandler.trackSdkError(SdkErrorType.EventBusProducerFail, failure)
                 return
             }
 
@@ -222,7 +222,7 @@ class EventBus(private val errorHandler: ErrorHandler) {
         try {
             producer.close()
         } catch (failure: Exception) {
-            errorHandler.trackInternalError(InternalErrorType.EventBusProducerFail, failure)
+            errorHandler.trackSdkError(SdkErrorType.EventBusProducerFail, failure)
         }
     }
 
@@ -252,7 +252,7 @@ class EventBus(private val errorHandler: ErrorHandler) {
 
     private fun reportFailure(registrant: Any, failure: Exception) {
         if (loggedFailures.add(registrant)) {
-            errorHandler.trackInternalError(InternalErrorType.EventBusHandlerFail, failure)
+            errorHandler.trackSdkError(SdkErrorType.EventBusHandlerFail, failure)
 
             // a dispatch in flight across stop may have added after its clear
             if (stopped) {

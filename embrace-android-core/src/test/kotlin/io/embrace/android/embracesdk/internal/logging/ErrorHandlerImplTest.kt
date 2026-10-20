@@ -8,7 +8,7 @@ import org.junit.Test
 
 internal class ErrorHandlerImplTest {
 
-    private val type = InternalErrorType.DeliverySchedulingFail
+    private val type = SdkErrorType.DeliverySchedulingFail
     private lateinit var clock: FakeClock
     private lateinit var handler: ErrorHandlerImpl
     private lateinit var errors: MutableList<Pair<Throwable, Long>>
@@ -64,7 +64,7 @@ internal class ErrorHandlerImplTest {
     @Test
     fun `Ignored type is not tracked`() {
         handler.drain(sink)
-        handler.guardSdkCode(InternalErrorType.Ignored, Unit) { throw IllegalStateException() }
+        handler.guardSdkCode(SdkErrorType.Ignored, Unit) { throw IllegalStateException() }
         assertTrue(errors.isEmpty())
     }
 

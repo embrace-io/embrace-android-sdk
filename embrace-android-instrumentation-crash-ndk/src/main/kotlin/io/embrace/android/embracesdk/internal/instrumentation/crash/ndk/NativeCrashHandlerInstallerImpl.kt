@@ -9,7 +9,7 @@ import io.embrace.android.embracesdk.internal.delivery.SupportedEnvelopeType
 import io.embrace.android.embracesdk.internal.handler.MainThreadHandler
 import io.embrace.android.embracesdk.internal.instrumentation.crash.ndk.jni.JniDelegate
 import io.embrace.android.embracesdk.internal.logging.ErrorHandler
-import io.embrace.android.embracesdk.internal.logging.InternalErrorType
+import io.embrace.android.embracesdk.internal.logging.SdkErrorType
 import io.embrace.android.embracesdk.internal.utils.EmbTrace
 import io.embrace.android.embracesdk.internal.worker.BackgroundWorker
 import io.embrace.android.embracesdk.internal.worker.Worker
@@ -61,7 +61,7 @@ internal class NativeCrashHandlerInstallerImpl(
                 args.registerSessionPartChangeListener { updateSessionIds() }
             }
         } catch (ex: Exception) {
-            errorHandler.trackInternalError(InternalErrorType.NativeHandlerInstallFail, ex)
+            errorHandler.trackSdkError(SdkErrorType.NativeHandlerInstallFail, ex)
         }
     }
 

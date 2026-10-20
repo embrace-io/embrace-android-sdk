@@ -1,7 +1,7 @@
 package io.embrace.android.embracesdk.internal.network.http
 
 import io.embrace.android.embracesdk.internal.logging.ErrorHandler
-import io.embrace.android.embracesdk.internal.logging.InternalErrorType
+import io.embrace.android.embracesdk.internal.logging.SdkErrorType
 import io.embrace.android.embracesdk.network.http.HttpRequestInfo
 import io.embrace.android.embracesdk.network.http.HttpRequestInfoModifier
 import io.embrace.android.embracesdk.network.http.MutableHttpRequestInfo
@@ -40,7 +40,7 @@ class HttpRequestInfoModifierChain(
                 modifier.modifyHttpRequestInfo(info)
             } catch (t: Exception) {
                 if (loggedFailure.compareAndSet(false, true)) {
-                    errorHandler.trackInternalError(InternalErrorType.HttpRequestInfoModifierFail, t)
+                    errorHandler.trackSdkError(SdkErrorType.HttpRequestInfoModifierFail, t)
                 }
             }
         }

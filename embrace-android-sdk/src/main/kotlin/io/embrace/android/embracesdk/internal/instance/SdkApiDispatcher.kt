@@ -16,7 +16,7 @@ import io.embrace.android.embracesdk.internal.api.delegate.LateBindingOpenTeleme
 import io.embrace.android.embracesdk.internal.api.delegate.TrackedExperimentImpl
 import io.embrace.android.embracesdk.internal.api.delegate.TrackedFeatureFlagImpl
 import io.embrace.android.embracesdk.internal.logging.ErrorHandler
-import io.embrace.android.embracesdk.internal.logging.InternalErrorType
+import io.embrace.android.embracesdk.internal.logging.SdkErrorType
 import io.embrace.android.embracesdk.internal.otel.spans.NoopEmbraceSdkSpan
 import io.embrace.android.embracesdk.internal.telemetry.InternalTelemetryService
 import io.embrace.android.embracesdk.network.EmbraceNetworkRequest
@@ -339,7 +339,7 @@ internal class SdkApiDispatcher(
     private inline fun record(name: String, call: () -> Unit) = record(name, Unit, call)
 
     /**
-     * Performs [call], reporting anything it throws as an internal error and returning [fallback] instead.
+     * Performs [call], reporting anything it throws as an SDK error and returning [fallback] instead.
      */
     private inline fun <T> guard(fallback: T, call: () -> T): T = try {
         call()
@@ -350,5 +350,5 @@ internal class SdkApiDispatcher(
 
     private inline fun guard(call: () -> Unit) = guard(Unit, call)
 
-    private fun trackError(exc: Throwable) = errorHandler.trackInternalError(InternalErrorType.PublicApiFail, exc)
+    private fun trackError(exc: Throwable) = errorHandler.trackSdkError(SdkErrorType.PublicApiFail, exc)
 }

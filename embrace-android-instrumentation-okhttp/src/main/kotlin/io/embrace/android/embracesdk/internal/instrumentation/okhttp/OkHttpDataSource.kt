@@ -12,7 +12,7 @@ import io.embrace.android.embracesdk.internal.instrumentation.network.NetworkReq
 import io.embrace.android.embracesdk.internal.instrumentation.network.RequestEndData
 import io.embrace.android.embracesdk.internal.instrumentation.network.RequestStartData
 import io.embrace.android.embracesdk.internal.instrumentation.network.getOverriddenURLString
-import io.embrace.android.embracesdk.internal.logging.InternalErrorType
+import io.embrace.android.embracesdk.internal.logging.SdkErrorType
 import io.embrace.android.embracesdk.okhttp3.EmbraceCustomPathException
 import okhttp3.Call
 import okhttp3.Interceptor
@@ -221,7 +221,7 @@ internal class OkHttpDataSource(
                 )
             }
         } catch (exc: Throwable) {
-            errorHandler.trackInternalError(InternalErrorType.DataSourceDataCaptureFail, exc)
+            errorHandler.trackSdkError(SdkErrorType.DataSourceDataCaptureFail, exc)
             networkRequestDataSource?.discardRequest(callData.id)
         } finally {
             activeCalls.remove(chain.call())
@@ -372,8 +372,8 @@ internal class OkHttpDataSource(
             }
             dataCaptureErrorMessage =
                 "There were errors in capturing the following part(s) of the network call: %s$errors"
-            errorHandler.trackInternalError(
-                InternalErrorType.DataSourceDataCaptureFail,
+            errorHandler.trackSdkError(
+                SdkErrorType.DataSourceDataCaptureFail,
                 RuntimeException(
                     "Failure during the building of NetworkCaptureData. $dataCaptureErrorMessage",
                     e,
@@ -412,8 +412,8 @@ internal class OkHttpDataSource(
                 return buffer.readByteArray()
             }
         } catch (e: IOException) {
-            errorHandler.trackInternalError(
-                InternalErrorType.DataSourceDataCaptureFail,
+            errorHandler.trackSdkError(
+                SdkErrorType.DataSourceDataCaptureFail,
                 e,
             )
         }

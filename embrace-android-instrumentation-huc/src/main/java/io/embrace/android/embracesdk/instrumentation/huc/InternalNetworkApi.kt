@@ -6,7 +6,7 @@ internal interface InternalNetworkApi {
     fun isNetworkSpanForwardingEnabled(): Boolean
     fun recordNetworkRequest(embraceNetworkRequest: EmbraceNetworkRequest)
     fun shouldCaptureNetworkBody(url: String, method: String): Boolean
-    fun logInternalError(error: Throwable)
+    fun logSdkError(error: Throwable)
     fun getSdkCurrentTimeMs(): Long
 }
 
@@ -14,6 +14,6 @@ internal object NoopInternalNetworkApi : InternalNetworkApi {
     override fun isNetworkSpanForwardingEnabled(): Boolean = false
     override fun recordNetworkRequest(embraceNetworkRequest: EmbraceNetworkRequest) {}
     override fun shouldCaptureNetworkBody(url: String, method: String): Boolean = false
-    override fun logInternalError(error: Throwable) {}
+    override fun logSdkError(error: Throwable) {}
     override fun getSdkCurrentTimeMs(): Long = 0
 }

@@ -13,7 +13,7 @@ enum class PayloadType(
     AEI("sys.exit", "aei"),
     EXCEPTION("sys.exception", "exception"),
     NETWORK_CAPTURE("sys.network_capture", "network"),
-    INTERNAL_ERROR("sys.internal", "internal"),
+    SDK_ERROR("sys.internal", "internal"),
     ATTACHMENT("attachment", "attachment"),
     UNKNOWN("unknown", "unknown"),
     ;

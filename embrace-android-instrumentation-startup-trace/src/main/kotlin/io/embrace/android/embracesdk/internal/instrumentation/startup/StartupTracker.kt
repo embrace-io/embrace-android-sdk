@@ -7,7 +7,7 @@ import io.embrace.android.embracesdk.annotation.IgnoreForStartup
 import io.embrace.android.embracesdk.internal.instrumentation.startup.activity.traceInstanceId
 import io.embrace.android.embracesdk.internal.instrumentation.startup.ui.DrawEventEmitter
 import io.embrace.android.embracesdk.internal.logging.ErrorHandler
-import io.embrace.android.embracesdk.internal.logging.InternalErrorType
+import io.embrace.android.embracesdk.internal.logging.SdkErrorType
 import java.util.concurrent.atomic.AtomicBoolean
 
 /**
@@ -52,7 +52,7 @@ class StartupTracker(
                 appStartupDataCollector.startupActivityPreCreated()
             }
         } catch (exc: Throwable) {
-            errorHandler.trackInternalError(InternalErrorType.UiCallbackFail, exc)
+            errorHandler.trackSdkError(SdkErrorType.UiCallbackFail, exc)
         }
     }
 
@@ -70,7 +70,7 @@ class StartupTracker(
                 drawEventEmitter?.registerFirstDrawCallback(activity, {}, callback)
             }
         } catch (exc: Throwable) {
-            errorHandler.trackInternalError(InternalErrorType.UiCallbackFail, exc)
+            errorHandler.trackSdkError(SdkErrorType.UiCallbackFail, exc)
         }
     }
 
@@ -80,7 +80,7 @@ class StartupTracker(
                 appStartupDataCollector.startupActivityPostCreated()
             }
         } catch (exc: Throwable) {
-            errorHandler.trackInternalError(InternalErrorType.UiCallbackFail, exc)
+            errorHandler.trackSdkError(SdkErrorType.UiCallbackFail, exc)
         }
     }
 
@@ -90,7 +90,7 @@ class StartupTracker(
                 appStartupDataCollector.startupActivityInitEnd()
             }
         } catch (exc: Throwable) {
-            errorHandler.trackInternalError(InternalErrorType.UiCallbackFail, exc)
+            errorHandler.trackSdkError(SdkErrorType.UiCallbackFail, exc)
         }
     }
 
@@ -102,7 +102,7 @@ class StartupTracker(
                 )
             }
         } catch (exc: Throwable) {
-            errorHandler.trackInternalError(InternalErrorType.UiCallbackFail, exc)
+            errorHandler.trackSdkError(SdkErrorType.UiCallbackFail, exc)
         }
     }
 

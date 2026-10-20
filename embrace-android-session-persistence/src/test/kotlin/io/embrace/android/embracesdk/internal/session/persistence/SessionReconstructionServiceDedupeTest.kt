@@ -68,7 +68,7 @@ internal class SessionReconstructionServiceDedupeTest {
     @Before
     fun setUp() {
         sessionsDir = tempFolder.newFolder("embrace_sessions")
-        errorHandler = FakeErrorHandler(throwOnInternalError = false)
+        errorHandler = FakeErrorHandler(throwOnSdkError = false)
         sessionSpan = fullyPopulatedSpan
         activePart = partDirectory
         metadataWriter = SessionMetadataWriter(
@@ -92,7 +92,7 @@ internal class SessionReconstructionServiceDedupeTest {
         val payload = checkNotNull(service.reconstruct(partDirectory)?.envelope?.data)
         assertEquals(listOf(earlySpan, fullyPopulatedSpan), payload.spans)
         assertEquals(emptyList<Span>(), payload.spanSnapshots)
-        assertNoInternalErrors()
+        assertNoSdkErrors()
     }
 
     @Test
@@ -102,7 +102,7 @@ internal class SessionReconstructionServiceDedupeTest {
         val payload = checkNotNull(service.reconstruct(partDirectory)?.envelope?.data)
         assertEquals(listOf(earlySpan, fullyPopulatedSpan), payload.spans)
         assertEquals(emptyList<Span>(), payload.spanSnapshots)
-        assertNoInternalErrors()
+        assertNoSdkErrors()
     }
 
     @Test
@@ -118,7 +118,7 @@ internal class SessionReconstructionServiceDedupeTest {
         write(snapshots = listOf(earlySpan, lateSpan))
 
         assertEquals(listOf(lateSpan), service.reconstruct(partDirectory)?.envelope?.data?.spanSnapshots)
-        assertNoInternalErrors()
+        assertNoSdkErrors()
     }
 
     @Test
@@ -130,7 +130,7 @@ internal class SessionReconstructionServiceDedupeTest {
         val payload = checkNotNull(service.reconstruct(partDirectory)?.envelope?.data)
         assertEquals(listOf(earlySpan, otherSpan, fullyPopulatedSpan), payload.spans)
         assertEquals(listOf(otherSnapshot), payload.spanSnapshots)
-        assertNoInternalErrors()
+        assertNoSdkErrors()
     }
 
     @Test
@@ -147,7 +147,7 @@ internal class SessionReconstructionServiceDedupeTest {
     }
 
     @Test
-    fun `one internal error is logged however many duplicates are removed`() {
+    fun `one SDK error is logged however many duplicates are removed`() {
         write(
             spans = listOf(earlySpanProto, earlySpanProto, otherSpanProto, otherSpanProto),
             snapshots = listOf(inFlightSpan, otherSnapshot, otherSnapshot),
@@ -165,17 +165,17 @@ internal class SessionReconstructionServiceDedupeTest {
 
         val payload = checkNotNull(service.reconstruct(partDirectory)?.envelope?.data)
         assertEquals(listOf(anonymousSpan, anonymousSpan, fullyPopulatedSpan), payload.spans)
-        assertNoInternalErrors()
+        assertNoSdkErrors()
     }
 
     @Test
-    fun `a payload with no duplicates logs no internal error`() {
+    fun `a payload with no duplicates logs no SDK error`() {
         write(spans = listOf(earlySpanProto, otherSpanProto), snapshots = listOf(otherSnapshot))
 
         val payload = checkNotNull(service.reconstruct(partDirectory)?.envelope?.data)
         assertEquals(listOf(earlySpan, otherSpan, fullyPopulatedSpan), payload.spans)
         assertEquals(listOf(otherSnapshot), payload.spanSnapshots)
-        assertNoInternalErrors()
+        assertNoSdkErrors()
     }
 
     private fun target(): SessionPartWriteTarget =
@@ -191,12 +191,12 @@ internal class SessionReconstructionServiceDedupeTest {
         assertTrue(snapshotsWriter.write(snapshots))
     }
 
-    private fun assertNoInternalErrors() {
-        assertEquals(emptyList<FakeErrorHandler.LogMessage>(), errorHandler.internalErrorMessages)
+    private fun assertNoSdkErrors() {
+        assertEquals(emptyList<FakeErrorHandler.LogMessage>(), errorHandler.sdkErrorMessages)
     }
 
     private fun assertDuplicatesTracked() {
-        assertEquals(1, errorHandler.internalErrorMessages.size)
-        assertEquals("DuplicateSpanIds", errorHandler.internalErrorMessages.single().msg)
+        assertEquals(1, errorHandler.sdkErrorMessages.size)
+        assertEquals("DuplicateSpanIds", errorHandler.sdkErrorMessages.single().msg)
     }
 }

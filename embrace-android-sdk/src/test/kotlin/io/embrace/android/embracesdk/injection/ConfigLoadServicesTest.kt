@@ -21,7 +21,7 @@ internal class ConfigLoadServicesTest {
         val workerThreadPool = FakeWorkerThreadPool(testWorkers = listOf(Worker.Background.IoRegWorker))
         val configLoadServices = ConfigLoadServices(
             context = ApplicationProvider.getApplicationContext(),
-            preStartServices = PreStartServices(errorHandler = FakeErrorHandler(throwOnInternalError = false)),
+            preStartServices = PreStartServices(errorHandler = FakeErrorHandler(throwOnSdkError = false)),
             workerThreadPoolSupplier = { workerThreadPool },
             configServiceSupplier = { _, _, _, _, _, _ -> configService },
         )

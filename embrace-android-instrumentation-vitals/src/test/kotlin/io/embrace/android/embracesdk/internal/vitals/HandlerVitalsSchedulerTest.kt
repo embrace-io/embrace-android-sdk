@@ -47,14 +47,14 @@ internal class HandlerVitalsSchedulerTest {
 
     @Test
     fun `work that throws is tracked and the thread keeps running`() {
-        val errorHandler = FakeErrorHandler(throwOnInternalError = false)
+        val errorHandler = FakeErrorHandler(throwOnSdkError = false)
         val scheduler = HandlerVitalsScheduler(errorHandler).apply { start() }
         val latch = CountDownLatch(1)
         scheduler.post { error("boom") }
         scheduler.post { latch.countDown() }
 
         assertTrue(latch.await(TIMEOUT_MS, TimeUnit.MILLISECONDS))
-        assertEquals(1, errorHandler.internalErrorMessages.size)
+        assertEquals(1, errorHandler.sdkErrorMessages.size)
         scheduler.stop()
     }
 

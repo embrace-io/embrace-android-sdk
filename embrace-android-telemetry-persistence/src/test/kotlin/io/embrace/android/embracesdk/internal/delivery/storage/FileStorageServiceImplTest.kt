@@ -40,7 +40,7 @@ class FileStorageServiceImplTest {
         outputDir = Files.createTempDirectory("temp").toFile().apply {
             mkdirs()
         }
-        errorHandler = FakeErrorHandler(throwOnInternalError = false)
+        errorHandler = FakeErrorHandler(throwOnSdkError = false)
         executor = BlockingScheduledExecutorService()
         clock = FakeClock()
         service = FileStorageServiceImpl(
@@ -80,13 +80,13 @@ class FileStorageServiceImplTest {
     @Test
     fun `payload size is zero for a payload that was never stored`() {
         assertEquals(0L, service.payloadSizeBytes(fakeSessionStoredTelemetryMetadata))
-        assertTrue(errorHandler.internalErrorMessages.isEmpty())
+        assertTrue(errorHandler.sdkErrorMessages.isEmpty())
     }
 
     @Test
     fun `load payload stream no file`() {
         assertNull(service.loadPayloadAsStream(fakeSessionStoredTelemetryMetadata))
-        assertTrue(errorHandler.internalErrorMessages.isEmpty())
+        assertTrue(errorHandler.sdkErrorMessages.isEmpty())
     }
 
     @Test
@@ -219,7 +219,7 @@ class FileStorageServiceImplTest {
         val outcome = failing.store(fakeSessionStoredTelemetryMetadata) { it.write(DUMMY_CONTENT.toByteArray()) }
 
         assertEquals(StorageOutcome.FAILED, outcome)
-        assertTrue(errorHandler.internalErrorMessages.single().throwable is IllegalStateException)
+        assertTrue(errorHandler.sdkErrorMessages.single().throwable is IllegalStateException)
     }
 
     @Test
@@ -334,7 +334,7 @@ class FileStorageServiceImplTest {
         } finally {
             deleteExecutor.shutdownNow()
         }
-        assertTrue(errorHandler.internalErrorMessages.isEmpty())
+        assertTrue(errorHandler.sdkErrorMessages.isEmpty())
 
         val indexedFilenames = concurrentService.getStoredPayloads().map { it.filename }.toSet()
         val filenamesOnDisk = checkNotNull(outputDir.listFiles()).map { it.name }.toSet()

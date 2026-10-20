@@ -24,7 +24,7 @@ import io.embrace.android.embracesdk.internal.config.remote.RemoteConfig
 import io.embrace.android.embracesdk.internal.delivery.storage.StorageLocation
 import io.embrace.android.embracesdk.internal.delivery.storage.asFile
 import io.embrace.android.embracesdk.internal.instance.SdkState
-import io.embrace.android.embracesdk.internal.logging.InternalErrorType
+import io.embrace.android.embracesdk.internal.logging.SdkErrorType
 import io.embrace.android.embracesdk.internal.otel.sdk.findAttributeValue
 import io.embrace.android.embracesdk.internal.otel.spans.NoopEmbraceSdkSpan
 import io.embrace.android.embracesdk.internal.toStringMap
@@ -83,8 +83,8 @@ internal class SdkStateIntegrationTest(
         private val sdkDisabledConfig = RemoteConfig(threshold = 0)
         private fun File.sentinelFile(): File = File(File(this, TEST_SUBDIR_NAME), TEST_FILE_NAME)
 
-        private fun assertNoInternalErrors(errorHandler: FakeErrorHandler) {
-            assertEquals(emptyList<String>(), errorHandler.internalErrorMessages.map { it.msg })
+        private fun assertNoSdkErrors(errorHandler: FakeErrorHandler) {
+            assertEquals(emptyList<String>(), errorHandler.sdkErrorMessages.map { it.msg })
         }
     }
 
@@ -114,7 +114,7 @@ internal class SdkStateIntegrationTest(
             startSdk = false,
             setupAction = {
                 errorHandler = getFakeErrorHandler().apply {
-                    throwOnInternalError = false
+                    throwOnSdkError = false
                 }
             },
             testCaseAction = {
@@ -199,7 +199,7 @@ internal class SdkStateIntegrationTest(
             expectSdkToStart = false,
             setupAction = {
                 errorHandler = getFakeErrorHandler().apply {
-                    throwOnInternalError = false
+                    throwOnSdkError = false
                 }
             },
             testCaseAction = {
@@ -210,7 +210,7 @@ internal class SdkStateIntegrationTest(
                 }
             },
             assertAction = {
-                assertNoInternalErrors(errorHandler)
+                assertNoSdkErrors(errorHandler)
                 assertEquals(
                     listOf("Embrace SDK failed to start, cannot log_message. Subsequent dropped calls will not be logged."),
                     errorHandler.infoMessages.map { it.msg }.filter { it.startsWith("Embrace SDK failed to start") },
@@ -229,7 +229,7 @@ internal class SdkStateIntegrationTest(
             expectSdkToStart = false,
             setupAction = {
                 errorHandler = getFakeErrorHandler().apply {
-                    throwOnInternalError = false
+                    throwOnSdkError = false
                 }
                 moduleGraphFailure = failure
             },
@@ -247,10 +247,10 @@ internal class SdkStateIntegrationTest(
             },
             assertAction = {
                 assertEquals(
-                    listOf(InternalErrorType.PublicApiFail.toString()),
-                    errorHandler.internalErrorMessages.map { it.msg },
+                    listOf(SdkErrorType.PublicApiFail.toString()),
+                    errorHandler.sdkErrorMessages.map { it.msg },
                 )
-                assertSame(failure, errorHandler.internalErrorMessages.single().throwable)
+                assertSame(failure, errorHandler.sdkErrorMessages.single().throwable)
                 assertEquals(
                     listOf("Embrace SDK failed to start, cannot log_message. Subsequent dropped calls will not be logged."),
                     errorHandler.infoMessages.map { it.msg }.filter { it.startsWith("Embrace SDK failed to start") },
@@ -285,7 +285,7 @@ internal class SdkStateIntegrationTest(
         testRule.runTest(
             setupAction = {
                 errorHandler = getFakeErrorHandler().apply {
-                    throwOnInternalError = false
+                    throwOnSdkError = false
                 }
                 // create dummy values in embrace directories to see if they are deleted
                 embraceDirs.values.forEach {
@@ -315,7 +315,7 @@ internal class SdkStateIntegrationTest(
             },
             assertAction = {
                 awaitStorageDeleted()
-                assertNoInternalErrors(errorHandler)
+                assertNoSdkErrors(errorHandler)
                 assertEquals(0, getLogEnvelopes(0).size)
                 assertEquals(0, getSessionEnvelopes(0).size)
             },
@@ -389,7 +389,7 @@ internal class SdkStateIntegrationTest(
         testRule.runTest(
             setupAction = {
                 errorHandler = getFakeErrorHandler().apply {
-                    throwOnInternalError = false
+                    throwOnSdkError = false
                 }
             },
             testCaseAction = {
@@ -434,7 +434,7 @@ internal class SdkStateIntegrationTest(
         testRule.runTest(
             setupAction = {
                 errorHandler = getFakeErrorHandler().apply {
-                    throwOnInternalError = false
+                    throwOnSdkError = false
                 }
             },
             testCaseAction = {
@@ -723,7 +723,7 @@ internal class SdkStateIntegrationTest(
          * Asserts that the first dropped call was reported, and that subsequent dropped calls were not.
          */
         fun assertDropped(errorHandler: FakeErrorHandler, disabled: Boolean = false) {
-            assertNoInternalErrors(errorHandler)
+            assertNoSdkErrors(errorHandler)
             if (disabled) {
                 assertEquals(
                     listOf("Embrace SDK is disabled, cannot add_span_exporter. Subsequent dropped calls will not be logged."),

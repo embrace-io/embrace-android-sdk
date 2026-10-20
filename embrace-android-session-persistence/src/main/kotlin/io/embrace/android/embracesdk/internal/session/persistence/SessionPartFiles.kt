@@ -45,7 +45,7 @@ internal const val FILE_SYNC_SECTION = "mf-file-sync"
  * but worth it in cases that happen infrequently and where a write failure is more consequential.
  *
  * Throws [IOException] if the file could not be written; callers are responsible for reporting that
- * as an internal error of the appropriate type.
+ * as an SDK error of the appropriate type.
  */
 internal fun writeAtomically(
     partDir: File,

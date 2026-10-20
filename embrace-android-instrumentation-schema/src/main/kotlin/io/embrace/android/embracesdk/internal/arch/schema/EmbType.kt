@@ -64,7 +64,7 @@ sealed class EmbType(type: String, subtype: String?) : EmbraceAttribute {
 
         object Exception : System("exception", SendMode.IMMEDIATE)
 
-        object InternalError : System("internal")
+        object SdkError : System("internal")
 
         object Exit : System("exit", SendMode.IMMEDIATE)
 

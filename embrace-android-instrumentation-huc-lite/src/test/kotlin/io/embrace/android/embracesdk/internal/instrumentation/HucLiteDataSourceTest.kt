@@ -56,7 +56,7 @@ class HucLiteDataSourceTest {
         fakeTelemetryDestination = FakeTelemetryDestination()
         fakeTelemetryService = FakeInternalTelemetryService()
         fakeClock = FakeClock(FAKE_TIME_MS)
-        fakeErrorHandler = FakeErrorHandler(throwOnInternalError = false)
+        fakeErrorHandler = FakeErrorHandler(throwOnSdkError = false)
         mockedConnection =
             mockk<HttpsURLConnection>(relaxed = true).apply {
                 every { url } returns testUrl

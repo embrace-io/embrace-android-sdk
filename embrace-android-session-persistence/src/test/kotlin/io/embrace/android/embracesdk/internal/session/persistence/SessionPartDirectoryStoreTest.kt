@@ -46,7 +46,7 @@ internal class SessionPartDirectoryStoreTest {
         sessionsDir = tempFolder.newFolder("embrace_sessions_split")
         clock = FakeClock()
         executor = BlockingScheduledExecutorService(clock)
-        errorHandler = FakeErrorHandler(throwOnInternalError = false)
+        errorHandler = FakeErrorHandler(throwOnSdkError = false)
         store = createStore()
     }
 
@@ -57,7 +57,7 @@ internal class SessionPartDirectoryStoreTest {
 
         executor.runCurrentlyBlocked()
         assertTrue(partDir(partDirectory).isDirectory)
-        assertNoInternalErrors()
+        assertNoSdkErrors()
     }
 
     @Test
@@ -65,7 +65,7 @@ internal class SessionPartDirectoryStoreTest {
         create(partDirectory)
         assertEquals(listOf(partDirectory.dirName), dirNames())
         assertEquals(partDirectory, SessionPartDirectory.fromDirName(partDirectory.dirName))
-        assertNoInternalErrors()
+        assertNoSdkErrors()
     }
 
     @Test
@@ -80,7 +80,7 @@ internal class SessionPartDirectoryStoreTest {
             assertEquals("", userSessionId)
             assertEquals("", sessionPartId)
         }
-        assertNoInternalErrors()
+        assertNoSdkErrors()
     }
 
     @Test
@@ -88,7 +88,7 @@ internal class SessionPartDirectoryStoreTest {
         create(partDirectory)
         create(partDirectory)
         assertEquals(listOf(partDirectory.dirName), dirNames())
-        assertNoInternalErrors()
+        assertNoSdkErrors()
     }
 
     @Test
@@ -98,7 +98,7 @@ internal class SessionPartDirectoryStoreTest {
         create(partDirectory)
 
         assertTrue(File(absentRoot, partDirectory.dirName).isDirectory)
-        assertNoInternalErrors()
+        assertNoSdkErrors()
     }
 
     @Test
@@ -112,7 +112,7 @@ internal class SessionPartDirectoryStoreTest {
         create(partDirectory)
 
         assertEquals(listOf(partDirectory.dirName), dirNames())
-        assertNoInternalErrors()
+        assertNoSdkErrors()
     }
 
     @Test
@@ -122,7 +122,7 @@ internal class SessionPartDirectoryStoreTest {
         create(partDirectory)
 
         assertEquals(setOf(existing.dirName, partDirectory.dirName), dirNames().toSet())
-        assertNoInternalErrors()
+        assertNoSdkErrors()
     }
 
     @Test
@@ -135,7 +135,7 @@ internal class SessionPartDirectoryStoreTest {
 
         assertEquals(setOf(fresh.dirName, partDirectory.dirName), dirNames().toSet())
         assertFalse(partDir(stale).exists())
-        assertNoInternalErrors()
+        assertNoSdkErrors()
     }
 
     @Test
@@ -145,7 +145,7 @@ internal class SessionPartDirectoryStoreTest {
         directories.forEach(::create)
 
         assertEquals(directories.drop(1).map(SessionPartDirectory::dirName).toSet(), dirNames().toSet())
-        assertNoInternalErrors()
+        assertNoSdkErrors()
     }
 
     @Test
@@ -159,7 +159,7 @@ internal class SessionPartDirectoryStoreTest {
 
         assertEquals(newer.map(SessionPartDirectory::dirName).toSet(), dirNames().toSet())
         assertFalse(partDir(oldest).exists())
-        assertNoInternalErrors()
+        assertNoSdkErrors()
     }
 
     @Test
@@ -171,7 +171,7 @@ internal class SessionPartDirectoryStoreTest {
         create(other)
 
         assertEquals(setOf(partDirectory, other), store.storedDirectories().toSet())
-        assertNoInternalErrors()
+        assertNoSdkErrors()
     }
 
     @Test
@@ -181,7 +181,7 @@ internal class SessionPartDirectoryStoreTest {
         create(partDirectory)
 
         assertEquals(setOf(previous, partDirectory), store.storedDirectories().toSet())
-        assertNoInternalErrors()
+        assertNoSdkErrors()
     }
 
     @Test
@@ -195,7 +195,7 @@ internal class SessionPartDirectoryStoreTest {
         assertFalse(partDir(partDirectory).exists())
         assertEquals(listOf(survivor), store.storedDirectories())
         assertEquals(listOf(survivor.dirName), dirNames())
-        assertNoInternalErrors()
+        assertNoSdkErrors()
     }
 
     @Test
@@ -205,7 +205,7 @@ internal class SessionPartDirectoryStoreTest {
         store.delete(partDirectory)
 
         assertEquals(emptyList<SessionPartDirectory>(), store.storedDirectories())
-        assertNoInternalErrors()
+        assertNoSdkErrors()
     }
 
     @Test
@@ -252,12 +252,12 @@ internal class SessionPartDirectoryStoreTest {
 
     private fun dirNames(): List<String> = sessionsDir.list()?.toList() ?: emptyList()
 
-    private fun assertNoInternalErrors() {
-        assertEquals(emptyList<FakeErrorHandler.LogMessage>(), errorHandler.internalErrorMessages)
+    private fun assertNoSdkErrors() {
+        assertEquals(emptyList<FakeErrorHandler.LogMessage>(), errorHandler.sdkErrorMessages)
     }
 
     private fun assertStoreFailureTracked() {
-        assertEquals(1, errorHandler.internalErrorMessages.size)
-        assertEquals("SessionPartDirectoryStoreFail", errorHandler.internalErrorMessages.single().msg)
+        assertEquals(1, errorHandler.sdkErrorMessages.size)
+        assertEquals("SessionPartDirectoryStoreFail", errorHandler.sdkErrorMessages.single().msg)
     }
 }

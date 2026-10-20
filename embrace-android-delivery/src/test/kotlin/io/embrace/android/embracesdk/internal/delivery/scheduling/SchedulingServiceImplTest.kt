@@ -21,7 +21,7 @@ import io.embrace.android.embracesdk.internal.delivery.execution.ExecutionResult
 import io.embrace.android.embracesdk.internal.delivery.execution.ExecutionResult.Failure
 import io.embrace.android.embracesdk.internal.delivery.execution.ExecutionResult.Incomplete
 import io.embrace.android.embracesdk.internal.delivery.scheduling.SchedulingServiceImpl.Companion.INITIAL_DELAY_MS
-import io.embrace.android.embracesdk.internal.logging.InternalErrorType
+import io.embrace.android.embracesdk.internal.logging.SdkErrorType
 import io.embrace.android.embracesdk.internal.payload.Envelope
 import io.embrace.android.embracesdk.internal.payload.Log
 import io.embrace.android.embracesdk.internal.payload.LogPayload
@@ -282,18 +282,18 @@ internal class SchedulingServiceImplTest {
 
     @Test
     fun `unhandled exception during request sending will not be retried`() {
-        errorHandler.throwOnInternalError = false
+        errorHandler.throwOnSdkError = false
         executionService.exceptionOnExecution = RuntimeException("die")
         waitForResurrectionAndDeliveryAttempt(2)
         assertEquals(0, executionService.sendAttempts())
         assertEquals(0, storageService.storedPayloadCount())
-        assertEquals(2, errorHandler.internalErrorMessages.size)
+        assertEquals(2, errorHandler.sdkErrorMessages.size)
     }
 
     @Test
     fun `payload stream is closed when the request fails before the body is read`() {
         // simulate failure before payload body consumption
-        errorHandler.throwOnInternalError = false
+        errorHandler.throwOnSdkError = false
         executionService.exceptionOnExecution = RuntimeException("die")
         waitForResurrectionAndDeliveryAttempt(2)
         assertEquals(0, executionService.sendAttempts())
@@ -774,10 +774,10 @@ internal class SchedulingServiceImplTest {
 
         assertEquals(0, executionService.sendAttempts())
         assertEquals(0, storageService.storedPayloadCount())
-        assertEquals(1, errorHandler.internalErrorMessages.size)
+        assertEquals(1, errorHandler.sdkErrorMessages.size)
         assertEquals(
-            InternalErrorType.PayloadDeliveryFail.toString(),
-            errorHandler.internalErrorMessages.single().msg,
+            SdkErrorType.PayloadDeliveryFail.toString(),
+            errorHandler.sdkErrorMessages.single().msg,
         )
     }
 
@@ -789,7 +789,7 @@ internal class SchedulingServiceImplTest {
 
         assertEquals(1, executionService.sendAttempts())
         assertEquals(0, storageService.storedPayloadCount())
-        assertTrue(errorHandler.internalErrorMessages.isEmpty())
+        assertTrue(errorHandler.sdkErrorMessages.isEmpty())
     }
 
     @Test
@@ -809,7 +809,7 @@ internal class SchedulingServiceImplTest {
 
     @Test(expected = RejectedExecutionException::class)
     fun `test shutdown`() {
-        errorHandler.throwOnInternalError = false
+        errorHandler.throwOnSdkError = false
         schedulingService.onResurrectionComplete()
         schedulingService.shutdown()
 
@@ -923,7 +923,7 @@ internal class SchedulingServiceImplTest {
         storageService.payloadSizeBytes(metadata)
 
     private fun useMaxPayloadBytes(maxPayloadBytes: Long) {
-        errorHandler.throwOnInternalError = false
+        errorHandler.throwOnSdkError = false
         networkConnectivityService.removeNetworkConnectivityListener(schedulingService)
         schedulingService = SchedulingServiceImpl(
             storageService = storageService,

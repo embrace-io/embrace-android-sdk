@@ -1,7 +1,7 @@
 package io.embrace.android.embracesdk.internal.instrumentation.crash.jvm
 
 import io.embrace.android.embracesdk.internal.logging.ErrorHandler
-import io.embrace.android.embracesdk.internal.logging.InternalErrorType
+import io.embrace.android.embracesdk.internal.logging.SdkErrorType
 
 /**
  * Intercepts uncaught exceptions from the JVM and forwards them to the Embrace API. Once handled,
@@ -28,7 +28,7 @@ internal class EmbraceUncaughtExceptionHandler(
         try {
             dataSource?.logUnhandledJvmThrowable(exception)
         } catch (ex: Exception) {
-            errorHandler.trackInternalError(InternalErrorType.UncaughtExceptionHandler, ex)
+            errorHandler.trackSdkError(SdkErrorType.UncaughtExceptionHandler, ex)
         } finally {
             defaultHandler?.uncaughtException(thread, exception)
         }

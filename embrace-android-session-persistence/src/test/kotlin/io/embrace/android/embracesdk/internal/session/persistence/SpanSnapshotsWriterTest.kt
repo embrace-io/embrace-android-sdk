@@ -61,7 +61,7 @@ internal class SpanSnapshotsWriterTest {
     fun setUp() {
         sessionsDir = tempFolder.newFolder("embrace_sessions")
         clock = FakeClock()
-        errorHandler = FakeErrorHandler(throwOnInternalError = false)
+        errorHandler = FakeErrorHandler(throwOnSdkError = false)
         recorder = FakeSectionRecorder()
         SystemTrace.recorder = recorder
         activePart = partDirectory
@@ -78,7 +78,7 @@ internal class SpanSnapshotsWriterTest {
     fun `the span snapshots are written into the session part directory`() {
         assertTrue(write())
         assertTrue(snapshotsFile().isFile)
-        assertNoInternalErrors()
+        assertNoSdkErrors()
     }
 
     @Test
@@ -120,7 +120,7 @@ internal class SpanSnapshotsWriterTest {
     fun `an empty list of spans is still written`() {
         assertTrue(write(span = emptyList()))
         assertEquals(persisted(SpanCollection(format_version = FORMAT_VERSION)), readSnapshots())
-        assertNoInternalErrors()
+        assertNoSdkErrors()
     }
 
     @Test
@@ -128,7 +128,7 @@ internal class SpanSnapshotsWriterTest {
         write()
         assertTrue(writer.write(emptyList()))
         assertEquals(emptyList<SpanProto>(), readSnapshots().spans)
-        assertNoInternalErrors()
+        assertNoSdkErrors()
     }
 
     @Test
@@ -142,14 +142,14 @@ internal class SpanSnapshotsWriterTest {
         assertTrue(writer.write(updated))
         assertEquals(updated.map(Span::toProto), readSnapshots().spans)
         assertEquals(listOf(SPAN_SNAPSHOTS_FILE_NAME), partDir().list()?.toList())
-        assertNoInternalErrors()
+        assertNoSdkErrors()
     }
 
     @Test
     fun `nothing is written when no session part is active`() {
         assertFalse(write(directory = null))
         assertFalse(snapshotsFile().exists())
-        assertNoInternalErrors()
+        assertNoSdkErrors()
     }
 
     @Test
@@ -158,7 +158,7 @@ internal class SpanSnapshotsWriterTest {
         activePart = null
         assertFalse(writer.write(listOf(fullyPopulatedSpan.copy(name = "other"))))
         assertEquals("emb-session", readSnapshots().spans.first().name)
-        assertNoInternalErrors()
+        assertNoSdkErrors()
     }
 
     @Test
@@ -183,7 +183,7 @@ internal class SpanSnapshotsWriterTest {
         assertTrue(write(other, listOf(fullyPopulatedSpan.copy(spanId = "aaaaaaaaaaaaaaa9"))))
         assertEquals("aaaaaaaaaaaaaaa1", readSnapshots().spans.first().span_id)
         assertEquals("aaaaaaaaaaaaaaa9", readSnapshots(other).spans.single().span_id)
-        assertNoInternalErrors()
+        assertNoSdkErrors()
     }
 
     @Test
@@ -199,7 +199,7 @@ internal class SpanSnapshotsWriterTest {
         assertTrue(write())
         assertEquals(persisted(fullyPopulatedSpanSnapshotsProto), readSnapshots())
         assertEquals(listOf(SPAN_SNAPSHOTS_FILE_NAME), partDir().list()?.toList())
-        assertNoInternalErrors()
+        assertNoSdkErrors()
     }
 
     @Test
@@ -208,7 +208,7 @@ internal class SpanSnapshotsWriterTest {
         assertTrue(write(span = listOf(first, second)))
         assertTrue(append(listOf(third), live = listOf(first, second, third)))
         assertFalse(recorder.sections.contains(FILE_SYNC_SECTION))
-        assertNoInternalErrors()
+        assertNoSdkErrors()
     }
 
     @Test
@@ -287,7 +287,7 @@ internal class SpanSnapshotsWriterTest {
         assertEquals(protos(first, second), loggedRecords())
         assertEquals(protos(first, second), latestSnapshots())
         assertEquals(clock.now(), readSnapshots().written_at_ms)
-        assertNoInternalErrors()
+        assertNoSdkErrors()
     }
 
     @Test
@@ -298,7 +298,7 @@ internal class SpanSnapshotsWriterTest {
 
         assertEquals(protos(first, second, updated), loggedRecords())
         assertEquals(protos(updated, second), latestSnapshots())
-        assertNoInternalErrors()
+        assertNoSdkErrors()
     }
 
     @Test
@@ -306,7 +306,7 @@ internal class SpanSnapshotsWriterTest {
         assertTrue(write(span = listOf(first)))
         assertTrue(writer.append(emptyList()) { error("live spans read for an empty append") })
         assertEquals(protos(first), loggedRecords())
-        assertNoInternalErrors()
+        assertNoSdkErrors()
     }
 
     @Test
@@ -314,7 +314,7 @@ internal class SpanSnapshotsWriterTest {
         assertTrue(append(listOf(second), live = listOf(first, second)))
         assertEquals(protos(first, second), loggedRecords())
         assertEquals(FORMAT_VERSION, readSnapshots().format_version)
-        assertNoInternalErrors()
+        assertNoSdkErrors()
     }
 
     @Test
@@ -330,7 +330,7 @@ internal class SpanSnapshotsWriterTest {
         assertEquals(protos(updated, second, third), loggedRecords())
         assertEquals(protos(updated, second, third), latestSnapshots())
         assertEquals(clock.now(), readSnapshots().written_at_ms)
-        assertNoInternalErrors()
+        assertNoSdkErrors()
     }
 
     @Test
@@ -351,7 +351,7 @@ internal class SpanSnapshotsWriterTest {
         assertTrue(append(listOf(appended)))
         assertEquals((rolledUp + appended).map(Span::toProto), loggedRecords())
         assertEquals(protos(rolledUp.first(), appended), latestSnapshots())
-        assertNoInternalErrors()
+        assertNoSdkErrors()
     }
 
     @Test
@@ -383,7 +383,7 @@ internal class SpanSnapshotsWriterTest {
             assertTrue(loggedRecords().size <= 4)
         }
         assertEquals(live.map(Span::toProto), latestSnapshots())
-        assertNoInternalErrors()
+        assertNoSdkErrors()
     }
 
     @Test
@@ -395,7 +395,7 @@ internal class SpanSnapshotsWriterTest {
         assertTrue(write(span = rolledUp))
         assertTrue(append(listOf(updated), live = listOf(updated, second)))
         assertEquals(protos(updated, second), loggedRecords())
-        assertNoInternalErrors()
+        assertNoSdkErrors()
     }
 
     @Test
@@ -407,7 +407,7 @@ internal class SpanSnapshotsWriterTest {
         assertTrue(append(listOf(second), live = listOf(second), directory = other))
         assertEquals(protos(first), loggedRecords())
         assertEquals(protos(second), loggedRecords(other))
-        assertNoInternalErrors()
+        assertNoSdkErrors()
     }
 
     @Test
@@ -415,7 +415,7 @@ internal class SpanSnapshotsWriterTest {
         assertTrue(write(span = listOf(first)))
         assertFalse(append(listOf(second), directory = null))
         assertEquals(protos(first), loggedRecords())
-        assertNoInternalErrors()
+        assertNoSdkErrors()
     }
 
     @Test
@@ -424,7 +424,7 @@ internal class SpanSnapshotsWriterTest {
         writer.close()
         assertTrue(append(listOf(second), live = listOf(first, second)))
         assertEquals(protos(first, second), loggedRecords())
-        assertNoInternalErrors()
+        assertNoSdkErrors()
     }
 
     @Test
@@ -513,13 +513,13 @@ internal class SpanSnapshotsWriterTest {
     private fun persisted(collection: SpanCollection): SpanCollection =
         collection.copy(written_at_ms = clock.now())
 
-    private fun assertNoInternalErrors() {
-        assertEquals(emptyList<FakeErrorHandler.LogMessage>(), errorHandler.internalErrorMessages)
+    private fun assertNoSdkErrors() {
+        assertEquals(emptyList<FakeErrorHandler.LogMessage>(), errorHandler.sdkErrorMessages)
     }
 
     private fun assertWriteFailureTracked() {
-        assertEquals(1, errorHandler.internalErrorMessages.size)
-        assertEquals("SpanSnapshotsWriteFail", errorHandler.internalErrorMessages.single().msg)
+        assertEquals(1, errorHandler.sdkErrorMessages.size)
+        assertEquals("SpanSnapshotsWriteFail", errorHandler.sdkErrorMessages.single().msg)
     }
 
     /**

@@ -17,7 +17,7 @@ import io.embrace.android.embracesdk.internal.envelope.metadata.HostedSdkVersion
 import io.embrace.android.embracesdk.internal.envelope.resource.EnvelopeResourceSource
 import io.embrace.android.embracesdk.internal.instrumentation.crash.jvm.JvmCrashDataSource
 import io.embrace.android.embracesdk.internal.logging.ErrorHandler
-import io.embrace.android.embracesdk.internal.logging.InternalErrorType
+import io.embrace.android.embracesdk.internal.logging.SdkErrorType
 import io.embrace.android.embracesdk.internal.logs.LogExceptionType
 import io.embrace.android.embracesdk.internal.payload.JsException
 import io.embrace.android.embracesdk.internal.serialization.PlatformSerializer
@@ -167,7 +167,7 @@ internal class HostedSdkInternalInterfaceImpl(
     }
 
     /**
-     * Records usage of the internal API [name] then performs [call], reporting anything it throws as an internal error.
+     * Records usage of the internal API [name] then performs [call], reporting anything it throws as an SDK error.
      */
     private inline fun record(name: String, call: () -> Unit) = guard(Unit) {
         telemetryService.onPublicApiCalled(name)
@@ -175,12 +175,12 @@ internal class HostedSdkInternalInterfaceImpl(
     }
 
     /**
-     * Performs [call], reporting anything it throws as an internal error and returning [fallback] instead.
+     * Performs [call], reporting anything it throws as an SDK error and returning [fallback] instead.
      */
     private inline fun <T> guard(fallback: T, call: () -> T): T = try {
         call()
     } catch (exc: Throwable) {
-        errorHandler.trackInternalError(InternalErrorType.PublicApiFail, exc)
+        errorHandler.trackSdkError(SdkErrorType.PublicApiFail, exc)
         fallback
     }
 }

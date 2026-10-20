@@ -170,12 +170,12 @@ class NativeCrashHandlerInstallerImplTest {
     }
 
     @Test
-    fun `do not track internal error when loading embrace native fails`() {
+    fun `do not track SDK error when loading embrace native fails`() {
         fakeSharedObjectLoader.failLoad = true
 
         nativeCrashHandlerInstaller.install()
 
-        assertEquals(0, args.errorHandler.internalErrorMessages.size)
+        assertEquals(0, args.errorHandler.sdkErrorMessages.size)
         assertFalse(fakeDelegate.signalHandlerInstalled)
     }
 

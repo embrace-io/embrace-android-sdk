@@ -47,7 +47,7 @@ internal class FirstDrawDetectorTest {
         drawFrame()
         assertEquals(1, drawBeginCount)
         assertEquals(1, drawCompleteCount)
-        assertEquals(0, errorHandler.internalErrorMessages.size)
+        assertEquals(0, errorHandler.sdkErrorMessages.size)
     }
 
     @Test
@@ -134,13 +134,13 @@ internal class FirstDrawDetectorTest {
 
     @Test
     fun `null window callback is reported once and callbacks are never invoked`() {
-        errorHandler.throwOnInternalError = false
+        errorHandler.throwOnSdkError = false
         activity.window.callback = null
         register()
         register()
 
         drawFrame()
-        assertEquals(1, errorHandler.internalErrorMessages.size)
+        assertEquals(1, errorHandler.sdkErrorMessages.size)
         assertEquals(0, drawBeginCount)
         assertEquals(0, drawCompleteCount)
     }

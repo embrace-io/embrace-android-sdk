@@ -6,7 +6,7 @@ import io.embrace.android.embracesdk.internal.arch.SessionPartChangeListener
 import io.embrace.android.embracesdk.internal.arch.SessionPartEndListener
 import io.embrace.android.embracesdk.internal.arch.state.ProcessState
 import io.embrace.android.embracesdk.internal.logging.ErrorHandler
-import io.embrace.android.embracesdk.internal.logging.InternalErrorType
+import io.embrace.android.embracesdk.internal.logging.SdkErrorType
 import io.embrace.android.embracesdk.internal.session.SessionPartToken
 import java.util.concurrent.CopyOnWriteArraySet
 
@@ -56,7 +56,7 @@ internal class SessionPartTrackerImpl(
             try {
                 activityManager.value?.setProcessStateSummary("${sessionPartId}_$userSessionId".toByteArray())
             } catch (e: Throwable) {
-                errorHandler.trackInternalError(InternalErrorType.ProcessStateSummaryFail, e)
+                errorHandler.trackSdkError(SdkErrorType.ProcessStateSummaryFail, e)
             }
         }
     }

@@ -44,7 +44,7 @@ internal class FileStorageServiceCountersTest {
         service = FileStorageServiceImpl(
             lazy { outputDir },
             PriorityWorker(BlockingScheduledExecutorService()),
-            FakeErrorHandler(throwOnInternalError = false),
+            FakeErrorHandler(throwOnSdkError = false),
             clock,
             counters = FileWriteCounters(BYTES_COUNTER, FILES_COUNTER),
         )

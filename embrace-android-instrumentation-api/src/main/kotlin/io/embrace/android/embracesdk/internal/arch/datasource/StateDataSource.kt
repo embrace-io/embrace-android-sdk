@@ -6,7 +6,7 @@ import io.embrace.android.embracesdk.internal.arch.SessionPartChangeListener
 import io.embrace.android.embracesdk.internal.arch.SessionPartEndListener
 import io.embrace.android.embracesdk.internal.arch.limits.UpToLimitStrategy
 import io.embrace.android.embracesdk.internal.arch.schema.SchemaType
-import io.embrace.android.embracesdk.internal.logging.InternalErrorType
+import io.embrace.android.embracesdk.internal.logging.SdkErrorType
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicReference
 
@@ -161,7 +161,7 @@ abstract class StateDataSource<T : Any>(
                     ),
                 )
             } catch (t: Throwable) {
-                errorHandler.trackInternalError(InternalErrorType.SessionStateCreationFail, t)
+                errorHandler.trackSdkError(SdkErrorType.SessionStateCreationFail, t)
             }
         }
     }

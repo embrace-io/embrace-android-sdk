@@ -1,16 +1,16 @@
 package io.embrace.android.embracesdk.fakes
 
 import io.embrace.android.embracesdk.internal.logging.ErrorHandler
-import io.embrace.android.embracesdk.internal.logging.InternalErrorType
+import io.embrace.android.embracesdk.internal.logging.SdkErrorType
 import io.embrace.android.embracesdk.internal.logging.UserCodeException
 
 /**
- * Records log messages & internal errors. If [delegate] is supplied, guarded code and internal errors are forwarded to it
+ * Records log messages & SDK errors. If [delegate] is supplied, guarded code and SDK errors are forwarded to it
  * so that buffering & delivery behave like production.
  */
 class FakeErrorHandler(
-    var throwOnInternalError: Boolean = true,
-    val ignoredErrors: List<InternalErrorType> = emptyList(),
+    var throwOnSdkError: Boolean = true,
+    val ignoredErrors: List<SdkErrorType> = emptyList(),
     private val delegate: ErrorHandler? = null,
 ) : ErrorHandler {
 
@@ -22,7 +22,7 @@ class FakeErrorHandler(
     var infoMessages: MutableList<LogMessage> = mutableListOf()
     var warningMessages: MutableList<LogMessage> = mutableListOf()
     var errorMessages: MutableList<LogMessage> = mutableListOf()
-    var internalErrorMessages: MutableList<LogMessage> = mutableListOf()
+    var sdkErrorMessages: MutableList<LogMessage> = mutableListOf()
 
     override fun log(msg: String, throwable: Throwable?, severity: ErrorHandler.Severity) {
         val messages = when (severity) {
@@ -33,32 +33,32 @@ class FakeErrorHandler(
         messages.add(LogMessage(msg, throwable))
     }
 
-    override fun trackInternalError(type: InternalErrorType, throwable: Throwable) {
+    override fun trackSdkError(type: SdkErrorType, throwable: Throwable) {
         if (!ignoredErrors.contains(type)) {
-            if (throwOnInternalError) {
-                throw IllegalStateException("Internal error: $type", throwable)
+            if (throwOnSdkError) {
+                throw IllegalStateException("SDK error: $type", throwable)
             } else {
-                internalErrorMessages.add(LogMessage(type.toString(), throwable))
-                delegate?.trackInternalError(type, throwable)
+                sdkErrorMessages.add(LogMessage(type.toString(), throwable))
+                delegate?.trackSdkError(type, throwable)
             }
         }
     }
 
-    override fun <T> guardSdkCode(type: InternalErrorType, default: T, action: () -> T): T {
+    override fun <T> guardSdkCode(type: SdkErrorType, default: T, action: () -> T): T {
         if (delegate != null) {
             return delegate.guardSdkCode(type, default, action)
         }
         return try {
             action()
         } catch (exc: Throwable) {
-            if (type != InternalErrorType.Ignored && exc !is UserCodeException) {
-                internalErrorMessages.add(LogMessage(type.toString(), exc))
+            if (type != SdkErrorType.Ignored && exc !is UserCodeException) {
+                sdkErrorMessages.add(LogMessage(type.toString(), exc))
             }
             default
         }
     }
 
-    override fun <T> guardSdkCodeEach(type: InternalErrorType, items: Iterable<T>, action: (T) -> Unit) {
+    override fun <T> guardSdkCodeEach(type: SdkErrorType, items: Iterable<T>, action: (T) -> Unit) {
         if (delegate != null) {
             delegate.guardSdkCodeEach(type, items, action)
         } else {

@@ -51,7 +51,7 @@ internal class SdkInitEnvironmentAttributesTest {
     @Before
     fun setUp() {
         context = ApplicationProvider.getApplicationContext()
-        errorHandler = FakeErrorHandler(throwOnInternalError = false)
+        errorHandler = FakeErrorHandler(throwOnSdkError = false)
         powerManager = context.getSystemService(Context.POWER_SERVICE) as PowerManager
         shadowPowerManager = Shadow.extract(powerManager)
         shadowPowerManager.thermalStatus = PowerManager.THERMAL_STATUS_MODERATE
@@ -63,7 +63,7 @@ internal class SdkInitEnvironmentAttributesTest {
     @Test
     fun `a device that answers everything records every attribute and reports nothing`() {
         buildEnvironmentAttributes().assertDefaults()
-        assertNoInternalErrors()
+        assertNoSdkErrors()
     }
 
     @Test
@@ -108,7 +108,7 @@ internal class SdkInitEnvironmentAttributesTest {
         val attributes = buildEnvironmentAttributes()
         attributes.assertAttribute(THERMAL_STATUS, "severe")
         attributes.assertDefaultsExcept(THERMAL_STATUS)
-        assertNoInternalErrors()
+        assertNoSdkErrors()
     }
 
     @Test
@@ -117,7 +117,7 @@ internal class SdkInitEnvironmentAttributesTest {
         val attributes = buildEnvironmentAttributes()
         attributes.assertAttribute(THERMAL_STATUS, "99")
         attributes.assertDefaultsExcept(THERMAL_STATUS)
-        assertNoInternalErrors()
+        assertNoSdkErrors()
     }
 
     @Test
@@ -126,7 +126,7 @@ internal class SdkInitEnvironmentAttributesTest {
         val attributes = buildEnvironmentAttributes()
         attributes.assertAbsent(THERMAL_STATUS)
         attributes.assertDefaultsExcept(THERMAL_STATUS)
-        assertNoInternalErrors()
+        assertNoSdkErrors()
     }
 
     @Test
@@ -138,7 +138,7 @@ internal class SdkInitEnvironmentAttributesTest {
         attributes.assertAbsent(THERMAL_STATUS)
         attributes.assertAbsent(THERMAL_HEADROOM_PCT)
         attributes.assertDefaultsExcept(THERMAL_STATUS, THERMAL_HEADROOM_PCT)
-        assertNoInternalErrors()
+        assertNoSdkErrors()
     }
 
     @Test
@@ -146,7 +146,7 @@ internal class SdkInitEnvironmentAttributesTest {
         val attributes = buildEnvironmentAttributes(versionChecker = { min -> min < THERMAL_HEADROOM_PCT_MIN_API })
         attributes.assertAbsent(THERMAL_HEADROOM_PCT)
         attributes.assertDefaultsExcept(THERMAL_HEADROOM_PCT)
-        assertNoInternalErrors()
+        assertNoSdkErrors()
     }
 
     @Test
@@ -157,7 +157,7 @@ internal class SdkInitEnvironmentAttributesTest {
             val attributes = buildEnvironmentAttributes()
             attributes.assertAttribute(THERMAL_HEADROOM_PCT, THERMAL_HEADROOM_PCT_UNAVAILABLE)
             attributes.assertDefaultsExcept(THERMAL_HEADROOM_PCT)
-            assertNoInternalErrors()
+            assertNoSdkErrors()
         }
     }
 
@@ -168,7 +168,7 @@ internal class SdkInitEnvironmentAttributesTest {
             val attributes = buildEnvironmentAttributes()
             attributes.assertAttribute(THERMAL_HEADROOM_PCT, expected)
             attributes.assertDefaultsExcept(THERMAL_HEADROOM_PCT)
-            assertNoInternalErrors()
+            assertNoSdkErrors()
         }
     }
 
@@ -218,7 +218,7 @@ internal class SdkInitEnvironmentAttributesTest {
         attributes.assertAttribute(SECONDS_SINCE_INSTALL, "0")
         attributes.assertAttribute(SECONDS_SINCE_UPDATE, "0")
         attributes.assertDefaultsExcept(SECONDS_SINCE_INSTALL, SECONDS_SINCE_UPDATE)
-        assertNoInternalErrors()
+        assertNoSdkErrors()
     }
 
     @Test
@@ -239,7 +239,7 @@ internal class SdkInitEnvironmentAttributesTest {
         // the low memory flag is present only when the system reports it
         attributes.assertAbsent(LOW_MEMORY)
         attributes.assertDefaultsExcept(MEM_AVAILABLE_PCT, LOW_MEMORY)
-        assertNoInternalErrors()
+        assertNoSdkErrors()
     }
 
     @Test
@@ -276,7 +276,7 @@ internal class SdkInitEnvironmentAttributesTest {
         val attributes = buildEnvironmentAttributes()
         attributes.assertAttribute(SECONDS_SINCE_BOOT, "90")
         attributes.assertDefaultsExcept(SECONDS_SINCE_BOOT)
-        assertNoInternalErrors()
+        assertNoSdkErrors()
     }
 
     @Test
@@ -285,7 +285,7 @@ internal class SdkInitEnvironmentAttributesTest {
         val attributes = buildEnvironmentAttributes()
         attributes.assertAttribute(SECONDS_SINCE_BOOT, "0")
         attributes.assertDefaultsExcept(SECONDS_SINCE_BOOT)
-        assertNoInternalErrors()
+        assertNoSdkErrors()
     }
 
     @Test
@@ -312,7 +312,7 @@ internal class SdkInitEnvironmentAttributesTest {
             val attributes = buildEnvironmentAttributes()
             attributes.assertAttribute(PREFS_FILE_BYTES, "0")
             attributes.assertDefaultsExcept(PREFS_FILE_BYTES)
-            assertNoInternalErrors()
+            assertNoSdkErrors()
         }
     }
 
@@ -331,7 +331,7 @@ internal class SdkInitEnvironmentAttributesTest {
         attributes.assertAttribute(ART_COMPILER_FILTER, "verify")
         attributes.assertAttribute(APP_IMAGE_AT_INIT, "false")
         attributes.assertDefaultsExcept(ART_COMPILER_FILTER, APP_IMAGE_AT_INIT)
-        assertNoInternalErrors()
+        assertNoSdkErrors()
     }
 
     @Test
@@ -343,7 +343,7 @@ internal class SdkInitEnvironmentAttributesTest {
             attributes.assertAttribute(ART_COMPILER_FILTER, filter)
             attributes.assertAttribute(APP_IMAGE_AT_INIT, "true")
             attributes.assertDefaultsExcept(ART_COMPILER_FILTER)
-            assertNoInternalErrors()
+            assertNoSdkErrors()
         }
     }
 
@@ -354,7 +354,7 @@ internal class SdkInitEnvironmentAttributesTest {
         attributes.assertAbsent(ART_COMPILER_FILTER)
         attributes.assertAbsent(APP_IMAGE_AT_INIT)
         attributes.assertDefaultsExcept(ART_COMPILER_FILTER, APP_IMAGE_AT_INIT)
-        assertNoInternalErrors()
+        assertNoSdkErrors()
     }
 
     @Test
@@ -435,18 +435,18 @@ internal class SdkInitEnvironmentAttributesTest {
      * Asserts an attribute capture failure occurred for exactly the given attributes, in order.
      */
     private fun assertCaptureFailureReported(vararg keys: String) {
-        assertEquals(keys.size, errorHandler.internalErrorMessages.size)
-        assertTrue(errorHandler.internalErrorMessages.all { it.msg == "SdkInitAttributeCaptureFail" })
+        assertEquals(keys.size, errorHandler.sdkErrorMessages.size)
+        assertTrue(errorHandler.sdkErrorMessages.all { it.msg == "SdkInitAttributeCaptureFail" })
         if (keys.isNotEmpty()) {
             assertEquals(
                 keys.toList(),
-                errorHandler.internalErrorMessages.map { it.throwable?.message?.substringAfterLast(": ") },
+                errorHandler.sdkErrorMessages.map { it.throwable?.message?.substringAfterLast(": ") },
             )
         }
     }
 
-    private fun assertNoInternalErrors() {
-        assertEquals(0, errorHandler.internalErrorMessages.size)
+    private fun assertNoSdkErrors() {
+        assertEquals(0, errorHandler.sdkErrorMessages.size)
     }
 
     private companion object {

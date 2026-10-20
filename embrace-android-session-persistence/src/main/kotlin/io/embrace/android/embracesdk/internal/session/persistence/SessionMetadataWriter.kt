@@ -1,7 +1,7 @@
 package io.embrace.android.embracesdk.internal.session.persistence
 
 import io.embrace.android.embracesdk.internal.logging.ErrorHandler
-import io.embrace.android.embracesdk.internal.logging.InternalErrorType
+import io.embrace.android.embracesdk.internal.logging.SdkErrorType
 import io.embrace.android.embracesdk.internal.payload.EnvelopeMetadata
 import io.embrace.android.embracesdk.internal.payload.EnvelopeResource
 import io.embrace.android.embracesdk.internal.utils.SystemTrace
@@ -81,6 +81,6 @@ class SessionMetadataWriter(
     }
 
     private fun trackFailure(exc: Throwable) {
-        errorHandler.trackInternalError(InternalErrorType.SessionMetadataWriteFail, exc)
+        errorHandler.trackSdkError(SdkErrorType.SessionMetadataWriteFail, exc)
     }
 }

@@ -25,10 +25,10 @@ internal class HucInstrumentationEnabledTest(
     val testRule: SdkIntegrationTestRule = SdkIntegrationTestRule(otelSdkMode = otelSdkMode)
 
     @Test
-    fun `sdk starts successfully but internal error logged when HUC instrumentation enabled`() {
+    fun `sdk starts successfully but SDK error logged when HUC instrumentation enabled`() {
         testRule.runTest(
             setupAction = {
-                getFakeErrorHandler().throwOnInternalError = false
+                getFakeErrorHandler().throwOnSdkError = false
             },
             instrumentedConfig = FakeInstrumentedConfig(
                 enabledFeatures = FakeEnabledFeatureConfig(
@@ -42,7 +42,7 @@ internal class HucInstrumentationEnabledTest(
             assertAction = {
                 // URL's stream handler factory is JVM-global, so whichever mode runs second also logs
                 // 'factory already defined' from the fallback registration.
-                val errorTypes = getSingleLogEnvelope().getLogsOfType(EmbType.System.InternalError).map {
+                val errorTypes = getSingleLogEnvelope().getLogsOfType(EmbType.System.SdkError).map {
                     checkNotNull(it.attributes).findAttributeValue(ExceptionAttributes.EXCEPTION_TYPE)
                 }
                 assertEquals("java.lang.reflect.InaccessibleObjectException", errorTypes.first())
@@ -52,7 +52,7 @@ internal class HucInstrumentationEnabledTest(
     }
 
     @Test
-    fun `sdk starts successfully with no internal error when HUC disabled`() {
+    fun `sdk starts successfully with no SDK error when HUC disabled`() {
         testRule.runTest(
             instrumentedConfig = FakeInstrumentedConfig(
                 enabledFeatures = FakeEnabledFeatureConfig(

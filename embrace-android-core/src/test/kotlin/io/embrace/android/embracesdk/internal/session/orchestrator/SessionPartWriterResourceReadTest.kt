@@ -83,7 +83,7 @@ internal class SessionPartWriterResourceReadTest {
         sessionsDir = tempFolder.newFolder("embrace_sessions_split")
         clock = FakeClock()
         executor = BlockingScheduledExecutorService(clock, true)
-        errorHandler = FakeErrorHandler(throwOnInternalError = false)
+        errorHandler = FakeErrorHandler(throwOnSdkError = false)
         inFlightSpan = FakeEmbraceSdkSpan(name = "emb-network-request").apply { start(clock.now()) }
         inFlightSpans = listOf(inFlightSpan)
         sessionSpan = FakeEmbraceSdkSpan(name = "emb-session", type = EmbType.Ux.Session).apply { start(clock.now()) }
@@ -116,7 +116,7 @@ internal class SessionPartWriterResourceReadTest {
         assertEquals(RESOURCE, envelope.resource)
         assertEquals("my-user-id", envelope.metadata?.userId)
         assertEquals(SYMBOLS, envelope.data.sharedLibSymbolMapping)
-        assertEquals(emptyList<FakeErrorHandler.LogMessage>(), errorHandler.internalErrorMessages)
+        assertEquals(emptyList<FakeErrorHandler.LogMessage>(), errorHandler.sdkErrorMessages)
     }
 
     @Test
@@ -125,7 +125,7 @@ internal class SessionPartWriterResourceReadTest {
         val expected = checkNotNull(sessionSpan.snapshot())
         assertEquals(expected, envelope.data.spanSnapshots?.single { it.spanId == sessionSpan.spanId })
         assertNull(envelope.data.spans?.find { it.spanId == sessionSpan.spanId })
-        assertEquals(emptyList<FakeErrorHandler.LogMessage>(), errorHandler.internalErrorMessages)
+        assertEquals(emptyList<FakeErrorHandler.LogMessage>(), errorHandler.sdkErrorMessages)
     }
 
     @Test
@@ -138,7 +138,7 @@ internal class SessionPartWriterResourceReadTest {
         val expected = checkNotNull(sessionSpan.snapshot())
         assertEquals(expected, envelope.data.spans?.last())
         assertNull(envelope.data.spanSnapshots?.find { it.spanId == sessionSpan.spanId })
-        assertEquals(emptyList<FakeErrorHandler.LogMessage>(), errorHandler.internalErrorMessages)
+        assertEquals(emptyList<FakeErrorHandler.LogMessage>(), errorHandler.sdkErrorMessages)
     }
 
     @Test
@@ -150,7 +150,7 @@ internal class SessionPartWriterResourceReadTest {
                 it.spanId == inFlightSpan.spanId
             },
         )
-        assertEquals(emptyList<FakeErrorHandler.LogMessage>(), errorHandler.internalErrorMessages)
+        assertEquals(emptyList<FakeErrorHandler.LogMessage>(), errorHandler.sdkErrorMessages)
     }
 
     @Test
@@ -167,7 +167,7 @@ internal class SessionPartWriterResourceReadTest {
             RESOURCE.copy(screenResolution = "1440x3120", reactNativeBundleId = "bundle-2"),
             envelope.resource,
         )
-        assertEquals(emptyList<FakeErrorHandler.LogMessage>(), errorHandler.internalErrorMessages)
+        assertEquals(emptyList<FakeErrorHandler.LogMessage>(), errorHandler.sdkErrorMessages)
     }
 
     @Test
@@ -175,7 +175,7 @@ internal class SessionPartWriterResourceReadTest {
         writeSessionPart()
         File(partDir(), METADATA_FILE_NAME).delete()
         assertNull(service.reconstruct(directory()))
-        assertEquals(listOf("SessionReconstructionFail"), errorHandler.internalErrorMessages.map { it.msg })
+        assertEquals(listOf("SessionReconstructionFail"), errorHandler.sdkErrorMessages.map { it.msg })
     }
 
     private fun activeSpans(): List<EmbraceSdkSpan> =

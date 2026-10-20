@@ -58,7 +58,7 @@ import io.embrace.android.embracesdk.internal.instrumentation.startup.sdkInitEnv
 import io.embrace.android.embracesdk.internal.instrumentation.startup.toSdkInitDurationAttributes
 import io.embrace.android.embracesdk.internal.instrumentation.thread.blockage.ThreadBlockageService
 import io.embrace.android.embracesdk.internal.logging.ErrorHandler
-import io.embrace.android.embracesdk.internal.logging.InternalErrorType
+import io.embrace.android.embracesdk.internal.logging.SdkErrorType
 import io.embrace.android.embracesdk.internal.logs.LogLimitingService
 import io.embrace.android.embracesdk.internal.logs.LogOrchestrator
 import io.embrace.android.embracesdk.internal.logs.attachments.AttachmentService
@@ -313,7 +313,7 @@ internal class RealSdkInstance(
                         try {
                             spanRepository.stopTimedOutSpans(clock.now())
                         } catch (exc: Throwable) {
-                            errorHandler.trackInternalError(InternalErrorType.SpanTimeoutSweepFail, exc)
+                            errorHandler.trackSdkError(SdkErrorType.SpanTimeoutSweepFail, exc)
                         }
                     },
                     SPAN_TIMEOUT_SWEEP_INTERVAL_MS,
@@ -401,7 +401,7 @@ internal class RealSdkInstance(
                 }
             }
         } catch (t: Throwable) {
-            errorHandler.trackInternalError(InternalErrorType.InstrumentationRegFail, t)
+            errorHandler.trackSdkError(SdkErrorType.InstrumentationRegFail, t)
         }
     }
 
@@ -473,8 +473,8 @@ internal class RealSdkInstance(
                     resurrectionAttempted = true
                 } else {
                     val payloadCount = cacheStorageService?.getUndeliveredPayloads()?.size ?: 0
-                    errorHandler.trackInternalError(
-                        type = InternalErrorType.PayloadResurrectionFail,
+                    errorHandler.trackSdkError(
+                        type = SdkErrorType.PayloadResurrectionFail,
                         throwable = IllegalStateException(
                             "Resurrection service not found. Undelivered payloads not processed: $payloadCount",
                         ),
@@ -548,7 +548,7 @@ internal class RealSdkInstance(
         try {
             init()
         } catch (t: Throwable) {
-            errorHandler.trackInternalError(InternalErrorType.SdkInitPhaseFail, t)
+            errorHandler.trackSdkError(SdkErrorType.SdkInitPhaseFail, t)
         }
     }
 

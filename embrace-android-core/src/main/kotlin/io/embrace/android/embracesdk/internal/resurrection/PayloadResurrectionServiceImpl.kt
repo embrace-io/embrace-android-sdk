@@ -11,7 +11,7 @@ import io.embrace.android.embracesdk.internal.delivery.storage.CachedLogEnvelope
 import io.embrace.android.embracesdk.internal.delivery.storage.PayloadStorageService
 import io.embrace.android.embracesdk.internal.instrumentation.crash.ndk.NativeCrashService
 import io.embrace.android.embracesdk.internal.logging.ErrorHandler
-import io.embrace.android.embracesdk.internal.logging.InternalErrorType
+import io.embrace.android.embracesdk.internal.logging.SdkErrorType
 import io.embrace.android.embracesdk.internal.payload.Envelope
 import io.embrace.android.embracesdk.internal.payload.LogPayload
 import io.embrace.android.embracesdk.internal.payload.NativeCrashData
@@ -57,14 +57,14 @@ internal class PayloadResurrectionServiceImpl(
             runCatching {
                 processTombstones(nativeCrashServiceProvider, userSessionRestoreDecisionProvider(), pendingSessionPartIdsProvider)
             }.onFailure {
-                errorHandler.trackInternalError(InternalErrorType.PayloadResurrectionFail, it)
+                errorHandler.trackSdkError(SdkErrorType.PayloadResurrectionFail, it)
             }
         }
         completionListeners.forEach { listener ->
             runCatching {
                 listener()
             }.onFailure {
-                errorHandler.trackInternalError(InternalErrorType.PayloadResurrectionFail, it)
+                errorHandler.trackSdkError(SdkErrorType.PayloadResurrectionFail, it)
             }
         }
     }
@@ -107,8 +107,8 @@ internal class PayloadResurrectionServiceImpl(
                     isBackgroundOnly = restoreDecision?.takeIf { it.userSessionId == payload.userSessionId }?.backgroundOnly == true,
                 )
             }.onFailure {
-                errorHandler.trackInternalError(
-                    type = InternalErrorType.PayloadResurrectionPayloadFail,
+                errorHandler.trackSdkError(
+                    type = SdkErrorType.PayloadResurrectionPayloadFail,
                     throwable = it,
                 )
             }
@@ -142,7 +142,7 @@ internal class PayloadResurrectionServiceImpl(
         nativeCrashService: NativeCrashService,
     ) {
         // We assume that there can ever only be one cached crash envelope and one sessionless native crash
-        // Internal errors will be logged if that assumption is not true, as we currently don't store enough
+        // SDK errors will be logged if that assumption is not true, as we currently don't store enough
         // metadata in the native crash to determine which app instance it came from if it isn't associated with
         // a session.
         //
@@ -179,8 +179,8 @@ internal class PayloadResurrectionServiceImpl(
                         metadata = metadata,
                     )
                 } else {
-                    errorHandler.trackInternalError(
-                        type = InternalErrorType.NativeCrashResurrectionError,
+                    errorHandler.trackSdkError(
+                        type = SdkErrorType.NativeCrashResurrectionError,
                         throwable = IllegalStateException("Cached native crash envelope data not found"),
                     )
                 }
@@ -193,8 +193,8 @@ internal class PayloadResurrectionServiceImpl(
                 )
             }
             if (sessionlessNativeCrashes.size > 1) {
-                errorHandler.trackInternalError(
-                    type = InternalErrorType.NativeCrashResurrectionError,
+                errorHandler.trackSdkError(
+                    type = SdkErrorType.NativeCrashResurrectionError,
                     throwable = IllegalStateException("Multiple sessionless native crashes found."),
                 )
             }
@@ -321,7 +321,7 @@ internal class PayloadResurrectionServiceImpl(
             try {
                 task.get(5, TimeUnit.SECONDS)
             } catch (e: TimeoutException) {
-                errorHandler.trackInternalError(InternalErrorType.IntakeFail, e)
+                errorHandler.trackSdkError(SdkErrorType.IntakeFail, e)
             }
         }
     }

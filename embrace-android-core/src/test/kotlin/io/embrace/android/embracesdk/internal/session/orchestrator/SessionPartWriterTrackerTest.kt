@@ -65,7 +65,7 @@ internal class SessionPartWriterTrackerTest {
             ),
             TestUuidSource(),
             clock,
-            FakeErrorHandler(throwOnInternalError = false),
+            FakeErrorHandler(throwOnSdkError = false),
             resourceSource,
             { EnvelopeMetadata() },
             currentSessionPartSpan,

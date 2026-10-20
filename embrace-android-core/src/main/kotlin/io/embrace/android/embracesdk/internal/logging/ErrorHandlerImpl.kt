@@ -10,7 +10,7 @@ internal const val EMBRACE_TAG = "[Embrace]"
 
 /**
  * Implementation of [ErrorHandler] that logs to Android logcat & buffers SDK errors until they can be sent
- * to our internaltelemetry.
+ * to our internal telemetry.
  */
 class ErrorHandlerImpl(
     private val clock: Clock = NormalizedIntervalClock(),
@@ -36,18 +36,18 @@ class ErrorHandlerImpl(
         }
     }
 
-    override fun trackInternalError(type: InternalErrorType, throwable: Throwable) {
+    override fun trackSdkError(type: SdkErrorType, throwable: Throwable) {
         report(type, throwable)
     }
 
-    override fun <T> guardSdkCode(type: InternalErrorType, default: T, action: () -> T): T = try {
+    override fun <T> guardSdkCode(type: SdkErrorType, default: T, action: () -> T): T = try {
         action()
     } catch (exc: Throwable) {
         report(type, exc)
         default
     }
 
-    override fun <T> guardSdkCodeEach(type: InternalErrorType, items: Iterable<T>, action: (T) -> Unit) {
+    override fun <T> guardSdkCodeEach(type: SdkErrorType, items: Iterable<T>, action: (T) -> Unit) {
         try {
             items.forEach { item -> guardSdkCode(type, Unit) { action(item) } }
         } catch (exc: ConcurrentModificationException) {
@@ -63,15 +63,15 @@ class ErrorHandlerImpl(
         throw UserCodeException(exc)
     }
 
-    private fun report(type: InternalErrorType, exc: Throwable) {
+    private fun report(type: SdkErrorType, exc: Throwable) {
         when {
-            type == InternalErrorType.Ignored -> Unit
+            type == SdkErrorType.Ignored -> Unit
             exc is UserCodeException -> log("App-supplied code threw an exception ($type)", exc.cause)
-            else -> trackSdkError(type, exc)
+            else -> capture(type, exc)
         }
     }
 
-    private fun trackSdkError(type: InternalErrorType, throwable: Throwable) {
+    private fun capture(type: SdkErrorType, throwable: Throwable) {
         runCatching {
             if (!type.shouldCapture() || !enabled || count.incrementAndGet() > limit) {
                 return

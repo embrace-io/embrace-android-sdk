@@ -61,7 +61,7 @@ internal class ResurrectionFeatureTest(
             fakeStorageLayer = true,
         ).apply {
             getFakedWorkerExecutor(Worker.Background.SessionPersistenceWorker).blockingMode = false
-            getFakeErrorHandler().throwOnInternalError = false
+            getFakeErrorHandler().throwOnSdkError = false
         }.also {
             cacheStorageService = checkNotNull(it.fakeCacheStorageService)
         }
@@ -283,7 +283,7 @@ internal class ResurrectionFeatureTest(
         )
     }
 
-    @Ignore("Flakey because the internal errors sometimes comes before the crash")
+    @Ignore("Flakey because the SDK errors sometimes comes before the crash")
     @Test
     fun `native crash without session or crash envelope is sent with current SDK envelope`() {
         val crashData = createStoredNativeCrashData(

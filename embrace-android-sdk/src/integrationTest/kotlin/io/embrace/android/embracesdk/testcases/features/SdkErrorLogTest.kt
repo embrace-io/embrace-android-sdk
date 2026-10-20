@@ -2,7 +2,7 @@ package io.embrace.android.embracesdk.testcases.features
 
 import io.embrace.android.embracesdk.assertions.getLogWithAttributeValue
 import io.embrace.android.embracesdk.internal.logging.ErrorHandler
-import io.embrace.android.embracesdk.internal.logging.InternalErrorType
+import io.embrace.android.embracesdk.internal.logging.SdkErrorType
 import io.embrace.android.embracesdk.internal.otel.sdk.findAttributeValue
 import io.embrace.android.embracesdk.testframework.OtelSdkMode
 import io.embrace.android.embracesdk.testframework.SdkIntegrationTestRule
@@ -25,17 +25,17 @@ internal class SdkErrorLogTest(
     val testRule: SdkIntegrationTestRule = SdkIntegrationTestRule(otelSdkMode = otelSdkMode)
 
     @Test
-    fun `internal error log delivered`() {
+    fun `SDK error log delivered`() {
         lateinit var errorHandler: ErrorHandler
 
         testRule.runTest(
             setupAction = {
-                getFakeErrorHandler().throwOnInternalError = false
+                getFakeErrorHandler().throwOnSdkError = false
                 errorHandler = getFakeErrorHandler()
             },
             testCaseAction = {
                 recordSession {
-                    errorHandler.trackInternalError(InternalErrorType.InternalInterfaceFail, RuntimeException("Some error message"))
+                    errorHandler.trackSdkError(SdkErrorType.InternalInterfaceFail, RuntimeException("Some error message"))
                 }
             },
             assertAction = {
@@ -62,11 +62,11 @@ internal class SdkErrorLogTest(
     }
 
     @Test
-    fun `internal error tracked before sdk start delivered`() {
+    fun `SDK error tracked before sdk start delivered`() {
         testRule.runTest(
             setupAction = {
-                getFakeErrorHandler().throwOnInternalError = false
-                getFakeErrorHandler().trackInternalError(InternalErrorType.InternalInterfaceFail, RuntimeException("Early error"))
+                getFakeErrorHandler().throwOnSdkError = false
+                getFakeErrorHandler().trackSdkError(SdkErrorType.InternalInterfaceFail, RuntimeException("Early error"))
             },
             testCaseAction = {
                 recordSession()

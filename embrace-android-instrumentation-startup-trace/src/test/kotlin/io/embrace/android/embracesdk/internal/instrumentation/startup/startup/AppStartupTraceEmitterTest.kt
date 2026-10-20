@@ -779,7 +779,7 @@ internal class AppStartupTraceEmitterTest {
             }
         }
 
-        assertEquals(0, errorHandler.internalErrorMessages.size)
+        assertEquals(0, errorHandler.sdkErrorMessages.size)
     }
 
     private fun AppStartupTraceEmitter.initApp(hasAppInitEvents: Boolean, isColdStart: Boolean): AppInitTimestamps {

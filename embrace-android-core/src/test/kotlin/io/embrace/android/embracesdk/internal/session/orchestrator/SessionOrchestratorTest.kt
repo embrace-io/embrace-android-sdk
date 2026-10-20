@@ -38,7 +38,7 @@ import io.embrace.android.embracesdk.internal.config.resolved.EmbraceConfig
 import io.embrace.android.embracesdk.internal.config.resolved.PersistenceConfig
 import io.embrace.android.embracesdk.internal.delivery.caching.PayloadCachingService
 import io.embrace.android.embracesdk.internal.delivery.caching.PayloadCachingServiceImpl
-import io.embrace.android.embracesdk.internal.logging.InternalErrorType
+import io.embrace.android.embracesdk.internal.logging.SdkErrorType
 import io.embrace.android.embracesdk.internal.otel.spans.EmbraceSdkSpan
 import io.embrace.android.embracesdk.internal.session.LifeEventType
 import io.embrace.android.embracesdk.internal.session.UserSessionMetadata
@@ -107,7 +107,7 @@ internal class SessionOrchestratorTest {
     @Before
     fun setUp() {
         clock = FakeClock()
-        errorHandler = FakeErrorHandler(throwOnInternalError = false)
+        errorHandler = FakeErrorHandler(throwOnSdkError = false)
         startupClassifier = StartupClassifierImpl()
         sessionsDir = tempFolder.newFolder("embrace_sessions_split")
     }
@@ -834,9 +834,9 @@ internal class SessionOrchestratorTest {
         val session = activeUserSession()
         assertNotEquals("future-id", session.userSessionId)
 
-        val errors = errorHandler.internalErrorMessages
+        val errors = errorHandler.sdkErrorMessages
         assertEquals(1, errors.size)
-        assertEquals(InternalErrorType.ClockBackwardsShift.toString(), errors[0].msg)
+        assertEquals(SdkErrorType.ClockBackwardsShift.toString(), errors[0].msg)
     }
 
     @Test
@@ -858,9 +858,9 @@ internal class SessionOrchestratorTest {
         assertEquals(1, second.partIndex)
         assertEquals(true, second.isBackgroundOnly)
 
-        val errors = errorHandler.internalErrorMessages
+        val errors = errorHandler.sdkErrorMessages
         assertEquals(1, errors.size)
-        assertEquals(InternalErrorType.ClockBackwardsShift.toString(), errors[0].msg)
+        assertEquals(SdkErrorType.ClockBackwardsShift.toString(), errors[0].msg)
     }
 
     @Test
@@ -973,7 +973,7 @@ internal class SessionOrchestratorTest {
         assertEquals(sessionTracker.getActiveSessionPartId(), directory.sessionPartId)
         assertEquals(activeUserSession().userSessionId, directory.userSessionId)
         assertEquals(orchestratorStartTimeMs, directory.timestamp)
-        assertNoInternalErrors()
+        assertNoSdkErrors()
     }
 
     @Test
@@ -992,7 +992,7 @@ internal class SessionOrchestratorTest {
         val directories = sessionPartDirs()
         assertEquals(partIds, directories.map(SessionPartDirectory::sessionPartId))
         assertEquals(3, directories.map(SessionPartDirectory::dirName).distinct().size)
-        assertNoInternalErrors()
+        assertNoSdkErrors()
     }
 
     @Test
@@ -1002,7 +1002,7 @@ internal class SessionOrchestratorTest {
         orchestrator.onBackground()
 
         assertEquals(emptyList<SessionPartDirectory>(), sessionPartDirs())
-        assertNoInternalErrors()
+        assertNoSdkErrors()
     }
 
     @Test
@@ -1015,7 +1015,7 @@ internal class SessionOrchestratorTest {
         orchestrator.onBackground()
 
         assertEquals(listOf(initial), sessionPartDirs())
-        assertNoInternalErrors()
+        assertNoSdkErrors()
     }
 
     @Test
@@ -1027,7 +1027,7 @@ internal class SessionOrchestratorTest {
         orchestrator.handleCrash("crash-id")
 
         assertEquals(listOf(initial), partDirs())
-        assertNoInternalErrors()
+        assertNoSdkErrors()
     }
 
     @Test
@@ -1040,7 +1040,7 @@ internal class SessionOrchestratorTest {
 
         assertEquals(clock.now().millisToNanos(), sessionSpanIn(first)?.end_time_unix_nano)
         assertNull(sessionSpanIn(second)?.end_time_unix_nano)
-        assertNoInternalErrors()
+        assertNoSdkErrors()
     }
 
     @Test
@@ -1051,7 +1051,7 @@ internal class SessionOrchestratorTest {
         orchestrator.handleCrash("crash-id")
 
         assertEquals(clock.now().millisToNanos(), sessionSpanOnDisk(sessionPartId)?.end_time_unix_nano)
-        assertNoInternalErrors()
+        assertNoSdkErrors()
     }
 
     @Test
@@ -1064,7 +1064,7 @@ internal class SessionOrchestratorTest {
 
         assertNull(sessionTracker.getActiveSessionPartId())
         assertEquals(clock.now().millisToNanos(), sessionSpanIn(sessionPartId)?.end_time_unix_nano)
-        assertNoInternalErrors()
+        assertNoSdkErrors()
     }
 
     @Test
@@ -1076,7 +1076,7 @@ internal class SessionOrchestratorTest {
 
         assertEquals(emptyList<Any>(), store.storedSessionPartPayloads)
         assertTrue(sessionPartDirs().any { it.sessionPartId == sessionPartId })
-        assertNoInternalErrors()
+        assertNoSdkErrors()
     }
 
     @Test
@@ -1089,7 +1089,7 @@ internal class SessionOrchestratorTest {
         assertEquals(0, payloadCollator.finalEnvelopeCount)
         assertEquals(1, payloadCollator.endedWithoutEnvelopeCount)
         assertEquals(clock.now().millisToNanos(), sessionSpanIn(sessionPartId)?.end_time_unix_nano)
-        assertNoInternalErrors()
+        assertNoSdkErrors()
     }
 
     @Test
@@ -1101,7 +1101,7 @@ internal class SessionOrchestratorTest {
         assertEquals(1, payloadCollator.finalEnvelopeCount)
         assertEquals(0, payloadCollator.endedWithoutEnvelopeCount)
         assertEquals(1, store.storedSessionPartPayloads.size)
-        assertNoInternalErrors()
+        assertNoSdkErrors()
     }
 
     @Test
@@ -1113,7 +1113,7 @@ internal class SessionOrchestratorTest {
         sessionCacheExecutor.runCurrentlyBlocked()
 
         assertEquals(emptyList<Any>(), store.cachedSessionPartPayloads)
-        assertNoInternalErrors()
+        assertNoSdkErrors()
     }
 
     private fun createOrchestrator(
@@ -2034,8 +2034,8 @@ internal class SessionOrchestratorTest {
     private fun isSessionSpan(span: SpanProto): Boolean =
         span.attributes.any { it.key == "emb.type" && it.value_ == "ux.session" }
 
-    private fun assertNoInternalErrors() {
-        assertEquals(emptyList<FakeErrorHandler.LogMessage>(), errorHandler.internalErrorMessages)
+    private fun assertNoSdkErrors() {
+        assertEquals(emptyList<FakeErrorHandler.LogMessage>(), errorHandler.sdkErrorMessages)
     }
 
     private fun activeUserSession(): UserSessionMetadata = checkNotNull(orchestrator.currentUserSession())

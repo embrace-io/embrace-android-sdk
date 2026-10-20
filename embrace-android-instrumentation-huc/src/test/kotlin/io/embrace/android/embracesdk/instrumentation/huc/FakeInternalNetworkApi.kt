@@ -21,5 +21,5 @@ internal class FakeInternalNetworkApi(
         method: String,
     ): Boolean = captureNetworkBody
 
-    override fun logInternalError(error: Throwable) {}
+    override fun logSdkError(error: Throwable) {}
 }

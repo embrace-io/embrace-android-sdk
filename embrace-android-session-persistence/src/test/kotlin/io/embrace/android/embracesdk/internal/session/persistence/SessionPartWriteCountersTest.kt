@@ -43,7 +43,7 @@ internal class SessionPartWriteCountersTest {
         recorder = FakeSectionRecorder()
         SystemTrace.recorder = recorder
 
-        val errorHandler = FakeErrorHandler(throwOnInternalError = false)
+        val errorHandler = FakeErrorHandler(throwOnSdkError = false)
         target = SessionPartWriteTarget(lazy { sessionsDir }, FakeClock()) { partDirectory }
         completedSpansWriter = CompletedSpansWriter(target, errorHandler)
         spanSnapshotsWriter = SpanSnapshotsWriter(target, errorHandler)

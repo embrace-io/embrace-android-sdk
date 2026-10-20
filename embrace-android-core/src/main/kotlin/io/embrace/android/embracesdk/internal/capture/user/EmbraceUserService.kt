@@ -2,7 +2,7 @@ package io.embrace.android.embracesdk.internal.capture.user
 
 import io.embrace.android.embracesdk.internal.clock.Clock
 import io.embrace.android.embracesdk.internal.logging.ErrorHandler
-import io.embrace.android.embracesdk.internal.logging.InternalErrorType
+import io.embrace.android.embracesdk.internal.logging.SdkErrorType
 import io.embrace.android.embracesdk.internal.payload.UserInfo
 import io.embrace.android.embracesdk.internal.store.KeyValueStore
 import io.embrace.android.embracesdk.internal.utils.EmbTrace
@@ -66,7 +66,7 @@ internal class EmbraceUserService(
         return try {
             getStoredUserInfo()
         } catch (ex: Exception) {
-            errorHandler.trackInternalError(InternalErrorType.UserLoadFail, ex)
+            errorHandler.trackSdkError(SdkErrorType.UserLoadFail, ex)
             null
         }
     }
@@ -195,7 +195,7 @@ internal class EmbraceUserService(
         }
         listeners.forEach { listener ->
             runCatching(listener).onFailure {
-                errorHandler.trackInternalError(InternalErrorType.UserInfoCallbackFail, it)
+                errorHandler.trackSdkError(SdkErrorType.UserInfoCallbackFail, it)
             }
         }
     }

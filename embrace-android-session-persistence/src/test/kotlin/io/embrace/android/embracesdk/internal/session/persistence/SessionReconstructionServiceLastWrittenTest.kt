@@ -46,7 +46,7 @@ internal class SessionReconstructionServiceLastWrittenTest {
     fun setUp() {
         sessionsDir = tempFolder.newFolder("embrace_sessions")
         clock = FakeClock()
-        errorHandler = FakeErrorHandler(throwOnInternalError = false)
+        errorHandler = FakeErrorHandler(throwOnSdkError = false)
         userId = "userId"
         val target = SessionPartWriteTarget(lazy { sessionsDir }, clock) { partDirectory }
         metadataWriter = SessionMetadataWriter(
@@ -68,7 +68,7 @@ internal class SessionReconstructionServiceLastWrittenTest {
     fun `a part holding only metadata was last written when the metadata was`() {
         assertTrue(metadataWriter.write())
         assertEquals(clock.now(), lastWrittenMs())
-        assertNoInternalErrors()
+        assertNoSdkErrors()
     }
 
     @Test
@@ -99,7 +99,7 @@ internal class SessionReconstructionServiceLastWrittenTest {
         clock.tick(1000)
         assertTrue(completedWriter.write(listOf(fullyPopulatedSpan.copy(spanId = "aaaaaaaaaaaaaaa9"))))
         assertEquals(clock.now(), lastWrittenMs())
-        assertNoInternalErrors()
+        assertNoSdkErrors()
     }
 
     @Test
@@ -113,7 +113,7 @@ internal class SessionReconstructionServiceLastWrittenTest {
         val renamed = inFlightSpan.copy(name = "renamed")
         assertTrue(snapshotsWriter.append(listOf(renamed)) { listOf(renamed) })
         assertEquals(clock.now(), lastWrittenMs())
-        assertNoInternalErrors()
+        assertNoSdkErrors()
     }
 
     @Test
@@ -161,14 +161,14 @@ internal class SessionReconstructionServiceLastWrittenTest {
         val part = checkNotNull(service.reconstruct(partDirectory))
         assertEquals(listOf(fullyPopulatedSpan), part.envelope.data.spans)
         assertNull(part.lastWrittenMs)
-        assertNoInternalErrors()
+        assertNoSdkErrors()
     }
 
     private fun lastWrittenMs(): Long? = checkNotNull(service.reconstruct(partDirectory)).lastWrittenMs
 
     private fun partFile(fileName: String): File = File(File(sessionsDir, partDirectory.dirName), fileName)
 
-    private fun assertNoInternalErrors() {
-        assertEquals(emptyList<FakeErrorHandler.LogMessage>(), errorHandler.internalErrorMessages)
+    private fun assertNoSdkErrors() {
+        assertEquals(emptyList<FakeErrorHandler.LogMessage>(), errorHandler.sdkErrorMessages)
     }
 }

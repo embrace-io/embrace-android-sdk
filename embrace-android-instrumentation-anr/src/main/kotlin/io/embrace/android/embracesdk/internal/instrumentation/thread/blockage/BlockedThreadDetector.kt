@@ -9,7 +9,7 @@ import io.embrace.android.embracesdk.internal.instrumentation.thread.blockage.Th
 import io.embrace.android.embracesdk.internal.instrumentation.thread.blockage.ThreadBlockageEvent.BLOCKED_INTERVAL
 import io.embrace.android.embracesdk.internal.instrumentation.thread.blockage.ThreadBlockageEvent.UNBLOCKED
 import io.embrace.android.embracesdk.internal.logging.ErrorHandler
-import io.embrace.android.embracesdk.internal.logging.InternalErrorType
+import io.embrace.android.embracesdk.internal.logging.SdkErrorType
 import io.embrace.android.embracesdk.internal.worker.BackgroundWorker
 import java.util.concurrent.ScheduledFuture
 import java.util.concurrent.TimeUnit
@@ -138,7 +138,7 @@ class BlockedThreadDetector(
             }
             onMonitorThreadInterval(now)
         } catch (exc: Exception) {
-            errorHandler.trackInternalError(InternalErrorType.ThreadBlockageHeartbeatCheckFail, exc)
+            errorHandler.trackSdkError(SdkErrorType.ThreadBlockageHeartbeatCheckFail, exc)
         }
     }
 

@@ -21,9 +21,9 @@ import java.io.Closeable
 
 /**
  * Constructs the objects needed to load config and decide whether the SDK is disabled. This is constructed before
- * [InitializedModuleGraph] and decides whether to no-op or continue SDK initialization. Construction has no side
- * effects: [start] must be called to begin background work, and [close] must be called if the
- * [InitializedModuleGraph] is never constructed.
+ * the SDK's services and decides whether to no-op or continue SDK initialization. Construction has no side
+ * effects: [start] must be called to begin background work, and [close] must be called if the SDK's services
+ * are never constructed.
  *
  * Each supplier is a test seam and is null in production.
  */

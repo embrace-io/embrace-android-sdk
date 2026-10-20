@@ -63,14 +63,14 @@ internal class InitializedModuleGraphTest {
     @Test
     fun `test default implementation`() {
         with(createModuleGraph()) {
-            assertNotNull(initModule)
+            assertNotNull(startupClassifier)
             assertNotNull(spanService)
             assertNotNull(workerThreadPool)
             assertNotNull(processStateTracker)
             assertNotNull(startupTracker)
             assertNotNull(intakeService)
             assertNotNull(metadataService)
-            assertEquals(clock, initModule.clock)
+            assertEquals(this@InitializedModuleGraphTest.clock, clock)
         }
     }
 
@@ -125,7 +125,6 @@ internal class InitializedModuleGraphTest {
             ),
             sdkStartTimeMs = clock.now(),
             sdkInitResourceUsageTracker = SdkInitResourceUsageTracker(errorHandler),
-            initModuleSupplier = { initModule },
         )
     }
 

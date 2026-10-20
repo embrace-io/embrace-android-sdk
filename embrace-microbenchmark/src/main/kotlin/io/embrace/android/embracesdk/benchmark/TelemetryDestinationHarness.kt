@@ -3,8 +3,6 @@ package io.embrace.android.embracesdk.benchmark
 import io.embrace.android.embracesdk.internal.SystemInfo
 import io.embrace.android.embracesdk.internal.arch.datasource.TelemetryDestination
 import io.embrace.android.embracesdk.internal.arch.destination.TelemetryDestinationImpl
-import io.embrace.android.embracesdk.internal.arch.startup.StartupClassifier
-import io.embrace.android.embracesdk.internal.arch.startup.StartupClassifierImpl
 import io.embrace.android.embracesdk.internal.clock.Clock
 import io.embrace.android.embracesdk.internal.clock.NormalizedIntervalClock
 import io.embrace.android.embracesdk.internal.config.behavior.BehaviorThresholdCheck
@@ -12,7 +10,6 @@ import io.embrace.android.embracesdk.internal.config.instrumented.InstrumentedCo
 import io.embrace.android.embracesdk.internal.config.instrumented.schema.InstrumentedConfig
 import io.embrace.android.embracesdk.internal.config.remote.OtelKotlinSdkConfig
 import io.embrace.android.embracesdk.internal.config.remote.RemoteConfig
-import io.embrace.android.embracesdk.internal.injection.InitModule
 import io.embrace.android.embracesdk.internal.config.behavior.SensitiveKeysBehavior
 import io.embrace.android.embracesdk.internal.injection.createCurrentSessionPartSpan
 import io.embrace.android.embracesdk.internal.injection.createOtelSdkConfig
@@ -29,13 +26,10 @@ import io.embrace.android.embracesdk.internal.otel.spans.EmbraceSpanFactoryImpl
 import io.embrace.android.embracesdk.internal.otel.spans.SpanRepository
 import io.embrace.android.embracesdk.internal.otel.spans.SpanService
 import io.embrace.android.embracesdk.internal.otel.spans.SpanServiceImpl
-import io.embrace.android.embracesdk.internal.serialization.EmbraceSerializer
-import io.embrace.android.embracesdk.internal.serialization.PlatformSerializer
 import io.embrace.android.embracesdk.internal.telemetry.AppliedLimitType
 import io.embrace.android.embracesdk.internal.telemetry.InternalTelemetryService
 import io.embrace.android.embracesdk.internal.utils.UuidSource
 import io.embrace.android.embracesdk.internal.utils.UuidSourceImpl
-import okhttp3.OkHttpClient
 
 /**
  * [useKotlinSdk] selects the opentelemetry-kotlin implementation that backs the OTel module.
@@ -145,15 +139,12 @@ internal class TelemetryDestinationHarness(
         )
     }
 
-    private class TestInitModule(override val clock: Clock) : InitModule {
-        override val telemetryService: InternalTelemetryService = NoopInternalTelemetryService
-        override val errorHandler: ErrorHandler = ErrorHandlerImpl(clock)
-        override val systemInfo: SystemInfo = SystemInfo()
-        override val uuidSource: UuidSource = UuidSourceImpl()
-        override val startupClassifier: StartupClassifier = StartupClassifierImpl()
-        override val jsonSerializer: PlatformSerializer = EmbraceSerializer()
-        override val instrumentedConfig: InstrumentedConfig = InstrumentedConfigImpl
-        override val okHttpClient: Lazy<OkHttpClient> = lazyOf(OkHttpClient())
+    private class TestInitModule(val clock: Clock) {
+        val telemetryService: InternalTelemetryService = NoopInternalTelemetryService
+        val errorHandler: ErrorHandler = ErrorHandlerImpl(clock)
+        val systemInfo: SystemInfo = SystemInfo()
+        val uuidSource: UuidSource = UuidSourceImpl()
+        val instrumentedConfig: InstrumentedConfig = InstrumentedConfigImpl
     }
 
     private object NoopInternalTelemetryService : InternalTelemetryService {

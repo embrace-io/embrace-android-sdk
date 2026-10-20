@@ -15,8 +15,4 @@ typealias ConfigServiceSupplier = (
     persistedConfig: PersistedConfig,
 ) -> ConfigService
 
-typealias InitModuleSupplier = (
-    preStartServices: PreStartServices,
-) -> InitModule
-
 typealias WorkerThreadPoolSupplier = () -> WorkerThreadPool

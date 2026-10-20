@@ -113,16 +113,13 @@ for the available plugins and what each applies.
 
 ## Dependency Injection
 
-The SDK uses **manual dependency injection** via module interfaces:
+The SDK uses **manual dependency injection** without module objects:
 
-```
-InitModule -> CoreModule -> EssentialServiceModule -> ...
-```
-
-- Each DI module is defined as an **interface** in `embrace-android-core/.../injection/`
-- Implementations are `*Impl` classes (e.g., `InitModuleImpl`)
-- Fake implementations exist in `embrace-test-fakes` for testing (e.g., `FakeInitModule`)
-- `InitializedModuleGraph` in `embrace-android-sdk` wires all modules together
+- `InitializedModuleGraph` in `embrace-android-sdk` constructs every service as a property, wired by hand
+- Service implementations stay `internal` to their module; `embrace-android-core/.../injection/*Factories.kt`
+  expose top-level `create*` functions that return the interface type
+- Test seams are `SdkOverrides` fields, null in production and resolved with `resolve` (`override ?: real`)
+- `FakeInitModule` and other `Fake*Module` classes in `embrace-test-fakes` are plain bundles of fakes for tests
 
 ---
 

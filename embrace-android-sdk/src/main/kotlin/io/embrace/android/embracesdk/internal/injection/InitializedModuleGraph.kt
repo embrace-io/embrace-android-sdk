@@ -3,12 +3,15 @@ package io.embrace.android.embracesdk.internal.injection
 import android.app.ActivityManager
 import android.app.Application
 import android.content.Context
+import io.embrace.android.embracesdk.internal.SystemInfo
 import io.embrace.android.embracesdk.internal.arch.InstrumentationArgs
 import io.embrace.android.embracesdk.internal.arch.InstrumentationRegistry
 import io.embrace.android.embracesdk.internal.arch.InstrumentationRegistryImpl
 import io.embrace.android.embracesdk.internal.arch.datasource.TelemetryDestination
 import io.embrace.android.embracesdk.internal.arch.destination.TelemetryDestinationImpl
 import io.embrace.android.embracesdk.internal.arch.navigation.NavigationTrackingService
+import io.embrace.android.embracesdk.internal.arch.startup.StartupClassifier
+import io.embrace.android.embracesdk.internal.arch.startup.StartupClassifierImpl
 import io.embrace.android.embracesdk.internal.arch.state.ProcessStateTracker
 import io.embrace.android.embracesdk.internal.capture.connectivity.NetworkConnectivityService
 import io.embrace.android.embracesdk.internal.capture.crumbs.BreadcrumbDataSource
@@ -17,8 +20,10 @@ import io.embrace.android.embracesdk.internal.capture.metadata.MetadataService
 import io.embrace.android.embracesdk.internal.capture.metadata.RnBundleIdTracker
 import io.embrace.android.embracesdk.internal.capture.session.UserSessionPropertiesService
 import io.embrace.android.embracesdk.internal.capture.user.UserService
+import io.embrace.android.embracesdk.internal.clock.Clock
 import io.embrace.android.embracesdk.internal.config.ConfigService
 import io.embrace.android.embracesdk.internal.config.behavior.SensitiveKeysBehavior
+import io.embrace.android.embracesdk.internal.config.instrumented.schema.InstrumentedConfig
 import io.embrace.android.embracesdk.internal.delivery.StoredTelemetryMetadata
 import io.embrace.android.embracesdk.internal.delivery.caching.PayloadCachingService
 import io.embrace.android.embracesdk.internal.delivery.debug.DeliveryTracer
@@ -53,6 +58,7 @@ import io.embrace.android.embracesdk.internal.instrumentation.startup.createUiLo
 import io.embrace.android.embracesdk.internal.instrumentation.thread.blockage.ThreadBlockageService
 import io.embrace.android.embracesdk.internal.instrumentation.thread.blockage.ThreadBlockageServiceSupplier
 import io.embrace.android.embracesdk.internal.instrumentation.thread.blockage.createThreadBlockageService
+import io.embrace.android.embracesdk.internal.logging.ErrorHandler
 import io.embrace.android.embracesdk.internal.logs.LogLimitingService
 import io.embrace.android.embracesdk.internal.logs.LogLimitingServiceImpl
 import io.embrace.android.embracesdk.internal.logs.LogOrchestrator
@@ -72,6 +78,7 @@ import io.embrace.android.embracesdk.internal.otel.spans.SpanService
 import io.embrace.android.embracesdk.internal.otel.spans.SpanServiceImpl
 import io.embrace.android.embracesdk.internal.resurrection.PayloadResurrectionService
 import io.embrace.android.embracesdk.internal.resurrection.SessionPartReader
+import io.embrace.android.embracesdk.internal.serialization.PlatformSerializer
 import io.embrace.android.embracesdk.internal.session.id.SessionIdsProvider
 import io.embrace.android.embracesdk.internal.session.id.SessionPartTracker
 import io.embrace.android.embracesdk.internal.session.lifecycle.createLifecycleTracker
@@ -86,21 +93,24 @@ import io.embrace.android.embracesdk.internal.store.KeyValueStore
 import io.embrace.android.embracesdk.internal.store.Ordinal
 import io.embrace.android.embracesdk.internal.store.OrdinalStore
 import io.embrace.android.embracesdk.internal.store.OrdinalStoreImpl
+import io.embrace.android.embracesdk.internal.telemetry.InternalTelemetryService
 import io.embrace.android.embracesdk.internal.utils.BuildVersionChecker
 import io.embrace.android.embracesdk.internal.utils.EmbTrace
+import io.embrace.android.embracesdk.internal.utils.UuidSource
 import io.embrace.android.embracesdk.internal.utils.VersionChecker
 import io.embrace.android.embracesdk.internal.utils.event.EventBus
 import io.embrace.android.embracesdk.internal.worker.PriorityWorker
 import io.embrace.android.embracesdk.internal.worker.Worker
 import io.embrace.android.embracesdk.spans.TracingApi
+import okhttp3.OkHttpClient
 import java.util.concurrent.TimeUnit
 
 /**
  * Constructs objects used by the initialized SDK. Only constructed once [ConfigLoadServices] has
  * confirmed the SDK is not disabled. Construction has no side effects: [start] must be called afterwards.
  *
- * Each supplier is a test seam and is null in production. Where it is null the real construction
- * below runs instead; because [init] is inlined that costs no lambda allocation on the default path.
+ * [SdkOverrides] are test seams and are null in production. Where they are null the real construction
+ * below runs instead; because [resolve] and [init] are inlined that costs no lambda allocation on the default path.
  */
 internal class InitializedModuleGraph(
     context: Context,
@@ -109,18 +119,20 @@ internal class InitializedModuleGraph(
     val sdkStartTimeMs: Long,
     val sdkInitResourceUsageTracker: SdkInitResourceUsageTracker,
     overrides: SdkOverrides? = null,
-    private val initModuleSupplier: InitModuleSupplier? = null,
     private val threadBlockageServiceSupplier: ThreadBlockageServiceSupplier? = null,
 ) {
 
-    val initModule: InitModule = init(name = "init-module", recordDuration = true) {
-        initModuleSupplier?.invoke(preStartServices) ?: InitModuleImpl(
-            preStartServices = preStartServices,
-            uuidSource = configLoadServices.uuidSource,
-            instrumentedConfig = configLoadServices.instrumentedConfig,
-            jsonSerializer = configLoadServices.jsonSerializer,
-            okHttpClient = configLoadServices.okHttpClient,
-        )
+    val clock: Clock = preStartServices.clock
+    val errorHandler: ErrorHandler = preStartServices.errorHandler
+    val systemInfo: SystemInfo = preStartServices.systemInfo
+    val telemetryService: InternalTelemetryService = preStartServices.telemetryService
+    val jsonSerializer: PlatformSerializer = configLoadServices.jsonSerializer
+    val instrumentedConfig: InstrumentedConfig = configLoadServices.instrumentedConfig
+    val okHttpClient: Lazy<OkHttpClient> = configLoadServices.okHttpClient
+    val uuidSource: UuidSource = configLoadServices.uuidSource
+
+    val startupClassifier: StartupClassifier = init(name = "init-module", recordDuration = true) {
+        StartupClassifierImpl()
     }
 
     val workerThreadPool: WorkerThreadPool = init("worker-thread-pool") { configLoadServices.workerThreadPool }
@@ -138,7 +150,7 @@ internal class InitializedModuleGraph(
         )
     }
 
-    private val openTelemetryClock: EmbClock = init("open-telemetry-clock") { EmbClock(initModule.clock) }
+    private val openTelemetryClock: EmbClock = init("open-telemetry-clock") { EmbClock(clock) }
 
     private val sensitiveKeysBehavior: SensitiveKeysBehavior = init("sensitive-keys-behavior") {
         SensitiveKeysBehavior(configService.config.sensitiveKeys)
@@ -154,10 +166,10 @@ internal class InitializedModuleGraph(
                 createOtelSdkConfig(
                     spanRepository = spanRepository,
                     logSink = logSink,
-                    instrumentedConfig = initModule.instrumentedConfig,
-                    systemInfo = initModule.systemInfo,
-                    uuidSource = initModule.uuidSource,
-                    errorHandler = initModule.errorHandler,
+                    instrumentedConfig = instrumentedConfig,
+                    systemInfo = systemInfo,
+                    uuidSource = uuidSource,
+                    errorHandler = errorHandler,
                     externalOtelConfig = preStartServices.externalOtelConfig,
                     sessionIdsProvider = otelSignalContext::getSessionIdsProvider,
                     userIdProvider = otelSignalContext::getUserId,
@@ -174,7 +186,7 @@ internal class InitializedModuleGraph(
                     otelClock = openTelemetryClock,
                     configuration = otelSdkConfig.value,
                     spanServiceProvider = { spanService },
-                    errorHandler = initModule.errorHandler,
+                    errorHandler = errorHandler,
                     useKotlinSdk = configService.otelBehavior.shouldUseKotlinSdk(),
                 )
             }
@@ -184,19 +196,19 @@ internal class InitializedModuleGraph(
     private val dataValidator: DataValidator = init("data-validator") {
         DataValidator(
             bypassValidation = configService::isOnlyUsingOtelExporters,
-            telemetryService = initModule.telemetryService,
+            telemetryService = telemetryService,
         )
     }
 
     val currentSessionPartSpan: CurrentSessionPartSpan = init("current-session-part-span-impl") {
         createCurrentSessionPartSpan(
             openTelemetryClock = openTelemetryClock,
-            telemetryService = initModule.telemetryService,
+            telemetryService = telemetryService,
             spanRepository = spanRepository,
             tracerSupplier = { otelSdkWrapper.value.sdkTracer },
             openTelemetrySupplier = { otelSdkWrapper.value.openTelemetryKotlin },
             embraceSpanFactorySupplier = { embraceSpanFactory },
-            uuidSource = initModule.uuidSource,
+            uuidSource = uuidSource,
             otelBehaviorSupplier = { configService.otelBehavior },
             customBreadcrumbLimitSupplier = { configService.config.breadcrumb.customLimit },
         )
@@ -209,7 +221,7 @@ internal class InitializedModuleGraph(
             dataValidator = dataValidator,
             stopCallback = currentSessionPartSpan::spanStopCallback,
             redactionFunction = createRedactionFunction(sensitiveKeysBehavior),
-            telemetryService = initModule.telemetryService,
+            telemetryService = telemetryService,
         )
     }
 
@@ -244,21 +256,21 @@ internal class InitializedModuleGraph(
     }
 
     val eventBus: EventBus by lazy {
-        EmbTrace.trace("event-bus-init") { EventBus(initModule.errorHandler) }
+        EmbTrace.trace("event-bus-init") { EventBus(errorHandler) }
     }
 
     val appVersionStartupCounter: Int by lazy {
         EmbTrace.trace("app-version-startup-counter-init") {
             ordinalStore.incrementAndGet(
                 ordinal = Ordinal.APP_VERSION_STARTUP,
-                scope = initModule.instrumentedConfig.project.getVersionName() ?: "UNKNOWN",
+                scope = instrumentedConfig.project.getVersionName() ?: "UNKNOWN",
             )
         }
     }
 
     val processStateTracker: ProcessStateTracker = init(name = "essential-service-module", recordDuration = true) {
         createProcessStateTracker(
-            errorHandler = initModule.errorHandler,
+            errorHandler = errorHandler,
             lifecycleTracker = overrides?.lifecycleTracker.resolve {
                 createLifecycleTracker(configService, application, context)
             },
@@ -275,13 +287,13 @@ internal class InitializedModuleGraph(
                 context = appContext,
                 configService = configService,
                 worker = workerThreadPool.backgroundWorker(Worker.Background.NonIoRegWorker),
-                errorHandler = initModule.errorHandler,
+                errorHandler = errorHandler,
             )
         }
     }
 
     val sessionPartTracker: SessionPartTracker = init("session-part-tracker") {
-        createSessionPartTracker(appContext, initModule.errorHandler)
+        createSessionPartTracker(appContext, errorHandler)
     }
 
     val sessionIdsProvider: SessionIdsProvider = init("session-ids-provider") {
@@ -290,7 +302,7 @@ internal class InitializedModuleGraph(
 
     val telemetryDestination: TelemetryDestination = init("telemetry-destination") {
         TelemetryDestinationImpl(
-            clock = initModule.clock,
+            clock = clock,
             spanService = spanService,
             loggerSupplier = { otelSdkWrapper.value.sdkLogger },
             currentSessionPartSpan = currentSessionPartSpan,
@@ -302,20 +314,20 @@ internal class InitializedModuleGraph(
             store = lazy { store },
             configService = configService,
             destination = telemetryDestination,
-            telemetryService = initModule.telemetryService,
+            telemetryService = telemetryService,
         )
     }
 
     val userService: Lazy<UserService> = lazy {
         EmbTrace.trace("user-service-init") {
-            createUserService(store, initModule.clock, initModule.errorHandler)
+            createUserService(store, clock, errorHandler)
         }
     }
 
     val experimentTrackingService: Lazy<ExperimentTrackingService> = lazy {
         EmbTrace.trace("experiment-tracking-service-init") {
             overrides?.experimentTrackingService.resolve {
-                createExperimentTrackingService(configService, initModule.telemetryService, telemetryDestination)
+                createExperimentTrackingService(configService, telemetryService, telemetryDestination)
             }
         }
     }
@@ -323,31 +335,31 @@ internal class InitializedModuleGraph(
     val storageService: StorageService = init("storage-service") {
         EmbraceStorageService(
             appContext,
-            initModule.telemetryService,
+            telemetryService,
             StatFsAvailabilityChecker(appContext),
         )
     }
 
     val instrumentationRegistry: InstrumentationRegistry = init("instrumentation-registry") {
-        overrides?.instrumentationRegistry.resolve { InstrumentationRegistryImpl(initModule.errorHandler) }
+        overrides?.instrumentationRegistry.resolve { InstrumentationRegistryImpl(errorHandler) }
     }
 
     val instrumentationArgs: InstrumentationArgs = init(name = "instrumentation-module", recordDuration = true) {
         createInstrumentationArgs(
             configService = configService,
             destination = telemetryDestination,
-            errorHandler = initModule.errorHandler,
-            clock = initModule.clock,
+            errorHandler = errorHandler,
+            clock = clock,
             context = appContext,
             application = application,
             storeProvider = { store },
-            serializer = initModule.jsonSerializer,
-            uuidSource = initModule.uuidSource,
+            serializer = jsonSerializer,
+            uuidSource = uuidSource,
             ordinalStore = ordinalStore,
             processIdentifier = otelSdkConfig.value.processIdentifier,
             processStateTracker = processStateTracker,
             navigationTrackingService = navigationTrackingService,
-            telemetryService = initModule.telemetryService,
+            telemetryService = telemetryService,
             workerThreadPool = workerThreadPool,
             sessionPartTracker = sessionPartTracker,
             userSessionPropertiesService = userSessionPropertiesService,
@@ -386,12 +398,12 @@ internal class InitializedModuleGraph(
     val appStartupDataCollector: AppStartupDataCollector = init("app-startup-data-collector") {
         val instrumentationArgs = instrumentationArgs
         createAppStartupDataCollector(
-            clock = initModule.clock,
-            errorHandler = initModule.errorHandler,
+            clock = clock,
+            errorHandler = errorHandler,
             destination = instrumentationArgs.destination,
             configService = configService,
             startupService = startupService,
-            startupClassifier = initModule.startupClassifier,
+            startupClassifier = startupClassifier,
             versionChecker = versionChecker,
             activityManager = instrumentationArgs.systemService<ActivityManager>(Context.ACTIVITY_SERVICE),
             backgroundWorker = workerThreadPool.backgroundWorker(Worker.Background.NonIoRegWorker),
@@ -408,8 +420,8 @@ internal class InitializedModuleGraph(
 
     val startupTracker: StartupTracker = init("startup-tracker") {
         createStartupTracker(
-            clock = initModule.clock,
-            errorHandler = initModule.errorHandler,
+            clock = clock,
+            errorHandler = errorHandler,
             configService = configService,
             appStartupDataCollector = appStartupDataCollector,
             uiLoadDataListener = uiLoadDataListener,
@@ -436,8 +448,8 @@ internal class InitializedModuleGraph(
                     context = appContext,
                     worker = worker,
                     processIdProvider = processIdProvider,
-                    errorHandler = initModule.errorHandler,
-                    clock = initModule.clock,
+                    errorHandler = errorHandler,
+                    clock = clock,
                     deliveryTracer = deliveryTracer,
                     limit = overrides?.payloadStorageLimit.resolve { PayloadStorageServiceImpl.DEFAULT_STORAGE_LIMIT },
                 )
@@ -453,8 +465,8 @@ internal class InitializedModuleGraph(
                     context = appContext,
                     worker = worker,
                     processIdProvider = processIdProvider,
-                    errorHandler = initModule.errorHandler,
-                    clock = initModule.clock,
+                    errorHandler = errorHandler,
+                    clock = clock,
                     deliveryTracer = deliveryTracer,
                 )
             }
@@ -466,9 +478,9 @@ internal class InitializedModuleGraph(
             overrides?.requestExecutionService.resolve {
                 createRequestExecutionService(
                     configService = configService,
-                    instrumentedConfig = initModule.instrumentedConfig,
-                    okHttpClient = initModule.okHttpClient,
-                    errorHandler = initModule.errorHandler,
+                    instrumentedConfig = instrumentedConfig,
+                    okHttpClient = okHttpClient,
+                    errorHandler = errorHandler,
                     deliveryTracer = deliveryTracer,
                 )
             }
@@ -484,8 +496,8 @@ internal class InitializedModuleGraph(
                 requestExecutionService,
                 workerThreadPool.backgroundWorker(Worker.Background.DeliverySchedulingWorker),
                 workerThreadPool.backgroundWorker(Worker.Background.HttpRequestWorker),
-                initModule.clock,
-                initModule.errorHandler,
+                clock,
+                errorHandler,
                 deliveryTracer,
             )
         } else {
@@ -501,8 +513,8 @@ internal class InitializedModuleGraph(
                         schedulingService,
                         payloadStorageService,
                         cacheStorageService,
-                        initModule.errorHandler,
-                        initModule.jsonSerializer,
+                        errorHandler,
+                        jsonSerializer,
                         worker,
                         deliveryTracer,
                     )
@@ -517,9 +529,9 @@ internal class InitializedModuleGraph(
         intakeService?.let {
             createPayloadStore(
                 intakeService = it,
-                clock = initModule.clock,
+                clock = clock,
                 processIdProvider = processIdProvider,
-                uuidSource = initModule.uuidSource,
+                uuidSource = uuidSource,
                 sessionIdsProvider = sessionIdsProvider::getActiveSessionIds,
             )
         }
@@ -529,9 +541,9 @@ internal class InitializedModuleGraph(
         payloadStore?.let {
             createPayloadCachingService(
                 worker = workerThreadPool.backgroundWorker(Worker.Background.PeriodicCacheWorker),
-                errorHandler = initModule.errorHandler,
+                errorHandler = errorHandler,
                 periodicCacheIntervalMs = configService.otelBehavior.getPeriodicCacheIntervalMs(),
-                clock = initModule.clock,
+                clock = clock,
                 sessionIdsProvider = sessionIdsProvider,
                 payloadStore = it,
                 deliveryTracer = deliveryTracer,
@@ -544,9 +556,9 @@ internal class InitializedModuleGraph(
             createCachedLogEnvelopeStore(
                 context = appContext,
                 worker = worker,
-                errorHandler = initModule.errorHandler,
-                serializer = initModule.jsonSerializer,
-                clock = initModule.clock,
+                errorHandler = errorHandler,
+                serializer = jsonSerializer,
+                clock = clock,
             )
         }
     }
@@ -580,8 +592,8 @@ internal class InitializedModuleGraph(
             context = appContext,
             configService = configService,
             worker = workerThreadPool.backgroundWorker(Worker.Background.NonIoRegWorker),
-            systemInfo = initModule.systemInfo,
-            errorHandler = initModule.errorHandler,
+            systemInfo = systemInfo,
+            errorHandler = errorHandler,
             hostedSdkVersionInfo = hostedSdkVersionInfo,
             rnBundleIdTracker = rnBundleIdTracker,
             useKotlinSdkProvider = { otelSdkWrapper.value.useKotlinSdk },
@@ -599,8 +611,8 @@ internal class InitializedModuleGraph(
             spanRepository = spanRepository,
             otelPayloadMapper = threadBlockageService,
             processStateTracker = processStateTracker,
-            clock = initModule.clock,
-            errorHandler = initModule.errorHandler,
+            clock = clock,
+            errorHandler = errorHandler,
             envelopeMetadataSource = envelopeMetadataSource,
             resourceSource = resourceSource,
         )
@@ -621,7 +633,7 @@ internal class InitializedModuleGraph(
             context = appContext,
             configService = configService,
             store = store,
-            clock = initModule.clock,
+            clock = clock,
             worker = workerThreadPool.backgroundWorker(Worker.Background.NonIoRegWorker),
         )
     }
@@ -634,8 +646,8 @@ internal class InitializedModuleGraph(
                     payloadStorageService = payloadStorageService,
                     cacheStorageService = cacheStorageService,
                     cachedLogEnvelopeStore = cachedLogEnvelopeStore,
-                    errorHandler = initModule.errorHandler,
-                    serializer = initModule.jsonSerializer,
+                    errorHandler = errorHandler,
+                    serializer = jsonSerializer,
                 )
             } else {
                 null
@@ -652,7 +664,7 @@ internal class InitializedModuleGraph(
             worker = overrides?.logOrchestratorWorker.resolve {
                 workerThreadPool.backgroundWorker(Worker.Background.NonIoRegWorker)
             },
-            clock = initModule.clock,
+            clock = clock,
             sink = logSink,
             payloadStore = payloadStore,
             logEnvelopeSource = logEnvelopeSource,
@@ -669,7 +681,7 @@ internal class InitializedModuleGraph(
             telemetryDestination,
             configService,
             logLimitingService,
-            initModule.telemetryService,
+            telemetryService,
         )
     }
 
@@ -677,8 +689,8 @@ internal class InitializedModuleGraph(
         if (intakeService != null && cachedLogEnvelopeStore != null) {
             createSessionPartReader(
                 context = appContext,
-                clock = initModule.clock,
-                errorHandler = initModule.errorHandler,
+                clock = clock,
+                errorHandler = errorHandler,
                 configService = configService,
                 sessionPersistenceWorker = workerThreadPool.backgroundWorker(Worker.Background.SessionPersistenceWorker),
                 intakeService = intakeService,
@@ -698,11 +710,11 @@ internal class InitializedModuleGraph(
         init(name = "user-session-orchestration-module", recordDuration = true) {
             overrides?.sessionOrchestrator.resolve {
                 createSessionOrchestrator(
-                    clock = initModule.clock,
-                    errorHandler = initModule.errorHandler,
-                    uuidSource = initModule.uuidSource,
-                    startupClassifier = initModule.startupClassifier,
-                    telemetryService = initModule.telemetryService,
+                    clock = clock,
+                    errorHandler = errorHandler,
+                    uuidSource = uuidSource,
+                    startupClassifier = startupClassifier,
+                    telemetryService = telemetryService,
                     configService = configService,
                     processStateTracker = processStateTracker,
                     sessionPartTracker = sessionPartTracker,

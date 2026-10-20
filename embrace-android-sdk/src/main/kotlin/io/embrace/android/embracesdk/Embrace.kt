@@ -4,19 +4,16 @@ import android.annotation.SuppressLint
 import android.util.Log
 import io.embrace.android.embracesdk.internal.api.SdkApi
 import io.embrace.android.embracesdk.internal.injection.PreStartServices
-import io.embrace.android.embracesdk.internal.instance.BufferingSdkInstance
-import io.embrace.android.embracesdk.internal.instance.NoopInternalTelemetryService
 import io.embrace.android.embracesdk.internal.instance.NoopSdkInstance
-import io.embrace.android.embracesdk.internal.instance.SdkStateHolder
 import io.embrace.android.embracesdk.internal.instance.createSdkStateHolder
 import io.embrace.android.embracesdk.internal.logging.ErrorHandlerImpl
 import io.embrace.android.embracesdk.internal.utils.EmbTrace
 
-private val sdkStateHolder = try {
+private val sdkApi: SdkApi = try {
     EmbTrace.trace(sectionName = "embrace-impl-init", recordDuration = true) {
         createSdkStateHolder(
             preStartServices = EmbTrace.trace("pre-start-services-init") { PreStartServices() },
-        )
+        ).api
     }
 } catch (exc: Throwable) {
     // not possible to report, but don't throw
@@ -25,16 +22,9 @@ private val sdkStateHolder = try {
         "Failed to create the Embrace SDK instance. All Embrace API calls will be no-ops and no telemetry will be captured.",
         exc,
     )
-    val errorHandler = ErrorHandlerImpl(System::currentTimeMillis)
-    val instance = NoopSdkInstance(errorHandler, NoopSdkInstance.SDK_NOT_INITIALIZED)
-    SdkStateHolder(
-        instanceFactory = { instance },
-        preStart = BufferingSdkInstance(System::currentTimeMillis, errorHandler),
-        failed = { instance },
-        disabled = { instance },
-        telemetryService = NoopInternalTelemetryService,
-        errorHandler = errorHandler,
-    )
+    // The fallback deliberately touches as few classes as possible, as the failure above may have been class linkage.
+    // Anything thrown here escapes as an ExceptionInInitializerError, so no further fallback is attempted.
+    NoopSdkInstance(ErrorHandlerImpl(System::currentTimeMillis), NoopSdkInstance.SDK_NOT_INITIALIZED)
 }
 
 /**
@@ -43,7 +33,7 @@ private val sdkStateHolder = try {
  * Contains a singleton instance of itself, and is used for initializing the SDK.
  */
 @SuppressLint("EmbracePublicApiPackageRule")
-public object Embrace : SdkApi by sdkStateHolder.api {
+public object Embrace : SdkApi by sdkApi {
 
     /**
      * Gets the singleton instance of the Embrace SDK.

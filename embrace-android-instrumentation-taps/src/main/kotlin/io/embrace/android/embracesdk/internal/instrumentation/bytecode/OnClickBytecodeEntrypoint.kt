@@ -14,7 +14,8 @@ object OnClickBytecodeEntrypoint {
     @Suppress("unused")
     @Keep
     @JvmStatic
-    fun onClick(view: View) {
+    fun onClick(view: View?) {
+        view ?: return
         tapDataSource?.logTouchEvent(view, TapBreadcrumbType.TAP)
     }
 }

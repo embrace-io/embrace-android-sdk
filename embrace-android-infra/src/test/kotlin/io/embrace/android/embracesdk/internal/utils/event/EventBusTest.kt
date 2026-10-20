@@ -231,6 +231,21 @@ internal class EventBusTest {
     }
 
     @Test
+    fun `a handler that throws an Error during dispatch is reported rather than thrown`() {
+        val received = AtomicInteger()
+        bus.addHandler(appKey) { throw NoClassDefFoundError("boom") }
+        bus.addHandler(appKey) { received.incrementAndGet() }
+
+        bus.emit(appKey, ForegroundEvent())
+
+        assertEquals("the handler after the throwing one was not invoked", 1, received.get())
+        assertEquals(
+            listOf(SdkErrorType.EventBusHandlerFail.toString()),
+            errorHandler.sdkErrorMessages.map { it.msg },
+        )
+    }
+
+    @Test
     fun `a handler that throws on every event is reported once`() {
         bus.addHandler(appKey) { error("boom") }
 

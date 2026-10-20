@@ -225,7 +225,7 @@ class EventBus(private val errorHandler: ErrorHandler) {
         val value = currentState(key) ?: return
         try {
             handler.onEvent(value)
-        } catch (failure: Exception) {
+        } catch (failure: Throwable) {
             reportFailure(handler, failure)
         }
     }
@@ -236,13 +236,13 @@ class EventBus(private val errorHandler: ErrorHandler) {
             val typed = handler as EventHandler<E>
             try {
                 typed.onEvent(event)
-            } catch (failure: Exception) {
+            } catch (failure: Throwable) {
                 reportFailure(handler, failure)
             }
         }
     }
 
-    private fun reportFailure(registrant: Any, failure: Exception) {
+    private fun reportFailure(registrant: Any, failure: Throwable) {
         if (loggedFailures.add(registrant)) {
             errorHandler.trackSdkError(SdkErrorType.EventBusHandlerFail, failure)
 

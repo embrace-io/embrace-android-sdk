@@ -357,8 +357,10 @@ internal class RealSdkInstance(
      */
     private fun loadInstrumentationProviders(): List<InstrumentationProvider> {
         val providers = mutableListOf<InstrumentationProvider>()
-        for (provider in ServiceLoader.load(InstrumentationProvider::class.java, InstrumentationProvider::class.java.classLoader)) {
-            providers.add(provider)
+        val iterator = ServiceLoader.load(InstrumentationProvider::class.java, InstrumentationProvider::class.java.classLoader).iterator()
+
+        while (errorHandler.guardSdkCode(SdkErrorType.InstrumentationRegFail, false, iterator::hasNext)) {
+            errorHandler.guardSdkCode(SdkErrorType.InstrumentationRegFail) { providers.add(iterator.next()) }
         }
         return providers
     }

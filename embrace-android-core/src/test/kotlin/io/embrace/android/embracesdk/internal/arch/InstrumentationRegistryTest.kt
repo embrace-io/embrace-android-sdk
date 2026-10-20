@@ -55,6 +55,21 @@ internal class InstrumentationRegistryTest {
     }
 
     @Test
+    fun `a provider that throws before registering does not stop the providers after it`() {
+        val args = FakeInstrumentationArgs(Application())
+        val initOrder = mutableListOf<Int>()
+        val broken = object : InstrumentationProvider {
+            override val priority: Int = 10
+            override val asyncInit: Boolean
+                get() = throw NoClassDefFoundError("boom")
+
+            override fun register(args: InstrumentationArgs) = null
+        }
+        registry.loadInstrumentations(listOf(broken, FakeInstrumentationProvider(100, initOrder::add)), args)
+        assertEquals(listOf(100), initOrder)
+    }
+
+    @Test
     fun `add creates and enables the data source`() {
         assertEquals(dataSource, registry.add { dataSource })
         assertEquals(dataSource, registry.findByType(FakeDataSource::class))

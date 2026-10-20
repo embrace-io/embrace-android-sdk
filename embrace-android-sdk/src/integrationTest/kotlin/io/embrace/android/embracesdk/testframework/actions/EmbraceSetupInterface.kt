@@ -30,8 +30,6 @@ import io.embrace.android.embracesdk.internal.delivery.storage.StorageLocation
 import io.embrace.android.embracesdk.internal.delivery.storage.asFile
 import io.embrace.android.embracesdk.internal.injection.ConfigLoadServices
 import io.embrace.android.embracesdk.internal.injection.ConfigLoadServicesSupplier
-import io.embrace.android.embracesdk.internal.injection.CoreModule
-import io.embrace.android.embracesdk.internal.injection.CoreModuleImpl
 import io.embrace.android.embracesdk.internal.injection.InitModule
 import io.embrace.android.embracesdk.internal.injection.InitializedModuleGraph
 import io.embrace.android.embracesdk.internal.injection.ModuleGraphSupplier
@@ -171,11 +169,11 @@ internal class EmbraceSetupInterface(
     /** Runs the log orchestrator's batch checks on the fake clock rather than after real delays. */
     private val logOrchestratorExecutor = BlockingScheduledExecutorService(fakeClock, blockingMode = false)
 
-    private val fakeCoreModule: CoreModule = FakeCoreModule()
+    private val fakeCoreModule: FakeCoreModule = FakeCoreModule()
 
     /**
      * The SDK's store, backed by the same `SharedPreferences` the module graph will use. Owned here
-     * rather than read off [CoreModule] because tests write to it in `setupAction`, before the module
+     * rather than read off the module graph because tests write to it in `setupAction`, before the module
      * graph exists.
      */
     private val keyValueStore: KeyValueStore by lazy {
@@ -216,6 +214,10 @@ internal class EmbraceSetupInterface(
         payloadStorageLimit = { payloadStorageLimit },
         lifecycleTracker = { AndroidxProcessLifecycleTracker(fakeLifecycleOwner) },
         networkConnectivityService = { fakeNetworkConnectivityService },
+        appContext = {
+            moduleGraphFailure?.let { throw it }
+            fakeCoreModule.context
+        },
     )
 
     fun createModuleGraphSupplier(): ModuleGraphSupplier =
@@ -247,11 +249,6 @@ internal class EmbraceSetupInterface(
                 userIdProvider = userIdProvider,
                 eventMetadataProvider = eventMetadataProvider,
             ).also { openTelemetryModuleOrNull = it }
-        },
-        // forwards the supplied store so the module shares one instance with PersistedConfig, as in production
-        coreModuleSupplier = { _, _, suppliedStore ->
-            moduleGraphFailure?.let { throw it }
-            CoreModuleImpl(fakeCoreModule.context, fakeInitModule, suppliedStore)
         },
         threadBlockageServiceSupplier = { args ->
             if (threadBlockageWatchdogThread != null) {

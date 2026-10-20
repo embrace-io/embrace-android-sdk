@@ -40,7 +40,7 @@ internal class UserSessionClockAnomalyTest(
             assertAction = {
                 val sessions = getSessionEnvelopes(2, assertOrdering = false)
                 assertDistinctUserSessions(sessions[0], sessions[1])
-                val errorHandler = testRule.moduleGraph.errorHandler as FakeErrorHandler
+                val errorHandler = testRule.services.errorHandler as FakeErrorHandler
 
                 assertTrue(errorHandler.sdkErrorMessages.any {
                     it.msg == SdkErrorType.ClockBackwardsShift.toString()
@@ -69,7 +69,7 @@ internal class UserSessionClockAnomalyTest(
                 val session = getSingleSessionEnvelope()
                 assertNotEquals(staleUserSessionId, session.getUserSessionId())
 
-                val errorHandler = testRule.moduleGraph.errorHandler as FakeErrorHandler
+                val errorHandler = testRule.services.errorHandler as FakeErrorHandler
                 assertTrue(errorHandler.sdkErrorMessages.any {
                     it.msg == SdkErrorType.ClockBackwardsShift.toString()
                 })

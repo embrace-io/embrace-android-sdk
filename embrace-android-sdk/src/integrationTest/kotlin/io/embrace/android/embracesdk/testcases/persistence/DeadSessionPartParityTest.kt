@@ -128,7 +128,7 @@ internal class DeadSessionPartParityTest(
     fun `a native crash in the part the process died in is attached to it during the next launch`() {
         lateinit var deadPart: SessionIdsSnapshot
         killActiveSessionPart(instrumentedConfig = nativeCrashConfig) {
-            deadPart = testRule.moduleGraph.sessionIdsProvider.getActiveSessionIds()
+            deadPart = testRule.services.sessionIdsProvider.getActiveSessionIds()
         }
         val crash = NativeCrashData(
             nativeCrashId = "dead-process-crash",
@@ -155,13 +155,13 @@ internal class DeadSessionPartParityTest(
         val deadProcesses = 3
         val deadPartIds = (1..deadProcesses).map { process ->
             if (process > 1) {
-                testRule.moduleGraph.networkConnectivityService.close()
-                testRule.moduleGraph.otelSdkConfig.value.close()
-                testRule.moduleGraph.workerThreadPool.close()
+                testRule.services.networkConnectivityService.close()
+                testRule.services.otelSdkConfig.close()
+                testRule.services.workerThreadPool.close()
             }
             lateinit var deadPart: SessionIdsSnapshot
             killActiveSessionPart(killBeforeResurrection = true) {
-                deadPart = testRule.moduleGraph.sessionIdsProvider.getActiveSessionIds()
+                deadPart = testRule.services.sessionIdsProvider.getActiveSessionIds()
             }
             deadPart.sessionPartId
         }
@@ -214,9 +214,9 @@ internal class DeadSessionPartParityTest(
         setupAction: EmbraceSetupInterface.() -> Unit = {},
         assertAction: EmbracePayloadAssertionInterface.() -> Unit,
     ) {
-        testRule.moduleGraph.networkConnectivityService.close()
-        testRule.moduleGraph.otelSdkConfig.value.close()
-        testRule.moduleGraph.workerThreadPool.close()
+        testRule.services.networkConnectivityService.close()
+        testRule.services.otelSdkConfig.close()
+        testRule.services.workerThreadPool.close()
         testRule.runTest(
             instrumentedConfig = instrumentedConfig,
             persistedRemoteConfig = remoteConfig(),
@@ -281,7 +281,7 @@ internal class DeadSessionPartParityTest(
                 shutdownNow()
             }
         }
-        checkNotNull(testRule.moduleGraph.intakeService).shutdown()
+        testRule.services.intakeService.shutdown()
     }
 
     private fun remoteConfig() = RemoteConfig(

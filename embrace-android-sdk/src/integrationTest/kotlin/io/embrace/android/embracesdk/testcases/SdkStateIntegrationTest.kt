@@ -139,7 +139,7 @@ internal class SdkStateIntegrationTest(
                 assertEquals("value", span.attributes?.findAttributeValue("key"))
                 assertEquals(
                     calls.experimentRecords,
-                    testRule.moduleGraph.experimentTrackingService.value.getRecords(),
+                    testRule.services.experimentTrackingService.getRecords(),
                 )
                 assertEquals(listOf(LOG_2), getSingleLogEnvelope().data.logs?.map { it.body })
             },
@@ -231,7 +231,7 @@ internal class SdkStateIntegrationTest(
                 errorHandler = getFakeErrorHandler().apply {
                     throwOnSdkError = false
                 }
-                moduleGraphFailure = failure
+                constructionFailure = failure
             },
             testCaseAction = {
                 assertEquals(SdkState.FAILED, sdkState)

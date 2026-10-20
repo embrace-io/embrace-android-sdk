@@ -210,7 +210,7 @@ internal class ThreadBlockageFeatureTest(
         intervalMs: Long = INTERVAL_MS,
         incomplete: Boolean = false,
     ) {
-        testRule.moduleGraph.threadBlockageService?.simulateTargetThreadResponse()
+        testRule.services.threadBlockageService?.simulateTargetThreadResponse()
         with(watchdogExecutor) {
             blockingMode = true
 
@@ -225,7 +225,7 @@ internal class ThreadBlockageFeatureTest(
 
             if (!incomplete) {
                 // simulate the main thread becoming responsive again, ending the interval
-                testRule.moduleGraph.threadBlockageService?.simulateTargetThreadResponse()
+                testRule.services.threadBlockageService?.simulateTargetThreadResponse()
             }
 
             blockingMode = false

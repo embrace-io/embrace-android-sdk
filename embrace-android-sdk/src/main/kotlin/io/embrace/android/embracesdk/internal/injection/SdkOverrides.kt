@@ -11,9 +11,12 @@ import io.embrace.android.embracesdk.internal.delivery.storage.PayloadStorageSer
 import io.embrace.android.embracesdk.internal.instrumentation.thread.blockage.ThreadBlockageService
 import io.embrace.android.embracesdk.internal.otel.config.OtelSdkConfig
 import io.embrace.android.embracesdk.internal.otel.sdk.OtelSdkWrapper
+import io.embrace.android.embracesdk.internal.otel.spans.SpanRepository
+import io.embrace.android.embracesdk.internal.session.id.SessionIdsProvider
 import io.embrace.android.embracesdk.internal.session.lifecycle.LifecycleTracker
 import io.embrace.android.embracesdk.internal.session.orchestrator.SessionOrchestrator
 import io.embrace.android.embracesdk.internal.utils.VersionChecker
+import io.embrace.android.embracesdk.internal.utils.event.EventBus
 import io.embrace.android.embracesdk.internal.worker.BackgroundWorker
 
 /**
@@ -39,4 +42,7 @@ internal class SdkOverrides(
     val sessionOrchestrator: Override<SessionOrchestrator>? = null,
     val intakeService: Override<IntakeService>? = null,
     val experimentTrackingService: Override<ExperimentTrackingService>? = null,
+    val sessionIdsProvider: Override<SessionIdsProvider>? = null,
+    val spanRepository: Override<SpanRepository>? = null,
+    val eventBus: Override<EventBus>? = null,
 )

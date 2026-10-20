@@ -42,7 +42,7 @@ internal class UserSessionTimeoutGoldenFileTest(
         testRule.runTest(
             testCaseAction = {
                 recordSession {
-                    val behavior = testRule.moduleGraph.configService.sessionBehavior
+                    val behavior = testRule.services.configService.sessionBehavior
                     clock.tick(behavior.getMaxSessionDurationMs() + 1)
                     testRule.setup.getFakedWorkerExecutor(Worker.Background.NonIoRegWorker).runCurrentlyBlocked()
                 }

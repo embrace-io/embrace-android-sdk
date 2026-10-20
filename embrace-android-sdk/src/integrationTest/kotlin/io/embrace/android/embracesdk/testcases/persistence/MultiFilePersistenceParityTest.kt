@@ -559,14 +559,14 @@ internal class MultiFilePersistenceParityTest(
             },
             assertAction = {
                 crashedProcessId =
-                    testRule.moduleGraph.otelSdkConfig.value.processIdentifier
+                    testRule.services.otelSdkConfig.processIdentifier
             },
         )
 
         // tear the crashed process down so the next launch reads the shared storage from scratch
-        testRule.moduleGraph.networkConnectivityService.close()
-        testRule.moduleGraph.otelSdkConfig.value.close()
-        testRule.moduleGraph.workerThreadPool.close()
+        testRule.services.networkConnectivityService.close()
+        testRule.services.otelSdkConfig.close()
+        testRule.services.workerThreadPool.close()
 
         testRule.runTest(
             persistedRemoteConfig = remoteConfig(),
@@ -630,9 +630,9 @@ internal class MultiFilePersistenceParityTest(
             },
         )
 
-        testRule.moduleGraph.networkConnectivityService.close()
-        testRule.moduleGraph.otelSdkConfig.value.close()
-        testRule.moduleGraph.workerThreadPool.close()
+        testRule.services.networkConnectivityService.close()
+        testRule.services.otelSdkConfig.close()
+        testRule.services.workerThreadPool.close()
 
         // Verify the real payload gets delivered in a new process with an unblocked worker if we are in multi-file mode.
         // This part ended cleanly, so it must not be treated as terminated by the process's death, and is delivered as
@@ -917,9 +917,9 @@ internal class MultiFilePersistenceParityTest(
      * carries the expected set of metadata prefixed by [token].
      */
     private fun relaunchAndAssertDeliveredMetadata(token: String) {
-        testRule.moduleGraph.networkConnectivityService.close()
-        testRule.moduleGraph.otelSdkConfig.value.close()
-        testRule.moduleGraph.workerThreadPool.close()
+        testRule.services.networkConnectivityService.close()
+        testRule.services.otelSdkConfig.close()
+        testRule.services.workerThreadPool.close()
         testRule.runTest(
             instrumentedConfig = hostedSdkConfig,
             persistedRemoteConfig = remoteConfig(),
@@ -953,7 +953,7 @@ internal class MultiFilePersistenceParityTest(
                 shutdownNow()
             }
         }
-        checkNotNull(testRule.moduleGraph.intakeService).shutdown()
+        testRule.services.intakeService.shutdown()
     }
 
     /**
@@ -1006,7 +1006,7 @@ internal class MultiFilePersistenceParityTest(
      * next launch to send again.
      */
     private fun awaitDeliveredSessionPayloadsDeleted() {
-        val storage = checkNotNull(testRule.moduleGraph.payloadStorageService)
+        val storage = testRule.services.payloadStorageService
         waitUntilConditionMet(
             dataProvider = { storage.getPayloadsByPriority().count { it.envelopeType == SupportedEnvelopeType.SESSION } },
             condition = { it == 0 },
@@ -1050,7 +1050,7 @@ internal class MultiFilePersistenceParityTest(
      * storage service, which keeps its index in step with the disk.
      */
     private fun freePayloadStorage(entries: List<StoredTelemetryMetadata>) {
-        val storage = checkNotNull(testRule.moduleGraph.payloadStorageService)
+        val storage = testRule.services.payloadStorageService
         val deleted = CountDownLatch(entries.size)
         entries.forEach { storage.delete(it) { deleted.countDown() } }
         assertTrue("the payload storage was not freed", deleted.await(5, TimeUnit.SECONDS))

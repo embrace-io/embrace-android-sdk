@@ -48,7 +48,7 @@ internal class UserSessionInactivityTimeoutGoldenFileTest(
                 backgroundActivityConfig = BackgroundActivityRemoteConfig(100f)
             ),
             testCaseAction = {
-                val behavior = testRule.moduleGraph.configService.sessionBehavior
+                val behavior = testRule.services.configService.sessionBehavior
                 val workerExecutor = testRule.setup.getFakedWorkerExecutor(Worker.Background.NonIoRegWorker)
 
                 // record initial session

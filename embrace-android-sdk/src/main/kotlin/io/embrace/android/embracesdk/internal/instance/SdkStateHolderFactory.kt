@@ -5,7 +5,6 @@ import io.embrace.android.embracesdk.internal.api.delegate.PreStartOTelApi
 import io.embrace.android.embracesdk.internal.injection.ConfigLoadServices
 import io.embrace.android.embracesdk.internal.injection.ConfigLoadServicesSupplier
 import io.embrace.android.embracesdk.internal.injection.InitializedModuleGraph
-import io.embrace.android.embracesdk.internal.injection.ModuleGraphSupplier
 import io.embrace.android.embracesdk.internal.injection.PreStartServices
 import io.embrace.android.embracesdk.internal.injection.SdkOverrides
 import io.embrace.android.embracesdk.internal.instrumentation.startup.SdkInitResourceUsageTracker
@@ -21,9 +20,7 @@ import io.embrace.android.embracesdk.internal.utils.SystemTrace
 internal fun createSdkStateHolder(
     preStartServices: PreStartServices = PreStartServices(),
     configLoadServicesSupplier: ConfigLoadServicesSupplier? = null,
-    moduleGraphSupplier: ModuleGraphSupplier? = null,
     sdkInitResourceUsageTrackerSupplier: Provider<SdkInitResourceUsageTracker>? = null,
-    onModuleGraphCreated: ((InitializedModuleGraph) -> Unit)? = null,
     overrides: SdkOverrides? = null,
 ): SdkStateHolder {
     val errorHandler = preStartServices.errorHandler
@@ -43,12 +40,10 @@ internal fun createSdkStateHolder(
                         preStartServices,
                         buffer,
                         configLoadServicesSupplier,
-                        moduleGraphSupplier,
                         sdkInitResourceUsageTrackerSupplier,
                         overrides,
                     )
                 }?.let { moduleGraph ->
-                    onModuleGraphCreated?.invoke(moduleGraph)
                     EmbTrace.trace("real-sdk-instance-init") {
                         createRealSdkInstance(
                             moduleGraph = moduleGraph,
@@ -75,7 +70,6 @@ private fun createModuleGraph(
     preStartServices: PreStartServices,
     buffer: BufferingSdkInstance,
     configLoadServicesSupplier: ConfigLoadServicesSupplier?,
-    moduleGraphSupplier: ModuleGraphSupplier?,
     sdkInitResourceUsageTrackerSupplier: Provider<SdkInitResourceUsageTracker>?,
     overrides: SdkOverrides?,
 ): InitializedModuleGraph? {
@@ -111,14 +105,7 @@ private fun createModuleGraph(
             null
         } else {
             val graph = EmbTrace.trace("initialized-module-graph-init") {
-                moduleGraphSupplier?.invoke(
-                    context,
-                    preStartServices,
-                    configLoadServices,
-                    sdkStartTimeMs,
-                    sdkInitResourceUsageTracker,
-                    overrides,
-                ) ?: InitializedModuleGraph(
+                InitializedModuleGraph(
                     context,
                     preStartServices,
                     configLoadServices,

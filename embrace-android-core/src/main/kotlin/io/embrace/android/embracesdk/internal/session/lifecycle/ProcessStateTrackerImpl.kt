@@ -57,7 +57,7 @@ internal class ProcessStateTrackerImpl(
     override fun getAppState(): ProcessState = lifecycleTracker.getProcessState()
 
     override fun close() {
-        runCatching { lifecycleTracker.close() }
+        errorHandler.guardSdkCode(SdkErrorType.ResourceCloseFail) { lifecycleTracker.close() }
         listeners.clear()
         sessionOrchestrator = null
     }

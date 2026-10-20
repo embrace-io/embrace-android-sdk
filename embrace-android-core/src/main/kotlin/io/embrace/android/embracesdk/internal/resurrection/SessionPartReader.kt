@@ -131,9 +131,9 @@ class SessionPartReader(
      * delivered yet.
      */
     fun storedSessionPartIds(): Set<String> =
-        runCatching {
+        errorHandler.guardSdkCode(SdkErrorType.SessionPartReadFail, emptySet()) {
             directoryStore.storedDirectories().mapTo(HashSet(), SessionPartDirectory::sessionPartId)
-        }.getOrDefault(emptySet())
+        }
 
     private fun deletePersistedSessionParts() {
         EmbTrace.trace("mf-delete-session-parts") {

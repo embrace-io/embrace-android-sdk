@@ -47,7 +47,7 @@ internal class NetworkCallbackConnectivityService(
         backgroundWorker.submit {
             val manager = connectivityManager.value
             if (manager != null && !registered.getAndSet(true)) {
-                updateSafely {
+                errorHandler.guardSdkCode(SdkErrorType.ConnectivityUpdateFailure) {
                     manager.activeNetwork?.let { defaultNetwork ->
                         synchronized(currentNetwork) {
                             updateNetwork(defaultNetwork)
@@ -64,9 +64,9 @@ internal class NetworkCallbackConnectivityService(
     }
 
     override fun close() {
-        runCatching {
+        errorHandler.guardSdkCode(SdkErrorType.ConnectivityUpdateFailure) {
             backgroundWorker.submit {
-                updateSafely {
+                errorHandler.guardSdkCode(SdkErrorType.ConnectivityUpdateFailure) {
                     if (registered.getAndSet(false)) {
                         connectivityManager.value?.unregisterNetworkCallback(this)
                     }
@@ -76,7 +76,7 @@ internal class NetworkCallbackConnectivityService(
     }
 
     override fun addNetworkConnectivityListener(listener: NetworkConnectivityListener) {
-        updateSafely {
+        errorHandler.guardSdkCode(SdkErrorType.ConnectivityUpdateFailure) {
             listeners.add(listener)
             listener.onNetworkConnectivityStatusChanged(currentStatus.get())
         }
@@ -98,7 +98,7 @@ internal class NetworkCallbackConnectivityService(
             if (currentStatus.get() != newStatus) {
                 currentStatus.set(newStatus)
                 for (listener in listeners) {
-                    updateSafely {
+                    errorHandler.guardSdkCode(SdkErrorType.ConnectivityUpdateFailure) {
                         listener.onNetworkConnectivityStatusChanged(newStatus)
                     }
                 }
@@ -116,7 +116,4 @@ internal class NetworkCallbackConnectivityService(
             else -> ConnectivityStatus.Unknown(connected)
         }
     }
-
-    private fun updateSafely(action: () -> Unit) =
-        errorHandler.guardSdkCode(SdkErrorType.ConnectivityUpdateFailure, action)
 }

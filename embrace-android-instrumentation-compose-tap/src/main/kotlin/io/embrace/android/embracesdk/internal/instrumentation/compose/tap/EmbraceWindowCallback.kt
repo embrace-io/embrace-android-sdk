@@ -7,6 +7,7 @@ import android.view.Menu
 import android.view.MotionEvent
 import android.view.Window
 import io.embrace.android.embracesdk.internal.logging.ErrorHandler
+import io.embrace.android.embracesdk.internal.logging.SdkErrorType
 
 /**
  * Custom Window callback that triggers onTouch event
@@ -30,12 +31,10 @@ internal class EmbraceWindowCallback(
             return delegate.dispatchTouchEvent(event)
         }
         event?.let {
-            try {
+            errorHandler.guardSdkCode(SdkErrorType.UiCallbackFail) {
                 val copy = MotionEvent.obtain(it)
                 gestureDetector.onTouchEvent(copy)
                 copy.recycle()
-            } catch (e: Throwable) {
-                errorHandler.log("Touch event dispatch failed", e, severity = ErrorHandler.Severity.ERROR)
             }
         }
 

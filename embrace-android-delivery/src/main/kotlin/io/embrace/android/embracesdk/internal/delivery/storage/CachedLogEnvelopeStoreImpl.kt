@@ -3,6 +3,7 @@ package io.embrace.android.embracesdk.internal.delivery.storage
 import io.embrace.android.embracesdk.internal.clock.Clock
 import io.embrace.android.embracesdk.internal.delivery.StoredTelemetryMetadata
 import io.embrace.android.embracesdk.internal.logging.ErrorHandler
+import io.embrace.android.embracesdk.internal.logging.SdkErrorType
 import io.embrace.android.embracesdk.internal.payload.Envelope
 import io.embrace.android.embracesdk.internal.payload.Envelope.Companion.createLogEnvelope
 import io.embrace.android.embracesdk.internal.payload.EnvelopeMetadata
@@ -15,7 +16,7 @@ import java.io.File
 class CachedLogEnvelopeStoreImpl(
     outputDir: Lazy<File>,
     worker: PriorityWorker<StoredTelemetryMetadata>,
-    errorHandler: ErrorHandler,
+    private val errorHandler: ErrorHandler,
     private val serializer: PlatformSerializer,
     clock: Clock,
     storageLimit: Int = 100,
@@ -44,11 +45,11 @@ class CachedLogEnvelopeStoreImpl(
     }
 
     override fun get(storedTelemetryMetadata: StoredTelemetryMetadata): Envelope<LogPayload>? =
-        runCatching {
+        errorHandler.guardSdkCode(SdkErrorType.PayloadStorageFail, null) {
             fileStorageService.loadPayloadAsStream(storedTelemetryMetadata)?.let { inputStream ->
                 serializer.fromJson(inputStream, Envelope.serializer(LogPayload.serializer()))
             }
-        }.getOrNull()
+        }
 
     override fun clear() {
         fileStorageService.getStoredPayloads().forEach {

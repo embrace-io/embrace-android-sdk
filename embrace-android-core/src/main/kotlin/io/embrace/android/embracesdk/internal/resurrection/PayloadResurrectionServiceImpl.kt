@@ -145,13 +145,17 @@ internal class PayloadResurrectionServiceImpl(
             val cachedCrashEnvelopeMetadata = undeliveredPayloads.firstOrNull { it.isCrashEnvelope() }
             val cachedCrashEnvelope = cachedCrashEnvelopeMetadata
                 ?.let { metadata ->
-                    runCatching {
+                    errorHandler.guardSdkCode(SdkErrorType.PayloadResurrectionPayloadFail, null) {
                         metadata.loadDecompressedPayload()?.let { payloadStream ->
                             serializer.fromJson(payloadStream, Envelope.serializer(LogPayload.serializer()))
                         }
-                    }.getOrNull()
+                    }
                 }
-                ?.also { runCatching { cacheStorageService.delete(cachedCrashEnvelopeMetadata) } }
+                ?.also {
+                    errorHandler.guardSdkCode(SdkErrorType.PayloadResurrectionPayloadFail) {
+                        cacheStorageService.delete(cachedCrashEnvelopeMetadata)
+                    }
+                }
             val resource = cachedCrashEnvelope?.resource
             val metadata = cachedCrashEnvelope?.metadata
             sessionlessNativeCrashes.forEach { nativeCrash ->

@@ -167,7 +167,7 @@ internal class SdkApiDispatcher(
             target.createSpan(
                 name,
                 parent,
-                autoTerminationMode
+                autoTerminationMode,
             )
         }
 
@@ -181,7 +181,7 @@ internal class SdkApiDispatcher(
             name,
             parent,
             startTimeMs,
-            autoTerminationMode
+            autoTerminationMode,
         )
     }
 
@@ -240,11 +240,15 @@ internal class SdkApiDispatcher(
 
     override fun disable() = errorHandler.guardSdkCode(SdkErrorType.PublicApiFail) { target.disable() }
 
-    override fun applicationInitStart() = errorHandler.guardSdkCode(SdkErrorType.PublicApiFail) { target.applicationInitStart() }
+    override fun applicationInitStart() = errorHandler.guardSdkCode(SdkErrorType.PublicApiFail) {
+        target.applicationInitStart()
+    }
 
     override fun applicationInitEnd() = record("application_init_end") { target.applicationInitEnd() }
 
-    override val isStarted: Boolean get() = errorHandler.guardSdkCode(SdkErrorType.PublicApiFail, false) { target.isStarted }
+    override val isStarted: Boolean get() = errorHandler.guardSdkCode(SdkErrorType.PublicApiFail, false) {
+        target.isStarted
+    }
 
     override val deviceId: String get() = record("get_device_id", "") { target.deviceId }
 
@@ -253,7 +257,7 @@ internal class SdkApiDispatcher(
 
     override val lastRunEndState: LastRunEndState get() = errorHandler.guardSdkCode(
         SdkErrorType.PublicApiFail,
-        LastRunEndState.INVALID
+        LastRunEndState.INVALID,
     ) { target.lastRunEndState }
 
     override fun addLogRecordExporter(logRecordExporter: LogRecordExporter) =
@@ -323,7 +327,7 @@ internal class SdkApiDispatcher(
     override fun createExperiment(id: String, variant: String?, startedAt: Long?): TrackedExperiment =
         errorHandler.guardSdkCode(
             SdkErrorType.PublicApiFail,
-            TrackedExperimentImpl(id, variant, startedAt)
+            TrackedExperimentImpl(id, variant, startedAt),
         ) { target.createExperiment(id, variant, startedAt) }
 
     override fun trackExperiment(id: String, variant: String?, startedAt: Long?) =
@@ -341,7 +345,7 @@ internal class SdkApiDispatcher(
     override fun createFeatureFlag(id: String, variant: String?, startedAt: Long?): TrackedFeatureFlag =
         errorHandler.guardSdkCode(
             SdkErrorType.PublicApiFail,
-            TrackedFeatureFlagImpl(id, variant, startedAt)
+            TrackedFeatureFlagImpl(id, variant, startedAt),
         ) { target.createFeatureFlag(id, variant, startedAt) }
 
     override fun trackFeatureFlag(id: String, variant: String?, startedAt: Long?) =
@@ -359,11 +363,14 @@ internal class SdkApiDispatcher(
     /**
      * Records usage of the public API [name] then performs [call], returning [fallback] if the SDK throws.
      */
-    private fun <T> record(name: String, fallback: T, call: () -> T): T = errorHandler.guardSdkCode(SdkErrorType.PublicApiFail, fallback) {
+    private fun <T> record(
+        name: String,
+        fallback: T,
+        call: () -> T,
+    ): T = errorHandler.guardSdkCode(SdkErrorType.PublicApiFail, fallback) {
         telemetryService.onPublicApiCalled(name)
         call()
     }
 
     private fun record(name: String, call: () -> Unit) = record(name, Unit, call)
-
 }

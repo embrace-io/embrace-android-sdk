@@ -6,6 +6,7 @@ import android.os.Bundle
 import android.view.GestureDetector
 import android.view.Window
 import io.embrace.android.embracesdk.internal.logging.ErrorHandler
+import io.embrace.android.embracesdk.internal.logging.SdkErrorType
 import java.lang.ref.WeakReference
 import java.util.WeakHashMap
 
@@ -24,12 +25,12 @@ internal class ComposeActivityListener(
     private var closed = false
 
     override fun onActivityResumed(activity: Activity) {
-        try {
+        errorHandler.guardSdkCode(SdkErrorType.UiCallbackFail) {
             // Set EmbraceWindowCallback to install Embrace Gesture Listener to capture onClick events
             val window: Window = activity.window
             synchronized(windowCallbacks) {
                 if (closed || windowCallbacks.containsKey(window)) {
-                    return
+                    return@guardSdkCode
                 }
                 val gestureListener = EmbraceGestureListener(activity, errorHandler, dataSource)
                 val gestureDetectorCompat = GestureDetector(activity, gestureListener)
@@ -41,8 +42,6 @@ internal class ComposeActivityListener(
                 windowCallbacks[window] = WeakReference(callback)
                 window.callback = callback
             }
-        } catch (e: Throwable) {
-            errorHandler.log("Failed to register gesture listener", e, severity = ErrorHandler.Severity.ERROR)
         }
     }
 

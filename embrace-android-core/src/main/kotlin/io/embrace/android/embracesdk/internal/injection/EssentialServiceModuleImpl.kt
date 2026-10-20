@@ -18,6 +18,7 @@ import io.embrace.android.embracesdk.internal.capture.session.UserSessionPropert
 import io.embrace.android.embracesdk.internal.capture.user.EmbraceUserService
 import io.embrace.android.embracesdk.internal.capture.user.UserService
 import io.embrace.android.embracesdk.internal.config.ConfigService
+import io.embrace.android.embracesdk.internal.logging.SdkErrorType
 import io.embrace.android.embracesdk.internal.navigation.NavigationTrackingServiceImpl
 import io.embrace.android.embracesdk.internal.session.id.SessionIdsProvider
 import io.embrace.android.embracesdk.internal.session.id.SessionIdsProviderImpl
@@ -42,6 +43,8 @@ class EssentialServiceModuleImpl(
     networkConnectivityServiceProvider: Provider<NetworkConnectivityService?>,
     private val sessionOrchestratorProvider: Provider<SessionOrchestrator>,
 ) : EssentialServiceModule {
+
+    private val errorHandler = initModule.errorHandler
 
     override val processStateTracker: ProcessStateTracker = EmbTrace.trace("process-state-service-init") {
         val lifecycleTracker = lifecycleTrackerProvider()
@@ -125,7 +128,7 @@ class EssentialServiceModuleImpl(
     }
 
     override fun close() {
-        runCatching { processStateTracker.close() }
-        runCatching { networkConnectivityService.close() }
+        errorHandler.guardSdkCode(SdkErrorType.ResourceCloseFail) { processStateTracker.close() }
+        errorHandler.guardSdkCode(SdkErrorType.ResourceCloseFail) { networkConnectivityService.close() }
     }
 }

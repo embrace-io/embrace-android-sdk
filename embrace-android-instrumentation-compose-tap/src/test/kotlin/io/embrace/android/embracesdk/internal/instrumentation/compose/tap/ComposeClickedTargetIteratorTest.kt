@@ -11,6 +11,7 @@ import io.embrace.android.embracesdk.internal.arch.ui.TapSignal
 import io.embrace.android.embracesdk.internal.instrumentation.compose.tap.fakes.FakeScreenViewFactory
 import io.embrace.android.embracesdk.internal.instrumentation.compose.tap.fakes.PositionedFrameLayout
 import io.embrace.android.embracesdk.internal.instrumentation.compose.tap.fakes.PositionedView
+import io.embrace.android.embracesdk.internal.logging.SdkErrorType
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Before
@@ -136,7 +137,7 @@ internal class ComposeClickedTargetIteratorTest {
     }
 
     @Test
-    fun `exception during traversal is caught and logged`() {
+    fun `exception during traversal is caught and reported`() {
         val throwingChild = object : View(context) {
             init { layout(0, 0, 100, 100) }
             override fun getLocationInWindow(outLocation: IntArray) {
@@ -148,8 +149,7 @@ internal class ComposeClickedTargetIteratorTest {
 
         iterator.findTarget(decor, x = 50f, y = 50f)
 
-        assertEquals(1, args.errorHandler.errorMessages.size)
-        assertEquals("Failed to find target", args.errorHandler.errorMessages[0].msg)
+        assertEquals(SdkErrorType.UiCallbackFail.toString(), args.errorHandler.sdkErrorMessages.single().msg)
         assertTrue(taps.isEmpty())
     }
 

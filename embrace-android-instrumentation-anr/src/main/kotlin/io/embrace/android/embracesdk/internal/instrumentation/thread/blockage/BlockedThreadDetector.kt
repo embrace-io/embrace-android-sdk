@@ -62,7 +62,7 @@ class BlockedThreadDetector(
                 lastWatchdogThreadResponse.set(clock.now())
                 lastTargetThreadResponse.set(clock.now())
                 val runnable = Runnable(::checkHeartbeat)
-                runCatching {
+                errorHandler.guardSdkCode(SdkErrorType.ThreadBlockageHeartbeatCheckFail) {
                     monitorFuture = watchdogWorker.scheduleAtFixedRate(runnable, 0, intervalMs, TimeUnit.MILLISECONDS)
                 }
             }

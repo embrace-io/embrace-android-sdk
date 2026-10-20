@@ -62,12 +62,7 @@ class DeviceImpl(
     }
 
     private fun notifyChanged() {
-        listeners.forEach { listener ->
-            try {
-                listener()
-            } catch (ignored: Throwable) {
-            }
-        }
+        errorHandler.guardSdkCodeEach(SdkErrorType.DeviceChangeListenerFail, listeners) { it() }
     }
 
     private fun asyncRetrieveUsesEmmcStorage() {

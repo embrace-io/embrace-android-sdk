@@ -137,12 +137,14 @@ class StartupTracker(
     override fun close() {
         synchronized(lock) {
             startupDataCollectionComplete.set(true)
-            runCatching { drawEventEmitter?.close() }
-            runCatching { (activityLoadEventEmitter as? AutoCloseable)?.close() }
+            errorHandler.guardSdkCode(SdkErrorType.ResourceCloseFail) { drawEventEmitter?.close() }
+            errorHandler.guardSdkCode(SdkErrorType.ResourceCloseFail) { (activityLoadEventEmitter as? AutoCloseable)?.close() }
             val application = application ?: return
-            runCatching { application.unregisterActivityLifecycleCallbacks(this) }
+            errorHandler.guardSdkCode(SdkErrorType.ResourceCloseFail) { application.unregisterActivityLifecycleCallbacks(this) }
             if (activityLoadEventEmitter != null) {
-                runCatching { application.unregisterActivityLifecycleCallbacks(activityLoadEventEmitter) }
+                errorHandler.guardSdkCode(SdkErrorType.ResourceCloseFail) {
+                    application.unregisterActivityLifecycleCallbacks(activityLoadEventEmitter)
+                }
             }
         }
     }

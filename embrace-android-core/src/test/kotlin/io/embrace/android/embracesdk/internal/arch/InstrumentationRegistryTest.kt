@@ -58,6 +58,20 @@ internal class InstrumentationRegistryTest {
     }
 
     @Test
+    fun `each added data source is passed on before the next provider registers`() {
+        val args = FakeInstrumentationArgs(Application())
+        val events = mutableListOf<Any>()
+        val secondDataSource = FakeDataSource(Application())
+        val providers = listOf(
+            FakeInstrumentationProvider(10, events::add, { dataSource }),
+            FakeInstrumentationProvider(20, events::add),
+            FakeInstrumentationProvider(30, events::add, { secondDataSource }),
+        )
+        registry.loadInstrumentations(providers, args, events::add)
+        assertEquals(listOf(10, dataSource, 20, 30, secondDataSource), events)
+    }
+
+    @Test
     fun `a provider that throws before registering does not stop the providers after it`() {
         val args = FakeInstrumentationArgs(Application())
         val initOrder = mutableListOf<Int>()

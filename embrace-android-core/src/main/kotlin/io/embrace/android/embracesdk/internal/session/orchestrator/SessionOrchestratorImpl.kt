@@ -464,9 +464,11 @@ internal class SessionOrchestratorImpl(
         if (metadata != null && !metadata.isBackgroundOnly) {
             inactivityTimerState = SessionTimerState(
                 backgroundWorker.schedule<Unit>(
-                    ::onInactivityTimeout,
-                    metadata.inactivityTimeoutSecs,
-                    TimeUnit.SECONDS,
+                    command = {
+                        errorHandler.guardSdkCode(SdkErrorType.UserSessionTimerFail, ::onInactivityTimeout)
+                    },
+                    delay = metadata.inactivityTimeoutSecs,
+                    unit = TimeUnit.SECONDS,
                 ),
             )
         }
@@ -483,8 +485,13 @@ internal class SessionOrchestratorImpl(
             return
         }
         val intervalMs = lastActivityUpdateIntervalMs(metadata)
+        // guarded, as a throw from a fixed-delay task cancels every later run
         val future = backgroundWorker.scheduleWithFixedDelay(
-            { synchronized(lock) { updateUserSessionActivityIfStale(clock.now(), intervalMs) } },
+            {
+                errorHandler.guardSdkCode(SdkErrorType.UserSessionTimerFail) {
+                    synchronized(lock) { updateUserSessionActivityIfStale(clock.now(), intervalMs) }
+                }
+            },
             intervalMs,
             intervalMs,
             TimeUnit.MILLISECONDS,
@@ -499,7 +506,7 @@ internal class SessionOrchestratorImpl(
             val delay = max(remainingSecs, 0)
             maxDurationTimerState = SessionTimerState(
                 backgroundWorker.schedule<Unit>(
-                    ::onMaxDurationTimeout,
+                    { errorHandler.guardSdkCode(SdkErrorType.UserSessionTimerFail, ::onMaxDurationTimeout) },
                     delay,
                     TimeUnit.SECONDS,
                 ),
@@ -632,7 +639,7 @@ internal class SessionOrchestratorImpl(
                     notifyListeners(UserSessionActive(newMetadata.userSessionId))
                     backgroundStartupWindowTimerState = SessionTimerState(
                         backgroundWorker.schedule<Unit>(
-                            ::makeCurrentUserSessionBackgroundOnly,
+                            { errorHandler.guardSdkCode(SdkErrorType.UserSessionTimerFail, ::makeCurrentUserSessionBackgroundOnly) },
                             BACKGROUND_STARTUP_WINDOW_MS,
                             TimeUnit.MILLISECONDS,
                         ),

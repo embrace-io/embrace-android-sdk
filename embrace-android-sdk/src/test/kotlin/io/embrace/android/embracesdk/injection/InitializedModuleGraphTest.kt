@@ -81,7 +81,7 @@ internal class InitializedModuleGraphTest {
             assertNotNull(openTelemetryModule)
             assertNotNull(workerThreadPool)
             assertTrue(essentialServiceModule is EssentialServiceModuleImpl)
-            assertNotNull(dataCaptureServiceModule)
+            assertNotNull(startupTracker)
             assertNotNull(deliveryModule)
             assertNotNull(payloadSourceModule)
             assertEquals(clock, initModule.clock)

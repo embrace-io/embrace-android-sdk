@@ -8,10 +8,15 @@ import io.embrace.android.embracesdk.internal.config.ConfigService
 import io.embrace.android.embracesdk.internal.instrumentation.crash.CrashFileMarker
 import io.embrace.android.embracesdk.internal.instrumentation.crash.CrashFileMarkerImpl
 import io.embrace.android.embracesdk.internal.instrumentation.crash.LastRunCrashVerifier
-import io.embrace.android.embracesdk.internal.instrumentation.startup.DataCaptureServiceModule
-import io.embrace.android.embracesdk.internal.instrumentation.startup.DataCaptureServiceModuleImpl
-import io.embrace.android.embracesdk.internal.instrumentation.startup.DataCaptureServiceModuleSupplier
+import io.embrace.android.embracesdk.internal.instrumentation.startup.AppStartupDataCollector
 import io.embrace.android.embracesdk.internal.instrumentation.startup.SdkInitResourceUsageTracker
+import io.embrace.android.embracesdk.internal.instrumentation.startup.StartupService
+import io.embrace.android.embracesdk.internal.instrumentation.startup.StartupTracker
+import io.embrace.android.embracesdk.internal.instrumentation.startup.activity.UiLoadDataListener
+import io.embrace.android.embracesdk.internal.instrumentation.startup.createAppStartupDataCollector
+import io.embrace.android.embracesdk.internal.instrumentation.startup.createStartupService
+import io.embrace.android.embracesdk.internal.instrumentation.startup.createStartupTracker
+import io.embrace.android.embracesdk.internal.instrumentation.startup.createUiLoadDataListener
 import io.embrace.android.embracesdk.internal.instrumentation.thread.blockage.ThreadBlockageService
 import io.embrace.android.embracesdk.internal.instrumentation.thread.blockage.ThreadBlockageServiceSupplier
 import io.embrace.android.embracesdk.internal.instrumentation.thread.blockage.createThreadBlockageService
@@ -45,7 +50,6 @@ internal class InitializedModuleGraph(
     configLoadServices: ConfigLoadServices,
     val sdkStartTimeMs: Long,
     val sdkInitResourceUsageTracker: SdkInitResourceUsageTracker,
-    versionChecker: VersionChecker = BuildVersionChecker,
     overrides: SdkOverrides? = null,
     private val initModuleSupplier: InitModuleSupplier? = null,
     private val openTelemetryModuleSupplier: OpenTelemetryModuleSupplier? = null,
@@ -53,7 +57,6 @@ internal class InitializedModuleGraph(
     private val storageServiceSupplier: StorageServiceSupplier? = null,
     private val essentialServiceModuleSupplier: EssentialServiceModuleSupplier? = null,
     private val instrumentationModuleSupplier: InstrumentationModuleSupplier? = null,
-    private val dataCaptureServiceModuleSupplier: DataCaptureServiceModuleSupplier? = null,
     private val deliveryModuleSupplier: DeliveryModuleSupplier? = null,
     private val threadBlockageServiceSupplier: ThreadBlockageServiceSupplier? = null,
     private val userSessionOrchestrationModuleSupplier: UserSessionOrchestrationModuleSupplier? = null,
@@ -190,31 +193,46 @@ internal class InitializedModuleGraph(
         LastRunCrashVerifier(crashMarker)
     }
 
-    val dataCaptureServiceModule: DataCaptureServiceModule = init("data-capture-service-module") {
+    private val versionChecker: VersionChecker = overrides?.versionChecker.resolve { BuildVersionChecker }
+
+    val startupService: StartupService = init("startup-service") {
+        createStartupService(
+            destination = instrumentationModule.instrumentationArgs.destination,
+            appVersionStartupCounterProvider = { coreModule.appVersionStartupCounter },
+        )
+    }
+
+    val appStartupDataCollector: AppStartupDataCollector = init("app-startup-data-collector") {
         val instrumentationArgs = instrumentationModule.instrumentationArgs
-        val destination = instrumentationArgs.destination
-        val activityManager = instrumentationArgs.systemService<ActivityManager>(Context.ACTIVITY_SERVICE)
-        val backgroundWorker = workerThreadPool.backgroundWorker(Worker.Background.NonIoRegWorker)
-        dataCaptureServiceModuleSupplier?.invoke(
-            initModule.clock,
-            initModule.errorHandler,
-            destination,
-            configService,
-            { coreModule.appVersionStartupCounter },
-            initModule.startupClassifier,
-            versionChecker,
-            activityManager,
-            backgroundWorker,
-        ) ?: DataCaptureServiceModuleImpl(
-            initModule.clock,
-            initModule.errorHandler,
-            destination,
-            configService,
-            { coreModule.appVersionStartupCounter },
-            initModule.startupClassifier,
-            versionChecker,
-            activityManager,
-            backgroundWorker,
+        createAppStartupDataCollector(
+            clock = initModule.clock,
+            errorHandler = initModule.errorHandler,
+            destination = instrumentationArgs.destination,
+            configService = configService,
+            startupService = startupService,
+            startupClassifier = initModule.startupClassifier,
+            versionChecker = versionChecker,
+            activityManager = instrumentationArgs.systemService<ActivityManager>(Context.ACTIVITY_SERVICE),
+            backgroundWorker = workerThreadPool.backgroundWorker(Worker.Background.NonIoRegWorker),
+        )
+    }
+
+    val uiLoadDataListener: UiLoadDataListener? = init("ui-load-data-listener") {
+        createUiLoadDataListener(
+            destination = instrumentationModule.instrumentationArgs.destination,
+            configService = configService,
+            versionChecker = versionChecker,
+        )
+    }
+
+    val startupTracker: StartupTracker = init("startup-tracker") {
+        createStartupTracker(
+            clock = initModule.clock,
+            errorHandler = initModule.errorHandler,
+            configService = configService,
+            appStartupDataCollector = appStartupDataCollector,
+            uiLoadDataListener = uiLoadDataListener,
+            versionChecker = versionChecker,
         )
     }
 
@@ -310,8 +328,8 @@ internal class InitializedModuleGraph(
 
     val userSessionOrchestrationModule: UserSessionOrchestrationModule =
         init(name = "user-session-orchestration-module", recordDuration = true) {
-            val startupDurationProvider = dataCaptureServiceModule.startupService::getSdkStartupDuration
-            val appVersionStartupCounterProvider = dataCaptureServiceModule.startupService::getAppVersionStartupCounter
+            val startupDurationProvider = startupService::getSdkStartupDuration
+            val appVersionStartupCounterProvider = startupService::getAppVersionStartupCounter
             userSessionOrchestrationModuleSupplier?.invoke(
                 initModule,
                 openTelemetryModule,

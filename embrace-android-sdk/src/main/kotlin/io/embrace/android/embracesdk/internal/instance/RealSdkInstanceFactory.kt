@@ -61,9 +61,9 @@ internal fun createRealSdkInstance(
         threadBlockageService = moduleGraph.threadBlockageService,
         lastRunCrashVerifier = moduleGraph.lastRunCrashVerifier,
         crashMarker = moduleGraph.crashMarker,
-        startupTracker = moduleGraph.dataCaptureServiceModule.startupTracker,
-        startupService = moduleGraph.dataCaptureServiceModule.startupService,
-        appStartupDataCollector = moduleGraph.dataCaptureServiceModule.appStartupDataCollector,
+        startupTracker = moduleGraph.startupTracker,
+        startupService = moduleGraph.startupService,
+        appStartupDataCollector = moduleGraph.appStartupDataCollector,
         sdkStartTimeMs = moduleGraph.sdkStartTimeMs,
         sdkInitResourceUsageTracker = moduleGraph.sdkInitResourceUsageTracker,
         userApiDelegate = UserApiDelegate(
@@ -107,8 +107,8 @@ internal fun createRealSdkInstance(
         ),
         instrumentationApiDelegate = InstrumentationApiDelegate(
             clock = moduleGraph.initModule.clock,
-            uiLoadTraceEmitter = moduleGraph.dataCaptureServiceModule.uiLoadDataListener,
-            appStartupDataCollector = moduleGraph.dataCaptureServiceModule.appStartupDataCollector,
+            uiLoadTraceEmitter = moduleGraph.uiLoadDataListener,
+            appStartupDataCollector = moduleGraph.appStartupDataCollector,
             navigationTrackingService = moduleGraph.essentialServiceModule.navigationTrackingService,
         ),
         experimentApiDelegate = ExperimentApiDelegate(

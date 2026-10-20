@@ -7,6 +7,8 @@ import io.embrace.android.embracesdk.internal.arch.SessionPartEndListener
 import io.embrace.android.embracesdk.internal.arch.state.ProcessState
 import io.embrace.android.embracesdk.internal.logging.ErrorHandler
 import io.embrace.android.embracesdk.internal.logging.SdkErrorType
+import io.embrace.android.embracesdk.internal.logging.guardSdkCode
+import io.embrace.android.embracesdk.internal.logging.guardSdkCodeEach
 import io.embrace.android.embracesdk.internal.session.SessionPartToken
 import java.util.concurrent.CopyOnWriteArraySet
 

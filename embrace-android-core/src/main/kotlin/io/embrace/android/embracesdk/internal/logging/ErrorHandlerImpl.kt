@@ -40,29 +40,6 @@ class ErrorHandlerImpl(
         report(type, throwable)
     }
 
-    override fun <T> guardSdkCode(type: SdkErrorType, default: T, action: () -> T): T = try {
-        action()
-    } catch (exc: Throwable) {
-        report(type, exc)
-        default
-    }
-
-    override fun <T> guardSdkCodeEach(type: SdkErrorType, items: Iterable<T>, action: (T) -> Unit) {
-        try {
-            items.forEach { item -> guardSdkCode(type) { action(item) } }
-        } catch (exc: ConcurrentModificationException) {
-            report(type, exc)
-        }
-    }
-
-    override fun <T> guardUserCode(action: () -> T): T = try {
-        action()
-    } catch (exc: UserCodeException) {
-        throw exc
-    } catch (exc: Throwable) {
-        throw UserCodeException(exc)
-    }
-
     private fun report(type: SdkErrorType, exc: Throwable) {
         when {
             type == SdkErrorType.Ignored -> Unit

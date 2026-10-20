@@ -10,6 +10,7 @@ import io.embrace.android.embracesdk.internal.instrumentation.thread.blockage.Th
 import io.embrace.android.embracesdk.internal.instrumentation.thread.blockage.ThreadBlockageEvent.UNBLOCKED
 import io.embrace.android.embracesdk.internal.logging.ErrorHandler
 import io.embrace.android.embracesdk.internal.logging.SdkErrorType
+import io.embrace.android.embracesdk.internal.logging.guardSdkCode
 import io.embrace.android.embracesdk.internal.worker.BackgroundWorker
 import java.util.concurrent.ScheduledFuture
 import java.util.concurrent.TimeUnit

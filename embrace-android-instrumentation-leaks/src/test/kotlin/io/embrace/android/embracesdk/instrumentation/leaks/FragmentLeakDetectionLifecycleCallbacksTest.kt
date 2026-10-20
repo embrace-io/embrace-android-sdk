@@ -208,6 +208,7 @@ internal class FragmentLeakDetectionLifecycleCallbacksTest {
 
     @Test
     fun `an exception from the app's view is tracked rather than thrown into the fragment lifecycle`() {
+        errorHandler.throwOnSdkError = false
         val activity = registerOn(buildActivity(FragmentActivity::class.java).setup().get())
         val fragment = ThrowingViewFragment()
 

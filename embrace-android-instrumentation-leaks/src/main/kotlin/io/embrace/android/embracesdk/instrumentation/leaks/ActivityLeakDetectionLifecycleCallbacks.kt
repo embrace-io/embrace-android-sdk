@@ -6,6 +6,7 @@ import android.os.Build
 import android.os.Bundle
 import io.embrace.android.embracesdk.internal.logging.ErrorHandler
 import io.embrace.android.embracesdk.internal.logging.SdkErrorType
+import io.embrace.android.embracesdk.internal.logging.guardSdkCode
 import io.embrace.android.embracesdk.internal.session.id.SessionIdsSnapshot
 
 internal class ActivityLeakDetectionLifecycleCallbacks(

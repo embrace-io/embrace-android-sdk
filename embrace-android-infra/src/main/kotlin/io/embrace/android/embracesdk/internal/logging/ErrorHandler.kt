@@ -25,29 +25,6 @@ interface ErrorHandler : AutoCloseable {
     fun trackSdkError(type: SdkErrorType, throwable: Throwable)
 
     /**
-     * Runs SDK code safely, returning [default] if it throws. The [Throwable] is tracked as an SDK error of
-     * [type]. [SdkErrorType.Ignored] reports nothing.
-     */
-    fun <T> guardSdkCode(type: SdkErrorType, default: T, action: () -> T): T
-
-    /**
-     * Runs SDK code safely, ignoring any result. The [Throwable] is tracked as an SDK error of [type].
-     * [SdkErrorType.Ignored] reports nothing.
-     */
-    fun guardSdkCode(type: SdkErrorType, action: () -> Unit): Unit = guardSdkCode(type, Unit, action)
-
-    /**
-     * Runs [action] for each of [items], guarding each call separately so one failure doesn't skip the rest.
-     * [ConcurrentModificationException] thrown whilst iterating is also guarded.
-     */
-    fun <T> guardSdkCodeEach(type: SdkErrorType, items: Iterable<T>, action: (T) -> Unit)
-
-    /**
-     * Runs user-supplied code. A [Throwable] it throws is printed via logcat.
-     */
-    fun <T> guardUserCode(action: () -> T): T
-
-    /**
      * Drains buffered errors to [sink] (throwable, timestampMs) on an SDK state transition. A null [sink] closes this object
      * completely.
      */
@@ -57,6 +34,46 @@ interface ErrorHandler : AutoCloseable {
      * Resets the limit on how many errors are sent.
      */
     fun resetLimit()
+}
+
+/**
+ * Runs SDK code safely, returning [default] if it throws. The [Throwable] is tracked as an SDK error of
+ * [type]. [SdkErrorType.Ignored] reports nothing.
+ */
+inline fun <T> ErrorHandler.guardSdkCode(type: SdkErrorType, default: T, action: () -> T): T = try {
+    action()
+} catch (exc: Throwable) {
+    trackSdkError(type, exc)
+    default
+}
+
+/**
+ * Runs SDK code safely, ignoring any result. The [Throwable] is tracked as an SDK error of [type].
+ * [SdkErrorType.Ignored] reports nothing.
+ */
+inline fun ErrorHandler.guardSdkCode(type: SdkErrorType, action: () -> Unit): Unit = guardSdkCode(type, Unit, action)
+
+/**
+ * Runs [action] for each of [items], guarding each call separately so one failure doesn't skip the rest.
+ * [ConcurrentModificationException] thrown whilst iterating is also guarded.
+ */
+inline fun <T> ErrorHandler.guardSdkCodeEach(type: SdkErrorType, items: Iterable<T>, action: (T) -> Unit) {
+    try {
+        items.forEach { item -> guardSdkCode(type) { action(item) } }
+    } catch (exc: ConcurrentModificationException) {
+        trackSdkError(type, exc)
+    }
+}
+
+/**
+ * Runs user-supplied code. A [Throwable] it throws is printed via logcat.
+ */
+inline fun <T> ErrorHandler.guardUserCode(action: () -> T): T = try {
+    action()
+} catch (exc: UserCodeException) {
+    throw exc
+} catch (exc: Throwable) {
+    throw UserCodeException(exc)
 }
 
 /**

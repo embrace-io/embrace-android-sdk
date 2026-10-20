@@ -18,6 +18,7 @@ import io.embrace.android.embracesdk.internal.envelope.resource.EnvelopeResource
 import io.embrace.android.embracesdk.internal.instrumentation.crash.jvm.JvmCrashDataSource
 import io.embrace.android.embracesdk.internal.logging.ErrorHandler
 import io.embrace.android.embracesdk.internal.logging.SdkErrorType
+import io.embrace.android.embracesdk.internal.logging.guardSdkCode
 import io.embrace.android.embracesdk.internal.logs.LogExceptionType
 import io.embrace.android.embracesdk.internal.payload.JsException
 import io.embrace.android.embracesdk.internal.serialization.PlatformSerializer

@@ -9,6 +9,7 @@ import io.embrace.android.embracesdk.internal.envelope.session.SESSION_ENVELOPE_
 import io.embrace.android.embracesdk.internal.envelope.session.SESSION_ENVELOPE_VERSION
 import io.embrace.android.embracesdk.internal.logging.ErrorHandler
 import io.embrace.android.embracesdk.internal.logging.SdkErrorType
+import io.embrace.android.embracesdk.internal.logging.guardSdkCode
 import io.embrace.android.embracesdk.internal.otel.spans.EmbraceSdkSpan
 import io.embrace.android.embracesdk.internal.otel.spans.hasEmbraceAttribute
 import io.embrace.android.embracesdk.internal.payload.Span

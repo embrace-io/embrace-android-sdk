@@ -64,6 +64,7 @@ internal class WebViewLeakScannerTest {
 
     @Test
     fun `an exception during traversal is caught and reported, not thrown`() {
+        errorHandler.throwOnSdkError = false
         val root = ThrowingViewGroup(context)
         val found = mutableListOf<WebView>()
 

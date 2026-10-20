@@ -6,6 +6,7 @@ import android.view.MotionEvent
 import android.view.View
 import io.embrace.android.embracesdk.internal.logging.ErrorHandler
 import io.embrace.android.embracesdk.internal.logging.SdkErrorType
+import io.embrace.android.embracesdk.internal.logging.guardSdkCode
 import java.lang.ref.WeakReference
 
 /**

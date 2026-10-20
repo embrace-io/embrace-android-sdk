@@ -12,6 +12,8 @@ import io.embrace.android.embracesdk.internal.delivery.storage.PayloadStorageSer
 import io.embrace.android.embracesdk.internal.instrumentation.crash.ndk.NativeCrashService
 import io.embrace.android.embracesdk.internal.logging.ErrorHandler
 import io.embrace.android.embracesdk.internal.logging.SdkErrorType
+import io.embrace.android.embracesdk.internal.logging.guardSdkCode
+import io.embrace.android.embracesdk.internal.logging.guardSdkCodeEach
 import io.embrace.android.embracesdk.internal.payload.Envelope
 import io.embrace.android.embracesdk.internal.payload.LogPayload
 import io.embrace.android.embracesdk.internal.payload.NativeCrashData

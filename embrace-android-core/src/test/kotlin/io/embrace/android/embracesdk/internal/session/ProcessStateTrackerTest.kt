@@ -82,6 +82,7 @@ internal class ProcessStateTrackerTest {
             override fun close() = error("close failed")
         }
         val invocations = mutableListOf<String>()
+        fakeErrorHandler.throwOnSdkError = false
         stateService = ProcessStateTrackerImpl(fakeErrorHandler, throwingTracker)
         stateService.addListener(DecoratedListener(invocations))
         stateService.addListener(DecoratedSessionOrchestrator(invocations))

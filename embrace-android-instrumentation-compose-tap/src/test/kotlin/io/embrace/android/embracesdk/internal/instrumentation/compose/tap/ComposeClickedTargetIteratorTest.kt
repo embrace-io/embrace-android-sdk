@@ -138,6 +138,7 @@ internal class ComposeClickedTargetIteratorTest {
 
     @Test
     fun `exception during traversal is caught and reported`() {
+        args.errorHandler.throwOnSdkError = false
         val throwingChild = object : View(context) {
             init { layout(0, 0, 100, 100) }
             override fun getLocationInWindow(outLocation: IntArray) {

@@ -12,6 +12,7 @@ import io.embrace.android.embracesdk.internal.instrumentation.fcm.PushNotificati
 import io.embrace.android.embracesdk.internal.instrumentation.fcm.fcmDataSource
 import io.embrace.android.embracesdk.internal.logging.ErrorHandler
 import io.embrace.android.embracesdk.internal.logging.SdkErrorType
+import io.embrace.android.embracesdk.internal.logging.guardSdkCode
 import io.embrace.android.embracesdk.internal.logs.LogExceptionType
 import io.embrace.android.embracesdk.internal.logs.LogService
 import io.embrace.android.embracesdk.internal.logs.attachments.Attachment

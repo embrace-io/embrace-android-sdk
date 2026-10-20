@@ -5,6 +5,7 @@ import android.os.HandlerThread
 import android.os.Message
 import io.embrace.android.embracesdk.internal.logging.ErrorHandler
 import io.embrace.android.embracesdk.internal.logging.SdkErrorType
+import io.embrace.android.embracesdk.internal.logging.guardSdkCode
 
 internal interface VitalsScheduler {
     fun post(action: Runnable)

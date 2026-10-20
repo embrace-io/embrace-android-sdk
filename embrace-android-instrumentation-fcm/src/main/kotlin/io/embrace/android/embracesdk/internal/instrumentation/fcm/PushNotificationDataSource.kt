@@ -7,6 +7,7 @@ import io.embrace.android.embracesdk.internal.arch.limits.UpToLimitStrategy
 import io.embrace.android.embracesdk.internal.arch.schema.SchemaType
 import io.embrace.android.embracesdk.internal.instrumentation.fcm.PushNotificationBreadcrumb.NotificationType.Builder.notificationTypeFor
 import io.embrace.android.embracesdk.internal.logging.SdkErrorType
+import io.embrace.android.embracesdk.internal.logging.guardSdkCode
 
 /**
  * Captures custom breadcrumbs.

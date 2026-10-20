@@ -46,7 +46,7 @@ internal class DeviceImplChangeListenerTest {
     @Test
     fun `a throwing listener does not prevent the others from being notified`() {
         val executor = BlockingScheduledExecutorService(blockingMode = true)
-        val device = createDevice(executor)
+        val device = createDevice(executor, FakeErrorHandler(throwOnSdkError = false))
 
         var count = 0
         device.addChangeListener { error("listener failed") }
@@ -56,11 +56,14 @@ internal class DeviceImplChangeListenerTest {
         assertEquals(3, count)
     }
 
-    private fun createDevice(executor: BlockingScheduledExecutorService) = DeviceImpl(
+    private fun createDevice(
+        executor: BlockingScheduledExecutorService,
+        errorHandler: FakeErrorHandler = FakeErrorHandler(),
+    ) = DeviceImpl(
         windowManagerProvider = { mockk<WindowManager>(relaxed = true) },
         backgroundWorker = BackgroundWorker(executor),
         systemInfo = SystemInfo(),
-        errorHandler = FakeErrorHandler(),
+        errorHandler = errorHandler,
         isEmulator = { false },
     ).apply { startAsyncRetrieval() }
 }

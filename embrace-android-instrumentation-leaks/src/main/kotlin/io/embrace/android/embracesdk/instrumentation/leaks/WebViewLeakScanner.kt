@@ -5,6 +5,7 @@ import android.view.ViewGroup
 import android.webkit.WebView
 import io.embrace.android.embracesdk.internal.logging.ErrorHandler
 import io.embrace.android.embracesdk.internal.logging.SdkErrorType
+import io.embrace.android.embracesdk.internal.logging.guardSdkCode
 
 internal object WebViewLeakScanner {
 

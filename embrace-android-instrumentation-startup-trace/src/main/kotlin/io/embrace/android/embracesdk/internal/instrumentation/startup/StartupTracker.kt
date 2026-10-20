@@ -8,6 +8,7 @@ import io.embrace.android.embracesdk.internal.instrumentation.startup.activity.t
 import io.embrace.android.embracesdk.internal.instrumentation.startup.ui.DrawEventEmitter
 import io.embrace.android.embracesdk.internal.logging.ErrorHandler
 import io.embrace.android.embracesdk.internal.logging.SdkErrorType
+import io.embrace.android.embracesdk.internal.logging.guardSdkCode
 import java.util.concurrent.atomic.AtomicBoolean
 
 /**

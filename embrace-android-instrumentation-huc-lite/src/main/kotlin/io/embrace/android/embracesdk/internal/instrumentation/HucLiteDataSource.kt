@@ -17,6 +17,7 @@ import io.embrace.android.embracesdk.internal.instrumentation.network.getOverrid
 import io.embrace.android.embracesdk.internal.instrumentation.network.toStatusCodeString
 import io.embrace.android.embracesdk.internal.logging.ErrorHandler
 import io.embrace.android.embracesdk.internal.logging.SdkErrorType
+import io.embrace.android.embracesdk.internal.logging.guardSdkCode
 import io.embrace.android.embracesdk.internal.network.http.HttpRequestInfoModifierChain
 import io.embrace.android.embracesdk.internal.network.http.MutableHttpRequestInfoImpl
 import io.embrace.android.embracesdk.internal.telemetry.AppliedLimitType

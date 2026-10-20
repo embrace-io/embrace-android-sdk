@@ -70,7 +70,7 @@ internal class InitializedModuleGraphTest {
                     registry = instrumentationRegistry
                 }
             },
-        )
+        ).apply { start() }
     }
 
     @Test

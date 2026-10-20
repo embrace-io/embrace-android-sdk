@@ -24,7 +24,7 @@ import java.util.concurrent.TimeUnit
 
 /**
  * Constructs objects used by the initialized SDK. Only constructed once [ConfigLoadServices] has
- * confirmed the SDK is not disabled.
+ * confirmed the SDK is not disabled. Construction has no side effects: [start] must be called afterwards.
  *
  * Each supplier is a test seam and is null in production. Where it is null the real construction
  * below runs instead; because [init] is inlined that costs no lambda allocation on the default path.
@@ -88,10 +88,6 @@ internal class InitializedModuleGraph(
             userIdProvider = otelSignalContext::getUserId,
             eventMetadataProvider = otelSignalContext::getEventMetadata,
         )
-    }.apply {
-        EmbTrace.trace(sectionName = "span-service-init", recordDuration = true) {
-            currentSessionPartSpan.initializeService(sdkStartTimeMs)
-        }
     }
 
     val coreModule: CoreModule = init("core") {
@@ -134,11 +130,7 @@ internal class InitializedModuleGraph(
                 coreModule.context,
                 initModule.telemetryService,
                 StatFsAvailabilityChecker(coreModule.context),
-            ).also { storageService ->
-                workerThreadPool
-                    .backgroundWorker(Worker.Background.IoRegWorker)
-                    .schedule<Unit>({ storageService.logStorageTelemetry() }, 1, TimeUnit.MINUTES)
-            }
+            )
     }
 
     val instrumentationModule: InstrumentationModule = init(name = "instrumentation", recordDuration = true) {
@@ -320,7 +312,16 @@ internal class InitializedModuleGraph(
             )
         }
 
-    init {
+    /**
+     * Performs the side effects of initialization. Must be called once, after construction.
+     */
+    fun start() {
+        EmbTrace.trace(sectionName = "span-service-init", recordDuration = true) {
+            openTelemetryModule.currentSessionPartSpan.initializeService(sdkStartTimeMs)
+        }
+        workerThreadPool
+            .backgroundWorker(Worker.Background.IoRegWorker)
+            .schedule<Unit>({ storageService.logStorageTelemetry() }, 1, TimeUnit.MINUTES)
         otelSignalContext.markReady()
     }
 

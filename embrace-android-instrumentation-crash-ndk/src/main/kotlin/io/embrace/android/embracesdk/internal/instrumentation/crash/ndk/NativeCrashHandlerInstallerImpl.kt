@@ -53,9 +53,13 @@ internal class NativeCrashHandlerInstallerImpl(
             if (sharedObjectLoader.loadEmbraceNative()) {
                 val markerFilePath = args.crashMarkerFile.absolutePath
                 updateSessionIds()
-                mainThreadHandler.postAtFrontOfQueue { installSignals(markerFilePath) }
+                mainThreadHandler.postAtFrontOfQueue {
+                    errorHandler.guardSdkCode(SdkErrorType.NativeHandlerInstallFail) { installSignals(markerFilePath) }
+                }
                 mainThreadHandler.postDelayed(
-                    Runnable(::checkSignalHandlersOverwritten),
+                    {
+                        errorHandler.guardSdkCode(SdkErrorType.NativeHandlerInstallFail, ::checkSignalHandlersOverwritten)
+                    },
                     HANDLER_CHECK_DELAY_MS,
                 )
                 args.registerSessionPartChangeListener { updateSessionIds() }
@@ -97,7 +101,8 @@ internal class NativeCrashHandlerInstallerImpl(
 
     private fun checkSignalHandlersOverwritten() {
         synchronized(lock) {
-            if (!disabled && configService.config.autoDataCapture.thirdPartySigHandlerDetectionEnabled) {
+            val detectionEnabled = configService.config.autoDataCapture.thirdPartySigHandlerDetectionEnabled
+            if (!disabled && signalHandlersInstalled && detectionEnabled) {
                 val culprit = delegate.checkForOverwrittenHandlers()
                 if (culprit != null) {
                     if (shouldIgnoreOverriddenHandler(culprit)) {

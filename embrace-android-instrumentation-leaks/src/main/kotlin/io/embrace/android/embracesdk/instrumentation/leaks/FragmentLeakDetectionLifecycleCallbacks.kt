@@ -8,6 +8,7 @@ import androidx.fragment.app.Fragment
 import androidx.fragment.app.FragmentActivity
 import androidx.fragment.app.FragmentManager
 import io.embrace.android.embracesdk.internal.logging.ErrorHandler
+import io.embrace.android.embracesdk.internal.logging.SdkErrorType
 import io.embrace.android.embracesdk.internal.session.id.SessionIdsSnapshot
 import java.util.Collections
 import java.util.WeakHashMap
@@ -44,44 +45,54 @@ internal class FragmentLeakDetectionLifecycleCallbacks(
     }
 
     override fun onFragmentAttached(fm: FragmentManager, f: Fragment, context: Context) {
-        leakDetector.trackOpened(f, TrackingSource.FRAGMENT)
+        errorHandler.guardSdkCode(SdkErrorType.UiCallbackFail) {
+            leakDetector.trackOpened(f, TrackingSource.FRAGMENT)
+        }
     }
 
     override fun onFragmentDestroyed(fm: FragmentManager, f: Fragment) {
-        leakDetector.trackClosed(
-            f,
-            TrackingSource.FRAGMENT,
-            LeakContext(FRAGMENT_OBJECT_TYPE, activeSessionIdsProvider(), f.javaClass),
-        )
+        errorHandler.guardSdkCode(SdkErrorType.UiCallbackFail) {
+            leakDetector.trackClosed(
+                f,
+                TrackingSource.FRAGMENT,
+                LeakContext(FRAGMENT_OBJECT_TYPE, activeSessionIdsProvider(), f.javaClass),
+            )
+        }
     }
 
     override fun onFragmentViewCreated(fm: FragmentManager, f: Fragment, v: View, savedInstanceState: Bundle?) {
-        pendingViews.opened(f, v)
-        leakDetector.trackOpened(v, TrackingSource.FRAGMENT)
+        errorHandler.guardSdkCode(SdkErrorType.UiCallbackFail) {
+            pendingViews.opened(f, v)
+            leakDetector.trackOpened(v, TrackingSource.FRAGMENT)
+        }
     }
 
     // started rather than resumed: Fragments start before their Activity's onActivityResumed, so this opens their WebViews
     // ahead of the Activity's own scan, and owns them
     override fun onFragmentStarted(fm: FragmentManager, f: Fragment) {
-        if (webViewLeakDetectionEnabled) {
-            WebViewLeakScanner.scan(f.view, errorHandler) { webView ->
-                leakDetector.trackOpened(webView, TrackingSource.FRAGMENT)
+        errorHandler.guardSdkCode(SdkErrorType.UiCallbackFail) {
+            if (webViewLeakDetectionEnabled) {
+                WebViewLeakScanner.scan(f.view, errorHandler) { webView ->
+                    leakDetector.trackOpened(webView, TrackingSource.FRAGMENT)
+                }
             }
         }
     }
 
     override fun onFragmentViewDestroyed(fm: FragmentManager, f: Fragment) {
-        val view = pendingViews.closed(f) ?: return
-        val sessionIds = activeSessionIdsProvider()
-        leakDetector.trackClosed(view, TrackingSource.FRAGMENT, LeakContext(FRAGMENT_VIEW_OBJECT_TYPE, sessionIds, f.javaClass))
+        errorHandler.guardSdkCode(SdkErrorType.UiCallbackFail) {
+            val view = pendingViews.closed(f) ?: return@guardSdkCode
+            val sessionIds = activeSessionIdsProvider()
+            leakDetector.trackClosed(view, TrackingSource.FRAGMENT, LeakContext(FRAGMENT_VIEW_OBJECT_TYPE, sessionIds, f.javaClass))
 
-        if (webViewLeakDetectionEnabled) {
-            WebViewLeakScanner.scan(view, errorHandler) { webView ->
-                leakDetector.trackClosed(
-                    webView,
-                    TrackingSource.FRAGMENT,
-                    LeakContext(WebViewLeakScanner.WEBVIEW_OBJECT_TYPE, sessionIds, f.javaClass),
-                )
+            if (webViewLeakDetectionEnabled) {
+                WebViewLeakScanner.scan(view, errorHandler) { webView ->
+                    leakDetector.trackClosed(
+                        webView,
+                        TrackingSource.FRAGMENT,
+                        LeakContext(WebViewLeakScanner.WEBVIEW_OBJECT_TYPE, sessionIds, f.javaClass),
+                    )
+                }
             }
         }
     }

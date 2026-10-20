@@ -11,6 +11,7 @@ import android.widget.FrameLayout
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.FragmentActivity
 import io.embrace.android.embracesdk.fakes.FakeErrorHandler
+import io.embrace.android.embracesdk.internal.logging.SdkErrorType
 import io.embrace.android.embracesdk.internal.session.id.SessionIdsSnapshot
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotNull
@@ -31,7 +32,7 @@ internal class FragmentLeakDetectionLifecycleCallbacksTest {
 
     @Before
     fun setUp() {
-        leakDetector = LeakDetector(clock = { 0L })
+        leakDetector = LeakDetector(clock = { 0L }, errorHandler = errorHandler)
         callbacks = FragmentLeakDetectionLifecycleCallbacks(leakDetector, { SESSION_IDS }, errorHandler)
     }
 
@@ -106,7 +107,7 @@ internal class FragmentLeakDetectionLifecycleCallbacksTest {
 
     @Test
     fun `a leaked fragment view is reported under its fragment's class`() {
-        val detector = LeakDetector(clock = { 0L }, gcCycleCountReader = { "0" })
+        val detector = LeakDetector(clock = { 0L }, errorHandler = errorHandler, gcCycleCountReader = { "0" })
         val activity = buildActivity(FragmentActivity::class.java).setup().get()
         FragmentLeakDetectionLifecycleCallbacks(detector, { SESSION_IDS }, errorHandler).onActivityCreated(activity)
         val fragment = ViewFragment()
@@ -205,6 +206,20 @@ internal class FragmentLeakDetectionLifecycleCallbacksTest {
         )
     }
 
+    @Test
+    fun `an exception from the app's view is tracked rather than thrown into the fragment lifecycle`() {
+        val activity = registerOn(buildActivity(FragmentActivity::class.java).setup().get())
+        val fragment = ThrowingViewFragment()
+
+        activity.supportFragmentManager.beginTransaction().add(content, fragment).commitNow()
+        activity.supportFragmentManager.beginTransaction().remove(fragment).commitNow()
+
+        assertEquals(
+            listOf(SdkErrorType.UiCallbackFail.toString(), SdkErrorType.UiCallbackFail.toString()),
+            errorHandler.sdkErrorMessages.map { it.msg },
+        )
+    }
+
     private fun registerOn(activity: FragmentActivity): FragmentActivity {
         callbacks.onActivityCreated(activity)
         return activity
@@ -245,4 +260,15 @@ internal class WebViewFragment : Fragment() {
 internal class ViewFragment : Fragment() {
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View =
         View(requireContext())
+}
+
+/**
+ * A [Fragment] whose view throws when hashed, as an app's own View subclass might. Must be a top-level, non-private
+ * class - same requirement as [ViewFragment].
+ */
+internal class ThrowingViewFragment : Fragment() {
+    override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View =
+        object : View(requireContext()) {
+            override fun hashCode(): Int = error("hashCode failed")
+        }
 }

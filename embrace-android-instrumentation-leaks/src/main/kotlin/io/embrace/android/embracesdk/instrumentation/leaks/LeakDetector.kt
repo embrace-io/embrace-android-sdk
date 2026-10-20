@@ -3,6 +3,8 @@ package io.embrace.android.embracesdk.instrumentation.leaks
 import android.os.Build
 import android.os.Debug
 import io.embrace.android.embracesdk.internal.clock.Clock
+import io.embrace.android.embracesdk.internal.logging.ErrorHandler
+import io.embrace.android.embracesdk.internal.logging.SdkErrorType
 import java.lang.ref.PhantomReference
 import java.lang.ref.Reference
 import java.lang.ref.ReferenceQueue
@@ -34,6 +36,7 @@ import kotlin.concurrent.thread
  */
 internal class LeakDetector(
     private val clock: Clock,
+    private val errorHandler: ErrorHandler,
     // guarded here (rather than relying on LeakDetectionInstrumentationProvider never constructing this class below API
     // 23) so that lint's own NewApi check, which can't trace that guard through a lazily-invoked factory in another
     // file, can see it too
@@ -303,9 +306,11 @@ internal class LeakDetector(
     }
 
     private fun dispatch(reclaimed: Reference<*>) {
-        when (reclaimed) {
-            is TrackedReference -> onSentinelReclaimed(reclaimed)
-            is ConfirmedSuspect -> onSuspectCollected(reclaimed)
+        errorHandler.guardSdkCode(SdkErrorType.DataSourceDataCaptureFail) {
+            when (reclaimed) {
+                is TrackedReference -> onSentinelReclaimed(reclaimed)
+                is ConfirmedSuspect -> onSuspectCollected(reclaimed)
+            }
         }
     }
 

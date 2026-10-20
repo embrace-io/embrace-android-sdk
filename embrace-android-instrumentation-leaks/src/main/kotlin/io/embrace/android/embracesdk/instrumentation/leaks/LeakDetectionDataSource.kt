@@ -21,7 +21,7 @@ class LeakDetectionDataSource(args: InstrumentationArgs) :
      * Visible so that tests can drive tracking and reclamation directly, rather than depending on real Activity
      * lifecycle callbacks and real collections.
      */
-    internal val leakDetector = LeakDetector(args.clock)
+    internal val leakDetector = LeakDetector(args.clock, args.errorHandler)
 
     private val webViewLeakDetectionEnabled = args.configService.config.autoDataCapture.webViewLeakDetectionEnabled
 

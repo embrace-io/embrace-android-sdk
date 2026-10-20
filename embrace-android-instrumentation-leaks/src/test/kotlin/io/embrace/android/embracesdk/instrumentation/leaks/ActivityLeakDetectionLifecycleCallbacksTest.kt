@@ -15,8 +15,8 @@ import org.robolectric.RobolectricTestRunner
 @RunWith(RobolectricTestRunner::class)
 internal class ActivityLeakDetectionLifecycleCallbacksTest {
 
-    private val leakDetector = LeakDetector(clock = { 0L })
     private val errorHandler = FakeErrorHandler()
+    private val leakDetector = LeakDetector(clock = { 0L }, errorHandler = errorHandler)
 
     @Test
     fun `resuming an activity with a webview in its decor view tracks it as opened, when enabled`() {

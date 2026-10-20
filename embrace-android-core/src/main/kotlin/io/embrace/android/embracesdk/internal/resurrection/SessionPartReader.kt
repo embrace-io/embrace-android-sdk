@@ -50,11 +50,11 @@ import java.util.concurrent.TimeoutException
  * up by any subsquent pass because it is just a regular, completed session part to be delivered.
  */
 class SessionPartReader(
-    private val sessionsDir: Lazy<File>,
-    private val directoryStore: SessionPartDirectoryStore,
+    internal val sessionsDir: Lazy<File>,
+    internal val directoryStore: SessionPartDirectoryStore,
     private val reconstructionService: SessionReconstructionService,
     private val intakeService: IntakeService,
-    private val writeTracker: SessionPartWriteTracker,
+    internal val writeTracker: SessionPartWriteTracker,
     private val deadPartResurrector: MultiFileDeadPartResurrector,
     private val processIdProvider: () -> String,
     private val configService: ConfigService,

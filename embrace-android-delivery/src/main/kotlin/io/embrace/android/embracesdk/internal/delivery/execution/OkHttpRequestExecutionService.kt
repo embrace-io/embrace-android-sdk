@@ -6,8 +6,8 @@ import io.embrace.android.embracesdk.internal.delivery.SupportedEnvelopeType
 import io.embrace.android.embracesdk.internal.delivery.debug.DeliveryTracer
 import io.embrace.android.embracesdk.internal.delivery.execution.ExecutionResult.Companion.getResult
 import io.embrace.android.embracesdk.internal.delivery.storage.loadAttachment
+import io.embrace.android.embracesdk.internal.logging.ErrorHandler
 import io.embrace.android.embracesdk.internal.logging.InternalErrorType
-import io.embrace.android.embracesdk.internal.logging.InternalLogger
 import okhttp3.Headers.Companion.toHeaders
 import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.MultipartBody
@@ -28,7 +28,7 @@ class OkHttpRequestExecutionService(
     private val lazyDeviceId: Lazy<String>,
     private val appId: String,
     private val embraceVersionName: String,
-    private val logger: InternalLogger,
+    private val errorHandler: ErrorHandler,
     private val deliveryTracer: DeliveryTracer? = null,
 ) : RequestExecutionService {
 
@@ -55,7 +55,7 @@ class OkHttpRequestExecutionService(
             // IOExceptions are expected during the execution of a network request is expected, so don't log errors
             // for those. But any unexpected error should be logged.
             if (throwable !is IOException) {
-                logger.trackInternalError(
+                errorHandler.trackInternalError(
                     type = InternalErrorType.PayloadDeliveryFail,
                     throwable = throwable,
                 )

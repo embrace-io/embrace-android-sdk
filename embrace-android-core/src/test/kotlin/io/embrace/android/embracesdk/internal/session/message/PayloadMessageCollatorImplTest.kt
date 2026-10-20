@@ -105,7 +105,7 @@ internal class PayloadMessageCollatorImplTest(
             FinalEnvelopeParams(
                 initial = startMsg,
                 endType = SessionPartSnapshotType.NORMAL_END,
-                logger = initModule.logger,
+                errorHandler = initModule.errorHandler,
                 continueMonitoring = true,
                 crashId = "crashId",
             ),
@@ -133,7 +133,7 @@ internal class PayloadMessageCollatorImplTest(
             FinalEnvelopeParams(
                 initial = startMsg,
                 endType = SessionPartSnapshotType.NORMAL_END,
-                logger = initModule.logger,
+                errorHandler = initModule.errorHandler,
                 continueMonitoring = true,
                 crashId = "crashId",
             ),
@@ -157,7 +157,7 @@ internal class PayloadMessageCollatorImplTest(
             FinalEnvelopeParams(
                 initial = startMsg,
                 endType = SessionPartSnapshotType.NORMAL_END,
-                logger = initModule.logger,
+                errorHandler = initModule.errorHandler,
                 continueMonitoring = true,
                 crashId = "crashId",
             ),

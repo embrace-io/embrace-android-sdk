@@ -2,7 +2,7 @@ package io.embrace.android.embracesdk.internal.api
 
 import io.embrace.android.embracesdk.fakes.FakeConfigService
 import io.embrace.android.embracesdk.fakes.FakeEnvelopeResourceSource
-import io.embrace.android.embracesdk.fakes.FakeInternalLogger
+import io.embrace.android.embracesdk.fakes.FakeErrorHandler
 import io.embrace.android.embracesdk.fakes.FakeInternalTelemetryService
 import io.embrace.android.embracesdk.fakes.FakeKeyValueStore
 import io.embrace.android.embracesdk.internal.api.delegate.HostedSdkInternalInterfaceImpl
@@ -17,13 +17,13 @@ import org.junit.Test
 internal class HostedSdkInternalInterfaceImplTest {
 
     private lateinit var telemetryService: FakeInternalTelemetryService
-    private lateinit var logger: FakeInternalLogger
+    private lateinit var errorHandler: FakeErrorHandler
     private lateinit var impl: HostedSdkInternalInterfaceImpl
 
     @Before
     fun setUp() {
         telemetryService = FakeInternalTelemetryService()
-        logger = FakeInternalLogger(throwOnInternalError = false)
+        errorHandler = FakeErrorHandler(throwOnInternalError = false)
         impl = HostedSdkInternalInterfaceImpl(
             logsApi = mockk(),
             configService = FakeConfigService(),
@@ -32,7 +32,7 @@ internal class HostedSdkInternalInterfaceImplTest {
             serializer = mockk(),
             rnBundleIdTracker = lazy { error("rn bundle id tracker failure") },
             hostedSdkVersionInfo = FlutterSdkVersionInfo(FakeKeyValueStore()),
-            logger = logger,
+            errorHandler = errorHandler,
             telemetryService = telemetryService,
         )
     }
@@ -56,7 +56,7 @@ internal class HostedSdkInternalInterfaceImplTest {
         assertEquals(listOf("set_javascript_bundle_url", "log_handled_unity_exception"), telemetryService.apiCalls)
         assertEquals(
             listOf(InternalErrorType.PublicApiFail.toString(), InternalErrorType.PublicApiFail.toString()),
-            logger.internalErrorMessages.map { it.msg },
+            errorHandler.internalErrorMessages.map { it.msg },
         )
     }
 
@@ -70,10 +70,10 @@ internal class HostedSdkInternalInterfaceImplTest {
             serializer = mockk(),
             rnBundleIdTracker = lazy { mockk() },
             hostedSdkVersionInfo = mockk(),
-            logger = logger,
+            errorHandler = errorHandler,
             telemetryService = telemetryService,
         )
         assertFalse(throwingImpl.isNetworkSpanForwardingEnabled())
-        assertEquals(1, logger.internalErrorMessages.size)
+        assertEquals(1, errorHandler.internalErrorMessages.size)
     }
 }

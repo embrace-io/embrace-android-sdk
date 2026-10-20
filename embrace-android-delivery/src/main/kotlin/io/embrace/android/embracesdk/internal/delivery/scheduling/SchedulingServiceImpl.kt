@@ -10,8 +10,8 @@ import io.embrace.android.embracesdk.internal.delivery.execution.ExecutionResult
 import io.embrace.android.embracesdk.internal.delivery.execution.RequestExecutionService
 import io.embrace.android.embracesdk.internal.delivery.storage.PayloadStorageService
 import io.embrace.android.embracesdk.internal.delivery.storedTelemetryComparator
+import io.embrace.android.embracesdk.internal.logging.ErrorHandler
 import io.embrace.android.embracesdk.internal.logging.InternalErrorType
-import io.embrace.android.embracesdk.internal.logging.InternalLogger
 import io.embrace.android.embracesdk.internal.worker.BackgroundWorker
 import java.io.IOException
 import java.io.InputStream
@@ -33,7 +33,7 @@ class SchedulingServiceImpl(
     private val schedulingWorker: BackgroundWorker,
     private val deliveryWorker: BackgroundWorker,
     private val clock: Clock,
-    private val logger: InternalLogger,
+    private val errorHandler: ErrorHandler,
     private val deliveryTracer: DeliveryTracer? = null,
     private val maxPayloadBytes: Long = MAX_UPLOAD_PAYLOAD_BYTES,
 ) : SchedulingService {
@@ -135,7 +135,7 @@ class SchedulingServiceImpl(
                 }
             }
         } catch (t: Throwable) {
-            logger.trackInternalError(InternalErrorType.DeliverySchedulingFail, t)
+            errorHandler.trackInternalError(InternalErrorType.DeliverySchedulingFail, t)
         }
     }
 
@@ -207,7 +207,7 @@ class SchedulingServiceImpl(
 
         val sizeBytes = storageService.payloadSizeBytes(payload)
         if (sizeBytes > maxPayloadBytes) {
-            logger.trackInternalError(
+            errorHandler.trackInternalError(
                 type = InternalErrorType.PayloadDeliveryFail,
                 throwable = IOException("$OVERSIZED_UPLOAD_MSG: $sizeBytes bytes"),
             )
@@ -223,7 +223,7 @@ class SchedulingServiceImpl(
                 )
             } ?: ExecutionResult.NotAttempted
         } catch (t: Throwable) {
-            logger.trackInternalError(InternalErrorType.DeliverySchedulingFail, t)
+            errorHandler.trackInternalError(InternalErrorType.DeliverySchedulingFail, t)
             ExecutionResult.Incomplete(exception = t, retry = false)
         }
     }

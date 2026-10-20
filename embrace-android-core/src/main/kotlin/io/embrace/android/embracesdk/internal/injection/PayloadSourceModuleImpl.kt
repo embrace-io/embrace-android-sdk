@@ -61,7 +61,7 @@ class PayloadSourceModuleImpl(
             otelPayloadMapper,
             essentialServiceModule.processStateTracker,
             initModule.clock,
-            initModule.logger,
+            initModule.errorHandler,
         )
     }
 
@@ -89,7 +89,7 @@ class PayloadSourceModuleImpl(
             windowManagerProvider = { coreModule.context.getSystemServiceSafe(Context.WINDOW_SERVICE) },
             backgroundWorker = workerThreadPool.backgroundWorker(Worker.Background.NonIoRegWorker),
             systemInfo = initModule.systemInfo,
-            logger = initModule.logger,
+            errorHandler = initModule.errorHandler,
         ).apply { startAsyncRetrieval() }
     }
 
@@ -144,7 +144,7 @@ class PayloadSourceModuleImpl(
             payloadStorageService = deliveryModule.payloadStorageService,
             cacheStorageService = deliveryModule.cacheStorageService,
             cachedLogEnvelopeStore = deliveryModule.cachedLogEnvelopeStore,
-            logger = initModule.logger,
+            errorHandler = initModule.errorHandler,
             serializer = initModule.jsonSerializer,
         )
     }

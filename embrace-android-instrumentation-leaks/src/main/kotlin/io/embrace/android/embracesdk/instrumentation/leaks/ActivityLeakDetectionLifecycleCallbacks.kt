@@ -4,15 +4,15 @@ import android.app.Activity
 import android.app.Application
 import android.os.Build
 import android.os.Bundle
+import io.embrace.android.embracesdk.internal.logging.ErrorHandler
 import io.embrace.android.embracesdk.internal.logging.InternalErrorType
-import io.embrace.android.embracesdk.internal.logging.InternalLogger
 import io.embrace.android.embracesdk.internal.session.id.SessionIdsSnapshot
 
 internal class ActivityLeakDetectionLifecycleCallbacks(
     private val leakDetector: LeakDetector,
     private val activeSessionIdsProvider: () -> SessionIdsSnapshot,
     private val fragmentSupport: FragmentSupport,
-    private val logger: InternalLogger,
+    private val errorHandler: ErrorHandler,
     private val webViewLeakDetectionEnabled: Boolean = false,
 ) : Application.ActivityLifecycleCallbacks {
 
@@ -20,7 +20,7 @@ internal class ActivityLeakDetectionLifecycleCallbacks(
         try {
             leakDetector.trackOpened(activity, TrackingSource.ACTIVITY)
         } catch (exc: Throwable) {
-            logger.trackInternalError(InternalErrorType.UiCallbackFail, exc)
+            errorHandler.trackInternalError(InternalErrorType.UiCallbackFail, exc)
         }
     }
 
@@ -31,7 +31,7 @@ internal class ActivityLeakDetectionLifecycleCallbacks(
             }
             fragmentSupport.onActivityCreated(activity)
         } catch (exc: Throwable) {
-            logger.trackInternalError(InternalErrorType.UiCallbackFail, exc)
+            errorHandler.trackInternalError(InternalErrorType.UiCallbackFail, exc)
         }
     }
 
@@ -42,7 +42,7 @@ internal class ActivityLeakDetectionLifecycleCallbacks(
 
             if (webViewLeakDetectionEnabled) {
                 // WebViews inside Fragments are opened by the Fragment instrumentation first, so are not closed here
-                WebViewLeakScanner.scan(activity.window?.decorView, logger) { webView ->
+                WebViewLeakScanner.scan(activity.window?.decorView, errorHandler) { webView ->
                     leakDetector.trackClosed(
                         webView,
                         TrackingSource.ACTIVITY,
@@ -51,7 +51,7 @@ internal class ActivityLeakDetectionLifecycleCallbacks(
                 }
             }
         } catch (exc: Throwable) {
-            logger.trackInternalError(InternalErrorType.UiCallbackFail, exc)
+            errorHandler.trackInternalError(InternalErrorType.UiCallbackFail, exc)
         }
     }
 
@@ -60,12 +60,12 @@ internal class ActivityLeakDetectionLifecycleCallbacks(
     override fun onActivityResumed(activity: Activity) {
         try {
             if (webViewLeakDetectionEnabled) {
-                WebViewLeakScanner.scan(activity.window?.decorView, logger) { webView ->
+                WebViewLeakScanner.scan(activity.window?.decorView, errorHandler) { webView ->
                     leakDetector.trackOpened(webView, TrackingSource.ACTIVITY)
                 }
             }
         } catch (exc: Throwable) {
-            logger.trackInternalError(InternalErrorType.UiCallbackFail, exc)
+            errorHandler.trackInternalError(InternalErrorType.UiCallbackFail, exc)
         }
     }
 

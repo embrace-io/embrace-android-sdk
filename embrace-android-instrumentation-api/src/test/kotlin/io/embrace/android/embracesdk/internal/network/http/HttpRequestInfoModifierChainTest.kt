@@ -1,6 +1,6 @@
 package io.embrace.android.embracesdk.internal.network.http
 
-import io.embrace.android.embracesdk.fakes.FakeInternalLogger
+import io.embrace.android.embracesdk.fakes.FakeErrorHandler
 import io.embrace.android.embracesdk.internal.logging.InternalErrorType
 import io.embrace.android.embracesdk.network.http.HttpRequestInfoModifier
 import io.embrace.android.embracesdk.network.http.MutableHttpRequestInfo
@@ -10,13 +10,13 @@ import org.junit.Test
 
 internal class HttpRequestInfoModifierChainTest {
 
-    private lateinit var logger: FakeInternalLogger
+    private lateinit var errorHandler: FakeErrorHandler
     private lateinit var chain: HttpRequestInfoModifierChain
 
     @Before
     fun setUp() {
-        logger = FakeInternalLogger(throwOnInternalError = false)
-        chain = HttpRequestInfoModifierChain(logger)
+        errorHandler = FakeErrorHandler(throwOnInternalError = false)
+        chain = HttpRequestInfoModifierChain(errorHandler)
     }
 
     @Test
@@ -77,10 +77,10 @@ internal class HttpRequestInfoModifierChainTest {
 
         assertEquals(true, ranAfter)
         assertEquals("https://after.com", result.url)
-        assertEquals(1, logger.internalErrorMessages.size)
+        assertEquals(1, errorHandler.internalErrorMessages.size)
         assertEquals(
             InternalErrorType.HttpRequestInfoModifierFail.toString(),
-            logger.internalErrorMessages.single().msg,
+            errorHandler.internalErrorMessages.single().msg,
         )
     }
 
@@ -90,7 +90,7 @@ internal class HttpRequestInfoModifierChainTest {
         repeat(3) {
             chain.apply(MutableHttpRequestInfoImpl(httpMethod = "GET", url = "https://example.com"))
         }
-        assertEquals(1, logger.internalErrorMessages.size)
+        assertEquals(1, errorHandler.internalErrorMessages.size)
     }
 
     @Test

@@ -2,7 +2,7 @@ package io.embrace.android.embracesdk.internal.instrumentation.startup
 
 import io.embrace.android.embracesdk.fakes.FakeClock
 import io.embrace.android.embracesdk.fakes.FakeConfigService
-import io.embrace.android.embracesdk.fakes.FakeInternalLogger
+import io.embrace.android.embracesdk.fakes.FakeErrorHandler
 import io.embrace.android.embracesdk.fakes.FakeTelemetryDestination
 import io.embrace.android.embracesdk.internal.arch.startup.StartupClassifierImpl
 import io.embrace.android.embracesdk.internal.config.resolved.AutoDataCaptureConfig
@@ -18,7 +18,7 @@ internal class DataCaptureServiceModuleImplTest {
     fun testDefaultImplementations() {
         val module = DataCaptureServiceModuleImpl(
             clock = FakeClock(),
-            logger = FakeInternalLogger(),
+            errorHandler = FakeErrorHandler(),
             destination = FakeTelemetryDestination(),
             configService = FakeConfigService(),
             appVersionStartupCounterProvider = { 1 },
@@ -36,7 +36,7 @@ internal class DataCaptureServiceModuleImplTest {
     fun `disable ui load performance capture`() {
         val module = DataCaptureServiceModuleImpl(
             clock = FakeClock(),
-            logger = FakeInternalLogger(),
+            errorHandler = FakeErrorHandler(),
             destination = FakeTelemetryDestination(),
             configService = FakeConfigService(
                 config = EmbraceConfig(autoDataCapture = { AutoDataCaptureConfig(uiLoadTracingEnabled = { false }) }),
@@ -53,7 +53,7 @@ internal class DataCaptureServiceModuleImplTest {
     fun `enable only selected ui load performance capture`() {
         val module = DataCaptureServiceModuleImpl(
             clock = FakeClock(),
-            logger = FakeInternalLogger(),
+            errorHandler = FakeErrorHandler(),
             destination = FakeTelemetryDestination(),
             configService = FakeConfigService(
                 config = EmbraceConfig(autoDataCapture = { AutoDataCaptureConfig(uiLoadTracingTraceAll = { false }) }),

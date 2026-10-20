@@ -15,7 +15,7 @@ import io.embrace.android.embracesdk.internal.NoopInternalInterfaceApi
 import io.embrace.android.embracesdk.internal.api.SdkApi
 import io.embrace.android.embracesdk.internal.api.delegate.TrackedExperimentImpl
 import io.embrace.android.embracesdk.internal.api.delegate.TrackedFeatureFlagImpl
-import io.embrace.android.embracesdk.internal.logging.InternalLogger
+import io.embrace.android.embracesdk.internal.logging.ErrorHandler
 import io.embrace.android.embracesdk.internal.otel.spans.NoopEmbraceSdkSpan
 import io.embrace.android.embracesdk.network.EmbraceNetworkRequest
 import io.embrace.android.embracesdk.network.http.HttpRequestInfoModifier
@@ -37,7 +37,7 @@ import io.opentelemetry.kotlin.tracing.export.SpanProcessor
  * When handed a [BufferingSdkInstance] it discards the buffered calls so their memory is released.
  */
 internal class NoopSdkInstance(
-    private val logger: InternalLogger,
+    private val errorHandler: ErrorHandler,
     private val message: String,
 ) : SdkInstance, InternalInterfaceApi by NoopInternalInterfaceApi {
 
@@ -55,10 +55,10 @@ internal class NoopSdkInstance(
             logged = true
             if (message == SDK_NOT_INITIALIZED) {
                 val msg = "$message, cannot $action."
-                logger.logWarning(msg, Throwable(msg))
+                errorHandler.log(msg, Throwable(msg))
             } else {
                 val msg = "$message, cannot $action. Subsequent dropped calls will not be logged."
-                logger.logInfo(msg, Throwable(msg))
+                errorHandler.log(msg, Throwable(msg), severity = ErrorHandler.Severity.INFO)
             }
         }
     }

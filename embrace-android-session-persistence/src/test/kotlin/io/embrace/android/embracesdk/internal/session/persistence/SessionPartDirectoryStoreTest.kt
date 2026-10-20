@@ -2,7 +2,7 @@ package io.embrace.android.embracesdk.internal.session.persistence
 
 import io.embrace.android.embracesdk.concurrency.BlockingScheduledExecutorService
 import io.embrace.android.embracesdk.fakes.FakeClock
-import io.embrace.android.embracesdk.fakes.FakeInternalLogger
+import io.embrace.android.embracesdk.fakes.FakeErrorHandler
 import io.embrace.android.embracesdk.internal.worker.BackgroundWorker
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
@@ -38,7 +38,7 @@ internal class SessionPartDirectoryStoreTest {
     private lateinit var sessionsDir: File
     private lateinit var clock: FakeClock
     private lateinit var executor: BlockingScheduledExecutorService
-    private lateinit var logger: FakeInternalLogger
+    private lateinit var errorHandler: FakeErrorHandler
     private lateinit var store: SessionPartDirectoryStore
 
     @Before
@@ -46,7 +46,7 @@ internal class SessionPartDirectoryStoreTest {
         sessionsDir = tempFolder.newFolder("embrace_sessions_split")
         clock = FakeClock()
         executor = BlockingScheduledExecutorService(clock)
-        logger = FakeInternalLogger(throwOnInternalError = false)
+        errorHandler = FakeErrorHandler(throwOnInternalError = false)
         store = createStore()
     }
 
@@ -225,7 +225,7 @@ internal class SessionPartDirectoryStoreTest {
         lazy { root },
         BackgroundWorker(executor),
         clock,
-        logger,
+        errorHandler,
         storageLimit,
         MAX_AGE_MS,
     )
@@ -253,11 +253,11 @@ internal class SessionPartDirectoryStoreTest {
     private fun dirNames(): List<String> = sessionsDir.list()?.toList() ?: emptyList()
 
     private fun assertNoInternalErrors() {
-        assertEquals(emptyList<FakeInternalLogger.LogMessage>(), logger.internalErrorMessages)
+        assertEquals(emptyList<FakeErrorHandler.LogMessage>(), errorHandler.internalErrorMessages)
     }
 
     private fun assertStoreFailureTracked() {
-        assertEquals(1, logger.internalErrorMessages.size)
-        assertEquals("SessionPartDirectoryStoreFail", logger.internalErrorMessages.single().msg)
+        assertEquals(1, errorHandler.internalErrorMessages.size)
+        assertEquals("SessionPartDirectoryStoreFail", errorHandler.internalErrorMessages.single().msg)
     }
 }

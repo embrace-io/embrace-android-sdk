@@ -45,7 +45,7 @@ internal class ComposeTapDataSourceTest {
         ComposeTapDataSource(isolated).logComposeTap(Pair(1f, 2f), "my-button-id")
 
         assertTrue(isolated.destination.addedEvents.isEmpty())
-        assertTrue(isolated.logger.errorMessages.isEmpty())
+        assertTrue(isolated.errorHandler.errorMessages.isEmpty())
     }
 
     @Test
@@ -81,7 +81,7 @@ internal class ComposeTapDataSourceTest {
         }
 
         assertTrue(taps.isEmpty())
-        assertTrue(args.logger.errorMessages.isEmpty())
+        assertTrue(args.errorHandler.errorMessages.isEmpty())
     }
 
     @Test

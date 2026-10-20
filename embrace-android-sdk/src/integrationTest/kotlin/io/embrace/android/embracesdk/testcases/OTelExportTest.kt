@@ -14,8 +14,8 @@ import io.embrace.android.embracesdk.fakes.config.FakeInstrumentedConfig
 import io.embrace.android.embracesdk.fakes.config.FakeProjectConfig
 import io.embrace.android.embracesdk.internal.arch.schema.EmbType
 import io.embrace.android.embracesdk.internal.clock.millisToNanos
+import io.embrace.android.embracesdk.internal.logging.ErrorHandler
 import io.embrace.android.embracesdk.internal.logging.InternalErrorType
-import io.embrace.android.embracesdk.internal.logging.InternalLogger
 import io.embrace.android.embracesdk.internal.toStringMap
 import io.embrace.android.embracesdk.otel.java.addJavaLogRecordExporter
 import io.embrace.android.embracesdk.otel.java.addJavaLogRecordProcessor
@@ -170,11 +170,11 @@ internal class OTelExportTest(
         val logProcessor = FakeLogRecordProcessor()
         val spanExporter = FakeSpanExporter()
         val logExporter = FakeLogRecordExporter()
-        lateinit var logger: InternalLogger
+        lateinit var errorHandler: ErrorHandler
 
         testRule.runTest(
             setupAction = {
-                logger = getEmbLogger().apply { throwOnInternalError = false }
+                errorHandler = getFakeErrorHandler().apply { throwOnInternalError = false }
             },
             preSdkStartAction = {
                 embrace.addSpanProcessor(spanProcessor)
@@ -186,7 +186,7 @@ internal class OTelExportTest(
                 recordSession {
                     embrace.startSpan("public-span").stop()
                     embrace.logMessage("public-log", Severity.INFO)
-                    logger.trackInternalError(InternalErrorType.InternalInterfaceFail, RuntimeException("internal"))
+                    errorHandler.trackInternalError(InternalErrorType.InternalInterfaceFail, RuntimeException("internal"))
                 }
             },
             assertAction = {

@@ -51,13 +51,13 @@ class DeliveryModuleImpl(
     override val payloadStorageService: PayloadStorageService =
         payloadStorageServiceProvider?.invoke() ?: PayloadStorageServiceImpl(
             StorageLocation.PAYLOAD.asFile(
-                logger = initModule.logger,
+                errorHandler = initModule.errorHandler,
                 rootDirSupplier = rootDirSupplier,
                 fallbackDirSupplier = fallbackDirSupplier,
             ),
             dataPersistenceWorker,
             processIdProvider,
-            initModule.logger,
+            initModule.errorHandler,
             initModule.clock,
             deliveryTracer,
             payloadStorageLimit,
@@ -66,13 +66,13 @@ class DeliveryModuleImpl(
     override val cacheStorageService: PayloadStorageService =
         cacheStorageServiceProvider?.invoke() ?: PayloadStorageServiceImpl(
             StorageLocation.CACHE.asFile(
-                logger = initModule.logger,
+                errorHandler = initModule.errorHandler,
                 rootDirSupplier = rootDirSupplier,
                 fallbackDirSupplier = fallbackDirSupplier,
             ),
             dataPersistenceWorker,
             processIdProvider,
-            initModule.logger,
+            initModule.errorHandler,
             initModule.clock,
             deliveryTracer,
         )
@@ -89,7 +89,7 @@ class DeliveryModuleImpl(
                 lazy(configService::deviceId),
                 appId,
                 BuildConfig.VERSION_NAME,
-                initModule.logger,
+                initModule.errorHandler,
                 deliveryTracer,
             )
         }
@@ -100,7 +100,7 @@ class DeliveryModuleImpl(
         workerThreadPool.backgroundWorker(Worker.Background.DeliverySchedulingWorker),
         workerThreadPool.backgroundWorker(Worker.Background.HttpRequestWorker),
         initModule.clock,
-        initModule.logger,
+        initModule.errorHandler,
         deliveryTracer,
     )
 
@@ -108,7 +108,7 @@ class DeliveryModuleImpl(
         schedulingService,
         payloadStorageService,
         cacheStorageService,
-        initModule.logger,
+        initModule.errorHandler,
         initModule.jsonSerializer,
         dataPersistenceWorker,
         deliveryTracer,
@@ -124,7 +124,7 @@ class DeliveryModuleImpl(
 
     private val partCacher: PeriodicSessionPartCacher = PeriodicSessionPartCacher(
         workerThreadPool.backgroundWorker(Worker.Background.PeriodicCacheWorker),
-        initModule.logger,
+        initModule.errorHandler,
         configService.otelBehavior.getPeriodicCacheIntervalMs(),
     )
 
@@ -138,12 +138,12 @@ class DeliveryModuleImpl(
 
     override val cachedLogEnvelopeStore: CachedLogEnvelopeStore = CachedLogEnvelopeStoreImpl(
         outputDir = StorageLocation.ENVELOPE.asFile(
-            logger = initModule.logger,
+            errorHandler = initModule.errorHandler,
             rootDirSupplier = rootDirSupplier,
             fallbackDirSupplier = fallbackDirSupplier,
         ),
         worker = dataPersistenceWorker,
-        logger = initModule.logger,
+        errorHandler = initModule.errorHandler,
         serializer = initModule.jsonSerializer,
         clock = initModule.clock,
     )

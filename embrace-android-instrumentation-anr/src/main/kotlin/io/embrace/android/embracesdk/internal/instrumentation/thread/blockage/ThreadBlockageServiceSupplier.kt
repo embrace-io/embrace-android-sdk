@@ -35,7 +35,7 @@ fun createThreadBlockageService(args: InstrumentationArgs): ThreadBlockageServic
             watchdogWorker = watchdogWorker,
             clock = args.clock,
             looper = looper,
-            logger = args.logger,
+            errorHandler = args.errorHandler,
             intervalMs = cfg.sampleIntervalMs,
             blockedDurationThreshold = cfg.minDurationMs,
             listener = stacktraceSampler,

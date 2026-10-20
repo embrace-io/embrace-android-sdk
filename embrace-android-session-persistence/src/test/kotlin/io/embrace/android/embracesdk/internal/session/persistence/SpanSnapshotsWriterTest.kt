@@ -1,7 +1,7 @@
 package io.embrace.android.embracesdk.internal.session.persistence
 
 import io.embrace.android.embracesdk.fakes.FakeClock
-import io.embrace.android.embracesdk.fakes.FakeInternalLogger
+import io.embrace.android.embracesdk.fakes.FakeErrorHandler
 import io.embrace.android.embracesdk.fakes.FakeSectionRecorder
 import io.embrace.android.embracesdk.internal.payload.Attribute
 import io.embrace.android.embracesdk.internal.payload.Span
@@ -50,7 +50,7 @@ internal class SpanSnapshotsWriterTest {
 
     private lateinit var sessionsDir: File
     private lateinit var clock: FakeClock
-    private lateinit var logger: FakeInternalLogger
+    private lateinit var errorHandler: FakeErrorHandler
     private lateinit var recorder: FakeSectionRecorder
     private lateinit var writer: SpanSnapshotsWriter
 
@@ -61,11 +61,11 @@ internal class SpanSnapshotsWriterTest {
     fun setUp() {
         sessionsDir = tempFolder.newFolder("embrace_sessions")
         clock = FakeClock()
-        logger = FakeInternalLogger(throwOnInternalError = false)
+        errorHandler = FakeErrorHandler(throwOnInternalError = false)
         recorder = FakeSectionRecorder()
         SystemTrace.recorder = recorder
         activePart = partDirectory
-        writer = SpanSnapshotsWriter(target { activePart }, logger)
+        writer = SpanSnapshotsWriter(target { activePart }, errorHandler)
         createPartDir(partDirectory)
     }
 
@@ -239,7 +239,7 @@ internal class SpanSnapshotsWriterTest {
 
     @Test
     fun `a failing session part source is reported and does not throw`() {
-        writer = SpanSnapshotsWriter(target { error("boom") }, logger)
+        writer = SpanSnapshotsWriter(target { error("boom") }, errorHandler)
         assertFalse(writer.write(snapshots))
         assertEquals(emptyList<String>(), partDir().list()?.toList())
         assertWriteFailureTracked()
@@ -482,7 +482,7 @@ internal class SpanSnapshotsWriterTest {
         maxRecordBytes: Long = MAX_RECORD_BYTES,
         maxRecords: Int = MAX_PERSISTED_SPANS,
     ): SpanSnapshotsWriter =
-        SpanSnapshotsWriter(target { activePart }, logger, maxBytes, maxRecordBytes, maxRecords)
+        SpanSnapshotsWriter(target { activePart }, errorHandler, maxBytes, maxRecordBytes, maxRecords)
 
     private fun append(
         spans: List<Span>,
@@ -514,12 +514,12 @@ internal class SpanSnapshotsWriterTest {
         collection.copy(written_at_ms = clock.now())
 
     private fun assertNoInternalErrors() {
-        assertEquals(emptyList<FakeInternalLogger.LogMessage>(), logger.internalErrorMessages)
+        assertEquals(emptyList<FakeErrorHandler.LogMessage>(), errorHandler.internalErrorMessages)
     }
 
     private fun assertWriteFailureTracked() {
-        assertEquals(1, logger.internalErrorMessages.size)
-        assertEquals("SpanSnapshotsWriteFail", logger.internalErrorMessages.single().msg)
+        assertEquals(1, errorHandler.internalErrorMessages.size)
+        assertEquals("SpanSnapshotsWriteFail", errorHandler.internalErrorMessages.single().msg)
     }
 
     /**

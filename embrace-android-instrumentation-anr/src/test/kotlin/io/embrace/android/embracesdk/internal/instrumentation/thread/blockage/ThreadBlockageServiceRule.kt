@@ -3,8 +3,8 @@ package io.embrace.android.embracesdk.internal.instrumentation.thread.blockage
 import android.os.Looper
 import io.embrace.android.embracesdk.fakes.FakeClock
 import io.embrace.android.embracesdk.fakes.FakeConfigService
+import io.embrace.android.embracesdk.fakes.FakeErrorHandler
 import io.embrace.android.embracesdk.fakes.FakeInstrumentationArgs
-import io.embrace.android.embracesdk.fakes.FakeInternalLogger
 import io.embrace.android.embracesdk.fakes.FakeProcessStateTracker
 import io.embrace.android.embracesdk.internal.arch.state.ProcessState
 import io.embrace.android.embracesdk.internal.config.resolved.EmbraceConfig
@@ -25,7 +25,7 @@ internal class ThreadBlockageServiceRule<T : ScheduledExecutorService>(
     val clock: FakeClock = FakeClock(),
     private val scheduledExecutorSupplier: Provider<T>,
 ) : ExternalResource() {
-    val logger = FakeInternalLogger()
+    val errorHandler = FakeErrorHandler()
 
     lateinit var fakeConfigService: FakeConfigService
     lateinit var fakeAppStateTracker: FakeProcessStateTracker
@@ -64,12 +64,12 @@ internal class ThreadBlockageServiceRule<T : ScheduledExecutorService>(
             blockedDurationThreshold = config.minDurationMs,
             intervalMs = config.sampleIntervalMs,
             listener = stacktraceSampler,
-            logger = logger,
+            errorHandler = errorHandler,
         )
         args = FakeInstrumentationArgs(
             mockk(),
             configService = fakeConfigService,
-            logger = logger,
+            errorHandler = errorHandler,
             clock = clock,
             processStateTracker = fakeAppStateTracker,
         )

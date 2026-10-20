@@ -17,7 +17,7 @@ import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import io.embrace.android.embracesdk.concurrency.runConcurrently
 import io.embrace.android.embracesdk.fakes.FakeClock
-import io.embrace.android.embracesdk.fakes.FakeInternalLogger
+import io.embrace.android.embracesdk.fakes.FakeErrorHandler
 import io.embrace.android.embracesdk.internal.arch.navigation.NavigationSignal
 import io.embrace.android.embracesdk.internal.arch.navigation.NavigationSignal.ScreenChanged
 import io.embrace.android.embracesdk.internal.arch.navigation.NavigationSignal.ScreenSourceAttached
@@ -39,7 +39,7 @@ internal class NavControllerTrackerTest {
     private lateinit var eventBus: EventBus
     private lateinit var signals: MutableList<NavigationSignal>
     private lateinit var tracker: NavControllerTracker
-    private lateinit var logger: FakeInternalLogger
+    private lateinit var errorHandler: FakeErrorHandler
     private lateinit var activity: FragmentActivity
 
     private val attached get() = signals.filterIsInstance<ScreenSourceAttached>()
@@ -48,11 +48,11 @@ internal class NavControllerTrackerTest {
     @Before
     fun setUp() {
         clock = FakeClock()
-        logger = FakeInternalLogger()
+        errorHandler = FakeErrorHandler()
         signals = CopyOnWriteArrayList()
-        eventBus = EventBus(logger)
+        eventBus = EventBus(errorHandler)
         eventBus.addHandler(NavigationSignal.KEY) { signals.add(it) }
-        tracker = NavControllerTracker(eventBus, clock, logger)
+        tracker = NavControllerTracker(eventBus, clock, errorHandler)
         activity = createActivity()
     }
 
@@ -155,7 +155,7 @@ internal class NavControllerTrackerTest {
 
     @Test
     fun `error during tracking is logged and does not crash`() {
-        val errorLogger = FakeInternalLogger(throwOnInternalError = false)
+        val errorLogger = FakeErrorHandler(throwOnInternalError = false)
         tracker = NavControllerTracker(eventBus, clock, errorLogger)
         tracker.trackNavigation(buildActivity(BrokenNavActivity::class.java).setup().get())
         assertTrue(signals.isEmpty())
@@ -182,7 +182,7 @@ internal class NavControllerTrackerTest {
             }
         }
 
-        assertTrue(logger.internalErrorMessages.isEmpty())
+        assertTrue(errorHandler.internalErrorMessages.isEmpty())
         pairs.forEach { (roundActivity, _) ->
             assertEquals(1, attached.count { it.instanceId == roundActivity.getId() })
             assertEquals(1, screenChanges.count { it.instanceId == roundActivity.getId() })

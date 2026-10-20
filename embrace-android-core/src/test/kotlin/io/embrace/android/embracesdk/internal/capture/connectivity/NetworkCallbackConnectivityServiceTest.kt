@@ -15,7 +15,7 @@ import androidx.test.core.app.ApplicationProvider.getApplicationContext
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import io.embrace.android.embracesdk.concurrency.BlockingScheduledExecutorService
 import io.embrace.android.embracesdk.fakes.fakeBackgroundWorker
-import io.embrace.android.embracesdk.internal.logging.InternalLoggerImpl
+import io.embrace.android.embracesdk.internal.logging.ErrorHandlerImpl
 import io.embrace.android.embracesdk.internal.worker.BackgroundWorker
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
@@ -51,7 +51,7 @@ internal class NetworkCallbackConnectivityServiceTest {
         lazyConnectivityManager = lazy { connectivityManager }
         service = NetworkCallbackConnectivityService(
             fakeBackgroundWorker(),
-            InternalLoggerImpl(),
+            ErrorHandlerImpl(),
             lazyConnectivityManager,
         )
     }
@@ -61,7 +61,7 @@ internal class NetworkCallbackConnectivityServiceTest {
         val lazyManager = lazy { connectivityManager }
         NetworkCallbackConnectivityService(
             fakeBackgroundWorker(),
-            InternalLoggerImpl(),
+            ErrorHandlerImpl(),
             lazyManager,
         )
         assertFalse(lazyManager.isInitialized())
@@ -73,7 +73,7 @@ internal class NetworkCallbackConnectivityServiceTest {
         val lazyManager = lazy { connectivityManager }
         NetworkCallbackConnectivityService(
             BackgroundWorker(executor),
-            InternalLoggerImpl(),
+            ErrorHandlerImpl(),
             lazyManager,
         ).register()
 
@@ -114,7 +114,7 @@ internal class NetworkCallbackConnectivityServiceTest {
     fun `exception during register is caught and does not propagate`() {
         NetworkCallbackConnectivityService(
             fakeBackgroundWorker(),
-            InternalLoggerImpl(),
+            ErrorHandlerImpl(),
             connectivityManager = lazyOf<ConnectivityManager?>(null),
         ).apply {
             register()

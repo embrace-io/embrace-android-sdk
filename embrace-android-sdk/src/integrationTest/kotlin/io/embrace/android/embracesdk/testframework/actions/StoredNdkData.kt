@@ -3,7 +3,7 @@ package io.embrace.android.embracesdk.testframework.actions
 import android.content.Context
 import androidx.test.core.app.ApplicationProvider
 import io.embrace.android.embracesdk.ResourceReader
-import io.embrace.android.embracesdk.fakes.FakeInternalLogger
+import io.embrace.android.embracesdk.fakes.FakeErrorHandler
 import io.embrace.android.embracesdk.fakes.fakeEmptyLogEnvelope
 import io.embrace.android.embracesdk.fakes.fakeEnvelopeMetadata
 import io.embrace.android.embracesdk.fakes.fakeEnvelopeResource
@@ -34,7 +34,7 @@ internal data class StoredNativeCrashData(
     fun getCrashFile(): File {
         val ctx = ApplicationProvider.getApplicationContext<Context>()
         val outputDir = StorageLocation.NATIVE.asFile(
-            logger = FakeInternalLogger(),
+            errorHandler = FakeErrorHandler(),
             rootDirSupplier = { ctx.filesDir },
             fallbackDirSupplier = { ctx.cacheDir },
         ).value.apply {

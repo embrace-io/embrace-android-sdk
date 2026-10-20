@@ -2,7 +2,7 @@ package io.embrace.android.embracesdk.fakes.injection
 
 import io.embrace.android.embracesdk.fakes.FakeClock
 import io.embrace.android.embracesdk.fakes.FakeConfigService
-import io.embrace.android.embracesdk.fakes.FakeInternalLogger
+import io.embrace.android.embracesdk.fakes.FakeErrorHandler
 import io.embrace.android.embracesdk.fakes.OtelSdkMode
 import io.embrace.android.embracesdk.fakes.TestUuidSource
 import io.embrace.android.embracesdk.fakes.config.FakeInstrumentedConfig
@@ -17,14 +17,15 @@ import io.embrace.android.embracesdk.internal.injection.InitModuleImpl
 import io.embrace.android.embracesdk.internal.injection.OpenTelemetryModule
 import io.embrace.android.embracesdk.internal.injection.OpenTelemetryModuleImpl
 import io.embrace.android.embracesdk.internal.injection.PreStartServices
-import io.embrace.android.embracesdk.internal.logging.InternalLogger
+import io.embrace.android.embracesdk.internal.logging.ErrorHandler
+import io.embrace.android.embracesdk.internal.logging.ErrorHandlerImpl
 import io.embrace.android.embracesdk.internal.telemetry.InternalTelemetryService
 import io.embrace.android.embracesdk.internal.telemetry.InternalTelemetryServiceImpl
 import io.embrace.android.embracesdk.internal.utils.UuidSource
 
 class FakeInitModule(
     clock: Clock = FakeClock(),
-    logger: InternalLogger = FakeInternalLogger(),
+    errorHandler: ErrorHandler = FakeErrorHandler(delegate = ErrorHandlerImpl(clock)),
     systemInfo: SystemInfo = SystemInfo(
         osVersion = "99.0.0",
         deviceManufacturer = "Fake Manufacturer",
@@ -33,7 +34,7 @@ class FakeInitModule(
     fakeTelemetryService: InternalTelemetryService? = null,
     override val uuidSource: UuidSource = TestUuidSource(),
     val preStartServices: PreStartServices = PreStartServices(
-        logger = logger,
+        errorHandler = errorHandler,
         clock = clock,
         systemInfo = systemInfo,
         telemetryService = fakeTelemetryService ?: InternalTelemetryServiceImpl(systemInfo = systemInfo),

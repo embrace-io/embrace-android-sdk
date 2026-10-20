@@ -2,7 +2,7 @@ package io.embrace.android.embracesdk.internal.delivery.storage
 
 import io.embrace.android.embracesdk.concurrency.BlockableExecutorService
 import io.embrace.android.embracesdk.fakes.FakeClock
-import io.embrace.android.embracesdk.fakes.FakeInternalLogger
+import io.embrace.android.embracesdk.fakes.FakeErrorHandler
 import io.embrace.android.embracesdk.internal.delivery.StoredTelemetryMetadata
 import io.embrace.android.embracesdk.internal.delivery.SupportedEnvelopeType.BLOB
 import io.embrace.android.embracesdk.internal.delivery.SupportedEnvelopeType.CRASH
@@ -31,7 +31,7 @@ class PayloadStorageServiceImplTest {
     private val metadata = StoredTelemetryMetadata(TIMESTAMP, UUID, PROCESS_ID, SESSION)
     private lateinit var service: PayloadStorageService
     private lateinit var outputDir: File
-    private lateinit var logger: FakeInternalLogger
+    private lateinit var errorHandler: FakeErrorHandler
     private lateinit var worker: PriorityWorker<StoredTelemetryMetadata>
     private lateinit var currentProcessId: String
     private lateinit var clock: FakeClock
@@ -41,10 +41,10 @@ class PayloadStorageServiceImplTest {
         outputDir = Files.createTempDirectory("output").toFile()
         outputDir.deleteRecursively()
         worker = PriorityWorker(BlockableExecutorService(false))
-        logger = FakeInternalLogger(false)
+        errorHandler = FakeErrorHandler(false)
         currentProcessId = PROCESS_ID
         clock = FakeClock(0L)
-        service = PayloadStorageServiceImpl(lazy { outputDir }, worker, { currentProcessId }, logger, clock)
+        service = PayloadStorageServiceImpl(lazy { outputDir }, worker, { currentProcessId }, errorHandler, clock)
     }
 
     @Test
@@ -89,7 +89,7 @@ class PayloadStorageServiceImplTest {
     @Test
     fun `payload size is zero for a non existent file`() {
         assertEquals(0L, service.payloadSizeBytes(metadata))
-        assertTrue(logger.internalErrorMessages.isEmpty())
+        assertTrue(errorHandler.internalErrorMessages.isEmpty())
     }
 
     @Test
@@ -101,7 +101,7 @@ class PayloadStorageServiceImplTest {
     @Test
     fun `load non existent file`() {
         assertNull(service.loadPayloadAsStream(metadata))
-        assertTrue(logger.internalErrorMessages.isEmpty())
+        assertTrue(errorHandler.internalErrorMessages.isEmpty())
     }
 
     @Test
@@ -109,13 +109,21 @@ class PayloadStorageServiceImplTest {
         service.store(metadata) {
             error("Whoops!")
         }
-        assertNotNull(logger.internalErrorMessages.single().throwable)
+        assertNotNull(errorHandler.internalErrorMessages.single().throwable)
     }
 
     @Test
     fun `test objects pruned past limit`() {
         assertNull(outputDir.listFiles())
-        service = PayloadStorageServiceImpl(lazy { outputDir }, worker, { currentProcessId }, logger, FakeClock(0L), null, 4)
+        service = PayloadStorageServiceImpl(
+            lazy { outputDir },
+            worker,
+            { currentProcessId },
+            errorHandler,
+            FakeClock(0L),
+            null,
+            4,
+        )
 
         // exceed storage limit
         listOf(

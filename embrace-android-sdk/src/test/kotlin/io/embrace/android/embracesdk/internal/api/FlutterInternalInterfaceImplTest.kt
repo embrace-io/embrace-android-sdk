@@ -26,7 +26,7 @@ internal class FlutterInternalInterfaceImplTest {
             serializer = mockk(),
             rnBundleIdTracker = lazy { mockk() },
             hostedSdkVersionInfo = hostedSdkVersionInfo,
-            logger = mockk(),
+            errorHandler = mockk(),
             telemetryService = FakeInternalTelemetryService(),
         )
     }

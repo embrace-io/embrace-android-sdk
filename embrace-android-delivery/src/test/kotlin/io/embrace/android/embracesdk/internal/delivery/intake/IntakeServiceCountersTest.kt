@@ -2,7 +2,7 @@ package io.embrace.android.embracesdk.internal.delivery.intake
 
 import io.embrace.android.embracesdk.concurrency.BlockableExecutorService
 import io.embrace.android.embracesdk.fakes.FakeClock
-import io.embrace.android.embracesdk.fakes.FakeInternalLogger
+import io.embrace.android.embracesdk.fakes.FakeErrorHandler
 import io.embrace.android.embracesdk.fakes.FakePayloadStorageService
 import io.embrace.android.embracesdk.fakes.FakeSchedulingService
 import io.embrace.android.embracesdk.fakes.FakeSectionRecorder
@@ -45,7 +45,7 @@ internal class IntakeServiceCountersTest {
             FakeSchedulingService(),
             FakePayloadStorageService(),
             FakePayloadStorageService(),
-            FakeInternalLogger(throwOnInternalError = false),
+            FakeErrorHandler(throwOnInternalError = false),
             serializer,
             PriorityWorker(executorService),
         )

@@ -3,7 +3,7 @@ package io.embrace.android.embracesdk.internal.instrumentation.startup.ui
 import android.app.Activity
 import android.os.Build.VERSION_CODES
 import io.embrace.android.embracesdk.internal.handler.AndroidMainThreadHandler
-import io.embrace.android.embracesdk.internal.logging.InternalLogger
+import io.embrace.android.embracesdk.internal.logging.ErrorHandler
 import io.embrace.android.embracesdk.internal.utils.VersionChecker
 
 /**
@@ -28,9 +28,9 @@ interface DrawEventEmitter : AutoCloseable {
 
 internal fun createDrawEventEmitter(
     versionChecker: VersionChecker,
-    logger: InternalLogger,
+    errorHandler: ErrorHandler,
 ): DrawEventEmitter? = if (supportFrameCommitCallback(versionChecker)) {
-    FirstDrawDetector(logger)
+    FirstDrawDetector(errorHandler)
 } else if (hasRenderEvent(versionChecker)) {
     HandlerMessageDrawDetector(AndroidMainThreadHandler())
 } else {

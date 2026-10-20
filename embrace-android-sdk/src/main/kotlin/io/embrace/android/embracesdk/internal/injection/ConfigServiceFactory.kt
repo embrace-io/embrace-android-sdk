@@ -34,5 +34,5 @@ internal fun createConfigService(
     remoteConfigSource = remoteConfigSource,
     hasConfiguredOtlpExport = preStartServices.externalOtelConfig::hasConfiguredOtlpExport,
     primaryAbi = preStartServices.systemInfo.primaryAbi,
-    logger = preStartServices.logger,
+    errorHandler = preStartServices.errorHandler,
 )

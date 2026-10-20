@@ -10,7 +10,7 @@ import io.embrace.android.embracesdk.assertions.findSpansOfType
 import io.embrace.android.embracesdk.assertions.getSessionPartId
 import io.embrace.android.embracesdk.assertions.getUserSessionId
 import io.embrace.android.embracesdk.assertions.waitUntilConditionMet
-import io.embrace.android.embracesdk.fakes.FakeInternalLogger
+import io.embrace.android.embracesdk.fakes.FakeErrorHandler
 import io.embrace.android.embracesdk.fakes.config.FakeInstrumentedConfig
 import io.embrace.android.embracesdk.fakes.config.FakeProjectConfig
 import io.embrace.android.embracesdk.internal.EmbraceInternalApi
@@ -598,7 +598,7 @@ internal class MultiFilePersistenceParityTest(
         testRule.runTest(
             persistedRemoteConfig = remoteConfig(),
             setupAction = {
-                getEmbLogger().throwOnInternalError = false
+                getFakeErrorHandler().throwOnInternalError = false
             },
             testCaseAction = {
                 // Allow a session part's data to be persisted to disk, but stop the worker used in
@@ -624,7 +624,7 @@ internal class MultiFilePersistenceParityTest(
                     PersistenceMode.MULTI_FILE -> {
                         assertEquals(0, getSessionEnvelopes(0).size)
                         assertEquals(3, storedSessionPartDirectories().size)
-                        assertEquals(0, testRule.setup.getEmbLogger().internalErrorMessages.size)
+                        assertEquals(0, testRule.setup.getFakeErrorHandler().internalErrorMessages.size)
                     }
                 }
             },
@@ -640,7 +640,7 @@ internal class MultiFilePersistenceParityTest(
         testRule.runTest(
             persistedRemoteConfig = remoteConfig(),
             setupAction = {
-                getEmbLogger().throwOnInternalError = false
+                getFakeErrorHandler().throwOnInternalError = false
             },
             testCaseAction = {},
             assertAction = {
@@ -653,7 +653,7 @@ internal class MultiFilePersistenceParityTest(
                     PersistenceMode.MULTI_FILE -> {
                         // Payload assembled and delivered as expected with no errors.
                         assertMatchesGoldenFile(deliveredParts().single())
-                        assertEquals(0, testRule.setup.getEmbLogger().internalErrorMessages.size)
+                        assertEquals(0, testRule.setup.getFakeErrorHandler().internalErrorMessages.size)
 
                         // Every part the dead process left behind is delivered, not just its last one: the
                         // background part before the session, and the one that was live when it died.
@@ -795,7 +795,7 @@ internal class MultiFilePersistenceParityTest(
             persistedRemoteConfig = remoteConfig(backgroundActivity = BackgroundActivityRemoteConfig(0f)),
             setupAction = {
                 // the deleted part is reported as an internal error
-                getEmbLogger().throwOnInternalError = false
+                getFakeErrorHandler().throwOnInternalError = false
                 fakeNetworkConnectivityService.connectivityStatus = ConnectivityStatus.None
                 fillPayloadStorage()
             },
@@ -819,7 +819,7 @@ internal class MultiFilePersistenceParityTest(
                 )
                 assertTrue(
                     "the deleted part was not reported",
-                    testRule.setup.getEmbLogger().internalErrorMessages.any {
+                    testRule.setup.getFakeErrorHandler().internalErrorMessages.any {
                         it.msg == InternalErrorType.SessionPartReadFail.toString() &&
                             it.throwable?.message?.contains("failed intake retry failed again") == true
                     },
@@ -1022,7 +1022,7 @@ internal class MultiFilePersistenceParityTest(
     private fun storageDir(location: StorageLocation): File {
         val ctx = ApplicationProvider.getApplicationContext<Context>()
         return location.asFile(
-            logger = FakeInternalLogger(),
+            errorHandler = FakeErrorHandler(),
             rootDirSupplier = { ctx.filesDir },
             fallbackDirSupplier = { ctx.cacheDir },
         ).value

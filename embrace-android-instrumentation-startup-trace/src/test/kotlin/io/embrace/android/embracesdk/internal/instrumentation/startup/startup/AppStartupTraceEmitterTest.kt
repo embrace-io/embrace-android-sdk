@@ -4,7 +4,7 @@ import android.os.Build.VERSION_CODES
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import io.embrace.android.embracesdk.fakes.FakeClock
 import io.embrace.android.embracesdk.fakes.FakeClock.Companion.DEFAULT_FAKE_CURRENT_TIME
-import io.embrace.android.embracesdk.fakes.FakeInternalLogger
+import io.embrace.android.embracesdk.fakes.FakeErrorHandler
 import io.embrace.android.embracesdk.fakes.FakeProcessInfo
 import io.embrace.android.embracesdk.fakes.FakeSpanToken
 import io.embrace.android.embracesdk.fakes.FakeTelemetryDestination
@@ -67,7 +67,7 @@ internal class AppStartupTraceEmitterTest {
 
     private lateinit var clock: FakeClock
     private lateinit var destination: FakeTelemetryDestination
-    private lateinit var logger: FakeInternalLogger
+    private lateinit var errorHandler: FakeErrorHandler
     private lateinit var versionChecker: VersionChecker
 
     @Before
@@ -76,7 +76,7 @@ internal class AppStartupTraceEmitterTest {
         destination = FakeTelemetryDestination()
         startupService = StartupServiceImpl(destination) { APP_VERSION_STARTUP_COUNTER }
         clock.tick(100L)
-        logger = FakeInternalLogger(false)
+        errorHandler = FakeErrorHandler(false)
     }
 
     /**
@@ -647,7 +647,7 @@ internal class AppStartupTraceEmitterTest {
             startupServiceProvider = { startupService },
             destination = destination,
             versionChecker = versionChecker,
-            logger = logger,
+            errorHandler = errorHandler,
             startupClassifier = startupClassifier,
             manualEnd = manualEnd,
             processInfo = FakeProcessInfo(
@@ -779,7 +779,7 @@ internal class AppStartupTraceEmitterTest {
             }
         }
 
-        assertEquals(0, logger.internalErrorMessages.size)
+        assertEquals(0, errorHandler.internalErrorMessages.size)
     }
 
     private fun AppStartupTraceEmitter.initApp(hasAppInitEvents: Boolean, isColdStart: Boolean): AppInitTimestamps {

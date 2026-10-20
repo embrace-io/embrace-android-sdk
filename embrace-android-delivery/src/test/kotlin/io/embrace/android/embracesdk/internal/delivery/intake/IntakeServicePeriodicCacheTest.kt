@@ -2,7 +2,7 @@ package io.embrace.android.embracesdk.internal.delivery.intake
 
 import io.embrace.android.embracesdk.concurrency.BlockableExecutorService
 import io.embrace.android.embracesdk.fakes.FakeClock
-import io.embrace.android.embracesdk.fakes.FakeInternalLogger
+import io.embrace.android.embracesdk.fakes.FakeErrorHandler
 import io.embrace.android.embracesdk.fakes.FakePayloadStorageService
 import io.embrace.android.embracesdk.fakes.FakeSchedulingService
 import io.embrace.android.embracesdk.fakes.TestPlatformSerializer
@@ -23,7 +23,7 @@ class IntakeServicePeriodicCacheTest {
     private lateinit var cacheStorageService: FakePayloadStorageService
     private lateinit var schedulingService: FakeSchedulingService
     private lateinit var executorService: BlockableExecutorService
-    private lateinit var logger: FakeInternalLogger
+    private lateinit var errorHandler: FakeErrorHandler
 
     private val serializer = TestPlatformSerializer()
     private val sessionEnvelope = Envelope(
@@ -37,12 +37,12 @@ class IntakeServicePeriodicCacheTest {
         cacheStorageService = FakePayloadStorageService()
         schedulingService = FakeSchedulingService()
         executorService = BlockableExecutorService(blockingMode = true)
-        logger = FakeInternalLogger(false)
+        errorHandler = FakeErrorHandler(false)
         intakeService = IntakeServiceImpl(
             schedulingService,
             payloadStorageService,
             cacheStorageService,
-            logger,
+            errorHandler,
             serializer,
             PriorityWorker(executorService),
         )

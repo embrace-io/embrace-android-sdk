@@ -3,7 +3,7 @@ package io.embrace.android.embracesdk.instrumentation.leaks
 import android.app.Activity
 import android.webkit.WebView
 import android.widget.FrameLayout
-import io.embrace.android.embracesdk.fakes.FakeInternalLogger
+import io.embrace.android.embracesdk.fakes.FakeErrorHandler
 import io.embrace.android.embracesdk.internal.session.id.SessionIdsSnapshot
 import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertNull
@@ -16,7 +16,7 @@ import org.robolectric.RobolectricTestRunner
 internal class ActivityLeakDetectionLifecycleCallbacksTest {
 
     private val leakDetector = LeakDetector(clock = { 0L })
-    private val logger = FakeInternalLogger()
+    private val errorHandler = FakeErrorHandler()
 
     @Test
     fun `resuming an activity with a webview in its decor view tracks it as opened, when enabled`() {
@@ -62,7 +62,7 @@ internal class ActivityLeakDetectionLifecycleCallbacksTest {
         leakDetector,
         { SESSION_IDS },
         NoOpFragmentSupport,
-        logger,
+        errorHandler,
         webViewLeakDetectionEnabled,
     )
 

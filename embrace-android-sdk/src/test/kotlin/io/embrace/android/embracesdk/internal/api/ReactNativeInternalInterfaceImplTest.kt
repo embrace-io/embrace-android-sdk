@@ -5,8 +5,8 @@ import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import io.embrace.android.embracesdk.fakes.FakeConfigService
 import io.embrace.android.embracesdk.fakes.FakeEnvelopeResourceSource
+import io.embrace.android.embracesdk.fakes.FakeErrorHandler
 import io.embrace.android.embracesdk.fakes.FakeInstrumentationModule
-import io.embrace.android.embracesdk.fakes.FakeInternalLogger
 import io.embrace.android.embracesdk.fakes.FakeInternalTelemetryService
 import io.embrace.android.embracesdk.fakes.FakeKeyValueStore
 import io.embrace.android.embracesdk.fakes.FakeRnBundleIdTracker
@@ -32,7 +32,7 @@ internal class ReactNativeInternalInterfaceImplTest {
     private lateinit var store: FakeKeyValueStore
     private lateinit var instrumentationModule: FakeInstrumentationModule
     private lateinit var rnBundleIdTracker: FakeRnBundleIdTracker
-    private lateinit var logger: FakeInternalLogger
+    private lateinit var errorHandler: FakeErrorHandler
     private lateinit var context: Context
     private lateinit var hostedSdkVersionInfo: HostedSdkVersionInfo
 
@@ -41,7 +41,7 @@ internal class ReactNativeInternalInterfaceImplTest {
         store = FakeKeyValueStore()
         rnBundleIdTracker = FakeRnBundleIdTracker()
         hostedSdkVersionInfo = ReactNativeSdkVersionInfo(store)
-        logger = FakeInternalLogger(false)
+        errorHandler = FakeErrorHandler(false)
         context = ApplicationProvider.getApplicationContext()
         instrumentationModule = FakeInstrumentationModule(ApplicationProvider.getApplicationContext())
         impl = HostedSdkInternalInterfaceImpl(
@@ -52,7 +52,7 @@ internal class ReactNativeInternalInterfaceImplTest {
             serializer = TestPlatformSerializer(),
             rnBundleIdTracker = lazyOf(rnBundleIdTracker),
             hostedSdkVersionInfo = hostedSdkVersionInfo,
-            logger = logger,
+            errorHandler = errorHandler,
             telemetryService = FakeInternalTelemetryService(),
         )
     }
@@ -101,7 +101,7 @@ internal class ReactNativeInternalInterfaceImplTest {
             serializer = TestPlatformSerializer(),
             rnBundleIdTracker = lazyOf(rnBundleIdTracker),
             hostedSdkVersionInfo = hostedSdkVersionInfo,
-            logger = logger,
+            errorHandler = errorHandler,
             telemetryService = FakeInternalTelemetryService(),
         )
 

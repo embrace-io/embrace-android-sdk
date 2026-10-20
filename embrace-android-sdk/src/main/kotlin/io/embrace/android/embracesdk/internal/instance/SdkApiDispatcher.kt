@@ -15,7 +15,7 @@ import io.embrace.android.embracesdk.internal.api.SdkApi
 import io.embrace.android.embracesdk.internal.api.delegate.LateBindingOpenTelemetry
 import io.embrace.android.embracesdk.internal.api.delegate.TrackedExperimentImpl
 import io.embrace.android.embracesdk.internal.api.delegate.TrackedFeatureFlagImpl
-import io.embrace.android.embracesdk.internal.logging.InternalErrorHandler
+import io.embrace.android.embracesdk.internal.logging.ErrorHandler
 import io.embrace.android.embracesdk.internal.logging.InternalErrorType
 import io.embrace.android.embracesdk.internal.otel.spans.NoopEmbraceSdkSpan
 import io.embrace.android.embracesdk.internal.telemetry.InternalTelemetryService
@@ -40,7 +40,7 @@ import io.opentelemetry.kotlin.tracing.export.SpanProcessor
 internal class SdkApiDispatcher(
     initialTarget: SdkInstance,
     private val telemetryService: InternalTelemetryService,
-    private val errorHandler: InternalErrorHandler,
+    private val errorHandler: ErrorHandler,
 ) : SdkApi {
 
     @Volatile

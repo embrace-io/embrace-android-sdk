@@ -22,7 +22,6 @@ import io.embrace.android.embracesdk.internal.instrumentation.network.DefaultTra
 import io.embrace.android.embracesdk.internal.logging.ErrorHandler
 import io.embrace.android.embracesdk.internal.logging.ErrorHandlerImpl
 import io.embrace.android.embracesdk.internal.logging.InternalErrorType
-import io.embrace.android.embracesdk.internal.logging.InternalLogger
 import io.embrace.android.embracesdk.spans.EmbraceSpan
 import io.embrace.android.embracesdk.spans.EmbraceSpanEvent
 import io.embrace.android.embracesdk.spans.ErrorCode
@@ -43,10 +42,9 @@ import java.util.concurrent.TimeUnit
  */
 internal class BufferingSdkInstance(
     private val clock: Clock,
-    private val logger: InternalLogger,
     private val errorHandler: ErrorHandler = ErrorHandlerImpl(clock),
 ) : SdkInstance,
-    SdkApi by NoopSdkInstance(logger, NoopSdkInstance.SDK_NOT_INITIALIZED),
+    SdkApi by NoopSdkInstance(errorHandler, NoopSdkInstance.SDK_NOT_INITIALIZED),
     InternalInterfaceApi by NoopInternalInterfaceApi {
 
     private val otelConfigCalls = CallBuffer<OTelApi, OTelConfigCall>()
@@ -264,7 +262,7 @@ internal class BufferingSdkInstance(
         try {
             action()
         } catch (exc: Throwable) {
-            logger.trackInternalError(InternalErrorType.PublicApiFail, exc)
+            errorHandler.trackInternalError(InternalErrorType.PublicApiFail, exc)
         }
     }
 

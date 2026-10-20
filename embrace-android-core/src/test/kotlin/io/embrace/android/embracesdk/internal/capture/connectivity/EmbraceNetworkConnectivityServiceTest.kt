@@ -7,8 +7,8 @@ import android.net.ConnectivityManager
 import io.embrace.android.embracesdk.concurrency.BlockingScheduledExecutorService
 import io.embrace.android.embracesdk.fakes.FakeClock
 import io.embrace.android.embracesdk.fakes.fakeBackgroundWorker
-import io.embrace.android.embracesdk.internal.logging.InternalLogger
-import io.embrace.android.embracesdk.internal.logging.InternalLoggerImpl
+import io.embrace.android.embracesdk.internal.logging.ErrorHandler
+import io.embrace.android.embracesdk.internal.logging.ErrorHandlerImpl
 import io.embrace.android.embracesdk.internal.worker.BackgroundWorker
 import io.mockk.clearAllMocks
 import io.mockk.every
@@ -33,7 +33,7 @@ internal class EmbraceNetworkConnectivityServiceTest {
 
     companion object {
         private lateinit var context: Context
-        private lateinit var logger: InternalLogger
+        private lateinit var errorHandler: ErrorHandler
         private lateinit var mockConnectivityManager: ConnectivityManager
         private lateinit var worker: BackgroundWorker
         private lateinit var fakeClock: FakeClock
@@ -45,7 +45,7 @@ internal class EmbraceNetworkConnectivityServiceTest {
         @JvmStatic
         fun setupBeforeAll() {
             context = mockk(relaxed = true)
-            logger = InternalLoggerImpl()
+            errorHandler = ErrorHandlerImpl()
             mockConnectivityManager = mockk()
             fakeClock = FakeClock()
             worker = fakeBackgroundWorker()
@@ -71,7 +71,7 @@ internal class EmbraceNetworkConnectivityServiceTest {
         service = EmbraceNetworkConnectivityService(
             context,
             worker,
-            logger,
+            errorHandler,
             lazyOf<ConnectivityManager?>(mockConnectivityManager),
         )
 
@@ -183,7 +183,7 @@ internal class EmbraceNetworkConnectivityServiceTest {
         val service = EmbraceNetworkConnectivityService(
             context,
             BackgroundWorker(executor),
-            logger,
+            errorHandler,
             lazyOf<ConnectivityManager?>(mockConnectivityManager),
         )
         service.register()
@@ -202,5 +202,5 @@ internal class EmbraceNetworkConnectivityServiceTest {
     }
 
     private fun createService(connectivityManager: Lazy<ConnectivityManager?>) =
-        EmbraceNetworkConnectivityService(context, worker, logger, connectivityManager)
+        EmbraceNetworkConnectivityService(context, worker, errorHandler, connectivityManager)
 }

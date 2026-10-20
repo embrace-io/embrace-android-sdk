@@ -3,7 +3,7 @@ package io.embrace.android.embracesdk.injection
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import io.embrace.android.embracesdk.fakes.FakeConfigService
-import io.embrace.android.embracesdk.fakes.FakeInternalLogger
+import io.embrace.android.embracesdk.fakes.FakeErrorHandler
 import io.embrace.android.embracesdk.fakes.injection.FakeWorkerThreadPool
 import io.embrace.android.embracesdk.internal.injection.ConfigLoadServices
 import io.embrace.android.embracesdk.internal.injection.PreStartServices
@@ -21,7 +21,7 @@ internal class ConfigLoadServicesTest {
         val workerThreadPool = FakeWorkerThreadPool(testWorkers = listOf(Worker.Background.IoRegWorker))
         val configLoadServices = ConfigLoadServices(
             context = ApplicationProvider.getApplicationContext(),
-            preStartServices = PreStartServices(logger = FakeInternalLogger(throwOnInternalError = false)),
+            preStartServices = PreStartServices(errorHandler = FakeErrorHandler(throwOnInternalError = false)),
             workerThreadPoolSupplier = { workerThreadPool },
             configServiceSupplier = { _, _, _, _, _, _ -> configService },
         )

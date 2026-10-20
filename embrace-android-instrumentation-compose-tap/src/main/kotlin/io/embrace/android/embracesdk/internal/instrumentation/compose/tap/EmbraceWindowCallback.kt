@@ -6,7 +6,7 @@ import android.view.KeyboardShortcutGroup
 import android.view.Menu
 import android.view.MotionEvent
 import android.view.Window
-import io.embrace.android.embracesdk.internal.logging.InternalLogger
+import io.embrace.android.embracesdk.internal.logging.ErrorHandler
 
 /**
  * Custom Window callback that triggers onTouch event
@@ -15,7 +15,7 @@ import io.embrace.android.embracesdk.internal.logging.InternalLogger
 internal class EmbraceWindowCallback(
     private val delegate: Window.Callback,
     private val gestureDetector: GestureDetector,
-    private val logger: InternalLogger,
+    private val errorHandler: ErrorHandler,
 ) : Window.Callback by delegate, AutoCloseable {
 
     @Volatile
@@ -35,7 +35,7 @@ internal class EmbraceWindowCallback(
                 gestureDetector.onTouchEvent(copy)
                 copy.recycle()
             } catch (e: Throwable) {
-                logger.logError("Touch event dispatch failed", e)
+                errorHandler.log("Touch event dispatch failed", e, severity = ErrorHandler.Severity.ERROR)
             }
         }
 

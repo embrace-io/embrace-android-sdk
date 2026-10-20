@@ -12,7 +12,7 @@ import io.embrace.android.embracesdk.fakes.TestStateDataSource
 import io.embrace.android.embracesdk.fakes.TestStateValue
 import io.embrace.android.embracesdk.internal.arch.datasource.DataSource
 import io.embrace.android.embracesdk.internal.arch.datasource.TelemetryDestination
-import io.embrace.android.embracesdk.internal.logging.InternalLoggerImpl
+import io.embrace.android.embracesdk.internal.logging.ErrorHandlerImpl
 import io.embrace.android.embracesdk.internal.worker.BackgroundWorker
 import io.embrace.android.embracesdk.semconv.EmbStateTransitionAttributes
 import org.junit.Assert.assertEquals
@@ -37,7 +37,7 @@ internal class InstrumentationRegistryTest {
         configService = FakeConfigService()
         executorService = BlockingScheduledExecutorService(blockingMode = false)
         registry = InstrumentationRegistryImpl(
-            InternalLoggerImpl(),
+            ErrorHandlerImpl(),
         )
     }
 

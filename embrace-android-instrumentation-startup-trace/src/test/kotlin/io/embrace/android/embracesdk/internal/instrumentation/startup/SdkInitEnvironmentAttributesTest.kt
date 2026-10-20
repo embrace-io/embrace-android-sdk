@@ -6,7 +6,7 @@ import android.content.pm.PackageInfo
 import android.os.PowerManager
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
-import io.embrace.android.embracesdk.fakes.FakeInternalLogger
+import io.embrace.android.embracesdk.fakes.FakeErrorHandler
 import io.embrace.android.embracesdk.internal.instrumentation.startup.SdkInitAttributeKeys.APP_IMAGE_AT_INIT
 import io.embrace.android.embracesdk.internal.instrumentation.startup.SdkInitAttributeKeys.ART_COMPILER_FILTER
 import io.embrace.android.embracesdk.internal.instrumentation.startup.SdkInitAttributeKeys.ART_COMPILER_FILTER_NOT_FOUND
@@ -40,7 +40,7 @@ import org.robolectric.shadow.api.Shadow
 internal class SdkInitEnvironmentAttributesTest {
 
     private lateinit var context: Context
-    private lateinit var logger: FakeInternalLogger
+    private lateinit var errorHandler: FakeErrorHandler
     private lateinit var powerManager: PowerManager
     private lateinit var shadowPowerManager: EmbraceShadowPowerManager
     private var uptimeMs: Long = 45_000L
@@ -51,7 +51,7 @@ internal class SdkInitEnvironmentAttributesTest {
     @Before
     fun setUp() {
         context = ApplicationProvider.getApplicationContext()
-        logger = FakeInternalLogger(throwOnInternalError = false)
+        errorHandler = FakeErrorHandler(throwOnInternalError = false)
         powerManager = context.getSystemService(Context.POWER_SERVICE) as PowerManager
         shadowPowerManager = Shadow.extract(powerManager)
         shadowPowerManager.thermalStatus = PowerManager.THERMAL_STATUS_MODERATE
@@ -378,7 +378,7 @@ internal class SdkInitEnvironmentAttributesTest {
         artOptimizationProvider: () -> ArtOptimizationState? = { artOptimizationState },
     ): Map<String, String> = sdkInitEnvironmentAttributes(
         nowMs = NOW_MS,
-        logger = logger,
+        errorHandler = errorHandler,
         packageInfo = packageInfo,
         powerManagerProvider = powerManagerProvider,
         activityManagerProvider = activityManagerProvider,
@@ -435,18 +435,18 @@ internal class SdkInitEnvironmentAttributesTest {
      * Asserts an attribute capture failure occurred for exactly the given attributes, in order.
      */
     private fun assertCaptureFailureReported(vararg keys: String) {
-        assertEquals(keys.size, logger.internalErrorMessages.size)
-        assertTrue(logger.internalErrorMessages.all { it.msg == "SdkInitAttributeCaptureFail" })
+        assertEquals(keys.size, errorHandler.internalErrorMessages.size)
+        assertTrue(errorHandler.internalErrorMessages.all { it.msg == "SdkInitAttributeCaptureFail" })
         if (keys.isNotEmpty()) {
             assertEquals(
                 keys.toList(),
-                logger.internalErrorMessages.map { it.throwable?.message?.substringAfterLast(": ") },
+                errorHandler.internalErrorMessages.map { it.throwable?.message?.substringAfterLast(": ") },
             )
         }
     }
 
     private fun assertNoInternalErrors() {
-        assertEquals(0, logger.internalErrorMessages.size)
+        assertEquals(0, errorHandler.internalErrorMessages.size)
     }
 
     private companion object {

@@ -5,8 +5,8 @@ import io.embrace.android.embracesdk.internal.arch.InstrumentationArgs
 import io.embrace.android.embracesdk.internal.arch.limits.LimitStrategy
 import io.embrace.android.embracesdk.internal.clock.Clock
 import io.embrace.android.embracesdk.internal.config.ConfigService
+import io.embrace.android.embracesdk.internal.logging.ErrorHandler
 import io.embrace.android.embracesdk.internal.logging.InternalErrorType
-import io.embrace.android.embracesdk.internal.logging.InternalLogger
 import io.embrace.android.embracesdk.internal.telemetry.AppliedLimitType
 
 /**
@@ -19,7 +19,7 @@ abstract class DataSourceImpl(
 ) : DataSource {
 
     protected val clock: Clock = args.clock
-    protected val logger: InternalLogger = args.logger
+    protected val errorHandler: ErrorHandler = args.errorHandler
     protected val configService: ConfigService = args.configService
     protected val destination: TelemetryDestination = args.destination
     protected val telemetryService = args.telemetryService
@@ -55,7 +55,7 @@ abstract class DataSourceImpl(
                 telemetryService.trackAppliedLimit(instrumentationName, AppliedLimitType.DROP)
             }
         } catch (exc: Throwable) {
-            logger.trackInternalError(InternalErrorType.DataSourceDataCaptureFail, exc)
+            errorHandler.trackInternalError(InternalErrorType.DataSourceDataCaptureFail, exc)
         }
         return null
     }

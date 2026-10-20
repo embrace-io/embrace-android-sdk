@@ -61,7 +61,7 @@ internal class ResurrectionFeatureTest(
             fakeStorageLayer = true,
         ).apply {
             getFakedWorkerExecutor(Worker.Background.SessionPersistenceWorker).blockingMode = false
-            getEmbLogger().throwOnInternalError = false
+            getFakeErrorHandler().throwOnInternalError = false
         }.also {
             cacheStorageService = checkNotNull(it.fakeCacheStorageService)
         }

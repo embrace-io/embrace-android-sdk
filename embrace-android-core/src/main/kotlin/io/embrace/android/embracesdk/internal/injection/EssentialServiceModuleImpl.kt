@@ -46,7 +46,7 @@ class EssentialServiceModuleImpl(
     override val processStateTracker: ProcessStateTracker = EmbTrace.trace("process-state-service-init") {
         val lifecycleTracker = lifecycleTrackerProvider()
             ?: createLifecycleTracker(configService, coreModule.application, startupContext)
-        ProcessStateTrackerImpl(initModule.logger, lifecycleTracker)
+        ProcessStateTrackerImpl(initModule.errorHandler, lifecycleTracker)
             .apply { register() }
     }
 
@@ -64,14 +64,14 @@ class EssentialServiceModuleImpl(
             ) {
                 NetworkCallbackConnectivityService(
                     worker,
-                    initModule.logger,
+                    initModule.errorHandler,
                     connectivityManager,
                 )
             } else {
                 EmbraceNetworkConnectivityService(
                     coreModule.context,
                     worker,
-                    initModule.logger,
+                    initModule.errorHandler,
                     connectivityManager,
                 )
             }
@@ -83,7 +83,7 @@ class EssentialServiceModuleImpl(
 
     override val sessionPartTracker: SessionPartTracker = SessionPartTrackerImpl(
         activityManager,
-        initModule.logger,
+        initModule.errorHandler,
     )
 
     override val sessionIdsProvider: SessionIdsProvider =
@@ -111,7 +111,7 @@ class EssentialServiceModuleImpl(
             EmbraceUserService(
                 coreModule.store,
                 initModule.clock,
-                initModule.logger,
+                initModule.errorHandler,
             ).apply { recordInstallDateIfAbsent() }
         }
     }

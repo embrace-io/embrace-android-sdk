@@ -4,8 +4,8 @@ import io.embrace.android.embracesdk.concurrency.BlockingScheduledExecutorServic
 import io.embrace.android.embracesdk.fakes.FakeCachedLogEnvelopeStore
 import io.embrace.android.embracesdk.fakes.FakeClock
 import io.embrace.android.embracesdk.fakes.FakeConfigService
+import io.embrace.android.embracesdk.fakes.FakeErrorHandler
 import io.embrace.android.embracesdk.fakes.FakeIntakeService
-import io.embrace.android.embracesdk.fakes.FakeInternalLogger
 import io.embrace.android.embracesdk.fakes.FakeNativeCrashService
 import io.embrace.android.embracesdk.internal.clock.Clock
 import io.embrace.android.embracesdk.internal.clock.millisToNanos
@@ -104,7 +104,7 @@ internal class SessionPartReaderTest {
     private lateinit var sessionsDir: File
     private lateinit var clock: FakeClock
     private lateinit var executor: BlockingScheduledExecutorService
-    private lateinit var logger: FakeInternalLogger
+    private lateinit var errorHandler: FakeErrorHandler
     private lateinit var directoryStore: SessionPartDirectoryStore
     private lateinit var intakeService: FakeIntakeService
     private lateinit var slowIntake: SlowIntakeService
@@ -117,8 +117,8 @@ internal class SessionPartReaderTest {
         sessionsDir = tempFolder.newFolder("embrace_sessions_split")
         clock = FakeClock()
         executor = BlockingScheduledExecutorService(clock, true)
-        logger = FakeInternalLogger(throwOnInternalError = false)
-        directoryStore = SessionPartDirectoryStore(lazy { sessionsDir }, BackgroundWorker(executor), clock, logger)
+        errorHandler = FakeErrorHandler(throwOnInternalError = false)
+        directoryStore = SessionPartDirectoryStore(lazy { sessionsDir }, BackgroundWorker(executor), clock, errorHandler)
         intakeService = FakeIntakeService()
         slowIntake = SlowIntakeService()
         writeTracker = SessionPartWriteTracker()
@@ -146,7 +146,7 @@ internal class SessionPartReaderTest {
             assertTrue(complete)
         }
         assertDeleted(partDirectory)
-        assertEquals(emptyList<FakeInternalLogger.LogMessage>(), logger.internalErrorMessages)
+        assertEquals(emptyList<FakeErrorHandler.LogMessage>(), errorHandler.internalErrorMessages)
     }
 
     @Test
@@ -307,7 +307,7 @@ internal class SessionPartReaderTest {
 
         assertEquals(ids(laterPartDirectory), intakesAttempted())
         assertDeleted(partDirectory, laterPartDirectory)
-        assertTrue(logger.internalErrorMessages.single().throwable is IllegalStateException)
+        assertTrue(errorHandler.internalErrorMessages.single().throwable is IllegalStateException)
     }
 
     @Test
@@ -385,7 +385,7 @@ internal class SessionPartReaderTest {
         reader.readPersistedSessionParts()
         assertEquals(ids(partDirectory, partDirectory, laterPartDirectory), intakesAttempted())
         assertDeleted(partDirectory, laterPartDirectory)
-        assertEquals(emptyList<FakeInternalLogger.LogMessage>(), logger.internalErrorMessages)
+        assertEquals(emptyList<FakeErrorHandler.LogMessage>(), errorHandler.internalErrorMessages)
     }
 
     @Test
@@ -399,7 +399,7 @@ internal class SessionPartReaderTest {
         reader.readPersistedSessionParts()
         assertEquals(ids(partDirectory, partDirectory, laterPartDirectory), intakesAttempted())
         assertDeleted(partDirectory, laterPartDirectory)
-        assertTrue(logger.internalErrorMessages.single().throwable is IllegalStateException)
+        assertTrue(errorHandler.internalErrorMessages.single().throwable is IllegalStateException)
     }
 
     @Test
@@ -413,7 +413,7 @@ internal class SessionPartReaderTest {
         // reported, and the later part is attempted in the same pass
         assertEquals(ids(partDirectory, laterPartDirectory), intakesAttempted())
         assertDeleted(partDirectory, laterPartDirectory)
-        assertTrue(logger.internalErrorMessages.single().throwable is IllegalStateException)
+        assertTrue(errorHandler.internalErrorMessages.single().throwable is IllegalStateException)
     }
 
     @Test
@@ -432,7 +432,7 @@ internal class SessionPartReaderTest {
         assertEquals(emptyList<Any>(), intakeService.intakeList)
         assertEquals(emptyList<Any>(), intakeService.cacheList)
         assertFalse(sessionsDir.exists())
-        assertEquals(emptyList<FakeInternalLogger.LogMessage>(), logger.internalErrorMessages)
+        assertEquals(emptyList<FakeErrorHandler.LogMessage>(), errorHandler.internalErrorMessages)
     }
 
     @Test
@@ -456,7 +456,7 @@ internal class SessionPartReaderTest {
         assertDeleted(partDirectory, laterPartDirectory)
         assertEquals(
             listOf(TimeoutException::class, TimeoutException::class, IllegalStateException::class),
-            logger.internalErrorMessages.map { it.throwable?.let { throwable -> throwable::class } },
+            errorHandler.internalErrorMessages.map { it.throwable?.let { throwable -> throwable::class } },
         )
     }
 
@@ -521,7 +521,7 @@ internal class SessionPartReaderTest {
 
         assertEquals(ids(partDirectory, laterPartDirectory), slowIntake.takenPartIds)
         assertDeleted(partDirectory, laterPartDirectory)
-        assertTrue(logger.internalErrorMessages.last().throwable is IllegalStateException)
+        assertTrue(errorHandler.internalErrorMessages.last().throwable is IllegalStateException)
     }
 
     @Test
@@ -564,7 +564,7 @@ internal class SessionPartReaderTest {
         reader.readPersistedSessionParts()
         assertEquals(ids(partDirectory, partDirectory, laterPartDirectory), slowIntake.takenPartIds)
         assertDeleted(partDirectory, laterPartDirectory)
-        assertEquals(emptyList<FakeInternalLogger.LogMessage>(), logger.internalErrorMessages)
+        assertEquals(emptyList<FakeErrorHandler.LogMessage>(), errorHandler.internalErrorMessages)
     }
 
     /**
@@ -656,7 +656,7 @@ internal class SessionPartReaderTest {
     ) = SessionPartReader(
         sessionsDir = lazy { sessionsDir },
         directoryStore = directoryStore,
-        reconstructionService = SessionReconstructionService(lazy { sessionsDir }, logger),
+        reconstructionService = SessionReconstructionService(lazy { sessionsDir }, errorHandler),
         intakeService = intakeService,
         writeTracker = writeTracker,
         deadPartResurrector = MultiFileDeadPartResurrector(
@@ -668,7 +668,7 @@ internal class SessionPartReaderTest {
         configService = FakeConfigService(
             config = EmbraceConfig(persistence = { PersistenceConfig(multiFileEnabled = { enabled }) }),
         ),
-        logger = logger,
+        errorHandler = errorHandler,
     )
 
     /**
@@ -697,11 +697,11 @@ internal class SessionPartReaderTest {
             envelopeVersion = SESSION_ENVELOPE_VERSION,
             envelopeType = SESSION_ENVELOPE_TYPE,
             sharedLibSymbolMappingSource = { null },
-            logger = logger,
+            errorHandler = errorHandler,
         ).write()
-        CompletedSpansWriter(target, logger).write(listOf(span))
+        CompletedSpansWriter(target, errorHandler).write(listOf(span))
         if (snapshots.isNotEmpty()) {
-            SpanSnapshotsWriter(target, logger).write(snapshots)
+            SpanSnapshotsWriter(target, errorHandler).write(snapshots)
         }
     }
 
@@ -740,7 +740,7 @@ internal class SessionPartReaderTest {
         assertEquals(emptyList<Any>(), intakeService.intakeList)
         assertEquals(emptyList<Any>(), intakeService.cacheList)
         assertRetained(*retained.toTypedArray())
-        assertEquals(emptyList<FakeInternalLogger.LogMessage>(), logger.internalErrorMessages)
+        assertEquals(emptyList<FakeErrorHandler.LogMessage>(), errorHandler.internalErrorMessages)
     }
 
     /**

@@ -8,8 +8,8 @@ import io.embrace.android.embracesdk.internal.delivery.StoredTelemetryMetadata
 import io.embrace.android.embracesdk.internal.delivery.SupportedEnvelopeType
 import io.embrace.android.embracesdk.internal.handler.MainThreadHandler
 import io.embrace.android.embracesdk.internal.instrumentation.crash.ndk.jni.JniDelegate
+import io.embrace.android.embracesdk.internal.logging.ErrorHandler
 import io.embrace.android.embracesdk.internal.logging.InternalErrorType
-import io.embrace.android.embracesdk.internal.logging.InternalLogger
 import io.embrace.android.embracesdk.internal.utils.EmbTrace
 import io.embrace.android.embracesdk.internal.worker.BackgroundWorker
 import io.embrace.android.embracesdk.internal.worker.Worker
@@ -30,7 +30,7 @@ internal class NativeCrashHandlerInstallerImpl(
     private val processIdentifier = args.processIdentifier
 
     private val configService: ConfigService = args.configService
-    private val logger: InternalLogger = args.logger
+    private val errorHandler: ErrorHandler = args.errorHandler
     private val backgroundWorker: BackgroundWorker =
         args.backgroundWorker(Worker.Background.IoRegWorker)
     private val clock: Clock = args.clock
@@ -61,7 +61,7 @@ internal class NativeCrashHandlerInstallerImpl(
                 args.registerSessionPartChangeListener { updateSessionIds() }
             }
         } catch (ex: Exception) {
-            logger.trackInternalError(InternalErrorType.NativeHandlerInstallFail, ex)
+            errorHandler.trackInternalError(InternalErrorType.NativeHandlerInstallFail, ex)
         }
     }
 

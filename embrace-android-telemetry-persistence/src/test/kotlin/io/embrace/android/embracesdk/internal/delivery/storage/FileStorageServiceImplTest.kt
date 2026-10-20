@@ -4,7 +4,7 @@ import io.embrace.android.embracesdk.concurrency.BlockingScheduledExecutorServic
 import io.embrace.android.embracesdk.concurrency.runConcurrently
 import io.embrace.android.embracesdk.fakes.FakeClock
 import io.embrace.android.embracesdk.fakes.FakeClock.Companion.DEFAULT_FAKE_CURRENT_TIME
-import io.embrace.android.embracesdk.fakes.FakeInternalLogger
+import io.embrace.android.embracesdk.fakes.FakeErrorHandler
 import io.embrace.android.embracesdk.internal.delivery.PayloadType
 import io.embrace.android.embracesdk.internal.delivery.StoredTelemetryMetadata
 import io.embrace.android.embracesdk.internal.delivery.SupportedEnvelopeType
@@ -31,7 +31,7 @@ class FileStorageServiceImplTest {
 
     private lateinit var outputDir: File
     private lateinit var service: FileStorageService
-    private lateinit var logger: FakeInternalLogger
+    private lateinit var errorHandler: FakeErrorHandler
     private lateinit var executor: BlockingScheduledExecutorService
     private lateinit var clock: FakeClock
 
@@ -40,13 +40,13 @@ class FileStorageServiceImplTest {
         outputDir = Files.createTempDirectory("temp").toFile().apply {
             mkdirs()
         }
-        logger = FakeInternalLogger(throwOnInternalError = false)
+        errorHandler = FakeErrorHandler(throwOnInternalError = false)
         executor = BlockingScheduledExecutorService()
         clock = FakeClock()
         service = FileStorageServiceImpl(
             lazy { outputDir },
             PriorityWorker(executor),
-            logger,
+            errorHandler,
             clock,
             maxAgeMs = MAX_AGE_MS,
         )
@@ -80,13 +80,13 @@ class FileStorageServiceImplTest {
     @Test
     fun `payload size is zero for a payload that was never stored`() {
         assertEquals(0L, service.payloadSizeBytes(fakeSessionStoredTelemetryMetadata))
-        assertTrue(logger.internalErrorMessages.isEmpty())
+        assertTrue(errorHandler.internalErrorMessages.isEmpty())
     }
 
     @Test
     fun `load payload stream no file`() {
         assertNull(service.loadPayloadAsStream(fakeSessionStoredTelemetryMetadata))
-        assertTrue(logger.internalErrorMessages.isEmpty())
+        assertTrue(errorHandler.internalErrorMessages.isEmpty())
     }
 
     @Test
@@ -212,14 +212,14 @@ class FileStorageServiceImplTest {
         val failing = FileStorageServiceImpl(
             lazy { error("payload directory unavailable") },
             PriorityWorker(executor),
-            logger,
+            errorHandler,
             clock,
         )
 
         val outcome = failing.store(fakeSessionStoredTelemetryMetadata) { it.write(DUMMY_CONTENT.toByteArray()) }
 
         assertEquals(StorageOutcome.FAILED, outcome)
-        assertTrue(logger.internalErrorMessages.single().throwable is IllegalStateException)
+        assertTrue(errorHandler.internalErrorMessages.single().throwable is IllegalStateException)
     }
 
     @Test
@@ -272,7 +272,7 @@ class FileStorageServiceImplTest {
         val freshService = FileStorageServiceImpl(
             lazy { outputDir },
             PriorityWorker(executor),
-            logger,
+            errorHandler,
             clock,
             maxAgeMs = MAX_AGE_MS,
         )
@@ -291,7 +291,7 @@ class FileStorageServiceImplTest {
         val concurrentService = FileStorageServiceImpl(
             lazy { outputDir },
             PriorityWorker(deleteExecutor),
-            logger,
+            errorHandler,
             clock,
             maxAgeMs = MAX_AGE_MS,
         )
@@ -334,7 +334,7 @@ class FileStorageServiceImplTest {
         } finally {
             deleteExecutor.shutdownNow()
         }
-        assertTrue(logger.internalErrorMessages.isEmpty())
+        assertTrue(errorHandler.internalErrorMessages.isEmpty())
 
         val indexedFilenames = concurrentService.getStoredPayloads().map { it.filename }.toSet()
         val filenamesOnDisk = checkNotNull(outputDir.listFiles()).map { it.name }.toSet()
@@ -375,7 +375,7 @@ class FileStorageServiceImplTest {
     private fun createService(storageLimit: Int) = FileStorageServiceImpl(
         lazy { outputDir },
         PriorityWorker(executor),
-        logger,
+        errorHandler,
         clock,
         storageLimit = storageLimit,
         maxAgeMs = MAX_AGE_MS,

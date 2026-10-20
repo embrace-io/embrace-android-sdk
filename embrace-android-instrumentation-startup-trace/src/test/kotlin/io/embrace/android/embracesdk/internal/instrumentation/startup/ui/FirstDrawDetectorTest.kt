@@ -5,7 +5,7 @@ import android.os.Looper
 import android.view.View
 import android.view.ViewTreeObserver
 import androidx.test.ext.junit.runners.AndroidJUnit4
-import io.embrace.android.embracesdk.fakes.FakeInternalLogger
+import io.embrace.android.embracesdk.fakes.FakeErrorHandler
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
 import org.junit.Before
@@ -18,7 +18,7 @@ import org.robolectric.util.ReflectionHelpers
 @RunWith(AndroidJUnit4::class)
 internal class FirstDrawDetectorTest {
 
-    private lateinit var logger: FakeInternalLogger
+    private lateinit var errorHandler: FakeErrorHandler
     private lateinit var detector: FirstDrawDetector
     private lateinit var activity: Activity
     private var drawBeginCount = 0
@@ -26,8 +26,8 @@ internal class FirstDrawDetectorTest {
 
     @Before
     fun setUp() {
-        logger = FakeInternalLogger()
-        detector = FirstDrawDetector(logger)
+        errorHandler = FakeErrorHandler()
+        detector = FirstDrawDetector(errorHandler)
         activity = Robolectric.buildActivity(Activity::class.java).setup().get()
         drawBeginCount = 0
         drawCompleteCount = 0
@@ -47,7 +47,7 @@ internal class FirstDrawDetectorTest {
         drawFrame()
         assertEquals(1, drawBeginCount)
         assertEquals(1, drawCompleteCount)
-        assertEquals(0, logger.internalErrorMessages.size)
+        assertEquals(0, errorHandler.internalErrorMessages.size)
     }
 
     @Test
@@ -134,13 +134,13 @@ internal class FirstDrawDetectorTest {
 
     @Test
     fun `null window callback is reported once and callbacks are never invoked`() {
-        logger.throwOnInternalError = false
+        errorHandler.throwOnInternalError = false
         activity.window.callback = null
         register()
         register()
 
         drawFrame()
-        assertEquals(1, logger.internalErrorMessages.size)
+        assertEquals(1, errorHandler.internalErrorMessages.size)
         assertEquals(0, drawBeginCount)
         assertEquals(0, drawCompleteCount)
     }
@@ -213,7 +213,7 @@ internal class FirstDrawDetectorTest {
         register(newActivity)
         detector.close()
 
-        detector = FirstDrawDetector(logger)
+        detector = FirstDrawDetector(errorHandler)
         register(newActivity)
         controller.create()
         newActivity.setContentView(View(newActivity))

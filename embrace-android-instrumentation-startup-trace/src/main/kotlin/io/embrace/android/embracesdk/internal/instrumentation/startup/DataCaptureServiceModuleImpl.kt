@@ -11,14 +11,14 @@ import io.embrace.android.embracesdk.internal.instrumentation.startup.activity.U
 import io.embrace.android.embracesdk.internal.instrumentation.startup.activity.UiLoadTraceEmitter
 import io.embrace.android.embracesdk.internal.instrumentation.startup.activity.createActivityLoadEventEmitter
 import io.embrace.android.embracesdk.internal.instrumentation.startup.ui.createDrawEventEmitter
-import io.embrace.android.embracesdk.internal.logging.InternalLogger
+import io.embrace.android.embracesdk.internal.logging.ErrorHandler
 import io.embrace.android.embracesdk.internal.utils.BuildVersionChecker
 import io.embrace.android.embracesdk.internal.utils.VersionChecker
 import io.embrace.android.embracesdk.internal.worker.BackgroundWorker
 
 class DataCaptureServiceModuleImpl(
     clock: Clock,
-    logger: InternalLogger,
+    errorHandler: ErrorHandler,
     destination: TelemetryDestination,
     configService: ConfigService,
     appVersionStartupCounterProvider: () -> Int?,
@@ -51,7 +51,7 @@ class DataCaptureServiceModuleImpl(
         startupServiceProvider = { startupService },
         destination = destination,
         versionChecker = versionChecker,
-        logger = logger,
+        errorHandler = errorHandler,
         startupClassifier = startupClassifier,
         manualEnd = configService.config.autoDataCapture.endStartupWithAppReadyEnabled,
         processInfo = processInfo,
@@ -71,18 +71,18 @@ class DataCaptureServiceModuleImpl(
         uiLoadDataListener?.let { uiLoadEventListener ->
             createActivityLoadEventEmitter(
                 uiLoadEventListener = uiLoadEventListener,
-                firstDrawDetector = createDrawEventEmitter(versionChecker, logger),
+                firstDrawDetector = createDrawEventEmitter(versionChecker, errorHandler),
                 autoTraceEnabled = configService.config.autoDataCapture.uiLoadTracingTraceAll,
                 clock = clock,
                 versionChecker = versionChecker,
-                logger = logger,
+                errorHandler = errorHandler,
             )
         }
 
     override val startupTracker: StartupTracker = StartupTracker(
         appStartupDataCollector = appStartupDataCollector,
         activityLoadEventEmitter = activityLoadEventEmitter,
-        drawEventEmitter = createDrawEventEmitter(versionChecker, logger),
-        logger = logger,
+        drawEventEmitter = createDrawEventEmitter(versionChecker, errorHandler),
+        errorHandler = errorHandler,
     )
 }

@@ -10,7 +10,7 @@ import android.webkit.WebView
 import android.widget.FrameLayout
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.FragmentActivity
-import io.embrace.android.embracesdk.fakes.FakeInternalLogger
+import io.embrace.android.embracesdk.fakes.FakeErrorHandler
 import io.embrace.android.embracesdk.internal.session.id.SessionIdsSnapshot
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotNull
@@ -27,18 +27,18 @@ internal class FragmentLeakDetectionLifecycleCallbacksTest {
 
     private lateinit var leakDetector: LeakDetector
     private lateinit var callbacks: FragmentLeakDetectionLifecycleCallbacks
-    private val logger = FakeInternalLogger()
+    private val errorHandler = FakeErrorHandler()
 
     @Before
     fun setUp() {
         leakDetector = LeakDetector(clock = { 0L })
-        callbacks = FragmentLeakDetectionLifecycleCallbacks(leakDetector, { SESSION_IDS }, logger)
+        callbacks = FragmentLeakDetectionLifecycleCallbacks(leakDetector, { SESSION_IDS }, errorHandler)
     }
 
     @Test
     fun `createFragmentSupport returns a real implementation when Fragment is present`() {
         assertTrue(
-            createFragmentSupport(leakDetector, { SESSION_IDS }, logger) is FragmentLeakDetectionLifecycleCallbacks,
+            createFragmentSupport(leakDetector, { SESSION_IDS }, errorHandler) is FragmentLeakDetectionLifecycleCallbacks,
         )
     }
 
@@ -108,7 +108,7 @@ internal class FragmentLeakDetectionLifecycleCallbacksTest {
     fun `a leaked fragment view is reported under its fragment's class`() {
         val detector = LeakDetector(clock = { 0L }, gcCycleCountReader = { "0" })
         val activity = buildActivity(FragmentActivity::class.java).setup().get()
-        FragmentLeakDetectionLifecycleCallbacks(detector, { SESSION_IDS }, logger).onActivityCreated(activity)
+        FragmentLeakDetectionLifecycleCallbacks(detector, { SESSION_IDS }, errorHandler).onActivityCreated(activity)
         val fragment = ViewFragment()
 
         detector.start()
@@ -158,7 +158,7 @@ internal class FragmentLeakDetectionLifecycleCallbacksTest {
         val webViewCallbacks = FragmentLeakDetectionLifecycleCallbacks(
             leakDetector,
             { SESSION_IDS },
-            logger,
+            errorHandler,
             webViewLeakDetectionEnabled = true,
         )
         val activity = registerOnWith(webViewCallbacks)
@@ -177,7 +177,7 @@ internal class FragmentLeakDetectionLifecycleCallbacksTest {
         val webViewCallbacks = FragmentLeakDetectionLifecycleCallbacks(
             leakDetector,
             { SESSION_IDS },
-            logger,
+            errorHandler,
             webViewLeakDetectionEnabled = true,
         )
         val activity = registerOnWith(webViewCallbacks)

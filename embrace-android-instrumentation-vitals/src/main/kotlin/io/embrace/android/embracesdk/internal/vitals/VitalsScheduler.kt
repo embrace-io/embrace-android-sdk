@@ -3,8 +3,8 @@ package io.embrace.android.embracesdk.internal.vitals
 import android.os.Handler
 import android.os.HandlerThread
 import android.os.Message
+import io.embrace.android.embracesdk.internal.logging.ErrorHandler
 import io.embrace.android.embracesdk.internal.logging.InternalErrorType
-import io.embrace.android.embracesdk.internal.logging.InternalLogger
 
 internal interface VitalsScheduler {
     fun post(action: Runnable)
@@ -12,7 +12,7 @@ internal interface VitalsScheduler {
     fun cancelSettle(action: Runnable)
 }
 
-internal class HandlerVitalsScheduler(private val logger: InternalLogger) : VitalsScheduler {
+internal class HandlerVitalsScheduler(private val errorHandler: ErrorHandler) : VitalsScheduler {
 
     /**
      * Handler backed by the dedicated vitals thread. Valid only after [start]; also used by
@@ -38,7 +38,7 @@ internal class HandlerVitalsScheduler(private val logger: InternalLogger) : Vita
                 try {
                     super.dispatchMessage(msg)
                 } catch (exc: Throwable) {
-                    logger.trackInternalError(InternalErrorType.UiCallbackFail, exc)
+                    errorHandler.trackInternalError(InternalErrorType.UiCallbackFail, exc)
                 }
             }
         }

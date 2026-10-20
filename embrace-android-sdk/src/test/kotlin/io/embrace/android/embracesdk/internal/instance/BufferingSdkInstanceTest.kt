@@ -3,7 +3,7 @@ package io.embrace.android.embracesdk.internal.instance
 import io.embrace.android.embracesdk.experiments.TrackedExperiment
 import io.embrace.android.embracesdk.experiments.TrackedFeatureFlag
 import io.embrace.android.embracesdk.fakes.FakeClock
-import io.embrace.android.embracesdk.fakes.FakeInternalLogger
+import io.embrace.android.embracesdk.fakes.FakeErrorHandler
 import io.embrace.android.embracesdk.fakes.FakeLogRecordExporter
 import io.embrace.android.embracesdk.fakes.FakeLogRecordProcessor
 import io.embrace.android.embracesdk.fakes.FakeSpanExporter
@@ -37,7 +37,7 @@ import kotlin.concurrent.thread
 internal class BufferingSdkInstanceTest {
 
     private lateinit var clock: FakeClock
-    private lateinit var logger: FakeInternalLogger
+    private lateinit var errorHandler: FakeErrorHandler
     private lateinit var target: RecordingSdkApi
     private lateinit var replayed: MutableList<List<ExperimentApiCall>>
     private lateinit var instance: BufferingSdkInstance
@@ -45,10 +45,10 @@ internal class BufferingSdkInstanceTest {
     @Before
     fun setUp() {
         clock = FakeClock(currentTime = 1000L)
-        logger = FakeInternalLogger(throwOnInternalError = false)
+        errorHandler = FakeErrorHandler(throwOnInternalError = false)
         target = RecordingSdkApi()
         replayed = mutableListOf()
-        instance = BufferingSdkInstance(clock, logger)
+        instance = BufferingSdkInstance(clock, errorHandler)
     }
 
     @Test
@@ -428,7 +428,7 @@ internal class BufferingSdkInstanceTest {
         instance.logInfo("msg")
         assertEquals(
             "Embrace SDK is not initialized yet, cannot add_breadcrumb.",
-            logger.warningMessages.single().msg,
+            errorHandler.warningMessages.single().msg,
         )
         assertTrue(target.calls.isEmpty())
     }
@@ -436,7 +436,7 @@ internal class BufferingSdkInstanceTest {
     private fun assertInternalErrorReported() {
         assertEquals(
             listOf(InternalErrorType.PublicApiFail.toString()),
-            logger.internalErrorMessages.map { it.msg },
+            errorHandler.internalErrorMessages.map { it.msg },
         )
     }
 
@@ -444,7 +444,7 @@ internal class BufferingSdkInstanceTest {
         instance.drainExperimentCalls(target) { replayed.add(it) }
     }
 
-    private class RecordingSdkApi : SdkApi by NoopSdkInstance(FakeInternalLogger(), "") {
+    private class RecordingSdkApi : SdkApi by NoopSdkInstance(FakeErrorHandler(), "") {
         val calls = mutableListOf<Any>()
         var recordResult = true
         var onRecordCompletedSpan: () -> Unit = {}

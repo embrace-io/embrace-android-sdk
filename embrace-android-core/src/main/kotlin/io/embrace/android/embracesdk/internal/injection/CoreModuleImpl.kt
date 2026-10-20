@@ -25,7 +25,7 @@ class CoreModuleImpl(
     override val store: KeyValueStore by (keyValueStore ?: lazy { createKeyValueStore(context, initModule.jsonSerializer) })
 
     override val ordinalStore: OrdinalStore by lazy { OrdinalStoreImpl(store) }
-    override val eventBus: EventBus by lazy { EventBus(initModule.logger) }
+    override val eventBus: EventBus by lazy { EventBus(initModule.errorHandler) }
 
     override val appVersionStartupCounter: Int by lazy {
         ordinalStore.incrementAndGet(

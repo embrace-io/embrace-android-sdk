@@ -1,6 +1,6 @@
 package io.embrace.android.embracesdk.internal.session
 
-import io.embrace.android.embracesdk.fakes.FakeInternalLogger
+import io.embrace.android.embracesdk.fakes.FakeErrorHandler
 import io.embrace.android.embracesdk.fakes.FakeLifecycleTracker
 import io.embrace.android.embracesdk.fakes.FakeProcessStateListener
 import io.embrace.android.embracesdk.fakes.FakeSessionOrchestrator
@@ -20,13 +20,13 @@ internal class ProcessStateTrackerTest {
 
     private lateinit var stateService: ProcessStateTrackerImpl
     private lateinit var lifecycleTracker: FakeLifecycleTracker
-    private lateinit var fakeEmbLogger: FakeInternalLogger
+    private lateinit var fakeErrorHandler: FakeErrorHandler
 
     @Before
     fun before() {
-        fakeEmbLogger = FakeInternalLogger()
+        fakeErrorHandler = FakeErrorHandler()
         lifecycleTracker = FakeLifecycleTracker()
-        stateService = ProcessStateTrackerImpl(fakeEmbLogger, lifecycleTracker)
+        stateService = ProcessStateTrackerImpl(fakeErrorHandler, lifecycleTracker)
     }
 
     @Test
@@ -82,7 +82,7 @@ internal class ProcessStateTrackerTest {
             override fun close() = error("close failed")
         }
         val invocations = mutableListOf<String>()
-        stateService = ProcessStateTrackerImpl(fakeEmbLogger, throwingTracker)
+        stateService = ProcessStateTrackerImpl(fakeErrorHandler, throwingTracker)
         stateService.addListener(DecoratedListener(invocations))
         stateService.addListener(DecoratedSessionOrchestrator(invocations))
         stateService.close()
@@ -164,7 +164,7 @@ internal class ProcessStateTrackerTest {
             stateService.onForeground()
             stateService.onBackground()
         }
-        val messages = fakeEmbLogger.internalErrorMessages
+        val messages = fakeErrorHandler.internalErrorMessages
         assertTrue(messages.isEmpty())
     }
 
@@ -176,7 +176,7 @@ internal class ProcessStateTrackerTest {
         stateService.onBackground()
         stateService.onForeground()
 
-        val messages = fakeEmbLogger.internalErrorMessages
+        val messages = fakeErrorHandler.internalErrorMessages
         assertEquals(0, messages.size)
     }
 
@@ -188,7 +188,7 @@ internal class ProcessStateTrackerTest {
         stateService.onForeground()
         stateService.onBackground()
 
-        val messages = fakeEmbLogger.internalErrorMessages
+        val messages = fakeErrorHandler.internalErrorMessages
         assertTrue(messages.isEmpty())
     }
 

@@ -57,7 +57,7 @@ class OpenTelemetryModuleImpl(
             userIdProvider = userIdProvider,
             eventMetadataProvider = eventMetadataProvider,
             processIdentifierProvider = IdGenerator.Companion::generateLaunchInstanceId,
-            externalExportDispatcher = ExternalExportDispatcher(initModule.logger),
+            externalExportDispatcher = ExternalExportDispatcher(initModule.errorHandler),
             externalConfig = externalOtelConfig,
         )
     }
@@ -68,7 +68,7 @@ class OpenTelemetryModuleImpl(
                 otelClock = openTelemetryClock,
                 configuration = otelSdkConfig,
                 spanServiceProvider = { spanService },
-                errorHandler = initModule.logger,
+                errorHandler = initModule.errorHandler,
                 useKotlinSdk = configService.otelBehavior.shouldUseKotlinSdk(),
             )
         }

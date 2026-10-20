@@ -2,13 +2,13 @@ package io.embrace.android.embracesdk.internal.instrumentation.crash.jvm
 
 import android.app.Application
 import io.embrace.android.embracesdk.fakes.FakeConfigService
+import io.embrace.android.embracesdk.fakes.FakeErrorHandler
 import io.embrace.android.embracesdk.fakes.FakeInstrumentationArgs
-import io.embrace.android.embracesdk.fakes.FakeInternalLogger
 import io.embrace.android.embracesdk.internal.arch.schema.SchemaType
 import io.embrace.android.embracesdk.internal.arch.schema.TelemetryAttributes
 import io.embrace.android.embracesdk.internal.config.resolved.AutoDataCaptureConfig
 import io.embrace.android.embracesdk.internal.config.resolved.EmbraceConfig
-import io.embrace.android.embracesdk.internal.logging.InternalLogger
+import io.embrace.android.embracesdk.internal.logging.ErrorHandler
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertSame
 import org.junit.Before
@@ -18,7 +18,7 @@ internal class JvmCrashDataSourceImplTest {
 
     private lateinit var crashDataSource: JvmCrashDataSourceImpl
     private lateinit var args: FakeInstrumentationArgs
-    private lateinit var logger: InternalLogger
+    private lateinit var errorHandler: ErrorHandler
     private lateinit var testException: Exception
     private lateinit var ctx: Application
     private var modifier: ((TelemetryAttributes) -> SchemaType)? = null
@@ -27,7 +27,7 @@ internal class JvmCrashDataSourceImplTest {
     fun setUp() {
         ctx = Application()
         args = FakeInstrumentationArgs(ctx)
-        logger = FakeInternalLogger()
+        errorHandler = FakeErrorHandler()
         testException = RuntimeException("Test exception")
         Thread.setDefaultUncaughtExceptionHandler(null)
     }
@@ -95,7 +95,7 @@ internal class JvmCrashDataSourceImplTest {
         val embraceDefaultHandler = EmbraceUncaughtExceptionHandler(
             defaultHandler = null,
             dataSource = FakeJvmCrashDataSource(),
-            logger = FakeInternalLogger(),
+            errorHandler = FakeErrorHandler(),
         )
         Thread.setDefaultUncaughtExceptionHandler(embraceDefaultHandler)
         setupForHandleCrash(true)

@@ -3,8 +3,8 @@ package io.embrace.android.embracesdk.internal.delivery.storage
 import io.embrace.android.embracesdk.internal.clock.Clock
 import io.embrace.android.embracesdk.internal.delivery.StoredTelemetryMetadata
 import io.embrace.android.embracesdk.internal.delivery.traceSection
+import io.embrace.android.embracesdk.internal.logging.ErrorHandler
 import io.embrace.android.embracesdk.internal.logging.InternalErrorType
-import io.embrace.android.embracesdk.internal.logging.InternalLogger
 import io.embrace.android.embracesdk.internal.utils.CountingOutputStream
 import io.embrace.android.embracesdk.internal.utils.FileWriteCounters
 import io.embrace.android.embracesdk.internal.utils.SystemTrace
@@ -17,7 +17,7 @@ import java.util.concurrent.RejectedExecutionException
 class FileStorageServiceImpl(
     outputDir: Lazy<File>,
     private val worker: PriorityWorker<StoredTelemetryMetadata>,
-    private val logger: InternalLogger,
+    private val errorHandler: ErrorHandler,
     clock: Clock,
     storageLimit: Int = 500,
     maxAgeMs: Long = DEFAULT_MAX_AGE_MS,
@@ -33,7 +33,7 @@ class FileStorageServiceImpl(
         outputDir = outputDir,
         layout = StoredTelemetryMetadataLayout,
         clock = clock,
-        logger = logger,
+        errorHandler = errorHandler,
         errorType = InternalErrorType.PayloadStorageFail,
         storageLimit = storageLimit,
         maxAgeMs = maxAgeMs,
@@ -45,7 +45,7 @@ class FileStorageServiceImpl(
         } catch (t: Throwable) {
             // Building the payload or writing it failed. A file system in trouble, such as a full disk, is
             // not expected to recover soon, so this is not worth retrying.
-            logger.trackInternalError(InternalErrorType.PayloadStorageFail, t)
+            errorHandler.trackInternalError(InternalErrorType.PayloadStorageFail, t)
             StorageOutcome.FAILED
         }
     }
@@ -104,7 +104,7 @@ class FileStorageServiceImpl(
         } catch (_: FileNotFoundException) {
             null
         } catch (exc: Throwable) {
-            logger.trackInternalError(InternalErrorType.PayloadStorageFail, exc)
+            errorHandler.trackInternalError(InternalErrorType.PayloadStorageFail, exc)
             null
         }
     }

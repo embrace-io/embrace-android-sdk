@@ -54,7 +54,7 @@ internal class EmbraceWindowCallbackTest {
                 return super.onTouchEvent(ev)
             }
         }
-        val callback = EmbraceWindowCallback(recordingDelegate, recordingDetector, args.logger)
+        val callback = EmbraceWindowCallback(recordingDelegate, recordingDetector, args.errorHandler)
         val event = MotionEvent.obtain(0L, 0L, MotionEvent.ACTION_DOWN, 10f, 20f, 0)
 
         try {
@@ -65,7 +65,7 @@ internal class EmbraceWindowCallbackTest {
             assertSame(event, recordingDelegate.lastTouchEvent)
             assertEquals(1, recordingDetector.callCount)
             assertNotSame(event, recordingDetector.lastEvent)
-            assertTrue(args.logger.errorMessages.isEmpty())
+            assertTrue(args.errorHandler.errorMessages.isEmpty())
         } finally {
             event.recycle()
         }
@@ -90,7 +90,7 @@ internal class EmbraceWindowCallbackTest {
                 return super.onTouchEvent(ev)
             }
         }
-        val callback = EmbraceWindowCallback(recordingDelegate, recordingDetector, args.logger)
+        val callback = EmbraceWindowCallback(recordingDelegate, recordingDetector, args.errorHandler)
         callback.close()
         val event = MotionEvent.obtain(0L, 0L, MotionEvent.ACTION_DOWN, 10f, 20f, 0)
 

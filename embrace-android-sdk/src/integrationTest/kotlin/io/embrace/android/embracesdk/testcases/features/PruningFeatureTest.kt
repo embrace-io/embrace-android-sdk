@@ -28,7 +28,7 @@ internal class PruningFeatureTest(
     @JvmField
     val testRule: SdkIntegrationTestRule = SdkIntegrationTestRule(otelSdkMode) {
         EmbraceSetupInterface(payloadStorageLimit = STORAGE_LIMIT).apply {
-            getEmbLogger().throwOnInternalError = false
+            getFakeErrorHandler().throwOnInternalError = false
         }
     }
 

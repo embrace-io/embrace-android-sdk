@@ -24,7 +24,7 @@ class FakeInstrumentationArgs(
     override val configService: FakeConfigService = FakeConfigService(),
     override val context: Context = application,
     override val destination: FakeTelemetryDestination = FakeTelemetryDestination(),
-    override val logger: FakeInternalLogger = FakeInternalLogger(),
+    override val errorHandler: FakeErrorHandler = FakeErrorHandler(),
     override val clock: FakeClock = FakeClock(),
     override val store: FakeKeyValueStore = FakeKeyValueStore(),
     override val serializer: PlatformSerializer = TestPlatformSerializer(),
@@ -42,7 +42,7 @@ class FakeInstrumentationArgs(
     val sessionChangeListeners: MutableList<SessionPartChangeListener> = mutableListOf(),
     val sessionEndListeners: MutableList<SessionPartEndListener> = mutableListOf(),
     val systemServiceSupplier: (name: String) -> Any? = { null },
-    override val eventBus: EventBus = EventBus(logger),
+    override val eventBus: EventBus = EventBus(errorHandler),
 ) : InstrumentationArgs {
 
     override fun backgroundWorker(worker: Worker.Background): BackgroundWorker = backgroundWorkerSupplier(worker)
@@ -67,7 +67,7 @@ class FakeInstrumentationArgs(
 
     override val navigationTrackingService = FakeNavigationTrackingService()
 
-    override val httpRequestInfoModifierChain: HttpRequestInfoModifierChain = HttpRequestInfoModifierChain(logger)
+    override val httpRequestInfoModifierChain: HttpRequestInfoModifierChain = HttpRequestInfoModifierChain(errorHandler)
 
     override fun registerSessionPartChangeListener(listener: SessionPartChangeListener) {
         sessionChangeListeners.add(listener)

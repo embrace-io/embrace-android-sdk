@@ -2,7 +2,7 @@ package io.embrace.android.embracesdk.benchmark
 
 import androidx.benchmark.junit4.BenchmarkRule
 import androidx.benchmark.junit4.measureRepeated
-import io.embrace.android.embracesdk.internal.logging.InternalLoggerImpl
+import io.embrace.android.embracesdk.internal.logging.ErrorHandlerImpl
 import io.embrace.android.embracesdk.internal.payload.Envelope
 import io.embrace.android.embracesdk.internal.payload.SessionPartPayload
 import io.embrace.android.embracesdk.internal.serialization.EmbraceSerializer
@@ -34,7 +34,7 @@ class PersistenceDeserializationBenchmarks(
     val benchmarkRule = BenchmarkRule()
 
     private val serializer: PlatformSerializer = EmbraceSerializer()
-    private val decoder = SessionPartDecoder(InternalLoggerImpl())
+    private val decoder = SessionPartDecoder(ErrorHandlerImpl())
     private lateinit var fixture: StoredSessionFixture
 
     @Before

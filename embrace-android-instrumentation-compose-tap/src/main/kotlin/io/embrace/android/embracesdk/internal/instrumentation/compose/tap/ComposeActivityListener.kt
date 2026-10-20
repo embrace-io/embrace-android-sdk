@@ -5,12 +5,12 @@ import android.app.Application.ActivityLifecycleCallbacks
 import android.os.Bundle
 import android.view.GestureDetector
 import android.view.Window
-import io.embrace.android.embracesdk.internal.logging.InternalLogger
+import io.embrace.android.embracesdk.internal.logging.ErrorHandler
 import java.lang.ref.WeakReference
 import java.util.WeakHashMap
 
 internal class ComposeActivityListener(
-    private val logger: InternalLogger,
+    private val errorHandler: ErrorHandler,
     private val dataSource: ComposeTapDataSource,
 ) : ActivityLifecycleCallbacks, AutoCloseable {
 
@@ -31,18 +31,18 @@ internal class ComposeActivityListener(
                 if (closed || windowCallbacks.containsKey(window)) {
                     return
                 }
-                val gestureListener = EmbraceGestureListener(activity, logger, dataSource)
+                val gestureListener = EmbraceGestureListener(activity, errorHandler, dataSource)
                 val gestureDetectorCompat = GestureDetector(activity, gestureListener)
                 val callback = EmbraceWindowCallback(
                     window.callback,
                     gestureDetectorCompat,
-                    logger,
+                    errorHandler,
                 )
                 windowCallbacks[window] = WeakReference(callback)
                 window.callback = callback
             }
         } catch (e: Throwable) {
-            logger.logError("Failed to register gesture listener", e)
+            errorHandler.log("Failed to register gesture listener", e, severity = ErrorHandler.Severity.ERROR)
         }
     }
 

@@ -7,7 +7,7 @@ import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.testing.TestLifecycleOwner
 import io.embrace.android.embracesdk.concurrency.BlockingScheduledExecutorService
 import io.embrace.android.embracesdk.fakes.FakeClock
-import io.embrace.android.embracesdk.fakes.FakeInternalLogger
+import io.embrace.android.embracesdk.fakes.FakeErrorHandler
 import io.embrace.android.embracesdk.fakes.FakeJniDelegate
 import io.embrace.android.embracesdk.fakes.FakeNetworkConnectivityService
 import io.embrace.android.embracesdk.fakes.FakePayloadStorageService
@@ -53,6 +53,7 @@ import io.embrace.android.embracesdk.internal.instrumentation.crash.ndk.sharedOb
 import io.embrace.android.embracesdk.internal.instrumentation.startup.DataCaptureServiceModuleImpl
 import io.embrace.android.embracesdk.internal.instrumentation.startup.SdkInitResourceUsageTracker
 import io.embrace.android.embracesdk.internal.instrumentation.thread.blockage.createThreadBlockageService
+import io.embrace.android.embracesdk.internal.logging.ErrorHandlerImpl
 import io.embrace.android.embracesdk.internal.logging.InternalErrorType
 import io.embrace.android.embracesdk.internal.otel.spans.SpanRepository
 import io.embrace.android.embracesdk.internal.payload.Attribute
@@ -147,7 +148,7 @@ internal class EmbraceSetupInterface(
 
     private val fakeInitModule: FakeInitModule = FakeInitModule(
         clock = fakeClock,
-        logger = FakeInternalLogger(ignoredErrors = ignoredInternalErrors),
+        errorHandler = FakeErrorHandler(ignoredErrors = ignoredInternalErrors, delegate = ErrorHandlerImpl(fakeClock)),
         uuidSource = uuidSource,
         // unused: the module graph builds its OTel module from the SDK's ConfigService
         otelSdkMode = OtelSdkMode.COMPAT,
@@ -315,10 +316,10 @@ internal class EmbraceSetupInterface(
             }
         },
         dataCaptureServiceModuleSupplier = simulatedVersionChecker?.let { versionChecker ->
-            { clock, logger, destination, configService, appVersionStartupCounterProvider, startupClassifier, _, activityManager, backgroundWorker ->
+            { clock, errorHandler, destination, configService, appVersionStartupCounterProvider, startupClassifier, _, activityManager, backgroundWorker ->
                 DataCaptureServiceModuleImpl(
                     clock = clock,
-                    logger = logger,
+                    errorHandler = errorHandler,
                     destination = destination,
                     configService = configService,
                     appVersionStartupCounterProvider = appVersionStartupCounterProvider,
@@ -370,7 +371,7 @@ internal class EmbraceSetupInterface(
             sessionPartId = sessionPartId,
         )
         val sessionsDir = StorageLocation.SESSION_SPLIT.asFile(
-            logger = fakeInitModule.logger,
+            errorHandler = fakeInitModule.errorHandler,
             rootDirSupplier = { fakeCoreModule.context.filesDir },
             fallbackDirSupplier = { fakeCoreModule.context.cacheDir },
         )
@@ -386,9 +387,9 @@ internal class EmbraceSetupInterface(
             envelopeVersion = "0.1.0",
             envelopeType = "spans",
             sharedLibSymbolMappingSource = { null },
-            logger = fakeInitModule.logger,
+            errorHandler = fakeInitModule.errorHandler,
         ).write()
-        CompletedSpansWriter(target, fakeInitModule.logger).write(
+        CompletedSpansWriter(target, fakeInitModule.errorHandler).write(
             listOf(persistedSessionSpan(userSessionId, sessionPartId, timestamp, processIdentifier)),
         )
     }
@@ -540,7 +541,7 @@ internal class EmbraceSetupInterface(
 
     fun getCurrentSessionPartSpan(): CurrentSessionPartSpan = openTelemetryModule.currentSessionPartSpan
 
-    fun getEmbLogger(): FakeInternalLogger = fakeInitModule.logger as FakeInternalLogger
+    fun getFakeErrorHandler(): FakeErrorHandler = fakeInitModule.errorHandler as FakeErrorHandler
 
     fun getFakedWorkerExecutor(worker: Worker.Background): BlockingScheduledExecutorService =
         (workerThreadPool as FakeWorkerThreadPool).executorFor(worker)
@@ -587,7 +588,7 @@ internal class EmbraceSetupInterface(
         val readBytes = statProvider(INIT_DISK_READ_KB * 1024L)
         val gcCount = statProvider(INIT_GC_COUNT)
         return SdkInitResourceUsageTracker(
-            logger = fakeInitModule.logger,
+            errorHandler = fakeInitModule.errorHandler,
             versionChecker = { true },
             threadCpuTimeMs = cpuMs,
             elapsedRealtimeMs = elapsedMs,

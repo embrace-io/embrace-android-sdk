@@ -3,7 +3,7 @@ package io.embrace.android.embracesdk.internal.instrumentation.navigation
 import android.app.Activity
 import android.os.Build
 import io.embrace.android.embracesdk.fakes.FakeClock
-import io.embrace.android.embracesdk.fakes.FakeInternalLogger
+import io.embrace.android.embracesdk.fakes.FakeErrorHandler
 import io.embrace.android.embracesdk.fakes.FakeNavigationTrackingService
 import io.embrace.android.embracesdk.internal.arch.navigation.NavigationSignal
 import io.embrace.android.embracesdk.internal.arch.navigation.NavigationSignal.ActivityPaused
@@ -31,7 +31,7 @@ internal class ActivityNavigationTrackerTest {
     fun setUp() {
         clock = FakeClock()
         signals = mutableListOf()
-        eventBus = EventBus(FakeInternalLogger())
+        eventBus = EventBus(FakeErrorHandler())
         eventBus.addHandler(NavigationSignal.KEY) { signals.add(it) }
         navigationTrackingService = FakeNavigationTrackingService()
         application = FakeApplication()
@@ -131,7 +131,7 @@ internal class ActivityNavigationTrackerTest {
             clock,
             eventBus,
             navigationTrackingService,
-            FakeInternalLogger(),
+            FakeErrorHandler(),
             VersionChecker { min -> sdkInt >= min },
         ).apply {
             application.registerActivityLifecycleCallbacks(this)

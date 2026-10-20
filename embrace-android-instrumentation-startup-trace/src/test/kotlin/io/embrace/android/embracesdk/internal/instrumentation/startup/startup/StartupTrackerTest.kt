@@ -9,12 +9,12 @@ import io.embrace.android.embracesdk.fakes.FakeActivityLifecycleListener
 import io.embrace.android.embracesdk.fakes.FakeAppStartupDataCollector
 import io.embrace.android.embracesdk.fakes.FakeClock
 import io.embrace.android.embracesdk.fakes.FakeDrawEventEmitter
-import io.embrace.android.embracesdk.fakes.FakeInternalLogger
+import io.embrace.android.embracesdk.fakes.FakeErrorHandler
 import io.embrace.android.embracesdk.fakes.FakeSplashScreenActivity
 import io.embrace.android.embracesdk.internal.instrumentation.startup.StartupTracker
 import io.embrace.android.embracesdk.internal.instrumentation.startup.asDispatchedOn
 import io.embrace.android.embracesdk.internal.instrumentation.startup.ui.hasRenderEvent
-import io.embrace.android.embracesdk.internal.logging.InternalLogger
+import io.embrace.android.embracesdk.internal.logging.ErrorHandler
 import io.embrace.android.embracesdk.internal.utils.BuildVersionChecker
 import io.embrace.android.embracesdk.internal.utils.VersionChecker
 import org.junit.Assert.assertEquals
@@ -34,7 +34,7 @@ internal class StartupTrackerTest {
     private lateinit var application: Application
     private lateinit var clock: FakeClock
     private lateinit var dataCollector: FakeAppStartupDataCollector
-    private lateinit var logger: InternalLogger
+    private lateinit var errorHandler: ErrorHandler
     private lateinit var activityLifecycleListener: FakeActivityLifecycleListener
     private lateinit var drawEventEmitter: FakeDrawEventEmitter
     private lateinit var startupTracker: StartupTracker
@@ -45,7 +45,7 @@ internal class StartupTrackerTest {
     fun setUp() {
         application = RuntimeEnvironment.getApplication()
         clock = FakeClock()
-        logger = FakeInternalLogger()
+        errorHandler = FakeErrorHandler()
         dataCollector = FakeAppStartupDataCollector(clock = clock)
         activityLifecycleListener = FakeActivityLifecycleListener()
         drawEventEmitter = FakeDrawEventEmitter()
@@ -53,7 +53,7 @@ internal class StartupTrackerTest {
             appStartupDataCollector = dataCollector,
             activityLoadEventEmitter = activityLifecycleListener,
             drawEventEmitter = drawEventEmitter,
-            logger = logger,
+            errorHandler = errorHandler,
         )
         startupTracker.register(application)
         defaultActivityController = Robolectric.buildActivity(Activity::class.java)

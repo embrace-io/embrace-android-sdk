@@ -3,8 +3,8 @@ package io.embrace.android.embracesdk.internal.session.persistence
 import io.embrace.android.embracesdk.internal.clock.Clock
 import io.embrace.android.embracesdk.internal.delivery.storage.StoredEntryIndex
 import io.embrace.android.embracesdk.internal.delivery.storage.StoredEntryLayout
+import io.embrace.android.embracesdk.internal.logging.ErrorHandler
 import io.embrace.android.embracesdk.internal.logging.InternalErrorType
-import io.embrace.android.embracesdk.internal.logging.InternalLogger
 import io.embrace.android.embracesdk.internal.worker.BackgroundWorker
 import java.io.File
 import java.io.IOException
@@ -20,7 +20,7 @@ class SessionPartDirectoryStore(
     sessionsDir: Lazy<File>,
     private val worker: BackgroundWorker,
     clock: Clock,
-    private val logger: InternalLogger,
+    private val errorHandler: ErrorHandler,
     storageLimit: Int = MAX_SESSION_PART_DIRS,
     maxAgeMs: Long = MAX_SESSION_PART_AGE_MS,
 ) {
@@ -42,7 +42,7 @@ class SessionPartDirectoryStore(
         outputDir = sessionsDir,
         layout = SessionPartDirectoryLayout,
         clock = clock,
-        logger = logger,
+        errorHandler = errorHandler,
         errorType = InternalErrorType.SessionPartDirectoryStoreFail,
         storageLimit = storageLimit,
         maxAgeMs = maxAgeMs,
@@ -56,7 +56,7 @@ class SessionPartDirectoryStore(
         try {
             createImpl(directory)
         } catch (exc: Throwable) {
-            logger.trackInternalError(InternalErrorType.SessionPartDirectoryStoreFail, exc)
+            errorHandler.trackInternalError(InternalErrorType.SessionPartDirectoryStoreFail, exc)
         }
     }
 

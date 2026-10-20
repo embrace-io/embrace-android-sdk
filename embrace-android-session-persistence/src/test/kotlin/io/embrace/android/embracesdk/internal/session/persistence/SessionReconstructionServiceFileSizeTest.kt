@@ -3,7 +3,7 @@ package io.embrace.android.embracesdk.internal.session.persistence
 import com.squareup.wire.ProtoAdapter
 import com.squareup.wire.ProtoWriter
 import io.embrace.android.embracesdk.fakes.FakeClock
-import io.embrace.android.embracesdk.fakes.FakeInternalLogger
+import io.embrace.android.embracesdk.fakes.FakeErrorHandler
 import io.embrace.android.embracesdk.internal.payload.Span
 import okio.Buffer
 import okio.ByteString.Companion.toByteString
@@ -46,7 +46,7 @@ internal class SessionReconstructionServiceFileSizeTest {
     val tempFolder: TemporaryFolder = TemporaryFolder()
 
     private lateinit var sessionsDir: File
-    private lateinit var logger: FakeInternalLogger
+    private lateinit var errorHandler: FakeErrorHandler
     private lateinit var metadataWriter: SessionMetadataWriter
     private lateinit var snapshotsWriter: SpanSnapshotsWriter
     private lateinit var service: SessionReconstructionService
@@ -57,7 +57,7 @@ internal class SessionReconstructionServiceFileSizeTest {
     @Before
     fun setUp() {
         sessionsDir = tempFolder.newFolder("embrace_sessions")
-        logger = FakeInternalLogger(throwOnInternalError = false)
+        errorHandler = FakeErrorHandler(throwOnInternalError = false)
         activePart = partDirectory
         metadataWriter = SessionMetadataWriter(
             target = target(),
@@ -66,10 +66,10 @@ internal class SessionReconstructionServiceFileSizeTest {
             envelopeVersion = ENVELOPE_VERSION,
             envelopeType = ENVELOPE_TYPE,
             sharedLibSymbolMappingSource = { null },
-            logger = logger,
+            errorHandler = errorHandler,
         )
-        snapshotsWriter = SpanSnapshotsWriter(target(), logger)
-        service = SessionReconstructionService(lazy { sessionsDir }, logger)
+        snapshotsWriter = SpanSnapshotsWriter(target(), errorHandler)
+        service = SessionReconstructionService(lazy { sessionsDir }, errorHandler)
         File(sessionsDir, partDirectory.dirName).mkdirs()
         write()
     }
@@ -90,8 +90,8 @@ internal class SessionReconstructionServiceFileSizeTest {
         padToSize(SPAN_SNAPSHOTS_FILE_NAME, MAX_PART_FILE_BYTES + 1)
         val payload = checkNotNull(service.reconstruct(partDirectory)?.envelope?.data)
         assertEquals(listOf(inFlightSpan), payload.spanSnapshots)
-        assertEquals(1, logger.internalErrorMessages.size)
-        assertEquals("SessionReconstructionFail", logger.internalErrorMessages.single().msg)
+        assertEquals(1, errorHandler.internalErrorMessages.size)
+        assertEquals("SessionReconstructionFail", errorHandler.internalErrorMessages.single().msg)
     }
 
     @Test
@@ -109,8 +109,8 @@ internal class SessionReconstructionServiceFileSizeTest {
     fun `an oversized completed spans log is reported but still reconstructed`() {
         padToSize(COMPLETED_SPANS_FILE_NAME, MAX_PART_FILE_BYTES + 1)
         assertNotNull(service.reconstruct(partDirectory))
-        assertEquals(1, logger.internalErrorMessages.size)
-        assertEquals("SessionReconstructionFail", logger.internalErrorMessages.single().msg)
+        assertEquals(1, errorHandler.internalErrorMessages.size)
+        assertEquals("SessionReconstructionFail", errorHandler.internalErrorMessages.single().msg)
     }
 
     @Test
@@ -147,8 +147,8 @@ internal class SessionReconstructionServiceFileSizeTest {
 
         val envelope = checkNotNull(service.reconstruct(partDirectory)?.envelope)
         assertEquals(listOf(paddedSpanId(0)), envelope.data.spans?.map(Span::spanId))
-        assertEquals(1, logger.internalErrorMessages.size)
-        assertEquals("SessionReconstructionFail", logger.internalErrorMessages.single().msg)
+        assertEquals(1, errorHandler.internalErrorMessages.size)
+        assertEquals("SessionReconstructionFail", errorHandler.internalErrorMessages.single().msg)
     }
 
     @Test
@@ -161,14 +161,14 @@ internal class SessionReconstructionServiceFileSizeTest {
             paddedSpan(paddedSpanId(2), padding = 1),
         )
 
-        val writer = CompletedSpansWriter(target(), logger, MAX_PART_FILE_BYTES, bound)
+        val writer = CompletedSpansWriter(target(), errorHandler, MAX_PART_FILE_BYTES, bound)
         assertTrue(writer.write(logged))
         writer.close()
 
         val envelope = checkNotNull(service.reconstruct(partDirectory)?.envelope)
         assertEquals(listOf(paddedSpanId(0), paddedSpanId(2)), envelope.data.spans?.map(Span::spanId))
-        assertEquals(1, logger.internalErrorMessages.size)
-        assertEquals("CompletedSpansWriteFail", logger.internalErrorMessages.single().msg)
+        assertEquals(1, errorHandler.internalErrorMessages.size)
+        assertEquals("CompletedSpansWriteFail", errorHandler.internalErrorMessages.single().msg)
     }
 
     @Test
@@ -182,8 +182,8 @@ internal class SessionReconstructionServiceFileSizeTest {
         assertEquals(logged.take(MAX_PERSISTED_SPANS).map(SpanProto::span_id), spans.map(Span::spanId))
 
         assertEquals(emptyList<Span>(), envelope.data.spanSnapshots)
-        assertEquals(1, logger.internalErrorMessages.size)
-        assertEquals("SessionReconstructionFail", logger.internalErrorMessages.single().msg)
+        assertEquals(1, errorHandler.internalErrorMessages.size)
+        assertEquals("SessionReconstructionFail", errorHandler.internalErrorMessages.single().msg)
     }
 
     @Test
@@ -213,8 +213,8 @@ internal class SessionReconstructionServiceFileSizeTest {
     private fun assertOversizedFileRejected(fileName: String) {
         padToSize(fileName, MAX_PART_FILE_BYTES + 1)
         assertNull(service.reconstruct(partDirectory))
-        assertEquals(1, logger.internalErrorMessages.size)
-        assertEquals("SessionReconstructionFail", logger.internalErrorMessages.single().msg)
+        assertEquals(1, errorHandler.internalErrorMessages.size)
+        assertEquals("SessionReconstructionFail", errorHandler.internalErrorMessages.single().msg)
     }
 
     /**
@@ -277,6 +277,6 @@ internal class SessionReconstructionServiceFileSizeTest {
     }
 
     private fun assertNoInternalErrors() {
-        assertEquals(emptyList<FakeInternalLogger.LogMessage>(), logger.internalErrorMessages)
+        assertEquals(emptyList<FakeErrorHandler.LogMessage>(), errorHandler.internalErrorMessages)
     }
 }

@@ -26,12 +26,11 @@ internal fun createSdkStateHolder(
     onModuleGraphCreated: ((InitializedModuleGraph) -> Unit)? = null,
     overrides: SdkOverrides? = null,
 ): SdkStateHolder {
-    val logger = preStartServices.logger
+    val errorHandler = preStartServices.errorHandler
     val clock = preStartServices.clock
     val buffer = BufferingSdkInstance(
         clock = clock::now,
-        logger = logger,
-        errorHandler = preStartServices.errorHandler,
+        errorHandler = errorHandler,
     )
     return SdkStateHolder(
         instanceFactory = { context ->
@@ -54,11 +53,10 @@ internal fun createSdkStateHolder(
             }
         },
         preStart = buffer,
-        failed = { NoopSdkInstance(logger, NoopSdkInstance.SDK_START_FAILED) },
-        disabled = { NoopSdkInstance(logger, NoopSdkInstance.SDK_DISABLED) },
+        failed = { NoopSdkInstance(errorHandler, NoopSdkInstance.SDK_START_FAILED) },
+        disabled = { NoopSdkInstance(errorHandler, NoopSdkInstance.SDK_DISABLED) },
         telemetryService = preStartServices.telemetryService,
-        errorHandler = logger,
-        bufferedErrorHandler = preStartServices.errorHandler,
+        errorHandler = errorHandler,
     )
 }
 
@@ -84,7 +82,7 @@ private fun createModuleGraph(
     // drained before the config service is created, as it checks whether OTLP export has been configured
     buffer.drainOTelConfig(PreStartOTelApi(preStartServices.externalOtelConfig))
     val sdkInitResourceUsageTracker =
-        (sdkInitResourceUsageTrackerSupplier?.invoke() ?: SdkInitResourceUsageTracker(preStartServices.logger)).apply {
+        (sdkInitResourceUsageTrackerSupplier?.invoke() ?: SdkInitResourceUsageTracker(preStartServices.errorHandler)).apply {
             captureStart()
         }
 

@@ -4,7 +4,6 @@ import android.content.Context
 import android.util.Log
 import io.embrace.android.embracesdk.internal.api.SdkApi
 import io.embrace.android.embracesdk.internal.logging.ErrorHandler
-import io.embrace.android.embracesdk.internal.logging.InternalErrorHandler
 import io.embrace.android.embracesdk.internal.logging.InternalErrorType
 import io.embrace.android.embracesdk.internal.telemetry.InternalTelemetryService
 import io.embrace.android.embracesdk.internal.utils.EmbTrace
@@ -36,8 +35,7 @@ internal class SdkStateHolder(
     private val failed: Provider<SdkInstance>,
     private val disabled: Provider<SdkInstance>,
     telemetryService: InternalTelemetryService,
-    private val errorHandler: InternalErrorHandler,
-    private val bufferedErrorHandler: ErrorHandler,
+    private val errorHandler: ErrorHandler,
 ) : AutoCloseable {
 
     private val lock = Any()
@@ -86,7 +84,7 @@ internal class SdkStateHolder(
                     dispatcher.target.close()
                     next?.let { guard { it.close() } }
                     transition(failed(), SdkState.FAILED)
-                    guard { bufferedErrorHandler.close() }
+                    guard { errorHandler.close() }
                 }
             }
         }
@@ -104,7 +102,7 @@ internal class SdkStateHolder(
             // disabling is terminal even if teardown fails partway. Unlike a failed start, this deletes persisted data.
             guard { dispatcher.target.disable() }
             transition(disabled(), SdkState.DISABLED)
-            guard { bufferedErrorHandler.close() }
+            guard { errorHandler.close() }
         }
     }
 

@@ -1,6 +1,6 @@
 package io.embrace.android.embracesdk.internal.otel.spans
 
-import io.embrace.android.embracesdk.fakes.FakeInternalLogger
+import io.embrace.android.embracesdk.fakes.FakeErrorHandler
 import io.embrace.android.embracesdk.fakes.FakeReadWriteSpan
 import io.embrace.android.embracesdk.fakes.FakeSpan
 import io.embrace.android.embracesdk.fakes.FakeSpanExporter
@@ -65,7 +65,7 @@ internal class DefaultSpanExporterTest {
         val exporter = exporter(
             spanRepository = spanRepository,
             externalExporters = listOf(FakeSpanExporter()),
-            dispatcher = ExternalExportDispatcher(FakeInternalLogger()),
+            dispatcher = ExternalExportDispatcher(FakeErrorHandler()),
         )
 
         exporter.exportInline(listOf(span("public-span")))
@@ -79,7 +79,7 @@ internal class DefaultSpanExporterTest {
         val exporter = exporter(
             spanRepository = SpanRepository(),
             externalExporters = listOf(threadRecordingExporter(exportThreads)),
-            dispatcher = ExternalExportDispatcher(FakeInternalLogger()),
+            dispatcher = ExternalExportDispatcher(FakeErrorHandler()),
         )
 
         exporter.exportInline(listOf(span("public-span")))

@@ -1,7 +1,7 @@
 package io.embrace.android.embracesdk.internal.session.persistence
 
+import io.embrace.android.embracesdk.internal.logging.ErrorHandler
 import io.embrace.android.embracesdk.internal.logging.InternalErrorType
-import io.embrace.android.embracesdk.internal.logging.InternalLogger
 import io.embrace.android.embracesdk.internal.payload.EnvelopeMetadata
 import io.embrace.android.embracesdk.internal.payload.EnvelopeResource
 import io.embrace.android.embracesdk.internal.utils.SystemTrace
@@ -22,7 +22,7 @@ class SessionMetadataWriter(
     private val envelopeVersion: String,
     private val envelopeType: String,
     private val sharedLibSymbolMappingSource: () -> Map<String, String>?,
-    private val logger: InternalLogger,
+    private val errorHandler: ErrorHandler,
 ) {
 
     /**
@@ -81,6 +81,6 @@ class SessionMetadataWriter(
     }
 
     private fun trackFailure(exc: Throwable) {
-        logger.trackInternalError(InternalErrorType.SessionMetadataWriteFail, exc)
+        errorHandler.trackInternalError(InternalErrorType.SessionMetadataWriteFail, exc)
     }
 }

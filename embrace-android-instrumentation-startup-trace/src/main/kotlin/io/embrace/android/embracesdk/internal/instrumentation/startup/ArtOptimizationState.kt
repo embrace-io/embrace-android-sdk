@@ -5,7 +5,7 @@ import io.embrace.android.embracesdk.internal.instrumentation.startup.ArtOptimiz
 import io.embrace.android.embracesdk.internal.instrumentation.startup.SdkInitAttributeKeys.ART_COMPILER_FILTER
 import io.embrace.android.embracesdk.internal.instrumentation.startup.SdkInitAttributeKeys.ART_COMPILER_FILTER_NOT_FOUND
 import io.embrace.android.embracesdk.internal.instrumentation.startup.SdkInitAttributeKeys.STRING_ERROR
-import io.embrace.android.embracesdk.internal.logging.InternalLogger
+import io.embrace.android.embracesdk.internal.logging.ErrorHandler
 import io.embrace.android.embracesdk.internal.utils.indexOf
 import io.embrace.android.embracesdk.internal.utils.readHead
 import java.io.File
@@ -39,7 +39,7 @@ class ArtOptimizationState internal constructor(
          * can populate [artCompilerFilter] and [hasAppImage] properly. This is the case when an app's primary DEX has not been
          * compiled, indicating a startup without the benefit of ART optimization.
          */
-        fun create(apkPath: String, primaryAbi: String, logger: InternalLogger): ArtOptimizationState? {
+        fun create(apkPath: String, primaryAbi: String, errorHandler: ErrorHandler): ArtOptimizationState? {
             val apk = File(apkPath)
             val apkDir = apk.parentFile ?: return null
             val isa = getIsa(primaryAbi) ?: return null
@@ -58,7 +58,7 @@ class ArtOptimizationState internal constructor(
                     ART_COMPILER_FILTER_NOT_FOUND
                 }
             } catch (t: Throwable) {
-                logger.trackAttributeError(ART_COMPILER_FILTER, t)
+                errorHandler.trackAttributeError(ART_COMPILER_FILTER, t)
                 STRING_ERROR
             }
 

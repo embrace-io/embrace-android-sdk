@@ -3,7 +3,7 @@ package io.embrace.android.embracesdk.internal.instance
 import io.embrace.android.embracesdk.LastRunEndState
 import io.embrace.android.embracesdk.PropertyScope
 import io.embrace.android.embracesdk.fakes.FakeClock
-import io.embrace.android.embracesdk.fakes.FakeInternalLogger
+import io.embrace.android.embracesdk.fakes.FakeErrorHandler
 import io.embrace.android.embracesdk.fakes.FakeTelemetryDestination
 import io.embrace.android.embracesdk.internal.api.SdkApi
 import io.embrace.android.embracesdk.internal.logging.ErrorHandlerImpl
@@ -22,13 +22,13 @@ import org.junit.Test
 
 internal class NoopSdkInstanceTest {
 
-    private lateinit var logger: FakeInternalLogger
+    private lateinit var errorHandler: FakeErrorHandler
     private lateinit var instance: NoopSdkInstance
 
     @Before
     fun setUp() {
-        logger = FakeInternalLogger()
-        instance = NoopSdkInstance(logger, NoopSdkInstance.SDK_NOT_INITIALIZED)
+        errorHandler = FakeErrorHandler()
+        instance = NoopSdkInstance(errorHandler, NoopSdkInstance.SDK_NOT_INITIALIZED)
     }
 
     @Test
@@ -37,7 +37,7 @@ internal class NoopSdkInstanceTest {
         assertEquals("", instance.deviceId)
         assertNull(instance.currentUserSessionId)
         assertEquals(LastRunEndState.INVALID, instance.lastRunEndState)
-        assertTrue(logger.infoMessages.isEmpty())
+        assertTrue(errorHandler.infoMessages.isEmpty())
     }
 
     @Test
@@ -57,7 +57,7 @@ internal class NoopSdkInstanceTest {
 
     @Test
     fun `calls after onPostStart are not buffered`() {
-        val buffer = BufferingSdkInstance({ 0 }, logger)
+        val buffer = BufferingSdkInstance({ 0 }, errorHandler)
         instance.onPostStart(buffer)
         buffer.setResourceAttribute("key", "value")
         buffer.recordCompletedSpan("span", 1, 2)
@@ -68,7 +68,7 @@ internal class NoopSdkInstanceTest {
     @Test
     fun `onPostStart discards buffered internal errors`() {
         val handler = ErrorHandlerImpl(FakeClock())
-        val buffer = BufferingSdkInstance({ 0 }, logger, handler)
+        val buffer = BufferingSdkInstance({ 0 }, handler)
         handler.guardSdkCode(InternalErrorType.DeliverySchedulingFail, Unit) { throw IllegalStateException() }
         instance.onPostStart(buffer)
         handler.guardSdkCode(InternalErrorType.DeliverySchedulingFail, Unit) { throw IllegalStateException() }
@@ -78,7 +78,7 @@ internal class NoopSdkInstanceTest {
         assertTrue(destination.logEvents.isEmpty())
     }
 
-    private fun createBuffer() = BufferingSdkInstance({ 0 }, logger).apply {
+    private fun createBuffer() = BufferingSdkInstance({ 0 }, errorHandler).apply {
         setResourceAttribute("key", "value")
         recordCompletedSpan("span", 1, 2)
         trackExperiment("exp", "variant", 1)
@@ -130,11 +130,10 @@ internal class NoopSdkInstanceTest {
     fun `logs not initialized warning once`() {
         instance.addBreadcrumb("crumb")
         instance.logInfo("msg")
-        val msg = logger.warningMessages.single()
+        val msg = errorHandler.warningMessages.single()
         assertEquals("Embrace SDK is not initialized yet, cannot add_breadcrumb.", msg.msg)
         assertEquals(msg.msg, msg.throwable?.message)
-        assertTrue(logger.infoMessages.isEmpty())
-        assertTrue(logger.sdkNotInitializedMessages.isEmpty())
+        assertTrue(errorHandler.infoMessages.isEmpty())
     }
 
     @Test
@@ -142,18 +141,18 @@ internal class NoopSdkInstanceTest {
         assertEquals("", instance.deviceId)
         assertEquals(
             "Embrace SDK is not initialized yet, cannot get_device_id.",
-            logger.warningMessages.single().msg,
+            errorHandler.warningMessages.single().msg,
         )
     }
 
     @Test
     fun `logs disabled message`() {
-        val disabled = NoopSdkInstance(logger, NoopSdkInstance.SDK_DISABLED)
+        val disabled = NoopSdkInstance(errorHandler, NoopSdkInstance.SDK_DISABLED)
         disabled.addBreadcrumb("crumb")
         assertEquals(
             "Embrace SDK is disabled, cannot add_breadcrumb. Subsequent dropped calls will not be logged.",
-            logger.infoMessages.single().msg,
+            errorHandler.infoMessages.single().msg,
         )
-        assertTrue(logger.warningMessages.isEmpty())
+        assertTrue(errorHandler.warningMessages.isEmpty())
     }
 }

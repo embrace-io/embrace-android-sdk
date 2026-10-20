@@ -7,8 +7,8 @@ import io.embrace.android.embracesdk.internal.envelope.metadata.EnvelopeMetadata
 import io.embrace.android.embracesdk.internal.envelope.resource.EnvelopeResourceSource
 import io.embrace.android.embracesdk.internal.envelope.session.SESSION_ENVELOPE_TYPE
 import io.embrace.android.embracesdk.internal.envelope.session.SESSION_ENVELOPE_VERSION
+import io.embrace.android.embracesdk.internal.logging.ErrorHandler
 import io.embrace.android.embracesdk.internal.logging.InternalErrorType
-import io.embrace.android.embracesdk.internal.logging.InternalLogger
 import io.embrace.android.embracesdk.internal.otel.spans.EmbraceSdkSpan
 import io.embrace.android.embracesdk.internal.otel.spans.hasEmbraceAttribute
 import io.embrace.android.embracesdk.internal.payload.Span
@@ -40,14 +40,14 @@ class SessionPartWriterImpl(
     private val configService: ConfigService,
     private val uuidSource: UuidSource,
     private val clock: Clock,
-    private val logger: InternalLogger,
+    private val errorHandler: ErrorHandler,
     private val resourceSource: EnvelopeResourceSource,
     private val metadataSource: EnvelopeMetadataSource,
     private val currentSessionPartSpan: CurrentSessionPartSpan,
     private val inFlightSpanSource: () -> List<EmbraceSdkSpan>,
     private val telemetryService: InternalTelemetryService,
     private val directoryStore: SessionPartDirectoryStore =
-        SessionPartDirectoryStore(sessionsDir, worker, clock, logger),
+        SessionPartDirectoryStore(sessionsDir, worker, clock, errorHandler),
     private val writeTracker: SessionPartWriteTracker = SessionPartWriteTracker(),
     private val onWritesComplete: () -> Unit = {},
 ) : SessionPartWriter {
@@ -157,7 +157,7 @@ class SessionPartWriterImpl(
     }
 
     private fun reportMissedEnd(msg: String) =
-        logger.trackInternalError(InternalErrorType.SessionPartEndMissed, IllegalStateException(msg))
+        errorHandler.trackInternalError(InternalErrorType.SessionPartEndMissed, IllegalStateException(msg))
 
     override fun onMetadataChanged() {
         if (!acceptingWrites()) {
@@ -254,7 +254,7 @@ class SessionPartWriterImpl(
         val spans = try {
             inFlightSpanSource()
         } catch (exc: Throwable) {
-            logger.trackInternalError(InternalErrorType.SpanSnapshotsWriteFail, exc)
+            errorHandler.trackInternalError(InternalErrorType.SpanSnapshotsWriteFail, exc)
             return@trace
         }
         execute(writers, InternalErrorType.SpanSnapshotsWriteFail, { worker.submit(it) }) {
@@ -279,7 +279,7 @@ class SessionPartWriterImpl(
         }
     }
 
-    private fun reportOrphanedSessionSpan() = logger.trackInternalError(
+    private fun reportOrphanedSessionSpan() = errorHandler.trackInternalError(
         InternalErrorType.OrphanedSessionSpan,
         IllegalStateException("Session span completed with no session part to write it to"),
     )
@@ -312,7 +312,7 @@ class SessionPartWriterImpl(
                 try {
                     task.run()
                 } catch (exc: Throwable) {
-                    logger.trackInternalError(errorType, exc)
+                    errorHandler.trackInternalError(errorType, exc)
                 }
             }
         }
@@ -325,7 +325,7 @@ class SessionPartWriterImpl(
         try {
             onWritesComplete()
         } catch (exc: Throwable) {
-            logger.trackInternalError(InternalErrorType.SessionPartWritesCompleteFail, exc)
+            errorHandler.trackInternalError(InternalErrorType.SessionPartWritesCompleteFail, exc)
         }
     }
 
@@ -362,11 +362,11 @@ class SessionPartWriterImpl(
             envelopeVersion = SESSION_ENVELOPE_VERSION,
             envelopeType = SESSION_ENVELOPE_TYPE,
             sharedLibSymbolMappingSource = { configService.nativeSymbolMap },
-            logger = logger,
+            errorHandler = errorHandler,
         )
 
-        val completedSpans = CompletedSpansWriter(target, logger)
-        val spanSnapshots = SpanSnapshotsWriter(target, logger)
+        val completedSpans = CompletedSpansWriter(target, errorHandler)
+        val spanSnapshots = SpanSnapshotsWriter(target, errorHandler)
 
         val metadataWrites = TelemetryWriteScheduler(
             worker = worker,

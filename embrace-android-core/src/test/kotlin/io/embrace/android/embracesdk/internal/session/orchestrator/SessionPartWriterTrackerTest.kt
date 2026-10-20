@@ -5,7 +5,7 @@ import io.embrace.android.embracesdk.fakes.FakeClock
 import io.embrace.android.embracesdk.fakes.FakeConfigService
 import io.embrace.android.embracesdk.fakes.FakeCurrentSessionPartSpan
 import io.embrace.android.embracesdk.fakes.FakeEmbraceSdkSpan
-import io.embrace.android.embracesdk.fakes.FakeInternalLogger
+import io.embrace.android.embracesdk.fakes.FakeErrorHandler
 import io.embrace.android.embracesdk.fakes.FakeInternalTelemetryService
 import io.embrace.android.embracesdk.fakes.TestUuidSource
 import io.embrace.android.embracesdk.internal.config.resolved.EmbraceConfig
@@ -65,7 +65,7 @@ internal class SessionPartWriterTrackerTest {
             ),
             TestUuidSource(),
             clock,
-            FakeInternalLogger(throwOnInternalError = false),
+            FakeErrorHandler(throwOnInternalError = false),
             resourceSource,
             { EnvelopeMetadata() },
             currentSessionPartSpan,

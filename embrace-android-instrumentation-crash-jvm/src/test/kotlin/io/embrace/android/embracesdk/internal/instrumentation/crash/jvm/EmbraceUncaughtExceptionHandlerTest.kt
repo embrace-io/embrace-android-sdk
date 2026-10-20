@@ -1,6 +1,6 @@
 package io.embrace.android.embracesdk.internal.instrumentation.crash.jvm
 
-import io.embrace.android.embracesdk.fakes.FakeInternalLogger
+import io.embrace.android.embracesdk.fakes.FakeErrorHandler
 import io.embrace.android.embracesdk.internal.arch.CrashTeardownHandler
 import io.embrace.android.embracesdk.internal.arch.datasource.TelemetryDestination
 import io.embrace.android.embracesdk.internal.arch.schema.SchemaType
@@ -20,7 +20,7 @@ import org.junit.Test
  */
 internal class EmbraceUncaughtExceptionHandlerTest {
 
-    private val logger = FakeInternalLogger(false)
+    private val errorHandler = FakeErrorHandler(false)
 
     private val originalHandler = Thread.getDefaultUncaughtExceptionHandler()
 
@@ -36,7 +36,7 @@ internal class EmbraceUncaughtExceptionHandlerTest {
      */
     @Test
     fun testNullArg1() {
-        EmbraceUncaughtExceptionHandler(null, FakeJvmCrashDataSource(), logger)
+        EmbraceUncaughtExceptionHandler(null, FakeJvmCrashDataSource(), errorHandler)
     }
 
     /**
@@ -47,7 +47,7 @@ internal class EmbraceUncaughtExceptionHandlerTest {
     fun testExceptionHandler() {
         val defaultHandler = TestUncaughtExceptionHandler()
         val fakeCrashService = FakeJvmCrashDataSource()
-        val handler = EmbraceUncaughtExceptionHandler(defaultHandler, fakeCrashService, logger)
+        val handler = EmbraceUncaughtExceptionHandler(defaultHandler, fakeCrashService, errorHandler)
 
         val testException = RuntimeException("Test exception")
         handler.uncaughtException(Thread.currentThread(), testException)
@@ -69,7 +69,7 @@ internal class EmbraceUncaughtExceptionHandlerTest {
     fun testCrashingExceptionHandler() {
         val defaultHandler = TestUncaughtExceptionHandler()
         val crashingCrashService = CrashingJvmCrashService()
-        val handler = EmbraceUncaughtExceptionHandler(defaultHandler, crashingCrashService, logger)
+        val handler = EmbraceUncaughtExceptionHandler(defaultHandler, crashingCrashService, errorHandler)
         val testException = RuntimeException("Test exception")
         handler.uncaughtException(Thread.currentThread(), testException)
 
@@ -82,7 +82,7 @@ internal class EmbraceUncaughtExceptionHandlerTest {
     fun `detached handler stops forwarding to the data source but still delegates`() {
         val defaultHandler = TestUncaughtExceptionHandler()
         val fakeCrashService = FakeJvmCrashDataSource()
-        val handler = EmbraceUncaughtExceptionHandler(defaultHandler, fakeCrashService, logger)
+        val handler = EmbraceUncaughtExceptionHandler(defaultHandler, fakeCrashService, errorHandler)
         handler.detach()
         val testException = RuntimeException("Test exception")
         handler.uncaughtException(Thread.currentThread(), testException)
@@ -93,7 +93,8 @@ internal class EmbraceUncaughtExceptionHandlerTest {
 
     @Test
     fun `detaching leaves a handler that wraps this one installed`() {
-        val handler = EmbraceUncaughtExceptionHandler(TestUncaughtExceptionHandler(), FakeJvmCrashDataSource(), logger)
+        val handler =
+            EmbraceUncaughtExceptionHandler(TestUncaughtExceptionHandler(), FakeJvmCrashDataSource(), errorHandler)
         val wrapper = Thread.UncaughtExceptionHandler { thread, throwable -> handler.uncaughtException(thread, throwable) }
         Thread.setDefaultUncaughtExceptionHandler(wrapper)
         handler.detach()

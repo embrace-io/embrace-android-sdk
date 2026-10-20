@@ -3,8 +3,8 @@ package io.embrace.android.embracesdk.internal.arch
 import io.embrace.android.embracesdk.internal.arch.datasource.DataSource
 import io.embrace.android.embracesdk.internal.arch.datasource.DataSourceFactory
 import io.embrace.android.embracesdk.internal.arch.datasource.StateDataSource
+import io.embrace.android.embracesdk.internal.logging.ErrorHandler
 import io.embrace.android.embracesdk.internal.logging.InternalErrorType
-import io.embrace.android.embracesdk.internal.logging.InternalLogger
 import io.embrace.android.embracesdk.internal.worker.Worker
 import java.util.concurrent.CopyOnWriteArrayList
 import kotlin.reflect.KClass
@@ -15,7 +15,7 @@ import kotlin.reflect.safeCast
  * place to coordinate everything in one place.
  */
 class InstrumentationRegistryImpl(
-    private val logger: InternalLogger,
+    private val errorHandler: ErrorHandler,
 ) : InstrumentationRegistry {
 
     private val dataSources = CopyOnWriteArrayList<DataSource>()
@@ -64,7 +64,7 @@ class InstrumentationRegistryImpl(
         try {
             dataSource.onDataCaptureDisabled()
         } catch (exc: Throwable) {
-            logger.trackInternalError(InternalErrorType.InstrumentationDisableFail, exc)
+            errorHandler.trackInternalError(InternalErrorType.InstrumentationDisableFail, exc)
         }
     }
 
@@ -95,7 +95,7 @@ class InstrumentationRegistryImpl(
         try {
             provider.register(args)?.let { add(it) }
         } catch (exc: Throwable) {
-            logger.trackInternalError(InternalErrorType.InstrumentationRegFail, exc)
+            errorHandler.trackInternalError(InternalErrorType.InstrumentationRegFail, exc)
         }
     }
 

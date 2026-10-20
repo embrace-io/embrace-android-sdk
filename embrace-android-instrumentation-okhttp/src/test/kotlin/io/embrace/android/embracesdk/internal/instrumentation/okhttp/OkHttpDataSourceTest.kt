@@ -538,7 +538,7 @@ internal class OkHttpDataSourceTest {
 
     @Test
     fun `a failure recording the end of a request does not fail the app's request`() {
-        args.logger.throwOnInternalError = false
+        args.errorHandler.throwOnInternalError = false
         networkRequestDataSource.endRequestFailure = RuntimeException("instrumentation failure")
         server.enqueue(createBaseMockResponse().setBody(RESPONSE_BODY))
 
@@ -546,7 +546,7 @@ internal class OkHttpDataSourceTest {
         assertEquals(200, response.code)
 
         // the failure was contained and the request's tracking reference released
-        assertEquals(1, args.logger.internalErrorMessages.size)
+        assertEquals(1, args.errorHandler.internalErrorMessages.size)
         assertEquals(1, networkRequestDataSource.discardedIds.size)
     }
 

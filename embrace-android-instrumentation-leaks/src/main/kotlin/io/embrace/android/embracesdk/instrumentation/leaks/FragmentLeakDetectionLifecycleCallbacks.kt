@@ -7,7 +7,7 @@ import android.view.View
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.FragmentActivity
 import androidx.fragment.app.FragmentManager
-import io.embrace.android.embracesdk.internal.logging.InternalLogger
+import io.embrace.android.embracesdk.internal.logging.ErrorHandler
 import io.embrace.android.embracesdk.internal.session.id.SessionIdsSnapshot
 import java.util.Collections
 import java.util.WeakHashMap
@@ -19,7 +19,7 @@ import java.util.WeakHashMap
 internal class FragmentLeakDetectionLifecycleCallbacks(
     private val leakDetector: LeakDetector,
     private val activeSessionIdsProvider: () -> SessionIdsSnapshot,
-    private val logger: InternalLogger,
+    private val errorHandler: ErrorHandler,
     private val webViewLeakDetectionEnabled: Boolean = false,
 ) : FragmentManager.FragmentLifecycleCallbacks(), FragmentSupport {
 
@@ -64,7 +64,7 @@ internal class FragmentLeakDetectionLifecycleCallbacks(
     // ahead of the Activity's own scan, and owns them
     override fun onFragmentStarted(fm: FragmentManager, f: Fragment) {
         if (webViewLeakDetectionEnabled) {
-            WebViewLeakScanner.scan(f.view, logger) { webView ->
+            WebViewLeakScanner.scan(f.view, errorHandler) { webView ->
                 leakDetector.trackOpened(webView, TrackingSource.FRAGMENT)
             }
         }
@@ -76,7 +76,7 @@ internal class FragmentLeakDetectionLifecycleCallbacks(
         leakDetector.trackClosed(view, TrackingSource.FRAGMENT, LeakContext(FRAGMENT_VIEW_OBJECT_TYPE, sessionIds, f.javaClass))
 
         if (webViewLeakDetectionEnabled) {
-            WebViewLeakScanner.scan(view, logger) { webView ->
+            WebViewLeakScanner.scan(view, errorHandler) { webView ->
                 leakDetector.trackClosed(
                     webView,
                     TrackingSource.FRAGMENT,

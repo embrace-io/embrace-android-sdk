@@ -3,8 +3,8 @@ package io.embrace.android.embracesdk.internal.session.lifecycle
 import io.embrace.android.embracesdk.internal.arch.state.ProcessState
 import io.embrace.android.embracesdk.internal.arch.state.ProcessStateListener
 import io.embrace.android.embracesdk.internal.arch.state.ProcessStateTracker
+import io.embrace.android.embracesdk.internal.logging.ErrorHandler
 import io.embrace.android.embracesdk.internal.logging.InternalErrorType
-import io.embrace.android.embracesdk.internal.logging.InternalLogger
 import io.embrace.android.embracesdk.internal.session.orchestrator.SessionOrchestrator
 import java.util.concurrent.CopyOnWriteArrayList
 
@@ -12,7 +12,7 @@ import java.util.concurrent.CopyOnWriteArrayList
  * Notifies the rest of the SDK whenever the app's process state changes.
  */
 internal class ProcessStateTrackerImpl(
-    private val logger: InternalLogger,
+    private val errorHandler: ErrorHandler,
     private val lifecycleTracker: LifecycleTracker,
 ) : ProcessStateTracker, ProcessStateListener {
 
@@ -61,7 +61,7 @@ internal class ProcessStateTrackerImpl(
         try {
             action()
         } catch (ex: Exception) {
-            logger.trackInternalError(InternalErrorType.AppStateCallbackFail, ex)
+            errorHandler.trackInternalError(InternalErrorType.AppStateCallbackFail, ex)
         }
     }
 

@@ -31,7 +31,7 @@ internal class ComposeClickedTargetIteratorTest {
         context = application
         args = FakeInstrumentationArgs(application)
         args.eventBus.addHandler(TapSignal.KEY) { taps.add(it) }
-        iterator = ComposeClickedTargetIterator(args.logger, ComposeTapDataSource(args))
+        iterator = ComposeClickedTargetIterator(args.errorHandler, ComposeTapDataSource(args))
     }
 
     @Test
@@ -40,7 +40,7 @@ internal class ComposeClickedTargetIteratorTest {
 
         iterator.findTarget(decor, x = 540f, y = 1200f)
 
-        assertTrue(args.logger.errorMessages.isEmpty())
+        assertTrue(args.errorHandler.errorMessages.isEmpty())
         assertTrue(taps.isEmpty())
     }
 
@@ -50,7 +50,7 @@ internal class ComposeClickedTargetIteratorTest {
 
         iterator.findTarget(decor, x = 2000f, y = 3000f)
 
-        assertTrue(args.logger.errorMessages.isEmpty())
+        assertTrue(args.errorHandler.errorMessages.isEmpty())
         assertTrue(taps.isEmpty())
     }
 
@@ -66,7 +66,7 @@ internal class ComposeClickedTargetIteratorTest {
 
         // child was queued and popped — so its children's location was queried during the bounds check
         assertEquals(1, inner.locationCheckCount)
-        assertTrue(args.logger.errorMessages.isEmpty())
+        assertTrue(args.errorHandler.errorMessages.isEmpty())
     }
 
     @Test
@@ -81,7 +81,7 @@ internal class ComposeClickedTargetIteratorTest {
         iterator.findTarget(decor, x = 150f, y = 200f)
 
         assertEquals(0, inner.locationCheckCount)
-        assertTrue(args.logger.errorMessages.isEmpty())
+        assertTrue(args.errorHandler.errorMessages.isEmpty())
     }
 
     @Test
@@ -96,7 +96,7 @@ internal class ComposeClickedTargetIteratorTest {
         iterator.findTarget(decor, x = 100f, y = 200f)
 
         assertEquals(0, inner.locationCheckCount)
-        assertTrue(args.logger.errorMessages.isEmpty())
+        assertTrue(args.errorHandler.errorMessages.isEmpty())
     }
 
     @Test
@@ -115,7 +115,7 @@ internal class ComposeClickedTargetIteratorTest {
         // outOfBoundsChild was added to the queue without a bounds check and processed,
         // so its child's location was queried
         assertEquals(1, inner.locationCheckCount)
-        assertTrue(args.logger.errorMessages.isEmpty())
+        assertTrue(args.errorHandler.errorMessages.isEmpty())
     }
 
     @Test
@@ -132,7 +132,7 @@ internal class ComposeClickedTargetIteratorTest {
         iterator.findTarget(decor, x = 50f, y = 50f)
 
         assertEquals(0, inner.locationCheckCount)
-        assertTrue(args.logger.errorMessages.isEmpty())
+        assertTrue(args.errorHandler.errorMessages.isEmpty())
     }
 
     @Test
@@ -148,8 +148,8 @@ internal class ComposeClickedTargetIteratorTest {
 
         iterator.findTarget(decor, x = 50f, y = 50f)
 
-        assertEquals(1, args.logger.errorMessages.size)
-        assertEquals("Failed to find target", args.logger.errorMessages[0].msg)
+        assertEquals(1, args.errorHandler.errorMessages.size)
+        assertEquals("Failed to find target", args.errorHandler.errorMessages[0].msg)
         assertTrue(taps.isEmpty())
     }
 
@@ -167,7 +167,7 @@ internal class ComposeClickedTargetIteratorTest {
 
         iterator.findTarget(decor, x = 50f, y = 50f)
 
-        assertTrue(args.logger.errorMessages.isEmpty())
+        assertTrue(args.errorHandler.errorMessages.isEmpty())
         assertTrue(taps.isEmpty())
     }
 }

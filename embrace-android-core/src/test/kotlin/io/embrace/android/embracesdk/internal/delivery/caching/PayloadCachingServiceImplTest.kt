@@ -2,7 +2,7 @@ package io.embrace.android.embracesdk.internal.delivery.caching
 
 import io.embrace.android.embracesdk.concurrency.BlockingScheduledExecutorService
 import io.embrace.android.embracesdk.fakes.FakeClock
-import io.embrace.android.embracesdk.fakes.FakeInternalLogger
+import io.embrace.android.embracesdk.fakes.FakeErrorHandler
 import io.embrace.android.embracesdk.fakes.FakePayloadStore
 import io.embrace.android.embracesdk.fakes.FakeSessionIdsProvider
 import io.embrace.android.embracesdk.fakes.fakeSessionEnvelope
@@ -27,7 +27,7 @@ class PayloadCachingServiceImplTest {
     @Before
     fun setUp() {
         executorService = BlockingScheduledExecutorService(FakeClock())
-        val cacher = PeriodicSessionPartCacher(BackgroundWorker(executorService), FakeInternalLogger(), INTERVAL)
+        val cacher = PeriodicSessionPartCacher(BackgroundWorker(executorService), FakeErrorHandler(), INTERVAL)
         sessionIdsProvider = FakeSessionIdsProvider(sessionPartId = zygote.sessionPartId)
 
         service = PayloadCachingServiceImpl(

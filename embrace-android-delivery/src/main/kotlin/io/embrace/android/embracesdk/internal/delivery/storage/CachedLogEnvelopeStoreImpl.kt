@@ -2,7 +2,7 @@ package io.embrace.android.embracesdk.internal.delivery.storage
 
 import io.embrace.android.embracesdk.internal.clock.Clock
 import io.embrace.android.embracesdk.internal.delivery.StoredTelemetryMetadata
-import io.embrace.android.embracesdk.internal.logging.InternalLogger
+import io.embrace.android.embracesdk.internal.logging.ErrorHandler
 import io.embrace.android.embracesdk.internal.payload.Envelope
 import io.embrace.android.embracesdk.internal.payload.Envelope.Companion.createLogEnvelope
 import io.embrace.android.embracesdk.internal.payload.EnvelopeMetadata
@@ -15,7 +15,7 @@ import java.io.File
 class CachedLogEnvelopeStoreImpl(
     outputDir: Lazy<File>,
     worker: PriorityWorker<StoredTelemetryMetadata>,
-    logger: InternalLogger,
+    errorHandler: ErrorHandler,
     private val serializer: PlatformSerializer,
     clock: Clock,
     storageLimit: Int = 100,
@@ -24,7 +24,7 @@ class CachedLogEnvelopeStoreImpl(
     private val fileStorageService: FileStorageService = FileStorageServiceImpl(
         outputDir,
         worker,
-        logger,
+        errorHandler,
         clock,
         storageLimit,
     )

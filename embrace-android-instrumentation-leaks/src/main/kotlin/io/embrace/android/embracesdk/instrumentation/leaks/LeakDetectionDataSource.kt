@@ -27,7 +27,7 @@ class LeakDetectionDataSource(args: InstrumentationArgs) :
 
     private val fragmentSupport: FragmentSupport =
         if (args.configService.config.autoDataCapture.fragmentLeakDetectionEnabled) {
-            createFragmentSupport(leakDetector, args::activeSessionIds, args.logger, webViewLeakDetectionEnabled)
+            createFragmentSupport(leakDetector, args::activeSessionIds, args.errorHandler, webViewLeakDetectionEnabled)
         } else {
             NoOpFragmentSupport
         }
@@ -36,7 +36,7 @@ class LeakDetectionDataSource(args: InstrumentationArgs) :
         leakDetector,
         args::activeSessionIds,
         fragmentSupport,
-        args.logger,
+        args.errorHandler,
         webViewLeakDetectionEnabled,
     )
 

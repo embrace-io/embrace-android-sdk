@@ -1,7 +1,7 @@
 package io.embrace.android.embracesdk.internal.logging
 
-import io.embrace.android.embracesdk.internal.logging.InternalLogger.Severity
-import io.embrace.android.embracesdk.internal.logging.InternalLogger.Severity.ERROR
+import io.embrace.android.embracesdk.internal.logging.ErrorHandler.Severity
+import io.embrace.android.embracesdk.internal.logging.ErrorHandler.Severity.ERROR
 
 /**
  * Represents a type of internal error that can be recorded for the Embrace SDK's telemetry.

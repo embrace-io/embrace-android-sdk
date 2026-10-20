@@ -8,7 +8,7 @@ import io.embrace.android.embracesdk.fakes.FakeClock
 import io.embrace.android.embracesdk.fakes.FakeConfigService
 import io.embrace.android.embracesdk.fakes.FakeCurrentSessionPartSpan
 import io.embrace.android.embracesdk.fakes.FakeDataSource
-import io.embrace.android.embracesdk.fakes.FakeInternalLogger
+import io.embrace.android.embracesdk.fakes.FakeErrorHandler
 import io.embrace.android.embracesdk.fakes.FakeKeyValueStore
 import io.embrace.android.embracesdk.fakes.FakeLogEnvelopeSource
 import io.embrace.android.embracesdk.fakes.FakeLogLimitingService
@@ -68,7 +68,7 @@ internal class SessionOrchestratorListenerTest {
     private lateinit var sessionCacheExecutor: BlockingScheduledExecutorService
     private lateinit var instrumentationRegistry: InstrumentationRegistry
     private lateinit var fakeDataSource: FakeDataSource
-    private lateinit var logger: FakeInternalLogger
+    private lateinit var errorHandler: FakeErrorHandler
     private lateinit var startupClassifier: StartupClassifierImpl
     private lateinit var currentSessionPartSpan: FakeCurrentSessionPartSpan
     private lateinit var destination: FakeTelemetryDestination
@@ -80,7 +80,7 @@ internal class SessionOrchestratorListenerTest {
     @Before
     fun setUp() {
         clock = FakeClock()
-        logger = FakeInternalLogger(throwOnInternalError = false)
+        errorHandler = FakeErrorHandler(throwOnInternalError = false)
         startupClassifier = StartupClassifierImpl()
         configService = FakeConfigService(
             config = EmbraceConfig(
@@ -215,7 +215,7 @@ internal class SessionOrchestratorListenerTest {
         clock.tick(10000)
         orchestrator.endSessionWithManual()
         assertTrue(secondListenerInvoked)
-        assertTrue(logger.internalErrorMessages.any { it.msg == InternalErrorType.UserSessionCallbackFail.toString() })
+        assertTrue(errorHandler.internalErrorMessages.any { it.msg == InternalErrorType.UserSessionCallbackFail.toString() })
     }
 
     @Test
@@ -345,19 +345,19 @@ internal class SessionOrchestratorListenerTest {
             payloadMessageCollator = payloadCollator,
             logEnvelopeSource = payloadSourceModule.logEnvelopeSource,
             configService = configService,
-            logger = logger,
+            errorHandler = errorHandler,
         )
         userSessionPropertiesService = FakeUserSessionPropertiesService()
         userService = FakeUserService()
         sessionTracker = SessionPartTrackerImpl(
             activityManager = lazyOf<ActivityManager?>(null),
-            logger = logger,
+            errorHandler = errorHandler,
         )
         sessionCacheExecutor = BlockingScheduledExecutorService(clock, true)
         payloadCachingService = PayloadCachingServiceImpl(
             PeriodicSessionPartCacher(
                 BackgroundWorker(sessionCacheExecutor),
-                logger,
+                errorHandler,
             ),
             clock,
             object : SessionIdsProvider {
@@ -370,7 +370,7 @@ internal class SessionOrchestratorListenerTest {
         )
         fakeDataSource = FakeDataSource(Application())
         instrumentationRegistry = InstrumentationRegistryImpl(
-            logger,
+            errorHandler,
         ).apply {
             add { fakeDataSource }
         }
@@ -400,7 +400,7 @@ internal class SessionOrchestratorListenerTest {
             ordinalStoreOverride ?: FakeOrdinalStore(),
             FakeKeyValueStore(),
             metadataStoreOverride ?: UserSessionMetadataStore(FakeKeyValueStore()),
-            logger,
+            errorHandler,
             fakeBackgroundWorker(),
             TestUuidSource(),
             startupClassifier,

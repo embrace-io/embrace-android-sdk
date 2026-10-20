@@ -91,7 +91,7 @@ class ViewDataSource(
         try {
             changeView(activity.javaClass.name)
         } catch (exc: Throwable) {
-            logger.trackInternalError(InternalErrorType.UiCallbackFail, exc)
+            errorHandler.trackInternalError(InternalErrorType.UiCallbackFail, exc)
         }
     }
 
@@ -102,7 +102,7 @@ class ViewDataSource(
         try {
             onViewClose()
         } catch (exc: Throwable) {
-            logger.trackInternalError(InternalErrorType.UiCallbackFail, exc)
+            errorHandler.trackInternalError(InternalErrorType.UiCallbackFail, exc)
         }
     }
 

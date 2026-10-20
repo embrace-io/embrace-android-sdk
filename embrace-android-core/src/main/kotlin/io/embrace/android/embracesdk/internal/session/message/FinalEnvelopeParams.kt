@@ -1,6 +1,6 @@
 package io.embrace.android.embracesdk.internal.session.message
 
-import io.embrace.android.embracesdk.internal.logging.InternalLogger
+import io.embrace.android.embracesdk.internal.logging.ErrorHandler
 import io.embrace.android.embracesdk.internal.session.SessionPartToken
 import io.embrace.android.embracesdk.internal.session.orchestrator.SessionPartSnapshotType
 
@@ -11,7 +11,7 @@ import io.embrace.android.embracesdk.internal.session.orchestrator.SessionPartSn
 class FinalEnvelopeParams(
     val initial: SessionPartToken,
     val endType: SessionPartSnapshotType,
-    val logger: InternalLogger,
+    val errorHandler: ErrorHandler,
     continueMonitoring: Boolean,
     crashId: String? = null,
 ) {

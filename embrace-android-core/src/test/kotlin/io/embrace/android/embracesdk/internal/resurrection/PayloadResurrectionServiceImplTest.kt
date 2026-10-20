@@ -9,7 +9,7 @@ import io.embrace.android.embracesdk.assertions.getUserSessionId
 import io.embrace.android.embracesdk.concurrency.BlockableExecutorService
 import io.embrace.android.embracesdk.fakes.FakeCachedLogEnvelopeStore
 import io.embrace.android.embracesdk.fakes.FakeEmbraceSdkSpan
-import io.embrace.android.embracesdk.fakes.FakeInternalLogger
+import io.embrace.android.embracesdk.fakes.FakeErrorHandler
 import io.embrace.android.embracesdk.fakes.FakeNativeCrashService
 import io.embrace.android.embracesdk.fakes.FakePayloadStorageService
 import io.embrace.android.embracesdk.fakes.FakeSchedulingService
@@ -78,7 +78,7 @@ class PayloadResurrectionServiceImplTest {
     private lateinit var cacheStorageService: FakePayloadStorageService
     private lateinit var cachedLogEnvelopeStore: FakeCachedLogEnvelopeStore
     private lateinit var nativeCrashService: FakeNativeCrashService
-    private lateinit var logger: FakeInternalLogger
+    private lateinit var errorHandler: FakeErrorHandler
     private lateinit var serializer: TestPlatformSerializer
     private lateinit var resurrectionService: PayloadResurrectionServiceImpl
 
@@ -90,21 +90,21 @@ class PayloadResurrectionServiceImplTest {
         cacheStorageService = FakePayloadStorageService()
         cachedLogEnvelopeStore = FakeCachedLogEnvelopeStore()
         nativeCrashService = FakeNativeCrashService()
-        logger = FakeInternalLogger(false)
+        errorHandler = FakeErrorHandler(false)
         serializer = TestPlatformSerializer()
         resurrectionService = PayloadResurrectionServiceImpl(
             intakeService = IntakeServiceImpl(
                 schedulingService,
                 payloadStorageService,
                 cacheStorageService,
-                logger,
+                errorHandler,
                 serializer,
                 PriorityWorker(intakeExecutor),
             ),
             payloadStorageService = payloadStorageService,
             cacheStorageService = cacheStorageService,
             cachedLogEnvelopeStore = cachedLogEnvelopeStore,
-            logger = logger,
+            errorHandler = errorHandler,
             serializer = serializer,
         )
     }
@@ -535,7 +535,7 @@ class PayloadResurrectionServiceImplTest {
         assertEquals(0, payloadStorageService.storedPayloadCount())
         assertEquals(0, cacheStorageService.storedPayloadCount())
         assertEquals(1, cacheStorageService.deleteCount.get())
-        assertTrue(logger.internalErrorMessages.isEmpty())
+        assertTrue(errorHandler.internalErrorMessages.isEmpty())
     }
 
     @Test
@@ -548,7 +548,7 @@ class PayloadResurrectionServiceImplTest {
         assertEquals(0, payloadStorageService.storedPayloadCount())
         assertEquals(0, cacheStorageService.storedPayloadCount())
         assertEquals(1, cacheStorageService.deleteCount.get())
-        assertTrue(logger.internalErrorMessages.isEmpty())
+        assertTrue(errorHandler.internalErrorMessages.isEmpty())
     }
 
     @Test
@@ -567,7 +567,7 @@ class PayloadResurrectionServiceImplTest {
 
         assertEquals(1, payloadStorageService.storedPayloadCount())
         assertEquals(0, cacheStorageService.storedPayloadCount())
-        assertTrue(logger.internalErrorMessages.isEmpty())
+        assertTrue(errorHandler.internalErrorMessages.isEmpty())
     }
 
     @Test
@@ -578,7 +578,7 @@ class PayloadResurrectionServiceImplTest {
 
         assertEquals(1, payloadStorageService.storedPayloadCount())
         assertEquals(0, cacheStorageService.storedPayloadCount())
-        assertTrue(logger.internalErrorMessages.isEmpty())
+        assertTrue(errorHandler.internalErrorMessages.isEmpty())
     }
 
     @Test
@@ -603,10 +603,10 @@ class PayloadResurrectionServiceImplTest {
         assertEquals(1, nativeCrashService.nativeCrashesSent.size)
         assertEquals(deadSessionCrashData, nativeCrashService.nativeCrashesSent.single().first)
 
-        assertEquals(1, logger.internalErrorMessages.size)
+        assertEquals(1, errorHandler.internalErrorMessages.size)
         assertEquals(
             InternalErrorType.NativeCrashResurrectionError.toString(),
-            logger.internalErrorMessages.single().msg,
+            errorHandler.internalErrorMessages.single().msg,
         )
     }
 
@@ -634,10 +634,10 @@ class PayloadResurrectionServiceImplTest {
             assertEquals(deadSessionCrashData, first)
         }
 
-        assertEquals(1, logger.internalErrorMessages.size)
+        assertEquals(1, errorHandler.internalErrorMessages.size)
         assertEquals(
             InternalErrorType.NativeCrashResurrectionError.toString(),
-            logger.internalErrorMessages.single().msg,
+            errorHandler.internalErrorMessages.single().msg,
         )
     }
 
@@ -864,7 +864,7 @@ class PayloadResurrectionServiceImplTest {
             payloadStorageService = payloadStorageService,
             cacheStorageService = cacheStorageService,
             cachedLogEnvelopeStore = cachedLogEnvelopeStore,
-            logger = logger,
+            errorHandler = errorHandler,
             serializer = serializer,
         )
 
@@ -876,7 +876,7 @@ class PayloadResurrectionServiceImplTest {
 
         assertTrue(listenerCalled)
         assertTrue(
-            logger.internalErrorMessages.any {
+            errorHandler.internalErrorMessages.any {
                 it.throwable is TimeoutException
             },
         )
@@ -923,14 +923,14 @@ class PayloadResurrectionServiceImplTest {
                 schedulingService,
                 payloadStorageService,
                 cacheStorageService,
-                logger,
+                errorHandler,
                 serializer,
                 PriorityWorker(intakeExecutor),
             ),
             payloadStorageService = payloadStorageService,
             cacheStorageService = cacheStorageService,
             cachedLogEnvelopeStore = cachedLogEnvelopeStore,
-            logger = logger,
+            errorHandler = errorHandler,
             serializer = serializer,
             maxPayloadBytes = maxPayloadBytes,
         )
@@ -945,14 +945,14 @@ class PayloadResurrectionServiceImplTest {
                 schedulingService,
                 payloadStorageService,
                 nullStreamCacheStorage,
-                logger,
+                errorHandler,
                 serializer,
                 PriorityWorker(intakeExecutor),
             ),
             payloadStorageService = payloadStorageService,
             cacheStorageService = nullStreamCacheStorage,
             cachedLogEnvelopeStore = cachedLogEnvelopeStore,
-            logger = logger,
+            errorHandler = errorHandler,
             serializer = serializer,
         )
     }
@@ -972,10 +972,10 @@ class PayloadResurrectionServiceImplTest {
     private fun assertResurrectionFailure() {
         assertEquals(0, payloadStorageService.storedPayloadCount())
         assertEquals(0, cacheStorageService.storedPayloadCount())
-        assertEquals(1, logger.internalErrorMessages.size)
+        assertEquals(1, errorHandler.internalErrorMessages.size)
         assertEquals(
             InternalErrorType.PayloadResurrectionPayloadFail.toString(),
-            logger.internalErrorMessages.single().msg,
+            errorHandler.internalErrorMessages.single().msg,
         )
     }
 

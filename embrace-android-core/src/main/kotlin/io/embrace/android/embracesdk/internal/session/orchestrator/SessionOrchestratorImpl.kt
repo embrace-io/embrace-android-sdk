@@ -14,8 +14,8 @@ import io.embrace.android.embracesdk.internal.arch.state.ProcessStateTracker
 import io.embrace.android.embracesdk.internal.clock.Clock
 import io.embrace.android.embracesdk.internal.config.ConfigService
 import io.embrace.android.embracesdk.internal.delivery.caching.PayloadCachingService
+import io.embrace.android.embracesdk.internal.logging.ErrorHandler
 import io.embrace.android.embracesdk.internal.logging.InternalErrorType
-import io.embrace.android.embracesdk.internal.logging.InternalLogger
 import io.embrace.android.embracesdk.internal.payload.Envelope
 import io.embrace.android.embracesdk.internal.payload.SessionPartPayload
 import io.embrace.android.embracesdk.internal.session.SessionPartToken
@@ -56,7 +56,7 @@ internal class SessionOrchestratorImpl(
     private val ordinalStore: OrdinalStore,
     private val store: KeyValueStore,
     private val metadataStore: UserSessionMetadataStore,
-    private val logger: InternalLogger,
+    private val errorHandler: ErrorHandler,
     private val backgroundWorker: BackgroundWorker,
     private val uuidSource: UuidSource,
     private val startupClassifier: StartupClassifier,
@@ -113,7 +113,7 @@ internal class SessionOrchestratorImpl(
 
                     // Current timestamp not congruent with stored user session's timestamp, so clear the cache
                     clock.now() < stored.startTimeMs -> {
-                        logger.trackInternalError(
+                        errorHandler.trackInternalError(
                             InternalErrorType.ClockBackwardsShift,
                             IllegalStateException(
                                 "Clock shifted backwards from previous user session.",
@@ -305,7 +305,7 @@ internal class SessionOrchestratorImpl(
                 try {
                     listener.onSessionStateEvent(UserSessionActive(metadata.userSessionId))
                 } catch (e: Exception) {
-                    logger.trackInternalError(InternalErrorType.UserSessionCallbackFail, e)
+                    errorHandler.trackInternalError(InternalErrorType.UserSessionCallbackFail, e)
                 }
             }
         }
@@ -322,7 +322,7 @@ internal class SessionOrchestratorImpl(
             try {
                 listener.onSessionStateEvent(event)
             } catch (e: Exception) {
-                logger.trackInternalError(InternalErrorType.UserSessionCallbackFail, e)
+                errorHandler.trackInternalError(InternalErrorType.UserSessionCallbackFail, e)
             }
         }
     }
@@ -781,7 +781,7 @@ internal class SessionOrchestratorImpl(
         when {
             // Don't continue session if current time is not congruent with the user session's timestamp
             timestamp < startTimeMs -> {
-                logger.trackInternalError(
+                errorHandler.trackInternalError(
                     InternalErrorType.ClockBackwardsShift,
                     IllegalStateException("Clock shifted backwards from user session start time."),
                 )

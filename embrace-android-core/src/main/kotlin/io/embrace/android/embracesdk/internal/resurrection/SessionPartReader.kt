@@ -7,7 +7,7 @@ import io.embrace.android.embracesdk.internal.delivery.SupportedEnvelopeType
 import io.embrace.android.embracesdk.internal.delivery.intake.IntakeResult
 import io.embrace.android.embracesdk.internal.delivery.intake.IntakeService
 import io.embrace.android.embracesdk.internal.logging.ErrorHandler
-import io.embrace.android.embracesdk.internal.logging.InternalErrorType
+import io.embrace.android.embracesdk.internal.logging.SdkErrorType
 import io.embrace.android.embracesdk.internal.otel.sdk.findAttributeValue
 import io.embrace.android.embracesdk.internal.payload.Envelope
 import io.embrace.android.embracesdk.internal.payload.SessionPartPayload
@@ -117,7 +117,7 @@ class SessionPartReader(
                             performingResurrection = performingResurrection,
                         )
                     }.onFailure {
-                        errorHandler.trackInternalError(InternalErrorType.SessionPartReadFail, it)
+                        errorHandler.trackSdkError(SdkErrorType.SessionPartReadFail, it)
                     }.getOrDefault(true)
 
                     if (!proceed) {
@@ -125,7 +125,7 @@ class SessionPartReader(
                     }
                 }
             }.onFailure {
-                errorHandler.trackInternalError(InternalErrorType.SessionPartReadFail, it)
+                errorHandler.trackSdkError(SdkErrorType.SessionPartReadFail, it)
             }
         }
     }
@@ -144,7 +144,7 @@ class SessionPartReader(
             runCatching {
                 sessionsDir.value.deleteRecursively()
             }.onFailure {
-                errorHandler.trackInternalError(InternalErrorType.SessionPartReadFail, it)
+                errorHandler.trackSdkError(SdkErrorType.SessionPartReadFail, it)
             }
         }
     }
@@ -193,7 +193,7 @@ class SessionPartReader(
         val result = try {
             intake.task.get(INTAKE_TIMEOUT_MS, TimeUnit.MILLISECONDS)
         } catch (exc: TimeoutException) {
-            errorHandler.trackInternalError(InternalErrorType.IntakeFail, exc)
+            errorHandler.trackSdkError(SdkErrorType.IntakeFail, exc)
             return if (intake.timedOut) {
                 // The intake has already timed out once, so stop blocking newer parts on it. Cancel it
                 // first, so that one still queued can't store the part after newer parts. One already
@@ -255,7 +255,7 @@ class SessionPartReader(
     private fun runAfterStored(intake: PendingIntake, result: IntakeResult) {
         if (result == IntakeResult.STORED) {
             runCatching(intake.afterStored).onFailure {
-                errorHandler.trackInternalError(InternalErrorType.PayloadResurrectionPayloadFail, it)
+                errorHandler.trackSdkError(SdkErrorType.PayloadResurrectionPayloadFail, it)
             }
         }
     }
@@ -263,8 +263,8 @@ class SessionPartReader(
     private fun deleteSessionPartData(directory: SessionPartDirectory, reason: String) {
         failed.remove(directory)
         directoryStore.delete(directory)
-        errorHandler.trackInternalError(
-            InternalErrorType.SessionPartReadFail,
+        errorHandler.trackSdkError(
+            SdkErrorType.SessionPartReadFail,
             IllegalStateException("Session part data deleted: $reason"),
         )
     }
@@ -318,7 +318,7 @@ class SessionPartReader(
                 lastWrittenMs = lastWrittenMs,
             )
         }.onFailure {
-            errorHandler.trackInternalError(InternalErrorType.PayloadResurrectionPayloadFail, it)
+            errorHandler.trackSdkError(SdkErrorType.PayloadResurrectionPayloadFail, it)
         }.getOrNull()
         if (resurrected == null) {
             deleteSessionPartData(directory, "dead session part could not be resurrected")

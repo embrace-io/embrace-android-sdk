@@ -10,7 +10,7 @@ import android.view.Window
 import androidx.annotation.RequiresApi
 import io.embrace.android.embracesdk.internal.instrumentation.startup.activity.traceInstanceId
 import io.embrace.android.embracesdk.internal.logging.ErrorHandler
-import io.embrace.android.embracesdk.internal.logging.InternalErrorType
+import io.embrace.android.embracesdk.internal.logging.SdkErrorType
 import java.util.Collections
 import java.util.WeakHashMap
 import java.util.concurrent.ConcurrentHashMap
@@ -69,8 +69,8 @@ internal class FirstDrawDetector(
                     }
                 }
             } else if (!loadingActivities.containsKey(instanceId)) {
-                errorHandler.trackInternalError(
-                    type = InternalErrorType.UiCallbackFail,
+                errorHandler.trackSdkError(
+                    type = SdkErrorType.UiCallbackFail,
                     throwable = IllegalStateException(
                         "Fail to attach frame rendering callback because the callback on Window was null",
                     ),
@@ -91,8 +91,8 @@ internal class FirstDrawDetector(
             runCatching {
                 activity.window.decorView.viewTreeObserver.unregisterFrameCommitCallback(firstDrawCallback)
             }.exceptionOrNull()?.let { exception ->
-                errorHandler.trackInternalError(
-                    type = InternalErrorType.UiCallbackFail,
+                errorHandler.trackSdkError(
+                    type = SdkErrorType.UiCallbackFail,
                     throwable = IllegalStateException("Failed to unregister first draw callback", exception),
                 )
             }
@@ -116,7 +116,7 @@ internal class FirstDrawDetector(
         try {
             callback()
         } catch (exc: Throwable) {
-            errorHandler.trackInternalError(InternalErrorType.UiCallbackFail, exc)
+            errorHandler.trackSdkError(SdkErrorType.UiCallbackFail, exc)
         }
     }
 

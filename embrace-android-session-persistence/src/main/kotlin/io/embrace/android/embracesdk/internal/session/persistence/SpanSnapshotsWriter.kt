@@ -1,7 +1,7 @@
 package io.embrace.android.embracesdk.internal.session.persistence
 
 import io.embrace.android.embracesdk.internal.logging.ErrorHandler
-import io.embrace.android.embracesdk.internal.logging.InternalErrorType
+import io.embrace.android.embracesdk.internal.logging.SdkErrorType
 import io.embrace.android.embracesdk.internal.payload.Span
 import io.embrace.android.embracesdk.internal.utils.SystemTrace
 import java.io.File
@@ -146,6 +146,6 @@ class SpanSnapshotsWriter(
     }
 
     private fun trackFailure(exc: Throwable) {
-        errorHandler.trackInternalError(InternalErrorType.SpanSnapshotsWriteFail, exc)
+        errorHandler.trackSdkError(SdkErrorType.SpanSnapshotsWriteFail, exc)
     }
 }

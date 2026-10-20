@@ -77,7 +77,7 @@ internal class JvmCrashFeatureTest(
                 Worker.Background.SessionPersistenceWorker,
             ),
         ).apply {
-            getFakeErrorHandler().throwOnInternalError = false
+            getFakeErrorHandler().throwOnSdkError = false
             getFakedWorkerExecutor(Worker.Background.NonIoRegWorker).blockingMode = false
             getFakedWorkerExecutor(Worker.Background.IoRegWorker).blockingMode = false
         }.also {

@@ -26,7 +26,7 @@ import javax.net.ssl.HttpsURLConnection
 internal class HucTestHarness(versionChecker: VersionChecker = BuildVersionChecker) {
     val fakeTelemetryDestination: FakeTelemetryDestination = FakeTelemetryDestination()
     val fakeClock = FakeClock(FAKE_TIME_MS)
-    val fakeErrorHandler = FakeErrorHandler(throwOnInternalError = false)
+    val fakeErrorHandler = FakeErrorHandler(throwOnSdkError = false)
     val hucLiteDataSource = HucLiteDataSource(
         FakeInstrumentationArgs(
             destination = fakeTelemetryDestination,
@@ -92,7 +92,7 @@ internal class HucTestHarness(versionChecker: VersionChecker = BuildVersionCheck
         assertEquals(0, fakeTelemetryDestination.createdSpans.size)
     }
 
-    fun getInternalErrors() = fakeErrorHandler.internalErrorMessages
+    fun getSdkErrors() = fakeErrorHandler.sdkErrorMessages
 
     private fun FakeSpanToken.assertSuccessfulRequest(
         expectedStartTime: Long,

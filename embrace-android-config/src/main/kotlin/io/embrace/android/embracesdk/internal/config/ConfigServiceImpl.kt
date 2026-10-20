@@ -13,7 +13,7 @@ import io.embrace.android.embracesdk.internal.config.rollout.PCT_ROLLOUT_FLAGS
 import io.embrace.android.embracesdk.internal.config.source.CombinedRemoteConfigSource
 import io.embrace.android.embracesdk.internal.config.source.RemoteConfigSource
 import io.embrace.android.embracesdk.internal.logging.ErrorHandler
-import io.embrace.android.embracesdk.internal.logging.InternalErrorType
+import io.embrace.android.embracesdk.internal.logging.SdkErrorType
 import io.embrace.android.embracesdk.internal.payload.AppFramework
 import io.embrace.android.embracesdk.internal.payload.NativeSymbols
 import io.embrace.android.embracesdk.internal.serialization.PlatformSerializer
@@ -124,7 +124,7 @@ class ConfigServiceImpl(
             val decodedSymbols: String = encodedSymbols.decodeBase64()?.utf8() ?: return null
             return serializer.fromJson(decodedSymbols, NativeSymbols.serializer())
         } catch (ex: Exception) {
-            errorHandler.trackInternalError(InternalErrorType.InvalidNativeSymbols, ex)
+            errorHandler.trackSdkError(SdkErrorType.InvalidNativeSymbols, ex)
         }
 
         return null

@@ -11,7 +11,7 @@ import io.embrace.android.embracesdk.internal.delivery.execution.RequestExecutio
 import io.embrace.android.embracesdk.internal.delivery.storage.PayloadStorageService
 import io.embrace.android.embracesdk.internal.delivery.storedTelemetryComparator
 import io.embrace.android.embracesdk.internal.logging.ErrorHandler
-import io.embrace.android.embracesdk.internal.logging.InternalErrorType
+import io.embrace.android.embracesdk.internal.logging.SdkErrorType
 import io.embrace.android.embracesdk.internal.worker.BackgroundWorker
 import java.io.IOException
 import java.io.InputStream
@@ -135,7 +135,7 @@ class SchedulingServiceImpl(
                 }
             }
         } catch (t: Throwable) {
-            errorHandler.trackInternalError(InternalErrorType.DeliverySchedulingFail, t)
+            errorHandler.trackSdkError(SdkErrorType.DeliverySchedulingFail, t)
         }
     }
 
@@ -207,8 +207,8 @@ class SchedulingServiceImpl(
 
         val sizeBytes = storageService.payloadSizeBytes(payload)
         if (sizeBytes > maxPayloadBytes) {
-            errorHandler.trackInternalError(
-                type = InternalErrorType.PayloadDeliveryFail,
+            errorHandler.trackSdkError(
+                type = SdkErrorType.PayloadDeliveryFail,
                 throwable = IOException("$OVERSIZED_UPLOAD_MSG: $sizeBytes bytes"),
             )
             return ExecutionResult.PayloadTooLarge(sizeBytes)
@@ -223,7 +223,7 @@ class SchedulingServiceImpl(
                 )
             } ?: ExecutionResult.NotAttempted
         } catch (t: Throwable) {
-            errorHandler.trackInternalError(InternalErrorType.DeliverySchedulingFail, t)
+            errorHandler.trackSdkError(SdkErrorType.DeliverySchedulingFail, t)
             ExecutionResult.Incomplete(exception = t, retry = false)
         }
     }

@@ -57,7 +57,7 @@ internal class SessionReconstructionServiceFileSizeTest {
     @Before
     fun setUp() {
         sessionsDir = tempFolder.newFolder("embrace_sessions")
-        errorHandler = FakeErrorHandler(throwOnInternalError = false)
+        errorHandler = FakeErrorHandler(throwOnSdkError = false)
         activePart = partDirectory
         metadataWriter = SessionMetadataWriter(
             target = target(),
@@ -77,7 +77,7 @@ internal class SessionReconstructionServiceFileSizeTest {
     @Test
     fun `a session part within the maximum file size is reconstructed`() {
         assertNotNull(service.reconstruct(partDirectory))
-        assertNoInternalErrors()
+        assertNoSdkErrors()
     }
 
     @Test
@@ -90,8 +90,8 @@ internal class SessionReconstructionServiceFileSizeTest {
         padToSize(SPAN_SNAPSHOTS_FILE_NAME, MAX_PART_FILE_BYTES + 1)
         val payload = checkNotNull(service.reconstruct(partDirectory)?.envelope?.data)
         assertEquals(listOf(inFlightSpan), payload.spanSnapshots)
-        assertEquals(1, errorHandler.internalErrorMessages.size)
-        assertEquals("SessionReconstructionFail", errorHandler.internalErrorMessages.single().msg)
+        assertEquals(1, errorHandler.sdkErrorMessages.size)
+        assertEquals("SessionReconstructionFail", errorHandler.sdkErrorMessages.single().msg)
     }
 
     @Test
@@ -99,7 +99,7 @@ internal class SessionReconstructionServiceFileSizeTest {
         padToSize(METADATA_FILE_NAME, MAX_PART_FILE_BYTES)
         assertEquals(MAX_PART_FILE_BYTES, partFile(METADATA_FILE_NAME).length())
         assertNotNull(service.reconstruct(partDirectory))
-        assertNoInternalErrors()
+        assertNoSdkErrors()
     }
 
     /**
@@ -109,8 +109,8 @@ internal class SessionReconstructionServiceFileSizeTest {
     fun `an oversized completed spans log is reported but still reconstructed`() {
         padToSize(COMPLETED_SPANS_FILE_NAME, MAX_PART_FILE_BYTES + 1)
         assertNotNull(service.reconstruct(partDirectory))
-        assertEquals(1, errorHandler.internalErrorMessages.size)
-        assertEquals("SessionReconstructionFail", errorHandler.internalErrorMessages.single().msg)
+        assertEquals(1, errorHandler.sdkErrorMessages.size)
+        assertEquals("SessionReconstructionFail", errorHandler.sdkErrorMessages.single().msg)
     }
 
     @Test
@@ -147,8 +147,8 @@ internal class SessionReconstructionServiceFileSizeTest {
 
         val envelope = checkNotNull(service.reconstruct(partDirectory)?.envelope)
         assertEquals(listOf(paddedSpanId(0)), envelope.data.spans?.map(Span::spanId))
-        assertEquals(1, errorHandler.internalErrorMessages.size)
-        assertEquals("SessionReconstructionFail", errorHandler.internalErrorMessages.single().msg)
+        assertEquals(1, errorHandler.sdkErrorMessages.size)
+        assertEquals("SessionReconstructionFail", errorHandler.sdkErrorMessages.single().msg)
     }
 
     @Test
@@ -167,8 +167,8 @@ internal class SessionReconstructionServiceFileSizeTest {
 
         val envelope = checkNotNull(service.reconstruct(partDirectory)?.envelope)
         assertEquals(listOf(paddedSpanId(0), paddedSpanId(2)), envelope.data.spans?.map(Span::spanId))
-        assertEquals(1, errorHandler.internalErrorMessages.size)
-        assertEquals("CompletedSpansWriteFail", errorHandler.internalErrorMessages.single().msg)
+        assertEquals(1, errorHandler.sdkErrorMessages.size)
+        assertEquals("CompletedSpansWriteFail", errorHandler.sdkErrorMessages.single().msg)
     }
 
     @Test
@@ -182,8 +182,8 @@ internal class SessionReconstructionServiceFileSizeTest {
         assertEquals(logged.take(MAX_PERSISTED_SPANS).map(SpanProto::span_id), spans.map(Span::spanId))
 
         assertEquals(emptyList<Span>(), envelope.data.spanSnapshots)
-        assertEquals(1, errorHandler.internalErrorMessages.size)
-        assertEquals("SessionReconstructionFail", errorHandler.internalErrorMessages.single().msg)
+        assertEquals(1, errorHandler.sdkErrorMessages.size)
+        assertEquals("SessionReconstructionFail", errorHandler.sdkErrorMessages.single().msg)
     }
 
     @Test
@@ -196,7 +196,7 @@ internal class SessionReconstructionServiceFileSizeTest {
 
         val envelope = checkNotNull(service.reconstruct(partDirectory)?.envelope)
         assertEquals(listOf(inFlightSpan), envelope.data.spanSnapshots)
-        assertNoInternalErrors()
+        assertNoSdkErrors()
     }
 
     @Test
@@ -207,14 +207,14 @@ internal class SessionReconstructionServiceFileSizeTest {
         val envelope = checkNotNull(service.reconstruct(partDirectory)?.envelope)
         assertEquals(MAX_PERSISTED_SPANS - 1, envelope.data.spans?.size)
         assertEquals(listOf(inFlightSpan), envelope.data.spanSnapshots)
-        assertNoInternalErrors()
+        assertNoSdkErrors()
     }
 
     private fun assertOversizedFileRejected(fileName: String) {
         padToSize(fileName, MAX_PART_FILE_BYTES + 1)
         assertNull(service.reconstruct(partDirectory))
-        assertEquals(1, errorHandler.internalErrorMessages.size)
-        assertEquals("SessionReconstructionFail", errorHandler.internalErrorMessages.single().msg)
+        assertEquals(1, errorHandler.sdkErrorMessages.size)
+        assertEquals("SessionReconstructionFail", errorHandler.sdkErrorMessages.single().msg)
     }
 
     /**
@@ -276,7 +276,7 @@ internal class SessionReconstructionServiceFileSizeTest {
         partFile(COMPLETED_SPANS_FILE_NAME).writeBytes(completedSpansLog(emptyList()))
     }
 
-    private fun assertNoInternalErrors() {
-        assertEquals(emptyList<FakeErrorHandler.LogMessage>(), errorHandler.internalErrorMessages)
+    private fun assertNoSdkErrors() {
+        assertEquals(emptyList<FakeErrorHandler.LogMessage>(), errorHandler.sdkErrorMessages)
     }
 }

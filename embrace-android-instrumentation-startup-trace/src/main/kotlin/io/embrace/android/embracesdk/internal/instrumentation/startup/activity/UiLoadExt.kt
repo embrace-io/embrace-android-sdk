@@ -11,7 +11,7 @@ import io.embrace.android.embracesdk.annotation.NotTracedActivity
 import io.embrace.android.embracesdk.internal.clock.Clock
 import io.embrace.android.embracesdk.internal.instrumentation.startup.ui.DrawEventEmitter
 import io.embrace.android.embracesdk.internal.logging.ErrorHandler
-import io.embrace.android.embracesdk.internal.logging.InternalErrorType
+import io.embrace.android.embracesdk.internal.logging.SdkErrorType
 import io.embrace.android.embracesdk.internal.utils.VersionChecker
 import java.util.concurrent.ConcurrentHashMap
 
@@ -164,7 +164,7 @@ private class LifecycleEventEmitter(
                 )
             }
         } catch (exc: Throwable) {
-            errorHandler.trackInternalError(InternalErrorType.UiCallbackFail, exc)
+            errorHandler.trackSdkError(SdkErrorType.UiCallbackFail, exc)
         }
     }
 
@@ -177,7 +177,7 @@ private class LifecycleEventEmitter(
                 )
             }
         } catch (exc: Throwable) {
-            errorHandler.trackInternalError(InternalErrorType.UiCallbackFail, exc)
+            errorHandler.trackSdkError(SdkErrorType.UiCallbackFail, exc)
         }
     }
 
@@ -205,7 +205,7 @@ private class LifecycleEventEmitter(
                 instanceStartTime[instanceId] = nowMs()
             }
         } catch (exc: Throwable) {
-            errorHandler.trackInternalError(InternalErrorType.UiCallbackFail, exc)
+            errorHandler.trackSdkError(SdkErrorType.UiCallbackFail, exc)
         }
     }
 
@@ -225,7 +225,7 @@ private class LifecycleEventEmitter(
                 )
             }
         } catch (exc: Throwable) {
-            errorHandler.trackInternalError(InternalErrorType.UiCallbackFail, exc)
+            errorHandler.trackSdkError(SdkErrorType.UiCallbackFail, exc)
         }
     }
 
@@ -238,7 +238,7 @@ private class LifecycleEventEmitter(
                 )
             }
         } catch (exc: Throwable) {
-            errorHandler.trackInternalError(InternalErrorType.UiCallbackFail, exc)
+            errorHandler.trackSdkError(SdkErrorType.UiCallbackFail, exc)
         }
     }
 
@@ -252,7 +252,7 @@ private class LifecycleEventEmitter(
                 )
             }
         } catch (exc: Throwable) {
-            errorHandler.trackInternalError(InternalErrorType.UiCallbackFail, exc)
+            errorHandler.trackSdkError(SdkErrorType.UiCallbackFail, exc)
         }
     }
 
@@ -268,7 +268,7 @@ private class LifecycleEventEmitter(
                 drawEventEmitter?.unregisterFirstDrawCallback(activity)
             }
         } catch (exc: Throwable) {
-            errorHandler.trackInternalError(InternalErrorType.UiCallbackFail, exc)
+            errorHandler.trackSdkError(SdkErrorType.UiCallbackFail, exc)
         }
     }
 

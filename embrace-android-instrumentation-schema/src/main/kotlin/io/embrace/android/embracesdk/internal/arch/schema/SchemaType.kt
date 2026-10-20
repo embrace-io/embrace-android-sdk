@@ -320,7 +320,7 @@ sealed class SchemaType(
     }
 
     class SdkError(throwable: Throwable) : SchemaType(
-        telemetryType = EmbType.System.InternalError,
+        telemetryType = EmbType.System.SdkError,
         fixedObjectName = "internal-error",
     ) {
         override val schemaAttributes: Map<String, String> = mapOf(

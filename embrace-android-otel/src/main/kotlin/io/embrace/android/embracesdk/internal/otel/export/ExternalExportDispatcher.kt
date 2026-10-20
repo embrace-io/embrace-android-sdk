@@ -1,7 +1,7 @@
 package io.embrace.android.embracesdk.internal.otel.export
 
 import io.embrace.android.embracesdk.internal.logging.ErrorHandler
-import io.embrace.android.embracesdk.internal.logging.InternalErrorType
+import io.embrace.android.embracesdk.internal.logging.SdkErrorType
 import io.embrace.android.embracesdk.internal.utils.EmbTrace
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineExceptionHandler
@@ -71,7 +71,7 @@ class ExternalExportDispatcher(
 
     private fun onUncaught(exc: Throwable) {
         if (exc !is IOException && exc !is VirtualMachineError) {
-            errorHandler.trackInternalError(InternalErrorType.OtelExternalExportFail, exc)
+            errorHandler.trackSdkError(SdkErrorType.OtelExternalExportFail, exc)
         }
     }
 

@@ -27,10 +27,10 @@ internal class HucLiteInstrumentationEnabledTest(
     val testRule: SdkIntegrationTestRule = SdkIntegrationTestRule(otelSdkMode = otelSdkMode)
 
     @Test
-    fun `sdk starts successfully but internal error logged when HUC Lite instrumentation enabled`() {
+    fun `sdk starts successfully but SDK error logged when HUC Lite instrumentation enabled`() {
         testRule.runTest(
             setupAction = {
-                getFakeErrorHandler().throwOnInternalError = false
+                getFakeErrorHandler().throwOnSdkError = false
             },
             instrumentedConfig = FakeInstrumentedConfig(
                 enabledFeatures = FakeEnabledFeatureConfig(
@@ -43,7 +43,7 @@ internal class HucLiteInstrumentationEnabledTest(
             },
             assertAction = {
                 getSingleLogEnvelope()
-                    .getLogOfType(EmbType.System.InternalError)
+                    .getLogOfType(EmbType.System.SdkError)
                     .assertHucLiteInitializationAttempt(true)
                 assertNotNull(getSingleSessionEnvelope())
             },
@@ -51,7 +51,7 @@ internal class HucLiteInstrumentationEnabledTest(
     }
 
     @Test
-    fun `sdk starts successfully with no internal error when HUC Lite instrumentation disabled`() {
+    fun `sdk starts successfully with no SDK error when HUC Lite instrumentation disabled`() {
         testRule.runTest(
             instrumentedConfig = FakeInstrumentedConfig(
                 enabledFeatures = FakeEnabledFeatureConfig(
@@ -72,7 +72,7 @@ internal class HucLiteInstrumentationEnabledTest(
     fun `SDK starts when both HUC instrumentations are enabled`() {
         testRule.runTest(
             setupAction = {
-                getFakeErrorHandler().throwOnInternalError = false
+                getFakeErrorHandler().throwOnSdkError = false
             },
             instrumentedConfig = FakeInstrumentedConfig(
                 enabledFeatures = FakeEnabledFeatureConfig(

@@ -4,7 +4,7 @@ import io.embrace.android.embracesdk.internal.arch.datasource.DataSource
 import io.embrace.android.embracesdk.internal.arch.datasource.DataSourceFactory
 import io.embrace.android.embracesdk.internal.arch.datasource.StateDataSource
 import io.embrace.android.embracesdk.internal.logging.ErrorHandler
-import io.embrace.android.embracesdk.internal.logging.InternalErrorType
+import io.embrace.android.embracesdk.internal.logging.SdkErrorType
 import io.embrace.android.embracesdk.internal.worker.Worker
 import java.util.concurrent.CopyOnWriteArrayList
 import kotlin.reflect.KClass
@@ -64,7 +64,7 @@ class InstrumentationRegistryImpl(
         try {
             dataSource.onDataCaptureDisabled()
         } catch (exc: Throwable) {
-            errorHandler.trackInternalError(InternalErrorType.InstrumentationDisableFail, exc)
+            errorHandler.trackSdkError(SdkErrorType.InstrumentationDisableFail, exc)
         }
     }
 
@@ -95,7 +95,7 @@ class InstrumentationRegistryImpl(
         try {
             provider.register(args)?.let { add(it) }
         } catch (exc: Throwable) {
-            errorHandler.trackInternalError(InternalErrorType.InstrumentationRegFail, exc)
+            errorHandler.trackSdkError(SdkErrorType.InstrumentationRegFail, exc)
         }
     }
 

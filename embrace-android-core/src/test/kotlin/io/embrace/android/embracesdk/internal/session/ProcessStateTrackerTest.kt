@@ -164,7 +164,7 @@ internal class ProcessStateTrackerTest {
             stateService.onForeground()
             stateService.onBackground()
         }
-        val messages = fakeErrorHandler.internalErrorMessages
+        val messages = fakeErrorHandler.sdkErrorMessages
         assertTrue(messages.isEmpty())
     }
 
@@ -176,7 +176,7 @@ internal class ProcessStateTrackerTest {
         stateService.onBackground()
         stateService.onForeground()
 
-        val messages = fakeErrorHandler.internalErrorMessages
+        val messages = fakeErrorHandler.sdkErrorMessages
         assertEquals(0, messages.size)
     }
 
@@ -188,7 +188,7 @@ internal class ProcessStateTrackerTest {
         stateService.onForeground()
         stateService.onBackground()
 
-        val messages = fakeErrorHandler.internalErrorMessages
+        val messages = fakeErrorHandler.sdkErrorMessages
         assertTrue(messages.isEmpty())
     }
 

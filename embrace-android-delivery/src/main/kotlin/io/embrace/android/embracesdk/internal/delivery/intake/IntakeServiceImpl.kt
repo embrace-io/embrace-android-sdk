@@ -12,7 +12,7 @@ import io.embrace.android.embracesdk.internal.delivery.storage.StorageOutcome
 import io.embrace.android.embracesdk.internal.delivery.storage.storeAttachment
 import io.embrace.android.embracesdk.internal.delivery.traceSection
 import io.embrace.android.embracesdk.internal.logging.ErrorHandler
-import io.embrace.android.embracesdk.internal.logging.InternalErrorType
+import io.embrace.android.embracesdk.internal.logging.SdkErrorType
 import io.embrace.android.embracesdk.internal.payload.Envelope
 import io.embrace.android.embracesdk.internal.serialization.PlatformSerializer
 import io.embrace.android.embracesdk.internal.utils.CountingOutputStream
@@ -198,8 +198,8 @@ class IntakeServiceImpl(
                     schedulingService.onPayloadIntake()
                 }
             } else if (!cacheableEnvelopeTypes.contains(metadata.envelopeType)) {
-                errorHandler.trackInternalError(
-                    InternalErrorType.IntakeUnexpectedType,
+                errorHandler.trackSdkError(
+                    SdkErrorType.IntakeUnexpectedType,
                     IllegalStateException("Unexpected envelope type cache attempt: ${metadata.envelopeType}"),
                 )
             }
@@ -208,7 +208,7 @@ class IntakeServiceImpl(
                 cacheStorageService.delete(it)
             }
         } catch (exc: Throwable) {
-            errorHandler.trackInternalError(InternalErrorType.IntakeFail, exc)
+            errorHandler.trackSdkError(SdkErrorType.IntakeFail, exc)
         }
         return result
     }

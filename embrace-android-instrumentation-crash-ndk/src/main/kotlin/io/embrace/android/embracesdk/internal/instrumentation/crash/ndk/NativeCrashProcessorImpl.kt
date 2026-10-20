@@ -6,7 +6,7 @@ import io.embrace.android.embracesdk.internal.delivery.storage.FileStorageServic
 import io.embrace.android.embracesdk.internal.delivery.storage.FileStorageServiceImpl
 import io.embrace.android.embracesdk.internal.instrumentation.crash.ndk.jni.JniDelegate
 import io.embrace.android.embracesdk.internal.logging.ErrorHandler
-import io.embrace.android.embracesdk.internal.logging.InternalErrorType
+import io.embrace.android.embracesdk.internal.logging.SdkErrorType
 import io.embrace.android.embracesdk.internal.payload.NativeCrashData
 import io.embrace.android.embracesdk.internal.serialization.PlatformSerializer
 import io.embrace.android.embracesdk.internal.worker.PriorityWorker
@@ -74,15 +74,15 @@ internal class NativeCrashProcessorImpl(
                         .copy(symbols = symbolMap)
                     nativeCrashes[nativeCrash.nativeCrashId] = LoadedCrash(nativeCrash, metadata)
                 } else {
-                    errorHandler.trackInternalError(
-                        type = InternalErrorType.NativeCrashLoadFail,
+                    errorHandler.trackSdkError(
+                        type = SdkErrorType.NativeCrashLoadFail,
                         throwable = FileNotFoundException("Failed to load crash report at ${crashFile.path}"),
                     )
                 }
             } catch (t: Throwable) {
                 crashFile.delete()
-                errorHandler.trackInternalError(
-                    type = InternalErrorType.NativeCrashLoadFail,
+                errorHandler.trackSdkError(
+                    type = SdkErrorType.NativeCrashLoadFail,
                     throwable = RuntimeException(
                         "Failed to read native crash file {crashFilePath=" + crashFile.absolutePath + "}.",
                         t,

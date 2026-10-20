@@ -19,22 +19,22 @@ interface ErrorHandler : AutoCloseable {
     fun log(msg: String, throwable: Throwable? = null, severity: Severity = Severity.WARNING)
 
     /**
-     * Tracks an internal error. This is sent to our own telemetry so should be used sparingly
+     * Tracks an SDK error. This is sent to our own telemetry so should be used sparingly
      * & only for states that we can take actions to improve.
      */
-    fun trackInternalError(type: InternalErrorType, throwable: Throwable)
+    fun trackSdkError(type: SdkErrorType, throwable: Throwable)
 
     /**
-     * Runs SDK code safely, returning [default] if it throws. The [Throwable] is tracked as an internal error of
-     * [type]. [InternalErrorType.Ignored] reports nothing.
+     * Runs SDK code safely, returning [default] if it throws. The [Throwable] is tracked as an SDK error of
+     * [type]. [SdkErrorType.Ignored] reports nothing.
      */
-    fun <T> guardSdkCode(type: InternalErrorType, default: T, action: () -> T): T
+    fun <T> guardSdkCode(type: SdkErrorType, default: T, action: () -> T): T
 
     /**
      * Runs [action] for each of [items], guarding each call separately so one failure doesn't skip the rest.
      * [ConcurrentModificationException] thrown whilst iterating is also guarded.
      */
-    fun <T> guardSdkCodeEach(type: InternalErrorType, items: Iterable<T>, action: (T) -> Unit)
+    fun <T> guardSdkCodeEach(type: SdkErrorType, items: Iterable<T>, action: (T) -> Unit)
 
     /**
      * Runs user-supplied code. A [Throwable] it throws is printed via logcat.

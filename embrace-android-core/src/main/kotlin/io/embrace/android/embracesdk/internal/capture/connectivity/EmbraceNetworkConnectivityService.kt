@@ -6,7 +6,7 @@ import android.content.Intent
 import android.content.IntentFilter
 import android.net.ConnectivityManager
 import io.embrace.android.embracesdk.internal.logging.ErrorHandler
-import io.embrace.android.embracesdk.internal.logging.InternalErrorType
+import io.embrace.android.embracesdk.internal.logging.SdkErrorType
 import io.embrace.android.embracesdk.internal.worker.BackgroundWorker
 import java.util.concurrent.CopyOnWriteArrayList
 
@@ -33,7 +33,7 @@ internal class EmbraceNetworkConnectivityService(
                 notifyNetworkConnectivityListeners(connectivityStatus)
             }
         } catch (ex: Exception) {
-            errorHandler.trackInternalError(InternalErrorType.NetworkStatusCaptureFail, ex)
+            errorHandler.trackSdkError(SdkErrorType.NetworkStatusCaptureFail, ex)
         }
     }
 
@@ -54,7 +54,7 @@ internal class EmbraceNetworkConnectivityService(
                 ConnectivityStatus.None
             }
         } catch (e: Exception) {
-            errorHandler.trackInternalError(InternalErrorType.NetworkStatusCaptureFail, e)
+            errorHandler.trackSdkError(SdkErrorType.NetworkStatusCaptureFail, e)
             OptimisticUnknown
         }
     }

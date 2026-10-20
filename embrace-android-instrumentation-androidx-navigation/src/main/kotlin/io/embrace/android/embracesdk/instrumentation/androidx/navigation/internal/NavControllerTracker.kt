@@ -13,7 +13,7 @@ import io.embrace.android.embracesdk.internal.arch.navigation.NavigationTracking
 import io.embrace.android.embracesdk.internal.arch.navigation.getId
 import io.embrace.android.embracesdk.internal.clock.Clock
 import io.embrace.android.embracesdk.internal.logging.ErrorHandler
-import io.embrace.android.embracesdk.internal.logging.InternalErrorType
+import io.embrace.android.embracesdk.internal.logging.SdkErrorType
 import io.embrace.android.embracesdk.internal.utils.event.EventBus
 import java.util.concurrent.atomic.AtomicReference
 
@@ -59,7 +59,7 @@ internal class NavControllerTracker(
                 }
             }
         }.onFailure {
-            errorHandler.trackInternalError(InternalErrorType.NavControllerTrackingFail, it)
+            errorHandler.trackSdkError(SdkErrorType.NavControllerTrackingFail, it)
         }
     }
 
@@ -77,7 +77,7 @@ internal class NavControllerTracker(
         try {
             eventBus.emit(NavigationSignal.KEY, ScreenChanged(activityId, extractScreenName(destination), clock.now()))
         } catch (exc: Throwable) {
-            errorHandler.trackInternalError(InternalErrorType.UiCallbackFail, exc)
+            errorHandler.trackSdkError(SdkErrorType.UiCallbackFail, exc)
         }
     }
 

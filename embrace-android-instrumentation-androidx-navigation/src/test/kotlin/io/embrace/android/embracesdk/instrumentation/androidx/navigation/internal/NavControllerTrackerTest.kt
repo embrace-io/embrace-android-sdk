@@ -22,7 +22,7 @@ import io.embrace.android.embracesdk.internal.arch.navigation.NavigationSignal
 import io.embrace.android.embracesdk.internal.arch.navigation.NavigationSignal.ScreenChanged
 import io.embrace.android.embracesdk.internal.arch.navigation.NavigationSignal.ScreenSourceAttached
 import io.embrace.android.embracesdk.internal.arch.navigation.getId
-import io.embrace.android.embracesdk.internal.logging.InternalErrorType
+import io.embrace.android.embracesdk.internal.logging.SdkErrorType
 import io.embrace.android.embracesdk.internal.utils.event.EventBus
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
@@ -155,13 +155,13 @@ internal class NavControllerTrackerTest {
 
     @Test
     fun `error during tracking is logged and does not crash`() {
-        val errorLogger = FakeErrorHandler(throwOnInternalError = false)
+        val errorLogger = FakeErrorHandler(throwOnSdkError = false)
         tracker = NavControllerTracker(eventBus, clock, errorLogger)
         tracker.trackNavigation(buildActivity(BrokenNavActivity::class.java).setup().get())
         assertTrue(signals.isEmpty())
         assertTrue(
-            errorLogger.internalErrorMessages.any {
-                it.msg == InternalErrorType.NavControllerTrackingFail.toString()
+            errorLogger.sdkErrorMessages.any {
+                it.msg == SdkErrorType.NavControllerTrackingFail.toString()
             },
         )
     }
@@ -182,7 +182,7 @@ internal class NavControllerTrackerTest {
             }
         }
 
-        assertTrue(errorHandler.internalErrorMessages.isEmpty())
+        assertTrue(errorHandler.sdkErrorMessages.isEmpty())
         pairs.forEach { (roundActivity, _) ->
             assertEquals(1, attached.count { it.instanceId == roundActivity.getId() })
             assertEquals(1, screenChanges.count { it.instanceId == roundActivity.getId() })

@@ -26,7 +26,7 @@ import java.util.concurrent.TimeUnit
 internal class SdkStateHolderFactoryTest {
 
     private val context = ApplicationProvider.getApplicationContext<Context>()
-    private val preStartServices = PreStartServices(errorHandler = FakeErrorHandler(throwOnInternalError = false))
+    private val preStartServices = PreStartServices(errorHandler = FakeErrorHandler(throwOnSdkError = false))
     private val workerThreadPool = RecordingWorkerThreadPool()
 
     @Test

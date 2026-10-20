@@ -6,7 +6,7 @@ import io.embrace.android.embracesdk.fakes.config.FakeProjectConfig
 import io.embrace.android.embracesdk.internal.EmbraceInternalApi
 import io.embrace.android.embracesdk.internal.arch.schema.EmbType
 import io.embrace.android.embracesdk.internal.logging.ErrorHandler
-import io.embrace.android.embracesdk.internal.logging.InternalErrorType
+import io.embrace.android.embracesdk.internal.logging.SdkErrorType
 import io.embrace.android.embracesdk.semconv.EmbSessionAttributes
 import io.embrace.android.embracesdk.testframework.OtelSdkMode
 import io.embrace.android.embracesdk.testframework.SdkIntegrationTestRule
@@ -57,12 +57,12 @@ internal class PayloadTypesHeaderTest(
 
         testRule.runTest(
             setupAction = {
-                getFakeErrorHandler().throwOnInternalError = false
+                getFakeErrorHandler().throwOnSdkError = false
                 errorHandler = getFakeErrorHandler()
             },
             testCaseAction = {
                 embrace.logInfo("some message")
-                errorHandler.trackInternalError(InternalErrorType.InternalInterfaceFail, RuntimeException("some internal error"))
+                errorHandler.trackSdkError(SdkErrorType.InternalInterfaceFail, RuntimeException("some SDK error"))
                 embrace.logWarning("uh oh!")
                 clock.tick(2000L)
             },
@@ -74,7 +74,7 @@ internal class PayloadTypesHeaderTest(
                 // Assert only 1 header has been tracked, and it contains the correct type
                 val headers = getPayloadTypesHeaders()
                 assertEquals(1, headers.size)
-                assertEquals("${EmbType.System.Log.value},${EmbType.System.InternalError.value}", headers[0])
+                assertEquals("${EmbType.System.Log.value},${EmbType.System.SdkError.value}", headers[0])
             }
         )
     }
@@ -92,12 +92,12 @@ internal class PayloadTypesHeaderTest(
         testRule.runTest(
             instrumentedConfig = instrumentedConfig,
             setupAction = {
-                getFakeErrorHandler().throwOnInternalError = false
+                getFakeErrorHandler().throwOnSdkError = false
                 errorHandler = getFakeErrorHandler()
             },
             testCaseAction = {
                 embrace.logInfo("log message")
-                errorHandler.trackInternalError(InternalErrorType.InternalInterfaceFail, RuntimeException("some internal error"))
+                errorHandler.trackSdkError(SdkErrorType.InternalInterfaceFail, RuntimeException("some SDK error"))
                 embrace.logMessage(
                     "Flutter error occurred",
                     Severity.ERROR,
@@ -110,7 +110,7 @@ internal class PayloadTypesHeaderTest(
             },
             assertAction = {
                 // Expect 2 envelopes:
-                // 1. Batched logs (log message + internal error)
+                // 1. Batched logs (log message + SDK error)
                 // 2. Flutter exception (sent immediately)
                 getLogEnvelopes(2)
 
@@ -140,12 +140,12 @@ internal class PayloadTypesHeaderTest(
         testRule.runTest(
             instrumentedConfig = instrumentedConfig,
             setupAction = {
-                getFakeErrorHandler().throwOnInternalError = false
+                getFakeErrorHandler().throwOnSdkError = false
                 errorHandler = getFakeErrorHandler()
             },
             testCaseAction = {
                 embrace.logInfo("log message")
-                errorHandler.trackInternalError(InternalErrorType.InternalInterfaceFail, RuntimeException("some internal error"))
+                errorHandler.trackSdkError(SdkErrorType.InternalInterfaceFail, RuntimeException("some SDK error"))
                 EmbraceInternalApi.unityInternalInterface.logUnhandledUnityException(
                     "UnityException",
                     "Unity error occurred",
@@ -155,7 +155,7 @@ internal class PayloadTypesHeaderTest(
             },
             assertAction = {
                 // Expect 2 envelopes:
-                // 1. Batched logs (log message + internal error)
+                // 1. Batched logs (log message + SDK error)
                 // 2. Unity exception (sent immediately)
                 getLogEnvelopes(2)
 

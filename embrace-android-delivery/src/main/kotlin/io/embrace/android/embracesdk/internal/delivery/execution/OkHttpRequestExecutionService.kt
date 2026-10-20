@@ -7,7 +7,7 @@ import io.embrace.android.embracesdk.internal.delivery.debug.DeliveryTracer
 import io.embrace.android.embracesdk.internal.delivery.execution.ExecutionResult.Companion.getResult
 import io.embrace.android.embracesdk.internal.delivery.storage.loadAttachment
 import io.embrace.android.embracesdk.internal.logging.ErrorHandler
-import io.embrace.android.embracesdk.internal.logging.InternalErrorType
+import io.embrace.android.embracesdk.internal.logging.SdkErrorType
 import okhttp3.Headers.Companion.toHeaders
 import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.MultipartBody
@@ -55,8 +55,8 @@ class OkHttpRequestExecutionService(
             // IOExceptions are expected during the execution of a network request is expected, so don't log errors
             // for those. But any unexpected error should be logged.
             if (throwable !is IOException) {
-                errorHandler.trackInternalError(
-                    type = InternalErrorType.PayloadDeliveryFail,
+                errorHandler.trackSdkError(
+                    type = SdkErrorType.PayloadDeliveryFail,
                     throwable = throwable,
                 )
             }

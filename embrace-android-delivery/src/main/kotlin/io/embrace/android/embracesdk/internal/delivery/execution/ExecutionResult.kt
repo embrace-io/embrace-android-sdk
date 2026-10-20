@@ -56,7 +56,7 @@ sealed class ExecutionResult(
     object NetworkNotReady : ExecutionResult(true)
 
     /**
-     * An execution attempt was not made for expected reasons. Any internal error logging will be handled at the
+     * An execution attempt was not made for expected reasons. Any SDK error logging will be handled at the
      * site where the error was found, and the caller can move on.
      */
     object NotAttempted : ExecutionResult(false)

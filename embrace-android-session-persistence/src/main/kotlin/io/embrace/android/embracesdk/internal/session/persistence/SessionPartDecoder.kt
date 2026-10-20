@@ -2,7 +2,7 @@ package io.embrace.android.embracesdk.internal.session.persistence
 
 import com.squareup.wire.ProtoAdapter
 import io.embrace.android.embracesdk.internal.logging.ErrorHandler
-import io.embrace.android.embracesdk.internal.logging.InternalErrorType
+import io.embrace.android.embracesdk.internal.logging.SdkErrorType
 import io.embrace.android.embracesdk.internal.payload.Envelope
 import io.embrace.android.embracesdk.internal.payload.SessionPartPayload
 import io.embrace.android.embracesdk.internal.payload.Span
@@ -84,8 +84,8 @@ class SessionPartDecoder(
 
             val duplicates = (spans.size - dedupedSpans.size) + (remainingSnapshots.size - dedupedSnapshots.size)
             if (duplicates > 0) {
-                errorHandler.trackInternalError(
-                    InternalErrorType.DuplicateSpanIds,
+                errorHandler.trackSdkError(
+                    SdkErrorType.DuplicateSpanIds,
                     IllegalStateException("Removed duplicate spans from session part payload"),
                 )
             }
@@ -197,7 +197,7 @@ class SessionPartDecoder(
         source.open(file) ?: throw IOException("Session part file not found")
 
     private fun trackFailure(exc: Throwable) {
-        errorHandler.trackInternalError(InternalErrorType.SessionReconstructionFail, exc)
+        errorHandler.trackSdkError(SdkErrorType.SessionReconstructionFail, exc)
     }
 
     private class PartSpans(val spans: List<Span>, val spanSnapshots: List<Span>)

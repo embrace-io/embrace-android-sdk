@@ -15,7 +15,7 @@ import io.embrace.android.embracesdk.fakes.config.FakeProjectConfig
 import io.embrace.android.embracesdk.internal.arch.schema.EmbType
 import io.embrace.android.embracesdk.internal.clock.millisToNanos
 import io.embrace.android.embracesdk.internal.logging.ErrorHandler
-import io.embrace.android.embracesdk.internal.logging.InternalErrorType
+import io.embrace.android.embracesdk.internal.logging.SdkErrorType
 import io.embrace.android.embracesdk.internal.toStringMap
 import io.embrace.android.embracesdk.otel.java.addJavaLogRecordExporter
 import io.embrace.android.embracesdk.otel.java.addJavaLogRecordProcessor
@@ -174,7 +174,7 @@ internal class OTelExportTest(
 
         testRule.runTest(
             setupAction = {
-                errorHandler = getFakeErrorHandler().apply { throwOnInternalError = false }
+                errorHandler = getFakeErrorHandler().apply { throwOnSdkError = false }
             },
             preSdkStartAction = {
                 embrace.addSpanProcessor(spanProcessor)
@@ -186,7 +186,7 @@ internal class OTelExportTest(
                 recordSession {
                     embrace.startSpan("public-span").stop()
                     embrace.logMessage("public-log", Severity.INFO)
-                    errorHandler.trackInternalError(InternalErrorType.InternalInterfaceFail, RuntimeException("internal"))
+                    errorHandler.trackSdkError(SdkErrorType.InternalInterfaceFail, RuntimeException("internal"))
                 }
             },
             assertAction = {

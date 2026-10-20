@@ -62,7 +62,7 @@ internal class SessionMetadataWriterTest {
     fun setUp() {
         sessionsDir = tempFolder.newFolder("embrace_sessions")
         clock = FakeClock()
-        errorHandler = FakeErrorHandler(throwOnInternalError = false)
+        errorHandler = FakeErrorHandler(throwOnSdkError = false)
         metadataProvider = { fullyPopulatedMetadata }
         resourceProvider = { fullyPopulatedResource }
         symbolProvider = { null }
@@ -82,7 +82,7 @@ internal class SessionMetadataWriterTest {
     fun `metadata is written into the session part directory`() {
         assertTrue(write())
         assertTrue(metadataFile().isFile)
-        assertNoInternalErrors()
+        assertNoSdkErrors()
     }
 
     @Test
@@ -144,7 +144,7 @@ internal class SessionMetadataWriterTest {
             assertEquals(clock.now(), written_at_ms)
         }
         assertEquals(listOf(METADATA_FILE_NAME), partDir().list()?.toList())
-        assertNoInternalErrors()
+        assertNoSdkErrors()
     }
 
     @Test
@@ -213,7 +213,7 @@ internal class SessionMetadataWriterTest {
         }
         assertEquals("userId", readMetadata().user_id)
         assertEquals(listOf(METADATA_FILE_NAME), partDir().list()?.toList())
-        assertNoInternalErrors()
+        assertNoSdkErrors()
     }
 
     @Test
@@ -261,7 +261,7 @@ internal class SessionMetadataWriterTest {
     fun `nothing is written when no session part is active`() {
         assertFalse(write(directory = null))
         assertFalse(metadataFile().exists())
-        assertNoInternalErrors()
+        assertNoSdkErrors()
     }
 
     @Test
@@ -272,7 +272,7 @@ internal class SessionMetadataWriterTest {
         assertFalse(writer.write())
 
         assertEquals("userId", readMetadata().user_id)
-        assertNoInternalErrors()
+        assertNoSdkErrors()
     }
 
     @Test
@@ -307,7 +307,7 @@ internal class SessionMetadataWriterTest {
         assertEquals(SESSION_PART_ID, readMetadata().session_part_id)
         assertEquals("otherUserId", readMetadata(other).user_id)
         assertEquals(other.sessionPartId, readMetadata(other).session_part_id)
-        assertNoInternalErrors()
+        assertNoSdkErrors()
     }
 
     @Test
@@ -323,7 +323,7 @@ internal class SessionMetadataWriterTest {
         assertTrue(write())
         assertEquals(persisted(fullyPopulatedMetadataProto()), readMetadata())
         assertEquals(listOf(METADATA_FILE_NAME), partDir().list()?.toList())
-        assertNoInternalErrors()
+        assertNoSdkErrors()
     }
 
     @Test
@@ -335,7 +335,7 @@ internal class SessionMetadataWriterTest {
         assertTrue(writer.write())
         assertEquals("newUserId", readMetadata().user_id)
         assertEquals(1, recorder.sections.count { it == FILE_SYNC_SECTION })
-        assertNoInternalErrors()
+        assertNoSdkErrors()
     }
 
     @Test
@@ -377,7 +377,7 @@ internal class SessionMetadataWriterTest {
         assertFalse(writer.write())
         assertEquals(currentMetadata, readMetadata())
         assertWriteFailureTracked()
-        assertEquals(OVERSIZED_PART_FILE_MSG, errorHandler.internalErrorMessages.single().throwable?.message)
+        assertEquals(OVERSIZED_PART_FILE_MSG, errorHandler.sdkErrorMessages.single().throwable?.message)
     }
 
     @Test
@@ -389,7 +389,7 @@ internal class SessionMetadataWriterTest {
         assertTrue(metadataFile().length() <= MAX_PART_FILE_BYTES)
         assertTrue(metadataFile().length() > MAX_PART_FILE_BYTES - 8192)
         assertEquals(extras, readMetadata().resource?.extras)
-        assertNoInternalErrors()
+        assertNoSdkErrors()
     }
 
     @Test
@@ -439,7 +439,7 @@ internal class SessionMetadataWriterTest {
         assertEquals(1, recorder.sections.count { it == FILE_SYNC_SECTION })
 
         assertFalse(metadataFile().isFile)
-        assertNoInternalErrors()
+        assertNoSdkErrors()
     }
 
     @Test
@@ -449,7 +449,7 @@ internal class SessionMetadataWriterTest {
         assertTrue(write())
 
         assertEquals("other-user", readMetadata().user_id)
-        assertNoInternalErrors()
+        assertNoSdkErrors()
     }
 
     @Test
@@ -459,7 +459,7 @@ internal class SessionMetadataWriterTest {
         assertTrue(write())
 
         assertEquals("9.9.9", readMetadata().resource?.app_version)
-        assertNoInternalErrors()
+        assertNoSdkErrors()
     }
 
     @Test
@@ -524,13 +524,13 @@ internal class SessionMetadataWriterTest {
     private fun persisted(metadata: SessionMetadata): SessionMetadata =
         metadata.copy(written_at_ms = clock.now())
 
-    private fun assertNoInternalErrors() {
-        assertEquals(emptyList<FakeErrorHandler.LogMessage>(), errorHandler.internalErrorMessages)
+    private fun assertNoSdkErrors() {
+        assertEquals(emptyList<FakeErrorHandler.LogMessage>(), errorHandler.sdkErrorMessages)
     }
 
     private fun assertWriteFailureTracked() {
-        assertEquals(1, errorHandler.internalErrorMessages.size)
-        assertEquals("SessionMetadataWriteFail", errorHandler.internalErrorMessages.single().msg)
+        assertEquals(1, errorHandler.sdkErrorMessages.size)
+        assertEquals("SessionMetadataWriteFail", errorHandler.sdkErrorMessages.single().msg)
     }
 
     /**

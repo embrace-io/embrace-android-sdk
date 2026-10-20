@@ -4,7 +4,7 @@ import android.os.Handler
 import android.os.HandlerThread
 import android.os.Message
 import io.embrace.android.embracesdk.internal.logging.ErrorHandler
-import io.embrace.android.embracesdk.internal.logging.InternalErrorType
+import io.embrace.android.embracesdk.internal.logging.SdkErrorType
 
 internal interface VitalsScheduler {
     fun post(action: Runnable)
@@ -38,7 +38,7 @@ internal class HandlerVitalsScheduler(private val errorHandler: ErrorHandler) : 
                 try {
                     super.dispatchMessage(msg)
                 } catch (exc: Throwable) {
-                    errorHandler.trackInternalError(InternalErrorType.UiCallbackFail, exc)
+                    errorHandler.trackSdkError(SdkErrorType.UiCallbackFail, exc)
                 }
             }
         }

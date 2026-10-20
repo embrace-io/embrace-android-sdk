@@ -76,7 +76,7 @@ internal class SessionPayloadSizeTest(
      * SDK would actually leave behind.
      */
     private fun measureSessionPart(): Map<String, Long> {
-        val errorHandler = FakeErrorHandler(throwOnInternalError = true)
+        val errorHandler = FakeErrorHandler(throwOnSdkError = true)
         val sessionsDir = tempFolder.newFolder("embrace_sessions")
         val partDir = File(sessionsDir, fixture.directory.dirName).apply { mkdirs() }
         val target = SessionPartWriteTarget(lazy { sessionsDir }, FakeClock()) { fixture.directory }

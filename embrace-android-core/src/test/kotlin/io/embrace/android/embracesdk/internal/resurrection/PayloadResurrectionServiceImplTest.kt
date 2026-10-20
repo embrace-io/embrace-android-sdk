@@ -43,7 +43,7 @@ import io.embrace.android.embracesdk.internal.delivery.intake.IntakeService
 import io.embrace.android.embracesdk.internal.delivery.intake.IntakeServiceImpl
 import io.embrace.android.embracesdk.internal.delivery.storage.PayloadStorageService
 import io.embrace.android.embracesdk.internal.instrumentation.crash.ndk.NativeCrashService
-import io.embrace.android.embracesdk.internal.logging.InternalErrorType
+import io.embrace.android.embracesdk.internal.logging.SdkErrorType
 import io.embrace.android.embracesdk.internal.otel.sdk.findAttributeValue
 import io.embrace.android.embracesdk.internal.otel.sdk.id.OtelIds
 import io.embrace.android.embracesdk.internal.payload.Envelope
@@ -535,7 +535,7 @@ class PayloadResurrectionServiceImplTest {
         assertEquals(0, payloadStorageService.storedPayloadCount())
         assertEquals(0, cacheStorageService.storedPayloadCount())
         assertEquals(1, cacheStorageService.deleteCount.get())
-        assertTrue(errorHandler.internalErrorMessages.isEmpty())
+        assertTrue(errorHandler.sdkErrorMessages.isEmpty())
     }
 
     @Test
@@ -548,7 +548,7 @@ class PayloadResurrectionServiceImplTest {
         assertEquals(0, payloadStorageService.storedPayloadCount())
         assertEquals(0, cacheStorageService.storedPayloadCount())
         assertEquals(1, cacheStorageService.deleteCount.get())
-        assertTrue(errorHandler.internalErrorMessages.isEmpty())
+        assertTrue(errorHandler.sdkErrorMessages.isEmpty())
     }
 
     @Test
@@ -567,7 +567,7 @@ class PayloadResurrectionServiceImplTest {
 
         assertEquals(1, payloadStorageService.storedPayloadCount())
         assertEquals(0, cacheStorageService.storedPayloadCount())
-        assertTrue(errorHandler.internalErrorMessages.isEmpty())
+        assertTrue(errorHandler.sdkErrorMessages.isEmpty())
     }
 
     @Test
@@ -578,7 +578,7 @@ class PayloadResurrectionServiceImplTest {
 
         assertEquals(1, payloadStorageService.storedPayloadCount())
         assertEquals(0, cacheStorageService.storedPayloadCount())
-        assertTrue(errorHandler.internalErrorMessages.isEmpty())
+        assertTrue(errorHandler.sdkErrorMessages.isEmpty())
     }
 
     @Test
@@ -603,10 +603,10 @@ class PayloadResurrectionServiceImplTest {
         assertEquals(1, nativeCrashService.nativeCrashesSent.size)
         assertEquals(deadSessionCrashData, nativeCrashService.nativeCrashesSent.single().first)
 
-        assertEquals(1, errorHandler.internalErrorMessages.size)
+        assertEquals(1, errorHandler.sdkErrorMessages.size)
         assertEquals(
-            InternalErrorType.NativeCrashResurrectionError.toString(),
-            errorHandler.internalErrorMessages.single().msg,
+            SdkErrorType.NativeCrashResurrectionError.toString(),
+            errorHandler.sdkErrorMessages.single().msg,
         )
     }
 
@@ -634,10 +634,10 @@ class PayloadResurrectionServiceImplTest {
             assertEquals(deadSessionCrashData, first)
         }
 
-        assertEquals(1, errorHandler.internalErrorMessages.size)
+        assertEquals(1, errorHandler.sdkErrorMessages.size)
         assertEquals(
-            InternalErrorType.NativeCrashResurrectionError.toString(),
-            errorHandler.internalErrorMessages.single().msg,
+            SdkErrorType.NativeCrashResurrectionError.toString(),
+            errorHandler.sdkErrorMessages.single().msg,
         )
     }
 
@@ -876,7 +876,7 @@ class PayloadResurrectionServiceImplTest {
 
         assertTrue(listenerCalled)
         assertTrue(
-            errorHandler.internalErrorMessages.any {
+            errorHandler.sdkErrorMessages.any {
                 it.throwable is TimeoutException
             },
         )
@@ -972,10 +972,10 @@ class PayloadResurrectionServiceImplTest {
     private fun assertResurrectionFailure() {
         assertEquals(0, payloadStorageService.storedPayloadCount())
         assertEquals(0, cacheStorageService.storedPayloadCount())
-        assertEquals(1, errorHandler.internalErrorMessages.size)
+        assertEquals(1, errorHandler.sdkErrorMessages.size)
         assertEquals(
-            InternalErrorType.PayloadResurrectionPayloadFail.toString(),
-            errorHandler.internalErrorMessages.single().msg,
+            SdkErrorType.PayloadResurrectionPayloadFail.toString(),
+            errorHandler.sdkErrorMessages.single().msg,
         )
     }
 

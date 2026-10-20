@@ -117,7 +117,7 @@ internal class SessionPartReaderTest {
         sessionsDir = tempFolder.newFolder("embrace_sessions_split")
         clock = FakeClock()
         executor = BlockingScheduledExecutorService(clock, true)
-        errorHandler = FakeErrorHandler(throwOnInternalError = false)
+        errorHandler = FakeErrorHandler(throwOnSdkError = false)
         directoryStore = SessionPartDirectoryStore(lazy { sessionsDir }, BackgroundWorker(executor), clock, errorHandler)
         intakeService = FakeIntakeService()
         slowIntake = SlowIntakeService()
@@ -146,7 +146,7 @@ internal class SessionPartReaderTest {
             assertTrue(complete)
         }
         assertDeleted(partDirectory)
-        assertEquals(emptyList<FakeErrorHandler.LogMessage>(), errorHandler.internalErrorMessages)
+        assertEquals(emptyList<FakeErrorHandler.LogMessage>(), errorHandler.sdkErrorMessages)
     }
 
     @Test
@@ -307,7 +307,7 @@ internal class SessionPartReaderTest {
 
         assertEquals(ids(laterPartDirectory), intakesAttempted())
         assertDeleted(partDirectory, laterPartDirectory)
-        assertTrue(errorHandler.internalErrorMessages.single().throwable is IllegalStateException)
+        assertTrue(errorHandler.sdkErrorMessages.single().throwable is IllegalStateException)
     }
 
     @Test
@@ -385,7 +385,7 @@ internal class SessionPartReaderTest {
         reader.readPersistedSessionParts()
         assertEquals(ids(partDirectory, partDirectory, laterPartDirectory), intakesAttempted())
         assertDeleted(partDirectory, laterPartDirectory)
-        assertEquals(emptyList<FakeErrorHandler.LogMessage>(), errorHandler.internalErrorMessages)
+        assertEquals(emptyList<FakeErrorHandler.LogMessage>(), errorHandler.sdkErrorMessages)
     }
 
     @Test
@@ -399,7 +399,7 @@ internal class SessionPartReaderTest {
         reader.readPersistedSessionParts()
         assertEquals(ids(partDirectory, partDirectory, laterPartDirectory), intakesAttempted())
         assertDeleted(partDirectory, laterPartDirectory)
-        assertTrue(errorHandler.internalErrorMessages.single().throwable is IllegalStateException)
+        assertTrue(errorHandler.sdkErrorMessages.single().throwable is IllegalStateException)
     }
 
     @Test
@@ -413,7 +413,7 @@ internal class SessionPartReaderTest {
         // reported, and the later part is attempted in the same pass
         assertEquals(ids(partDirectory, laterPartDirectory), intakesAttempted())
         assertDeleted(partDirectory, laterPartDirectory)
-        assertTrue(errorHandler.internalErrorMessages.single().throwable is IllegalStateException)
+        assertTrue(errorHandler.sdkErrorMessages.single().throwable is IllegalStateException)
     }
 
     @Test
@@ -432,7 +432,7 @@ internal class SessionPartReaderTest {
         assertEquals(emptyList<Any>(), intakeService.intakeList)
         assertEquals(emptyList<Any>(), intakeService.cacheList)
         assertFalse(sessionsDir.exists())
-        assertEquals(emptyList<FakeErrorHandler.LogMessage>(), errorHandler.internalErrorMessages)
+        assertEquals(emptyList<FakeErrorHandler.LogMessage>(), errorHandler.sdkErrorMessages)
     }
 
     @Test
@@ -456,7 +456,7 @@ internal class SessionPartReaderTest {
         assertDeleted(partDirectory, laterPartDirectory)
         assertEquals(
             listOf(TimeoutException::class, TimeoutException::class, IllegalStateException::class),
-            errorHandler.internalErrorMessages.map { it.throwable?.let { throwable -> throwable::class } },
+            errorHandler.sdkErrorMessages.map { it.throwable?.let { throwable -> throwable::class } },
         )
     }
 
@@ -521,7 +521,7 @@ internal class SessionPartReaderTest {
 
         assertEquals(ids(partDirectory, laterPartDirectory), slowIntake.takenPartIds)
         assertDeleted(partDirectory, laterPartDirectory)
-        assertTrue(errorHandler.internalErrorMessages.last().throwable is IllegalStateException)
+        assertTrue(errorHandler.sdkErrorMessages.last().throwable is IllegalStateException)
     }
 
     @Test
@@ -564,7 +564,7 @@ internal class SessionPartReaderTest {
         reader.readPersistedSessionParts()
         assertEquals(ids(partDirectory, partDirectory, laterPartDirectory), slowIntake.takenPartIds)
         assertDeleted(partDirectory, laterPartDirectory)
-        assertEquals(emptyList<FakeErrorHandler.LogMessage>(), errorHandler.internalErrorMessages)
+        assertEquals(emptyList<FakeErrorHandler.LogMessage>(), errorHandler.sdkErrorMessages)
     }
 
     /**
@@ -740,7 +740,7 @@ internal class SessionPartReaderTest {
         assertEquals(emptyList<Any>(), intakeService.intakeList)
         assertEquals(emptyList<Any>(), intakeService.cacheList)
         assertRetained(*retained.toTypedArray())
-        assertEquals(emptyList<FakeErrorHandler.LogMessage>(), errorHandler.internalErrorMessages)
+        assertEquals(emptyList<FakeErrorHandler.LogMessage>(), errorHandler.sdkErrorMessages)
     }
 
     /**

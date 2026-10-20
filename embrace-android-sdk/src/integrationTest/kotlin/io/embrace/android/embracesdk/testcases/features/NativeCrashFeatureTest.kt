@@ -133,7 +133,7 @@ internal class NativeCrashFeatureTest(
             fakeStorageLayer = true,
             workersToFake = listOf(Worker.Background.IoRegWorker),
         ).apply {
-            getFakeErrorHandler().throwOnInternalError = false
+            getFakeErrorHandler().throwOnSdkError = false
             getFakedWorkerExecutor(Worker.Background.IoRegWorker).blockingMode = false
         }
     }

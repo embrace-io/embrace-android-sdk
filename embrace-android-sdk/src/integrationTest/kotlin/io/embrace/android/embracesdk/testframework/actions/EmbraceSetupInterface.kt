@@ -54,7 +54,7 @@ import io.embrace.android.embracesdk.internal.instrumentation.startup.DataCaptur
 import io.embrace.android.embracesdk.internal.instrumentation.startup.SdkInitResourceUsageTracker
 import io.embrace.android.embracesdk.internal.instrumentation.thread.blockage.createThreadBlockageService
 import io.embrace.android.embracesdk.internal.logging.ErrorHandlerImpl
-import io.embrace.android.embracesdk.internal.logging.InternalErrorType
+import io.embrace.android.embracesdk.internal.logging.SdkErrorType
 import io.embrace.android.embracesdk.internal.otel.spans.SpanRepository
 import io.embrace.android.embracesdk.internal.payload.Attribute
 import io.embrace.android.embracesdk.internal.payload.Envelope
@@ -105,7 +105,7 @@ internal class EmbraceSetupInterface(
     private val workersToFake: List<Worker.Background> = emptyList(),
     private val threadBlockageWatchdogThread: Thread? = null,
     fakeStorageLayer: Boolean = false,
-    ignoredInternalErrors: List<InternalErrorType> = listOf(),
+    ignoredSdkErrors: List<SdkErrorType> = listOf(),
     val fakeClock: FakeClock = FakeClock(currentTime = SdkIntegrationTestRule.DEFAULT_SDK_START_TIME_MS),
     private val uuidSource: UuidSource = TestUuidSource(Random.nextInt()),
     simulatedSdkInt: Int? = null,
@@ -148,7 +148,7 @@ internal class EmbraceSetupInterface(
 
     private val fakeInitModule: FakeInitModule = FakeInitModule(
         clock = fakeClock,
-        errorHandler = FakeErrorHandler(ignoredErrors = ignoredInternalErrors, delegate = ErrorHandlerImpl(fakeClock)),
+        errorHandler = FakeErrorHandler(ignoredErrors = ignoredSdkErrors, delegate = ErrorHandlerImpl(fakeClock)),
         uuidSource = uuidSource,
         // unused: the module graph builds its OTel module from the SDK's ConfigService
         otelSdkMode = OtelSdkMode.COMPAT,

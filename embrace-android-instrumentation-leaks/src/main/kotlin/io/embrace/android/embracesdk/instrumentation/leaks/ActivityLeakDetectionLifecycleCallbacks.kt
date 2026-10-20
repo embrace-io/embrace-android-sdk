@@ -5,7 +5,7 @@ import android.app.Application
 import android.os.Build
 import android.os.Bundle
 import io.embrace.android.embracesdk.internal.logging.ErrorHandler
-import io.embrace.android.embracesdk.internal.logging.InternalErrorType
+import io.embrace.android.embracesdk.internal.logging.SdkErrorType
 import io.embrace.android.embracesdk.internal.session.id.SessionIdsSnapshot
 
 internal class ActivityLeakDetectionLifecycleCallbacks(
@@ -20,7 +20,7 @@ internal class ActivityLeakDetectionLifecycleCallbacks(
         try {
             leakDetector.trackOpened(activity, TrackingSource.ACTIVITY)
         } catch (exc: Throwable) {
-            errorHandler.trackInternalError(InternalErrorType.UiCallbackFail, exc)
+            errorHandler.trackSdkError(SdkErrorType.UiCallbackFail, exc)
         }
     }
 
@@ -31,7 +31,7 @@ internal class ActivityLeakDetectionLifecycleCallbacks(
             }
             fragmentSupport.onActivityCreated(activity)
         } catch (exc: Throwable) {
-            errorHandler.trackInternalError(InternalErrorType.UiCallbackFail, exc)
+            errorHandler.trackSdkError(SdkErrorType.UiCallbackFail, exc)
         }
     }
 
@@ -51,7 +51,7 @@ internal class ActivityLeakDetectionLifecycleCallbacks(
                 }
             }
         } catch (exc: Throwable) {
-            errorHandler.trackInternalError(InternalErrorType.UiCallbackFail, exc)
+            errorHandler.trackSdkError(SdkErrorType.UiCallbackFail, exc)
         }
     }
 
@@ -65,7 +65,7 @@ internal class ActivityLeakDetectionLifecycleCallbacks(
                 }
             }
         } catch (exc: Throwable) {
-            errorHandler.trackInternalError(InternalErrorType.UiCallbackFail, exc)
+            errorHandler.trackSdkError(SdkErrorType.UiCallbackFail, exc)
         }
     }
 

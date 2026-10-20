@@ -895,6 +895,6 @@ class EmbraceUrlConnectionDelegate<T extends HttpURLConnection> implements Embra
     }
 
     private void logError(@NonNull Throwable t) {
-        internalNetworkApi.logInternalError(t);
+        internalNetworkApi.logSdkError(t);
     }
 }

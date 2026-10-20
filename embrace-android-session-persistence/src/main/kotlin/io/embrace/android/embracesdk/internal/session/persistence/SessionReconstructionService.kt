@@ -1,7 +1,7 @@
 package io.embrace.android.embracesdk.internal.session.persistence
 
 import io.embrace.android.embracesdk.internal.logging.ErrorHandler
-import io.embrace.android.embracesdk.internal.logging.InternalErrorType
+import io.embrace.android.embracesdk.internal.logging.SdkErrorType
 import io.embrace.android.embracesdk.internal.utils.SystemTrace
 import java.io.File
 import java.io.IOException
@@ -37,6 +37,6 @@ class SessionReconstructionService(
         }
 
     private fun trackFailure(exc: Throwable) {
-        errorHandler.trackInternalError(InternalErrorType.SessionReconstructionFail, exc)
+        errorHandler.trackSdkError(SdkErrorType.SessionReconstructionFail, exc)
     }
 }

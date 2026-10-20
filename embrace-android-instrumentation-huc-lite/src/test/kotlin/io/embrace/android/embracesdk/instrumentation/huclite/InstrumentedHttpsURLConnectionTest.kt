@@ -1,7 +1,7 @@
 package io.embrace.android.embracesdk.instrumentation.huclite
 
 import android.os.Build.VERSION_CODES
-import io.embrace.android.embracesdk.internal.logging.InternalErrorType
+import io.embrace.android.embracesdk.internal.logging.SdkErrorType
 import io.embrace.android.embracesdk.internal.utils.VersionChecker
 import io.mockk.every
 import io.mockk.mockk
@@ -426,7 +426,7 @@ internal class InstrumentedHttpsURLConnectionTest {
         every { mockWrappedConnection.url } throws FakeIOException()
         instrumentedConnection.responseCode
         assertNoRequestRecorded()
-        assertEquals(InternalErrorType.DataSourceDataCaptureFail.toString(), getInternalErrors().single().msg)
+        assertEquals(SdkErrorType.DataSourceDataCaptureFail.toString(), getSdkErrors().single().msg)
     }
 
     @Test

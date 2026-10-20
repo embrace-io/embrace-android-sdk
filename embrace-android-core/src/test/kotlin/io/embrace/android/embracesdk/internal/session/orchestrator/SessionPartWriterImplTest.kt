@@ -97,7 +97,7 @@ internal class SessionPartWriterImplTest {
         sessionsDir = tempFolder.newFolder("embrace_sessions_split")
         clock = FakeClock()
         executor = BlockingScheduledExecutorService(clock, true)
-        errorHandler = FakeErrorHandler(throwOnInternalError = false)
+        errorHandler = FakeErrorHandler(throwOnSdkError = false)
         telemetryService = FakeInternalTelemetryService()
         recorder = FakeSectionRecorder()
         SystemTrace.recorder = recorder
@@ -127,7 +127,7 @@ internal class SessionPartWriterImplTest {
         assertEquals(startedAt, directory.timestamp)
         assertEquals(USER_SESSION_ID, directory.userSessionId)
         assertEquals(SESSION_PART_ID, directory.sessionPartId)
-        assertNoInternalErrors()
+        assertNoSdkErrors()
     }
 
     @Test
@@ -143,7 +143,7 @@ internal class SessionPartWriterImplTest {
 
         val directories = sessionPartDirs()
         assertEquals(listOf(SESSION_PART_ID, OTHER_SESSION_PART_ID), directories.map { it.sessionPartId })
-        assertNoInternalErrors()
+        assertNoSdkErrors()
     }
 
     @Test
@@ -159,7 +159,7 @@ internal class SessionPartWriterImplTest {
 
         val directories = sessionPartDirs()
         assertEquals(listOf(SESSION_PART_ID, OTHER_SESSION_PART_ID), directories.map { it.sessionPartId })
-        assertNoInternalErrors()
+        assertNoSdkErrors()
     }
 
     @Test
@@ -169,7 +169,7 @@ internal class SessionPartWriterImplTest {
 
         assertEquals(emptyList<SessionPartDirectory>(), sessionPartDirs())
         assertEquals(0, resourceCount)
-        assertNoInternalErrors()
+        assertNoSdkErrors()
     }
 
     @Test
@@ -187,7 +187,7 @@ internal class SessionPartWriterImplTest {
         assertEquals("resource0", metadata.resource?.app_version)
         assertEquals(1, writeCount)
         assertEquals(1, resourceCount)
-        assertNoInternalErrors()
+        assertNoSdkErrors()
     }
 
     @Test
@@ -201,7 +201,7 @@ internal class SessionPartWriterImplTest {
         drain()
         assertEquals("user1", metadataIn(SESSION_PART_ID)?.user_id)
         assertEquals(2, writeCount)
-        assertNoInternalErrors()
+        assertNoSdkErrors()
     }
 
     @Test
@@ -216,7 +216,7 @@ internal class SessionPartWriterImplTest {
         // the queued writes were superseded before they ran, so only the last one wrote
         assertEquals("user1", metadataIn(SESSION_PART_ID)?.user_id)
         assertEquals(2, writeCount)
-        assertNoInternalErrors()
+        assertNoSdkErrors()
     }
 
     @Test
@@ -234,7 +234,7 @@ internal class SessionPartWriterImplTest {
         writer.onMetadataChanged()
         assertEquals(emptyList<SessionPartDirectory>(), sessionPartDirs())
         assertEquals(0, writeCount)
-        assertNoInternalErrors()
+        assertNoSdkErrors()
     }
 
     @Test
@@ -243,7 +243,7 @@ internal class SessionPartWriterImplTest {
         writer.onSessionPartStarted(clock.now(), USER_SESSION_ID, SESSION_PART_ID)
         drain()
 
-        assertInternalErrors("SessionPartDirectoryStoreFail", "SessionMetadataWriteFail")
+        assertSdkErrors("SessionPartDirectoryStoreFail", "SessionMetadataWriteFail")
 
         writer.onMetadataChanged()
         drain()
@@ -251,7 +251,7 @@ internal class SessionPartWriterImplTest {
         writer.onSessionPartEnded(SESSION_PART_ID)
         drain()
 
-        assertInternalErrors("SessionPartDirectoryStoreFail", "SessionMetadataWriteFail")
+        assertSdkErrors("SessionPartDirectoryStoreFail", "SessionMetadataWriteFail")
         assertEquals(0, writeCount)
     }
 
@@ -260,7 +260,7 @@ internal class SessionPartWriterImplTest {
         val writer = createWriter(configService = configService(enabled = true, nativeSymbolMap = SYMBOLS))
         writer.onSessionPartStarted(clock.now(), USER_SESSION_ID, SESSION_PART_ID)
         assertEquals(SYMBOLS, metadataIn(SESSION_PART_ID)?.shared_lib_symbol_mapping?.symbols)
-        assertNoInternalErrors()
+        assertNoSdkErrors()
     }
 
     @Test
@@ -268,7 +268,7 @@ internal class SessionPartWriterImplTest {
         val writer = createWriter(configService = configService(enabled = true, nativeSymbolMap = null))
         writer.onSessionPartStarted(clock.now(), USER_SESSION_ID, SESSION_PART_ID)
         assertNull(checkNotNull(metadataIn(SESSION_PART_ID)).shared_lib_symbol_mapping)
-        assertNoInternalErrors()
+        assertNoSdkErrors()
     }
 
     @Test
@@ -284,7 +284,7 @@ internal class SessionPartWriterImplTest {
 
         assertEquals(SESSION_PART_ID, metadataIn(SESSION_PART_ID)?.session_part_id)
         assertEquals(OTHER_SESSION_PART_ID, metadataIn(OTHER_SESSION_PART_ID)?.session_part_id)
-        assertNoInternalErrors()
+        assertNoSdkErrors()
     }
 
     @Test
@@ -302,7 +302,7 @@ internal class SessionPartWriterImplTest {
             assertEquals(USER_SESSION_ID, user_session_id)
             assertEquals(SESSION_PART_ID, session_part_id)
         }
-        assertNoInternalErrors()
+        assertNoSdkErrors()
     }
 
     @Test
@@ -315,7 +315,7 @@ internal class SessionPartWriterImplTest {
         assertEquals("span0", span.name)
         assertEquals(sessionSpan.traceId, span.trace_id)
         assertEquals(sessionSpan.spanId, span.span_id)
-        assertNoInternalErrors()
+        assertNoSdkErrors()
     }
 
     @Test
@@ -333,7 +333,7 @@ internal class SessionPartWriterImplTest {
 
         assertEquals("span0", sessionSpanIn(SESSION_PART_ID)?.name)
         assertEquals("span1", sessionSpanIn(OTHER_SESSION_PART_ID)?.name)
-        assertNoInternalErrors()
+        assertNoSdkErrors()
     }
 
     @Test
@@ -346,7 +346,7 @@ internal class SessionPartWriterImplTest {
         drain()
 
         assertEquals("span0", sessionSpanIn(SESSION_PART_ID)?.name)
-        assertNoInternalErrors()
+        assertNoSdkErrors()
     }
 
     @Test
@@ -357,7 +357,7 @@ internal class SessionPartWriterImplTest {
         drain()
 
         assertEquals("span1", sessionSpanIn(SESSION_PART_ID)?.name)
-        assertNoInternalErrors()
+        assertNoSdkErrors()
     }
 
     @Test
@@ -368,7 +368,7 @@ internal class SessionPartWriterImplTest {
         drain()
 
         assertNull(sessionSpanIn(SESSION_PART_ID))
-        assertNoInternalErrors()
+        assertNoSdkErrors()
     }
 
     @Test
@@ -382,7 +382,7 @@ internal class SessionPartWriterImplTest {
         drain()
 
         assertEquals("span0", sessionSpanIn(SESSION_PART_ID)?.name)
-        assertNoInternalErrors()
+        assertNoSdkErrors()
     }
 
     @Test
@@ -401,7 +401,7 @@ internal class SessionPartWriterImplTest {
         assertEquals("span0", span.name)
         assertEquals(sessionSpan.spanId, span.span_id)
         assertEquals(endedAt.millisToNanos(), span.end_time_unix_nano)
-        assertNoInternalErrors()
+        assertNoSdkErrors()
     }
 
     @Test
@@ -417,7 +417,7 @@ internal class SessionPartWriterImplTest {
         drain()
 
         assertEquals("span1", sessionSpanIn(SESSION_PART_ID)?.name)
-        assertNoInternalErrors()
+        assertNoSdkErrors()
     }
 
     @Test
@@ -436,7 +436,7 @@ internal class SessionPartWriterImplTest {
         assertEquals(listOf("span0"), completedSpanNamesOnDisk(SESSION_PART_ID))
         assertEquals(listOf("span0"), spanSnapshotNamesOnDisk(SESSION_PART_ID))
         assertEquals(endedAt.millisToNanos(), sessionSpanOnDisk(SESSION_PART_ID)?.end_time_unix_nano)
-        assertNoInternalErrors()
+        assertNoSdkErrors()
     }
 
     @Test
@@ -447,7 +447,7 @@ internal class SessionPartWriterImplTest {
 
         assertEquals(emptyList<String>(), completedSpanNamesOnDisk(SESSION_PART_ID))
         assertNull(sessionSpanOnDisk(SESSION_PART_ID)?.end_time_unix_nano)
-        assertNoInternalErrors()
+        assertNoSdkErrors()
     }
 
     @Test
@@ -467,7 +467,7 @@ internal class SessionPartWriterImplTest {
             emptyList<String?>(),
             completedSpansOnDisk(OTHER_SESSION_PART_ID).map(SpanProto::span_id).filter { it == endedSpanId },
         )
-        assertNoInternalErrors()
+        assertNoSdkErrors()
     }
 
     @Test
@@ -483,7 +483,7 @@ internal class SessionPartWriterImplTest {
         File(sessionsDir, partDirs().single().dirName).deleteRecursively()
         writer.onSpanSnapshotChanged(sessionSpan)
         drain()
-        assertNoInternalErrors()
+        assertNoSdkErrors()
     }
 
     @Test
@@ -499,7 +499,7 @@ internal class SessionPartWriterImplTest {
         drain()
 
         assertEquals(endedAt.millisToNanos(), sessionSpanIn(SESSION_PART_ID)?.end_time_unix_nano)
-        assertNoInternalErrors()
+        assertNoSdkErrors()
     }
 
     @Test
@@ -510,7 +510,7 @@ internal class SessionPartWriterImplTest {
 
         assertEquals(emptyList<SessionPartDirectory>(), sessionPartDirs())
         assertEquals(0, executor.submitCount)
-        assertNoInternalErrors()
+        assertNoSdkErrors()
     }
 
     @Test
@@ -522,10 +522,10 @@ internal class SessionPartWriterImplTest {
         writer.onSessionPartStarted(clock.now(), USER_SESSION_ID, OTHER_SESSION_PART_ID)
         drain()
 
-        assertInternalErrors("SessionPartEndMissed")
+        assertSdkErrors("SessionPartEndMissed")
         assertEquals(
             "Session part started before the previous one ended",
-            errorHandler.internalErrorMessages.single().throwable?.message,
+            errorHandler.sdkErrorMessages.single().throwable?.message,
         )
     }
 
@@ -546,10 +546,10 @@ internal class SessionPartWriterImplTest {
         assertEquals(submitCount, executor.submitCount)
 
         assertNotNull(sessionSpanIn(SESSION_PART_ID)?.end_time_unix_nano)
-        assertInternalErrors("SessionPartEndMissed")
+        assertSdkErrors("SessionPartEndMissed")
         assertEquals(
             "Session part ended after another had started",
-            errorHandler.internalErrorMessages.single().throwable?.message,
+            errorHandler.sdkErrorMessages.single().throwable?.message,
         )
     }
 
@@ -566,7 +566,7 @@ internal class SessionPartWriterImplTest {
         }
 
         assertEquals("span4", sessionSpanIn(SESSION_PART_ID)?.name)
-        assertNoInternalErrors()
+        assertNoSdkErrors()
     }
 
     @Test
@@ -577,7 +577,7 @@ internal class SessionPartWriterImplTest {
 
         assertEquals(emptyList<SessionPartDirectory>(), sessionPartDirs())
         assertEquals(0, executor.submitCount)
-        assertNoInternalErrors()
+        assertNoSdkErrors()
     }
 
     @Test
@@ -590,7 +590,7 @@ internal class SessionPartWriterImplTest {
         drain()
 
         assertNull(sessionSpanIn(SESSION_PART_ID))
-        assertNoInternalErrors()
+        assertNoSdkErrors()
     }
 
     @Test
@@ -606,7 +606,7 @@ internal class SessionPartWriterImplTest {
         }
         drain()
 
-        assertEquals(listOf("SpanSnapshotsWriteFail"), errorHandler.internalErrorMessages.map { it.msg })
+        assertEquals(listOf("SpanSnapshotsWriteFail"), errorHandler.sdkErrorMessages.map { it.msg })
     }
 
     @Test
@@ -614,7 +614,7 @@ internal class SessionPartWriterImplTest {
         val writer = createWriter()
         writer.onSessionPartStarted(clock.now(), USER_SESSION_ID, SESSION_PART_ID)
         drain()
-        assertNoInternalErrors()
+        assertNoSdkErrors()
         File(sessionsDir, partDirs().single().dirName).deleteRecursively()
 
         repeat(10) { index ->
@@ -626,7 +626,7 @@ internal class SessionPartWriterImplTest {
             writer.onSpanCompleted(listOf(completedSpan("completed$index")))
             drain()
         }
-        assertEquals(1, errorHandler.internalErrorMessages.size)
+        assertEquals(1, errorHandler.sdkErrorMessages.size)
     }
 
     @Test
@@ -639,7 +639,7 @@ internal class SessionPartWriterImplTest {
         clock.tick(2000)
         writer.onSpanSnapshotChanged(sessionSpan)
         drain()
-        assertEquals(1, errorHandler.internalErrorMessages.size)
+        assertEquals(1, errorHandler.sdkErrorMessages.size)
 
         writer.endPart()
         writer.onSessionPartEnded(SESSION_PART_ID)
@@ -649,7 +649,7 @@ internal class SessionPartWriterImplTest {
 
         assertNotNull(sessionSpanIn(OTHER_SESSION_PART_ID))
         assertNotNull(metadataIn(OTHER_SESSION_PART_ID))
-        assertEquals(1, errorHandler.internalErrorMessages.size)
+        assertEquals(1, errorHandler.sdkErrorMessages.size)
     }
 
     @Test
@@ -666,7 +666,7 @@ internal class SessionPartWriterImplTest {
         drain()
 
         assertEquals("span4", sessionSpanIn(SESSION_PART_ID)?.name)
-        assertNoInternalErrors()
+        assertNoSdkErrors()
     }
 
     @Test
@@ -680,7 +680,7 @@ internal class SessionPartWriterImplTest {
 
         assertEquals(clock.now().millisToNanos(), sessionSpanOnDisk(SESSION_PART_ID)?.end_time_unix_nano)
         assertTrue(executor.isShutdown)
-        assertNoInternalErrors()
+        assertNoSdkErrors()
     }
 
     @Test
@@ -699,7 +699,7 @@ internal class SessionPartWriterImplTest {
 
         assertEquals(emptyList<String>(), events)
         assertEquals(expectedEndTimeNanos, sessionSpanOnDisk(SESSION_PART_ID)?.end_time_unix_nano)
-        assertNoInternalErrors()
+        assertNoSdkErrors()
     }
 
     @Test
@@ -720,7 +720,7 @@ internal class SessionPartWriterImplTest {
         writer.onCrash()
         assertEquals(listOf("metadata-write", "shutdown"), events)
         assertEquals("user1", metadataOnDisk(SESSION_PART_ID)?.user_id)
-        assertNoInternalErrors()
+        assertNoSdkErrors()
     }
 
     @Test
@@ -741,7 +741,7 @@ internal class SessionPartWriterImplTest {
         drain()
 
         assertEquals(expectedEndTimeNanos, endTimeAtCompletion)
-        assertNoInternalErrors()
+        assertNoSdkErrors()
     }
 
     @Test
@@ -753,7 +753,7 @@ internal class SessionPartWriterImplTest {
         assertEquals("user0", metadataOnDisk(SESSION_PART_ID)?.user_id)
         assertEquals("span0", sessionSpanOnDisk(SESSION_PART_ID)?.name)
         assertEquals(0, executor.scheduledTasksCount())
-        assertNoInternalErrors()
+        assertNoSdkErrors()
     }
 
     @Test
@@ -766,7 +766,7 @@ internal class SessionPartWriterImplTest {
 
         executor.moveForwardAndRunBlocked(SessionPartWriterImpl.METADATA_WRITE_DELAY_MS)
         assertEquals("user1", metadataOnDisk(SESSION_PART_ID)?.user_id)
-        assertNoInternalErrors()
+        assertNoSdkErrors()
     }
 
     @Test
@@ -796,7 +796,7 @@ internal class SessionPartWriterImplTest {
         writer.onSessionPartEnded(SESSION_PART_ID)
         assertEquals(emptyList<Long>(), delays)
         drain()
-        assertNoInternalErrors()
+        assertNoSdkErrors()
     }
 
     @Test
@@ -818,7 +818,7 @@ internal class SessionPartWriterImplTest {
         // the change arrived after the part stopped being current, so it is not written to it
         assertEquals(1, writeCount)
         assertEquals("user0", metadataOnDisk(SESSION_PART_ID)?.user_id)
-        assertNoInternalErrors()
+        assertNoSdkErrors()
     }
 
     @Test
@@ -841,7 +841,7 @@ internal class SessionPartWriterImplTest {
         writer.onSessionPartStarted(clock.now(), USER_SESSION_ID, OTHER_SESSION_PART_ID)
 
         assertEquals(listOf("network-request"), completedSpanNamesIn(OTHER_SESSION_PART_ID))
-        assertNoInternalErrors()
+        assertNoSdkErrors()
     }
 
     @Test
@@ -868,7 +868,7 @@ internal class SessionPartWriterImplTest {
         // the write is flushed by the part ending, so it lands before the part is sealed
         assertEquals(listOf("metadata-write", "writes-complete"), events)
         assertEquals("user1", metadataOnDisk(SESSION_PART_ID)?.user_id)
-        assertNoInternalErrors()
+        assertNoSdkErrors()
     }
 
     @Test
@@ -886,7 +886,7 @@ internal class SessionPartWriterImplTest {
         writer.onSessionPartStarted(clock.now(), USER_SESSION_ID, OTHER_SESSION_PART_ID)
 
         assertEquals(emptyList<String?>(), completedSpanNamesIn(OTHER_SESSION_PART_ID))
-        assertNoInternalErrors()
+        assertNoSdkErrors()
     }
 
     @Test
@@ -910,7 +910,7 @@ internal class SessionPartWriterImplTest {
         assertTrue(executor.isShutdown)
         assertEquals(listOf("span0"), spanSnapshotNamesOnDisk(SESSION_PART_ID))
         assertNull(spanSnapshotNamesOnDisk(OTHER_SESSION_PART_ID))
-        assertNoInternalErrors()
+        assertNoSdkErrors()
     }
 
     @Test
@@ -932,7 +932,7 @@ internal class SessionPartWriterImplTest {
         drainOnce()
         assertEquals("user1", metadataOnDisk(SESSION_PART_ID)?.user_id)
         assertEquals(2, writeCount)
-        assertNoInternalErrors()
+        assertNoSdkErrors()
     }
 
     @Test
@@ -945,7 +945,7 @@ internal class SessionPartWriterImplTest {
         assertEquals("resource0", metadataOnDisk(SESSION_PART_ID)?.resource?.app_version)
         assertEquals("user0", metadataOnDisk(SESSION_PART_ID)?.user_id)
         assertEquals("span0", sessionSpanOnDisk(SESSION_PART_ID)?.name)
-        assertNoInternalErrors()
+        assertNoSdkErrors()
     }
 
     @Test
@@ -961,7 +961,7 @@ internal class SessionPartWriterImplTest {
         drain()
 
         assertNull(partFile(SESSION_PART_ID, METADATA_FILE_NAME))
-        assertNoInternalErrors()
+        assertNoSdkErrors()
     }
 
     @Test
@@ -975,7 +975,7 @@ internal class SessionPartWriterImplTest {
         writer.onCrash()
 
         assertNull(partFile(SESSION_PART_ID, METADATA_FILE_NAME))
-        assertNoInternalErrors()
+        assertNoSdkErrors()
     }
 
     @Test
@@ -988,7 +988,7 @@ internal class SessionPartWriterImplTest {
         assertEquals("user0", metadataIn(SESSION_PART_ID)?.user_id)
         assertEquals(1, writeCount)
         assertEquals("span0", sessionSpanIn(SESSION_PART_ID)?.name)
-        assertNoInternalErrors()
+        assertNoSdkErrors()
     }
 
     @Test
@@ -997,7 +997,7 @@ internal class SessionPartWriterImplTest {
         inFlightSpans = listOf(inFlightSpan("network-request"))
         writer.onSessionPartStarted(clock.now(), USER_SESSION_ID, SESSION_PART_ID)
         assertEquals(listOf("network-request"), inFlightSpanNamesIn(SESSION_PART_ID))
-        assertNoInternalErrors()
+        assertNoSdkErrors()
     }
 
     @Test
@@ -1013,7 +1013,7 @@ internal class SessionPartWriterImplTest {
         writer.onSessionPartEnded(SESSION_PART_ID)
 
         assertEquals(listOf("network-request"), inFlightSpanNamesIn(SESSION_PART_ID))
-        assertNoInternalErrors()
+        assertNoSdkErrors()
     }
 
     @Test
@@ -1021,7 +1021,7 @@ internal class SessionPartWriterImplTest {
         val writer = createWriter()
         writer.onSessionPartStarted(clock.now(), USER_SESSION_ID, SESSION_PART_ID)
         assertEquals(emptyList<String>(), inFlightSpanNamesIn(SESSION_PART_ID))
-        assertNoInternalErrors()
+        assertNoSdkErrors()
     }
 
     @Test
@@ -1034,7 +1034,7 @@ internal class SessionPartWriterImplTest {
         writer.onSessionPartStarted(clock.now(), USER_SESSION_ID, SESSION_PART_ID)
         drain()
 
-        assertInternalErrors("SpanSnapshotsWriteFail")
+        assertSdkErrors("SpanSnapshotsWriteFail")
         assertEquals("user0", metadataOnDisk(SESSION_PART_ID)?.user_id)
         assertNull(spanSnapshotNamesOnDisk(SESSION_PART_ID))
 
@@ -1055,7 +1055,7 @@ internal class SessionPartWriterImplTest {
 
         // the change costs one record rather than a rewrite of everything in flight
         assertEquals(listOf("network-request", "view-load"), inFlightSpanNamesIn(SESSION_PART_ID))
-        assertNoInternalErrors()
+        assertNoSdkErrors()
     }
 
     @Test
@@ -1075,7 +1075,7 @@ internal class SessionPartWriterImplTest {
         assertEquals(listOf("network-request"), inFlightSpanNamesOnDisk(SESSION_PART_ID))
 
         assertEquals(1, reads)
-        assertNoInternalErrors()
+        assertNoSdkErrors()
     }
 
     @Test
@@ -1096,7 +1096,7 @@ internal class SessionPartWriterImplTest {
             listOf("span0", "view-load"),
             spanSnapshotNamesOnDisk(SESSION_PART_ID),
         )
-        assertNoInternalErrors()
+        assertNoSdkErrors()
     }
 
     @Test
@@ -1112,7 +1112,7 @@ internal class SessionPartWriterImplTest {
 
         assertEquals(listOf("span0", "view-load"), spanSnapshotNamesOnDisk(SESSION_PART_ID))
         assertEquals("span0", sessionSpanIn(SESSION_PART_ID)?.name)
-        assertNoInternalErrors()
+        assertNoSdkErrors()
     }
 
     @Test
@@ -1128,7 +1128,7 @@ internal class SessionPartWriterImplTest {
 
         assertEquals(listOf("span0", "span1"), spanSnapshotNamesOnDisk(SESSION_PART_ID))
         assertEquals("span1", sessionSpanIn(SESSION_PART_ID)?.name)
-        assertNoInternalErrors()
+        assertNoSdkErrors()
     }
 
     @Test
@@ -1145,7 +1145,7 @@ internal class SessionPartWriterImplTest {
         drain()
 
         assertEquals(listOf("network-request"), inFlightSpanNamesOnDisk(SESSION_PART_ID))
-        assertNoInternalErrors()
+        assertNoSdkErrors()
     }
 
     @Test
@@ -1159,7 +1159,7 @@ internal class SessionPartWriterImplTest {
         drain()
 
         assertEquals(listOf("network-request"), inFlightSpanNamesOnDisk(SESSION_PART_ID))
-        assertNoInternalErrors()
+        assertNoSdkErrors()
     }
 
     @Test
@@ -1179,7 +1179,7 @@ internal class SessionPartWriterImplTest {
 
         assertEquals(listOf("network-request", "network-request"), inFlightSpanNamesOnDisk(SESSION_PART_ID))
         assertEquals(listOf("next-part-span"), inFlightSpanNamesOnDisk(OTHER_SESSION_PART_ID))
-        assertNoInternalErrors()
+        assertNoSdkErrors()
     }
 
     @Test
@@ -1192,7 +1192,7 @@ internal class SessionPartWriterImplTest {
         drain()
 
         assertEquals(listOf("view-load"), inFlightSpanNamesOnDisk(SESSION_PART_ID))
-        assertNoInternalErrors()
+        assertNoSdkErrors()
     }
 
     @Test
@@ -1202,7 +1202,7 @@ internal class SessionPartWriterImplTest {
 
         assertEquals(emptyList<SessionPartDirectory>(), sessionPartDirs())
         assertEquals(0, executor.submitCount)
-        assertNoInternalErrors()
+        assertNoSdkErrors()
     }
 
     @Test
@@ -1221,7 +1221,7 @@ internal class SessionPartWriterImplTest {
         writer.onSpanSnapshotChanged(inFlightSpans.single())
 
         assertEquals(listOf("network-request"), inFlightSpanNamesIn(SESSION_PART_ID))
-        assertNoInternalErrors()
+        assertNoSdkErrors()
     }
 
     @Test
@@ -1240,7 +1240,7 @@ internal class SessionPartWriterImplTest {
         drain()
 
         assertEquals(emptyList<String>(), inFlightSpanNamesOnDisk(SESSION_PART_ID))
-        assertNoInternalErrors()
+        assertNoSdkErrors()
     }
 
     @Test
@@ -1266,7 +1266,7 @@ internal class SessionPartWriterImplTest {
         writer.onSessionPartEnded(SESSION_PART_ID)
 
         assertEquals(listOf("view-load"), inFlightSpanNamesIn(SESSION_PART_ID))
-        assertNoInternalErrors()
+        assertNoSdkErrors()
     }
 
     @Test
@@ -1283,7 +1283,7 @@ internal class SessionPartWriterImplTest {
 
         assertTrue(checkNotNull(currentSessionPartSpan.current()).isRecording)
         assertEquals(listOf(endedSpanId), snapshotSessionSpanIdsIn(SESSION_PART_ID))
-        assertNoInternalErrors()
+        assertNoSdkErrors()
     }
 
     @Test
@@ -1298,7 +1298,7 @@ internal class SessionPartWriterImplTest {
 
         assertEquals(emptyList<String>(), inFlightSpanNamesIn(SESSION_PART_ID))
         assertEquals("span1", sessionSpanIn(SESSION_PART_ID)?.name)
-        assertNoInternalErrors()
+        assertNoSdkErrors()
     }
 
     @Test
@@ -1317,7 +1317,7 @@ internal class SessionPartWriterImplTest {
         writer.onSessionPartStarted(clock.now(), USER_SESSION_ID, OTHER_SESSION_PART_ID)
 
         assertEquals(listOf("view-load"), inFlightSpanNamesIn(OTHER_SESSION_PART_ID))
-        assertNoInternalErrors()
+        assertNoSdkErrors()
     }
 
     @Test
@@ -1328,7 +1328,7 @@ internal class SessionPartWriterImplTest {
 
         assertEquals(emptyList<SessionPartDirectory>(), sessionPartDirs())
         assertEquals(0, executor.submitCount)
-        assertNoInternalErrors()
+        assertNoSdkErrors()
     }
 
     @Test
@@ -1344,7 +1344,7 @@ internal class SessionPartWriterImplTest {
 
         assertEquals(submitCount, executor.submitCount)
         assertEquals(listOf("network-request"), inFlightSpanNamesOnDisk(SESSION_PART_ID))
-        assertNoInternalErrors()
+        assertNoSdkErrors()
     }
 
     @Test
@@ -1366,7 +1366,7 @@ internal class SessionPartWriterImplTest {
         assertEquals(submitCount, executor.submitCount)
         assertEquals("span0", sessionSpanOnDisk(SESSION_PART_ID)?.name)
         assertNull(sessionSpanOnDisk(SESSION_PART_ID)?.end_time_unix_nano)
-        assertNoInternalErrors()
+        assertNoSdkErrors()
     }
 
     @Test
@@ -1380,7 +1380,7 @@ internal class SessionPartWriterImplTest {
 
         assertEquals(listOf(SESSION_PART_ID), partDirs().map(SessionPartDirectory::sessionPartId))
         assertEquals(submitCount, executor.submitCount)
-        assertNoInternalErrors()
+        assertNoSdkErrors()
     }
 
     @Test
@@ -1391,7 +1391,7 @@ internal class SessionPartWriterImplTest {
 
         assertEquals(emptyList<SessionPartDirectory>(), partDirs())
         assertFalse(executor.isShutdown)
-        assertNoInternalErrors()
+        assertNoSdkErrors()
     }
 
     @Test
@@ -1403,7 +1403,7 @@ internal class SessionPartWriterImplTest {
         writer.onSpanCompleted(listOf(completedSpan("network-request")))
 
         assertEquals(listOf("network-request"), completedSpanNamesIn(SESSION_PART_ID))
-        assertNoInternalErrors()
+        assertNoSdkErrors()
     }
 
     @Test
@@ -1416,7 +1416,7 @@ internal class SessionPartWriterImplTest {
         writer.onSpanCompleted(listOf(completedSpan("third")))
 
         assertEquals(listOf("first", "second", "third"), completedSpanNamesIn(SESSION_PART_ID))
-        assertNoInternalErrors()
+        assertNoSdkErrors()
     }
 
     @Test
@@ -1431,7 +1431,7 @@ internal class SessionPartWriterImplTest {
         drain()
 
         assertEquals(listOf("first", "second"), completedSpanNamesIn(SESSION_PART_ID))
-        assertNoInternalErrors()
+        assertNoSdkErrors()
     }
 
     @Test
@@ -1441,7 +1441,7 @@ internal class SessionPartWriterImplTest {
         drain()
 
         assertNull(partFile(SESSION_PART_ID, COMPLETED_SPANS_FILE_NAME))
-        assertNoInternalErrors()
+        assertNoSdkErrors()
     }
 
     @Test
@@ -1455,7 +1455,7 @@ internal class SessionPartWriterImplTest {
 
         assertEquals(submitCount, executor.submitCount)
         assertNull(partFile(SESSION_PART_ID, COMPLETED_SPANS_FILE_NAME))
-        assertNoInternalErrors()
+        assertNoSdkErrors()
     }
 
     @Test
@@ -1473,7 +1473,7 @@ internal class SessionPartWriterImplTest {
         // the first part's own session span is logged alongside what completed while it was active
         assertEquals(listOf("first", "span0"), completedSpanNamesIn(SESSION_PART_ID))
         assertEquals(listOf("second"), completedSpanNamesIn(OTHER_SESSION_PART_ID))
-        assertNoInternalErrors()
+        assertNoSdkErrors()
     }
 
     @Test
@@ -1485,7 +1485,7 @@ internal class SessionPartWriterImplTest {
 
         writer.onSessionPartStarted(clock.now(), USER_SESSION_ID, SESSION_PART_ID)
         assertEquals(listOf("network-request"), completedSpanNamesIn(SESSION_PART_ID))
-        assertNoInternalErrors()
+        assertNoSdkErrors()
     }
 
     @Test
@@ -1510,7 +1510,7 @@ internal class SessionPartWriterImplTest {
             listOf("mf-write-metadata", "mf-write-completed-spans"),
             recorder.sections.filter { it == "mf-write-metadata" || it == "mf-write-completed-spans" },
         )
-        assertNoInternalErrors()
+        assertNoSdkErrors()
     }
 
     @Test
@@ -1529,7 +1529,7 @@ internal class SessionPartWriterImplTest {
         writer.onSessionPartStarted(clock.now(), USER_SESSION_ID, OTHER_SESSION_PART_ID)
 
         assertEquals(emptyList<String?>(), completedSpanNamesIn(OTHER_SESSION_PART_ID))
-        assertNoInternalErrors()
+        assertNoSdkErrors()
     }
 
     @Test
@@ -1544,7 +1544,7 @@ internal class SessionPartWriterImplTest {
             List(2) { "carried_over_span" to AppliedLimitType.DROP },
             telemetryService.appliedLimits,
         )
-        assertNoInternalErrors()
+        assertNoSdkErrors()
     }
 
     @Test
@@ -1555,7 +1555,7 @@ internal class SessionPartWriterImplTest {
 
         assertEquals(emptyList<SessionPartDirectory>(), sessionPartDirs())
         assertEquals(0, executor.submitCount)
-        assertNoInternalErrors()
+        assertNoSdkErrors()
     }
 
     @Test
@@ -1569,7 +1569,7 @@ internal class SessionPartWriterImplTest {
 
         writer.onCrash()
         assertFalse(writer.onSpanCompleted(listOf(completedSpan("dropped"))))
-        assertNoInternalErrors()
+        assertNoSdkErrors()
     }
 
     @Test
@@ -1589,7 +1589,7 @@ internal class SessionPartWriterImplTest {
 
         assertEquals(submitCount, executor.submitCount)
         assertEquals(listOf("first"), completedSpanNamesOnDisk(SESSION_PART_ID))
-        assertNoInternalErrors()
+        assertNoSdkErrors()
     }
 
     @Test
@@ -1601,7 +1601,7 @@ internal class SessionPartWriterImplTest {
 
         writer.onSessionPartStarted(clock.now(), USER_SESSION_ID, SESSION_PART_ID)
         assertEquals(emptyList<SpanProto>(), completedSessionSpansIn(SESSION_PART_ID))
-        assertInternalErrors("OrphanedSessionSpan")
+        assertSdkErrors("OrphanedSessionSpan")
     }
 
     /**
@@ -1796,11 +1796,11 @@ internal class SessionPartWriterImplTest {
         return File(File(sessionsDir, directory.dirName), fileName).takeIf(File::isFile)
     }
 
-    private fun assertInternalErrors(vararg expected: String) {
-        assertEquals(expected.sorted(), errorHandler.internalErrorMessages.map { it.msg }.sorted())
+    private fun assertSdkErrors(vararg expected: String) {
+        assertEquals(expected.sorted(), errorHandler.sdkErrorMessages.map { it.msg }.sorted())
     }
 
-    private fun assertNoInternalErrors() {
-        assertEquals(emptyList<FakeErrorHandler.LogMessage>(), errorHandler.internalErrorMessages)
+    private fun assertNoSdkErrors() {
+        assertEquals(emptyList<FakeErrorHandler.LogMessage>(), errorHandler.sdkErrorMessages)
     }
 }

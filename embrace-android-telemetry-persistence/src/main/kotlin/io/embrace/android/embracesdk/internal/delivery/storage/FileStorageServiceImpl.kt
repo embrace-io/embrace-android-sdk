@@ -4,7 +4,7 @@ import io.embrace.android.embracesdk.internal.clock.Clock
 import io.embrace.android.embracesdk.internal.delivery.StoredTelemetryMetadata
 import io.embrace.android.embracesdk.internal.delivery.traceSection
 import io.embrace.android.embracesdk.internal.logging.ErrorHandler
-import io.embrace.android.embracesdk.internal.logging.InternalErrorType
+import io.embrace.android.embracesdk.internal.logging.SdkErrorType
 import io.embrace.android.embracesdk.internal.utils.CountingOutputStream
 import io.embrace.android.embracesdk.internal.utils.FileWriteCounters
 import io.embrace.android.embracesdk.internal.utils.SystemTrace
@@ -34,7 +34,7 @@ class FileStorageServiceImpl(
         layout = StoredTelemetryMetadataLayout,
         clock = clock,
         errorHandler = errorHandler,
-        errorType = InternalErrorType.PayloadStorageFail,
+        errorType = SdkErrorType.PayloadStorageFail,
         storageLimit = storageLimit,
         maxAgeMs = maxAgeMs,
     )
@@ -45,7 +45,7 @@ class FileStorageServiceImpl(
         } catch (t: Throwable) {
             // Building the payload or writing it failed. A file system in trouble, such as a full disk, is
             // not expected to recover soon, so this is not worth retrying.
-            errorHandler.trackInternalError(InternalErrorType.PayloadStorageFail, t)
+            errorHandler.trackSdkError(SdkErrorType.PayloadStorageFail, t)
             StorageOutcome.FAILED
         }
     }
@@ -104,7 +104,7 @@ class FileStorageServiceImpl(
         } catch (_: FileNotFoundException) {
             null
         } catch (exc: Throwable) {
-            errorHandler.trackInternalError(InternalErrorType.PayloadStorageFail, exc)
+            errorHandler.trackSdkError(SdkErrorType.PayloadStorageFail, exc)
             null
         }
     }

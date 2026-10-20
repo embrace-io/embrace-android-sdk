@@ -2,7 +2,7 @@ package io.embrace.android.embracesdk.internal.clock
 
 import android.os.SystemClock
 import io.embrace.android.embracesdk.internal.logging.ErrorHandler
-import io.embrace.android.embracesdk.internal.logging.InternalErrorType
+import io.embrace.android.embracesdk.internal.logging.SdkErrorType
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicLong
 import kotlin.math.max
@@ -14,7 +14,7 @@ import kotlin.math.max
  * This is useful when it is necessary to perform interval timing but the results must be
  * sent to the API in a way that matches the device time.
  *
- * If [errorHandler] is provided, an internal error is tracked whenever successive [now] calls detect that time
+ * If [errorHandler] is provided, an SDK error is tracked whenever successive [now] calls detect that time
  * drifted backwards by more than [driftThresholdMs] milliseconds.
  */
 class NormalizedIntervalClock(
@@ -46,8 +46,8 @@ class NormalizedIntervalClock(
 
             if (prev != Long.MIN_VALUE && newTime < prev - driftThresholdMs) {
                 if (hasLoggedDrift.compareAndSet(false, true)) {
-                    errorHandler?.trackInternalError(
-                        InternalErrorType.InternalInterfaceFail,
+                    errorHandler?.trackSdkError(
+                        SdkErrorType.InternalInterfaceFail,
                         IllegalStateException(
                             "NormalizedIntervalClock drifted back in time by more than threshold. Delivery is likely out-of-order.",
                         ),

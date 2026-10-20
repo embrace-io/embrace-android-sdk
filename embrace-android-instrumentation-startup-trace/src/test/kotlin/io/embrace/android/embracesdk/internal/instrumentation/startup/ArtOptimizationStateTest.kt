@@ -31,7 +31,7 @@ internal class ArtOptimizationStateTest {
     fun setUp() {
         val apkDir = tmp.newFolder("data", "app", "~~abc", "io.embrace.test-xyz")
         apk = File(apkDir, "base.apk").apply { writeBytes(ByteArray(16)) }
-        errorHandler = FakeErrorHandler(throwOnInternalError = false)
+        errorHandler = FakeErrorHandler(throwOnSdkError = false)
     }
 
     @Test
@@ -92,7 +92,7 @@ internal class ArtOptimizationStateTest {
         writeOdex("compiler-filter-extra\u0000verify\u0000".toByteArray())
         assertEquals(ART_COMPILER_FILTER_NOT_FOUND, createState().artCompilerFilter)
 
-        assertEquals(emptyList<FakeErrorHandler.LogMessage>(), errorHandler.internalErrorMessages)
+        assertEquals(emptyList<FakeErrorHandler.LogMessage>(), errorHandler.sdkErrorMessages)
     }
 
     @Test
@@ -110,7 +110,7 @@ internal class ArtOptimizationStateTest {
         assertEquals(STRING_ERROR, state.artCompilerFilter)
         assertTrue(state.hasAppImage)
 
-        val reported = errorHandler.internalErrorMessages.single()
+        val reported = errorHandler.sdkErrorMessages.single()
         assertEquals("SdkInitAttributeCaptureFail", reported.msg)
         assertTrue(reported.throwable?.message?.endsWith(ART_COMPILER_FILTER) == true)
         assertTrue(reported.throwable?.cause is IOException)

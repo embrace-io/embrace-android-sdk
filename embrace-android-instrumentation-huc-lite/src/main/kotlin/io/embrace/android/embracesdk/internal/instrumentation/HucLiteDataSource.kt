@@ -16,7 +16,7 @@ import io.embrace.android.embracesdk.internal.clock.Clock
 import io.embrace.android.embracesdk.internal.instrumentation.network.getOverriddenURLString
 import io.embrace.android.embracesdk.internal.instrumentation.network.toStatusCodeString
 import io.embrace.android.embracesdk.internal.logging.ErrorHandler
-import io.embrace.android.embracesdk.internal.logging.InternalErrorType
+import io.embrace.android.embracesdk.internal.logging.SdkErrorType
 import io.embrace.android.embracesdk.internal.network.http.HttpRequestInfoModifierChain
 import io.embrace.android.embracesdk.internal.network.http.MutableHttpRequestInfoImpl
 import io.embrace.android.embracesdk.internal.telemetry.AppliedLimitType
@@ -130,12 +130,12 @@ class HucLiteDataSource(
 
             factoryInstaller(newFactory ?: instrumentedUrlStreamHandlerFactoryProvider())
         }.onFailure {
-            errorHandler.trackInternalError(InternalErrorType.UrlStreamHandlerFactoryInstallFail, it)
+            errorHandler.trackSdkError(SdkErrorType.UrlStreamHandlerFactoryInstallFail, it)
         }
     }
 
     private fun trackCaptureError(t: Throwable) {
-        errorHandler.trackInternalError(InternalErrorType.DataSourceDataCaptureFail, InstrumentationException(t))
+        errorHandler.trackSdkError(SdkErrorType.DataSourceDataCaptureFail, InstrumentationException(t))
     }
 
     class RequestData(

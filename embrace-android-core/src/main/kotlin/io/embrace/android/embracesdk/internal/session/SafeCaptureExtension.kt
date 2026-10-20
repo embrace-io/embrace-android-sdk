@@ -1,11 +1,11 @@
 package io.embrace.android.embracesdk.internal.session
 
 import io.embrace.android.embracesdk.internal.logging.ErrorHandler
-import io.embrace.android.embracesdk.internal.logging.InternalErrorType
+import io.embrace.android.embracesdk.internal.logging.SdkErrorType
 import io.embrace.android.embracesdk.internal.utils.Provider
 
 /**
- * Captures a block of data safely, logging any exceptions that occur as an internal error.
+ * Captures a block of data safely, logging any exceptions that occur as an SDK error.
  * This is intended for use when building the session/background activity payloads. If an
  * exception is thrown during capture, then we still want to send the request.
  */
@@ -13,7 +13,7 @@ internal inline fun <R> captureDataSafely(errorHandler: ErrorHandler, result: Pr
     return try {
         result()
     } catch (exc: Throwable) {
-        errorHandler.trackInternalError(InternalErrorType.SafeDataCaptureFail, exc)
+        errorHandler.trackSdkError(SdkErrorType.SafeDataCaptureFail, exc)
         null
     }
 }

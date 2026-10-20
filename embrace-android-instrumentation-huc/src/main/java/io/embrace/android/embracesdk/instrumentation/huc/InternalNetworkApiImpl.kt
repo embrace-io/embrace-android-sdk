@@ -4,7 +4,7 @@ import io.embrace.android.embracesdk.internal.arch.InstrumentationArgs
 import io.embrace.android.embracesdk.internal.instrumentation.network.HttpNetworkRequest
 import io.embrace.android.embracesdk.internal.instrumentation.network.NetworkCaptureDataSource
 import io.embrace.android.embracesdk.internal.instrumentation.network.NetworkRequestDataSource
-import io.embrace.android.embracesdk.internal.logging.InternalErrorType
+import io.embrace.android.embracesdk.internal.logging.SdkErrorType
 import io.embrace.android.embracesdk.network.EmbraceNetworkRequest
 
 internal class InternalNetworkApiImpl(
@@ -52,5 +52,5 @@ internal class InternalNetworkApiImpl(
         ) ?: false
     }
 
-    override fun logInternalError(error: Throwable) = args.errorHandler.trackInternalError(InternalErrorType.InternalInterfaceFail, error)
+    override fun logSdkError(error: Throwable) = args.errorHandler.trackSdkError(SdkErrorType.InternalInterfaceFail, error)
 }

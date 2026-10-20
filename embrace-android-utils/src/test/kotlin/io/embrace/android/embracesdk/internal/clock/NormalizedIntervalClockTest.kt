@@ -14,7 +14,7 @@ internal class NormalizedIntervalClockTest {
 
     @Before
     fun setUp() {
-        errorHandler = FakeErrorHandler(throwOnInternalError = false)
+        errorHandler = FakeErrorHandler(throwOnSdkError = false)
     }
 
     @Test
@@ -23,7 +23,7 @@ internal class NormalizedIntervalClockTest {
         clock.now()
         elapsedMs += 1_000L
         clock.now()
-        assertTrue(errorHandler.internalErrorMessages.isEmpty())
+        assertTrue(errorHandler.sdkErrorMessages.isEmpty())
     }
 
     @Test
@@ -33,7 +33,7 @@ internal class NormalizedIntervalClockTest {
         clock.now() // record high-water mark
         elapsedMs -= 59_999L // drift back by just under 60s
         clock.now()
-        assertTrue(errorHandler.internalErrorMessages.isEmpty())
+        assertTrue(errorHandler.sdkErrorMessages.isEmpty())
     }
 
     @Test
@@ -43,7 +43,7 @@ internal class NormalizedIntervalClockTest {
         clock.now() // record high-water mark
         elapsedMs -= 60_001L // drift back by just over 60s
         clock.now()
-        assertEquals(1, errorHandler.internalErrorMessages.size)
+        assertEquals(1, errorHandler.sdkErrorMessages.size)
     }
 
     @Test
@@ -65,7 +65,7 @@ internal class NormalizedIntervalClockTest {
         clock.now()
         elapsedMs -= 500L // 500ms back, under 1s threshold
         clock.now()
-        assertTrue(errorHandler.internalErrorMessages.isEmpty())
+        assertTrue(errorHandler.sdkErrorMessages.isEmpty())
     }
 
     @Test
@@ -75,7 +75,7 @@ internal class NormalizedIntervalClockTest {
         clock.now()
         elapsedMs -= 1_001L // 1001ms back, over 1s threshold
         clock.now()
-        assertEquals(1, errorHandler.internalErrorMessages.size)
+        assertEquals(1, errorHandler.sdkErrorMessages.size)
     }
 
     @Test
@@ -89,7 +89,7 @@ internal class NormalizedIntervalClockTest {
         clock.now() // new high-water mark
         elapsedMs -= 60_001L // second drift above threshold
         clock.now()
-        assertEquals(1, errorHandler.internalErrorMessages.size)
+        assertEquals(1, errorHandler.sdkErrorMessages.size)
     }
 
     @Test
@@ -97,7 +97,7 @@ internal class NormalizedIntervalClockTest {
         val clock = buildClock()
         elapsedMs = 0L // very low elapsed time
         clock.now() // no previous value, must not log
-        assertTrue(errorHandler.internalErrorMessages.isEmpty())
+        assertTrue(errorHandler.sdkErrorMessages.isEmpty())
     }
 
     private fun buildClock(driftThresholdMs: Long = NormalizedIntervalClock.DEFAULT_DRIFT_THRESHOLD_MS) =

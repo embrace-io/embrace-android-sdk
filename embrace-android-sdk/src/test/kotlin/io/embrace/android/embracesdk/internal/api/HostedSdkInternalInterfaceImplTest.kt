@@ -7,7 +7,7 @@ import io.embrace.android.embracesdk.fakes.FakeInternalTelemetryService
 import io.embrace.android.embracesdk.fakes.FakeKeyValueStore
 import io.embrace.android.embracesdk.internal.api.delegate.HostedSdkInternalInterfaceImpl
 import io.embrace.android.embracesdk.internal.envelope.metadata.FlutterSdkVersionInfo
-import io.embrace.android.embracesdk.internal.logging.InternalErrorType
+import io.embrace.android.embracesdk.internal.logging.SdkErrorType
 import io.mockk.mockk
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
@@ -23,7 +23,7 @@ internal class HostedSdkInternalInterfaceImplTest {
     @Before
     fun setUp() {
         telemetryService = FakeInternalTelemetryService()
-        errorHandler = FakeErrorHandler(throwOnInternalError = false)
+        errorHandler = FakeErrorHandler(throwOnSdkError = false)
         impl = HostedSdkInternalInterfaceImpl(
             logsApi = mockk(),
             configService = FakeConfigService(),
@@ -55,8 +55,8 @@ internal class HostedSdkInternalInterfaceImplTest {
         impl.logHandledUnityException("name", "message", null)
         assertEquals(listOf("set_javascript_bundle_url", "log_handled_unity_exception"), telemetryService.apiCalls)
         assertEquals(
-            listOf(InternalErrorType.PublicApiFail.toString(), InternalErrorType.PublicApiFail.toString()),
-            errorHandler.internalErrorMessages.map { it.msg },
+            listOf(SdkErrorType.PublicApiFail.toString(), SdkErrorType.PublicApiFail.toString()),
+            errorHandler.sdkErrorMessages.map { it.msg },
         )
     }
 
@@ -74,6 +74,6 @@ internal class HostedSdkInternalInterfaceImplTest {
             telemetryService = telemetryService,
         )
         assertFalse(throwingImpl.isNetworkSpanForwardingEnabled())
-        assertEquals(1, errorHandler.internalErrorMessages.size)
+        assertEquals(1, errorHandler.sdkErrorMessages.size)
     }
 }

@@ -43,7 +43,7 @@ interface InstrumentationArgs {
     val destination: TelemetryDestination
 
     /**
-     * Logs messages & guards SDK code, tracking internal errors for Embrace's telemetry.
+     * Logs messages & guards SDK code, tracking SDK errors for Embrace's telemetry.
      */
     val errorHandler: ErrorHandler
 

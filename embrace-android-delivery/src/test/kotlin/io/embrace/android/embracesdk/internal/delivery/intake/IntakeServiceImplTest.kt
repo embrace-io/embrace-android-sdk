@@ -15,7 +15,7 @@ import io.embrace.android.embracesdk.internal.delivery.SupportedEnvelopeType.LOG
 import io.embrace.android.embracesdk.internal.delivery.SupportedEnvelopeType.SESSION
 import io.embrace.android.embracesdk.internal.delivery.storage.PayloadStorageServiceImpl
 import io.embrace.android.embracesdk.internal.delivery.storedTelemetryRunnableComparator
-import io.embrace.android.embracesdk.internal.logging.InternalErrorType
+import io.embrace.android.embracesdk.internal.logging.SdkErrorType
 import io.embrace.android.embracesdk.internal.payload.Envelope
 import io.embrace.android.embracesdk.internal.payload.Log
 import io.embrace.android.embracesdk.internal.payload.LogPayload
@@ -231,7 +231,7 @@ class IntakeServiceImplTest {
 
         // assert nothing was stored but no exception was thrown
         assertEquals(0, payloadStorageService.storedPayloadCount())
-        val throwable = errorHandler.internalErrorMessages.single().throwable
+        val throwable = errorHandler.sdkErrorMessages.single().throwable
         assertTrue(throwable is IOException)
     }
 
@@ -377,7 +377,7 @@ class IntakeServiceImplTest {
         }
         assertFalse(cacheStorageService.storedFilenames().contains(snapshot2.filename))
         assertTrue(payloadStorageService.storedFilenames().contains(session.filename))
-        assertTrue(errorHandler.internalErrorMessages.isEmpty())
+        assertTrue(errorHandler.sdkErrorMessages.isEmpty())
     }
 
     @Test
@@ -408,7 +408,7 @@ class IntakeServiceImplTest {
         }
 
         assertEquals(snapshot2.filename, cacheStorageService.storedFilenames().single())
-        assertTrue(errorHandler.internalErrorMessages.isEmpty())
+        assertTrue(errorHandler.sdkErrorMessages.isEmpty())
     }
 
     @Test
@@ -473,7 +473,7 @@ class IntakeServiceImplTest {
     }
 
     @Test
-    fun `intake of cache request for unexpected envelope type will succeed but produce internal error`() {
+    fun `intake of cache request for unexpected envelope type will succeed but produce SDK error`() {
         executorService.blockingMode = false
         val cache1 =
             StoredTelemetryMetadata(clock.now(), UUID, PROCESS_ID, BLOB, false, PayloadType.AEI).apply {
@@ -484,7 +484,7 @@ class IntakeServiceImplTest {
             }
 
         assertEquals(cache1.filename, cacheStorageService.storedFilenames().single())
-        assertEquals(InternalErrorType.IntakeUnexpectedType.toString(), errorHandler.internalErrorMessages.single().msg)
+        assertEquals(SdkErrorType.IntakeUnexpectedType.toString(), errorHandler.sdkErrorMessages.single().msg)
     }
 
     @Test
@@ -818,7 +818,7 @@ class IntakeServiceImplTest {
 
         assertEquals(0, payloadStorageService.storedPayloadCount())
         assertEquals(0, storedCount)
-        assertTrue(errorHandler.internalErrorMessages.single().throwable is IOException)
+        assertTrue(errorHandler.sdkErrorMessages.single().throwable is IOException)
     }
 
     @Test
@@ -836,7 +836,7 @@ class IntakeServiceImplTest {
         assertEquals(0, storedCount)
         assertEquals(IntakeResult.RETRYABLE_FAILURE, future.get())
         assertEquals(0, schedulingService.payloadIntakeCount)
-        assertTrue(errorHandler.internalErrorMessages.isEmpty())
+        assertTrue(errorHandler.sdkErrorMessages.isEmpty())
     }
 
     @Test
@@ -852,7 +852,7 @@ class IntakeServiceImplTest {
         assertEquals(0, storedCount)
         assertEquals(IntakeResult.PERMANENT_FAILURE, future.get())
         assertEquals(0, schedulingService.payloadIntakeCount)
-        assertTrue(errorHandler.internalErrorMessages.isEmpty())
+        assertTrue(errorHandler.sdkErrorMessages.isEmpty())
     }
 
     @Test
@@ -918,7 +918,7 @@ class IntakeServiceImplTest {
         assertEquals(1, storedCount)
         assertEquals(listOf(sessionMetadata), fileStorageService.getPayloadsByPriority())
         assertEquals(1, schedulingService.payloadIntakeCount)
-        assertTrue(errorHandler.internalErrorMessages.isEmpty())
+        assertTrue(errorHandler.sdkErrorMessages.isEmpty())
     }
 
     @Test
@@ -981,7 +981,7 @@ class IntakeServiceImplTest {
         assertEquals(2, storedCount)
         assertEquals(listOf(sessionMetadata), fileStorageService.getPayloadsByPriority())
         assertEquals(2, schedulingService.payloadIntakeCount)
-        assertTrue(errorHandler.internalErrorMessages.isEmpty())
+        assertTrue(errorHandler.sdkErrorMessages.isEmpty())
     }
 
     private fun assertIntakeRejected(envelope: Envelope<*>, metadata: StoredTelemetryMetadata) {

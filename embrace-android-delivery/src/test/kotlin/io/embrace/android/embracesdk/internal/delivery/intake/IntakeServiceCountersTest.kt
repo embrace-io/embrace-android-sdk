@@ -45,7 +45,7 @@ internal class IntakeServiceCountersTest {
             FakeSchedulingService(),
             FakePayloadStorageService(),
             FakePayloadStorageService(),
-            FakeErrorHandler(throwOnInternalError = false),
+            FakeErrorHandler(throwOnSdkError = false),
             serializer,
             PriorityWorker(executorService),
         )

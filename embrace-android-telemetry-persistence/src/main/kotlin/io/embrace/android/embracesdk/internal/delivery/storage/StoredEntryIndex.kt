@@ -2,7 +2,7 @@ package io.embrace.android.embracesdk.internal.delivery.storage
 
 import io.embrace.android.embracesdk.internal.clock.Clock
 import io.embrace.android.embracesdk.internal.logging.ErrorHandler
-import io.embrace.android.embracesdk.internal.logging.InternalErrorType
+import io.embrace.android.embracesdk.internal.logging.SdkErrorType
 import io.embrace.android.embracesdk.internal.utils.SystemTrace
 import io.embrace.android.embracesdk.internal.utils.threadSafeToList
 import java.io.File
@@ -22,7 +22,7 @@ class StoredEntryIndex<T>(
     private val layout: StoredEntryLayout<T>,
     private val clock: Clock,
     private val errorHandler: ErrorHandler,
-    private val errorType: InternalErrorType,
+    private val errorType: SdkErrorType,
     private val storageLimit: Int,
     private val maxAgeMs: Long,
 ) {
@@ -71,7 +71,7 @@ class StoredEntryIndex<T>(
             layout.delete(fileFor(entry))
         } catch (exc: Throwable) {
             if (exc !is FileNotFoundException) {
-                errorHandler.trackInternalError(errorType, exc)
+                errorHandler.trackSdkError(errorType, exc)
             }
         } finally {
             entries.remove(entry)

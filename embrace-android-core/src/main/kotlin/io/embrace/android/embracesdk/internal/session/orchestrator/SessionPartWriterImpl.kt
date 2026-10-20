@@ -8,7 +8,7 @@ import io.embrace.android.embracesdk.internal.envelope.resource.EnvelopeResource
 import io.embrace.android.embracesdk.internal.envelope.session.SESSION_ENVELOPE_TYPE
 import io.embrace.android.embracesdk.internal.envelope.session.SESSION_ENVELOPE_VERSION
 import io.embrace.android.embracesdk.internal.logging.ErrorHandler
-import io.embrace.android.embracesdk.internal.logging.InternalErrorType
+import io.embrace.android.embracesdk.internal.logging.SdkErrorType
 import io.embrace.android.embracesdk.internal.otel.spans.EmbraceSdkSpan
 import io.embrace.android.embracesdk.internal.otel.spans.hasEmbraceAttribute
 import io.embrace.android.embracesdk.internal.payload.Span
@@ -157,7 +157,7 @@ class SessionPartWriterImpl(
     }
 
     private fun reportMissedEnd(msg: String) =
-        errorHandler.trackInternalError(InternalErrorType.SessionPartEndMissed, IllegalStateException(msg))
+        errorHandler.trackSdkError(SdkErrorType.SessionPartEndMissed, IllegalStateException(msg))
 
     override fun onMetadataChanged() {
         if (!acceptingWrites()) {
@@ -233,7 +233,7 @@ class SessionPartWriterImpl(
             return
         }
         resourceListenerRegistered = true
-        execute(null, InternalErrorType.SessionMetadataWriteFail, { worker.submit(it) }) {
+        execute(null, SdkErrorType.SessionMetadataWriteFail, { worker.submit(it) }) {
             resourceSource.addChangeListener { _ -> onResourceChanged() }
         }
     }
@@ -254,10 +254,10 @@ class SessionPartWriterImpl(
         val spans = try {
             inFlightSpanSource()
         } catch (exc: Throwable) {
-            errorHandler.trackInternalError(InternalErrorType.SpanSnapshotsWriteFail, exc)
+            errorHandler.trackSdkError(SdkErrorType.SpanSnapshotsWriteFail, exc)
             return@trace
         }
-        execute(writers, InternalErrorType.SpanSnapshotsWriteFail, { worker.submit(it) }) {
+        execute(writers, SdkErrorType.SpanSnapshotsWriteFail, { worker.submit(it) }) {
             writers.spanSnapshots.write(writers.snapshotsOf(spans))
         }
     }
@@ -279,8 +279,8 @@ class SessionPartWriterImpl(
         }
     }
 
-    private fun reportOrphanedSessionSpan() = errorHandler.trackInternalError(
-        InternalErrorType.OrphanedSessionSpan,
+    private fun reportOrphanedSessionSpan() = errorHandler.trackSdkError(
+        SdkErrorType.OrphanedSessionSpan,
         IllegalStateException("Session span completed with no session part to write it to"),
     )
 
@@ -289,7 +289,7 @@ class SessionPartWriterImpl(
      */
     private fun execute(
         writers: PartWriters?,
-        errorType: InternalErrorType,
+        errorType: SdkErrorType,
         submit: (Runnable) -> Unit,
         action: () -> Unit,
     ) {
@@ -301,10 +301,10 @@ class SessionPartWriterImpl(
 
     /**
      * Wraps a write so that it is dropped once [abandoned] reports the session part is done with,
-     * and so that a failure is tracked as an internal error rather than escaping onto the [worker].
+     * and so that a failure is tracked as an SDK error rather than escaping onto the [worker].
      */
     internal fun guard(
-        errorType: InternalErrorType,
+        errorType: SdkErrorType,
         abandoned: () -> Boolean = { false },
     ): (Runnable) -> Runnable = { task ->
         Runnable {
@@ -312,7 +312,7 @@ class SessionPartWriterImpl(
                 try {
                     task.run()
                 } catch (exc: Throwable) {
-                    errorHandler.trackInternalError(errorType, exc)
+                    errorHandler.trackSdkError(errorType, exc)
                 }
             }
         }
@@ -325,7 +325,7 @@ class SessionPartWriterImpl(
         try {
             onWritesComplete()
         } catch (exc: Throwable) {
-            errorHandler.trackInternalError(InternalErrorType.SessionPartWritesCompleteFail, exc)
+            errorHandler.trackSdkError(SdkErrorType.SessionPartWritesCompleteFail, exc)
         }
     }
 
@@ -372,7 +372,7 @@ class SessionPartWriterImpl(
             worker = worker,
             delayMs = METADATA_WRITE_DELAY_MS,
             queue = metadataChangeQueue(),
-            guard = guard(InternalErrorType.SessionMetadataWriteFail) { abandoned },
+            guard = guard(SdkErrorType.SessionMetadataWriteFail) { abandoned },
             onWrite = { metadata.write() },
         )
 
@@ -380,7 +380,7 @@ class SessionPartWriterImpl(
             worker = worker,
             delayMs = COMPLETED_SPAN_WRITE_DELAY_MS,
             queue = completedSpansQueue(),
-            guard = guard(InternalErrorType.CompletedSpansWriteFail),
+            guard = guard(SdkErrorType.CompletedSpansWriteFail),
             onWrite = ::writeCompletedSpans,
         )
 
@@ -388,7 +388,7 @@ class SessionPartWriterImpl(
             worker = worker,
             delayMs = SPAN_SNAPSHOT_WRITE_DELAY_MS,
             queue = spanSnapshotsQueue(),
-            guard = guard(InternalErrorType.SpanSnapshotsWriteFail) { abandoned },
+            guard = guard(SdkErrorType.SpanSnapshotsWriteFail) { abandoned },
             onWrite = ::writeSpanSnapshots,
         )
 

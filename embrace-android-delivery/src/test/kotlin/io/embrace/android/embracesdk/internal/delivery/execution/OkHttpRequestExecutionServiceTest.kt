@@ -151,7 +151,7 @@ class OkHttpRequestExecutionServiceTest {
     }
 
     @Test
-    fun `return incomplete with no internal error logged if the execution throws IOException`() {
+    fun `return incomplete with no SDK error logged if the execution throws IOException`() {
         // given a server that drops the connection
         server.enqueue(MockResponse().setSocketPolicy(SocketPolicy.DISCONNECT_AT_START))
 
@@ -166,7 +166,7 @@ class OkHttpRequestExecutionServiceTest {
         check(result is ExecutionResult.Incomplete)
         assertTrue(result.retry)
         assertTrue(result.exception is IOException)
-        assertEquals(0, errorHandler.internalErrorMessages.size)
+        assertEquals(0, errorHandler.sdkErrorMessages.size)
     }
 
     @Test

@@ -4,7 +4,7 @@ import io.embrace.android.embracesdk.internal.clock.Clock
 import io.embrace.android.embracesdk.internal.delivery.storage.StoredEntryIndex
 import io.embrace.android.embracesdk.internal.delivery.storage.StoredEntryLayout
 import io.embrace.android.embracesdk.internal.logging.ErrorHandler
-import io.embrace.android.embracesdk.internal.logging.InternalErrorType
+import io.embrace.android.embracesdk.internal.logging.SdkErrorType
 import io.embrace.android.embracesdk.internal.worker.BackgroundWorker
 import java.io.File
 import java.io.IOException
@@ -43,7 +43,7 @@ class SessionPartDirectoryStore(
         layout = SessionPartDirectoryLayout,
         clock = clock,
         errorHandler = errorHandler,
-        errorType = InternalErrorType.SessionPartDirectoryStoreFail,
+        errorType = SdkErrorType.SessionPartDirectoryStoreFail,
         storageLimit = storageLimit,
         maxAgeMs = maxAgeMs,
     )
@@ -56,7 +56,7 @@ class SessionPartDirectoryStore(
         try {
             createImpl(directory)
         } catch (exc: Throwable) {
-            errorHandler.trackInternalError(InternalErrorType.SessionPartDirectoryStoreFail, exc)
+            errorHandler.trackSdkError(SdkErrorType.SessionPartDirectoryStoreFail, exc)
         }
     }
 

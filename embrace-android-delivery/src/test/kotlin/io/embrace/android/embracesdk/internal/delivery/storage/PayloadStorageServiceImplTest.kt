@@ -89,7 +89,7 @@ class PayloadStorageServiceImplTest {
     @Test
     fun `payload size is zero for a non existent file`() {
         assertEquals(0L, service.payloadSizeBytes(metadata))
-        assertTrue(errorHandler.internalErrorMessages.isEmpty())
+        assertTrue(errorHandler.sdkErrorMessages.isEmpty())
     }
 
     @Test
@@ -101,7 +101,7 @@ class PayloadStorageServiceImplTest {
     @Test
     fun `load non existent file`() {
         assertNull(service.loadPayloadAsStream(metadata))
-        assertTrue(errorHandler.internalErrorMessages.isEmpty())
+        assertTrue(errorHandler.sdkErrorMessages.isEmpty())
     }
 
     @Test
@@ -109,7 +109,7 @@ class PayloadStorageServiceImplTest {
         service.store(metadata) {
             error("Whoops!")
         }
-        assertNotNull(errorHandler.internalErrorMessages.single().throwable)
+        assertNotNull(errorHandler.sdkErrorMessages.single().throwable)
     }
 
     @Test

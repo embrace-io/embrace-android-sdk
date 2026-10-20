@@ -1,7 +1,7 @@
 package io.embrace.android.embracesdk.internal.session.persistence
 
 import io.embrace.android.embracesdk.fakes.FakeClock
-import io.embrace.android.embracesdk.fakes.FakeInternalLogger
+import io.embrace.android.embracesdk.fakes.FakeErrorHandler
 import io.embrace.android.embracesdk.fakes.FakeSectionRecorder
 import io.embrace.android.embracesdk.internal.payload.EnvelopeMetadata
 import io.embrace.android.embracesdk.internal.payload.EnvelopeResource
@@ -41,7 +41,7 @@ internal class SessionMetadataWriterTest {
 
     private lateinit var sessionsDir: File
     private lateinit var clock: FakeClock
-    private lateinit var logger: FakeInternalLogger
+    private lateinit var errorHandler: FakeErrorHandler
     private lateinit var writer: SessionMetadataWriter
 
     @Volatile
@@ -62,7 +62,7 @@ internal class SessionMetadataWriterTest {
     fun setUp() {
         sessionsDir = tempFolder.newFolder("embrace_sessions")
         clock = FakeClock()
-        logger = FakeInternalLogger(throwOnInternalError = false)
+        errorHandler = FakeErrorHandler(throwOnInternalError = false)
         metadataProvider = { fullyPopulatedMetadata }
         resourceProvider = { fullyPopulatedResource }
         symbolProvider = { null }
@@ -377,7 +377,7 @@ internal class SessionMetadataWriterTest {
         assertFalse(writer.write())
         assertEquals(currentMetadata, readMetadata())
         assertWriteFailureTracked()
-        assertEquals(OVERSIZED_PART_FILE_MSG, logger.internalErrorMessages.single().throwable?.message)
+        assertEquals(OVERSIZED_PART_FILE_MSG, errorHandler.internalErrorMessages.single().throwable?.message)
     }
 
     @Test
@@ -500,7 +500,7 @@ internal class SessionMetadataWriterTest {
             envelopeVersion = ENVELOPE_VERSION,
             envelopeType = ENVELOPE_TYPE,
             sharedLibSymbolMappingSource = { symbolProvider() },
-            logger = logger,
+            errorHandler = errorHandler,
         )
 
     private fun createPartDir(directory: SessionPartDirectory): File =
@@ -525,12 +525,12 @@ internal class SessionMetadataWriterTest {
         metadata.copy(written_at_ms = clock.now())
 
     private fun assertNoInternalErrors() {
-        assertEquals(emptyList<FakeInternalLogger.LogMessage>(), logger.internalErrorMessages)
+        assertEquals(emptyList<FakeErrorHandler.LogMessage>(), errorHandler.internalErrorMessages)
     }
 
     private fun assertWriteFailureTracked() {
-        assertEquals(1, logger.internalErrorMessages.size)
-        assertEquals("SessionMetadataWriteFail", logger.internalErrorMessages.single().msg)
+        assertEquals(1, errorHandler.internalErrorMessages.size)
+        assertEquals("SessionMetadataWriteFail", errorHandler.internalErrorMessages.single().msg)
     }
 
     /**

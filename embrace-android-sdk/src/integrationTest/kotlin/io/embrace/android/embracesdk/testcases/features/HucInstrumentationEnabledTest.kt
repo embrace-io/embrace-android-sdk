@@ -28,7 +28,7 @@ internal class HucInstrumentationEnabledTest(
     fun `sdk starts successfully but internal error logged when HUC instrumentation enabled`() {
         testRule.runTest(
             setupAction = {
-                getEmbLogger().throwOnInternalError = false
+                getFakeErrorHandler().throwOnInternalError = false
             },
             instrumentedConfig = FakeInstrumentedConfig(
                 enabledFeatures = FakeEnabledFeatureConfig(

@@ -4,8 +4,8 @@ import android.content.Context
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import io.embrace.android.embracesdk.fakes.FakeClock
 import io.embrace.android.embracesdk.fakes.FakeConfigService
+import io.embrace.android.embracesdk.fakes.FakeErrorHandler
 import io.embrace.android.embracesdk.fakes.FakeInstrumentationModule
-import io.embrace.android.embracesdk.fakes.FakeInternalLogger
 import io.embrace.android.embracesdk.fakes.FakeReadWriteLogRecord
 import io.embrace.android.embracesdk.fakes.OtelSdkMode
 import io.embrace.android.embracesdk.fakes.TestPlatformSerializer
@@ -38,7 +38,7 @@ import java.io.File
 @RunWith(AndroidJUnit4::class)
 internal class InitializedModuleGraphTest {
 
-    private lateinit var logger: FakeInternalLogger
+    private lateinit var errorHandler: FakeErrorHandler
     private lateinit var clock: Clock
     private lateinit var coreModule: FakeCoreModule
     private lateinit var context: Context
@@ -46,7 +46,7 @@ internal class InitializedModuleGraphTest {
 
     @Before
     fun setup() {
-        logger = FakeInternalLogger(false)
+        errorHandler = FakeErrorHandler(false)
         clock = FakeClock()
         coreModule = FakeCoreModule()
         context = RuntimeEnvironment.getApplication().applicationContext
@@ -54,7 +54,7 @@ internal class InitializedModuleGraphTest {
 
     private fun createModuleGraph(): InitializedModuleGraph {
         val application = RuntimeEnvironment.getApplication()
-        val preStartServices = PreStartServices(logger, clock)
+        val preStartServices = PreStartServices(errorHandler, clock)
         return InitializedModuleGraph(
             context = context,
             preStartServices = preStartServices,
@@ -64,10 +64,10 @@ internal class InitializedModuleGraphTest {
                 configServiceSupplier = { _, _, _, _, _, _ -> FakeConfigService() },
             ),
             sdkStartTimeMs = clock.now(),
-            sdkInitResourceUsageTracker = SdkInitResourceUsageTracker(logger),
+            sdkInitResourceUsageTracker = SdkInitResourceUsageTracker(errorHandler),
             coreModuleSupplier = { _, _, _ -> coreModule },
             instrumentationModuleSupplier = { _, _, _, _, _, _, _, _, _ ->
-                FakeInstrumentationModule(application, logger = logger).apply {
+                FakeInstrumentationModule(application, errorHandler = errorHandler).apply {
                     registry = instrumentationRegistry
                 }
             },
@@ -123,7 +123,7 @@ internal class InitializedModuleGraphTest {
         File(storageDir, "most_recent_response").outputStream().buffered().use { stream ->
             TestPlatformSerializer().toJson(cfg, RemoteConfig.serializer(), stream)
         }
-        val initModule = FakeInitModule(clock = clock, logger = logger, otelSdkMode = OtelSdkMode.COMPAT)
+        val initModule = FakeInitModule(clock = clock, errorHandler = errorHandler, otelSdkMode = OtelSdkMode.COMPAT)
         return InitializedModuleGraph(
             context = context,
             preStartServices = initModule.preStartServices,
@@ -138,10 +138,10 @@ internal class InitializedModuleGraphTest {
                 },
             ),
             sdkStartTimeMs = clock.now(),
-            sdkInitResourceUsageTracker = SdkInitResourceUsageTracker(logger),
+            sdkInitResourceUsageTracker = SdkInitResourceUsageTracker(errorHandler),
             initModuleSupplier = { initModule },
             instrumentationModuleSupplier = { _, _, _, _, _, _, _, _, _ ->
-                FakeInstrumentationModule(RuntimeEnvironment.getApplication(), logger = logger)
+                FakeInstrumentationModule(RuntimeEnvironment.getApplication(), errorHandler = errorHandler)
             },
         )
     }

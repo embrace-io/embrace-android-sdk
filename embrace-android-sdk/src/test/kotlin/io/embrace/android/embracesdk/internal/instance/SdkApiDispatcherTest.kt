@@ -3,7 +3,7 @@ package io.embrace.android.embracesdk.internal.instance
 import android.app.Activity
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import io.embrace.android.embracesdk.PropertyScope
-import io.embrace.android.embracesdk.fakes.FakeInternalLogger
+import io.embrace.android.embracesdk.fakes.FakeErrorHandler
 import io.embrace.android.embracesdk.fakes.FakeInternalTelemetryService
 import io.embrace.android.embracesdk.internal.EmbraceInternalApi
 import io.embrace.android.embracesdk.internal.InternalInterfaceApi
@@ -27,14 +27,14 @@ internal class SdkApiDispatcherTest {
 
     private val calls = mutableListOf<String>()
     private lateinit var telemetryService: FakeInternalTelemetryService
-    private lateinit var logger: FakeInternalLogger
+    private lateinit var errorHandler: FakeErrorHandler
     private lateinit var sdk: SdkApiDispatcher
 
     @Before
     fun setUp() {
         telemetryService = FakeInternalTelemetryService()
-        logger = FakeInternalLogger(throwOnInternalError = false)
-        sdk = SdkApiDispatcher(recordingSdkApi(calls), telemetryService, logger)
+        errorHandler = FakeErrorHandler(throwOnInternalError = false)
+        sdk = SdkApiDispatcher(recordingSdkApi(calls), telemetryService, errorHandler)
     }
 
     @Test
@@ -121,7 +121,7 @@ internal class SdkApiDispatcherTest {
         assertFalse(sdk.startView("view"))
         assertSame(NoopEmbraceSdkSpan, sdk.startSpan("span"))
         assertEquals("", sdk.deviceId)
-        assertEquals(4, logger.internalErrorMessages.size)
+        assertEquals(4, errorHandler.internalErrorMessages.size)
     }
 
     @Test
@@ -136,7 +136,7 @@ internal class SdkApiDispatcherTest {
     fun `user code runs when recordSpan throws before invoking it`() {
         sdk.target = throwingSdkApi()
         assertEquals("result", sdk.recordSpan("span") { "result" })
-        assertEquals(1, logger.internalErrorMessages.size)
+        assertEquals(1, errorHandler.internalErrorMessages.size)
     }
 
     @Test
@@ -149,7 +149,7 @@ internal class SdkApiDispatcherTest {
         }
         assertEquals("result", result)
         assertEquals(1, invocations)
-        assertEquals("sdk failure", logger.internalErrorMessages.single().throwable?.message)
+        assertEquals("sdk failure", errorHandler.internalErrorMessages.single().throwable?.message)
     }
 
     @Test
@@ -157,7 +157,7 @@ internal class SdkApiDispatcherTest {
         sdk.target = RecordSpanSdkApi { code -> code() }
         val exc = IllegalArgumentException("user failure")
         assertSame(exc, assertThrows(IllegalArgumentException::class.java) { sdk.recordSpan("span") { throw exc } })
-        assertEquals(emptyList<FakeInternalLogger.LogMessage>(), logger.internalErrorMessages)
+        assertEquals(emptyList<FakeErrorHandler.LogMessage>(), errorHandler.internalErrorMessages)
     }
 
     private class RecordSpanSdkApi(

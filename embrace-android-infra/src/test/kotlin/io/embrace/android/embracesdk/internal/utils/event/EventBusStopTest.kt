@@ -1,6 +1,6 @@
 package io.embrace.android.embracesdk.internal.utils.event
 
-import io.embrace.android.embracesdk.fakes.FakeInternalLogger
+import io.embrace.android.embracesdk.fakes.FakeErrorHandler
 import io.embrace.android.embracesdk.internal.logging.InternalErrorType
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
@@ -15,8 +15,8 @@ internal class EventBusStopTest {
 
     private class ScreenState(val name: String)
 
-    private val logger = FakeInternalLogger(throwOnInternalError = false)
-    private val bus = EventBus(logger)
+    private val errorHandler = FakeErrorHandler(throwOnInternalError = false)
+    private val bus = EventBus(errorHandler)
 
     private val appKey = EventKey<AppEvent>()
 
@@ -137,7 +137,10 @@ internal class EventBusStopTest {
         bus.stop()
 
         assertEquals(listOf("app"), closed)
-        assertEquals(listOf(InternalErrorType.EventBusProducerFail.toString()), logger.internalErrorMessages.map { it.msg })
+        assertEquals(
+            listOf(InternalErrorType.EventBusProducerFail.toString()),
+            errorHandler.internalErrorMessages.map { it.msg },
+        )
     }
 
     @Test

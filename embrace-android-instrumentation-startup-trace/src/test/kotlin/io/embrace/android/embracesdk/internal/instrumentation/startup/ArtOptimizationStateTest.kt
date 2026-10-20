@@ -1,6 +1,6 @@
 package io.embrace.android.embracesdk.internal.instrumentation.startup
 
-import io.embrace.android.embracesdk.fakes.FakeInternalLogger
+import io.embrace.android.embracesdk.fakes.FakeErrorHandler
 import io.embrace.android.embracesdk.internal.instrumentation.startup.SdkInitAttributeKeys.ART_COMPILER_FILTER
 import io.embrace.android.embracesdk.internal.instrumentation.startup.SdkInitAttributeKeys.ART_COMPILER_FILTER_NOT_FOUND
 import io.embrace.android.embracesdk.internal.instrumentation.startup.SdkInitAttributeKeys.STRING_ERROR
@@ -25,13 +25,13 @@ internal class ArtOptimizationStateTest {
     private val supportedAbi = "arm64-v8a"
     private val supportedIsa = "arm64"
     private lateinit var apk: File
-    private lateinit var logger: FakeInternalLogger
+    private lateinit var errorHandler: FakeErrorHandler
 
     @Before
     fun setUp() {
         val apkDir = tmp.newFolder("data", "app", "~~abc", "io.embrace.test-xyz")
         apk = File(apkDir, "base.apk").apply { writeBytes(ByteArray(16)) }
-        logger = FakeInternalLogger(throwOnInternalError = false)
+        errorHandler = FakeErrorHandler(throwOnInternalError = false)
     }
 
     @Test
@@ -92,7 +92,7 @@ internal class ArtOptimizationStateTest {
         writeOdex("compiler-filter-extra\u0000verify\u0000".toByteArray())
         assertEquals(ART_COMPILER_FILTER_NOT_FOUND, createState().artCompilerFilter)
 
-        assertEquals(emptyList<FakeInternalLogger.LogMessage>(), logger.internalErrorMessages)
+        assertEquals(emptyList<FakeErrorHandler.LogMessage>(), errorHandler.internalErrorMessages)
     }
 
     @Test
@@ -110,7 +110,7 @@ internal class ArtOptimizationStateTest {
         assertEquals(STRING_ERROR, state.artCompilerFilter)
         assertTrue(state.hasAppImage)
 
-        val reported = logger.internalErrorMessages.single()
+        val reported = errorHandler.internalErrorMessages.single()
         assertEquals("SdkInitAttributeCaptureFail", reported.msg)
         assertTrue(reported.throwable?.message?.endsWith(ART_COMPILER_FILTER) == true)
         assertTrue(reported.throwable?.cause is IOException)
@@ -136,10 +136,10 @@ internal class ArtOptimizationStateTest {
     private fun createState(
         apkPath: String = apk.path,
         abi: String = supportedAbi,
-    ): ArtOptimizationState = checkNotNull(ArtOptimizationState.create(apkPath = apkPath, primaryAbi = abi, logger = logger))
+    ): ArtOptimizationState = checkNotNull(ArtOptimizationState.create(apkPath = apkPath, primaryAbi = abi, errorHandler = errorHandler))
 
     private fun assertNullState(apkPath: String = apk.path, abi: String = supportedAbi) {
-        assertNull(ArtOptimizationState.create(apkPath = apkPath, primaryAbi = abi, logger = logger))
+        assertNull(ArtOptimizationState.create(apkPath = apkPath, primaryAbi = abi, errorHandler = errorHandler))
     }
 
     private fun writeOdex(bytes: ByteArray, isa: String = supportedIsa) {

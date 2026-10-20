@@ -1,7 +1,7 @@
 package io.embrace.android.embracesdk.internal.network.http
 
+import io.embrace.android.embracesdk.internal.logging.ErrorHandler
 import io.embrace.android.embracesdk.internal.logging.InternalErrorType
-import io.embrace.android.embracesdk.internal.logging.InternalLogger
 import io.embrace.android.embracesdk.network.http.HttpRequestInfo
 import io.embrace.android.embracesdk.network.http.HttpRequestInfoModifier
 import io.embrace.android.embracesdk.network.http.MutableHttpRequestInfo
@@ -15,7 +15,7 @@ import java.util.concurrent.atomic.AtomicBoolean
  * Registering the same modifier more than once has no additional effect.
  */
 class HttpRequestInfoModifierChain(
-    private val logger: InternalLogger,
+    private val errorHandler: ErrorHandler,
 ) {
     private val modifiers = CopyOnWriteArrayList<HttpRequestInfoModifier>()
 
@@ -40,7 +40,7 @@ class HttpRequestInfoModifierChain(
                 modifier.modifyHttpRequestInfo(info)
             } catch (t: Exception) {
                 if (loggedFailure.compareAndSet(false, true)) {
-                    logger.trackInternalError(InternalErrorType.HttpRequestInfoModifierFail, t)
+                    errorHandler.trackInternalError(InternalErrorType.HttpRequestInfoModifierFail, t)
                 }
             }
         }

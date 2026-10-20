@@ -9,7 +9,7 @@ import io.embrace.android.embracesdk.fakes.FakeCurrentSessionPartSpan
 import io.embrace.android.embracesdk.fakes.FakeDataSource
 import io.embrace.android.embracesdk.fakes.FakeEnvelopeMetadataSource
 import io.embrace.android.embracesdk.fakes.FakeEnvelopeResourceSource
-import io.embrace.android.embracesdk.fakes.FakeInternalLogger
+import io.embrace.android.embracesdk.fakes.FakeErrorHandler
 import io.embrace.android.embracesdk.fakes.FakeInternalTelemetryService
 import io.embrace.android.embracesdk.fakes.FakeKeyValueStore
 import io.embrace.android.embracesdk.fakes.FakeLogEnvelopeSource
@@ -90,7 +90,7 @@ internal class SessionOrchestratorTest {
     private lateinit var inactivityWorkerExecutor: BlockingScheduledExecutorService
     private lateinit var instrumentationRegistry: InstrumentationRegistry
     private lateinit var fakeDataSource: FakeDataSource
-    private lateinit var logger: FakeInternalLogger
+    private lateinit var errorHandler: FakeErrorHandler
     private lateinit var startupClassifier: StartupClassifierImpl
     private lateinit var currentSessionPartSpan: FakeCurrentSessionPartSpan
     private lateinit var destination: FakeTelemetryDestination
@@ -107,7 +107,7 @@ internal class SessionOrchestratorTest {
     @Before
     fun setUp() {
         clock = FakeClock()
-        logger = FakeInternalLogger(throwOnInternalError = false)
+        errorHandler = FakeErrorHandler(throwOnInternalError = false)
         startupClassifier = StartupClassifierImpl()
         sessionsDir = tempFolder.newFolder("embrace_sessions_split")
     }
@@ -834,7 +834,7 @@ internal class SessionOrchestratorTest {
         val session = activeUserSession()
         assertNotEquals("future-id", session.userSessionId)
 
-        val errors = logger.internalErrorMessages
+        val errors = errorHandler.internalErrorMessages
         assertEquals(1, errors.size)
         assertEquals(InternalErrorType.ClockBackwardsShift.toString(), errors[0].msg)
     }
@@ -858,7 +858,7 @@ internal class SessionOrchestratorTest {
         assertEquals(1, second.partIndex)
         assertEquals(true, second.isBackgroundOnly)
 
-        val errors = logger.internalErrorMessages
+        val errors = errorHandler.internalErrorMessages
         assertEquals(1, errors.size)
         assertEquals(InternalErrorType.ClockBackwardsShift.toString(), errors[0].msg)
     }
@@ -1135,12 +1135,12 @@ internal class SessionOrchestratorTest {
             payloadMessageCollator = payloadCollator,
             logEnvelopeSource = payloadSourceModule.logEnvelopeSource,
             configService = configService,
-            logger = logger,
+            errorHandler = errorHandler,
         )
         userSessionPropertiesService = FakeUserSessionPropertiesService()
         sessionTracker = SessionPartTrackerImpl(
             activityManager = lazyOf<ActivityManager?>(null),
-            logger = logger,
+            errorHandler = errorHandler,
         )
         sessionCacheExecutor = BlockingScheduledExecutorService(clock, true)
         inactivityWorkerExecutor = BlockingScheduledExecutorService(clock, true)
@@ -1148,7 +1148,7 @@ internal class SessionOrchestratorTest {
         payloadCachingService = PayloadCachingServiceImpl(
             PeriodicSessionPartCacher(
                 BackgroundWorker(sessionCacheExecutor),
-                logger,
+                errorHandler,
             ),
             clock,
             object : SessionIdsProvider {
@@ -1161,7 +1161,7 @@ internal class SessionOrchestratorTest {
         )
         fakeDataSource = FakeDataSource(Application())
         instrumentationRegistry = InstrumentationRegistryImpl(
-            logger,
+            errorHandler,
         ).apply {
             add { fakeDataSource }
         }
@@ -1172,7 +1172,7 @@ internal class SessionOrchestratorTest {
             configService,
             TestUuidSource(),
             clock,
-            logger,
+            errorHandler,
             FakeEnvelopeResourceSource(),
             FakeEnvelopeMetadataSource(),
             currentSessionPartSpan,
@@ -1206,7 +1206,7 @@ internal class SessionOrchestratorTest {
             ordinalStoreOverride ?: FakeOrdinalStore(),
             keyValueStoreOverride ?: FakeKeyValueStore(),
             metadataStoreOverride ?: UserSessionMetadataStore(FakeKeyValueStore()),
-            logger,
+            errorHandler,
             BackgroundWorker(inactivityWorkerExecutor),
             TestUuidSource(),
             startupClassifier,
@@ -2035,7 +2035,7 @@ internal class SessionOrchestratorTest {
         span.attributes.any { it.key == "emb.type" && it.value_ == "ux.session" }
 
     private fun assertNoInternalErrors() {
-        assertEquals(emptyList<FakeInternalLogger.LogMessage>(), logger.internalErrorMessages)
+        assertEquals(emptyList<FakeErrorHandler.LogMessage>(), errorHandler.internalErrorMessages)
     }
 
     private fun activeUserSession(): UserSessionMetadata = checkNotNull(orchestrator.currentUserSession())

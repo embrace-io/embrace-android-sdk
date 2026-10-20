@@ -9,7 +9,7 @@ import io.embrace.android.embracesdk.internal.instrumentation.startup.SdkInitAtt
 import io.embrace.android.embracesdk.internal.instrumentation.startup.SdkInitAttributeKeys.INIT_GC_COUNT_MIN_API
 import io.embrace.android.embracesdk.internal.instrumentation.startup.SdkInitAttributeKeys.INIT_RUN_DELAY_PCT
 import io.embrace.android.embracesdk.internal.instrumentation.startup.SdkInitAttributeKeys.NUMERIC_ERROR
-import io.embrace.android.embracesdk.internal.logging.InternalLogger
+import io.embrace.android.embracesdk.internal.logging.ErrorHandler
 import io.embrace.android.embracesdk.internal.utils.BuildVersionChecker
 import io.embrace.android.embracesdk.internal.utils.VersionChecker
 import java.io.FileInputStream
@@ -25,7 +25,7 @@ import kotlin.math.roundToLong
  * could be triggered by that call.
  */
 class SdkInitResourceUsageTracker(
-    private val logger: InternalLogger,
+    private val errorHandler: ErrorHandler,
     private val versionChecker: VersionChecker = BuildVersionChecker,
     private val threadCpuTimeMs: () -> Long = { SystemClock.currentThreadTimeMillis() },
     private val elapsedRealtimeMs: () -> Long = { SystemClock.elapsedRealtime() },
@@ -103,9 +103,9 @@ class SdkInitResourceUsageTracker(
      * the valid range to denote the failure.
      */
     fun buildAttributes(): Map<String, String> = buildMap {
-        safePutAttributes(logger, INIT_WINDOW_ATTRIBUTES) { putInitWindowShares() }
-        safePutAttributes(logger, INIT_DISK_READ_KB) { putDiskReadKb() }
-        safePutAttributes(logger, INIT_GC_COUNT) { putGcCount() }
+        safePutAttributes(errorHandler, INIT_WINDOW_ATTRIBUTES) { putInitWindowShares() }
+        safePutAttributes(errorHandler, INIT_DISK_READ_KB) { putDiskReadKb() }
+        safePutAttributes(errorHandler, INIT_GC_COUNT) { putGcCount() }
     }
 
     /**
@@ -119,7 +119,7 @@ class SdkInitResourceUsageTracker(
         if (wallStart == null || wallEnd == null || wallEnd < wallStart) {
             put(INIT_CPU_PCT, NUMERIC_ERROR)
             put(INIT_RUN_DELAY_PCT, NUMERIC_ERROR)
-            logger.trackAttributeError(INIT_WINDOW_ATTRIBUTES)
+            errorHandler.trackAttributeError(INIT_WINDOW_ATTRIBUTES)
         } else if (wallEnd != wallStart) {
             // Only try to compute a percentage if the denominator, the SDK init time, isn't 0.
             val wallMs = wallEnd - wallStart
@@ -186,7 +186,7 @@ class SdkInitResourceUsageTracker(
     private fun MutableMap<String, String>.monotonicCounterDelta(key: String, start: Long?, end: Long?): Long? =
         if (start == null || end == null || end < start) {
             put(key, NUMERIC_ERROR)
-            logger.trackAttributeError(key)
+            errorHandler.trackAttributeError(key)
             null
         } else {
             end - start

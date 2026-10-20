@@ -53,7 +53,7 @@ internal class PayloadFactoryImplTest(
             payloadMessageCollator = collator,
             logEnvelopeSource = payloadSourceModule.logEnvelopeSource,
             configService = configService,
-            logger = initModule.logger,
+            errorHandler = initModule.errorHandler,
         )
     }
 

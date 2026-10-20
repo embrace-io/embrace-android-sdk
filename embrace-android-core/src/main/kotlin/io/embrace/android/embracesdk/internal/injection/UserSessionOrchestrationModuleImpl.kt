@@ -41,7 +41,7 @@ class UserSessionOrchestrationModuleImpl(
     override val sessionIdsProvider: SessionIdsProvider get() = essentialServiceModule.sessionIdsProvider
 
     private val sessionsDir: Lazy<File> = StorageLocation.SESSION_SPLIT.asFile(
-        logger = initModule.logger,
+        errorHandler = initModule.errorHandler,
         rootDirSupplier = { coreModule.context.filesDir },
         fallbackDirSupplier = { coreModule.context.cacheDir },
     )
@@ -54,7 +54,7 @@ class UserSessionOrchestrationModuleImpl(
         sessionsDir,
         sessionPersistenceWorker,
         initModule.clock,
-        initModule.logger,
+        initModule.errorHandler,
     )
 
     private val sessionPartWriteTracker = SessionPartWriteTracker()
@@ -63,7 +63,7 @@ class UserSessionOrchestrationModuleImpl(
         SessionPartReader(
             sessionsDir = sessionsDir,
             directoryStore = sessionPartDirectoryStore,
-            reconstructionService = SessionReconstructionService(sessionsDir, initModule.logger),
+            reconstructionService = SessionReconstructionService(sessionsDir, initModule.errorHandler),
             intakeService = delivery.intakeService,
             writeTracker = sessionPartWriteTracker,
             deadPartResurrector = MultiFileDeadPartResurrector(
@@ -75,7 +75,7 @@ class UserSessionOrchestrationModuleImpl(
             ),
             processIdProvider = { openTelemetryModule.otelSdkConfig.processIdentifier },
             configService = configService,
-            logger = initModule.logger,
+            errorHandler = initModule.errorHandler,
         )
     }
 
@@ -90,7 +90,7 @@ class UserSessionOrchestrationModuleImpl(
             payloadMessageCollator,
             payloadSourceModule.logEnvelopeSource,
             configService,
-            initModule.logger,
+            initModule.errorHandler,
         )
 
         val boundaryDelegate = OrchestratorBoundaryDelegate(
@@ -115,7 +115,7 @@ class UserSessionOrchestrationModuleImpl(
                 configService,
                 initModule.uuidSource,
                 initModule.clock,
-                initModule.logger,
+                initModule.errorHandler,
                 payloadSourceModule.resourceSource,
                 payloadSourceModule.envelopeMetadataSource,
                 openTelemetryModule.currentSessionPartSpan,
@@ -150,7 +150,7 @@ class UserSessionOrchestrationModuleImpl(
             coreModule.ordinalStore,
             coreModule.store,
             UserSessionMetadataStore(coreModule.store),
-            initModule.logger,
+            initModule.errorHandler,
             workerThreadPool.backgroundWorker(Worker.Background.NonIoRegWorker),
             initModule.uuidSource,
             initModule.startupClassifier,

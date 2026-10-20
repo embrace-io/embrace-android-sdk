@@ -4,11 +4,11 @@ import android.annotation.SuppressLint
 import android.view.View
 import android.view.ViewGroup
 import androidx.compose.ui.platform.ComposeView
-import io.embrace.android.embracesdk.internal.logging.InternalLogger
+import io.embrace.android.embracesdk.internal.logging.ErrorHandler
 import java.util.ArrayDeque
 
 internal class ComposeClickedTargetIterator(
-    private val logger: InternalLogger,
+    private val errorHandler: ErrorHandler,
     dataSource: ComposeTapDataSource,
 ) : EmbraceClickedTargetIterator {
 
@@ -44,7 +44,7 @@ internal class ComposeClickedTargetIterator(
                 }
             }
         } catch (e: Throwable) {
-            logger.logError("Failed to find target", e)
+            errorHandler.log("Failed to find target", e, severity = ErrorHandler.Severity.ERROR)
         }
     }
 

@@ -2,8 +2,8 @@ package io.embrace.android.embracesdk.internal.api.delegate
 
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import io.embrace.android.embracesdk.fakes.FakeClock
+import io.embrace.android.embracesdk.fakes.FakeErrorHandler
 import io.embrace.android.embracesdk.fakes.FakeExperimentTrackingService
-import io.embrace.android.embracesdk.fakes.FakeInternalLogger
 import io.embrace.android.embracesdk.fakes.OtelSdkMode
 import io.embrace.android.embracesdk.fakes.injection.FakeInitModule
 import io.embrace.android.embracesdk.internal.capture.experiment.ExperimentApiCall
@@ -23,21 +23,21 @@ internal class ExperimentApiDelegateTest {
 
     private lateinit var delegate: ExperimentApiDelegate
     private lateinit var fakeExperimentTrackingService: FakeExperimentTrackingService
-    private lateinit var initLogger: FakeInternalLogger
+    private lateinit var initLogger: FakeErrorHandler
     private lateinit var clock: FakeClock
     private lateinit var initModule: FakeInitModule
-    private lateinit var bufferLogger: FakeInternalLogger
+    private lateinit var bufferLogger: FakeErrorHandler
     private lateinit var buffer: BufferingSdkInstance
 
     @Before
     fun setUp() {
         fakeExperimentTrackingService = FakeExperimentTrackingService()
-        initLogger = FakeInternalLogger()
+        initLogger = FakeErrorHandler()
 
-        initModule = FakeInitModule(logger = initLogger, otelSdkMode = OtelSdkMode.COMPAT)
+        initModule = FakeInitModule(errorHandler = initLogger, otelSdkMode = OtelSdkMode.COMPAT)
         clock = checkNotNull(initModule.getFakeClock())
         delegate = createDelegate()
-        bufferLogger = FakeInternalLogger()
+        bufferLogger = FakeErrorHandler()
         buffer = BufferingSdkInstance(clock, bufferLogger)
     }
 

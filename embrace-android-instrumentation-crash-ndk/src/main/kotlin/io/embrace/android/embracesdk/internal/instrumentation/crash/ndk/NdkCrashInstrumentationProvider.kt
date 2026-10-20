@@ -23,9 +23,9 @@ class NdkCrashInstrumentationProvider : InstrumentationProvider {
         return {
             val delegate = jniDelegateTestOverride ?: JniDelegateImpl()
             val sharedObjectLoader =
-                sharedObjectLoaderTestOverride ?: SharedObjectLoaderImpl(args.logger)
+                sharedObjectLoaderTestOverride ?: SharedObjectLoaderImpl(args.errorHandler)
             val nativeOutputDir = StorageLocation.NATIVE.asFile(
-                logger = args.logger,
+                errorHandler = args.errorHandler,
                 rootDirSupplier = { args.context.filesDir },
                 fallbackDirSupplier = { args.context.cacheDir },
             )

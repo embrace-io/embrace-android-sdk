@@ -52,7 +52,7 @@ internal class VitalsActivityListenerTest {
 
         assertTrue(activity.window.callback is VitalsWindowCallback)
         assertEquals(1, focalCallbacks.screenStartCount)
-        assertTrue(args.logger.errorMessages.isEmpty())
+        assertTrue(args.errorHandler.errorMessages.isEmpty())
     }
 
     @Test

@@ -1,7 +1,7 @@
 package io.embrace.android.embracesdk.internal.session.persistence
 
 import io.embrace.android.embracesdk.fakes.FakeClock
-import io.embrace.android.embracesdk.fakes.FakeInternalLogger
+import io.embrace.android.embracesdk.fakes.FakeErrorHandler
 import io.embrace.android.embracesdk.internal.payload.EnvelopeMetadata
 import io.embrace.android.embracesdk.internal.payload.EnvelopeResource
 import org.junit.Assert.assertEquals
@@ -37,7 +37,7 @@ internal class SessionReconstructionServiceMetadataTest {
     val tempFolder: TemporaryFolder = TemporaryFolder()
 
     private lateinit var sessionsDir: File
-    private lateinit var logger: FakeInternalLogger
+    private lateinit var errorHandler: FakeErrorHandler
     private lateinit var writer: SessionMetadataWriter
     private lateinit var service: SessionReconstructionService
 
@@ -56,7 +56,7 @@ internal class SessionReconstructionServiceMetadataTest {
     @Before
     fun setUp() {
         sessionsDir = tempFolder.newFolder("embrace_sessions")
-        logger = FakeInternalLogger(throwOnInternalError = false)
+        errorHandler = FakeErrorHandler(throwOnInternalError = false)
         metadataProvider = { fullyPopulatedMetadata }
         resourceProvider = { fullyPopulatedResource }
         symbolProvider = { null }
@@ -68,9 +68,9 @@ internal class SessionReconstructionServiceMetadataTest {
             envelopeVersion = ENVELOPE_VERSION,
             envelopeType = ENVELOPE_TYPE,
             sharedLibSymbolMappingSource = { symbolProvider() },
-            logger = logger,
+            errorHandler = errorHandler,
         )
-        service = SessionReconstructionService(lazy { sessionsDir }, logger)
+        service = SessionReconstructionService(lazy { sessionsDir }, errorHandler)
         createPartDir(partDirectory)
     }
 
@@ -291,11 +291,11 @@ internal class SessionReconstructionServiceMetadataTest {
     }
 
     private fun assertNoInternalErrors() {
-        assertEquals(emptyList<FakeInternalLogger.LogMessage>(), logger.internalErrorMessages)
+        assertEquals(emptyList<FakeErrorHandler.LogMessage>(), errorHandler.internalErrorMessages)
     }
 
     private fun assertReconstructionFailureTracked() {
-        assertEquals(1, logger.internalErrorMessages.size)
-        assertEquals("SessionReconstructionFail", logger.internalErrorMessages.single().msg)
+        assertEquals(1, errorHandler.internalErrorMessages.size)
+        assertEquals("SessionReconstructionFail", errorHandler.internalErrorMessages.single().msg)
     }
 }

@@ -3,7 +3,7 @@ package io.embrace.android.embracesdk.internal.instance
 import android.content.Context
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
-import io.embrace.android.embracesdk.fakes.FakeInternalLogger
+import io.embrace.android.embracesdk.fakes.FakeErrorHandler
 import io.embrace.android.embracesdk.fakes.FakeInternalTelemetryService
 import io.embrace.android.embracesdk.internal.EmbraceInternalApi
 import io.embrace.android.embracesdk.internal.NoopInternalInterfaceApi
@@ -21,9 +21,9 @@ internal class SdkStateHolderTest {
 
     private val context = ApplicationProvider.getApplicationContext<Context>()
     private val calls = mutableListOf<String>()
-    private val logger = FakeInternalLogger(throwOnInternalError = false)
     private val bufferedErrorHandler = ErrorHandlerImpl({ 0 })
-    private val buffer = BufferingSdkInstance({ 0 }, logger, bufferedErrorHandler)
+    private val errorHandler = FakeErrorHandler(throwOnInternalError = false, delegate = bufferedErrorHandler)
+    private val buffer = BufferingSdkInstance({ 0 }, errorHandler)
     private val failed = FakeInstance(calls, prefix = "failed:")
     private val disabled = FakeInstance(calls, prefix = "disabled:")
 
@@ -85,7 +85,7 @@ internal class SdkStateHolderTest {
         assertEquals(SdkState.FAILED, holder.state)
         assertSame(failed, holder.dispatcher.target)
         assertEquals(listOf("instantiate", "start", "close", "failed:onPostStart"), calls)
-        assertEquals("start failed", logger.internalErrorMessages.single().throwable?.message)
+        assertEquals("start failed", errorHandler.internalErrorMessages.single().throwable?.message)
     }
 
     @Test
@@ -96,7 +96,7 @@ internal class SdkStateHolderTest {
         assertEquals(SdkState.FAILED, holder.state)
         assertSame(failed, holder.dispatcher.target)
         assertEquals(listOf("instantiate", "start", "close", "failed:onPostStart"), calls)
-        assertEquals("close failed", logger.internalErrorMessages.single().throwable?.message)
+        assertEquals("close failed", errorHandler.internalErrorMessages.single().throwable?.message)
     }
 
     @Test
@@ -114,7 +114,7 @@ internal class SdkStateHolderTest {
         holder.start(context)
         assertEquals(SdkState.FAILED, holder.state)
         assertSame(failed, holder.dispatcher.target)
-        assertEquals("post start failed", logger.internalErrorMessages.single().throwable?.message)
+        assertEquals("post start failed", errorHandler.internalErrorMessages.single().throwable?.message)
     }
 
     @Test
@@ -183,7 +183,7 @@ internal class SdkStateHolderTest {
         holder.close()
         assertEquals(SdkState.DISABLED, holder.state)
         assertSame(disabled, holder.dispatcher.target)
-        assertEquals("disable failed", logger.internalErrorMessages.single().throwable?.message)
+        assertEquals("disable failed", errorHandler.internalErrorMessages.single().throwable?.message)
         holder.close()
         assertEquals(listOf("instantiate", "start", "onPostStart", "disable"), calls)
     }
@@ -257,7 +257,7 @@ internal class SdkStateHolderTest {
         val holder = createHolder(instance)
         holder.start(context)
         assertEquals(SdkState.STARTED, holder.state)
-        assertEquals("post start failed", logger.internalErrorMessages.single().throwable?.message)
+        assertEquals("post start failed", errorHandler.internalErrorMessages.single().throwable?.message)
     }
 
     @Test
@@ -286,7 +286,7 @@ internal class SdkStateHolderTest {
         holder.start(context)
         assertEquals(SdkState.FAILED, holder.state)
         assertSame(failed, holder.dispatcher.target)
-        assertEquals("instantiation failed", logger.internalErrorMessages.single().throwable?.message)
+        assertEquals("instantiation failed", errorHandler.internalErrorMessages.single().throwable?.message)
 
         instantiationThrows = false
         holder.start(context)
@@ -309,7 +309,7 @@ internal class SdkStateHolderTest {
         holder.close()
         assertEquals(SdkState.DISABLED, holder.state)
         assertSame(disabled, holder.dispatcher.target)
-        assertEquals("post start failed", logger.internalErrorMessages.single().throwable?.message)
+        assertEquals("post start failed", errorHandler.internalErrorMessages.single().throwable?.message)
     }
 
     @Test
@@ -358,8 +358,7 @@ internal class SdkStateHolderTest {
         failed = { failed },
         disabled = { disabled },
         telemetryService = FakeInternalTelemetryService(),
-        errorHandler = logger,
-        bufferedErrorHandler = bufferedErrorHandler,
+        errorHandler = errorHandler,
     )
 
     private class FakeInstance(

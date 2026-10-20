@@ -9,7 +9,6 @@ import io.embrace.android.embracesdk.internal.instance.NoopSdkInstance
 import io.embrace.android.embracesdk.internal.instance.SdkStateHolder
 import io.embrace.android.embracesdk.internal.instance.createSdkStateHolder
 import io.embrace.android.embracesdk.internal.logging.ErrorHandlerImpl
-import io.embrace.android.embracesdk.internal.logging.InternalLoggerImpl
 import io.embrace.android.embracesdk.internal.utils.EmbTrace
 
 private val sdkStateHolder = try {
@@ -23,17 +22,15 @@ private val sdkStateHolder = try {
         "Failed to create the Embrace SDK instance. All Embrace API calls will be no-ops and no telemetry will be captured.",
         exc,
     )
-    val logger = InternalLoggerImpl()
-    val instance = NoopSdkInstance(logger, NoopSdkInstance.SDK_NOT_INITIALIZED)
-    val bufferedErrorHandler = ErrorHandlerImpl(System::currentTimeMillis)
+    val errorHandler = ErrorHandlerImpl(System::currentTimeMillis)
+    val instance = NoopSdkInstance(errorHandler, NoopSdkInstance.SDK_NOT_INITIALIZED)
     SdkStateHolder(
         instanceFactory = { instance },
-        preStart = BufferingSdkInstance(System::currentTimeMillis, logger, bufferedErrorHandler),
+        preStart = BufferingSdkInstance(System::currentTimeMillis, errorHandler),
         failed = { instance },
         disabled = { instance },
         telemetryService = NoopInternalTelemetryService,
-        errorHandler = logger,
-        bufferedErrorHandler = bufferedErrorHandler,
+        errorHandler = errorHandler,
     )
 }
 

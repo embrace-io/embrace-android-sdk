@@ -16,8 +16,8 @@ import io.embrace.android.embracesdk.internal.config.ConfigService
 import io.embrace.android.embracesdk.internal.envelope.metadata.HostedSdkVersionInfo
 import io.embrace.android.embracesdk.internal.envelope.resource.EnvelopeResourceSource
 import io.embrace.android.embracesdk.internal.instrumentation.crash.jvm.JvmCrashDataSource
+import io.embrace.android.embracesdk.internal.logging.ErrorHandler
 import io.embrace.android.embracesdk.internal.logging.InternalErrorType
-import io.embrace.android.embracesdk.internal.logging.InternalLogger
 import io.embrace.android.embracesdk.internal.logs.LogExceptionType
 import io.embrace.android.embracesdk.internal.payload.JsException
 import io.embrace.android.embracesdk.internal.serialization.PlatformSerializer
@@ -35,7 +35,7 @@ internal class HostedSdkInternalInterfaceImpl(
     private val serializer: PlatformSerializer,
     private val rnBundleIdTracker: Lazy<RnBundleIdTracker>,
     private val hostedSdkVersionInfo: HostedSdkVersionInfo,
-    private val logger: InternalLogger,
+    private val errorHandler: ErrorHandler,
     private val telemetryService: InternalTelemetryService,
 ) : EmbraceInternalInterface,
     ReactNativeInternalInterface,
@@ -102,10 +102,11 @@ internal class HostedSdkInternalInterfaceImpl(
     ) = record("set_unity_metadata") {
         if (unityVersion == null || buildGuid == null) {
             val sdkVersionMessage = unitySdkVersion ?: "null or previous than 1.7.5"
-            logger.logError(
+            errorHandler.log(
                 "Unity metadata is corrupted or malformed. Unity version is " +
                     unityVersion + ", Unity build id is " + buildGuid +
                     " and Unity SDK version is " + sdkVersionMessage,
+                severity = ErrorHandler.Severity.ERROR,
             )
         } else if (unitySdkVersion != null) {
             hostedSdkVersionInfo.batch {
@@ -179,7 +180,7 @@ internal class HostedSdkInternalInterfaceImpl(
     private inline fun <T> guard(fallback: T, call: () -> T): T = try {
         call()
     } catch (exc: Throwable) {
-        logger.trackInternalError(InternalErrorType.PublicApiFail, exc)
+        errorHandler.trackInternalError(InternalErrorType.PublicApiFail, exc)
         fallback
     }
 }

@@ -1,6 +1,6 @@
 package io.embrace.android.embracesdk.internal.utils.event
 
-import io.embrace.android.embracesdk.internal.logging.InternalErrorHandler
+import io.embrace.android.embracesdk.internal.logging.ErrorHandler
 import io.embrace.android.embracesdk.internal.logging.InternalErrorType
 import io.embrace.android.embracesdk.internal.utils.event.EventBus.Companion.DEFAULT_ORDER
 import java.util.BitSet
@@ -20,7 +20,7 @@ internal const val INITIAL_CAPACITY = 16
  * State travels separately, against a [StateKey]: a value emitted against one is retained and replayed to handlers registered
  * against that key afterwards.
  */
-class EventBus(private val internalErrorHandler: InternalErrorHandler) {
+class EventBus(private val errorHandler: ErrorHandler) {
 
     /**
      * Guards every change to [registrations], and every replacement of [retainedStateValues].
@@ -93,7 +93,7 @@ class EventBus(private val internalErrorHandler: InternalErrorHandler) {
             val producer = try {
                 factory()
             } catch (failure: Exception) {
-                internalErrorHandler.trackInternalError(InternalErrorType.EventBusProducerFail, failure)
+                errorHandler.trackInternalError(InternalErrorType.EventBusProducerFail, failure)
                 return
             }
 
@@ -222,7 +222,7 @@ class EventBus(private val internalErrorHandler: InternalErrorHandler) {
         try {
             producer.close()
         } catch (failure: Exception) {
-            internalErrorHandler.trackInternalError(InternalErrorType.EventBusProducerFail, failure)
+            errorHandler.trackInternalError(InternalErrorType.EventBusProducerFail, failure)
         }
     }
 
@@ -252,7 +252,7 @@ class EventBus(private val internalErrorHandler: InternalErrorHandler) {
 
     private fun reportFailure(registrant: Any, failure: Exception) {
         if (loggedFailures.add(registrant)) {
-            internalErrorHandler.trackInternalError(InternalErrorType.EventBusHandlerFail, failure)
+            errorHandler.trackInternalError(InternalErrorType.EventBusHandlerFail, failure)
 
             // a dispatch in flight across stop may have added after its clear
             if (stopped) {

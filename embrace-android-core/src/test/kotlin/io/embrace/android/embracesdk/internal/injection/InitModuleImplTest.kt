@@ -31,7 +31,7 @@ internal class InitModuleImplTest {
         val initModule = InitModuleImpl(preStartServices)
         assertSame(clock, initModule.clock)
         assertSame(systemInfo, initModule.systemInfo)
-        assertSame(preStartServices.logger, initModule.logger)
+        assertSame(preStartServices.errorHandler, initModule.errorHandler)
         assertSame(preStartServices.telemetryService, initModule.telemetryService)
         assertSame(preStartServices.errorHandler, initModule.errorHandler)
     }

@@ -1,8 +1,8 @@
 package io.embrace.android.embracesdk.testcases.features
 
 import io.embrace.android.embracesdk.assertions.getLogWithAttributeValue
+import io.embrace.android.embracesdk.internal.logging.ErrorHandler
 import io.embrace.android.embracesdk.internal.logging.InternalErrorType
-import io.embrace.android.embracesdk.internal.logging.InternalLogger
 import io.embrace.android.embracesdk.internal.otel.sdk.findAttributeValue
 import io.embrace.android.embracesdk.testframework.OtelSdkMode
 import io.embrace.android.embracesdk.testframework.SdkIntegrationTestRule
@@ -26,16 +26,16 @@ internal class SdkErrorLogTest(
 
     @Test
     fun `internal error log delivered`() {
-        lateinit var logger: InternalLogger
+        lateinit var errorHandler: ErrorHandler
 
         testRule.runTest(
             setupAction = {
-                getEmbLogger().throwOnInternalError = false
-                logger = getEmbLogger()
+                getFakeErrorHandler().throwOnInternalError = false
+                errorHandler = getFakeErrorHandler()
             },
             testCaseAction = {
                 recordSession {
-                    logger.trackInternalError(InternalErrorType.InternalInterfaceFail, RuntimeException("Some error message"))
+                    errorHandler.trackInternalError(InternalErrorType.InternalInterfaceFail, RuntimeException("Some error message"))
                 }
             },
             assertAction = {
@@ -65,8 +65,8 @@ internal class SdkErrorLogTest(
     fun `internal error tracked before sdk start delivered`() {
         testRule.runTest(
             setupAction = {
-                getEmbLogger().throwOnInternalError = false
-                getEmbLogger().trackInternalError(InternalErrorType.InternalInterfaceFail, RuntimeException("Early error"))
+                getFakeErrorHandler().throwOnInternalError = false
+                getFakeErrorHandler().trackInternalError(InternalErrorType.InternalInterfaceFail, RuntimeException("Early error"))
             },
             testCaseAction = {
                 recordSession()

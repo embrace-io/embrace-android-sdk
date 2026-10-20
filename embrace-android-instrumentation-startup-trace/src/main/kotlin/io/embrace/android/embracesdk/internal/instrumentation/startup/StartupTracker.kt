@@ -6,8 +6,8 @@ import android.os.Bundle
 import io.embrace.android.embracesdk.annotation.IgnoreForStartup
 import io.embrace.android.embracesdk.internal.instrumentation.startup.activity.traceInstanceId
 import io.embrace.android.embracesdk.internal.instrumentation.startup.ui.DrawEventEmitter
+import io.embrace.android.embracesdk.internal.logging.ErrorHandler
 import io.embrace.android.embracesdk.internal.logging.InternalErrorType
-import io.embrace.android.embracesdk.internal.logging.InternalLogger
 import java.util.concurrent.atomic.AtomicBoolean
 
 /**
@@ -33,7 +33,7 @@ class StartupTracker(
     private val appStartupDataCollector: AppStartupDataCollector,
     private val activityLoadEventEmitter: Application.ActivityLifecycleCallbacks?,
     private val drawEventEmitter: DrawEventEmitter?,
-    private val logger: InternalLogger,
+    private val errorHandler: ErrorHandler,
 ) : Application.ActivityLifecycleCallbacks, AutoCloseable {
 
     private val lock = Any()
@@ -52,7 +52,7 @@ class StartupTracker(
                 appStartupDataCollector.startupActivityPreCreated()
             }
         } catch (exc: Throwable) {
-            logger.trackInternalError(InternalErrorType.UiCallbackFail, exc)
+            errorHandler.trackInternalError(InternalErrorType.UiCallbackFail, exc)
         }
     }
 
@@ -70,7 +70,7 @@ class StartupTracker(
                 drawEventEmitter?.registerFirstDrawCallback(activity, {}, callback)
             }
         } catch (exc: Throwable) {
-            logger.trackInternalError(InternalErrorType.UiCallbackFail, exc)
+            errorHandler.trackInternalError(InternalErrorType.UiCallbackFail, exc)
         }
     }
 
@@ -80,7 +80,7 @@ class StartupTracker(
                 appStartupDataCollector.startupActivityPostCreated()
             }
         } catch (exc: Throwable) {
-            logger.trackInternalError(InternalErrorType.UiCallbackFail, exc)
+            errorHandler.trackInternalError(InternalErrorType.UiCallbackFail, exc)
         }
     }
 
@@ -90,7 +90,7 @@ class StartupTracker(
                 appStartupDataCollector.startupActivityInitEnd()
             }
         } catch (exc: Throwable) {
-            logger.trackInternalError(InternalErrorType.UiCallbackFail, exc)
+            errorHandler.trackInternalError(InternalErrorType.UiCallbackFail, exc)
         }
     }
 
@@ -102,7 +102,7 @@ class StartupTracker(
                 )
             }
         } catch (exc: Throwable) {
-            logger.trackInternalError(InternalErrorType.UiCallbackFail, exc)
+            errorHandler.trackInternalError(InternalErrorType.UiCallbackFail, exc)
         }
     }
 

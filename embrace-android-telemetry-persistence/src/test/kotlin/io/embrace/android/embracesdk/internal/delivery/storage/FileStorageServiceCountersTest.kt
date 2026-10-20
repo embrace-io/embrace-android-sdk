@@ -2,7 +2,7 @@ package io.embrace.android.embracesdk.internal.delivery.storage
 
 import io.embrace.android.embracesdk.concurrency.BlockingScheduledExecutorService
 import io.embrace.android.embracesdk.fakes.FakeClock
-import io.embrace.android.embracesdk.fakes.FakeInternalLogger
+import io.embrace.android.embracesdk.fakes.FakeErrorHandler
 import io.embrace.android.embracesdk.fakes.FakeSectionRecorder
 import io.embrace.android.embracesdk.internal.delivery.PayloadType
 import io.embrace.android.embracesdk.internal.delivery.StoredTelemetryMetadata
@@ -44,7 +44,7 @@ internal class FileStorageServiceCountersTest {
         service = FileStorageServiceImpl(
             lazy { outputDir },
             PriorityWorker(BlockingScheduledExecutorService()),
-            FakeInternalLogger(throwOnInternalError = false),
+            FakeErrorHandler(throwOnInternalError = false),
             clock,
             counters = FileWriteCounters(BYTES_COUNTER, FILES_COUNTER),
         )

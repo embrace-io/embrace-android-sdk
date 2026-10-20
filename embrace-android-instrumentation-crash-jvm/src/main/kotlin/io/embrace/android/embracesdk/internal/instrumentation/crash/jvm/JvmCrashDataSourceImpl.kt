@@ -144,7 +144,7 @@ class JvmCrashDataSourceImpl(
     private fun registerExceptionHandler() {
         val defaultHandler = Thread.getDefaultUncaughtExceptionHandler()
         if (defaultHandler !is EmbraceUncaughtExceptionHandler) {
-            val embraceHandler = EmbraceUncaughtExceptionHandler(defaultHandler, this, logger)
+            val embraceHandler = EmbraceUncaughtExceptionHandler(defaultHandler, this, errorHandler)
             Thread.setDefaultUncaughtExceptionHandler(embraceHandler)
             exceptionHandler = embraceHandler
         }

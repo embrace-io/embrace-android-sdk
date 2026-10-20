@@ -1,7 +1,7 @@
 package io.embrace.android.embracesdk.internal.session.persistence
 
 import io.embrace.android.embracesdk.fakes.FakeClock
-import io.embrace.android.embracesdk.fakes.FakeInternalLogger
+import io.embrace.android.embracesdk.fakes.FakeErrorHandler
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
@@ -33,7 +33,7 @@ internal class SessionReconstructionServiceLastWrittenTest {
 
     private lateinit var sessionsDir: File
     private lateinit var clock: FakeClock
-    private lateinit var logger: FakeInternalLogger
+    private lateinit var errorHandler: FakeErrorHandler
     private lateinit var metadataWriter: SessionMetadataWriter
     private lateinit var completedWriter: CompletedSpansWriter
     private lateinit var snapshotsWriter: SpanSnapshotsWriter
@@ -46,7 +46,7 @@ internal class SessionReconstructionServiceLastWrittenTest {
     fun setUp() {
         sessionsDir = tempFolder.newFolder("embrace_sessions")
         clock = FakeClock()
-        logger = FakeInternalLogger(throwOnInternalError = false)
+        errorHandler = FakeErrorHandler(throwOnInternalError = false)
         userId = "userId"
         val target = SessionPartWriteTarget(lazy { sessionsDir }, clock) { partDirectory }
         metadataWriter = SessionMetadataWriter(
@@ -56,11 +56,11 @@ internal class SessionReconstructionServiceLastWrittenTest {
             envelopeVersion = "0.1.0",
             envelopeType = "spans",
             sharedLibSymbolMappingSource = { null },
-            logger = logger,
+            errorHandler = errorHandler,
         )
-        completedWriter = CompletedSpansWriter(target, logger)
-        snapshotsWriter = SpanSnapshotsWriter(target, logger)
-        service = SessionReconstructionService(lazy { sessionsDir }, logger)
+        completedWriter = CompletedSpansWriter(target, errorHandler)
+        snapshotsWriter = SpanSnapshotsWriter(target, errorHandler)
+        service = SessionReconstructionService(lazy { sessionsDir }, errorHandler)
         File(sessionsDir, partDirectory.dirName).mkdirs()
     }
 
@@ -169,6 +169,6 @@ internal class SessionReconstructionServiceLastWrittenTest {
     private fun partFile(fileName: String): File = File(File(sessionsDir, partDirectory.dirName), fileName)
 
     private fun assertNoInternalErrors() {
-        assertEquals(emptyList<FakeInternalLogger.LogMessage>(), logger.internalErrorMessages)
+        assertEquals(emptyList<FakeErrorHandler.LogMessage>(), errorHandler.internalErrorMessages)
     }
 }

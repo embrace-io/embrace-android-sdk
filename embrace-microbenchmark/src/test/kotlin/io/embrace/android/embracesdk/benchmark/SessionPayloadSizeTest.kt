@@ -3,7 +3,7 @@ package io.embrace.android.embracesdk.benchmark
 import io.embrace.android.embracesdk.benchmark.SessionPayloadSizeTest.PersistenceMethod.MULTI_FILE
 import io.embrace.android.embracesdk.benchmark.SessionPayloadSizeTest.PersistenceMethod.SINGLE_FILE
 import io.embrace.android.embracesdk.fakes.FakeClock
-import io.embrace.android.embracesdk.fakes.FakeInternalLogger
+import io.embrace.android.embracesdk.fakes.FakeErrorHandler
 import io.embrace.android.embracesdk.fakes.OtelSdkMode
 import io.embrace.android.embracesdk.internal.payload.Envelope
 import io.embrace.android.embracesdk.internal.serialization.EmbraceSerializer
@@ -76,7 +76,7 @@ internal class SessionPayloadSizeTest(
      * SDK would actually leave behind.
      */
     private fun measureSessionPart(): Map<String, Long> {
-        val logger = FakeInternalLogger(throwOnInternalError = true)
+        val errorHandler = FakeErrorHandler(throwOnInternalError = true)
         val sessionsDir = tempFolder.newFolder("embrace_sessions")
         val partDir = File(sessionsDir, fixture.directory.dirName).apply { mkdirs() }
         val target = SessionPartWriteTarget(lazy { sessionsDir }, FakeClock()) { fixture.directory }
@@ -88,11 +88,11 @@ internal class SessionPayloadSizeTest(
             envelopeVersion = fixture.envelopeVersion,
             envelopeType = fixture.envelopeType,
             sharedLibSymbolMappingSource = { null },
-            logger = logger,
+            errorHandler = errorHandler,
         ).write()
-        SpanSnapshotsWriter(target, logger).write(fixture.spanSnapshots)
+        SpanSnapshotsWriter(target, errorHandler).write(fixture.spanSnapshots)
         // the session span is logged as a completed span once it ends
-        with(CompletedSpansWriter(target, logger)) {
+        with(CompletedSpansWriter(target, errorHandler)) {
             write(fixture.completedSpans + fixture.sessionSpan)
             close()
         }

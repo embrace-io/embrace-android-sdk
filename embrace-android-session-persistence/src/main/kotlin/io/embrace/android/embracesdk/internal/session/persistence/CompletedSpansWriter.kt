@@ -1,7 +1,7 @@
 package io.embrace.android.embracesdk.internal.session.persistence
 
+import io.embrace.android.embracesdk.internal.logging.ErrorHandler
 import io.embrace.android.embracesdk.internal.logging.InternalErrorType
-import io.embrace.android.embracesdk.internal.logging.InternalLogger
 import io.embrace.android.embracesdk.internal.payload.Span
 import io.embrace.android.embracesdk.internal.utils.SystemTrace
 import java.io.File
@@ -19,7 +19,7 @@ import java.io.IOException
  */
 class CompletedSpansWriter(
     private val target: SessionPartWriteTarget,
-    private val logger: InternalLogger,
+    private val errorHandler: ErrorHandler,
     private val maxBytes: Long = MAX_PART_FILE_BYTES,
     private val maxRecordBytes: Long = MAX_RECORD_BYTES,
     private val maxRecords: Int = MAX_PERSISTED_SPANS,
@@ -124,6 +124,6 @@ class CompletedSpansWriter(
     }
 
     private fun trackFailure(exc: Throwable) {
-        logger.trackInternalError(InternalErrorType.CompletedSpansWriteFail, exc)
+        errorHandler.trackInternalError(InternalErrorType.CompletedSpansWriteFail, exc)
     }
 }

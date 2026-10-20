@@ -1,7 +1,7 @@
 package io.embrace.android.embracesdk.internal.session.persistence
 
 import io.embrace.android.embracesdk.fakes.FakeClock
-import io.embrace.android.embracesdk.fakes.FakeInternalLogger
+import io.embrace.android.embracesdk.fakes.FakeErrorHandler
 import io.embrace.android.embracesdk.internal.payload.Attribute
 import io.embrace.android.embracesdk.internal.payload.Span
 import okio.buffer
@@ -51,7 +51,7 @@ internal class CompletedSpansWriterTest {
 
     private lateinit var sessionsDir: File
     private lateinit var clock: FakeClock
-    private lateinit var logger: FakeInternalLogger
+    private lateinit var errorHandler: FakeErrorHandler
     private lateinit var writer: CompletedSpansWriter
 
     @Volatile
@@ -61,9 +61,9 @@ internal class CompletedSpansWriterTest {
     fun setUp() {
         sessionsDir = tempFolder.newFolder("embrace_sessions")
         clock = FakeClock()
-        logger = FakeInternalLogger(throwOnInternalError = false)
+        errorHandler = FakeErrorHandler(throwOnInternalError = false)
         activePart = partDirectory
-        writer = CompletedSpansWriter(target { activePart }, logger)
+        writer = CompletedSpansWriter(target { activePart }, errorHandler)
         createPartDir(partDirectory)
     }
 
@@ -199,7 +199,7 @@ internal class CompletedSpansWriterTest {
 
     @Test
     fun `a failing session part source is reported and does not throw`() {
-        writer = CompletedSpansWriter(target { error("boom") }, logger)
+        writer = CompletedSpansWriter(target { error("boom") }, errorHandler)
         assertFalse(writer.write(completed))
         assertEquals(emptyList<String>(), partDir().list()?.toList())
         assertWriteFailureTracked()
@@ -428,14 +428,14 @@ internal class CompletedSpansWriterTest {
 
     private fun recordBoundedWriter(): CompletedSpansWriter {
         val bound = SpanCollection.ADAPTER.encodedSize(SpanCollection(spans = listOf(oversized.toProto()))) - 1L
-        return CompletedSpansWriter(target { activePart }, logger, MAX_PART_FILE_BYTES, bound)
+        return CompletedSpansWriter(target { activePart }, errorHandler, MAX_PART_FILE_BYTES, bound)
     }
 
     private fun recordCappedWriter(maxRecords: Int): CompletedSpansWriter =
-        CompletedSpansWriter(target { activePart }, logger, MAX_PART_FILE_BYTES, MAX_RECORD_BYTES, maxRecords)
+        CompletedSpansWriter(target { activePart }, errorHandler, MAX_PART_FILE_BYTES, MAX_RECORD_BYTES, maxRecords)
 
     private fun boundedWriter(): CompletedSpansWriter =
-        CompletedSpansWriter(target { activePart }, logger, twoSpanBudget)
+        CompletedSpansWriter(target { activePart }, errorHandler, twoSpanBudget)
 
     private fun target(source: () -> SessionPartDirectory?): SessionPartWriteTarget =
         SessionPartWriteTarget(
@@ -468,12 +468,12 @@ internal class CompletedSpansWriterTest {
     }
 
     private fun assertNoInternalErrors() {
-        assertEquals(emptyList<FakeInternalLogger.LogMessage>(), logger.internalErrorMessages)
+        assertEquals(emptyList<FakeErrorHandler.LogMessage>(), errorHandler.internalErrorMessages)
     }
 
     private fun assertWriteFailureTracked() {
-        assertEquals(1, logger.internalErrorMessages.size)
-        assertEquals("CompletedSpansWriteFail", logger.internalErrorMessages.single().msg)
+        assertEquals(1, errorHandler.internalErrorMessages.size)
+        assertEquals("CompletedSpansWriteFail", errorHandler.internalErrorMessages.single().msg)
     }
 
     /**

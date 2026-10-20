@@ -1,7 +1,7 @@
 package io.embrace.android.embracesdk.internal.arch
 
+import io.embrace.android.embracesdk.fakes.FakeErrorHandler
 import io.embrace.android.embracesdk.fakes.FakeInstrumentationArgs
-import io.embrace.android.embracesdk.fakes.FakeInternalLogger
 import io.embrace.android.embracesdk.internal.arch.datasource.DataSourceImpl
 import io.embrace.android.embracesdk.internal.arch.limits.LimitStrategy
 import io.embrace.android.embracesdk.internal.arch.limits.NoopLimitStrategy
@@ -72,7 +72,7 @@ internal class DataSourceImplTest {
     private class FakeDataSourceImpl(
         limitStrategy: LimitStrategy = NoopLimitStrategy,
         args: FakeInstrumentationArgs = FakeInstrumentationArgs(
-            logger = FakeInternalLogger(throwOnInternalError = false),
+            errorHandler = FakeErrorHandler(throwOnInternalError = false),
         ),
     ) : DataSourceImpl(
         args,

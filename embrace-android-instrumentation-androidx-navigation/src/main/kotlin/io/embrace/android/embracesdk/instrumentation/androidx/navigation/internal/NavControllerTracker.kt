@@ -12,8 +12,8 @@ import io.embrace.android.embracesdk.internal.arch.navigation.NavigationTracking
 import io.embrace.android.embracesdk.internal.arch.navigation.NavigationTrackingService
 import io.embrace.android.embracesdk.internal.arch.navigation.getId
 import io.embrace.android.embracesdk.internal.clock.Clock
+import io.embrace.android.embracesdk.internal.logging.ErrorHandler
 import io.embrace.android.embracesdk.internal.logging.InternalErrorType
-import io.embrace.android.embracesdk.internal.logging.InternalLogger
 import io.embrace.android.embracesdk.internal.utils.event.EventBus
 import java.util.concurrent.atomic.AtomicReference
 
@@ -24,7 +24,7 @@ import java.util.concurrent.atomic.AtomicReference
 internal class NavControllerTracker(
     private val eventBus: EventBus,
     private val clock: Clock,
-    private val logger: InternalLogger,
+    private val errorHandler: ErrorHandler,
 ) : NavigationTrackingInitListener {
 
     private val trackAttemptStatus = mutableMapOf<Int, Boolean>()
@@ -59,7 +59,7 @@ internal class NavControllerTracker(
                 }
             }
         }.onFailure {
-            logger.trackInternalError(InternalErrorType.NavControllerTrackingFail, it)
+            errorHandler.trackInternalError(InternalErrorType.NavControllerTrackingFail, it)
         }
     }
 
@@ -77,7 +77,7 @@ internal class NavControllerTracker(
         try {
             eventBus.emit(NavigationSignal.KEY, ScreenChanged(activityId, extractScreenName(destination), clock.now()))
         } catch (exc: Throwable) {
-            logger.trackInternalError(InternalErrorType.UiCallbackFail, exc)
+            errorHandler.trackInternalError(InternalErrorType.UiCallbackFail, exc)
         }
     }
 

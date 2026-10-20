@@ -32,7 +32,7 @@ internal class LogsApiDelegateTest {
         delegate = LogsApiDelegate(
             logService = lazy { logService },
             attachmentService = AttachmentService(),
-            logger = initModule.logger,
+            errorHandler = initModule.errorHandler,
             payloadStore = null,
             serializer = initModule.jsonSerializer,
             telemetryService = telemetryService,

@@ -49,7 +49,7 @@ internal class VitalsWindowCallbackTest {
         assertEquals(1, delegateCalls)
         assertEquals(1, focalCallbacks.interactionStartCount)
         assertEquals(0, focalCallbacks.interactionEndCount)
-        assertTrue(args.logger.errorMessages.isEmpty())
+        assertTrue(args.errorHandler.errorMessages.isEmpty())
     }
 
     @Test

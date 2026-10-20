@@ -3,7 +3,7 @@ package io.embrace.android.embracesdk.internal.delivery.scheduling
 import io.embrace.android.embracesdk.concurrency.BlockableExecutorService
 import io.embrace.android.embracesdk.concurrency.BlockingScheduledExecutorService
 import io.embrace.android.embracesdk.fakes.FakeClock
-import io.embrace.android.embracesdk.fakes.FakeInternalLogger
+import io.embrace.android.embracesdk.fakes.FakeErrorHandler
 import io.embrace.android.embracesdk.fakes.FakeNetworkConnectivityService
 import io.embrace.android.embracesdk.fakes.FakePayloadStorageService
 import io.embrace.android.embracesdk.fakes.FakeRequestExecutionService
@@ -46,7 +46,7 @@ internal class SchedulingServiceImplTest {
     private lateinit var storageExecutor: BlockableExecutorService
     private lateinit var networkUpdateDispatchExecutor: BlockingScheduledExecutorService
     private lateinit var networkConnectivityService: FakeNetworkConnectivityService
-    private lateinit var logger: FakeInternalLogger
+    private lateinit var errorHandler: FakeErrorHandler
     private lateinit var schedulingService: SchedulingServiceImpl
 
     @Volatile
@@ -68,7 +68,7 @@ internal class SchedulingServiceImplTest {
             addFakePayload(fakeSessionStoredTelemetryMetadata)
         }
         executionService = FakeRequestExecutionService()
-        logger = FakeInternalLogger()
+        errorHandler = FakeErrorHandler()
         allSendsSucceed()
         schedulingService = SchedulingServiceImpl(
             storageService = storageService,
@@ -76,7 +76,7 @@ internal class SchedulingServiceImplTest {
             schedulingWorker = BackgroundWorker(schedulingExecutor),
             deliveryWorker = BackgroundWorker(deliveryExecutor),
             clock = clock,
-            logger = logger,
+            errorHandler = errorHandler,
         )
         networkConnectivityService.addNetworkConnectivityListener(schedulingService)
         networkUpdateDispatchExecutor.awaitExecutionCompletion()
@@ -282,18 +282,18 @@ internal class SchedulingServiceImplTest {
 
     @Test
     fun `unhandled exception during request sending will not be retried`() {
-        logger.throwOnInternalError = false
+        errorHandler.throwOnInternalError = false
         executionService.exceptionOnExecution = RuntimeException("die")
         waitForResurrectionAndDeliveryAttempt(2)
         assertEquals(0, executionService.sendAttempts())
         assertEquals(0, storageService.storedPayloadCount())
-        assertEquals(2, logger.internalErrorMessages.size)
+        assertEquals(2, errorHandler.internalErrorMessages.size)
     }
 
     @Test
     fun `payload stream is closed when the request fails before the body is read`() {
         // simulate failure before payload body consumption
-        logger.throwOnInternalError = false
+        errorHandler.throwOnInternalError = false
         executionService.exceptionOnExecution = RuntimeException("die")
         waitForResurrectionAndDeliveryAttempt(2)
         assertEquals(0, executionService.sendAttempts())
@@ -774,10 +774,10 @@ internal class SchedulingServiceImplTest {
 
         assertEquals(0, executionService.sendAttempts())
         assertEquals(0, storageService.storedPayloadCount())
-        assertEquals(1, logger.internalErrorMessages.size)
+        assertEquals(1, errorHandler.internalErrorMessages.size)
         assertEquals(
             InternalErrorType.PayloadDeliveryFail.toString(),
-            logger.internalErrorMessages.single().msg,
+            errorHandler.internalErrorMessages.single().msg,
         )
     }
 
@@ -789,7 +789,7 @@ internal class SchedulingServiceImplTest {
 
         assertEquals(1, executionService.sendAttempts())
         assertEquals(0, storageService.storedPayloadCount())
-        assertTrue(logger.internalErrorMessages.isEmpty())
+        assertTrue(errorHandler.internalErrorMessages.isEmpty())
     }
 
     @Test
@@ -809,7 +809,7 @@ internal class SchedulingServiceImplTest {
 
     @Test(expected = RejectedExecutionException::class)
     fun `test shutdown`() {
-        logger.throwOnInternalError = false
+        errorHandler.throwOnInternalError = false
         schedulingService.onResurrectionComplete()
         schedulingService.shutdown()
 
@@ -923,7 +923,7 @@ internal class SchedulingServiceImplTest {
         storageService.payloadSizeBytes(metadata)
 
     private fun useMaxPayloadBytes(maxPayloadBytes: Long) {
-        logger.throwOnInternalError = false
+        errorHandler.throwOnInternalError = false
         networkConnectivityService.removeNetworkConnectivityListener(schedulingService)
         schedulingService = SchedulingServiceImpl(
             storageService = storageService,
@@ -931,7 +931,7 @@ internal class SchedulingServiceImplTest {
             schedulingWorker = BackgroundWorker(schedulingExecutor),
             deliveryWorker = BackgroundWorker(deliveryExecutor),
             clock = clock,
-            logger = logger,
+            errorHandler = errorHandler,
             maxPayloadBytes = maxPayloadBytes,
         )
         networkConnectivityService.addNetworkConnectivityListener(schedulingService)

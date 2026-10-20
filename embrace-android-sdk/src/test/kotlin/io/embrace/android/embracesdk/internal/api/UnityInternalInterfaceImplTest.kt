@@ -5,7 +5,7 @@ import io.embrace.android.embracesdk.fakes.FakeKeyValueStore
 import io.embrace.android.embracesdk.internal.api.delegate.HostedSdkInternalInterfaceImpl
 import io.embrace.android.embracesdk.internal.envelope.metadata.HostedSdkVersionInfo
 import io.embrace.android.embracesdk.internal.envelope.metadata.UnitySdkVersionInfo
-import io.embrace.android.embracesdk.internal.logging.InternalLogger
+import io.embrace.android.embracesdk.internal.logging.ErrorHandler
 import io.mockk.mockk
 import org.junit.Assert.assertEquals
 import org.junit.Before
@@ -16,12 +16,12 @@ internal class UnityInternalInterfaceImplTest {
     private lateinit var hostedSdkVersionInfo: HostedSdkVersionInfo
     private lateinit var impl: HostedSdkInternalInterfaceImpl
     private lateinit var store: FakeKeyValueStore
-    private lateinit var logger: InternalLogger
+    private lateinit var errorHandler: ErrorHandler
 
     @Before
     fun setUp() {
         store = FakeKeyValueStore()
-        logger = mockk(relaxed = true)
+        errorHandler = mockk(relaxed = true)
         hostedSdkVersionInfo = UnitySdkVersionInfo(store)
         impl = HostedSdkInternalInterfaceImpl(
             logsApi = mockk(),
@@ -31,7 +31,7 @@ internal class UnityInternalInterfaceImplTest {
             serializer = mockk(),
             rnBundleIdTracker = lazy { mockk() },
             hostedSdkVersionInfo = hostedSdkVersionInfo,
-            logger = logger,
+            errorHandler = errorHandler,
             telemetryService = FakeInternalTelemetryService(),
         )
     }

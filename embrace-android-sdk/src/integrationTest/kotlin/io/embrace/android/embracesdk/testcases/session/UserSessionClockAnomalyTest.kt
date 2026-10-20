@@ -1,7 +1,7 @@
 package io.embrace.android.embracesdk.testcases.session
 
 import io.embrace.android.embracesdk.assertions.getUserSessionId
-import io.embrace.android.embracesdk.fakes.FakeInternalLogger
+import io.embrace.android.embracesdk.fakes.FakeErrorHandler
 import io.embrace.android.embracesdk.internal.logging.InternalErrorType
 import io.embrace.android.embracesdk.testframework.OtelSdkMode
 import io.embrace.android.embracesdk.testframework.SdkIntegrationTestRule
@@ -25,7 +25,7 @@ internal class UserSessionClockAnomalyTest(
     @Rule
     @JvmField
     val testRule: SdkIntegrationTestRule = SdkIntegrationTestRule(otelSdkMode) {
-        EmbraceSetupInterface().apply { getEmbLogger().throwOnInternalError = false }
+        EmbraceSetupInterface().apply { getFakeErrorHandler().throwOnInternalError = false }
     }
 
     @Test
@@ -40,9 +40,9 @@ internal class UserSessionClockAnomalyTest(
             assertAction = {
                 val sessions = getSessionEnvelopes(2, assertOrdering = false)
                 assertDistinctUserSessions(sessions[0], sessions[1])
-                val logger = testRule.moduleGraph.initModule.logger as FakeInternalLogger
+                val errorHandler = testRule.moduleGraph.initModule.errorHandler as FakeErrorHandler
 
-                assertTrue(logger.internalErrorMessages.any {
+                assertTrue(errorHandler.internalErrorMessages.any {
                     it.msg == InternalErrorType.ClockBackwardsShift.toString()
                 })
             }
@@ -69,8 +69,8 @@ internal class UserSessionClockAnomalyTest(
                 val session = getSingleSessionEnvelope()
                 assertNotEquals(staleUserSessionId, session.getUserSessionId())
 
-                val logger = testRule.moduleGraph.initModule.logger as FakeInternalLogger
-                assertTrue(logger.internalErrorMessages.any {
+                val errorHandler = testRule.moduleGraph.initModule.errorHandler as FakeErrorHandler
+                assertTrue(errorHandler.internalErrorMessages.any {
                     it.msg == InternalErrorType.ClockBackwardsShift.toString()
                 })
             }

@@ -221,7 +221,7 @@ internal class OkHttpDataSource(
                 )
             }
         } catch (exc: Throwable) {
-            logger.trackInternalError(InternalErrorType.DataSourceDataCaptureFail, exc)
+            errorHandler.trackInternalError(InternalErrorType.DataSourceDataCaptureFail, exc)
             networkRequestDataSource?.discardRequest(callData.id)
         } finally {
             activeCalls.remove(chain.call())
@@ -372,7 +372,7 @@ internal class OkHttpDataSource(
             }
             dataCaptureErrorMessage =
                 "There were errors in capturing the following part(s) of the network call: %s$errors"
-            logger.trackInternalError(
+            errorHandler.trackInternalError(
                 InternalErrorType.DataSourceDataCaptureFail,
                 RuntimeException(
                     "Failure during the building of NetworkCaptureData. $dataCaptureErrorMessage",
@@ -412,7 +412,7 @@ internal class OkHttpDataSource(
                 return buffer.readByteArray()
             }
         } catch (e: IOException) {
-            logger.trackInternalError(
+            errorHandler.trackInternalError(
                 InternalErrorType.DataSourceDataCaptureFail,
                 e,
             )

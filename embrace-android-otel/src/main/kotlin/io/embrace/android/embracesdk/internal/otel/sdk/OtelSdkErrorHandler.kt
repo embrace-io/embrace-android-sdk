@@ -1,6 +1,6 @@
 package io.embrace.android.embracesdk.internal.otel.sdk
 
-import io.embrace.android.embracesdk.internal.logging.InternalErrorHandler
+import io.embrace.android.embracesdk.internal.logging.ErrorHandler
 import io.embrace.android.embracesdk.internal.logging.InternalErrorType
 import io.opentelemetry.kotlin.error.SdkError
 import io.opentelemetry.kotlin.error.SdkErrorHandler
@@ -12,7 +12,7 @@ import io.opentelemetry.kotlin.error.SdkErrorHandler
  * deliberately dropped, as they are not defects in the OpenTelemetry SDK.
  */
 internal class OtelSdkErrorHandler(
-    private val errorHandler: InternalErrorHandler,
+    private val errorHandler: ErrorHandler,
 ) : SdkErrorHandler {
 
     override fun onError(error: SdkError) {

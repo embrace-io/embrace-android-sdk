@@ -1,6 +1,6 @@
 package io.embrace.android.embracesdk.internal.otel.logs
 
-import io.embrace.android.embracesdk.fakes.FakeInternalLogger
+import io.embrace.android.embracesdk.fakes.FakeErrorHandler
 import io.embrace.android.embracesdk.fakes.FakeLogRecordExporter
 import io.embrace.android.embracesdk.fakes.FakeReadWriteLogRecord
 import io.embrace.android.embracesdk.internal.otel.export.ExternalExportDispatcher
@@ -45,7 +45,7 @@ internal class DefaultLogRecordExporterTest {
     fun `logs reach the sink before exportInline() returns`() {
         val logSink: LogSink = LogSinkImpl()
         val exporter =
-            exporter(logSink, listOf(FakeLogRecordExporter()), ExternalExportDispatcher(FakeInternalLogger()))
+            exporter(logSink, listOf(FakeLogRecordExporter()), ExternalExportDispatcher(FakeErrorHandler()))
 
         exporter.exportInline(listOf(FakeReadWriteLogRecord()))
 
@@ -65,7 +65,7 @@ internal class DefaultLogRecordExporterTest {
             override suspend fun shutdown(): OperationResultCode = OperationResultCode.Success
         }
         val exporter =
-            exporter(LogSinkImpl(), listOf(threadRecordingExporter), ExternalExportDispatcher(FakeInternalLogger()))
+            exporter(LogSinkImpl(), listOf(threadRecordingExporter), ExternalExportDispatcher(FakeErrorHandler()))
 
         exporter.exportInline(listOf(FakeReadWriteLogRecord()))
         runBlocking { exporter.forceFlush() }
@@ -77,7 +77,7 @@ internal class DefaultLogRecordExporterTest {
     fun `external exporters receive the record as it was when exported`() {
         val pendingExports = ArrayDeque<Runnable>()
         val dispatcher =
-            ExternalExportDispatcher(FakeInternalLogger()) { Executor(pendingExports::add).asCoroutineDispatcher() }
+            ExternalExportDispatcher(FakeErrorHandler()) { Executor(pendingExports::add).asCoroutineDispatcher() }
         val externalExporter = FakeLogRecordExporter()
         val log = FakeReadWriteLogRecord(body = "original")
 

@@ -5,7 +5,7 @@ import io.embrace.android.embracesdk.fakes.FakeClock
 import io.embrace.android.embracesdk.fakes.FakeConfigService
 import io.embrace.android.embracesdk.fakes.FakeCurrentSessionPartSpan
 import io.embrace.android.embracesdk.fakes.FakeEmbraceSdkSpan
-import io.embrace.android.embracesdk.fakes.FakeInternalLogger
+import io.embrace.android.embracesdk.fakes.FakeErrorHandler
 import io.embrace.android.embracesdk.fakes.FakeInternalTelemetryService
 import io.embrace.android.embracesdk.fakes.FakeSectionRecorder
 import io.embrace.android.embracesdk.fakes.TestUuidSource
@@ -61,7 +61,7 @@ internal class SessionPartWriterImplTest {
     private lateinit var sessionsDir: File
     private lateinit var clock: FakeClock
     private lateinit var executor: BlockingScheduledExecutorService
-    private lateinit var logger: FakeInternalLogger
+    private lateinit var errorHandler: FakeErrorHandler
     private lateinit var telemetryService: FakeInternalTelemetryService
     private lateinit var recorder: FakeSectionRecorder
 
@@ -97,7 +97,7 @@ internal class SessionPartWriterImplTest {
         sessionsDir = tempFolder.newFolder("embrace_sessions_split")
         clock = FakeClock()
         executor = BlockingScheduledExecutorService(clock, true)
-        logger = FakeInternalLogger(throwOnInternalError = false)
+        errorHandler = FakeErrorHandler(throwOnInternalError = false)
         telemetryService = FakeInternalTelemetryService()
         recorder = FakeSectionRecorder()
         SystemTrace.recorder = recorder
@@ -525,7 +525,7 @@ internal class SessionPartWriterImplTest {
         assertInternalErrors("SessionPartEndMissed")
         assertEquals(
             "Session part started before the previous one ended",
-            logger.internalErrorMessages.single().throwable?.message,
+            errorHandler.internalErrorMessages.single().throwable?.message,
         )
     }
 
@@ -549,7 +549,7 @@ internal class SessionPartWriterImplTest {
         assertInternalErrors("SessionPartEndMissed")
         assertEquals(
             "Session part ended after another had started",
-            logger.internalErrorMessages.single().throwable?.message,
+            errorHandler.internalErrorMessages.single().throwable?.message,
         )
     }
 
@@ -606,7 +606,7 @@ internal class SessionPartWriterImplTest {
         }
         drain()
 
-        assertEquals(listOf("SpanSnapshotsWriteFail"), logger.internalErrorMessages.map { it.msg })
+        assertEquals(listOf("SpanSnapshotsWriteFail"), errorHandler.internalErrorMessages.map { it.msg })
     }
 
     @Test
@@ -626,7 +626,7 @@ internal class SessionPartWriterImplTest {
             writer.onSpanCompleted(listOf(completedSpan("completed$index")))
             drain()
         }
-        assertEquals(1, logger.internalErrorMessages.size)
+        assertEquals(1, errorHandler.internalErrorMessages.size)
     }
 
     @Test
@@ -639,7 +639,7 @@ internal class SessionPartWriterImplTest {
         clock.tick(2000)
         writer.onSpanSnapshotChanged(sessionSpan)
         drain()
-        assertEquals(1, logger.internalErrorMessages.size)
+        assertEquals(1, errorHandler.internalErrorMessages.size)
 
         writer.endPart()
         writer.onSessionPartEnded(SESSION_PART_ID)
@@ -649,7 +649,7 @@ internal class SessionPartWriterImplTest {
 
         assertNotNull(sessionSpanIn(OTHER_SESSION_PART_ID))
         assertNotNull(metadataIn(OTHER_SESSION_PART_ID))
-        assertEquals(1, logger.internalErrorMessages.size)
+        assertEquals(1, errorHandler.internalErrorMessages.size)
     }
 
     @Test
@@ -1677,7 +1677,7 @@ internal class SessionPartWriterImplTest {
         configService,
         TestUuidSource(),
         clock,
-        logger,
+        errorHandler,
         resourceSource,
         metadataSource,
         currentSessionPartSpan,
@@ -1797,10 +1797,10 @@ internal class SessionPartWriterImplTest {
     }
 
     private fun assertInternalErrors(vararg expected: String) {
-        assertEquals(expected.sorted(), logger.internalErrorMessages.map { it.msg }.sorted())
+        assertEquals(expected.sorted(), errorHandler.internalErrorMessages.map { it.msg }.sorted())
     }
 
     private fun assertNoInternalErrors() {
-        assertEquals(emptyList<FakeInternalLogger.LogMessage>(), logger.internalErrorMessages)
+        assertEquals(emptyList<FakeErrorHandler.LogMessage>(), errorHandler.internalErrorMessages)
     }
 }

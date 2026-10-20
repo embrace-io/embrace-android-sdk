@@ -4,7 +4,7 @@ import io.embrace.android.embracesdk.internal.clock.Clock
 import io.embrace.android.embracesdk.internal.delivery.StoredTelemetryMetadata
 import io.embrace.android.embracesdk.internal.delivery.debug.DeliveryTracer
 import io.embrace.android.embracesdk.internal.delivery.storedTelemetryComparator
-import io.embrace.android.embracesdk.internal.logging.InternalLogger
+import io.embrace.android.embracesdk.internal.logging.ErrorHandler
 import io.embrace.android.embracesdk.internal.worker.PriorityWorker
 import java.io.File
 import java.io.InputStream
@@ -19,7 +19,7 @@ class PayloadStorageServiceImpl(
     outputDir: Lazy<File>,
     worker: PriorityWorker<StoredTelemetryMetadata>,
     private val processIdProvider: () -> String,
-    logger: InternalLogger,
+    errorHandler: ErrorHandler,
     clock: Clock,
     private val deliveryTracer: DeliveryTracer? = null,
     storageLimit: Int = DEFAULT_STORAGE_LIMIT,
@@ -32,7 +32,7 @@ class PayloadStorageServiceImpl(
     private val fileStorageService: FileStorageService = FileStorageServiceImpl(
         outputDir,
         worker,
-        logger,
+        errorHandler,
         clock,
         storageLimit,
     )

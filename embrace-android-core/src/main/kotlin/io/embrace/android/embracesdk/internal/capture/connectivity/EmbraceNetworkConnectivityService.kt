@@ -5,8 +5,8 @@ import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
 import android.net.ConnectivityManager
+import io.embrace.android.embracesdk.internal.logging.ErrorHandler
 import io.embrace.android.embracesdk.internal.logging.InternalErrorType
-import io.embrace.android.embracesdk.internal.logging.InternalLogger
 import io.embrace.android.embracesdk.internal.worker.BackgroundWorker
 import java.util.concurrent.CopyOnWriteArrayList
 
@@ -14,7 +14,7 @@ import java.util.concurrent.CopyOnWriteArrayList
 internal class EmbraceNetworkConnectivityService(
     private val context: Context,
     private val backgroundWorker: BackgroundWorker,
-    private val logger: InternalLogger,
+    private val errorHandler: ErrorHandler,
     private val connectivityManager: Lazy<ConnectivityManager?>,
 ) : BroadcastReceiver(), NetworkConnectivityService {
 
@@ -33,7 +33,7 @@ internal class EmbraceNetworkConnectivityService(
                 notifyNetworkConnectivityListeners(connectivityStatus)
             }
         } catch (ex: Exception) {
-            logger.trackInternalError(InternalErrorType.NetworkStatusCaptureFail, ex)
+            errorHandler.trackInternalError(InternalErrorType.NetworkStatusCaptureFail, ex)
         }
     }
 
@@ -54,7 +54,7 @@ internal class EmbraceNetworkConnectivityService(
                 ConnectivityStatus.None
             }
         } catch (e: Exception) {
-            logger.trackInternalError(InternalErrorType.NetworkStatusCaptureFail, e)
+            errorHandler.trackInternalError(InternalErrorType.NetworkStatusCaptureFail, e)
             OptimisticUnknown
         }
     }

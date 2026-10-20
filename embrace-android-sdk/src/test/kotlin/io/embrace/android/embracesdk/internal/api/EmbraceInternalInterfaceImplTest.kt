@@ -3,7 +3,7 @@ package io.embrace.android.embracesdk.internal.api
 import io.embrace.android.embracesdk.fakes.FakeClock
 import io.embrace.android.embracesdk.fakes.FakeConfigService
 import io.embrace.android.embracesdk.fakes.FakeEnvelopeResourceSource
-import io.embrace.android.embracesdk.fakes.FakeInternalLogger
+import io.embrace.android.embracesdk.fakes.FakeErrorHandler
 import io.embrace.android.embracesdk.fakes.FakeInternalTelemetryService
 import io.embrace.android.embracesdk.fakes.OtelSdkMode
 import io.embrace.android.embracesdk.fakes.behavior.FakeNetworkSpanForwardingBehavior
@@ -27,7 +27,7 @@ internal class EmbraceInternalInterfaceImplTest {
     @Before
     fun setUp() {
         fakeClock = FakeClock(currentTime = beforeObjectInitTime)
-        initModule = FakeInitModule(clock = fakeClock, logger = FakeInternalLogger(false), otelSdkMode = OtelSdkMode.COMPAT)
+        initModule = FakeInitModule(clock = fakeClock, errorHandler = FakeErrorHandler(false), otelSdkMode = OtelSdkMode.COMPAT)
         fakeConfigService = FakeConfigService()
         resourceSource = FakeEnvelopeResourceSource()
         internalImpl = HostedSdkInternalInterfaceImpl(
@@ -38,7 +38,7 @@ internal class EmbraceInternalInterfaceImplTest {
             serializer = mockk(),
             rnBundleIdTracker = lazy { mockk() },
             hostedSdkVersionInfo = mockk(),
-            logger = mockk(),
+            errorHandler = mockk(),
             telemetryService = FakeInternalTelemetryService(),
         )
     }

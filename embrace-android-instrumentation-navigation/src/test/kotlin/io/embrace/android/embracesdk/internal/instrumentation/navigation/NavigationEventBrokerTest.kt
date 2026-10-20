@@ -1,7 +1,7 @@
 package io.embrace.android.embracesdk.internal.instrumentation.navigation
 
 import io.embrace.android.embracesdk.fakes.FakeClock
-import io.embrace.android.embracesdk.fakes.FakeInternalLogger
+import io.embrace.android.embracesdk.fakes.FakeErrorHandler
 import io.embrace.android.embracesdk.internal.arch.navigation.CurrentScreen
 import io.embrace.android.embracesdk.internal.arch.navigation.NavigationSignal
 import io.embrace.android.embracesdk.internal.arch.navigation.NavigationSignal.ActivityPaused
@@ -31,7 +31,7 @@ internal class NavigationEventBrokerTest {
         clock = FakeClock()
         loadTimes = mutableListOf()
         screens = mutableListOf()
-        val eventBus = EventBus(FakeInternalLogger())
+        val eventBus = EventBus(FakeErrorHandler())
         eventBus.addStateHandler(CurrentScreen.KEY) { screens.add(it) }
         broker = NavigationEventBroker(eventBus)
     }

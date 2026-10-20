@@ -16,8 +16,6 @@ import io.embrace.android.embracesdk.internal.injection.InitModule
 import io.embrace.android.embracesdk.internal.injection.OpenTelemetryModuleImpl
 import io.embrace.android.embracesdk.internal.logging.ErrorHandler
 import io.embrace.android.embracesdk.internal.logging.ErrorHandlerImpl
-import io.embrace.android.embracesdk.internal.logging.InternalLogger
-import io.embrace.android.embracesdk.internal.logging.InternalLoggerImpl
 import io.embrace.android.embracesdk.internal.otel.impl.EmbClock
 import io.embrace.android.embracesdk.internal.otel.logs.LogSink
 import io.embrace.android.embracesdk.internal.otel.sdk.DataValidator
@@ -91,7 +89,6 @@ internal class TelemetryDestinationHarness(
 
     private class TestInitModule(override val clock: Clock) : InitModule {
         override val telemetryService: InternalTelemetryService = NoopInternalTelemetryService
-        override val logger: InternalLogger = InternalLoggerImpl()
         override val errorHandler: ErrorHandler = ErrorHandlerImpl(clock)
         override val systemInfo: SystemInfo = SystemInfo()
         override val uuidSource: UuidSource = UuidSourceImpl()

@@ -1,7 +1,7 @@
 package io.embrace.android.embracesdk.internal.session.persistence
 
+import io.embrace.android.embracesdk.internal.logging.ErrorHandler
 import io.embrace.android.embracesdk.internal.logging.InternalErrorType
-import io.embrace.android.embracesdk.internal.logging.InternalLogger
 import io.embrace.android.embracesdk.internal.utils.SystemTrace
 import java.io.File
 import java.io.IOException
@@ -12,10 +12,10 @@ import java.io.IOException
  */
 class SessionReconstructionService(
     private val sessionsDir: Lazy<File>,
-    private val logger: InternalLogger,
+    private val errorHandler: ErrorHandler,
 ) {
 
-    private val decoder = SessionPartDecoder(logger)
+    private val decoder = SessionPartDecoder(errorHandler)
 
     /**
      * Reconstructs the envelope for the given session part, along with when its files were last
@@ -37,6 +37,6 @@ class SessionReconstructionService(
         }
 
     private fun trackFailure(exc: Throwable) {
-        logger.trackInternalError(InternalErrorType.SessionReconstructionFail, exc)
+        errorHandler.trackInternalError(InternalErrorType.SessionReconstructionFail, exc)
     }
 }

@@ -24,7 +24,7 @@ internal fun createRealSdkInstance(
     val logsApiDelegate = LogsApiDelegate(
         logService = moduleGraph.logService,
         attachmentService = moduleGraph.attachmentService,
-        logger = moduleGraph.initModule.logger,
+        errorHandler = moduleGraph.initModule.errorHandler,
         payloadStore = moduleGraph.deliveryModule?.payloadStore,
         serializer = moduleGraph.initModule.jsonSerializer,
         telemetryService = moduleGraph.initModule.telemetryService,
@@ -32,7 +32,6 @@ internal fun createRealSdkInstance(
     val deliveryModule = moduleGraph.deliveryModule
     return RealSdkInstance(
         clock = clock,
-        logger = moduleGraph.initModule.logger,
         errorHandler = moduleGraph.initModule.errorHandler,
         primaryAbi = moduleGraph.initModule.systemInfo.primaryAbi,
         configService = moduleGraph.configService,
@@ -88,7 +87,7 @@ internal fun createRealSdkInstance(
             serializer = moduleGraph.initModule.jsonSerializer,
             rnBundleIdTracker = lazy { moduleGraph.payloadSourceModule.rnBundleIdTracker },
             hostedSdkVersionInfo = moduleGraph.payloadSourceModule.hostedSdkVersionInfo,
-            logger = moduleGraph.initModule.logger,
+            errorHandler = moduleGraph.initModule.errorHandler,
             telemetryService = moduleGraph.initModule.telemetryService,
         ),
         viewTrackingApiDelegate = ViewTrackingApiDelegate(

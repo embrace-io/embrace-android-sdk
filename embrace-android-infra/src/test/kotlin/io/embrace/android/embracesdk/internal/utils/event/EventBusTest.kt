@@ -1,6 +1,6 @@
 package io.embrace.android.embracesdk.internal.utils.event
 
-import io.embrace.android.embracesdk.fakes.FakeInternalLogger
+import io.embrace.android.embracesdk.fakes.FakeErrorHandler
 import io.embrace.android.embracesdk.internal.logging.InternalErrorType
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
@@ -34,8 +34,8 @@ internal class EventBusTest {
 
     private object Disconnected : ConnectionState
 
-    private val logger = FakeInternalLogger(throwOnInternalError = false)
-    private val bus = EventBus(logger)
+    private val errorHandler = FakeErrorHandler(throwOnInternalError = false)
+    private val bus = EventBus(errorHandler)
 
     private val appKey = EventKey<AppEvent>()
 
@@ -224,7 +224,10 @@ internal class EventBusTest {
         bus.emit(appKey, ForegroundEvent())
 
         assertEquals("the handler after the throwing one was not invoked", 1, received.get())
-        assertEquals(listOf(InternalErrorType.EventBusHandlerFail.toString()), logger.internalErrorMessages.map { it.msg })
+        assertEquals(
+            listOf(InternalErrorType.EventBusHandlerFail.toString()),
+            errorHandler.internalErrorMessages.map { it.msg },
+        )
     }
 
     @Test
@@ -233,7 +236,7 @@ internal class EventBusTest {
 
         repeat(3) { bus.emit(appKey, ForegroundEvent()) }
 
-        assertEquals(1, logger.internalErrorMessages.size)
+        assertEquals(1, errorHandler.internalErrorMessages.size)
     }
 
     @Test
@@ -246,7 +249,7 @@ internal class EventBusTest {
         bus.addHandler(appKey, handler)
         bus.emit(appKey, ForegroundEvent())
 
-        assertEquals(2, logger.internalErrorMessages.size)
+        assertEquals(2, errorHandler.internalErrorMessages.size)
     }
 
     @Test
@@ -463,7 +466,10 @@ internal class EventBusTest {
 
         bus.addStateHandler(screenKey) { error("boom") }
 
-        assertEquals(listOf(InternalErrorType.EventBusHandlerFail.toString()), logger.internalErrorMessages.map { it.msg })
+        assertEquals(
+            listOf(InternalErrorType.EventBusHandlerFail.toString()),
+            errorHandler.internalErrorMessages.map { it.msg },
+        )
     }
 
     @Test
@@ -587,7 +593,10 @@ internal class EventBusTest {
         }
 
         assertEquals(1, attempts.get())
-        assertEquals(listOf(InternalErrorType.EventBusProducerFail.toString()), logger.internalErrorMessages.map { it.msg })
+        assertEquals(
+            listOf(InternalErrorType.EventBusProducerFail.toString()),
+            errorHandler.internalErrorMessages.map { it.msg },
+        )
     }
 
     @Test

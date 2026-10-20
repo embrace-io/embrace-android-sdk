@@ -195,7 +195,7 @@ internal class InitializedModuleGraph(
         val backgroundWorker = workerThreadPool.backgroundWorker(Worker.Background.NonIoRegWorker)
         dataCaptureServiceModuleSupplier?.invoke(
             initModule.clock,
-            initModule.logger,
+            initModule.errorHandler,
             destination,
             configService,
             { coreModule.appVersionStartupCounter },
@@ -205,7 +205,7 @@ internal class InitializedModuleGraph(
             backgroundWorker,
         ) ?: DataCaptureServiceModuleImpl(
             initModule.clock,
-            initModule.logger,
+            initModule.errorHandler,
             destination,
             configService,
             { coreModule.appVersionStartupCounter },

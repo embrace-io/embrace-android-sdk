@@ -3,7 +3,7 @@ package io.embrace.android.embracesdk.internal.session.message
 import io.embrace.android.embracesdk.internal.arch.state.ProcessState
 import io.embrace.android.embracesdk.internal.config.ConfigService
 import io.embrace.android.embracesdk.internal.envelope.log.LogEnvelopeSource
-import io.embrace.android.embracesdk.internal.logging.InternalLogger
+import io.embrace.android.embracesdk.internal.logging.ErrorHandler
 import io.embrace.android.embracesdk.internal.payload.Envelope
 import io.embrace.android.embracesdk.internal.payload.LogPayload
 import io.embrace.android.embracesdk.internal.payload.SessionPartPayload
@@ -16,7 +16,7 @@ internal class PayloadFactoryImpl(
     private val payloadMessageCollator: PayloadMessageCollator,
     private val logEnvelopeSource: LogEnvelopeSource,
     private val configService: ConfigService,
-    private val logger: InternalLogger,
+    private val errorHandler: ErrorHandler,
 ) : PayloadFactory {
 
     override fun startPayloadWithState(
@@ -93,7 +93,7 @@ internal class PayloadFactoryImpl(
             FinalEnvelopeParams(
                 initial = initial,
                 endType = SessionPartSnapshotType.NORMAL_END,
-                logger = logger,
+                errorHandler = errorHandler,
                 continueMonitoring = true,
             ),
         )
@@ -154,7 +154,7 @@ internal class PayloadFactoryImpl(
             FinalEnvelopeParams(
                 initial = initial,
                 endType = SessionPartSnapshotType.NORMAL_END,
-                logger = logger,
+                errorHandler = errorHandler,
                 continueMonitoring = isBackgroundActivityEnabled(),
             ),
         )
@@ -171,7 +171,7 @@ internal class PayloadFactoryImpl(
             FinalEnvelopeParams(
                 initial = initial,
                 endType = SessionPartSnapshotType.NORMAL_END,
-                logger = logger,
+                errorHandler = errorHandler,
                 continueMonitoring = true,
             ),
         )
@@ -185,7 +185,7 @@ internal class PayloadFactoryImpl(
             FinalEnvelopeParams(
                 initial = initial,
                 endType = SessionPartSnapshotType.JVM_CRASH,
-                logger = logger,
+                errorHandler = errorHandler,
                 continueMonitoring = false,
                 crashId = crashId,
             ),
@@ -203,7 +203,7 @@ internal class PayloadFactoryImpl(
             FinalEnvelopeParams(
                 initial = initial,
                 endType = SessionPartSnapshotType.JVM_CRASH,
-                logger = logger,
+                errorHandler = errorHandler,
                 continueMonitoring = false,
                 crashId = crashId,
             ),
@@ -218,7 +218,7 @@ internal class PayloadFactoryImpl(
             FinalEnvelopeParams(
                 initial = initial,
                 endType = SessionPartSnapshotType.PERIODIC_CACHE,
-                logger = logger,
+                errorHandler = errorHandler,
                 continueMonitoring = true,
             ),
         )
@@ -232,7 +232,7 @@ internal class PayloadFactoryImpl(
             FinalEnvelopeParams(
                 initial = initial,
                 endType = SessionPartSnapshotType.PERIODIC_CACHE,
-                logger = logger,
+                errorHandler = errorHandler,
                 continueMonitoring = true,
             ),
         )

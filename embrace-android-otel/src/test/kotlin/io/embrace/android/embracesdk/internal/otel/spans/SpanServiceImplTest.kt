@@ -6,7 +6,7 @@ import io.embrace.android.embracesdk.assertions.assertIsType
 import io.embrace.android.embracesdk.assertions.assertIsTypePerformance
 import io.embrace.android.embracesdk.assertions.assertNotPrivateSpan
 import io.embrace.android.embracesdk.fakes.FakeClock
-import io.embrace.android.embracesdk.fakes.FakeInternalLogger
+import io.embrace.android.embracesdk.fakes.FakeErrorHandler
 import io.embrace.android.embracesdk.fakes.FakeInternalTelemetryService
 import io.embrace.android.embracesdk.fakes.FakeOtelKotlinClock
 import io.embrace.android.embracesdk.fakes.FakeSessionIdsProvider
@@ -715,7 +715,7 @@ internal class SpanServiceImplTest(
             otelClock = otelClock,
             configuration = otelSdkConfig,
             spanServiceProvider = ::FakeSpanService,
-            errorHandler = FakeInternalLogger(),
+            errorHandler = FakeErrorHandler(),
             useKotlinSdk = otelSdkMode.useKotlinSdk,
         )
         val embraceSpanFactory = EmbraceSpanFactoryImpl(

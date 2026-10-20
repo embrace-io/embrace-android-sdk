@@ -47,7 +47,7 @@ internal class AeiDataSourceImpl(
             try {
                 processAeiRecords()
             } catch (exc: Throwable) {
-                logger.trackInternalError(InternalErrorType.ProcessAeiRecords, exc)
+                errorHandler.trackInternalError(InternalErrorType.ProcessAeiRecords, exc)
             }
         }
     }

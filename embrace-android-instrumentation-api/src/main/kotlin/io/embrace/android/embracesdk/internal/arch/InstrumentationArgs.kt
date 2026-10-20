@@ -8,7 +8,7 @@ import io.embrace.android.embracesdk.internal.arch.navigation.NavigationTracking
 import io.embrace.android.embracesdk.internal.arch.state.ProcessStateTracker
 import io.embrace.android.embracesdk.internal.clock.Clock
 import io.embrace.android.embracesdk.internal.config.ConfigService
-import io.embrace.android.embracesdk.internal.logging.InternalLogger
+import io.embrace.android.embracesdk.internal.logging.ErrorHandler
 import io.embrace.android.embracesdk.internal.network.http.HttpRequestInfoModifierChain
 import io.embrace.android.embracesdk.internal.serialization.PlatformSerializer
 import io.embrace.android.embracesdk.internal.session.id.SessionIdsSnapshot
@@ -43,9 +43,9 @@ interface InstrumentationArgs {
     val destination: TelemetryDestination
 
     /**
-     * Embrace SDK's internal logger.
+     * Logs messages & guards SDK code, tracking internal errors for Embrace's telemetry.
      */
-    val logger: InternalLogger
+    val errorHandler: ErrorHandler
 
     /**
      * A clock that can be used for time measurements in telemetry.

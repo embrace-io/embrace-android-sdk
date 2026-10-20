@@ -15,8 +15,8 @@ import io.embrace.android.embracesdk.internal.arch.schema.SchemaType
 import io.embrace.android.embracesdk.internal.clock.Clock
 import io.embrace.android.embracesdk.internal.instrumentation.network.getOverriddenURLString
 import io.embrace.android.embracesdk.internal.instrumentation.network.toStatusCodeString
+import io.embrace.android.embracesdk.internal.logging.ErrorHandler
 import io.embrace.android.embracesdk.internal.logging.InternalErrorType
-import io.embrace.android.embracesdk.internal.logging.InternalLogger
 import io.embrace.android.embracesdk.internal.network.http.HttpRequestInfoModifierChain
 import io.embrace.android.embracesdk.internal.network.http.MutableHttpRequestInfoImpl
 import io.embrace.android.embracesdk.internal.telemetry.AppliedLimitType
@@ -60,7 +60,7 @@ class HucLiteDataSource(
             try {
                 installURLStreamHandlerFactory(
                     clock = args.clock,
-                    logger = args.logger,
+                    errorHandler = args.errorHandler,
                 )
             } finally {
                 initializationAttempted = true
@@ -86,11 +86,11 @@ class HucLiteDataSource(
                     },
                     clock = clock,
                     telemetryDestination = telemetryDestination,
-                    errorHandler = ::errorHandler,
+                    errorHandler = ::trackCaptureError,
                     httpRequestInfoModifierChain = args.httpRequestInfoModifierChain,
                 )
             }.onFailure {
-                errorHandler(it)
+                trackCaptureError(it)
             }.getOrNull()
         } else {
             null
@@ -99,7 +99,7 @@ class HucLiteDataSource(
 
     private fun installURLStreamHandlerFactory(
         clock: Clock,
-        logger: InternalLogger,
+        errorHandler: ErrorHandler,
     ) {
         runCatching {
             val httpsHandlerClass = httpsHandlerClassProvider()
@@ -130,12 +130,12 @@ class HucLiteDataSource(
 
             factoryInstaller(newFactory ?: instrumentedUrlStreamHandlerFactoryProvider())
         }.onFailure {
-            logger.trackInternalError(InternalErrorType.UrlStreamHandlerFactoryInstallFail, it)
+            errorHandler.trackInternalError(InternalErrorType.UrlStreamHandlerFactoryInstallFail, it)
         }
     }
 
-    private fun errorHandler(t: Throwable) {
-        logger.trackInternalError(InternalErrorType.DataSourceDataCaptureFail, InstrumentationException(t))
+    private fun trackCaptureError(t: Throwable) {
+        errorHandler.trackInternalError(InternalErrorType.DataSourceDataCaptureFail, InstrumentationException(t))
     }
 
     class RequestData(

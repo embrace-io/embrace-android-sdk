@@ -4,7 +4,7 @@ import android.content.Context
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import io.embrace.android.embracesdk.fakes.FakeConfigService
-import io.embrace.android.embracesdk.fakes.FakeInternalLogger
+import io.embrace.android.embracesdk.fakes.FakeErrorHandler
 import io.embrace.android.embracesdk.fakes.FakeSpanExporter
 import io.embrace.android.embracesdk.internal.config.ConfigService
 import io.embrace.android.embracesdk.internal.config.resolved.EmbraceConfig
@@ -26,7 +26,7 @@ import java.util.concurrent.TimeUnit
 internal class SdkStateHolderFactoryTest {
 
     private val context = ApplicationProvider.getApplicationContext<Context>()
-    private val preStartServices = PreStartServices(logger = FakeInternalLogger(throwOnInternalError = false))
+    private val preStartServices = PreStartServices(errorHandler = FakeErrorHandler(throwOnInternalError = false))
     private val workerThreadPool = RecordingWorkerThreadPool()
 
     @Test

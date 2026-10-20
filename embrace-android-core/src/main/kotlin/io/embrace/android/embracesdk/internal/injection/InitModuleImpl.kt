@@ -7,7 +7,6 @@ import io.embrace.android.embracesdk.internal.clock.Clock
 import io.embrace.android.embracesdk.internal.config.instrumented.InstrumentedConfigImpl
 import io.embrace.android.embracesdk.internal.config.instrumented.schema.InstrumentedConfig
 import io.embrace.android.embracesdk.internal.logging.ErrorHandler
-import io.embrace.android.embracesdk.internal.logging.InternalLogger
 import io.embrace.android.embracesdk.internal.serialization.EmbraceSerializer
 import io.embrace.android.embracesdk.internal.serialization.PlatformSerializer
 import io.embrace.android.embracesdk.internal.telemetry.InternalTelemetryService
@@ -24,7 +23,6 @@ class InitModuleImpl(
     override val okHttpClient: Lazy<OkHttpClient> = lazyOkHttpClient(),
 ) : InitModule {
 
-    override val logger: InternalLogger = preStartServices.logger
     override val clock: Clock = preStartServices.clock
     override val systemInfo: SystemInfo = preStartServices.systemInfo
     override val telemetryService: InternalTelemetryService = preStartServices.telemetryService

@@ -3,7 +3,7 @@ package io.embrace.android.embracesdk.internal.session.id
 import android.app.ActivityManager
 import io.embrace.android.embracesdk.fakes.fakeSessionPartToken
 import io.embrace.android.embracesdk.internal.arch.state.ProcessState
-import io.embrace.android.embracesdk.internal.logging.InternalLoggerImpl
+import io.embrace.android.embracesdk.internal.logging.ErrorHandlerImpl
 import io.embrace.android.embracesdk.internal.session.LifeEventType
 import io.embrace.android.embracesdk.internal.session.SessionPartToken
 import org.junit.Assert.assertEquals
@@ -16,7 +16,7 @@ internal class SessionPartTrackerImplTest {
 
     @Before
     fun setUp() {
-        tracker = SessionPartTrackerImpl(lazyOf<ActivityManager?>(null), InternalLoggerImpl())
+        tracker = SessionPartTrackerImpl(lazyOf<ActivityManager?>(null), ErrorHandlerImpl())
     }
 
     @Test

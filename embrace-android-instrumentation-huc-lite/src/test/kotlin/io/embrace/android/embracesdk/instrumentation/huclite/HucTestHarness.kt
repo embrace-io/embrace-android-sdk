@@ -2,8 +2,8 @@ package io.embrace.android.embracesdk.instrumentation.huclite
 
 import io.embrace.android.embracesdk.fakes.FakeClock
 import io.embrace.android.embracesdk.fakes.FakeClock.Companion.DEFAULT_FAKE_CURRENT_TIME
+import io.embrace.android.embracesdk.fakes.FakeErrorHandler
 import io.embrace.android.embracesdk.fakes.FakeInstrumentationArgs
-import io.embrace.android.embracesdk.fakes.FakeInternalLogger
 import io.embrace.android.embracesdk.fakes.FakeSpanToken
 import io.embrace.android.embracesdk.fakes.FakeTelemetryDestination
 import io.embrace.android.embracesdk.internal.arch.schema.ErrorCodeAttribute
@@ -26,11 +26,11 @@ import javax.net.ssl.HttpsURLConnection
 internal class HucTestHarness(versionChecker: VersionChecker = BuildVersionChecker) {
     val fakeTelemetryDestination: FakeTelemetryDestination = FakeTelemetryDestination()
     val fakeClock = FakeClock(FAKE_TIME_MS)
-    val fakeEmbLogger = FakeInternalLogger(throwOnInternalError = false)
+    val fakeErrorHandler = FakeErrorHandler(throwOnInternalError = false)
     val hucLiteDataSource = HucLiteDataSource(
         FakeInstrumentationArgs(
             destination = fakeTelemetryDestination,
-            logger = fakeEmbLogger,
+            errorHandler = fakeErrorHandler,
             clock = fakeClock,
         ),
     )
@@ -92,7 +92,7 @@ internal class HucTestHarness(versionChecker: VersionChecker = BuildVersionCheck
         assertEquals(0, fakeTelemetryDestination.createdSpans.size)
     }
 
-    fun getInternalErrors() = fakeEmbLogger.internalErrorMessages
+    fun getInternalErrors() = fakeErrorHandler.internalErrorMessages
 
     private fun FakeSpanToken.assertSuccessfulRequest(
         expectedStartTime: Long,

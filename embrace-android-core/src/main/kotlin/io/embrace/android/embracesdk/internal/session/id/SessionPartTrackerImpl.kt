@@ -5,14 +5,14 @@ import android.os.Build
 import io.embrace.android.embracesdk.internal.arch.SessionPartChangeListener
 import io.embrace.android.embracesdk.internal.arch.SessionPartEndListener
 import io.embrace.android.embracesdk.internal.arch.state.ProcessState
+import io.embrace.android.embracesdk.internal.logging.ErrorHandler
 import io.embrace.android.embracesdk.internal.logging.InternalErrorType
-import io.embrace.android.embracesdk.internal.logging.InternalLogger
 import io.embrace.android.embracesdk.internal.session.SessionPartToken
 import java.util.concurrent.CopyOnWriteArraySet
 
 internal class SessionPartTrackerImpl(
     private val activityManager: Lazy<ActivityManager?>,
-    private val logger: InternalLogger,
+    private val errorHandler: ErrorHandler,
 ) : SessionPartTracker {
 
     private val sessionChangeListeners = CopyOnWriteArraySet<SessionPartChangeListener>()
@@ -56,7 +56,7 @@ internal class SessionPartTrackerImpl(
             try {
                 activityManager.value?.setProcessStateSummary("${sessionPartId}_$userSessionId".toByteArray())
             } catch (e: Throwable) {
-                logger.trackInternalError(InternalErrorType.ProcessStateSummaryFail, e)
+                errorHandler.trackInternalError(InternalErrorType.ProcessStateSummaryFail, e)
             }
         }
     }

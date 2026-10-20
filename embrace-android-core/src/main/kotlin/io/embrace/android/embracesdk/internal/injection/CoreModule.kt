@@ -8,7 +8,7 @@ import io.embrace.android.embracesdk.internal.utils.event.EventBus
 
 /**
  * Contains a core set of dependencies that are required by most services/classes in the SDK.
- * This includes a reference to the application context, a clock, logger, etc...
+ * This includes a reference to the application context, a clock, error handler, etc...
  */
 interface CoreModule {
 

@@ -19,7 +19,7 @@ import io.embrace.android.embracesdk.internal.capture.user.UserService
 import io.embrace.android.embracesdk.internal.config.resolved.BackgroundActivityConfig
 import io.embrace.android.embracesdk.internal.config.resolved.EmbraceConfig
 import io.embrace.android.embracesdk.internal.envelope.session.SessionPartPayloadSourceImpl
-import io.embrace.android.embracesdk.internal.logging.InternalLoggerImpl
+import io.embrace.android.embracesdk.internal.logging.ErrorHandlerImpl
 import io.embrace.android.embracesdk.internal.otel.spans.SpanRepository
 import io.embrace.android.embracesdk.internal.session.message.PayloadFactoryImpl
 import io.embrace.android.embracesdk.internal.session.message.PayloadMessageCollatorImpl
@@ -112,7 +112,7 @@ internal class PayloadFactoryBaTest(
     }
 
     private fun createService(createInitialSession: Boolean = true): PayloadFactoryImpl {
-        val logger = InternalLoggerImpl()
+        val errorHandler = ErrorHandlerImpl()
         val payloadSourceModule = FakePayloadSourceModule(
             partPayloadSource = SessionPartPayloadSourceImpl(
                 null,
@@ -121,7 +121,7 @@ internal class PayloadFactoryBaTest(
                 FakeOtelPayloadMapper(),
                 FakeProcessStateTracker(),
                 FakeClock(),
-                logger,
+                errorHandler,
             ),
         )
         val collator = PayloadMessageCollatorImpl(
@@ -129,7 +129,7 @@ internal class PayloadFactoryBaTest(
             currentSessionPartSpan,
             FakeSessionIdsProvider(),
         )
-        return PayloadFactoryImpl(collator, payloadSourceModule.logEnvelopeSource, configService, logger).apply {
+        return PayloadFactoryImpl(collator, payloadSourceModule.logEnvelopeSource, configService, errorHandler).apply {
             if (createInitialSession) {
                 startPayloadWithState(ProcessState.BACKGROUND, clock.now(), true, { 1 }, { 1 })
             }

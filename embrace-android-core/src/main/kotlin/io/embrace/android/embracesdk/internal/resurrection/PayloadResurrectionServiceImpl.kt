@@ -10,8 +10,8 @@ import io.embrace.android.embracesdk.internal.delivery.storage.CachedLogEnvelope
 import io.embrace.android.embracesdk.internal.delivery.storage.CachedLogEnvelopeStore.Companion.createNativeCrashEnvelopeMetadata
 import io.embrace.android.embracesdk.internal.delivery.storage.PayloadStorageService
 import io.embrace.android.embracesdk.internal.instrumentation.crash.ndk.NativeCrashService
+import io.embrace.android.embracesdk.internal.logging.ErrorHandler
 import io.embrace.android.embracesdk.internal.logging.InternalErrorType
-import io.embrace.android.embracesdk.internal.logging.InternalLogger
 import io.embrace.android.embracesdk.internal.payload.Envelope
 import io.embrace.android.embracesdk.internal.payload.LogPayload
 import io.embrace.android.embracesdk.internal.payload.NativeCrashData
@@ -35,7 +35,7 @@ internal class PayloadResurrectionServiceImpl(
     private val payloadStorageService: PayloadStorageService,
     private val cacheStorageService: PayloadStorageService,
     private val cachedLogEnvelopeStore: CachedLogEnvelopeStore,
-    private val logger: InternalLogger,
+    private val errorHandler: ErrorHandler,
     private val serializer: PlatformSerializer,
     private val maxPayloadBytes: Long = MAX_CACHED_PAYLOAD_BYTES,
 ) : PayloadResurrectionService {
@@ -57,14 +57,14 @@ internal class PayloadResurrectionServiceImpl(
             runCatching {
                 processTombstones(nativeCrashServiceProvider, userSessionRestoreDecisionProvider(), pendingSessionPartIdsProvider)
             }.onFailure {
-                logger.trackInternalError(InternalErrorType.PayloadResurrectionFail, it)
+                errorHandler.trackInternalError(InternalErrorType.PayloadResurrectionFail, it)
             }
         }
         completionListeners.forEach { listener ->
             runCatching {
                 listener()
             }.onFailure {
-                logger.trackInternalError(InternalErrorType.PayloadResurrectionFail, it)
+                errorHandler.trackInternalError(InternalErrorType.PayloadResurrectionFail, it)
             }
         }
     }
@@ -107,7 +107,7 @@ internal class PayloadResurrectionServiceImpl(
                     isBackgroundOnly = restoreDecision?.takeIf { it.userSessionId == payload.userSessionId }?.backgroundOnly == true,
                 )
             }.onFailure {
-                logger.trackInternalError(
+                errorHandler.trackInternalError(
                     type = InternalErrorType.PayloadResurrectionPayloadFail,
                     throwable = it,
                 )
@@ -179,7 +179,7 @@ internal class PayloadResurrectionServiceImpl(
                         metadata = metadata,
                     )
                 } else {
-                    logger.trackInternalError(
+                    errorHandler.trackInternalError(
                         type = InternalErrorType.NativeCrashResurrectionError,
                         throwable = IllegalStateException("Cached native crash envelope data not found"),
                     )
@@ -193,7 +193,7 @@ internal class PayloadResurrectionServiceImpl(
                 )
             }
             if (sessionlessNativeCrashes.size > 1) {
-                logger.trackInternalError(
+                errorHandler.trackInternalError(
                     type = InternalErrorType.NativeCrashResurrectionError,
                     throwable = IllegalStateException("Multiple sessionless native crashes found."),
                 )
@@ -321,7 +321,7 @@ internal class PayloadResurrectionServiceImpl(
             try {
                 task.get(5, TimeUnit.SECONDS)
             } catch (e: TimeoutException) {
-                logger.trackInternalError(InternalErrorType.IntakeFail, e)
+                errorHandler.trackInternalError(InternalErrorType.IntakeFail, e)
             }
         }
     }

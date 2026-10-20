@@ -9,8 +9,8 @@ import android.view.ViewTreeObserver
 import android.view.Window
 import androidx.annotation.RequiresApi
 import io.embrace.android.embracesdk.internal.instrumentation.startup.activity.traceInstanceId
+import io.embrace.android.embracesdk.internal.logging.ErrorHandler
 import io.embrace.android.embracesdk.internal.logging.InternalErrorType
-import io.embrace.android.embracesdk.internal.logging.InternalLogger
 import java.util.Collections
 import java.util.WeakHashMap
 import java.util.concurrent.ConcurrentHashMap
@@ -24,7 +24,7 @@ import java.util.concurrent.ConcurrentHashMap
  */
 @RequiresApi(Build.VERSION_CODES.Q)
 internal class FirstDrawDetector(
-    private val logger: InternalLogger,
+    private val errorHandler: ErrorHandler,
 ) : DrawEventEmitter {
 
     private val loadingActivities: MutableMap<Int, Runnable> = ConcurrentHashMap()
@@ -69,7 +69,7 @@ internal class FirstDrawDetector(
                     }
                 }
             } else if (!loadingActivities.containsKey(instanceId)) {
-                logger.trackInternalError(
+                errorHandler.trackInternalError(
                     type = InternalErrorType.UiCallbackFail,
                     throwable = IllegalStateException(
                         "Fail to attach frame rendering callback because the callback on Window was null",
@@ -91,7 +91,7 @@ internal class FirstDrawDetector(
             runCatching {
                 activity.window.decorView.viewTreeObserver.unregisterFrameCommitCallback(firstDrawCallback)
             }.exceptionOrNull()?.let { exception ->
-                logger.trackInternalError(
+                errorHandler.trackInternalError(
                     type = InternalErrorType.UiCallbackFail,
                     throwable = IllegalStateException("Failed to unregister first draw callback", exception),
                 )
@@ -116,7 +116,7 @@ internal class FirstDrawDetector(
         try {
             callback()
         } catch (exc: Throwable) {
-            logger.trackInternalError(InternalErrorType.UiCallbackFail, exc)
+            errorHandler.trackInternalError(InternalErrorType.UiCallbackFail, exc)
         }
     }
 

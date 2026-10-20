@@ -11,8 +11,8 @@ import io.embrace.android.embracesdk.internal.delivery.storage.PayloadStorageSer
 import io.embrace.android.embracesdk.internal.delivery.storage.StorageOutcome
 import io.embrace.android.embracesdk.internal.delivery.storage.storeAttachment
 import io.embrace.android.embracesdk.internal.delivery.traceSection
+import io.embrace.android.embracesdk.internal.logging.ErrorHandler
 import io.embrace.android.embracesdk.internal.logging.InternalErrorType
-import io.embrace.android.embracesdk.internal.logging.InternalLogger
 import io.embrace.android.embracesdk.internal.payload.Envelope
 import io.embrace.android.embracesdk.internal.serialization.PlatformSerializer
 import io.embrace.android.embracesdk.internal.utils.CountingOutputStream
@@ -29,7 +29,7 @@ class IntakeServiceImpl(
     private val schedulingService: SchedulingService,
     private val payloadStorageService: PayloadStorageService,
     private val cacheStorageService: PayloadStorageService,
-    private val logger: InternalLogger,
+    private val errorHandler: ErrorHandler,
     private val serializer: PlatformSerializer,
     private val worker: PriorityWorker<StoredTelemetryMetadata>,
     private val deliveryTracer: DeliveryTracer? = null,
@@ -198,7 +198,7 @@ class IntakeServiceImpl(
                     schedulingService.onPayloadIntake()
                 }
             } else if (!cacheableEnvelopeTypes.contains(metadata.envelopeType)) {
-                logger.trackInternalError(
+                errorHandler.trackInternalError(
                     InternalErrorType.IntakeUnexpectedType,
                     IllegalStateException("Unexpected envelope type cache attempt: ${metadata.envelopeType}"),
                 )
@@ -208,7 +208,7 @@ class IntakeServiceImpl(
                 cacheStorageService.delete(it)
             }
         } catch (exc: Throwable) {
-            logger.trackInternalError(InternalErrorType.IntakeFail, exc)
+            errorHandler.trackInternalError(InternalErrorType.IntakeFail, exc)
         }
         return result
     }

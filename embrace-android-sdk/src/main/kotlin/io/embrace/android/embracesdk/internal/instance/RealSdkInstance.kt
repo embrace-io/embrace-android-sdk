@@ -59,7 +59,6 @@ import io.embrace.android.embracesdk.internal.instrumentation.startup.toSdkInitD
 import io.embrace.android.embracesdk.internal.instrumentation.thread.blockage.ThreadBlockageService
 import io.embrace.android.embracesdk.internal.logging.ErrorHandler
 import io.embrace.android.embracesdk.internal.logging.InternalErrorType
-import io.embrace.android.embracesdk.internal.logging.InternalLogger
 import io.embrace.android.embracesdk.internal.logs.LogLimitingService
 import io.embrace.android.embracesdk.internal.logs.LogOrchestrator
 import io.embrace.android.embracesdk.internal.logs.attachments.AttachmentService
@@ -94,7 +93,6 @@ private const val WORKER_TERMINATION_TIMEOUT_MS = 2_000L
 @Suppress("LongParameterList")
 internal class RealSdkInstance(
     private val clock: Clock,
-    private val logger: InternalLogger,
     private val errorHandler: ErrorHandler,
     private val primaryAbi: String,
     private val configService: ConfigService,
@@ -240,7 +238,7 @@ internal class RealSdkInstance(
                 }
                 StorageLocation.entries.map {
                     it.asFile(
-                        logger = null,
+                        errorHandler = null,
                         rootDirSupplier = { rootDir },
                         fallbackDirSupplier = { fallbackDir },
                     ).value
@@ -315,7 +313,7 @@ internal class RealSdkInstance(
                         try {
                             spanRepository.stopTimedOutSpans(clock.now())
                         } catch (exc: Throwable) {
-                            logger.trackInternalError(InternalErrorType.SpanTimeoutSweepFail, exc)
+                            errorHandler.trackInternalError(InternalErrorType.SpanTimeoutSweepFail, exc)
                         }
                     },
                     SPAN_TIMEOUT_SWEEP_INTERVAL_MS,
@@ -403,7 +401,7 @@ internal class RealSdkInstance(
                 }
             }
         } catch (t: Throwable) {
-            logger.trackInternalError(InternalErrorType.InstrumentationRegFail, t)
+            errorHandler.trackInternalError(InternalErrorType.InstrumentationRegFail, t)
         }
     }
 
@@ -475,7 +473,7 @@ internal class RealSdkInstance(
                     resurrectionAttempted = true
                 } else {
                     val payloadCount = cacheStorageService?.getUndeliveredPayloads()?.size ?: 0
-                    logger.trackInternalError(
+                    errorHandler.trackInternalError(
                         type = InternalErrorType.PayloadResurrectionFail,
                         throwable = IllegalStateException(
                             "Resurrection service not found. Undelivered payloads not processed: $payloadCount",
@@ -510,7 +508,7 @@ internal class RealSdkInstance(
                             resourceUsageTracker.buildAttributes() +
                             sdkInitEnvironmentAttributes(
                                 nowMs = clock.now(),
-                                logger = logger,
+                                errorHandler = errorHandler,
                                 packageInfo = instrumentationArgs.packageInfo,
                                 powerManagerProvider = {
                                     instrumentationArgs.systemService(Context.POWER_SERVICE)
@@ -524,7 +522,7 @@ internal class RealSdkInstance(
                                     ArtOptimizationState.create(
                                         apkPath = sourceDir,
                                         primaryAbi = primaryAbi,
-                                        logger = logger,
+                                        errorHandler = errorHandler,
                                     )
                                 }
                             }
@@ -537,7 +535,7 @@ internal class RealSdkInstance(
             val appId = configService.appId
             val startMsg = "Embrace SDK version ${BuildConfig.VERSION_NAME} started" +
                 (appId?.let { " for appId = $it" } ?: " without an app ID")
-            logger.logInfo(startMsg)
+            errorHandler.log(startMsg, severity = ErrorHandler.Severity.INFO)
         }
     }
 
@@ -550,7 +548,7 @@ internal class RealSdkInstance(
         try {
             init()
         } catch (t: Throwable) {
-            logger.trackInternalError(InternalErrorType.SdkInitPhaseFail, t)
+            errorHandler.trackInternalError(InternalErrorType.SdkInitPhaseFail, t)
         }
     }
 

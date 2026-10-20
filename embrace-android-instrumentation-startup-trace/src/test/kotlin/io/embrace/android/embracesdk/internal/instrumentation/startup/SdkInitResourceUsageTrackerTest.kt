@@ -1,6 +1,6 @@
 package io.embrace.android.embracesdk.internal.instrumentation.startup
 
-import io.embrace.android.embracesdk.fakes.FakeInternalLogger
+import io.embrace.android.embracesdk.fakes.FakeErrorHandler
 import io.embrace.android.embracesdk.internal.instrumentation.startup.SdkInitAttributeKeys.INIT_GC_COUNT_MIN_API
 import io.embrace.android.embracesdk.internal.instrumentation.startup.SdkInitAttributeKeys.NUMERIC_ERROR
 import io.embrace.android.embracesdk.internal.utils.VersionChecker
@@ -18,7 +18,7 @@ internal class SdkInitResourceUsageTrackerTest {
     private lateinit var procIoContents: ArrayDeque<ByteArray?>
     private lateinit var runtimeStats: MutableMap<String, ArrayDeque<String?>>
     private lateinit var readPaths: MutableList<String>
-    private lateinit var logger: FakeInternalLogger
+    private lateinit var errorHandler: FakeErrorHandler
 
     @Before
     fun setUp() {
@@ -41,7 +41,7 @@ internal class SdkInitResourceUsageTrackerTest {
             "art.gc.gc-count" to ArrayDeque(listOf("3", "5")),
         )
         readPaths = mutableListOf()
-        logger = FakeInternalLogger(throwOnInternalError = false)
+        errorHandler = FakeErrorHandler(throwOnInternalError = false)
     }
 
     @Test
@@ -257,12 +257,12 @@ internal class SdkInitResourceUsageTrackerTest {
      * Asserts an attribute capture failure occurred with an optional set of expected attribute names to validate
      */
     private fun assertCaptureFailureReported(vararg keys: String) {
-        assertEquals(keys.size, logger.internalErrorMessages.size)
-        assertTrue(logger.internalErrorMessages.all { it.msg == "SdkInitAttributeCaptureFail" })
+        assertEquals(keys.size, errorHandler.internalErrorMessages.size)
+        assertTrue(errorHandler.internalErrorMessages.all { it.msg == "SdkInitAttributeCaptureFail" })
         if (keys.isNotEmpty()) {
             assertEquals(
                 keys.toList(),
-                logger.internalErrorMessages.map { it.throwable?.message?.substringAfterLast(": ") },
+                errorHandler.internalErrorMessages.map { it.throwable?.message?.substringAfterLast(": ") },
             )
         }
     }
@@ -278,7 +278,7 @@ internal class SdkInitResourceUsageTrackerTest {
             }
         },
     ) = SdkInitResourceUsageTracker(
-        logger = logger,
+        errorHandler = errorHandler,
         versionChecker = versionChecker,
         threadCpuTimeMs = { cpuTimesMs.removeFirst() },
         elapsedRealtimeMs = { wallTimesMs.removeFirst() },
@@ -306,7 +306,7 @@ internal class SdkInitResourceUsageTrackerTest {
     }
 
     private fun assertNoInternalErrors() {
-        assertEquals(0, logger.internalErrorMessages.size)
+        assertEquals(0, errorHandler.internalErrorMessages.size)
     }
 
     private companion object {

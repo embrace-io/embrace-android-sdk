@@ -9,8 +9,8 @@ import android.net.NetworkCapabilities.TRANSPORT_CELLULAR
 import android.net.NetworkCapabilities.TRANSPORT_WIFI
 import android.os.Build
 import androidx.annotation.RequiresApi
+import io.embrace.android.embracesdk.internal.logging.ErrorHandler
 import io.embrace.android.embracesdk.internal.logging.InternalErrorType
-import io.embrace.android.embracesdk.internal.logging.InternalLogger
 import io.embrace.android.embracesdk.internal.worker.BackgroundWorker
 import java.util.concurrent.CopyOnWriteArrayList
 import java.util.concurrent.atomic.AtomicBoolean
@@ -19,7 +19,7 @@ import java.util.concurrent.atomic.AtomicReference
 @RequiresApi(Build.VERSION_CODES.N)
 internal class NetworkCallbackConnectivityService(
     private val backgroundWorker: BackgroundWorker,
-    private val logger: InternalLogger,
+    private val errorHandler: ErrorHandler,
     private val connectivityManager: Lazy<ConnectivityManager?>,
 ) : NetworkConnectivityService, ConnectivityManager.NetworkCallback() {
 
@@ -121,6 +121,6 @@ internal class NetworkCallbackConnectivityService(
         runCatching {
             action()
         }.onFailure {
-            logger.trackInternalError(InternalErrorType.ConnectivityUpdateFailure, it)
+            errorHandler.trackInternalError(InternalErrorType.ConnectivityUpdateFailure, it)
         }
 }

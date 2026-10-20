@@ -6,6 +6,8 @@ import io.embrace.android.embracesdk.internal.clock.NormalizedIntervalClock
 import java.util.concurrent.ConcurrentLinkedQueue
 import java.util.concurrent.atomic.AtomicInteger
 
+internal const val EMBRACE_TAG = "[Embrace]"
+
 /**
  * Implementation of [ErrorHandler] that logs to Android logcat & buffers SDK errors until they can be sent
  * to our internaltelemetry.
@@ -32,6 +34,10 @@ class ErrorHandlerImpl(
             ErrorHandler.Severity.WARNING -> Log.w(EMBRACE_TAG, msg, throwable)
             ErrorHandler.Severity.ERROR -> Log.e(EMBRACE_TAG, msg, throwable)
         }
+    }
+
+    override fun trackInternalError(type: InternalErrorType, throwable: Throwable) {
+        report(type, throwable)
     }
 
     override fun <T> guardSdkCode(type: InternalErrorType, default: T, action: () -> T): T = try {

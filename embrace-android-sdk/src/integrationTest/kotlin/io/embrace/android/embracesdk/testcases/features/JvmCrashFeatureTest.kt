@@ -1,15 +1,15 @@
 package io.embrace.android.embracesdk.testcases.features
 
+import android.content.Context
+import androidx.test.core.app.ApplicationProvider
 import io.embrace.android.embracesdk.PropertyScope
 import io.embrace.android.embracesdk.assertions.assertMatches
 import io.embrace.android.embracesdk.assertions.assertOtelLogReceived
 import io.embrace.android.embracesdk.assertions.getLastLog
 import io.embrace.android.embracesdk.assertions.getStartTime
 import io.embrace.android.embracesdk.assertions.getUserSessionId
-import android.content.Context
-import androidx.test.core.app.ApplicationProvider
 import io.embrace.android.embracesdk.concurrency.BlockingScheduledExecutorService
-import io.embrace.android.embracesdk.fakes.FakeInternalLogger
+import io.embrace.android.embracesdk.fakes.FakeErrorHandler
 import io.embrace.android.embracesdk.fakes.FakePayloadStorageService
 import io.embrace.android.embracesdk.fakes.TestPlatformSerializer
 import io.embrace.android.embracesdk.fakes.config.FakeInstrumentedConfig
@@ -18,10 +18,10 @@ import io.embrace.android.embracesdk.internal.EmbraceInternalApi
 import io.embrace.android.embracesdk.internal.arch.attrs.toEmbraceAttributeName
 import io.embrace.android.embracesdk.internal.arch.schema.EmbType
 import io.embrace.android.embracesdk.internal.arch.state.ProcessState
+import io.embrace.android.embracesdk.internal.clock.millisToNanos
 import io.embrace.android.embracesdk.internal.config.remote.BackgroundActivityRemoteConfig
 import io.embrace.android.embracesdk.internal.config.remote.RemoteConfig
 import io.embrace.android.embracesdk.internal.config.remote.UserSessionRemoteConfig
-import io.embrace.android.embracesdk.internal.clock.millisToNanos
 import io.embrace.android.embracesdk.internal.delivery.PayloadType
 import io.embrace.android.embracesdk.internal.delivery.storage.StorageLocation
 import io.embrace.android.embracesdk.internal.delivery.storage.asFile
@@ -32,8 +32,8 @@ import io.embrace.android.embracesdk.internal.payload.Log
 import io.embrace.android.embracesdk.internal.payload.SessionPartPayload
 import io.embrace.android.embracesdk.internal.serialization.EmbraceSerializer
 import io.embrace.android.embracesdk.internal.session.getSessionPartSpan
-import io.embrace.android.embracesdk.internal.session.persistence.SpanCollection
 import io.embrace.android.embracesdk.internal.session.persistence.SessionPartDirectory
+import io.embrace.android.embracesdk.internal.session.persistence.SpanCollection
 import io.embrace.android.embracesdk.internal.session.persistence.SpanProto
 import io.embrace.android.embracesdk.internal.utils.getSafeStackTrace
 import io.embrace.android.embracesdk.internal.worker.Worker
@@ -77,7 +77,7 @@ internal class JvmCrashFeatureTest(
                 Worker.Background.SessionPersistenceWorker,
             ),
         ).apply {
-            getEmbLogger().throwOnInternalError = false
+            getFakeErrorHandler().throwOnInternalError = false
             getFakedWorkerExecutor(Worker.Background.NonIoRegWorker).blockingMode = false
             getFakedWorkerExecutor(Worker.Background.IoRegWorker).blockingMode = false
         }.also {
@@ -429,7 +429,7 @@ internal class JvmCrashFeatureTest(
     private fun readSessionSpanOnDisk(sessionPartId: String): SpanProto? {
         val ctx = ApplicationProvider.getApplicationContext<Context>()
         val sessionsDir = StorageLocation.SESSION_SPLIT.asFile(
-            logger = FakeInternalLogger(),
+            errorHandler = FakeErrorHandler(),
             rootDirSupplier = { ctx.filesDir },
             fallbackDirSupplier = { ctx.cacheDir },
         ).value

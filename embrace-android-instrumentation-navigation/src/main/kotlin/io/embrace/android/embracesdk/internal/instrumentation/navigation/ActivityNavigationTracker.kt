@@ -13,8 +13,8 @@ import io.embrace.android.embracesdk.internal.arch.navigation.NavigationTracking
 import io.embrace.android.embracesdk.internal.arch.navigation.getId
 import io.embrace.android.embracesdk.internal.arch.state.ProcessStateListener
 import io.embrace.android.embracesdk.internal.clock.Clock
+import io.embrace.android.embracesdk.internal.logging.ErrorHandler
 import io.embrace.android.embracesdk.internal.logging.InternalErrorType
-import io.embrace.android.embracesdk.internal.logging.InternalLogger
 import io.embrace.android.embracesdk.internal.utils.BuildVersionChecker
 import io.embrace.android.embracesdk.internal.utils.VersionChecker
 import io.embrace.android.embracesdk.internal.utils.event.EventBus
@@ -29,7 +29,7 @@ internal class ActivityNavigationTracker(
     private val clock: Clock,
     private val eventBus: EventBus,
     private val navigationTrackingService: NavigationTrackingService,
-    private val logger: InternalLogger,
+    private val errorHandler: ErrorHandler,
     versionChecker: VersionChecker = BuildVersionChecker,
 ) : Application.ActivityLifecycleCallbacks, ProcessStateListener {
 
@@ -85,7 +85,7 @@ internal class ActivityNavigationTracker(
         try {
             eventBus.emit(NavigationSignal.KEY, ActivityStarted(activity.getId(), clock.now()))
         } catch (exc: Throwable) {
-            logger.trackInternalError(InternalErrorType.UiCallbackFail, exc)
+            errorHandler.trackInternalError(InternalErrorType.UiCallbackFail, exc)
         }
     }
 
@@ -96,7 +96,7 @@ internal class ActivityNavigationTracker(
             // Add screen source tracking after the resume signal is emitted to mimic how the rememberNavController Composable will do it.
             navigationTrackingService.trackNavigation(activity)
         } catch (exc: Throwable) {
-            logger.trackInternalError(InternalErrorType.UiCallbackFail, exc)
+            errorHandler.trackInternalError(InternalErrorType.UiCallbackFail, exc)
         }
     }
 
@@ -104,7 +104,7 @@ internal class ActivityNavigationTracker(
         try {
             eventBus.emit(NavigationSignal.KEY, ActivityPaused(activity.getId(), clock.now()))
         } catch (exc: Throwable) {
-            logger.trackInternalError(InternalErrorType.UiCallbackFail, exc)
+            errorHandler.trackInternalError(InternalErrorType.UiCallbackFail, exc)
         }
     }
 }

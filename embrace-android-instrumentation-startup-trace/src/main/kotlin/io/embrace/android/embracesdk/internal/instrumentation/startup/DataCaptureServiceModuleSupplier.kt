@@ -5,7 +5,7 @@ import io.embrace.android.embracesdk.internal.arch.datasource.TelemetryDestinati
 import io.embrace.android.embracesdk.internal.arch.startup.StartupClassifier
 import io.embrace.android.embracesdk.internal.clock.Clock
 import io.embrace.android.embracesdk.internal.config.ConfigService
-import io.embrace.android.embracesdk.internal.logging.InternalLogger
+import io.embrace.android.embracesdk.internal.logging.ErrorHandler
 import io.embrace.android.embracesdk.internal.utils.VersionChecker
 import io.embrace.android.embracesdk.internal.worker.BackgroundWorker
 
@@ -15,7 +15,7 @@ import io.embrace.android.embracesdk.internal.worker.BackgroundWorker
  */
 typealias DataCaptureServiceModuleSupplier = (
     clock: Clock,
-    logger: InternalLogger,
+    errorHandler: ErrorHandler,
     destination: TelemetryDestination,
     configService: ConfigService,
     appVersionStartupCounterProvider: () -> Int?,

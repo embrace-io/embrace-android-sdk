@@ -21,12 +21,12 @@ class InstrumentationModuleImpl(
 ) : InstrumentationModule {
 
     override val instrumentationRegistry: InstrumentationRegistry = InstrumentationRegistryImpl(
-        initModule.logger,
+        initModule.errorHandler,
     )
 
     override val instrumentationArgs: InstrumentationArgs = InstrumentationArgsImpl(
         configService = configService,
-        logger = initModule.logger,
+        errorHandler = initModule.errorHandler,
         clock = initModule.clock,
         context = coreModule.context,
         application = coreModule.application,

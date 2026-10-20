@@ -2,8 +2,8 @@ package io.embrace.android.embracesdk.internal.instrumentation
 
 import io.embrace.android.embracesdk.fakes.FakeClock
 import io.embrace.android.embracesdk.fakes.FakeConfigService
+import io.embrace.android.embracesdk.fakes.FakeErrorHandler
 import io.embrace.android.embracesdk.fakes.FakeInstrumentationArgs
-import io.embrace.android.embracesdk.fakes.FakeInternalLogger
 import io.embrace.android.embracesdk.fakes.FakeInternalTelemetryService
 import io.embrace.android.embracesdk.fakes.FakeTelemetryDestination
 import io.embrace.android.embracesdk.fakes.FakeURLStreamHandler
@@ -35,7 +35,7 @@ class HucLiteDataSourceTest {
     private lateinit var fakeTelemetryDestination: FakeTelemetryDestination
     private lateinit var fakeTelemetryService: FakeInternalTelemetryService
     private lateinit var fakeClock: FakeClock
-    private lateinit var fakeEmbLogger: FakeInternalLogger
+    private lateinit var fakeErrorHandler: FakeErrorHandler
     private lateinit var domainCountLimiter: EmbraceDomainCountLimiter
     private lateinit var mockedConnection: HttpsURLConnection
     private lateinit var hucLiteDataSource: HucLiteDataSource
@@ -56,7 +56,7 @@ class HucLiteDataSourceTest {
         fakeTelemetryDestination = FakeTelemetryDestination()
         fakeTelemetryService = FakeInternalTelemetryService()
         fakeClock = FakeClock(FAKE_TIME_MS)
-        fakeEmbLogger = FakeInternalLogger(throwOnInternalError = false)
+        fakeErrorHandler = FakeErrorHandler(throwOnInternalError = false)
         mockedConnection =
             mockk<HttpsURLConnection>(relaxed = true).apply {
                 every { url } returns testUrl
@@ -74,7 +74,7 @@ class HucLiteDataSourceTest {
         args = FakeInstrumentationArgs(
             configService = FakeConfigService(networkBehavior = networkBehavior),
             destination = fakeTelemetryDestination,
-            logger = fakeEmbLogger,
+            errorHandler = fakeErrorHandler,
             clock = fakeClock,
             telemetryService = fakeTelemetryService,
         ).apply { configureModifiers(httpRequestInfoModifierChain) },

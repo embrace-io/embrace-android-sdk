@@ -1,6 +1,6 @@
 package io.embrace.android.embracesdk.internal.otel.export
 
-import io.embrace.android.embracesdk.internal.logging.InternalErrorHandler
+import io.embrace.android.embracesdk.internal.logging.ErrorHandler
 import io.embrace.android.embracesdk.internal.logging.InternalErrorType
 import io.embrace.android.embracesdk.internal.utils.EmbTrace
 import kotlinx.coroutines.CoroutineDispatcher
@@ -22,7 +22,7 @@ import java.util.concurrent.Executors
  * exporting inline would block whichever thread ended a span or emitted a log.
  */
 class ExternalExportDispatcher(
-    private val errorHandler: InternalErrorHandler,
+    private val errorHandler: ErrorHandler,
     dispatcherProvider: () -> CoroutineDispatcher = ::singleThreadedDispatcher,
 ) {
 

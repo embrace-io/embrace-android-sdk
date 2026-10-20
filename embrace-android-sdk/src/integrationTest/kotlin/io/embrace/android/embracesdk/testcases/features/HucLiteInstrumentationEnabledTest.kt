@@ -30,7 +30,7 @@ internal class HucLiteInstrumentationEnabledTest(
     fun `sdk starts successfully but internal error logged when HUC Lite instrumentation enabled`() {
         testRule.runTest(
             setupAction = {
-                getEmbLogger().throwOnInternalError = false
+                getFakeErrorHandler().throwOnInternalError = false
             },
             instrumentedConfig = FakeInstrumentedConfig(
                 enabledFeatures = FakeEnabledFeatureConfig(
@@ -72,7 +72,7 @@ internal class HucLiteInstrumentationEnabledTest(
     fun `SDK starts when both HUC instrumentations are enabled`() {
         testRule.runTest(
             setupAction = {
-                getEmbLogger().throwOnInternalError = false
+                getFakeErrorHandler().throwOnInternalError = false
             },
             instrumentedConfig = FakeInstrumentedConfig(
                 enabledFeatures = FakeEnabledFeatureConfig(

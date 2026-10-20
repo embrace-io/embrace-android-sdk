@@ -30,7 +30,7 @@ internal class AndroidxNavigationDataSource(
     instrumentationName = "androidx_navigation_data_source",
 ) {
 
-    private val tracker = NavControllerTracker(args.eventBus, args.clock, args.logger)
+    private val tracker = NavControllerTracker(args.eventBus, args.clock, args.errorHandler)
     private val trackNavigationHook: (Activity, Any?) -> Unit = tracker::trackNavigation
 
     private val attachBackStackHook = fun(activity: Activity) {

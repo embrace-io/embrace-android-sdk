@@ -1,7 +1,7 @@
 package io.embrace.android.embracesdk.internal.config
 
 import io.embrace.android.embracesdk.fakes.FakeClock
-import io.embrace.android.embracesdk.fakes.FakeInternalLogger
+import io.embrace.android.embracesdk.fakes.FakeErrorHandler
 import io.embrace.android.embracesdk.fakes.FakeKeyValueStore
 import io.embrace.android.embracesdk.fakes.FakeRemoteConfigSource
 import io.embrace.android.embracesdk.fakes.TestPlatformSerializer
@@ -108,7 +108,7 @@ internal class ConfigServiceImplTest {
             serializer = serializer,
             remoteConfigSource = FakeRemoteConfigSource(),
             primaryAbi = "arm64-v8a",
-            logger = FakeInternalLogger(),
+            errorHandler = FakeErrorHandler(),
             hasConfiguredOtlpExport = hasConfiguredExporters,
         )
     }

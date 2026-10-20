@@ -8,10 +8,11 @@ import io.embrace.android.embracesdk.internal.injection.InstrumentationModule
 
 class FakeInstrumentationModule(
     application: Application,
-    private val logger: FakeInternalLogger = FakeInternalLogger(),
-    override val instrumentationArgs: InstrumentationArgs = FakeInstrumentationArgs(application, logger = logger),
+    private val errorHandler: FakeErrorHandler = FakeErrorHandler(),
+    override val instrumentationArgs: InstrumentationArgs =
+        FakeInstrumentationArgs(application, errorHandler = errorHandler),
 ) : InstrumentationModule {
     override val instrumentationRegistry: InstrumentationRegistry = InstrumentationRegistryImpl(
-        logger,
+        errorHandler,
     )
 }

@@ -1,8 +1,8 @@
 package io.embrace.android.embracesdk.internal.capture.user
 
 import io.embrace.android.embracesdk.internal.clock.Clock
+import io.embrace.android.embracesdk.internal.logging.ErrorHandler
 import io.embrace.android.embracesdk.internal.logging.InternalErrorType
-import io.embrace.android.embracesdk.internal.logging.InternalLogger
 import io.embrace.android.embracesdk.internal.payload.UserInfo
 import io.embrace.android.embracesdk.internal.store.KeyValueStore
 import io.embrace.android.embracesdk.internal.utils.EmbTrace
@@ -14,7 +14,7 @@ import java.util.regex.Pattern
 internal class EmbraceUserService(
     private val impl: KeyValueStore,
     private val clock: Clock,
-    private val logger: InternalLogger,
+    private val errorHandler: ErrorHandler,
 ) : UserService {
 
     /**
@@ -66,7 +66,7 @@ internal class EmbraceUserService(
         return try {
             getStoredUserInfo()
         } catch (ex: Exception) {
-            logger.trackInternalError(InternalErrorType.UserLoadFail, ex)
+            errorHandler.trackInternalError(InternalErrorType.UserLoadFail, ex)
             null
         }
     }
@@ -195,7 +195,7 @@ internal class EmbraceUserService(
         }
         listeners.forEach { listener ->
             runCatching(listener).onFailure {
-                logger.trackInternalError(InternalErrorType.UserInfoCallbackFail, it)
+                errorHandler.trackInternalError(InternalErrorType.UserInfoCallbackFail, it)
             }
         }
     }

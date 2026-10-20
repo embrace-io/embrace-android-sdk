@@ -2,8 +2,8 @@ package io.embrace.android.embracesdk.internal.instrumentation.crash.ndk
 
 import io.embrace.android.embracesdk.concurrency.BlockingScheduledExecutorService
 import io.embrace.android.embracesdk.fakes.FakeConfigService
+import io.embrace.android.embracesdk.fakes.FakeErrorHandler
 import io.embrace.android.embracesdk.fakes.FakeInstrumentationArgs
-import io.embrace.android.embracesdk.fakes.FakeInternalLogger
 import io.embrace.android.embracesdk.fakes.FakeJniDelegate
 import io.embrace.android.embracesdk.fakes.FakeMainThreadHandler
 import io.embrace.android.embracesdk.fakes.FakeSharedObjectLoader
@@ -48,7 +48,7 @@ class NativeCrashHandlerInstallerImplTest {
 
         args = FakeInstrumentationArgs(
             configService = fakeConfigService,
-            logger = FakeInternalLogger(false),
+            errorHandler = FakeErrorHandler(false),
             backgroundWorkerSupplier = { BackgroundWorker(executorService) },
             sessionPartIdSupplier = { sessionPartId },
             userSessionIdSupplier = { userSessionId },
@@ -175,7 +175,7 @@ class NativeCrashHandlerInstallerImplTest {
 
         nativeCrashHandlerInstaller.install()
 
-        assertEquals(0, args.logger.internalErrorMessages.size)
+        assertEquals(0, args.errorHandler.internalErrorMessages.size)
         assertFalse(fakeDelegate.signalHandlerInstalled)
     }
 

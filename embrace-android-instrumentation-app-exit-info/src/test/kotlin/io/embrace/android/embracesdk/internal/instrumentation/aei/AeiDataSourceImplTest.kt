@@ -4,8 +4,8 @@ import android.app.ActivityManager
 import android.app.ApplicationExitInfo
 import io.embrace.android.embracesdk.concurrency.BlockingScheduledExecutorService
 import io.embrace.android.embracesdk.fakes.FakeConfigService
+import io.embrace.android.embracesdk.fakes.FakeErrorHandler
 import io.embrace.android.embracesdk.fakes.FakeInstrumentationArgs
-import io.embrace.android.embracesdk.fakes.FakeInternalLogger
 import io.embrace.android.embracesdk.fakes.FakeKeyValueStore
 import io.embrace.android.embracesdk.fakes.FakeOrdinalStore
 import io.embrace.android.embracesdk.fakes.fakeBackgroundWorker
@@ -84,9 +84,9 @@ internal class AeiDataSourceImplTest {
     private fun startApplicationExitInfoService(
         versionChecker: VersionChecker = BuildVersionChecker,
         activityManagerProvider: Provider<ActivityManager?> = { mockActivityManager },
-        logger: FakeInternalLogger = FakeInternalLogger(),
+        errorHandler: FakeErrorHandler = FakeErrorHandler(),
     ) {
-        args = FakeInstrumentationArgs(mockk(), configService = configService, logger = logger)
+        args = FakeInstrumentationArgs(mockk(), configService = configService, errorHandler = errorHandler)
         applicationExitInfoService = AeiDataSourceImpl(
             args,
             worker,
@@ -470,12 +470,12 @@ internal class AeiDataSourceImplTest {
         } throws NullPointerException()
 
         // when the service is started
-        val logger = FakeInternalLogger(throwOnInternalError = false)
-        startApplicationExitInfoService(logger = logger)
+        val errorHandler = FakeErrorHandler(throwOnInternalError = false)
+        startApplicationExitInfoService(errorHandler = errorHandler)
 
         // no logs were sent, and the failure was tracked as an internal error
         assertTrue(args.destination.logEvents.isEmpty())
-        val internalError = logger.internalErrorMessages.single()
+        val internalError = errorHandler.internalErrorMessages.single()
         assertEquals(InternalErrorType.ProcessAeiRecords.toString(), internalError.msg)
         assertTrue(internalError.throwable is NullPointerException)
     }

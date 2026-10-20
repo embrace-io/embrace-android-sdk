@@ -32,7 +32,7 @@ class FakeOpenTelemetryModule(
             packageName = "com.test.app",
             systemInfo = systemInfo,
             uuidSource = TestUuidSource(),
-            externalExportDispatcher = ExternalExportDispatcher(FakeInternalLogger()),
+            externalExportDispatcher = ExternalExportDispatcher(FakeErrorHandler()),
         )
 
     override val spanService: SpanService = FakeSpanService()
@@ -42,7 +42,7 @@ class FakeOpenTelemetryModule(
             otelClock = FakeOtelKotlinClock(),
             configuration = otelSdkConfig,
             spanServiceProvider = { spanService },
-            errorHandler = FakeInternalLogger(),
+            errorHandler = FakeErrorHandler(),
             useKotlinSdk = otelSdkMode.useKotlinSdk,
         )
 

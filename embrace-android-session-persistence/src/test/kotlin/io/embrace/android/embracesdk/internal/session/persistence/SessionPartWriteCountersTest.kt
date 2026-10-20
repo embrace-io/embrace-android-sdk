@@ -1,7 +1,7 @@
 package io.embrace.android.embracesdk.internal.session.persistence
 
 import io.embrace.android.embracesdk.fakes.FakeClock
-import io.embrace.android.embracesdk.fakes.FakeInternalLogger
+import io.embrace.android.embracesdk.fakes.FakeErrorHandler
 import io.embrace.android.embracesdk.fakes.FakeSectionRecorder
 import io.embrace.android.embracesdk.internal.utils.SystemTrace
 import org.junit.After
@@ -43,10 +43,10 @@ internal class SessionPartWriteCountersTest {
         recorder = FakeSectionRecorder()
         SystemTrace.recorder = recorder
 
-        val logger = FakeInternalLogger(throwOnInternalError = false)
+        val errorHandler = FakeErrorHandler(throwOnInternalError = false)
         target = SessionPartWriteTarget(lazy { sessionsDir }, FakeClock()) { partDirectory }
-        completedSpansWriter = CompletedSpansWriter(target, logger)
-        spanSnapshotsWriter = SpanSnapshotsWriter(target, logger)
+        completedSpansWriter = CompletedSpansWriter(target, errorHandler)
+        spanSnapshotsWriter = SpanSnapshotsWriter(target, errorHandler)
     }
 
     @After

@@ -1,8 +1,8 @@
 package io.embrace.android.embracesdk.internal.session.persistence
 
 import com.squareup.wire.ProtoAdapter
+import io.embrace.android.embracesdk.internal.logging.ErrorHandler
 import io.embrace.android.embracesdk.internal.logging.InternalErrorType
-import io.embrace.android.embracesdk.internal.logging.InternalLogger
 import io.embrace.android.embracesdk.internal.payload.Envelope
 import io.embrace.android.embracesdk.internal.payload.SessionPartPayload
 import io.embrace.android.embracesdk.internal.payload.Span
@@ -14,7 +14,7 @@ import java.io.IOException
  * Turns the bytes persisted for one session part back into the envelope that can be delivered.
  */
 class SessionPartDecoder(
-    private val logger: InternalLogger,
+    private val errorHandler: ErrorHandler,
 ) {
 
     /**
@@ -84,7 +84,7 @@ class SessionPartDecoder(
 
             val duplicates = (spans.size - dedupedSpans.size) + (remainingSnapshots.size - dedupedSnapshots.size)
             if (duplicates > 0) {
-                logger.trackInternalError(
+                errorHandler.trackInternalError(
                     InternalErrorType.DuplicateSpanIds,
                     IllegalStateException("Removed duplicate spans from session part payload"),
                 )
@@ -197,7 +197,7 @@ class SessionPartDecoder(
         source.open(file) ?: throw IOException("Session part file not found")
 
     private fun trackFailure(exc: Throwable) {
-        logger.trackInternalError(InternalErrorType.SessionReconstructionFail, exc)
+        errorHandler.trackInternalError(InternalErrorType.SessionReconstructionFail, exc)
     }
 
     private class PartSpans(val spans: List<Span>, val spanSnapshots: List<Span>)

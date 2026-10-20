@@ -7,8 +7,8 @@ import android.util.DisplayMetrics
 import android.view.WindowManager
 import io.embrace.android.embracesdk.internal.SystemInfo
 import io.embrace.android.embracesdk.internal.isEmulator
+import io.embrace.android.embracesdk.internal.logging.ErrorHandler
 import io.embrace.android.embracesdk.internal.logging.InternalErrorType
-import io.embrace.android.embracesdk.internal.logging.InternalLogger
 import io.embrace.android.embracesdk.internal.utils.Provider
 import io.embrace.android.embracesdk.internal.worker.BackgroundWorker
 import java.io.File
@@ -19,7 +19,7 @@ class DeviceImpl(
     private val windowManagerProvider: Provider<WindowManager?>,
     private val backgroundWorker: BackgroundWorker,
     override val systemInfo: SystemInfo,
-    private val logger: InternalLogger,
+    private val errorHandler: ErrorHandler,
     private val isEmulator: () -> Boolean = { systemInfo.isEmulator() },
 ) : Device {
 
@@ -97,7 +97,7 @@ class DeviceImpl(
                 displayMetrics.heightPixels,
             )
         } catch (ex: Exception) {
-            logger.trackInternalError(InternalErrorType.ScreenResCaptureFail, ex)
+            errorHandler.trackInternalError(InternalErrorType.ScreenResCaptureFail, ex)
             ""
         }
     }

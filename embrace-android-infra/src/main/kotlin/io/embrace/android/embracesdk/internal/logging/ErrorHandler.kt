@@ -19,6 +19,12 @@ interface ErrorHandler : AutoCloseable {
     fun log(msg: String, throwable: Throwable? = null, severity: Severity = Severity.WARNING)
 
     /**
+     * Tracks an internal error. This is sent to our own telemetry so should be used sparingly
+     * & only for states that we can take actions to improve.
+     */
+    fun trackInternalError(type: InternalErrorType, throwable: Throwable)
+
+    /**
      * Runs SDK code safely, returning [default] if it throws. The [Throwable] is tracked as an internal error of
      * [type]. [InternalErrorType.Ignored] reports nothing.
      */

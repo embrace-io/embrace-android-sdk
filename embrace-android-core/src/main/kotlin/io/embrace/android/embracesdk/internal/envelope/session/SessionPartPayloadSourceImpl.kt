@@ -5,7 +5,7 @@ import io.embrace.android.embracesdk.internal.arch.schema.EmbType
 import io.embrace.android.embracesdk.internal.arch.state.ProcessState
 import io.embrace.android.embracesdk.internal.arch.state.ProcessStateTracker
 import io.embrace.android.embracesdk.internal.clock.Clock
-import io.embrace.android.embracesdk.internal.logging.InternalLogger
+import io.embrace.android.embracesdk.internal.logging.ErrorHandler
 import io.embrace.android.embracesdk.internal.otel.spans.SpanRepository
 import io.embrace.android.embracesdk.internal.payload.SessionPartPayload
 import io.embrace.android.embracesdk.internal.payload.Span
@@ -20,7 +20,7 @@ internal class SessionPartPayloadSourceImpl(
     private val otelPayloadMapper: OtelPayloadMapper?,
     private val processStateTracker: ProcessStateTracker,
     private val clock: Clock,
-    private val logger: InternalLogger,
+    private val errorHandler: ErrorHandler,
 ) : SessionPartPayloadSource {
 
     override fun getSessionPartPayload(
@@ -84,7 +84,7 @@ internal class SessionPartPayloadSourceImpl(
         startNewSession: Boolean,
         crashId: String?,
     ): List<Span>? {
-        val spans: List<Span>? = captureDataSafely(logger) {
+        val spans: List<Span>? = captureDataSafely(errorHandler) {
             when {
                 !isCacheAttempt -> {
                     val appTerminationCause = when {
@@ -105,7 +105,7 @@ internal class SessionPartPayloadSourceImpl(
         return spans
     }
 
-    private fun retrieveSpanSnapshots(isCacheAttempt: Boolean) = captureDataSafely(logger) {
+    private fun retrieveSpanSnapshots(isCacheAttempt: Boolean) = captureDataSafely(errorHandler) {
         // Only snapshot session part spans if we are caching an in-progress session payload
         spanRepository.getActiveEmbraceSpans()
             .filter { isCacheAttempt || !it.hasEmbraceAttribute(EmbType.Ux.Session) }

@@ -13,7 +13,7 @@ import io.embrace.android.embracesdk.internal.capture.session.UserSessionPropert
 import io.embrace.android.embracesdk.internal.clock.Clock
 import io.embrace.android.embracesdk.internal.config.ConfigService
 import io.embrace.android.embracesdk.internal.injection.WorkerThreadPool
-import io.embrace.android.embracesdk.internal.logging.InternalLogger
+import io.embrace.android.embracesdk.internal.logging.ErrorHandler
 import io.embrace.android.embracesdk.internal.network.http.HttpRequestInfoModifierChain
 import io.embrace.android.embracesdk.internal.serialization.PlatformSerializer
 import io.embrace.android.embracesdk.internal.session.id.SessionIdsSnapshot
@@ -32,7 +32,7 @@ import java.util.concurrent.ConcurrentHashMap
 internal class InstrumentationArgsImpl(
     override val configService: ConfigService,
     override val destination: TelemetryDestination,
-    override val logger: InternalLogger,
+    override val errorHandler: ErrorHandler,
     override val clock: Clock,
     override val context: Context,
     override val application: Application,
@@ -61,7 +61,7 @@ internal class InstrumentationArgsImpl(
         runCatching { context.packageManager.getPackageInfo(context.packageName, 0) }.getOrNull()
     }
 
-    override val httpRequestInfoModifierChain: HttpRequestInfoModifierChain = HttpRequestInfoModifierChain(logger)
+    override val httpRequestInfoModifierChain: HttpRequestInfoModifierChain = HttpRequestInfoModifierChain(errorHandler)
 
     override fun backgroundWorker(worker: Worker.Background): BackgroundWorker = workerThreadPool.backgroundWorker(worker)
     override fun <T> priorityWorker(

@@ -7,6 +7,7 @@ import androidx.annotation.RequiresApi
 import io.embrace.android.embracesdk.internal.handler.MainThreadHandler
 import io.embrace.android.embracesdk.internal.logging.ErrorHandler
 import io.embrace.android.embracesdk.internal.logging.SdkErrorType
+import io.embrace.android.embracesdk.internal.logging.guardSdkCode
 
 @RequiresApi(M)
 internal class HandlerMessageDrawDetector(

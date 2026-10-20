@@ -13,6 +13,7 @@ import io.embrace.android.embracesdk.internal.delivery.storage.storeAttachment
 import io.embrace.android.embracesdk.internal.delivery.traceSection
 import io.embrace.android.embracesdk.internal.logging.ErrorHandler
 import io.embrace.android.embracesdk.internal.logging.SdkErrorType
+import io.embrace.android.embracesdk.internal.logging.guardSdkCode
 import io.embrace.android.embracesdk.internal.payload.Envelope
 import io.embrace.android.embracesdk.internal.serialization.PlatformSerializer
 import io.embrace.android.embracesdk.internal.utils.CountingOutputStream

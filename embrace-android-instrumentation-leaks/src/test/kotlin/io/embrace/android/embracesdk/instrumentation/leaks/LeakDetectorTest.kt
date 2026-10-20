@@ -255,7 +255,7 @@ internal class LeakDetectorTest {
 
     @Test
     fun `an exception dispatching on the detector thread is tracked and later references are still dispatched`() {
-        val errorHandler = FakeErrorHandler()
+        val errorHandler = FakeErrorHandler(throwOnSdkError = false)
         val readFailed = AtomicBoolean(false)
         detector = LeakDetector(
             clock = { now },

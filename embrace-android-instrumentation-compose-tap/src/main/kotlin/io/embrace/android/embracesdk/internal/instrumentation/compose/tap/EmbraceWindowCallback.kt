@@ -8,6 +8,7 @@ import android.view.MotionEvent
 import android.view.Window
 import io.embrace.android.embracesdk.internal.logging.ErrorHandler
 import io.embrace.android.embracesdk.internal.logging.SdkErrorType
+import io.embrace.android.embracesdk.internal.logging.guardSdkCode
 
 /**
  * Custom Window callback that triggers onTouch event

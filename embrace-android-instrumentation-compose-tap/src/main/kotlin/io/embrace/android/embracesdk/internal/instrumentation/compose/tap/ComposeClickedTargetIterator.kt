@@ -6,6 +6,7 @@ import android.view.ViewGroup
 import androidx.compose.ui.platform.ComposeView
 import io.embrace.android.embracesdk.internal.logging.ErrorHandler
 import io.embrace.android.embracesdk.internal.logging.SdkErrorType
+import io.embrace.android.embracesdk.internal.logging.guardSdkCode
 import java.util.ArrayDeque
 
 internal class ComposeClickedTargetIterator(

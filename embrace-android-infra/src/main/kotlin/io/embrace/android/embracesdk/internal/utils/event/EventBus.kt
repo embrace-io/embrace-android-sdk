@@ -2,6 +2,7 @@ package io.embrace.android.embracesdk.internal.utils.event
 
 import io.embrace.android.embracesdk.internal.logging.ErrorHandler
 import io.embrace.android.embracesdk.internal.logging.SdkErrorType
+import io.embrace.android.embracesdk.internal.logging.guardSdkCode
 import io.embrace.android.embracesdk.internal.utils.event.EventBus.Companion.DEFAULT_ORDER
 import java.util.BitSet
 import java.util.Collections

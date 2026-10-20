@@ -5,6 +5,7 @@ import io.embrace.android.embracesdk.internal.arch.datasource.DataSourceFactory
 import io.embrace.android.embracesdk.internal.arch.datasource.StateDataSource
 import io.embrace.android.embracesdk.internal.logging.ErrorHandler
 import io.embrace.android.embracesdk.internal.logging.SdkErrorType
+import io.embrace.android.embracesdk.internal.logging.guardSdkCode
 import io.embrace.android.embracesdk.internal.worker.Worker
 import java.util.concurrent.CopyOnWriteArrayList
 import kotlin.reflect.KClass

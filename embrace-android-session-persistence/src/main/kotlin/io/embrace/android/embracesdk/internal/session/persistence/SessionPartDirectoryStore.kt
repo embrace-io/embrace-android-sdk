@@ -5,6 +5,7 @@ import io.embrace.android.embracesdk.internal.delivery.storage.StoredEntryIndex
 import io.embrace.android.embracesdk.internal.delivery.storage.StoredEntryLayout
 import io.embrace.android.embracesdk.internal.logging.ErrorHandler
 import io.embrace.android.embracesdk.internal.logging.SdkErrorType
+import io.embrace.android.embracesdk.internal.logging.guardSdkCode
 import io.embrace.android.embracesdk.internal.worker.BackgroundWorker
 import java.io.File
 import java.io.IOException

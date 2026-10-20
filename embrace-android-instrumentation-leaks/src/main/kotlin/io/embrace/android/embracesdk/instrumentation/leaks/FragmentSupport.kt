@@ -3,6 +3,7 @@ package io.embrace.android.embracesdk.instrumentation.leaks
 import android.app.Activity
 import io.embrace.android.embracesdk.internal.logging.ErrorHandler
 import io.embrace.android.embracesdk.internal.logging.SdkErrorType
+import io.embrace.android.embracesdk.internal.logging.guardSdkCode
 import io.embrace.android.embracesdk.internal.session.id.SessionIdsSnapshot
 
 /**

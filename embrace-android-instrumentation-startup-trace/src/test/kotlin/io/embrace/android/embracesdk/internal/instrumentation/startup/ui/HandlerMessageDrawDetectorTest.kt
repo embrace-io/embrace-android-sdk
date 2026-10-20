@@ -48,6 +48,7 @@ internal class HandlerMessageDrawDetectorTest {
 
     @Test
     fun `exception in draw complete callback is tracked rather than thrown`() {
+        errorHandler.throwOnSdkError = false
         detector.registerFirstDrawCallback(
             activity = Robolectric.buildActivity(Activity::class.java).get(),
             drawBeginCallback = {},

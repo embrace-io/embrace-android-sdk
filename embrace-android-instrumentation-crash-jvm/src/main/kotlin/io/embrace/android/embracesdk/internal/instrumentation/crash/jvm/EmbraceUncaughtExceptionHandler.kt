@@ -2,6 +2,7 @@ package io.embrace.android.embracesdk.internal.instrumentation.crash.jvm
 
 import io.embrace.android.embracesdk.internal.logging.ErrorHandler
 import io.embrace.android.embracesdk.internal.logging.SdkErrorType
+import io.embrace.android.embracesdk.internal.logging.guardSdkCode
 
 /**
  * Intercepts uncaught exceptions from the JVM and forwards them to the Embrace API. Once handled,

@@ -7,6 +7,7 @@ import android.view.GestureDetector
 import android.view.Window
 import io.embrace.android.embracesdk.internal.logging.ErrorHandler
 import io.embrace.android.embracesdk.internal.logging.SdkErrorType
+import io.embrace.android.embracesdk.internal.logging.guardSdkCode
 import java.lang.ref.WeakReference
 import java.util.WeakHashMap
 

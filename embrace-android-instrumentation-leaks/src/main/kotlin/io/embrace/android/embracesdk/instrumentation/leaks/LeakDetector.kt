@@ -5,6 +5,7 @@ import android.os.Debug
 import io.embrace.android.embracesdk.internal.clock.Clock
 import io.embrace.android.embracesdk.internal.logging.ErrorHandler
 import io.embrace.android.embracesdk.internal.logging.SdkErrorType
+import io.embrace.android.embracesdk.internal.logging.guardSdkCode
 import java.lang.ref.PhantomReference
 import java.lang.ref.Reference
 import java.lang.ref.ReferenceQueue

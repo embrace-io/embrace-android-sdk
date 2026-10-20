@@ -34,44 +34,13 @@ class FakeErrorHandler(
     }
 
     override fun trackSdkError(type: SdkErrorType, throwable: Throwable) {
-        if (!ignoredErrors.contains(type)) {
-            if (throwOnSdkError) {
-                throw IllegalStateException("SDK error: $type", throwable)
-            } else {
-                sdkErrorMessages.add(LogMessage(type.toString(), throwable))
-                delegate?.trackSdkError(type, throwable)
-            }
-        }
-    }
-
-    override fun <T> guardSdkCode(type: SdkErrorType, default: T, action: () -> T): T = try {
-        action()
-    } catch (exc: Throwable) {
         when {
-            type == SdkErrorType.Ignored -> Unit
-            exc is UserCodeException -> log("App-supplied code threw an exception ($type)", exc.cause)
-            else -> sdkErrorMessages.add(LogMessage(type.toString(), exc))
+            type == SdkErrorType.Ignored || ignoredErrors.contains(type) -> return
+            throwable is UserCodeException -> log("App-supplied code threw an exception ($type)", throwable.cause)
+            throwOnSdkError -> throw IllegalStateException("SDK error: $type", throwable)
+            else -> sdkErrorMessages.add(LogMessage(type.toString(), throwable))
         }
-        delegate?.guardSdkCode(type) { throw exc }
-        default
-    }
-
-    override fun <T> guardSdkCodeEach(type: SdkErrorType, items: Iterable<T>, action: (T) -> Unit) {
-        try {
-            items.forEach { item -> guardSdkCode(type) { action(item) } }
-        } catch (exc: ConcurrentModificationException) {
-            guardSdkCode(type) { throw exc }
-        }
-    }
-
-    override fun <T> guardUserCode(action: () -> T): T {
-        return try {
-            action()
-        } catch (exc: UserCodeException) {
-            throw exc
-        } catch (exc: Throwable) {
-            throw UserCodeException(exc)
-        }
+        delegate?.trackSdkError(type, throwable)
     }
 
     override fun drain(sink: ((Throwable, Long) -> Unit)?) {

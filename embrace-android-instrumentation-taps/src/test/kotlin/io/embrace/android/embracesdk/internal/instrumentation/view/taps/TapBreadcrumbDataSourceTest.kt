@@ -15,6 +15,7 @@ import org.junit.Test
 internal class TapBreadcrumbDataSourceTest {
 
     private lateinit var args: FakeInstrumentationArgs
+    private lateinit var dataSource: TapDataSource
 
     @Before
     fun setUp() {
@@ -24,8 +25,15 @@ internal class TapBreadcrumbDataSourceTest {
             ),
         )
 
-        // constructing the data source registers its handler on the event bus
-        TapDataSource(args)
+        // enabling the data source registers its handler on the event bus
+        dataSource = TapDataSource(args).apply { onDataCaptureEnabled() }
+    }
+
+    @Test
+    fun `taps are not recorded once data capture is disabled`() {
+        dataSource.onDataCaptureDisabled()
+        args.eventBus.emit(TapSignal.KEY, TapSignal("my-button-id", 126f, 309f))
+        assertEquals(emptyList<Any>(), args.destination.addedEvents)
     }
 
     @Test

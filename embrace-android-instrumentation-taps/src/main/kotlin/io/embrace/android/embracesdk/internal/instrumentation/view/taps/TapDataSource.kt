@@ -7,19 +7,27 @@ import io.embrace.android.embracesdk.internal.arch.datasource.TelemetryDestinati
 import io.embrace.android.embracesdk.internal.arch.limits.UpToLimitStrategy
 import io.embrace.android.embracesdk.internal.arch.schema.SchemaType
 import io.embrace.android.embracesdk.internal.arch.ui.TapSignal
+import io.embrace.android.embracesdk.internal.utils.event.EventHandler
 
 /**
  * Captures custom breadcrumbs.
  */
 class TapDataSource(
-    args: InstrumentationArgs,
+    private val args: InstrumentationArgs,
 ) : DataSourceImpl(
     args = args,
     limitStrategy = UpToLimitStrategy { args.configService.config.breadcrumb.tapLimit },
     instrumentationName = "tap_data_source",
 ) {
 
+    private val tapHandler = EventHandler<TapSignal> { logTap(Pair(it.x, it.y), it.elementName) }
+
+    override fun onDataCaptureEnabled() {
+        args.eventBus.addHandler(TapSignal.KEY, tapHandler)
+    }
+
     override fun onDataCaptureDisabled() {
+        args.eventBus.removeHandler(TapSignal.KEY, tapHandler)
         if (tapDataSource === this) {
             tapDataSource = null
         }
@@ -27,10 +35,6 @@ class TapDataSource(
 
     companion object {
         private const val UNKNOWN_ELEMENT_NAME = "Unknown element"
-    }
-
-    init {
-        args.eventBus.addHandler(TapSignal.KEY) { logTap(Pair(it.x, it.y), it.elementName) }
     }
 
     private fun logTap(coords: Pair<Float, Float>, tag: String) {

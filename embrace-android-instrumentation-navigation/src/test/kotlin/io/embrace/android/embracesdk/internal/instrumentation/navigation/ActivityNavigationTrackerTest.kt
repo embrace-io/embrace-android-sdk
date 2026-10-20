@@ -141,12 +141,4 @@ internal class ActivityNavigationTrackerTest {
     private fun assertSignals(vararg expected: NavigationSignal) {
         assertEquals(expected.toList(), signals)
     }
-
-    private class DopeActivity : Activity() {
-        override fun getLocalClassName(): String = "DopeActivity"
-    }
-
-    private class CoolActivity : Activity() {
-        override fun getLocalClassName(): String = "CoolActivity"
-    }
 }

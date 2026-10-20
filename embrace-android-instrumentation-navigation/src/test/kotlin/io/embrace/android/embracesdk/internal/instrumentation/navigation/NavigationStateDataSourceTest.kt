@@ -173,14 +173,15 @@ internal class NavigationStateDataSourceTest {
     }
 
     @Test
-    fun `activity lifecycle callbacks are unregistered when data capture is disabled`() {
+    fun `activity lifecycle callbacks are registered after the broker and unregistered when data capture is disabled`() {
+        // the broker is registered before the activity callbacks that feed it, so a callback fired as they are registered
+        // is resolved
+        application.resumedActivity = DopeActivity()
+        val source = NavigationStateInstrumentationProvider().factoryProvider(args)().apply { onDataCaptureEnabled() }
+        assertEquals(Screen.Named("DopeActivity"), args.eventBus.currentState(CurrentScreen.KEY)?.screen)
+
         val signals = mutableListOf<NavigationSignal>()
         args.eventBus.addHandler(NavigationSignal.KEY) { signals.add(it) }
-        val tracker =
-            ActivityNavigationTracker(args.clock, args.eventBus, args.navigationTrackingService, args.errorHandler)
-        args.application.registerActivityLifecycleCallbacks(tracker)
-        val source = NavigationStateDataSource(args, tracker).apply { onDataCaptureEnabled() }
-
         source.onDataCaptureDisabled()
         val activity = Activity()
         application.start(activity)

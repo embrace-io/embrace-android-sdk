@@ -3,6 +3,7 @@ package io.embrace.android.embracesdk.instrumentation.huc;
 import static io.embrace.android.embracesdk.internal.config.behavior.NetworkSpanForwardingBehaviorImpl.TRACEPARENT_HEADER_NAME;
 
 import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 
 import java.io.IOException;
 import java.lang.reflect.Method;
@@ -23,7 +24,12 @@ abstract class EmbraceUrlStreamHandler extends URLStreamHandler {
     protected static final String MSG_ERROR_OPEN_CONNECTION =
         "An exception was thrown while attempting to open a connection";
 
-    protected final InternalNetworkApi internalNetworkApi;
+    /**
+     * The network API to use, or null to use the one {@link HttpUrlConnectionTracker} holds at the time. Handlers are cached
+     * for the life of the process, so they must not keep the API they were created with once capture is reset.
+     */
+    @Nullable
+    private final InternalNetworkApi internalNetworkApi;
 
     protected final URLStreamHandler handler;
 
@@ -46,10 +52,10 @@ abstract class EmbraceUrlStreamHandler extends URLStreamHandler {
      * Given the base URLStreamHandler that will be wrapped, constructs the instance.
      */
     public EmbraceUrlStreamHandler(@NonNull URLStreamHandler handler) {
-        this(handler, HttpUrlConnectionTracker.INSTANCE.getInternalNetworkApi());
+        this(handler, null);
     }
 
-    EmbraceUrlStreamHandler(@NonNull URLStreamHandler handler, @NonNull InternalNetworkApi internalNetworkApi) {
+    EmbraceUrlStreamHandler(@NonNull URLStreamHandler handler, @Nullable InternalNetworkApi internalNetworkApi) {
         this.handler = handler;
         this.internalNetworkApi = internalNetworkApi;
         try {
@@ -113,9 +119,17 @@ abstract class EmbraceUrlStreamHandler extends URLStreamHandler {
     }
 
     protected void injectTraceparent(@NonNull URLConnection connection) {
-        boolean networkSpanForwardingEnabled = internalNetworkApi.isNetworkSpanForwardingEnabled();
+        boolean networkSpanForwardingEnabled = currentInternalNetworkApi().isNetworkSpanForwardingEnabled();
         if (networkSpanForwardingEnabled && !connection.getRequestProperties().containsKey(TRACEPARENT_HEADER_NAME)) {
             connection.addRequestProperty(TRACEPARENT_HEADER_NAME, DefaultTraceparentGenerator.INSTANCE.generateW3cTraceparent());
         }
+    }
+
+    @NonNull
+    private InternalNetworkApi currentInternalNetworkApi() {
+        if (internalNetworkApi != null) {
+            return internalNetworkApi;
+        }
+        return HttpUrlConnectionTracker.INSTANCE.getInternalNetworkApi();
     }
 }

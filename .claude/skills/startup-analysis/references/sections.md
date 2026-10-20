@@ -8,7 +8,7 @@ follow this order.
 ```
 embrace-impl-init            class-load: EmbraceImpl construction (before the span window)
 sdk-start                    wraps the whole Embrace.start() call — the SDK-init window proxy
-├─ modules-init              InitializedModuleGraph ctor — opens the SDK-init span window
+├─ modules-init              createRealSdkInstance() — opens the SDK-init span window
 │  ├─ persisted-config-init  cached-config read; most variable section (was persisted-config-load)
 │  ├─ config-service-init    ConfigService construction (recorded in the harness too)
 │  ├─ init-module-init       InitModule construction (was bootstrapper-init)

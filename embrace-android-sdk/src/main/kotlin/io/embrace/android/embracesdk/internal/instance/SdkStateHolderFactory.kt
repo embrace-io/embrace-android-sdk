@@ -4,7 +4,6 @@ import android.content.Context
 import io.embrace.android.embracesdk.internal.api.delegate.PreStartOTelApi
 import io.embrace.android.embracesdk.internal.injection.ConfigLoadServices
 import io.embrace.android.embracesdk.internal.injection.ConfigLoadServicesSupplier
-import io.embrace.android.embracesdk.internal.injection.InitializedModuleGraph
 import io.embrace.android.embracesdk.internal.injection.PreStartServices
 import io.embrace.android.embracesdk.internal.injection.SdkOverrides
 import io.embrace.android.embracesdk.internal.instrumentation.startup.SdkInitResourceUsageTracker
@@ -35,7 +34,7 @@ internal fun createSdkStateHolder(
         SdkStateHolder(
             instanceFactory = { context ->
                 EmbTrace.trace(sectionName = "modules-init", recordDuration = true) {
-                    createModuleGraph(
+                    createSdkInstance(
                         context,
                         preStartServices,
                         buffer,
@@ -43,13 +42,6 @@ internal fun createSdkStateHolder(
                         sdkInitResourceUsageTrackerSupplier,
                         overrides,
                     )
-                }?.let { moduleGraph ->
-                    EmbTrace.trace("real-sdk-instance-init") {
-                        createRealSdkInstance(
-                            moduleGraph = moduleGraph,
-                            clock = clock,
-                        )
-                    }
                 }
             },
             preStart = buffer,
@@ -62,17 +54,17 @@ internal fun createSdkStateHolder(
 }
 
 /**
- * Returns the [InitializedModuleGraph], or null if the SDK is disabled. A disabled SDK never
- * constructs the module graph to reduce SDK init cost.
+ * Returns the [RealSdkInstance], or null if the SDK is disabled. A disabled SDK never
+ * constructs its services to reduce SDK init cost.
  */
-private fun createModuleGraph(
+private fun createSdkInstance(
     context: Context,
     preStartServices: PreStartServices,
     buffer: BufferingSdkInstance,
     configLoadServicesSupplier: ConfigLoadServicesSupplier?,
     sdkInitResourceUsageTrackerSupplier: Provider<SdkInitResourceUsageTracker>?,
     overrides: SdkOverrides?,
-): InitializedModuleGraph? {
+): RealSdkInstance? {
     SystemTrace.recorder = AndroidSectionRecorder
 
     // stamped before anything else so that the SDK init span covers all the work below,
@@ -94,7 +86,7 @@ private fun createModuleGraph(
             ?: ConfigLoadServices(context, preStartServices)
     }
 
-    val moduleGraph = try {
+    val instance = try {
         EmbTrace.trace("config-load-services-start") {
             configLoadServices.start()
         }
@@ -104,29 +96,23 @@ private fun createModuleGraph(
         if (sdkDisabled) {
             null
         } else {
-            val graph = EmbTrace.trace("initialized-module-graph-init") {
-                InitializedModuleGraph(
-                    context,
-                    preStartServices,
-                    configLoadServices,
-                    sdkStartTimeMs,
-                    sdkInitResourceUsageTracker,
-                    overrides = overrides,
-                )
-            }
-            EmbTrace.trace("initialized-module-graph-start") {
-                graph.start()
-            }
-            graph
+            createRealSdkInstance(
+                context,
+                preStartServices,
+                configLoadServices,
+                sdkStartTimeMs,
+                sdkInitResourceUsageTracker,
+                overrides,
+            )
         }
     } catch (exc: Throwable) {
         configLoadServices.close()
         throw exc
     }
 
-    // the module graph owns the config load services' resources once constructed
-    if (moduleGraph == null) {
+    // the SDK instance owns the config load services' resources once constructed
+    if (instance == null) {
         configLoadServices.close()
     }
-    return moduleGraph
+    return instance
 }

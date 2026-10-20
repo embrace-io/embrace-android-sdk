@@ -9,21 +9,31 @@ import io.embrace.android.embracesdk.fakes.FakeReadWriteLogRecord
 import io.embrace.android.embracesdk.fakes.OtelSdkMode
 import io.embrace.android.embracesdk.fakes.TestPlatformSerializer
 import io.embrace.android.embracesdk.fakes.injection.TestInitServices
+import io.embrace.android.embracesdk.internal.arch.InstrumentationRegistry
 import io.embrace.android.embracesdk.internal.clock.Clock
 import io.embrace.android.embracesdk.internal.config.PersistedConfig
 import io.embrace.android.embracesdk.internal.config.remote.OtelKotlinSdkConfig
 import io.embrace.android.embracesdk.internal.config.remote.RemoteConfig
+import io.embrace.android.embracesdk.internal.delivery.intake.IntakeService
 import io.embrace.android.embracesdk.internal.injection.ConfigLoadServices
-import io.embrace.android.embracesdk.internal.injection.InitializedModuleGraph
 import io.embrace.android.embracesdk.internal.injection.PreStartServices
+import io.embrace.android.embracesdk.internal.injection.SdkOverrides
 import io.embrace.android.embracesdk.internal.instance.RealSdkInstance
 import io.embrace.android.embracesdk.internal.instance.createRealSdkInstance
+import io.embrace.android.embracesdk.internal.instrumentation.crash.CrashFileMarker
 import io.embrace.android.embracesdk.internal.instrumentation.startup.SdkInitResourceUsageTracker
+import io.embrace.android.embracesdk.internal.instrumentation.thread.blockage.ThreadBlockageService
+import io.embrace.android.embracesdk.internal.logs.LogOrchestrator
+import io.embrace.android.embracesdk.internal.otel.config.OtelSdkConfig
+import io.embrace.android.embracesdk.internal.otel.sdk.OtelSdkWrapper
+import io.embrace.android.embracesdk.internal.session.orchestrator.PayloadStore
+import io.embrace.android.embracesdk.internal.session.orchestrator.SessionOrchestrator
 import io.embrace.android.embracesdk.semconv.EmbSessionAttributes
 import io.opentelemetry.kotlin.NoopOpenTelemetry
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNotNull
+import org.junit.Assert.assertSame
 import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
@@ -32,11 +42,27 @@ import org.robolectric.RuntimeEnvironment
 import java.io.File
 
 @RunWith(AndroidJUnit4::class)
-internal class InitializedModuleGraphTest {
+internal class RealSdkInstanceFactoryTest {
 
     private lateinit var errorHandler: FakeErrorHandler
     private lateinit var clock: Clock
     private lateinit var context: Context
+
+    private var otelSdkConfig: OtelSdkConfig? = null
+    private var otelSdkWrapper: OtelSdkWrapper? = null
+    private var instrumentationRegistry: InstrumentationRegistry? = null
+    private var sessionOrchestrator: SessionOrchestrator? = null
+    private var threadBlockageService: ThreadBlockageService? = null
+    private var intakeService: IntakeService? = null
+
+    private val overrides = SdkOverrides(
+        otelSdkConfig = { real -> real().also { otelSdkConfig = it } },
+        otelSdkWrapper = { real -> real().also { otelSdkWrapper = it } },
+        instrumentationRegistry = { real -> real().also { instrumentationRegistry = it } },
+        sessionOrchestrator = { real -> real().also { sessionOrchestrator = it } },
+        threadBlockageService = { real -> real().also { threadBlockageService = it } },
+        intakeService = { real -> real().also { intakeService = it } },
+    )
 
     @Before
     fun setup() {
@@ -45,9 +71,9 @@ internal class InitializedModuleGraphTest {
         context = RuntimeEnvironment.getApplication().applicationContext
     }
 
-    private fun createModuleGraph(): InitializedModuleGraph {
+    private fun createInstance(): RealSdkInstance {
         val preStartServices = PreStartServices(errorHandler, clock)
-        return InitializedModuleGraph(
+        return createRealSdkInstance(
             context = context,
             preStartServices = preStartServices,
             configLoadServices = ConfigLoadServices(
@@ -57,27 +83,22 @@ internal class InitializedModuleGraphTest {
             ),
             sdkStartTimeMs = clock.now(),
             sdkInitResourceUsageTracker = SdkInitResourceUsageTracker(errorHandler),
-        ).apply { start() }
+            overrides = overrides,
+        )
     }
 
     @Test
     fun `test default implementation`() {
-        with(createModuleGraph()) {
-            assertNotNull(startupClassifier)
-            assertNotNull(spanService)
-            assertNotNull(workerThreadPool)
-            assertNotNull(processStateTracker)
-            assertNotNull(startupTracker)
-            assertNotNull(intakeService)
-            assertNotNull(metadataService)
-            assertEquals(this@InitializedModuleGraphTest.clock, clock)
-        }
+        assertNotNull(createInstance())
+        assertNotNull(otelSdkWrapper)
+        assertNotNull(sessionOrchestrator)
+        assertNotNull(intakeService)
     }
 
     @Test
     fun `metadata provider is installed before instrumentation loads`() {
-        val moduleGraph = createModuleGraph()
-        val processor = moduleGraph.otelSdkConfig.value.logRecordProcessor
+        createInstance()
+        val processor = checkNotNull(otelSdkConfig).logRecordProcessor
 
         val log = FakeReadWriteLogRecord()
         processor.onEmit(log, NoopOpenTelemetry.context.implicit())
@@ -90,27 +111,27 @@ internal class InitializedModuleGraphTest {
      */
     @Test
     fun `kotlin otel sdk selected from persisted config during init`() {
-        val moduleGraph = createModuleGraphWithPersistedConfig(
+        createInstanceWithPersistedConfig(
             RemoteConfig(otelKotlinSdkConfig = OtelKotlinSdkConfig(pctEnabled = 100f)),
         )
-        assertTrue(moduleGraph.otelSdkWrapper.value.useKotlinSdk)
+        assertTrue(checkNotNull(otelSdkWrapper).useKotlinSdk)
     }
 
     @Test
     fun `kotlin otel sdk not selected when disabled by persisted config`() {
-        val moduleGraph = createModuleGraphWithPersistedConfig(
+        createInstanceWithPersistedConfig(
             RemoteConfig(otelKotlinSdkConfig = OtelKotlinSdkConfig(pctEnabled = 0f)),
         )
-        assertFalse(moduleGraph.otelSdkWrapper.value.useKotlinSdk)
+        assertFalse(checkNotNull(otelSdkWrapper).useKotlinSdk)
     }
 
-    private fun createModuleGraphWithPersistedConfig(cfg: RemoteConfig): InitializedModuleGraph {
+    private fun createInstanceWithPersistedConfig(cfg: RemoteConfig): RealSdkInstance {
         val storageDir = File(context.filesDir, PersistedConfig.STORAGE_DIR_NAME).apply { mkdirs() }
         File(storageDir, PersistedConfig.CONFIG_RESPONSE_FILE_NAME).outputStream().buffered().use { stream ->
             TestPlatformSerializer().toJson(cfg, RemoteConfig.serializer(), stream)
         }
         val initServices = TestInitServices(clock = clock, errorHandler = errorHandler, otelSdkMode = OtelSdkMode.COMPAT)
-        return InitializedModuleGraph(
+        return createRealSdkInstance(
             context = context,
             preStartServices = initServices.preStartServices,
             configLoadServices = ConfigLoadServices(
@@ -125,26 +146,24 @@ internal class InitializedModuleGraphTest {
             ),
             sdkStartTimeMs = clock.now(),
             sdkInitResourceUsageTracker = SdkInitResourceUsageTracker(errorHandler),
+            overrides = overrides,
         )
     }
 
     @Test
     fun `post load instrumentation hooks up listeners`() {
-        val moduleGraph = createModuleGraph()
-        val registry = moduleGraph.instrumentationRegistry
+        val instance = createInstance()
         val dataSource = CrashHandlerDataSource()
-        registry.add { dataSource }
+        checkNotNull(instrumentationRegistry).add { dataSource }
 
-        createRealSdkInstance(moduleGraph, clock).postLoadInstrumentation()
+        instance.postLoadInstrumentation()
 
         val handlers = dataSource.handlers
-        val expected = listOf(
-            moduleGraph.threadBlockageService,
-            moduleGraph.logOrchestrator,
-            moduleGraph.sessionOrchestrator,
-            moduleGraph.crashMarker,
-            moduleGraph.payloadStore,
-        )
-        assertEquals(expected, handlers)
+        assertEquals(5, handlers.size)
+        assertSame(checkNotNull(threadBlockageService), handlers[0])
+        assertTrue(handlers[1] is LogOrchestrator)
+        assertSame(sessionOrchestrator, handlers[2])
+        assertTrue(handlers[3] is CrashFileMarker)
+        assertTrue(handlers[4] is PayloadStore)
     }
 }

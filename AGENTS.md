@@ -115,7 +115,7 @@ for the available plugins and what each applies.
 
 The SDK uses **manual dependency injection** without module objects:
 
-- `InitializedModuleGraph` in `embrace-android-sdk` constructs every service as a property, wired by hand
+- `createRealSdkInstance` in `embrace-android-sdk` constructs every service as a local, wired by hand
 - Service implementations stay `internal` to their module; `embrace-android-core/.../injection/*Factories.kt`
   expose top-level `create*` functions that return the interface type
 - Test seams are `SdkOverrides` fields, null in production and resolved with `resolve` (`override ?: real`)

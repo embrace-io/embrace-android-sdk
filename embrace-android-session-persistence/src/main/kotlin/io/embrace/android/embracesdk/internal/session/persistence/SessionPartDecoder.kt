@@ -123,15 +123,12 @@ class SessionPartDecoder(
         if (source.sizeBytes(file) > MAX_PART_FILE_BYTES) {
             trackFailure(IOException(OVERSIZED_PART_FILE_MSG))
         }
-        try {
+        errorHandler.guardSdkCode(SdkErrorType.SessionReconstructionFail, DecodedSpanCollections.NONE) {
             val decoded = openOrThrow(source, file).use { src -> read(src, budget.remaining) }
             decoded.corruption?.let(::trackFailure)
             val payload = SystemTrace.trace("mf-spans-proto-to-payload") { decoded.drainToPayload() }
             budget.spend(payload.size, truncated = decoded.spanLimitReached)
             DecodedSpanCollections(payload, decoded.lastWrittenMs ?: 0L)
-        } catch (exc: Throwable) {
-            trackFailure(exc)
-            DecodedSpanCollections.NONE
         }
     }
 
@@ -163,7 +160,7 @@ class SessionPartDecoder(
         adapter: ProtoAdapter<T>,
         formatVersion: (T) -> Int,
     ): T? = SystemTrace.trace(file.traceSection) {
-        try {
+        errorHandler.guardSdkCode(SdkErrorType.SessionReconstructionFail, null) {
             val message = decodePartFile(source, file, adapter)
 
             val version = formatVersion(message)
@@ -171,9 +168,6 @@ class SessionPartDecoder(
                 throw IOException(UNSUPPORTED_VERSION_MSG)
             }
             message
-        } catch (exc: Throwable) {
-            trackFailure(exc)
-            null
         }
     }
 

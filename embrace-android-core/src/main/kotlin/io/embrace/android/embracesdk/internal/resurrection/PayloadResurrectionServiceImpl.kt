@@ -26,7 +26,6 @@ import java.io.IOException
 import java.io.InputStream
 import java.util.concurrent.CopyOnWriteArrayList
 import java.util.concurrent.TimeUnit
-import java.util.concurrent.TimeoutException
 import java.util.zip.GZIPInputStream
 import java.util.zip.ZipException
 
@@ -305,11 +304,7 @@ internal class PayloadResurrectionServiceImpl(
                 metadata = copy(complete = true),
                 staleEntry = this,
             )
-            try {
-                task.get(5, TimeUnit.SECONDS)
-            } catch (e: TimeoutException) {
-                errorHandler.trackSdkError(SdkErrorType.IntakeFail, e)
-            }
+            errorHandler.guardSdkCode(SdkErrorType.IntakeFail) { task.get(5, TimeUnit.SECONDS) }
         }
     }
 

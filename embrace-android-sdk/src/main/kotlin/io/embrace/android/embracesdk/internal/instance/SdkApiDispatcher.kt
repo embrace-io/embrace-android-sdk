@@ -55,10 +55,10 @@ internal class SdkApiDispatcher(
     }
 
     private val openTelemetryKotlin = LateBindingOpenTelemetry {
-        guard(NoopOpenTelemetry) { target.getOpenTelemetryKotlin() }
+        errorHandler.guardSdkCode(SdkErrorType.PublicApiFail, NoopOpenTelemetry) { target.getOpenTelemetryKotlin() }
     }
 
-    override fun start(context: Context) = guard { target.start(context) }
+    override fun start(context: Context) = errorHandler.guardSdkCode(SdkErrorType.PublicApiFail) { target.start(context) }
 
     override fun logMessage(message: String, severity: Severity, properties: Map<String, Any>) =
         record("log_message") { target.logMessage(message, severity, properties) }
@@ -123,7 +123,8 @@ internal class SdkApiDispatcher(
         record("remove_http_request_info_modifier") { target.removeHttpRequestInfoModifier(modifier) }
 
     @Deprecated("This is no longer supported")
-    override fun generateW3cTraceparent(): String? = guard(null) { target.generateW3cTraceparent() }
+    override fun generateW3cTraceparent(): String? =
+        errorHandler.guardSdkCode(SdkErrorType.PublicApiFail, null) { target.generateW3cTraceparent() }
 
     override fun addUserSessionProperty(key: String, value: String, scope: PropertyScope): Boolean =
         record("add_session_property", false) { target.addUserSessionProperty(key, value, scope) }
@@ -162,14 +163,27 @@ internal class SdkApiDispatcher(
     override fun clearUsername() = record("clear_username") { target.clearUsername() }
 
     override fun createSpan(name: String, parent: EmbraceSpan?, autoTerminationMode: AutoTerminationMode): EmbraceSpan =
-        guard(NoopEmbraceSdkSpan) { target.createSpan(name, parent, autoTerminationMode) }
+        errorHandler.guardSdkCode(SdkErrorType.PublicApiFail, NoopEmbraceSdkSpan) {
+            target.createSpan(
+                name,
+                parent,
+                autoTerminationMode
+            )
+        }
 
     override fun startSpan(
         name: String,
         parent: EmbraceSpan?,
         startTimeMs: Long?,
         autoTerminationMode: AutoTerminationMode,
-    ): EmbraceSpan = guard(NoopEmbraceSdkSpan) { target.startSpan(name, parent, startTimeMs, autoTerminationMode) }
+    ): EmbraceSpan = errorHandler.guardSdkCode(SdkErrorType.PublicApiFail, NoopEmbraceSdkSpan) {
+        target.startSpan(
+            name,
+            parent,
+            startTimeMs,
+            autoTerminationMode
+        )
+    }
 
     override fun <T> recordSpan(
         name: String,
@@ -196,7 +210,7 @@ internal class SdkApiDispatcher(
             }
         } catch (exc: Throwable) {
             if (exc !== userCodeError) {
-                trackError(exc)
+                errorHandler.trackSdkError(SdkErrorType.PublicApiFail, exc)
             }
             userCodeError?.let { throw it }
             // run user code if it hasn't run already
@@ -213,44 +227,51 @@ internal class SdkApiDispatcher(
         parent: EmbraceSpan?,
         attributes: Map<String, String>,
         events: List<EmbraceSpanEvent>,
-    ): Boolean = guard(false) {
+    ): Boolean = errorHandler.guardSdkCode(SdkErrorType.PublicApiFail, false) {
         target.recordCompletedSpan(name, startTimeMs, endTimeMs, errorCode, parent, attributes, events)
     }
 
-    override fun getSpan(spanId: String): EmbraceSpan? = guard(null) { target.getSpan(spanId) }
+    override fun getSpan(spanId: String): EmbraceSpan? =
+        errorHandler.guardSdkCode(SdkErrorType.PublicApiFail, null) { target.getSpan(spanId) }
 
     override fun startView(name: String): Boolean = record("start_view", false) { target.startView(name) }
 
     override fun endView(name: String): Boolean = record("end_view", false) { target.endView(name) }
 
-    override fun disable() = guard { target.disable() }
+    override fun disable() = errorHandler.guardSdkCode(SdkErrorType.PublicApiFail) { target.disable() }
 
-    override fun applicationInitStart() = guard { target.applicationInitStart() }
+    override fun applicationInitStart() = errorHandler.guardSdkCode(SdkErrorType.PublicApiFail) { target.applicationInitStart() }
 
     override fun applicationInitEnd() = record("application_init_end") { target.applicationInitEnd() }
 
-    override val isStarted: Boolean get() = guard(false) { target.isStarted }
+    override val isStarted: Boolean get() = errorHandler.guardSdkCode(SdkErrorType.PublicApiFail, false) { target.isStarted }
 
     override val deviceId: String get() = record("get_device_id", "") { target.deviceId }
 
     override val currentUserSessionId: String? get() =
         record("get_current_session_id", null) { target.currentUserSessionId }
 
-    override val lastRunEndState: LastRunEndState get() = guard(LastRunEndState.INVALID) { target.lastRunEndState }
+    override val lastRunEndState: LastRunEndState get() = errorHandler.guardSdkCode(
+        SdkErrorType.PublicApiFail,
+        LastRunEndState.INVALID
+    ) { target.lastRunEndState }
 
     override fun addLogRecordExporter(logRecordExporter: LogRecordExporter) =
-        guard { target.addLogRecordExporter(logRecordExporter) }
+        errorHandler.guardSdkCode(SdkErrorType.PublicApiFail) { target.addLogRecordExporter(logRecordExporter) }
 
-    override fun addSpanExporter(spanExporter: SpanExporter) = guard { target.addSpanExporter(spanExporter) }
+    override fun addSpanExporter(spanExporter: SpanExporter) =
+        errorHandler.guardSdkCode(SdkErrorType.PublicApiFail) { target.addSpanExporter(spanExporter) }
 
-    override fun addSpanProcessor(spanProcessor: SpanProcessor) = guard { target.addSpanProcessor(spanProcessor) }
+    override fun addSpanProcessor(spanProcessor: SpanProcessor) =
+        errorHandler.guardSdkCode(SdkErrorType.PublicApiFail) { target.addSpanProcessor(spanProcessor) }
 
     override fun addLogRecordProcessor(logRecordProcessor: LogRecordProcessor) =
-        guard { target.addLogRecordProcessor(logRecordProcessor) }
+        errorHandler.guardSdkCode(SdkErrorType.PublicApiFail) { target.addLogRecordProcessor(logRecordProcessor) }
 
     override fun getOpenTelemetryKotlin(): OpenTelemetry = openTelemetryKotlin
 
-    override fun setResourceAttribute(key: String, value: String) = guard { target.setResourceAttribute(key, value) }
+    override fun setResourceAttribute(key: String, value: String) =
+        errorHandler.guardSdkCode(SdkErrorType.PublicApiFail) { target.setResourceAttribute(key, value) }
 
     override fun addBreadcrumb(message: String) = record("add_breadcrumb") { target.addBreadcrumb(message) }
 
@@ -258,7 +279,8 @@ internal class SdkApiDispatcher(
 
     override fun activityLoaded(activity: Activity) = record("activity_fully_loaded") { target.activityLoaded(activity) }
 
-    override fun getSdkCurrentTimeMs(): Long = guard(System.currentTimeMillis()) { target.getSdkCurrentTimeMs() }
+    override fun getSdkCurrentTimeMs(): Long =
+        errorHandler.guardSdkCode(SdkErrorType.PublicApiFail, System.currentTimeMillis()) { target.getSdkCurrentTimeMs() }
 
     override fun addLoadTraceAttribute(activity: Activity, key: String, value: String) =
         record("add_load_trace_attribute") { target.addLoadTraceAttribute(activity, key, value) }
@@ -299,7 +321,10 @@ internal class SdkApiDispatcher(
         record("observe_navigation") { target.observeNavigation(activity, navigationController) }
 
     override fun createExperiment(id: String, variant: String?, startedAt: Long?): TrackedExperiment =
-        guard(TrackedExperimentImpl(id, variant, startedAt)) { target.createExperiment(id, variant, startedAt) }
+        errorHandler.guardSdkCode(
+            SdkErrorType.PublicApiFail,
+            TrackedExperimentImpl(id, variant, startedAt)
+        ) { target.createExperiment(id, variant, startedAt) }
 
     override fun trackExperiment(id: String, variant: String?, startedAt: Long?) =
         record("track_experiment") { target.trackExperiment(id, variant, startedAt) }
@@ -314,7 +339,10 @@ internal class SdkApiDispatcher(
         record("untrack_experiment") { target.untrackExperiments(ids, endedAt) }
 
     override fun createFeatureFlag(id: String, variant: String?, startedAt: Long?): TrackedFeatureFlag =
-        guard(TrackedFeatureFlagImpl(id, variant, startedAt)) { target.createFeatureFlag(id, variant, startedAt) }
+        errorHandler.guardSdkCode(
+            SdkErrorType.PublicApiFail,
+            TrackedFeatureFlagImpl(id, variant, startedAt)
+        ) { target.createFeatureFlag(id, variant, startedAt) }
 
     override fun trackFeatureFlag(id: String, variant: String?, startedAt: Long?) =
         record("track_feature_flag") { target.trackFeatureFlag(id, variant, startedAt) }
@@ -331,24 +359,11 @@ internal class SdkApiDispatcher(
     /**
      * Records usage of the public API [name] then performs [call], returning [fallback] if the SDK throws.
      */
-    private inline fun <T> record(name: String, fallback: T, call: () -> T): T = guard(fallback) {
+    private fun <T> record(name: String, fallback: T, call: () -> T): T = errorHandler.guardSdkCode(SdkErrorType.PublicApiFail, fallback) {
         telemetryService.onPublicApiCalled(name)
         call()
     }
 
-    private inline fun record(name: String, call: () -> Unit) = record(name, Unit, call)
+    private fun record(name: String, call: () -> Unit) = record(name, Unit, call)
 
-    /**
-     * Performs [call], reporting anything it throws as an SDK error and returning [fallback] instead.
-     */
-    private inline fun <T> guard(fallback: T, call: () -> T): T = try {
-        call()
-    } catch (exc: Throwable) {
-        trackError(exc)
-        fallback
-    }
-
-    private inline fun guard(call: () -> Unit) = guard(Unit, call)
-
-    private fun trackError(exc: Throwable) = errorHandler.trackSdkError(SdkErrorType.PublicApiFail, exc)
 }

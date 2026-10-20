@@ -40,12 +40,7 @@ class SessionMetadataWriter(
      * Writes the metadata for the active session part, replacing any metadata already on disk.
      */
     fun write(): Boolean = SystemTrace.trace("mf-write-metadata") {
-        try {
-            writeImpl()
-        } catch (exc: Throwable) {
-            trackFailure(exc)
-            false
-        }
+        errorHandler.guardSdkCode(SdkErrorType.SessionMetadataWriteFail, false, ::writeImpl)
     }
 
     private fun writeImpl(): Boolean {

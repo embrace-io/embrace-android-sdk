@@ -64,15 +64,13 @@ internal class BufferingSdkInstance(
 
     fun drainOTelConfig(target: OTelApi) {
         otelConfigCalls.drain(target) { calls ->
-            calls.forEach { call ->
-                guard {
-                    when (call) {
-                        is OTelConfigCall.AddSpanExporter -> target.addSpanExporter(call.exporter)
-                        is OTelConfigCall.AddSpanProcessor -> target.addSpanProcessor(call.processor)
-                        is OTelConfigCall.AddLogRecordExporter -> target.addLogRecordExporter(call.exporter)
-                        is OTelConfigCall.AddLogRecordProcessor -> target.addLogRecordProcessor(call.processor)
-                        is OTelConfigCall.SetResourceAttribute -> target.setResourceAttribute(call.key, call.value)
-                    }
+            errorHandler.guardSdkCodeEach(SdkErrorType.PublicApiFail, calls) { call ->
+                when (call) {
+                    is OTelConfigCall.AddSpanExporter -> target.addSpanExporter(call.exporter)
+                    is OTelConfigCall.AddSpanProcessor -> target.addSpanProcessor(call.processor)
+                    is OTelConfigCall.AddLogRecordExporter -> target.addLogRecordExporter(call.exporter)
+                    is OTelConfigCall.AddLogRecordProcessor -> target.addLogRecordProcessor(call.processor)
+                    is OTelConfigCall.SetResourceAttribute -> target.setResourceAttribute(call.key, call.value)
                 }
             }
         }
@@ -80,24 +78,22 @@ internal class BufferingSdkInstance(
 
     fun drainCompletedSpans(target: TracingApi) {
         completedSpanCalls.drain(target) { calls ->
-            calls.forEach { call ->
-                guard {
-                    target.recordCompletedSpan(
-                        call.name,
-                        call.startTimeMs,
-                        call.endTimeMs,
-                        call.errorCode,
-                        call.parent,
-                        call.attributes,
-                        call.events,
-                    )
-                }
+            errorHandler.guardSdkCodeEach(SdkErrorType.PublicApiFail, calls) { call ->
+                target.recordCompletedSpan(
+                    call.name,
+                    call.startTimeMs,
+                    call.endTimeMs,
+                    call.errorCode,
+                    call.parent,
+                    call.attributes,
+                    call.events,
+                )
             }
         }
     }
 
     fun drainExperimentCalls(target: ExperimentApi, replay: (List<ExperimentApiCall>) -> Unit) {
-        experimentCalls.drain(target) { calls -> guard { replay(calls) } }
+        experimentCalls.drain(target) { calls -> errorHandler.guardSdkCode(SdkErrorType.PublicApiFail) { replay(calls) } }
     }
 
     /**
@@ -256,14 +252,6 @@ internal class BufferingSdkInstance(
             buffer = { calls -> untrack(calls, ids, ExperimentKind.FEATURE_FLAG, endedAt) },
             forward = { it.untrackFeatureFlags(ids, endedAt) },
         )
-    }
-
-    private inline fun guard(action: () -> Unit) {
-        try {
-            action()
-        } catch (exc: Throwable) {
-            errorHandler.trackSdkError(SdkErrorType.PublicApiFail, exc)
-        }
     }
 
     private fun bufferOTelConfig(calls: MutableList<OTelConfigCall>, call: OTelConfigCall) {

@@ -35,34 +35,16 @@ internal class ProcessStateTrackerImpl(
      * Called by [lifecycleTracker] when the app process has entered the foreground.
      */
     override fun onForeground() {
-        invokeCallbackSafely { sessionOrchestrator?.onForeground() }
-
-        listeners.toList().forEach { listener: ProcessStateListener ->
-            invokeCallbackSafely {
-                listener.onForeground()
-            }
-        }
+        errorHandler.guardSdkCode(SdkErrorType.AppStateCallbackFail) { sessionOrchestrator?.onForeground() }
+        errorHandler.guardSdkCodeEach(SdkErrorType.AppStateCallbackFail, listeners.toList(), ProcessStateListener::onForeground)
     }
 
     /**
      * Called by [lifecycleTracker] when the app process has entered the background.
      */
     override fun onBackground() {
-        listeners.toList().forEach { listener: ProcessStateListener ->
-            invokeCallbackSafely {
-                listener.onBackground()
-            }
-        }
-
-        invokeCallbackSafely { sessionOrchestrator?.onBackground() }
-    }
-
-    private inline fun invokeCallbackSafely(action: () -> Unit) {
-        try {
-            action()
-        } catch (ex: Exception) {
-            errorHandler.trackSdkError(SdkErrorType.AppStateCallbackFail, ex)
-        }
+        errorHandler.guardSdkCodeEach(SdkErrorType.AppStateCallbackFail, listeners.toList(), ProcessStateListener::onBackground)
+        errorHandler.guardSdkCode(SdkErrorType.AppStateCallbackFail) { sessionOrchestrator?.onBackground() }
     }
 
     override fun addListener(listener: ProcessStateListener) {

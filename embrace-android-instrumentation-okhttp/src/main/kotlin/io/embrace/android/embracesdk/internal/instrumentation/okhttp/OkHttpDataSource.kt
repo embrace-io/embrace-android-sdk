@@ -25,7 +25,6 @@ import okhttp3.internal.http.promisesBody
 import okio.Buffer
 import okio.GzipSource
 import okio.buffer
-import java.io.IOException
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.TimeUnit
 
@@ -402,22 +401,11 @@ internal class OkHttpDataSource(
         return headers
     }
 
-    private fun getRequestBody(request: Request): ByteArray? {
-        try {
-            val requestCopy = request.newBuilder().build()
-            val requestBody = requestCopy.body
-            if (requestBody != null) {
-                val buffer = Buffer()
-                requestBody.writeTo(buffer)
-                return buffer.readByteArray()
-            }
-        } catch (e: IOException) {
-            errorHandler.trackSdkError(
-                SdkErrorType.DataSourceDataCaptureFail,
-                e,
-            )
-        }
-        return null
+    private fun getRequestBody(request: Request): ByteArray? = errorHandler.guardSdkCode(SdkErrorType.DataSourceDataCaptureFail, null) {
+        val requestBody = request.newBuilder().build().body ?: return@guardSdkCode null
+        val buffer = Buffer()
+        requestBody.writeTo(buffer)
+        buffer.readByteArray()
     }
 
     /**

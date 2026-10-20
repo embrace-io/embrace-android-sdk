@@ -170,9 +170,7 @@ internal class RealSdkInstance(
 
     override fun onPostStart(buffer: BufferingSdkInstance) {
         buffer.drainCompletedSpans(tracingApi)
-        applyCustomMetadata {
-            buffer.drainExperimentCalls(experimentApiDelegate, experimentApiDelegate::replay)
-        }
+        buffer.drainExperimentCalls(experimentApiDelegate, experimentApiDelegate::replay)
         // the buffered value was recorded first, so takes precedence
         buffer.applicationInitStartMs?.let { applicationInitStartMs = it }
 
@@ -291,18 +289,10 @@ internal class RealSdkInstance(
     }
 
     /**
-     * Apply custom metadata by the SDK user through Embrace APIs.
-     * Should only be done after the SDK has been started successfully.
-     */
-    private fun applyCustomMetadata(applyMetadata: () -> Unit) = safeInit {
-        applyMetadata()
-    }
-
-    /**
      * Registers listeners for various lifecycle/system callbacks.
      */
     private fun registerListeners() {
-        safeInit {
+        errorHandler.guardSdkCode(SdkErrorType.SdkInitPhaseFail) {
             EmbTrace.trace("service-registration") {
                 startupTracker.register(appContext as Application)
 
@@ -341,7 +331,7 @@ internal class RealSdkInstance(
      * Loads instrumentation via SPI and legacy methods.
      */
     private fun loadInstrumentation() {
-        safeInit {
+        errorHandler.guardSdkCode(SdkErrorType.SdkInitPhaseFail) {
             EmbTrace.trace(sectionName = "load-instrumentation", recordDuration = true) {
                 instrumentationRegistry.loadInstrumentations(loadInstrumentationProviders(), instrumentationArgs)
 
@@ -413,7 +403,7 @@ internal class RealSdkInstance(
      * Performs post-load instrumentation tasks such as setting listeners.
      */
     internal fun postLoadInstrumentation() {
-        safeInit {
+        errorHandler.guardSdkCode(SdkErrorType.SdkInitPhaseFail) {
             // setup crash teardown handlers
             val registry = instrumentationRegistry
             registry.findByType(JvmCrashDataSource::class)?.apply {
@@ -437,7 +427,7 @@ internal class RealSdkInstance(
      * Trigger sending cached data on disk.
      */
     private fun triggerPayloadSend() {
-        safeInit {
+        errorHandler.guardSdkCode(SdkErrorType.SdkInitPhaseFail) {
             val worker = workerThreadPool.backgroundWorker(Worker.Background.IoRegWorker)
             worker.submit {
                 // Get real network status as soon as we can on the worker.
@@ -489,7 +479,7 @@ internal class RealSdkInstance(
      * Mark SDK initialization as complete.
      */
     private fun markSdkInitComplete(sdkInitDurationsProvider: () -> Map<String, Long>) {
-        safeInit {
+        errorHandler.guardSdkCode(SdkErrorType.SdkInitPhaseFail) {
             EmbTrace.trace("startup-tracking") {
                 val sdkInitDurations = sdkInitDurationsProvider()
                 val resourceUsageTracker = sdkInitResourceUsageTracker
@@ -532,19 +522,6 @@ internal class RealSdkInstance(
             val startMsg = "Embrace SDK version ${BuildConfig.VERSION_NAME} started" +
                 (appId?.let { " for appId = $it" } ?: " without an app ID")
             errorHandler.log(startMsg, severity = ErrorHandler.Severity.INFO)
-        }
-    }
-
-    /**
-     * Run the given initialization phase and record any failures, but allow execution to continue even if it does.
-     */
-    private inline fun safeInit(
-        init: () -> Unit,
-    ) {
-        try {
-            init()
-        } catch (t: Throwable) {
-            errorHandler.trackSdkError(SdkErrorType.SdkInitPhaseFail, t)
         }
     }
 

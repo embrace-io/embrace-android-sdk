@@ -1,5 +1,6 @@
 package io.embrace.android.embracesdk.internal.api
 
+import io.embrace.android.embracesdk.fakes.FakeErrorHandler
 import io.embrace.android.embracesdk.fakes.FakeInternalTelemetryService
 import io.embrace.android.embracesdk.fakes.FakeKeyValueStore
 import io.embrace.android.embracesdk.internal.api.delegate.HostedSdkInternalInterfaceImpl
@@ -21,7 +22,7 @@ internal class UnityInternalInterfaceImplTest {
     @Before
     fun setUp() {
         store = FakeKeyValueStore()
-        errorHandler = mockk(relaxed = true)
+        errorHandler = FakeErrorHandler()
         hostedSdkVersionInfo = UnitySdkVersionInfo(store)
         impl = HostedSdkInternalInterfaceImpl(
             logsApi = mockk(),

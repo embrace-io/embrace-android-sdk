@@ -88,13 +88,8 @@ internal class FirstDrawDetector(
         val instanceId = traceInstanceId(activity)
         pendingDraws.remove(instanceId)
         loadingActivities[instanceId]?.let { firstDrawCallback ->
-            runCatching {
+            errorHandler.guardSdkCode(SdkErrorType.UiCallbackFail) {
                 activity.window.decorView.viewTreeObserver.unregisterFrameCommitCallback(firstDrawCallback)
-            }.exceptionOrNull()?.let { exception ->
-                errorHandler.trackSdkError(
-                    type = SdkErrorType.UiCallbackFail,
-                    throwable = IllegalStateException("Failed to unregister first draw callback", exception),
-                )
             }
             loadingActivities.remove(instanceId)
         }

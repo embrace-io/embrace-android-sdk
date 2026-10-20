@@ -6,10 +6,10 @@ import io.embrace.android.embracesdk.internal.arch.state.ProcessState
 import io.embrace.android.embracesdk.internal.arch.state.ProcessStateTracker
 import io.embrace.android.embracesdk.internal.clock.Clock
 import io.embrace.android.embracesdk.internal.logging.ErrorHandler
+import io.embrace.android.embracesdk.internal.logging.SdkErrorType
 import io.embrace.android.embracesdk.internal.otel.spans.SpanRepository
 import io.embrace.android.embracesdk.internal.payload.SessionPartPayload
 import io.embrace.android.embracesdk.internal.payload.Span
-import io.embrace.android.embracesdk.internal.session.captureDataSafely
 import io.embrace.android.embracesdk.internal.session.orchestrator.SessionPartSnapshotType
 import io.embrace.android.embracesdk.internal.spans.CurrentSessionPartSpan
 
@@ -83,32 +83,30 @@ internal class SessionPartPayloadSourceImpl(
         isCacheAttempt: Boolean,
         startNewSession: Boolean,
         crashId: String?,
-    ): List<Span>? {
-        val spans: List<Span>? = captureDataSafely(errorHandler) {
-            when {
-                !isCacheAttempt -> {
-                    val appTerminationCause = when {
-                        crashId != null -> AppTerminationCause.Crash
-                        else -> null
-                    }
-                    otelPayloadMapper?.record()
-                    currentSessionPartSpan.endSession(
-                        startNewSession = startNewSession,
-                        appTerminationCause = appTerminationCause,
-                    )
+    ): List<Span>? = errorHandler.guardSdkCode(SdkErrorType.SafeDataCaptureFail, null) {
+        when {
+            !isCacheAttempt -> {
+                val appTerminationCause = when {
+                    crashId != null -> AppTerminationCause.Crash
+                    else -> null
                 }
-
-                else -> spanRepository.completedOtelSpans()
-                    .plus(otelPayloadMapper?.snapshotSpans() ?: emptyList())
+                otelPayloadMapper?.record()
+                currentSessionPartSpan.endSession(
+                    startNewSession = startNewSession,
+                    appTerminationCause = appTerminationCause,
+                )
             }
+
+            else -> spanRepository.completedOtelSpans()
+                .plus(otelPayloadMapper?.snapshotSpans() ?: emptyList())
         }
-        return spans
     }
 
-    private fun retrieveSpanSnapshots(isCacheAttempt: Boolean) = captureDataSafely(errorHandler) {
-        // Only snapshot session part spans if we are caching an in-progress session payload
-        spanRepository.getActiveEmbraceSpans()
-            .filter { isCacheAttempt || !it.hasEmbraceAttribute(EmbType.Ux.Session) }
-            .mapNotNull { it.snapshot() }
-    }
+    private fun retrieveSpanSnapshots(isCacheAttempt: Boolean) =
+        errorHandler.guardSdkCode(SdkErrorType.SafeDataCaptureFail, null) {
+            // Only snapshot session part spans if we are caching an in-progress session payload
+            spanRepository.getActiveEmbraceSpans()
+                .filter { isCacheAttempt || !it.hasEmbraceAttribute(EmbType.Ux.Session) }
+                .mapNotNull { it.snapshot() }
+        }
 }

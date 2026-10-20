@@ -1,7 +1,6 @@
 package io.embrace.android.embracesdk.internal.network.http
 
 import io.embrace.android.embracesdk.fakes.FakeErrorHandler
-import io.embrace.android.embracesdk.internal.logging.SdkErrorType
 import io.embrace.android.embracesdk.network.http.HttpRequestInfoModifier
 import io.embrace.android.embracesdk.network.http.MutableHttpRequestInfo
 import org.junit.Assert.assertEquals
@@ -77,11 +76,8 @@ internal class HttpRequestInfoModifierChainTest {
 
         assertEquals(true, ranAfter)
         assertEquals("https://after.com", result.url)
-        assertEquals(1, errorHandler.sdkErrorMessages.size)
-        assertEquals(
-            SdkErrorType.HttpRequestInfoModifierFail.toString(),
-            errorHandler.sdkErrorMessages.single().msg,
-        )
+        assertEquals(0, errorHandler.sdkErrorMessages.size)
+        assertEquals("boom", errorHandler.warningMessages.single().throwable?.message)
     }
 
     @Test
@@ -90,7 +86,8 @@ internal class HttpRequestInfoModifierChainTest {
         repeat(3) {
             chain.apply(MutableHttpRequestInfoImpl(httpMethod = "GET", url = "https://example.com"))
         }
-        assertEquals(1, errorHandler.sdkErrorMessages.size)
+        assertEquals(1, errorHandler.warningMessages.size)
+        assertEquals(0, errorHandler.sdkErrorMessages.size)
     }
 
     @Test

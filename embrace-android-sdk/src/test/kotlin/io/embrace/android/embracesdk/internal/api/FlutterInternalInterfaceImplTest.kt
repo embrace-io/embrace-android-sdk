@@ -1,5 +1,6 @@
 package io.embrace.android.embracesdk.internal.api
 
+import io.embrace.android.embracesdk.fakes.FakeErrorHandler
 import io.embrace.android.embracesdk.fakes.FakeInternalTelemetryService
 import io.embrace.android.embracesdk.fakes.FakeKeyValueStore
 import io.embrace.android.embracesdk.internal.api.delegate.HostedSdkInternalInterfaceImpl
@@ -26,7 +27,7 @@ internal class FlutterInternalInterfaceImplTest {
             serializer = mockk(),
             rnBundleIdTracker = lazy { mockk() },
             hostedSdkVersionInfo = hostedSdkVersionInfo,
-            errorHandler = mockk(),
+            errorHandler = FakeErrorHandler(),
             telemetryService = FakeInternalTelemetryService(),
         )
     }

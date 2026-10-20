@@ -303,7 +303,7 @@ internal class SessionOrchestratorImpl(
             }
             currentUserSession()?.let { metadata ->
                 errorHandler.guardSdkCode(SdkErrorType.UserSessionCallbackFail) {
-                    listener.onSessionStateEvent(UserSessionActive(metadata.userSessionId))
+                    errorHandler.guardUserCode { listener.onSessionStateEvent(UserSessionActive(metadata.userSessionId)) }
                 }
             }
         }
@@ -317,7 +317,7 @@ internal class SessionOrchestratorImpl(
 
     private fun notifyListeners(event: SessionStateEvent) {
         errorHandler.guardSdkCodeEach(SdkErrorType.UserSessionCallbackFail, userSessionListeners) { listener ->
-            listener.onSessionStateEvent(event)
+            errorHandler.guardUserCode { listener.onSessionStateEvent(event) }
         }
     }
 

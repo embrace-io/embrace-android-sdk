@@ -67,15 +67,13 @@ class StoredEntryIndex<T>(
      * Removes the entry's data from disk, and the entry from the index.
      */
     fun delete(entry: T) {
-        try {
-            layout.delete(fileFor(entry))
-        } catch (exc: Throwable) {
-            if (exc !is FileNotFoundException) {
-                errorHandler.trackSdkError(errorType, exc)
+        errorHandler.guardSdkCode(errorType) {
+            try {
+                layout.delete(fileFor(entry))
+            } catch (_: FileNotFoundException) {
             }
-        } finally {
-            entries.remove(entry)
         }
+        entries.remove(entry)
     }
 
     /**

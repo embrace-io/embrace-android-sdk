@@ -12,12 +12,15 @@ class FakeJniDelegate : JniDelegate {
     var signalHandlerInstalled: Boolean = false
     var signalHandlerReinstalled = false
     var crashCaptureDisabled = false
+    var installError: Throwable? = null
+    var checkError: Throwable? = null
 
     override fun installSignalHandlers(
         markerFilePath: String?,
         reportId: String?,
         devLogging: Boolean,
     ) {
+        installError?.let { throw it }
         signalHandlerInstalled = true
     }
 
@@ -36,6 +39,7 @@ class FakeJniDelegate : JniDelegate {
     }
 
     override fun checkForOverwrittenHandlers(): String? {
+        checkError?.let { throw it }
         return culprit
     }
 

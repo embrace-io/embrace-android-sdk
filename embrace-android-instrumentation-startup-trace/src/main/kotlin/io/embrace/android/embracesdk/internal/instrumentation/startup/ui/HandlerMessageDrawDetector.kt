@@ -5,10 +5,13 @@ import android.os.Build.VERSION_CODES.M
 import android.os.Message
 import androidx.annotation.RequiresApi
 import io.embrace.android.embracesdk.internal.handler.MainThreadHandler
+import io.embrace.android.embracesdk.internal.logging.ErrorHandler
+import io.embrace.android.embracesdk.internal.logging.SdkErrorType
 
 @RequiresApi(M)
 internal class HandlerMessageDrawDetector(
     private val handler: MainThreadHandler,
+    private val errorHandler: ErrorHandler,
 ) : DrawEventEmitter {
 
     @Volatile
@@ -26,7 +29,7 @@ internal class HandlerMessageDrawDetector(
         handler.sendMessageAtFrontOfQueue(
             Message.obtain(handler.wrappedHandler) {
                 if (!closed) {
-                    drawCompleteCallback()
+                    errorHandler.guardSdkCode(SdkErrorType.UiCallbackFail, drawCompleteCallback)
                 }
             }.apply {
                 isAsynchronous = true

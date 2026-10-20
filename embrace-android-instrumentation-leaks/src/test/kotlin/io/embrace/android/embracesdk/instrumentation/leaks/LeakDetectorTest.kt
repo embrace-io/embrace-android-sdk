@@ -1,6 +1,8 @@
 package io.embrace.android.embracesdk.instrumentation.leaks
 
 import io.embrace.android.embracesdk.concurrency.runActionsConcurrently
+import io.embrace.android.embracesdk.fakes.FakeErrorHandler
+import io.embrace.android.embracesdk.internal.logging.SdkErrorType
 import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotNull
@@ -12,6 +14,7 @@ import org.junit.Test
 import java.util.concurrent.ConcurrentLinkedQueue
 import java.util.concurrent.LinkedBlockingQueue
 import java.util.concurrent.TimeUnit
+import java.util.concurrent.atomic.AtomicBoolean
 
 internal class LeakDetectorTest {
 
@@ -24,7 +27,11 @@ internal class LeakDetectorTest {
     fun setUp() {
         now = 1000L
         gcCycleCount = 0L
-        detector = LeakDetector(clock = { now }, gcCycleCountReader = { gcCycleCount.toString() })
+        detector = LeakDetector(
+            clock = { now },
+            errorHandler = FakeErrorHandler(),
+            gcCycleCountReader = { gcCycleCount.toString() },
+        )
     }
 
     @After
@@ -244,6 +251,42 @@ internal class LeakDetectorTest {
         detector.onSentinelReclaimed(ref)
 
         assertTrue(detector.suspects().isEmpty())
+    }
+
+    @Test
+    fun `an exception dispatching on the detector thread is tracked and later references are still dispatched`() {
+        val errorHandler = FakeErrorHandler()
+        val readFailed = AtomicBoolean(false)
+        detector = LeakDetector(
+            clock = { now },
+            errorHandler = errorHandler,
+            gcCycleCountReader = {
+                // only the detector thread fails, so that polling suspects() from this thread can't take the failure
+                if (Thread.currentThread().name == LeakDetector.THREAD_NAME && readFailed.compareAndSet(false, true)) {
+                    error("failed to read GC count")
+                }
+                gcCycleCount.toString()
+            },
+        )
+        detector.start()
+
+        // held strongly for the duration of the test so that they cannot be collected
+        val leaked = List(2) { Any() }
+        leaked.forEach { referent ->
+            detector.trackOpened(referent, OWNER)
+            val ref = checkNotNull(detector.trackClosed(referent, OWNER))
+            // the first reclaim is driven directly, and the confirming one through the detector thread's queue
+            checkNotNull(detector.onSentinelReclaimed(ref)).enqueue()
+        }
+
+        val deadline = System.currentTimeMillis() + THREAD_EXIT_TIMEOUT_MS
+        while (detector.suspects().isEmpty() && System.currentTimeMillis() < deadline) {
+            Thread.sleep(10)
+        }
+
+        assertEquals("only the reference whose dispatch didn't throw is confirmed", 1, detector.suspects().size)
+        assertEquals(SdkErrorType.DataSourceDataCaptureFail.toString(), errorHandler.sdkErrorMessages.single().msg)
+        assertTrue(checkNotNull(detectorThread()).isAlive)
     }
 
     @Test

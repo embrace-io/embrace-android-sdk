@@ -9,6 +9,7 @@ import io.embrace.android.embracesdk.fakes.FakeMainThreadHandler
 import io.embrace.android.embracesdk.fakes.FakeSharedObjectLoader
 import io.embrace.android.embracesdk.internal.config.resolved.AutoDataCaptureConfig
 import io.embrace.android.embracesdk.internal.config.resolved.EmbraceConfig
+import io.embrace.android.embracesdk.internal.logging.SdkErrorType
 import io.embrace.android.embracesdk.internal.session.id.SessionIdsSnapshot
 import io.embrace.android.embracesdk.internal.worker.BackgroundWorker
 import org.junit.Assert.assertEquals
@@ -209,6 +210,29 @@ class NativeCrashHandlerInstallerImplTest {
         assertFalse(fakeDelegate.signalHandlerReinstalled)
         assertNull(fakeDelegate.reportPath)
         assertFalse(fakeDelegate.crashCaptureDisabled)
+    }
+
+    @Test
+    fun `JNI failure installing signal handlers is tracked and does not stop session tracking`() {
+        fakeDelegate.installError = UnsatisfiedLinkError()
+
+        nativeCrashHandlerInstaller.install()
+
+        assertEquals(SdkErrorType.NativeHandlerInstallFail.toString(), args.errorHandler.sdkErrorMessages.single().msg)
+        assertFalse(fakeDelegate.signalHandlerInstalled)
+        assertFalse(fakeDelegate.signalHandlerReinstalled)
+        assertEquals(1, args.sessionChangeListeners.size)
+    }
+
+    @Test
+    fun `JNI failure checking for overwritten handlers is tracked and does not stop session tracking`() {
+        fakeDelegate.checkError = UnsatisfiedLinkError()
+
+        nativeCrashHandlerInstaller.install()
+
+        assertEquals(SdkErrorType.NativeHandlerInstallFail.toString(), args.errorHandler.sdkErrorMessages.single().msg)
+        assertTrue(fakeDelegate.signalHandlerInstalled)
+        assertEquals(1, args.sessionChangeListeners.size)
     }
 
     private fun getFilename(): String = File(checkNotNull(fakeDelegate.reportPath)).name

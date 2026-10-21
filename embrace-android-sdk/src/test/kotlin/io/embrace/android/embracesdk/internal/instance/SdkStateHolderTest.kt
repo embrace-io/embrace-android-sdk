@@ -6,7 +6,6 @@ import androidx.test.ext.junit.runners.AndroidJUnit4
 import io.embrace.android.embracesdk.fakes.FakeErrorHandler
 import io.embrace.android.embracesdk.fakes.FakeInternalTelemetryService
 import io.embrace.android.embracesdk.internal.EmbraceInternalApi
-import io.embrace.android.embracesdk.internal.NoopInternalInterfaceApi
 import io.embrace.android.embracesdk.internal.logging.ErrorHandlerImpl
 import io.embrace.android.embracesdk.internal.logging.SdkErrorType
 import io.embrace.android.embracesdk.internal.logging.guardSdkCode
@@ -216,16 +215,16 @@ internal class SdkStateHolderTest {
     fun `internal interface api follows the dispatcher target`() {
         val holder = createHolder(FakeInstance(calls))
         assertSame(buffer, EmbraceInternalApi.internalInterfaceApi)
-        assertSame(NoopInternalInterfaceApi.internalInterface, EmbraceInternalApi.internalInterface)
+        val internalInterface = EmbraceInternalApi.internalInterface
 
         holder.start(context)
         calls.clear()
-        EmbraceInternalApi.internalInterface
+        internalInterface.addEnvelopeResource("key", "value")
         assertEquals(listOf("getInternalInterface/0"), calls)
 
         holder.close()
         calls.clear()
-        EmbraceInternalApi.internalInterface
+        internalInterface.addEnvelopeResource("key", "value")
         assertEquals(listOf("disabled:getInternalInterface/0"), calls)
     }
 
@@ -234,7 +233,7 @@ internal class SdkStateHolderTest {
         val holder = createHolder(FakeInstance(calls, startSucceeds = false))
         holder.start(context)
         calls.clear()
-        EmbraceInternalApi.internalInterface
+        EmbraceInternalApi.internalInterface.addEnvelopeResource("key", "value")
         assertEquals(listOf("failed:getInternalInterface/0"), calls)
     }
 

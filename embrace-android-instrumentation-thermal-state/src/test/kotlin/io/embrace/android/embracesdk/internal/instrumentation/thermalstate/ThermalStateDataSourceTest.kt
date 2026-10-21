@@ -79,6 +79,17 @@ internal class ThermalStateDataSourceTest {
     }
 
     @Test
+    fun `a failure looking up the thermal service is reported`() {
+        val failingArgs = FakeInstrumentationArgs(errorHandler = FakeErrorHandler(throwOnSdkError = false))
+        ThermalStateDataSource(failingArgs) { error("no thermal service") }.onDataCaptureEnabled()
+
+        assertEquals(
+            listOf(SdkErrorType.InstrumentationRegFail.toString()),
+            failingArgs.errorHandler.sdkErrorMessages.map { it.msg },
+        )
+    }
+
+    @Test
     fun `disable removes the registered listener`() {
         dataSource.onDataCaptureEnabled()
         val listener = notifier.addedListeners.single()

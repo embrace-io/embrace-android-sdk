@@ -99,13 +99,16 @@ class BlockedThreadDetector(
     fun onTargetThreadProcessedMessage(timestamp: Long) {
         lastTargetThreadResponse.set(timestamp)
 
-        if (isDebuggerEnabled()) {
-            return
-        }
+        // runs on the watchdog worker, where a failure would otherwise be lost silently
+        errorHandler.guardSdkCode(SdkErrorType.ThreadBlockageHeartbeatCheckFail) {
+            if (isDebuggerEnabled()) {
+                return@guardSdkCode
+            }
 
-        // thread was blocked but recovered
-        if (blocked.getAndSet(false)) {
-            listener.onThreadBlockageEvent(UNBLOCKED, timestamp)
+            // thread was blocked but recovered
+            if (blocked.getAndSet(false)) {
+                listener.onThreadBlockageEvent(UNBLOCKED, timestamp)
+            }
         }
     }
 

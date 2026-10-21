@@ -43,9 +43,14 @@ class ThermalStateDataSource internal constructor(
     override fun onDataCaptureEnabled() {
         backgroundWorker.submit {
             EmbTrace.trace("thermal-service-registration") {
-                val notifier = notifierProvider() ?: return@trace
+                // runs on a worker, where a failure would otherwise be lost silently
+                val notifier = errorHandler.guardSdkCode(SdkErrorType.InstrumentationRegFail, null, notifierProvider)
+                    ?: return@trace
                 val listener = PowerManager.OnThermalStatusChangedListener {
-                    handleThermalStateChange(it)
+                    // delivered on a worker, where a failure would otherwise be lost silently
+                    errorHandler.guardSdkCode(SdkErrorType.DataSourceDataCaptureFail) {
+                        handleThermalStateChange(it)
+                    }
                 }
 
                 // Android API only accepts an executor. We don't want to directly expose those

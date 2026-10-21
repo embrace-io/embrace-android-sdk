@@ -162,7 +162,8 @@ fun createMetadataService(
     store: KeyValueStore,
     clock: Clock,
     worker: BackgroundWorker,
-): MetadataService = EmbraceMetadataService(lazyOf(resourceSource), context, configService, store, clock, worker)
+    errorHandler: ErrorHandler,
+): MetadataService = EmbraceMetadataService(lazyOf(resourceSource), context, configService, store, clock, worker, errorHandler)
 
 fun createPayloadResurrectionService(
     intakeService: IntakeService,

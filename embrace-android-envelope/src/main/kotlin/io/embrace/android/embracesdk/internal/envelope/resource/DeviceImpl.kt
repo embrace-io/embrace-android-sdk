@@ -76,15 +76,15 @@ class DeviceImpl(
 
     private fun asyncRetrieveScreenResolution() {
         backgroundWorker.submit {
-            screenResolution = getScreenResolution(windowManagerProvider())
+            screenResolution = readScreenResolution()
             notifyChanged()
         }
     }
 
     @Suppress("DEPRECATION")
-    private fun getScreenResolution(windowManager: WindowManager?): String {
+    private fun readScreenResolution(): String {
         return errorHandler.guardSdkCode(SdkErrorType.ScreenResCaptureFail, "") {
-            val display = windowManager?.defaultDisplay
+            val display = windowManagerProvider()?.defaultDisplay
             val displayMetrics = DisplayMetrics()
             display?.getMetrics(displayMetrics)
             String.format(

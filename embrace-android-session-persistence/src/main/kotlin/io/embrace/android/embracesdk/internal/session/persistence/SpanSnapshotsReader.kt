@@ -9,6 +9,8 @@ import okio.BufferedSource
  * [supersededIds] holds the spans already read back from the completed spans log. A completed span
  * always supersedes a snapshot of it, so its records are skipped rather than spending [maxSpans] on
  * a span that is discarded once the payload is assembled.
+ *
+ * The session span does not count towards [maxSpans].
  */
 internal fun readSpanSnapshots(
     source: BufferedSource,
@@ -36,11 +38,13 @@ private class SnapshotDecoder(
 
     private val snapshots = LinkedHashMap<String, SpanProto>()
     private var records = 0
+    private var sessionSpanHeld = false
 
     override fun decoded(): MutableList<SpanProto> = snapshots.values.toMutableList()
 
     override fun reset() {
         snapshots.clear()
+        sessionSpanHeld = false
     }
 
     override fun readRecord(): Boolean {
@@ -52,11 +56,15 @@ private class SnapshotDecoder(
         if (span.span_id in supersededIds) {
             return true
         }
-        if (snapshots.size >= maxSpans && !snapshots.containsKey(span.span_id)) {
+        if (span.isSessionSpan()) {
+            sessionSpanHeld = true
+        } else if (limitedSpans() >= maxSpans && !snapshots.containsKey(span.span_id)) {
             truncated = true
             return true
         }
         snapshots[span.span_id] = span
         return true
     }
+
+    private fun limitedSpans(): Int = snapshots.size - if (sessionSpanHeld) 1 else 0
 }

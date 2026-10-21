@@ -127,8 +127,9 @@ class SessionPartDecoder(
         errorHandler.guardSdkCode(SdkErrorType.SessionReconstructionFail, DecodedSpanCollections.NONE) {
             val decoded = openOrThrow(source, file).use { src -> read(src, budget.remaining) }
             decoded.corruption?.let(::trackFailure)
+            val limitedSpans = decoded.spans.count { !it.isSessionSpan() }
             val payload = SystemTrace.trace("mf-spans-proto-to-payload") { decoded.drainToPayload() }
-            budget.spend(payload.size, truncated = decoded.spanLimitReached)
+            budget.spend(limitedSpans, truncated = decoded.spanLimitReached)
             DecodedSpanCollections(payload, decoded.lastWrittenMs ?: 0L)
         }
     }

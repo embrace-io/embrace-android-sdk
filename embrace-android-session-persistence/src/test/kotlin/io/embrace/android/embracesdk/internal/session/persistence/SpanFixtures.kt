@@ -131,4 +131,16 @@ internal fun paddedSpanProto(spanId: String, padding: Int): SpanProto = SpanProt
     attributes = listOf(AttributeProto(key = "pad", value_ = "x".repeat(padding))),
 )
 
+private const val SESSION_SPAN_ID = "aaaaaaaaaaaaaaa9"
+
+internal val sessionSpan = fullyPopulatedSpan.copy(
+    spanId = SESSION_SPAN_ID,
+    attributes = listOf(Attribute(key = "emb.type", data = "ux.session")),
+)
+
+internal val sessionSpanProto = fullyPopulatedSpanProto.copy(
+    span_id = SESSION_SPAN_ID,
+    attributes = listOf(AttributeProto(key = "emb.type", value_ = "ux.session")),
+)
+
 internal fun paddedSpanId(index: Int): String = "aaaaaaaa" + "%08d".format(index)

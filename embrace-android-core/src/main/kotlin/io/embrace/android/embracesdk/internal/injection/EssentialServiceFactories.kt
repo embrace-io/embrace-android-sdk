@@ -35,7 +35,7 @@ import io.embrace.android.embracesdk.internal.worker.BackgroundWorker
 fun createProcessStateTracker(
     errorHandler: ErrorHandler,
     lifecycleTracker: LifecycleTracker,
-): ProcessStateTracker = ProcessStateTrackerImpl(errorHandler, lifecycleTracker).apply { register() }
+): ProcessStateTracker = ProcessStateTrackerImpl(errorHandler, lifecycleTracker)
 
 fun createNavigationTrackingService(): NavigationTrackingService = NavigationTrackingServiceImpl()
 

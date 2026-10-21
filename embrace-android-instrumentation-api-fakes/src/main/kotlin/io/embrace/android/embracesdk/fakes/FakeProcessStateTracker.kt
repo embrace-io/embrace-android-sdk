@@ -10,6 +10,12 @@ class FakeProcessStateTracker(
 
     val listeners: MutableList<ProcessStateListener> = mutableListOf()
 
+    var registered: Boolean = false
+
+    override fun register() {
+        registered = true
+    }
+
     override fun addListener(listener: ProcessStateListener) {
         listeners.add(listener)
     }

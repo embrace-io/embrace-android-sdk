@@ -188,6 +188,9 @@ internal class RealSdkInstance(
 
     override fun start(context: Context) {
         try {
+            EmbTrace.trace(sectionName = "process-state-tracker-register", recordDuration = true) {
+                processStateTracker.register()
+            }
             postInit()
 
             EmbTrace.trace(sectionName = "post-services-setup", recordDuration = true) {

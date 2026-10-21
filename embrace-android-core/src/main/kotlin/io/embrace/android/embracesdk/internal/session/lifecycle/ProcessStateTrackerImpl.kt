@@ -25,11 +25,7 @@ internal class ProcessStateTrackerImpl(
 
     private var sessionOrchestrator: SessionOrchestrator? = null
 
-    /**
-     * Starts tracking process state. Must be called exactly once, immediately after construction -
-     * transitions that happen before this are not observed.
-     */
-    fun register() {
+    override fun register() {
         lifecycleTracker.register(this)
     }
 

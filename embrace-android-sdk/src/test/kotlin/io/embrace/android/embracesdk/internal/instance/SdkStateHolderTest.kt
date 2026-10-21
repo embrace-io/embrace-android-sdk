@@ -421,10 +421,24 @@ internal class SdkStateHolderTest {
         assertErrorHandlerClosedOnStart(createHolder { error("instantiation failed") }, SdkState.FAILED)
     }
 
+    /**
+     * A thread that picked up the buffer just before the SDK transitioned away from it still calls the buffer, and the call
+     * must reach the instance every other call now goes to rather than be dropped.
+     */
     @Test
-    fun `buffer is closed after the sdk starts`() {
+    fun `a call that reaches the buffer after the sdk is enabled goes to the enabled instance`() {
         val instance = FakeInstance(calls)
         createHolder(instance).start(context)
+        buffer.recordCompletedSpan("span", 1, 2)
+        assertEquals(listOf("recordCompletedSpan/7"), instance.drained)
+    }
+
+    @Test
+    fun `buffer is closed after an enabled sdk is disabled`() {
+        val instance = FakeInstance(calls)
+        val holder = createHolder(instance)
+        holder.start(context)
+        holder.close()
         assertBufferClosed(instance)
     }
 
@@ -585,9 +599,12 @@ internal class SdkStateHolderTest {
         assertTrue(errors.isEmpty())
     }
 
+    // every fake instance drains the span group when the SDK transitions to it, so this also shows a drained group stops
+    // forwarding
     private fun assertBufferClosed(target: FakeInstance) {
+        val drainedBefore = target.drained.toList()
         assertFalse(buffer.recordCompletedSpan("span", 1, 2))
-        assertEquals(emptyList<String>(), target.drained)
+        assertEquals(drainedBefore, target.drained)
     }
 
     private fun trackError() {

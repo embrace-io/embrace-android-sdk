@@ -39,7 +39,9 @@ import java.util.concurrent.TimeUnit
  * An [SdkApi] implementation for use before the SDK has started. Calls whose effect can be applied later are buffered
  * so they can be drained into the started SDK.
  *
- * Once a group is drained subsequent calls in that group are forwarded straight to the real SDK instance.
+ * Once a group is drained subsequent calls in that group are forwarded straight to the real SDK instance. That covers a
+ * call from a thread that picked up this buffer just before the SDK transitioned away from it, which must not be lost.
+ * Closing, when the SDK fails or is disabled, drops every later call instead, whether or not its group was drained.
  */
 internal class BufferingSdkInstance(
     private val clock: Clock,
@@ -383,6 +385,9 @@ internal class BufferingSdkInstance(
             }
         }
 
+        /**
+         * Discards the buffered calls, after which calls are dropped rather than buffered or forwarded.
+         */
         override fun close() {
             synchronized(lock) {
                 closed = true

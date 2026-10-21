@@ -28,7 +28,8 @@ import io.embrace.android.embracesdk.internal.utils.Provider
  * [SdkInstance.onEnabled] finishes the instance's init before the start returns. A null instance means the SDK is
  * disabled by config. Each change of [SdkState] is a transition, which points the public API at the instance that serves
  * calls in the new state. The calls buffered before the SDK is enabled are handed to the instance before it is published,
- * so none is overtaken by a call made directly.
+ * so none is overtaken by a call made directly, and a call that still reaches the buffer afterwards is forwarded to it.
+ * Once the SDK fails or is disabled, calls that still reach the buffer are dropped.
  *
  * Only one attempt is made to start the SDK. A start that does not succeed closes any instance that was created, keeping
  * the telemetry the SDK persisted, moves the SDK to [SdkState.FAILED], routes all subsequent calls to [failed] and
@@ -42,7 +43,7 @@ import io.embrace.android.embracesdk.internal.utils.Provider
  */
 internal class SdkStateHolder(
     realSdkInstanceFactory: SdkInstanceFactory,
-    preStart: BufferingSdkInstance,
+    private val preStart: BufferingSdkInstance,
     private val failed: Provider<SdkInstance>,
     private val disabled: Provider<SdkInstance>,
     private val persistedTelemetryDeletion: PersistedTelemetryDeletion,
@@ -105,6 +106,9 @@ internal class SdkStateHolder(
             if (state != SdkState.DISABLED) {
                 val previous = api.target
                 transition(disabled(), SdkState.DISABLED)
+                // calls that still reach the pre-start buffer are dropped, even in a group drained to the instance going
+                // away
+                errorHandler.guardSdkCode(SdkErrorType.PublicApiFail) { preStart.disable() }
                 errorHandler.guardSdkCode(SdkErrorType.PublicApiFail) { previous.disable() }
                 errorHandler.guardSdkCode(SdkErrorType.PublicApiFail) { errorHandler.close() }
             }
@@ -196,7 +200,9 @@ internal class SdkStateHolder(
 
     /**
      * Transitions the SDK to a no-op instance. When [deleteTelemetryOnDisable] is true, holds a deletion of the telemetry
-     * the SDK persisted for the next disable to run, as no instance is left whose own disable would delete it.
+     * the SDK persisted for the next disable to run, as no instance is left whose own disable would delete it. The
+     * pre-start buffer then drops every call that still reaches it, including one in a group already drained to an
+     * instance that is going away.
      */
     private fun terminate(next: SdkInstance, nextState: SdkState, context: Context, deleteTelemetryOnDisable: Boolean) {
         if (deleteTelemetryOnDisable) {
@@ -205,6 +211,7 @@ internal class SdkStateHolder(
             }
         }
         transition(next, nextState)
+        errorHandler.guardSdkCode(SdkErrorType.PublicApiFail) { preStart.close() }
         errorHandler.guardSdkCode(SdkErrorType.PublicApiFail) { errorHandler.close() }
     }
 
@@ -215,7 +222,8 @@ internal class SdkStateHolder(
 
     /**
      * Points the public API at [next]. The calls buffered before start are handed to [next] first, so that a call made
-     * directly once [next] is published can't overtake them.
+     * directly once [next] is published can't overtake them. The buffer is not closed here: a thread that picked it up
+     * just before the swap still calls it, and its call is forwarded to [next] like every other call.
      */
     private fun swapTarget(next: SdkInstance) {
         val previous = api.target
@@ -223,9 +231,6 @@ internal class SdkStateHolder(
             errorHandler.guardSdkCode(SdkErrorType.PublicApiFail) { next.onTransition(previous) }
         }
         api.target = next
-        if (previous is BufferingSdkInstance) {
-            errorHandler.guardSdkCode(SdkErrorType.PublicApiFail) { previous.close() }
-        }
     }
 
     private fun reportStartFailure(exc: Throwable) {

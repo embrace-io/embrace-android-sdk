@@ -43,7 +43,7 @@ class NdkCrashInstrumentationProvider : InstrumentationProvider {
                 args,
                 sharedObjectLoader = sharedObjectLoader,
                 delegate = delegate,
-                mainThreadHandler = AndroidMainThreadHandler(),
+                mainThreadHandler = AndroidMainThreadHandler(args.errorHandler),
                 outputDir = nativeOutputDir,
             )
             nativeCrashHandlerInstaller.install()

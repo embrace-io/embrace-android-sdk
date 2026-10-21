@@ -53,8 +53,10 @@ class ThermalStateDataSource(
                 }
                 synchronized(lock) {
                     if (!closed && registration == null) {
-                        pm.addThermalStatusListener(executor, listener)
-                        registration = Pair(pm, listener)
+                        runCatching {
+                            pm.addThermalStatusListener(executor, listener)
+                            registration = Pair(pm, listener)
+                        }
                     }
                 }
             }

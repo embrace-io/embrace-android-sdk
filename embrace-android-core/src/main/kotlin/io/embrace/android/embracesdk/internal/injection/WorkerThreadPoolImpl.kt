@@ -1,13 +1,17 @@
 package io.embrace.android.embracesdk.internal.injection
 
 import io.embrace.android.embracesdk.internal.delivery.storedTelemetryRunnableComparator
+import io.embrace.android.embracesdk.internal.logging.ErrorHandler
+import io.embrace.android.embracesdk.internal.logging.SdkErrorType
 import io.embrace.android.embracesdk.internal.worker.BackgroundWorker
 import io.embrace.android.embracesdk.internal.worker.PriorityThreadPoolExecutor
 import io.embrace.android.embracesdk.internal.worker.PriorityWorker
 import io.embrace.android.embracesdk.internal.worker.Worker
 import java.util.concurrent.ConcurrentHashMap
+import java.util.concurrent.ExecutionException
 import java.util.concurrent.ExecutorService
 import java.util.concurrent.Executors
+import java.util.concurrent.Future
 import java.util.concurrent.RejectedExecutionHandler
 import java.util.concurrent.ScheduledExecutorService
 import java.util.concurrent.ScheduledThreadPoolExecutor
@@ -19,6 +23,7 @@ import java.util.concurrent.atomic.AtomicReference
 // This lint error seems spurious as it only flags methods annotated with @JvmStatic even though the accessor is generated regardless
 // for lazily initialized members
 class WorkerThreadPoolImpl(
+    private val errorHandler: ErrorHandler,
     private val watchdogIdleTimeoutMs: Long = WATCHDOG_IDLE_TIMEOUT_MS,
 ) : WorkerThreadPool, RejectedExecutionHandler {
 
@@ -73,15 +78,19 @@ class WorkerThreadPoolImpl(
             val threadFactory = createThreadFactory(worker)
 
             if (worker is Worker.Priority.DataPersistenceWorker) {
-                PriorityThreadPoolExecutor(
+                object : PriorityThreadPoolExecutor(
                     threadFactory,
                     this,
                     1,
                     1,
                     storedTelemetryRunnableComparator,
-                )
+                ) {
+                    override fun afterExecute(r: Runnable, t: Throwable?) = trackTaskFailure(r, t)
+                }
             } else {
-                ScheduledThreadPoolExecutor(1, threadFactory, this).apply {
+                object : ScheduledThreadPoolExecutor(1, threadFactory, this) {
+                    override fun afterExecute(r: Runnable, t: Throwable?) = trackTaskFailure(r, t)
+                }.apply {
                     removeOnCancelPolicy = true
 
                     // thread is unused in background, allow cleanup
@@ -104,6 +113,18 @@ class WorkerThreadPoolImpl(
      * never return a value.
      */
     override fun rejectedExecution(runnable: Runnable, executor: ThreadPoolExecutor) {
+    }
+
+    internal fun trackTaskFailure(runnable: Runnable, throwable: Throwable?) {
+        val failure = throwable ?: (runnable as? Future<*>)?.takeIf { it.isDone && !it.isCancelled }?.let {
+            try {
+                it.get()
+                null
+            } catch (exc: ExecutionException) {
+                exc.cause
+            }
+        }
+        failure?.let { runCatching { errorHandler.trackSdkError(SdkErrorType.WorkerTaskFail, it) } }
     }
 
     private fun createThreadFactory(name: Worker): ThreadFactory {

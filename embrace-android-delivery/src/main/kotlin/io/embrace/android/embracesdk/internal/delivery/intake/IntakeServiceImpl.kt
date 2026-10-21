@@ -172,7 +172,9 @@ class IntakeServiceImpl(
             }
 
             // the payload is now on disk, so any other copy the caller holds is safe to discard
-            onStored?.invoke()
+            errorHandler.guardSdkCode(SdkErrorType.IntakeFail) {
+                onStored?.invoke()
+            }
 
             /**
              * Determine which cache entry to clean up:

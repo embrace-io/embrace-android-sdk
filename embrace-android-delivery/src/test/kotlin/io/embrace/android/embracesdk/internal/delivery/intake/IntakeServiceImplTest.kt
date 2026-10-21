@@ -28,6 +28,7 @@ import org.junit.Assert.assertArrayEquals
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNotNull
+import org.junit.Assert.assertSame
 import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
@@ -807,6 +808,33 @@ class IntakeServiceImplTest {
         executorService.runCurrentlyBlocked()
         assertEquals(1, payloadStorageService.storedPayloadCount())
         assertEquals(1, storedCount)
+    }
+
+    @Test
+    fun `a throwing onStored does not skip scheduling or stale entry cleanup`() {
+        executorService.blockingMode = false
+        val stale = StoredTelemetryMetadata(
+            timestamp = clock.now(),
+            uuid = "stale-uuid",
+            processIdentifier = "old-pid",
+            envelopeType = SESSION,
+            complete = false,
+        ).apply {
+            cacheStorageService.store(this) { it.write("stale".toByteArray()) }
+        }
+        val failure = IllegalStateException("onStored failed")
+        val future = intakeService.take(
+            intake = sessionEnvelope,
+            metadata = sessionMetadata,
+            staleEntry = stale,
+            onStored = { throw failure },
+        )
+
+        assertEquals(IntakeResult.STORED, future.get())
+        assertEquals(1, payloadStorageService.storedPayloadCount())
+        assertFalse(cacheStorageService.storedFilenames().contains(stale.filename))
+        assertEquals(1, schedulingService.payloadIntakeCount)
+        assertSame(failure, errorHandler.sdkErrorMessages.single().throwable)
     }
 
     @Test

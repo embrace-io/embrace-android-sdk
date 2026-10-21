@@ -9,9 +9,6 @@ import io.embrace.android.embracesdk.internal.logging.guardSdkCode
 
 class AndroidMainThreadHandler(private val errorHandler: ErrorHandler) : MainThreadHandler {
 
-    /**
-     * Catches anything thrown by dispatched work so it can't crash the app.
-     */
     override val wrappedHandler: Handler = object : Handler(checkNotNull(Looper.getMainLooper())) {
         override fun dispatchMessage(msg: Message) {
             errorHandler.guardSdkCode(SdkErrorType.UiCallbackFail) { super.dispatchMessage(msg) }

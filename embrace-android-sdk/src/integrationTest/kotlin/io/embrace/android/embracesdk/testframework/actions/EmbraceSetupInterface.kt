@@ -523,7 +523,7 @@ internal class EmbraceSetupInterface(
             threadBlockageWatchdogThread: Thread?,
         ): WorkerThreadPool =
             if (workersToFake.isEmpty()) {
-                WorkerThreadPoolImpl()
+                WorkerThreadPoolImpl(fakeInitServices.errorHandler)
             } else {
                 FakeWorkerThreadPool(
                     fakeInitServices = fakeInitServices,

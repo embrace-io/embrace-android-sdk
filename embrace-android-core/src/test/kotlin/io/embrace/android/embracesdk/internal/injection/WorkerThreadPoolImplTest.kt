@@ -1,5 +1,6 @@
 package io.embrace.android.embracesdk.internal.injection
 
+import io.embrace.android.embracesdk.fakes.FakeErrorHandler
 import io.embrace.android.embracesdk.internal.worker.Worker
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
@@ -16,7 +17,7 @@ internal class WorkerThreadPoolImplTest {
 
     @Test
     fun testModule() {
-        val module = WorkerThreadPoolImpl()
+        val module = WorkerThreadPoolImpl(FakeErrorHandler())
         assertNotNull(module)
 
         val backgroundExecutor = module.backgroundWorker(Worker.Background.PeriodicCacheWorker)
@@ -31,7 +32,7 @@ internal class WorkerThreadPoolImplTest {
 
     @Test
     fun `rejected execution policy`() {
-        val module = WorkerThreadPoolImpl()
+        val module = WorkerThreadPoolImpl(FakeErrorHandler())
         val worker = module.backgroundWorker(Worker.Background.PeriodicCacheWorker)
         module.close()
 
@@ -41,7 +42,7 @@ internal class WorkerThreadPoolImplTest {
 
     @Test
     fun `await termination waits for running and queued tasks`() {
-        val module = WorkerThreadPoolImpl()
+        val module = WorkerThreadPoolImpl(FakeErrorHandler())
         val worker = module.backgroundWorker(Worker.Background.IoRegWorker)
         val started = CountDownLatch(1)
         val release = CountDownLatch(1)
@@ -63,7 +64,7 @@ internal class WorkerThreadPoolImplTest {
 
     @Test
     fun `close drops delayed tasks`() {
-        val module = WorkerThreadPoolImpl()
+        val module = WorkerThreadPoolImpl(FakeErrorHandler())
         val worker = module.backgroundWorker(Worker.Background.IoRegWorker)
         worker.schedule<Unit>({}, 1, TimeUnit.HOURS)
         module.close()
@@ -72,7 +73,7 @@ internal class WorkerThreadPoolImplTest {
 
     @Test
     fun `worker first requested after close is shut down`() {
-        val module = WorkerThreadPoolImpl()
+        val module = WorkerThreadPoolImpl(FakeErrorHandler())
         module.backgroundWorker(Worker.Background.IoRegWorker)
         module.close()
 
@@ -84,7 +85,7 @@ internal class WorkerThreadPoolImplTest {
 
     @Test
     fun `watchdog thread exits when idle and is recreated for new work`() {
-        val module = WorkerThreadPoolImpl(watchdogIdleTimeoutMs = IDLE_TIMEOUT_MS)
+        val module = WorkerThreadPoolImpl(FakeErrorHandler(), watchdogIdleTimeoutMs = IDLE_TIMEOUT_MS)
         val worker = module.backgroundWorker(Worker.Background.ThreadBlockageWatchdogWorker)
 
         val first = worker.submit<Thread> { Thread.currentThread() }.get(1, TimeUnit.SECONDS)
@@ -99,7 +100,7 @@ internal class WorkerThreadPoolImplTest {
 
     @Test
     fun `watchdog thread stays alive while a task is scheduled`() {
-        val module = WorkerThreadPoolImpl(watchdogIdleTimeoutMs = IDLE_TIMEOUT_MS)
+        val module = WorkerThreadPoolImpl(FakeErrorHandler(), watchdogIdleTimeoutMs = IDLE_TIMEOUT_MS)
         val worker = module.backgroundWorker(Worker.Background.ThreadBlockageWatchdogWorker)
 
         val thread = worker.submit<Thread> { Thread.currentThread() }.get(1, TimeUnit.SECONDS)
@@ -115,13 +116,54 @@ internal class WorkerThreadPoolImplTest {
 
     @Test
     fun `other worker threads do not exit when idle`() {
-        val module = WorkerThreadPoolImpl(watchdogIdleTimeoutMs = IDLE_TIMEOUT_MS)
+        val module = WorkerThreadPoolImpl(FakeErrorHandler(), watchdogIdleTimeoutMs = IDLE_TIMEOUT_MS)
         val worker = module.backgroundWorker(Worker.Background.NonIoRegWorker)
 
         val thread = worker.submit<Thread> { Thread.currentThread() }.get(1, TimeUnit.SECONDS)
         thread.join(ALIVE_CHECK_MS)
         assertTrue(thread.isAlive)
         module.close()
+    }
+
+    @Test
+    fun `failed tasks are tracked as sdk errors`() {
+        val errorHandler = FakeErrorHandler(throwOnSdkError = false)
+        val module = WorkerThreadPoolImpl(errorHandler)
+        val background = module.backgroundWorker(Worker.Background.IoRegWorker)
+        background.submit { error("submit") }
+        background.scheduleAtFixedRate({ error("periodic") }, 0, 1, TimeUnit.HOURS)
+        background.schedule<Unit>({}, 1, TimeUnit.HOURS).cancel(false)
+        background.submit {}.get(1, TimeUnit.SECONDS)
+        module.close()
+
+        assertTrue(module.awaitTermination(1000))
+        assertEquals(
+            listOf("submit", "periodic"),
+            errorHandler.sdkErrorMessages.map { it.throwable?.message },
+        )
+        assertTrue(errorHandler.sdkErrorMessages.all { it.msg == "WorkerTaskFail" })
+    }
+
+    @Test
+    fun `error handler failure does not kill the worker thread`() {
+        val module = WorkerThreadPoolImpl(FakeErrorHandler(throwOnSdkError = true))
+        val worker = module.backgroundWorker(Worker.Background.IoRegWorker)
+        val first = worker.submit<Thread> { Thread.currentThread() }.get(1, TimeUnit.SECONDS)
+        worker.submit { error("fail") }
+        val second = worker.submit<Thread> { Thread.currentThread() }.get(1, TimeUnit.SECONDS)
+        assertSame(first, second)
+        module.close()
+    }
+
+    @Test
+    fun `failed priority tasks are tracked as sdk errors`() {
+        val errorHandler = FakeErrorHandler(throwOnSdkError = false)
+        val module = WorkerThreadPoolImpl(errorHandler)
+        module.priorityWorker<String>(Worker.Priority.DataPersistenceWorker).submit("p") { error("priority") }
+        module.close()
+
+        assertTrue(module.awaitTermination(1000))
+        assertEquals("priority", errorHandler.sdkErrorMessages.single().throwable?.message)
     }
 
     private companion object {

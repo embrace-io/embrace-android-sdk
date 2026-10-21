@@ -55,7 +55,7 @@ internal class ConfigLoadServices(
     }
 
     val workerThreadPool: WorkerThreadPool = EmbTrace.trace("worker-thread-pool-init") {
-        workerThreadPoolSupplier?.invoke() ?: WorkerThreadPoolImpl()
+        workerThreadPoolSupplier?.invoke() ?: WorkerThreadPoolImpl(preStartServices.errorHandler)
     }
 
     val configService: ConfigService = EmbTrace.trace(sectionName = "config-service-init", recordDuration = true) {

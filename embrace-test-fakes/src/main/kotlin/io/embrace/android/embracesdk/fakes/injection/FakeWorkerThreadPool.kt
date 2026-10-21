@@ -15,7 +15,7 @@ class FakeWorkerThreadPool(
     threadBlockageMonitoringThread: Thread? = null,
     testWorkers: List<Worker.Background> = emptyList(),
     private val testPriorityWorker: Worker.Priority? = null,
-    private val base: WorkerThreadPool = WorkerThreadPoolImpl(),
+    private val base: WorkerThreadPool = WorkerThreadPoolImpl(fakeInitServices.errorHandler),
 ) : WorkerThreadPool by base {
 
     val executorClock: FakeClock = fakeInitServices.getFakeClock() ?: FakeClock()

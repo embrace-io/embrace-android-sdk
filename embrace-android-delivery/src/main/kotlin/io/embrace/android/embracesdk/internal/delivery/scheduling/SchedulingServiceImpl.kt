@@ -47,6 +47,7 @@ class SchedulingServiceImpl(
     private val resurrectionComplete = AtomicBoolean(false)
     private val payloadsInProgress = ConcurrentHashMap<SupportedEnvelopeType, StoredTelemetryMetadata>()
     private val intakeDeliveryPending = AtomicBoolean(false)
+    private val stopped = AtomicBoolean(false)
     private val scheduledDeliveryAttempt: ScheduledDeliveryAttempt = ScheduledDeliveryAttempt(
         clock = clock,
         scheduleAction = ::queueDeliveryAttempt,
@@ -72,7 +73,9 @@ class SchedulingServiceImpl(
 
     override fun shutdown() {
         // shutdown workers from further scheduling but don't wait for completion as
-        // we can just retry in the next process
+        // we can just retry in the next process. Deliveries already queued on the worker
+        // still run after shutdown, so they check this flag and skip the request.
+        stopped.set(true)
         schedulingWorker.shutdownAndWait(0)
         deliveryWorker.shutdownAndWait(0)
     }
@@ -176,6 +179,9 @@ class SchedulingServiceImpl(
         deliveryTracer?.onExecuteDelivery(payload)
         activeSends.add(payload)
         deliveryWorker.submit {
+            if (stopped.get()) {
+                return@submit
+            }
             val result: ExecutionResult = attemptDelivery(payload)
 
             // Block the connection right away to prevent future delivery if the request just run dictates that

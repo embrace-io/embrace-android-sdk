@@ -858,6 +858,14 @@ internal class SchedulingServiceImplTest {
         )
     }
 
+    @Test
+    fun `deliveries queued before shutdown are not sent`() {
+        waitForResurrection()
+        schedulingService.shutdown()
+        assertEquals(0, executionService.sendAttempts())
+        assertEquals(2, storageService.storedPayloadCount())
+    }
+
     @Test(expected = RejectedExecutionException::class)
     fun `test shutdown`() {
         errorHandler.throwOnSdkError = false

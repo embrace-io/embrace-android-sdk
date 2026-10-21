@@ -34,14 +34,17 @@ import io.opentelemetry.kotlin.tracing.export.SpanExporter
 import io.opentelemetry.kotlin.tracing.export.SpanProcessor
 
 /**
- * An [SdkApi] implementation that forwards every call to [target]. [target] is volatile and read fresh on
- * every call; it must only ever be changed by [SdkStateHolder]. Setting [target] also points [EmbraceInternalApi] at
- * it, so hosted SDKs always reach the current instance's internal interfaces.
+ * An [SdkApi] implementation that forwards every call to [target], except [start] and [disable], which call [onStart]
+ * and [onDisable]. [target] is volatile and read fresh on every call; it must only ever be changed by
+ * [SdkStateHolder]. Setting [target] also points [EmbraceInternalApi] at it, so hosted SDKs always reach the current
+ * instance's internal interfaces.
  */
 internal class SdkApiDispatcher(
     initialTarget: SdkInstance,
     private val telemetryService: InternalTelemetryService,
     private val errorHandler: ErrorHandler,
+    private val onStart: (Context) -> Unit,
+    private val onDisable: () -> Unit,
 ) : SdkApi {
 
     @Volatile
@@ -59,7 +62,7 @@ internal class SdkApiDispatcher(
         errorHandler.guardSdkCode(SdkErrorType.PublicApiFail, NoopOpenTelemetry) { target.getOpenTelemetryKotlin() }
     }
 
-    override fun start(context: Context) = errorHandler.guardSdkCode(SdkErrorType.PublicApiFail) { target.start(context) }
+    override fun start(context: Context) = errorHandler.guardSdkCode(SdkErrorType.PublicApiFail) { onStart(context) }
 
     override fun logMessage(message: String, severity: Severity, properties: Map<String, Any>) =
         record("log_message") { target.logMessage(message, severity, properties) }
@@ -239,7 +242,7 @@ internal class SdkApiDispatcher(
 
     override fun endView(name: String): Boolean = record("end_view", false) { target.endView(name) }
 
-    override fun disable() = errorHandler.guardSdkCode(SdkErrorType.PublicApiFail) { target.disable() }
+    override fun disable() = errorHandler.guardSdkCode(SdkErrorType.PublicApiFail) { onDisable() }
 
     override fun applicationInitStart() = errorHandler.guardSdkCode(SdkErrorType.PublicApiFail) {
         target.applicationInitStart()

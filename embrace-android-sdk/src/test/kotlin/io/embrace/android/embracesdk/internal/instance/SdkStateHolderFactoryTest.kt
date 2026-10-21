@@ -57,6 +57,7 @@ internal class SdkStateHolderFactoryTest {
         holder.start(context)
         assertFalse(servicesCreated)
         assertFalse(holder.api.isStarted)
+        assertEquals(SdkState.DISABLED, holder.state)
     }
 
     @Test

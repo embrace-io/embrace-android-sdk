@@ -33,8 +33,6 @@ import io.opentelemetry.kotlin.tracing.export.SpanProcessor
 /**
  * A no-op implementation of [SdkApi]. The first API call that gets dropped logs [message] along
  * with the name of the action that could not be performed.
- *
- * When handed a [BufferingSdkInstance] it discards the buffered calls so their memory is released.
  */
 internal class NoopSdkInstance(
     private val errorHandler: ErrorHandler,
@@ -63,12 +61,7 @@ internal class NoopSdkInstance(
         }
     }
 
-    override fun onPostStart(buffer: BufferingSdkInstance) {
-        buffer.drainCompletedSpans(this)
-        buffer.drainExperimentCalls(this) {}
-        buffer.drainOTelConfig(this)
-        buffer.drainSdkErrors(null)
-    }
+    override fun onPostStart(buffer: BufferingSdkInstance) {}
 
     override fun start(context: Context) {}
 

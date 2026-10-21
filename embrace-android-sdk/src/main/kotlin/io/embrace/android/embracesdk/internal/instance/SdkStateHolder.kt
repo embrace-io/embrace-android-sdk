@@ -19,15 +19,15 @@ import io.embrace.android.embracesdk.internal.utils.Provider
  * NOT_STARTED --start() succeeds--> STARTED --close()----> DISABLED
  *      |   |                                                ^  ^
  *      |   +--start() fails--> FAILED --close()-------------+  |
- *      +-----------------------close()-------------------------+
+ *      +-------close() or start() disabled by config-----------+
  * ```
  *
- * The [SdkInstance] is created by [instanceFactory] when the SDK starts. A null instance means the SDK could not be
- * instantiated.
+ * The [SdkInstance] is created by [instanceFactory] when the SDK starts. A null instance means the SDK is disabled by
+ * config.
  *
  * Only one attempt is made to start the SDK. A start that does not succeed closes any instance that was created without
  * deleting its persisted data, moves the SDK to [SdkState.FAILED], routes all subsequent calls to [failed] and discards
- * any buffered calls. Only disabling the SDK deletes persisted data. Neither [SdkState.FAILED] nor [SdkState.DISABLED]
+ * any buffered calls. Only calling [close] deletes persisted data. Neither [SdkState.FAILED] nor [SdkState.DISABLED]
  * can be started again. Exceptions are reported to [errorHandler] rather than thrown.
  */
 internal class SdkStateHolder(
@@ -44,21 +44,10 @@ internal class SdkStateHolder(
     // released once used, so the static `Embrace` object does not keep the module graph reachable through it
     private var instanceFactory: ((Context) -> SdkInstance?)? = instanceFactory
 
-    val dispatcher: SdkApiDispatcher = SdkApiDispatcher(preStart, telemetryService, errorHandler)
-
     /**
-     * The [SdkApi] that backs the public `Embrace` object. Calls that change SDK state are handled here and
-     * everything else is delegated to [dispatcher].
+     * The [SdkApi] that backs the public `Embrace` object.
      */
-    val api: SdkApi = object : SdkApi by dispatcher {
-        override fun start(context: Context) {
-            errorHandler.guardSdkCode(SdkErrorType.PublicApiFail) { this@SdkStateHolder.start(context) }
-        }
-
-        override fun disable() {
-            errorHandler.guardSdkCode(SdkErrorType.PublicApiFail) { this@SdkStateHolder.close() }
-        }
-    }
+    val api: SdkApiDispatcher = SdkApiDispatcher(preStart, telemetryService, errorHandler, ::start, ::close)
 
     @Volatile
     var state: SdkState = SdkState.NOT_STARTED
@@ -80,17 +69,19 @@ internal class SdkStateHolder(
                     factory(context)
                 } catch (exc: Throwable) {
                     reportStartFailure(exc)
-                    null
+                    terminate(failed(), SdkState.FAILED)
+                    return
                 }
-                if (next != null && tryStart(next, context)) {
-                    state = SdkState.STARTED
-                    swapTarget(next)
-                } else {
-                    // tear down buffered instance
-                    dispatcher.target.close()
-                    next?.let { errorHandler.guardSdkCode(SdkErrorType.PublicApiFail) { it.close() } }
-                    transition(failed(), SdkState.FAILED)
-                    errorHandler.guardSdkCode(SdkErrorType.PublicApiFail) { errorHandler.close() }
+                when {
+                    next == null -> terminate(disabled(), SdkState.DISABLED)
+                    tryStart(next, context) -> {
+                        state = SdkState.STARTED
+                        swapTarget(next)
+                    }
+                    else -> {
+                        errorHandler.guardSdkCode(SdkErrorType.PublicApiFail) { next.close() }
+                        terminate(failed(), SdkState.FAILED)
+                    }
                 }
             }
         }
@@ -105,7 +96,7 @@ internal class SdkStateHolder(
                 return
             }
             instanceFactory = null
-            val previous = dispatcher.target
+            val previous = api.target
             transition(disabled(), SdkState.DISABLED)
             errorHandler.guardSdkCode(SdkErrorType.PublicApiFail) { previous.disable() }
             errorHandler.guardSdkCode(SdkErrorType.PublicApiFail) { errorHandler.close() }
@@ -125,14 +116,19 @@ internal class SdkStateHolder(
         return true
     }
 
+    private fun terminate(next: SdkInstance, nextState: SdkState) {
+        transition(next, nextState)
+        errorHandler.guardSdkCode(SdkErrorType.PublicApiFail) { errorHandler.close() }
+    }
+
     private fun transition(next: SdkInstance, nextState: SdkState) {
         swapTarget(next)
         state = nextState
     }
 
     private fun swapTarget(next: SdkInstance) {
-        val previous = dispatcher.target
-        dispatcher.target = next
+        val previous = api.target
+        api.target = next
         if (previous is BufferingSdkInstance) {
             errorHandler.guardSdkCode(SdkErrorType.PublicApiFail) { next.onPostStart(previous) }
             errorHandler.guardSdkCode(SdkErrorType.PublicApiFail) { previous.close() }

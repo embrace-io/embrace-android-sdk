@@ -31,7 +31,7 @@ generator=io.embrace.android.embracesdk.macrobenchmark.BaselineProfileGenerator
 dest=$root/embrace-android-sdk/src/main/baseline-prof.txt
 
 pub=:embrace-gradle-plugin:publishAllPublicationsToIntegrationTestRepository
-set -- :embrace-macrobenchmark:pixel6Api34BaselineProfileAndroidTest -Pembrace.baselineProfile \
+set -- :embrace-macrobenchmark:pixel6Api34BaselineProfileAndroidTest --rerun -Pembrace.baselineProfile \
     "-Pandroid.testInstrumentationRunnerArguments.androidx.benchmark.enabledRules=BaselineProfile" \
     "-Pandroid.testInstrumentationRunnerArguments.class=$generator"
 # shellcheck disable=SC2086 # extra holds whitespace-separated gradle args
@@ -50,7 +50,7 @@ if [ "$publish" = true ]; then
     ( cd "$root" && ./gradlew "$pub" -Psigning.skip ) || die 3 "publish failed"
 fi
 
-outputs=$root/embrace-macrobenchmark/build/outputs/managed_device_android_test_additional_output/baselineProfile/pixel6Api34
+outputs=$root/embrace-macrobenchmark/build/outputs/managed_device_android_test_additional_output
 results=$root/embrace-macrobenchmark/build/outputs/androidTest-results/managedDevice/baselineprofile/pixel6Api34
 marker=$(mktemp)
 
@@ -73,7 +73,8 @@ fi
 
 # Gradle exits 0 even when the install or the test runner fails, so require a fresh profile.
 fresh_profile() {
-    found=$(find "$outputs" -name "BaselineProfileGenerator_$1-baseline-prof.txt" -newer "$marker" -size +0 2>/dev/null | head -1)
+    found=$(find "$outputs" -ipath '*/baselineprofile/pixel6Api34/*' \
+        -name "BaselineProfileGenerator_$1-baseline-prof.txt" -newer "$marker" -size +0 2>/dev/null | head -1)
     [ -n "$found" ] || die 4 "gradle reported success but produced no $1 profile under $outputs"
     printf '%s' "$found"
 }

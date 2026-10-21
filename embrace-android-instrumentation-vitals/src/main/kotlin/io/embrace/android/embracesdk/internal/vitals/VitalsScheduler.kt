@@ -2,6 +2,7 @@ package io.embrace.android.embracesdk.internal.vitals
 
 import android.os.Handler
 import android.os.HandlerThread
+import android.os.Looper
 import android.os.Message
 import io.embrace.android.embracesdk.internal.logging.ErrorHandler
 import io.embrace.android.embracesdk.internal.logging.SdkErrorType
@@ -9,6 +10,7 @@ import io.embrace.android.embracesdk.internal.logging.guardSdkCode
 
 internal interface VitalsScheduler {
     fun post(action: Runnable)
+    fun postToMain(action: Runnable)
     fun scheduleSettle(delayMs: Long, action: Runnable)
     fun cancelSettle(action: Runnable)
 }
@@ -23,6 +25,11 @@ internal class HandlerVitalsScheduler(private val errorHandler: ErrorHandler) : 
     lateinit var handler: Handler
         private set
 
+    /**
+     * Handler backed by the main thread, behind the same guard as [handler]. Valid only after [start].
+     */
+    private lateinit var mainHandler: Handler
+
     private var thread: HandlerThread? = null
 
     @Volatile
@@ -34,11 +41,8 @@ internal class HandlerVitalsScheduler(private val errorHandler: ErrorHandler) : 
     fun start() {
         val thread = HandlerThread(HANDLER_THREAD_NAME).apply { start() }
         this.thread = thread
-        handler = object : Handler(thread.looper) {
-            override fun dispatchMessage(msg: Message) {
-                errorHandler.guardSdkCode(SdkErrorType.UiCallbackFail) { super.dispatchMessage(msg) }
-            }
-        }
+        handler = guardedHandler(thread.looper)
+        mainHandler = guardedHandler(Looper.getMainLooper())
     }
 
     /**
@@ -56,6 +60,12 @@ internal class HandlerVitalsScheduler(private val errorHandler: ErrorHandler) : 
         }
     }
 
+    override fun postToMain(action: Runnable) {
+        if (!stopped) {
+            mainHandler.post(action)
+        }
+    }
+
     override fun scheduleSettle(delayMs: Long, action: Runnable) {
         if (!stopped) {
             handler.removeCallbacks(action)
@@ -65,6 +75,12 @@ internal class HandlerVitalsScheduler(private val errorHandler: ErrorHandler) : 
 
     override fun cancelSettle(action: Runnable) {
         handler.removeCallbacks(action)
+    }
+
+    private fun guardedHandler(looper: Looper): Handler = object : Handler(looper) {
+        override fun dispatchMessage(msg: Message) {
+            errorHandler.guardSdkCode(SdkErrorType.UiCallbackFail) { super.dispatchMessage(msg) }
+        }
     }
 
     private companion object {

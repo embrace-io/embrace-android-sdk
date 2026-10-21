@@ -50,7 +50,15 @@ internal class FocalMomentTracker(
     private var bufferedEndNanos = 0L
 
     @WorkerThread
-    override fun onFrame(vsyncNanos: Long, frameDispatchNanos: Long, jankNanos: Long, expectedFrames: Int) {
+    override fun onFrame(
+        vsyncNanos: Long,
+        frameDispatchNanos: Long,
+        frameStartNanos: Long,
+        intendedVsyncNanos: Long,
+        frameIntervalNanos: Long,
+        jankNanos: Long,
+        expectedFrames: Int,
+    ) {
         if (capturing) {
             recordFrame(vsyncNanos, frameDispatchNanos, jankNanos)
             settle.notifyActivity(vsyncNanos.nanosToMillis())

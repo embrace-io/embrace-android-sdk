@@ -34,6 +34,19 @@ internal interface FrameMetricsStrategy {
         vsyncNanos(frameMetrics) - frameMetrics.getMetric(FrameMetrics.TOTAL_DURATION)
 
     /**
+     * The vsync the frame was scheduled for, in the [vsyncNanos] base, or 0 below API 26.
+     */
+    @WorkerThread
+    fun intendedVsyncNanos(frameMetrics: FrameMetrics): Long
+
+    /**
+     * When the main thread began the frame (`Choreographer`'s input-handling start) in the [vsyncNanos] base, or 0 below API 26.
+     */
+    @WorkerThread
+    fun frameStartNanos(frameMetrics: FrameMetrics, intendedVsyncNanos: Long = intendedVsyncNanos(frameMetrics)): Long =
+        intendedVsyncNanos + frameMetrics.getMetric(FrameMetrics.UNKNOWN_DELAY_DURATION)
+
+    /**
      * The frame interval (without the jank heuristic multiplier) the frame was expected to render within.
      */
     @WorkerThread
@@ -44,8 +57,11 @@ internal interface FrameMetricsStrategy {
      * Unbounded here: [FrameCounts.frame] clamps it.
      */
     @WorkerThread
-    fun expectedFrames(frameMetrics: FrameMetrics, jankNanos: Long): Int {
-        val intervalNanos = frameIntervalNanos(frameMetrics)
+    fun expectedFrames(
+        frameMetrics: FrameMetrics,
+        jankNanos: Long,
+        intervalNanos: Long = frameIntervalNanos(frameMetrics),
+    ): Int {
         if (jankNanos == 0L || intervalNanos <= 0L) {
             return 1
         }
@@ -114,6 +130,9 @@ private class Api31FrameMetricsStrategy(private val jankHeuristicMultiplier: Dou
         return (total - budget).coerceAtLeast(0L)
     }
 
+    override fun intendedVsyncNanos(frameMetrics: FrameMetrics): Long =
+        frameMetrics.getMetric(FrameMetrics.INTENDED_VSYNC_TIMESTAMP)
+
     override fun frameIntervalNanos(frameMetrics: FrameMetrics): Long =
         frameMetrics.getMetric(FrameMetrics.DEADLINE)
 }
@@ -137,6 +156,9 @@ private class Api26FrameMetricsStrategy(
         val budget = (refreshIntervalNanos * jankHeuristicMultiplier).toLong()
         return (frameMetrics.getMetric(FrameMetrics.TOTAL_DURATION) - budget).coerceAtLeast(0L)
     }
+
+    override fun intendedVsyncNanos(frameMetrics: FrameMetrics): Long =
+        frameMetrics.getMetric(FrameMetrics.INTENDED_VSYNC_TIMESTAMP)
 
     override fun frameIntervalNanos(frameMetrics: FrameMetrics): Long = refreshIntervalNanos
 
@@ -163,6 +185,10 @@ private class LegacyFrameMetricsStrategy(
         val budget = (refreshIntervalNanos * jankHeuristicMultiplier).toLong()
         return (frameMetrics.getMetric(FrameMetrics.TOTAL_DURATION) - budget).coerceAtLeast(0L)
     }
+
+    override fun intendedVsyncNanos(frameMetrics: FrameMetrics): Long = 0L
+
+    override fun frameStartNanos(frameMetrics: FrameMetrics, intendedVsyncNanos: Long): Long = 0L
 
     override fun frameIntervalNanos(frameMetrics: FrameMetrics): Long = refreshIntervalNanos
 

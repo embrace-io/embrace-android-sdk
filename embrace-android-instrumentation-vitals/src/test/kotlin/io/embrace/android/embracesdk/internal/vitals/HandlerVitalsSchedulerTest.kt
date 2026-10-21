@@ -1,12 +1,15 @@
 package io.embrace.android.embracesdk.internal.vitals
 
+import android.os.Looper
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import io.embrace.android.embracesdk.fakes.FakeErrorHandler
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
+import org.junit.Assert.assertSame
 import org.junit.Assert.assertTrue
 import org.junit.Test
 import org.junit.runner.RunWith
+import org.robolectric.Shadows.shadowOf
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.TimeUnit
 
@@ -54,6 +57,39 @@ internal class HandlerVitalsSchedulerTest {
         scheduler.post { latch.countDown() }
 
         assertTrue(latch.await(TIMEOUT_MS, TimeUnit.MILLISECONDS))
+        assertEquals(1, errorHandler.sdkErrorMessages.size)
+        scheduler.stop()
+    }
+
+    @Test
+    fun `main-thread work runs on the main looper`() {
+        val scheduler = HandlerVitalsScheduler(FakeErrorHandler()).apply { start() }
+        var ranOn: Thread? = null
+        scheduler.postToMain { ranOn = Thread.currentThread() }
+
+        shadowOf(Looper.getMainLooper()).idle()
+        assertSame(Looper.getMainLooper().thread, ranOn)
+        scheduler.stop()
+    }
+
+    @Test
+    fun `main-thread work scheduled after stop is dropped`() {
+        val scheduler = HandlerVitalsScheduler(FakeErrorHandler()).apply { start() }
+        scheduler.stop()
+        var ran = false
+        scheduler.postToMain { ran = true }
+
+        shadowOf(Looper.getMainLooper()).idle()
+        assertFalse(ran)
+    }
+
+    @Test
+    fun `main-thread work that throws is tracked`() {
+        val errorHandler = FakeErrorHandler(throwOnSdkError = false)
+        val scheduler = HandlerVitalsScheduler(errorHandler).apply { start() }
+        scheduler.postToMain { error("boom") }
+
+        shadowOf(Looper.getMainLooper()).idle()
         assertEquals(1, errorHandler.sdkErrorMessages.size)
         scheduler.stop()
     }

@@ -14,6 +14,8 @@ internal class FakeVitalsScheduler : VitalsScheduler {
 
     override fun post(action: Runnable) = action.run()
 
+    override fun postToMain(action: Runnable) = action.run()
+
     override fun scheduleSettle(delayMs: Long, action: Runnable) {
         schedules[action] = SystemClock.uptimeMillis() + delayMs
     }

@@ -23,9 +23,20 @@ internal class VitalsFrameMetricsListener(
         try {
             val vsyncNanos = frameMetricsStrategy.vsyncNanos(frameMetrics)
             val frameDispatchNanos = frameMetricsStrategy.frameDispatchNanos(frameMetrics)
+            val intendedVsyncNanos = frameMetricsStrategy.intendedVsyncNanos(frameMetrics)
+            val frameStartNanos = frameMetricsStrategy.frameStartNanos(frameMetrics, intendedVsyncNanos)
+            val frameIntervalNanos = frameMetricsStrategy.frameIntervalNanos(frameMetrics)
             val jankNanos = frameMetricsStrategy.jankNanos(frameMetrics)
-            val expectedFrames = frameMetricsStrategy.expectedFrames(frameMetrics, jankNanos)
-            focalCallbacks.onFrame(vsyncNanos, frameDispatchNanos, jankNanos, expectedFrames)
+            val expectedFrames = frameMetricsStrategy.expectedFrames(frameMetrics, jankNanos, frameIntervalNanos)
+            focalCallbacks.onFrame(
+                vsyncNanos,
+                frameDispatchNanos,
+                frameStartNanos,
+                intendedVsyncNanos,
+                frameIntervalNanos,
+                jankNanos,
+                expectedFrames,
+            )
         } catch (_: Throwable) {
         }
     }

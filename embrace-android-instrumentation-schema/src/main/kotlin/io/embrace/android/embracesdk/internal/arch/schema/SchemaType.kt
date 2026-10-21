@@ -319,6 +319,20 @@ sealed class SchemaType(
         )
     }
 
+    /**
+     * Experimental interaction-latency vital: the time from a user action until the vsync of the frame that follows it.
+     */
+    class InteractionLatency(durationMs: Long) : SchemaType(
+        telemetryType = EmbType.Ux.InteractionLatency,
+        fixedObjectName = "interaction-latency",
+    ) {
+        override val schemaAttributes: Map<String, String> = mapOf(DURATION_MS to durationMs.toString())
+
+        companion object {
+            const val DURATION_MS: String = "interaction_latency.duration_ms"
+        }
+    }
+
     class SdkError(throwable: Throwable) : SchemaType(
         telemetryType = EmbType.System.SdkError,
         fixedObjectName = "internal-error",

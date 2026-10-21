@@ -284,7 +284,15 @@ internal class FocalMomentTrackerTest {
         )
 
         sampledInTracker.onInteractionStart()
-        sampledInTracker.onFrame(vsyncNanos = start + 16.ms, frameDispatchNanos = start + 16.ms, jankNanos = 0L, expectedFrames = 1)
+        sampledInTracker.onFrame(
+            vsyncNanos = start + 16.ms,
+            frameDispatchNanos = start + 16.ms,
+            frameStartNanos = start + 16.ms,
+            intendedVsyncNanos = start + 16.ms,
+            frameIntervalNanos = 16.ms,
+            jankNanos = 0L,
+            expectedFrames = 1,
+        )
         sampledInTracker.onScreenStop()
 
         assertNotNull(sampledInEmitted.single().frameTraceBase64)
@@ -318,7 +326,7 @@ internal class FocalMomentTrackerTest {
         frameDispatchNanos: Long = vsyncNanos,
         expectedFrames: Int = 1,
     ) {
-        tracker.onFrame(vsyncNanos, frameDispatchNanos, jankNanos, expectedFrames)
+        tracker.onFrame(vsyncNanos, frameDispatchNanos, vsyncNanos, vsyncNanos, 16.ms, jankNanos, expectedFrames)
     }
 
     /** Milliseconds expressed in the nanosecond base the tracker works in. */

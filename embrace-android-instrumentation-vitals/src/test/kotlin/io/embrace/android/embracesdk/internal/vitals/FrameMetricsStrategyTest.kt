@@ -96,6 +96,28 @@ internal class FrameMetricsStrategyTest {
     }
 
     @Test
+    fun `at API 26 and above the intended vsync is read from the frame`() {
+        forEachSdk(O, S) { sdkInt ->
+            assertEquals(100_000_000L, strategy(sdkInt = sdkInt).intendedVsyncNanos(frameMetrics(intendedVsyncNanos = 100_000_000L)))
+        }
+    }
+
+    @Test
+    fun `at API 26 and above the frame start is the intended vsync plus the main-thread delay`() {
+        forEachSdk(O, S) { sdkInt ->
+            val delayed = frameMetrics(intendedVsyncNanos = 100_000_000L, unknownDelayNanos = 7_000_000L)
+            assertEquals(107_000_000L, strategy(sdkInt = sdkInt).frameStartNanos(delayed))
+        }
+    }
+
+    @Test
+    fun `below API 26 neither the intended vsync nor the frame start is reported`() {
+        val delayed = frameMetrics(intendedVsyncNanos = 100_000_000L, unknownDelayNanos = 7_000_000L)
+        assertEquals(0L, strategy(sdkInt = N).intendedVsyncNanos(delayed))
+        assertEquals(0L, strategy(sdkInt = N).frameStartNanos(delayed))
+    }
+
+    @Test
     fun `from API 26 a first-draw frame reports zero jank — it is the baseline, not a dropped frame`() {
         forEachSdk(O, S) { sdkInt ->
             // A long frame that would otherwise be janky, but flagged as first-draw, reports zero jank.
@@ -181,10 +203,14 @@ internal class FrameMetricsStrategyTest {
         firstDraw: Boolean = false,
         vsyncNanos: Long = 0L,
         deadlineNanos: Long = 0L,
+        intendedVsyncNanos: Long = 0L,
+        unknownDelayNanos: Long = 0L,
     ): FrameMetrics = mockk {
         every { getMetric(FrameMetrics.TOTAL_DURATION) } returns totalDurationNanos
         every { getMetric(FrameMetrics.FIRST_DRAW_FRAME) } returns if (firstDraw) 1L else 0L
         every { getMetric(FrameMetrics.VSYNC_TIMESTAMP) } returns vsyncNanos
         every { getMetric(FrameMetrics.DEADLINE) } returns deadlineNanos
+        every { getMetric(FrameMetrics.INTENDED_VSYNC_TIMESTAMP) } returns intendedVsyncNanos
+        every { getMetric(FrameMetrics.UNKNOWN_DELAY_DURATION) } returns unknownDelayNanos
     }
 }

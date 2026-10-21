@@ -105,9 +105,9 @@ internal class SdkStateHolder(
                 return
             }
             instanceFactory = null
-            // disabling is terminal even if teardown fails partway. Unlike a failed start, this deletes persisted data.
-            errorHandler.guardSdkCode(SdkErrorType.PublicApiFail) { dispatcher.target.disable() }
+            val previous = dispatcher.target
             transition(disabled(), SdkState.DISABLED)
+            errorHandler.guardSdkCode(SdkErrorType.PublicApiFail) { previous.disable() }
             errorHandler.guardSdkCode(SdkErrorType.PublicApiFail) { errorHandler.close() }
         }
     }

@@ -253,6 +253,21 @@ internal class SpanSnapshotsReaderTest {
     }
 
     @Test
+    fun `the session span is held past the span limit`() {
+        val file = spanSnapshotsRollup(listOf(first, second, third, sessionSpanProto))
+        val decoded = decodeBoundedSpans(file, maxSpans = 2)
+        assertEquals(listOf(first, second, sessionSpanProto), decoded.spans)
+        assertTrue(decoded.spanLimitReached)
+    }
+
+    @Test
+    fun `the session span does not count towards the span limit`() {
+        val decoded = decodeBoundedSpans(spanSnapshotsRollup(listOf(sessionSpanProto, first, second)), maxSpans = 2)
+        assertEquals(listOf(sessionSpanProto, first, second), decoded.spans)
+        assertFalse(decoded.spanLimitReached)
+    }
+
+    @Test
     fun `a file at the span limit reads back in full and reports nothing`() {
         val decoded = decodeBoundedSpans(spanSnapshotsRollup(listOf(first, second)), maxSpans = 2)
         assertEquals(listOf(first, second), decoded.spans)

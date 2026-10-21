@@ -224,10 +224,33 @@ internal class CompletedSpansReaderTest {
     }
 
     @Test
-    fun `a record past the span limit is not decoded at all`() {
+    fun `the session span past the span limit reads back`() {
+        val log = completedSpansLog(listOf(first, second, third, sessionSpanProto))
+        val decoded = readBoundedSpans(log, maxSpans = 2)
+        assertEquals(listOf(first, second, sessionSpanProto), decoded.spans)
+        assertTrue(decoded.spanLimitReached)
+    }
+
+    @Test
+    fun `the session span does not count towards the span limit`() {
+        val decoded = readBoundedSpans(completedSpansLog(listOf(first, second, sessionSpanProto)), maxSpans = 2)
+        assertEquals(listOf(first, second, sessionSpanProto), decoded.spans)
+        assertFalse(decoded.spanLimitReached)
+    }
+
+    @Test
+    fun `a record past the span limit is decoded while the session span is yet to be read`() {
         val log = completedSpansLog(listOf(first, second)) + UNDECODABLE_RECORD
         val decoded = readBoundedSpans(log, maxSpans = 2)
         assertEquals(listOf(first, second), decoded.spans)
+        assertNotNull(decoded.corruption)
+    }
+
+    @Test
+    fun `a record past the span limit is not decoded at all once the session span is read`() {
+        val log = completedSpansLog(listOf(first, second, sessionSpanProto)) + UNDECODABLE_RECORD
+        val decoded = readBoundedSpans(log, maxSpans = 2)
+        assertEquals(listOf(first, second, sessionSpanProto), decoded.spans)
         assertNull(decoded.corruption)
         assertTrue(decoded.spanLimitReached)
     }

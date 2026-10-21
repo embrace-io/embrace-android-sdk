@@ -187,6 +187,39 @@ internal class SessionReconstructionServiceFileSizeTest {
     }
 
     @Test
+    fun `a session span logged past the persisted span limit is delivered`() {
+        val logged = List(MAX_PERSISTED_SPANS + 5) { paddedSpanProto(paddedSpanId(it), padding = 1) }
+        partFile(COMPLETED_SPANS_FILE_NAME).writeBytes(completedSpansLog(logged + sessionSpanProto))
+        val spans = checkNotNull(service.reconstruct(partDirectory)?.envelope?.data?.spans)
+
+        assertEquals(MAX_PERSISTED_SPANS + 1, spans.size)
+        assertEquals(sessionSpan.spanId, spans.last().spanId)
+        assertEquals(1, errorHandler.sdkErrorMessages.size)
+    }
+
+    @Test
+    fun `a session span in flight is delivered when the completed spans fill the persisted span limit`() {
+        val logged = List(MAX_PERSISTED_SPANS) { paddedSpanProto(paddedSpanId(it), padding = 1) }
+        partFile(COMPLETED_SPANS_FILE_NAME).writeBytes(completedSpansLog(logged))
+        assertTrue(snapshotsWriter.write(listOf(sessionSpan, inFlightSpan)))
+
+        val envelope = checkNotNull(service.reconstruct(partDirectory)?.envelope)
+        assertEquals(listOf(sessionSpan), envelope.data.spanSnapshots)
+        assertEquals(1, errorHandler.sdkErrorMessages.size)
+        assertEquals("SessionReconstructionFail", errorHandler.sdkErrorMessages.single().msg)
+    }
+
+    @Test
+    fun `a logged session span does not cost a span still in flight`() {
+        val logged = List(MAX_PERSISTED_SPANS - 1) { paddedSpanProto(paddedSpanId(it), padding = 1) }
+        partFile(COMPLETED_SPANS_FILE_NAME).writeBytes(completedSpansLog(logged + sessionSpanProto))
+
+        val envelope = checkNotNull(service.reconstruct(partDirectory)?.envelope)
+        assertEquals(listOf(inFlightSpan), envelope.data.spanSnapshots)
+        assertNoSdkErrors()
+    }
+
+    @Test
     fun `a snapshot of a completed span does not cost a span still in flight`() {
         val logged = List(MAX_PERSISTED_SPANS - 1) { paddedSpanProto(paddedSpanId(it), padding = 1) }
         partFile(COMPLETED_SPANS_FILE_NAME).writeBytes(completedSpansLog(logged))

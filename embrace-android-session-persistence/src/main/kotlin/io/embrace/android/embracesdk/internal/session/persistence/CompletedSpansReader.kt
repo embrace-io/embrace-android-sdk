@@ -7,6 +7,8 @@ import okio.BufferedSource
  *
  * Every record is kept, in the order it was appended, because a span only reaches this log once it
  * has ended and so is never superseded by a later record.
+ *
+ * The session span does not count towards [maxSpans].
  */
 internal fun readCompletedSpans(
     source: BufferedSource,
@@ -27,19 +29,35 @@ private class CompletedSpansDecoder(
 ) : SpanRecordDecoder(collection) {
 
     private val spans = mutableListOf<SpanProto>()
+    private var limitedSpans = 0
+    private var sessionSpanRead = false
 
     override fun decoded(): MutableList<SpanProto> = spans
 
     override fun reset() {
         spans.clear()
+        limitedSpans = 0
+        sessionSpanRead = false
     }
 
     override fun readRecord(): Boolean {
-        if (spans.size >= maxSpans) {
+        val limitReached = limitedSpans >= maxSpans
+        if (limitReached && sessionSpanRead) {
             return truncate()
         }
         val record = collection.readRecord() ?: return stop()
-        decodeSpan(record)?.let(spans::add)
+        val span = decodeSpan(record) ?: return true
+        when {
+            span.isSessionSpan() -> {
+                sessionSpanRead = true
+                spans.add(span)
+            }
+            limitReached -> truncated = true
+            else -> {
+                limitedSpans++
+                spans.add(span)
+            }
+        }
         return true
     }
 }

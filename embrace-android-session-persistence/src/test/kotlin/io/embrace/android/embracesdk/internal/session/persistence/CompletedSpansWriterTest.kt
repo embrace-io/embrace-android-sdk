@@ -281,6 +281,35 @@ internal class CompletedSpansWriterTest {
     }
 
     @Test
+    fun `the session span is logged past the record cap`() {
+        writer = recordCappedWriter(maxRecords = 1)
+        assertTrue(write(spans = listOf(span("aaaaaaaaaaaaaaa1"))))
+        assertTrue(write(spans = listOf(sessionSpan)))
+        assertEquals(listOf("aaaaaaaaaaaaaaa1", sessionSpan.spanId), readLog().map(SpanProto::span_id))
+        assertNoSdkErrors()
+    }
+
+    @Test
+    fun `the session span is logged when the spans batched with it pass the record cap`() {
+        writer = recordCappedWriter(maxRecords = 2)
+        assertTrue(
+            write(
+                spans = listOf(
+                    span("aaaaaaaaaaaaaaa1"),
+                    span("aaaaaaaaaaaaaaa2"),
+                    span("aaaaaaaaaaaaaaa3"),
+                    sessionSpan,
+                ),
+            ),
+        )
+        assertEquals(
+            listOf("aaaaaaaaaaaaaaa1", "aaaaaaaaaaaaaaa2", sessionSpan.spanId),
+            readLog().map(SpanProto::span_id),
+        )
+        assertWriteFailureTracked()
+    }
+
+    @Test
     fun `a log at the record cap is reported once however many appends are dropped`() {
         writer = recordCappedWriter(maxRecords = 1)
         assertTrue(write(spans = listOf(span("aaaaaaaaaaaaaaa1"))))

@@ -25,6 +25,7 @@ dependencies {
 
     implementation(project(":embrace-android-payload"))
     implementation(project(":embrace-android-infra"))
+    implementation(project(":embrace-android-instrumentation-schema"))
     implementation(project(":embrace-android-limits"))
     implementation(project(":embrace-android-telemetry-persistence"))
 

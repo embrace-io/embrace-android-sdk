@@ -445,47 +445,46 @@ internal class RealSdkInstance(
         errorHandler.guardSdkCode(SdkErrorType.SdkInitPhaseFail) {
             val worker = workerThreadPool.backgroundWorker(Worker.Background.IoRegWorker)
             worker.submit {
-                // Get real network status as soon as we can on the worker.
-                // This allows the delivery triggered by resurrection to get the most accurate network status as possible
-                // so that it won't waste time trying to send when the device is known to be offline.
-                schedulingService?.let(networkConnectivityService::addNetworkConnectivityListener)
+                errorHandler.guardSdkCode(SdkErrorType.PayloadResurrectionFail) {
+                    // Get real network status as soon as we can on the worker.
+                    // This allows the delivery triggered by resurrection to get the most accurate network status as possible
+                    // so that it won't waste time trying to send when the device is known to be offline.
+                    schedulingService?.let(networkConnectivityService::addNetworkConnectivityListener)
 
-                // process multi-file session part directories before resurrection can run. The reader resurrects
-                // dead parts itself, so a part this pass doesn't reach is still resurrected by a later pass
-                sessionPartReader?.readPersistedSessionParts(true)
+                    // process multi-file session part directories before resurrection can run. The reader resurrects
+                    // dead parts itself, so a part this pass doesn't reach is still resurrected by a later pass
+                    sessionPartReader?.readPersistedSessionParts(true)
 
-                val resurrectionService = payloadResurrectionService
-                var resurrectionAttempted = false
-                if (resurrectionService != null) {
-                    schedulingService?.let { scheduler ->
-                        resurrectionService.addResurrectionCompleteListener(scheduler::onResurrectionComplete)
+                    val resurrectionService = payloadResurrectionService
+                    if (resurrectionService != null) {
+                        schedulingService?.let { scheduler ->
+                            resurrectionService.addResurrectionCompleteListener(scheduler::onResurrectionComplete)
+                        }
+                        resurrectionService.resurrectOldPayloads(
+                            nativeCrashServiceProvider = {
+                                instrumentationRegistry.findByType(NativeCrashDataSource::class)
+                            },
+                            userSessionRestoreDecisionProvider = {
+                                sessionOrchestrator.userSessionRestoreDecision
+                            },
+                            pendingSessionPartIdsProvider = {
+                                sessionPartReader?.storedSessionPartIds() ?: emptySet()
+                            },
+                        )
+                    } else {
+                        val payloadCount = cacheStorageService?.getUndeliveredPayloads()?.size ?: 0
+                        errorHandler.trackSdkError(
+                            type = SdkErrorType.PayloadResurrectionFail,
+                            throwable = IllegalStateException(
+                                "Resurrection service not found. Undelivered payloads not processed: $payloadCount",
+                            ),
+                        )
                     }
-                    resurrectionService.resurrectOldPayloads(
-                        nativeCrashServiceProvider = {
-                            instrumentationRegistry.findByType(NativeCrashDataSource::class)
-                        },
-                        userSessionRestoreDecisionProvider = {
-                            sessionOrchestrator.userSessionRestoreDecision
-                        },
-                        pendingSessionPartIdsProvider = {
-                            sessionPartReader?.storedSessionPartIds() ?: emptySet()
-                        },
-                    )
-                    resurrectionAttempted = true
-                } else {
-                    val payloadCount = cacheStorageService?.getUndeliveredPayloads()?.size ?: 0
-                    errorHandler.trackSdkError(
-                        type = SdkErrorType.PayloadResurrectionFail,
-                        throwable = IllegalStateException(
-                            "Resurrection service not found. Undelivered payloads not processed: $payloadCount",
-                        ),
-                    )
                 }
 
-                // Unblock scheduler and attempt to send undelivered payloads if no resurrection was attempted
-                if (!resurrectionAttempted) {
-                    schedulingService?.onResurrectionComplete()
-                }
+                // always unblock the scheduler, even if resurrection didn't run or failed partway, as otherwise
+                // non-crash payloads would never be delivered in this process
+                schedulingService?.onResurrectionComplete()
             }
         }
     }

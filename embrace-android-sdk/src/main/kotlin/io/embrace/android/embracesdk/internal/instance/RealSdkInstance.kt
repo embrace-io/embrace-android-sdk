@@ -41,6 +41,7 @@ import io.embrace.android.embracesdk.internal.delivery.storage.PayloadStorageSer
 import io.embrace.android.embracesdk.internal.delivery.storage.StorageLocation
 import io.embrace.android.embracesdk.internal.delivery.storage.asFile
 import io.embrace.android.embracesdk.internal.injection.WorkerThreadPool
+import io.embrace.android.embracesdk.internal.injection.evictConnections
 import io.embrace.android.embracesdk.internal.instrumentation.crash.CrashFileMarker
 import io.embrace.android.embracesdk.internal.instrumentation.crash.LastRunCrashVerifier
 import io.embrace.android.embracesdk.internal.instrumentation.crash.jvm.JvmCrashDataSource
@@ -77,6 +78,7 @@ import io.embrace.android.embracesdk.internal.worker.Worker
 import io.embrace.android.embracesdk.spans.TracingApi
 import io.opentelemetry.kotlin.NoopOpenTelemetry
 import io.opentelemetry.kotlin.OpenTelemetry
+import okhttp3.OkHttpClient
 import java.io.File
 import java.util.ServiceLoader
 import java.util.concurrent.Executors
@@ -98,6 +100,7 @@ internal class RealSdkInstance(
     private val primaryAbi: String,
     private val configService: ConfigService,
     private val workerThreadPool: WorkerThreadPool,
+    private val okHttpClient: Lazy<OkHttpClient>,
     private val eventBus: EventBus,
     private val appContext: Context,
     private val spanRepository: SpanRepository,
@@ -224,6 +227,11 @@ internal class RealSdkInstance(
         runCatching { startupTracker.close() }
         runCatching { otelSdkConfig.value.close() }
         runCatching { sessionOrchestrator.close() }
+        runCatching {
+            workerThreadPool.backgroundWorker(Worker.Background.HttpRequestWorker).submit {
+                okHttpClient.evictConnections()
+            }
+        }
         runCatching { workerThreadPool.close() }
         runCatching { eventBus.stop() }
 

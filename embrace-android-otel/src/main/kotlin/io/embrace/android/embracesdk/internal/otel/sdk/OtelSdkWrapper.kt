@@ -89,7 +89,8 @@ class OtelSdkWrapper(
                     linkCountLimit = limits.getMaxTotalLinkCount()
                 }
                 export {
-                    val processors = listOf(configuration.spanProcessor) + configuration.externalSpanProcessors
+                    val processors = listOf(ErrorReportingSpanProcessor(configuration.spanProcessor, errorHandler)) +
+                        configuration.externalSpanProcessors
                     compositeSpanProcessor(*processors.toTypedArray())
                 }
             },
@@ -99,7 +100,8 @@ class OtelSdkWrapper(
                     attributeCountLimit = limits.getMaxTotalAttributeCount()
                 }
                 export {
-                    val processors = listOf(configuration.logRecordProcessor) + configuration.externalLogRecordProcessors
+                    val processors = listOf(ErrorReportingLogRecordProcessor(configuration.logRecordProcessor, errorHandler)) +
+                        configuration.externalLogRecordProcessors
                     compositeLogRecordProcessor(*processors.toTypedArray())
                 }
             },

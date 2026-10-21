@@ -65,6 +65,7 @@ sealed class SdkErrorType(private val severity: Severity) {
     object SdkInitAttributeCaptureFail : SdkErrorType(ERROR)
     object OtelSdkCodeError : SdkErrorType(ERROR)
     object OtelExternalExportFail : SdkErrorType(ERROR)
+    object OtelProcessorFail : SdkErrorType(ERROR)
     object EventBusHandlerFail : SdkErrorType(ERROR)
     object EventBusProducerFail : SdkErrorType(ERROR)
     object SessionPartListenerFail : SdkErrorType(ERROR)

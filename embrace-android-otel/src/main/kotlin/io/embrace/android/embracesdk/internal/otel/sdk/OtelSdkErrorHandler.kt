@@ -8,8 +8,9 @@ import io.opentelemetry.kotlin.error.SdkErrorHandler
 /**
  * Routes failures inside the OpenTelemetry SDK's own code to Embrace's SDK error tracking.
  *
- * API misuse and failures in user-supplied code (including Embrace's own processors) are
- * deliberately dropped, as they are not defects in the OpenTelemetry SDK.
+ * API misuse and failures in user-supplied code are deliberately dropped, as they are not defects in
+ * the OpenTelemetry SDK. Embrace's own processors track their failures via [ErrorReportingSpanProcessor]
+ * and [ErrorReportingLogRecordProcessor] instead.
  */
 internal class OtelSdkErrorHandler(
     private val errorHandler: ErrorHandler,

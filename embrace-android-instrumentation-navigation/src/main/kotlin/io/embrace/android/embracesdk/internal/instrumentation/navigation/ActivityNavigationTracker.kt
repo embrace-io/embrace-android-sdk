@@ -4,6 +4,7 @@ import android.app.Activity
 import android.app.Application
 import android.os.Build
 import android.os.Bundle
+import io.embrace.android.embracesdk.internal.arch.lifecycle.ProcessChannels
 import io.embrace.android.embracesdk.internal.arch.navigation.NavigationSignal
 import io.embrace.android.embracesdk.internal.arch.navigation.NavigationSignal.ActivityPaused
 import io.embrace.android.embracesdk.internal.arch.navigation.NavigationSignal.ActivityResumed
@@ -11,7 +12,7 @@ import io.embrace.android.embracesdk.internal.arch.navigation.NavigationSignal.A
 import io.embrace.android.embracesdk.internal.arch.navigation.NavigationSignal.Backgrounded
 import io.embrace.android.embracesdk.internal.arch.navigation.NavigationTrackingService
 import io.embrace.android.embracesdk.internal.arch.navigation.getId
-import io.embrace.android.embracesdk.internal.arch.state.ProcessStateListener
+import io.embrace.android.embracesdk.internal.arch.state.ProcessState
 import io.embrace.android.embracesdk.internal.clock.Clock
 import io.embrace.android.embracesdk.internal.logging.ErrorHandler
 import io.embrace.android.embracesdk.internal.logging.SdkErrorType
@@ -19,22 +20,47 @@ import io.embrace.android.embracesdk.internal.logging.guardSdkCode
 import io.embrace.android.embracesdk.internal.utils.BuildVersionChecker
 import io.embrace.android.embracesdk.internal.utils.VersionChecker
 import io.embrace.android.embracesdk.internal.utils.event.EventBus
+import io.embrace.android.embracesdk.internal.utils.event.EventHandler
 
 /**
- * Tracks Activities coming into and out of view through [Application.ActivityLifecycleCallbacks], but listens to [ProcessStateListener]
- * when it comes to tracking app backgrounding in order to synchronize with the rest of the SDK's app backgrounding logic.
+ * Tracks Activities coming into and out of view through [Application.ActivityLifecycleCallbacks], but takes app backgrounding from
+ * [ProcessChannels.ProcessState] in order to synchronize with the rest of the SDK's app backgrounding logic.
  *
  * The time that this component's listeners fire is the canonical time for the signal, whenever it is processed downstream.
  */
 internal class ActivityNavigationTracker(
+    private val application: Application,
     private val clock: Clock,
     private val eventBus: EventBus,
     private val navigationTrackingService: NavigationTrackingService,
     private val errorHandler: ErrorHandler,
     versionChecker: VersionChecker = BuildVersionChecker,
-) : Application.ActivityLifecycleCallbacks, ProcessStateListener {
+) : Application.ActivityLifecycleCallbacks, AutoCloseable {
 
     private val usePrePostCallbacks = versionChecker.isAtLeast(Build.VERSION_CODES.Q)
+
+    private val processStateHandler = EventHandler<ProcessState> { state ->
+        if (state == ProcessState.BACKGROUND) {
+            onBackground()
+        }
+    }
+
+    /**
+     * Starts tracking Activities and app backgrounding, returning this tracker so that closing it stops both.
+     */
+    fun install(): AutoCloseable {
+        application.registerActivityLifecycleCallbacks(this)
+        eventBus.addStateHandler(ProcessChannels.ProcessState, replay = false, handler = processStateHandler)
+        return this
+    }
+
+    /**
+     * Stops tracking app backgrounding and Activities.
+     */
+    override fun close() {
+        eventBus.removeStateHandler(ProcessChannels.ProcessState, processStateHandler)
+        application.unregisterActivityLifecycleCallbacks(this)
+    }
 
     override fun onActivityPreStarted(activity: Activity) {
         if (usePrePostCallbacks) {
@@ -72,15 +98,14 @@ internal class ActivityNavigationTracker(
         }
     }
 
-    override fun onBackground() {
-        eventBus.emit(NavigationSignal.KEY, Backgrounded(clock.now()))
-    }
-
     override fun onActivityCreated(activity: Activity, savedInstanceState: Bundle?) {}
     override fun onActivityStopped(activity: Activity) {}
     override fun onActivitySaveInstanceState(activity: Activity, outState: Bundle) {}
     override fun onActivityDestroyed(activity: Activity) {}
-    override fun onForeground() {}
+
+    private fun onBackground() {
+        eventBus.emit(NavigationSignal.KEY, Backgrounded(clock.now()))
+    }
 
     private fun handleActivityStarted(activity: Activity) {
         errorHandler.guardSdkCode(SdkErrorType.UiCallbackFail) {

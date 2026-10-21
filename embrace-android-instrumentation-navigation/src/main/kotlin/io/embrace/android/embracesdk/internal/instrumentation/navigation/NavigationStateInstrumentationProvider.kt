@@ -15,22 +15,22 @@ class NavigationStateInstrumentationProvider :
     override fun factoryProvider(args: InstrumentationArgs): () -> NavigationStateDataSource {
         return {
             val activityTracker = ActivityNavigationTracker(
+                application = args.application,
                 clock = args.clock,
                 eventBus = args.eventBus,
                 navigationTrackingService = args.navigationTrackingService,
                 errorHandler = args.errorHandler,
             )
-            NavigationStateDataSource(args, activityTracker).also { startPublishing(args, activityTracker) }
+            startPublishing(args)
+            NavigationStateDataSource(args, activityTracker::install)
         }
     }
 
     /**
-     * Starts the production side of navigation, registering the broker before the Activity source that feeds it so that no
-     * signal is emitted with nothing to handle it.
+     * Starts the production side of navigation, registering the broker before the data source installs the Activity source that
+     * feeds it so that no signal is emitted with nothing to handle it.
      */
-    private fun startPublishing(args: InstrumentationArgs, activityTracker: ActivityNavigationTracker) {
+    private fun startPublishing(args: InstrumentationArgs) {
         args.eventBus.addHandler(NavigationSignal.KEY, NavigationEventBroker(args.eventBus))
-        args.application.registerActivityLifecycleCallbacks(activityTracker)
-        args.processStateTracker.addListener(activityTracker)
     }
 }

@@ -5,15 +5,18 @@ import android.os.Build
 import io.embrace.android.embracesdk.fakes.FakeClock
 import io.embrace.android.embracesdk.fakes.FakeErrorHandler
 import io.embrace.android.embracesdk.fakes.FakeNavigationTrackingService
+import io.embrace.android.embracesdk.internal.arch.lifecycle.ProcessChannels
 import io.embrace.android.embracesdk.internal.arch.navigation.NavigationSignal
 import io.embrace.android.embracesdk.internal.arch.navigation.NavigationSignal.ActivityPaused
 import io.embrace.android.embracesdk.internal.arch.navigation.NavigationSignal.ActivityResumed
 import io.embrace.android.embracesdk.internal.arch.navigation.NavigationSignal.ActivityStarted
 import io.embrace.android.embracesdk.internal.arch.navigation.NavigationSignal.Backgrounded
 import io.embrace.android.embracesdk.internal.arch.navigation.getId
+import io.embrace.android.embracesdk.internal.arch.state.ProcessState
 import io.embrace.android.embracesdk.internal.utils.VersionChecker
 import io.embrace.android.embracesdk.internal.utils.event.EventBus
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
 
@@ -59,6 +62,20 @@ internal class ActivityNavigationTrackerTest {
         createTracker(Build.VERSION_CODES.Q).assertConcurrentPlainActivityNavigation()
     }
 
+    @Test
+    fun `a closed tracker produces no signals`() {
+        createTracker(Build.VERSION_CODES.Q).close()
+
+        with(application) {
+            start(first)
+            resume(first)
+            pause(first)
+        }
+        background()
+
+        assertTrue(signals.isEmpty())
+    }
+
     private fun ActivityNavigationTracker.assertPlainActivityNavigation() {
         val times = transitionBetweenActivities()
         assertEquals(7, times.size)
@@ -98,7 +115,7 @@ internal class ActivityNavigationTrackerTest {
                 { start(second) },
                 { resume(second) },
                 { pause(second) },
-                ::onBackground,
+                ::background,
             ),
         )
     }
@@ -112,9 +129,13 @@ internal class ActivityNavigationTrackerTest {
                 { resume(second) },
                 { pause(first) },
                 { pause(second) },
-                ::onBackground,
+                ::background,
             ),
         )
+    }
+
+    private fun background() {
+        eventBus.emitState(ProcessChannels.ProcessState, ProcessState.BACKGROUND)
     }
 
     private fun invokeCallbacks(callbacks: List<() -> Unit>): List<Long> {
@@ -128,13 +149,14 @@ internal class ActivityNavigationTrackerTest {
 
     private fun createTracker(sdkInt: Int): ActivityNavigationTracker {
         return ActivityNavigationTracker(
+            application,
             clock,
             eventBus,
             navigationTrackingService,
             FakeErrorHandler(),
             VersionChecker { min -> sdkInt >= min },
         ).apply {
-            application.registerActivityLifecycleCallbacks(this)
+            install()
         }
     }
 

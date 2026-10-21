@@ -2,10 +2,12 @@ package io.embrace.android.embracesdk.internal.instrumentation.navigation
 
 import android.app.Activity
 import io.embrace.android.embracesdk.fakes.FakeInstrumentationArgs
+import io.embrace.android.embracesdk.internal.arch.lifecycle.ProcessChannels
 import io.embrace.android.embracesdk.internal.arch.navigation.CurrentScreen
 import io.embrace.android.embracesdk.internal.arch.navigation.NavigationSignal
 import io.embrace.android.embracesdk.internal.arch.navigation.ScreenAttributesSource
 import io.embrace.android.embracesdk.internal.arch.schema.SchemaType.NavigationState.Screen
+import io.embrace.android.embracesdk.internal.arch.state.ProcessState
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotEquals
 import org.junit.Assert.assertTrue
@@ -176,10 +178,7 @@ internal class NavigationStateDataSourceTest {
     fun `activity lifecycle callbacks are unregistered when data capture is disabled`() {
         val signals = mutableListOf<NavigationSignal>()
         args.eventBus.addHandler(NavigationSignal.KEY) { signals.add(it) }
-        val tracker =
-            ActivityNavigationTracker(args.clock, args.eventBus, args.navigationTrackingService, args.errorHandler)
-        args.application.registerActivityLifecycleCallbacks(tracker)
-        val source = NavigationStateDataSource(args, tracker).apply { onDataCaptureEnabled() }
+        val source = NavigationStateDataSource(args, createTracker()::install).apply { onDataCaptureEnabled() }
 
         source.onDataCaptureDisabled()
         val activity = Activity()
@@ -187,6 +186,33 @@ internal class NavigationStateDataSourceTest {
         application.resume(activity)
         assertTrue(signals.isEmpty())
     }
+
+    @Test
+    fun `a background while data capture is enabled is reported as a navigation signal`() {
+        val signals = mutableListOf<NavigationSignal>()
+        args.eventBus.addHandler(NavigationSignal.KEY) { signals.add(it) }
+        NavigationStateDataSource(args, createTracker()::install).onDataCaptureEnabled()
+
+        args.eventBus.emitState(ProcessChannels.ProcessState, ProcessState.FOREGROUND)
+        args.eventBus.emitState(ProcessChannels.ProcessState, ProcessState.BACKGROUND)
+
+        assertEquals(listOf(NavigationSignal.Backgrounded(args.clock.now())), signals)
+    }
+
+    @Test
+    fun `a background after data capture is disabled is not reported`() {
+        val signals = mutableListOf<NavigationSignal>()
+        args.eventBus.addHandler(NavigationSignal.KEY) { signals.add(it) }
+        val source = NavigationStateDataSource(args, createTracker()::install).apply { onDataCaptureEnabled() }
+
+        source.onDataCaptureDisabled()
+        args.eventBus.emitState(ProcessChannels.ProcessState, ProcessState.BACKGROUND)
+
+        assertTrue(signals.isEmpty())
+    }
+
+    private fun createTracker() =
+        ActivityNavigationTracker(args.application, args.clock, args.eventBus, args.navigationTrackingService, args.errorHandler)
 
     private class CountingScreenAttributesSource : ScreenAttributesSource {
         var collectCount = 0

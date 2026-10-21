@@ -51,9 +51,10 @@ internal class RemoteConfigStoreImpl(
             val cfg = configFile.inputStream().buffered().use {
                 serializer.fromJson(it, RemoteConfig.serializer())
             }
+            // omit etag so the next request is unconditional, so the binary cache is regenerated
             StoredConfigResponse(
                 cfg = cfg,
-                etag = readEtag(),
+                etag = null,
                 deviceId = null,
             )
         } catch (_: IllegalArgumentException) {
@@ -65,8 +66,6 @@ internal class RemoteConfigStoreImpl(
             null
         }
     }
-
-    private fun readEtag(): String? = runCatching { etagFile.readText() }.getOrNull()?.ifEmpty { null }
 
     override fun saveResponse(response: ConfigHttpResponse) {
         try {

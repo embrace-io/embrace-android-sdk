@@ -48,9 +48,6 @@
           "signature": "isJvmCrashCaptureEnabled()Z"
         },
         {
-          "signature": "isMultiFilePersistenceEnabled()Z"
-        },
-        {
           "signature": "isNativeCrashCaptureEnabled()Z"
         },
         {
@@ -143,6 +140,15 @@
         },
         {
           "signature": "getMaxSystemLinkCount()I"
+        }
+      ]
+    },
+    {
+      "className": "PersistenceLocalConfigImpl",
+      "methods": [
+        {
+          "signature": "isMultiFileEnabled()Z",
+          "returnValue": "false"
         }
       ]
     },

@@ -28,6 +28,7 @@ class ConfigInstrumentationTest {
         "EnabledFeatureConfigImpl",
         "NetworkCaptureConfigImpl",
         "OtelLimitsConfigImpl",
+        "PersistenceLocalConfigImpl",
         "ProjectConfigImpl",
         "RedactionConfigImpl",
     ).map {

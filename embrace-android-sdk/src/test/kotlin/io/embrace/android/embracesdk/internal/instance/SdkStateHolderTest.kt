@@ -131,6 +131,16 @@ internal class SdkStateHolderTest {
     }
 
     @Test
+    fun `calls during teardown are routed to the disabled instance`() {
+        val instance = FakeInstance(calls)
+        val holder = createHolder(instance)
+        holder.start(context)
+        instance.onDisable = { holder.dispatcher.logInfo("message") }
+        holder.close()
+        assertEquals(listOf("instantiate", "start", "onPostStart", "disable", "disabled:logInfo/1"), calls)
+    }
+
+    @Test
     fun `repeated close is ignored`() {
         val holder = createHolder(FakeInstance(calls))
         holder.start(context)
@@ -375,6 +385,8 @@ internal class SdkStateHolderTest {
 
         val handedOver = mutableListOf<BufferingSdkInstance>()
 
+        var onDisable: () -> Unit = {}
+
         override fun onPostStart(buffer: BufferingSdkInstance) {
             calls += "${prefix}onPostStart"
             handedOver += buffer
@@ -399,6 +411,7 @@ internal class SdkStateHolderTest {
 
         override fun disable() {
             calls += "${prefix}disable"
+            onDisable()
             check(!closeThrows) { "disable failed" }
             started = false
         }

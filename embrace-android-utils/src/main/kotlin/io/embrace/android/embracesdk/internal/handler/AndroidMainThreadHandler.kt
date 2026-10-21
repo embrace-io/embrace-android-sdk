@@ -3,9 +3,20 @@ package io.embrace.android.embracesdk.internal.handler
 import android.os.Handler
 import android.os.Looper
 import android.os.Message
+import io.embrace.android.embracesdk.internal.logging.ErrorHandler
+import io.embrace.android.embracesdk.internal.logging.SdkErrorType
+import io.embrace.android.embracesdk.internal.logging.guardSdkCode
 
-class AndroidMainThreadHandler : MainThreadHandler {
-    override val wrappedHandler = Handler(checkNotNull(Looper.getMainLooper()))
+class AndroidMainThreadHandler(private val errorHandler: ErrorHandler) : MainThreadHandler {
+
+    /**
+     * Catches anything thrown by dispatched work so it can't crash the app.
+     */
+    override val wrappedHandler: Handler = object : Handler(checkNotNull(Looper.getMainLooper())) {
+        override fun dispatchMessage(msg: Message) {
+            errorHandler.guardSdkCode(SdkErrorType.UiCallbackFail) { super.dispatchMessage(msg) }
+        }
+    }
 
     override fun postAtFrontOfQueue(function: () -> Unit) {
         wrappedHandler.postAtFrontOfQueue(function)

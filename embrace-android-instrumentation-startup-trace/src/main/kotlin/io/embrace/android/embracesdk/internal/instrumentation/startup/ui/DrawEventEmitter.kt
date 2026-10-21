@@ -32,7 +32,7 @@ internal fun createDrawEventEmitter(
 ): DrawEventEmitter? = if (supportFrameCommitCallback(versionChecker)) {
     FirstDrawDetector(errorHandler)
 } else if (hasRenderEvent(versionChecker)) {
-    HandlerMessageDrawDetector(AndroidMainThreadHandler(), errorHandler)
+    HandlerMessageDrawDetector(AndroidMainThreadHandler(errorHandler), errorHandler)
 } else {
     null
 }

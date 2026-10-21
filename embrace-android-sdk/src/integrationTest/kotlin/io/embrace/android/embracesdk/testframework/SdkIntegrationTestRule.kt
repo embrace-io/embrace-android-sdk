@@ -132,6 +132,7 @@ internal class SdkIntegrationTestRule(
         persistedRemoteConfig: RemoteConfig = RemoteConfig(),
         serverResponseConfig: RemoteConfig = persistedRemoteConfig,
         serverResponseConfigJson: String? = null,
+        serverResponseConfigEtag: String = "server_etag_value",
         expectSdkToStart: Boolean = startSdk,
         setupAction: EmbraceSetupInterface.() -> Unit = {},
         preSdkStartAction: EmbracePreSdkStartInterface.() -> Unit = {},
@@ -144,7 +145,7 @@ internal class SdkIntegrationTestRule(
         val serverConfig = otelSdkMode.applyTo(serverResponseConfig)
         setup = embraceSetupInterfaceSupplier()
         val deliveryTracer = DeliveryTracer()
-        val apiServer = FakeApiServer(serverConfig, deliveryTracer, serverResponseConfigJson)
+        val apiServer = FakeApiServer(serverConfig, deliveryTracer, serverResponseConfigJson, serverResponseConfigEtag)
         server = MockWebServer().apply {
             protocols = listOf(Protocol.HTTP_2, Protocol.HTTP_1_1)
             dispatcher = apiServer

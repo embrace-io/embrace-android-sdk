@@ -83,7 +83,7 @@ internal class InstrumentationApiDelegate(
     private fun toSpanEvent(event: EmbraceSpanEvent): SpanEvent = SpanEventImpl(
         name = event.name,
         timestampNanos = event.timestampNanos,
-        attributes = event.attributes,
+        attributes = event.attributes.toMap(),
     )
 
     private fun ErrorCode?.toErrorCodeAttribute(): ErrorCodeAttribute? {

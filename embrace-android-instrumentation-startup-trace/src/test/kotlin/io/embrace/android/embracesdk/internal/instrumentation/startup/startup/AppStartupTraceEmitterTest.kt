@@ -8,6 +8,7 @@ import io.embrace.android.embracesdk.fakes.FakeErrorHandler
 import io.embrace.android.embracesdk.fakes.FakeProcessInfo
 import io.embrace.android.embracesdk.fakes.FakeSpanToken
 import io.embrace.android.embracesdk.fakes.FakeTelemetryDestination
+import io.embrace.android.embracesdk.internal.arch.datasource.SpanEventImpl
 import io.embrace.android.embracesdk.internal.arch.schema.ErrorCodeAttribute
 import io.embrace.android.embracesdk.internal.arch.schema.PrivateSpan
 import io.embrace.android.embracesdk.internal.arch.startup.MAX_COLD_STARTUP_INIT_GAP_MS
@@ -15,6 +16,7 @@ import io.embrace.android.embracesdk.internal.arch.startup.StartupClassifier
 import io.embrace.android.embracesdk.internal.arch.startup.StartupClassifierImpl
 import io.embrace.android.embracesdk.internal.arch.startup.StartupType
 import io.embrace.android.embracesdk.internal.arch.state.ProcessState
+import io.embrace.android.embracesdk.internal.clock.millisToNanos
 import io.embrace.android.embracesdk.internal.instrumentation.startup.AppStartupTraceEmitter
 import io.embrace.android.embracesdk.internal.instrumentation.startup.AppStartupTraceEmitter.Companion.ACTIVITY_FIRST_DRAW_SPAN
 import io.embrace.android.embracesdk.internal.instrumentation.startup.AppStartupTraceEmitter.Companion.ACTIVITY_INIT_DELAY_SPAN
@@ -179,6 +181,23 @@ internal class AppStartupTraceEmitterTest {
             firstFrameRendered(STARTUP_ACTIVITY_NAME)
         }
         assertEquals(1, dataCollectionCompletedCallbackInvokedCount)
+    }
+
+    @Test
+    fun `tracked interval is unaffected by the caller mutating its collections afterwards`() {
+        simulateApi(VERSION_CODES.TIRAMISU)
+        val attributes = mutableMapOf("key" to "value")
+        val events = mutableListOf(SpanEventImpl("event", clock.now().millisToNanos(), emptyMap()))
+        createTraceEmitter().run {
+            addTrackedInterval("app-span", clock.now(), clock.tick(15L), attributes, events)
+            attributes.clear()
+            events.clear()
+            simulateAppStartup(verifyTrace = false)
+        }
+        with(checkNotNull(destination.completedSpans().single { it.name == "app-span" })) {
+            assertEquals("value", this.attributes["key"])
+            assertEquals("event", this.events.single().name)
+        }
     }
 
     @Test

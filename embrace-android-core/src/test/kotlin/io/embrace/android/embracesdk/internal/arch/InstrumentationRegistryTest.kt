@@ -19,6 +19,7 @@ import io.embrace.android.embracesdk.semconv.EmbStateTransitionAttributes
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNull
+import org.junit.Assert.assertThrows
 import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
@@ -88,6 +89,18 @@ internal class InstrumentationRegistryTest {
     fun `close disables registered data sources`() {
         registry.add { dataSource }
         registry.close()
+        assertEquals(1, dataSource.disableDataCaptureCount)
+    }
+
+    /**
+     * Enabling can register callbacks before it fails, and a data source that fails to enable never joins the registry for
+     * close() to disable, so it is disabled straight away.
+     */
+    @Test
+    fun `a data source that throws while being enabled is disabled and not registered`() {
+        dataSource.enableThrows = true
+        assertThrows(IllegalStateException::class.java) { registry.add { dataSource } }
+        assertNull(registry.findByType(FakeDataSource::class))
         assertEquals(1, dataSource.disableDataCaptureCount)
     }
 

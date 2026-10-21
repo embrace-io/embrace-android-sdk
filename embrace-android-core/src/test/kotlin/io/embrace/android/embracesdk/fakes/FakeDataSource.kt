@@ -19,6 +19,7 @@ class FakeDataSource(
     var resetCount: Int = 0
     var sessionEnds = 0
     var sessionChanges = 0
+    var enableThrows = false
 
     override fun <T> captureTelemetry(
         inputValidation: () -> Boolean,
@@ -29,6 +30,7 @@ class FakeDataSource(
     override fun onDataCaptureEnabled() {
         ctx.registerComponentCallbacks(this)
         enableDataCaptureCount++
+        check(!enableThrows) { "enable failed" }
     }
 
     override fun onDataCaptureDisabled() {

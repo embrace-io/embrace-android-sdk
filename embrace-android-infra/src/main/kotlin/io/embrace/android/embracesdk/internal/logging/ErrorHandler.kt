@@ -25,8 +25,8 @@ interface ErrorHandler : AutoCloseable {
     fun trackSdkError(type: SdkErrorType, throwable: Throwable)
 
     /**
-     * Drains buffered errors to [sink] (throwable, timestampMs) on an SDK state transition. A null [sink] closes this object
-     * completely.
+     * Drains buffered errors to [sink] (throwable, timestampMs) on an SDK state transition. Errors captured after that go to
+     * [sink] directly. A null [sink] closes this object completely.
      */
     fun drain(sink: ((Throwable, Long) -> Unit)?)
 

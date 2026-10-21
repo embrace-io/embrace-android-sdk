@@ -5,6 +5,10 @@ import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
+import java.util.concurrent.CountDownLatch
+import java.util.concurrent.TimeUnit
+import java.util.concurrent.atomic.AtomicBoolean
+import kotlin.concurrent.thread
 
 internal class ErrorHandlerImplTest {
 
@@ -45,6 +49,38 @@ internal class ErrorHandlerImplTest {
 
         handler.drain(sink)
         assertEquals(listOf(first to firstTime, second to firstTime + 100), errors)
+    }
+
+    /**
+     * A thread that found the error needs buffering just as a drain takes the buffer should send
+     * it directly rather than adding it to the buffer.
+     */
+    @Test
+    fun `an error about to be buffered as the buffer is being drained is sent directly instead`() {
+        val atBuffering = CountDownLatch(1)
+        val release = CountDownLatch(1)
+        val holdNext = AtomicBoolean(false)
+        handler = ErrorHandlerImpl(
+            clock,
+            beforeBuffering = {
+                if (holdNext.getAndSet(false)) {
+                    atBuffering.countDown()
+                    release.await()
+                }
+            },
+        )
+        val buffered = IllegalStateException("buffered")
+        val late = IllegalStateException("late")
+        fail(buffered)
+        holdNext.set(true)
+        val logger = thread { fail(late) }
+        assertTrue(atBuffering.await(1, TimeUnit.SECONDS))
+
+        handler.drain(sink)
+        release.countDown()
+        logger.join()
+
+        assertEquals(listOf(buffered, late), errors.map { it.first })
     }
 
     @Test

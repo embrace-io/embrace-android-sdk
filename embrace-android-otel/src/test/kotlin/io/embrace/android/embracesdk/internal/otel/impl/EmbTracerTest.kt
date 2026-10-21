@@ -12,9 +12,13 @@ import io.embrace.android.embracesdk.internal.clock.nanosToMillis
 import io.embrace.android.embracesdk.internal.otel.spans.createContext
 import io.opentelemetry.kotlin.NoopOpenTelemetry
 import io.opentelemetry.kotlin.tracing.SpanKind
+import io.opentelemetry.kotlin.tracing.StatusData
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertSame
+import org.junit.Assert.assertThrows
+import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -107,5 +111,20 @@ internal class EmbTracerTest(
             scope.detach()
         }
         assertNull(spanService.createdSpans.single().parent)
+    }
+
+    @Test
+    fun `span is ended with error status when action throws`() {
+        val exc = IllegalStateException("boom")
+        val thrown = assertThrows(IllegalStateException::class.java) {
+            tracer.startSpan("foo") {
+                throw exc
+            }
+        }
+        assertSame(exc, thrown)
+        with(spanService.createdSpans.single()) {
+            assertFalse(isRecording)
+            assertTrue(status is StatusData.Error)
+        }
     }
 }

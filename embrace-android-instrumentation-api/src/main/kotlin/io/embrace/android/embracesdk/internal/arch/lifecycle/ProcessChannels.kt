@@ -1,6 +1,7 @@
 package io.embrace.android.embracesdk.internal.arch.lifecycle
 
 import io.embrace.android.embracesdk.internal.arch.state.ProcessState
+import io.embrace.android.embracesdk.internal.logging.SdkErrorType
 import io.embrace.android.embracesdk.internal.utils.event.StateKey
 
 /**
@@ -11,5 +12,5 @@ object ProcessChannels {
     /**
      * The state the process is in, emitted before the session orchestrator reacts to each transition.
      */
-    val ProcessState = StateKey<ProcessState>()
+    val ProcessState = StateKey<ProcessState>(SdkErrorType.AppStateCallbackFail)
 }

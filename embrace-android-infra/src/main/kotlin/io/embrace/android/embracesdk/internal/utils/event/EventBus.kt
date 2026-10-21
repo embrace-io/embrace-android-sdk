@@ -155,7 +155,7 @@ class EventBus(private val errorHandler: ErrorHandler) {
      */
     fun <E : Any> emit(key: EventKey<E>, event: E) {
         val registered = registrationsFor(key.id) ?: return
-        deliverTo(registered.handlers, event)
+        deliverTo(key, registered.handlers, event)
     }
 
     /**
@@ -179,7 +179,7 @@ class EventBus(private val errorHandler: ErrorHandler) {
         }
 
         val registered = registrationsFor(key.id) ?: return
-        deliverTo(registered.handlers, value)
+        deliverTo(key, registered.handlers, value)
     }
 
     /**
@@ -226,25 +226,25 @@ class EventBus(private val errorHandler: ErrorHandler) {
         try {
             handler.onEvent(value)
         } catch (failure: Exception) {
-            reportFailure(handler, failure)
+            reportFailure(key, handler, failure)
         }
     }
 
-    private fun <E : Any> deliverTo(registered: Array<EventHandler<*>>, event: E) {
+    private fun <E : Any> deliverTo(key: BusKey, registered: Array<EventHandler<*>>, event: E) {
         for (handler in registered) {
             @Suppress("UNCHECKED_CAST") // addHandler and addStateHandler pair a key with handlers of that key's own type
             val typed = handler as EventHandler<E>
             try {
                 typed.onEvent(event)
             } catch (failure: Exception) {
-                reportFailure(handler, failure)
+                reportFailure(key, handler, failure)
             }
         }
     }
 
-    private fun reportFailure(registrant: Any, failure: Exception) {
+    private fun reportFailure(key: BusKey, registrant: Any, failure: Exception) {
         if (loggedFailures.add(registrant)) {
-            errorHandler.trackSdkError(SdkErrorType.EventBusHandlerFail, failure)
+            errorHandler.trackSdkError(key.handlerErrorType, failure)
 
             // a dispatch in flight across stop may have added after its clear
             if (stopped) {

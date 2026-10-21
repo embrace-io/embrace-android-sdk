@@ -473,6 +473,34 @@ internal class EventBusTest {
     }
 
     @Test
+    fun `a handler that throws during dispatch is reported as its event key's error type`() {
+        val key = EventKey<AppEvent>(SdkErrorType.AppStateCallbackFail)
+        bus.addHandler(key) { error("boom") }
+
+        bus.emit(key, ForegroundEvent())
+
+        assertEquals(
+            listOf(SdkErrorType.AppStateCallbackFail.toString()),
+            errorHandler.sdkErrorMessages.map { it.msg },
+        )
+    }
+
+    @Test
+    fun `a handler that throws during state dispatch or replay is reported as its state key's error type`() {
+        val key = StateKey<ScreenState>(SdkErrorType.AppStateCallbackFail)
+        bus.emitState(key, ScreenState("home"))
+        bus.addStateHandler(key) { error("boom") }
+        bus.addStateHandler(key, replay = false) { error("boom") }
+
+        bus.emitState(key, ScreenState("settings"))
+
+        assertEquals(
+            listOf(SdkErrorType.AppStateCallbackFail.toString(), SdkErrorType.AppStateCallbackFail.toString()),
+            errorHandler.sdkErrorMessages.map { it.msg },
+        )
+    }
+
+    @Test
     fun `a value emitted against a state key does not reach a handler registered against an event key`() {
         val received = AtomicInteger()
         bus.addHandler(screenEventKey) { received.incrementAndGet() }

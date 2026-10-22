@@ -8,6 +8,7 @@ import io.mockk.mockk
 import io.mockk.verify
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
+import org.junit.Assert.assertNull
 import org.junit.Assert.assertSame
 import org.junit.Assert.assertThrows
 import org.junit.Assert.assertTrue
@@ -257,6 +258,21 @@ internal class InstrumentedHttpsURLConnectionTest {
         assertEquals(mockErrorStream, result)
         verify(exactly = 1) { mockWrappedConnection.errorStream }
         assertSingleSuccessfulRequest()
+    }
+
+    @Test
+    fun `methods that do not throw after a failed request do not leak the response code exception`() = harness.runTest {
+        every { mockWrappedConnection.responseCode } throws FakeIOException()
+        every { mockWrappedConnection.errorStream } returns null
+        every { mockWrappedConnection.getHeaderField(FAKE_FIELD_NAME) } returns null
+        every { mockWrappedConnection.contentLength } returns -1
+
+        with(instrumentedConnection) {
+            assertNull(errorStream)
+            assertNull(getHeaderField(FAKE_FIELD_NAME))
+            assertEquals(-1, contentLength)
+        }
+        assertSingleClientError()
     }
 
     @Test

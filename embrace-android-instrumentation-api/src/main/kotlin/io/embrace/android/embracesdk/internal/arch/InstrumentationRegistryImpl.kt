@@ -8,7 +8,6 @@ import io.embrace.android.embracesdk.internal.logging.SdkErrorType
 import io.embrace.android.embracesdk.internal.logging.guardSdkCode
 import io.embrace.android.embracesdk.internal.logging.guardSdkCodeEach
 import io.embrace.android.embracesdk.internal.worker.Worker
-import java.util.concurrent.CopyOnWriteArrayList
 import kotlin.reflect.KClass
 import kotlin.reflect.safeCast
 
@@ -20,8 +19,11 @@ class InstrumentationRegistryImpl(
     private val errorHandler: ErrorHandler,
 ) : InstrumentationRegistry {
 
-    private val dataSources = CopyOnWriteArrayList<DataSource>()
+    @Volatile
+    private var dataSources: Array<DataSource> = emptyArray()
     private val lock = Any()
+
+    @Volatile
     private var closed = false
 
     override fun onPreSessionEnd() {
@@ -42,24 +44,24 @@ class InstrumentationRegistryImpl(
     }
 
     override fun <T : DataSource> add(state: DataSourceFactory<T>): T? {
-        val dataSource = state() ?: return null
-        synchronized(lock) {
-            if (!closed) {
-                dataSources.add(dataSource)
-                // enable data capture once the data source is registered
-                dataSource.onDataCaptureEnabled()
-                return dataSource
+        val added = synchronized(lock) {
+            if (closed) {
+                return null
             }
+            val dataSource = state() ?: return null
+            dataSource.onDataCaptureEnabled()
+            dataSources += dataSource // copy-on-write
+            dataSource
         }
-        disable(dataSource)
-        return null
+        return added
     }
 
     override fun close() {
-        synchronized(lock) {
+        val snapshot = synchronized(lock) {
             closed = true
+            dataSources.also { dataSources = emptyArray() }
         }
-        dataSources.forEach(::disable)
+        snapshot.forEach(::disable)
     }
 
     private fun disable(dataSource: DataSource) {

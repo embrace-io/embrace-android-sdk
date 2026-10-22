@@ -16,6 +16,7 @@ import io.embrace.android.embracesdk.internal.logging.ErrorHandlerImpl
 import io.embrace.android.embracesdk.internal.worker.BackgroundWorker
 import io.embrace.android.embracesdk.semconv.EmbStateTransitionAttributes
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Before
@@ -90,12 +91,19 @@ internal class InstrumentationRegistryTest {
     }
 
     @Test
-    fun `data source added after close is disabled and not registered`() {
+    fun `data source added after close is not created or registered`() {
         registry.close()
-        assertNull(registry.add { dataSource })
+        var invoked = false
+        assertNull(
+            registry.add {
+                invoked = true
+                dataSource
+            },
+        )
+        assertFalse(invoked)
         assertNull(registry.findByType(FakeDataSource::class))
         assertEquals(0, dataSource.enableDataCaptureCount)
-        assertEquals(1, dataSource.disableDataCaptureCount)
+        assertEquals(0, dataSource.disableDataCaptureCount)
     }
 
     @Test

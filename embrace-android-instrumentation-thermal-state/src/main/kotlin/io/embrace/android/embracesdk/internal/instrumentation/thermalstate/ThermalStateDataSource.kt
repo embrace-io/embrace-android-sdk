@@ -33,8 +33,9 @@ class ThermalStateDataSource(
 
     private var span: SpanToken? = null
 
-    private val lock = Any()
+    @Volatile
     private var closed = false
+
     private var registration: Pair<PowerManager, PowerManager.OnThermalStatusChangedListener>? = null
 
     override fun onDataCaptureEnabled() {
@@ -51,12 +52,10 @@ class ThermalStateDataSource(
                 val executor = Executor {
                     backgroundWorker.submit(runnable = it)
                 }
-                synchronized(lock) {
-                    if (!closed && registration == null) {
-                        runCatching {
-                            pm.addThermalStatusListener(executor, listener)
-                            registration = Pair(pm, listener)
-                        }
+                if (!closed && registration == null) {
+                    runCatching {
+                        pm.addThermalStatusListener(executor, listener)
+                        registration = Pair(pm, listener)
                     }
                 }
             }
@@ -64,8 +63,8 @@ class ThermalStateDataSource(
     }
 
     override fun onDataCaptureDisabled() {
-        synchronized(lock) {
-            closed = true
+        closed = true
+        backgroundWorker.submit {
             registration?.let { (pm, listener) ->
                 registration = null
                 runCatching {

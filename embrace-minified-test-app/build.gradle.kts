@@ -208,7 +208,7 @@ dependencies {
 }
 
 // Linting this app's variant runs lintAnalyzeRelease on every library, even with checkDependencies
-// off, so keep lint out of `check` to keep local builds fast. CI runs it by name (see ci-gradle.yml).
+// off, so keep lint out of `check` to keep local builds fast. CI runs it via the root `ciBuild` task.
 tasks.named("check") {
     setDependsOn(dependsOn.filterNot { it is TaskProvider<*> && it.name == "lint" })
 }

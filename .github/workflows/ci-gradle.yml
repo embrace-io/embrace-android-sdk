@@ -124,7 +124,7 @@ jobs:
 
       - name: Gradle (build -x embrace-gradle-plugin-integration-tests:test)
         if: ${{ matrix.gradle-task == 'build' }}
-        run: ./gradlew build koverXmlReport embrace-microbenchmark:compileReleaseAndroidTestKotlin embrace-macrobenchmark:compileBenchmarkKotlin embrace-macrobenchmark-app:compileBenchmarkKotlin embrace-minified-test-app:lint embrace-microbenchmark:lint -x embrace-gradle-plugin-integration-tests:test -x embrace-minified-test-app:assemble -x embrace-macrobenchmark:assemble -x embrace-macrobenchmark-app:assemble -Pembrace.coverage --stacktrace
+        run: ./gradlew ciBuild -x embrace-gradle-plugin-integration-tests:test -x embrace-minified-test-app:assemble -x embrace-macrobenchmark:assemble -x embrace-macrobenchmark-app:assemble -Pembrace.coverage --stacktrace
 
       - name: Gradle (examples/ExampleApp/ bundleRelease)
         if: ${{ matrix.gradle-task == 'bundleReleaseExampleApp' }}

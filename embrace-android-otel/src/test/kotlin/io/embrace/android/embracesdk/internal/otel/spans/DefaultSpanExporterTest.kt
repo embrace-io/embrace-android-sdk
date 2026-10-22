@@ -51,7 +51,7 @@ internal class DefaultSpanExporterTest {
 
     @Test
     fun `export() should store spans in SpanRepository`() {
-        val spanRepository = SpanRepository()
+        val spanRepository = SpanRepository(FakeErrorHandler())
 
         runBlocking { exporter(spanRepository).export(listOf(span("public-span"))) }
 
@@ -60,7 +60,7 @@ internal class DefaultSpanExporterTest {
 
     @Test
     fun `spans reach the repository before exportInline() returns`() {
-        val spanRepository = SpanRepository()
+        val spanRepository = SpanRepository(FakeErrorHandler())
         // a real dispatcher, so only a genuinely inline store is visible without draining first
         val exporter = exporter(
             spanRepository = spanRepository,
@@ -77,7 +77,7 @@ internal class DefaultSpanExporterTest {
     fun `external export runs off the calling thread and is awaited by forceFlush()`() {
         val exportThreads = mutableListOf<String>()
         val exporter = exporter(
-            spanRepository = SpanRepository(),
+            spanRepository = SpanRepository(FakeErrorHandler()),
             externalExporters = listOf(threadRecordingExporter(exportThreads)),
             dispatcher = ExternalExportDispatcher(FakeErrorHandler()),
         )
@@ -90,7 +90,7 @@ internal class DefaultSpanExporterTest {
 
     @Test
     fun `a throwing external exporter neither stops the others nor fails the internal store`() {
-        val spanRepository = SpanRepository()
+        val spanRepository = SpanRepository(FakeErrorHandler())
         val workingExporter = FakeSpanExporter()
 
         val result = exporter(spanRepository, listOf(throwingExporter(), workingExporter))
@@ -103,7 +103,7 @@ internal class DefaultSpanExporterTest {
 
     @Test
     fun `a throwing completed spans listener neither fails the export nor stops external exporters`() {
-        val spanRepository = SpanRepository()
+        val spanRepository = SpanRepository(FakeErrorHandler())
         spanRepository.addCompletedOtelSpansListener { error("listener failed") }
         val externalExporter = FakeSpanExporter()
 
@@ -117,7 +117,7 @@ internal class DefaultSpanExporterTest {
 
     @Test
     fun `nothing is exported when the export check fails`() {
-        val spanRepository = SpanRepository()
+        val spanRepository = SpanRepository(FakeErrorHandler())
         val externalExporter = FakeSpanExporter()
         val exporter = exporter(spanRepository, listOf(externalExporter), exportCheck = { false })
 

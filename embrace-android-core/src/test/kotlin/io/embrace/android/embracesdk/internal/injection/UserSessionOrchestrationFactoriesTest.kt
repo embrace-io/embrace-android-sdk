@@ -5,6 +5,7 @@ import io.embrace.android.embracesdk.fakes.FakeConfigService
 import io.embrace.android.embracesdk.fakes.FakeCurrentSessionPartSpan
 import io.embrace.android.embracesdk.fakes.FakeEnvelopeMetadataSource
 import io.embrace.android.embracesdk.fakes.FakeEnvelopeResourceSource
+import io.embrace.android.embracesdk.fakes.FakeErrorHandler
 import io.embrace.android.embracesdk.fakes.FakeIntakeService
 import io.embrace.android.embracesdk.fakes.FakeKeyValueStore
 import io.embrace.android.embracesdk.fakes.FakeLogEnvelopeSource
@@ -35,7 +36,7 @@ import org.junit.Test
 
 internal class UserSessionOrchestrationFactoriesTest {
 
-    private val spanRepository = SpanRepository()
+    private val spanRepository = SpanRepository(FakeErrorHandler())
     private val initServices = TestInitServices(otelSdkMode = OtelSdkMode.COMPAT)
     private val workerThreadPool = FakeWorkerThreadPool(fakeInitServices = initServices)
     private val configService = FakeConfigService(

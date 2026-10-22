@@ -1,6 +1,7 @@
 package io.embrace.android.embracesdk.internal.otel.config
 
 import io.embrace.android.embracesdk.fakes.FakeAttributesMutator
+import io.embrace.android.embracesdk.fakes.FakeErrorHandler
 import io.embrace.android.embracesdk.fakes.FakeLogRecordExporter
 import io.embrace.android.embracesdk.fakes.FakeLogRecordProcessor
 import io.embrace.android.embracesdk.fakes.FakeReadWriteLogRecord
@@ -37,7 +38,7 @@ internal class OtelSdkConfigTest {
         )
 
         val configuration = OtelSdkConfig(
-            spanRepository = SpanRepository(),
+            spanRepository = SpanRepository(FakeErrorHandler()),
             logSink = LogSinkImpl(),
             sdkName = "sdk",
             sdkVersion = "1.0",
@@ -110,7 +111,7 @@ internal class OtelSdkConfigTest {
     }
 
     private fun config(externalConfig: ExternalOtelConfig) = OtelSdkConfig(
-        spanRepository = SpanRepository(),
+        spanRepository = SpanRepository(FakeErrorHandler()),
         logSink = LogSinkImpl(),
         sdkName = "sdk",
         sdkVersion = "1.0",

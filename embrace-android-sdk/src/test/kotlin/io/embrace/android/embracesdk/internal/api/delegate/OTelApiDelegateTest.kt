@@ -42,7 +42,7 @@ internal class OTelApiDelegateTest(
     @Before
     fun setUp() {
         cfg = OtelSdkConfig(
-            spanRepository = SpanRepository(),
+            spanRepository = SpanRepository(FakeErrorHandler()),
             logSink = LogSinkImpl(),
             sdkName = "sdk",
             sdkVersion = "1.0",

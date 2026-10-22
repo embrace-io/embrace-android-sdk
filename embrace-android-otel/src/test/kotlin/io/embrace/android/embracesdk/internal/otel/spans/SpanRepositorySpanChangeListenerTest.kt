@@ -1,6 +1,7 @@
 package io.embrace.android.embracesdk.internal.otel.spans
 
 import io.embrace.android.embracesdk.fakes.FakeEmbraceSdkSpan
+import io.embrace.android.embracesdk.fakes.FakeErrorHandler
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Before
@@ -13,7 +14,7 @@ internal class SpanRepositorySpanChangeListenerTest {
 
     @Before
     fun setup() {
-        repository = SpanRepository()
+        repository = SpanRepository(FakeErrorHandler())
         observed.clear()
     }
 

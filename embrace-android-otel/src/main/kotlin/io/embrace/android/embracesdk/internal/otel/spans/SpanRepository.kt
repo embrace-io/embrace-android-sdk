@@ -2,6 +2,9 @@ package io.embrace.android.embracesdk.internal.otel.spans
 
 import io.embrace.android.embracesdk.internal.arch.schema.EmbType
 import io.embrace.android.embracesdk.internal.arch.schema.ErrorCodeAttribute
+import io.embrace.android.embracesdk.internal.logging.ErrorHandler
+import io.embrace.android.embracesdk.internal.logging.SdkErrorType
+import io.embrace.android.embracesdk.internal.logging.guardSdkCode
 import io.embrace.android.embracesdk.internal.otel.sdk.StoreDataResult
 import io.embrace.android.embracesdk.internal.payload.Span
 import io.embrace.android.embracesdk.internal.utils.threadSafeToList
@@ -24,7 +27,9 @@ import java.util.concurrent.CopyOnWriteArrayList
  *   off-device, excluding any batch a listener has taken ownership of. Accessed via the
  *   `*OtelSpan(s)` methods.
  */
-class SpanRepository {
+class SpanRepository(
+    private val errorHandler: ErrorHandler,
+) {
     private val spans: ConcurrentMap<String, EmbraceSdkSpan> = ConcurrentHashMap()
     private val spanChangeListeners = CopyOnWriteArrayList<(EmbraceSdkSpan) -> Unit>()
 
@@ -71,7 +76,7 @@ class SpanRepository {
             if (mode is SpanTerminationMode.Timeout && startTimeMs != null) {
                 val deadlineMs = startTimeMs + mode.timeoutMs
                 if (now >= deadlineMs) {
-                    span.stopWithErrorCode(ErrorCodeAttribute.Failure, deadlineMs)
+                    errorHandler.guardSdkCode(SdkErrorType.SpanStopFail) { span.stopWithErrorCode(ErrorCodeAttribute.Failure, deadlineMs) }
                 }
             }
         }
@@ -82,7 +87,9 @@ class SpanRepository {
      */
     fun failActiveEmbraceSpans(failureTimeMs: Long) {
         getActiveEmbraceSpans().filterNot { it.hasEmbraceAttribute(EmbType.Ux.Session) }.forEach { span ->
-            span.stopWithErrorCode(ErrorCodeAttribute.Failure, failureTimeMs)
+            errorHandler.guardSdkCode(SdkErrorType.SpanStopFail) {
+                span.stopWithErrorCode(ErrorCodeAttribute.Failure, failureTimeMs)
+            }
         }
     }
 
@@ -230,7 +237,7 @@ class SpanRepository {
     private fun terminateSpansIfRequired(endTimeMs: Long, nodes: List<SpanNode>) {
         nodes.forEach { node ->
             if (node.span.isRecording) {
-                node.span.stop(endTimeMs = endTimeMs)
+                errorHandler.guardSdkCode(SdkErrorType.SpanStopFail) { node.span.stop(endTimeMs = endTimeMs) }
             }
             terminateSpansIfRequired(endTimeMs, node.children)
         }

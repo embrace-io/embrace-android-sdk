@@ -23,10 +23,10 @@ internal class VitalsWindowCallback(
         focalCallbacks = null
     }
 
-    override fun dispatchTouchEvent(event: MotionEvent): Boolean {
+    override fun dispatchTouchEvent(event: MotionEvent?): Boolean {
         val focalCallbacks = focalCallbacks ?: return delegate.dispatchTouchEvent(event)
         try {
-            when (event.actionMasked) {
+            when (event?.actionMasked) {
                 MotionEvent.ACTION_DOWN -> focalCallbacks.onInteractionStart()
                 MotionEvent.ACTION_MOVE -> focalCallbacks.onInteractionMove()
                 MotionEvent.ACTION_UP -> {

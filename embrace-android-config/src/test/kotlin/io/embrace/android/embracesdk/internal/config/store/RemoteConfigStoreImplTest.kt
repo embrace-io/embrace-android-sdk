@@ -104,6 +104,17 @@ internal class RemoteConfigStoreImplTest {
     }
 
     @Test
+    fun `json fallback has no etag`() {
+        val config = RemoteConfig(50)
+        store.saveResponse(ConfigHttpResponse(config, "etag"))
+        cachedConfigFile().delete()
+
+        val loaded = checkNotNull(store.loadResponse())
+        assertEquals(config, loaded.cfg)
+        assertNull(loaded.etag)
+    }
+
+    @Test
     fun `json fallback has no delivered at`() {
         val config = RemoteConfig(50)
         store.saveResponse(ConfigHttpResponse(config, "etag"))
@@ -125,7 +136,7 @@ internal class RemoteConfigStoreImplTest {
 
         val loaded = checkNotNull(store.loadResponse())
         assertEquals(config, loaded.cfg)
-        assertEquals("etag", loaded.etag)
+        assertNull(loaded.etag)
         // device id is only sourced from the binary fast-path, so the fallback omits it
         assertNull(loaded.deviceId)
     }
@@ -229,7 +240,7 @@ internal class RemoteConfigStoreImplTest {
         // ...but the json fallback was written successfully and still loads
         val loaded = checkNotNull(store.loadResponse())
         assertEquals(config, loaded.cfg)
-        assertEquals("etag", loaded.etag)
+        assertNull(loaded.etag)
         assertNull(loaded.deviceId)
     }
 

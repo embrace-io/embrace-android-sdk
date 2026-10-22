@@ -30,6 +30,7 @@ internal class FakeApiServer(
     private val remoteConfig: RemoteConfig,
     private val deliveryTracer: DeliveryTracer,
     private val configResponseJson: String? = null,
+    private val configEtag: String = "server_etag_value",
 ) : Dispatcher() {
 
     private val serializer by threadLocal { TestPlatformSerializer() }
@@ -37,6 +38,7 @@ internal class FakeApiServer(
     private val logRequests = CopyOnWriteArrayList<Envelope<LogPayload>>()
     private val attachments = CopyOnWriteArrayList<List<FormPart>>()
     private val configRequests = CopyOnWriteArrayList<String>()
+    private val configRequestEtags = CopyOnWriteArrayList<String?>()
     private val payloadTypesHeaders = CopyOnWriteArrayList<String>()
 
     /**
@@ -59,6 +61,12 @@ internal class FakeApiServer(
      * The returned value is the query parameter.
      */
     fun getConfigRequests(): List<String> = configRequests.toList()
+
+    /**
+     * Returns the If-None-Match header of each config request in the order in which the server received them.
+     * The value is null when the request did not send the header.
+     */
+    fun getConfigRequestEtags(): List<String?> = configRequestEtags.toList()
 
     /**
      * Returns a list of X-EM-PAYLOAD-TYPES headers in the order in which the server received them.
@@ -125,7 +133,16 @@ internal class FakeApiServer(
     }
 
     private fun handleConfigRequest(request: RecordedRequest): MockResponse {
+        configRequestEtags.add(request.getHeader("If-None-Match"))
         configRequests.add(request.requestUrl?.toUrl()?.query)
+
+        // the config is unchanged since the SDK last fetched it
+        if (request.getHeader("If-None-Match") == configEtag) {
+            deliveryTracer.onServerCompletedRequest("config", "")
+            return MockResponse()
+                .addHeader("etag", configEtag)
+                .setResponseCode(304)
+        }
 
         // serialize the config response
         val configResponseBuffer = Buffer()
@@ -137,7 +154,7 @@ internal class FakeApiServer(
         }
         val response = MockResponse()
             .setBody(configResponseBuffer)
-            .addHeader("etag", "server_etag_value")
+            .addHeader("etag", configEtag)
             .setResponseCode(200)
         deliveryTracer.onServerCompletedRequest("config", "")
         return response

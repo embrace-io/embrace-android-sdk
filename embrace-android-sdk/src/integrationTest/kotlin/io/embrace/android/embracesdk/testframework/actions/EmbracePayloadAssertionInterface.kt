@@ -201,6 +201,11 @@ internal class EmbracePayloadAssertionInterface(
     }
 
     /**
+     * Returns the If-None-Match header of each config request, or null where it was not sent.
+     */
+    internal fun getConfigRequestEtags(): List<String?> = checkNotNull(apiServer).getConfigRequestEtags()
+
+    /**
      * Asserts that config was persisted on disk and returns the persisted information.
      */
     internal fun readPersistedConfigResponse(): ConfigHttpResponse {

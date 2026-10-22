@@ -1,6 +1,7 @@
 package io.embrace.android.embracesdk.internal.instrumentation.startup.startup
 
 import io.embrace.android.embracesdk.fakes.FakeClock
+import io.embrace.android.embracesdk.fakes.FakeErrorHandler
 import io.embrace.android.embracesdk.fakes.FakeTelemetryDestination
 import io.embrace.android.embracesdk.fakes.fakeBackgroundWorker
 import io.embrace.android.embracesdk.internal.arch.state.ProcessState
@@ -8,6 +9,7 @@ import io.embrace.android.embracesdk.internal.instrumentation.startup.SdkInitAtt
 import io.embrace.android.embracesdk.internal.instrumentation.startup.StartupService
 import io.embrace.android.embracesdk.internal.instrumentation.startup.StartupServiceImpl
 import io.embrace.android.embracesdk.internal.instrumentation.startup.toSdkInitDurationAttributes
+import io.embrace.android.embracesdk.internal.logging.SdkErrorType
 import io.embrace.android.embracesdk.internal.worker.BackgroundWorker
 import io.embrace.android.embracesdk.semconv.EmbAppAttributes
 import org.junit.Assert.assertEquals
@@ -20,6 +22,7 @@ import org.junit.Test
 internal class StartupServiceImplTest {
 
     private lateinit var destination: FakeTelemetryDestination
+    private lateinit var errorHandler: FakeErrorHandler
     private lateinit var startupService: StartupService
     private lateinit var clock: FakeClock
     private lateinit var backgroundWorker: BackgroundWorker
@@ -29,7 +32,8 @@ internal class StartupServiceImplTest {
         clock = FakeClock(10000000)
         backgroundWorker = fakeBackgroundWorker()
         destination = FakeTelemetryDestination()
-        startupService = StartupServiceImpl(destination, appVersionStartupCounterProvider = { 3 })
+        errorHandler = FakeErrorHandler(throwOnSdkError = false)
+        startupService = StartupServiceImpl(destination, errorHandler, appVersionStartupCounterProvider = { 3 })
     }
 
     @Test
@@ -79,7 +83,7 @@ internal class StartupServiceImplTest {
 
     @Test
     fun `invalid app version startup counter omitted from SDK startup span`() {
-        startupService = StartupServiceImpl(destination, appVersionStartupCounterProvider = { -1 })
+        startupService = StartupServiceImpl(destination, errorHandler, appVersionStartupCounterProvider = { -1 })
         startupService.setSdkStartupInfo(
             startTimeMs = 10,
             endTimeMs = 20,
@@ -90,6 +94,22 @@ internal class StartupServiceImplTest {
         val span = destination.completedSpans().single()
         assertFalse(span.attributes.containsKey(EmbAppAttributes.EMB_APP_VERSION_STARTUP_COUNTER))
         assertNull(startupService.getAppVersionStartupCounter())
+    }
+
+    @Test
+    fun `sdk startup span is recorded without the provided attributes when the provider throws`() {
+        startupService.setSdkStartupInfo(
+            startTimeMs = 10,
+            endTimeMs = 20,
+            endState = ProcessState.BACKGROUND,
+            threadName = "main",
+            attributesProvider = { error("boom") },
+        )
+        startupService.recordSdkInitSpan()
+        val span = destination.completedSpans().single()
+        assertEquals("main", span.attributes["thread-name"])
+        assertEquals(emptyMap<String, String>(), startupService.getSdkInitAttributes())
+        assertEquals(listOf(SdkErrorType.SdkInitAttributeCaptureFail.toString()), errorHandler.sdkErrorMessages.map { it.msg })
     }
 
     @Test

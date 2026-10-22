@@ -404,6 +404,7 @@ internal fun createRealSdkInstance(
     val startupService = init("startup-service") {
         createStartupService(
             destination = instrumentationArgs.destination,
+            errorHandler = errorHandler,
             appVersionStartupCounterProvider = { appVersionStartupCounter },
         )
     }

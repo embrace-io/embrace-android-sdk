@@ -76,9 +76,9 @@ internal class AppStartupTraceEmitterTest {
     fun setUp() {
         clock = FakeClock(processInitTime)
         destination = FakeTelemetryDestination()
-        startupService = StartupServiceImpl(destination) { APP_VERSION_STARTUP_COUNTER }
-        clock.tick(100L)
         errorHandler = FakeErrorHandler(false)
+        startupService = StartupServiceImpl(destination, errorHandler) { APP_VERSION_STARTUP_COUNTER }
+        clock.tick(100L)
     }
 
     /**

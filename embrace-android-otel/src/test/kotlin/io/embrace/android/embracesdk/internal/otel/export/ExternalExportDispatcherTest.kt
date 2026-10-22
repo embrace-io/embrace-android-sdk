@@ -2,7 +2,9 @@ package io.embrace.android.embracesdk.internal.otel.export
 
 import io.embrace.android.embracesdk.fakes.FakeErrorHandler
 import io.embrace.android.embracesdk.internal.logging.SdkErrorType
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.awaitCancellation
 import kotlinx.coroutines.delay
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
@@ -55,6 +57,40 @@ internal class ExternalExportDispatcherTest {
         }
         dispatcher.shutdown()
         assertTrue(exported.await(5, TimeUnit.SECONDS))
+    }
+
+    @Test
+    fun `shutdown cancels a suspending export that outlives the timeout`() {
+        val dispatcher = ExternalExportDispatcher(errorHandler, shutdownTimeoutMs = 10)
+        val cancelled = CountDownLatch(1)
+        dispatcher.dispatch(listOf(1)) {
+            try {
+                awaitCancellation()
+            } catch (exc: CancellationException) {
+                cancelled.countDown()
+                throw exc
+            }
+        }
+        dispatcher.shutdown()
+        assertTrue(cancelled.await(5, TimeUnit.SECONDS))
+    }
+
+    @Test
+    fun `shutdown interrupts a blocking export that outlives the timeout`() {
+        val dispatcher = ExternalExportDispatcher(errorHandler, shutdownTimeoutMs = 10)
+        val started = CountDownLatch(1)
+        val interrupted = CountDownLatch(1)
+        dispatcher.dispatch(listOf(1)) {
+            try {
+                started.countDown()
+                CountDownLatch(1).await()
+            } catch (ignored: InterruptedException) {
+                interrupted.countDown()
+            }
+        }
+        assertTrue(started.await(5, TimeUnit.SECONDS))
+        dispatcher.shutdown()
+        assertTrue(interrupted.await(5, TimeUnit.SECONDS))
     }
 
     private fun throwingList(exc: Throwable): List<Int> = object : AbstractList<Int>() {

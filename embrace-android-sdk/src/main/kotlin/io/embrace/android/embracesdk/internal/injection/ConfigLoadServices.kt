@@ -88,6 +88,7 @@ internal class ConfigLoadServices(
 
     override fun close() {
         workerThreadPool.backgroundWorker(Worker.Background.HttpRequestWorker).submit {
+            okHttpClient.evictConnections()
             workerThreadPool.close()
         }
     }

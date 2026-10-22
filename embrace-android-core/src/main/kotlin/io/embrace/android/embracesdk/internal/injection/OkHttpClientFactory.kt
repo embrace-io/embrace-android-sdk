@@ -21,3 +21,9 @@ fun lazyOkHttpClient(): Lazy<OkHttpClient> = lazy(LazyThreadSafetyMode.SYNCHRONI
             .build()
     }
 }
+
+fun Lazy<OkHttpClient>.evictConnections() {
+    if (isInitialized()) {
+        value.connectionPool.evictAll()
+    }
+}

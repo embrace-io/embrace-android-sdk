@@ -782,6 +782,7 @@ internal fun createRealSdkInstance(
             primaryAbi = systemInfo.primaryAbi,
             configService = configService,
             workerThreadPool = workerThreadPool,
+            okHttpClient = okHttpClient,
             eventBus = eventBus,
             appContext = appContext,
             spanRepository = spanRepository,

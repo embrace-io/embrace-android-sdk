@@ -200,20 +200,20 @@ class SchedulingServiceImpl(
      * as the request body verbatim, so an oversized file is an oversized request.
      */
     private fun attemptDelivery(payload: StoredTelemetryMetadata): ExecutionResult {
-        if (!connectionStatus.ready()) {
-            return ExecutionResult.NetworkNotReady
-        }
-
-        val sizeBytes = storageService.payloadSizeBytes(payload)
-        if (sizeBytes > maxPayloadBytes) {
-            errorHandler.trackSdkError(
-                type = SdkErrorType.PayloadDeliveryFail,
-                throwable = IOException("$OVERSIZED_UPLOAD_MSG: $sizeBytes bytes"),
-            )
-            return ExecutionResult.PayloadTooLarge(sizeBytes)
-        }
-
         return try {
+            if (!connectionStatus.ready()) {
+                return ExecutionResult.NetworkNotReady
+            }
+
+            val sizeBytes = storageService.payloadSizeBytes(payload)
+            if (sizeBytes > maxPayloadBytes) {
+                errorHandler.trackSdkError(
+                    type = SdkErrorType.PayloadDeliveryFail,
+                    throwable = IOException("$OVERSIZED_UPLOAD_MSG: $sizeBytes bytes"),
+                )
+                return ExecutionResult.PayloadTooLarge(sizeBytes)
+            }
+
             payload.toStream()?.use { stream ->
                 executionService.attemptHttpRequest(
                     payloadStream = { stream },
@@ -228,9 +228,36 @@ class SchedulingServiceImpl(
     }
 
     /**
-     * Schedule future deliveries based on the latest delivery execution
+     * Schedule future deliveries based on the latest delivery execution.
+     *
+     * The payload's in-progress state is released even if recording the result fails, otherwise all
+     * payloads of this envelope type would never be delivered again in this process.
      */
     private fun ExecutionResult.processDeliveryResult(
+        payload: StoredTelemetryMetadata,
+    ) {
+        errorHandler.guardSdkCode(SdkErrorType.DeliverySchedulingFail) {
+            recordDeliveryResult(payload)
+        }
+
+        // remove any payloads that should not be retried to unblock other payloads of the same type
+        if (!shouldRetry) {
+            payloadsInProgress.remove(payload.envelopeType)
+        }
+
+        findAndDeliverNextPayload()
+        errorHandler.guardSdkCode(SdkErrorType.DeliverySchedulingFail) {
+            payloadsToRetry.values.minOfOrNull { it.nextRetryTimeMs }?.let { retryTimeMs ->
+                scheduleFutureDeliveryAttempt(maxOf(retryTimeMs, connectionStatus.getUnblockTime()))
+            }
+        }
+        activeSends.remove(payload)
+    }
+
+    /**
+     * Update connection, retry, and storage state from the latest delivery execution
+     */
+    private fun ExecutionResult.recordDeliveryResult(
         payload: StoredTelemetryMetadata,
     ) {
         // If the request failed because the SDK cannot reach the Embrace server, schedule a delivery for when the connection unblocks.
@@ -276,23 +303,6 @@ class SchedulingServiceImpl(
                 nextRetryTimeMs = nextRetryTimeMs,
             )
         }
-
-        // Any payload that will not be retried is either sent or deleted, so it should no longer considered to be in progress.
-        // If it should be retried, leave the payload as being in progress so no other payloads of the same type will be scheduled.
-        if (!shouldRetry) {
-            payloadsInProgress.remove(payload.envelopeType)
-        }
-
-        /**
-         * Always try to send the next payload and schedule the next retry or connection unblocking, whichever happens later.
-         * This is fulfilling the promise made in [onPayloadIntake] so that any debounced intake will not result in a
-         * new payload intake being ignored.
-         */
-        findAndDeliverNextPayload()
-        payloadsToRetry.values.minOfOrNull { it.nextRetryTimeMs }?.let { retryTimeMs ->
-            scheduleFutureDeliveryAttempt(maxOf(retryTimeMs, connectionStatus.getUnblockTime()))
-        }
-        activeSends.remove(payload)
     }
 
     /**

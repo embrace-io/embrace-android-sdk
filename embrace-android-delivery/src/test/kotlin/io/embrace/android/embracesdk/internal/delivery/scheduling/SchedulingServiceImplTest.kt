@@ -21,6 +21,7 @@ import io.embrace.android.embracesdk.internal.delivery.execution.ExecutionResult
 import io.embrace.android.embracesdk.internal.delivery.execution.ExecutionResult.Failure
 import io.embrace.android.embracesdk.internal.delivery.execution.ExecutionResult.Incomplete
 import io.embrace.android.embracesdk.internal.delivery.scheduling.SchedulingServiceImpl.Companion.INITIAL_DELAY_MS
+import io.embrace.android.embracesdk.internal.delivery.storage.PayloadStorageService
 import io.embrace.android.embracesdk.internal.logging.SdkErrorType
 import io.embrace.android.embracesdk.internal.payload.Envelope
 import io.embrace.android.embracesdk.internal.payload.Log
@@ -807,6 +808,56 @@ internal class SchedulingServiceImplTest {
         assertEquals(0, storageService.storedPayloadCount())
     }
 
+    @Test
+    fun `a failure processing a delivery result does not block later payloads of the same type`() {
+        storageService.clearStorage()
+        storageService.addFakePayload(fakeSessionStoredTelemetryMetadata)
+        storageService.addFakePayload(fakeSessionStoredTelemetryMetadata2)
+        recreateSchedulingService(
+            storage = object : PayloadStorageService by storageService {
+                override fun delete(metadata: StoredTelemetryMetadata, callback: () -> Unit) {
+                    if (metadata == fakeSessionStoredTelemetryMetadata) {
+                        error("delete failed")
+                    }
+                    storageService.delete(metadata, callback)
+                }
+            },
+        )
+        allSendsRejected()
+        waitForResurrectionAndDeliveryAttempt(2)
+
+        assertEquals(2, executionService.sendAttempts())
+        assertEquals(
+            SdkErrorType.DeliverySchedulingFail.toString(),
+            errorHandler.sdkErrorMessages.single().msg,
+        )
+    }
+
+    @Test
+    fun `a failure preparing a delivery does not block later payloads of the same type`() {
+        storageService.clearStorage()
+        storageService.addFakePayload(fakeSessionStoredTelemetryMetadata)
+        storageService.addFakePayload(fakeSessionStoredTelemetryMetadata2)
+        recreateSchedulingService(
+            storage = object : PayloadStorageService by storageService {
+                override fun payloadSizeBytes(metadata: StoredTelemetryMetadata): Long {
+                    if (metadata == fakeSessionStoredTelemetryMetadata) {
+                        error("size check failed")
+                    }
+                    return storageService.payloadSizeBytes(metadata)
+                }
+            },
+        )
+        waitForResurrectionAndDeliveryAttempt(2)
+
+        assertEquals(1, executionService.sendAttempts())
+        assertEquals(0, storageService.storedPayloadCount())
+        assertEquals(
+            SdkErrorType.DeliverySchedulingFail.toString(),
+            errorHandler.sdkErrorMessages.single().msg,
+        )
+    }
+
     @Test(expected = RejectedExecutionException::class)
     fun `test shutdown`() {
         errorHandler.throwOnSdkError = false
@@ -922,11 +973,16 @@ internal class SchedulingServiceImplTest {
     private fun storedSizeOf(metadata: StoredTelemetryMetadata): Long =
         storageService.payloadSizeBytes(metadata)
 
-    private fun useMaxPayloadBytes(maxPayloadBytes: Long) {
+    private fun useMaxPayloadBytes(maxPayloadBytes: Long) = recreateSchedulingService(maxPayloadBytes = maxPayloadBytes)
+
+    private fun recreateSchedulingService(
+        storage: PayloadStorageService = storageService,
+        maxPayloadBytes: Long = MAX_UPLOAD_PAYLOAD_BYTES,
+    ) {
         errorHandler.throwOnSdkError = false
         networkConnectivityService.removeNetworkConnectivityListener(schedulingService)
         schedulingService = SchedulingServiceImpl(
-            storageService = storageService,
+            storageService = storage,
             executionService = executionService,
             schedulingWorker = BackgroundWorker(schedulingExecutor),
             deliveryWorker = BackgroundWorker(deliveryExecutor),

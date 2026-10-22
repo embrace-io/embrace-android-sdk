@@ -1,6 +1,11 @@
 package io.embrace.android.embracesdk.injection
 
+import android.app.Activity
+import android.app.ActivityManager
+import android.app.ActivityManager.RunningAppProcessInfo
 import android.content.Context
+import android.os.Looper
+import android.os.Process
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import io.embrace.android.embracesdk.fakes.FakeClock
 import io.embrace.android.embracesdk.fakes.FakeConfigService
@@ -15,9 +20,12 @@ import io.embrace.android.embracesdk.internal.arch.InstrumentationRegistry
 import io.embrace.android.embracesdk.internal.arch.state.ProcessState
 import io.embrace.android.embracesdk.internal.arch.state.ProcessStateListener
 import io.embrace.android.embracesdk.internal.clock.Clock
+import io.embrace.android.embracesdk.internal.config.ConfigService
 import io.embrace.android.embracesdk.internal.config.PersistedConfig
 import io.embrace.android.embracesdk.internal.config.remote.OtelKotlinSdkConfig
 import io.embrace.android.embracesdk.internal.config.remote.RemoteConfig
+import io.embrace.android.embracesdk.internal.config.resolved.AutoDataCaptureConfig
+import io.embrace.android.embracesdk.internal.config.resolved.EmbraceConfig
 import io.embrace.android.embracesdk.internal.delivery.intake.IntakeService
 import io.embrace.android.embracesdk.internal.delivery.storage.StorageLocation
 import io.embrace.android.embracesdk.internal.injection.ConfigLoadServices
@@ -31,6 +39,7 @@ import io.embrace.android.embracesdk.internal.instrumentation.crash.CrashFileMar
 import io.embrace.android.embracesdk.internal.instrumentation.crash.jvm.JvmCrashDataSource
 import io.embrace.android.embracesdk.internal.instrumentation.startup.SdkInitResourceUsageTracker
 import io.embrace.android.embracesdk.internal.instrumentation.thread.blockage.ThreadBlockageService
+import io.embrace.android.embracesdk.internal.logging.ErrorHandler
 import io.embrace.android.embracesdk.internal.logs.LogOrchestrator
 import io.embrace.android.embracesdk.internal.otel.config.OtelSdkConfig
 import io.embrace.android.embracesdk.internal.otel.sdk.OtelSdkWrapper
@@ -44,6 +53,7 @@ import okhttp3.OkHttpClient
 import okhttp3.Request
 import okhttp3.mockwebserver.MockResponse
 import okhttp3.mockwebserver.MockWebServer
+import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNotNull
@@ -53,7 +63,9 @@ import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
+import org.robolectric.Robolectric
 import org.robolectric.RuntimeEnvironment
+import org.robolectric.Shadows.shadowOf
 import java.io.File
 
 @RunWith(AndroidJUnit4::class)
@@ -72,22 +84,25 @@ internal class RealSdkInstanceFactoryTest {
     private var lifecycleTrackerRegistered = false
 
     private val overrides = SdkOverrides(
+        lifecycleTracker = { real ->
+            val tracker = real()
+            object : LifecycleTracker by tracker {
+                override fun register(listener: ProcessStateListener) {
+                    lifecycleTrackerRegistered = true
+                    tracker.register(listener)
+                }
+            }
+        },
         otelSdkConfig = { real -> real().also { otelSdkConfig = it } },
         otelSdkWrapper = { real -> real().also { otelSdkWrapper = it } },
         instrumentationRegistry = { real -> real().also { instrumentationRegistry = it } },
         sessionOrchestrator = { real -> real().also { sessionOrchestrator = it } },
         threadBlockageService = { real -> real().also { threadBlockageService = it } },
         intakeService = { real -> real().also { intakeService = it } },
-        lifecycleTracker = {
-            object : LifecycleTracker {
-                override fun getProcessState(): ProcessState = ProcessState.BACKGROUND
-                override fun register(listener: ProcessStateListener) {
-                    lifecycleTrackerRegistered = true
-                }
-                override fun close() {}
-            }
-        },
     )
+
+    // closed after each test, so no instance leaves worker threads, lifecycle observers or scheduled tasks behind
+    private val instances = mutableListOf<RealSdkInstance>()
 
     @Before
     fun setup() {
@@ -96,7 +111,14 @@ internal class RealSdkInstanceFactoryTest {
         context = RuntimeEnvironment.getApplication().applicationContext
     }
 
+    @After
+    fun tearDown() {
+        instances.forEach(RealSdkInstance::close)
+    }
+
     private fun createInstance(
+        errorHandler: ErrorHandler = this.errorHandler,
+        configService: ConfigService = FakeConfigService(),
         workerThreadPool: WorkerThreadPool? = null,
         overrides: SdkOverrides = this.overrides,
         okHttpClient: Lazy<OkHttpClient> = lazyOkHttpClient(),
@@ -110,12 +132,12 @@ internal class RealSdkInstanceFactoryTest {
                 preStartServices = preStartServices,
                 okHttpClient = okHttpClient,
                 workerThreadPoolSupplier = workerThreadPool?.let { pool -> { pool } },
-                configServiceSupplier = { _, _, _, _, _, _ -> FakeConfigService() },
+                configServiceSupplier = { _, _, _, _, _, _ -> configService },
             ),
             sdkStartTimeMs = clock.now(),
             sdkInitResourceUsageTracker = SdkInitResourceUsageTracker(errorHandler),
             overrides = overrides,
-        )
+        ).also(instances::add)
     }
 
     @Test
@@ -182,7 +204,7 @@ internal class RealSdkInstanceFactoryTest {
             sdkStartTimeMs = clock.now(),
             sdkInitResourceUsageTracker = SdkInitResourceUsageTracker(errorHandler),
             overrides = overrides,
-        )
+        ).also(instances::add)
     }
 
     /**
@@ -192,14 +214,56 @@ internal class RealSdkInstanceFactoryTest {
     @Test
     fun `instrumentation loads in onEnabled rather than in enable`() {
         val instance = createInstance()
-        try {
-            instance.enable(context)
-            assertNull(checkNotNull(instrumentationRegistry).findByType(JvmCrashDataSource::class))
-            instance.onEnabled()
-            assertNotNull(checkNotNull(instrumentationRegistry).findByType(JvmCrashDataSource::class))
-        } finally {
-            instance.close()
+        instance.enable(context)
+        assertNull(checkNotNull(instrumentationRegistry).findByType(JvmCrashDataSource::class))
+        instance.onEnabled()
+        assertNotNull(checkNotNull(instrumentationRegistry).findByType(JvmCrashDataSource::class))
+    }
+
+    /**
+     * The integration tests replace the platform's lifecycle tracking, so this checks that a real tracker reaches an enabled
+     * instance. It uses the tracker driven by activity callbacks, as androidx's process lifecycle is not initialized here.
+     */
+    @Test
+    fun `real lifecycle tracking reports a foreground to the enabled instance`() {
+        val configService = FakeConfigService(
+            config = EmbraceConfig(
+                autoDataCapture = { AutoDataCaptureConfig(activityProcessLifecycleTrackerEnabled = { true }) },
+            ),
+        )
+        val activityManager = context.getSystemService(Context.ACTIVITY_SERVICE) as ActivityManager
+        shadowOf(activityManager).setProcesses(
+            listOf(
+                RunningAppProcessInfo().apply {
+                    pid = Process.myPid()
+                    importance = RunningAppProcessInfo.IMPORTANCE_CACHED
+                },
+            ),
+        )
+        createInstance(configService = configService).runInit()
+        assertEquals(ProcessState.BACKGROUND.description, emittedLogState())
+
+        Robolectric.buildActivity(Activity::class.java).setup()
+        shadowOf(Looper.getMainLooper()).idle()
+        assertEquals(ProcessState.FOREGROUND.description, emittedLogState())
+    }
+
+    /**
+     * Only a fixed number of SDK errors are sent per session part, so the limit must reset when a new part starts.
+     */
+    @Test
+    fun `a new session part resets the SDK error limit`() {
+        var limitResets = 0
+        val countingErrorHandler = object : ErrorHandler by errorHandler {
+            override fun resetLimit() {
+                limitResets++
+            }
         }
+        createInstance(countingErrorHandler).runInit()
+        val resetsAtStart = limitResets
+
+        checkNotNull(sessionOrchestrator).onForeground()
+        assertEquals(resetsAtStart + 1, limitResets)
     }
 
     @Test
@@ -273,6 +337,18 @@ internal class RealSdkInstanceFactoryTest {
         assertFalse(connectivityService.registered)
         assertTrue(connectivityService.listeners.isEmpty())
         server.shutdown()
+    }
+
+    // runs the instance's init as SdkStateHolder does, without a pre-start buffer to transition from
+    private fun RealSdkInstance.runInit() {
+        enable(context)
+        onEnabled()
+    }
+
+    private fun emittedLogState(): Any? {
+        val log = FakeReadWriteLogRecord()
+        checkNotNull(otelSdkConfig).logRecordProcessor.onEmit(log, NoopOpenTelemetry.context.implicit())
+        return log.attributes[EmbSessionAttributes.EMB_STATE]
     }
 
     private companion object {

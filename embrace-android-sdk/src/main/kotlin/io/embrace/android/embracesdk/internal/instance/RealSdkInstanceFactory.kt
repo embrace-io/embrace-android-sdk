@@ -676,6 +676,7 @@ internal fun createRealSdkInstance(
             sink = logSink,
             payloadStore = payloadStore,
             logEnvelopeSource = logEnvelopeSource,
+            errorHandler = errorHandler,
         )
     }
 

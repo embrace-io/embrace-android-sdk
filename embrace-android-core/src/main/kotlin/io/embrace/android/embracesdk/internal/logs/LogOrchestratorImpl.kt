@@ -2,7 +2,12 @@ package io.embrace.android.embracesdk.internal.logs
 
 import io.embrace.android.embracesdk.internal.clock.Clock
 import io.embrace.android.embracesdk.internal.envelope.log.LogEnvelopeSource
+import io.embrace.android.embracesdk.internal.logging.ErrorHandler
+import io.embrace.android.embracesdk.internal.logging.SdkErrorType
+import io.embrace.android.embracesdk.internal.logging.guardSdkCode
 import io.embrace.android.embracesdk.internal.otel.logs.LogSink
+import io.embrace.android.embracesdk.internal.payload.Envelope
+import io.embrace.android.embracesdk.internal.payload.LogPayload
 import io.embrace.android.embracesdk.internal.session.orchestrator.PayloadStore
 import io.embrace.android.embracesdk.internal.worker.BackgroundWorker
 import java.lang.Long.min
@@ -16,6 +21,7 @@ internal class LogOrchestratorImpl(
     private val sink: LogSink,
     private val payloadStore: PayloadStore?,
     private val logEnvelopeSource: LogEnvelopeSource,
+    private val errorHandler: ErrorHandler,
 ) : LogOrchestrator {
 
     @Volatile
@@ -34,7 +40,7 @@ internal class LogOrchestratorImpl(
 
         val envelope = logEnvelopeSource.getBatchedLogEnvelope()
         if (!envelope.data.logs.isNullOrEmpty()) {
-            payloadStore?.storeLogPayload(envelope)
+            storeLogPayload(envelope)
         }
     }
 
@@ -44,7 +50,7 @@ internal class LogOrchestratorImpl(
 
     override fun onLogsAdded() {
         logEnvelopeSource.getSingleLogEnvelopes().forEach { logRequest ->
-            payloadStore?.storeLogPayload(logRequest.payload)
+            storeLogPayload(logRequest.payload)
         }
 
         lastLogTime.set(clock.now())
@@ -72,6 +78,12 @@ internal class LogOrchestratorImpl(
         }
         flush(false)
         return true
+    }
+
+    private fun storeLogPayload(envelope: Envelope<LogPayload>) {
+        errorHandler.guardSdkCode(SdkErrorType.PayloadStorageFail) {
+            payloadStore?.storeLogPayload(envelope)
+        }
     }
 
     private fun scheduleCheck() {

@@ -10,6 +10,8 @@ import io.embrace.android.embracesdk.fakes.OtelSdkMode
 import io.embrace.android.embracesdk.fakes.TestPlatformSerializer
 import io.embrace.android.embracesdk.fakes.injection.TestInitServices
 import io.embrace.android.embracesdk.internal.arch.InstrumentationRegistry
+import io.embrace.android.embracesdk.internal.arch.state.ProcessState
+import io.embrace.android.embracesdk.internal.arch.state.ProcessStateListener
 import io.embrace.android.embracesdk.internal.clock.Clock
 import io.embrace.android.embracesdk.internal.config.PersistedConfig
 import io.embrace.android.embracesdk.internal.config.remote.OtelKotlinSdkConfig
@@ -26,6 +28,7 @@ import io.embrace.android.embracesdk.internal.instrumentation.thread.blockage.Th
 import io.embrace.android.embracesdk.internal.logs.LogOrchestrator
 import io.embrace.android.embracesdk.internal.otel.config.OtelSdkConfig
 import io.embrace.android.embracesdk.internal.otel.sdk.OtelSdkWrapper
+import io.embrace.android.embracesdk.internal.session.lifecycle.LifecycleTracker
 import io.embrace.android.embracesdk.internal.session.orchestrator.PayloadStore
 import io.embrace.android.embracesdk.internal.session.orchestrator.SessionOrchestrator
 import io.embrace.android.embracesdk.semconv.EmbSessionAttributes
@@ -54,6 +57,7 @@ internal class RealSdkInstanceFactoryTest {
     private var sessionOrchestrator: SessionOrchestrator? = null
     private var threadBlockageService: ThreadBlockageService? = null
     private var intakeService: IntakeService? = null
+    private var lifecycleTrackerRegistered = false
 
     private val overrides = SdkOverrides(
         otelSdkConfig = { real -> real().also { otelSdkConfig = it } },
@@ -62,6 +66,15 @@ internal class RealSdkInstanceFactoryTest {
         sessionOrchestrator = { real -> real().also { sessionOrchestrator = it } },
         threadBlockageService = { real -> real().also { threadBlockageService = it } },
         intakeService = { real -> real().also { intakeService = it } },
+        lifecycleTracker = {
+            object : LifecycleTracker {
+                override fun getProcessState(): ProcessState = ProcessState.BACKGROUND
+                override fun register(listener: ProcessStateListener) {
+                    lifecycleTrackerRegistered = true
+                }
+                override fun close() {}
+            }
+        },
     )
 
     @Before
@@ -169,5 +182,13 @@ internal class RealSdkInstanceFactoryTest {
         assertSame(sessionOrchestrator, handlers[2])
         assertTrue(handlers[3] is CrashFileMarker)
         assertTrue(handlers[4] is PayloadStore)
+    }
+
+    @Test
+    fun `lifecycle observer is registered when the instance starts`() {
+        val instance = createInstance()
+        assertFalse(lifecycleTrackerRegistered)
+        instance.start(context)
+        assertTrue(lifecycleTrackerRegistered)
     }
 }

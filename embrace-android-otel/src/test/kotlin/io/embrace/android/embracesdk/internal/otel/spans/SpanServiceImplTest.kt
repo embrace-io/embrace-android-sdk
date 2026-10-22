@@ -290,8 +290,8 @@ internal class SpanServiceImplTest(
             assertTrue(
                 spansService.recordCompletedSpan(
                     name = "test${errorCode.name}",
-                    startTimeMs = 0,
-                    endTimeMs = 1,
+                    startTimeMs = clock.now(),
+                    endTimeMs = clock.now() + 1,
                     errorCode = errorCode.toErrorCodeAttribute(),
                 ),
             )

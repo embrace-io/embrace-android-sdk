@@ -662,6 +662,16 @@ internal class EmbraceSpanImplTest(
     }
 
     @Test
+    fun `end time before start time is clamped to the start time`() {
+        val startTimeMs = fakeClock.now()
+        assertTrue(embraceSpan.start(startTimeMs))
+        assertTrue(embraceSpan.stop(endTimeMs = startTimeMs - 1000))
+        val exported = spanExporter.exportedSpans.single()
+        assertEquals(exported.startTimestamp, exported.endTimestamp)
+        assertEquals(startTimeMs.millisToNanos(), embraceSpan.snapshot()?.endTimeNanos)
+    }
+
+    @Test
     fun `start time from span builder used if no start time passed into start method`() {
         val timeOnWrapper = fakeClock.tick()
         val wrapper = createWrapperForInternalSpan(startTimeMs = timeOnWrapper)

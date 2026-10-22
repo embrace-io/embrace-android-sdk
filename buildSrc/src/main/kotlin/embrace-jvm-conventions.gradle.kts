@@ -50,4 +50,5 @@ project.tasks.withType<Test>().configureEach {
     jvmArgs("-XX:TieredStopAtLevel=1")
     // Avoids a JVM warning per test fork when mockk's agent appends to the bootstrap classpath
     jvmArgs("-Xshare:off")
+    timeout.set(TEST_TASK_TIMEOUT)
 }

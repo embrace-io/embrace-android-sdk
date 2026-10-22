@@ -59,6 +59,7 @@ android {
                 test.jvmArgs("-Xshare:off")
                 // Robolectric needs this to emulate SDK 36+
                 test.jvmArgs("--add-opens=java.base/jdk.internal.access=ALL-UNNAMED")
+                test.timeout.set(TEST_TASK_TIMEOUT)
 
                 // Disable test discovery failure for modules without test sources
                 test.failOnNoDiscoveredTests.set(false)

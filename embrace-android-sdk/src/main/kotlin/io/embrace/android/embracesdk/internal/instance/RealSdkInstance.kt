@@ -441,11 +441,13 @@ internal class RealSdkInstance(
                 payloadStore?.let(::addCrashTeardownHandler)
             }
             workerThreadPool.backgroundWorker(Worker.Background.NonIoRegWorker).submit {
-                with(networkConnectivityService) {
-                    registry.findByType(NetworkStatusDataSource::class)?.let(::addNetworkConnectivityListener)
-                    registry.findByType(NetworkStateDataSource::class)?.let(::addNetworkConnectivityListener)
-                    register()
+                errorHandler.guardSdkCode(SdkErrorType.SdkInitPhaseFail) {
+                    registry.findByType(NetworkStatusDataSource::class)?.let(networkConnectivityService::addNetworkConnectivityListener)
                 }
+                errorHandler.guardSdkCode(SdkErrorType.SdkInitPhaseFail) {
+                    registry.findByType(NetworkStateDataSource::class)?.let(networkConnectivityService::addNetworkConnectivityListener)
+                }
+                errorHandler.guardSdkCode(SdkErrorType.SdkInitPhaseFail, networkConnectivityService::register)
             }
         }
     }
@@ -461,11 +463,15 @@ internal class RealSdkInstance(
                     // Get real network status as soon as we can on the worker.
                     // This allows the delivery triggered by resurrection to get the most accurate network status as possible
                     // so that it won't waste time trying to send when the device is known to be offline.
-                    schedulingService?.let(networkConnectivityService::addNetworkConnectivityListener)
+                    errorHandler.guardSdkCode(SdkErrorType.SdkInitPhaseFail) {
+                        schedulingService?.let(networkConnectivityService::addNetworkConnectivityListener)
+                    }
 
                     // process multi-file session part directories before resurrection can run. The reader resurrects
                     // dead parts itself, so a part this pass doesn't reach is still resurrected by a later pass
-                    sessionPartReader?.readPersistedSessionParts(true)
+                    errorHandler.guardSdkCode(SdkErrorType.SdkInitPhaseFail) {
+                        sessionPartReader?.readPersistedSessionParts(true)
+                    }
 
                     val resurrectionService = payloadResurrectionService
                     if (resurrectionService != null) {

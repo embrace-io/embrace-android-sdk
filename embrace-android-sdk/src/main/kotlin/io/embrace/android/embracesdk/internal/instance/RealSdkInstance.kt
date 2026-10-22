@@ -230,11 +230,14 @@ internal class RealSdkInstance(
         runCatching { startupTracker.close() }
         runCatching { otelSdkConfig.value.close() }
         runCatching { sessionOrchestrator.close() }
+        // queue eviction before the scheduling service shuts down the HTTP worker it shares, or the submit is rejected
         runCatching {
             workerThreadPool.backgroundWorker(Worker.Background.HttpRequestWorker).submit {
                 okHttpClient.evictConnections()
             }
         }
+        runCatching { schedulingService?.shutdown() }
+        runCatching { cancelHttpRequests() }
         runCatching { workerThreadPool.close() }
         runCatching { eventBus.stop() }
 
@@ -403,6 +406,15 @@ internal class RealSdkInstance(
                     )
                 }
             }
+        }
+    }
+
+    /**
+     * Cancels HTTP calls that are already running, which would otherwise block worker shutdown until they time out.
+     */
+    private fun cancelHttpRequests() {
+        if (okHttpClient.isInitialized()) {
+            okHttpClient.value.dispatcher.cancelAll()
         }
     }
 

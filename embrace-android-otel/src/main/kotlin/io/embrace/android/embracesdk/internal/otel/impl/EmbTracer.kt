@@ -11,6 +11,7 @@ import io.opentelemetry.kotlin.context.Context
 import io.opentelemetry.kotlin.tracing.Span
 import io.opentelemetry.kotlin.tracing.SpanCreationAction
 import io.opentelemetry.kotlin.tracing.SpanKind
+import io.opentelemetry.kotlin.tracing.StatusData
 import io.opentelemetry.kotlin.tracing.Tracer
 
 /**
@@ -54,7 +55,14 @@ class EmbTracer(
         }
         val ref = span ?: EmbInvalidSpan()
         if (action != null) {
-            action(ref as SpanCreationAction)
+            try {
+                action(ref as SpanCreationAction)
+            } catch (exc: Throwable) {
+                // the span is never returned to the caller, so end it here or it would leak
+                ref.setStatus(StatusData.Error(null))
+                ref.end()
+                throw exc
+            }
         }
         return ref
     }

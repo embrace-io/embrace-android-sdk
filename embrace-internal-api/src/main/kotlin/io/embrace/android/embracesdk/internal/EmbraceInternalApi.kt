@@ -1,5 +1,7 @@
 package io.embrace.android.embracesdk.internal
 
+import io.embrace.android.embracesdk.internal.api.delegate.ForwardingInternalInterface
+
 /**
  * Provides access to internal Embrace SDK APIs. This is intended for use by Embrace's SDKs only and is subject
  * to breaking changes without warning.
@@ -17,15 +19,13 @@ object EmbraceInternalApi : InternalInterfaceApi {
     @Deprecated("", replaceWith = ReplaceWith("EmbraceInternalApi"))
     fun getInstance(): EmbraceInternalApi = this
 
-    override val internalInterface: EmbraceInternalInterface
-        get() = internalInterfaceApi.internalInterface
+    private val forwarder = ForwardingInternalInterface { internalInterfaceApi }
 
-    override val reactNativeInternalInterface: ReactNativeInternalInterface
-        get() = internalInterfaceApi.reactNativeInternalInterface
+    override val internalInterface: EmbraceInternalInterface = forwarder
 
-    override val unityInternalInterface: UnityInternalInterface
-        get() = internalInterfaceApi.unityInternalInterface
+    override val reactNativeInternalInterface: ReactNativeInternalInterface = forwarder
 
-    override val flutterInternalInterface: FlutterInternalInterface
-        get() = internalInterfaceApi.flutterInternalInterface
+    override val unityInternalInterface: UnityInternalInterface = forwarder
+
+    override val flutterInternalInterface: FlutterInternalInterface = forwarder
 }

@@ -469,16 +469,19 @@ internal class SdkStateIntegrationTest(
             startSdk = false,
             testCaseAction = {
                 assertInternalApiIsNoop()
-                EmbraceInternalApi.internalInterface.addEnvelopeResource("before", "start")
+                val internalInterface = EmbraceInternalApi.internalInterface
+                internalInterface.addEnvelopeResource("before", "start")
 
                 embrace.start(context)
                 assertInternalApiIsLive()
                 EmbraceInternalApi.internalInterface.addEnvelopeResource("after", "start")
+                internalInterface.addEnvelopeResource("held", "start")
                 recordSession()
             },
             assertAction = {
                 val extras = checkNotNull(getSingleSessionEnvelope().resource?.extras)
                 assertEquals("start", extras["after"])
+                assertEquals("start", extras["held"])
                 assertFalse(extras.containsKey("before"))
             },
         )
@@ -552,23 +555,19 @@ internal class SdkStateIntegrationTest(
     }
 
     private fun assertInternalApiIsNoop() {
-        assertSame(NoopInternalInterfaceApi.internalInterface, EmbraceInternalApi.internalInterface)
-        assertSame(
-            NoopInternalInterfaceApi.reactNativeInternalInterface,
-            EmbraceInternalApi.reactNativeInternalInterface,
-        )
-        assertSame(NoopInternalInterfaceApi.unityInternalInterface, EmbraceInternalApi.unityInternalInterface)
-        assertSame(NoopInternalInterfaceApi.flutterInternalInterface, EmbraceInternalApi.flutterInternalInterface)
+        val api = EmbraceInternalApi.internalInterfaceApi
+        assertSame(NoopInternalInterfaceApi.internalInterface, api.internalInterface)
+        assertSame(NoopInternalInterfaceApi.reactNativeInternalInterface, api.reactNativeInternalInterface)
+        assertSame(NoopInternalInterfaceApi.unityInternalInterface, api.unityInternalInterface)
+        assertSame(NoopInternalInterfaceApi.flutterInternalInterface, api.flutterInternalInterface)
     }
 
     private fun assertInternalApiIsLive() {
-        assertNotSame(NoopInternalInterfaceApi.internalInterface, EmbraceInternalApi.internalInterface)
-        assertNotSame(
-            NoopInternalInterfaceApi.reactNativeInternalInterface,
-            EmbraceInternalApi.reactNativeInternalInterface,
-        )
-        assertNotSame(NoopInternalInterfaceApi.unityInternalInterface, EmbraceInternalApi.unityInternalInterface)
-        assertNotSame(NoopInternalInterfaceApi.flutterInternalInterface, EmbraceInternalApi.flutterInternalInterface)
+        val api = EmbraceInternalApi.internalInterfaceApi
+        assertNotSame(NoopInternalInterfaceApi.internalInterface, api.internalInterface)
+        assertNotSame(NoopInternalInterfaceApi.reactNativeInternalInterface, api.reactNativeInternalInterface)
+        assertNotSame(NoopInternalInterfaceApi.unityInternalInterface, api.unityInternalInterface)
+        assertNotSame(NoopInternalInterfaceApi.flutterInternalInterface, api.flutterInternalInterface)
     }
 
     private fun awaitStorageDeleted() {

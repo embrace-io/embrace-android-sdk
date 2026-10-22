@@ -61,8 +61,18 @@ internal class BufferingSdkInstanceTest {
     }
 
     @Test
-    fun `getSdkCurrentTimeMs returns zero`() {
-        assertEquals(0, instance.getSdkCurrentTimeMs())
+    fun `getSdkCurrentTimeMs returns the clock time`() {
+        assertEquals(1000L, instance.getSdkCurrentTimeMs())
+    }
+
+    @Test
+    fun `completed span timed with getSdkCurrentTimeMs replays with its original times`() {
+        val startMs = instance.getSdkCurrentTimeMs()
+        clock.tick(100)
+        instance.recordCompletedSpan("span", startMs, instance.getSdkCurrentTimeMs())
+        clock.tick(500)
+        instance.drainCompletedSpans(target)
+        assertEquals(listOf("span:1000-1100"), target.calls)
     }
 
     @Test
@@ -444,7 +454,7 @@ internal class BufferingSdkInstanceTest {
         instance.drainExperimentCalls(target) { replayed.add(it) }
     }
 
-    private class RecordingSdkApi : SdkApi by NoopSdkInstance(FakeErrorHandler(), "") {
+    private class RecordingSdkApi : SdkApi by NoopSdkInstance(FakeClock(), FakeErrorHandler(), "") {
         val calls = mutableListOf<Any>()
         var recordResult = true
         var onRecordCompletedSpan: () -> Unit = {}

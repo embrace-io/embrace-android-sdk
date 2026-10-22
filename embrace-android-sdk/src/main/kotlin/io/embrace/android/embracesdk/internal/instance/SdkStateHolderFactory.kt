@@ -45,8 +45,8 @@ internal fun createSdkStateHolder(
                 }
             },
             preStart = buffer,
-            failed = { NoopSdkInstance(errorHandler, NoopSdkInstance.SDK_START_FAILED) },
-            disabled = { NoopSdkInstance(errorHandler, NoopSdkInstance.SDK_DISABLED) },
+            failed = { NoopSdkInstance(clock::now, errorHandler, NoopSdkInstance.SDK_START_FAILED) },
+            disabled = { NoopSdkInstance(clock::now, errorHandler, NoopSdkInstance.SDK_DISABLED) },
             telemetryService = preStartServices.telemetryService,
             errorHandler = errorHandler,
         )

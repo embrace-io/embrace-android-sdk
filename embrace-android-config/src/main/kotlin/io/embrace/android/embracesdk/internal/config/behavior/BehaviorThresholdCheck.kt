@@ -16,6 +16,12 @@ class BehaviorThresholdCheck(
          * roughly 1.6m possibilities, which is sufficient granularity for our needs.
          */
         private const val SPACE = 0xFFFFFF
+
+        /**
+         * Used when the device ID can't be normalized. It is above every percentage, so the device
+         * is outside every partial rollout.
+         */
+        private const val OUT_OF_ROLLOUT = Float.MAX_VALUE
     }
 
     /**
@@ -26,9 +32,13 @@ class BehaviorThresholdCheck(
      */
     private val normalizedId: Float by lazy {
         val deviceId = deviceIdProvider()
-        val finalChars = deviceId.substring(deviceId.length - DIGITS)
         // Normalize the device ID to a value between 0.0 - 100.0
-        finalChars.toInt(RADIX).toFloat() / SPACE * 100
+        deviceId.takeLast(DIGITS)
+            .takeIf { it.length == DIGITS }
+            ?.toIntOrNull(RADIX)
+            ?.takeIf { it >= 0 }
+            ?.let { it.toFloat() / SPACE * 100 }
+            ?: OUT_OF_ROLLOUT
     }
 
     /**

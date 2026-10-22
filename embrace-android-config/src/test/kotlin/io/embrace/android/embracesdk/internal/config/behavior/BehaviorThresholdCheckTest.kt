@@ -64,6 +64,15 @@ internal class BehaviorThresholdCheckTest {
     }
 
     @Test
+    fun `malformed device IDs are outside every partial rollout`() {
+        listOf("", "zz", "FFFFF", "0000000ZZZZZZ", "AAAA-FFFFF").forEach { deviceId ->
+            thresholdCheck = BehaviorThresholdCheck { deviceId }
+            assertFalse(deviceId, thresholdCheck.isBehaviorEnabled(99.9f))
+            assertTrue(deviceId, thresholdCheck.isBehaviorEnabled(100.0f))
+        }
+    }
+
+    @Test
     fun `test isBehaviourEnabled with bad input`() {
         thresholdCheck = BehaviorThresholdCheck { "07D85B44E4E245F4A30E559BFCFFFFFF" }
         assertFalse(thresholdCheck.isBehaviorEnabled(1000f))

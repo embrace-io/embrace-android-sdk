@@ -201,12 +201,4 @@ interface EnabledFeatureConfig {
      * sdk_config.automatic_data_capture.activity_process_lifecycle_tracker_enabled
      */
     fun isActivityProcessLifecycleTrackerEnabled(): Boolean = false
-
-    /**
-     * Gates whether session telemetry is persisted in multi-file mode instead of single-file mode.
-     * Only one of the two modes is active per launch.
-     *
-     * sdk_config.multi_file_persistence_enabled
-     */
-    fun isMultiFilePersistenceEnabled(): Boolean = false
 }

@@ -58,7 +58,6 @@ class EnabledFeatureConfigInstrumentationKtTest {
         ConfigMethod("isUiLoadTracingTraceAll", "()Z", true),
         ConfigMethod("isEndStartupWithAppReadyEnabled", "()Z", true),
         ConfigMethod("isActivityProcessLifecycleTrackerEnabled", "()Z", true),
-        ConfigMethod("isMultiFilePersistenceEnabled", "()Z", true),
     )
 
     @Test
@@ -110,7 +109,6 @@ class EnabledFeatureConfigInstrumentationKtTest {
                         otel = OpenTelemetryLocalConfig(
                             otelKotlinSdkEnabled = false,
                         ),
-                        multiFilePersistenceEnabled = true,
                         networking = NetworkLocalConfig(
                             captureRequestContentLength = true,
                             captureOkHttpResponseBodySize = true,

@@ -61,10 +61,6 @@
           "returnValue": "false"
         },
         {
-          "signature": "isMultiFilePersistenceEnabled()Z",
-          "returnValue": "true"
-        },
-        {
           "signature": "isNativeCrashCaptureEnabled()Z",
           "returnValue": "false"
         },
@@ -172,6 +168,15 @@
         },
         {
           "signature": "getMaxSystemLinkCount()I"
+        }
+      ]
+    },
+    {
+      "className": "PersistenceLocalConfigImpl",
+      "methods": [
+        {
+          "signature": "isMultiFileEnabled()Z",
+          "returnValue": "true"
         }
       ]
     },

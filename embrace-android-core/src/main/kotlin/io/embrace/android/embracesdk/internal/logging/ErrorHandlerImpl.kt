@@ -20,13 +20,19 @@ class ErrorHandlerImpl(
     private val limit: Int = 10,
     private val beforeBuffering: () -> Unit = {},
 ) : ErrorHandler {
-    private val handlerState = AtomicReference<HandlerState>(HandlerState.Buffering(emptyList()))
-    private val count = AtomicInteger(0)
 
-    // Set by drain before it switches the state to Recording, so a thread capturing an error can send it directly
-    // rather than add to a buffer that shouldn't be added to.
-    @Volatile
-    private var recordError: ((Throwable, Long) -> Unit)? = null
+    /**
+     * The state is [HandlerState.Empty] at handler init. It will transition to [HandlerState.Buffered]
+     * when the first error is captured. After that, a new instance of [HandlerState.Buffered] will be
+     * set in a lock-free way that contains the new error and a link back to the instance it replaced,
+     * all the way back to [HandlerState.Empty].
+     *
+     * A [drain] will stop the buffering and transition it to [HandlerState.Recording], which
+     * means the error should be recorded directly rather than go through the buffer. Meanwhile,
+     * a [close] will transition it to [HandlerState.Closed] and all new errors will be rejected.
+     */
+    private val handlerState = AtomicReference<HandlerState>(HandlerState.Empty)
+    private val count = AtomicInteger(0)
 
     override fun log(msg: String, throwable: Throwable?, severity: ErrorHandler.Severity) {
         when (severity) {
@@ -54,25 +60,27 @@ class ErrorHandlerImpl(
                 return
             }
             val timestampMs = clock.now()
+
+            // The buffer is a Treiber stack on a HandlerState instance that indicates that it is buffering errors. An error
+            // is added by swapping in a new Buffering instance contains the latest error and links back to the last one.
+            // The swap retries if another thread changed the HandlerState since it was read, and that retry will proceed
+            // according to what the new state is. So when it says the handler is no longer buffering, it will either
+            // record the error directly or drop it, bypassing the buffer either way since it's no longer buffering.
             while (true) {
                 when (val state = handlerState.get()) {
                     // Drop the error if the handler is closed
                     HandlerState.Closed -> return
 
                     // Once the handler is recording, record the error directly rather than buffering it
-                    HandlerState.Recording -> {
-                        recordError?.invoke(throwable, timestampMs)
+                    is HandlerState.Recording -> {
+                        state.record(throwable, timestampMs)
                         return
                     }
 
-                    // Buffer the error by swapping in a Buffering whose list is the one read above plus this error. The swap
-                    // fails if another thread changed the state since then (buffered another error, drained or closed), and
-                    // the loop retries against the new state, so every error is either buffered, recorded or dropped by a
-                    // close.
+                    // Still buffering: push the error on top of what is buffered so far
                     is HandlerState.Buffering -> {
                         beforeBuffering()
-                        val errors = state.bufferedErrors + BufferedError(timestampMs, throwable)
-                        if (handlerState.compareAndSet(state, HandlerState.Buffering(errors))) {
+                        if (handlerState.compareAndSet(state, HandlerState.Buffered(timestampMs, throwable, state))) {
                             return
                         }
                     }
@@ -81,24 +89,24 @@ class ErrorHandlerImpl(
         }
     }
 
-    override fun drain(sink: ((Throwable, Long) -> Unit)?) {
+    override fun drain(sink: ErrorRecorder?) {
         if (sink == null) {
             close()
             return
         }
-        recordError = sink
+        val recording = HandlerState.Recording(sink)
         while (true) {
             val current = handlerState.get()
             if (current === HandlerState.Closed) {
                 return
             }
 
-            // Swap whatever was read for Recording, taking the buffered errors with it: from then on no thread can add to
-            // that buffer, and new errors bypass the buffer and are recorded directly. The swap fails if another thread
-            // changed the state since it was read (buffered another error or closed), and the loop retries against the
-            // new state. Once it succeeds, the errors it took are recorded and the drain returns.
-            if (handlerState.compareAndSet(current, HandlerState.Recording)) {
-                (current as? HandlerState.Buffering)?.let { recordBufferedErrors(it.bufferedErrors, sink) }
+            // Swap whatever was read for Recording, taking the buffered errors with it. From this point on, no thread
+            // can add to that buffer, and new errors bypass the buffer and are recorded directly if the handler hasn't
+            // been closed. The swap fails if another thread changed the state since it was read, and the loop retries
+            // against the new state. Once it succeeds, the errors it took are recorded and the drain returns.
+            if (handlerState.compareAndSet(current, recording)) {
+                (current as? HandlerState.Buffered)?.let { recordBufferedErrors(it, sink) }
                 return
             }
         }
@@ -110,14 +118,13 @@ class ErrorHandlerImpl(
 
     override fun close() {
         handlerState.set(HandlerState.Closed)
-        recordError = null
     }
 
     /**
-     * Records the buffered [errors], oldest first, with the [sink] the drain was invoked with.
+     * Records the errors buffered up to [newest], oldest first, with the [sink] the drain was invoked with.
      */
-    private fun recordBufferedErrors(errors: List<BufferedError>, sink: (Throwable, Long) -> Unit) {
-        errors.forEach { error ->
+    private fun recordBufferedErrors(newest: HandlerState.Buffered, sink: ErrorRecorder) {
+        generateSequence(newest) { it.previous as? HandlerState.Buffered }.toList().asReversed().forEach { error ->
             try {
                 sink(error.throwable, error.timestampMs)
             } catch (_: Throwable) {
@@ -127,24 +134,35 @@ class ErrorHandlerImpl(
     }
 
     /**
-     * The state of the error handler that decides what happens with a new error that's captured
+     * The state of the error handler that decides what happens with a new error that's captured.
      */
     private sealed class HandlerState {
         /**
-         * The handler is not ready to record errors, and incoming ones are buffered in [bufferedErrors].
+         * The handler is not ready to record errors and is buffering them.
          */
-        class Buffering(val bufferedErrors: List<BufferedError>) : HandlerState()
+        sealed class Buffering : HandlerState()
 
         /**
-         * The handler is ready to record errors directly without going through the buffer.
+         * Buffering, with nothing buffered yet.
          */
-        object Recording : HandlerState()
+        object Empty : Buffering()
+
+        /**
+         * Buffering: [timestampMs] and [throwable] are the newest buffered error, and [previous] is what was buffered before it.
+         */
+        class Buffered(val timestampMs: Long, val throwable: Throwable, val previous: Buffering) : Buffering()
+
+        /**
+         * The handler is ready to record errors directly with [recorder], the one the drain was invoked with, without going
+         * through the buffer.
+         */
+        class Recording(private val recorder: ErrorRecorder) : HandlerState() {
+            fun record(throwable: Throwable, timestampMs: Long) = recorder(throwable, timestampMs)
+        }
 
         /**
          * The handler is closed and any new errors will be discarded.
          */
         object Closed : HandlerState()
     }
-
-    private class BufferedError(val timestampMs: Long, val throwable: Throwable)
 }

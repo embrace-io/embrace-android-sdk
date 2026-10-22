@@ -28,7 +28,7 @@ interface ErrorHandler : AutoCloseable {
      * Drains buffered errors to [sink] (throwable, timestampMs) on an SDK state transition. Errors captured after that go to
      * [sink] directly. A null [sink] closes this object completely.
      */
-    fun drain(sink: ((Throwable, Long) -> Unit)?)
+    fun drain(sink: ErrorRecorder?)
 
     /**
      * Resets the limit on how many errors are sent.
@@ -80,3 +80,8 @@ inline fun <T> ErrorHandler.guardUserCode(action: () -> T): T = try {
  * Wraps a [Throwable] thrown by user-supplied code.
  */
 class UserCodeException(override val cause: Throwable) : RuntimeException(cause)
+
+/**
+ * Signature for a function that records a [Throwable] as an SDK error at the given timestamp [Long]
+ */
+typealias ErrorRecorder = (Throwable, Long) -> Unit

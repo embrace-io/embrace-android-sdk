@@ -16,7 +16,7 @@ internal class ErrorHandlerImplTest {
     private lateinit var clock: FakeClock
     private lateinit var handler: ErrorHandlerImpl
     private lateinit var errors: MutableList<Pair<Throwable, Long>>
-    private val sink: (Throwable, Long) -> Unit = { throwable, timestampMs -> errors.add(throwable to timestampMs) }
+    private val sink: ErrorRecorder = { throwable, timestampMs -> errors.add(throwable to timestampMs) }
 
     @Before
     fun setUp() {

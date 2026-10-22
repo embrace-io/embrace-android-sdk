@@ -759,6 +759,15 @@ internal class EmbraceSpanImplTest(
     }
 
     @Test
+    fun `link attributes are unaffected by the caller mutating the map afterwards`() {
+        embraceSpan.start()
+        val attributes = mutableMapOf("key" to "value")
+        assertTrue(embraceSpan.addLink(checkNotNull(FakeEmbraceSdkSpan.started().spanContext), attributes))
+        attributes.clear()
+        assertEquals(mapOf("key" to "value"), checkNotNull(embraceSpan.snapshot()).links?.single()?.attributes?.toEmbracePayload())
+    }
+
+    @Test
     fun `event attributes are redacted if their key is sensitive when getting a span snapshot`() {
         // given a span event with a sensitive key
         embraceSpan = createInternalEmbraceSdkSpan()

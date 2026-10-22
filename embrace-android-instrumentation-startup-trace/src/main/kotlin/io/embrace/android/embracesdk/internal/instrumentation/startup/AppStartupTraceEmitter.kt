@@ -194,8 +194,8 @@ internal class AppStartupTraceEmitter(
                 name = name,
                 startTimeMs = startTimeMs,
                 endTimeMs = endTimeMs,
-                attributes = attributes,
-                events = events,
+                attributes = attributes.toMap(),
+                events = events.toList(),
                 errorCode = errorCode,
             ),
         )

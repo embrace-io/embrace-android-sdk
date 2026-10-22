@@ -62,7 +62,9 @@ internal class OkHttpDataSource(
 
     internal fun interceptRequest(chain: Interceptor.Chain, type: InterceptorType): Response? {
         val call = chain.call()
-        val callData = activeCalls[call] ?: startRequestInstrumentation(chain.request(), call)
+        val callData = errorHandler.guardSdkCode(SdkErrorType.DataSourceDataCaptureFail, null) {
+            activeCalls[call] ?: startRequestInstrumentation(chain.request(), call)
+        }
         return when (type) {
             InterceptorType.APPLICATION -> interceptApplicationRequest(chain, callData)
             InterceptorType.NETWORK -> interceptNetworkRequest(chain, callData)
@@ -113,17 +115,23 @@ internal class OkHttpDataSource(
             // we are not interested in response, just proceed
             return chain.proceed(request)
         } catch (e: EmbraceCustomPathException) {
-            val urlString = getOverriddenURLString(EmbraceOkHttpPathOverrideRequest(request), e.customPath)
-            callData?.recordNetworkError(chain.call(), urlString, request, e.cause)
+            errorHandler.guardSdkCode(SdkErrorType.DataSourceDataCaptureFail) {
+                val urlString = getOverriddenURLString(EmbraceOkHttpPathOverrideRequest(request), e.customPath)
+                callData?.recordNetworkError(chain.call(), urlString, request, e.cause)
+            }
             throw e
         } catch (e: Exception) {
-            // we are interested in errors.
-            val urlString = getOverriddenURLString(EmbraceOkHttpPathOverrideRequest(request))
-            callData?.recordNetworkError(chain.call(), urlString, request, e)
+            // we are interested in errors, but a failure to record one must not replace the app's exception
+            errorHandler.guardSdkCode(SdkErrorType.DataSourceDataCaptureFail) {
+                val urlString = getOverriddenURLString(EmbraceOkHttpPathOverrideRequest(request))
+                callData?.recordNetworkError(chain.call(), urlString, request, e)
+            }
             throw e
         } finally {
             if (callData != null && activeCalls.remove(chain.call()) != null) {
-                networkRequestDataSource?.discardRequest(callData.id)
+                errorHandler.guardSdkCode(SdkErrorType.DataSourceDataCaptureFail) {
+                    networkRequestDataSource?.discardRequest(callData.id)
+                }
             }
         }
     }
@@ -134,24 +142,22 @@ internal class OkHttpDataSource(
         request: Request,
         cause: Throwable?,
     ) {
-        try {
-            networkRequestDataSource?.endRequest(
-                RequestEndData(
-                    id = id,
-                    url = urlString,
-                    sdkClockStartTime = sdkClockStartTime,
-                    sdkClockEndTime = clock.now(),
-                    statusCode = null,
-                    errorType = cause?.javaClass?.canonicalName ?: UNKNOWN_EXCEPTION,
-                    errorMessage = cause?.message ?: UNKNOWN_MESSAGE,
-                    traceId = request.header(CUSTOM_TRACE_ID_HEADER_NAME),
-                    userAgentName = OKHTTP_USER_AGENT_NAME,
-                    userAgentVersion = OkHttp.VERSION,
-                ),
-            )
-        } finally {
-            activeCalls.remove(call)
-        }
+        networkRequestDataSource?.endRequest(
+            RequestEndData(
+                id = id,
+                url = urlString,
+                sdkClockStartTime = sdkClockStartTime,
+                sdkClockEndTime = clock.now(),
+                statusCode = null,
+                errorType = cause?.javaClass?.canonicalName ?: UNKNOWN_EXCEPTION,
+                errorMessage = cause?.message ?: UNKNOWN_MESSAGE,
+                traceId = request.header(CUSTOM_TRACE_ID_HEADER_NAME),
+                userAgentName = OKHTTP_USER_AGENT_NAME,
+                userAgentVersion = OkHttp.VERSION,
+            ),
+        )
+        // release the call once recorded: if recording fails, the application interceptor discards it instead
+        activeCalls.remove(call)
     }
 
     private fun interceptNetworkRequest(chain: Interceptor.Chain, callData: CallData?): Response {
@@ -163,14 +169,15 @@ internal class OkHttpDataSource(
         }
 
         val host = originalRequest.url.host
-        val request = if (originalRequest.header(TRACEPARENT_HEADER_NAME) == null &&
-            configService.traceparentInjectionBehavior.shouldInjectTraceparent(host)
-        ) {
-            originalRequest.newBuilder().header(TRACEPARENT_HEADER_NAME, callData.id).build()
-        } else {
-            originalRequest
+        val request = errorHandler.guardSdkCode(SdkErrorType.DataSourceDataCaptureFail, originalRequest) {
+            if (originalRequest.header(TRACEPARENT_HEADER_NAME) == null &&
+                configService.traceparentInjectionBehavior.shouldInjectTraceparent(host)
+            ) {
+                originalRequest.newBuilder().header(TRACEPARENT_HEADER_NAME, callData.id).build()
+            } else {
+                originalRequest
+            }
         }
-        val forwardNetworkSpan = configService.networkSpanForwardingBehavior.shouldForwardForDomain(host)
 
         // Let the request execution proceed and observe the result
         val networkResponse: Response = chain.proceed(request)
@@ -179,6 +186,8 @@ internal class OkHttpDataSource(
         // A response has been obtained, so instrumentation must not alter the app-visible result of the
         // request from here on: contain any failure and always release the call's tracking entry
         try {
+            val forwardNetworkSpan = configService.networkSpanForwardingBehavior.shouldForwardForDomain(host)
+
             // Get the size of the body from the response header if possible.
             // Failing that, and only when explicitly opted-in, count the bytes in the body itself.
             // Reading the body buffers it entirely into memory, so it is gated behind config to avoid

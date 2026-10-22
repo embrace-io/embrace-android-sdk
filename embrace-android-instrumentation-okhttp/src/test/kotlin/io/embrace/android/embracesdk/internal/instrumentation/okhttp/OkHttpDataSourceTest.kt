@@ -551,6 +551,51 @@ internal class OkHttpDataSourceTest {
     }
 
     @Test
+    fun `a failure starting instrumentation does not fail the app's request`() {
+        args.errorHandler.throwOnSdkError = false
+        networkRequestDataSource.startRequestFailure = RuntimeException("instrumentation failure")
+        server.enqueue(createBaseMockResponse().setBody(RESPONSE_BODY))
+
+        val response = runPostRequest()
+        assertEquals(200, response.code)
+        assertEquals(2, args.errorHandler.sdkErrorMessages.size)
+        assertTrue(args.destination.createdSpans.isEmpty())
+    }
+
+    @Test
+    fun `a failure recording a request error does not replace the app's exception`() {
+        args.errorHandler.throwOnSdkError = false
+        networkRequestDataSource.endRequestFailure = RuntimeException("instrumentation failure")
+        preNetworkInterceptorBeforeRequestSupplier = { throw SocketException("bad bad socket") }
+
+        assertThrows(SocketException::class.java) { runPostRequest() }
+        assertEquals(1, args.errorHandler.sdkErrorMessages.size)
+        assertEquals(1, networkRequestDataSource.discardedIds.size)
+    }
+
+    @Test
+    fun `a failure discarding a request does not fail the app's request`() {
+        args.errorHandler.throwOnSdkError = false
+        networkRequestDataSource.discardRequestFailure = RuntimeException("instrumentation failure")
+        val shortCircuitClient = OkHttpClient.Builder()
+            .addInterceptor(applicationInterceptor)
+            .addInterceptor { chain ->
+                Response.Builder()
+                    .request(chain.request())
+                    .protocol(Protocol.HTTP_1_1)
+                    .code(200)
+                    .message("OK")
+                    .body("short-circuited".toResponseBody())
+                    .build()
+            }
+            .build()
+
+        val response = checkNotNull(shortCircuitClient.newCall(postRequestBuilder.build()).execute())
+        assertEquals(200, response.code)
+        assertEquals(1, args.errorHandler.sdkErrorMessages.size)
+    }
+
+    @Test
     fun `resolved timeout falls back to config default when no call timeout is set`() {
         configService.networkBehavior = FakeNetworkBehavior(requestSpanTimeoutMs = 300_000L)
         server.enqueue(createBaseMockResponse())
@@ -769,9 +814,12 @@ private class RecordingNetworkRequestDataSource(
 
     val discardedIds: MutableList<String> = mutableListOf()
     val startedRequests: MutableList<RequestStartData> = mutableListOf()
+    var startRequestFailure: Throwable? = null
     var endRequestFailure: Throwable? = null
+    var discardRequestFailure: Throwable? = null
 
     override fun startRequest(startData: RequestStartData): String? {
+        startRequestFailure?.let { throw it }
         startedRequests.add(startData)
         return delegate.startRequest(startData)
     }
@@ -782,6 +830,7 @@ private class RecordingNetworkRequestDataSource(
     }
 
     override fun discardRequest(id: String) {
+        discardRequestFailure?.let { throw it }
         discardedIds.add(id)
         delegate.discardRequest(id)
     }

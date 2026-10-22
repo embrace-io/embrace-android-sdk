@@ -1,16 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<issues format="6" by="lint 9.1.1" type="baseline" client="gradle" dependencies="false" name="AGP (9.1.1)" variant="all" version="9.1.1">
-
-    <issue
-        id="StopShip"
-        message="`TODO` call found; points to code which must be fixed prior to release"
-        errorLine1="        get() = TODO()"
-        errorLine2="                ~~~~~~">
-        <location
-            file="src/main/kotlin/io/embrace/android/embracesdk/fakes/FakeOpenTelemetryModule.kt"
-            line="55"
-            column="17"/>
-    </issue>
+<issues format="6" by="lint 9.4.1" type="baseline" client="gradle" dependencies="false" name="AGP (9.4.1)" variant="all" version="9.4.1">
 
     <issue
         id="InvalidPackage"
@@ -24,48 +13,6 @@
         message="Invalid package reference in org.bouncycastle:bcprov-jdk18on; not included in Android: `javax.naming`. Referenced from `org.bouncycastle.jce.provider.X509LDAPCertStoreSpi`.">
         <location
             file="$GRADLE_USER_HOME/caches/modules-2/files-2.1/org.bouncycastle/bcprov-jdk18on/1.80/e22100b41042decf09cab914a5af8d2c57b5ac4a/bcprov-jdk18on-1.80.jar"/>
-    </issue>
-
-    <issue
-        id="InvalidPackage"
-        message="Invalid package reference in net.bytebuddy:byte-buddy; not included in Android: `java.lang.classfile.attribute`. Referenced from `net.bytebuddy.jar.asmjdkbridge.AsmWrappedAttribute.AsmCharacterRangeTableAttribute`.">
-        <location
-            file="$GRADLE_USER_HOME/caches/modules-2/files-2.1/net.bytebuddy/byte-buddy/1.18.2/7ac991b4bd502e2567efcdecc0d2e9b3f7dd3859/byte-buddy-1.18.2.jar"/>
-    </issue>
-
-    <issue
-        id="InvalidPackage"
-        message="Invalid package reference in net.bytebuddy:byte-buddy; not included in Android: `java.lang.classfile.constantpool`. Referenced from `net.bytebuddy.jar.asmjdkbridge.AsmAttribute.1`.">
-        <location
-            file="$GRADLE_USER_HOME/caches/modules-2/files-2.1/net.bytebuddy/byte-buddy/1.18.2/7ac991b4bd502e2567efcdecc0d2e9b3f7dd3859/byte-buddy-1.18.2.jar"/>
-    </issue>
-
-    <issue
-        id="InvalidPackage"
-        message="Invalid package reference in net.bytebuddy:byte-buddy; not included in Android: `java.lang.classfile.instruction`. Referenced from `net.bytebuddy.jar.asmjdkbridge.AsmWrappedAttribute.AsmCharacterRangeTableAttribute`.">
-        <location
-            file="$GRADLE_USER_HOME/caches/modules-2/files-2.1/net.bytebuddy/byte-buddy/1.18.2/7ac991b4bd502e2567efcdecc0d2e9b3f7dd3859/byte-buddy-1.18.2.jar"/>
-    </issue>
-
-    <issue
-        id="InvalidPackage"
-        message="Invalid package reference in net.bytebuddy:byte-buddy; not included in Android: `java.lang.classfile`. Referenced from `net.bytebuddy.jar.asmjdkbridge.AsmAttribute`.">
-        <location
-            file="$GRADLE_USER_HOME/caches/modules-2/files-2.1/net.bytebuddy/byte-buddy/1.18.2/7ac991b4bd502e2567efcdecc0d2e9b3f7dd3859/byte-buddy-1.18.2.jar"/>
-    </issue>
-
-    <issue
-        id="InvalidPackage"
-        message="Invalid package reference in net.bytebuddy:byte-buddy; not included in Android: `java.lang.constant`. Referenced from `net.bytebuddy.jar.asmjdkbridge.AsmAttribute.DelegatingClassWriter`.">
-        <location
-            file="$GRADLE_USER_HOME/caches/modules-2/files-2.1/net.bytebuddy/byte-buddy/1.18.2/7ac991b4bd502e2567efcdecc0d2e9b3f7dd3859/byte-buddy-1.18.2.jar"/>
-    </issue>
-
-    <issue
-        id="InvalidPackage"
-        message="Invalid package reference in io.mockk:mockk-agent-jvm; not included in Android: `java.lang.instrument`. Referenced from `io.mockk.proxy.jvm.JvmMockKAgentFactory`.">
-        <location
-            file="$GRADLE_USER_HOME/caches/modules-2/files-2.1/io.mockk/mockk-agent-jvm/1.14.9/e1e1acc201dc6ec3bfb9d2d8f10e5960eda3c9f0/mockk-agent-jvm-1.14.9.jar"/>
     </issue>
 
     <issue

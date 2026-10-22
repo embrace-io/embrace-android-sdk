@@ -4,6 +4,7 @@ import android.app.Application
 import io.embrace.android.embracesdk.concurrency.BlockingScheduledExecutorService
 import io.embrace.android.embracesdk.fakes.FakeConfigService
 import io.embrace.android.embracesdk.fakes.FakeDataSource
+import io.embrace.android.embracesdk.fakes.FakeErrorHandler
 import io.embrace.android.embracesdk.fakes.FakeInstrumentationArgs
 import io.embrace.android.embracesdk.fakes.FakeInstrumentationProvider
 import io.embrace.android.embracesdk.fakes.LazyInitStateDataSource
@@ -129,6 +130,22 @@ internal class InstrumentationRegistryTest {
     }
 
     @Test
+    fun `a data source that throws in a session hook does not stop the sources after it`() {
+        val errorHandler = FakeErrorHandler(throwOnSdkError = false)
+        registry = InstrumentationRegistryImpl(errorHandler)
+        registry.add { ThrowingDataSource() }
+        registry.add { dataSource }
+
+        registry.onPreSessionEnd()
+        registry.onPostSessionChange()
+
+        assertEquals(1, dataSource.sessionEnds)
+        assertEquals(1, dataSource.resetCount)
+        assertEquals(1, dataSource.sessionChanges)
+        assertEquals(3, errorHandler.sdkErrorMessages.size)
+    }
+
+    @Test
     fun `async provider registers and enables capture on a worker, not the calling thread`() {
         val executor = BlockingScheduledExecutorService(blockingMode = true)
         val args = FakeInstrumentationArgs(
@@ -245,6 +262,22 @@ internal class InstrumentationRegistryTest {
             ),
             registry.getCurrentStates(),
         )
+    }
+
+    private class ThrowingDataSource : DataSource, SessionPartEndListener, SessionPartChangeListener {
+        override val instrumentationName: String = "throwing_data_source"
+
+        override fun onDataCaptureEnabled() {}
+        override fun onDataCaptureDisabled() {}
+        override fun resetDataCaptureLimits() = error("reset")
+        override fun <T> captureTelemetry(
+            inputValidation: () -> Boolean,
+            invalidInputCallback: () -> Unit,
+            action: TelemetryDestination.() -> T?,
+        ): T? = null
+
+        override fun onPreSessionEnd() = error("end")
+        override fun onPostSessionChange() = error("change")
     }
 
     private class BlockingTestDataSource(

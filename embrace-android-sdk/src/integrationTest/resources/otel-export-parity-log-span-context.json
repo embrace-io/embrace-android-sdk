@@ -18,7 +18,7 @@
     },
     "instrumentationScopeName": "external-logger",
     "resourceAttributes": {
-      "android.os.api_level": "35",
+      "android.os.api_level": "37",
       "device.manufacturer": "Fake Manufacturer",
       "device.model.identifier": "Phake Phone Phive",
       "device.model.name": "Phake Phone Phive",
@@ -51,7 +51,7 @@
     },
     "instrumentationScopeName": "external-logger",
     "resourceAttributes": {
-      "android.os.api_level": "35",
+      "android.os.api_level": "37",
       "device.manufacturer": "Fake Manufacturer",
       "device.model.identifier": "Phake Phone Phive",
       "device.model.name": "Phake Phone Phive",

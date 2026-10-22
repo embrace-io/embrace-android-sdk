@@ -113,7 +113,7 @@
           { "key": "session-orchestrator-init-duration-ms", "value": "0" },
           { "key": "start-first-session-duration-ms", "value": "0" },
           { "key": "startup-classifier-init-duration-ms", "value": "0" },
-          { "key": "thermal-headroom-pct", "value": "-2" }
+          { "key": "thermal-headroom-pct", "value": "0" }
         ],
         "links": "__EMBRACE_TEST_IGNORE__"
       },

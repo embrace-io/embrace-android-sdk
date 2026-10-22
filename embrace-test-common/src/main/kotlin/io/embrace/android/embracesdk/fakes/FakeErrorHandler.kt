@@ -1,6 +1,7 @@
 package io.embrace.android.embracesdk.fakes
 
 import io.embrace.android.embracesdk.internal.logging.ErrorHandler
+import io.embrace.android.embracesdk.internal.logging.ErrorRecorder
 import io.embrace.android.embracesdk.internal.logging.SdkErrorType
 import io.embrace.android.embracesdk.internal.logging.UserCodeException
 
@@ -43,7 +44,7 @@ class FakeErrorHandler(
         delegate?.trackSdkError(type, throwable)
     }
 
-    override fun drain(sink: ((Throwable, Long) -> Unit)?) {
+    override fun drain(sink: ErrorRecorder?) {
         delegate?.drain(sink)
     }
 

@@ -26,10 +26,14 @@ internal class EmbraceUncaughtExceptionHandler(
     private var dataSource: JvmCrashDataSource? = dataSource
 
     override fun uncaughtException(thread: Thread, exception: Throwable) {
-        errorHandler.guardSdkCode(SdkErrorType.UncaughtExceptionHandler) {
-            dataSource?.logUnhandledJvmThrowable(exception)
+        // Run the default crash handler even if the guard method itself throws
+        try {
+            errorHandler.guardSdkCode(SdkErrorType.UncaughtExceptionHandler) {
+                dataSource?.logUnhandledJvmThrowable(exception)
+            }
+        } finally {
+            defaultHandler?.uncaughtException(thread, exception)
         }
-        defaultHandler?.uncaughtException(thread, exception)
     }
 
     /**

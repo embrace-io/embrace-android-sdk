@@ -723,6 +723,7 @@ internal class SpanServiceImplTest(
             spanRepository = spanRepository,
             dataValidator = dataValidator,
             telemetryService = FakeInternalTelemetryService(),
+            errorHandler = FakeErrorHandler(),
         )
 
         return SpanServiceImpl(

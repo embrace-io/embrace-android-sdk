@@ -2,6 +2,7 @@ package io.embrace.android.embracesdk.internal.otel.impl
 
 import io.embrace.android.embracesdk.fakes.FakeClock
 import io.embrace.android.embracesdk.fakes.FakeEmbraceSdkSpan
+import io.embrace.android.embracesdk.fakes.FakeErrorHandler
 import io.embrace.android.embracesdk.fakes.FakeOtelKotlinClock
 import io.embrace.android.embracesdk.fakes.FakeSpanService
 import io.embrace.android.embracesdk.fakes.FakeTracer
@@ -9,6 +10,10 @@ import io.embrace.android.embracesdk.fakes.OtelSdkMode
 import io.embrace.android.embracesdk.fakes.fakeOpenTelemetry
 import io.embrace.android.embracesdk.internal.arch.schema.EmbType
 import io.embrace.android.embracesdk.internal.clock.nanosToMillis
+import io.embrace.android.embracesdk.internal.logging.SdkErrorType
+import io.embrace.android.embracesdk.internal.otel.spans.EmbraceSdkSpan
+import io.embrace.android.embracesdk.internal.otel.spans.OtelSpanStartArgs
+import io.embrace.android.embracesdk.internal.otel.spans.SpanService
 import io.embrace.android.embracesdk.internal.otel.spans.createContext
 import io.opentelemetry.kotlin.NoopOpenTelemetry
 import io.opentelemetry.kotlin.tracing.SpanKind
@@ -53,6 +58,7 @@ internal class EmbTracerTest(
             spanService = spanService,
             clock = openTelemetryClock,
             openTelemetry = openTelemetry,
+            errorHandler = FakeErrorHandler(),
         )
     }
 
@@ -126,5 +132,21 @@ internal class EmbTracerTest(
             assertFalse(isRecording)
             assertTrue(status is StatusData.Error)
         }
+    }
+
+    @Test
+    fun `span creation failure returns an invalid span`() {
+        val errorHandler = FakeErrorHandler(throwOnSdkError = false)
+        val failingTracer = EmbTracer(
+            impl = sdkTracer,
+            spanService = object : SpanService by spanService {
+                override fun createSpan(otelSpanStartArgs: OtelSpanStartArgs): EmbraceSdkSpan = error("boom")
+            },
+            clock = openTelemetryClock,
+            openTelemetry = openTelemetry,
+            errorHandler = errorHandler,
+        )
+        assertFalse(failingTracer.startSpan("foo").isRecording())
+        assertEquals(SdkErrorType.SpanOperationFail.toString(), errorHandler.sdkErrorMessages.single().msg)
     }
 }

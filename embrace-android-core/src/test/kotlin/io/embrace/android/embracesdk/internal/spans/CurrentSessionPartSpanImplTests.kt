@@ -9,6 +9,7 @@ import io.embrace.android.embracesdk.assertions.validateSystemLink
 import io.embrace.android.embracesdk.fakes.FakeClock
 import io.embrace.android.embracesdk.fakes.FakeEmbraceSdkSpan
 import io.embrace.android.embracesdk.fakes.FakeEmbraceSpanFactory
+import io.embrace.android.embracesdk.fakes.FakeErrorHandler
 import io.embrace.android.embracesdk.fakes.FakeInternalTelemetryService
 import io.embrace.android.embracesdk.fakes.FakeOtelKotlinClock
 import io.embrace.android.embracesdk.fakes.FakeTracer
@@ -478,6 +479,7 @@ internal class CurrentSessionPartSpanImplTests(
                     spanRepository = repository,
                     dataValidator = DataValidator(telemetryService = telemetryService),
                     telemetryService = telemetryService,
+                    errorHandler = FakeErrorHandler(),
                 )
             },
             uuidSource = TestUuidSource(),

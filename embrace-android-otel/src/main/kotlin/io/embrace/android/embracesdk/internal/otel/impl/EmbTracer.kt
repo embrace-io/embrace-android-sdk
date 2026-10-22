@@ -2,6 +2,9 @@ package io.embrace.android.embracesdk.internal.otel.impl
 
 import io.embrace.android.embracesdk.internal.arch.schema.EmbType
 import io.embrace.android.embracesdk.internal.clock.nanosToMillis
+import io.embrace.android.embracesdk.internal.logging.ErrorHandler
+import io.embrace.android.embracesdk.internal.logging.SdkErrorType
+import io.embrace.android.embracesdk.internal.logging.guardSdkCode
 import io.embrace.android.embracesdk.internal.otel.getDefaultContext
 import io.embrace.android.embracesdk.internal.otel.spans.OtelSpanStartArgs
 import io.embrace.android.embracesdk.internal.otel.spans.SpanService
@@ -22,6 +25,7 @@ class EmbTracer(
     private val openTelemetry: OpenTelemetry,
     private val spanService: SpanService,
     private val clock: Clock,
+    private val errorHandler: ErrorHandler,
 ) : Tracer {
 
     override fun enabled(): Boolean = impl.enabled()
@@ -33,24 +37,26 @@ class EmbTracer(
         startTimestamp: Long?,
         action: (SpanCreationAction.() -> Unit)?,
     ): Span {
-        val spanCreator = OtelSpanStartArgs(
-            name = name,
-            type = EmbType.Performance.Default,
-            internal = false,
-            private = false,
-            tracer = impl,
-            parentCtx = parentContext ?: openTelemetry.getDefaultContext(),
-            openTelemetry = openTelemetry,
-            spanKind = spanKind,
-            startTimeMs = startTimestamp?.nanosToMillis(),
-        )
-        var span: Span? = null
-        spanService.createSpan(spanCreator).let { embraceSpan ->
+        val span = errorHandler.guardSdkCode(SdkErrorType.SpanOperationFail, null) {
+            val spanCreator = OtelSpanStartArgs(
+                name = name,
+                type = EmbType.Performance.Default,
+                internal = false,
+                private = false,
+                tracer = impl,
+                parentCtx = parentContext ?: openTelemetry.getDefaultContext(),
+                openTelemetry = openTelemetry,
+                spanKind = spanKind,
+                startTimeMs = startTimestamp?.nanosToMillis(),
+            )
+            val embraceSpan = spanService.createSpan(spanCreator)
             if (embraceSpan.start()) {
-                span = EmbSpan(
+                EmbSpan(
                     impl = embraceSpan,
                     clock = clock,
                 )
+            } else {
+                null
             }
         }
         val ref = span ?: EmbInvalidSpan()

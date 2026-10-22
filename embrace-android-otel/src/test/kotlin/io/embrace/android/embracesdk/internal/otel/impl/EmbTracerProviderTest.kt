@@ -1,6 +1,7 @@
 package io.embrace.android.embracesdk.internal.otel.impl
 
 import io.embrace.android.embracesdk.fakes.FakeClock
+import io.embrace.android.embracesdk.fakes.FakeErrorHandler
 import io.embrace.android.embracesdk.fakes.FakeOtelKotlinClock
 import io.embrace.android.embracesdk.fakes.FakeSpanService
 import io.embrace.android.embracesdk.fakes.FakeTracerProvider
@@ -27,6 +28,7 @@ internal class EmbTracerProviderTest {
             impl = otel,
             spanServiceProvider = { spanService },
             clock = openTelemetryClock,
+            errorHandler = FakeErrorHandler(),
         )
     }
 

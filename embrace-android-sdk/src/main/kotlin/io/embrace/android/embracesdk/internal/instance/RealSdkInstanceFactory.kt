@@ -238,6 +238,7 @@ internal fun createRealSdkInstance(
             stopCallback = currentSessionPartSpan::spanStopCallback,
             redactionFunction = createRedactionFunction(sensitiveKeysBehavior),
             telemetryService = telemetryService,
+            errorHandler = errorHandler,
         )
     }
 

@@ -10,6 +10,9 @@ import io.embrace.android.embracesdk.internal.arch.schema.LinkType
 import io.embrace.android.embracesdk.internal.clock.millisToNanos
 import io.embrace.android.embracesdk.internal.clock.nanosToMillis
 import io.embrace.android.embracesdk.internal.clock.normalizeTimestampAsMillis
+import io.embrace.android.embracesdk.internal.logging.ErrorHandler
+import io.embrace.android.embracesdk.internal.logging.SdkErrorType
+import io.embrace.android.embracesdk.internal.logging.guardSdkCode
 import io.embrace.android.embracesdk.internal.otel.payload.toEmbracePayload
 import io.embrace.android.embracesdk.internal.otel.payload.toPayloadString
 import io.embrace.android.embracesdk.internal.otel.sdk.DataValidator
@@ -44,6 +47,7 @@ class EmbraceSpanFactoryImpl(
     stopCallback: ((spanId: String) -> Unit)? = null,
     redactionFunction: ((key: String, value: String) -> String)? = null,
     telemetryService: InternalTelemetryService,
+    errorHandler: ErrorHandler,
 ) : EmbraceSpanFactory {
 
     private val deps = SpanDependencies(
@@ -53,6 +57,7 @@ class EmbraceSpanFactoryImpl(
         stopCallback = stopCallback,
         redactionFunction = redactionFunction,
         telemetryService = telemetryService,
+        errorHandler = errorHandler,
     )
 
     override fun create(otelSpanStartArgs: OtelSpanStartArgs): EmbraceSdkSpan = EmbraceSpanImpl(
@@ -72,6 +77,7 @@ private class SpanDependencies(
     val stopCallback: ((spanId: String) -> Unit)?,
     val redactionFunction: ((key: String, value: String) -> String)?,
     val telemetryService: InternalTelemetryService,
+    val errorHandler: ErrorHandler,
 )
 
 private const val SPAN_LINK_TELEMETRY_TYPE = "span_link"
@@ -125,7 +131,7 @@ private class EmbraceSpanImpl(
 
     override var status: StatusData
         get() = currentStatus
-        set(value) {
+        set(value) = guard(Unit) {
             if (setSpanStatus(value) && spanStarted()) {
                 notifyChanged()
             }
@@ -204,9 +210,9 @@ private class EmbraceSpanImpl(
     override val isRecording: Boolean
         get() = startedSpan.get()?.isRecording() == true
 
-    override fun start(startTimeMs: Long?): Boolean {
+    override fun start(startTimeMs: Long?): Boolean = guard(false) {
         if (spanStarted()) {
-            return false
+            return@guard false
         }
 
         val requestedStartTimeMs = startTimeMs?.normalizeTimestampAsMillis() ?: spanStartTimeMs
@@ -217,13 +223,13 @@ private class EmbraceSpanImpl(
         }
 
         synchronized(startedSpan) {
-            val args = startArgs ?: return false
+            val args = startArgs ?: return@guard false
             val newSpan = args.startSpan(attemptedStartTimeMs)
             if (newSpan.isRecording()) {
                 startedSpan.set(newSpan)
                 startArgs = null
             } else {
-                return false
+                return@guard false
             }
 
             deps.spanRepository.trackStartedEmbraceSpan(this)
@@ -236,15 +242,15 @@ private class EmbraceSpanImpl(
         }
 
         notifyChanged()
-        return true
+        true
     }
 
     override fun stop(errorCode: ErrorCode?, endTimeMs: Long?): Boolean =
         stopWithErrorCode(errorCode?.toErrorCodeAttribute(), endTimeMs)
 
-    override fun stopWithErrorCode(errorCode: ErrorCodeAttribute?, endTimeMs: Long?): Boolean {
+    override fun stopWithErrorCode(errorCode: ErrorCodeAttribute?, endTimeMs: Long?): Boolean = guard(false) {
         if (!isRecording) {
-            return false
+            return@guard false
         }
         var successful = false
         val requestedEndTimeMs = endTimeMs?.normalizeTimestampAsMillis() ?: UNSET_TIME
@@ -256,7 +262,7 @@ private class EmbraceSpanImpl(
 
         synchronized(startedSpan) {
             if (!isRecording) {
-                return false
+                return@guard false
             }
 
             startedSpan.get()?.let { spanToStop ->
@@ -285,7 +291,7 @@ private class EmbraceSpanImpl(
         if (successful) {
             notifyChanged()
         }
-        return successful
+        successful
     }
 
     /**
@@ -305,7 +311,7 @@ private class EmbraceSpanImpl(
     override fun addEvent(name: String, timestampMs: Long?, attributes: Map<String, String>): Boolean =
         addCustomEvent(name, timestampMs, attributes)
 
-    override fun addCustomEvent(name: String, timestampMs: Long?, attributes: Map<String, Any>): Boolean =
+    override fun addCustomEvent(name: String, timestampMs: Long?, attributes: Map<String, Any>): Boolean = guard(false) {
         recordEvent(
             system = false,
             max = deps.dataValidator.otelLimitsConfig.getMaxCustomEventCount(),
@@ -317,8 +323,9 @@ private class EmbraceSpanImpl(
                 attributes = attributes,
             )
         }
+    }
 
-    override fun recordException(exception: Throwable, attributes: Map<String, String>): Boolean =
+    override fun recordException(exception: Throwable, attributes: Map<String, String>): Boolean = guard(false) {
         recordEvent(
             system = false,
             max = deps.dataValidator.otelLimitsConfig.getMaxCustomEventCount(),
@@ -345,6 +352,7 @@ private class EmbraceSpanImpl(
                 attributes = attributes + exceptionAttributes,
             )
         }
+    }
 
     override fun addSystemEvent(name: String, timestampMs: Long?, attributes: Map<String, Any>?): Boolean =
         recordEvent(
@@ -363,11 +371,11 @@ private class EmbraceSpanImpl(
 
     override fun addAttribute(key: String, value: String): Boolean = addCustomAttribute(key, value)
 
-    override fun addCustomAttribute(key: String, value: Any): Boolean {
+    override fun addCustomAttribute(key: String, value: Any): Boolean = guard(false) {
         // Reserved attribute that can't be set by customers.
         // In the future, this should be expanded to more reserved attributes.
         if (key == EmbCommonAttributes.EMB_EXPERIMENTS) {
-            return false
+            return@guard false
         }
 
         val maxAttributeCount = deps.dataValidator.otelLimitsConfig.getMaxCustomAttributeCount()
@@ -389,15 +397,15 @@ private class EmbraceSpanImpl(
                 if (changed) {
                     notifyChanged()
                 }
-                return true
+                return@guard true
             }
         }
 
         deps.telemetryService.trackAppliedLimit("span_attribute", AppliedLimitType.DROP)
-        return false
+        false
     }
 
-    override fun updateName(newName: String): Boolean {
+    override fun updateName(newName: String): Boolean = guard(false) {
         if (newName.isNotBlank()) {
             var updated = false
             synchronized(startedSpan) {
@@ -411,11 +419,11 @@ private class EmbraceSpanImpl(
                 if (spanStarted()) {
                     notifyChanged()
                 }
-                return true
+                return@guard true
             }
         }
 
-        return false
+        false
     }
 
     override fun addSystemLink(linkedSpanContext: SpanContext, type: LinkType, attributes: Map<String, Any>): Boolean =
@@ -431,10 +439,11 @@ private class EmbraceSpanImpl(
     override fun addLink(linkedSpanContext: SpanContext, attributes: Map<String, String>): Boolean =
         addCustomLink(linkedSpanContext, attributes)
 
-    override fun addCustomLink(linkedSpanContext: SpanContext, attributes: Map<String, Any>): Boolean =
+    override fun addCustomLink(linkedSpanContext: SpanContext, attributes: Map<String, Any>): Boolean = guard(false) {
         recordLink(system = false, max = deps.dataValidator.otelLimitsConfig.getMaxCustomLinkCount()) {
             EmbraceLinkData(linkedSpanContext, attributes.toMap())
         }
+    }
 
     override fun asNewContext(): Context? = startedSpan.get()?.run {
         return parentContext.storeSpan(this)
@@ -712,6 +721,9 @@ private class EmbraceSpanImpl(
             }
         }
     }
+
+    private inline fun <T> guard(default: T, action: () -> T): T =
+        deps.errorHandler.guardSdkCode(SdkErrorType.SpanOperationFail, default, action)
 
     private fun validateName(name: String) =
         deps.dataValidator.truncateName(

@@ -360,6 +360,24 @@ internal class EmbraceSpanImplTest(
     }
 
     @Test
+    fun `recording an exception whose getters throw falls back to the type name`() {
+        val exception = object : RuntimeException() {
+            override val message: String get() = error("broken message")
+            override fun getStackTrace(): Array<StackTraceElement> = error("broken stacktrace")
+        }
+        with(embraceSpan) {
+            assertTrue(start())
+            assertTrue(recordException(exception = exception, attributes = mapOf("myKey" to "myValue")))
+        }
+
+        val attrs = checkNotNull(checkNotNull(embraceSpan.snapshot()).events).single().attributes.orEmpty()
+        assertEquals(exception.javaClass.name, attrs.single { it.key == ExceptionAttributes.EXCEPTION_TYPE }.data)
+        assertEquals("myValue", attrs.single { it.key == "myKey" }.data)
+        assertTrue(attrs.none { it.key == ExceptionAttributes.EXCEPTION_MESSAGE })
+        assertTrue(attrs.none { it.key == ExceptionAttributes.EXCEPTION_STACKTRACE })
+    }
+
+    @Test
     fun `retained event and link data is released when a span stops but the span remains retrievable`() {
         with(embraceSpan) {
             assertTrue(start())

@@ -323,24 +323,26 @@ private class EmbraceSpanImpl(
             system = false,
             max = deps.dataValidator.otelLimitsConfig.getMaxCustomEventCount(),
         ) {
-            val eventAttributes = mutableMapOf<String, Any>()
-            eventAttributes.putAll(attributes)
-
-            exception.javaClass.canonicalName?.let { type ->
-                eventAttributes[ExceptionAttributes.EXCEPTION_TYPE] = type
+            // app-defined Throwables can override getMessage()/getStackTrace() with implementations that throw
+            val exceptionAttributes = try {
+                buildMap {
+                    exception.javaClass.canonicalName?.let { type ->
+                        put(ExceptionAttributes.EXCEPTION_TYPE, type)
+                    }
+                    exception.message?.let { message ->
+                        put(ExceptionAttributes.EXCEPTION_MESSAGE, message)
+                    }
+                    put(ExceptionAttributes.EXCEPTION_STACKTRACE, exception.truncatedStacktraceText())
+                }
+            } catch (ignored: Throwable) {
+                mapOf(ExceptionAttributes.EXCEPTION_TYPE to exception.javaClass.name)
             }
-
-            exception.message?.let { message ->
-                eventAttributes[ExceptionAttributes.EXCEPTION_MESSAGE] = message
-            }
-
-            eventAttributes[ExceptionAttributes.EXCEPTION_STACKTRACE] = exception.truncatedStacktraceText()
 
             deps.dataValidator.createTruncatedSpanEvent(
                 name = deps.dataValidator.otelLimitsConfig.getExceptionEventName(),
                 timestampMs = deps.openTelemetryClock.now().nanosToMillis(),
                 internal = internal,
-                attributes = eventAttributes,
+                attributes = attributes + exceptionAttributes,
             )
         }
 

@@ -134,6 +134,7 @@ internal class SdkIntegrationTestRule(
         serverResponseConfigJson: String? = null,
         serverResponseConfigEtag: String = "server_etag_value",
         expectSdkToStart: Boolean = startSdk,
+        expectedSdkState: SdkState = if (expectSdkToStart) SdkState.STARTED else SdkState.DISABLED,
         setupAction: EmbraceSetupInterface.() -> Unit = {},
         preSdkStartAction: EmbracePreSdkStartInterface.() -> Unit = {},
         testCaseAction: EmbraceActionInterface.() -> Unit,
@@ -195,7 +196,7 @@ internal class SdkIntegrationTestRule(
                 )
                 assertEquals(
                     "SDK state holder did not reach the expected state.",
-                    if (expectSdkToStart) SdkState.STARTED else SdkState.FAILED,
+                    expectedSdkState,
                     sdkStateHolder.state
                 )
                 if (sdkStateHolder.api.isStarted) {

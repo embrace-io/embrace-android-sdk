@@ -34,7 +34,37 @@ internal class SdkApiDispatcherTest {
     fun setUp() {
         telemetryService = FakeInternalTelemetryService()
         errorHandler = FakeErrorHandler(throwOnSdkError = false)
-        sdk = SdkApiDispatcher(recordingSdkApi(calls), telemetryService, errorHandler)
+        sdk = SdkApiDispatcher(
+            recordingSdkApi(calls),
+            telemetryService,
+            errorHandler,
+            onStart = { calls += "onStart" },
+            onDisable = { calls += "onDisable" },
+        )
+    }
+
+    @Test
+    fun `lifecycle calls do not reach the target`() {
+        sdk.start(Robolectric.buildActivity(Activity::class.java).get())
+        sdk.disable()
+        assertEquals(listOf("onStart", "onDisable"), calls)
+    }
+
+    @Test
+    fun `lifecycle callback exceptions are reported`() {
+        val dispatcher = SdkApiDispatcher(
+            recordingSdkApi(calls),
+            telemetryService,
+            errorHandler,
+            onStart = { error("start failed") },
+            onDisable = { error("disable failed") },
+        )
+        dispatcher.start(Robolectric.buildActivity(Activity::class.java).get())
+        dispatcher.disable()
+        assertEquals(
+            listOf("start failed", "disable failed"),
+            errorHandler.sdkErrorMessages.map { it.throwable?.message },
+        )
     }
 
     @Test

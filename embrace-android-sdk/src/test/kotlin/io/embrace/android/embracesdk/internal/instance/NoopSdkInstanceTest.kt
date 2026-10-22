@@ -2,17 +2,8 @@ package io.embrace.android.embracesdk.internal.instance
 
 import io.embrace.android.embracesdk.LastRunEndState
 import io.embrace.android.embracesdk.PropertyScope
-import io.embrace.android.embracesdk.fakes.FakeClock
 import io.embrace.android.embracesdk.fakes.FakeErrorHandler
-import io.embrace.android.embracesdk.fakes.FakeTelemetryDestination
-import io.embrace.android.embracesdk.internal.api.SdkApi
-import io.embrace.android.embracesdk.internal.logging.ErrorHandlerImpl
-import io.embrace.android.embracesdk.internal.logging.SdkErrorType
-import io.embrace.android.embracesdk.internal.logging.guardSdkCode
 import io.embrace.android.embracesdk.internal.otel.spans.NoopEmbraceSdkSpan
-import io.embrace.android.embracesdk.spans.EmbraceSpan
-import io.embrace.android.embracesdk.spans.EmbraceSpanEvent
-import io.embrace.android.embracesdk.spans.ErrorCode
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNull
@@ -47,71 +38,6 @@ internal class NoopSdkInstanceTest {
         assertFalse(instance.recordCompletedSpan("span", 1, 2))
         assertSame(NoopEmbraceSdkSpan, instance.startSpan("span"))
         assertNull(instance.getSpan("id"))
-    }
-
-    @Test
-    fun `onPostStart drains buffered calls`() {
-        val buffer = createBuffer()
-        instance.onPostStart(buffer)
-        assertEquals(emptyList<String>(), drainRemaining(buffer))
-    }
-
-    @Test
-    fun `calls after onPostStart are not buffered`() {
-        val buffer = BufferingSdkInstance({ 0 }, errorHandler)
-        instance.onPostStart(buffer)
-        buffer.setResourceAttribute("key", "value")
-        buffer.recordCompletedSpan("span", 1, 2)
-        buffer.trackExperiment("exp", "variant", 1)
-        assertEquals(emptyList<String>(), drainRemaining(buffer))
-    }
-
-    @Test
-    fun `onPostStart discards buffered SDK errors`() {
-        val handler = ErrorHandlerImpl(FakeClock())
-        val buffer = BufferingSdkInstance({ 0 }, handler)
-        handler.guardSdkCode(SdkErrorType.DeliverySchedulingFail) { throw IllegalStateException() }
-        instance.onPostStart(buffer)
-        handler.guardSdkCode(SdkErrorType.DeliverySchedulingFail) { throw IllegalStateException() }
-
-        val destination = FakeTelemetryDestination()
-        buffer.drainSdkErrors(destination)
-        assertTrue(destination.logEvents.isEmpty())
-    }
-
-    private fun createBuffer() = BufferingSdkInstance({ 0 }, errorHandler).apply {
-        setResourceAttribute("key", "value")
-        recordCompletedSpan("span", 1, 2)
-        trackExperiment("exp", "variant", 1)
-    }
-
-    /**
-     * Drains whatever [buffer] still holds into a recorder and returns what was replayed.
-     */
-    private fun drainRemaining(buffer: BufferingSdkInstance): List<String> {
-        val replayed = mutableListOf<String>()
-        val recorder = object : SdkApi by instance {
-            override fun setResourceAttribute(key: String, value: String) {
-                replayed += key
-            }
-
-            override fun recordCompletedSpan(
-                name: String,
-                startTimeMs: Long,
-                endTimeMs: Long,
-                errorCode: ErrorCode?,
-                parent: EmbraceSpan?,
-                attributes: Map<String, String>,
-                events: List<EmbraceSpanEvent>,
-            ): Boolean {
-                replayed += name
-                return true
-            }
-        }
-        buffer.drainOTelConfig(recorder)
-        buffer.drainCompletedSpans(recorder)
-        buffer.drainExperimentCalls(recorder) { calls -> replayed += calls.map { "exp" } }
-        return replayed
     }
 
     @Test

@@ -3,12 +3,12 @@ package io.embrace.android.embracesdk.internal.instance
 import io.embrace.android.embracesdk.internal.api.SdkApi
 
 /**
- * An [SdkApi] that drains the [BufferingSdkInstance] used before the SDK starts.
+ * An [SdkApi] that takes over from the [BufferingSdkInstance] used before the SDK starts.
  */
 internal interface SdkInstance : InternalSdkApi, AutoCloseable {
 
     /**
-     * Invoked after the instance has started successfully. Not invoked if the start did not succeed.
+     * Invoked when this instance replaces [buffer] as the dispatch target, before [buffer] is closed.
      */
     fun onPostStart(buffer: BufferingSdkInstance)
 }

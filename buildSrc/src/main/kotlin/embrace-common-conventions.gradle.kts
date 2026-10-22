@@ -13,6 +13,7 @@ val target = project.findVersion("jvmTargetCompatibility")
 detekt {
     buildUponDefaultConfig = true
     autoCorrect = true
+    parallel = true
     config.from(project.files("${project.rootDir}/config/detekt/detekt.yml"))
     baseline = project.file("${project.projectDir}/config/detekt/baseline.xml")
 }

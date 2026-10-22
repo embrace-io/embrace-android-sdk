@@ -48,6 +48,7 @@ android {
                 test.maxHeapSize = heapSize
                 // Test forks are short-lived, so C2 compilation costs more than it saves
                 test.jvmArgs("-XX:TieredStopAtLevel=1")
+                test.timeout.set(TEST_TASK_TIMEOUT)
 
                 // Disable test discovery failure for modules without test sources
                 test.failOnNoDiscoveredTests.set(false)

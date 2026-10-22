@@ -16,25 +16,24 @@ import io.embrace.android.embracesdk.internal.logging.guardSdkCode
  */
 internal class EmbraceWindowCallback(
     private val delegate: Window.Callback,
-    private val gestureDetector: GestureDetector,
-    private val errorHandler: ErrorHandler,
+    gestureDetector: GestureDetector,
+    errorHandler: ErrorHandler,
 ) : Window.Callback by delegate, AutoCloseable {
 
+    // nulled on close so that windows outliving the SDK do not retain it
     @Volatile
-    private var closed = false
+    private var tapCapture: TapCapture? = TapCapture(gestureDetector, errorHandler)
 
     override fun close() {
-        closed = true
+        tapCapture = null
     }
 
     override fun dispatchTouchEvent(event: MotionEvent?): Boolean {
-        if (closed) {
-            return delegate.dispatchTouchEvent(event)
-        }
+        val capture = tapCapture ?: return delegate.dispatchTouchEvent(event)
         event?.let {
-            errorHandler.guardSdkCode(SdkErrorType.UiCallbackFail) {
+            capture.errorHandler.guardSdkCode(SdkErrorType.UiCallbackFail) {
                 val copy = MotionEvent.obtain(it)
-                gestureDetector.onTouchEvent(copy)
+                capture.gestureDetector.onTouchEvent(copy)
                 copy.recycle()
             }
         }
@@ -57,4 +56,9 @@ internal class EmbraceWindowCallback(
             delegate.onProvideKeyboardShortcuts(data, menu, deviceId)
         }
     }
+
+    private class TapCapture(
+        val gestureDetector: GestureDetector,
+        val errorHandler: ErrorHandler,
+    )
 }

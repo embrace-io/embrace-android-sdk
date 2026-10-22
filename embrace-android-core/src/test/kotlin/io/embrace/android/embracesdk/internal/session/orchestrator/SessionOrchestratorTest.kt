@@ -489,6 +489,31 @@ internal class SessionOrchestratorTest {
     }
 
     @Test
+    fun `user session last activity time keeps updating after an update fails`() {
+        var failWrites = false
+        val backing = FakeKeyValueStore()
+        val flakyStore = UserSessionMetadataStore(
+            object : KeyValueStore by backing {
+                override fun editAndCommit(action: KeyValueStoreEditor.() -> Unit) {
+                    check(!failWrites) { "simulated write failure" }
+                    backing.editAndCommit(action)
+                }
+            },
+        )
+        createOrchestrator(startingProcessState = ProcessState.FOREGROUND, metadataStoreOverride = flakyStore)
+
+        failWrites = true
+        clock.tick(61_000)
+        inactivityWorkerExecutor.runCurrentlyBlocked()
+
+        failWrites = false
+        clock.tick(61_000)
+        inactivityWorkerExecutor.runCurrentlyBlocked()
+        assertEquals(clock.now(), activeUserSession().lastActivityMs)
+        assertEquals(listOf(SdkErrorType.UserSessionTimerFail.toString()), errorHandler.sdkErrorMessages.map { it.msg })
+    }
+
+    @Test
     fun `user session last activity time does not update when app in the background`() {
         createOrchestrator(
             startingProcessState = ProcessState.FOREGROUND,

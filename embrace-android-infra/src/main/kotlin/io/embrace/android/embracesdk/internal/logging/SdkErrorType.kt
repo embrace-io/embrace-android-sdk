@@ -71,6 +71,7 @@ sealed class SdkErrorType(private val severity: Severity) {
     object SessionPartListenerFail : SdkErrorType(ERROR)
     object DeviceChangeListenerFail : SdkErrorType(ERROR)
     object UserSessionLoadFail : SdkErrorType(ERROR)
+    object UserSessionTimerFail : SdkErrorType(ERROR)
     object ResourceCloseFail : SdkErrorType(ERROR)
     object WorkerTaskFail : SdkErrorType(ERROR)
 

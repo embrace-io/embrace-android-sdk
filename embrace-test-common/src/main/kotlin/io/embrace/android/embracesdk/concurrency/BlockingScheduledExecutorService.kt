@@ -277,7 +277,10 @@ class BlockingScheduledExecutorService(
             if (!isPeriodic) {
                 super.run()
             } else {
-                runAndReset()
+                // as with a real executor, a run that throws (or a cancelled task) is not rescheduled
+                if (!runAndReset()) {
+                    return
+                }
                 if (runFromLastExecution) {
                     executionTimeMs = fakeClock.now() + periodMs
                 } else {

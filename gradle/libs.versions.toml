@@ -43,6 +43,7 @@ navigation = "2.10.2"
 navigation3 = "1.1.5"
 asmUtil = "9.11"
 gradleTestKit = "8.11.1"
+# 1.5.7-18+ ships Java 22 classes that Gradle 8.0.x can't instrument. See .github/dependabot.yml.
 zstdJni = "1.5.7-17"
 detekt = "1.23.8"
 buildconfig = "6.1.2"

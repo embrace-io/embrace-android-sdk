@@ -20,3 +20,10 @@ updates:
     open-pull-requests-limit: 50
     cooldown:
       default-days: 7
+    ignore:
+      # zstd-jni 1.5.7-18+ is a multi-release jar containing Java 22 (class file major version 66)
+      # classes. Gradle 8.0.x's ASM can't instrument them, so builds that apply the Embrace Gradle
+      # plugin fail with "Unsupported class file major version 66" before the plugin can run.
+      # Remove this once the plugin's minimum supported Gradle version can read Java 22 classes.
+      - dependency-name: "com.github.luben:zstd-jni"
+        versions: ["[1.5.7-18,)"]

@@ -15,6 +15,7 @@ import io.embrace.android.embracesdk.internal.NoopInternalInterfaceApi
 import io.embrace.android.embracesdk.internal.api.SdkApi
 import io.embrace.android.embracesdk.internal.api.delegate.TrackedExperimentImpl
 import io.embrace.android.embracesdk.internal.api.delegate.TrackedFeatureFlagImpl
+import io.embrace.android.embracesdk.internal.clock.Clock
 import io.embrace.android.embracesdk.internal.logging.ErrorHandler
 import io.embrace.android.embracesdk.internal.otel.spans.NoopEmbraceSdkSpan
 import io.embrace.android.embracesdk.network.EmbraceNetworkRequest
@@ -35,6 +36,7 @@ import io.opentelemetry.kotlin.tracing.export.SpanProcessor
  * with the name of the action that could not be performed.
  */
 internal class NoopSdkInstance(
+    private val clock: Clock,
     private val errorHandler: ErrorHandler,
     private val message: String,
 ) : SdkInstance, InternalInterfaceApi by NoopInternalInterfaceApi {
@@ -311,7 +313,7 @@ internal class NoopSdkInstance(
         logDropped("activity_fully_loaded")
     }
 
-    override fun getSdkCurrentTimeMs(): Long = System.currentTimeMillis()
+    override fun getSdkCurrentTimeMs(): Long = clock.now()
 
     override fun addLoadTraceAttribute(activity: Activity, key: String, value: String) {
         logDropped("add_load_trace_attribute")

@@ -46,7 +46,7 @@ internal class BufferingSdkInstance(
     private val clock: Clock,
     private val errorHandler: ErrorHandler = ErrorHandlerImpl(clock),
 ) : SdkInstance,
-    SdkApi by NoopSdkInstance(errorHandler, NoopSdkInstance.SDK_NOT_INITIALIZED),
+    SdkApi by NoopSdkInstance(clock, errorHandler, NoopSdkInstance.SDK_NOT_INITIALIZED),
     InternalInterfaceApi by NoopInternalInterfaceApi {
 
     private val otelConfigCalls = CallBuffer<OTelApi, OTelConfigCall>()
@@ -203,7 +203,7 @@ internal class BufferingSdkInstance(
         }
     }
 
-    override fun getSdkCurrentTimeMs(): Long = 0
+    override fun getSdkCurrentTimeMs(): Long = clock.now()
 
     override fun getOpenTelemetryKotlin(): OpenTelemetry = NoopOpenTelemetry
 

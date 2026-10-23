@@ -2,6 +2,7 @@ package io.embrace.android.embracesdk.internal.instance
 
 import io.embrace.android.embracesdk.LastRunEndState
 import io.embrace.android.embracesdk.PropertyScope
+import io.embrace.android.embracesdk.fakes.FakeClock
 import io.embrace.android.embracesdk.fakes.FakeErrorHandler
 import io.embrace.android.embracesdk.internal.otel.spans.NoopEmbraceSdkSpan
 import org.junit.Assert.assertEquals
@@ -14,13 +15,15 @@ import org.junit.Test
 
 internal class NoopSdkInstanceTest {
 
+    private lateinit var clock: FakeClock
     private lateinit var errorHandler: FakeErrorHandler
     private lateinit var instance: NoopSdkInstance
 
     @Before
     fun setUp() {
+        clock = FakeClock(currentTime = 1000L)
         errorHandler = FakeErrorHandler()
-        instance = NoopSdkInstance(errorHandler, NoopSdkInstance.SDK_NOT_INITIALIZED)
+        instance = NoopSdkInstance(clock, errorHandler, NoopSdkInstance.SDK_NOT_INITIALIZED)
     }
 
     @Test
@@ -38,6 +41,11 @@ internal class NoopSdkInstanceTest {
         assertFalse(instance.recordCompletedSpan("span", 1, 2))
         assertSame(NoopEmbraceSdkSpan, instance.startSpan("span"))
         assertNull(instance.getSpan("id"))
+    }
+
+    @Test
+    fun `getSdkCurrentTimeMs returns the clock time`() {
+        assertEquals(1000L, instance.getSdkCurrentTimeMs())
     }
 
     @Test
@@ -74,7 +82,7 @@ internal class NoopSdkInstanceTest {
 
     @Test
     fun `logs disabled message`() {
-        val disabled = NoopSdkInstance(errorHandler, NoopSdkInstance.SDK_DISABLED)
+        val disabled = NoopSdkInstance(clock, errorHandler, NoopSdkInstance.SDK_DISABLED)
         disabled.addBreadcrumb("crumb")
         assertEquals(
             "Embrace SDK is disabled, cannot add_breadcrumb. Subsequent dropped calls will not be logged.",

@@ -3,6 +3,7 @@ package io.embrace.android.embracesdk
 import android.annotation.SuppressLint
 import android.util.Log
 import io.embrace.android.embracesdk.internal.api.SdkApi
+import io.embrace.android.embracesdk.internal.clock.NormalizedIntervalClock
 import io.embrace.android.embracesdk.internal.injection.PreStartServices
 import io.embrace.android.embracesdk.internal.instance.NoopSdkInstance
 import io.embrace.android.embracesdk.internal.instance.createSdkStateHolder
@@ -24,7 +25,8 @@ private val sdkApi: SdkApi = try {
     )
     // The fallback deliberately touches as few classes as possible, as the failure above may have been class linkage.
     // Anything thrown here escapes as an ExceptionInInitializerError, so no further fallback is attempted.
-    NoopSdkInstance(ErrorHandlerImpl(System::currentTimeMillis), NoopSdkInstance.SDK_NOT_INITIALIZED)
+    val clock = NormalizedIntervalClock()
+    NoopSdkInstance(clock, ErrorHandlerImpl(clock), NoopSdkInstance.SDK_NOT_INITIALIZED)
 }
 
 /**

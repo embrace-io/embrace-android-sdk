@@ -35,7 +35,7 @@ class TelemetryLimitEnforcer(
         if (truncatedEntries.size < attributes.size) {
             telemetryService.trackAppliedLimit(SPAN_ATTRIBUTE_TELEMETRY_TYPE, AppliedLimitType.TRUNCATE_ATTRIBUTES)
         }
-        return truncatedEntries.associate {
+        val result = truncatedEntries.associate {
             truncateAttribute(
                 key = it.key,
                 value = it.value,
@@ -43,6 +43,10 @@ class TelemetryLimitEnforcer(
                 maxValueLength = maxValueLength,
             )
         }
+        if (result.size < truncatedEntries.size) {
+            telemetryService.trackAppliedLimit(SPAN_ATTRIBUTE_KEY_TELEMETRY_TYPE, AppliedLimitType.DROP)
+        }
+        return result
     }
 
     fun truncateAttribute(key: String, value: Any, maxKeyLength: Int, maxValueLength: Int): Pair<String, Any> {

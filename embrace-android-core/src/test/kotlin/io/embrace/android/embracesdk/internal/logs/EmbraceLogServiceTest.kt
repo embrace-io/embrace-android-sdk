@@ -146,6 +146,16 @@ internal class EmbraceLogServiceTest {
     }
 
     @Test
+    fun `a trimmed log message does not split a surrogate pair`() {
+        fakeConfigService = FakeConfigService(
+            config = EmbraceConfig(log = { LogConfig(maxMessageLength = { 5 }) }),
+        )
+        logService = createEmbraceLogService()
+        logService.log("a😀bcdef", LogSeverity.INFO, emptyMap(), ::Log)
+        assertEquals("a...", destination.logEvents.single().message)
+    }
+
+    @Test
     fun `log messages in Unity are trimmed to Unity max length`() {
         // given a config with message limit and app framework Unity
         fakeConfigService = FakeConfigService(
@@ -260,6 +270,34 @@ internal class EmbraceLogServiceTest {
     }
 
     @Test
+    fun `a value that fails to stringify keeps the other attributes`() {
+        logService.log(
+            message = "message",
+            severity = LogSeverity.INFO,
+            attributes = mapOf("bad" to ThrowingToString(), "exception.stacktrace" to "trace", "status" to "ok"),
+            schemaProvider = ::Log,
+        )
+        val attributes = destination.logEvents.single().schemaType.attributes()
+        assertEquals("trace", attributes["exception.stacktrace"])
+        assertEquals("ok", attributes["status"])
+        assertTrue("bad" !in attributes)
+    }
+
+    @Test
+    fun `keys that collide after truncation keep the last value and are reported`() {
+        val prefix = "k".repeat(200)
+        logService.log(
+            message = "message",
+            severity = LogSeverity.INFO,
+            attributes = mapOf("${prefix}1" to "first", "${prefix}2" to "second"),
+            schemaProvider = ::Log,
+        )
+        val attributes = destination.logEvents.single().schemaType.attributes()
+        assertEquals("second", attributes[prefix.take(125) + "..."])
+        assertTrue(fakeTelemetryService.appliedLimits.contains("log_attribute_key" to AppliedLimitType.DROP))
+    }
+
+    @Test
     fun `log properties unchanged if embrace not in use`() {
         fakeConfigService = FakeConfigService(onlyUsingOtelExporters = true)
         logService = createEmbraceLogService()
@@ -276,6 +314,10 @@ internal class EmbraceLogServiceTest {
     }
 
     private class UnSerializableClass
+
+    private class ThrowingToString : java.io.Serializable {
+        override fun toString(): String = error("boom")
+    }
 
     companion object {
         private val twoHundredXs = "x".repeat(200)

@@ -8,12 +8,16 @@ internal class LogCounter(
     private val count = AtomicInteger(0)
 
     fun addIfAllowed(): Boolean {
-        if (count.get() < getConfigLogLimit.invoke()) {
-            count.incrementAndGet()
-        } else {
-            return false
+        val limit = getConfigLogLimit()
+        while (true) {
+            val current = count.get()
+            if (current >= limit) {
+                return false
+            }
+            if (count.compareAndSet(current, current + 1)) {
+                return true
+            }
         }
-        return true
     }
 
     fun getCount(): Int = count.get()

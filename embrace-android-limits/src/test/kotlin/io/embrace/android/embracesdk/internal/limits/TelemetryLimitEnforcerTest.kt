@@ -70,6 +70,20 @@ internal class TelemetryLimitEnforcerTest {
     }
 
     @Test
+    fun `keys that collide after truncation keep the last value and are reported`() {
+        assertEquals(
+            mapOf("abcde..." to "2"),
+            enforcer().truncateAttributes(
+                attributes = mapOf("abcdefghi1" to "1", "abcdefghi2" to "2"),
+                maxCount = 5,
+                maxKeyLength = 8,
+                maxValueLength = 8,
+            ),
+        )
+        assertEquals(1, telemetryService.appliedLimits.count { it == "span_attribute_key" to AppliedLimitType.DROP })
+    }
+
+    @Test
     fun `non-string values keep their type unless their string form is over the limit`() {
         assertEquals(
             mapOf("long" to 1234567L, "list" to listOf("a", "b"), "longer" to "12345...", "longerList" to "[shor..."),

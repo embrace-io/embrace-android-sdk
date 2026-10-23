@@ -38,8 +38,7 @@ import io.embrace.android.embracesdk.internal.config.ConfigService
 import io.embrace.android.embracesdk.internal.delivery.caching.PayloadCachingService
 import io.embrace.android.embracesdk.internal.delivery.scheduling.SchedulingService
 import io.embrace.android.embracesdk.internal.delivery.storage.PayloadStorageService
-import io.embrace.android.embracesdk.internal.delivery.storage.StorageLocation
-import io.embrace.android.embracesdk.internal.delivery.storage.asFile
+import io.embrace.android.embracesdk.internal.delivery.storage.deleteSdkFiles
 import io.embrace.android.embracesdk.internal.injection.WorkerThreadPool
 import io.embrace.android.embracesdk.internal.injection.evictConnections
 import io.embrace.android.embracesdk.internal.instrumentation.crash.CrashFileMarker
@@ -257,15 +256,7 @@ internal class RealSdkInstance(
                 if (!workerThreadPool.awaitTermination(WORKER_TERMINATION_TIMEOUT_MS)) {
                     Log.w("[Embrace]", "Timed out waiting for Embrace workers to finish before deleting data.")
                 }
-                StorageLocation.entries.map {
-                    it.asFile(
-                        errorHandler = null,
-                        rootDirSupplier = { rootDir },
-                        fallbackDirSupplier = { fallbackDir },
-                    ).value
-                }.forEach {
-                    it.deleteRecursively()
-                }
+                deleteSdkFiles(rootDir, fallbackDir)
             }.onFailure { exception ->
                 Log.e("[Embrace]", "An error occurred while trying to disable Embrace SDK.", exception)
             }

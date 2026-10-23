@@ -139,14 +139,17 @@ internal class SdkStateHolderTest {
         assertEquals(listOf("instantiate", "enable", "onTransition", "disable", "disabled:logInfo/1"), calls)
     }
 
+    /**
+     * A repeated close disables whatever serves calls again, which is the instance from [disabled] by then.
+     */
     @Test
-    fun `repeated close is ignored`() {
+    fun `repeated close only disables the disabled instance`() {
         val holder = createHolder(FakeInstance(calls))
         holder.start(context)
         holder.close()
         holder.close()
         assertEquals(SdkState.DISABLED, holder.state)
-        assertEquals(listOf("instantiate", "enable", "onTransition", "disable"), calls)
+        assertEquals(listOf("instantiate", "enable", "onTransition", "disable", "disabled:disable"), calls)
     }
 
     @Test
@@ -185,6 +188,45 @@ internal class SdkStateHolderTest {
         assertEquals(listOf("instantiate", "enable", "close", "failed:onTransition", "failed:disable"), calls)
     }
 
+    /**
+     * No instance is left to delete the SDK's files, so [failed], which stands in for it, deletes them when disabled.
+     */
+    @Test
+    fun `close after instantiation that throws disables the failed instance`() {
+        val holder = createHolder { error("instantiation failed") }
+        holder.start(context)
+        holder.close()
+        assertEquals(listOf("instantiate", "failed:onTransition", "failed:disable"), calls)
+    }
+
+    /**
+     * A start disabled by remote config is already disabled, but the app disabling the SDK still deletes what earlier
+     * launches persisted, so none of it is sent if a later launch starts.
+     */
+    @Test
+    fun `close after a start disabled by config disables its instance`() {
+        val holder = createHolder { null }
+        holder.start(context)
+        holder.close()
+        assertEquals(listOf("instantiate", "disabled:onTransition", "disabled:disable"), calls)
+    }
+
+    /**
+     * A disable made while a start that config disables is still creating its instance is applied once the start
+     * completes, so it still deletes what earlier launches persisted.
+     */
+    @Test
+    fun `disable called while instantiating a start disabled by config disables its instance`() {
+        lateinit var holder: SdkStateHolder
+        holder = createHolder {
+            holder.api.disable()
+            null
+        }
+        holder.start(context)
+        assertEquals(SdkState.DISABLED, holder.state)
+        assertEquals(listOf("instantiate", "disabled:onTransition", "disabled:disable"), calls)
+    }
+
     @Test
     fun `failed disable is still terminal`() {
         val instance = FakeInstance(calls, closeThrows = true)
@@ -195,7 +237,7 @@ internal class SdkStateHolderTest {
         assertSame(disabled, holder.api.target)
         assertEquals("disable failed", errorHandler.sdkErrorMessages.single().throwable?.message)
         holder.close()
-        assertEquals(listOf("instantiate", "enable", "onTransition", "disable"), calls)
+        assertEquals(listOf("instantiate", "enable", "onTransition", "disable", "disabled:disable"), calls)
     }
 
     @Test
@@ -464,6 +506,9 @@ internal class SdkStateHolderTest {
         holder.start(context)
         assertEquals(SdkState.DISABLED, holder.state)
         assertSame(disabled, holder.api.target)
+
+        // the instance is disabled rather than closed, as the responsibility of closing falls to the disablement
+        assertEquals(listOf("instantiate", "enable", "disable", "failed:onTransition", "failed:disable"), calls)
     }
 
     /**
@@ -540,8 +585,8 @@ internal class SdkStateHolderTest {
             instanceFactory()
         },
         preStart = buffer,
-        failed = { failed },
-        disabled = { disabled },
+        failed = lazy { failed },
+        disabled = lazy { disabled },
         telemetryService = FakeInternalTelemetryService(),
         errorHandler = errorHandler,
     )

@@ -8,7 +8,6 @@ import io.embrace.android.embracesdk.internal.logging.SdkErrorType
 import io.embrace.android.embracesdk.internal.logging.guardSdkCode
 import io.embrace.android.embracesdk.internal.telemetry.InternalTelemetryService
 import io.embrace.android.embracesdk.internal.utils.EmbTrace
-import io.embrace.android.embracesdk.internal.utils.Provider
 
 /**
  * Holds the [SdkApi] instance that backs the public `Embrace` object, and the lifecycle state of the SDK.
@@ -32,15 +31,17 @@ import io.embrace.android.embracesdk.internal.utils.Provider
  *
  * Only one attempt is made to start the SDK. A start that does not succeed closes any instance that was created without
  * deleting its persisted data, moves the SDK to [SdkState.FAILED], routes all subsequent calls to [failed] and discards
- * any buffered calls. Only calling [close] deletes persisted data. Neither [SdkState.FAILED] nor [SdkState.DISABLED]
- * can be started again. Exceptions are reported to [errorHandler] rather than thrown. A disable made during start, by code
- * running on the start thread, is applied once the start completes rather than interrupting it.
+ * any buffered calls. Only calling [close] deletes persisted data, by disabling the instance that serves calls. After a
+ * start that failed or was disabled by config, that is [failed] or [disabled], which deletes what the SDK persisted.
+ * Neither [SdkState.FAILED] nor [SdkState.DISABLED] can be started again. Exceptions are reported to [errorHandler]
+ * rather than thrown. A disable made during start, by code running on the start thread, is applied once the start
+ * completes rather than interrupting it.
  */
 internal class SdkStateHolder(
     realSdkInstanceFactory: SdkInstanceFactory,
     preStart: BufferingSdkInstance,
-    private val failed: Provider<SdkInstance>,
-    private val disabled: Provider<SdkInstance>,
+    private val failed: Lazy<SdkInstance>,
+    private val disabled: Lazy<SdkInstance>,
     telemetryService: InternalTelemetryService,
     private val errorHandler: ErrorHandler,
 ) : AutoCloseable {
@@ -77,13 +78,10 @@ internal class SdkStateHolder(
     }
 
     /**
-     * Disables the SDK. Has no effect if the SDK is already in [SdkState.DISABLED].
+     * Disables the SDK. Disabling it again has no further effect.
      */
     override fun close() {
         synchronized(lock) {
-            if (state == SdkState.DISABLED) {
-                return
-            }
             if (pendingCall == PendingCall.Start || pendingCall == PendingCall.Disable) {
                 // only code running on the start thread gets here, as the lock is held for the whole start. The disable is
                 // applied once the start completes rather than interrupting it.
@@ -92,7 +90,7 @@ internal class SdkStateHolder(
             }
             pendingCall = PendingCall.Done
             val previous = api.target
-            transition(disabled(), SdkState.DISABLED)
+            transition(disabled.value, SdkState.DISABLED)
             errorHandler.guardSdkCode(SdkErrorType.PublicApiFail) { previous.disable() }
             errorHandler.guardSdkCode(SdkErrorType.PublicApiFail) { errorHandler.close() }
         }
@@ -108,19 +106,27 @@ internal class SdkStateHolder(
                 factory(context)
             } catch (exc: Throwable) {
                 reportStartFailure(exc)
-                terminate(failed(), SdkState.FAILED)
+                terminate(failed.value, SdkState.FAILED)
                 return
             }
             when {
                 // a null instance means the SDK is disabled by config
-                next == null -> terminate(disabled(), SdkState.DISABLED)
+                next == null -> terminate(disabled.value, SdkState.DISABLED)
                 tryEnable(next, context) -> {
                     transition(next, SdkState.ENABLED)
                     next.onEnabled()
                 }
                 else -> {
-                    errorHandler.guardSdkCode(SdkErrorType.PublicApiFail) { next.close() }
-                    terminate(failed(), SdkState.FAILED)
+                    errorHandler.guardSdkCode(SdkErrorType.PublicApiFail) {
+                        // a disable held during this start deletes data, which the instance does once its own
+                        // workers finish
+                        if (pendingCall == PendingCall.Disable) {
+                            next.disable()
+                        } else {
+                            next.close()
+                        }
+                    }
+                    terminate(failed.value, SdkState.FAILED)
                 }
             }
         } finally {

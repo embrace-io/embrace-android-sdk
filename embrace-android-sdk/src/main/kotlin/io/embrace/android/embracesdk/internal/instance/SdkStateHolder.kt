@@ -23,8 +23,9 @@ import io.embrace.android.embracesdk.internal.utils.Provider
  * ```
  *
  * Starting means the public start call, from when it is made until it returns. During it, the [SdkInstance] is created by
- * [instanceFactory] and then enabled. A null instance means the SDK is disabled by config. Each change of [SdkState] is a
- * transition, which points the public API at the instance that serves calls in the new state.
+ * [instanceFactory] and then enabled: the start fails if [SdkInstance.enable] does, and once it has succeeded
+ * [SdkInstance.onEnabled] finishes the instance's init. A null instance means the SDK is disabled by config. Each change
+ * of [SdkState] is a transition, which points the public API at the instance that serves calls in the new state.
  *
  * Only one attempt is made to start the SDK. A start that does not succeed closes any instance that was created without
  * deleting its persisted data, moves the SDK to [SdkState.FAILED], routes all subsequent calls to [failed] and discards
@@ -75,7 +76,10 @@ internal class SdkStateHolder(
                 }
                 when {
                     next == null -> terminate(disabled(), SdkState.DISABLED)
-                    tryEnable(next, context) -> transition(next, SdkState.STARTED)
+                    tryEnable(next, context) -> {
+                        next.onEnabled()
+                        transition(next, SdkState.STARTED)
+                    }
                     else -> {
                         errorHandler.guardSdkCode(SdkErrorType.PublicApiFail) { next.close() }
                         terminate(failed(), SdkState.FAILED)

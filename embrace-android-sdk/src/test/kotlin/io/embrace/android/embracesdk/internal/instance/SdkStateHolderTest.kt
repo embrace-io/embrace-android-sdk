@@ -455,6 +455,8 @@ internal class SdkStateHolderTest {
             }
         }
 
+        override fun onEnabled() {}
+
         override fun close() {
             calls += "${prefix}close"
             check(!closeThrows) { "close failed" }

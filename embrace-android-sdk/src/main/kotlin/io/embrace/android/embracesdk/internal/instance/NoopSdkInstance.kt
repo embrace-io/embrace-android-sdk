@@ -69,6 +69,8 @@ internal class NoopSdkInstance(
 
     override fun enable(context: Context) {}
 
+    override fun onEnabled() {}
+
     override fun start(context: Context) {}
 
     override fun logMessage(message: String, severity: Severity, properties: Map<String, Any>) {

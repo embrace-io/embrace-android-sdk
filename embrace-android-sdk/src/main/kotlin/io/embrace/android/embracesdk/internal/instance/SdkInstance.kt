@@ -16,6 +16,11 @@ internal interface SdkInstance : InternalSdkApi, AutoCloseable {
     fun enable(context: Context)
 
     /**
+     * Finishes the instance's init once [enable] has succeeded, on the same thread.
+     */
+    fun onEnabled()
+
+    /**
      * Invoked when the SDK transitions from [buffer], used before the SDK started, to this instance, before the instance
      * takes calls and before [buffer] is closed.
      */

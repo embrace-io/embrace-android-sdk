@@ -232,6 +232,7 @@ internal class RealSdkInstanceFactoryTest {
             okHttpClient = okHttpClient,
         )
         instance.enable(context)
+        instance.onEnabled()
         val nonIoWorker = workerThreadPool.executorFor(Worker.Background.NonIoRegWorker)
         val ioWorker = workerThreadPool.executorFor(Worker.Background.IoRegWorker)
         instance.disable()

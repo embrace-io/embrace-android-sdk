@@ -121,6 +121,8 @@ internal class BufferingSdkInstance(
 
     override fun enable(context: Context) {}
 
+    override fun onEnabled() {}
+
     override fun onTransition(buffer: BufferingSdkInstance) {}
 
     override fun disable() {}

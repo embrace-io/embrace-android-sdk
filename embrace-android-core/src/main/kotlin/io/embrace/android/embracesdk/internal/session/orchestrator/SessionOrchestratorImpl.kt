@@ -2,7 +2,6 @@
 
 package io.embrace.android.embracesdk.internal.session.orchestrator
 
-import io.embrace.android.embracesdk.SessionStateEvent
 import io.embrace.android.embracesdk.SessionStateEvent.UserSessionActive
 import io.embrace.android.embracesdk.SessionStateEvent.UserSessionEnded
 import io.embrace.android.embracesdk.internal.arch.InstrumentationRegistry
@@ -17,8 +16,6 @@ import io.embrace.android.embracesdk.internal.delivery.caching.PayloadCachingSer
 import io.embrace.android.embracesdk.internal.logging.ErrorHandler
 import io.embrace.android.embracesdk.internal.logging.SdkErrorType
 import io.embrace.android.embracesdk.internal.logging.guardSdkCode
-import io.embrace.android.embracesdk.internal.logging.guardSdkCodeEach
-import io.embrace.android.embracesdk.internal.logging.guardUserCode
 import io.embrace.android.embracesdk.internal.payload.Envelope
 import io.embrace.android.embracesdk.internal.payload.SessionPartPayload
 import io.embrace.android.embracesdk.internal.session.SessionPartToken
@@ -40,7 +37,6 @@ import io.embrace.android.embracesdk.internal.worker.BackgroundWorker
 import io.embrace.android.embracesdk.semconv.EmbSessionAttributes
 import io.embrace.android.embracesdk.semconv.EmbSessionAttributes.EmbUserSessionTerminationReasonValues
 import io.embrace.android.embracesdk.semconv.ExperimentalSemconv
-import java.util.concurrent.CopyOnWriteArrayList
 import java.util.concurrent.TimeUnit
 import kotlin.math.max
 
@@ -71,7 +67,7 @@ internal class SessionOrchestratorImpl(
      */
     private var coldStart = true
     private val lock = Any()
-    private val userSessionListeners = CopyOnWriteArrayList<UserSessionListener>()
+    private val userSessionEvents = UserSessionEventDispatcher(errorHandler)
 
     @Volatile
     private var state = processStateTracker.getAppState()
@@ -303,26 +299,18 @@ internal class SessionOrchestratorImpl(
 
     override fun addUserSessionListener(listener: UserSessionListener) {
         synchronized(lock) {
-            if (!userSessionListeners.addIfAbsent(listener)) {
+            if (!userSessionEvents.addListener(listener)) {
                 return
             }
             currentUserSession()?.let { metadata ->
-                errorHandler.guardSdkCode(SdkErrorType.UserSessionCallbackFail) {
-                    errorHandler.guardUserCode { listener.onSessionStateEvent(UserSessionActive(metadata.userSessionId)) }
-                }
+                userSessionEvents.notifyListener(listener, UserSessionActive(metadata.userSessionId))
             }
         }
     }
 
     override fun removeUserSessionListener(listener: UserSessionListener) {
         synchronized(lock) {
-            userSessionListeners.remove(listener)
-        }
-    }
-
-    private fun notifyListeners(event: SessionStateEvent) {
-        errorHandler.guardSdkCodeEach(SdkErrorType.UserSessionCallbackFail, userSessionListeners) { listener ->
-            errorHandler.guardUserCode { listener.onSessionStateEvent(event) }
+            userSessionEvents.removeListener(listener)
         }
     }
 
@@ -456,6 +444,7 @@ internal class SessionOrchestratorImpl(
                     }
                 }
             }
+            userSessionEvents.deliverPending()
         }
     }
 
@@ -636,7 +625,7 @@ internal class SessionOrchestratorImpl(
                 if (userSessionState !is Active) {
                     val newMetadata = createUnclassifiedUserSession(timestamp)
                     setActiveUserSession(newMetadata)
-                    notifyListeners(UserSessionActive(newMetadata.userSessionId))
+                    userSessionEvents.enqueue(UserSessionActive(newMetadata.userSessionId))
                     backgroundStartupWindowTimerState = SessionTimerState(
                         backgroundWorker.schedule<Unit>(
                             { errorHandler.guardSdkCode(SdkErrorType.UserSessionTimerFail, ::makeCurrentUserSessionBackgroundOnly) },
@@ -742,7 +731,7 @@ internal class SessionOrchestratorImpl(
         // responsible for scheduling the new session's end timers (see scheduleSessionEndTimers).
         val newMetadata = createUnclassifiedUserSession(timestamp).classify(isBackgroundOnly = endProcessState == ProcessState.BACKGROUND)
         setActiveUserSession(newMetadata)
-        notifyListeners(UserSessionActive(newMetadata.userSessionId))
+        userSessionEvents.enqueue(UserSessionActive(newMetadata.userSessionId))
     }
 
     /**
@@ -756,7 +745,7 @@ internal class SessionOrchestratorImpl(
             inactivityTimerState = null
             metadataStore.clear()
             userSessionState = UserSessionState.Terminated
-            notifyListeners(UserSessionEnded(it.userSessionId))
+            userSessionEvents.enqueue(UserSessionEnded(it.userSessionId))
         }
     }
 

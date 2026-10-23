@@ -8,6 +8,7 @@ import io.embrace.android.embracesdk.internal.utils.BuildVersionChecker
 import io.embrace.android.embracesdk.internal.utils.VersionChecker
 import java.io.InputStream
 import java.io.OutputStream
+import java.net.URL
 import java.security.Permission
 import java.security.Principal
 import java.security.cert.Certificate
@@ -224,6 +225,8 @@ internal class InstrumentedHttpsURLConnection(
     override fun getPermission(): Permission? = wrappedConnection.permission
 
     // Pass-through methods from URLConnection that won't be instrumented directly
+
+    override fun getURL(): URL = wrappedConnection.url
 
     override fun addRequestProperty(key: String?, value: String?) {
         wrappedConnection.addRequestProperty(key, value)

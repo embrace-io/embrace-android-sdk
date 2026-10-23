@@ -17,6 +17,7 @@ import org.junit.Test
 import java.io.IOException
 import java.io.InputStream
 import java.io.OutputStream
+import java.net.URL
 import java.security.Permission
 import java.security.Principal
 import java.security.cert.Certificate
@@ -553,6 +554,15 @@ internal class InstrumentedHttpsURLConnectionTest {
     }
 
     // Test HttpURLConnection methods
+
+    @Test
+    fun `getURL reflects the wrapped connection URL after a redirect`() = harness.runTest {
+        val redirectedUrl = URL("https://fakeurl.pizza/redirected")
+        every { mockWrappedConnection.url } returns redirectedUrl
+
+        assertEquals(redirectedUrl, instrumentedConnection.url)
+        assertNoRequestRecorded()
+    }
 
     @Test
     fun `usingProxy delegates to wrapped connection`() = harness.runTest {

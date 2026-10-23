@@ -1,26 +1,28 @@
 package io.embrace.android.embracesdk.injection
 
-import androidx.test.core.app.ApplicationProvider
-import androidx.test.ext.junit.runners.AndroidJUnit4
 import io.embrace.android.embracesdk.fakes.FakeConfigService
 import io.embrace.android.embracesdk.fakes.FakeErrorHandler
+import io.embrace.android.embracesdk.fakes.FilesDirApplication
 import io.embrace.android.embracesdk.fakes.injection.FakeWorkerThreadPool
 import io.embrace.android.embracesdk.internal.injection.ConfigLoadServices
 import io.embrace.android.embracesdk.internal.injection.PreStartServices
 import io.embrace.android.embracesdk.internal.worker.Worker
 import org.junit.Assert.assertEquals
+import org.junit.Rule
 import org.junit.Test
-import org.junit.runner.RunWith
+import org.junit.rules.TemporaryFolder
 
-@RunWith(AndroidJUnit4::class)
 internal class ConfigLoadServicesTest {
+
+    @get:Rule
+    val tempDir = TemporaryFolder()
 
     @Test
     fun `background work only begins once started`() {
         val configService = FakeConfigService()
         val workerThreadPool = FakeWorkerThreadPool(testWorkers = listOf(Worker.Background.IoRegWorker))
         val configLoadServices = ConfigLoadServices(
-            context = ApplicationProvider.getApplicationContext(),
+            context = FilesDirApplication(tempDir.newFolder()),
             preStartServices = PreStartServices(errorHandler = FakeErrorHandler(throwOnSdkError = false)),
             workerThreadPoolSupplier = { workerThreadPool },
             configServiceSupplier = { _, _, _, _, _, _ -> configService },

@@ -1,8 +1,6 @@
 package io.embrace.android.embracesdk.internal.api
 
 import android.content.Context
-import androidx.test.core.app.ApplicationProvider
-import androidx.test.ext.junit.runners.AndroidJUnit4
 import io.embrace.android.embracesdk.fakes.FakeConfigService
 import io.embrace.android.embracesdk.fakes.FakeEnvelopeResourceSource
 import io.embrace.android.embracesdk.fakes.FakeErrorHandler
@@ -12,6 +10,8 @@ import io.embrace.android.embracesdk.fakes.FakeKeyValueStore
 import io.embrace.android.embracesdk.fakes.FakeRnBundleIdTracker
 import io.embrace.android.embracesdk.fakes.FakeTelemetryDestination
 import io.embrace.android.embracesdk.fakes.TestPlatformSerializer
+import io.embrace.android.embracesdk.fakes.fakeApplication
+import io.embrace.android.embracesdk.fakes.fakeContext
 import io.embrace.android.embracesdk.fakes.unimplemented
 import io.embrace.android.embracesdk.internal.api.delegate.HostedSdkInternalInterfaceImpl
 import io.embrace.android.embracesdk.internal.arch.InstrumentationArgs
@@ -26,9 +26,7 @@ import io.opentelemetry.kotlin.semconv.ExceptionAttributes
 import org.junit.Assert.assertEquals
 import org.junit.Before
 import org.junit.Test
-import org.junit.runner.RunWith
 
-@RunWith(AndroidJUnit4::class)
 internal class ReactNativeInternalInterfaceImplTest {
 
     private lateinit var impl: HostedSdkInternalInterfaceImpl
@@ -46,9 +44,9 @@ internal class ReactNativeInternalInterfaceImplTest {
         rnBundleIdTracker = FakeRnBundleIdTracker()
         hostedSdkVersionInfo = ReactNativeSdkVersionInfo(store)
         errorHandler = FakeErrorHandler(false)
-        context = ApplicationProvider.getApplicationContext()
+        context = fakeContext()
         instrumentationRegistry = InstrumentationRegistryImpl(FakeErrorHandler())
-        instrumentationArgs = FakeInstrumentationArgs(ApplicationProvider.getApplicationContext())
+        instrumentationArgs = FakeInstrumentationArgs(fakeApplication())
         impl = HostedSdkInternalInterfaceImpl(
             logsApi = unimplemented(),
             configService = FakeConfigService(),

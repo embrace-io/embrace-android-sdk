@@ -1,6 +1,5 @@
 package io.embrace.android.embracesdk.internal.api.delegate
 
-import androidx.test.ext.junit.runners.AndroidJUnit4
 import io.embrace.android.embracesdk.fakes.FakeClock
 import io.embrace.android.embracesdk.fakes.FakeErrorHandler
 import io.embrace.android.embracesdk.fakes.FakeExperimentTrackingService
@@ -16,9 +15,7 @@ import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
-import org.junit.runner.RunWith
 
-@RunWith(AndroidJUnit4::class)
 internal class ExperimentApiDelegateTest {
 
     private lateinit var delegate: ExperimentApiDelegate

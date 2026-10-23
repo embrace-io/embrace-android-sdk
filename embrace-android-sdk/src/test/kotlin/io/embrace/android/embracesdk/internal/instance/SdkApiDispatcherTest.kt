@@ -1,7 +1,6 @@
 package io.embrace.android.embracesdk.internal.instance
 
 import android.app.Activity
-import androidx.test.ext.junit.runners.AndroidJUnit4
 import io.embrace.android.embracesdk.PropertyScope
 import io.embrace.android.embracesdk.fakes.FakeErrorHandler
 import io.embrace.android.embracesdk.fakes.FakeInternalTelemetryService
@@ -18,11 +17,8 @@ import org.junit.Assert.assertSame
 import org.junit.Assert.assertThrows
 import org.junit.Before
 import org.junit.Test
-import org.junit.runner.RunWith
-import org.robolectric.Robolectric
 import java.lang.reflect.Proxy
 
-@RunWith(AndroidJUnit4::class)
 internal class SdkApiDispatcherTest {
 
     private val calls = mutableListOf<String>()
@@ -45,7 +41,7 @@ internal class SdkApiDispatcherTest {
 
     @Test
     fun `lifecycle calls do not reach the target`() {
-        sdk.start(Robolectric.buildActivity(Activity::class.java).get())
+        sdk.start(Activity())
         sdk.disable()
         assertEquals(listOf("onStart", "onDisable"), calls)
     }
@@ -59,7 +55,7 @@ internal class SdkApiDispatcherTest {
             onStart = { error("start failed") },
             onDisable = { error("disable failed") },
         )
-        dispatcher.start(Robolectric.buildActivity(Activity::class.java).get())
+        dispatcher.start(Activity())
         dispatcher.disable()
         assertEquals(
             listOf("start failed", "disable failed"),
@@ -86,7 +82,7 @@ internal class SdkApiDispatcherTest {
 
     @Test
     fun `members with default bodies are forwarded rather than expanded`() {
-        val activity = Robolectric.buildActivity(Activity::class.java).get()
+        val activity = Activity()
         sdk.trackExperiment("exp")
         sdk.untrackExperiment("exp")
         sdk.trackFeatureFlag("flag")

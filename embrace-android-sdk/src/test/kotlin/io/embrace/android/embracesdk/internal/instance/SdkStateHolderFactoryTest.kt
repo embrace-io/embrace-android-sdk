@@ -1,11 +1,10 @@
 package io.embrace.android.embracesdk.internal.instance
 
 import android.content.Context
-import androidx.test.core.app.ApplicationProvider
-import androidx.test.ext.junit.runners.AndroidJUnit4
 import io.embrace.android.embracesdk.fakes.FakeConfigService
 import io.embrace.android.embracesdk.fakes.FakeErrorHandler
 import io.embrace.android.embracesdk.fakes.FakeSpanExporter
+import io.embrace.android.embracesdk.fakes.FilesDirApplication
 import io.embrace.android.embracesdk.internal.config.ConfigService
 import io.embrace.android.embracesdk.internal.config.resolved.EmbraceConfig
 import io.embrace.android.embracesdk.internal.config.resolved.SdkModeConfig
@@ -17,17 +16,26 @@ import io.embrace.android.embracesdk.internal.worker.Worker
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
+import org.junit.Before
+import org.junit.Rule
 import org.junit.Test
-import org.junit.runner.RunWith
+import org.junit.rules.TemporaryFolder
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.TimeUnit
 
-@RunWith(AndroidJUnit4::class)
 internal class SdkStateHolderFactoryTest {
 
-    private val context = ApplicationProvider.getApplicationContext<Context>()
+    @get:Rule
+    val tempDir = TemporaryFolder()
+
+    private lateinit var context: Context
     private val preStartServices = PreStartServices(errorHandler = FakeErrorHandler(throwOnSdkError = false))
     private val workerThreadPool = RecordingWorkerThreadPool()
+
+    @Before
+    fun setUp() {
+        context = FilesDirApplication(tempDir.newFolder())
+    }
 
     @Test
     fun `otel config set before start is applied to pre-start services`() {

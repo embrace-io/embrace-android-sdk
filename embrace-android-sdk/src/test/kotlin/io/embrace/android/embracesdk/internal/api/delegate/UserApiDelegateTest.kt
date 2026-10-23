@@ -1,6 +1,5 @@
 package io.embrace.android.embracesdk.internal.api.delegate
 
-import androidx.test.ext.junit.runners.AndroidJUnit4
 import io.embrace.android.embracesdk.fakes.FakeUserService
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
@@ -8,10 +7,8 @@ import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
-import org.junit.runner.RunWith
 
 @Suppress("DEPRECATION")
-@RunWith(AndroidJUnit4::class)
 internal class UserApiDelegateTest {
 
     private lateinit var delegate: UserApiDelegate

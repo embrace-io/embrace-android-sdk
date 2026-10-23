@@ -1,6 +1,5 @@
 package io.embrace.android.embracesdk.internal.api.delegate
 
-import androidx.test.ext.junit.runners.AndroidJUnit4
 import io.embrace.android.embracesdk.fakes.FakeConfigService
 import io.embrace.android.embracesdk.fakes.FakeSessionIdsProvider
 import io.embrace.android.embracesdk.fakes.TestUuidSource
@@ -10,9 +9,7 @@ import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
-import org.junit.runner.RunWith
 
-@RunWith(AndroidJUnit4::class)
 internal class SdkStateApiDelegateTest {
 
     private lateinit var delegate: SdkStateApiDelegate

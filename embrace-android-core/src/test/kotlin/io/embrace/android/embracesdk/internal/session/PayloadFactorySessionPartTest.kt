@@ -22,18 +22,11 @@ import io.embrace.android.embracesdk.internal.session.message.PayloadFactory
 import io.embrace.android.embracesdk.internal.session.message.PayloadFactoryImpl
 import io.embrace.android.embracesdk.internal.session.message.PayloadMessageCollatorImpl
 import io.embrace.android.embracesdk.internal.spans.CurrentSessionPartSpan
-import io.mockk.clearAllMocks
-import io.mockk.mockkStatic
-import io.mockk.unmockkAll
-import org.junit.After
-import org.junit.AfterClass
 import org.junit.Assert.assertEquals
 import org.junit.Before
-import org.junit.BeforeClass
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.junit.runners.Parameterized
-import java.util.concurrent.ExecutorService
 
 @RunWith(Parameterized::class)
 internal class PayloadFactorySessionPartTest(
@@ -58,18 +51,6 @@ internal class PayloadFactorySessionPartTest(
         fun modes(): List<Array<Any>> = OtelSdkMode.parameters()
 
         private val appStateTracker = FakeProcessStateTracker()
-
-        @BeforeClass
-        @JvmStatic
-        fun beforeClass() {
-            mockkStatic(ExecutorService::class)
-        }
-
-        @AfterClass
-        @JvmStatic
-        fun afterClass() {
-            unmockkAll()
-        }
     }
 
     @Before
@@ -86,11 +67,6 @@ internal class PayloadFactorySessionPartTest(
         currentSessionPartSpan = initServices.otelStack.currentSessionPartSpan
         spanService = initServices.otelStack.spanService
         blockingExecutorService = BlockingScheduledExecutorService(blockingMode = false)
-    }
-
-    @After
-    fun after() {
-        clearAllMocks(answers = false)
     }
 
     @Test

@@ -55,7 +55,13 @@ fun createNetworkConnectivityService(
     ) {
         NetworkCallbackConnectivityService(worker, errorHandler, connectivityManager)
     } else {
-        EmbraceNetworkConnectivityService(context, worker, errorHandler, connectivityManager)
+        EmbraceNetworkConnectivityService(
+            context = context,
+            backgroundWorker = worker,
+            errorHandler = errorHandler,
+            connectivityAvailable = { connectivityManager.value != null },
+            activeNetworkInfo = @Suppress("DEPRECATION") { connectivityManager.value?.activeNetworkInfo },
+        )
     }
 }
 

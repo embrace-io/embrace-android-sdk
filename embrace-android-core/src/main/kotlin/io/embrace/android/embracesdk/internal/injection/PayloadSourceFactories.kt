@@ -48,7 +48,12 @@ fun createRnBundleIdTracker(
     configService: ConfigService,
     store: KeyValueStore,
     worker: BackgroundWorker,
-): RnBundleIdTracker = RnBundleIdTrackerImpl(context, configService, store, worker).apply { startAsyncRetrieval() }
+): RnBundleIdTracker = RnBundleIdTrackerImpl(
+    { context.assets.open(it) },
+    configService,
+    store,
+    worker,
+).apply { startAsyncRetrieval() }
 
 fun createHostedSdkVersionInfo(
     appFramework: AppFramework,

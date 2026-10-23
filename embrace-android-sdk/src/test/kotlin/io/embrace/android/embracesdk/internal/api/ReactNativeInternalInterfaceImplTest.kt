@@ -12,6 +12,7 @@ import io.embrace.android.embracesdk.fakes.FakeKeyValueStore
 import io.embrace.android.embracesdk.fakes.FakeRnBundleIdTracker
 import io.embrace.android.embracesdk.fakes.FakeTelemetryDestination
 import io.embrace.android.embracesdk.fakes.TestPlatformSerializer
+import io.embrace.android.embracesdk.fakes.unimplemented
 import io.embrace.android.embracesdk.internal.api.delegate.HostedSdkInternalInterfaceImpl
 import io.embrace.android.embracesdk.internal.arch.InstrumentationArgs
 import io.embrace.android.embracesdk.internal.arch.InstrumentationRegistry
@@ -21,7 +22,6 @@ import io.embrace.android.embracesdk.internal.arch.schema.EmbType.System.ReactNa
 import io.embrace.android.embracesdk.internal.envelope.metadata.HostedSdkVersionInfo
 import io.embrace.android.embracesdk.internal.envelope.metadata.ReactNativeSdkVersionInfo
 import io.embrace.android.embracesdk.internal.instrumentation.crash.jvm.JvmCrashDataSourceImpl
-import io.mockk.mockk
 import io.opentelemetry.kotlin.semconv.ExceptionAttributes
 import org.junit.Assert.assertEquals
 import org.junit.Before
@@ -50,7 +50,7 @@ internal class ReactNativeInternalInterfaceImplTest {
         instrumentationRegistry = InstrumentationRegistryImpl(FakeErrorHandler())
         instrumentationArgs = FakeInstrumentationArgs(ApplicationProvider.getApplicationContext())
         impl = HostedSdkInternalInterfaceImpl(
-            logsApi = mockk(),
+            logsApi = unimplemented(),
             configService = FakeConfigService(),
             resourceSource = FakeEnvelopeResourceSource(),
             instrumentationRegistry = instrumentationRegistry,
@@ -99,7 +99,7 @@ internal class ReactNativeInternalInterfaceImplTest {
     @Test
     fun testSetJavaScriptBundleURLForOtherOTAs() {
         impl = HostedSdkInternalInterfaceImpl(
-            logsApi = mockk(),
+            logsApi = unimplemented(),
             configService = FakeConfigService(),
             resourceSource = FakeEnvelopeResourceSource(),
             instrumentationRegistry = instrumentationRegistry,

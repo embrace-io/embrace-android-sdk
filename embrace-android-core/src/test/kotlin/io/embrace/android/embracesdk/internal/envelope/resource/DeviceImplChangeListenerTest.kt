@@ -1,11 +1,9 @@
 package io.embrace.android.embracesdk.internal.envelope.resource
 
-import android.view.WindowManager
 import io.embrace.android.embracesdk.concurrency.BlockingScheduledExecutorService
 import io.embrace.android.embracesdk.fakes.FakeErrorHandler
 import io.embrace.android.embracesdk.internal.SystemInfo
 import io.embrace.android.embracesdk.internal.worker.BackgroundWorker
-import io.mockk.mockk
 import org.junit.Assert.assertEquals
 import org.junit.Test
 
@@ -60,7 +58,7 @@ internal class DeviceImplChangeListenerTest {
         executor: BlockingScheduledExecutorService,
         errorHandler: FakeErrorHandler = FakeErrorHandler(),
     ) = DeviceImpl(
-        windowManagerProvider = { mockk<WindowManager>(relaxed = true) },
+        windowManagerProvider = { null },
         backgroundWorker = BackgroundWorker(executor),
         systemInfo = SystemInfo(),
         errorHandler = errorHandler,

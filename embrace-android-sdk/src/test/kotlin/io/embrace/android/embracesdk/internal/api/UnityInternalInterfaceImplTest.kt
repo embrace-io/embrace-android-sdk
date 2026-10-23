@@ -3,11 +3,11 @@ package io.embrace.android.embracesdk.internal.api
 import io.embrace.android.embracesdk.fakes.FakeErrorHandler
 import io.embrace.android.embracesdk.fakes.FakeInternalTelemetryService
 import io.embrace.android.embracesdk.fakes.FakeKeyValueStore
+import io.embrace.android.embracesdk.fakes.unimplemented
 import io.embrace.android.embracesdk.internal.api.delegate.HostedSdkInternalInterfaceImpl
 import io.embrace.android.embracesdk.internal.envelope.metadata.HostedSdkVersionInfo
 import io.embrace.android.embracesdk.internal.envelope.metadata.UnitySdkVersionInfo
 import io.embrace.android.embracesdk.internal.logging.ErrorHandler
-import io.mockk.mockk
 import org.junit.Assert.assertEquals
 import org.junit.Before
 import org.junit.Test
@@ -25,12 +25,12 @@ internal class UnityInternalInterfaceImplTest {
         errorHandler = FakeErrorHandler()
         hostedSdkVersionInfo = UnitySdkVersionInfo(store)
         impl = HostedSdkInternalInterfaceImpl(
-            logsApi = mockk(),
-            configService = mockk(),
-            resourceSource = mockk(),
-            instrumentationRegistry = mockk(),
-            serializer = mockk(),
-            rnBundleIdTracker = lazy { mockk() },
+            logsApi = unimplemented(),
+            configService = unimplemented(),
+            resourceSource = unimplemented(),
+            instrumentationRegistry = unimplemented(),
+            serializer = unimplemented(),
+            rnBundleIdTracker = lazy { unimplemented() },
             hostedSdkVersionInfo = hostedSdkVersionInfo,
             errorHandler = errorHandler,
             telemetryService = FakeInternalTelemetryService(),

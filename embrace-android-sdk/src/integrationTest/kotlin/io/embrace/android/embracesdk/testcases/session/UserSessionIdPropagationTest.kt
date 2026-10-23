@@ -1,10 +1,6 @@
 package io.embrace.android.embracesdk.testcases.session
 
-import android.app.ActivityManager
-import android.app.Application
 import android.app.ApplicationExitInfo
-import android.content.Context
-import androidx.test.core.app.ApplicationProvider
 import io.embrace.android.embracesdk.Severity
 import io.embrace.android.embracesdk.assertions.SessionIds
 import io.embrace.android.embracesdk.assertions.assertSessionIds
@@ -42,8 +38,6 @@ import io.embrace.android.embracesdk.testframework.SdkIntegrationTestRule.Compan
 import io.embrace.android.embracesdk.testframework.SdkIntegrationTestRule.Companion.DEFAULT_SDK_START_TIME_MS
 import io.embrace.android.embracesdk.testframework.actions.EmbraceActionInterface
 import io.embrace.android.embracesdk.testframework.actions.EmbraceSetupInterface
-import io.mockk.every
-import io.mockk.mockk
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotEquals
 import org.junit.Assert.assertTrue
@@ -51,7 +45,6 @@ import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.ParameterizedRobolectricTestRunner
-import org.robolectric.Shadows
 import org.robolectric.annotation.Config
 import org.robolectric.shadows.ShadowActivityManager
 import java.util.concurrent.CountDownLatch
@@ -324,21 +317,16 @@ internal class UserSessionIdPropagationTest(
         val userSessionId = "2b3c4d5e6f7a8b9c0d1e2f3a4b5c6d7e"
         testRule.runTest(
             setupAction = {
-                val ctx = ApplicationProvider.getApplicationContext<Application>()
-                val am = ctx.getSystemService(Context.ACTIVITY_SERVICE) as ActivityManager
-                Shadows.shadowOf(am).addApplicationExitInfo(
-                    mockk<ApplicationExitInfo>(relaxed = true) {
-                        every { timestamp } returns 15000000000L
-                        every { pid } returns 6952
-                        every { processStateSummary } returns "${sessionPartId}_${userSessionId}".toByteArray()
-                        every { importance } returns 100
-                        every { pss } returns 1509123409L
-                        every { rss } returns 1123409L
-                        every { reason } returns ApplicationExitInfo.REASON_ANR
-                        every { status } returns 0
-                        every { description } returns "test-anr"
-                        every { traceInputStream } returns "test-trace".byteInputStream()
-                    }
+                setupFakeAeiData(
+                    listOf(
+                        TestAeiData(
+                            reason = ApplicationExitInfo.REASON_ANR,
+                            status = 0,
+                            description = "test-anr",
+                            trace = "test-trace",
+                            processStateSummary = "${sessionPartId}_${userSessionId}",
+                        ).toAeiObject()
+                    )
                 )
             },
             testCaseAction = { recordSession() },

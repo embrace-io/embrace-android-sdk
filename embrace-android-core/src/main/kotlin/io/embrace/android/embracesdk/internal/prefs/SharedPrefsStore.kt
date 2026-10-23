@@ -114,7 +114,9 @@ internal class SharedPrefsStore(
      * The default [SharedPreferences] are shared with the host app, so a key can hold a value of a
      * different type or malformed JSON. Treat any value that can't be read as absent.
      */
-    private inline fun <T> safeRead(read: () -> T?): T? = measureFirstAccess { runCatching(read).getOrNull() }
+    private inline fun <T> safeRead(
+        crossinline read: () -> T?,
+    ): T? = measureFirstAccess { runCatching(read).getOrNull() }
 
     /**
      * A calling of [read] that measures the first invocation, which is the access of [SharedPreferences]

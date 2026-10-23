@@ -112,6 +112,15 @@ internal class VitalsWindowCallbackTest {
         assertEquals(0, focalCallbacks.windowFocusedCount)
     }
 
+    @Test
+    fun `null event forwards to the delegate`() {
+        val windowCallback: Window.Callback = callback
+        assertTrue(windowCallback.dispatchTouchEvent(null))
+
+        assertEquals(1, delegateCalls)
+        assertEquals(0, focalCallbacks.interactionStartCount)
+    }
+
     private fun dispatch(action: Int): Boolean {
         val event = MotionEvent.obtain(0L, 0L, action, 1f, 1f, 0)
         try {

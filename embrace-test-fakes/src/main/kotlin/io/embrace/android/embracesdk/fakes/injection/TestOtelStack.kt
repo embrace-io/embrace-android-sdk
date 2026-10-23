@@ -28,7 +28,7 @@ class TestOtelStack(
 ) {
     private val openTelemetryClock = EmbClock(initServices.clock)
 
-    val spanRepository: SpanRepository = SpanRepository()
+    val spanRepository: SpanRepository = SpanRepository(initServices.errorHandler)
 
     val logSink: LogSink = LogSinkImpl()
 
@@ -78,6 +78,7 @@ class TestOtelStack(
         stopCallback = currentSessionPartSpan::spanStopCallback,
         redactionFunction = createRedactionFunction(SensitiveKeysBehavior(configService.config.sensitiveKeys)),
         telemetryService = initServices.telemetryService,
+        errorHandler = initServices.errorHandler,
     )
 
     val spanService: SpanService by lazy {

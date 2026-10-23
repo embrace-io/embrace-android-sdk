@@ -14,6 +14,7 @@ import io.embrace.android.embracesdk.testframework.SdkIntegrationTestRule.Compan
 import io.embrace.android.embracesdk.testframework.actions.EmbraceActionInterface
 import io.embrace.android.embracesdk.testframework.actions.EmbraceSetupInterface
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertTrue
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -83,6 +84,30 @@ internal class DeliveryConnectivityAtStartupTest(
             },
             testCaseAction = {
                 goOnlineAndAssertDelivery()
+            },
+            assertAction = {
+                assertEquals(1, getSessionEnvelopes(1).size)
+            }
+        )
+    }
+
+    /**
+     * A startup step that throws must not leave the stored payloads undelivered, or stop connectivity updates.
+     */
+    @Test
+    fun `stored payload sent at startup when adding a connectivity listener throws`() {
+        testRule.runTest(
+            setupAction = {
+                getFakeErrorHandler().throwOnSdkError = false
+                fakeNetworkConnectivityService.addListenerFailure = IllegalStateException("listener failure")
+                payloadStorageService.addPayload(
+                    fakeSessionStoredTelemetryMetadata,
+                    fakeSessionEnvelope(startMs = fakeSessionStoredTelemetryMetadata.timestamp),
+                )
+            },
+            testCaseAction = {
+                assertEquals(0, storedSessionPayloadCount())
+                assertTrue(testRule.setup.fakeNetworkConnectivityService.registered)
             },
             assertAction = {
                 assertEquals(1, getSessionEnvelopes(1).size)

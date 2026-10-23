@@ -1,6 +1,7 @@
 package io.embrace.android.embracesdk.internal.otel.spans
 
 import io.embrace.android.embracesdk.fakes.FakeClock
+import io.embrace.android.embracesdk.fakes.FakeErrorHandler
 import io.embrace.android.embracesdk.fakes.FakeInternalTelemetryService
 import io.embrace.android.embracesdk.fakes.FakeOtelKotlinClock
 import io.embrace.android.embracesdk.fakes.FakeSpanProcessor
@@ -41,7 +42,7 @@ internal class EmbraceSpanFactoryImplTest(
     @Before
     fun setup() {
         val openTelemetryClock = FakeOtelKotlinClock(clock)
-        spanRepository = SpanRepository().apply {
+        spanRepository = SpanRepository(FakeErrorHandler()).apply {
             addSpanChangeListener { updateNotified = true }
         }
         tracer = createSdkOtelInstance(
@@ -56,6 +57,7 @@ internal class EmbraceSpanFactoryImplTest(
             spanRepository = spanRepository,
             dataValidator = DataValidator(telemetryService = FakeInternalTelemetryService()),
             telemetryService = FakeInternalTelemetryService(),
+            errorHandler = FakeErrorHandler(),
         )
     }
 

@@ -79,6 +79,18 @@ internal class EmbraceUncaughtExceptionHandlerTest {
     }
 
     @Test
+    fun `default handler runs when the error handler itself throws`() {
+        val defaultHandler = TestUncaughtExceptionHandler()
+        val throwingErrorHandler = FakeErrorHandler(throwOnSdkError = true)
+        val handler = EmbraceUncaughtExceptionHandler(defaultHandler, CrashingJvmCrashService(), throwingErrorHandler)
+        val testException = RuntimeException("Test exception")
+
+        runCatching { handler.uncaughtException(Thread.currentThread(), testException) }
+
+        assertEquals(testException, defaultHandler.throwable)
+    }
+
+    @Test
     fun `detached handler stops forwarding to the data source but still delegates`() {
         val defaultHandler = TestUncaughtExceptionHandler()
         val fakeCrashService = FakeJvmCrashDataSource()

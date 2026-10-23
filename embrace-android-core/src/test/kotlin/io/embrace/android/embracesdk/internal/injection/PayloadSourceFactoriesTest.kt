@@ -4,6 +4,7 @@ import io.embrace.android.embracesdk.fakes.FakeCachedLogEnvelopeStore
 import io.embrace.android.embracesdk.fakes.FakeConfigService
 import io.embrace.android.embracesdk.fakes.FakeCurrentSessionPartSpan
 import io.embrace.android.embracesdk.fakes.FakeEnvelopeMetadataSource
+import io.embrace.android.embracesdk.fakes.FakeErrorHandler
 import io.embrace.android.embracesdk.fakes.FakeIntakeService
 import io.embrace.android.embracesdk.fakes.FakeKeyValueStore
 import io.embrace.android.embracesdk.fakes.FakeOtelPayloadMapper
@@ -32,7 +33,7 @@ internal class PayloadSourceFactoriesTest {
         val context = fakeContext(application)
         val store = FakeKeyValueStore()
         val configService = FakeConfigService()
-        val spanRepository = SpanRepository()
+        val spanRepository = SpanRepository(FakeErrorHandler())
         val cachedLogEnvelopeStore = FakeCachedLogEnvelopeStore()
         val worker = FakeWorkerThreadPool().backgroundWorker(Worker.Background.NonIoRegWorker)
         val envelopeMetadataSource = FakeEnvelopeMetadataSource()

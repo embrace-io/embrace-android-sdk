@@ -33,6 +33,7 @@ import io.embrace.android.embracesdk.internal.config.resolved.BackgroundActivity
 import io.embrace.android.embracesdk.internal.config.resolved.EmbraceConfig
 import io.embrace.android.embracesdk.internal.delivery.caching.PayloadCachingService
 import io.embrace.android.embracesdk.internal.delivery.caching.PayloadCachingServiceImpl
+import io.embrace.android.embracesdk.internal.session.SessionPartToken
 import io.embrace.android.embracesdk.internal.session.UserSessionListener
 import io.embrace.android.embracesdk.internal.session.UserSessionMetadata
 import io.embrace.android.embracesdk.internal.session.UserSessionMetadataStore
@@ -235,6 +236,48 @@ internal class SessionOrchestratorListenerTest {
 
         assertTrue(innerRegistered)
         assertEquals(listOf(SessionStateEvent.UserSessionActive::class), innerEvents.map { it::class })
+    }
+
+    @Test
+    fun `ending the user session from a listener runs after the in-progress transition completes`() {
+        configService = sessionBehaviorConfig()
+        createOrchestrator(ProcessState.FOREGROUND)
+        orchestrator.onBackground()
+        clock.tick(maxDurationMs + 1)
+
+        val events = mutableListOf<SessionStateEvent>()
+        var partSeenByListener: SessionPartToken? = null
+        orchestrator.addUserSessionListener { event ->
+            events.add(event)
+            if (event is SessionStateEvent.UserSessionActive && partSeenByListener == null && events.size > 1) {
+                partSeenByListener = sessionTracker.getActiveSessionPart()
+                orchestrator.endSessionWithManual()
+            }
+        }
+        events.clear()
+
+        // foregrounding after inactivity starts a new user session, whose listener ends it straight away
+        orchestrator.onForeground()
+
+        // the listener sees the part the transition created, not the one it ended
+        val seen = checkNotNull(partSeenByListener)
+        assertEquals(ProcessState.FOREGROUND, seen.processState)
+
+        // the manual end replaced that part with another, rather than being overwritten by the outer transition
+        val active = checkNotNull(sessionTracker.getActiveSessionPart())
+        assertEquals(seen.sessionPartNumber + 1, active.sessionPartNumber)
+
+        assertEquals(
+            listOf(
+                SessionStateEvent.UserSessionEnded::class,
+                SessionStateEvent.UserSessionActive::class,
+                SessionStateEvent.UserSessionEnded::class,
+                SessionStateEvent.UserSessionActive::class,
+            ),
+            events.map { it::class },
+        )
+        assertEquals(events[1].userSessionId, events[2].userSessionId)
+        assertEquals(events[3].userSessionId, orchestrator.currentUserSession()?.userSessionId)
     }
 
     @Test

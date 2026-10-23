@@ -2,36 +2,28 @@ package io.embrace.android.embracesdk.fakes
 
 import android.app.Application
 import android.content.Context
-import android.content.pm.PackageInfo
-import io.mockk.every
-import io.mockk.isMockKMock
-import io.mockk.mockk
+import android.content.pm.ApplicationInfo
 import org.robolectric.RuntimeEnvironment
 
 private const val FAKE_PACKAGE_NAME = "com.fake.package"
 
-@Suppress("DEPRECATION")
-private val fakePackageInfo = PackageInfo().apply {
-    packageName = FAKE_PACKAGE_NAME
-    versionName = "2.5.1"
-    versionCode = 99
+/**
+ * An [Application] for plain JVM tests. Unoverridden framework methods return default values.
+ */
+private class FakeJvmApplication : Application() {
+    private val appInfo = ApplicationInfo()
+
+    override fun getApplicationContext(): Context = this
+    override fun getPackageName(): String = FAKE_PACKAGE_NAME
+    override fun getApplicationInfo(): ApplicationInfo = appInfo
 }
 
 /**
- * The Robolectric application when running under Robolectric, otherwise a relaxed mock.
+ * The Robolectric application when running under Robolectric, otherwise a fake application.
  */
-fun fakeApplication(): Application = RuntimeEnvironment.getApplication() ?: mockk(relaxed = true) {
-    every { registerActivityLifecycleCallbacks(any()) } returns Unit
-}
+fun fakeApplication(): Application = RuntimeEnvironment.getApplication() ?: FakeJvmApplication()
 
 /**
- * The application context of [application], or a mocked context with fake package info if [application] is a mock.
+ * The application context of [application].
  */
-fun fakeContext(application: Application = fakeApplication()): Context = if (isMockKMock(application)) {
-    mockk<Context>(relaxed = true).apply {
-        every { packageName }.returns(FAKE_PACKAGE_NAME)
-        every { packageManager.getPackageInfo(FAKE_PACKAGE_NAME, 0) }.returns(fakePackageInfo)
-    }
-} else {
-    application.applicationContext
-}
+fun fakeContext(application: Application = fakeApplication()): Context = application.applicationContext

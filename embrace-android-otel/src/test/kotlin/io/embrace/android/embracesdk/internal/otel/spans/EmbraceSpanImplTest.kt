@@ -6,6 +6,7 @@ import io.embrace.android.embracesdk.concurrency.runActionsConcurrently
 import io.embrace.android.embracesdk.concurrency.runConcurrently
 import io.embrace.android.embracesdk.fakes.FakeClock
 import io.embrace.android.embracesdk.fakes.FakeEmbraceSdkSpan
+import io.embrace.android.embracesdk.fakes.FakeErrorHandler
 import io.embrace.android.embracesdk.fakes.FakeInternalTelemetryService
 import io.embrace.android.embracesdk.fakes.FakeOtelKotlinClock
 import io.embrace.android.embracesdk.fakes.FakeSpanExporter
@@ -37,6 +38,7 @@ import io.embrace.android.embracesdk.internal.arch.schema.LinkType
 import io.embrace.android.embracesdk.internal.arch.schema.PrivateSpan
 import io.embrace.android.embracesdk.internal.clock.millisToNanos
 import io.embrace.android.embracesdk.internal.clock.nanosToMillis
+import io.embrace.android.embracesdk.internal.logging.SdkErrorType
 import io.embrace.android.embracesdk.internal.otel.createSdkOtelInstance
 import io.embrace.android.embracesdk.internal.otel.payload.toEmbracePayload
 import io.embrace.android.embracesdk.internal.otel.sdk.DataValidator
@@ -85,6 +87,7 @@ internal class EmbraceSpanImplTest(
     private lateinit var telemetryService: FakeInternalTelemetryService
     private lateinit var spanExporter: FakeSpanExporter
     private lateinit var embraceSpanFactory: EmbraceSpanFactory
+    private lateinit var errorHandler: FakeErrorHandler
     private val notifications = AtomicInteger(0)
     private val updateNotified: Boolean get() = notifications.get() > 0
     private val exportedSpanAttributes: List<Map<String, Any>>
@@ -109,10 +112,11 @@ internal class EmbraceSpanImplTest(
                 }
             },
         ).getTracer("test-tracer")
-        spanRepository = SpanRepository().apply { addSpanChangeListener { notifications.incrementAndGet() } }
+        spanRepository = SpanRepository(FakeErrorHandler()).apply { addSpanChangeListener { notifications.incrementAndGet() } }
         serializer = TestPlatformSerializer()
         telemetryService = FakeInternalTelemetryService()
         dataValidator = DataValidator(telemetryService = telemetryService)
+        errorHandler = FakeErrorHandler()
         embraceSpanFactory = EmbraceSpanFactoryImpl(
             openTelemetryClock = otelClock,
             spanRepository = spanRepository,
@@ -120,6 +124,7 @@ internal class EmbraceSpanImplTest(
             stopCallback = ::stopCallback,
             redactionFunction = ::redactionFunction,
             telemetryService = telemetryService,
+            errorHandler = errorHandler,
         )
         embraceSpan = embraceSpanFactory.create(
             otelSpanStartArgs = OtelSpanStartArgs(
@@ -375,6 +380,24 @@ internal class EmbraceSpanImplTest(
         assertEquals("myValue", attrs.single { it.key == "myKey" }.data)
         assertTrue(attrs.none { it.key == ExceptionAttributes.EXCEPTION_MESSAGE })
         assertTrue(attrs.none { it.key == ExceptionAttributes.EXCEPTION_STACKTRACE })
+    }
+
+    @Test
+    fun `span operations that throw are tracked rather than crashing the caller`() {
+        errorHandler.throwOnSdkError = false
+        val brokenMap = object : AbstractMap<String, String>() {
+            override val entries: Set<Map.Entry<String, String>> get() = error("broken map")
+        }
+        with(embraceSpan) {
+            assertTrue(start())
+            assertFalse(addEvent("event", null, brokenMap))
+            assertFalse(recordException(RuntimeException(), brokenMap))
+            assertTrue(stop())
+        }
+        assertEquals(
+            listOf(SdkErrorType.SpanOperationFail.toString(), SdkErrorType.SpanOperationFail.toString()),
+            errorHandler.sdkErrorMessages.map { it.msg },
+        )
     }
 
     @Test
@@ -765,6 +788,20 @@ internal class EmbraceSpanImplTest(
         assertTrue(embraceSpan.addLink(checkNotNull(FakeEmbraceSdkSpan.started().spanContext), attributes))
         attributes.clear()
         assertEquals(mapOf("key" to "value"), checkNotNull(embraceSpan.snapshot()).links?.single()?.attributes?.toEmbracePayload())
+    }
+
+    @Test
+    fun `null attribute keys and values passed from java are dropped rather than preventing the span stopping`() {
+        embraceSpan.start()
+        @Suppress("UNCHECKED_CAST")
+        val attributes = mapOf<String?, String?>("key" to "value", "null-value" to null, null to "null-key") as Map<String, String>
+        assertTrue(embraceSpan.addLink(checkNotNull(FakeEmbraceSdkSpan.started().spanContext), attributes))
+        assertTrue(embraceSpan.addEvent("event", null, attributes))
+
+        assertTrue(embraceSpan.stop())
+        val exported = spanExporter.exportedSpans.single()
+        assertEquals(mapOf("key" to "value"), exported.links.single().attributes)
+        assertEquals(mapOf("key" to "value"), exported.events.single().attributes)
     }
 
     @Test
@@ -1180,6 +1217,7 @@ internal class EmbraceSpanImplTest(
             stopCallback = ::stopCallback,
             redactionFunction = ::redactionFunction,
             telemetryService = concurrentTelemetryService,
+            errorHandler = FakeErrorHandler(),
         )
         return concurrentTelemetryService
     }

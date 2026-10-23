@@ -23,7 +23,7 @@ internal class DataCaptureServiceFactoriesTest {
     @Test
     fun testDefaultImplementations() {
         val configService = FakeConfigService()
-        val startupService = createStartupService(destination) { 1 }
+        val startupService = createStartupService(destination, errorHandler) { 1 }
         val uiLoadDataListener = createUiLoadDataListener(destination, configService)
         assertEquals(1, startupService.getAppVersionStartupCounter())
         assertNotNull(uiLoadDataListener)
@@ -37,7 +37,8 @@ internal class DataCaptureServiceFactoriesTest {
         )
         val uiLoadDataListener = createUiLoadDataListener(destination, configService)
         assertNull(uiLoadDataListener)
-        assertNotNull(createStartupTracker(configService, createStartupService(destination) { 1 }, uiLoadDataListener))
+        val startupService = createStartupService(destination, errorHandler) { 1 }
+        assertNotNull(createStartupTracker(configService, startupService, uiLoadDataListener))
     }
 
     @Test

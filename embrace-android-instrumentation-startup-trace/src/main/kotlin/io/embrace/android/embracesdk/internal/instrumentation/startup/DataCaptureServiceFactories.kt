@@ -18,9 +18,11 @@ import io.embrace.android.embracesdk.internal.worker.BackgroundWorker
 
 fun createStartupService(
     destination: TelemetryDestination,
+    errorHandler: ErrorHandler,
     appVersionStartupCounterProvider: () -> Int?,
 ): StartupService = StartupServiceImpl(
     destination = destination,
+    errorHandler = errorHandler,
     appVersionStartupCounterProvider = appVersionStartupCounterProvider,
 )
 

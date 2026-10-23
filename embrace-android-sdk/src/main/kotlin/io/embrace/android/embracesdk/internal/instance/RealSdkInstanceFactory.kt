@@ -171,7 +171,7 @@ internal fun createRealSdkInstance(
     }
 
     val spanRepository = init("span-repository") {
-        overrides?.spanRepository.resolve { SpanRepository() }
+        overrides?.spanRepository.resolve { SpanRepository(errorHandler) }
     }
 
     val logSink = init("log-sink") { LogSinkImpl() }
@@ -238,6 +238,7 @@ internal fun createRealSdkInstance(
             stopCallback = currentSessionPartSpan::spanStopCallback,
             redactionFunction = createRedactionFunction(sensitiveKeysBehavior),
             telemetryService = telemetryService,
+            errorHandler = errorHandler,
         )
     }
 
@@ -404,6 +405,7 @@ internal fun createRealSdkInstance(
     val startupService = init("startup-service") {
         createStartupService(
             destination = instrumentationArgs.destination,
+            errorHandler = errorHandler,
             appVersionStartupCounterProvider = { appVersionStartupCounter },
         )
     }

@@ -70,7 +70,7 @@ internal class SpanServiceImplTest(
 
     @Before
     fun setup() {
-        spanRepository = SpanRepository()
+        spanRepository = SpanRepository(FakeErrorHandler())
         dataValidator = DataValidator(telemetryService = FakeInternalTelemetryService())
         spansService = createSpanService(dataValidator)
     }
@@ -723,6 +723,7 @@ internal class SpanServiceImplTest(
             spanRepository = spanRepository,
             dataValidator = dataValidator,
             telemetryService = FakeInternalTelemetryService(),
+            errorHandler = FakeErrorHandler(),
         )
 
         return SpanServiceImpl(

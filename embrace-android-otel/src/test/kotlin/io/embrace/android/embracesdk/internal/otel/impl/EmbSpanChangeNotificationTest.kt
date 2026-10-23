@@ -1,6 +1,7 @@
 package io.embrace.android.embracesdk.internal.otel.impl
 
 import io.embrace.android.embracesdk.fakes.FakeClock
+import io.embrace.android.embracesdk.fakes.FakeErrorHandler
 import io.embrace.android.embracesdk.fakes.FakeInternalTelemetryService
 import io.embrace.android.embracesdk.fakes.FakeOtelKotlinClock
 import io.embrace.android.embracesdk.fakes.FakeSpanProcessor
@@ -89,12 +90,13 @@ internal class EmbSpanChangeNotificationTest(
         tracer = otelInstance.getTracer("test-tracer")
         val telemetryService = FakeInternalTelemetryService()
         dataValidator = DataValidator(telemetryService = telemetryService)
-        spanRepository = SpanRepository().apply { addSpanChangeListener(observed::add) }
+        spanRepository = SpanRepository(FakeErrorHandler()).apply { addSpanChangeListener(observed::add) }
         spanFactory = EmbraceSpanFactoryImpl(
             openTelemetryClock = otelClock,
             spanRepository = spanRepository,
             dataValidator = dataValidator,
             telemetryService = telemetryService,
+            errorHandler = FakeErrorHandler(),
         )
         fakeClock.tick(100)
         linkTarget = checkNotNull(createStartedSpan().spanContext)
@@ -173,7 +175,7 @@ internal class EmbSpanChangeNotificationTest(
         )
 
         observed.clear()
-        EmbTracerProvider(otelInstance, { spanService }, otelClock)
+        EmbTracerProvider(otelInstance, { spanService }, otelClock, FakeErrorHandler())
             .getTracer("test-tracer")
             .startSpan("traced-span") {
                 setStringAttribute("first", "1")
@@ -192,7 +194,7 @@ internal class EmbSpanChangeNotificationTest(
 
     private fun declaredApi(): Set<String> = Span::class.java.inheritedApiMethodNames()
 
-    private fun wrap(impl: EmbraceSdkSpan) = EmbSpan(impl = impl, clock = otelClock)
+    private fun wrap(impl: EmbraceSdkSpan) = EmbSpan(impl = impl, clock = otelClock, errorHandler = FakeErrorHandler())
 
     private fun createStartedSpan(): EmbraceSdkSpan = spanFactory.create(
         otelSpanStartArgs = OtelSpanStartArgs(

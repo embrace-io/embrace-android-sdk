@@ -8,6 +8,7 @@ import io.embrace.android.embracesdk.fakes.FakeLogEnvelopeSource
 import io.embrace.android.embracesdk.fakes.FakePayloadStore
 import io.embrace.android.embracesdk.fixtures.deferredLog
 import io.embrace.android.embracesdk.fixtures.sendImmediatelyLog
+import io.embrace.android.embracesdk.internal.envelope.log.LogEnvelopeSource
 import io.embrace.android.embracesdk.internal.envelope.log.LogPayloadSourceImpl
 import io.embrace.android.embracesdk.internal.logging.SdkErrorType
 import io.embrace.android.embracesdk.internal.otel.logs.LogSink
@@ -40,6 +41,7 @@ internal class LogOrchestratorTest {
     private lateinit var store: FakePayloadStore
     private lateinit var errorHandler: FakeErrorHandler
     private var logStoreFailures = 0
+    private var batchEnvelopeFailures = 0
     private val clock = FakeClock()
 
     @Before
@@ -60,15 +62,35 @@ internal class LogOrchestratorTest {
                 store.storeLogPayload(envelope)
             }
         }
+        val envelopeSource = FakeLogEnvelopeSource(logPayloadSource = LogPayloadSourceImpl(logSink))
+        val failingEnvelopeSource = object : LogEnvelopeSource by envelopeSource {
+            override fun getBatchedLogEnvelope(): Envelope<LogPayload> {
+                if (batchEnvelopeFailures > 0) {
+                    batchEnvelopeFailures--
+                    error("batch failed")
+                }
+                return envelopeSource.getBatchedLogEnvelope()
+            }
+        }
         logOrchestrator = LogOrchestratorImpl(
             worker,
             clock,
             logSink,
             failingStore,
-            FakeLogEnvelopeSource(logPayloadSource = LogPayloadSourceImpl(logSink)),
+            failingEnvelopeSource,
             errorHandler,
         )
         logSink.registerLogStoredCallback(logOrchestrator::onLogsAdded)
+    }
+
+    @Test
+    fun `a failure in a scheduled batch check is reported`() {
+        logSink.storeLogs(listOf(Log()))
+        batchEnvelopeFailures = 1
+
+        moveTimeAhead(2000L)
+
+        assertEquals(listOf(SdkErrorType.SafeDataCaptureFail.toString()), errorHandler.sdkErrorMessages.map { it.msg })
     }
 
     @Test

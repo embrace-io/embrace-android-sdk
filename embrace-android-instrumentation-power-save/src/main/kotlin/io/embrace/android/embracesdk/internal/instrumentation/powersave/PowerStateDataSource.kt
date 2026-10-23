@@ -1,7 +1,5 @@
 package io.embrace.android.embracesdk.internal.instrumentation.powersave
 
-import android.content.Context
-import android.os.PowerManager
 import io.embrace.android.embracesdk.internal.arch.InstrumentationArgs
 import io.embrace.android.embracesdk.internal.arch.datasource.StateDataSource
 import io.embrace.android.embracesdk.internal.arch.schema.SchemaType.PowerState
@@ -16,8 +14,8 @@ class PowerStateDataSource(
     stateTypeFactory = ::PowerState,
     defaultValue = PowerMode.UNKNOWN,
 ) {
-    private val powerManagerProvider: Provider<PowerManager?> = { args.systemService(Context.POWER_SERVICE) }
-    private val receiver = PowerSaveModeReceiver(powerManagerProvider, ::onPowerSaveModeChanged)
+    private val powerSaveModeSourceProvider: Provider<PowerSaveModeSource?> = { args.powerSaveModeSource() }
+    private val receiver = PowerSaveModeReceiver(powerSaveModeSourceProvider, ::onPowerSaveModeChanged)
 
     override val captureStateOnCreation = false
 
@@ -26,8 +24,8 @@ class PowerStateDataSource(
         args.backgroundWorker(Worker.Background.NonIoRegWorker).run {
             receiver.register(args.context, this)
             submit {
-                powerManagerProvider()?.let {
-                    onPowerSaveModeChanged(it.isPowerSaveMode)
+                powerSaveModeSourceProvider()?.let {
+                    onPowerSaveModeChanged(it.isPowerSaveMode())
                 }
             }
         }

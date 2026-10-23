@@ -1,6 +1,5 @@
 package io.embrace.android.embracesdk.internal.instrumentation.powersave
 
-import android.content.Context
 import io.embrace.android.embracesdk.internal.arch.InstrumentationArgs
 import io.embrace.android.embracesdk.internal.arch.InstrumentationProvider
 import io.embrace.android.embracesdk.internal.arch.datasource.DataSource
@@ -17,7 +16,7 @@ class PowerSaveInstrumentationProvider : InstrumentationProvider {
                 LowPowerDataSource( // FIXME: supply via args
                     args = args,
                     backgroundWorker = args.backgroundWorker(Worker.Background.NonIoRegWorker),
-                    provider = { args.systemService(Context.POWER_SERVICE) },
+                    provider = { args.powerSaveModeSource() },
                 )
             } else {
                 null

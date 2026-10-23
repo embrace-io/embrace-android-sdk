@@ -10,7 +10,7 @@ import io.embrace.android.embracesdk.internal.utils.Provider
 import io.embrace.android.embracesdk.internal.worker.BackgroundWorker
 
 internal class PowerSaveModeReceiver(
-    private val powerManagerProvider: Provider<PowerManager?>,
+    private val powerSaveModeSourceProvider: Provider<PowerSaveModeSource?>,
     private val callback: (powerSaveMode: Boolean) -> Unit,
 ) : BroadcastReceiver() {
 
@@ -22,7 +22,7 @@ internal class PowerSaveModeReceiver(
     override fun onReceive(context: Context, intent: Intent) {
         runCatching {
             if (intent.action == PowerManager.ACTION_POWER_SAVE_MODE_CHANGED) {
-                powerManagerProvider()?.isPowerSaveMode?.let(callback)
+                powerSaveModeSourceProvider()?.isPowerSaveMode()?.let(callback)
             }
         }
     }
@@ -31,7 +31,7 @@ internal class PowerSaveModeReceiver(
         backgroundWorker.submit {
             EmbTrace.trace("power-service-registration") {
                 runCatching {
-                    if (powerManagerProvider() != null) {
+                    if (powerSaveModeSourceProvider() != null) {
                         val filter = IntentFilter(PowerManager.ACTION_POWER_SAVE_MODE_CHANGED)
                         synchronized(lock) {
                             if (!closed) {

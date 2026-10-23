@@ -36,6 +36,21 @@ internal class LogCounterTest {
     }
 
     @Test
+    fun `a racing add cannot push the count over the limit`() {
+        lateinit var counter: LogCounter
+        var raced = false
+        counter = LogCounter {
+            if (!raced) {
+                raced = true
+                counter.addIfAllowed()
+            }
+            1
+        }
+        assertFalse(counter.addIfAllowed())
+        assertTrue(counter.getCount() == 1)
+    }
+
+    @Test
     fun `clear resets count and log ids`() {
         logCounter.addIfAllowed()
         assertTrue(logCounter.getCount() == 1)

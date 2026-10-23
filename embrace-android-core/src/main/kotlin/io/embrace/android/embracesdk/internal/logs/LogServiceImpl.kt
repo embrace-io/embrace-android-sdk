@@ -62,16 +62,8 @@ class LogServiceImpl(
 
         if (message.length > maxLength) {
             telemetryService.trackAppliedLimit(telemetryType, AppliedLimitType.TRUNCATE_STRING)
-
-            val endChars = "..."
-
-            if (maxLength <= endChars.length) {
-                return message.take(maxLength)
-            }
-            return message.take(maxLength - endChars.length) + endChars
-        } else {
-            return message
         }
+        return truncate(message, maxLength)
     }
 
     private fun redactSensitiveAttributes(attributes: Map<String, Any>, telemetryType: String): Map<String, Any> {
@@ -101,19 +93,26 @@ class LogServiceImpl(
                 telemetryService.trackAppliedLimit(telemetryType, AppliedLimitType.TRUNCATE_ATTRIBUTES)
             }
 
-            // Process entries
-            attributes.entries.take(MAX_PROPERTY_COUNT).associate { (key, value) ->
-                val truncatedKey =
-                    truncateAndTrack(key, MAX_PROPERTY_KEY_LENGTH, "log_attribute_key")
+            // Process entries, dropping only the ones that fail
+            val entries = attributes.entries.take(MAX_PROPERTY_COUNT).mapNotNull { (key, value) ->
+                runCatching {
+                    val truncatedKey =
+                        truncateAndTrack(key, MAX_PROPERTY_KEY_LENGTH, "log_attribute_key")
 
-                val serializableValue = checkIfSerializable(value)
-                val truncatedValue = if (key == ExceptionAttributes.EXCEPTION_STACKTRACE) {
-                    serializableValue
-                } else {
-                    truncateValueAndTrack(serializableValue)
+                    val serializableValue = checkIfSerializable(value)
+                    val truncatedValue = if (key == ExceptionAttributes.EXCEPTION_STACKTRACE) {
+                        serializableValue
+                    } else {
+                        truncateValueAndTrack(serializableValue)
+                    }
+
+                    truncatedKey to truncatedValue
+                }.getOrNull()
+            }
+            entries.toMap().also {
+                if (it.size < entries.size) {
+                    telemetryService.trackAppliedLimit("log_attribute_key", AppliedLimitType.DROP)
                 }
-
-                truncatedKey to truncatedValue
             }
         }.getOrDefault(emptyMap())
     }

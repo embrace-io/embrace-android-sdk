@@ -1,6 +1,5 @@
 package io.embrace.android.embracesdk.internal.instrumentation.aei
 
-import android.app.ActivityManager
 import android.app.ApplicationExitInfo
 import io.embrace.android.embracesdk.concurrency.BlockingScheduledExecutorService
 import io.embrace.android.embracesdk.fakes.FakeConfigService
@@ -22,10 +21,6 @@ import io.embrace.android.embracesdk.internal.utils.VersionChecker
 import io.embrace.android.embracesdk.internal.worker.BackgroundWorker
 import io.embrace.android.embracesdk.semconv.EmbAeiAttributes
 import io.embrace.android.embracesdk.semconv.EmbSessionAttributes
-import io.mockk.every
-import io.mockk.mockk
-import io.mockk.unmockkAll
-import org.junit.AfterClass
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
@@ -57,41 +52,32 @@ internal class AeiDataSourceImplTest {
 
     private val store = FakeKeyValueStore()
 
-    private val mockActivityManager: ActivityManager = mockk {
-        every { getHistoricalProcessExitReasons(any(), any(), any()) } returns emptyList()
-    }
+    private var records: () -> List<AeiRecord> = { emptyList() }
+    private val recordSource = AeiRecordSource { records() }
 
-    private val mockAppExitInfo = mockk<ApplicationExitInfo>(relaxed = true) {
-        every { timestamp } returns TIMESTAMP
-        every { pid } returns PID
-        every { processStateSummary } returns PROCESS_SUMMARY_STATE.toByteArray()
-        every { importance } returns IMPORTANCE
-        every { pss } returns PSS
-        every { reason } returns REASON
-        every { rss } returns RSS
-        every { status } returns STATUS
-        every { description } returns DESCRIPTION
-        every { traceInputStream } returns TRACE.byteInputStream()
-    }
-
-    companion object {
-        @AfterClass
-        @JvmStatic
-        fun afterClass() {
-            unmockkAll()
-        }
-    }
+    private val aeiRecord = FakeAeiRecord(
+        timestamp = TIMESTAMP,
+        pid = PID,
+        processStateSummary = PROCESS_SUMMARY_STATE.toByteArray(),
+        importance = IMPORTANCE,
+        pss = PSS,
+        reason = REASON,
+        rss = RSS,
+        status = STATUS,
+        description = DESCRIPTION,
+        traceProvider = { TRACE.byteInputStream() },
+    )
 
     private fun startApplicationExitInfoService(
         versionChecker: VersionChecker = BuildVersionChecker,
-        activityManagerProvider: Provider<ActivityManager?> = { mockActivityManager },
+        recordSourceProvider: Provider<AeiRecordSource?> = { recordSource },
         errorHandler: FakeErrorHandler = FakeErrorHandler(),
     ) {
-        args = FakeInstrumentationArgs(mockk(), configService = configService, errorHandler = errorHandler)
+        args = FakeInstrumentationArgs(configService = configService, errorHandler = errorHandler)
         applicationExitInfoService = AeiDataSourceImpl(
             args,
             worker,
-            activityManagerProvider,
+            recordSourceProvider,
             store,
             FakeOrdinalStore(),
             versionChecker,
@@ -105,13 +91,7 @@ internal class AeiDataSourceImplTest {
 
     @Test
     fun `AEI data capture happy path`() {
-        every {
-            mockActivityManager.getHistoricalProcessExitReasons(
-                any(),
-                any(),
-                any(),
-            )
-        } returns listOf(mockAppExitInfo)
+        records = { listOf(aeiRecord) }
 
         startApplicationExitInfoService()
 
@@ -137,13 +117,7 @@ internal class AeiDataSourceImplTest {
     @Test
     fun `getCapturedData should return an empty list when getHistoricalProcessExitInfo returns an empty list`() {
         // given getHistoricalProcessExitReasons returns an empty list
-        every {
-            mockActivityManager.getHistoricalProcessExitReasons(
-                any(),
-                any(),
-                any(),
-            )
-        } returns emptyList()
+        records = { emptyList() }
         startApplicationExitInfoService()
 
         // no logs delivered
@@ -152,7 +126,7 @@ internal class AeiDataSourceImplTest {
 
     @Test
     fun `no telemetry captured when ActivityManager is unavailable`() {
-        startApplicationExitInfoService(activityManagerProvider = { null })
+        startApplicationExitInfoService(recordSourceProvider = { null })
 
         assertTrue(args.destination.logEvents.isEmpty())
     }
@@ -160,13 +134,13 @@ internal class AeiDataSourceImplTest {
     @Test
     fun `activity manager is not retrieved until data capture is enabled`() {
         var systemServiceLookups = 0
-        args = FakeInstrumentationArgs(mockk(), configService = configService)
+        args = FakeInstrumentationArgs(configService = configService)
         val source = AeiDataSourceImpl(
             args,
             worker,
             {
                 systemServiceLookups++
-                mockActivityManager
+                recordSource
             },
             store,
             FakeOrdinalStore(),
@@ -180,17 +154,11 @@ internal class AeiDataSourceImplTest {
     @Test
     fun `getHistoricalProcessExitInfo should truncate to 16 entries`() {
         // given getHistoricalProcessExitReasons returns more than 16 entries
-        val entries = mutableListOf<ApplicationExitInfo>()
+        val entries = mutableListOf<AeiRecord>()
         repeat(17) {
-            entries.add(mockAppExitInfo)
+            entries.add(aeiRecord)
         }
-        every {
-            mockActivityManager.getHistoricalProcessExitReasons(
-                any(),
-                any(),
-                any(),
-            )
-        } returns entries
+        records = { entries }
 
         startApplicationExitInfoService()
 
@@ -201,24 +169,14 @@ internal class AeiDataSourceImplTest {
     @Test
     fun `getUnsentExitReasons should not return AEI that have already been sent`() {
         // given getHistoricalProcessExitReasons returns 3 entries, but there are 2 that have already been sent
-        val appExitInfo1 = mockk<ApplicationExitInfo>(relaxed = true) {
-            every { timestamp } returns 1L
-            every { pid } returns STATUS
-        }
-        val appExitInfo2 = mockk<ApplicationExitInfo>(relaxed = true) {
-            every { timestamp } returns 2L
-            every { pid } returns 2
-        }
-        val appExitInfo3 = mockk<ApplicationExitInfo>(relaxed = true) {
-            every { timestamp } returns 3L
-            every { pid } returns 3
-        }
+        val appExitInfo1 = FakeAeiRecord(timestamp = 1L, pid = STATUS, traceProvider = { TRACE.byteInputStream() })
+        val appExitInfo2 = FakeAeiRecord(timestamp = 2L, pid = 2, traceProvider = { TRACE.byteInputStream() })
+        val appExitInfo3 = FakeAeiRecord(timestamp = 3L, pid = 3, traceProvider = { TRACE.byteInputStream() })
 
         val appExitInfo1Hash = "${appExitInfo1.timestamp}_${appExitInfo1.pid}"
         val appExitInfo2Hash = "${appExitInfo2.timestamp}_${appExitInfo2.pid}"
 
-        every { mockActivityManager.getHistoricalProcessExitReasons(any(), any(), any()) } returns
-            listOf(appExitInfo1, appExitInfo2, appExitInfo3)
+        records = { listOf(appExitInfo1, appExitInfo2, appExitInfo3) }
 
         store.editAndCommit {
             putStringSet("io.embrace.aeiHashCode", setOf(appExitInfo1Hash, appExitInfo2Hash))
@@ -237,14 +195,8 @@ internal class AeiDataSourceImplTest {
     fun `invalid session id should show up in ApplicationExitInfoData sessionIdError`() {
         // given an AEI with an invalid session ID
         val invalidSessionId = "_ 1NV@lid"
-        every { mockAppExitInfo.processStateSummary } returns invalidSessionId.toByteArray()
-        every {
-            mockActivityManager.getHistoricalProcessExitReasons(
-                any(),
-                any(),
-                any(),
-            )
-        } returns listOf(mockAppExitInfo)
+        aeiRecord.processStateSummary = invalidSessionId.toByteArray()
+        records = { listOf(aeiRecord) }
         startApplicationExitInfoService()
 
         // when AEI is delivered
@@ -257,10 +209,8 @@ internal class AeiDataSourceImplTest {
 
     @Test
     fun `aei_user_session_id is set when processStateSummary contains combined ids`() {
-        every { mockAppExitInfo.processStateSummary } returns "${SESSION_ID}_${USER_SESSION_ID}".toByteArray()
-        every {
-            mockActivityManager.getHistoricalProcessExitReasons(any(), any(), any())
-        } returns listOf(mockAppExitInfo)
+        aeiRecord.processStateSummary = "${SESSION_ID}_${USER_SESSION_ID}".toByteArray()
+        records = { listOf(aeiRecord) }
 
         startApplicationExitInfoService()
 
@@ -273,10 +223,8 @@ internal class AeiDataSourceImplTest {
 
     @Test
     fun `aei_user_session_id is absent when processStateSummary contains only part id`() {
-        every { mockAppExitInfo.processStateSummary } returns SESSION_ID.toByteArray()
-        every {
-            mockActivityManager.getHistoricalProcessExitReasons(any(), any(), any())
-        } returns listOf(mockAppExitInfo)
+        aeiRecord.processStateSummary = SESSION_ID.toByteArray()
+        records = { listOf(aeiRecord) }
 
         startApplicationExitInfoService()
 
@@ -288,14 +236,8 @@ internal class AeiDataSourceImplTest {
     @Test
     fun `null traces won't be sent to the blob endpoint`() {
         // given an application exit info with a null trace
-        every { mockAppExitInfo.traceInputStream } returns null
-        every {
-            mockActivityManager.getHistoricalProcessExitReasons(
-                any(),
-                any(),
-                any(),
-            )
-        } returns listOf(mockAppExitInfo)
+        aeiRecord.traceProvider = { null }
+        records = { listOf(aeiRecord) }
 
         // when the service is started
         startApplicationExitInfoService()
@@ -307,14 +249,8 @@ internal class AeiDataSourceImplTest {
     @Test
     fun `OOM while reading trace`() {
         // given an OOM happens when reading a trace
-        every { mockAppExitInfo.traceInputStream } throws OutOfMemoryError("Ouch")
-        every {
-            mockActivityManager.getHistoricalProcessExitReasons(
-                any(),
-                any(),
-                any(),
-            )
-        } returns listOf(mockAppExitInfo)
+        aeiRecord.traceProvider = { throw OutOfMemoryError("Ouch") }
+        records = { listOf(aeiRecord) }
 
         // when the service is started
         startApplicationExitInfoService()
@@ -328,14 +264,8 @@ internal class AeiDataSourceImplTest {
     @Test
     fun `IOException while reading trace`() {
         // given an IO exception happens when reading a trace
-        every { mockAppExitInfo.traceInputStream } throws IOException("Ouch")
-        every {
-            mockActivityManager.getHistoricalProcessExitReasons(
-                any(),
-                any(),
-                any(),
-            )
-        } returns listOf(mockAppExitInfo)
+        aeiRecord.traceProvider = { throw IOException("Ouch") }
+        records = { listOf(aeiRecord) }
 
         // when the service is started
         startApplicationExitInfoService()
@@ -350,14 +280,8 @@ internal class AeiDataSourceImplTest {
     fun `other error while reading trace`() {
         val errorMessage = "Please turn your computer screen back on."
         // given an IO exception happens when reading a trace
-        every { mockAppExitInfo.traceInputStream } throws IllegalMonitorStateException(errorMessage)
-        every {
-            mockActivityManager.getHistoricalProcessExitReasons(
-                any(),
-                any(),
-                any(),
-            )
-        } returns listOf(mockAppExitInfo)
+        aeiRecord.traceProvider = { throw IllegalMonitorStateException(errorMessage) }
+        records = { listOf(aeiRecord) }
 
         // when the service is started
         startApplicationExitInfoService()
@@ -371,16 +295,10 @@ internal class AeiDataSourceImplTest {
     @Test
     fun `Truncate trace if it exceeds limit`() {
         // given a trace that exceeds the limit
-        every { mockAppExitInfo.traceInputStream } returns "a".repeat(500).byteInputStream()
+        aeiRecord.traceProvider = { "a".repeat(500).byteInputStream() }
 
         configService.config = EmbraceConfig(aei = { AeiConfig(traceMaxLimit = { 100 }) })
-        every {
-            mockActivityManager.getHistoricalProcessExitReasons(
-                any(),
-                any(),
-                any(),
-            )
-        } returns listOf(mockAppExitInfo)
+        records = { listOf(aeiRecord) }
 
         // when the service is started
         startApplicationExitInfoService()
@@ -392,8 +310,8 @@ internal class AeiDataSourceImplTest {
 
     @Test
     fun `Truncate native tombstone if it exceeds limit`() {
-        every { mockAppExitInfo.traceInputStream } returns "a".repeat(500).byteInputStream()
-        every { mockAppExitInfo.reason } returns ApplicationExitInfo.REASON_CRASH_NATIVE
+        aeiRecord.traceProvider = { "a".repeat(500).byteInputStream() }
+        aeiRecord.reason = ApplicationExitInfo.REASON_CRASH_NATIVE
 
         configService = FakeConfigService(
             config = EmbraceConfig(
@@ -401,13 +319,7 @@ internal class AeiDataSourceImplTest {
                 autoDataCapture = { AutoDataCaptureConfig(nativeCrashCaptureEnabled = { true }) },
             ),
         )
-        every {
-            mockActivityManager.getHistoricalProcessExitReasons(
-                any(),
-                any(),
-                any(),
-            )
-        } returns listOf(mockAppExitInfo)
+        records = { listOf(aeiRecord) }
 
         startApplicationExitInfoService(versionChecker = { true })
 
@@ -418,14 +330,8 @@ internal class AeiDataSourceImplTest {
     @Test
     fun `trace stream is closed after reading a text trace`() {
         val stream = CloseRecordingStream(TRACE.toByteArray())
-        every { mockAppExitInfo.traceInputStream } returns stream
-        every {
-            mockActivityManager.getHistoricalProcessExitReasons(
-                any(),
-                any(),
-                any(),
-            )
-        } returns listOf(mockAppExitInfo)
+        aeiRecord.traceProvider = { stream }
+        records = { listOf(aeiRecord) }
 
         startApplicationExitInfoService()
 
@@ -436,15 +342,9 @@ internal class AeiDataSourceImplTest {
     @Test
     fun `trace stream is closed after reading a native tombstone`() {
         val stream = CloseRecordingStream(TRACE.toByteArray())
-        every { mockAppExitInfo.traceInputStream } returns stream
-        every { mockAppExitInfo.reason } returns ApplicationExitInfo.REASON_CRASH_NATIVE
-        every {
-            mockActivityManager.getHistoricalProcessExitReasons(
-                any(),
-                any(),
-                any(),
-            )
-        } returns listOf(mockAppExitInfo)
+        aeiRecord.traceProvider = { stream }
+        aeiRecord.reason = ApplicationExitInfo.REASON_CRASH_NATIVE
+        records = { listOf(aeiRecord) }
 
         startApplicationExitInfoService(versionChecker = { true })
 
@@ -462,13 +362,7 @@ internal class AeiDataSourceImplTest {
 
     @Test
     fun testActivityManagerException() {
-        every {
-            mockActivityManager.getHistoricalProcessExitReasons(
-                any(),
-                any(),
-                any(),
-            )
-        } throws NullPointerException()
+        records = { throw NullPointerException() }
 
         // when the service is started
         val errorHandler = FakeErrorHandler(throwOnSdkError = false)
@@ -483,14 +377,8 @@ internal class AeiDataSourceImplTest {
 
     @Test
     fun `one object sent per payload`() {
-        val entries = (0..16).map { mockAppExitInfo }
-        every {
-            mockActivityManager.getHistoricalProcessExitReasons(
-                any(),
-                any(),
-                any(),
-            )
-        } returns entries
+        val entries = (0..16).map { aeiRecord }
+        records = { entries }
 
         startApplicationExitInfoService()
 
@@ -500,20 +388,14 @@ internal class AeiDataSourceImplTest {
 
     @Test
     fun `disable before queued processing runs does not mark records as delivered`() {
-        every {
-            mockActivityManager.getHistoricalProcessExitReasons(
-                any(),
-                any(),
-                any(),
-            )
-        } returns listOf(mockAppExitInfo)
+        records = { listOf(aeiRecord) }
 
         val executor = BlockingScheduledExecutorService(blockingMode = true)
-        args = FakeInstrumentationArgs(mockk(), configService = configService)
+        args = FakeInstrumentationArgs(configService = configService)
         val source = AeiDataSourceImpl(
             args,
             BackgroundWorker(executor),
-            { mockActivityManager },
+            { recordSource },
             store,
             FakeOrdinalStore(),
         )
@@ -526,15 +408,15 @@ internal class AeiDataSourceImplTest {
 
     @Test
     fun `disable during processing does not persist delivered ids or ordinals`() {
-        every { mockAppExitInfo.reason } returns ApplicationExitInfo.REASON_CRASH_NATIVE
+        aeiRecord.reason = ApplicationExitInfo.REASON_CRASH_NATIVE
         val ordinalStore = FakeOrdinalStore()
-        args = FakeInstrumentationArgs(mockk(), configService = configService)
+        args = FakeInstrumentationArgs(configService = configService)
         lateinit var source: AeiDataSourceImpl
-        every { mockActivityManager.getHistoricalProcessExitReasons(any(), any(), any()) } answers {
+        records = {
             source.onDataCaptureDisabled()
-            listOf(mockAppExitInfo)
+            listOf(aeiRecord)
         }
-        source = AeiDataSourceImpl(args, worker, { mockActivityManager }, store, ordinalStore) { true }
+        source = AeiDataSourceImpl(args, worker, { recordSource }, store, ordinalStore) { true }
         source.onDataCaptureEnabled()
 
         assertTrue(args.destination.logEvents.isEmpty())

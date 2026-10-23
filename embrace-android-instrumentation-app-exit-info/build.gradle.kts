@@ -14,6 +14,5 @@ dependencies {
     testImplementation(project(":embrace-android-instrumentation-api-fakes"))
     testImplementation(libs.protobuf.java)
     testImplementation(libs.protobuf.java.util)
-    testImplementation(libs.mockk)
     testImplementation(libs.robolectric)
 }

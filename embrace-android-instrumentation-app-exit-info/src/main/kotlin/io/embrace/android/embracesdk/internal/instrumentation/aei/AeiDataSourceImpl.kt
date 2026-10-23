@@ -1,6 +1,5 @@
 package io.embrace.android.embracesdk.internal.instrumentation.aei
 
-import android.app.ActivityManager
 import android.app.ApplicationExitInfo
 import android.os.Build.VERSION_CODES
 import androidx.annotation.RequiresApi
@@ -23,7 +22,7 @@ import io.embrace.android.embracesdk.internal.worker.BackgroundWorker
 internal class AeiDataSourceImpl(
     args: InstrumentationArgs,
     private val backgroundWorker: BackgroundWorker,
-    private val activityManagerProvider: Provider<ActivityManager?>,
+    private val recordSourceProvider: Provider<AeiRecordSource?>,
     private val store: KeyValueStore,
     private val ordinalStore: OrdinalStore,
     private val versionChecker: VersionChecker = BuildVersionChecker,
@@ -61,9 +60,9 @@ internal class AeiDataSourceImpl(
         if (isClosed()) {
             return
         }
-        val activityManager = activityManagerProvider() ?: return
+        val recordSource = recordSourceProvider() ?: return
         val maxNum = configService.config.aei.maxNum
-        val records = activityManager.getHistoricalProcessExitReasons(null, 0, maxNum).take(SDK_AEI_SEND_LIMIT)
+        val records = recordSource.getHistoricalProcessExitReasons(maxNum).take(SDK_AEI_SEND_LIMIT)
         val deliveredIds = store.deliveredAeiIds
 
         // update persisted state on what records were sent
@@ -130,6 +129,6 @@ internal class AeiDataSourceImpl(
         get() = store.getStringSet(AEI_HASH_CODES) ?: emptySet()
         set(value) = store.editAndCommit { putStringSet(AEI_HASH_CODES, value) }
 
-    private fun ApplicationExitInfo.getAeiId(): String = "${timestamp}_$pid"
+    private fun AeiRecord.getAeiId(): String = "${timestamp}_$pid"
     private fun AppExitInfoData.getAeiId(): String = "${timestamp}_$pid"
 }

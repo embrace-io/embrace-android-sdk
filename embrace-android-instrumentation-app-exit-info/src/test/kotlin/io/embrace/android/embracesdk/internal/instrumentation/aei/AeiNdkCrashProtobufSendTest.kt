@@ -1,6 +1,5 @@
 package io.embrace.android.embracesdk.internal.instrumentation.aei
 
-import android.app.ActivityManager
 import android.app.ApplicationExitInfo
 import com.android.server.os.TombstoneProtos
 import io.embrace.android.embracesdk.ResourceReader
@@ -13,8 +12,6 @@ import io.embrace.android.embracesdk.fakes.fakeBackgroundWorker
 import io.embrace.android.embracesdk.internal.config.resolved.AutoDataCaptureConfig
 import io.embrace.android.embracesdk.internal.config.resolved.EmbraceConfig
 import io.embrace.android.embracesdk.internal.serialization.EmbraceSerializer
-import io.mockk.every
-import io.mockk.mockk
 import kotlinx.serialization.builtins.MapSerializer
 import kotlinx.serialization.builtins.serializer
 import org.junit.Assert.assertEquals
@@ -130,12 +127,8 @@ internal class AeiNdkCrashProtobufSendTest {
             else -> ApplicationExitInfo.REASON_ANR
         }
         val stream = ResourceReader.readResource(resName)
-        val activityManager = createMockActivityManager(
-            stream,
-            reason,
-        )
+        val record = FakeAeiRecord(reason = reason, traceProvider = { stream })
         val args = FakeInstrumentationArgs(
-            mockk(),
             configService = FakeConfigService(
                 config = EmbraceConfig(autoDataCapture = { AutoDataCaptureConfig(nativeCrashCaptureEnabled = { true }) }),
             ),
@@ -143,27 +136,10 @@ internal class AeiNdkCrashProtobufSendTest {
         AeiDataSourceImpl(
             args,
             fakeBackgroundWorker(),
-            { activityManager },
+            { AeiRecordSource { listOf(record) } },
             FakeKeyValueStore(),
             FakeOrdinalStore(),
         ) { ndkTraceFile }.onDataCaptureEnabled()
         return args.destination
-    }
-
-    private fun createMockActivityManager(stream: InputStream, code: Int): ActivityManager {
-        return mockk(relaxed = true) {
-            every {
-                getHistoricalProcessExitReasons(
-                    any(),
-                    any(),
-                    any(),
-                )
-            } returns listOf(
-                mockk(relaxed = true) {
-                    every { traceInputStream } returns stream
-                    every { reason } returns code
-                },
-            )
-        }
     }
 }

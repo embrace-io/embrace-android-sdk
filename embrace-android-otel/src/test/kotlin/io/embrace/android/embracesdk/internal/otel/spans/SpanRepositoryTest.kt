@@ -2,10 +2,12 @@ package io.embrace.android.embracesdk.internal.otel.spans
 
 import io.embrace.android.embracesdk.concurrency.SingleThreadTestScheduledExecutor
 import io.embrace.android.embracesdk.fakes.FakeEmbraceSdkSpan
+import io.embrace.android.embracesdk.fakes.FakeErrorHandler
 import io.embrace.android.embracesdk.fakes.FakeSpanData
 import io.embrace.android.embracesdk.fakes.OtelSdkMode
 import io.embrace.android.embracesdk.fakes.fakeOpenTelemetry
 import io.embrace.android.embracesdk.internal.arch.schema.ErrorCodeAttribute
+import io.embrace.android.embracesdk.internal.logging.SdkErrorType
 import io.embrace.android.embracesdk.internal.otel.sdk.StoreDataResult
 import io.embrace.android.embracesdk.internal.payload.Span
 import io.embrace.android.embracesdk.internal.toEmbracePayload
@@ -21,11 +23,13 @@ import java.util.concurrent.CountDownLatch
 import java.util.concurrent.TimeUnit
 
 internal class SpanRepositoryTest {
+    private lateinit var errorHandler: FakeErrorHandler
     private lateinit var repository: SpanRepository
 
     @Before
     fun setup() {
-        repository = SpanRepository()
+        errorHandler = FakeErrorHandler(throwOnSdkError = false)
+        repository = SpanRepository(errorHandler)
     }
 
     @Test
@@ -174,6 +178,47 @@ internal class SpanRepositoryTest {
             assertTrue(span.isRecording)
             assertNull(span.spanEndTimeMs)
         }
+    }
+
+    @Test
+    fun `a span that fails to stop does not prevent others being failed`() {
+        val spans = trackWithThrowingSpan { FakeEmbraceSdkSpan().apply { start(0L) } }
+        repository.failActiveEmbraceSpans(100L)
+        spans.forEach { assertFalse(it.isRecording) }
+        assertSpanStopFailReported()
+    }
+
+    @Test
+    fun `a span that fails to stop does not prevent others timing out`() {
+        val spans = trackWithThrowingSpan {
+            FakeEmbraceSdkSpan(terminationMode = SpanTerminationMode.Timeout(1000L)).apply { start(0L) }
+        }
+        repository.stopTimedOutSpans(now = 1000L)
+        spans.forEach { assertFalse(it.isRecording) }
+        assertSpanStopFailReported()
+    }
+
+    @Test
+    fun `a span that fails to stop does not prevent others being auto terminated`() {
+        val spans = trackWithThrowingSpan {
+            FakeEmbraceSdkSpan(terminationMode = SpanTerminationMode.OnBackground).apply { start(0L) }
+        }
+        repository.autoTerminateEmbraceSpans(now = 1000L)
+        spans.forEach { assertFalse(it.isRecording) }
+        assertSpanStopFailReported()
+    }
+
+    private fun assertSpanStopFailReported() {
+        assertEquals(SdkErrorType.SpanStopFail.toString(), errorHandler.sdkErrorMessages.single().msg)
+    }
+
+    private fun trackWithThrowingSpan(create: () -> FakeEmbraceSdkSpan): List<FakeEmbraceSdkSpan> {
+        val throwing = ThrowingEmbraceSdkSpan(create())
+        repository.trackStartedEmbraceSpan(throwing)
+        val spans = List(10) { create() }
+        spans.forEach(repository::trackStartedEmbraceSpan)
+        assertTrue(throwing.isRecording)
+        return spans
     }
 
     @Test

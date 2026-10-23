@@ -37,11 +37,11 @@ class DataValidator(
     fun truncateAttributes(attributes: Map<String, Any>, internal: Boolean, countOverride: Int? = null): Map<String, Any> {
         if (!internal && bypassValidation()) {
             // return a copy so future mutations doesn't affect what is returned
-            return attributes.toMap()
+            return attributes.withoutNullEntries()
         }
         val limits = SpanLimits.of(internal)
         return enforcer.truncateAttributes(
-            attributes = attributes,
+            attributes = attributes.withoutNullEntries(),
             maxCount = countOverride ?: limits.maxAttributeCount,
             maxKeyLength = limits.maxAttributeKeyLength,
             maxValueLength = limits.maxAttributeValueLength,
@@ -73,5 +73,21 @@ class DataValidator(
                 countOverride = otelLimitsConfig.getMaxEventAttributeCount(),
             ),
         )
+    }
+
+    /**
+     * Copies the map without any null key or value, handling callers from Java potentially passing
+     * null despite the signature.
+     */
+    private fun Map<String, Any>.withoutNullEntries(): Map<String, Any> {
+        val result = LinkedHashMap<String, Any>(size)
+        entries.forEach { entry ->
+            val key: String? = entry.key
+            val value: Any? = entry.value
+            if (key != null && value != null) {
+                result[key] = value
+            }
+        }
+        return result
     }
 }

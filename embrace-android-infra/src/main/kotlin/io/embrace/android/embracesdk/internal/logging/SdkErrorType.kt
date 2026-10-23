@@ -19,6 +19,7 @@ sealed class SdkErrorType(private val severity: Severity) {
     object ScreenResCaptureFail : SdkErrorType(ERROR)
     object PeriodicSessionCacheFail : SdkErrorType(ERROR)
     object SpanTimeoutSweepFail : SdkErrorType(ERROR)
+    object SpanStopFail : SdkErrorType(ERROR)
     object AppStateCallbackFail : SdkErrorType(ERROR)
     object ThreadBlockageHeartbeatCheckFail : SdkErrorType(ERROR)
     object DataSourceDataCaptureFail : SdkErrorType(ERROR)

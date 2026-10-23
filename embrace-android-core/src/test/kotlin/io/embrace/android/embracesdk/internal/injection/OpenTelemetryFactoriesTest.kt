@@ -1,6 +1,7 @@
 package io.embrace.android.embracesdk.internal.injection
 
 import io.embrace.android.embracesdk.fakes.FakeConfigService
+import io.embrace.android.embracesdk.fakes.FakeErrorHandler
 import io.embrace.android.embracesdk.fakes.OtelSdkMode
 import io.embrace.android.embracesdk.fakes.injection.TestInitServices
 import io.embrace.android.embracesdk.internal.config.behavior.REDACTED_LABEL
@@ -22,7 +23,7 @@ internal class OpenTelemetryFactoriesTest {
 
     @Test
     fun `factory defaults`() {
-        val spanRepository = SpanRepository()
+        val spanRepository = SpanRepository(FakeErrorHandler())
         assertNotNull(
             createOtelSdkConfig(
                 spanRepository = spanRepository,

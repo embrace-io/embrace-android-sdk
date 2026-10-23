@@ -3,6 +3,7 @@ package io.embrace.android.embracesdk.internal.envelope.session
 import io.embrace.android.embracesdk.fakes.FakeClock
 import io.embrace.android.embracesdk.fakes.FakeCurrentSessionPartSpan
 import io.embrace.android.embracesdk.fakes.FakeEmbraceSdkSpan
+import io.embrace.android.embracesdk.fakes.FakeErrorHandler
 import io.embrace.android.embracesdk.fakes.FakeOtelPayloadMapper
 import io.embrace.android.embracesdk.fakes.FakeProcessStateTracker
 import io.embrace.android.embracesdk.internal.arch.schema.EmbType
@@ -38,7 +39,7 @@ internal class SessionPartPayloadSourceImplTest {
             initializeService(1000L)
         }
         activeSpan = FakeEmbraceSdkSpan.started()
-        spanRepository = SpanRepository().apply {
+        spanRepository = SpanRepository(FakeErrorHandler()).apply {
             storeCompletedOtelSpans(listOf(cacheSpan))
         }
         spanRepository.trackStartedEmbraceSpan(checkNotNull(currentSessionPartSpan.sessionPartSpan))
@@ -82,7 +83,7 @@ internal class SessionPartPayloadSourceImplTest {
         val timedOutSpan = FakeEmbraceSdkSpan(terminationMode = SpanTerminationMode.Timeout(1000L)).apply {
             start(clock.now())
         }
-        val repository = SpanRepository().apply {
+        val repository = SpanRepository(FakeErrorHandler()).apply {
             trackStartedEmbraceSpan(checkNotNull(currentSessionPartSpan.sessionPartSpan))
             trackStartedEmbraceSpan(timedOutSpan)
         }
@@ -129,7 +130,7 @@ internal class SessionPartPayloadSourceImplTest {
         val timedOutSpan = FakeEmbraceSdkSpan(terminationMode = SpanTerminationMode.Timeout(1000L)).apply {
             start(clock.now())
         }
-        val repository = SpanRepository().apply {
+        val repository = SpanRepository(FakeErrorHandler()).apply {
             trackStartedEmbraceSpan(checkNotNull(currentSessionPartSpan.sessionPartSpan))
             trackStartedEmbraceSpan(timedOutSpan)
         }
@@ -155,7 +156,7 @@ internal class SessionPartPayloadSourceImplTest {
         val terminatedSpan = FakeEmbraceSdkSpan(terminationMode = SpanTerminationMode.OnBackground).apply {
             start(0L)
         }
-        val repository = SpanRepository().apply {
+        val repository = SpanRepository(FakeErrorHandler()).apply {
             trackStartedEmbraceSpan(checkNotNull(currentSessionPartSpan.sessionPartSpan))
             trackStartedEmbraceSpan(terminatedSpan)
         }

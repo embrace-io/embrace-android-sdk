@@ -177,7 +177,7 @@ internal class EmbSpanTest(
         ).getTracer("test-tracer")
         val realSpan = EmbraceSpanFactoryImpl(
             openTelemetryClock = openTelemetryClock,
-            spanRepository = SpanRepository(),
+            spanRepository = SpanRepository(FakeErrorHandler()),
             dataValidator = dataValidator,
             telemetryService = FakeInternalTelemetryService(),
             errorHandler = FakeErrorHandler(),

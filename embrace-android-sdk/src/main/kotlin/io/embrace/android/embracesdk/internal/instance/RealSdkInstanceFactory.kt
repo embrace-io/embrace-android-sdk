@@ -171,7 +171,7 @@ internal fun createRealSdkInstance(
     }
 
     val spanRepository = init("span-repository") {
-        overrides?.spanRepository.resolve { SpanRepository() }
+        overrides?.spanRepository.resolve { SpanRepository(errorHandler) }
     }
 
     val logSink = init("log-sink") { LogSinkImpl() }

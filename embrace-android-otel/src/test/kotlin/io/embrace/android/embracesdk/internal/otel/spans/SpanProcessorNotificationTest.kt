@@ -73,7 +73,7 @@ internal class SpanProcessorNotificationTest(
         )
         tracer = otelInstance.getTracer("test-tracer")
         val telemetryService = FakeInternalTelemetryService()
-        spanRepository = SpanRepository().apply { addSpanChangeListener(observed::add) }
+        spanRepository = SpanRepository(FakeErrorHandler()).apply { addSpanChangeListener(observed::add) }
         spanFactory = EmbraceSpanFactoryImpl(
             openTelemetryClock = otelClock,
             spanRepository = spanRepository,

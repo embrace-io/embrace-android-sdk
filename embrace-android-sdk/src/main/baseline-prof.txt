@@ -4691,7 +4691,7 @@ Lio/embrace/android/embracesdk/internal/otel/spans/SpanExtKt;
 HSPLio/embrace/android/embracesdk/internal/otel/spans/SpanExtKt;->hasEmbraceAttribute(Lio/embrace/android/embracesdk/internal/payload/Span;Lio/embrace/android/embracesdk/internal/arch/attrs/EmbraceAttribute;)Z
 HSPLio/embrace/android/embracesdk/internal/otel/spans/SpanExtKt;->toFailedSpan(Lio/embrace/android/embracesdk/internal/payload/Span;J)Lio/embrace/android/embracesdk/internal/payload/Span;
 Lio/embrace/android/embracesdk/internal/otel/spans/SpanRepository;
-HSPLio/embrace/android/embracesdk/internal/otel/spans/SpanRepository;-><init>()V
+HSPLio/embrace/android/embracesdk/internal/otel/spans/SpanRepository;-><init>(Lio/embrace/android/embracesdk/internal/logging/ErrorHandler;)V
 HSPLio/embrace/android/embracesdk/internal/otel/spans/SpanRepository;->addCompletedOtelSpansListener(Lkotlin/jvm/functions/Function1;)V
 HSPLio/embrace/android/embracesdk/internal/otel/spans/SpanRepository;->addSpanChangeListener(Lkotlin/jvm/functions/Function1;)V
 HSPLio/embrace/android/embracesdk/internal/otel/spans/SpanRepository;->completedOtelSpans()Ljava/util/List;

@@ -441,7 +441,7 @@ private class EmbraceSpanImpl(
 
     override fun addCustomLink(linkedSpanContext: SpanContext, attributes: Map<String, Any>): Boolean = guard(false) {
         recordLink(system = false, max = deps.dataValidator.otelLimitsConfig.getMaxCustomLinkCount()) {
-            EmbraceLinkData(linkedSpanContext, attributes.toMap())
+            EmbraceLinkData(linkedSpanContext, deps.dataValidator.truncateAttributes(attributes, false))
         }
     }
 

@@ -28,7 +28,7 @@ class TestOtelStack(
 ) {
     private val openTelemetryClock = EmbClock(initServices.clock)
 
-    val spanRepository: SpanRepository = SpanRepository()
+    val spanRepository: SpanRepository = SpanRepository(initServices.errorHandler)
 
     val logSink: LogSink = LogSinkImpl()
 

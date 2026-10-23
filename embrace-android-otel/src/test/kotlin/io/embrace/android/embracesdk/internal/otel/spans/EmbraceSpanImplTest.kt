@@ -112,7 +112,7 @@ internal class EmbraceSpanImplTest(
                 }
             },
         ).getTracer("test-tracer")
-        spanRepository = SpanRepository().apply { addSpanChangeListener { notifications.incrementAndGet() } }
+        spanRepository = SpanRepository(FakeErrorHandler()).apply { addSpanChangeListener { notifications.incrementAndGet() } }
         serializer = TestPlatformSerializer()
         telemetryService = FakeInternalTelemetryService()
         dataValidator = DataValidator(telemetryService = telemetryService)
@@ -787,6 +787,20 @@ internal class EmbraceSpanImplTest(
         assertTrue(embraceSpan.addLink(checkNotNull(FakeEmbraceSdkSpan.started().spanContext), attributes))
         attributes.clear()
         assertEquals(mapOf("key" to "value"), checkNotNull(embraceSpan.snapshot()).links?.single()?.attributes?.toEmbracePayload())
+    }
+
+    @Test
+    fun `null attribute keys and values passed from java are dropped rather than preventing the span stopping`() {
+        embraceSpan.start()
+        @Suppress("UNCHECKED_CAST")
+        val attributes = mapOf<String?, String?>("key" to "value", "null-value" to null, null to "null-key") as Map<String, String>
+        assertTrue(embraceSpan.addLink(checkNotNull(FakeEmbraceSdkSpan.started().spanContext), attributes))
+        assertTrue(embraceSpan.addEvent("event", null, attributes))
+
+        assertTrue(embraceSpan.stop())
+        val exported = spanExporter.exportedSpans.single()
+        assertEquals(mapOf("key" to "value"), exported.links.single().attributes)
+        assertEquals(mapOf("key" to "value"), exported.events.single().attributes)
     }
 
     @Test

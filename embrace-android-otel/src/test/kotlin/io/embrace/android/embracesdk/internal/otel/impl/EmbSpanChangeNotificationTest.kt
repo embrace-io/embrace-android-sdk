@@ -90,7 +90,7 @@ internal class EmbSpanChangeNotificationTest(
         tracer = otelInstance.getTracer("test-tracer")
         val telemetryService = FakeInternalTelemetryService()
         dataValidator = DataValidator(telemetryService = telemetryService)
-        spanRepository = SpanRepository().apply { addSpanChangeListener(observed::add) }
+        spanRepository = SpanRepository(FakeErrorHandler()).apply { addSpanChangeListener(observed::add) }
         spanFactory = EmbraceSpanFactoryImpl(
             openTelemetryClock = otelClock,
             spanRepository = spanRepository,

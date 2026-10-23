@@ -465,7 +465,7 @@ internal class CurrentSessionPartSpanImplTests(
         otelBehaviorSupplier: Provider<OtelBehavior?> = { null },
         customBreadcrumbLimitSupplier: Provider<Int> = { BreadcrumbConfig.DEFAULT_LIMIT },
     ): CurrentSessionPartSpanImpl {
-        val repository = SpanRepository()
+        val repository = SpanRepository(FakeErrorHandler())
         val otelClock = FakeOtelKotlinClock()
         return CurrentSessionPartSpanImpl(
             openTelemetryClock = otelClock,

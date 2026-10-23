@@ -21,6 +21,7 @@ class AsmTaskRegistration : EmbraceTaskRegistration {
     }
 
     private fun RegistrationParams.execute() {
+        val classInstrumentationFilter = ClassInstrumentationFilter(behavior.instrumentation.ignoredClasses)
         try {
             logger.info("Setting up ASM transformation.")
             variant.instrumentation.setAsmFramesComputationMode(FramesComputationMode.COMPUTE_FRAMES_FOR_INSTRUMENTED_METHODS)
@@ -41,9 +42,7 @@ class AsmTaskRegistration : EmbraceTaskRegistration {
                         behavior.isPluginDisabledForVariant(variant.name) || behavior.isInstrumentationDisabledForVariant(variant.name)
                     },
                 )
-                params.classInstrumentationFilter.set(
-                    ClassInstrumentationFilter(behavior.instrumentation.ignoredClasses),
-                )
+                params.classInstrumentationFilter.set(classInstrumentationFilter)
                 params.shouldInstrumentFirebaseMessaging.set(behavior.instrumentation.fcmPushNotificationsEnabled)
                 params.shouldInstrumentWebview.set(behavior.instrumentation.webviewEnabled)
                 params.shouldInstrumentAutoSdkInitialization.set(behavior.instrumentation.autoSdkInitializationEnabled)

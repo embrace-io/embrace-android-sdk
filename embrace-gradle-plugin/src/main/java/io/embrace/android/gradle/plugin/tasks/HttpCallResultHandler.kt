@@ -22,7 +22,9 @@ fun handleHttpCallResult(
 ) {
     val msg = when (result) {
         is Failure -> handleHttpFailure(endpoint, result)
-        is Error -> "errored: ${endpoint.url}, stacktrace=${result.exception.stackTrace.joinToString("\n")}"
+        is Error ->
+            "errored: ${endpoint.url}, exception=${result.exception}, " +
+                "stacktrace=${result.exception.stackTrace.joinToString("\n")}"
         is Success<*> -> null
     }
     if (msg != null && failBuildOnUploadErrors) {

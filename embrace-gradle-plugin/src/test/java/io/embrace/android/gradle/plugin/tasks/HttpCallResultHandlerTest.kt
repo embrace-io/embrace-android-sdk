@@ -4,6 +4,7 @@ import io.embrace.android.gradle.plugin.network.EmbraceEndpoint
 import io.embrace.android.gradle.plugin.network.HttpCallResult
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertThrows
+import org.junit.Assert.assertTrue
 import org.junit.Test
 
 class HttpCallResultHandlerTest {
@@ -18,6 +19,15 @@ class HttpCallResultHandlerTest {
             }
             assertEquals("Embrace HTTP request failed: ${endpoint.url}, status=$code", exc.message)
         }
+    }
+
+    @Test
+    fun `errors include the exception type and message`() {
+        val exc = assertThrows(IllegalStateException::class.java) {
+            handleHttpCallResult(HttpCallResult.Error(java.io.IOException("connection reset")), endpoint, true)
+        }
+        val msg = checkNotNull(exc.message)
+        assertTrue(msg, msg.contains("java.io.IOException: connection reset"))
     }
 
     @Test

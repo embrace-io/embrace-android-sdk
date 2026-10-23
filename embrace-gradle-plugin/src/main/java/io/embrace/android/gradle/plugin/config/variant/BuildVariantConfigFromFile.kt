@@ -62,11 +62,16 @@ private fun buildVariantConfiguration(configFile: File, systemWrapper: SystemWra
 
         configuration
     } catch (ex: SerializationException) {
+        val error = ex.localizedMessage?.lineSequence()?.first()
+        val problem = if (error?.contains("unknown key", ignoreCase = true) == true) {
+            "contains an unrecognized key.\nPlease check your embrace-config.json for typos or unsupported options."
+        } else {
+            "could not be parsed.\nPlease check your embrace-config.json is valid JSON with the expected value types."
+        }
         throw IllegalArgumentException(
-            "Embrace config file ${configFile.absoluteFile} contains an unrecognized key.\n" +
-                "Please check your embrace-config.json for typos or unsupported options.\n" +
+            "Embrace config file ${configFile.absoluteFile} $problem\n" +
                 "Available options are documented here: https://embrace.io/docs/android/configuration/configuration-file/\n" +
-                "Error: ${ex.localizedMessage?.lineSequence()?.first()}",
+                "Error: $error",
         )
     } catch (ex: Throwable) {
         throw IllegalArgumentException(

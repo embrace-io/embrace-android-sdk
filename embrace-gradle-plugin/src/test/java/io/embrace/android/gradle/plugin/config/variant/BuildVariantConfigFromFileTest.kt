@@ -5,7 +5,9 @@ import io.embrace.android.gradle.fakes.FakeSystemWrapper
 import io.embrace.android.gradle.plugin.model.AndroidCompactedVariantData
 import org.junit.AfterClass
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNull
+import org.junit.Assert.assertThrows
 import org.junit.Assert.assertTrue
 import org.junit.BeforeClass
 import org.junit.Test
@@ -179,6 +181,22 @@ class BuildVariantConfigFromFileTest {
         }
         assertTrue("Expected an IllegalArgumentException", ex != null)
         assertTrue(ex?.message?.contains("unrecognized key") == true)
+    }
+
+    @Test
+    fun `malformed config file reports a parse error rather than an unrecognized key`() {
+        listOf(
+            """{"app_id": "abcde"""",
+            """{"ndk_enabled": "not-a-boolean"}""",
+        ).forEach { json ->
+            configFile.writeText(json)
+            val ex = assertThrows(IllegalArgumentException::class.java) {
+                buildVariantConfig(fakeVariantInfo, projectDirectory, listOf(fileFinder))
+            }
+            val msg = checkNotNull(ex.message)
+            assertTrue(msg, msg.contains("could not be parsed"))
+            assertFalse(msg, msg.contains("unrecognized key"))
+        }
     }
 
     companion object {

@@ -10,13 +10,14 @@ import android.content.Context
 internal interface SdkInstance : InternalSdkApi, AutoCloseable {
 
     /**
-     * Enables the instance, on the thread that starts the SDK. The SDK starts only if this returns and the instance then
-     * reports [isStarted].
+     * Enables the instance, on the thread that starts the SDK: builds what it needs before it can serve calls. The SDK is
+     * enabled with this instance only if this returns and the instance then reports [isStarted].
      */
     fun enable(context: Context)
 
     /**
-     * Finishes the instance's init once [enable] has succeeded, on the same thread.
+     * Invoked once the SDK is enabled with this instance, which now serves calls, on the thread that enabled it. Finishes
+     * the instance's init, which is complete when this returns.
      */
     fun onEnabled()
 

@@ -16,16 +16,19 @@ import io.embrace.android.embracesdk.internal.utils.Provider
  * All lifecycle transitions happen under a single lock and follow [SdkState]:
  *
  * ```
- * NOT_STARTED --start() succeeds--> STARTED --close()----> DISABLED
+ * NOT_STARTED --start() succeeds--> ENABLED --close()----> DISABLED
  *      |   |                                                ^  ^
  *      |   +--start() fails--> FAILED --close()-------------+  |
  *      +-------close() or start() disabled by config-----------+
  * ```
  *
  * Starting means the public start call, from when it is made until it returns. During it, the [SdkInstance] is created by
- * [instanceFactory] and then enabled: the start fails if [SdkInstance.enable] does, and once it has succeeded
- * [SdkInstance.onEnabled] finishes the instance's init. A null instance means the SDK is disabled by config. Each change
- * of [SdkState] is a transition, which points the public API at the instance that serves calls in the new state.
+ * [instanceFactory] and then enabled: the start fails if [SdkInstance.enable] does. Once it has succeeded, the SDK
+ * transitions to [SdkState.ENABLED] and serves calls, including through the public `isStarted`, while
+ * [SdkInstance.onEnabled] finishes the instance's init before the start returns. A null instance means the SDK is
+ * disabled by config. Each change of [SdkState] is a transition, which points the public API at the instance that serves
+ * calls in the new state. The calls buffered before the SDK is enabled are handed to the instance before it is published,
+ * so none is overtaken by a call made directly.
  *
  * Only one attempt is made to start the SDK. A start that does not succeed closes any instance that was created without
  * deleting its persisted data, moves the SDK to [SdkState.FAILED], routes all subsequent calls to [failed] and discards
@@ -77,8 +80,8 @@ internal class SdkStateHolder(
                 when {
                     next == null -> terminate(disabled(), SdkState.DISABLED)
                     tryEnable(next, context) -> {
+                        transition(next, SdkState.ENABLED)
                         next.onEnabled()
-                        transition(next, SdkState.STARTED)
                     }
                     else -> {
                         errorHandler.guardSdkCode(SdkErrorType.PublicApiFail) { next.close() }
@@ -128,11 +131,17 @@ internal class SdkStateHolder(
         state = nextState
     }
 
+    /**
+     * Points the public API at [next]. The calls buffered before start are handed to [next] first, so that a call made
+     * directly once [next] is published can't overtake them.
+     */
     private fun swapTarget(next: SdkInstance) {
         val previous = api.target
-        api.target = next
         if (previous is BufferingSdkInstance) {
             errorHandler.guardSdkCode(SdkErrorType.PublicApiFail) { next.onTransition(previous) }
+        }
+        api.target = next
+        if (previous is BufferingSdkInstance) {
             errorHandler.guardSdkCode(SdkErrorType.PublicApiFail) { previous.close() }
         }
     }

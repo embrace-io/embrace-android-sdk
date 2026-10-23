@@ -46,7 +46,7 @@ internal class SdkStateHolderTest {
         val holder = createHolder(instance)
         holder.start(context)
         holder.api.logInfo("message")
-        assertEquals(SdkState.STARTED, holder.state)
+        assertEquals(SdkState.ENABLED, holder.state)
         assertSame(instance, holder.api.target)
         assertEquals(listOf("instantiate", "enable", "onTransition", "logInfo/1"), calls)
     }
@@ -56,7 +56,7 @@ internal class SdkStateHolderTest {
         val holder = createHolder(FakeInstance(calls))
         holder.start(context)
         holder.start(context)
-        assertEquals(SdkState.STARTED, holder.state)
+        assertEquals(SdkState.ENABLED, holder.state)
         assertEquals(listOf("instantiate", "enable", "onTransition"), calls)
     }
 
@@ -202,7 +202,7 @@ internal class SdkStateHolderTest {
     fun `api routes lifecycle calls through the holder`() {
         val holder = createHolder(FakeInstance(calls))
         holder.api.start(context)
-        assertEquals(SdkState.STARTED, holder.state)
+        assertEquals(SdkState.ENABLED, holder.state)
         holder.api.logInfo("message")
         holder.api.disable()
         assertEquals(SdkState.DISABLED, holder.state)
@@ -266,7 +266,7 @@ internal class SdkStateHolderTest {
         val instance = FakeInstance(calls = calls, transitionThrows = true)
         val holder = createHolder(instance)
         holder.start(context)
-        assertEquals(SdkState.STARTED, holder.state)
+        assertEquals(SdkState.ENABLED, holder.state)
         assertEquals("transition failed", errorHandler.sdkErrorMessages.single().throwable?.message)
     }
 
@@ -327,7 +327,7 @@ internal class SdkStateHolderTest {
         val holder = createHolder(FakeInstance(calls))
         val threads = List(8) { thread { holder.start(context) } }
         threads.forEach(Thread::join)
-        assertEquals(SdkState.STARTED, holder.state)
+        assertEquals(SdkState.ENABLED, holder.state)
         assertEquals(listOf("instantiate", "enable", "onTransition"), calls)
     }
 
@@ -388,6 +388,53 @@ internal class SdkStateHolderTest {
         assertBufferClosed(disabled)
     }
 
+    /**
+     * Once the SDK is enabled, public API calls from other threads should reach the instance. It keeps finishing its init
+     * after that point (listeners, instrumentation loading, payload send, init tracking), so a call dropped there is lost
+     * telemetry.
+     */
+    @Test
+    fun `calls from another thread while the instance finishes its init are not dropped`() {
+        lateinit var holder: SdkStateHolder
+        val instance = FakeInstance(
+            calls = calls,
+            onEnabledHook = { thread { holder.api.logInfo("message") }.join() },
+        )
+        holder = createHolder(instance)
+        holder.start(context)
+        assertTrue(calls.contains("logInfo/1"))
+    }
+
+    /**
+     * A call that arrives while the buffered calls are being handed over must not overtake them. Here the app
+     * tracks an experiment before start, then untracks it on another thread while the handover is in progress.
+     */
+    @Test
+    fun `a call made during the handover is applied after the buffered calls`() {
+        lateinit var holder: SdkStateHolder
+        lateinit var instance: FakeInstance
+        instance = FakeInstance(
+            calls = calls,
+            onTransitionHook = { buffer ->
+                thread { holder.api.untrackExperiment("a", 2) }.join()
+                buffer.drainExperimentCalls(instance) { replayed ->
+                    replayed.forEach { calls += "replay:${it.javaClass.simpleName}" }
+                }
+            },
+        )
+        holder = createHolder(instance)
+        holder.api.trackExperiment("a", "v1", 1)
+        holder.start(context)
+        val experimentCalls = calls.mapNotNull {
+            when (it) {
+                "replay:Track" -> "track"
+                "replay:Untrack", "untrackExperiment/2" -> "untrack"
+                else -> null
+            }
+        }
+        assertEquals(listOf("track", "untrack"), experimentCalls)
+    }
+
     private fun assertErrorHandlerClosedOnStart(holder: SdkStateHolder, expected: SdkState) {
         val errors = mutableListOf<Throwable>()
         bufferedErrorHandler.drain { throwable, _ -> errors += throwable }
@@ -428,6 +475,8 @@ internal class SdkStateHolderTest {
         val closeThrows: Boolean = false,
         var transitionThrows: Boolean = false,
         private val prefix: String = "",
+        private val onEnabledHook: () -> Unit = {},
+        private val onTransitionHook: (BufferingSdkInstance) -> Unit = {},
     ) : SdkInstance, InternalSdkApi by recordingSdkApi(calls, prefix) {
 
         private var started = false
@@ -443,6 +492,7 @@ internal class SdkStateHolderTest {
             handedOver += buffer
             buffer.drainCompletedSpans(recordingSdkApi(drained, prefix))
             check(!transitionThrows) { "transition failed" }
+            onTransitionHook(buffer)
         }
 
         override val isStarted: Boolean get() = started
@@ -455,7 +505,9 @@ internal class SdkStateHolderTest {
             }
         }
 
-        override fun onEnabled() {}
+        override fun onEnabled() {
+            onEnabledHook()
+        }
 
         override fun close() {
             calls += "${prefix}close"

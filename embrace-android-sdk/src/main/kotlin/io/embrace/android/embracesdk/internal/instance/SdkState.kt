@@ -16,9 +16,10 @@ internal enum class SdkState {
     FAILED,
 
     /**
-     * The SDK started successfully.
+     * The SDK is enabled: it serves public API calls. It becomes enabled partway through its start, which returns once the
+     * instance it enabled has finished its init.
      */
-    STARTED,
+    ENABLED,
 
     /**
      * The SDK was disabled. This state is terminal.

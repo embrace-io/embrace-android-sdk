@@ -124,7 +124,7 @@ internal class SdkStateIntegrationTest(
                 assertEquals(SdkState.NOT_STARTED, sdkState)
 
                 embrace.start(context)
-                assertEquals(SdkState.STARTED, sdkState)
+                assertEquals(SdkState.ENABLED, sdkState)
                 recordSession {
                     embrace.startSpan(SPAN_1).stop()
                     embrace.logInfo(LOG_2)
@@ -174,10 +174,10 @@ internal class SdkStateIntegrationTest(
     }
 
     @Test
-    fun `NOT_STARTED to STARTED - successful start`() {
+    fun `NOT_STARTED to ENABLED - successful start`() {
         testRule.runTest(
             testCaseAction = {
-                assertEquals(SdkState.STARTED, sdkState)
+                assertEquals(SdkState.ENABLED, sdkState)
                 assertTrue(embrace.isStarted)
                 recordSession {
                     assertNotNull(embrace.currentUserSessionId)
@@ -263,13 +263,13 @@ internal class SdkStateIntegrationTest(
     }
 
     @Test
-    fun `STARTED - repeated start is ignored`() {
+    fun `ENABLED - repeated start is ignored`() {
         testRule.runTest(
             testCaseAction = {
                 recordSession {
                     val userSessionId = embrace.currentUserSessionId
                     embrace.start(context)
-                    assertEquals(SdkState.STARTED, sdkState)
+                    assertEquals(SdkState.ENABLED, sdkState)
                     assertEquals(userSessionId, embrace.currentUserSessionId)
                 }
             },
@@ -281,7 +281,7 @@ internal class SdkStateIntegrationTest(
     }
 
     @Test
-    fun `STARTED to DISABLED - data export stops`() {
+    fun `ENABLED to DISABLED - data export stops`() {
         lateinit var errorHandler: FakeErrorHandler
         testRule.runTest(
             setupAction = {
@@ -335,7 +335,7 @@ internal class SdkStateIntegrationTest(
     }
 
     @Test
-    fun `STARTED to DISABLED - customer processors stop receiving telemetry and are shut down`() {
+    fun `ENABLED to DISABLED - customer processors stop receiving telemetry and are shut down`() {
         val spanProcessor = FakeSpanProcessor()
         val logRecordProcessor = FakeLogRecordProcessor()
         testRule.runTest(
@@ -365,7 +365,7 @@ internal class SdkStateIntegrationTest(
     }
 
     @Test
-    fun `STARTED to DISABLED - event bus is stopped`() {
+    fun `ENABLED to DISABLED - event bus is stopped`() {
         testRule.runTest(
             testCaseAction = {
                 val key = EventKey<Unit>()
@@ -465,7 +465,7 @@ internal class SdkStateIntegrationTest(
     }
 
     @Test
-    fun `NOT_STARTED to STARTED - internal API switches from noop to the SDK`() {
+    fun `NOT_STARTED to ENABLED - internal API switches from noop to the SDK`() {
         testRule.runTest(
             startSdk = false,
             testCaseAction = {
@@ -535,7 +535,7 @@ internal class SdkStateIntegrationTest(
     }
 
     @Test
-    fun `STARTED to DISABLED - internal API stays noop after start`() {
+    fun `ENABLED to DISABLED - internal API stays noop after start`() {
         testRule.runTest(
             testCaseAction = {
                 assertInternalApiIsLive()

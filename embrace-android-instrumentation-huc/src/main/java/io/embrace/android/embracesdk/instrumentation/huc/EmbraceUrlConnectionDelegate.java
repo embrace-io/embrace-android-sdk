@@ -126,6 +126,8 @@ class EmbraceUrlConnectionDelegate<T extends HttpURLConnection> implements Embra
 
     private final AtomicReference<NetworkCaptureData> networkCaptureData = new AtomicReference<>(null);
 
+    private final AtomicReference<CaptureRuleCheck> captureRuleCheck = new AtomicReference<>(null);
+
     @Nullable
     private volatile String traceparent = null;
 
@@ -769,13 +771,41 @@ class EmbraceUrlConnectionDelegate<T extends HttpURLConnection> implements Embra
     }
 
     private boolean hasNetworkCaptureRules() {
-        if (this.connection.getURL() == null) {
+        URL url = this.connection.getURL();
+        if (url == null) {
             return false;
         }
-        String url = this.connection.getURL().toString();
+        String urlString = url.toString();
         String method = this.connection.getRequestMethod();
+        CaptureRuleCheck check = captureRuleCheck.get();
+        if (check != null && check.matches(urlString, method)) {
+            return check.result;
+        }
+        boolean result;
+        try {
+            result = internalNetworkApi.shouldCaptureNetworkBody(urlString, method);
+        } catch (Throwable t) {
+            logError(t);
+            result = false;
+        }
+        captureRuleCheck.set(new CaptureRuleCheck(urlString, method, result));
+        return result;
+    }
 
-        return internalNetworkApi.shouldCaptureNetworkBody(url, method);
+    private static final class CaptureRuleCheck {
+        final String url;
+        final String method;
+        final boolean result;
+
+        CaptureRuleCheck(@NonNull String url, @Nullable String method, boolean result) {
+            this.url = url;
+            this.method = method;
+            this.result = result;
+        }
+
+        boolean matches(@NonNull String url, @Nullable String method) {
+            return this.url.equals(url) && (this.method == null ? method == null : this.method.equals(method));
+        }
     }
 
     private void cacheNetworkCallData() {

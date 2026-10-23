@@ -10,6 +10,7 @@ import io.embrace.android.embracesdk.internal.payload.NetworkCapturedCall
 import io.embrace.android.embracesdk.internal.serialization.PlatformSerializer
 import io.embrace.android.embracesdk.internal.store.KeyValueStore
 import io.embrace.android.embracesdk.internal.telemetry.AppliedLimitType
+import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.TimeUnit
 import kotlin.math.max
 
@@ -24,6 +25,7 @@ class NetworkCaptureDataSourceImpl(
     private val keyValueStore: KeyValueStore = args.store
     private val serializer: PlatformSerializer = args.serializer
     private val networkCaptureEncryptionManager = NetworkCaptureEncryptionManager()
+    private val urlRegexCache = ConcurrentHashMap<String, Result<Regex>>()
 
     internal companion object {
         const val NETWORK_ERROR_CODE = -1
@@ -167,7 +169,8 @@ class NetworkCaptureDataSourceImpl(
         val now = clock.now()
         val applicableRules = networkCaptureRules.filter { rule ->
             rule.method.contains(method) &&
-                runCatching { rule.urlRegex.toRegex().containsMatchIn(url) }.getOrDefault(false) &&
+                urlRegexCache.getOrPut(rule.urlRegex) { runCatching { rule.urlRegex.toRegex() } }
+                    .getOrNull()?.containsMatchIn(url) == true &&
                 rule.expiresIn > 0 &&
                 now < configDeliveredAt + TimeUnit.SECONDS.toMillis(rule.expiresIn)
         }.toMutableSet()

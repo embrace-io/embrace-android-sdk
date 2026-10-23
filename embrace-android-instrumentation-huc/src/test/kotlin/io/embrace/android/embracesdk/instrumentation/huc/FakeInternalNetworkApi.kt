@@ -9,6 +9,8 @@ internal class FakeInternalNetworkApi(
 ) : InternalNetworkApi {
 
     val networkRequests: MutableList<EmbraceNetworkRequest> = mutableListOf()
+    var captureNetworkBodyError: Throwable? = null
+    var captureNetworkBodyCount: Int = 0
 
     override fun getSdkCurrentTimeMs(): Long = time
     override fun isNetworkSpanForwardingEnabled(): Boolean = networkSpanForwardingEnabled
@@ -19,7 +21,11 @@ internal class FakeInternalNetworkApi(
     override fun shouldCaptureNetworkBody(
         url: String,
         method: String,
-    ): Boolean = captureNetworkBody
+    ): Boolean {
+        captureNetworkBodyCount++
+        captureNetworkBodyError?.let { throw it }
+        return captureNetworkBody
+    }
 
     override fun logSdkError(error: Throwable) {}
 }

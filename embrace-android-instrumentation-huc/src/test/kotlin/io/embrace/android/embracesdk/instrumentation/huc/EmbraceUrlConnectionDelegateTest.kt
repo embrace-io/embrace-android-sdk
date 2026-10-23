@@ -52,6 +52,7 @@ internal class EmbraceUrlConnectionDelegateTest {
             networkDataCaptured = true,
             responseBody = responseBodyText,
         )
+        assertEquals(1, internalApi.captureNetworkBodyCount)
     }
 
     @Test
@@ -397,6 +398,18 @@ internal class EmbraceUrlConnectionDelegateTest {
         val request = retrieveNetworkRequest()
         assertEquals(HTTP_OK, request.responseCode)
         assertEquals(customTraceId, request.traceId)
+    }
+
+    @Test
+    fun `a throwing capture rule check does not propagate to the app`() {
+        internalApi.captureNetworkBodyError = IllegalStateException("broken store")
+        executeRequest(
+            connection = createMockGzipConnection(),
+            wrappedIoStream = true,
+        )
+        val request = retrieveNetworkRequest()
+        assertEquals(HTTP_OK, request.responseCode)
+        assertNull(request.networkCaptureData)
     }
 
     private fun createMockConnectionWithPathOverride() = createMockGzipConnection(

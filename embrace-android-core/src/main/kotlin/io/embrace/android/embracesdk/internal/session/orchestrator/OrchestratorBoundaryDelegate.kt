@@ -18,14 +18,14 @@ internal class OrchestratorBoundaryDelegate(
      * Clears state that is scoped to a user session. This will be invoked when the active user session ends,
      * which is AFTER the final session part payload has been created and BEFORE the next session part span is created.
      */
-    fun cleanupAfterSessionEnd() {
-        userSessionPropertiesService.cleanupAfterSessionEnd()
+    fun cleanupAfterUserSessionEnd() {
+        userSessionPropertiesService.cleanupAfterUserSessionEnd()
     }
 
     /**
      * Prepare the SDK for a new session part. This will be invoked AFTER the new session part span has been created.
      */
-    fun prepareForNewSession() {
-        userSessionPropertiesService.prepareForNewSession()
+    fun prepareForNewSessionPart() {
+        userSessionPropertiesService.prepareForNewSessionPart()
     }
 }

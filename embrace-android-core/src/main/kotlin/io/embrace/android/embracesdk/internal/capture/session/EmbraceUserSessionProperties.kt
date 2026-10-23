@@ -83,7 +83,7 @@ internal class EmbraceUserSessionProperties(
     /**
      * Notify that the user session has ended so that its user session properties can be cleared.
      */
-    fun onNewUserSession() {
+    fun onUserSessionEnded() {
         synchronized(lock) {
             val iter = properties.iterator()
             while (iter.hasNext()) {

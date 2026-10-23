@@ -68,11 +68,11 @@ internal class UserSessionPropertiesServiceImpl(
 
     override fun getProperties(): Map<String, String> = props.get()
 
-    override fun cleanupAfterSessionEnd() {
-        props.onNewUserSession()
+    override fun cleanupAfterUserSessionEnd() {
+        props.onUserSessionEnded()
     }
 
-    override fun prepareForNewSession() {
+    override fun prepareForNewSessionPart() {
         props.addPropsForNewSessionPartSpan()
     }
 

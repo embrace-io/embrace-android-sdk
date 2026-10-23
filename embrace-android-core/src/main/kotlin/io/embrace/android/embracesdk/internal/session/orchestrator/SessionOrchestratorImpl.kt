@@ -405,7 +405,7 @@ internal class SessionOrchestratorImpl(
                                 sessionTracker.setProcessStateSummary(newSessionPart.sessionPartId, userSession.userSessionId)
                             }
                         }
-                        boundaryDelegate.prepareForNewSession()
+                        boundaryDelegate.prepareForNewSessionPart()
                         sessionPartSpanAttrPopulator.populateSessionPartSpanStartAttrs(newSessionPart, userSession)
                         if (transitionType != TransitionType.CRASH) {
                             // create the directory that holds this session part's telemetry
@@ -739,7 +739,7 @@ internal class SessionOrchestratorImpl(
             inactivityTimerState = null
             metadataStore.clear()
             userSessionState = UserSessionState.Terminated
-            boundaryDelegate.cleanupAfterSessionEnd()
+            boundaryDelegate.cleanupAfterUserSessionEnd()
             userSessionEvents.enqueue(UserSessionEnded(it.userSessionId))
         }
     }

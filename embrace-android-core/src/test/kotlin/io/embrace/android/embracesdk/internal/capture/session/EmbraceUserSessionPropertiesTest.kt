@@ -98,7 +98,7 @@ internal class EmbraceUserSessionPropertiesTest {
         assertTrue(props.add(KEY_VALID, VALUE_VALID, PropertyScope.PROCESS))
         assertEquals(1, props.get().size.toLong())
 
-        props.onNewUserSession()
+        props.onUserSessionEnded()
 
         assertEquals(1, props.get().size.toLong())
         assertEquals(VALUE_VALID, props.get()[KEY_VALID])
@@ -120,7 +120,7 @@ internal class EmbraceUserSessionPropertiesTest {
         props.add("processKey", "pv", PropertyScope.PROCESS)
         assertEquals(2, props.get().size.toLong())
 
-        props.onNewUserSession()
+        props.onUserSessionEnded()
 
         assertEquals(1, props.get().size.toLong())
         assertEquals("pv", props.get()["processKey"])
@@ -150,7 +150,7 @@ internal class EmbraceUserSessionPropertiesTest {
         props.add(KEY_VALID, VALUE_VALID, PropertyScope.USER_SESSION)
 
         // after clear, key should be gone (was moved to session scope)
-        props.onNewUserSession()
+        props.onUserSessionEnded()
         assertFalse(props.get().containsKey(KEY_VALID))
     }
 
@@ -162,7 +162,7 @@ internal class EmbraceUserSessionPropertiesTest {
         props.add(KEY_VALID, VALUE_VALID, PropertyScope.PROCESS)
 
         // after clear, key should still be present (was moved to process scope)
-        props.onNewUserSession()
+        props.onUserSessionEnded()
         assertEquals(VALUE_VALID, props.get()[KEY_VALID])
     }
 

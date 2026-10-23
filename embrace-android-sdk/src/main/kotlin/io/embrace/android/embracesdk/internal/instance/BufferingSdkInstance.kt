@@ -125,7 +125,8 @@ internal class BufferingSdkInstance(
 
     override fun onTransition(buffer: BufferingSdkInstance) {}
 
-    override fun disable() {}
+    // nothing is persisted, so there is nothing to delete beyond what closing discards
+    override fun disable() = close()
 
     override fun close() {
         closed = true

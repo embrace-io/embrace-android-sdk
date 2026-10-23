@@ -263,6 +263,20 @@ internal class BufferingSdkInstanceTest {
         assertTrue(replayed.isEmpty())
     }
 
+    /**
+     * The buffer persists nothing, so disabling it does everything closing it does and no more.
+     */
+    @Test
+    fun `calls are ignored after disable`() {
+        instance.recordCompletedSpan("buffered", 1, 2)
+        instance.disable()
+
+        assertFalse(instance.recordCompletedSpan("span", 1, 2))
+        instance.drainCompletedSpans(target)
+
+        assertTrue(target.calls.isEmpty())
+    }
+
     @Test
     fun `calls made during a replay are replayed in a later round, in order`() {
         instance.trackExperiment("exp1", startedAt = 1L)

@@ -389,6 +389,84 @@ internal class SdkStateHolderTest {
     }
 
     /**
+     * Code that runs on the main thread during start can disable the SDK, so the start call
+     * must not clobber the desired state set on the SdkStateHolder.
+     */
+    @Test
+    fun `disable called during start is not overwritten by the start`() {
+        lateinit var holder: SdkStateHolder
+        val instance = FakeInstance(calls = calls, onEnableAttempted = { holder.api.disable() })
+        holder = createHolder(instance)
+        holder.start(context)
+        assertEquals(SdkState.DISABLED, holder.state)
+        assertSame(disabled, holder.api.target)
+        assertEquals(listOf("instantiate", "enable", "onTransition", "disable"), calls)
+    }
+
+    /**
+     * A disable made while the instance finishes its init, such as by an instrumentation provider it loads, is applied once
+     * that init has finished, so the instance isn't torn down partway through it.
+     */
+    @Test
+    fun `disable called while the instance finishes its init is applied once it has finished`() {
+        lateinit var holder: SdkStateHolder
+        var disabledDuringInit = false
+        val instance = FakeInstance(
+            calls = calls,
+            onEnabledHook = {
+                holder.api.disable()
+                disabledDuringInit = calls.contains("disable")
+            },
+        )
+        holder = createHolder(instance)
+        holder.start(context)
+        assertFalse(disabledDuringInit)
+        assertEquals(SdkState.DISABLED, holder.state)
+        assertEquals(listOf("instantiate", "enable", "onTransition", "disable"), calls)
+    }
+
+    /**
+     * A disable made while another is already held during the start is held as well, rather than applied partway through.
+     */
+    @Test
+    fun `a second disable called during start is held as well`() {
+        lateinit var holder: SdkStateHolder
+        val instance = FakeInstance(
+            calls = calls,
+            onEnableAttempted = {
+                holder.api.disable()
+                holder.api.disable()
+            },
+        )
+        holder = createHolder(instance)
+        holder.start(context)
+        assertEquals(SdkState.DISABLED, holder.state)
+        assertSame(disabled, holder.api.target)
+        assertEquals(listOf("instantiate", "enable", "onTransition", "disable"), calls)
+    }
+
+    @Test
+    fun `start called during start is ignored`() {
+        lateinit var holder: SdkStateHolder
+        val instance = FakeInstance(calls = calls, onEnableAttempted = { holder.api.start(context) })
+        holder = createHolder(instance)
+        holder.start(context)
+        assertEquals(SdkState.ENABLED, holder.state)
+        assertEquals(listOf("instantiate", "enable", "onTransition"), calls)
+        assertTrue(errorHandler.sdkErrorMessages.isEmpty())
+    }
+
+    @Test
+    fun `disable called during a start that fails is applied once the start completes`() {
+        lateinit var holder: SdkStateHolder
+        val instance = FakeInstance(calls = calls, startSucceeds = false, onEnableAttempted = { holder.api.disable() })
+        holder = createHolder(instance)
+        holder.start(context)
+        assertEquals(SdkState.DISABLED, holder.state)
+        assertSame(disabled, holder.api.target)
+    }
+
+    /**
      * Once the SDK is enabled, public API calls from other threads should reach the instance. It keeps finishing its init
      * after that point (listeners, instrumentation loading, payload send, init tracking), so a call dropped there is lost
      * telemetry.
@@ -457,7 +535,7 @@ internal class SdkStateHolderTest {
     private fun createHolder(instance: SdkInstance) = createHolder { instance }
 
     private fun createHolder(instanceFactory: () -> SdkInstance?) = SdkStateHolder(
-        instanceFactory = {
+        realSdkInstanceFactory = {
             calls += "instantiate"
             instanceFactory()
         },
@@ -476,6 +554,7 @@ internal class SdkStateHolderTest {
         var transitionThrows: Boolean = false,
         private val prefix: String = "",
         private val onEnabledHook: () -> Unit = {},
+        private val onEnableAttempted: () -> Unit = {},
         private val onTransitionHook: (BufferingSdkInstance) -> Unit = {},
     ) : SdkInstance, InternalSdkApi by recordingSdkApi(calls, prefix) {
 
@@ -500,6 +579,7 @@ internal class SdkStateHolderTest {
         override fun enable(context: Context) {
             calls += "enable"
             check(!startThrows) { "start failed" }
+            onEnableAttempted()
             if (startSucceeds) {
                 started = true
             }

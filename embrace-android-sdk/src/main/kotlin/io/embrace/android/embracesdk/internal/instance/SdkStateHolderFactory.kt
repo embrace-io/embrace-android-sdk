@@ -32,7 +32,7 @@ internal fun createSdkStateHolder(
     }
     return EmbTrace.trace("sdk-state-holder-init") {
         SdkStateHolder(
-            instanceFactory = { context ->
+            realSdkInstanceFactory = { context ->
                 EmbTrace.trace(sectionName = "modules-init", recordDuration = true) {
                     createSdkInstance(
                         context,

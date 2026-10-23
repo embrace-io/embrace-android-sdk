@@ -23,7 +23,7 @@ import io.embrace.android.embracesdk.internal.utils.Provider
  * ```
  *
  * Starting means the public start call, from when it is made until it returns. During it, the [SdkInstance] is created by
- * [instanceFactory] and then enabled: the start fails if [SdkInstance.enable] does. Once it has succeeded, the SDK
+ * [realSdkInstanceFactory] and then enabled: the start fails if [SdkInstance.enable] does. Once it has succeeded, the SDK
  * transitions to [SdkState.ENABLED] and serves calls, including through the public `isStarted`, while
  * [SdkInstance.onEnabled] finishes the instance's init before the start returns. A null instance means the SDK is
  * disabled by config. Each change of [SdkState] is a transition, which points the public API at the instance that serves
@@ -33,10 +33,11 @@ import io.embrace.android.embracesdk.internal.utils.Provider
  * Only one attempt is made to start the SDK. A start that does not succeed closes any instance that was created without
  * deleting its persisted data, moves the SDK to [SdkState.FAILED], routes all subsequent calls to [failed] and discards
  * any buffered calls. Only calling [close] deletes persisted data. Neither [SdkState.FAILED] nor [SdkState.DISABLED]
- * can be started again. Exceptions are reported to [errorHandler] rather than thrown.
+ * can be started again. Exceptions are reported to [errorHandler] rather than thrown. A disable made during start, by code
+ * running on the start thread, is applied once the start completes rather than interrupting it.
  */
 internal class SdkStateHolder(
-    instanceFactory: (Context) -> SdkInstance?,
+    realSdkInstanceFactory: SdkInstanceFactory,
     preStart: BufferingSdkInstance,
     private val failed: Provider<SdkInstance>,
     private val disabled: Provider<SdkInstance>,
@@ -45,9 +46,6 @@ internal class SdkStateHolder(
 ) : AutoCloseable {
 
     private val lock = Any()
-
-    // released once used, so the static `Embrace` object does not keep the module graph reachable through it
-    private var instanceFactory: ((Context) -> SdkInstance?)? = instanceFactory
 
     /**
      * The [SdkApi] that backs the public `Embrace` object.
@@ -58,35 +56,21 @@ internal class SdkStateHolder(
     var state: SdkState = SdkState.NOT_STARTED
         private set
 
+    // only read and written under lock
+    private var pendingCall: PendingCall = PendingCall.None(realSdkInstanceFactory)
+
     /**
      * Starts the SDK. Has no effect unless the SDK is in [SdkState.NOT_STARTED].
      */
     fun start(context: Context) {
         EmbTrace.trace("sdk-start") {
             synchronized(lock) {
-                // guarantees the factory is invoked at most once
-                if (state != SdkState.NOT_STARTED) {
-                    return
-                }
-                val factory = checkNotNull(instanceFactory)
-                instanceFactory = null
-                val next = try {
-                    factory(context)
-                } catch (exc: Throwable) {
-                    reportStartFailure(exc)
-                    terminate(failed(), SdkState.FAILED)
-                    return
-                }
-                when {
-                    next == null -> terminate(disabled(), SdkState.DISABLED)
-                    tryEnable(next, context) -> {
-                        transition(next, SdkState.ENABLED)
-                        next.onEnabled()
-                    }
-                    else -> {
-                        errorHandler.guardSdkCode(SdkErrorType.PublicApiFail) { next.close() }
-                        terminate(failed(), SdkState.FAILED)
-                    }
+                // the factory is invoked at most once, as only an SDK that no call has reached yet holds it. The lock is
+                // reentrant, so a start made by code running during this start also reaches here, and is ignored.
+                val pending = pendingCall
+                if (pending is PendingCall.None) {
+                    pendingCall = PendingCall.Start
+                    runStart(pending.factory, context)
                 }
             }
         }
@@ -100,11 +84,51 @@ internal class SdkStateHolder(
             if (state == SdkState.DISABLED) {
                 return
             }
-            instanceFactory = null
+            if (pendingCall == PendingCall.Start || pendingCall == PendingCall.Disable) {
+                // only code running on the start thread gets here, as the lock is held for the whole start. The disable is
+                // applied once the start completes rather than interrupting it.
+                pendingCall = PendingCall.Disable
+                return
+            }
+            pendingCall = PendingCall.Done
             val previous = api.target
             transition(disabled(), SdkState.DISABLED)
             errorHandler.guardSdkCode(SdkErrorType.PublicApiFail) { previous.disable() }
             errorHandler.guardSdkCode(SdkErrorType.PublicApiFail) { errorHandler.close() }
+        }
+    }
+
+    /**
+     * Creates an [SdkInstance] with [factory] and enables it, or ends the start without one if that fails or the SDK is
+     * disabled by config. Called under [lock], for the one start the SDK gets.
+     */
+    private fun runStart(factory: SdkInstanceFactory, context: Context) {
+        try {
+            val next = try {
+                factory(context)
+            } catch (exc: Throwable) {
+                reportStartFailure(exc)
+                terminate(failed(), SdkState.FAILED)
+                return
+            }
+            when {
+                // a null instance means the SDK is disabled by config
+                next == null -> terminate(disabled(), SdkState.DISABLED)
+                tryEnable(next, context) -> {
+                    transition(next, SdkState.ENABLED)
+                    next.onEnabled()
+                }
+                else -> {
+                    errorHandler.guardSdkCode(SdkErrorType.PublicApiFail) { next.close() }
+                    terminate(failed(), SdkState.FAILED)
+                }
+            }
+        } finally {
+            val disablePending = pendingCall == PendingCall.Disable
+            pendingCall = PendingCall.Done
+            if (disablePending) {
+                close()
+            }
         }
     }
 
@@ -150,4 +174,37 @@ internal class SdkStateHolder(
         Log.w("Embrace", "Failed to start the Embrace SDK", exc)
         errorHandler.trackSdkError(SdkErrorType.PublicApiFail, exc)
     }
+
+    /**
+     * A lifecycle call that the holder has yet to finish processing.
+     */
+    private sealed interface PendingCall {
+
+        /**
+         * No call has been processed yet, so the SDK can still be started, once, with [factory]. Any other state
+         * releases the factory, so the static `Embrace` object does not keep the module graph reachable through it.
+         */
+        class None(val factory: SdkInstanceFactory) : PendingCall
+
+        /**
+         * A start call is being processed.
+         */
+        data object Start : PendingCall
+
+        /**
+         * A disable call was received while a start call was still being processed, and is applied once that start
+         * completes.
+         */
+        data object Disable : PendingCall
+
+        /**
+         * All accepted calls have been processed, so the SDK can't be started again.
+         */
+        data object Done : PendingCall
+    }
 }
+
+/**
+ * Creates the [SdkInstance] that a start enables, or returns null if the SDK is disabled by config.
+ */
+internal typealias SdkInstanceFactory = (Context) -> SdkInstance?

@@ -1,10 +1,7 @@
 package io.embrace.android.gradle.plugin.util
 
 import io.embrace.android.gradle.plugin.agp.AgpUtils
-import io.mockk.every
-import io.mockk.mockk
-import org.gradle.api.Task
-import org.gradle.api.tasks.TaskProvider
+import org.gradle.testfixtures.ProjectBuilder
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Test
@@ -23,14 +20,9 @@ class AgpUtilsTest {
 
     @Test
     fun `verify task is dexguard`() {
-        val task = mockk<TaskProvider<Task>> {
-            every { name } returns "dexguardApkDebug"
-        }
+        val tasks = ProjectBuilder.builder().build().tasks
 
-        assertTrue(AgpUtils.isDexguard(task))
-
-        every { task.name } returns "transformClassesAndResourcesWithProguardForDebug"
-
-        assertFalse(AgpUtils.isDexguard(task))
+        assertTrue(AgpUtils.isDexguard(tasks.register("dexguardApkDebug")))
+        assertFalse(AgpUtils.isDexguard(tasks.register("transformClassesAndResourcesWithProguardForDebug")))
     }
 }

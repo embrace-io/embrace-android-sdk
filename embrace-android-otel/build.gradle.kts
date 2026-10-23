@@ -33,5 +33,4 @@ dependencies {
     testImplementation(project(":embrace-android-otel-fakes"))
     testImplementation(libs.opentelemetry.api)
     testImplementation(libs.opentelemetry.sdk)
-    testImplementation(libs.mockk)
 }

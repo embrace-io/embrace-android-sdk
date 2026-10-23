@@ -17,8 +17,6 @@ import io.embrace.android.gradle.plugin.tasks.ndk.NdkUploadTasksRegistration
 import io.embrace.android.gradle.plugin.tasks.ndk.UploadSharedObjectFilesTask
 import io.embrace.android.gradle.plugin.tasks.registration.RegistrationParams
 import io.embrace.android.gradle.plugin.util.capitalizedString
-import io.mockk.every
-import io.mockk.mockk
 import org.gradle.api.DefaultTask
 import org.gradle.api.Project
 import org.gradle.api.internal.provider.AbstractProperty.PropertyQueryException
@@ -34,6 +32,7 @@ import org.junit.Assert.assertThrows
 import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
+import java.lang.reflect.Proxy
 
 class NdkUploadTasksRegistrationTest {
 
@@ -53,7 +52,16 @@ class NdkUploadTasksRegistrationTest {
         sourceMapPath = "sourceMapPath",
     )
 
-    private val mockVariant = mockk<Variant>(relaxed = true)
+    // Variant is a large AGP interface; registration only reads its name.
+    private val fakeVariant = Proxy.newProxyInstance(
+        Variant::class.java.classLoader,
+        arrayOf(Variant::class.java),
+    ) { _, method, _ ->
+        when (method.name) {
+            "getName" -> testVariantName
+            else -> error("Unexpected Variant.${method.name}()")
+        }
+    } as Variant
 
     private lateinit var embraceExtension: EmbraceExtension
     private lateinit var project: Project
@@ -63,7 +71,6 @@ class NdkUploadTasksRegistrationTest {
 
     @Before
     fun setUp() {
-        every { mockVariant.name } returns testVariantName
         project = projectBuilder.build()
         variantConfigurationsListProperty = project.objects.listProperty(VariantConfig::class.java).convention(emptyList())
         embraceExtension = project.extensions.create("embrace", EmbraceExtension::class.java)
@@ -73,7 +80,7 @@ class NdkUploadTasksRegistrationTest {
         )
         testRegistrationParams = RegistrationParams(
             project,
-            mockVariant,
+            fakeVariant,
             testAndroidCompactedVariantData,
             variantConfigurationsListProperty,
             testBehavior,

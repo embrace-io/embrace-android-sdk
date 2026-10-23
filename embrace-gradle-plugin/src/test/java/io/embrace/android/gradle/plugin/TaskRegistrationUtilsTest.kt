@@ -2,10 +2,7 @@ package io.embrace.android.gradle.plugin
 
 import io.embrace.android.gradle.plugin.gradle.isTaskRegistered
 import io.embrace.android.gradle.plugin.gradle.tryGetTaskProvider
-import io.embrace.android.gradle.plugin.model.AndroidCompactedVariantData
 import io.embrace.android.gradle.plugin.util.capitalizedString
-import io.mockk.every
-import io.mockk.mockk
 import org.gradle.testfixtures.ProjectBuilder
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNotNull
@@ -36,7 +33,7 @@ class TaskRegistrationUtilsTest {
 
     @Test
     fun `verify task provider is registered`() {
-        assertTrue(isTaskRegistered(mockk()))
+        assertTrue(isTaskRegistered(project.tasks.register("the-task")))
     }
 
     @Test
@@ -47,13 +44,10 @@ class TaskRegistrationUtilsTest {
     @Test
     fun `get task provider successfully`() {
         val variantName = "the-variant"
-        val variantData = mockk<AndroidCompactedVariantData> {
-            every { name } returns variantName
-        }
         val taskName = "the-task"
-        project.tasks.register("$taskName${variantData.name.capitalizedString()}")
+        project.tasks.register("$taskName${variantName.capitalizedString()}")
 
-        assertNotNull(project.tryGetTaskProvider("$taskName${variantData.name.capitalizedString()}"))
+        assertNotNull(project.tryGetTaskProvider("$taskName${variantName.capitalizedString()}"))
     }
 
     @Test

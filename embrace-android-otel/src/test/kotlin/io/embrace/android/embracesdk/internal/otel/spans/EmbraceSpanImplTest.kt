@@ -385,12 +385,13 @@ internal class EmbraceSpanImplTest(
     @Test
     fun `span operations that throw are tracked rather than crashing the caller`() {
         errorHandler.throwOnSdkError = false
-        @Suppress("UNCHECKED_CAST")
-        val nullValues = mapOf("key" to null) as Map<String, String>
+        val brokenMap = object : AbstractMap<String, String>() {
+            override val entries: Set<Map.Entry<String, String>> get() = error("broken map")
+        }
         with(embraceSpan) {
             assertTrue(start())
-            assertFalse(addEvent("event", null, nullValues))
-            assertFalse(recordException(RuntimeException(), nullValues))
+            assertFalse(addEvent("event", null, brokenMap))
+            assertFalse(recordException(RuntimeException(), brokenMap))
             assertTrue(stop())
         }
         assertEquals(

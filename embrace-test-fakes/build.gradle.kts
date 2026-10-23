@@ -33,5 +33,4 @@ dependencies {
     compileOnly(libs.opentelemetry.kotlin.sdk.api)
 
     implementation(libs.robolectric)
-    implementation(libs.mockk)
 }

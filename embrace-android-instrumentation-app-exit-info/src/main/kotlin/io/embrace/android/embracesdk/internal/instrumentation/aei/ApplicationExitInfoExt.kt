@@ -18,12 +18,12 @@ private const val SESSION_ID_LENGTH = 32
 private const val READ_BUFFER_SIZE = 8192
 
 /**
- * Constructs an [io.embrace.android.embracesdk.internal.payload.AppExitInfoData] object from an [ApplicationExitInfo] object. The trace
+ * Constructs an [io.embrace.android.embracesdk.internal.payload.AppExitInfoData] object from an [AeiRecord]. The trace
  * will be truncated if it is above a certain character limit. If no trace is present, this function
  * will return null as we don't wish to capture this data right now.
  */
 @RequiresApi(VERSION_CODES.R)
-internal fun ApplicationExitInfo.constructAeiObject(
+internal fun AeiRecord.constructAeiObject(
     versionChecker: VersionChecker,
     charLimit: Int,
 ): AppExitInfoData? {
@@ -55,7 +55,7 @@ internal fun ApplicationExitInfo.constructAeiObject(
  * Reads an AEI trace as a string and attempts to sanitize/handle exceptions + edge cases.
  */
 @RequiresApi(VERSION_CODES.R)
-private fun ApplicationExitInfo.readAeiTrace(
+private fun AeiRecord.readAeiTrace(
     versionChecker: VersionChecker,
     charLimit: Int,
 ): TraceResult? {
@@ -76,7 +76,7 @@ private fun ApplicationExitInfo.readAeiTrace(
 }
 
 @RequiresApi(VERSION_CODES.R)
-private fun ApplicationExitInfo.readTraceAsString(versionChecker: VersionChecker, charLimit: Int): String? {
+private fun AeiRecord.readTraceAsString(versionChecker: VersionChecker, charLimit: Int): String? {
     val stream = traceInputStream ?: return null
     return if (isNdkProtobufFile(versionChecker)) {
         stream.use { it.readBytesCapped(charLimit).toUTF8String() }
@@ -123,7 +123,7 @@ private fun Reader.readTextCapped(charLimit: Int): String {
  * NDK protobuf files are only available on Android 12 and above for AEI with
  * the REASON_CRASH_NATIVE reason.
  */
-private fun ApplicationExitInfo.isNdkProtobufFile(versionChecker: VersionChecker): Boolean {
+private fun AeiRecord.isNdkProtobufFile(versionChecker: VersionChecker): Boolean {
     return versionChecker.isAtLeast(VERSION_CODES.S) && reason == ApplicationExitInfo.REASON_CRASH_NATIVE
 }
 

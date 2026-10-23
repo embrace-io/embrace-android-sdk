@@ -74,12 +74,26 @@ internal class WorkerThreadPoolImplTest {
     }
 
     @Test
-    fun `close drops delayed tasks`() {
+    fun `close drops delayed and periodic tasks but runs queued tasks`() {
         val module = WorkerThreadPoolImpl(FakeErrorHandler())
         val worker = module.backgroundWorker(Worker.Background.IoRegWorker)
-        worker.schedule<Unit>({}, 1, TimeUnit.HOURS)
+        val started = CountDownLatch(1)
+        val release = CountDownLatch(1)
+        worker.submit {
+            started.countDown()
+            release.await()
+        }
+        val delayed = worker.schedule<Unit>({}, 1, TimeUnit.HOURS)
+        val periodic = worker.scheduleAtFixedRate({}, 0, 1, TimeUnit.HOURS)
+        val queued = worker.submit {}
+        started.await(1, TimeUnit.SECONDS)
         module.close()
+        release.countDown()
+
         assertTrue(module.awaitTermination(1000))
+        assertTrue(delayed.isCancelled)
+        assertTrue(periodic.isCancelled)
+        assertTrue(queued.isDone && !queued.isCancelled)
     }
 
     @Test

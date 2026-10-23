@@ -5,9 +5,11 @@ import androidx.test.ext.junit.runners.AndroidJUnit4
 import io.embrace.android.embracesdk.fakes.FakeClock
 import io.embrace.android.embracesdk.fakes.FakeConfigService
 import io.embrace.android.embracesdk.fakes.FakeErrorHandler
+import io.embrace.android.embracesdk.fakes.FakeNetworkConnectivityService
 import io.embrace.android.embracesdk.fakes.FakeReadWriteLogRecord
 import io.embrace.android.embracesdk.fakes.OtelSdkMode
 import io.embrace.android.embracesdk.fakes.TestPlatformSerializer
+import io.embrace.android.embracesdk.fakes.injection.FakeWorkerThreadPool
 import io.embrace.android.embracesdk.fakes.injection.TestInitServices
 import io.embrace.android.embracesdk.internal.arch.InstrumentationRegistry
 import io.embrace.android.embracesdk.internal.arch.state.ProcessState
@@ -17,9 +19,12 @@ import io.embrace.android.embracesdk.internal.config.PersistedConfig
 import io.embrace.android.embracesdk.internal.config.remote.OtelKotlinSdkConfig
 import io.embrace.android.embracesdk.internal.config.remote.RemoteConfig
 import io.embrace.android.embracesdk.internal.delivery.intake.IntakeService
+import io.embrace.android.embracesdk.internal.delivery.storage.StorageLocation
 import io.embrace.android.embracesdk.internal.injection.ConfigLoadServices
 import io.embrace.android.embracesdk.internal.injection.PreStartServices
 import io.embrace.android.embracesdk.internal.injection.SdkOverrides
+import io.embrace.android.embracesdk.internal.injection.WorkerThreadPool
+import io.embrace.android.embracesdk.internal.injection.lazyOkHttpClient
 import io.embrace.android.embracesdk.internal.instance.RealSdkInstance
 import io.embrace.android.embracesdk.internal.instance.createRealSdkInstance
 import io.embrace.android.embracesdk.internal.instrumentation.crash.CrashFileMarker
@@ -31,8 +36,13 @@ import io.embrace.android.embracesdk.internal.otel.sdk.OtelSdkWrapper
 import io.embrace.android.embracesdk.internal.session.lifecycle.LifecycleTracker
 import io.embrace.android.embracesdk.internal.session.orchestrator.PayloadStore
 import io.embrace.android.embracesdk.internal.session.orchestrator.SessionOrchestrator
+import io.embrace.android.embracesdk.internal.worker.Worker
 import io.embrace.android.embracesdk.semconv.EmbSessionAttributes
 import io.opentelemetry.kotlin.NoopOpenTelemetry
+import okhttp3.OkHttpClient
+import okhttp3.Request
+import okhttp3.mockwebserver.MockResponse
+import okhttp3.mockwebserver.MockWebServer
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNotNull
@@ -84,7 +94,11 @@ internal class RealSdkInstanceFactoryTest {
         context = RuntimeEnvironment.getApplication().applicationContext
     }
 
-    private fun createInstance(): RealSdkInstance {
+    private fun createInstance(
+        workerThreadPool: WorkerThreadPool? = null,
+        overrides: SdkOverrides = this.overrides,
+        okHttpClient: Lazy<OkHttpClient> = lazyOkHttpClient(),
+    ): RealSdkInstance {
         val preStartServices = PreStartServices(errorHandler, clock)
         return createRealSdkInstance(
             context = context,
@@ -92,6 +106,8 @@ internal class RealSdkInstanceFactoryTest {
             configLoadServices = ConfigLoadServices(
                 context = context,
                 preStartServices = preStartServices,
+                okHttpClient = okHttpClient,
+                workerThreadPoolSupplier = workerThreadPool?.let { pool -> { pool } },
                 configServiceSupplier = { _, _, _, _, _, _ -> FakeConfigService() },
             ),
             sdkStartTimeMs = clock.now(),
@@ -190,5 +206,56 @@ internal class RealSdkInstanceFactoryTest {
         assertFalse(lifecycleTrackerRegistered)
         instance.start(context)
         assertTrue(lifecycleTrackerRegistered)
+    }
+
+    @Test
+    fun `immediate disable runs queued cleanup and skips queued start work`() {
+        val connectivityService = FakeNetworkConnectivityService()
+        val workerThreadPool = FakeWorkerThreadPool(
+            fakeInitServices = TestInitServices(clock = clock, errorHandler = errorHandler, otelSdkMode = OtelSdkMode.COMPAT),
+            testWorkers = listOf(Worker.Background.NonIoRegWorker, Worker.Background.IoRegWorker),
+        )
+        val server = MockWebServer().apply { enqueue(MockResponse()) }
+        val okHttpClient = lazyOkHttpClient()
+        okHttpClient.value.newCall(Request.Builder().url(server.url("/")).build()).execute().close()
+        assertEquals(1, okHttpClient.value.connectionPool.idleConnectionCount())
+
+        val storageDirs = StorageLocation.entries.map { File(context.filesDir, it.dir) }
+        File(storageDirs.first().apply(File::mkdirs), "payload").writeText("{}")
+
+        val instance = createInstance(
+            workerThreadPool = workerThreadPool,
+            overrides = SdkOverrides(
+                lifecycleTracker = overrides.lifecycleTracker,
+                networkConnectivityService = { connectivityService },
+            ),
+            okHttpClient = okHttpClient,
+        )
+        instance.start(context)
+        val nonIoWorker = workerThreadPool.executorFor(Worker.Background.NonIoRegWorker)
+        val ioWorker = workerThreadPool.executorFor(Worker.Background.IoRegWorker)
+        instance.disable()
+
+        // eviction is queued on the HTTP worker during teardown and must run before the workers terminate
+        assertTrue(workerThreadPool.awaitTermination(AWAIT_TIMEOUT_MS))
+        assertEquals(0, okHttpClient.value.connectionPool.connectionCount())
+
+        // data deletion waits for worker termination on its own thread
+        val deadline = System.currentTimeMillis() + AWAIT_TIMEOUT_MS
+        while (storageDirs.any(File::exists) && System.currentTimeMillis() < deadline) {
+            Thread.sleep(10)
+        }
+        assertFalse(storageDirs.any(File::exists))
+
+        // start work queued on the faked workers before teardown still runs, but must not do anything
+        nonIoWorker.runCurrentlyBlocked()
+        ioWorker.runCurrentlyBlocked()
+        assertFalse(connectivityService.registered)
+        assertTrue(connectivityService.listeners.isEmpty())
+        server.shutdown()
+    }
+
+    private companion object {
+        const val AWAIT_TIMEOUT_MS = 5000L
     }
 }

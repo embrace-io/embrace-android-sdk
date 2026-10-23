@@ -20,12 +20,12 @@ sdk-start                    wraps the whole Embrace.start() call — the SDK-in
 │  ├─ resource-source-init
 │  ├─ session-orchestrator-init
 │  └─ current-session-part-span-initialize-service
-├─ post-init                 RealSdkInstance.postInit()
+├─ setup-services            RealSdkInstance.setupServices()
 └─ post-services-setup       tail of EmbraceImpl.start()
    └─ load-instrumentation
 ```
 
-The exported `emb-embrace-init` span is tiled by `modules-init + post-init +
+The exported `emb-embrace-init` span is tiled by `modules-init + setup-services +
 post-services-setup` (± ~1 ms of unattributed sliver); `sdk-start` wraps that interval plus
 <1 ms of Embrace.start() overhead, and is what analyze_startup.py reports as the window
 (falling back to the composed interval on SDKs without it). The class-load sections run before

@@ -100,7 +100,6 @@
           { "key": "otel-tracer-init-duration-ms", "value": "0" },
           { "key": "payload-storage-service-init-duration-ms", "value": "0" },
           { "key": "persisted-config-init-duration-ms", "value": "0" },
-          { "key": "post-init-duration-ms", "value": "0" },
           { "key": "post-services-setup-duration-ms", "value": "0" },
           { "key": "prefs-file-bytes", "value": "__EMBRACE_TEST_IGNORE__" },
           { "key": "prefs-first-read-duration-ms", "value": "0" },
@@ -111,6 +110,7 @@
           { "key": "seconds-since-install", "value": "432000" },
           { "key": "seconds-since-update", "value": "86400" },
           { "key": "session-orchestrator-init-duration-ms", "value": "0" },
+          { "key": "setup-services-duration-ms", "value": "0" },
           { "key": "start-first-session-duration-ms", "value": "0" },
           { "key": "startup-classifier-init-duration-ms", "value": "0" },
           { "key": "thermal-headroom-pct", "value": "0" }

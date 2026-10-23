@@ -140,7 +140,7 @@ private val expectedSdkInitSections = listOf(
     "payload-storage-service-init",
     "resource-source-init",
     "otel-tracer-init",
-    "post-init",
+    "setup-services",
     "load-instrumentation",
     "post-services-setup",
 )

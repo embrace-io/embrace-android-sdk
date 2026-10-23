@@ -29,12 +29,12 @@ interface UserSessionPropertiesService {
     fun getProperties(): Map<String, String>
 
     /**
-     * Clear state after a session ends
+     * Clear state after a user session ends
      */
     fun cleanupAfterSessionEnd()
 
     /**
-     * Apply state change required when a new session starts
+     * Apply state change required when a new session part starts
      */
     fun prepareForNewSession()
 

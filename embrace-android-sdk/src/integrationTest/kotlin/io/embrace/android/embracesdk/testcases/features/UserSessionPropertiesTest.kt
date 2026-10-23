@@ -2,6 +2,7 @@ package io.embrace.android.embracesdk.testcases.features
 
 import io.embrace.android.embracesdk.PropertyScope
 import io.embrace.android.embracesdk.assertions.findSessionPartSpan
+import io.embrace.android.embracesdk.assertions.getUserSessionId
 import io.embrace.android.embracesdk.fakes.config.FakeEnabledFeatureConfig
 import io.embrace.android.embracesdk.fakes.config.FakeInstrumentedConfig
 import io.embrace.android.embracesdk.internal.api.SdkApi
@@ -12,6 +13,7 @@ import io.embrace.android.embracesdk.testframework.OtelSdkMode
 import io.embrace.android.embracesdk.testframework.SdkIntegrationTestRule
 import io.embrace.android.embracesdk.testframework.actions.EmbraceActionInterface
 import io.embrace.android.embracesdk.testframework.actions.EmbraceSetupInterface
+import org.junit.Assert.assertNotEquals
 import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertNull
 import org.junit.Ignore
@@ -48,23 +50,23 @@ internal class UserSessionPropertiesTest(
                     missing = listOf(EXISTING_KEY_1)
                 )
                 sessions[0].findSessionPartSpan().assertPropertyExistence(
-                    exist = listOf(EXISTING_KEY_3, PERM_KEY, PERM_KEY_2, TEMP_KEY_2),
+                    exist = listOf(EXISTING_KEY_3, PERM_KEY, PERM_KEY_2, TEMP_KEY, TEMP_KEY_2),
                     missing = listOf(EXISTING_KEY_1, EXISTING_KEY_2)
                 )
                 bas[1].findSessionPartSpan().assertPropertyExistence(
-                    exist = listOf(EXISTING_KEY_3, PERM_KEY_2),
+                    exist = listOf(EXISTING_KEY_3, PERM_KEY_2, TEMP_KEY, TEMP_KEY_2),
                     missing = listOf(EXISTING_KEY_1, EXISTING_KEY_2, PERM_KEY, PERM_KEY_3, TEMP_KEY_3)
                 )
                 sessions[1].findSessionPartSpan().assertPropertyExistence(
-                    exist = listOf(EXISTING_KEY_3, PERM_KEY_2),
+                    exist = listOf(EXISTING_KEY_3, PERM_KEY_2, TEMP_KEY, TEMP_KEY_2),
                     missing = listOf(EXISTING_KEY_1, EXISTING_KEY_2, PERM_KEY, PERM_KEY_3, TEMP_KEY_3)
                 )
                 bas[2].findSessionPartSpan().assertPropertyExistence(
-                    exist = listOf(EXISTING_KEY_3, PERM_KEY_2),
+                    exist = listOf(EXISTING_KEY_3, PERM_KEY_2, TEMP_KEY, TEMP_KEY_2),
                     missing = listOf(EXISTING_KEY_1, EXISTING_KEY_2, PERM_KEY, PERM_KEY_3, TEMP_KEY_3)
                 )
                 sessions[2].findSessionPartSpan().assertPropertyExistence(
-                    exist = listOf(EXISTING_KEY_3, PERM_KEY_2),
+                    exist = listOf(EXISTING_KEY_3, PERM_KEY_2, TEMP_KEY, TEMP_KEY_2),
                     missing = listOf(EXISTING_KEY_1, EXISTING_KEY_2, PERM_KEY, PERM_KEY_3, TEMP_KEY_3)
                 )
             }
@@ -87,16 +89,38 @@ internal class UserSessionPropertiesTest(
                     missing = listOf(EXISTING_KEY_1, EXISTING_KEY_2)
                 )
                 sessions[1].findSessionPartSpan().assertPropertyExistence(
-                    exist = listOf(EXISTING_KEY_3, PERM_KEY_2),
-                    missing = listOf(
-                        EXISTING_KEY_1, EXISTING_KEY_2, PERM_KEY, PERM_KEY_3, TEMP_KEY, TEMP_KEY_2, TEMP_KEY_3
-                    )
+                    exist = listOf(EXISTING_KEY_3, PERM_KEY_2, TEMP_KEY, TEMP_KEY_2),
+                    missing = listOf(EXISTING_KEY_1, EXISTING_KEY_2, PERM_KEY, PERM_KEY_3, TEMP_KEY_3)
                 )
                 sessions[2].findSessionPartSpan().assertPropertyExistence(
-                    exist = listOf(EXISTING_KEY_3, PERM_KEY_2),
-                    missing = listOf(
-                        EXISTING_KEY_1, EXISTING_KEY_2, PERM_KEY, PERM_KEY_3, TEMP_KEY, TEMP_KEY_2, TEMP_KEY_3
-                    )
+                    exist = listOf(EXISTING_KEY_3, PERM_KEY_2, TEMP_KEY, TEMP_KEY_2),
+                    missing = listOf(EXISTING_KEY_1, EXISTING_KEY_2, PERM_KEY, PERM_KEY_3, TEMP_KEY_3)
+                )
+            }
+        )
+    }
+
+    @Test
+    fun `user-session-scoped property is cleared when the user session ends`() {
+        testRule.runTest(
+            testCaseAction = {
+                recordSession {
+                    embrace.addTemporaryProperty(TEMP_KEY)
+                    embrace.addPermanentProperty(PERM_KEY)
+                }
+                embrace.endUserSession()
+                recordSession()
+            },
+            assertAction = {
+                val sessions = getSessionEnvelopes(2)
+                assertNotEquals(sessions[0].getUserSessionId(), sessions[1].getUserSessionId())
+
+                sessions[0].findSessionPartSpan().assertPropertyExistence(
+                    exist = listOf(TEMP_KEY, PERM_KEY),
+                )
+                sessions[1].findSessionPartSpan().assertPropertyExistence(
+                    exist = listOf(PERM_KEY),
+                    missing = listOf(TEMP_KEY),
                 )
             }
         )

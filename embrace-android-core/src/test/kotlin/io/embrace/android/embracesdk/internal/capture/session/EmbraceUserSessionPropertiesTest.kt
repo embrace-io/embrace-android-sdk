@@ -128,7 +128,7 @@ internal class EmbraceUserSessionPropertiesTest {
     }
 
     @Test
-    fun `addPropsForNewSessionPartSpan includes permanent and process but not session`() {
+    fun `addPropsForNewSessionPartSpan includes all scopes`() {
         props.add("permKey", "permVal", PropertyScope.PERMANENT)
         props.add("procKey", "procVal", PropertyScope.PROCESS)
         props.add("sessKey", "sessVal", PropertyScope.USER_SESSION)
@@ -139,7 +139,7 @@ internal class EmbraceUserSessionPropertiesTest {
         val keys = destination.attributes.keys.map { it.removePrefix("emb.properties.") }
         assertTrue("permanent prop missing", keys.contains("permKey"))
         assertTrue("process prop missing", keys.contains("procKey"))
-        assertFalse("session prop should not be re-added", keys.contains("sessKey"))
+        assertTrue("session prop missing", keys.contains("sessKey"))
     }
 
     @Test

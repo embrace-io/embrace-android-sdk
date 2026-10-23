@@ -379,14 +379,8 @@ internal class SessionOrchestratorImpl(
                             )
                         },
                         startSessionPartCallback = {
-                            // the previous session has fully ended at this point
-                            // now, we can clear the SDK state and prepare for the next session
-                            EmbTrace.trace("prepare-new-session") {
-                                boundaryDelegate.cleanupAfterSessionEnd()
-                            }
-
-                            // transition the user session before creating the new session part so that
-                            // the user session is always ready
+                            // the previous session part has fully ended at this point. Transition the user session
+                            // before creating the new session part so that the user session is always ready
                             transitionUserSession(transitionType, endAppState, timestamp)
 
                             // create the next session part span if we should, and update the SDK state to reflect the transition
@@ -745,6 +739,7 @@ internal class SessionOrchestratorImpl(
             inactivityTimerState = null
             metadataStore.clear()
             userSessionState = UserSessionState.Terminated
+            boundaryDelegate.cleanupAfterSessionEnd()
             userSessionEvents.enqueue(UserSessionEnded(it.userSessionId))
         }
     }

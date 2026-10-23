@@ -1,6 +1,5 @@
 package io.embrace.android.embracesdk.testcases.session
 
-import io.embrace.android.embracesdk.PropertyScope
 import io.embrace.android.embracesdk.assertions.assertMatches
 import io.embrace.android.embracesdk.assertions.assertNoPreviousSessionPart
 import io.embrace.android.embracesdk.assertions.assertPreviousSessionPart
@@ -21,7 +20,6 @@ import io.embrace.android.embracesdk.internal.payload.Envelope
 import io.embrace.android.embracesdk.internal.payload.SessionPartPayload
 import io.embrace.android.embracesdk.internal.payload.Span
 import io.embrace.android.embracesdk.internal.session.LifeEventType
-import io.embrace.android.embracesdk.internal.session.getSessionProperty
 import io.embrace.android.embracesdk.internal.otel.sdk.findAttributeValue
 import io.embrace.android.embracesdk.internal.session.getSessionPartSpan
 import io.embrace.android.embracesdk.semconv.EmbAppAttributes
@@ -40,8 +38,8 @@ import org.junit.Test
 import org.junit.runner.RunWith
 
 /**
- * Asserts the shape and structure of session part payloads: device/app envelope attributes, session-scoped
- * data clearing at part boundaries, span links, session validity, life-event types, and part sequencing.
+ * Asserts the shape and structure of session part payloads: device/app envelope attributes, span links,
+ * session validity, life-event types, and part sequencing.
  */
 @RunWith(ParameterizedRobolectricTestRunner::class)
 internal class SessionPartPayloadTest(
@@ -71,36 +69,6 @@ internal class SessionPartPayloadTest(
                     }
                     assertTrue(getUserSessionId().isNotBlank())
                 }
-            }
-        )
-    }
-
-    /**
-     * Sets some data on the first session, and asserts that it is not present on the second
-     * session.
-     *
-     * This test case is not exhaustive - it's meant to be a canary in the coalmine that
-     * warns if no data at all is being cleared between sessions.
-     */
-    @Test
-    fun `session messages have a clean boundary`() {
-        testRule.runTest(
-            testCaseAction = {
-                recordSession {
-                    embrace.addUserSessionProperty("foo", "bar", PropertyScope.USER_SESSION)
-                }
-                recordSession()
-            },
-            assertAction = {
-                val sessions = getSessionEnvelopes(2)
-
-                // validate info added to first session
-                val span = sessions[0].findSessionPartSpan()
-                assertEquals("bar", span.getSessionProperty("foo"))
-
-                // confirm info not added to next session
-                val nextSpan = sessions[1].findSessionPartSpan()
-                assertNull(nextSpan.getSessionProperty("foo"))
             }
         )
     }

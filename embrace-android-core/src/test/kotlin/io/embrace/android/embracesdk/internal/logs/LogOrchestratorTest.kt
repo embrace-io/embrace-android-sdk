@@ -3,14 +3,19 @@ package io.embrace.android.embracesdk.internal.logs
 import io.embrace.android.embracesdk.concurrency.BlockingScheduledExecutorService
 import io.embrace.android.embracesdk.concurrency.SingleThreadTestScheduledExecutor
 import io.embrace.android.embracesdk.fakes.FakeClock
+import io.embrace.android.embracesdk.fakes.FakeErrorHandler
 import io.embrace.android.embracesdk.fakes.FakeLogEnvelopeSource
 import io.embrace.android.embracesdk.fakes.FakePayloadStore
 import io.embrace.android.embracesdk.fixtures.deferredLog
 import io.embrace.android.embracesdk.fixtures.sendImmediatelyLog
 import io.embrace.android.embracesdk.internal.envelope.log.LogPayloadSourceImpl
+import io.embrace.android.embracesdk.internal.logging.SdkErrorType
 import io.embrace.android.embracesdk.internal.otel.logs.LogSink
 import io.embrace.android.embracesdk.internal.otel.logs.LogSinkImpl
+import io.embrace.android.embracesdk.internal.payload.Envelope
 import io.embrace.android.embracesdk.internal.payload.Log
+import io.embrace.android.embracesdk.internal.payload.LogPayload
+import io.embrace.android.embracesdk.internal.session.orchestrator.PayloadStore
 import io.embrace.android.embracesdk.internal.worker.BackgroundWorker
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
@@ -33,6 +38,8 @@ internal class LogOrchestratorTest {
     private lateinit var worker: BackgroundWorker
     private lateinit var logSink: LogSink
     private lateinit var store: FakePayloadStore
+    private lateinit var errorHandler: FakeErrorHandler
+    private var logStoreFailures = 0
     private val clock = FakeClock()
 
     @Before
@@ -42,13 +49,24 @@ internal class LogOrchestratorTest {
             BackgroundWorker(executorService)
         logSink = LogSinkImpl()
         store = FakePayloadStore()
+        errorHandler = FakeErrorHandler(throwOnSdkError = false)
         clock.setCurrentTime(NOW)
+        val failingStore = object : PayloadStore by store {
+            override fun storeLogPayload(envelope: Envelope<LogPayload>) {
+                if (logStoreFailures > 0) {
+                    logStoreFailures--
+                    error("store failed")
+                }
+                store.storeLogPayload(envelope)
+            }
+        }
         logOrchestrator = LogOrchestratorImpl(
             worker,
             clock,
             logSink,
-            store,
+            failingStore,
             FakeLogEnvelopeSource(logPayloadSource = LogPayloadSourceImpl(logSink)),
+            errorHandler,
         )
         logSink.registerLogStoredCallback(logOrchestrator::onLogsAdded)
     }
@@ -197,6 +215,32 @@ internal class LogOrchestratorTest {
         assertNull(logSink.pollUnbatchedLog())
 
         assertEquals(1, store.storedLogPayloads.size)
+    }
+
+    @Test
+    fun `batch that fails to store is tracked as an SDK error`() {
+        logStoreFailures = 1
+        logSink.storeLogs(listOf(Log(), Log()))
+        moveTimeAhead(2000L)
+
+        assertTrue(logSink.logsForNextBatch().isEmpty())
+        verifyPayloadNotSent()
+        assertEquals(SdkErrorType.PayloadStorageFail.toString(), errorHandler.sdkErrorMessages.single().msg)
+
+        logSink.storeLogs(listOf(Log()))
+        logOrchestrator.flush(false)
+        verifyPayload(1)
+    }
+
+    @Test
+    fun `single log that fails to store does not stop batching`() {
+        logStoreFailures = 1
+        logSink.storeLogs(listOf(sendImmediatelyLog))
+        logSink.storeLogs(listOf(Log()))
+        moveTimeAhead(2000L)
+
+        verifyPayload(1)
+        assertEquals(1, errorHandler.sdkErrorMessages.size)
     }
 
     private fun verifyPayload(numberOfLogs: Int) {

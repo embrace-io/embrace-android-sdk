@@ -9,6 +9,7 @@ import org.junit.Assert.assertNotSame
 import org.junit.Assert.assertSame
 import org.junit.Assert.assertTrue
 import org.junit.Test
+import java.util.concurrent.Callable
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicBoolean
@@ -37,7 +38,17 @@ internal class WorkerThreadPoolImplTest {
         module.close()
 
         val future = worker.submit {}
-        assertNotNull(future)
+        assertTrue(future.isCancelled)
+    }
+
+    @Test
+    fun `rejected priority task is cancelled`() {
+        val module = WorkerThreadPoolImpl(FakeErrorHandler())
+        val worker = module.priorityWorker<String>(Worker.Priority.DataPersistenceWorker)
+        module.close()
+
+        val future = worker.submit("p", Callable { 1 })
+        assertTrue(future.isCancelled)
     }
 
     @Test

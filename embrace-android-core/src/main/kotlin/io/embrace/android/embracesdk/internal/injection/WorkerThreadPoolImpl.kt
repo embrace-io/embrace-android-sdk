@@ -104,15 +104,17 @@ class WorkerThreadPoolImpl(
     }
 
     /**
-     * Handles a rejected task ignoring the task. Generally speaking
+     * Handles a rejected task by cancelling it instead of throwing. Generally speaking
      * the executor will either have been shutdown directly (which should not happen outside of)
      * [WorkerThreadPoolImpl] or the process is terminating.
      *
-     * The difference with this policy is that a Future will be returned when the executor is
-     * shut down, and the caller must handle any TimeoutExceptions for the Future (that will)
-     * never return a value.
+     * The submitter still gets a Future, which is already cancelled, so anyone waiting on it fails
+     * fast with a CancellationException rather than blocking until a timeout.
      */
     override fun rejectedExecution(runnable: Runnable, executor: ThreadPoolExecutor) {
+        runCatching {
+            (runnable as? Future<*>)?.cancel(false)
+        }
     }
 
     internal fun trackTaskFailure(runnable: Runnable, throwable: Throwable?) {

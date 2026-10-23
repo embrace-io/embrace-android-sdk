@@ -84,7 +84,7 @@ import java.util.ServiceLoader
 import java.util.concurrent.Executors
 import java.util.concurrent.TimeUnit
 
-private const val WORKER_TERMINATION_TIMEOUT_MS = 2_000L
+private const val WORKER_TERMINATION_TIMEOUT_MS = 10_000L
 
 /**
  * Implementation class of the SDK. Embrace.java forms our public API and calls functions in this

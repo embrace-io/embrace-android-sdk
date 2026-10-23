@@ -8,8 +8,6 @@ import io.embrace.android.embracesdk.fakes.fakeBackgroundWorker
 import io.embrace.android.embracesdk.internal.arch.attrs.asPair
 import io.embrace.android.embracesdk.internal.arch.schema.EmbType
 import io.embrace.android.embracesdk.internal.worker.BackgroundWorker
-import io.mockk.every
-import io.mockk.mockk
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
@@ -30,7 +28,7 @@ internal class LowPowerDataSourceTest {
         dataSource = LowPowerDataSource(
             args,
             fakeBackgroundWorker(),
-        ) { mockk { every { isPowerSaveMode } answers { powerSaveMode } } }.apply(LowPowerDataSource::onDataCaptureEnabled)
+        ) { PowerSaveModeSource { powerSaveMode } }.apply(LowPowerDataSource::onDataCaptureEnabled)
     }
 
     @Test
@@ -66,7 +64,9 @@ internal class LowPowerDataSourceTest {
 
     @Test
     fun `receive intent`() {
-        val intent = mockk<Intent> { every { action } returns PowerManager.ACTION_POWER_SAVE_MODE_CHANGED }
+        val intent = object : Intent() {
+            override fun getAction(): String = PowerManager.ACTION_POWER_SAVE_MODE_CHANGED
+        }
         val receiver = application.receivers.single()
         powerSaveMode = true
         receiver.onReceive(application, intent)
@@ -98,7 +98,7 @@ internal class LowPowerDataSourceTest {
         val pending = LowPowerDataSource(
             FakeInstrumentationArgs(application = application),
             BackgroundWorker(executor),
-        ) { mockk(relaxed = true) }
+        ) { PowerSaveModeSource { false } }
         dataSource.onDataCaptureDisabled()
 
         pending.onDataCaptureEnabled()

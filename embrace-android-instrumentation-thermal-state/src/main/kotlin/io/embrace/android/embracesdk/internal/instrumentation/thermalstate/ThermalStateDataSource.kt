@@ -15,8 +15,11 @@ import io.embrace.android.embracesdk.internal.worker.Worker
 import java.util.concurrent.Executor
 
 @RequiresApi(Build.VERSION_CODES.Q)
-class ThermalStateDataSource(
+class ThermalStateDataSource internal constructor(
     args: InstrumentationArgs,
+    private val notifierProvider: Provider<ThermalStatusNotifier?> = {
+        args.systemService<PowerManager>(Context.POWER_SERVICE)?.let(::PowerManagerThermalStatusNotifier)
+    },
 ) : DataSourceImpl(
     args,
     limitStrategy = UpToLimitStrategy { MAX_CAPTURED_THERMAL_STATES },
@@ -28,20 +31,17 @@ class ThermalStateDataSource(
 
     private val backgroundWorker = args.backgroundWorker(Worker.Background.NonIoRegWorker)
 
-    // fetched lazily so the system service isn't retrieved on the main thread during SDK startup
-    private val powerManagerProvider: Provider<PowerManager?> = { args.systemService(Context.POWER_SERVICE) }
-
     private var span: SpanToken? = null
 
     @Volatile
     private var closed = false
 
-    private var registration: Pair<PowerManager, PowerManager.OnThermalStatusChangedListener>? = null
+    private var registration: Pair<ThermalStatusNotifier, PowerManager.OnThermalStatusChangedListener>? = null
 
     override fun onDataCaptureEnabled() {
         backgroundWorker.submit {
             EmbTrace.trace("thermal-service-registration") {
-                val pm = powerManagerProvider() ?: return@trace
+                val notifier = notifierProvider() ?: return@trace
                 val listener = PowerManager.OnThermalStatusChangedListener {
                     handleThermalStateChange(it)
                 }
@@ -54,8 +54,8 @@ class ThermalStateDataSource(
                 }
                 if (!closed && registration == null) {
                     runCatching {
-                        pm.addThermalStatusListener(executor, listener)
-                        registration = Pair(pm, listener)
+                        notifier.addThermalStatusListener(executor, listener)
+                        registration = Pair(notifier, listener)
                     }
                 }
             }
@@ -65,10 +65,10 @@ class ThermalStateDataSource(
     override fun onDataCaptureDisabled() {
         closed = true
         backgroundWorker.submit {
-            registration?.let { (pm, listener) ->
+            registration?.let { (notifier, listener) ->
                 registration = null
                 runCatching {
-                    pm.removeThermalStatusListener(listener)
+                    notifier.removeThermalStatusListener(listener)
                 }
             }
         }

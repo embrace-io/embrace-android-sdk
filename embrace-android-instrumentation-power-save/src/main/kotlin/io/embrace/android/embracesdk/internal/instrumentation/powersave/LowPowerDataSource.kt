@@ -1,6 +1,5 @@
 package io.embrace.android.embracesdk.internal.instrumentation.powersave
 
-import android.os.PowerManager
 import io.embrace.android.embracesdk.internal.arch.InstrumentationArgs
 import io.embrace.android.embracesdk.internal.arch.datasource.DataSourceImpl
 import io.embrace.android.embracesdk.internal.arch.datasource.SpanToken
@@ -9,10 +8,10 @@ import io.embrace.android.embracesdk.internal.arch.schema.SchemaType
 import io.embrace.android.embracesdk.internal.utils.Provider
 import io.embrace.android.embracesdk.internal.worker.BackgroundWorker
 
-class LowPowerDataSource(
+class LowPowerDataSource internal constructor(
     private val args: InstrumentationArgs,
     private val backgroundWorker: BackgroundWorker,
-    provider: Provider<PowerManager?>,
+    provider: Provider<PowerSaveModeSource?>,
 ) : DataSourceImpl(
     args = args,
     limitStrategy = UpToLimitStrategy { MAX_CAPTURED_POWER_MODE_INTERVALS },

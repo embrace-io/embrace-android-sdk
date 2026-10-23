@@ -6,10 +6,8 @@ import io.embrace.android.embracesdk.fakes.FakeInstrumentationArgs
 import io.embrace.android.embracesdk.internal.arch.schema.EmbType
 import io.embrace.android.embracesdk.internal.worker.BackgroundWorker
 import io.embrace.android.embracesdk.semconv.EmbThermalStateAttributes
-import io.mockk.mockk
-import io.mockk.slot
-import io.mockk.verify
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
 
@@ -17,12 +15,12 @@ internal class ThermalStateDataSourceTest {
 
     private lateinit var dataSource: ThermalStateDataSource
     private lateinit var args: FakeInstrumentationArgs
-    private val mockPowerManager = mockk<PowerManager>(relaxed = true)
+    private val notifier = FakeThermalStatusNotifier()
 
     @Before
     fun setUp() {
-        args = FakeInstrumentationArgs(mockk(), systemServiceSupplier = { mockPowerManager })
-        dataSource = ThermalStateDataSource(args)
+        args = FakeInstrumentationArgs()
+        dataSource = ThermalStateDataSource(args) { notifier }
     }
 
     @Test
@@ -58,10 +56,9 @@ internal class ThermalStateDataSourceTest {
     fun `power manager is not retrieved until data capture is enabled`() {
         var systemServiceLookups = 0
         val countingArgs = FakeInstrumentationArgs(
-            mockk(),
             systemServiceSupplier = {
                 systemServiceLookups++
-                mockPowerManager
+                null
             },
         )
         val source = ThermalStateDataSource(countingArgs)
@@ -73,38 +70,35 @@ internal class ThermalStateDataSourceTest {
 
     @Test
     fun onEnable() {
-        verify(exactly = 0) { mockPowerManager.addThermalStatusListener(any(), any()) }
+        assertTrue(notifier.addedListeners.isEmpty())
         dataSource.onDataCaptureEnabled()
-        verify(exactly = 1) { mockPowerManager.addThermalStatusListener(any(), any()) }
+        assertEquals(1, notifier.addedListeners.size)
     }
 
     @Test
     fun `disable removes the registered listener`() {
-        val listener = slot<PowerManager.OnThermalStatusChangedListener>()
         dataSource.onDataCaptureEnabled()
-        verify(exactly = 1) { mockPowerManager.addThermalStatusListener(any(), capture(listener)) }
+        val listener = notifier.addedListeners.single()
 
         dataSource.onDataCaptureDisabled()
-        verify(exactly = 1) { mockPowerManager.removeThermalStatusListener(listener.captured) }
+        assertEquals(listOf(listener), notifier.removedListeners)
 
         dataSource.onDataCaptureDisabled()
-        verify(exactly = 1) { mockPowerManager.removeThermalStatusListener(any()) }
+        assertEquals(1, notifier.removedListeners.size)
     }
 
     @Test
     fun `disable before queued registration runs prevents registration`() {
         val executor = BlockingScheduledExecutorService(blockingMode = true)
         val blockingArgs = FakeInstrumentationArgs(
-            mockk(),
             backgroundWorkerSupplier = { BackgroundWorker(executor) },
-            systemServiceSupplier = { mockPowerManager },
         )
-        val source = ThermalStateDataSource(blockingArgs)
+        val source = ThermalStateDataSource(blockingArgs) { notifier }
         source.onDataCaptureEnabled()
         source.onDataCaptureDisabled()
         executor.runCurrentlyBlocked()
 
-        verify(exactly = 0) { mockPowerManager.addThermalStatusListener(any(), any()) }
-        verify(exactly = 0) { mockPowerManager.removeThermalStatusListener(any()) }
+        assertTrue(notifier.addedListeners.isEmpty())
+        assertTrue(notifier.removedListeners.isEmpty())
     }
 }

@@ -27,16 +27,15 @@ class InstrumentationRegistryImpl(
     private var closed = false
 
     override fun onPreSessionEnd() {
-        dataSources
-            .filterIsInstance<SessionPartEndListener>()
-            .forEach {
-                it.onPreSessionEnd()
-            }
+        val listeners = dataSources.filterIsInstance<SessionPartEndListener>()
+        errorHandler.guardSdkCodeEach(SdkErrorType.SessionPartListenerFail, listeners) {
+            it.onPreSessionEnd()
+        }
     }
 
     override fun onPostSessionChange() {
-        dataSources.forEach {
-            it.resetDataCaptureLimits()
+        errorHandler.guardSdkCodeEach(SdkErrorType.SessionPartListenerFail, dataSources.asList()) {
+            errorHandler.guardSdkCode(SdkErrorType.SessionPartListenerFail, it::resetDataCaptureLimits)
             if (it is SessionPartChangeListener) {
                 it.onPostSessionChange()
             }

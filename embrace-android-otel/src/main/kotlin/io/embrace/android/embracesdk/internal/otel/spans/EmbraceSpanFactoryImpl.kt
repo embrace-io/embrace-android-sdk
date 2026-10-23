@@ -254,10 +254,15 @@ private class EmbraceSpanImpl(
         }
         var successful = false
         val requestedEndTimeMs = endTimeMs?.normalizeTimestampAsMillis() ?: UNSET_TIME
-        val attemptedEndTimeMs = if (requestedEndTimeMs > UNSET_TIME) {
+        val endOrNowMs = if (requestedEndTimeMs > UNSET_TIME) {
             requestedEndTimeMs
         } else {
             deps.openTelemetryClock.now().nanosToMillis()
+        }
+        val attemptedEndTimeMs = if (endOrNowMs > spanStartTimeMs) {
+            endOrNowMs
+        } else {
+            spanStartTimeMs
         }
 
         synchronized(startedSpan) {

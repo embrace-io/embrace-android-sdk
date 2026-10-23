@@ -21,6 +21,9 @@ internal class NetworkCallbackConnectivityService(
     private val backgroundWorker: BackgroundWorker,
     private val errorHandler: ErrorHandler,
     private val connectivityManager: Lazy<ConnectivityManager?>,
+    private val toStatus: (NetworkCapabilities) -> ConnectivityStatus = {
+        connectivityStatus(it::hasCapability, it::hasTransport)
+    },
 ) : NetworkConnectivityService, ConnectivityManager.NetworkCallback() {
 
     private var currentNetwork: AtomicReference<Network?> = AtomicReference(null)
@@ -99,7 +102,7 @@ internal class NetworkCallbackConnectivityService(
 
     private fun updateStatus(updatedNetwork: Network?, networkCapabilities: NetworkCapabilities?) {
         if (updatedNetwork == currentNetwork.get()) {
-            val newStatus = networkCapabilities?.toConnectionStatus() ?: ConnectivityStatus.None
+            val newStatus = networkCapabilities?.let(toStatus) ?: ConnectivityStatus.None
             if (currentStatus.get() != newStatus) {
                 currentStatus.set(newStatus)
                 for (listener in listeners) {
@@ -110,15 +113,19 @@ internal class NetworkCallbackConnectivityService(
             }
         }
     }
+}
 
-    private fun NetworkCapabilities.toConnectionStatus(): ConnectivityStatus {
-        val canConnect = hasCapability(NET_CAPABILITY_INTERNET)
-        val connected = hasCapability(NET_CAPABILITY_VALIDATED)
-        return when {
-            !canConnect -> ConnectivityStatus.None
-            hasTransport(TRANSPORT_WIFI) -> ConnectivityStatus.Wifi(connected)
-            hasTransport(TRANSPORT_CELLULAR) -> ConnectivityStatus.Wan(connected)
-            else -> ConnectivityStatus.Unknown(connected)
-        }
+/**
+ * Maps a network's capabilities to the [ConnectivityStatus] reported for it.
+ */
+@RequiresApi(Build.VERSION_CODES.N)
+internal fun connectivityStatus(hasCapability: (Int) -> Boolean, hasTransport: (Int) -> Boolean): ConnectivityStatus {
+    val canConnect = hasCapability(NET_CAPABILITY_INTERNET)
+    val connected = hasCapability(NET_CAPABILITY_VALIDATED)
+    return when {
+        !canConnect -> ConnectivityStatus.None
+        hasTransport(TRANSPORT_WIFI) -> ConnectivityStatus.Wifi(connected)
+        hasTransport(TRANSPORT_CELLULAR) -> ConnectivityStatus.Wan(connected)
+        else -> ConnectivityStatus.Unknown(connected)
     }
 }

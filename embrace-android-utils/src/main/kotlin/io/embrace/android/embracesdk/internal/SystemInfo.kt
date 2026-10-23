@@ -1,5 +1,6 @@
 package io.embrace.android.embracesdk.internal
 
+import android.annotation.SuppressLint
 import android.os.Build
 import io.embrace.android.embracesdk.internal.utils.BuildVersionChecker
 import io.embrace.android.embracesdk.internal.utils.VersionChecker
@@ -50,17 +51,20 @@ data class SystemInfo(
     val primaryAbi: String = getPrimaryAbi(),
 )
 
-internal fun getOsBuild(versionChecker: VersionChecker = BuildVersionChecker): String {
+internal fun getOsBuild(
+    versionChecker: VersionChecker = BuildVersionChecker,
+    baseOs: () -> String = @SuppressLint("NewApi") { Build.VERSION.BASE_OS },
+): String {
     return if (versionChecker.isAtLeast(Build.VERSION_CODES.M)) {
-        Build.VERSION.BASE_OS
+        baseOs()
     } else {
         ""
     }
 }
 
-internal fun getOsVersion(): String {
+internal fun getOsVersion(release: () -> String? = { Build.VERSION.RELEASE }): String {
     return try {
-        Build.VERSION.RELEASE
+        release() ?: ""
     } catch (t: Throwable) {
         ""
     }
@@ -93,9 +97,9 @@ internal fun getDeviceModel(): String {
 /**
  * Return the primary supported ABI or [Build.UNKNOWN] otherwise.
  */
-internal fun getPrimaryAbi(): String {
+internal fun getPrimaryAbi(supportedAbis: () -> Array<String>? = { Build.SUPPORTED_ABIS }): String {
     return try {
-        Build.SUPPORTED_ABIS?.firstOrNull()?.takeIf { it in SUPPORTED_ABIS } ?: Build.UNKNOWN
+        supportedAbis()?.firstOrNull()?.takeIf { it in SUPPORTED_ABIS } ?: Build.UNKNOWN
     } catch (t: Throwable) {
         Build.UNKNOWN
     }

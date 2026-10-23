@@ -1,18 +1,14 @@
-@file:Suppress("DEPRECATION") // NetworkInfo and related APIs are deprecated but needed for ShadowNetworkInfo
-
 package io.embrace.android.embracesdk.internal.capture.connectivity
 
-import android.app.Application
 import android.net.ConnectivityManager
+import android.net.FakeConnectivityManager
+import android.net.FakeNetwork
 import android.net.Network
 import android.net.NetworkCapabilities
 import android.net.NetworkCapabilities.NET_CAPABILITY_INTERNET
 import android.net.NetworkCapabilities.NET_CAPABILITY_VALIDATED
 import android.net.NetworkCapabilities.TRANSPORT_CELLULAR
 import android.net.NetworkCapabilities.TRANSPORT_WIFI
-import android.net.NetworkInfo
-import androidx.test.core.app.ApplicationProvider.getApplicationContext
-import androidx.test.ext.junit.runners.AndroidJUnit4
 import io.embrace.android.embracesdk.concurrency.BlockingScheduledExecutorService
 import io.embrace.android.embracesdk.fakes.fakeBackgroundWorker
 import io.embrace.android.embracesdk.internal.logging.ErrorHandlerImpl
@@ -23,47 +19,28 @@ import org.junit.Assert.assertNotEquals
 import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
-import org.junit.runner.RunWith
-import org.robolectric.Shadows
-import org.robolectric.shadow.api.Shadow
-import org.robolectric.shadows.ShadowConnectivityManager
-import org.robolectric.shadows.ShadowNetworkCapabilities
-import org.robolectric.shadows.ShadowNetworkInfo
 
-@RunWith(AndroidJUnit4::class)
 internal class NetworkCallbackConnectivityServiceTest {
 
     private lateinit var service: NetworkCallbackConnectivityService
-    private lateinit var connectivityManager: ConnectivityManager
+    private lateinit var connectivityManager: FakeConnectivityManager
     private lateinit var lazyConnectivityManager: Lazy<ConnectivityManager?>
-    private lateinit var shadowConnectivityManager: ShadowConnectivityManager
     private lateinit var receivedConnectivityStatuses: MutableList<ConnectivityStatus>
     private val networkConnectivityListener =
         NetworkConnectivityListener { status -> receivedConnectivityStatuses.add(status) }
 
     @Before
     fun setUp() {
-        connectivityManager = getApplicationContext<Application>().getSystemService(ConnectivityManager::class.java)
-        shadowConnectivityManager = Shadows.shadowOf(connectivityManager).apply {
-            setActiveNetworkInfo(null)
-        }
+        connectivityManager = FakeConnectivityManager()
         receivedConnectivityStatuses = mutableListOf()
         lazyConnectivityManager = lazy { connectivityManager }
-        service = NetworkCallbackConnectivityService(
-            fakeBackgroundWorker(),
-            ErrorHandlerImpl(),
-            lazyConnectivityManager,
-        )
+        service = createService(fakeBackgroundWorker(), lazyConnectivityManager)
     }
 
     @Test
     fun `connectivity manager is not obtained when service is constructed`() {
         val lazyManager = lazy { connectivityManager }
-        NetworkCallbackConnectivityService(
-            fakeBackgroundWorker(),
-            ErrorHandlerImpl(),
-            lazyManager,
-        )
+        createService(fakeBackgroundWorker(), lazyManager)
         assertFalse(lazyManager.isInitialized())
     }
 
@@ -71,11 +48,7 @@ internal class NetworkCallbackConnectivityServiceTest {
     fun `connectivity manager is obtained on the background worker rather than the calling thread`() {
         val executor = BlockingScheduledExecutorService()
         val lazyManager = lazy { connectivityManager }
-        NetworkCallbackConnectivityService(
-            BackgroundWorker(executor),
-            ErrorHandlerImpl(),
-            lazyManager,
-        ).register()
+        createService(BackgroundWorker(executor), lazyManager).register()
 
         assertFalse(lazyManager.isInitialized())
         executor.runCurrentlyBlocked()
@@ -85,7 +58,7 @@ internal class NetworkCallbackConnectivityServiceTest {
     @Test
     fun `register calls registerDefaultNetworkCallback with service as callback`() {
         service.register()
-        assertTrue(shadowConnectivityManager.networkCallbacks.contains(service))
+        assertTrue(connectivityManager.networkCallbacks.contains(service))
     }
 
     @Test
@@ -107,52 +80,46 @@ internal class NetworkCallbackConnectivityServiceTest {
         service.register()
         service.register()
         service.addNetworkConnectivityListener(networkConnectivityListener)
-        assertEquals(1, shadowConnectivityManager.networkCallbacks.size)
+        assertEquals(1, connectivityManager.networkCallbacks.size)
     }
 
     @Test
     fun `exception during register is caught and does not propagate`() {
-        NetworkCallbackConnectivityService(
-            fakeBackgroundWorker(),
-            ErrorHandlerImpl(),
-            connectivityManager = lazyOf<ConnectivityManager?>(null),
-        ).apply {
-            register()
-        }
+        createService(fakeBackgroundWorker(), lazyOf<ConnectivityManager?>(null)).register()
     }
 
     @Test
     fun `onAvailable makes doesn't change connectivity status but onCapabilitiesChanged does`() {
         initService()
-        val newNetwork = setActiveNetwork(connectedWifi)
+        val newNetwork = setActiveNetwork(TestNetwork.CONNECTED_WIFI)
         service.onAvailable(newNetwork)
-        assertEquals(unverified.getConnectivityStatus(), receivedConnectivityStatuses.single())
-        service.onCapabilitiesChanged(newNetwork, connectedWifi.getNetworkCapabilities())
+        assertEquals(ConnectivityStatus.Unverified, receivedConnectivityStatuses.single())
+        service.onCapabilitiesChanged(newNetwork, TestNetwork.CONNECTED_WIFI.capabilities)
         assertEquals(2, receivedConnectivityStatuses.size)
-        assertEquals(connectedWifi.getConnectivityStatus(), receivedConnectivityStatuses.last())
+        assertEquals(TestNetwork.CONNECTED_WIFI.status, receivedConnectivityStatuses.last())
     }
 
     @Test
     fun `switching from a connected to a disconnected network of the same type will update listener`() {
-        initWithNetwork(connectedWifi)
-        assertEquals(connectedWifi.getConnectivityStatus(), receivedConnectivityStatuses.single())
-        val newerNetwork = setActiveNetwork(disconnectedWifi)
+        initWithNetwork(TestNetwork.CONNECTED_WIFI)
+        assertEquals(TestNetwork.CONNECTED_WIFI.status, receivedConnectivityStatuses.single())
+        val newerNetwork = setActiveNetwork(TestNetwork.DISCONNECTED_WIFI)
         service.onAvailable(newerNetwork)
-        service.onCapabilitiesChanged(newerNetwork, disconnectedWifi.getNetworkCapabilities())
+        service.onCapabilitiesChanged(newerNetwork, TestNetwork.DISCONNECTED_WIFI.capabilities)
         assertEquals(2, receivedConnectivityStatuses.size)
-        assertEquals(disconnectedWifi.getConnectivityStatus(), receivedConnectivityStatuses.last())
+        assertEquals(TestNetwork.DISCONNECTED_WIFI.status, receivedConnectivityStatuses.last())
     }
 
     @Test
     fun `switching to all the connections`() {
         initService()
         assertEquals(ConnectivityStatus.Unverified, receivedConnectivityStatuses.last())
-        networkCapabilities.keys.forEach { networkInfo ->
-            setActiveNetwork(networkInfo).let { network ->
+        TestNetwork.entries.forEach { testNetwork ->
+            setActiveNetwork(testNetwork).let { network ->
                 service.onAvailable(network)
-                service.onCapabilitiesChanged(network, networkInfo.getNetworkCapabilities())
+                service.onCapabilitiesChanged(network, testNetwork.capabilities)
             }
-            assertEquals(networkInfo.getConnectivityStatus(), receivedConnectivityStatuses.last())
+            assertEquals(testNetwork.status, receivedConnectivityStatuses.last())
         }
     }
 
@@ -160,94 +127,94 @@ internal class NetworkCallbackConnectivityServiceTest {
     fun `switching from unverified to connected unknown will result in a dispatch`() {
         initService()
         assertEquals(ConnectivityStatus.Unverified, receivedConnectivityStatuses.last())
-        setActiveNetwork(connectedUnknown).let { network ->
+        setActiveNetwork(TestNetwork.CONNECTED_UNKNOWN).let { network ->
             service.onAvailable(network)
-            service.onCapabilitiesChanged(network, connectedUnknown.getNetworkCapabilities())
+            service.onCapabilitiesChanged(network, TestNetwork.CONNECTED_UNKNOWN.capabilities)
         }
         assertEquals(2, receivedConnectivityStatuses.size)
-        assertEquals(connectedUnknown.getConnectivityStatus(), receivedConnectivityStatuses.last())
+        assertEquals(TestNetwork.CONNECTED_UNKNOWN.status, receivedConnectivityStatuses.last())
     }
 
     @Test
     fun `onCapabilitiesChanged for non-current network does not dispatch`() {
-        val originalNetwork = initWithNetwork(connectedWifi)
+        val originalNetwork = initWithNetwork(TestNetwork.CONNECTED_WIFI)
         service.onAvailable(originalNetwork)
-        assertNotEquals(originalNetwork, setActiveNetwork(connectedWan))
-        service.onCapabilitiesChanged(originalNetwork, connectedWifi.getNetworkCapabilities())
-        assertEquals(connectedWifi.getConnectivityStatus(), receivedConnectivityStatuses.single())
+        assertNotEquals(originalNetwork, setActiveNetwork(TestNetwork.CONNECTED_WAN))
+        service.onCapabilitiesChanged(originalNetwork, TestNetwork.CONNECTED_WIFI.capabilities)
+        assertEquals(TestNetwork.CONNECTED_WIFI.status, receivedConnectivityStatuses.single())
     }
 
     @Test
     fun `onLost for current network will switch connectivity status to none`() {
-        val network = initWithNetwork(connectedWifi)
+        val network = initWithNetwork(TestNetwork.CONNECTED_WIFI)
         service.onLost(network)
         assertEquals(2, receivedConnectivityStatuses.size)
-        assertEquals(none.getConnectivityStatus(), receivedConnectivityStatuses.last())
+        assertEquals(TestNetwork.NONE.status, receivedConnectivityStatuses.last())
     }
 
     @Test
     fun `onLost for current network make subsequent capability changes for that network not be processed`() {
-        initWithNetwork(connectedWifi)
-        val newNetwork = setActiveNetwork(connectedWan)
+        initWithNetwork(TestNetwork.CONNECTED_WIFI)
+        val newNetwork = setActiveNetwork(TestNetwork.CONNECTED_WAN)
         service.onAvailable(newNetwork)
         service.onLost(newNetwork)
-        service.onCapabilitiesChanged(newNetwork, connectedWan.getNetworkCapabilities())
-        assertEquals(none.getConnectivityStatus(), receivedConnectivityStatuses.last())
+        service.onCapabilitiesChanged(newNetwork, TestNetwork.CONNECTED_WAN.capabilities)
+        assertEquals(TestNetwork.NONE.status, receivedConnectivityStatuses.last())
     }
 
     @Test
     fun `onLost for non-current network is ignored`() {
-        val oldNetwork = initWithNetwork(connectedWifi)
-        val newNetwork = setActiveNetwork(connectedWan)
+        val oldNetwork = initWithNetwork(TestNetwork.CONNECTED_WIFI)
+        val newNetwork = setActiveNetwork(TestNetwork.CONNECTED_WAN)
         service.onAvailable(newNetwork)
         service.onLost(oldNetwork)
-        assertEquals(connectedWifi.getConnectivityStatus(), receivedConnectivityStatuses.last())
-        service.onCapabilitiesChanged(newNetwork, connectedWan.getNetworkCapabilities())
-        assertEquals(connectedWan.getConnectivityStatus(), receivedConnectivityStatuses.last())
+        assertEquals(TestNetwork.CONNECTED_WIFI.status, receivedConnectivityStatuses.last())
+        service.onCapabilitiesChanged(newNetwork, TestNetwork.CONNECTED_WAN.capabilities)
+        assertEquals(TestNetwork.CONNECTED_WAN.status, receivedConnectivityStatuses.last())
     }
 
     @Test
     fun `switching to the same or different networks with equivalent connectivity status will not result in multiple dispatches`() {
-        initWithNetwork(connectedWifi)
-        val newWifi = setActiveNetwork(connectedWifi)
+        initWithNetwork(TestNetwork.CONNECTED_WIFI)
+        val newWifi = setActiveNetwork(TestNetwork.CONNECTED_WIFI)
         service.onAvailable(newWifi)
-        service.onCapabilitiesChanged(newWifi, connectedWifi.getNetworkCapabilities())
-        service.onCapabilitiesChanged(newWifi, connectedWifi.getNetworkCapabilities())
+        service.onCapabilitiesChanged(newWifi, TestNetwork.CONNECTED_WIFI.capabilities)
+        service.onCapabilitiesChanged(newWifi, TestNetwork.CONNECTED_WIFI.capabilities)
         assertEquals(1, receivedConnectivityStatuses.size)
     }
 
     @Test
     fun `addNetworkConnectivityListener gets current status upon addition`() {
-        val newNetwork = setActiveNetwork(connectedWifi)
+        val newNetwork = setActiveNetwork(TestNetwork.CONNECTED_WIFI)
         service.register()
         service.onAvailable(newNetwork)
-        service.onCapabilitiesChanged(newNetwork, connectedWifi.getNetworkCapabilities())
+        service.onCapabilitiesChanged(newNetwork, TestNetwork.CONNECTED_WIFI.capabilities)
         service.addNetworkConnectivityListener(networkConnectivityListener)
-        assertEquals(connectedWifi.getConnectivityStatus(), receivedConnectivityStatuses.single())
+        assertEquals(TestNetwork.CONNECTED_WIFI.status, receivedConnectivityStatuses.single())
     }
 
     @Test
     fun `removeNetworkConnectivityListener stops updates`() {
         initService()
         service.removeNetworkConnectivityListener(networkConnectivityListener)
-        val newNetwork = setActiveNetwork(connectedWifi)
+        val newNetwork = setActiveNetwork(TestNetwork.CONNECTED_WIFI)
         service.onAvailable(newNetwork)
-        service.onCapabilitiesChanged(newNetwork, connectedWifi.getNetworkCapabilities())
-        assertEquals(unverified.getConnectivityStatus(), receivedConnectivityStatuses.single())
+        service.onCapabilitiesChanged(newNetwork, TestNetwork.CONNECTED_WIFI.capabilities)
+        assertEquals(ConnectivityStatus.Unverified, receivedConnectivityStatuses.single())
     }
 
     @Test
     fun `close calls unregisterNetworkCallback with service as callback`() {
         service.register()
-        assertTrue(shadowConnectivityManager.networkCallbacks.contains(service))
+        assertTrue(connectivityManager.networkCallbacks.contains(service))
         service.close()
-        assertFalse(shadowConnectivityManager.networkCallbacks.contains(service))
+        assertFalse(connectivityManager.networkCallbacks.contains(service))
     }
 
     @Test
     fun `close without register is a no-op`() {
         service.close()
-        assertFalse(shadowConnectivityManager.networkCallbacks.contains(service))
+        assertFalse(connectivityManager.networkCallbacks.contains(service))
     }
 
     @Test
@@ -255,21 +222,17 @@ internal class NetworkCallbackConnectivityServiceTest {
         service.register()
         service.close()
         service.register()
-        assertFalse(shadowConnectivityManager.networkCallbacks.contains(service))
+        assertFalse(connectivityManager.networkCallbacks.contains(service))
     }
 
     @Test
     fun `close before queued register runs prevents registration`() {
         val executor = BlockingScheduledExecutorService(blockingMode = true)
-        val service = NetworkCallbackConnectivityService(
-            BackgroundWorker(executor),
-            ErrorHandlerImpl(),
-            lazyConnectivityManager,
-        )
+        val service = createService(BackgroundWorker(executor), lazyConnectivityManager)
         service.register()
         service.close()
         executor.runCurrentlyBlocked()
-        assertFalse(shadowConnectivityManager.networkCallbacks.contains(service))
+        assertFalse(connectivityManager.networkCallbacks.contains(service))
     }
 
     @Test
@@ -277,10 +240,22 @@ internal class NetworkCallbackConnectivityServiceTest {
         service.register()
         service.close()
         service.close()
-        assertFalse(shadowConnectivityManager.networkCallbacks.contains(service))
+        assertFalse(connectivityManager.networkCallbacks.contains(service))
     }
 
-    private fun initWithNetwork(network: NetworkInfo): Network {
+    private fun createService(
+        backgroundWorker: BackgroundWorker,
+        connectivityManager: Lazy<ConnectivityManager?>,
+    ) = NetworkCallbackConnectivityService(
+        backgroundWorker,
+        ErrorHandlerImpl(),
+        connectivityManager,
+    ) { caps ->
+        val network = TestNetwork.entries.single { it.capabilities === caps }
+        connectivityStatus(network.capabilityIds::contains, network.transportIds::contains)
+    }
+
+    private fun initWithNetwork(network: TestNetwork): Network {
         val newNetwork = setActiveNetwork(network)
         initService()
         return newNetwork
@@ -291,125 +266,39 @@ internal class NetworkCallbackConnectivityServiceTest {
         service.addNetworkConnectivityListener(networkConnectivityListener)
     }
 
-    private fun setActiveNetwork(networkInfo: NetworkInfo): Network {
-        shadowConnectivityManager.setActiveNetworkInfo(networkInfo)
-        val activeNetwork = checkNotNull(connectivityManager.activeNetwork)
-        shadowConnectivityManager.setNetworkCapabilities(activeNetwork, networkCapabilities[networkInfo])
-        return activeNetwork
+    private fun setActiveNetwork(testNetwork: TestNetwork): Network {
+        val network = FakeNetwork()
+        connectivityManager.active = network
+        connectivityManager.capabilities[network] = testNetwork.capabilities
+        return network
     }
 
-    private fun NetworkInfo.getNetworkCapabilities(): NetworkCapabilities = checkNotNull(networkCapabilities[this])
+    private enum class TestNetwork(
+        val capabilityIds: Set<Int>,
+        val transportIds: Set<Int>,
+        val status: ConnectivityStatus,
+    ) {
+        CONNECTED_WIFI(
+            setOf(NET_CAPABILITY_INTERNET, NET_CAPABILITY_VALIDATED),
+            setOf(TRANSPORT_WIFI),
+            ConnectivityStatus.Wifi(true),
+        ),
+        DISCONNECTED_WIFI(setOf(NET_CAPABILITY_INTERNET), setOf(TRANSPORT_WIFI), ConnectivityStatus.Wifi(false)),
+        CONNECTED_WAN(
+            setOf(NET_CAPABILITY_INTERNET, NET_CAPABILITY_VALIDATED),
+            setOf(TRANSPORT_CELLULAR),
+            ConnectivityStatus.Wan(true),
+        ),
+        DISCONNECTED_WAN(setOf(NET_CAPABILITY_INTERNET), setOf(TRANSPORT_CELLULAR), ConnectivityStatus.Wan(false)),
+        CONNECTED_UNKNOWN(
+            setOf(NET_CAPABILITY_INTERNET, NET_CAPABILITY_VALIDATED),
+            emptySet(),
+            ConnectivityStatus.Unknown(true),
+        ),
+        DISCONNECTED_UNKNOWN(setOf(NET_CAPABILITY_INTERNET), emptySet(), ConnectivityStatus.Unknown(false)),
+        NONE(emptySet(), emptySet(), ConnectivityStatus.None),
+        ;
 
-    private fun NetworkInfo.getConnectivityStatus(): ConnectivityStatus = checkNotNull(connectivityStatuses[this])
-
-    private companion object {
-        val connectedWifi = createNetworkInfo(
-            detailedState = NetworkInfo.DetailedState.CONNECTED,
-            type = ConnectivityManager.TYPE_WIFI,
-            isAvailable = true,
-            isConnected = true,
-        )
-
-        val disconnectedWifi = createNetworkInfo(
-            detailedState = NetworkInfo.DetailedState.DISCONNECTED,
-            type = ConnectivityManager.TYPE_WIFI,
-            isAvailable = true,
-            isConnected = false,
-        )
-
-        val connectedWan = createNetworkInfo(
-            detailedState = NetworkInfo.DetailedState.CONNECTED,
-            type = ConnectivityManager.TYPE_MOBILE,
-            isAvailable = true,
-            isConnected = true,
-        )
-
-        val disconnectedWan = createNetworkInfo(
-            detailedState = NetworkInfo.DetailedState.DISCONNECTED,
-            type = ConnectivityManager.TYPE_MOBILE,
-            isAvailable = true,
-            isConnected = false,
-        )
-
-        val connectedUnknown = createNetworkInfo(
-            detailedState = NetworkInfo.DetailedState.CONNECTED,
-            type = ConnectivityManager.TYPE_ETHERNET,
-            isAvailable = true,
-            isConnected = true,
-        )
-
-        val disconnectedUnknown = createNetworkInfo(
-            detailedState = NetworkInfo.DetailedState.DISCONNECTED,
-            type = ConnectivityManager.TYPE_ETHERNET,
-            isAvailable = true,
-            isConnected = false,
-        )
-
-        val none = createNetworkInfo(
-            detailedState = NetworkInfo.DetailedState.BLOCKED,
-            type = ConnectivityManager.TYPE_DUMMY,
-            isAvailable = false,
-            isConnected = false,
-        )
-
-        val unverified = createNetworkInfo(
-            detailedState = NetworkInfo.DetailedState.CONNECTED,
-            type = ConnectivityManager.TYPE_DUMMY,
-            isAvailable = true,
-            isConnected = true,
-        )
-
-        val networkCapabilities = mapOf(
-            connectedWifi to buildCaps {
-                addCapability(NET_CAPABILITY_INTERNET)
-                addCapability(NET_CAPABILITY_VALIDATED)
-                addTransportType(TRANSPORT_WIFI)
-            },
-            disconnectedWifi to buildCaps {
-                addCapability(NET_CAPABILITY_INTERNET)
-                addTransportType(TRANSPORT_WIFI)
-            },
-            connectedWan to buildCaps {
-                addCapability(NET_CAPABILITY_INTERNET)
-                addCapability(NET_CAPABILITY_VALIDATED)
-                addTransportType(TRANSPORT_CELLULAR)
-            },
-            disconnectedWan to buildCaps {
-                addCapability(NET_CAPABILITY_INTERNET)
-                addTransportType(TRANSPORT_CELLULAR)
-            },
-            connectedUnknown to buildCaps {
-                addCapability(NET_CAPABILITY_INTERNET)
-                addCapability(NET_CAPABILITY_VALIDATED)
-            },
-            disconnectedUnknown to buildCaps {
-                addCapability(NET_CAPABILITY_INTERNET)
-            },
-            none to buildCaps { },
-        )
-
-        val connectivityStatuses = mapOf(
-            connectedWifi to ConnectivityStatus.Wifi(true),
-            disconnectedWifi to ConnectivityStatus.Wifi(false),
-            connectedWan to ConnectivityStatus.Wan(true),
-            disconnectedWan to ConnectivityStatus.Wan(false),
-            connectedUnknown to ConnectivityStatus.Unknown(true),
-            disconnectedUnknown to ConnectivityStatus.Unknown(false),
-            unverified to ConnectivityStatus.Unverified,
-            none to ConnectivityStatus.None,
-        )
-
-        private fun createNetworkInfo(
-            detailedState: NetworkInfo.DetailedState,
-            type: Int,
-            isAvailable: Boolean,
-            isConnected: Boolean,
-        ): NetworkInfo = checkNotNull(ShadowNetworkInfo.newInstance(detailedState, type, 0, isAvailable, isConnected))
-
-        private fun buildCaps(configure: ShadowNetworkCapabilities.() -> Unit): NetworkCapabilities {
-            val caps = ShadowNetworkCapabilities.newInstance()
-            Shadow.extract<ShadowNetworkCapabilities>(caps).configure()
-            return caps
-        }
+        val capabilities = NetworkCapabilities()
     }
 }

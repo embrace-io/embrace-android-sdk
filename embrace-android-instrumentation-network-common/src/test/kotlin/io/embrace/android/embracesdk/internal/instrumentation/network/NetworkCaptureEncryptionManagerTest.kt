@@ -1,25 +1,21 @@
 package io.embrace.android.embracesdk.internal.instrumentation.network
 
-import android.util.Base64
-import androidx.test.ext.junit.runners.AndroidJUnit4
 import org.junit.Assert
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotNull
 import org.junit.Before
 import org.junit.Test
-import org.junit.runner.RunWith
 import java.security.KeyFactory
 import java.security.spec.PKCS8EncodedKeySpec
+import java.util.Base64
 
-@RunWith(AndroidJUnit4::class)
 internal class NetworkCaptureEncryptionManagerTest {
 
     private lateinit var networkCaptureEncryptionManager: NetworkCaptureEncryptionManager
 
     @Before
     fun setup() {
-        networkCaptureEncryptionManager =
-            NetworkCaptureEncryptionManager()
+        networkCaptureEncryptionManager = jvmEncryptionManager()
     }
 
     @Test
@@ -47,7 +43,7 @@ internal class NetworkCaptureEncryptionManagerTest {
 
     private fun decrypt(data: String): String? {
         val privateKey = KeyFactory.getInstance("RSA")
-            .generatePrivate(PKCS8EncodedKeySpec(Base64.decode(sPrivateKey, Base64.DEFAULT)))
+            .generatePrivate(PKCS8EncodedKeySpec(Base64.getMimeDecoder().decode(sPrivateKey)))
         return networkCaptureEncryptionManager.decrypt(data, privateKey)
     }
 
@@ -95,29 +91,30 @@ internal class NetworkCaptureEncryptionManagerTest {
             "pwIDAQAB"
 
     private val sPrivateKey: String =
-        "MIIEpQIBAAKCAQEAuAZAv5tzK9Ab/DsVpNaYiuslKQsOHjz4N4haZLT8VaVIrlVj\n" +
-            "tkd5nPrVgEKStQf6PKnQ+1C0Tp069b6aPUkG22UL96nCKQ1eCIwRUT+Da7ac2YVu\n" +
-            "L21+HTs1KxLEWgN7qGy1uYNonrpsiY3XqzDvYMo65oFzbBV+yctuGHDFaulULJiL\n" +
-            "L8cE3/Rg3T0RfHK+C5/PqC8FBj6kn3FP9FZJM4cty3nzbNWknj8r7+ikmOwma6CH\n" +
-            "EZz2u1gwPhIchNxNKuUF+4vxcBre9V/96LYOjSOGSDJmJN6ehUJjUpu7YSuGCki8\n" +
-            "YoLHAyoD/mYy7N/hYSeZwHiNjM+r44lZHNQTpwIDAQABAoIBAQCP8ww5Fd9cmVka\n" +
-            "0BkZLWh72n7iASzVCHpd7kJPXqe4Uydsf40VLAn8etYBk5HxHEFprKi1viadDC7v\n" +
-            "xl4erH45pmxbGiawOC2jX/W36Yfi/SDqoo5TeUHamdL4U6DWjLzxPcBVUm7HIyr9\n" +
-            "2r+mwQuvWeIDJ6XjGVlpfsErSyOSgYh/XTCa1hawSRT5PAfOifOKMwF0Yqr5fXZY\n" +
-            "BWTjm3M/PV+kamF118/Y+DZeEr6liG/OyIeWGcnv0IqxxxDukMbqZLuSZo9t1wEZ\n" +
-            "lTganTsS5avNfrMuL29YQjdzmU2p471ZM381Z+a5sqD/T/+mpnv05Ae8DvgMJo7c\n" +
-            "EE68r305AoGBAORFzo4iGNIVsCjRpSkMeQXN4UOG3Tv3orKJaMlas101lMQwHmu6\n" +
-            "Ui8PqUK5rz8ziZvLyPJjo8lSbsVYO/RH9BxwJOIBxHbQTYTfSQyBeW5dom3LNN1k\n" +
-            "xEXiGPqQcn/rGPYVCJffImQYE2UbMad6ju0qg2YHW0CWecTE5zC9nRl9AoGBAM5g\n" +
-            "iTiK8/UL7yusph6lTxiNnDZztEskITE7xY5mda4VBkckRMO8J6hEyLMnbWvi645M\n" +
-            "ckCoeTRklwJ4AdaSzKXdbFywIxVkB+ciYJ76juC7pIRmgaNaKgx0og1wtzc4e9KQ\n" +
-            "Uch+2MIHkgfPQrY/vBmS+rBqE4cK/H8LLqpSbgrzAoGBAKQtLLz++vkGDjedaHsY\n" +
-            "dGZfR3eIpM8/cK2VtF61NDGCmudrcEWssPUV/3d1EvyStZLuwyzJyv+9oNugdSZh\n" +
-            "JcnaQjymZsXJVSeOa/xplotxHqR2tSPSGHPmhG6ZuzATR1WdlRudqR9yTWi3YUQC\n" +
-            "Go+qtuyHt/LBBv0lXN2qUjYFAoGAUw4oy1eonJrj8zi1VioDLgd3sbZY/dCZhx3e\n" +
-            "ANQdUiTl9OWUww1LDH46I1efwsZ9NDRx2rGyrbI5z+WKH9fOgoYdISRFyksKnyuH\n" +
-            "pRODQtBhgmNakuord/3MZgpRweh6dKBeOYlLJLM1Qu1XlM8LnWM4fp0CJNv4CAzx\n" +
-            "B9zKqp8CgYEAysNuHbhUCkr0ZuUjPaKmZegxjyiqkrahNSZJjVQJfmicTwJBlqAv\n" +
-            "Z10/PLpJ7dXNS1DdHT5hLXczCd/9BA9EsmiU6Ny/TshHw2BcSBLfQBS7KYEh/+cQ\n" +
-            "D256kKbCmQKlNYs3bZEuAcVsrBabIPNIfxMzc+bdxUsW+fTw8DP8zzE="
+        "MIIEvwIBADANBgkqhkiG9w0BAQEFAASCBKkwggSlAgEAAoIBAQC4BkC/m3Mr0Bv8\n" +
+            "OxWk1piK6yUpCw4ePPg3iFpktPxVpUiuVWO2R3mc+tWAQpK1B/o8qdD7ULROnTr1\n" +
+            "vpo9SQbbZQv3qcIpDV4IjBFRP4NrtpzZhW4vbX4dOzUrEsRaA3uobLW5g2ieumyJ\n" +
+            "jderMO9gyjrmgXNsFX7Jy24YcMVq6VQsmIsvxwTf9GDdPRF8cr4Ln8+oLwUGPqSf\n" +
+            "cU/0Vkkzhy3LefNs1aSePyvv6KSY7CZroIcRnPa7WDA+EhyE3E0q5QX7i/FwGt71\n" +
+            "X/3otg6NI4ZIMmYk3p6FQmNSm7thK4YKSLxigscDKgP+ZjLs3+FhJ5nAeI2Mz6vj\n" +
+            "iVkc1BOnAgMBAAECggEBAI/zDDkV31yZWRrQGRktaHvafuIBLNUIel3uQk9ep7hT\n" +
+            "J2x/jRUsCfx61gGTkfEcQWmsqLW+Jp0MLu/GXh6sfjmmbFsaJrA4LaNf9bfph+L9\n" +
+            "IOqijlN5QdqZ0vhToNaMvPE9wFVSbscjKv3av6bBC69Z4gMnpeMZWWl+wStLI5KB\n" +
+            "iH9dMJrWFrBJFPk8B86J84ozAXRiqvl9dlgFZOObcz89X6RqYXXXz9j4Nl4SvqWI\n" +
+            "b87Ih5YZye/QirHHEO6Qxupku5Jmj23XARmVOBqdOxLlq81+sy4vb1hCN3OZTanj\n" +
+            "vVkzfzVn5rmyoP9P/6ame/TkB7wO+AwmjtwQTryvfTkCgYEA5EXOjiIY0hWwKNGl\n" +
+            "KQx5Bc3hQ4bdO/eisoloyVqzXTWUxDAea7pSLw+pQrmvPzOJm8vI8mOjyVJuxVg7\n" +
+            "9Ef0HHAk4gHEdtBNhN9JDIF5bl2ibcs03WTEReIY+pByf+sY9hUIl98iZBgTZRsx\n" +
+            "p3qO7SqDZgdbQJZ5xMTnML2dGX0CgYEAzmCJOIrz9QvvK6ymHqVPGI2cNnO0SyQh\n" +
+            "MTvFjmZ1rhUGRyREw7wnqETIsydta+LrjkxyQKh5NGSXAngB1pLMpd1sXLAjFWQH\n" +
+            "5yJgnvqO4LukhGaBo1oqDHSiDXC3Nzh70pBRyH7YwgeSB89Ctj+8GZL6sGoThwr8\n" +
+            "fwsuqlJuCvMCgYEApC0svP76+QYON51oexh0Zl9Hd4ikzz9wrZW0XrU0MYKa52tw\n" +
+            "Rayw9RX/d3US/JK1ku7DLMnK/72g26B1JmElydpCPKZmxclVJ45r/GmWi3EepHa1\n" +
+            "I9IYc+aEbpm7MBNHVZ2VG52pH3JNaLdhRAIaj6q27Ie38sEG/SVc3apSNgUCgYBT\n" +
+            "DijLV6icmuPzOLVWKgMuB3extlj90JmHHd4A1B1SJOX05ZTDDUsMfjojV5/Cxn00\n" +
+            "NHHasbKtsjnP5Yof186Chh0hJEXKSwqfK4elE4NC0GGCY1qS6it3/cxmClHB6Hp0\n" +
+            "oF45iUskszVC7VeUzwudYzh+nQIk2/gIDPEH3MqqnwKBgQDKw24duFQKSvRm5SM9\n" +
+            "oqZl6DGPKKqStqE1JkmNVAl+aJxPAkGWoC9nXT88uknt1c1LUN0dPmEtdzMJ3/0E\n" +
+            "D0SyaJTo3L9OyEfDYFxIEt9AFLspgSH/5xAPbnqQpsKZAqU1izdtkS4BxWysFpsg\n" +
+            "80h/EzNz5t3FSxb59PDwM/zPMQ=="
 }

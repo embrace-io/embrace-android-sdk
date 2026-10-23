@@ -54,6 +54,7 @@ class EmbTracer(
                 EmbSpan(
                     impl = embraceSpan,
                     clock = clock,
+                    errorHandler = errorHandler,
                 )
             } else {
                 null

@@ -16,7 +16,7 @@ internal class EmbAttributesMutator(
     }
 
     override fun setBooleanListAttribute(key: String, value: List<Boolean>) {
-        map[key] = value
+        map[key] = value.toList()
     }
 
     override fun setDoubleAttribute(key: String, value: Double) {
@@ -24,7 +24,7 @@ internal class EmbAttributesMutator(
     }
 
     override fun setDoubleListAttribute(key: String, value: List<Double>) {
-        map[key] = value
+        map[key] = value.toList()
     }
 
     override fun setLongAttribute(key: String, value: Long) {
@@ -32,7 +32,7 @@ internal class EmbAttributesMutator(
     }
 
     override fun setLongListAttribute(key: String, value: List<Long>) {
-        map[key] = value
+        map[key] = value.toList()
     }
 
     override fun setStringAttribute(key: String, value: String) {
@@ -40,7 +40,7 @@ internal class EmbAttributesMutator(
     }
 
     override fun setStringListAttribute(key: String, value: List<String>) {
-        map[key] = value
+        map[key] = value.toList()
     }
 
     override fun setByteArrayAttribute(key: String, value: ByteArray) {

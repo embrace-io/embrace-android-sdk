@@ -194,7 +194,7 @@ internal class EmbSpanChangeNotificationTest(
 
     private fun declaredApi(): Set<String> = Span::class.java.inheritedApiMethodNames()
 
-    private fun wrap(impl: EmbraceSdkSpan) = EmbSpan(impl = impl, clock = otelClock)
+    private fun wrap(impl: EmbraceSdkSpan) = EmbSpan(impl = impl, clock = otelClock, errorHandler = FakeErrorHandler())
 
     private fun createStartedSpan(): EmbraceSdkSpan = spanFactory.create(
         otelSpanStartArgs = OtelSpanStartArgs(

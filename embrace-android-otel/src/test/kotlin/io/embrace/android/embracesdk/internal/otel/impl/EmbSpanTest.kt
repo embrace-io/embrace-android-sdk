@@ -12,15 +12,18 @@ import io.embrace.android.embracesdk.internal.arch.schema.EmbType
 import io.embrace.android.embracesdk.internal.arch.schema.ErrorCodeAttribute
 import io.embrace.android.embracesdk.internal.clock.millisToNanos
 import io.embrace.android.embracesdk.internal.config.instrumented.InstrumentedConfigImpl
+import io.embrace.android.embracesdk.internal.logging.SdkErrorType
 import io.embrace.android.embracesdk.internal.otel.createSdkOtelInstance
 import io.embrace.android.embracesdk.internal.otel.sdk.DataValidator
 import io.embrace.android.embracesdk.internal.otel.sdk.hasEmbraceAttribute
+import io.embrace.android.embracesdk.internal.otel.spans.EmbraceSdkSpan
 import io.embrace.android.embracesdk.internal.otel.spans.EmbraceSpanFactoryImpl
 import io.embrace.android.embracesdk.internal.otel.spans.OtelSpanStartArgs
 import io.embrace.android.embracesdk.internal.otel.spans.SpanRepository
 import io.opentelemetry.kotlin.Clock
 import io.opentelemetry.kotlin.attributes.AnyValue
 import io.opentelemetry.kotlin.getTracer
+import io.opentelemetry.kotlin.tracing.SpanKind
 import io.opentelemetry.kotlin.tracing.StatusData
 import io.opentelemetry.kotlin.tracing.recordException
 import org.junit.Assert.assertEquals
@@ -32,6 +35,7 @@ import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.junit.runners.Parameterized
+import java.lang.reflect.Proxy
 
 @RunWith(Parameterized::class)
 internal class EmbSpanTest(
@@ -56,6 +60,7 @@ internal class EmbSpanTest(
         embSpan = EmbSpan(
             impl = fakeEmbraceSpan,
             clock = openTelemetryClock,
+            errorHandler = FakeErrorHandler(),
         )
     }
 
@@ -190,6 +195,7 @@ internal class EmbSpanTest(
         val realEmbSpan = EmbSpan(
             impl = realSpan,
             clock = openTelemetryClock,
+            errorHandler = FakeErrorHandler(),
         )
         val max = dataValidator.otelLimitsConfig.getMaxEventAttributeCount()
 
@@ -293,5 +299,85 @@ internal class EmbSpanTest(
         assertEquals(AnyValue.LongValue(3L), fakeEmbraceSpan.attributes["any"])
         assertEquals(mapOf("any" to AnyValue.StringValue("wrapped"), "bytes" to bytes), fakeEmbraceSpan.events.single().attributes)
         assertEquals(mapOf("any" to AnyValue.BoolValue(true), "bytes" to bytes), fakeEmbraceSpan.links.single().attributes)
+    }
+
+    @Test
+    fun `exceptions from the delegate span do not propagate`() {
+        val errorHandler = FakeErrorHandler(throwOnSdkError = false)
+        val throwingSpan = Proxy.newProxyInstance(
+            EmbraceSdkSpan::class.java.classLoader,
+            arrayOf(EmbraceSdkSpan::class.java),
+        ) { _, _, _ -> error("boom") } as EmbraceSdkSpan
+        val span = EmbSpan(impl = throwingSpan, clock = openTelemetryClock, errorHandler = errorHandler)
+
+        with(span) {
+            setStringAttribute("string", "value")
+            setStringListAttribute("strings", listOf("value"))
+            setLongAttribute("long", 1L)
+            setLongListAttribute("longs", listOf(1L))
+            setDoubleAttribute("double", 1.0)
+            setDoubleListAttribute("doubles", listOf(1.0))
+            setBooleanAttribute("boolean", true)
+            setBooleanListAttribute("booleans", listOf(true))
+            setByteArrayAttribute("bytes", byteArrayOf(1))
+            setAnyValueAttribute("any", AnyValue.LongValue(1L))
+            addEvent("event")
+            addLink(checkNotNull(FakeEmbraceSdkSpan.started().spanContext))
+            setName("name")
+            setStatus(StatusData.Error("error"))
+            end()
+            end(1L)
+            assertFalse(spanContext.isValid)
+            assertFalse(parent.isValid)
+            assertFalse(isRecording())
+            assertEquals(emptyMap<String, Any>(), attributes)
+            assertEquals("", name)
+            assertEquals(SpanKind.INTERNAL, spanKind)
+            assertEquals(0L, startTimestamp)
+            assertEquals(StatusData.Unset, status)
+            assertEquals(emptyList<Any>(), events)
+            assertEquals(emptyList<Any>(), links)
+        }
+        assertTrue(errorHandler.sdkErrorMessages.all { it.msg == SdkErrorType.SpanOperationFail.toString() })
+        assertTrue(errorHandler.sdkErrorMessages.isNotEmpty())
+    }
+
+    @Test
+    fun `exceptions from caller attribute lambdas propagate`() {
+        val exc = IllegalStateException("app")
+        val thrown = runCatching { embSpan.addEvent("event") { throw exc } }.exceptionOrNull()
+        assertTrue(thrown === exc)
+        assertTrue(fakeEmbraceSpan.events.isEmpty())
+    }
+
+    @Test
+    fun `mutating a list after setting it does not change the span`() {
+        val strings = mutableListOf("a")
+        val longs = mutableListOf(1L)
+        val doubles = mutableListOf(1.0)
+        val booleans = mutableListOf(true)
+        val eventStrings = mutableListOf("b")
+        with(embSpan) {
+            setStringListAttribute("strings", strings)
+            setLongListAttribute("longs", longs)
+            setDoubleListAttribute("doubles", doubles)
+            setBooleanListAttribute("booleans", booleans)
+            addEvent("event") {
+                setStringListAttribute("strings", eventStrings)
+            }
+        }
+        strings.add("x")
+        longs.add(2L)
+        doubles.add(2.0)
+        booleans.add(false)
+        eventStrings.add("y")
+
+        with(fakeEmbraceSpan) {
+            assertEquals(listOf("a"), attributes["strings"])
+            assertEquals(listOf(1L), attributes["longs"])
+            assertEquals(listOf(1.0), attributes["doubles"])
+            assertEquals(listOf(true), attributes["booleans"])
+            assertEquals(listOf("b"), events.single().attributes["strings"])
+        }
     }
 }

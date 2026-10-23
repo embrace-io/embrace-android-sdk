@@ -1,6 +1,5 @@
 package io.embrace.android.embracesdk.internal.capture.metadata
 
-import android.content.Context
 import io.embrace.android.embracesdk.internal.config.ConfigService
 import io.embrace.android.embracesdk.internal.payload.AppFramework
 import io.embrace.android.embracesdk.internal.store.KeyValueStore
@@ -12,7 +11,7 @@ import java.util.Locale
 import java.util.concurrent.CopyOnWriteArrayList
 
 internal class RnBundleIdTrackerImpl(
-    private val context: Context,
+    private val openAsset: (String) -> InputStream,
     private val configService: ConfigService,
     private val store: KeyValueStore,
     private val metadataBackgroundWorker: BackgroundWorker,
@@ -38,7 +37,7 @@ internal class RnBundleIdTrackerImpl(
                     // If we don't have a lastKnownJsBundleId, we compute the bundle ID from the last known JS bundle URL.
                     // If the last known JS bundle URL is null, we set React Native bundle ID to the buildId.
                     computeReactNativeBundleId(
-                        context,
+                        openAsset,
                         lastKnownJsBundleUrl,
                         configService.buildInfo.rnBundleId,
                     )
@@ -90,7 +89,7 @@ internal class RnBundleIdTrackerImpl(
             // Calculate the bundle ID for the new bundle URL
             metadataBackgroundWorker.submit {
                 val bundleId = computeReactNativeBundleId(
-                    context,
+                    openAsset,
                     jsBundleUrl,
                     configService.buildInfo.rnBundleId,
                 )
@@ -120,11 +119,11 @@ internal class RnBundleIdTrackerImpl(
         }
 
         private fun getBundleAsset(
-            context: Context,
+            openAsset: (String) -> InputStream,
             bundleUrl: String,
         ): InputStream? {
             runCatching {
-                return context.assets.open(getBundleAssetName(bundleUrl))
+                return openAsset(getBundleAssetName(bundleUrl))
             }
             return null
         }
@@ -137,7 +136,7 @@ internal class RnBundleIdTrackerImpl(
         }
 
         internal fun computeReactNativeBundleId(
-            context: Context,
+            openAsset: (String) -> InputStream,
             bundleUrl: String?,
             defaultBundleId: String?,
         ): String? {
@@ -149,7 +148,7 @@ internal class RnBundleIdTrackerImpl(
             // checks if the bundle url is an asset
             val bundleStream = if (bundleUrl.contains("assets")) {
                 // looks for the bundle file in assets
-                getBundleAsset(context, bundleUrl)
+                getBundleAsset(openAsset, bundleUrl)
             } else {
                 // looks for the bundle file from the custom path
                 getCustomBundleStream(bundleUrl)

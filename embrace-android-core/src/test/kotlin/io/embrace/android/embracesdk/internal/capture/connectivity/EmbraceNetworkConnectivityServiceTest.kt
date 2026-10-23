@@ -1,157 +1,101 @@
+@file:Suppress("DEPRECATION", "OVERRIDE_DEPRECATION")
+
 package io.embrace.android.embracesdk.internal.capture.connectivity
 
-import android.annotation.SuppressLint
-import android.content.Context
+import android.content.BroadcastReceiver
+import android.content.ContextWrapper
 import android.content.Intent
+import android.content.IntentFilter
 import android.net.ConnectivityManager
+import android.net.NetworkInfo
 import io.embrace.android.embracesdk.concurrency.BlockingScheduledExecutorService
-import io.embrace.android.embracesdk.fakes.FakeClock
 import io.embrace.android.embracesdk.fakes.fakeBackgroundWorker
 import io.embrace.android.embracesdk.internal.logging.ErrorHandler
 import io.embrace.android.embracesdk.internal.logging.ErrorHandlerImpl
 import io.embrace.android.embracesdk.internal.worker.BackgroundWorker
-import io.mockk.clearAllMocks
-import io.mockk.every
-import io.mockk.mockk
-import io.mockk.unmockkAll
-import io.mockk.verify
-import org.junit.After
-import org.junit.AfterClass
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Before
-import org.junit.BeforeClass
 import org.junit.Test
 
-@Suppress("DEPRECATION")
 internal class EmbraceNetworkConnectivityServiceTest {
 
     private lateinit var service: EmbraceNetworkConnectivityService
     private lateinit var testListener: NetworkConnectivityListener
     private var status: ConnectivityStatus? = null
+    private lateinit var context: ReceiverRecordingContext
+    private lateinit var errorHandler: ErrorHandler
+    private lateinit var worker: BackgroundWorker
+    private var networkInfo: () -> NetworkInfo? = { null }
 
-    companion object {
-        private lateinit var context: Context
-        private lateinit var errorHandler: ErrorHandler
-        private lateinit var mockConnectivityManager: ConnectivityManager
-        private lateinit var worker: BackgroundWorker
-        private lateinit var fakeClock: FakeClock
-
-        /**
-         * Setup before all tests get executed. Create mocks here.
-         */
-        @BeforeClass
-        @JvmStatic
-        fun setupBeforeAll() {
-            context = mockk(relaxed = true)
-            errorHandler = ErrorHandlerImpl()
-            mockConnectivityManager = mockk()
-            fakeClock = FakeClock()
-            worker = fakeBackgroundWorker()
-        }
-
-        /**
-         * Setup after all tests get executed. Un-mock all here.
-         */
-        @AfterClass
-        @JvmStatic
-        fun tearDownAfterAll() {
-            unmockkAll()
-        }
-    }
-
-    /**
-     * Setup before each test.
-     */
     @Before
     fun setup() {
-        every { context.getSystemService(Context.CONNECTIVITY_SERVICE) } returns mockConnectivityManager
-
-        service = EmbraceNetworkConnectivityService(
-            context,
-            worker,
-            errorHandler,
-            lazyOf<ConnectivityManager?>(mockConnectivityManager),
-        )
+        context = ReceiverRecordingContext()
+        errorHandler = ErrorHandlerImpl()
+        worker = fakeBackgroundWorker()
+        service = createService()
 
         testListener = NetworkConnectivityListener { status -> this@EmbraceNetworkConnectivityServiceTest.status = status }
         service.addNetworkConnectivityListener(testListener)
     }
 
     /**
-     * Setup after each test. Clean mocks content.
-     */
-    @After
-    fun tearDown() {
-        clearAllMocks()
-    }
-
-    /**
      * Asserts that a network connectivity broadcast receiver can be registered/unregistered
      */
-    @SuppressLint("UnspecifiedRegisterReceiverFlag")
     @Test
     @Throws(InterruptedException::class)
     fun `test connectivity broadcast receiver can register and unregister`() {
         service.register()
-        verify { context.registerReceiver(service, any()) }
+        assertEquals(listOf(service), context.registered)
         service.close()
-        verify { context.unregisterReceiver(service) }
+        assertEquals(listOf(service), context.unregistered)
     }
 
     @Test
     fun `test listener get notified when connectivity status changes to WIFI`() {
         // call onReceive to emulate a connectivity status change
-        val mockIntent = mockk<Intent>()
-        every { mockConnectivityManager.activeNetworkInfo?.isConnected } returns true
-        every { mockConnectivityManager.activeNetworkInfo?.type } returns ConnectivityManager.TYPE_WIFI
-        service.onReceive(context, mockIntent)
+        networkInfo = { fakeNetworkInfo(true, ConnectivityManager.TYPE_WIFI) }
+        service.onReceive(context, Intent())
         assertEquals(OptimisticWifi, status)
     }
 
     @Test
     fun `test listener get notified when connectivity status changes to MOBILE`() {
         // call onReceive to emulate a connectivity status change
-        val mockIntent = mockk<Intent>()
-        every { mockConnectivityManager.activeNetworkInfo?.isConnected } returns true
-        every { mockConnectivityManager.activeNetworkInfo?.type } returns ConnectivityManager.TYPE_MOBILE
-        service.onReceive(context, mockIntent)
+        networkInfo = { fakeNetworkInfo(true, ConnectivityManager.TYPE_MOBILE) }
+        service.onReceive(context, Intent())
         assertEquals(OptimisticWan, status)
     }
 
     @Test
     fun `test listener get notified when connectivity status changes to no connectivity`() {
         // call onReceive to emulate a connectivity status change
-        val mockIntent = mockk<Intent>()
-        every { mockConnectivityManager.activeNetworkInfo?.isConnected } returns false
-        service.onReceive(context, mockIntent)
+        networkInfo = { fakeNetworkInfo(false, ConnectivityManager.TYPE_WIFI) }
+        service.onReceive(context, Intent())
         assertEquals(ConnectivityStatus.None, status)
     }
 
     @Test
     fun `test listener get notified when connectivity status changes and no info obtained`() {
         // call onReceive to emulate a connectivity status change
-        val mockIntent = mockk<Intent>()
-        every { mockConnectivityManager.activeNetworkInfo } throws Exception("")
-        service.onReceive(context, mockIntent)
+        networkInfo = { throw IllegalStateException() }
+        service.onReceive(context, Intent())
         assertEquals(OptimisticUnknown, status)
     }
 
     @Test
     fun `test listener get notified when connectivity status changes and not notified when removed`() {
         // call onReceive to emulate a connectivity status change
-        val mockIntent = mockk<Intent>()
-        every { mockConnectivityManager.activeNetworkInfo?.isConnected } returns true
-        every { mockConnectivityManager.activeNetworkInfo?.type } returns ConnectivityManager.TYPE_MOBILE
-        service.onReceive(context, mockIntent)
+        networkInfo = { fakeNetworkInfo(true, ConnectivityManager.TYPE_MOBILE) }
+        service.onReceive(context, Intent())
 
         assertEquals(OptimisticWan, status)
 
         // remove listener and call onReceive again
         service.removeNetworkConnectivityListener(testListener)
-        every { mockConnectivityManager.activeNetworkInfo?.type } returns ConnectivityManager.TYPE_WIFI
-        service.onReceive(context, mockIntent)
+        networkInfo = { fakeNetworkInfo(true, ConnectivityManager.TYPE_WIFI) }
+        service.onReceive(context, Intent())
 
         assertEquals(OptimisticWan, status)
     }
@@ -159,22 +103,22 @@ internal class EmbraceNetworkConnectivityServiceTest {
     @Test
     fun `network is assumed available when connectivity manager is unavailable`() {
         var observed: ConnectivityStatus? = null
-        createService(lazyOf<ConnectivityManager?>(null)).apply {
+        createService(connectivityAvailable = false).apply {
             addNetworkConnectivityListener { observed = it }
             assertEquals(ConnectivityStatus.Unverified, observed)
             assertTrue(checkNotNull(observed).isConnected)
 
             // a broadcast must not downgrade the status to None
-            onReceive(context, mockk<Intent>())
+            onReceive(context, Intent())
             assertEquals(ConnectivityStatus.Unverified, observed)
         }
     }
 
     @Test
     fun `close without register does not unregister the receiver`() {
-        val service = createService(lazyOf<ConnectivityManager?>(mockConnectivityManager))
+        val service = createService()
         service.close()
-        verify(exactly = 0) { context.unregisterReceiver(service) }
+        assertEquals(emptyList<BroadcastReceiver>(), context.unregistered)
     }
 
     @Test
@@ -184,23 +128,49 @@ internal class EmbraceNetworkConnectivityServiceTest {
             context,
             BackgroundWorker(executor),
             errorHandler,
-            lazyOf<ConnectivityManager?>(mockConnectivityManager),
+            { true },
+            { networkInfo() },
         )
         service.register()
         service.close()
         executor.runCurrentlyBlocked()
 
-        verify(exactly = 0) { context.registerReceiver(service, any()) }
-        verify(exactly = 0) { context.unregisterReceiver(service) }
+        assertEquals(emptyList<BroadcastReceiver>(), context.registered)
+        assertEquals(emptyList<BroadcastReceiver>(), context.unregistered)
     }
 
     @Test
-    fun `connectivity manager is not obtained when service is constructed`() {
-        val lazyManager = lazy<ConnectivityManager?> { mockConnectivityManager }
-        createService(lazyManager)
-        assertFalse(lazyManager.isInitialized())
+    fun `connectivity is not read when service is constructed`() {
+        var read = false
+        EmbraceNetworkConnectivityService(
+            context,
+            worker,
+            errorHandler,
+            { true.also { read = true } },
+            { networkInfo().also { read = true } },
+        )
+        assertFalse(read)
     }
 
-    private fun createService(connectivityManager: Lazy<ConnectivityManager?>) =
-        EmbraceNetworkConnectivityService(context, worker, errorHandler, connectivityManager)
+    private fun createService(connectivityAvailable: Boolean = true) =
+        EmbraceNetworkConnectivityService(context, worker, errorHandler, { connectivityAvailable }, { networkInfo() })
+
+    private fun fakeNetworkInfo(connected: Boolean, type: Int): NetworkInfo = object : NetworkInfo(type, 0, null, null) {
+        override fun isConnected(): Boolean = connected
+        override fun getType(): Int = type
+    }
+
+    private class ReceiverRecordingContext : ContextWrapper(null) {
+        val registered = mutableListOf<BroadcastReceiver?>()
+        val unregistered = mutableListOf<BroadcastReceiver?>()
+
+        override fun registerReceiver(receiver: BroadcastReceiver?, filter: IntentFilter?): Intent? {
+            registered.add(receiver)
+            return null
+        }
+
+        override fun unregisterReceiver(receiver: BroadcastReceiver?) {
+            unregistered.add(receiver)
+        }
+    }
 }

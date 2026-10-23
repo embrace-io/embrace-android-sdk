@@ -46,6 +46,9 @@ class ActivityProcessLifecycleTracker(
     handler: Handler = Handler(Looper.getMainLooper()),
     private val postDelayed: (Runnable, Long) -> Unit = handler::postDelayed,
     private val removeCallbacks: (Runnable) -> Unit = handler::removeCallbacks,
+    private val runningAppProcesses: (Context) -> List<ActivityManager.RunningAppProcessInfo>? = {
+        it.getSystemServiceSafe<ActivityManager>(Context.ACTIVITY_SERVICE)?.runningAppProcesses
+    },
 ) : LifecycleTracker, Application.ActivityLifecycleCallbacks {
 
     private val lock = Any()
@@ -176,9 +179,8 @@ class ActivityProcessLifecycleTracker(
      * a process running a foreground service is not showing any UI.
      */
     private fun Context?.isForegroundProcess(): Boolean = runCatching {
-        val manager = this?.getSystemServiceSafe<ActivityManager>(Context.ACTIVITY_SERVICE)
         val pid = Process.myPid()
-        val process = manager?.runningAppProcesses?.firstOrNull { it.pid == pid }
+        val process = this?.let(runningAppProcesses)?.firstOrNull { it.pid == pid }
         process?.importance == ActivityManager.RunningAppProcessInfo.IMPORTANCE_FOREGROUND
     }.getOrDefault(false)
 

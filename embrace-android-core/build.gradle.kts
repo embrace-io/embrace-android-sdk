@@ -59,6 +59,5 @@ dependencies {
     testImplementation(libs.lifecycle.testing)
     testImplementation(libs.robolectric)
     testImplementation(libs.mockwebserver)
-    testImplementation(libs.mockk)
     testImplementation(kotlin("reflect"))
 }

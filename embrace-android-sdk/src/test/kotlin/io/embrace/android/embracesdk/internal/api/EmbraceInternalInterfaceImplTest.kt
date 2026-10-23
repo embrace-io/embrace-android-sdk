@@ -8,8 +8,8 @@ import io.embrace.android.embracesdk.fakes.FakeInternalTelemetryService
 import io.embrace.android.embracesdk.fakes.OtelSdkMode
 import io.embrace.android.embracesdk.fakes.behavior.FakeNetworkSpanForwardingBehavior
 import io.embrace.android.embracesdk.fakes.injection.TestInitServices
+import io.embrace.android.embracesdk.fakes.unimplemented
 import io.embrace.android.embracesdk.internal.api.delegate.HostedSdkInternalInterfaceImpl
-import io.mockk.mockk
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
@@ -31,13 +31,13 @@ internal class EmbraceInternalInterfaceImplTest {
         fakeConfigService = FakeConfigService()
         resourceSource = FakeEnvelopeResourceSource()
         internalImpl = HostedSdkInternalInterfaceImpl(
-            logsApi = mockk(),
+            logsApi = unimplemented(),
             configService = fakeConfigService,
             resourceSource = resourceSource,
-            instrumentationRegistry = mockk(),
-            serializer = mockk(),
-            rnBundleIdTracker = lazy { mockk() },
-            hostedSdkVersionInfo = mockk(),
+            instrumentationRegistry = unimplemented(),
+            serializer = unimplemented(),
+            rnBundleIdTracker = lazy { unimplemented() },
+            hostedSdkVersionInfo = unimplemented(),
             errorHandler = FakeErrorHandler(),
             telemetryService = FakeInternalTelemetryService(),
         )

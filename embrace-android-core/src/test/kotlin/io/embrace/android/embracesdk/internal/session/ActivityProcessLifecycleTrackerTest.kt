@@ -1,7 +1,6 @@
 package io.embrace.android.embracesdk.internal.session
 
 import android.app.Activity
-import android.app.ActivityManager
 import android.app.ActivityManager.RunningAppProcessInfo
 import android.content.Context
 import android.content.ContextWrapper
@@ -10,8 +9,6 @@ import io.embrace.android.embracesdk.fakes.FakeApplication
 import io.embrace.android.embracesdk.fakes.FakeProcessStateListener
 import io.embrace.android.embracesdk.internal.arch.state.ProcessState
 import io.embrace.android.embracesdk.internal.session.lifecycle.ActivityProcessLifecycleTracker
-import io.mockk.every
-import io.mockk.mockk
 import org.junit.Assert.assertEquals
 import org.junit.Before
 import org.junit.Test
@@ -25,16 +22,12 @@ internal class ActivityProcessLifecycleTrackerTest {
 
     private lateinit var application: FakeApplication
     private lateinit var listener: FakeProcessStateListener
-    private lateinit var processes: List<RunningAppProcessInfo>
+    private var processes: List<RunningAppProcessInfo>? = null
     private lateinit var pendingTasks: MutableList<Pair<Runnable, Long>>
 
     @Before
     fun before() {
         application = FakeApplication()
-        val activityManager = mockk<ActivityManager> {
-            every { runningAppProcesses } answers { processes }
-        }
-        application.systemServices[Context.ACTIVITY_SERVICE] = activityManager
         pendingTasks = mutableListOf()
         listener = FakeProcessStateListener()
         setProcessImportance(RunningAppProcessInfo.IMPORTANCE_CACHED)
@@ -105,7 +98,7 @@ internal class ActivityProcessLifecycleTrackerTest {
 
     @Test
     fun `a missing ActivityManager counts as background`() {
-        processes = emptyList()
+        processes = null
 
         val tracker = createTracker()
 
@@ -302,6 +295,7 @@ internal class ActivityProcessLifecycleTrackerTest {
         startupContext,
         postDelayed = { runnable, delayMs -> pendingTasks.add(runnable to delayMs) },
         removeCallbacks = { runnable -> pendingTasks.removeAll { it.first === runnable } },
+        runningAppProcesses = { processes },
     ).apply {
         if (registerTracker) {
             register(listener)

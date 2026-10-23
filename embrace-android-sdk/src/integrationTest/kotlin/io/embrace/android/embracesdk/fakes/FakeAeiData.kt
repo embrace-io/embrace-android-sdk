@@ -5,8 +5,6 @@ import android.app.Application
 import android.app.ApplicationExitInfo
 import android.content.Context
 import androidx.test.core.app.ApplicationProvider
-import io.mockk.every
-import io.mockk.mockk
 import org.robolectric.Shadows
 import org.robolectric.shadows.ShadowActivityManager
 
@@ -25,18 +23,18 @@ internal data class TestAeiData(
     val traceStatus: String? = null,
 ) {
 
-    fun toAeiObject() = mockk<ApplicationExitInfo>(relaxed = true) {
-        every { timestamp } returns this@TestAeiData.timestamp
-        every { pid } returns this@TestAeiData.pid
-        every { processStateSummary } returns this@TestAeiData.processStateSummary?.toByteArray()
-        every { importance } returns this@TestAeiData.importance
-        every { pss } returns this@TestAeiData.pss
-        every { rss } returns this@TestAeiData.rss
-        every { reason } returns this@TestAeiData.reason
-        every { status } returns this@TestAeiData.status
-        every { description } returns this@TestAeiData.description
-        every { traceInputStream } returns this@TestAeiData.trace?.byteInputStream()
-    }
+    fun toAeiObject(): ApplicationExitInfo = ShadowActivityManager.ApplicationExitInfoBuilder.newBuilder()
+        .setTimestamp(timestamp)
+        .setPid(pid)
+        .setProcessStateSummary(processStateSummary?.toByteArray())
+        .setImportance(importance)
+        .setPss(pss)
+        .setRss(rss)
+        .setReason(reason)
+        .setStatus(status)
+        .setDescription(description)
+        .setTraceInputStream(trace?.byteInputStream())
+        .build()
 }
 
 internal fun setupFakeAeiData(data: List<ApplicationExitInfo>) {

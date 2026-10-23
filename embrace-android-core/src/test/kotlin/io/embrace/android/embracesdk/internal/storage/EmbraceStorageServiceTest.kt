@@ -1,10 +1,9 @@
 package io.embrace.android.embracesdk.internal.storage
 
 import android.content.Context
+import android.content.ContextWrapper
 import io.embrace.android.embracesdk.fakes.FakeInternalTelemetryService
 import io.embrace.android.embracesdk.semconv.EmbTelemetryAttributes
-import io.mockk.every
-import io.mockk.mockk
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertTrue
@@ -31,9 +30,7 @@ internal class EmbraceStorageServiceTest {
             Paths.get(filesDir.absolutePath, "embrace"),
         ).toFile()
         embraceFilesDir = embraceFilesPath.absolutePath
-        val ctx = mockk<Context>()
-        every { ctx.cacheDir } returns cacheDir
-        every { ctx.filesDir } returns filesDir
+        val ctx = dirsContext(cacheDir, filesDir)
         fakeTelemetryService = FakeInternalTelemetryService()
         fakeStorageAvailabilityChecker = FakeStorageAvailabilityChecker()
 
@@ -81,9 +78,7 @@ internal class EmbraceStorageServiceTest {
     fun `test listFiles when files and cache dirs are invalid dirs`() {
         cacheDir = Files.createTempFile("invalid_dir_1", null).toFile()
         filesDir = Files.createTempFile("invalid_dir_2", null).toFile()
-        val ctx = mockk<Context>()
-        every { ctx.cacheDir } returns cacheDir
-        every { ctx.filesDir } returns filesDir
+        val ctx = dirsContext(cacheDir, filesDir)
         storageManager = EmbraceStorageService(ctx, fakeTelemetryService, fakeStorageAvailabilityChecker)
         val files = storageManager.listFiles { _, _ -> true }
         assertEquals(0, files.size)
@@ -107,4 +102,9 @@ internal class EmbraceStorageServiceTest {
         assertEquals(expectedSize.toString(), fakeTelemetryService.storageTelemetryMap[EmbTelemetryAttributes.EMB_STORAGE_USED])
         assertEquals("1000", fakeTelemetryService.storageTelemetryMap[EmbTelemetryAttributes.EMB_STORAGE_AVAILABLE])
     }
+}
+
+private fun dirsContext(cache: File, files: File): Context = object : ContextWrapper(null) {
+    override fun getCacheDir(): File = cache
+    override fun getFilesDir(): File = files
 }

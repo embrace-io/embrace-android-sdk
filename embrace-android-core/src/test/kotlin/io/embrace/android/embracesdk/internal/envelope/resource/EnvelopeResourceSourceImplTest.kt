@@ -1,6 +1,5 @@
 package io.embrace.android.embracesdk.internal.envelope.resource
 
-import android.os.Environment
 import io.embrace.android.embracesdk.fakes.FakeConfigService
 import io.embrace.android.embracesdk.fakes.FakeDevice
 import io.embrace.android.embracesdk.fakes.FakeKeyValueStore
@@ -8,33 +7,13 @@ import io.embrace.android.embracesdk.internal.capture.metadata.AppEnvironment
 import io.embrace.android.embracesdk.internal.envelope.metadata.UnitySdkVersionInfo
 import io.embrace.android.embracesdk.internal.payload.AppFramework
 import io.embrace.android.embracesdk.internal.payload.EnvelopeResource
-import io.mockk.every
-import io.mockk.mockkStatic
-import io.mockk.unmockkAll
-import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertSame
 import org.junit.Assert.assertTrue
-import org.junit.BeforeClass
 import org.junit.Test
-import java.io.File
 
 internal class EnvelopeResourceSourceImplTest {
-
-    companion object {
-        @BeforeClass
-        @JvmStatic
-        fun beforeClass() {
-            mockkStatic(Environment::class)
-            every { Environment.getDataDirectory() }.returns(File("ANDROID_DATA"))
-        }
-
-        @After
-        fun tearDown() {
-            unmockkAll()
-        }
-    }
 
     @Test
     fun getEnvelopeResource() {

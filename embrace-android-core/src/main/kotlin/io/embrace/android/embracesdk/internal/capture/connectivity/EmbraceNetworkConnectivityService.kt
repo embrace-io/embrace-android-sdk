@@ -1,3 +1,5 @@
+@file:Suppress("DEPRECATION") // uses deprecated APIs for backwards compat
+
 package io.embrace.android.embracesdk.internal.capture.connectivity
 
 import android.content.BroadcastReceiver
@@ -5,18 +7,23 @@ import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
 import android.net.ConnectivityManager
+import android.net.NetworkInfo
 import io.embrace.android.embracesdk.internal.logging.ErrorHandler
 import io.embrace.android.embracesdk.internal.logging.SdkErrorType
 import io.embrace.android.embracesdk.internal.logging.guardSdkCode
 import io.embrace.android.embracesdk.internal.worker.BackgroundWorker
 import java.util.concurrent.CopyOnWriteArrayList
 
-@Suppress("DEPRECATION") // uses deprecated APIs for backwards compat
+/**
+ * [connectivityAvailable] returns false when ConnectivityManager is unavailable, and [activeNetworkInfo] reads the
+ * active network.
+ */
 internal class EmbraceNetworkConnectivityService(
     private val context: Context,
     private val backgroundWorker: BackgroundWorker,
     private val errorHandler: ErrorHandler,
-    private val connectivityManager: Lazy<ConnectivityManager?>,
+    private val connectivityAvailable: () -> Boolean,
+    private val activeNetworkInfo: () -> NetworkInfo?,
 ) : BroadcastReceiver(), NetworkConnectivityService {
 
     private val intentFilter = IntentFilter(ConnectivityManager.CONNECTIVITY_ACTION)
@@ -39,8 +46,10 @@ internal class EmbraceNetworkConnectivityService(
     private fun getCurrentConnectivityStatus(): ConnectivityStatus {
         return errorHandler.guardSdkCode(SdkErrorType.NetworkStatusCaptureFail, OptimisticUnknown) {
             // if ConnectivityManager is unavailable, assume the network is reachable
-            val manager = connectivityManager.value ?: return@guardSdkCode ConnectivityStatus.Unverified
-            val networkInfo = manager.activeNetworkInfo
+            if (!connectivityAvailable()) {
+                return@guardSdkCode ConnectivityStatus.Unverified
+            }
+            val networkInfo = activeNetworkInfo()
             if (networkInfo != null && networkInfo.isConnected) {
                 // Network is reachable
                 when (networkInfo.type) {
@@ -57,7 +66,7 @@ internal class EmbraceNetworkConnectivityService(
 
     override fun register() {
         backgroundWorker.submit {
-            if (connectivityManager.value != null) {
+            if (connectivityAvailable()) {
                 synchronized(lock) {
                     if (!closed && !registered) {
                         errorHandler.guardSdkCode(SdkErrorType.ConnectivityUpdateFailure) {

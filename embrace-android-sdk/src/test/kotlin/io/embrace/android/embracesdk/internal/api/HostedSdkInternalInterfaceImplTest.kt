@@ -5,10 +5,11 @@ import io.embrace.android.embracesdk.fakes.FakeEnvelopeResourceSource
 import io.embrace.android.embracesdk.fakes.FakeErrorHandler
 import io.embrace.android.embracesdk.fakes.FakeInternalTelemetryService
 import io.embrace.android.embracesdk.fakes.FakeKeyValueStore
+import io.embrace.android.embracesdk.fakes.fakeContext
+import io.embrace.android.embracesdk.fakes.unimplemented
 import io.embrace.android.embracesdk.internal.api.delegate.HostedSdkInternalInterfaceImpl
 import io.embrace.android.embracesdk.internal.envelope.metadata.FlutterSdkVersionInfo
 import io.embrace.android.embracesdk.internal.logging.SdkErrorType
-import io.mockk.mockk
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Before
@@ -25,11 +26,11 @@ internal class HostedSdkInternalInterfaceImplTest {
         telemetryService = FakeInternalTelemetryService()
         errorHandler = FakeErrorHandler(throwOnSdkError = false)
         impl = HostedSdkInternalInterfaceImpl(
-            logsApi = mockk(),
+            logsApi = unimplemented(),
             configService = FakeConfigService(),
             resourceSource = FakeEnvelopeResourceSource(),
-            instrumentationRegistry = mockk(),
-            serializer = mockk(),
+            instrumentationRegistry = unimplemented(),
+            serializer = unimplemented(),
             rnBundleIdTracker = lazy { error("rn bundle id tracker failure") },
             hostedSdkVersionInfo = FlutterSdkVersionInfo(FakeKeyValueStore()),
             errorHandler = errorHandler,
@@ -51,7 +52,7 @@ internal class HostedSdkInternalInterfaceImplTest {
 
     @Test
     fun `sdk exceptions are reported and a fallback is returned`() {
-        impl.setJavaScriptBundleUrl(mockk(), "url")
+        impl.setJavaScriptBundleUrl(fakeContext(), "url")
         impl.logHandledUnityException("name", "message", null)
         assertEquals(listOf("set_javascript_bundle_url", "log_handled_unity_exception"), telemetryService.apiCalls)
         assertEquals(
@@ -63,13 +64,13 @@ internal class HostedSdkInternalInterfaceImplTest {
     @Test
     fun `network span forwarding defaults to disabled when the sdk throws`() {
         val throwingImpl = HostedSdkInternalInterfaceImpl(
-            logsApi = mockk(),
-            configService = mockk(),
-            resourceSource = mockk(),
-            instrumentationRegistry = mockk(),
-            serializer = mockk(),
-            rnBundleIdTracker = lazy { mockk() },
-            hostedSdkVersionInfo = mockk(),
+            logsApi = unimplemented(),
+            configService = unimplemented(),
+            resourceSource = unimplemented(),
+            instrumentationRegistry = unimplemented(),
+            serializer = unimplemented(),
+            rnBundleIdTracker = lazy { unimplemented() },
+            hostedSdkVersionInfo = unimplemented(),
             errorHandler = errorHandler,
             telemetryService = telemetryService,
         )

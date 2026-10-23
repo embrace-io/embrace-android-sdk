@@ -1,10 +1,9 @@
 package io.embrace.android.embracesdk.internal.instance
 
 import android.content.Context
-import androidx.test.core.app.ApplicationProvider
-import androidx.test.ext.junit.runners.AndroidJUnit4
 import io.embrace.android.embracesdk.fakes.FakeErrorHandler
 import io.embrace.android.embracesdk.fakes.FakeInternalTelemetryService
+import io.embrace.android.embracesdk.fakes.fakeContext
 import io.embrace.android.embracesdk.internal.EmbraceInternalApi
 import io.embrace.android.embracesdk.internal.logging.ErrorHandlerImpl
 import io.embrace.android.embracesdk.internal.logging.SdkErrorType
@@ -14,13 +13,11 @@ import org.junit.Assert.assertFalse
 import org.junit.Assert.assertSame
 import org.junit.Assert.assertTrue
 import org.junit.Test
-import org.junit.runner.RunWith
 import kotlin.concurrent.thread
 
-@RunWith(AndroidJUnit4::class)
 internal class SdkStateHolderTest {
 
-    private val context = ApplicationProvider.getApplicationContext<Context>()
+    private val context = fakeContext()
     private val calls = mutableListOf<String>()
     private val bufferedErrorHandler = ErrorHandlerImpl({ 0 })
     private val errorHandler = FakeErrorHandler(throwOnSdkError = false, delegate = bufferedErrorHandler)

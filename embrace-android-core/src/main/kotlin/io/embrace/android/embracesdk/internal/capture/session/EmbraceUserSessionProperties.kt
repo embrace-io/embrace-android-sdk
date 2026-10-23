@@ -81,9 +81,9 @@ internal class EmbraceUserSessionProperties(
     }
 
     /**
-     * Notify that a new user session has occurred so that old user session properties can be cleared.
+     * Notify that the user session has ended so that its user session properties can be cleared.
      */
-    fun onNewUserSession() {
+    fun onUserSessionEnded() {
         synchronized(lock) {
             val iter = properties.iterator()
             while (iter.hasNext()) {
@@ -100,9 +100,7 @@ internal class EmbraceUserSessionProperties(
     fun addPropsForNewSessionPartSpan() {
         synchronized(lock) {
             properties.forEach { (key, entry) ->
-                if (entry.scope != PropertyScope.USER_SESSION) {
-                    destination.addSessionPartAttribute(key.toEmbraceAttributeName(), entry.value)
-                }
+                destination.addSessionPartAttribute(key.toEmbraceAttributeName(), entry.value)
             }
         }
     }

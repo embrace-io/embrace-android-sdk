@@ -65,6 +65,7 @@ import io.embrace.android.embracesdk.semconv.EmbCommonAttributes
 import io.embrace.android.embracesdk.semconv.EmbSessionAttributes
 import io.embrace.android.embracesdk.semconv.ExperimentalSemconv
 import io.embrace.android.embracesdk.testframework.CapturedServices
+import io.embrace.android.embracesdk.testframework.InMemoryPrefsContext
 import io.embrace.android.embracesdk.testframework.SdkIntegrationTestRule
 import org.robolectric.Shadows
 import org.robolectric.shadows.ShadowLooper
@@ -171,7 +172,7 @@ internal class EmbraceSetupInterface(
      * graph exists.
      */
     private val keyValueStore: KeyValueStore by lazy {
-        createKeyValueStore(fakeContext, fakeInitServices.jsonSerializer)
+        createKeyValueStore(InMemoryPrefsContext(fakeContext), fakeInitServices.jsonSerializer)
     }
 
     init {
@@ -182,7 +183,7 @@ internal class EmbraceSetupInterface(
         fakeInitServices.instrumentedConfig = instrumentedConfig
         return { context, preStartServices ->
             ConfigLoadServices(
-                context = context,
+                context = InMemoryPrefsContext(context),
                 preStartServices = preStartServices,
                 instrumentedConfig = fakeInitServices.instrumentedConfig,
                 jsonSerializer = fakeInitServices.jsonSerializer,

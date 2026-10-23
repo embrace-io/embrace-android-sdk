@@ -3,6 +3,7 @@ package io.embrace.android.embracesdk.internal.instrumentation
 import io.embrace.android.embracesdk.fakes.FakeClock
 import io.embrace.android.embracesdk.fakes.FakeConfigService
 import io.embrace.android.embracesdk.fakes.FakeErrorHandler
+import io.embrace.android.embracesdk.fakes.FakeHttpsURLConnection
 import io.embrace.android.embracesdk.fakes.FakeInstrumentationArgs
 import io.embrace.android.embracesdk.fakes.FakeInternalTelemetryService
 import io.embrace.android.embracesdk.fakes.FakeTelemetryDestination
@@ -17,8 +18,6 @@ import io.embrace.android.embracesdk.instrumentation.huclite.testUrl
 import io.embrace.android.embracesdk.internal.network.http.HttpRequestInfoModifierChain
 import io.embrace.android.embracesdk.internal.network.logging.EmbraceDomainCountLimiter
 import io.embrace.android.embracesdk.internal.telemetry.AppliedLimitType
-import io.mockk.every
-import io.mockk.mockk
 import io.opentelemetry.kotlin.semconv.HttpAttributes
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
@@ -28,7 +27,6 @@ import org.junit.Test
 import java.lang.reflect.Field
 import java.net.URL
 import java.net.URLStreamHandlerFactory
-import javax.net.ssl.HttpsURLConnection
 
 class HucLiteDataSourceTest {
     private lateinit var factoryFieldRef: Field
@@ -37,7 +35,7 @@ class HucLiteDataSourceTest {
     private lateinit var fakeClock: FakeClock
     private lateinit var fakeErrorHandler: FakeErrorHandler
     private lateinit var domainCountLimiter: EmbraceDomainCountLimiter
-    private lateinit var mockedConnection: HttpsURLConnection
+    private lateinit var wrappedConnection: FakeHttpsURLConnection
     private lateinit var hucLiteDataSource: HucLiteDataSource
     private var staticFactorySetAttempts = 0
 
@@ -57,13 +55,7 @@ class HucLiteDataSourceTest {
         fakeTelemetryService = FakeInternalTelemetryService()
         fakeClock = FakeClock(FAKE_TIME_MS)
         fakeErrorHandler = FakeErrorHandler(throwOnSdkError = false)
-        mockedConnection =
-            mockk<HttpsURLConnection>(relaxed = true).apply {
-                every { url } returns testUrl
-                every { requestMethod } returns "GET"
-                every { responseCode } answers { 200 }
-                every { getRequestProperty(any()) } returns null
-            }
+        wrappedConnection = FakeHttpsURLConnection(testUrl)
         hucLiteDataSource = createHucLiteDataSource()
     }
 
@@ -90,7 +82,7 @@ class HucLiteDataSourceTest {
     fun `specific domain limit enforced`() {
         repeat(5) {
             hucLiteDataSource.createRequestData(
-                wrappedConnection = mockedConnection,
+                wrappedConnection = wrappedConnection,
                 clock = fakeClock,
             )?.apply {
                 startRequest()
@@ -102,10 +94,10 @@ class HucLiteDataSourceTest {
 
     @Test
     fun `default limit enforced`() {
-        every { mockedConnection.url } returns URL("https://fakeurl.burger/test/xyz?doStuff=true")
+        wrappedConnection.urlProvider = { URL("https://fakeurl.burger/test/xyz?doStuff=true") }
         repeat(5) {
             hucLiteDataSource.createRequestData(
-                wrappedConnection = mockedConnection,
+                wrappedConnection = wrappedConnection,
                 clock = fakeClock,
             )?.apply {
                 startRequest()
@@ -120,7 +112,7 @@ class HucLiteDataSourceTest {
         // Make 5 requests - the last one should exceed the limit of 4 for testUrl.host
         repeat(5) {
             hucLiteDataSource.createRequestData(
-                wrappedConnection = mockedConnection,
+                wrappedConnection = wrappedConnection,
                 clock = fakeClock,
             )?.apply {
                 startRequest()
@@ -145,7 +137,7 @@ class HucLiteDataSourceTest {
         )
 
         ds.createRequestData(
-            wrappedConnection = mockedConnection,
+            wrappedConnection = wrappedConnection,
             clock = fakeClock,
         )?.apply {
             startRequest()
@@ -169,7 +161,7 @@ class HucLiteDataSourceTest {
         )
 
         ds.createRequestData(
-            wrappedConnection = mockedConnection,
+            wrappedConnection = wrappedConnection,
             clock = fakeClock,
         )?.apply {
             startRequest()

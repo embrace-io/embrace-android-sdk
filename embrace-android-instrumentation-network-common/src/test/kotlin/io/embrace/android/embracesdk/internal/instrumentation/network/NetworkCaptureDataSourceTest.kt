@@ -1,7 +1,5 @@
 package io.embrace.android.embracesdk.internal.instrumentation.network
 
-import androidx.test.core.app.ApplicationProvider
-import androidx.test.ext.junit.runners.AndroidJUnit4
 import io.embrace.android.embracesdk.fakes.FakeClock
 import io.embrace.android.embracesdk.fakes.FakeConfigService
 import io.embrace.android.embracesdk.fakes.FakeInstrumentationArgs
@@ -21,9 +19,7 @@ import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
-import org.junit.runner.RunWith
 
-@RunWith(AndroidJUnit4::class)
 internal class NetworkCaptureDataSourceTest {
 
     private lateinit var cfg: RemoteConfig
@@ -95,7 +91,6 @@ internal class NetworkCaptureDataSourceTest {
             networkBehavior = createNetworkBehavior(remoteCfg = cfg, configDeliveredAt = clock.now()),
         )
         args = FakeInstrumentationArgs(
-            application = ApplicationProvider.getApplicationContext(),
             configService = configService,
             clock = clock,
         )
@@ -121,7 +116,6 @@ internal class NetworkCaptureDataSourceTest {
             networkBehavior = createNetworkBehavior(remoteCfg = cfg, configDeliveredAt = deliveredAt),
         )
         args = FakeInstrumentationArgs(
-            application = ApplicationProvider.getApplicationContext(),
             configService = configService,
             clock = clock,
         )
@@ -134,7 +128,6 @@ internal class NetworkCaptureDataSourceTest {
             networkBehavior = createNetworkBehavior(remoteCfg = cfg, configDeliveredAt = deliveredAt),
         )
         args = FakeInstrumentationArgs(
-            application = ApplicationProvider.getApplicationContext(),
             configService = configService,
             clock = clock,
         )
@@ -306,12 +299,11 @@ internal class NetworkCaptureDataSourceTest {
             ),
         )
         args = FakeInstrumentationArgs(
-            application = ApplicationProvider.getApplicationContext(),
             configService = configService,
         )
         destination = args.destination
 
-        NetworkCaptureDataSourceImpl(args).recordNetworkRequest(
+        NetworkCaptureDataSourceImpl(args, jvmEncryptionManager()).recordNetworkRequest(
             HttpNetworkRequest(
                 url = "https://embrace.io/changelog",
                 httpMethod = "GET",
@@ -344,7 +336,6 @@ internal class NetworkCaptureDataSourceTest {
         val telemetryService = FakeInternalTelemetryService()
         configService = FakeConfigService(networkBehavior = createNetworkBehavior(remoteCfg = cfg))
         args = FakeInstrumentationArgs(
-            application = ApplicationProvider.getApplicationContext(),
             configService = configService,
             telemetryService = telemetryService,
         )
@@ -460,7 +451,6 @@ internal class NetworkCaptureDataSourceTest {
             networkBehavior = createNetworkBehavior(remoteCfg = cfg),
         )
         args = FakeInstrumentationArgs(
-            application = ApplicationProvider.getApplicationContext(),
             configService = configService,
         )
         destination = args.destination

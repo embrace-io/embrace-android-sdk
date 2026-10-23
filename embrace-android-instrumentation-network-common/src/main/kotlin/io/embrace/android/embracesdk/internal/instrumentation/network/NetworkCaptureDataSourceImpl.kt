@@ -14,8 +14,9 @@ import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.TimeUnit
 import kotlin.math.max
 
-class NetworkCaptureDataSourceImpl(
+class NetworkCaptureDataSourceImpl internal constructor(
     private val args: InstrumentationArgs,
+    private val networkCaptureEncryptionManager: NetworkCaptureEncryptionManager,
 ) : NetworkCaptureDataSource, DataSourceImpl(
     args = args,
     limitStrategy = NoopLimitStrategy,
@@ -24,8 +25,9 @@ class NetworkCaptureDataSourceImpl(
 
     private val keyValueStore: KeyValueStore = args.store
     private val serializer: PlatformSerializer = args.serializer
-    private val networkCaptureEncryptionManager = NetworkCaptureEncryptionManager()
     private val urlRegexCache = ConcurrentHashMap<String, Result<Regex>>()
+
+    constructor(args: InstrumentationArgs) : this(args, NetworkCaptureEncryptionManager())
 
     internal companion object {
         const val NETWORK_ERROR_CODE = -1

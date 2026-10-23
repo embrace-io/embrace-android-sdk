@@ -1,28 +1,26 @@
 package io.embrace.android.embracesdk.internal.utils
 
 import android.os.Build.VERSION_CODES
-import androidx.test.ext.junit.runners.AndroidJUnit4
 import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
-import org.junit.runner.RunWith
-import org.robolectric.shadows.ShadowTrace
 
-@RunWith(AndroidJUnit4::class)
 internal class AndroidSectionRecorderTest {
+
+    private val traceApi = FakeTraceApi()
 
     @Before
     fun setUp() {
-        ShadowTrace.reset()
-        ShadowTrace.setEnabled(true)
+        AndroidSectionRecorder.versionChecker = VersionChecker { min -> VERSION_CODES.Q >= min }
+        AndroidSectionRecorder.traceApi = traceApi
     }
 
     @After
     fun tearDown() {
-        ShadowTrace.reset()
         AndroidSectionRecorder.versionChecker = BuildVersionChecker
+        AndroidSectionRecorder.traceApi = AndroidTraceApi
     }
 
     @Test
@@ -31,22 +29,22 @@ internal class AndroidSectionRecorderTest {
         AndroidSectionRecorder.setCounter(longName, 1)
         assertEquals(
             listOf("emb-sf-bytes-written" to 4096L, prefixedTraceName(longName) to 1L),
-            ShadowTrace.getCounters().map { it.name to it.value },
+            traceApi.counters,
         )
     }
 
     @Test
     fun `no counter is recorded while nothing is capturing a trace`() {
-        ShadowTrace.setEnabled(false)
+        traceApi.enabled = false
         AndroidSectionRecorder.setCounter("sf-bytes-written", 4096)
-        assertTrue(ShadowTrace.getCounters().isEmpty())
+        assertTrue(traceApi.counters.isEmpty())
     }
 
     @Test
     fun `no counter is recorded below the supported API version`() {
         AndroidSectionRecorder.versionChecker = VersionChecker { min -> VERSION_CODES.P >= min }
         AndroidSectionRecorder.setCounter("sf-bytes-written", 4096)
-        assertTrue(ShadowTrace.getCounters().isEmpty())
+        assertTrue(traceApi.counters.isEmpty())
     }
 
     private companion object {

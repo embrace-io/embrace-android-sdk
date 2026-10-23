@@ -3,7 +3,6 @@ package io.embrace.android.embracesdk.internal.utils
 import android.annotation.SuppressLint
 import android.os.Build.VERSION_CODES
 import android.os.SystemClock
-import android.os.Trace
 import io.embrace.android.embracesdk.internal.utils.EmbTrace.durationTracker
 import kotlin.contracts.ExperimentalContracts
 import kotlin.contracts.InvocationKind
@@ -25,6 +24,10 @@ object EmbTrace {
     @JvmField
     internal var versionChecker: VersionChecker = BuildVersionChecker
 
+    @PublishedApi
+    @JvmField
+    internal var traceApi: TraceApi = AndroidTraceApi
+
     /**
      * Create a trace section around the lambda passed in and return the result.
      * The name of the section will be [sectionName] prefixed by "emb-" and truncated to 127 characters.
@@ -44,12 +47,12 @@ object EmbTrace {
     @SuppressLint("UnclosedTrace")
     inline fun <T> trace(sectionName: String, recordDuration: Boolean = false, code: Provider<T>): T {
         contract { callsInPlace(code, InvocationKind.EXACTLY_ONCE) }
-        val enabled = versionChecker.isAtLeast(VERSION_CODES.Q) && Trace.isEnabled()
+        val enabled = versionChecker.isAtLeast(VERSION_CODES.Q) && traceApi.isEnabled()
         if (enabled) {
             // android.os.Trace rejects section names longer than 127 chars, so only pay for the
             // extra substring allocation when the name actually exceeds that limit.
             val name = "emb-$sectionName"
-            Trace.beginSection(
+            traceApi.beginSection(
                 when {
                     name.length > MAX_KEY_LENGTH -> name.substring(0, MAX_KEY_LENGTH)
                     else -> name
@@ -68,7 +71,7 @@ object EmbTrace {
                 durationTracker.record(sectionName, SystemClock.elapsedRealtime() - startMs)
             }
             if (enabled) {
-                Trace.endSection()
+                traceApi.endSection()
             }
         }
     }
@@ -78,9 +81,9 @@ object EmbTrace {
      * [name] prefixed by "emb-" and truncated to 127 characters.
      */
     fun counter(name: String, value: Long) {
-        if (!versionChecker.isAtLeast(VERSION_CODES.Q) || !Trace.isEnabled()) {
+        if (!versionChecker.isAtLeast(VERSION_CODES.Q) || !traceApi.isEnabled()) {
             return
         }
-        Trace.setCounter(prefixedTraceName(name), value)
+        traceApi.setCounter(prefixedTraceName(name), value)
     }
 }

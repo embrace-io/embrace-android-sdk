@@ -16,7 +16,10 @@ import javax.crypto.NoSuchPaddingException
 /**
  * API to encrypt/decrypt data
  */
-internal class NetworkCaptureEncryptionManager {
+internal class NetworkCaptureEncryptionManager(
+    private val encodeBase64: (ByteArray) -> String = { Base64.encodeToString(it, Base64.DEFAULT) },
+    private val decodeBase64: (String?) -> ByteArray = { Base64.decode(it, Base64.DEFAULT) },
+) {
 
     private val transformation = "RSA/ECB/PKCS1Padding"
 
@@ -48,7 +51,7 @@ internal class NetworkCaptureEncryptionManager {
             val plainData = data.toByteArray(charset(UTF_8))
             val decodedData = decodeWithBuffer(cipher, plainData, ENCRYPT_BLOCK_SIZE)
 
-            val encodedString = Base64.encodeToString(decodedData, Base64.DEFAULT)
+            val encodedString = encodeBase64(decodedData)
             result += encodedString
         } catch (ignored: NoSuchAlgorithmException) {
         } catch (ignored: NoSuchPaddingException) {
@@ -71,7 +74,7 @@ internal class NetworkCaptureEncryptionManager {
             cipher.init(Cipher.DECRYPT_MODE, key)
 
             val decodedData: ByteArray?
-            val encryptedData = Base64.decode(data, Base64.DEFAULT)
+            val encryptedData = decodeBase64(data)
             decodedData = decodeWithBuffer(cipher, encryptedData, DECRYPT_BLOCK_SIZE)
 
             result = String(decodedData, charset(UTF_8))
@@ -143,7 +146,7 @@ internal class NetworkCaptureEncryptionManager {
 
     private fun getKeyFromText(keyText: String?): Key? {
         try {
-            val encodedKeySpec = X509EncodedKeySpec(Base64.decode(keyText, Base64.DEFAULT))
+            val encodedKeySpec = X509EncodedKeySpec(decodeBase64(keyText))
             return KeyFactory.getInstance("RSA").generatePublic(encodedKeySpec)
         } catch (ignored: InvalidKeySpecException) {
         } catch (ignored: NoSuchAlgorithmException) {

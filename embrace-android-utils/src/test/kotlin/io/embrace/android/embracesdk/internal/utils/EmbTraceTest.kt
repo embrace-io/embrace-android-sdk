@@ -1,30 +1,28 @@
 package io.embrace.android.embracesdk.internal.utils
 
 import android.os.Build.VERSION_CODES
-import androidx.test.ext.junit.runners.AndroidJUnit4
 import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
-import org.junit.runner.RunWith
-import org.robolectric.shadows.ShadowTrace
 
-@RunWith(AndroidJUnit4::class)
 internal class EmbTraceTest {
+
+    private val traceApi = FakeTraceApi()
 
     @Before
     fun setUp() {
-        ShadowTrace.reset()
-        ShadowTrace.setEnabled(true)
+        EmbTrace.versionChecker = VersionChecker { min -> VERSION_CODES.Q >= min }
+        EmbTrace.traceApi = traceApi
         EmbTrace.durationTracker.reset()
     }
 
     @After
     fun tearDown() {
-        ShadowTrace.reset()
         EmbTrace.durationTracker.reset()
         EmbTrace.versionChecker = BuildVersionChecker
+        EmbTrace.traceApi = AndroidTraceApi
     }
 
     @Test
@@ -42,14 +40,14 @@ internal class EmbTraceTest {
     @Test
     fun `trace records a section prefixed with emb-`() {
         EmbTrace.trace(sectionName = "test 屈福特", recordDuration = true) { }
-        assertEquals("emb-test 屈福特", ShadowTrace.getPreviousSections().single())
+        assertEquals("emb-test 屈福特", traceApi.previousSections.single())
         assertEquals(setOf("test 屈福特"), EmbTrace.durationTracker.flush().keys)
     }
 
     @Test
     fun `trace truncates long section names to 127 characters`() {
         EmbTrace.trace(sectionName = longName, recordDuration = true) { }
-        val section = ShadowTrace.getPreviousSections().single()
+        val section = traceApi.previousSections.single()
         assertEquals(127, section.length)
         assertTrue(section.startsWith("emb-a"))
         assertEquals(setOf(longName), EmbTrace.durationTracker.flush().keys)
@@ -57,9 +55,9 @@ internal class EmbTraceTest {
 
     @Test
     fun `trace runs the lambda and records a duration when tracing is disabled`() {
-        ShadowTrace.setEnabled(false)
+        traceApi.enabled = false
         assertEquals(2, EmbTrace.trace(sectionName = "test", recordDuration = true) { 1 + 1 })
-        assertTrue(ShadowTrace.getPreviousSections().isEmpty())
+        assertTrue(traceApi.previousSections.isEmpty())
         assertEquals(setOf("test"), EmbTrace.durationTracker.flush().keys)
     }
 
@@ -80,14 +78,14 @@ internal class EmbTraceTest {
     fun `trace records a section on the minimum supported API version`() {
         EmbTrace.versionChecker = VersionChecker { min -> VERSION_CODES.Q >= min }
         EmbTrace.trace("test") { }
-        assertEquals("emb-test", ShadowTrace.getPreviousSections().single())
+        assertEquals("emb-test", traceApi.previousSections.single())
     }
 
     @Test
     fun `trace runs the lambda and records a duration below the supported API version`() {
         EmbTrace.versionChecker = VersionChecker { min -> VERSION_CODES.P >= min }
         assertEquals(2, EmbTrace.trace(sectionName = "test", recordDuration = true) { 1 + 1 })
-        assertTrue(ShadowTrace.getPreviousSections().isEmpty())
+        assertTrue(traceApi.previousSections.isEmpty())
         assertEquals(setOf("test"), EmbTrace.durationTracker.flush().keys)
     }
 
@@ -95,14 +93,14 @@ internal class EmbTraceTest {
     fun `counter is recorded on the minimum supported API version`() {
         EmbTrace.versionChecker = VersionChecker { min -> VERSION_CODES.Q >= min }
         EmbTrace.counter("test", 1)
-        assertEquals(listOf("emb-test" to 1L), ShadowTrace.getCounters().map { it.name to it.value })
+        assertEquals(listOf("emb-test" to 1L), traceApi.counters)
     }
 
     @Test
     fun `counter is not recorded below the supported API version`() {
         EmbTrace.versionChecker = VersionChecker { min -> VERSION_CODES.P >= min }
         EmbTrace.counter("test", 1)
-        assertTrue(ShadowTrace.getCounters().isEmpty())
+        assertTrue(traceApi.counters.isEmpty())
     }
 
     private companion object {

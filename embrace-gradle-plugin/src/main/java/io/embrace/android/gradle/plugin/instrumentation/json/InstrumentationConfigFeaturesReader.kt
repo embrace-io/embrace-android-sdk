@@ -7,10 +7,11 @@ import io.embrace.android.gradle.plugin.instrumentation.visitor.BytecodeMethodIn
 import io.embrace.android.gradle.plugin.instrumentation.visitor.BytecodeMethodOverrideParams
 import io.embrace.android.gradle.plugin.util.serialization.JsonSerializer
 
-fun readBytecodeInstrumentationFeatures(): List<BytecodeInstrumentationFeature> {
-    val configFeatures = readBytecodeInstrumentationConfig()
-    return configFeatures.features.map(InstrumentationConfigFeature::convertInstrumentationConfigFeature)
+private val bytecodeInstrumentationFeatures: List<BytecodeInstrumentationFeature> by lazy {
+    readBytecodeInstrumentationConfig().features.map(InstrumentationConfigFeature::convertInstrumentationConfigFeature)
 }
+
+fun readBytecodeInstrumentationFeatures(): List<BytecodeInstrumentationFeature> = bytecodeInstrumentationFeatures
 
 private fun readBytecodeInstrumentationConfig(): InstrumentationConfigFeatures {
     val classLoader = InstrumentationConfigFeatures::class.java.classLoader

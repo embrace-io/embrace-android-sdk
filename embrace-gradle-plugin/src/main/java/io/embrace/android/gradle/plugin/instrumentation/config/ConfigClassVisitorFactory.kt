@@ -13,6 +13,8 @@ import io.embrace.android.gradle.plugin.model.VariantOutputInfo
 import org.objectweb.asm.ClassVisitor
 
 object ConfigClassVisitorFactory {
+    private const val CONFIG_PACKAGE = "io.embrace.android.embracesdk.internal.config.instrumented."
+
     private enum class ConfigClassType {
         BaseUrlConfig,
         EnabledFeatureConfig,
@@ -22,7 +24,7 @@ object ConfigClassVisitorFactory {
         Base64SharedObjectFilesMap,
         ;
 
-        val className = "io.embrace.android.embracesdk.internal.config.instrumented.${name}Impl"
+        val className = "$CONFIG_PACKAGE${name}Impl"
 
         fun createClassVisitor(
             cfg: VariantConfig,
@@ -45,6 +47,11 @@ object ConfigClassVisitorFactory {
     }
 
     /**
+     * Whether [className] is a config class in the SDK that [createClassVisitor] instruments.
+     */
+    fun isConfigClass(className: String): Boolean = className.startsWith(CONFIG_PACKAGE)
+
+    /**
      * Creates a class visitor that instruments a config class in the SDK, or returns null if the
      * class is not a config class.
      */
@@ -59,7 +66,7 @@ object ConfigClassVisitorFactory {
     ): ClassVisitor? {
         val type = ConfigClassType.entries.singleOrNull { it.className == className }
         return type?.createClassVisitor(cfg, encodedSharedObjectFilesMap, reactNativeBundleId, variantOutputInfo, api, cv)
-            ?: if (className.startsWith("io.embrace.android.embracesdk.internal.config.instrumented.")) {
+            ?: if (isConfigClass(className)) {
                 LocalConfigClassVisitor(cfg.embraceConfig?.json, api, cv)
             } else {
                 null

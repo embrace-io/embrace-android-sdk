@@ -26,22 +26,21 @@ abstract class EmbraceClassVisitorFactory : AsmClassVisitorFactory<BytecodeInstr
         var visitor = nextClassVisitor
         val className = classContext.currentClassData.className
 
-        // Add a visitor if this is a config class provided by the SDK
+        // Add a visitor if this is a config class provided by the SDK. Only config classes need the inputs read
+        // from files, so skip reading them for every other class.
         val params = parameters.get()
-        val cfg = params.config.get()
-        val reactNativeBundleId = readTextFromFile(params.reactNativeBundleId)
-        val variantOutputInfo = params.variantOutputInfo.get()
-        val encodedSharedObjectFilesMap = readTextFromFile(params.encodedSharedObjectFilesMap)
-        ConfigClassVisitorFactory.createClassVisitor(
-            className,
-            cfg,
-            encodedSharedObjectFilesMap,
-            variantOutputInfo,
-            reactNativeBundleId,
-            api,
-            visitor,
-        )?.let {
-            visitor = it
+        if (ConfigClassVisitorFactory.isConfigClass(className)) {
+            ConfigClassVisitorFactory.createClassVisitor(
+                className,
+                params.config.get(),
+                readTextFromFile(params.encodedSharedObjectFilesMap),
+                params.variantOutputInfo.get(),
+                readTextFromFile(params.reactNativeBundleId),
+                api,
+                visitor,
+            )?.let {
+                visitor = it
+            }
         }
 
         val features = readBytecodeInstrumentationFeatures()

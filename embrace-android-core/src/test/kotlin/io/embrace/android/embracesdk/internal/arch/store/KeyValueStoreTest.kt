@@ -33,6 +33,20 @@ internal class KeyValueStoreTest {
     }
 
     @Test
+    fun `a value of another type or malformed JSON reads as absent`() {
+        store.editAndCommit {
+            putInt("int", 1)
+            putString("string", "{not json")
+        }
+        assertNull(store.getString("int"))
+        assertNull(store.getStringSet("int"))
+        assertNull(store.getStringMap("string"))
+        assertNull(store.getInt("string"))
+        assertNull(store.getLong("string"))
+        assertTrue(store.getBoolean("string", true))
+    }
+
+    @Test
     fun testOverrideValues() {
         val strValue = "value"
         val intValue = 1

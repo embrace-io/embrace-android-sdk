@@ -105,10 +105,18 @@ internal class SharedPrefsStore(
      * [read] is `noinline` so it can be handed to [measureFirstAccess]
      */
     private inline fun <reified T> pending(key: String, noinline read: () -> T?): T? {
-        val batch = openBatch.get() ?: return measureFirstAccess(read)
-        val write = batch.writes[key] ?: return measureFirstAccess(read)
+        val batch = openBatch.get() ?: return safeRead(read)
+        val write = batch.writes[key] ?: return safeRead(read)
         return write.value as? T
     }
+
+    /**
+     * The default [SharedPreferences] are shared with the host app, so a key can hold a value of a
+     * different type or malformed JSON. Treat any value that can't be read as absent.
+     */
+    private inline fun <T> safeRead(
+        crossinline read: () -> T?,
+    ): T? = measureFirstAccess { runCatching(read).getOrNull() }
 
     /**
      * A calling of [read] that measures the first invocation, which is the access of [SharedPreferences]

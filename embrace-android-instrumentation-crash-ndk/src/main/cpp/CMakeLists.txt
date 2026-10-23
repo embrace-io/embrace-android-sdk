@@ -74,6 +74,8 @@ set_target_properties(embrace-native
         -Werror -pedantic -Wall)
 
 add_subdirectory(3rdparty/libunwindstack-ndk/cmake)
+# Vendored code: suppress its compiler warnings, which we don't fix and which drown out build output
+target_compile_options(unwindstack PRIVATE -w)
 target_link_libraries(embrace-native unwindstack)
 target_link_options(embrace-native PRIVATE "-Wl,--gc-sections")
 target_link_options(embrace-native PRIVATE "-Wl,-z,max-page-size=16384")

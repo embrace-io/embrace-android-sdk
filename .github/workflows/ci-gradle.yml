@@ -48,7 +48,8 @@ jobs:
       - name: Checkout Branch
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
-          fetch-depth: 0
+          # Codecov resolves the PR head commit via HEAD^2 of the merge commit, so a depth of 2 is needed
+          fetch-depth: 2
           persist-credentials: false
 
       - name: Setup Java
@@ -101,7 +102,7 @@ jobs:
 
       - name: Gradle (embrace-gradle-plugin-integration-tests:test)
         if: ${{ matrix.gradle-task == 'test' }}
-        run: ./gradlew embrace-gradle-plugin-integration-tests:test --stacktrace
+        run: ./gradlew embrace-gradle-plugin-integration-tests:test --warn
 
       - name: Check TestKit caches changed
         id: testkit-changed
@@ -124,12 +125,12 @@ jobs:
 
       - name: Gradle (build -x embrace-gradle-plugin-integration-tests:test)
         if: ${{ matrix.gradle-task == 'build' }}
-        run: ./gradlew build koverXmlReport embrace-microbenchmark:compileReleaseAndroidTestKotlin embrace-macrobenchmark:compileBenchmarkKotlin embrace-macrobenchmark-app:compileBenchmarkKotlin embrace-minified-test-app:lint embrace-microbenchmark:lint -x embrace-gradle-plugin-integration-tests:test -x embrace-minified-test-app:assemble -x embrace-macrobenchmark:assemble -x embrace-macrobenchmark-app:assemble -Pembrace.coverage --stacktrace
+        run: ./gradlew build koverXmlReport embrace-microbenchmark:compileReleaseAndroidTestKotlin embrace-macrobenchmark:compileBenchmarkKotlin embrace-macrobenchmark-app:compileBenchmarkKotlin embrace-minified-test-app:lint embrace-microbenchmark:lint -x embrace-gradle-plugin-integration-tests:test -x embrace-minified-test-app:assemble -x embrace-macrobenchmark:assemble -x embrace-macrobenchmark-app:assemble -Pembrace.coverage --warn
 
       - name: Gradle (examples/ExampleApp/ bundleRelease)
         if: ${{ matrix.gradle-task == 'bundleReleaseExampleApp' }}
         working-directory: examples/ExampleApp
-        run: ./gradlew bundleRelease
+        run: ./gradlew bundleRelease --warn
 
       - name: Archive Test Results
         if: ${{ always() && matrix.gradle-task != 'bundleReleaseExampleApp' }}

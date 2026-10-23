@@ -1,4 +1,5 @@
 import org.gradle.api.tasks.testing.logging.TestExceptionFormat
+import org.gradle.api.tasks.testing.logging.TestLogEvent
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 import org.jetbrains.kotlin.gradle.dsl.KotlinVersion
 
@@ -38,8 +39,15 @@ val forkCount = project.testForkCount()
 project.tasks.withType<Test>().configureEach {
     testLogging {
         exceptionFormat = TestExceptionFormat.FULL
+        // CI runs with --warn, so failures must also be logged at warn level to appear in the output
+        warn {
+            events(TestLogEvent.FAILED)
+            exceptionFormat = TestExceptionFormat.FULL
+        }
     }
     maxParallelForks = forkCount
     // Test forks are short-lived, so C2 compilation costs more than it saves
     jvmArgs("-XX:TieredStopAtLevel=1")
+    // Avoids a JVM warning per test fork when mockk's agent appends to the bootstrap classpath
+    jvmArgs("-Xshare:off")
 }

@@ -13,6 +13,7 @@ import java.util.concurrent.ExecutorService
 import java.util.concurrent.Executors
 import java.util.concurrent.Future
 import java.util.concurrent.RejectedExecutionHandler
+import java.util.concurrent.RunnableScheduledFuture
 import java.util.concurrent.ScheduledExecutorService
 import java.util.concurrent.ScheduledThreadPoolExecutor
 import java.util.concurrent.ThreadFactory
@@ -53,9 +54,23 @@ class WorkerThreadPoolImpl(
         executors.values.forEach { runCatching { shutdown(it) } }
     }
 
+    /**
+     * Shuts down the executor, letting tasks that are already due run but dropping timers that are not yet due.
+     * Periodic tasks are dropped by [ScheduledThreadPoolExecutor]'s default shutdown policy.
+     *
+     * Delayed tasks must be cancelled here rather than via `executeExistingDelayedTasksAfterShutdownPolicy = false`,
+     * because on some versions of Android the flag also cancels queued tasks with no delay. This
+     * could drop cleanup  work that is submitted during teardown.
+     */
     private fun shutdown(executor: ExecutorService) {
-        (executor as? ScheduledThreadPoolExecutor)?.executeExistingDelayedTasksAfterShutdownPolicy = false
-        executor.shutdown()
+        runCatching {
+            executor.shutdown()
+            (executor as? ScheduledThreadPoolExecutor)?.queue?.toList()?.forEach { task ->
+                if (task is RunnableScheduledFuture<*> && !task.isPeriodic && task.getDelay(TimeUnit.NANOSECONDS) > 0) {
+                    task.cancel(false)
+                }
+            }
+        }
     }
 
     override fun awaitTermination(timeoutMs: Long): Boolean {

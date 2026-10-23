@@ -12,6 +12,7 @@ class FakeNetworkConnectivityService(
 ) : NetworkConnectivityService {
 
     private val networkConnectivityListeners = CopyOnWriteArrayList<NetworkConnectivityListener>()
+    val listeners: List<NetworkConnectivityListener> get() = networkConnectivityListeners
     var connectivityStatus: ConnectivityStatus = initialConnectivityStatus
         set(value) {
             field = value

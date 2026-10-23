@@ -441,6 +441,9 @@ internal class RealSdkInstance(
                 payloadStore?.let(::addCrashTeardownHandler)
             }
             workerThreadPool.backgroundWorker(Worker.Background.NonIoRegWorker).submit {
+                if (!started) {
+                    return@submit
+                }
                 errorHandler.guardSdkCode(SdkErrorType.SdkInitPhaseFail) {
                     registry.findByType(NetworkStatusDataSource::class)?.let(networkConnectivityService::addNetworkConnectivityListener)
                 }
@@ -459,6 +462,9 @@ internal class RealSdkInstance(
         errorHandler.guardSdkCode(SdkErrorType.SdkInitPhaseFail) {
             val worker = workerThreadPool.backgroundWorker(Worker.Background.IoRegWorker)
             worker.submit {
+                if (!started) {
+                    return@submit
+                }
                 errorHandler.guardSdkCode(SdkErrorType.PayloadResurrectionFail) {
                     // Get real network status as soon as we can on the worker.
                     // This allows the delivery triggered by resurrection to get the most accurate network status as possible
@@ -548,7 +554,9 @@ internal class RealSdkInstance(
                 )
             }
             workerThreadPool.backgroundWorker(Worker.Background.NonIoRegWorker).submit {
-                startupService.recordSdkInitSpan()
+                if (started) {
+                    startupService.recordSdkInitSpan()
+                }
             }
             val appId = configService.appId
             val startMsg = "Embrace SDK version ${BuildConfig.VERSION_NAME} started" +

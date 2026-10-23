@@ -2,24 +2,15 @@ package io.embrace.android.embracesdk.testcases.persistence
 
 import android.content.Context
 import androidx.test.core.app.ApplicationProvider
-import io.embrace.android.embracesdk.PropertyScope
-import io.embrace.android.embracesdk.assertions.findEventsOfType
 import io.embrace.android.embracesdk.assertions.findSessionPartSpan
-import io.embrace.android.embracesdk.assertions.findSpanByName
-import io.embrace.android.embracesdk.assertions.findSpansOfType
 import io.embrace.android.embracesdk.assertions.getSessionPartId
-import io.embrace.android.embracesdk.assertions.getUserSessionId
 import io.embrace.android.embracesdk.assertions.waitUntilConditionMet
 import io.embrace.android.embracesdk.fakes.FakeErrorHandler
-import io.embrace.android.embracesdk.fakes.config.FakeInstrumentedConfig
-import io.embrace.android.embracesdk.fakes.config.FakeProjectConfig
-import io.embrace.android.embracesdk.internal.EmbraceInternalApi
 import io.embrace.android.embracesdk.internal.arch.schema.EmbType
 import io.embrace.android.embracesdk.internal.arch.state.ProcessState
 import io.embrace.android.embracesdk.internal.capture.connectivity.ConnectivityStatus
 import io.embrace.android.embracesdk.internal.config.behavior.DEFAULT_PERIODIC_CACHE_INTERVAL_MS
 import io.embrace.android.embracesdk.internal.config.remote.BackgroundActivityRemoteConfig
-import io.embrace.android.embracesdk.internal.config.remote.RemoteConfig
 import io.embrace.android.embracesdk.internal.delivery.StoredTelemetryMetadata
 import io.embrace.android.embracesdk.internal.delivery.SupportedEnvelopeType
 import io.embrace.android.embracesdk.internal.delivery.storage.StorageLocation
@@ -27,35 +18,23 @@ import io.embrace.android.embracesdk.internal.delivery.storage.asFile
 import io.embrace.android.embracesdk.internal.logging.SdkErrorType
 import io.embrace.android.embracesdk.internal.otel.sdk.findAttributeValue
 import io.embrace.android.embracesdk.internal.otel.spans.hasEmbraceAttribute
-import io.embrace.android.embracesdk.internal.payload.Attribute
 import io.embrace.android.embracesdk.internal.payload.Envelope
 import io.embrace.android.embracesdk.internal.payload.SessionPartPayload
-import io.embrace.android.embracesdk.internal.payload.Span
-import io.embrace.android.embracesdk.internal.payload.SpanEvent
-import io.embrace.android.embracesdk.internal.session.getSessionProperty
 import io.embrace.android.embracesdk.internal.session.persistence.SessionPartDirectory
 import io.embrace.android.embracesdk.internal.session.persistence.SpanCollection
 import io.embrace.android.embracesdk.internal.session.persistence.SpanProto
 import io.embrace.android.embracesdk.internal.worker.Worker
-import io.embrace.android.embracesdk.network.EmbraceNetworkRequest
-import io.embrace.android.embracesdk.network.http.HttpMethod
 import io.embrace.android.embracesdk.semconv.EmbSessionAttributes
-import io.embrace.android.embracesdk.semconv.EmbSpanAttributes
 import io.embrace.android.embracesdk.spans.EmbraceSpan
-import io.embrace.android.embracesdk.testcases.features.createNativeSymbolsForCurrentArch
 import io.embrace.android.embracesdk.testframework.OtelSdkMode
 import io.embrace.android.embracesdk.testframework.SdkIntegrationTestRule
 import io.embrace.android.embracesdk.testframework.actions.EmbraceActionInterface
-import io.embrace.android.embracesdk.testframework.actions.EmbracePayloadAssertionInterface
-import io.embrace.android.embracesdk.testframework.actions.EmbraceSetupInterface
-import io.embrace.android.embracesdk.testframework.assertions.Placeholder
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Assume.assumeTrue
-import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.ParameterizedRobolectricTestRunner
@@ -65,177 +44,14 @@ import java.util.concurrent.CountDownLatch
 import java.util.concurrent.TimeUnit
 
 /**
- * Verifies that a session payload reaches the server, and looks the same, whether it was persisted
- * in single-file mode or in multi-file mode.
- *
- * Every case runs under both modes, and under each [OtelSdkMode]. Only one of them may deliver a given session part - see
- * [deliveredParts].
+ * Parity across session part boundaries and process deaths: multiple parts, crashes, kills, relaunches and full
+ * payload storage.
  */
 @RunWith(ParameterizedRobolectricTestRunner::class)
-internal class MultiFilePersistenceParityTest(
-    private val persistenceMode: PersistenceMode,
+internal class MultiFilePersistenceLifecycleParityTest(
+    persistenceMode: PersistenceMode,
     otelSdkMode: OtelSdkMode,
-) {
-
-    internal enum class PersistenceMode { SINGLE_FILE, MULTI_FILE }
-
-    private val backgroundActivityEnabled = BackgroundActivityRemoteConfig(100f)
-
-    /**
-     * The remote config for the mode under test.
-     */
-    private fun remoteConfig(
-        backgroundActivity: BackgroundActivityRemoteConfig = backgroundActivityEnabled,
-    ) = RemoteConfig(
-        pctMultiFilePersistenceEnabled = when (persistenceMode) {
-            PersistenceMode.MULTI_FILE -> 100.0f
-            PersistenceMode.SINGLE_FILE -> 0.0f
-        },
-        backgroundActivityConfig = backgroundActivity,
-    )
-
-    @Rule
-    @JvmField
-    val testRule: SdkIntegrationTestRule = SdkIntegrationTestRule(otelSdkMode) {
-        EmbraceSetupInterface(
-            workersToFake = listOf(
-                Worker.Background.SessionPersistenceWorker,
-                Worker.Background.PeriodicCacheWorker,
-                Worker.Background.NonIoRegWorker,
-                Worker.Background.IoRegWorker,
-            ),
-        ).apply {
-            getFakedWorkerExecutor(Worker.Background.SessionPersistenceWorker).blockingMode = false
-            getFakedWorkerExecutor(Worker.Background.NonIoRegWorker).blockingMode = false
-            getFakedWorkerExecutor(Worker.Background.IoRegWorker).blockingMode = false
-        }
-    }
-
-    @Test
-    fun `one session payload is delivered`() {
-        testRule.runTest(
-            persistedRemoteConfig = remoteConfig(),
-            testCaseAction = {
-                recordSession()
-            },
-            assertAction = {
-                assertMinimalSessionPayload(deliveredParts().single())
-            },
-        )
-    }
-
-    @Test
-    fun `the session part span matches the golden file`() {
-        testRule.runTest(
-            persistedRemoteConfig = remoteConfig(),
-            testCaseAction = {
-                recordSession()
-            },
-            assertAction = {
-                assertMatchesGoldenFile(deliveredParts().single())
-            },
-        )
-    }
-
-    @Test
-    fun `spans completed during the session are persisted identically`() {
-        testRule.runTest(
-            persistedRemoteConfig = remoteConfig(),
-            testCaseAction = {
-                recordSession {
-                    embrace.recordSpan("completed-span") {
-                        clock.tick(100)
-                    }
-                    val span = checkNotNull(embrace.startSpan("stopped-span"))
-                    clock.tick(50)
-                    span.stop()
-                }
-            },
-            assertAction = {
-                val names = deliveredParts().single().allSpanNames()
-                assertTrue("completed-span missing: $names", "completed-span" in names)
-                assertTrue("stopped-span missing: $names", "stopped-span" in names)
-            },
-        )
-    }
-
-    @Test
-    fun `a span still in flight at session end is persisted identically`() {
-        testRule.runTest(
-            persistedRemoteConfig = remoteConfig(),
-            testCaseAction = {
-                recordSession {
-                    checkNotNull(embrace.startSpan("in-flight-span"))
-                }
-            },
-            assertAction = {
-                val names = deliveredParts().single().allSpanNames()
-                assertTrue("in-flight-span missing: $names", "in-flight-span" in names)
-            },
-        )
-    }
-
-    @Test
-    fun `breadcrumbs recorded during the session are persisted identically`() {
-        testRule.runTest(
-            persistedRemoteConfig = remoteConfig(),
-            testCaseAction = {
-                recordSession {
-                    embrace.addBreadcrumb("Hello, world!")
-                    clock.tick(1000)
-                    embrace.addBreadcrumb("Bye, world!")
-                }
-            },
-            assertAction = {
-                val sessionSpan = deliveredParts().single().findSessionPartSpan()
-                assertEquals(2, sessionSpan.findEventsOfType(EmbType.System.Breadcrumb).size)
-            },
-        )
-    }
-
-    @Test
-    fun `session properties are persisted identically`() {
-        testRule.runTest(
-            persistedRemoteConfig = remoteConfig(),
-            setupAction = {
-                setupPermanentUserSessionProperties(mapOf("seeded" to "value"))
-            },
-            testCaseAction = {
-                recordSession {
-                    embrace.addUserSessionProperty("permanent", "value", PropertyScope.PERMANENT)
-                    embrace.addUserSessionProperty("temporary", "value", PropertyScope.USER_SESSION)
-                }
-            },
-            assertAction = {
-                val sessionSpan = deliveredParts().single().findSessionPartSpan()
-                listOf("seeded", "permanent", "temporary").forEach {
-                    assertNotNull("missing session property '$it'", sessionSpan.getSessionProperty(it))
-                }
-            },
-        )
-    }
-
-    /**
-     * The harness never runs the debounced metadata write, so the change can only reach the payload
-     * through what each mode does at part end: the single-file mode builds the payload from live state,
-     * the multi-file mode flushes its pending writes.
-     */
-    @Test
-    fun `user info changed mid-session is persisted identically`() {
-        testRule.runTest(
-            instrumentedConfig = hostedSdkConfig,
-            persistedRemoteConfig = remoteConfig(),
-            testCaseAction = {
-                changeEnvelopeMetadata(BEFORE)
-                recordSession {
-                    changeEnvelopeMetadata(AFTER)
-                }
-            },
-            assertAction = {
-                deliveredParts().single().assertEnvelopeMetadata(AFTER)
-            },
-        )
-    }
+) : MultiFilePersistenceParityTestBase(persistenceMode, otelSdkMode) {
 
     /**
      * A change made just before the process dies is lost in both modes: the multi-file mode's
@@ -291,51 +107,6 @@ internal class MultiFilePersistenceParityTest(
     }
 
     @Test
-    fun `a recorded network request is persisted identically`() {
-        testRule.runTest(
-            persistedRemoteConfig = remoteConfig(),
-            testCaseAction = {
-                recordSession {
-                    embrace.recordNetworkRequest(
-                        EmbraceNetworkRequest.fromCompletedRequest(
-                            "https://embrace.io",
-                            HttpMethod.GET,
-                            clock.now(),
-                            clock.now() + 100,
-                            100,
-                            1000,
-                            200,
-                        ),
-                    )
-                }
-            },
-            assertAction = {
-                val envelope = deliveredParts().single()
-                assertEquals(1, envelope.findSpansOfType(EmbType.Performance.Network).size)
-            },
-        )
-    }
-
-    @Test
-    fun `the native symbol map is persisted identically`() {
-        testRule.runTest(
-            instrumentedConfig = FakeInstrumentedConfig(
-                symbols = createNativeSymbolsForCurrentArch(mapOf("libfoo.so" to "symbol_content")),
-            ),
-            persistedRemoteConfig = remoteConfig(),
-            testCaseAction = {
-                recordSession()
-            },
-            assertAction = {
-                assertEquals(
-                    mapOf("libfoo.so" to "symbol_content"),
-                    deliveredParts().single().data.sharedLibSymbolMapping,
-                )
-            },
-        )
-    }
-
-    @Test
     fun `each session part in a process is persisted identically`() {
         testRule.runTest(
             persistedRemoteConfig = remoteConfig(),
@@ -355,58 +126,6 @@ internal class MultiFilePersistenceParityTest(
                     setOf("first-part-span", "second-part-span"),
                     parts.map { part -> part.allSpanNames().single { it.endsWith("-part-span") } }.toSet(),
                 )
-            },
-        )
-    }
-
-    @Test
-    fun `background activity parts are persisted identically`() {
-        testRule.runTest(
-            persistedRemoteConfig = remoteConfig(),
-            testCaseAction = {
-                recordSession()
-            },
-            assertAction = {
-                val envelope = deliveredParts(state = ProcessState.BACKGROUND).single()
-                assertEquals(
-                    "background",
-                    envelope.findSessionPartSpan().attributes?.findAttributeValue(EmbSessionAttributes.EMB_STATE),
-                )
-            },
-        )
-    }
-
-    @Test
-    fun `a periodic cache tick before the session ends does not change what is persisted`() {
-        testRule.runTest(
-            persistedRemoteConfig = remoteConfig(),
-            testCaseAction = {
-                recordSession {
-                    embrace.recordSpan("before-the-periodic-write") { clock.tick(100) }
-                    clock.tick(2000)
-                    testRule.setup.getFakedWorkerExecutor(Worker.Background.PeriodicCacheWorker)
-                        .runCurrentlyBlocked()
-                    embrace.recordSpan("after-the-periodic-write") { clock.tick(100) }
-                }
-            },
-            assertAction = {
-                val names = deliveredParts().single().allSpanNames()
-                assertTrue("before-the-periodic-write missing: $names", "before-the-periodic-write" in names)
-                assertTrue("after-the-periodic-write missing: $names", "after-the-periodic-write" in names)
-            },
-        )
-    }
-
-    @Test
-    fun `spans completed before the first session part directory exists are persisted identically`() {
-        testRule.runTest(
-            persistedRemoteConfig = remoteConfig(backgroundActivity = BackgroundActivityRemoteConfig(0f)),
-            testCaseAction = {
-                recordSession()
-            },
-            assertAction = {
-                val names = deliveredParts().single().allSpanNames()
-                assertTrue("emb-sdk-init missing from: $names", "emb-sdk-init" in names)
             },
         )
     }
@@ -461,43 +180,6 @@ internal class MultiFilePersistenceParityTest(
                     assertFalse("started-span was persisted: $names", "started-span" in names)
                     assertFalse("recorded-span was persisted: $names", "recorded-span" in names)
                 }
-            },
-        )
-    }
-
-    @Test
-    fun `an empty span event collection survives being persisted`() {
-        testRule.runTest(
-            persistedRemoteConfig = remoteConfig(),
-            testCaseAction = {
-                recordSession {
-                    embrace.recordSpan("plain-span") {
-                        clock.tick(100)
-                    }
-                }
-            },
-            assertAction = {
-                val span = checkNotNull(deliveredParts().single().findSpanByName("plain-span"))
-                assertEquals(emptyList<SpanEvent>(), span.events)
-                assertEquals(
-                    listOf("END_SESSION_PART"),
-                    span.links.orEmpty().map { it.attributes?.findAttributeValue("emb.link_type") },
-                )
-            },
-        )
-    }
-
-    @Test
-    fun `the session span records the process that created it`() {
-        testRule.runTest(
-            persistedRemoteConfig = remoteConfig(),
-            testCaseAction = {
-                recordSession()
-            },
-            assertAction = {
-                val processId = deliveredParts().single()
-                    .findSessionPartSpan().attributes?.findAttributeValue(EmbSessionAttributes.EMB_PROCESS_IDENTIFIER)
-                assertNotNull("the session span has no process identifier", processId)
             },
         )
     }
@@ -717,36 +399,6 @@ internal class MultiFilePersistenceParityTest(
     }
 
     @Test
-    fun `the session span's events and links survive being persisted`() {
-        testRule.runTest(
-            persistedRemoteConfig = remoteConfig(),
-            testCaseAction = {
-                recordSession {
-                    embrace.recordSpan("linked-span") {
-                        clock.tick(100)
-                    }
-                    clock.tick(WRITE_DEBOUNCE_WAIT_MS * 2)
-                    embrace.addBreadcrumb("last gasp")
-                }
-            },
-            assertAction = {
-                val sessionSpan = deliveredParts().single().findSessionPartSpan()
-                assertEquals(
-                    "the session span lost its events",
-                    1,
-                    sessionSpan.findEventsOfType(EmbType.System.Breadcrumb).size,
-                )
-                assertTrue(
-                    "the session span lost its links: ${sessionSpan.links}",
-                    sessionSpan.links.orEmpty().any {
-                        it.attributes?.findAttributeValue(EmbSpanAttributes.EMB_LINK_TYPE) == "ENDED_IN"
-                    },
-                )
-            },
-        )
-    }
-
-    @Test
     fun `a session part rejected by full payload storage in multi-file mode is kept and delivered once space frees`() {
         assumeTrue(persistenceMode == PersistenceMode.MULTI_FILE)
         lateinit var heldBack: List<StoredTelemetryMetadata>
@@ -842,54 +494,6 @@ internal class MultiFilePersistenceParityTest(
     }
 
     /**
-     * Returns the envelope delivered for each session part.
-     *
-     * Exactly one envelope is expected per part: only one persistence mode may own a part, so a
-     * second envelope for the same part means both modes delivered it. `getSessionEnvelopes`
-     * waits for an exact count, so a duplicate delivery fails here rather than passing silently.
-     */
-    private fun EmbracePayloadAssertionInterface.deliveredParts(
-        expectedParts: Int = 1,
-        state: ProcessState = ProcessState.FOREGROUND,
-    ): List<Envelope<SessionPartPayload>> {
-        val envelopes = getSessionEnvelopes(expectedParts, state, assertOrdering = false)
-        assertEquals(
-            "wrong number of distinct session parts delivered",
-            expectedParts,
-            envelopes.map(Envelope<SessionPartPayload>::getSessionPartId).distinct().size,
-        )
-        return envelopes
-    }
-
-    private fun EmbracePayloadAssertionInterface.assertMatchesGoldenFile(
-        envelope: Envelope<SessionPartPayload>,
-    ) {
-        val sessionSpan = envelope.findSessionPartSpan()
-        validatePayloadAgainstGoldenFile(
-            payload = sessionSpan.copy(attributes = sessionSpan.attributes?.sorted()),
-            goldenFileName = GOLDEN_FILE,
-            placeholders = mapOf(
-                Placeholder.USER_SESSION_ID to envelope.getUserSessionId(),
-                Placeholder.SESSION_PART_ID to envelope.getSessionPartId(),
-            ),
-        )
-    }
-
-    /**
-     * Asserts the basic shape of a delivered session payload. Both persistence paths must satisfy
-     * this identically.
-     */
-    private fun assertMinimalSessionPayload(envelope: Envelope<SessionPartPayload>) {
-        assertEquals("spans", envelope.type)
-        assertEquals("2.5.1", envelope.resource?.appVersion)
-
-        val sessionSpan = envelope.findSessionPartSpan()
-        assertEquals(SESSION_SPAN_NAME, sessionSpan.name)
-        assertNotNull(sessionSpan.endTimeNanos)
-        assertEquals("foreground", sessionSpan.attributes?.findAttributeValue(EmbSessionAttributes.EMB_STATE))
-    }
-
-    /**
      * Records a foreground part that the process dies in the middle of. Both modes persist the part as it starts.
      */
     private fun killMidPart(action: EmbraceActionInterface.() -> Unit) {
@@ -955,35 +559,6 @@ internal class MultiFilePersistenceParityTest(
         }
         testRule.services.intakeService.shutdown()
     }
-
-    /**
-     * Changes everything in the envelope that a session part persists outside its spans: the user
-     * info, and the envelope resource via the hosted SDK version.
-     */
-    @Suppress("DEPRECATION")
-    private fun EmbraceActionInterface.changeEnvelopeMetadata(token: String) {
-        embrace.setUserIdentifier("$token-id")
-        embrace.setUsername("$token-name")
-        embrace.setUserEmail("$token@domain.com")
-        embrace.clearAllUserPersonas()
-        embrace.addUserPersona("${token}_persona")
-        EmbraceInternalApi.flutterInternalInterface.setEmbraceFlutterSdkVersion("$token-sdk")
-    }
-
-    private fun Envelope<SessionPartPayload>.assertEnvelopeMetadata(token: String) {
-        val metadata = checkNotNull(metadata)
-        assertEquals("$token-id", metadata.userId)
-        assertEquals("$token-name", metadata.username)
-        assertEquals("$token@domain.com", metadata.email)
-        assertEquals(
-            setOf("${token}_persona"),
-            metadata.personas.orEmpty().filter { it.endsWith("_persona") }.toSet(),
-        )
-        assertEquals("$token-sdk", resource?.hostedSdkVersion)
-    }
-
-    private fun Envelope<SessionPartPayload>.allSpanNames(): List<String> =
-        (data.spans.orEmpty() + data.spanSnapshots.orEmpty()).mapNotNull(Span::name)
 
     /**
      * The session spans logged for the newest session part. A part that can be read back holds
@@ -1056,42 +631,21 @@ internal class MultiFilePersistenceParityTest(
         assertTrue("the payload storage was not freed", deleted.await(5, TimeUnit.SECONDS))
     }
 
-    /**
-     * Sorts a span's attributes: an attribute map is unordered by nature, so the golden file can
-     * only be compared against a stable ordering.
-     */
-    private fun List<Attribute>.sorted(): List<Attribute> = sortedWith(compareBy({ it.key }, { it.data }))
-
-    internal companion object {
-        private const val SESSION_SPAN_NAME = "emb-session"
-        private const val COMPLETED_SPANS_FILE_NAME = "completed_spans.pb"
-        private const val EVENT_DRIVEN_PROPERTY = "event-driven"
-        private const val WRITE_DEBOUNCE_WAIT_MS = 1000L
+    private companion object {
+        const val COMPLETED_SPANS_FILE_NAME = "completed_spans.pb"
 
         // the single-file mode's default periodic cache interval
-        private const val WRITE_INTERVAL_MS = DEFAULT_PERIODIC_CACHE_INTERVAL_MS
+        const val WRITE_INTERVAL_MS = DEFAULT_PERIODIC_CACHE_INTERVAL_MS
 
         // the multi-file mode's metadata write delay (SessionPartWriterImpl.METADATA_WRITE_DELAY_MS)
-        private const val METADATA_WRITE_DELAY_MS = 500L
-        private const val BEFORE = "before"
-        private const val AFTER = "after"
-        private const val LAST = "last"
+        const val METADATA_WRITE_DELAY_MS = 500L
+        const val LAST = "last"
 
-        private val persistenceWorkers = listOf(
+        val persistenceWorkers = listOf(
             Worker.Background.SessionPersistenceWorker,
             Worker.Background.PeriodicCacheWorker,
         )
 
-        private val hostedSdkConfig = FakeInstrumentedConfig(
-            project = FakeProjectConfig(appId = "abcde", appFramework = "flutter"),
-        )
-        private const val GOLDEN_FILE = "multi_file_parity_session_part_span.json"
-        private const val PAYLOAD_STORAGE_LIMIT = 500
-
-        @JvmStatic
-        @ParameterizedRobolectricTestRunner.Parameters(name = "{0}-{1}")
-        fun modes(): List<Array<Any>> = PersistenceMode.entries.flatMap { persistenceMode ->
-            OtelSdkMode.entries.map { otelSdkMode -> arrayOf(persistenceMode, otelSdkMode) }
-        }
+        const val PAYLOAD_STORAGE_LIMIT = 500
     }
 }

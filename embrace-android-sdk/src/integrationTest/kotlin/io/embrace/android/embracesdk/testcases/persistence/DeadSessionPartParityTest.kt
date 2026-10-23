@@ -23,7 +23,7 @@ import io.embrace.android.embracesdk.internal.session.id.SessionIdsSnapshot
 import io.embrace.android.embracesdk.internal.worker.Worker
 import io.embrace.android.embracesdk.semconv.EmbSessionAttributes
 import io.embrace.android.embracesdk.testcases.features.createNativeSymbolsForCurrentArch
-import io.embrace.android.embracesdk.testcases.persistence.MultiFilePersistenceParityTest.PersistenceMode
+import io.embrace.android.embracesdk.testcases.persistence.MultiFilePersistenceParityTestBase.PersistenceMode
 import io.embrace.android.embracesdk.testframework.OtelSdkMode
 import io.embrace.android.embracesdk.testframework.SdkIntegrationTestRule
 import io.embrace.android.embracesdk.testframework.actions.EmbraceActionInterface

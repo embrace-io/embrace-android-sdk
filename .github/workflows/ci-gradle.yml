@@ -32,7 +32,7 @@ jobs:
   gradle:
     needs: environment
     runs-on: ${{ needs.environment.outputs.where }}
-    timeout-minutes: 60
+    timeout-minutes: 30
     strategy:
       matrix:
         gradle-task: ['build', 'bundleReleaseExampleApp', 'test']

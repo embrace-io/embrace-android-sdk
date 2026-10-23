@@ -42,4 +42,5 @@ project.tasks.withType<Test>().configureEach {
     maxParallelForks = forkCount
     // Test forks are short-lived, so C2 compilation costs more than it saves
     jvmArgs("-XX:TieredStopAtLevel=1")
+    timeout.set(TEST_TASK_TIMEOUT)
 }

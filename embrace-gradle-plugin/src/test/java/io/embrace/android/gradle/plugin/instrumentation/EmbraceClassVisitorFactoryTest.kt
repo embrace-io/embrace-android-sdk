@@ -1,12 +1,11 @@
 package io.embrace.android.gradle.plugin.instrumentation
 
 import com.android.build.api.instrumentation.ClassContext
+import com.android.build.api.instrumentation.ClassData
 import io.embrace.android.gradle.plugin.instrumentation.fakes.TestBytecodeInstrumentationParams
 import io.embrace.android.gradle.plugin.instrumentation.fakes.TestClassData
 import io.embrace.android.gradle.plugin.instrumentation.fakes.TestClassVisitor
 import io.embrace.android.gradle.plugin.instrumentation.fakes.TestVisitorFactoryImpl
-import io.mockk.every
-import io.mockk.mockk
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertSame
 import org.junit.Assert.assertTrue
@@ -125,13 +124,8 @@ class EmbraceClassVisitorFactoryTest {
         )
     }
 
-    private fun createMockClassContext(clzName: String): ClassContext {
-        val ctx = mockk<ClassContext> {
-            every { currentClassData } returns mockk {
-                every { className } returns clzName
-                every { superClasses } returns listOf(clzName)
-            }
-        }
-        return ctx
+    private fun createMockClassContext(clzName: String): ClassContext = object : ClassContext {
+        override val currentClassData = TestClassData(clzName, superClasses = listOf(clzName))
+        override fun loadClassData(className: String): ClassData? = error("Unexpected loadClassData($className)")
     }
 }

@@ -20,7 +20,6 @@ dependencies {
 
     testImplementation(libs.agp.api)
     testImplementation(libs.junit)
-    testImplementation(libs.mockk)
     testImplementation(libs.mockwebserver)
     testImplementation(project(":embrace-test-common"))
     testRuntimeOnly(project(":embrace-android-config")) { isTransitive = false }

@@ -1,37 +1,14 @@
 package io.embrace.android.gradle.plugin.ndk
 
-import io.embrace.android.gradle.plugin.network.NetworkService
-import io.embrace.android.gradle.plugin.tasks.ndk.NdkUploadHandshake
 import io.embrace.android.gradle.plugin.tasks.ndk.NdkUploadHandshakeRequest
 import io.embrace.android.gradle.plugin.tasks.ndk.NdkUploadHandshakeResponse
 import io.embrace.android.gradle.plugin.util.serialization.JsonSerializer
-import io.mockk.mockk
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertTrue
-import org.junit.Before
 import org.junit.Test
 
 class NdkUploadHandshakeTest {
-
-    private lateinit var mockNetworkService: NetworkService
-    private lateinit var ndkUploadHandshakeRequest: NdkUploadHandshakeRequest
-    private lateinit var ndkUploadHandshake: NdkUploadHandshake
-
-    @Before
-    fun setUp() {
-        mockNetworkService = mockk()
-        ndkUploadHandshake = NdkUploadHandshake(
-            networkService = mockNetworkService,
-        )
-
-        ndkUploadHandshakeRequest = NdkUploadHandshakeRequest(
-            appId = APP_ID,
-            apiToken = API_TOKEN,
-            variant = VARIANT,
-            archSymbols = emptyMap(),
-        )
-    }
 
     @Test
     fun `NdkUploadHandshakeRequest serialization test - empty archs`() {

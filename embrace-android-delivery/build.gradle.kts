@@ -12,5 +12,4 @@ dependencies {
     testImplementation(project(":embrace-test-common"))
     testImplementation(project(":embrace-android-delivery-fakes"))
     testImplementation(libs.mockwebserver)
-    testImplementation(libs.mockk)
 }

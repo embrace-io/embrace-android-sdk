@@ -9,11 +9,10 @@ import io.embrace.android.gradle.plugin.instrumentation.config.MapReturnValueMet
 import io.embrace.android.gradle.plugin.instrumentation.config.StringListReturnValueMethodVisitor
 import io.embrace.android.gradle.plugin.instrumentation.config.StringReturnValueMethodVisitor
 import io.embrace.android.gradle.plugin.instrumentation.config.arch.InstrumentedConfigClass
-import io.mockk.mockk
 import org.junit.Assert.assertEquals
 import org.objectweb.asm.MethodVisitor
 
-private val nextVisitor: MethodVisitor = mockk(relaxed = true)
+private val nextVisitor: MethodVisitor = object : MethodVisitor(ASM_API_VERSION) {}
 
 fun verifyConfigMethodVisitor(
     instrumentation: InstrumentedConfigClass,

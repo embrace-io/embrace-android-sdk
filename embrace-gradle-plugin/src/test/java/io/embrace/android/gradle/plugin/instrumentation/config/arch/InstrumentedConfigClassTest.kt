@@ -6,7 +6,6 @@ import io.embrace.android.gradle.plugin.instrumentation.config.IntReturnValueMet
 import io.embrace.android.gradle.plugin.instrumentation.config.LongReturnValueMethodVisitor
 import io.embrace.android.gradle.plugin.instrumentation.config.MapReturnValueMethodVisitor
 import io.embrace.android.gradle.plugin.instrumentation.config.StringReturnValueMethodVisitor
-import io.mockk.mockk
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertSame
 import org.junit.Test
@@ -14,8 +13,8 @@ import org.objectweb.asm.MethodVisitor
 
 class InstrumentedConfigClassTest {
 
-    private val nextVisitor: MethodVisitor = mockk(relaxed = true)
     private val api = ASM_API_VERSION
+    private val nextVisitor: MethodVisitor = object : MethodVisitor(api) {}
 
     private val cfg = modelSdkConfigClass {
         boolMethod("getBool") { true }

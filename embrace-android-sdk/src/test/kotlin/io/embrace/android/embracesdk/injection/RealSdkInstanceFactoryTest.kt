@@ -201,10 +201,10 @@ internal class RealSdkInstanceFactoryTest {
     }
 
     @Test
-    fun `lifecycle observer is registered when the instance starts`() {
+    fun `lifecycle observer is registered when the instance is enabled`() {
         val instance = createInstance()
         assertFalse(lifecycleTrackerRegistered)
-        instance.start(context)
+        instance.enable(context)
         assertTrue(lifecycleTrackerRegistered)
     }
 
@@ -231,7 +231,7 @@ internal class RealSdkInstanceFactoryTest {
             ),
             okHttpClient = okHttpClient,
         )
-        instance.start(context)
+        instance.enable(context)
         val nonIoWorker = workerThreadPool.executorFor(Worker.Background.NonIoRegWorker)
         val ioWorker = workerThreadPool.executorFor(Worker.Background.IoRegWorker)
         instance.disable()

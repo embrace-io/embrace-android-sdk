@@ -13,6 +13,7 @@ import io.embrace.android.embracesdk.experiments.TrackedFeatureFlag
 import io.embrace.android.embracesdk.internal.InternalInterfaceApi
 import io.embrace.android.embracesdk.internal.NoopInternalInterfaceApi
 import io.embrace.android.embracesdk.internal.api.SdkApi
+import io.embrace.android.embracesdk.internal.api.SdkLifecycleApi
 import io.embrace.android.embracesdk.internal.api.delegate.TrackedExperimentImpl
 import io.embrace.android.embracesdk.internal.api.delegate.TrackedFeatureFlagImpl
 import io.embrace.android.embracesdk.internal.clock.Clock
@@ -33,13 +34,14 @@ import io.opentelemetry.kotlin.tracing.export.SpanProcessor
 
 /**
  * A no-op implementation of [SdkApi]. The first API call that gets dropped logs [message] along
- * with the name of the action that could not be performed.
+ * with the name of the action that could not be performed. It implements the [SdkLifecycleApi]
+ * calls too, so that it can back the public API on its own when the SDK can't be created.
  */
 internal class NoopSdkInstance(
     private val clock: Clock,
     private val errorHandler: ErrorHandler,
     private val message: String,
-) : SdkInstance, InternalInterfaceApi by NoopInternalInterfaceApi {
+) : SdkInstance, SdkApi, InternalInterfaceApi by NoopInternalInterfaceApi {
 
     companion object {
         const val SDK_NOT_INITIALIZED: String = "Embrace SDK is not initialized yet"
@@ -63,7 +65,9 @@ internal class NoopSdkInstance(
         }
     }
 
-    override fun onPostStart(buffer: BufferingSdkInstance) {}
+    override fun onTransition(buffer: BufferingSdkInstance) {}
+
+    override fun enable(context: Context) {}
 
     override fun start(context: Context) {}
 

@@ -22,8 +22,9 @@ import io.embrace.android.embracesdk.internal.utils.Provider
  *      +-------close() or start() disabled by config-----------+
  * ```
  *
- * The [SdkInstance] is created by [instanceFactory] when the SDK starts. A null instance means the SDK is disabled by
- * config.
+ * Starting means the public start call, from when it is made until it returns. During it, the [SdkInstance] is created by
+ * [instanceFactory] and then enabled. A null instance means the SDK is disabled by config. Each change of [SdkState] is a
+ * transition, which points the public API at the instance that serves calls in the new state.
  *
  * Only one attempt is made to start the SDK. A start that does not succeed closes any instance that was created without
  * deleting its persisted data, moves the SDK to [SdkState.FAILED], routes all subsequent calls to [failed] and discards
@@ -74,10 +75,7 @@ internal class SdkStateHolder(
                 }
                 when {
                     next == null -> terminate(disabled(), SdkState.DISABLED)
-                    tryStart(next, context) -> {
-                        state = SdkState.STARTED
-                        swapTarget(next)
-                    }
+                    tryEnable(next, context) -> transition(next, SdkState.STARTED)
                     else -> {
                         errorHandler.guardSdkCode(SdkErrorType.PublicApiFail) { next.close() }
                         terminate(failed(), SdkState.FAILED)
@@ -103,9 +101,9 @@ internal class SdkStateHolder(
         }
     }
 
-    private fun tryStart(next: SdkInstance, context: Context): Boolean {
+    private fun tryEnable(next: SdkInstance, context: Context): Boolean {
         try {
-            next.start(context)
+            next.enable(context)
             if (!next.isStarted) {
                 return false
             }
@@ -130,7 +128,7 @@ internal class SdkStateHolder(
         val previous = api.target
         api.target = next
         if (previous is BufferingSdkInstance) {
-            errorHandler.guardSdkCode(SdkErrorType.PublicApiFail) { next.onPostStart(previous) }
+            errorHandler.guardSdkCode(SdkErrorType.PublicApiFail) { next.onTransition(previous) }
             errorHandler.guardSdkCode(SdkErrorType.PublicApiFail) { previous.close() }
         }
     }

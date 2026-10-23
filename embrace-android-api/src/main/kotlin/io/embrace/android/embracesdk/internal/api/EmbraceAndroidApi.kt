@@ -1,6 +1,5 @@
 package io.embrace.android.embracesdk.internal.api
 
-import android.content.Context
 import io.embrace.android.embracesdk.annotation.InternalApi
 
 /**
@@ -11,18 +10,6 @@ import io.embrace.android.embracesdk.annotation.InternalApi
  */
 @InternalApi
 public interface EmbraceAndroidApi {
-
-    /**
-     * Starts instrumentation of the Android application using the Embrace SDK. This should be
-     * called during creation of the application, as early as possible.
-     *
-     * See [Embrace Docs](https://embrace.io/docs/android/) for
-     * integration instructions. For compatibility with other networking SDKs such as Akamai,
-     * the Embrace SDK must be initialized after any other SDK.
-     *
-     * @param context an instance of the application context
-     */
-    public fun start(context: Context)
 
     /**
      * Records that a view 'started'. You should call this when your app starts displaying an
@@ -53,21 +40,6 @@ public interface EmbraceAndroidApi {
      * @param name the name of the view to log
      */
     public fun endView(name: String): Boolean
-
-    /**
-     * If a user wishes to opt-out of exporting data to Embrace, you should:
-     *
-     * (1) Persist this user preference somewhere that can be readily accessed between processes
-     * (2) On the next process launch, read this preference & only initialize the Embrace SDK if you wish to capture data
-     * (3) Call this function if the SDK has already been initialized.
-     *
-     * When the SDK has already been initialized this function will prevent the SDK from exporting any further data
-     * via HTTP requests or OTel exports, and will delete any persisted data that has not yet been exported.
-     *
-     * The SDK makes a best effort attempt. Some data capture/handlers may remain active until the next process launch
-     * due to technical reasons, but any captured data will not be exported.
-     */
-    public fun disable()
 
     /**
      * Notify the Embrace SDK that the application is starting to initialize. This is typically called at the beginning of the

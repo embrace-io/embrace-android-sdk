@@ -172,7 +172,7 @@ internal class RealSdkInstance(
         NoopOpenTelemetry
     }
 
-    override fun onPostStart(buffer: BufferingSdkInstance) {
+    override fun onTransition(buffer: BufferingSdkInstance) {
         buffer.drainCompletedSpans(tracingApi)
         buffer.drainExperimentCalls(experimentApiDelegate, experimentApiDelegate::replay)
         // the buffered value was recorded first, so takes precedence
@@ -186,7 +186,7 @@ internal class RealSdkInstance(
         )
     }
 
-    override fun start(context: Context) {
+    override fun enable(context: Context) {
         try {
             EmbTrace.trace(sectionName = "process-state-tracker-register", recordDuration = true) {
                 processStateTracker.register()

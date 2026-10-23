@@ -2,6 +2,7 @@ package io.embrace.android.embracesdk.internal.otel.impl
 
 import io.embrace.android.embracesdk.fakes.FakeClock
 import io.embrace.android.embracesdk.fakes.FakeEmbraceSdkSpan
+import io.embrace.android.embracesdk.fakes.FakeErrorHandler
 import io.embrace.android.embracesdk.fakes.FakeInternalTelemetryService
 import io.embrace.android.embracesdk.fakes.FakeOtelKotlinClock
 import io.embrace.android.embracesdk.fakes.FakeSpanProcessor
@@ -174,6 +175,7 @@ internal class EmbSpanTest(
             spanRepository = SpanRepository(),
             dataValidator = dataValidator,
             telemetryService = FakeInternalTelemetryService(),
+            errorHandler = FakeErrorHandler(),
         ).create(
             OtelSpanStartArgs(
                 name = "test-span",

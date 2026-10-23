@@ -1,6 +1,7 @@
 package io.embrace.android.embracesdk.internal.otel.impl
 
 import io.embrace.android.embracesdk.fakes.FakeClock
+import io.embrace.android.embracesdk.fakes.FakeErrorHandler
 import io.embrace.android.embracesdk.fakes.FakeInternalTelemetryService
 import io.embrace.android.embracesdk.fakes.FakeOtelKotlinClock
 import io.embrace.android.embracesdk.fakes.FakeSpanProcessor
@@ -95,6 +96,7 @@ internal class EmbSpanChangeNotificationTest(
             spanRepository = spanRepository,
             dataValidator = dataValidator,
             telemetryService = telemetryService,
+            errorHandler = FakeErrorHandler(),
         )
         fakeClock.tick(100)
         linkTarget = checkNotNull(createStartedSpan().spanContext)
@@ -173,7 +175,7 @@ internal class EmbSpanChangeNotificationTest(
         )
 
         observed.clear()
-        EmbTracerProvider(otelInstance, { spanService }, otelClock)
+        EmbTracerProvider(otelInstance, { spanService }, otelClock, FakeErrorHandler())
             .getTracer("test-tracer")
             .startSpan("traced-span") {
                 setStringAttribute("first", "1")

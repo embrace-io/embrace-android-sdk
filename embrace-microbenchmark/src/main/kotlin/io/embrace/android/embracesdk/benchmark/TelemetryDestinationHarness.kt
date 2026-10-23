@@ -93,6 +93,7 @@ internal class TelemetryDestinationHarness(
         stopCallback = currentSessionPartSpan::spanStopCallback,
         redactionFunction = createRedactionFunction(SensitiveKeysBehavior(configService.config.sensitiveKeys)),
         telemetryService = initServices.telemetryService,
+        errorHandler = initServices.errorHandler,
     )
 
     val spanService: SpanService by lazy {
@@ -128,6 +129,7 @@ internal class TelemetryDestinationHarness(
             spanRepository = spanRepository,
             dataValidator = validator,
             telemetryService = NoopInternalTelemetryService,
+            errorHandler = initServices.errorHandler,
         )
         return SpanServiceImpl(
             spanRepository = spanRepository,

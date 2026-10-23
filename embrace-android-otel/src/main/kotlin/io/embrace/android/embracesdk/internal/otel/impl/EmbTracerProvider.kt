@@ -1,5 +1,6 @@
 package io.embrace.android.embracesdk.internal.otel.impl
 
+import io.embrace.android.embracesdk.internal.logging.ErrorHandler
 import io.embrace.android.embracesdk.internal.otel.sdk.ApiKey
 import io.embrace.android.embracesdk.internal.otel.spans.SpanService
 import io.embrace.android.embracesdk.internal.utils.Provider
@@ -17,6 +18,7 @@ class EmbTracerProvider(
     private val impl: OpenTelemetry,
     private val spanServiceProvider: Provider<SpanService>,
     private val clock: Clock,
+    private val errorHandler: ErrorHandler,
 ) : TracerProvider {
 
     private val tracers = ConcurrentHashMap<ApiKey, Tracer>()
@@ -53,6 +55,7 @@ class EmbTracerProvider(
             spanService = spanServiceProvider(),
             clock = clock,
             openTelemetry = impl,
+            errorHandler = errorHandler,
         )
         tracers[key] = tracer
         return tracer

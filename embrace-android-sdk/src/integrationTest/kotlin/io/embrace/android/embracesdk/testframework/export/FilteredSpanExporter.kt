@@ -1,7 +1,7 @@
 package io.embrace.android.embracesdk.testframework.export
 
-import io.embrace.android.embracesdk.assertions.returnIfConditionMet
 import io.embrace.android.embracesdk.internal.arch.schema.EmbType
+import io.embrace.android.embracesdk.testframework.ChangeSignal
 import io.opentelemetry.kotlin.aliases.OtelJavaCompletableResultCode
 import io.opentelemetry.kotlin.aliases.OtelJavaSpanData
 import io.opentelemetry.kotlin.aliases.OtelJavaSpanExporter
@@ -14,9 +14,11 @@ import java.util.concurrent.CopyOnWriteArrayList
 internal class FilteredSpanExporter : OtelJavaSpanExporter {
 
     private val spanData = CopyOnWriteArrayList<OtelJavaSpanData>()
+    private val exported = ChangeSignal()
 
     override fun export(spans: MutableCollection<OtelJavaSpanData>): OtelJavaCompletableResultCode {
         spanData.addAll(spans)
+        exported.notifyChanged()
         return OtelJavaCompletableResultCode.ofSuccess()
     }
 
@@ -30,9 +32,8 @@ internal class FilteredSpanExporter : OtelJavaSpanExporter {
 
     fun awaitSpans(expectedCount: Int, filter: (OtelJavaSpanData) -> Boolean): List<OtelJavaSpanData> {
         val supplier = { spanData.filter(filter) }
-        return returnIfConditionMet(
-            desiredValueSupplier = supplier,
-            dataProvider = supplier,
+        return exported.await(
+            supplier = supplier,
             condition = { data ->
                 data.size == expectedCount
             },

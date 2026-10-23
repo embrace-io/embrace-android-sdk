@@ -10,6 +10,7 @@ import io.embrace.android.embracesdk.internal.payload.LogPayload
 import io.embrace.android.embracesdk.internal.payload.SessionPartPayload
 import io.embrace.android.embracesdk.internal.otel.sdk.findAttributeValue
 import io.embrace.android.embracesdk.internal.utils.threadLocal
+import io.embrace.android.embracesdk.testframework.ChangeSignal
 import io.embrace.android.embracesdk.assertions.getLastLog
 import io.opentelemetry.kotlin.semconv.LogAttributes
 import java.util.concurrent.CopyOnWriteArrayList
@@ -40,6 +41,11 @@ internal class FakeApiServer(
     private val configRequests = CopyOnWriteArrayList<String>()
     private val configRequestEtags = CopyOnWriteArrayList<String?>()
     private val payloadTypesHeaders = CopyOnWriteArrayList<String>()
+
+    /**
+     * Notified whenever the server records a session, log, attachment or config request.
+     */
+    val requestRecorded = ChangeSignal()
 
     /**
      * Returns a list of session envelopes in the order in which the server received them.
@@ -108,6 +114,7 @@ internal class FakeApiServer(
     private fun handleSessionRequest(endpoint: Endpoint, envelope: Envelope<*>) {
         val obj = envelope as Envelope<SessionPartPayload>
         sessionRequests.add(obj)
+        requestRecorded.notifyChanged()
         deliveryTracer.onServerCompletedRequest(endpoint.name, obj.getUserSessionId())
     }
 
@@ -115,6 +122,7 @@ internal class FakeApiServer(
     private fun handleLogRequest(endpoint: Endpoint, envelope: Envelope<*>) {
         val obj = envelope as Envelope<LogPayload>
         logRequests.add(obj)
+        requestRecorded.notifyChanged()
         deliveryTracer.onServerCompletedRequest(
             endpoint.name,
             obj.getLastLog().attributes?.findAttributeValue(LogAttributes.LOG_RECORD_UID) ?: ""
@@ -126,6 +134,7 @@ internal class FakeApiServer(
             MultipartFormReader().read(request).let { parts ->
                 attachments.add(parts)
             }
+            requestRecorded.notifyChanged()
             return MockResponse().setResponseCode(200)
         } catch (exc: Throwable) {
             throw IllegalStateException("Failed to handle attachment request", exc)
@@ -135,6 +144,7 @@ internal class FakeApiServer(
     private fun handleConfigRequest(request: RecordedRequest): MockResponse {
         configRequestEtags.add(request.getHeader("If-None-Match"))
         configRequests.add(request.requestUrl?.toUrl()?.query)
+        requestRecorded.notifyChanged()
 
         // the config is unchanged since the SDK last fetched it
         if (request.getHeader("If-None-Match") == configEtag) {

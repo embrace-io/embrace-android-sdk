@@ -7,7 +7,6 @@ import io.embrace.android.embracesdk.assertions.assertMatches
 import io.embrace.android.embracesdk.assertions.findSessionPartSpan
 import io.embrace.android.embracesdk.assertions.getSessionPartId
 import io.embrace.android.embracesdk.assertions.getUserSessionId
-import io.embrace.android.embracesdk.assertions.returnIfConditionMet
 import io.embrace.android.embracesdk.assertions.waitUntilConditionMet
 import io.embrace.android.embracesdk.internal.arch.schema.EmbType
 import io.embrace.android.embracesdk.internal.arch.state.ProcessState
@@ -362,7 +361,7 @@ internal class EmbracePayloadAssertionInterface(
     /**
      * Retrieves a payload that was stored in the delivery service.
      */
-    private inline fun <reified T> retrievePayload(
+    private fun <T> retrievePayload(
         expectedSize: Int?,
         waitTimeMs: Int = WAIT_TIME_MS,
         supplier: () -> List<T>,
@@ -370,11 +369,9 @@ internal class EmbracePayloadAssertionInterface(
         return when (expectedSize) {
             null -> supplier()
             else ->
-                returnIfConditionMet(
+                checkNotNull(apiServer).requestRecorded.await(
                     waitTimeMs = waitTimeMs,
-                    checkIntervalMs = 1,
-                    desiredValueSupplier = supplier,
-                    dataProvider = supplier,
+                    supplier = supplier,
                     condition = { data ->
                         data.size == expectedSize
                     },

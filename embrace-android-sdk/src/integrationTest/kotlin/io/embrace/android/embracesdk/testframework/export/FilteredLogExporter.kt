@@ -1,16 +1,19 @@
 package io.embrace.android.embracesdk.testframework.export
 
-import io.embrace.android.embracesdk.assertions.returnIfConditionMet
+import io.embrace.android.embracesdk.testframework.ChangeSignal
 import io.opentelemetry.kotlin.aliases.OtelJavaCompletableResultCode
 import io.opentelemetry.kotlin.aliases.OtelJavaLogRecordData
 import io.opentelemetry.kotlin.aliases.OtelJavaLogRecordExporter
+import java.util.concurrent.CopyOnWriteArrayList
 
 internal class FilteredLogExporter: OtelJavaLogRecordExporter {
 
-    private val logData = mutableListOf<OtelJavaLogRecordData>()
+    private val logData = CopyOnWriteArrayList<OtelJavaLogRecordData>()
+    private val exported = ChangeSignal()
 
     override fun export(logs: MutableCollection<OtelJavaLogRecordData>): OtelJavaCompletableResultCode {
         logData.addAll(logs)
+        exported.notifyChanged()
         return OtelJavaCompletableResultCode.ofSuccess()
     }
 
@@ -24,9 +27,8 @@ internal class FilteredLogExporter: OtelJavaLogRecordExporter {
 
     fun awaitLogs(expectedCount: Int, filter: (OtelJavaLogRecordData) -> Boolean): List<OtelJavaLogRecordData> {
         val supplier = { logData.filter(filter) }
-        return returnIfConditionMet(
-            desiredValueSupplier = supplier,
-            dataProvider = supplier,
+        return exported.await(
+            supplier = supplier,
             condition = { data ->
                 data.size == expectedCount
             },

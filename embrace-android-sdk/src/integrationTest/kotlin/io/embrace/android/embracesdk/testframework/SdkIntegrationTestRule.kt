@@ -34,6 +34,7 @@ import okhttp3.Protocol
 import okhttp3.mockwebserver.MockWebServer
 import org.junit.Assert.assertEquals
 import org.junit.rules.ExternalResource
+import org.robolectric.Shadows.shadowOf
 import java.io.File
 
 /**
@@ -248,6 +249,18 @@ internal class SdkIntegrationTestRule(
     override fun before() {
         Thread.setDefaultUncaughtExceptionHandler(null)
         EmbTrace.durationTracker.reset()
+        useLightweightActivityTheme()
+    }
+
+    /**
+     * Activities get the default Material theme otherwise, so every Activity.onCreate inflates a full window decor
+     * including an action bar, which is about a quarter of the CPU time of the suite. A framework theme
+     * without an action bar or activity transitions makes each simulated activity about 4x cheaper.
+     */
+    private fun useLightweightActivityTheme() {
+        val ctx = ApplicationProvider.getApplicationContext<Context>()
+        val packageInfo = shadowOf(ctx.packageManager).getInternalMutablePackageInfo(ctx.packageName)
+        packageInfo.applicationInfo?.theme = android.R.style.Theme_NoTitleBar
     }
 
     /**

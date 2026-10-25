@@ -57,7 +57,6 @@ dependencies {
     testImplementation(libs.opentelemetry.sdk)
     testImplementation(libs.lifecycle.runtime)
     testImplementation(libs.lifecycle.testing)
-    testImplementation(libs.robolectric)
     testImplementation(libs.mockwebserver)
     testImplementation(kotlin("reflect"))
 }

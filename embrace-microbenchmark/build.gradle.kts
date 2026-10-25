@@ -42,7 +42,7 @@ kotlin {
 }
 
 // Linting the release variant runs lintAnalyzeRelease on every library it depends on, so keep lint
-// out of `check` to keep local builds fast. CI runs it by name (see ci-gradle.yml).
+// out of `check` to keep local builds fast. CI runs it via the root `ciBuild` task.
 tasks.named("check") {
     setDependsOn(dependsOn.filterNot { it is TaskProvider<*> && it.name == "lint" })
 }

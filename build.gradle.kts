@@ -13,23 +13,23 @@ group = "io.embrace"
 version = project.version
 
 // Kover instruments every class in every test JVM, so it is only applied on CI where coverage is reported.
-if (providers.environmentVariable("CI").isPresent) {
+val koverEnabled = providers.environmentVariable("CI").isPresent
+val koverIgnoreList = listOf(
+    "embrace-lint",
+    "embrace-perfetto-analysis",
+    "embrace-microbenchmark",
+    "embrace-macrobenchmark",
+    "embrace-macrobenchmark-app",
+    "embrace-benchmark-common",
+)
+
+fun Project.hasCoverage() = !name.contains("-test") && !name.contains("-fakes") && !koverIgnoreList.contains(name)
+
+if (koverEnabled) {
     apply(plugin = "org.jetbrains.kotlinx.kover")
     configure<KoverProjectExtension> {
         merge {
-            subprojects { project ->
-                val ignoreList = listOf(
-                    "embrace-lint",
-                    "embrace-perfetto-analysis",
-                    "embrace-microbenchmark",
-                    "embrace-macrobenchmark",
-                    "embrace-macrobenchmark-app",
-                    "embrace-benchmark-common",
-                )
-                !project.name.contains("-test") &&
-                    !project.name.contains("-fakes") &&
-                    !ignoreList.contains(project.name)
-            }
+            subprojects { project -> project.hasCoverage() }
         }
         reports {
             filters {
@@ -48,6 +48,23 @@ tasks.register("verify") {
     val pluginIntegrationTests = ":embrace-gradle-plugin-integration-tests"
     dependsOn(subprojects.filter { it.path != pluginIntegrationTests }.map { "${it.path}:check" })
     dependsOn("$pluginIntegrationTests:detekt", "$pluginIntegrationTests:validatePlugins", "$pluginIntegrationTests:sanityTest")
+}
+
+tasks.register("ciBuild") {
+    group = "verification"
+    description = "Runs everything the CI build job checks. CI adds the -x exclusions and -Pembrace.coverage."
+    dependsOn(":build", subprojects.map { "${it.path}:build" })
+    if (koverEnabled) {
+        dependsOn(":koverXmlReport")
+        dependsOn(subprojects.filter { it.hasCoverage() }.map { "${it.path}:koverXmlReport" })
+    }
+    dependsOn(
+        ":embrace-microbenchmark:compileReleaseAndroidTestKotlin",
+        ":embrace-macrobenchmark:compileBenchmarkKotlin",
+        ":embrace-macrobenchmark-app:compileBenchmarkKotlin",
+    )
+    // These apps keep lint out of `check` because it runs lintAnalyzeRelease on every library.
+    dependsOn(":embrace-minified-test-app:lint", ":embrace-microbenchmark:lint", ":embrace-macrobenchmark-app:lint")
 }
 
 dependencies {

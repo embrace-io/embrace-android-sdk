@@ -20,6 +20,7 @@ import io.embrace.android.embracesdk.internal.otel.sdk.findAttributeValue
 import io.embrace.android.embracesdk.internal.payload.Log
 import io.embrace.android.embracesdk.semconv.EmbAeiAttributes
 import io.embrace.android.embracesdk.semconv.EmbAndroidAttributes
+import io.embrace.android.embracesdk.testframework.InMemoryPrefsContext
 import io.embrace.android.embracesdk.testframework.OtelSdkMode
 import io.embrace.android.embracesdk.testframework.SdkIntegrationTestRule
 import org.junit.Assert.assertEquals
@@ -322,13 +323,13 @@ internal class AeiFeatureTest(
 
     @Suppress("DEPRECATION")
     private fun retrieveAeiHistory(): Set<String> {
-        return PreferenceManager.getDefaultSharedPreferences(ApplicationProvider.getApplicationContext())
+        return PreferenceManager.getDefaultSharedPreferences(InMemoryPrefsContext(ApplicationProvider.getApplicationContext()))
             .getStringSet("io.embrace.aeiHashCode", null) ?: emptySet()
     }
 
     @Suppress("DEPRECATION")
     private fun alterAeiHistory(history: Set<String>) {
-        PreferenceManager.getDefaultSharedPreferences(ApplicationProvider.getApplicationContext())
+        PreferenceManager.getDefaultSharedPreferences(InMemoryPrefsContext(ApplicationProvider.getApplicationContext()))
             .edit()
             .putStringSet("io.embrace.aeiHashCode", history)
             .commit()

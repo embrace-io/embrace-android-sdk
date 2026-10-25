@@ -47,7 +47,7 @@ import java.io.File
  * 1) Core: uses [fakeContext] to fake Android system objects like [Application], [Context],
  * and resources that are normally not available in a JUnit test environment. Also, a [FakeClock] is used
  * so we can control time to control timing and execution manually rather than waiting for normal
- * time to pass.
+ * time to pass. `SharedPreferences` are held in memory by [InMemorySharedPreferences] rather than written to disk.
  *
  * 2) Essential services: these use a [FakeConfigService] to allow the appropriate feature flags be set to suit
  * the test case. The lifecycle tracker and network connectivity service are replaced via [SdkOverrides], and

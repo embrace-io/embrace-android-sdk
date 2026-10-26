@@ -11,6 +11,7 @@ import io.embrace.android.embracesdk.internal.otel.spans.SpanService
 import io.embrace.android.embracesdk.internal.otel.spans.SpanTerminationMode
 import io.embrace.android.embracesdk.internal.otel.spans.createContext
 import io.embrace.android.embracesdk.spans.EmbraceSpan
+import io.opentelemetry.kotlin.tracing.SpanContext
 
 class FakeSpanService : SpanService {
 
@@ -21,6 +22,7 @@ class FakeSpanService : SpanService {
     override fun createSpan(
         name: String,
         parent: EmbraceSpan?,
+        parentSpanContext: SpanContext?,
         type: EmbType,
         internal: Boolean,
         private: Boolean,
@@ -28,7 +30,9 @@ class FakeSpanService : SpanService {
     ): EmbraceSdkSpan = FakeEmbraceSdkSpan(
         name = name,
         parentContext = (parent as? EmbraceSdkSpan)?.createContext(fakeOpenTelemetry(OtelSdkMode.REGULAR))
-            ?: fakeOpenTelemetry(OtelSdkMode.REGULAR).context.root(),
+            ?: fakeOpenTelemetry(OtelSdkMode.REGULAR).run {
+                parentSpanContext?.let { context.root().storeSpan(span.fromSpanContext(it)) } ?: context.root()
+            },
         type = type,
         internal = internal,
         private = private,
@@ -61,10 +65,12 @@ class FakeSpanService : SpanService {
         internal: Boolean,
         private: Boolean,
         terminationMode: SpanTerminationMode,
+        parentSpanContext: SpanContext?,
     ): EmbraceSdkSpan {
         val newSpan = createSpan(
             name = name,
             parent = parent,
+            parentSpanContext = parentSpanContext,
             type = type,
             internal = internal,
             private = private,

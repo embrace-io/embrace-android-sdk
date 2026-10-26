@@ -461,7 +461,9 @@ private class EmbraceSpanImpl(
             io.embrace.android.embracesdk.internal.payload.Span(
                 traceId = traceId,
                 spanId = spanId,
-                parentSpanId = parent?.spanId ?: OtelIds.INVALID_SPAN_ID,
+                parentSpanId = parent?.spanId
+                    ?: parentContext.extractSpan().spanContext.takeIf { it.isValid }?.spanId
+                    ?: OtelIds.INVALID_SPAN_ID,
                 name = name(),
                 startTimeNanos = spanStartTimeMs.takeIf { it > UNSET_TIME }?.millisToNanos(),
                 endTimeNanos = spanEndTimeMs.takeIf { it > UNSET_TIME }?.millisToNanos(),

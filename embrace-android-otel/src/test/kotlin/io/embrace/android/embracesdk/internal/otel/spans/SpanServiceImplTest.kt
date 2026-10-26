@@ -45,6 +45,7 @@ import io.embrace.android.embracesdk.internal.payload.Span
 import io.embrace.android.embracesdk.spans.EmbraceSpan
 import io.embrace.android.embracesdk.spans.EmbraceSpanEvent
 import io.embrace.android.embracesdk.spans.ErrorCode
+import io.opentelemetry.kotlin.tracing.createSpanContext
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNotEquals
@@ -168,6 +169,30 @@ internal class SpanServiceImplTest(
             assertEquals(parentSpan.traceId, traceId)
             assertNotPrivateSpan()
         }
+    }
+
+    @Test
+    fun `start a span with a remote parent`() {
+        val span = spansService.startSpan(name = "remote-child", parentSpanContext = remoteParent())
+        assertTrue(span.isRecording)
+        assertNull(span.parent)
+        assertEquals(REMOTE_TRACE_ID, span.traceId)
+        assertEquals(REMOTE_SPAN_ID, checkNotNull(span.snapshot()).parentSpanId)
+
+        assertTrue(span.stop())
+        with(verifyAndReturnSoleCompletedSpan("emb-remote-child")) {
+            assertEquals(REMOTE_TRACE_ID, traceId)
+            assertEquals(REMOTE_SPAN_ID, parentSpanId)
+        }
+    }
+
+    @Test
+    fun `embrace parent takes precedence over a remote parent`() {
+        val parent = spansService.startSpan(name = "parent")
+        val child = spansService.startSpan(name = "child", parent = parent, parentSpanContext = remoteParent())
+        assertEquals(parent.traceId, child.traceId)
+        assertEquals(parent.spanId, checkNotNull(child.parent).spanId)
+        assertEquals(parent.spanId, checkNotNull(child.snapshot()).parentSpanId)
     }
 
     @Test
@@ -736,6 +761,11 @@ internal class SpanServiceImplTest(
         )
     }
 
+    private fun remoteParent() = createSpanContext(REMOTE_TRACE_ID, REMOTE_SPAN_ID) {
+        isRemote = true
+        isSampled = true
+    }
+
     private fun verifyAndReturnSoleCompletedSpan(name: String): Span {
         val currentSpans = spanRepository.completedOtelSpans()
         assertEquals(1, currentSpans.size)
@@ -749,6 +779,9 @@ internal class SpanServiceImplTest(
     }
 
     companion object {
+        private const val REMOTE_TRACE_ID = "0af7651916cd43dd8448eb211c80319c"
+        private const val REMOTE_SPAN_ID = "b7ad6b7169203331"
+
         @JvmStatic
         @Parameterized.Parameters(name = "{0}")
         fun modes(): List<Array<Any>> = OtelSdkMode.parameters()

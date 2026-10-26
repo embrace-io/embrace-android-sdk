@@ -265,6 +265,72 @@ internal class TelemetryDestinationImplTest {
     }
 
     @Test
+    fun `span started with an unknown parent and its trace id has a remote parent`() {
+        impl.startSpanCapture(
+            schemaType = SchemaType.NetworkRequest(emptyMap()),
+            startTimeMs = 5,
+            parentSpanId = REMOTE_SPAN_ID,
+            parentTraceId = REMOTE_TRACE_ID,
+        )
+
+        val span = spanService.createdSpans.single()
+        assertNull(span.parent)
+        with(span.parentContext.extractSpan().spanContext) {
+            assertEquals(REMOTE_TRACE_ID, traceId)
+            assertEquals(REMOTE_SPAN_ID, spanId)
+            assertTrue(isRemote)
+            assertTrue(traceFlags.isSampled)
+        }
+    }
+
+    @Test
+    fun `known parent with a different trace id is used as a remote parent`() {
+        val parentSpan = FakeEmbraceSdkSpan.started()
+        spanService.addKnownSpan(parentSpan)
+        val parentSpanId = checkNotNull(parentSpan.spanId)
+
+        impl.startSpanCapture(
+            schemaType = SchemaType.NetworkRequest(emptyMap()),
+            startTimeMs = 5,
+            parentSpanId = parentSpanId,
+            parentTraceId = REMOTE_TRACE_ID,
+        )
+
+        val span = spanService.createdSpans.single()
+        assertNull(span.parent)
+        assertEquals(REMOTE_TRACE_ID, span.parentContext.extractSpan().spanContext.traceId)
+    }
+
+    @Test
+    fun `known parent with a matching trace id is used as the embrace parent`() {
+        val parentSpan = FakeEmbraceSdkSpan.started()
+        spanService.addKnownSpan(parentSpan)
+
+        impl.startSpanCapture(
+            schemaType = SchemaType.NetworkRequest(emptyMap()),
+            startTimeMs = 5,
+            parentSpanId = checkNotNull(parentSpan.spanId),
+            parentTraceId = checkNotNull(parentSpan.traceId),
+        )
+
+        assertEquals(parentSpan, spanService.createdSpans.single().parent)
+    }
+
+    @Test
+    fun `invalid remote parent ids start a root span`() {
+        impl.startSpanCapture(
+            schemaType = SchemaType.NetworkRequest(emptyMap()),
+            startTimeMs = 5,
+            parentSpanId = REMOTE_SPAN_ID,
+            parentTraceId = "00000000000000000000000000000000",
+        )
+
+        val span = spanService.createdSpans.single()
+        assertNull(span.parent)
+        assertFalse(span.parentContext.extractSpan().spanContext.isValid)
+    }
+
+    @Test
     fun `test record successful span`() {
         val name = "success-span"
         val clock = FakeClock()
@@ -397,5 +463,10 @@ internal class TelemetryDestinationImplTest {
     private fun verifyAndResetSessionUpdate() {
         assertTrue(sessionDataUpdated)
         sessionDataUpdated = false
+    }
+
+    private companion object {
+        const val REMOTE_TRACE_ID = "0af7651916cd43dd8448eb211c80319c"
+        const val REMOTE_SPAN_ID = "b7ad6b7169203331"
     }
 }

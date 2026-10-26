@@ -4,6 +4,7 @@ import io.embrace.android.embracesdk.internal.arch.datasource.SpanEvent
 import io.embrace.android.embracesdk.internal.arch.schema.EmbType
 import io.embrace.android.embracesdk.internal.arch.schema.ErrorCodeAttribute
 import io.embrace.android.embracesdk.spans.EmbraceSpan
+import io.opentelemetry.kotlin.tracing.SpanContext
 
 /**
  * Internal service that supports the creation and recording of [EmbraceSpan]
@@ -12,11 +13,13 @@ interface SpanService {
 
     /**
      * Return an [EmbraceSpan] instance that can be used to record spans. Returns noop instance if at least one input parameter
-     * is not valid or if the SDK or session is not in a state where a new span can be recorded.
+     * is not valid or if the SDK or session is not in a state where a new span can be recorded. [parentSpanContext] is used as
+     * the parent when [parent] is null.
      */
     fun createSpan(
         name: String,
         parent: EmbraceSpan? = null,
+        parentSpanContext: SpanContext? = null,
         type: EmbType = EmbType.Performance.Default,
         internal: Boolean = true,
         private: Boolean = false,
@@ -40,6 +43,7 @@ interface SpanService {
         internal: Boolean = true,
         private: Boolean = false,
         terminationMode: SpanTerminationMode = SpanTerminationMode.None,
+        parentSpanContext: SpanContext? = null,
     ): EmbraceSdkSpan
 
     /**

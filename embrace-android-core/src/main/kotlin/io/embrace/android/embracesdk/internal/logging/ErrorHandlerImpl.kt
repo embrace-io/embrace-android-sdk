@@ -73,14 +73,14 @@ class ErrorHandlerImpl(
 
                     // Once the handler is recording, record the error directly rather than buffering it
                     is HandlerState.Recording -> {
-                        state.record(throwable, timestampMs)
+                        state.record(type, throwable, timestampMs)
                         return
                     }
 
                     // Still buffering: push the error on top of what is buffered so far
                     is HandlerState.Buffering -> {
                         beforeBuffering()
-                        if (handlerState.compareAndSet(state, HandlerState.Buffered(timestampMs, throwable, state))) {
+                        if (handlerState.compareAndSet(state, HandlerState.Buffered(type, timestampMs, throwable, state))) {
                             return
                         }
                     }
@@ -126,7 +126,7 @@ class ErrorHandlerImpl(
     private fun recordBufferedErrors(newest: HandlerState.Buffered, sink: ErrorRecorder) {
         generateSequence(newest) { it.previous as? HandlerState.Buffered }.toList().asReversed().forEach { error ->
             try {
-                sink(error.throwable, error.timestampMs)
+                sink(error.type, error.throwable, error.timestampMs)
             } catch (_: Throwable) {
                 // A failure to record one error doesn't stop the rest from being recorded
             }
@@ -148,16 +148,26 @@ class ErrorHandlerImpl(
         object Empty : Buffering()
 
         /**
-         * Buffering: [timestampMs] and [throwable] are the newest buffered error, and [previous] is what was buffered before it.
+         * Buffering: [type], [timestampMs] and [throwable] are the newest buffered error, and [previous] is what was buffered
+         * before it.
          */
-        class Buffered(val timestampMs: Long, val throwable: Throwable, val previous: Buffering) : Buffering()
+        class Buffered(
+            val type: SdkErrorType,
+            val timestampMs: Long,
+            val throwable: Throwable,
+            val previous: Buffering,
+        ) : Buffering()
 
         /**
          * The handler is ready to record errors directly with [recorder], the one the drain was invoked with, without going
          * through the buffer.
          */
         class Recording(private val recorder: ErrorRecorder) : HandlerState() {
-            fun record(throwable: Throwable, timestampMs: Long) = recorder(throwable, timestampMs)
+            fun record(
+                type: SdkErrorType,
+                throwable: Throwable,
+                timestampMs: Long,
+            ) = recorder(type, throwable, timestampMs)
         }
 
         /**

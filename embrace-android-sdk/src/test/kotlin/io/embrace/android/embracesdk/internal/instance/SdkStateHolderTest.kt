@@ -394,7 +394,7 @@ internal class SdkStateHolderTest {
         val holder = createHolder(FakeInstance(calls))
         holder.start(context)
         val errors = mutableListOf<Throwable>()
-        bufferedErrorHandler.drain { throwable, _ -> errors += throwable }
+        bufferedErrorHandler.drain { _, throwable, _ -> errors += throwable }
         holder.close()
         trackError()
         assertTrue(errors.isEmpty())
@@ -404,7 +404,7 @@ internal class SdkStateHolderTest {
     fun `SDK error handler is closed when the sdk fails to start`() {
         val holder = createHolder(FakeInstance(calls, startSucceeds = false))
         val errors = mutableListOf<Throwable>()
-        bufferedErrorHandler.drain { throwable, _ -> errors += throwable }
+        bufferedErrorHandler.drain { _, throwable, _ -> errors += throwable }
         holder.start(context)
         assertEquals(SdkState.FAILED, holder.state)
         trackError()
@@ -591,7 +591,7 @@ internal class SdkStateHolderTest {
 
     private fun assertErrorHandlerClosedOnStart(holder: SdkStateHolder, expected: SdkState) {
         val errors = mutableListOf<Throwable>()
-        bufferedErrorHandler.drain { throwable, _ -> errors += throwable }
+        bufferedErrorHandler.drain { _, throwable, _ -> errors += throwable }
         holder.start(context)
         assertEquals(expected, holder.state)
         errors.clear()

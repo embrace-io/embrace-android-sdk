@@ -314,8 +314,9 @@ internal class PayloadResurrectionServiceImpl(
     }
 
     /**
-     * Opens the cached payload for reading, or returns null if it is not on disk or does not hold
-     * gzipped data. Throws [IOException] if the file is larger than [maxPayloadBytes].
+     * Opens the cached payload for reading, or returns null if it is not on disk. Throws [IOException] if
+     * the file is larger than [maxPayloadBytes] or does not hold a valid gzip header, so that callers track
+     * the corrupt payload as [SdkErrorType.PayloadResurrectionPayloadFail].
      */
     private fun StoredTelemetryMetadata.loadDecompressedPayload(): InputStream? {
         if (cacheStorageService.payloadSizeBytes(this) > maxPayloadBytes) {
@@ -324,9 +325,9 @@ internal class PayloadResurrectionServiceImpl(
         return cacheStorageService.loadPayloadAsStream(this)?.let {
             try {
                 GZIPInputStream(it)
-            } catch (_: IOException) {
+            } catch (exc: IOException) {
                 it.close()
-                null
+                throw exc
             }
         }
     }

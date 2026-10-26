@@ -147,7 +147,7 @@ internal class SessionOrchestratorTest {
         val kvStore = FakeKeyValueStore()
         createOrchestrator(
             startingProcessState = ProcessState.FOREGROUND,
-            ordinalStoreOverride = OrdinalStoreImpl(kvStore),
+            ordinalStoreOverride = OrdinalStoreImpl(kvStore, FakeErrorHandler()),
             metadataStoreOverride = UserSessionMetadataStore(kvStore),
             keyValueStoreOverride = kvStore,
         )

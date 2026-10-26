@@ -1,6 +1,8 @@
 package io.embrace.android.embracesdk.internal.store
 
+import io.embrace.android.embracesdk.fakes.FakeErrorHandler
 import io.embrace.android.embracesdk.fakes.FakeKeyValueStore
+import io.embrace.android.embracesdk.internal.logging.SdkErrorType
 import org.junit.Assert.assertEquals
 import org.junit.Before
 import org.junit.Test
@@ -13,7 +15,7 @@ class OrdinalStoreImplTest {
     @Before
     fun setUp() {
         kvStore = FakeKeyValueStore()
-        store = OrdinalStoreImpl(kvStore)
+        store = OrdinalStoreImpl(kvStore, FakeErrorHandler())
     }
 
     @Test
@@ -139,10 +141,23 @@ class OrdinalStoreImplTest {
     }
 
     @Test
-    fun `a failure in the underlying store returns -1`() {
-        val throwingStore = OrdinalStoreImpl(ThrowingKeyValueStore())
+    fun `a failure in the underlying store returns -1 and is tracked`() {
+        val errorHandler = FakeErrorHandler(throwOnSdkError = false)
+        val throwingStore = OrdinalStoreImpl(ThrowingKeyValueStore(), errorHandler)
         assertEquals(-1, throwingStore.incrementAndGet(Ordinal.SESSION))
         assertEquals(-1, throwingStore.incrementAndGet(Ordinal.APP_VERSION_STARTUP, "1.0.0"))
+        assertEquals(
+            listOf(SdkErrorType.PayloadStorageFail.toString(), SdkErrorType.PayloadStorageFail.toString()),
+            errorHandler.sdkErrorMessages.map { it.msg },
+        )
+    }
+
+    @Test
+    fun `a scoped ordinal without a scope returns -1 without tracking an error`() {
+        val errorHandler = FakeErrorHandler()
+        val scopedStore = OrdinalStoreImpl(kvStore, errorHandler)
+        assertEquals(-1, scopedStore.incrementAndGet(Ordinal.APP_VERSION_STARTUP, null))
+        assertEquals(emptyList<FakeErrorHandler.LogMessage>(), errorHandler.sdkErrorMessages)
     }
 
     /**

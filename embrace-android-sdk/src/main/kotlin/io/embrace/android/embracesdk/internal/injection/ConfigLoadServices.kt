@@ -38,7 +38,9 @@ internal class ConfigLoadServices(
     configServiceSupplier: ConfigServiceSupplier? = null,
 ) : Closeable {
 
-    val keyValueStore: Lazy<KeyValueStore> = lazy { createKeyValueStore(context, jsonSerializer) }
+    val keyValueStore: Lazy<KeyValueStore> = lazy {
+        createKeyValueStore(context, jsonSerializer, preStartServices.errorHandler)
+    }
 
     val persistedConfig: PersistedConfig = EmbTrace.trace(
         sectionName = "persisted-config-init",

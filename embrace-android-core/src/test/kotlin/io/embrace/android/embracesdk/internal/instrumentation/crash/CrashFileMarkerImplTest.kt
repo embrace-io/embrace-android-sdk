@@ -1,5 +1,7 @@
 package io.embrace.android.embracesdk.internal.instrumentation.crash
 
+import io.embrace.android.embracesdk.fakes.FakeErrorHandler
+import io.embrace.android.embracesdk.internal.logging.SdkErrorType
 import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Before
@@ -32,12 +34,15 @@ internal class CrashFileMarkerImplTest {
      */
     private lateinit var crashMarker: CrashFileMarkerImpl
 
+    private lateinit var errorHandler: FakeErrorHandler
+
     @Before
     fun setUp() {
         testFile = File(tempFolder.root.path, CrashFileMarkerImpl.Companion.CRASH_MARKER_FILE_NAME)
         mockFile = testFile
         markerLazyFile = lazy { mockFile }
-        crashMarker = CrashFileMarkerImpl(markerLazyFile)
+        errorHandler = FakeErrorHandler()
+        crashMarker = CrashFileMarkerImpl(markerLazyFile, errorHandler)
     }
 
     @After
@@ -60,6 +65,18 @@ internal class CrashFileMarkerImplTest {
         crashMarker.mark()
         crashMarker.mark()
         assertEquals(true, testFile.exists())
+    }
+
+    @Test
+    fun `a marker that cannot be written is tracked once`() {
+        errorHandler.throwOnSdkError = false
+        val unwritable = tempFolder.newFolder("unwritable")
+        val marker = CrashFileMarkerImpl(lazy { unwritable }, errorHandler)
+        marker.mark()
+        assertEquals(
+            listOf(SdkErrorType.PayloadStorageFail.toString()),
+            errorHandler.sdkErrorMessages.map { it.msg },
+        )
     }
 
     @Test

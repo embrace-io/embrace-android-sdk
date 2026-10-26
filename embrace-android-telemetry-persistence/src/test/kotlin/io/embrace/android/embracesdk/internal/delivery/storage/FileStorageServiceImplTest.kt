@@ -8,6 +8,7 @@ import io.embrace.android.embracesdk.fakes.FakeErrorHandler
 import io.embrace.android.embracesdk.internal.delivery.PayloadType
 import io.embrace.android.embracesdk.internal.delivery.StoredTelemetryMetadata
 import io.embrace.android.embracesdk.internal.delivery.SupportedEnvelopeType
+import io.embrace.android.embracesdk.internal.logging.SdkErrorType
 import io.embrace.android.embracesdk.internal.worker.PriorityWorker
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
@@ -80,6 +81,42 @@ class FileStorageServiceImplTest {
     @Test
     fun `payload size is zero for a payload that was never stored`() {
         assertEquals(0L, service.payloadSizeBytes(fakeSessionStoredTelemetryMetadata))
+        assertTrue(errorHandler.sdkErrorMessages.isEmpty())
+    }
+
+    @Test
+    fun `a storage directory that cannot be listed is tracked`() {
+        storeDummyFile(fakeSessionStoredTelemetryMetadata)
+        assertTrue(outputDir.setReadable(false))
+
+        try {
+            val unlistableService = FileStorageServiceImpl(
+                lazy { outputDir },
+                PriorityWorker(executor),
+                errorHandler,
+                clock,
+                maxAgeMs = MAX_AGE_MS,
+            )
+            assertTrue(unlistableService.getStoredPayloads().isEmpty())
+        } finally {
+            outputDir.setReadable(true)
+        }
+        val error = errorHandler.sdkErrorMessages.single()
+        assertEquals(SdkErrorType.PayloadStorageFail.toString(), error.msg)
+        assertTrue(error.throwable is IOException)
+    }
+
+    @Test
+    fun `a storage root that is not a directory is left for the write to report`() {
+        val notADirectory = File.createTempFile("not-a-dir", null)
+        val unusableService = FileStorageServiceImpl(
+            lazy { notADirectory },
+            PriorityWorker(executor),
+            errorHandler,
+            clock,
+            maxAgeMs = MAX_AGE_MS,
+        )
+        assertTrue(unusableService.getStoredPayloads().isEmpty())
         assertTrue(errorHandler.sdkErrorMessages.isEmpty())
     }
 

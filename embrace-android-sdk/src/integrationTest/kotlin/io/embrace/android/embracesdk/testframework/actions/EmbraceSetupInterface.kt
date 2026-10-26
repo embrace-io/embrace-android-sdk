@@ -178,7 +178,11 @@ internal class EmbraceSetupInterface(
      * graph exists.
      */
     private val keyValueStore: KeyValueStore by lazy {
-        createKeyValueStore(InMemoryPrefsContext(fakeContext), fakeInitServices.jsonSerializer)
+        createKeyValueStore(
+            InMemoryPrefsContext(fakeContext),
+            fakeInitServices.jsonSerializer,
+            fakeInitServices.errorHandler,
+        )
     }
 
     init {

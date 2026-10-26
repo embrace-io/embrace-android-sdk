@@ -16,7 +16,7 @@ interface NetworkRequestDataSource : DataSource {
 
     /**
      * Start a span that will instrument the network request represented by [startData].
-     * If the span is successfully started, its W3C traceparent representation will be returned.
+     * If the span is successfully started, the W3C traceparent to send with the request when injection applies is returned.
      */
     fun startRequest(startData: RequestStartData): String?
 

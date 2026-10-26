@@ -11,6 +11,7 @@ import io.embrace.android.embracesdk.internal.instrumentation.network.NetworkCap
 import io.embrace.android.embracesdk.internal.instrumentation.network.NetworkRequestDataSource
 import io.embrace.android.embracesdk.internal.instrumentation.network.RequestEndData
 import io.embrace.android.embracesdk.internal.instrumentation.network.RequestStartData
+import io.embrace.android.embracesdk.internal.instrumentation.network.W3cTraceparent
 import io.embrace.android.embracesdk.internal.instrumentation.network.getOverriddenURLString
 import io.embrace.android.embracesdk.internal.logging.SdkErrorType
 import io.embrace.android.embracesdk.internal.logging.guardSdkCode
@@ -80,12 +81,13 @@ internal class OkHttpDataSource(
         val systemClockStartTime = systemClock.now()
         val clockOffset = clock.offset(systemClock)
         val sdkClockStartTime = systemClockStartTime + clockOffset
+        val inboundTraceparent = request.header(TRACEPARENT_HEADER_NAME)
         val callId = networkRequestDataSource?.startRequest(
             RequestStartData(
                 url = getOverriddenURLString(EmbraceOkHttpPathOverrideRequest(request)),
                 httpMethod = request.method,
                 sdkClockStartTime = sdkClockStartTime,
-                traceparent = request.header(TRACEPARENT_HEADER_NAME),
+                traceparent = inboundTraceparent,
                 timeoutMs = resolveTimeoutMs(call),
             ),
         ) ?: return null
@@ -94,6 +96,7 @@ internal class OkHttpDataSource(
             id = callId,
             clockOffset = clockOffset,
             sdkClockStartTime = sdkClockStartTime,
+            inboundTraceparent = inboundTraceparent,
         ).also {
             activeCalls[call] = it
         }
@@ -174,13 +177,7 @@ internal class OkHttpDataSource(
 
         val host = originalRequest.url.host
         val request = errorHandler.guardSdkCode(SdkErrorType.DataSourceDataCaptureFail, originalRequest) {
-            if (originalRequest.header(TRACEPARENT_HEADER_NAME) == null &&
-                configService.traceparentInjectionBehavior.shouldInjectTraceparent(host)
-            ) {
-                originalRequest.newBuilder().header(TRACEPARENT_HEADER_NAME, callData.id).build()
-            } else {
-                originalRequest
-            }
+            originalRequest.withTraceparent(callData, host)
         }
 
         // Let the request execution proceed and observe the result
@@ -241,6 +238,21 @@ internal class OkHttpDataSource(
         }
 
         return response
+    }
+
+    /**
+     * Sets the call's traceparent, replacing an inbound one only if the span was parented from it and joined its trace.
+     */
+    private fun Request.withTraceparent(callData: CallData, host: String): Request {
+        val existing = header(TRACEPARENT_HEADER_NAME)
+        val settable = existing == null ||
+            (existing == callData.inboundTraceparent && W3cTraceparent.isSameTrace(existing, callData.id))
+
+        return if (settable && configService.traceparentInjectionBehavior.shouldInjectTraceparent(host)) {
+            newBuilder().header(TRACEPARENT_HEADER_NAME, callData.id).build()
+        } else {
+            this
+        }
     }
 
     private fun RequestEndData.createHttpNetworkRequest(
@@ -429,6 +441,7 @@ internal class OkHttpDataSource(
         val id: String,
         val clockOffset: Long,
         val sdkClockStartTime: Long,
+        val inboundTraceparent: String?,
     )
 
     internal companion object {

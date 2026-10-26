@@ -22,7 +22,7 @@ class LowPowerDataSource internal constructor(
         private const val MAX_CAPTURED_POWER_MODE_INTERVALS = 100
     }
 
-    private val receiver = PowerSaveModeReceiver(provider, ::onPowerSaveModeChanged)
+    private val receiver = PowerSaveModeReceiver(args.errorHandler, provider, ::onPowerSaveModeChanged)
     private var span: SpanToken? = null
 
     override fun onDataCaptureEnabled() = receiver.register(args.context, backgroundWorker)

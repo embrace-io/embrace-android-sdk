@@ -217,7 +217,7 @@ internal class EmbraceSetupInterface(
         payloadStorageService = { real -> (fakePayloadStorageService ?: real()).also { services.payloadStorageService = it } },
         cacheStorageService = fakeCacheStorageService?.let { fake -> { fake } },
         payloadStorageLimit = { payloadStorageLimit },
-        lifecycleTracker = { AndroidxProcessLifecycleTracker(fakeLifecycleOwner) },
+        lifecycleTracker = { AndroidxProcessLifecycleTracker(fakeLifecycleOwner, FakeErrorHandler()) },
         networkConnectivityService = { fakeNetworkConnectivityService },
         appContext = {
             constructionFailure?.let { throw it }

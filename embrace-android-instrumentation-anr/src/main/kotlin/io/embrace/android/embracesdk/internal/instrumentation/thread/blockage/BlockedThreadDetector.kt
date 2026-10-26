@@ -39,6 +39,7 @@ class BlockedThreadDetector(
         looper = looper,
         watchdogWorker = watchdogWorker,
         clock = clock,
+        errorHandler = errorHandler,
         action = ::onTargetThreadProcessedMessage,
     )
     private val started: AtomicBoolean = AtomicBoolean(false)
@@ -194,11 +195,12 @@ class BlockedThreadDetector(
         looper: Looper,
         private val watchdogWorker: BackgroundWorker,
         private val clock: Clock,
+        private val errorHandler: ErrorHandler,
         private val action: (time: Long) -> Unit,
     ) : Handler(looper) {
 
         override fun handleMessage(msg: Message) {
-            runCatching {
+            errorHandler.guardSdkCode(SdkErrorType.ThreadBlockageHeartbeatCheckFail) {
                 if (msg.what == HEARTBEAT_REQUEST) {
                     val timestamp = clock.now()
                     watchdogWorker.submit {

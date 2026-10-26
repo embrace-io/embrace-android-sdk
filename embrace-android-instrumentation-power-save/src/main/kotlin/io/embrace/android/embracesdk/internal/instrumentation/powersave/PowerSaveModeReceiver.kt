@@ -5,11 +5,15 @@ import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
 import android.os.PowerManager
+import io.embrace.android.embracesdk.internal.logging.ErrorHandler
+import io.embrace.android.embracesdk.internal.logging.SdkErrorType
+import io.embrace.android.embracesdk.internal.logging.guardSdkCode
 import io.embrace.android.embracesdk.internal.utils.EmbTrace
 import io.embrace.android.embracesdk.internal.utils.Provider
 import io.embrace.android.embracesdk.internal.worker.BackgroundWorker
 
 internal class PowerSaveModeReceiver(
+    private val errorHandler: ErrorHandler,
     private val powerSaveModeSourceProvider: Provider<PowerSaveModeSource?>,
     private val callback: (powerSaveMode: Boolean) -> Unit,
 ) : BroadcastReceiver() {
@@ -30,7 +34,7 @@ internal class PowerSaveModeReceiver(
     fun register(context: Context, backgroundWorker: BackgroundWorker) {
         backgroundWorker.submit {
             EmbTrace.trace("power-service-registration") {
-                runCatching {
+                errorHandler.guardSdkCode(SdkErrorType.RegistrationFail) {
                     if (powerSaveModeSourceProvider() != null) {
                         val filter = IntentFilter(PowerManager.ACTION_POWER_SAVE_MODE_CHANGED)
                         synchronized(lock) {
@@ -50,7 +54,7 @@ internal class PowerSaveModeReceiver(
             closed = true
             if (registered) {
                 registered = false
-                runCatching {
+                errorHandler.guardSdkCode(SdkErrorType.RegistrationFail) {
                     context.unregisterReceiver(this)
                 }
             }

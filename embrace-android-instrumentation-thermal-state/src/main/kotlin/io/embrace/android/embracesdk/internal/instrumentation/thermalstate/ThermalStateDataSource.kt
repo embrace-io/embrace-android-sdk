@@ -9,6 +9,8 @@ import io.embrace.android.embracesdk.internal.arch.datasource.DataSourceImpl
 import io.embrace.android.embracesdk.internal.arch.datasource.SpanToken
 import io.embrace.android.embracesdk.internal.arch.limits.UpToLimitStrategy
 import io.embrace.android.embracesdk.internal.arch.schema.SchemaType
+import io.embrace.android.embracesdk.internal.logging.SdkErrorType
+import io.embrace.android.embracesdk.internal.logging.guardSdkCode
 import io.embrace.android.embracesdk.internal.utils.EmbTrace
 import io.embrace.android.embracesdk.internal.utils.Provider
 import io.embrace.android.embracesdk.internal.worker.Worker
@@ -53,7 +55,7 @@ class ThermalStateDataSource internal constructor(
                     backgroundWorker.submit(runnable = it)
                 }
                 if (!closed && registration == null) {
-                    runCatching {
+                    errorHandler.guardSdkCode(SdkErrorType.RegistrationFail) {
                         notifier.addThermalStatusListener(executor, listener)
                         registration = Pair(notifier, listener)
                     }
@@ -67,7 +69,7 @@ class ThermalStateDataSource internal constructor(
         backgroundWorker.submit {
             registration?.let { (notifier, listener) ->
                 registration = null
-                runCatching {
+                errorHandler.guardSdkCode(SdkErrorType.RegistrationFail) {
                     notifier.removeThermalStatusListener(listener)
                 }
             }

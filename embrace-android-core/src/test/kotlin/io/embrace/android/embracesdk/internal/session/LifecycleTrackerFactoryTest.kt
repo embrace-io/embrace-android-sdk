@@ -2,6 +2,7 @@ package io.embrace.android.embracesdk.internal.session
 
 import android.app.Application
 import io.embrace.android.embracesdk.fakes.FakeConfigService
+import io.embrace.android.embracesdk.fakes.FakeErrorHandler
 import io.embrace.android.embracesdk.internal.config.resolved.AutoDataCaptureConfig
 import io.embrace.android.embracesdk.internal.config.resolved.EmbraceConfig
 import io.embrace.android.embracesdk.internal.session.lifecycle.ActivityProcessLifecycleTracker
@@ -40,5 +41,6 @@ internal class LifecycleTrackerFactoryTest {
         ),
         application = application,
         startupContext = application,
+        errorHandler = FakeErrorHandler(),
     )
 }

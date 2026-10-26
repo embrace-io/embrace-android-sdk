@@ -1,9 +1,13 @@
 package io.embrace.android.embracesdk.internal.session
 
 import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.LifecycleObserver
+import androidx.lifecycle.LifecycleOwner
 import androidx.lifecycle.testing.TestLifecycleOwner
+import io.embrace.android.embracesdk.fakes.FakeErrorHandler
 import io.embrace.android.embracesdk.fakes.FakeProcessStateListener
 import io.embrace.android.embracesdk.internal.arch.state.ProcessState
+import io.embrace.android.embracesdk.internal.logging.SdkErrorType
 import io.embrace.android.embracesdk.internal.session.lifecycle.AndroidxProcessLifecycleTracker
 import kotlinx.coroutines.Dispatchers
 import org.junit.Assert.assertEquals
@@ -20,19 +24,22 @@ internal class AndroidxProcessLifecycleTrackerTest {
     private lateinit var listener: FakeProcessStateListener
     private lateinit var mainThread: Thread
     private lateinit var mainThreadQueue: MutableList<Runnable>
+    private lateinit var errorHandler: FakeErrorHandler
 
     @Before
     fun before() {
         listener = FakeProcessStateListener()
+        errorHandler = FakeErrorHandler(throwOnSdkError = false)
         mainThread = Thread.currentThread()
         mainThreadQueue = mutableListOf()
     }
 
     private fun createTracker(
-        lifecycleOwner: TestLifecycleOwner,
+        lifecycleOwner: LifecycleOwner,
         registerTracker: Boolean = true,
     ): AndroidxProcessLifecycleTracker = AndroidxProcessLifecycleTracker(
         lifecycleOwner,
+        errorHandler,
         isMainThread = { Thread.currentThread() === mainThread },
         postToMainThread = { synchronized(mainThreadQueue) { mainThreadQueue.add(it) } },
     ).apply {
@@ -142,5 +149,22 @@ internal class AndroidxProcessLifecycleTrackerTest {
 
         assertEquals(1, listener.foregroundCount.get())
         assertEquals(0, listener.backgroundCount.get())
+    }
+
+    @Test
+    fun `a failed registration is tracked`() {
+        val failure = IllegalStateException("addObserver failed")
+        val lifecycle = object : Lifecycle() {
+            override val currentState: State = State.INITIALIZED
+            override fun addObserver(observer: LifecycleObserver) = throw failure
+            override fun removeObserver(observer: LifecycleObserver) {}
+        }
+        createTracker(object : LifecycleOwner {
+            override val lifecycle: Lifecycle = lifecycle
+        })
+
+        val error = errorHandler.sdkErrorMessages.single()
+        assertEquals(SdkErrorType.RegistrationFail.toString(), error.msg)
+        assertEquals(failure, error.throwable)
     }
 }

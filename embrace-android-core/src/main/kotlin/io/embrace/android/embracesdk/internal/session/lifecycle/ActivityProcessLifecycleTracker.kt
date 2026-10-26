@@ -27,6 +27,9 @@ import android.os.Process
 import io.embrace.android.embracesdk.internal.arch.state.ProcessState
 import io.embrace.android.embracesdk.internal.arch.state.ProcessStateListener
 import io.embrace.android.embracesdk.internal.injection.getSystemServiceSafe
+import io.embrace.android.embracesdk.internal.logging.ErrorHandler
+import io.embrace.android.embracesdk.internal.logging.SdkErrorType
+import io.embrace.android.embracesdk.internal.logging.guardSdkCode
 
 /**
  * Reports process state transitions by counting started activities, without depending on
@@ -43,6 +46,7 @@ import io.embrace.android.embracesdk.internal.injection.getSystemServiceSafe
 class ActivityProcessLifecycleTracker(
     private val application: Application,
     startupContext: Context?,
+    private val errorHandler: ErrorHandler,
     handler: Handler = Handler(Looper.getMainLooper()),
     private val postDelayed: (Runnable, Long) -> Unit = handler::postDelayed,
     private val removeCallbacks: (Runnable) -> Unit = handler::removeCallbacks,
@@ -99,7 +103,7 @@ class ActivityProcessLifecycleTracker(
 
     override fun register(listener: ProcessStateListener) {
         this.listener = listener
-        runCatching {
+        errorHandler.guardSdkCode(SdkErrorType.RegistrationFail) {
             application.registerActivityLifecycleCallbacks(this)
         }
 

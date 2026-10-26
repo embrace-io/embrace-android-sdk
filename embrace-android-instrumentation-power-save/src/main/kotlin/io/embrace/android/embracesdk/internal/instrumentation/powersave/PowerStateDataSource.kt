@@ -15,7 +15,8 @@ class PowerStateDataSource(
     defaultValue = PowerMode.UNKNOWN,
 ) {
     private val powerSaveModeSourceProvider: Provider<PowerSaveModeSource?> = { args.powerSaveModeSource() }
-    private val receiver = PowerSaveModeReceiver(powerSaveModeSourceProvider, ::onPowerSaveModeChanged)
+    private val receiver =
+        PowerSaveModeReceiver(args.errorHandler, powerSaveModeSourceProvider, ::onPowerSaveModeChanged)
 
     override val captureStateOnCreation = false
 

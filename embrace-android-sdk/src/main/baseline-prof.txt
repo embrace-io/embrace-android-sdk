@@ -916,7 +916,7 @@ HSPLio/embrace/android/embracesdk/internal/capture/session/EmbraceUserSessionPro
 HSPLio/embrace/android/embracesdk/internal/capture/session/EmbraceUserSessionProperties;->addPropsForNewSessionPartSpan()V
 HSPLio/embrace/android/embracesdk/internal/capture/session/EmbraceUserSessionProperties;->get()Ljava/util/Map;
 HSPLio/embrace/android/embracesdk/internal/capture/session/EmbraceUserSessionProperties;->getProperties()Ljava/util/Map;
-HSPLio/embrace/android/embracesdk/internal/capture/session/EmbraceUserSessionProperties;->onNewUserSession()V
+HSPLio/embrace/android/embracesdk/internal/capture/session/EmbraceUserSessionProperties;->onUserSessionEnded()V
 HSPLio/embrace/android/embracesdk/internal/capture/session/EmbraceUserSessionProperties;->persistPermanentProperties$lambda$0(Lio/embrace/android/embracesdk/internal/capture/session/EmbraceUserSessionProperties;Lio/embrace/android/embracesdk/internal/store/KeyValueStoreEditor;)Lkotlin/Unit;
 HSPLio/embrace/android/embracesdk/internal/capture/session/EmbraceUserSessionProperties;->persistPermanentProperties()V
 HSPLio/embrace/android/embracesdk/internal/capture/session/EmbraceUserSessionProperties;->properties_delegate$lambda$0(Lio/embrace/android/embracesdk/internal/capture/session/EmbraceUserSessionProperties;)Ljava/util/Map;
@@ -936,12 +936,12 @@ Lio/embrace/android/embracesdk/internal/capture/session/UserSessionPropertiesSer
 HSPLio/embrace/android/embracesdk/internal/capture/session/UserSessionPropertiesServiceImpl;-><clinit>()V
 HSPLio/embrace/android/embracesdk/internal/capture/session/UserSessionPropertiesServiceImpl;-><init>(Lkotlin/Lazy;Lio/embrace/android/embracesdk/internal/config/ConfigService;Lio/embrace/android/embracesdk/internal/arch/datasource/TelemetryDestination;Lio/embrace/android/embracesdk/internal/telemetry/InternalTelemetryService;)V
 HSPLio/embrace/android/embracesdk/internal/capture/session/UserSessionPropertiesServiceImpl;->addProperty(Ljava/lang/String;Ljava/lang/String;Lio/embrace/android/embracesdk/internal/capture/session/PropertyScope;)Z
-HSPLio/embrace/android/embracesdk/internal/capture/session/UserSessionPropertiesServiceImpl;->cleanupAfterSessionEnd()V
+HSPLio/embrace/android/embracesdk/internal/capture/session/UserSessionPropertiesServiceImpl;->cleanupAfterUserSessionEnd()V
 HSPLio/embrace/android/embracesdk/internal/capture/session/UserSessionPropertiesServiceImpl;->getProperties()Ljava/util/Map;
 HSPLio/embrace/android/embracesdk/internal/capture/session/UserSessionPropertiesServiceImpl;->getProps()Lio/embrace/android/embracesdk/internal/capture/session/EmbraceUserSessionProperties;
 HSPLio/embrace/android/embracesdk/internal/capture/session/UserSessionPropertiesServiceImpl;->isValidKey(Ljava/lang/String;)Z
 HSPLio/embrace/android/embracesdk/internal/capture/session/UserSessionPropertiesServiceImpl;->isValidValue(Ljava/lang/String;)Z
-HSPLio/embrace/android/embracesdk/internal/capture/session/UserSessionPropertiesServiceImpl;->prepareForNewSession()V
+HSPLio/embrace/android/embracesdk/internal/capture/session/UserSessionPropertiesServiceImpl;->prepareForNewSessionPart()V
 HSPLio/embrace/android/embracesdk/internal/capture/session/UserSessionPropertiesServiceImpl;->props_delegate$lambda$0(Lio/embrace/android/embracesdk/internal/capture/session/UserSessionPropertiesServiceImpl;Lio/embrace/android/embracesdk/internal/arch/datasource/TelemetryDestination;)Lio/embrace/android/embracesdk/internal/capture/session/EmbraceUserSessionProperties;
 HSPLio/embrace/android/embracesdk/internal/capture/session/UserSessionPropertiesServiceImpl;->removeProperty(Ljava/lang/String;)Z
 Lio/embrace/android/embracesdk/internal/capture/user/EmbraceUserService$$ExternalSyntheticLambda1;
@@ -5389,8 +5389,8 @@ HSPLio/embrace/android/embracesdk/internal/session/message/PayloadMessageCollato
 HSPLio/embrace/android/embracesdk/internal/session/message/PayloadMessageCollatorImpl;->buildInitialPart(Lio/embrace/android/embracesdk/internal/session/message/InitialEnvelopeParams;)Lio/embrace/android/embracesdk/internal/session/SessionPartToken;
 Lio/embrace/android/embracesdk/internal/session/orchestrator/OrchestratorBoundaryDelegate;
 HSPLio/embrace/android/embracesdk/internal/session/orchestrator/OrchestratorBoundaryDelegate;-><init>(Lio/embrace/android/embracesdk/internal/capture/session/UserSessionPropertiesService;)V
-HSPLio/embrace/android/embracesdk/internal/session/orchestrator/OrchestratorBoundaryDelegate;->cleanupAfterSessionEnd()V
-HSPLio/embrace/android/embracesdk/internal/session/orchestrator/OrchestratorBoundaryDelegate;->prepareForNewSession()V
+HSPLio/embrace/android/embracesdk/internal/session/orchestrator/OrchestratorBoundaryDelegate;->cleanupAfterUserSessionEnd()V
+HSPLio/embrace/android/embracesdk/internal/session/orchestrator/OrchestratorBoundaryDelegate;->prepareForNewSessionPart()V
 Lio/embrace/android/embracesdk/internal/session/orchestrator/OrchestratorTerminationConditionsKt;
 HSPLio/embrace/android/embracesdk/internal/session/orchestrator/OrchestratorTerminationConditionsKt;->shouldEndManualSession(Lio/embrace/android/embracesdk/internal/config/ConfigService;Lio/embrace/android/embracesdk/internal/clock/Clock;Ljava/lang/Long;Ljava/lang/Long;)Z
 HSPLio/embrace/android/embracesdk/internal/session/orchestrator/OrchestratorTerminationConditionsKt;->shouldRunOnForeground(Lio/embrace/android/embracesdk/internal/arch/state/ProcessState;)Z

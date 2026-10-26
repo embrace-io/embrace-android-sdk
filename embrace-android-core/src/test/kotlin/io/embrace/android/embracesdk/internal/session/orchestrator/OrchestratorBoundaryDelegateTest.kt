@@ -19,16 +19,16 @@ internal class OrchestratorBoundaryDelegateTest {
     }
 
     @Test
-    fun cleanupAfterSessionEnd() {
-        delegate.cleanupAfterSessionEnd()
-        assertEquals(1, userSessionPropertiesService.cleanupAfterSessionEndCallCount)
-        assertEquals(0, userSessionPropertiesService.prepareNewSessionCallCount)
+    fun cleanupAfterUserSessionEnd() {
+        delegate.cleanupAfterUserSessionEnd()
+        assertEquals(1, userSessionPropertiesService.cleanupAfterUserSessionEndCallCount)
+        assertEquals(0, userSessionPropertiesService.prepareNewSessionPartCallCount)
     }
 
     @Test
-    fun `prepare new session`() {
-        delegate.prepareForNewSession()
-        assertEquals(0, userSessionPropertiesService.cleanupAfterSessionEndCallCount)
-        assertEquals(1, userSessionPropertiesService.prepareNewSessionCallCount)
+    fun `prepare new session part`() {
+        delegate.prepareForNewSessionPart()
+        assertEquals(0, userSessionPropertiesService.cleanupAfterUserSessionEndCallCount)
+        assertEquals(1, userSessionPropertiesService.prepareNewSessionPartCallCount)
     }
 }

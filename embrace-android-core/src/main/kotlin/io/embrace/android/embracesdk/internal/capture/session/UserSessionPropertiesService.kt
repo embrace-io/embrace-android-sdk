@@ -29,14 +29,14 @@ interface UserSessionPropertiesService {
     fun getProperties(): Map<String, String>
 
     /**
-     * Clear state after a session ends
+     * Clear state after a user session ends
      */
-    fun cleanupAfterSessionEnd()
+    fun cleanupAfterUserSessionEnd()
 
     /**
-     * Apply state change required when a new session starts
+     * Apply state change required when a new session part starts
      */
-    fun prepareForNewSession()
+    fun prepareForNewSessionPart()
 
     /**
      * Adds a listener that will be invoked with a Map representation of all the session properties

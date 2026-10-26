@@ -4,6 +4,7 @@ import android.annotation.SuppressLint
 import io.embrace.android.embracesdk.internal.clock.Clock
 import io.embrace.android.embracesdk.internal.instrumentation.HucLiteDataSource
 import java.io.IOException
+import java.lang.reflect.InvocationTargetException
 import java.net.Proxy
 import java.net.URL
 import java.net.URLConnection
@@ -25,12 +26,14 @@ internal class InstrumentedHttpsURLStreamHandler(
         delegatedHandler::class.java,
         "openConnection",
         arrayOf(URL::class.java, Proxy::class.java),
+        ::trackCaptureError,
     )
 
     private val openConnectionMethod by LazyMethodLookup(
         delegatedHandler::class.java,
         "openConnection",
         arrayOf(URL::class.java),
+        ::trackCaptureError,
     )
 
     @SuppressLint("PrivateApi")
@@ -61,8 +64,16 @@ internal class InstrumentedHttpsURLStreamHandler(
         )
     }
 
-    private fun Throwable.toInstrumentedConnectionException(): IOException =
-        InstrumentedConnectionException("Failed to instrumented HTTPS connection", this)
+    private fun Throwable.toInstrumentedConnectionException(): IOException {
+        if (this !is InvocationTargetException && this !is LazyMethodLookup.MethodLookupException) {
+            trackCaptureError(this)
+        }
+        return InstrumentedConnectionException("Failed to instrumented HTTPS connection", this)
+    }
+
+    private fun trackCaptureError(t: Throwable) {
+        dataSourceProvider()?.trackCaptureError(t)
+    }
 
     private class InstrumentedConnectionException(
         override val message: String?,

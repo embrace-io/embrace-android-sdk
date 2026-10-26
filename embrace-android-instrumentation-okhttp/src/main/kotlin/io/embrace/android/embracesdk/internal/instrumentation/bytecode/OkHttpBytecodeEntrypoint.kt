@@ -45,7 +45,8 @@ object OkHttpBytecodeEntrypoint {
                 thiz.networkInterceptors(),
                 EmbraceOkHttpInterceptor(InterceptorType.NETWORK, provider),
             )
-        } catch (ignored: Throwable) {
+        } catch (t: Throwable) {
+            okhttpDataSource?.trackCaptureError(t)
         }
     }
 

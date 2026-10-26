@@ -23,12 +23,14 @@ internal class DelegatingInstrumentedUrlStreamHandler(
         delegateHandler::class.java,
         "openConnection",
         arrayOf(URL::class.java, Proxy::class.java),
+        ::trackCaptureError,
     )
 
     private val openConnectionMethod by LazyMethodLookup(
         delegateHandler::class.java,
         "openConnection",
         arrayOf(URL::class.java),
+        ::trackCaptureError,
     )
 
     @Throws(IOException::class)
@@ -53,8 +55,14 @@ internal class DelegatingInstrumentedUrlStreamHandler(
         } catch (e: InvocationTargetException) {
             throw e.targetException ?: e
         } catch (e: IllegalAccessException) {
-            throw IOException("Failed to invoke ${delegateHandler::class.java.simpleName}.openConnection", e)
+            throw IOException("Failed to invoke ${delegateHandler::class.java.simpleName}.openConnection", e).also {
+                trackCaptureError(it)
+            }
         }
+    }
+
+    private fun trackCaptureError(t: Throwable) {
+        dataSourceProvider()?.trackCaptureError(t)
     }
 
     /**

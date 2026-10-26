@@ -60,6 +60,10 @@ internal class OkHttpDataSource(
         }
     }
 
+    internal fun trackCaptureError(t: Throwable) {
+        errorHandler.trackSdkError(SdkErrorType.DataSourceDataCaptureFail, t)
+    }
+
     internal fun interceptRequest(chain: Interceptor.Chain, type: InterceptorType): Response? {
         val call = chain.call()
         val callData = errorHandler.guardSdkCode(SdkErrorType.DataSourceDataCaptureFail, null) {

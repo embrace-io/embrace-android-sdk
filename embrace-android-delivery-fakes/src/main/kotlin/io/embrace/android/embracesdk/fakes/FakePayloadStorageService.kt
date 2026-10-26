@@ -29,6 +29,7 @@ class FakePayloadStorageService(
     private val processIdProvider: () -> String = { processIdentifier }
     private val serializer = TestPlatformSerializer()
     private val cachedPayloads = Collections.synchronizedMap(LinkedHashMap<StoredTelemetryMetadata, ByteArray>())
+    private val deletedPayloads = Collections.synchronizedList(mutableListOf<StoredTelemetryMetadata>())
 
     private val worker = if (workerExecutor != null) {
         PriorityWorker<StoredTelemetryMetadata>(workerExecutor)
@@ -134,6 +135,13 @@ class FakePayloadStorageService(
         return synchronized(cachedPayloads) { cachedPayloads.keys.toList() }
     }
 
+    /**
+     * The payloads deleted so far, in order. A complete payload is deleted once it has been delivered.
+     */
+    fun deletedPayloadMetadata(): List<StoredTelemetryMetadata> {
+        return synchronized(deletedPayloads) { deletedPayloads.toList() }
+    }
+
     fun storedPayloadCount() = cachedPayloads.size
 
     fun clearStorage() {
@@ -157,6 +165,7 @@ class FakePayloadStorageService(
     private fun deleteSynchronous(metadata: StoredTelemetryMetadata, callback: () -> Unit) {
         cachedPayloads.remove(metadata)
         deleteCount.getAndIncrement()
+        deletedPayloads.add(metadata)
         callback()
     }
 

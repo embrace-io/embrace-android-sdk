@@ -8,6 +8,7 @@ import io.embrace.android.embracesdk.assertions.assertOtelLogReceived
 import io.embrace.android.embracesdk.assertions.getLastLog
 import io.embrace.android.embracesdk.assertions.getStartTime
 import io.embrace.android.embracesdk.assertions.getUserSessionId
+import io.embrace.android.embracesdk.assertions.waitUntilConditionMet
 import io.embrace.android.embracesdk.concurrency.BlockingScheduledExecutorService
 import io.embrace.android.embracesdk.fakes.FakeErrorHandler
 import io.embrace.android.embracesdk.fakes.FakePayloadStorageService
@@ -237,6 +238,16 @@ internal class JvmCrashFeatureTest(
                 crashTimeMs = clock.now()
                 ioWorker.runCurrentlyBlocked()
                 nonIoWorker.runCurrentlyBlocked()
+
+                // the resurrected session is delivered on real workers, and receiving the crash stops delivery, so wait for
+                // the delivery before crashing
+                waitUntilConditionMet(
+                    dataProvider = payloadStorageService::deletedPayloadMetadata,
+                    condition = { deleted ->
+                        deleted.any { it.payloadType == PayloadType.SESSION && it.complete && it.timestamp < crashTimeMs }
+                    },
+                    errorMessageSupplier = { "Timeout waiting for the resurrected session to be delivered" },
+                )
                 simulateJvmUncaughtException(testException)
                 ioWorker.runCurrentlyBlocked()
                 nonIoWorker.runCurrentlyBlocked()

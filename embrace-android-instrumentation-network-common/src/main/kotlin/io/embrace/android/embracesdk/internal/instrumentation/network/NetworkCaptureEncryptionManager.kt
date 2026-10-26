@@ -1,17 +1,10 @@
 package io.embrace.android.embracesdk.internal.instrumentation.network
 
 import android.util.Base64
-import java.io.IOException
-import java.security.InvalidKeyException
 import java.security.Key
 import java.security.KeyFactory
-import java.security.NoSuchAlgorithmException
-import java.security.spec.InvalidKeySpecException
 import java.security.spec.X509EncodedKeySpec
-import javax.crypto.BadPaddingException
 import javax.crypto.Cipher
-import javax.crypto.IllegalBlockSizeException
-import javax.crypto.NoSuchPaddingException
 
 /**
  * API to encrypt/decrypt data
@@ -24,43 +17,27 @@ internal class NetworkCaptureEncryptionManager(
     private val transformation = "RSA/ECB/PKCS1Padding"
 
     /**
-     * @return encrypted data in Base64 String or null if any error occur.
+     * @return encrypted data in Base64 String or null if any error occur, in which case [onError] is invoked.
      */
-    fun encrypt(data: String, keyText: String): String? {
+    fun encrypt(data: String, keyText: String, onError: (Throwable) -> Unit = {}): String? {
         return try {
-            val publicKey = getKeyFromText(keyText)
-            if (publicKey != null) {
-                encrypt(data, publicKey)
-            } else {
-                null
-            }
-        } catch (ignored: Exception) {
+            encrypt(data, getKeyFromText(keyText))
+        } catch (exc: Exception) {
+            onError(exc)
             null
         }
     }
 
     /**
-     * @return encrypted data in Base64 String or null if any error occur.
+     * @return encrypted data in Base64 String.
      */
-    private fun encrypt(data: String, key: Key): String? {
-        var result: String? = ""
-        try {
-            val cipher = Cipher.getInstance(transformation)
-            cipher.init(Cipher.ENCRYPT_MODE, key)
+    private fun encrypt(data: String, key: Key): String {
+        val cipher = Cipher.getInstance(transformation)
+        cipher.init(Cipher.ENCRYPT_MODE, key)
 
-            val plainData = data.toByteArray(charset(UTF_8))
-            val decodedData = decodeWithBuffer(cipher, plainData, ENCRYPT_BLOCK_SIZE)
-
-            val encodedString = encodeBase64(decodedData)
-            result += encodedString
-        } catch (ignored: NoSuchAlgorithmException) {
-        } catch (ignored: NoSuchPaddingException) {
-        } catch (ignored: InvalidKeyException) {
-        } catch (ignored: BadPaddingException) {
-        } catch (ignored: IllegalBlockSizeException) {
-        } catch (ignored: IOException) {
-        }
-        return result
+        val plainData = data.toByteArray(charset(UTF_8))
+        val decodedData = decodeWithBuffer(cipher, plainData, ENCRYPT_BLOCK_SIZE)
+        return encodeBase64(decodedData)
     }
 
     /**
@@ -78,12 +55,7 @@ internal class NetworkCaptureEncryptionManager(
             decodedData = decodeWithBuffer(cipher, encryptedData, DECRYPT_BLOCK_SIZE)
 
             result = String(decodedData, charset(UTF_8))
-        } catch (ignored: NoSuchAlgorithmException) {
-        } catch (ignored: NoSuchPaddingException) {
-        } catch (ignored: InvalidKeyException) {
-        } catch (ignored: BadPaddingException) {
-        } catch (ignored: IllegalBlockSizeException) {
-        } catch (ignored: IOException) {
+        } catch (ignored: Exception) {
         }
         return result
     }
@@ -144,15 +116,9 @@ internal class NetworkCaptureEncryptionManager(
         return toReturn
     }
 
-    private fun getKeyFromText(keyText: String?): Key? {
-        try {
-            val encodedKeySpec = X509EncodedKeySpec(decodeBase64(keyText))
-            return KeyFactory.getInstance("RSA").generatePublic(encodedKeySpec)
-        } catch (ignored: InvalidKeySpecException) {
-        } catch (ignored: NoSuchAlgorithmException) {
-        }
-
-        return null
+    private fun getKeyFromText(keyText: String): Key {
+        val encodedKeySpec = X509EncodedKeySpec(decodeBase64(keyText))
+        return KeyFactory.getInstance("RSA").generatePublic(encodedKeySpec)
     }
 
     companion object {

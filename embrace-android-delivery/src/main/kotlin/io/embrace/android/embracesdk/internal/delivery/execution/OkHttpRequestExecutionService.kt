@@ -15,11 +15,13 @@ import okhttp3.OkHttpClient
 import okhttp3.Request
 import okhttp3.RequestBody
 import okhttp3.RequestBody.Companion.toRequestBody
+import okhttp3.Response
 import okio.BufferedSink
 import okio.buffer
 import okio.source
 import java.io.IOException
 import java.io.InputStream
+import java.util.concurrent.TimeUnit
 import java.util.zip.GZIPInputStream
 
 class OkHttpRequestExecutionService(
@@ -34,6 +36,7 @@ class OkHttpRequestExecutionService(
 
     private companion object {
         private val mediaType = "application/json".toMediaType()
+        private const val RETRY_AFTER = "Retry-After"
     }
 
     override fun attemptHttpRequest(
@@ -68,12 +71,21 @@ class OkHttpRequestExecutionService(
             getResult(
                 endpoint = envelopeType.endpoint,
                 responseCode = response?.code,
-                headersProvider = { response?.headers?.toMap() ?: emptyMap() },
+                retryAfterMsProvider = { response?.retryAfterMs() },
                 executionError = executionError,
             )
         }.apply {
             deliveryTracer?.onHttpCallEnded(this, envelopeType, payloadType)
         }
+    }
+
+    private fun Response.retryAfterMs(): Long? {
+        val value = header(RETRY_AFTER) ?: return null
+        value.trim().toLongOrNull()?.let {
+            return TimeUnit.SECONDS.toMillis(it).coerceAtLeast(0)
+        }
+        val retryAt = headers.getDate(RETRY_AFTER) ?: return null
+        return (retryAt.time - receivedResponseAtMillis).coerceAtLeast(0)
     }
 
     private fun prepareRequest(

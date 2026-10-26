@@ -3,6 +3,7 @@ package io.embrace.android.embracesdk.internal.delivery.execution
 import io.embrace.android.embracesdk.fakes.FakeErrorHandler
 import io.embrace.android.embracesdk.internal.delivery.PayloadType
 import io.embrace.android.embracesdk.internal.delivery.SupportedEnvelopeType
+import okhttp3.Headers
 import okhttp3.Headers.Companion.toHeaders
 import okhttp3.OkHttpClient
 import okhttp3.Protocol
@@ -16,6 +17,7 @@ import org.junit.Before
 import org.junit.Test
 import java.io.IOException
 import java.net.UnknownHostException
+import java.util.Date
 import java.util.concurrent.TimeUnit
 
 class OkHttpRequestExecutionServiceTest {
@@ -148,6 +150,56 @@ class OkHttpRequestExecutionServiceTest {
         // then the result should be too many requests
         check(result is ExecutionResult.TooManyRequests)
         assertEquals(10000L, result.retryAfterMs)
+    }
+
+    @Test
+    fun `retry-after header name is matched case-insensitively`() {
+        server.enqueue(
+            MockResponse()
+                .setResponseCode(429)
+                .setHeaders(mapOf("retry-after" to "30").toHeaders()),
+        )
+        val result = requestExecutionService.attemptHttpRequest(
+            payloadStream = { testPostBody.byteInputStream() },
+            envelopeType = SupportedEnvelopeType.SESSION,
+            payloadType = PayloadType.SESSION.value,
+        )
+        check(result is ExecutionResult.TooManyRequests)
+        assertEquals(30000L, result.retryAfterMs)
+    }
+
+    @Test
+    fun `retry-after header in HTTP-date form is parsed`() {
+        val retryAt = Date(System.currentTimeMillis() + TimeUnit.MINUTES.toMillis(2))
+        server.enqueue(
+            MockResponse()
+                .setResponseCode(429)
+                .setHeaders(Headers.Builder().add("Retry-After", retryAt).build()),
+        )
+        val result = requestExecutionService.attemptHttpRequest(
+            payloadStream = { testPostBody.byteInputStream() },
+            envelopeType = SupportedEnvelopeType.SESSION,
+            payloadType = PayloadType.SESSION.value,
+        )
+        check(result is ExecutionResult.TooManyRequests)
+        val retryAfterMs = checkNotNull(result.retryAfterMs)
+        assertTrue(retryAfterMs in TimeUnit.SECONDS.toMillis(100)..TimeUnit.MINUTES.toMillis(2))
+    }
+
+    @Test
+    fun `retry-after header in the past does not give a negative delay`() {
+        server.enqueue(
+            MockResponse()
+                .setResponseCode(429)
+                .setHeaders(Headers.Builder().add("Retry-After", Date(0)).build()),
+        )
+        val result = requestExecutionService.attemptHttpRequest(
+            payloadStream = { testPostBody.byteInputStream() },
+            envelopeType = SupportedEnvelopeType.SESSION,
+            payloadType = PayloadType.SESSION.value,
+        )
+        check(result is ExecutionResult.TooManyRequests)
+        assertEquals(0L, result.retryAfterMs)
     }
 
     @Test

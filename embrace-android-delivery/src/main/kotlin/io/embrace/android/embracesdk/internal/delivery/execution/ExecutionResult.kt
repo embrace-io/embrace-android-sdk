@@ -14,7 +14,8 @@ sealed class ExecutionResult(
     object Success : ExecutionResult(false)
 
     /**
-     * A completed HTTP request that returned a 429 (Too Many Requests) status code.
+     * A completed HTTP request that returned a 429 (Too Many Requests) status code. [retryAfterMs] is the delay
+     * requested by the server's Retry-After header, if one was sent.
      */
     data class TooManyRequests(val endpoint: Endpoint, val retryAfterMs: Long?) : ExecutionResult(true)
 
@@ -72,7 +73,7 @@ sealed class ExecutionResult(
         fun getResult(
             endpoint: Endpoint,
             responseCode: Int?,
-            headersProvider: () -> Map<String, String>,
+            retryAfterMsProvider: () -> Long?,
             executionError: Throwable? = null,
         ): ExecutionResult {
             return when (responseCode) {
@@ -84,7 +85,7 @@ sealed class ExecutionResult(
                 HTTP_OK -> Success
                 HTTP_TOO_MANY_REQUESTS -> TooManyRequests(
                     endpoint,
-                    headersProvider()["Retry-After"]?.toLongOrNull()?.times(1000),
+                    retryAfterMsProvider(),
                 )
 
                 in HTTP_FAILURES -> Failure(responseCode)

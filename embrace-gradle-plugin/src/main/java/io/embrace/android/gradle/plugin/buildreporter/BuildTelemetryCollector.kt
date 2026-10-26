@@ -112,7 +112,7 @@ class BuildTelemetryCollector {
         }
     }
 
-    private fun Project.getJvmArgs() = getProperty(GRADLE_JVM_ARGS) ?: ""
+    private fun Project.getJvmArgs() = redactJvmArgs(getProperty(GRADLE_JVM_ARGS) ?: "")
     private fun Project.getEdmVersion() = getProperty(EMBRACE_UNITY_EDM_VERSION) ?: ""
 
     private fun getKotlinVersion(project: Project): String? {

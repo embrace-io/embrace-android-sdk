@@ -161,12 +161,12 @@ internal class RealSdkInstance(
     private var applicationInitStartMs: Long? = null
 
     @Volatile
-    private var started: Boolean = false
+    private var enabled: Boolean = false
 
     override val isStarted: Boolean
-        get() = started
+        get() = enabled
 
-    override fun getOpenTelemetryKotlin(): OpenTelemetry = if (started) {
+    override fun getOpenTelemetryKotlin(): OpenTelemetry = if (enabled) {
         otelApiDelegate.getOpenTelemetryKotlin()
     } else {
         NoopOpenTelemetry
@@ -193,10 +193,17 @@ internal class RealSdkInstance(
             }
             setupServices()
 
+            // not fully initialized, but the SDK shouldn't catastrophically throw after this point,
+            // so we allow external calls.
+            enabled = true
+        } catch (ignored: Throwable) {
+            Log.w("Embrace", "Failed to initialize Embrace SDK", ignored)
+        }
+    }
+
+    override fun onEnabled() {
+        try {
             EmbTrace.trace(sectionName = "post-services-setup", recordDuration = true) {
-                // not fully initialized, but the SDK shouldn't catastrophically throw after this point,
-                // so we allow external calls.
-                started = true
                 registerListeners()
                 loadInstrumentation()
                 postLoadInstrumentation()
@@ -204,7 +211,7 @@ internal class RealSdkInstance(
             }
             markSdkInitComplete(EmbTrace.durationTracker::flush)
         } catch (ignored: Throwable) {
-            Log.w("Embrace", "Failed to initialize Embrace SDK", ignored)
+            Log.w("Embrace", "Embrace SDK started with some failures", ignored)
         }
     }
 
@@ -216,7 +223,7 @@ internal class RealSdkInstance(
      * the remaining steps from running.
      */
     private fun tearDown(deleteData: Boolean) {
-        started = false
+        enabled = false
         runCatching { errorHandler.close() }
         runCatching { otelSdkConfig.value.disableDataExport() }
         runCatching { instrumentationRegistry.close() }
@@ -440,7 +447,7 @@ internal class RealSdkInstance(
                 payloadStore?.let(::addCrashTeardownHandler)
             }
             workerThreadPool.backgroundWorker(Worker.Background.NonIoRegWorker).submit {
-                if (!started) {
+                if (!enabled) {
                     return@submit
                 }
                 errorHandler.guardSdkCode(SdkErrorType.SdkInitPhaseFail) {
@@ -461,7 +468,7 @@ internal class RealSdkInstance(
         errorHandler.guardSdkCode(SdkErrorType.SdkInitPhaseFail) {
             val worker = workerThreadPool.backgroundWorker(Worker.Background.IoRegWorker)
             worker.submit {
-                if (!started) {
+                if (!enabled) {
                     return@submit
                 }
                 errorHandler.guardSdkCode(SdkErrorType.PayloadResurrectionFail) {
@@ -553,7 +560,7 @@ internal class RealSdkInstance(
                 )
             }
             workerThreadPool.backgroundWorker(Worker.Background.NonIoRegWorker).submit {
-                if (started) {
+                if (enabled) {
                     startupService.recordSdkInitSpan()
                 }
             }

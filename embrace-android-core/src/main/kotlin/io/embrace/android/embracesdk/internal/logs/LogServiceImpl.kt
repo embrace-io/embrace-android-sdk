@@ -8,6 +8,9 @@ import io.embrace.android.embracesdk.internal.arch.schema.TelemetryAttributes
 import io.embrace.android.embracesdk.internal.config.ConfigService
 import io.embrace.android.embracesdk.internal.config.behavior.REDACTED_LABEL
 import io.embrace.android.embracesdk.internal.config.behavior.SensitiveKeysBehavior
+import io.embrace.android.embracesdk.internal.logging.ErrorHandler
+import io.embrace.android.embracesdk.internal.logging.SdkErrorType
+import io.embrace.android.embracesdk.internal.logging.guardSdkCode
 import io.embrace.android.embracesdk.internal.otel.payload.toPayloadString
 import io.embrace.android.embracesdk.internal.payload.AppFramework
 import io.embrace.android.embracesdk.internal.telemetry.AppliedLimitType
@@ -24,6 +27,7 @@ class LogServiceImpl(
     private val configService: ConfigService,
     private val logLimitingService: LogLimitingService,
     private val telemetryService: InternalTelemetryService,
+    private val errorHandler: ErrorHandler,
 ) : LogService {
 
     private val cfg = configService.config.log
@@ -84,9 +88,9 @@ class LogServiceImpl(
         telemetryType: String,
         bypassPropertyLimit: Boolean = false,
     ): Map<String, Any> {
-        return runCatching {
+        return errorHandler.guardSdkCode(SdkErrorType.SafeDataCaptureFail, emptyMap()) {
             if (bypassPropertyLimit) {
-                return@runCatching attributes.mapValues { checkIfSerializable(it.value) }
+                return@guardSdkCode attributes.mapValues { checkIfSerializable(it.value) }
             }
 
             if (attributes.size > MAX_PROPERTY_COUNT) {
@@ -95,7 +99,7 @@ class LogServiceImpl(
 
             // Process entries, dropping only the ones that fail
             val entries = attributes.entries.take(MAX_PROPERTY_COUNT).mapNotNull { (key, value) ->
-                runCatching {
+                errorHandler.guardSdkCode(SdkErrorType.SafeDataCaptureFail, null) {
                     val truncatedKey =
                         truncateAndTrack(key, MAX_PROPERTY_KEY_LENGTH, "log_attribute_key")
 
@@ -107,14 +111,14 @@ class LogServiceImpl(
                     }
 
                     truncatedKey to truncatedValue
-                }.getOrNull()
+                }
             }
             entries.toMap().also {
                 if (it.size < entries.size) {
                     telemetryService.trackAppliedLimit("log_attribute_key", AppliedLimitType.DROP)
                 }
             }
-        }.getOrDefault(emptyMap())
+        }
     }
 
     private fun checkIfSerializable(value: Any): Any {

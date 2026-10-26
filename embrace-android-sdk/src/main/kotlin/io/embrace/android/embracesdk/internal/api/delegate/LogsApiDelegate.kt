@@ -226,9 +226,10 @@ internal class LogsApiDelegate(
         return { SchemaType.Custom(parts[0], parts[1], it, mode) }
     }
 
-    private fun serializeStacktrace(elements: Array<StackTraceElement>): String? = runCatching {
-        serializer.truncatedStacktrace(elements)
-    }.getOrNull()
+    private fun serializeStacktrace(elements: Array<StackTraceElement>): String? =
+        errorHandler.guardSdkCode(SdkErrorType.SafeDataCaptureFail, null) {
+            serializer.truncatedStacktrace(elements)
+        }
 
     @Deprecated("This API is deprecated and will be removed in a future release.Use logMessage() instead.")
     override fun logPushNotification(

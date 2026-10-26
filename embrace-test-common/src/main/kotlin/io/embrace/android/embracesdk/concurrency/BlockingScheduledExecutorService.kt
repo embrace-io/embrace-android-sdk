@@ -278,7 +278,7 @@ class BlockingScheduledExecutorService(
                 super.run()
             } else {
                 // as with a real executor, a run that throws (or a cancelled task) is not rescheduled
-                if (!runAndReset()) {
+                if (!runAndReset() || isShutdown) {
                     return
                 }
                 if (runFromLastExecution) {

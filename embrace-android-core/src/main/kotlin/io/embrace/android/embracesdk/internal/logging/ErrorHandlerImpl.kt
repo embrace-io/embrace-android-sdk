@@ -48,9 +48,16 @@ class ErrorHandlerImpl(
 
     /**
      * Set while the current thread is in the sink. Errors raised by the sink itself are
-     * dropped rather than recorded
+     * not recorded directly, but the first one is held in [sinkFailure].
      */
     private val inSink = ThreadLocal<Boolean>()
+
+    /**
+     * An error the sink raised on the current thread whilst attempting to track an SDK error. This is
+     * recorded as [SdkErrorType.ErrorSinkFail] once the sink returns but is only attempted once so
+     * failing again in the same way can't recurse.
+     */
+    private val sinkFailure = ThreadLocal<Throwable>()
 
     override fun log(msg: String, throwable: Throwable?, severity: ErrorHandler.Severity) {
         runSafely("Failed to log message", logcat) {
@@ -76,7 +83,11 @@ class ErrorHandlerImpl(
         if (!type.shouldCapture() || handlerState.get() === HandlerState.Closed) {
             return
         }
-        if (inSink.get() == true || !limiter.tryAcquire(type, throwable)) {
+        if (inSink.get() == true) {
+            holdSinkFailure(throwable)
+            return
+        }
+        if (!limiter.tryAcquire(type, throwable)) {
             return
         }
         val timestampMs = clock.now()
@@ -155,7 +166,9 @@ class ErrorHandlerImpl(
     }
 
     /**
-     * Records an error with [sink]. A sink failure is logged, and doesn't stop later errors from being recorded.
+     * Records an error with [sink]. A sink failure is logged, and doesn't stop later errors from being recorded. The first
+     * error the sink raises is then recorded with [sink] as [SdkErrorType.ErrorSinkFail], and anything raised by that
+     * attempt is logged and dropped.
      */
     private fun record(
         sink: ErrorRecorder,
@@ -165,12 +178,29 @@ class ErrorHandlerImpl(
     ) {
         inSink.set(true)
         try {
-            // do NOT attempt to capture another SDK error...
             runSafely("Failed to record SDK error ($type)", logcat) {
-                sink(type, throwable, timestampMs)
+                try {
+                    sink(type, throwable, timestampMs)
+                } catch (exc: Throwable) {
+                    holdSinkFailure(exc)
+                    throw exc
+                }
+            }
+            val failure = sinkFailure.get() ?: return
+            runSafely("Failed to record SDK error (${SdkErrorType.ErrorSinkFail})", logcat) {
+                if (limiter.tryAcquire(SdkErrorType.ErrorSinkFail, failure)) {
+                    sink(SdkErrorType.ErrorSinkFail, failure, clock.now())
+                }
             }
         } finally {
             inSink.remove()
+            sinkFailure.remove()
+        }
+    }
+
+    private fun holdSinkFailure(exc: Throwable) {
+        if (sinkFailure.get() == null) {
+            sinkFailure.set(exc)
         }
     }
 

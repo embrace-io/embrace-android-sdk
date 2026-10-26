@@ -79,6 +79,7 @@ sealed class SdkErrorType(private val severity: Severity) {
     object WorkerTaskFail : SdkErrorType(ERROR)
     object ClockDrift : SdkErrorType(ERROR)
     object ClockCasExhausted : SdkErrorType(ERROR)
+    object ErrorSinkFail : SdkErrorType(ERROR)
 
     /**
      * A failure that can be ignored.

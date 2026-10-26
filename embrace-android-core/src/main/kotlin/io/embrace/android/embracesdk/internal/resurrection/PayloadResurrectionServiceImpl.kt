@@ -29,7 +29,6 @@ import java.io.InputStream
 import java.util.concurrent.CopyOnWriteArrayList
 import java.util.concurrent.TimeUnit
 import java.util.zip.GZIPInputStream
-import java.util.zip.ZipException
 
 internal class PayloadResurrectionServiceImpl(
     private val intakeService: IntakeService,
@@ -325,7 +324,8 @@ internal class PayloadResurrectionServiceImpl(
         return cacheStorageService.loadPayloadAsStream(this)?.let {
             try {
                 GZIPInputStream(it)
-            } catch (_: ZipException) {
+            } catch (_: IOException) {
+                it.close()
                 null
             }
         }

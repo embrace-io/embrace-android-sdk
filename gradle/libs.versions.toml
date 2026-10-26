@@ -14,7 +14,7 @@ annotation = "1.11.0"
 otelKotlin = "0.9.0"
 # Pinned to 1.10.x: 1.11.0+ requires kotlin-stdlib 2.2.20, which breaks our minimum supported Kotlin (2.0.21).
 kotlinxCoroutines = "1.10.2"
-kotlinxSerialization = "1.8.1"
+kotlinxSerialization = "1.12.0"
 # The Gradle plugin must stay on a release built with Kotlin < 2.1: Gradle 8.0.2 compiles build scripts with Kotlin 1.8,
 # which can't read 2.1 module metadata
 kotlinxSerializationGradlePlugin = "1.7.3"

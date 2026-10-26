@@ -5,16 +5,20 @@ import io.opentelemetry.kotlin.logging.export.LogRecordProcessor
 import io.opentelemetry.kotlin.tracing.export.SpanExporter
 import io.opentelemetry.kotlin.tracing.export.SpanProcessor
 import java.util.concurrent.ConcurrentHashMap
+import java.util.concurrent.CopyOnWriteArrayList
 
 /**
  * OpenTelemetry configuration supplied by the app before the SDK starts.
+ *
+ * The app can still add to it on another thread while the SDK starts and reads it, so each list is copy-on-write: a read
+ * iterates a snapshot rather than failing on a concurrent add.
  */
 class ExternalOtelConfig {
 
-    private val spanExporters = mutableListOf<SpanExporter>()
-    private val spanProcessors = mutableListOf<SpanProcessor>()
-    private val logExporters = mutableListOf<LogRecordExporter>()
-    private val logRecordProcessors = mutableListOf<LogRecordProcessor>()
+    private val spanExporters = CopyOnWriteArrayList<SpanExporter>()
+    private val spanProcessors = CopyOnWriteArrayList<SpanProcessor>()
+    private val logExporters = CopyOnWriteArrayList<LogRecordExporter>()
+    private val logRecordProcessors = CopyOnWriteArrayList<LogRecordProcessor>()
     private val resourceAttributes: MutableMap<String, String> = ConcurrentHashMap()
 
     fun addSpanExporter(spanExporter: SpanExporter) {

@@ -535,7 +535,7 @@ internal class SdkStateIntegrationTest(
                 assertInternalApiIsNoop()
             },
             assertAction = {
-                // nothing started, so the disable deletes what earlier launches persisted itself
+                // no instance was started to disable, so the state holder deletes what earlier launches persisted itself
                 awaitStorageDeleted()
             },
         )

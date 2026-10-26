@@ -90,20 +90,4 @@ internal class NoopSdkInstanceTest {
         )
         assertTrue(errorHandler.warningMessages.isEmpty())
     }
-
-    @Test
-    fun `disable deletes the data once and close does not`() {
-        var deletions = 0
-        val failed = NoopSdkInstance(
-            clock = clock,
-            errorHandler = errorHandler,
-            message = NoopSdkInstance.SDK_START_FAILED,
-            deleteData = { deletions++ },
-        )
-        failed.close()
-        assertEquals(0, deletions)
-        failed.disable()
-        failed.disable()
-        assertEquals(1, deletions)
-    }
 }

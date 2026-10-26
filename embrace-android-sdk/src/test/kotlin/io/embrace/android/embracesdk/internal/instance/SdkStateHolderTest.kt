@@ -24,6 +24,7 @@ internal class SdkStateHolderTest {
     private val buffer = BufferingSdkInstance({ 0 }, errorHandler)
     private val failed = FakeInstance(calls, prefix = "failed:")
     private val disabled = FakeInstance(calls, prefix = "disabled:")
+    private val recordDeletion: PersistedTelemetryDeletion = { { calls += "deleteTelemetry" } }
 
     @Test
     fun `initial state`() {
@@ -139,17 +140,14 @@ internal class SdkStateHolderTest {
         assertEquals(listOf("instantiate", "enable", "onTransition", "disable", "disabled:logInfo/1"), calls)
     }
 
-    /**
-     * A repeated close disables whatever serves calls again, which is the instance from [disabled] by then.
-     */
     @Test
-    fun `repeated close only disables the disabled instance`() {
+    fun `repeated close is ignored`() {
         val holder = createHolder(FakeInstance(calls))
         holder.start(context)
         holder.close()
         holder.close()
         assertEquals(SdkState.DISABLED, holder.state)
-        assertEquals(listOf("instantiate", "enable", "onTransition", "disable", "disabled:disable"), calls)
+        assertEquals(listOf("instantiate", "enable", "onTransition", "disable"), calls)
     }
 
     @Test
@@ -185,18 +183,22 @@ internal class SdkStateHolderTest {
         instance.startSucceeds = true
         holder.start(context)
         assertEquals(SdkState.DISABLED, holder.state)
-        assertEquals(listOf("instantiate", "enable", "close", "failed:onTransition", "failed:disable"), calls)
+        assertEquals(
+            listOf("instantiate", "enable", "close", "failed:onTransition", "failed:disable", "deleteTelemetry"),
+            calls,
+        )
     }
 
     /**
-     * No instance is left to delete the SDK's files, so [failed], which stands in for it, deletes them when disabled.
+     * The holder coordinates the cleanup: with no instance left to disable, it deletes the SDK's files itself, once.
      */
     @Test
-    fun `close after instantiation that throws disables the failed instance`() {
+    fun `close after instantiation that throws deletes the persisted telemetry once`() {
         val holder = createHolder { error("instantiation failed") }
         holder.start(context)
         holder.close()
-        assertEquals(listOf("instantiate", "failed:onTransition", "failed:disable"), calls)
+        holder.close()
+        assertEquals(listOf("instantiate", "failed:onTransition", "failed:disable", "deleteTelemetry"), calls)
     }
 
     /**
@@ -204,11 +206,12 @@ internal class SdkStateHolderTest {
      * launches persisted, so none of it is sent if a later launch starts.
      */
     @Test
-    fun `close after a start disabled by config disables its instance`() {
+    fun `close after a start disabled by config deletes the persisted telemetry`() {
         val holder = createHolder { null }
         holder.start(context)
         holder.close()
-        assertEquals(listOf("instantiate", "disabled:onTransition", "disabled:disable"), calls)
+        assertEquals(SdkState.DISABLED, holder.state)
+        assertEquals(listOf("instantiate", "disabled:onTransition", "deleteTelemetry"), calls)
     }
 
     /**
@@ -216,7 +219,7 @@ internal class SdkStateHolderTest {
      * completes, so it still deletes what earlier launches persisted.
      */
     @Test
-    fun `disable called while instantiating a start disabled by config disables its instance`() {
+    fun `disable called while instantiating a start disabled by config deletes the persisted telemetry`() {
         lateinit var holder: SdkStateHolder
         holder = createHolder {
             holder.api.disable()
@@ -224,7 +227,20 @@ internal class SdkStateHolderTest {
         }
         holder.start(context)
         assertEquals(SdkState.DISABLED, holder.state)
-        assertEquals(listOf("instantiate", "disabled:onTransition", "disabled:disable"), calls)
+        assertEquals(listOf("instantiate", "disabled:onTransition", "deleteTelemetry"), calls)
+    }
+
+    @Test
+    fun `close after a failed start still disables the sdk if the deletion fails`() {
+        val holder = createHolder(
+            instance = FakeInstance(calls, startSucceeds = false),
+            persistedTelemetryDeletion = { { error("deletion failed") } },
+        )
+        holder.start(context)
+        holder.close()
+        assertEquals(SdkState.DISABLED, holder.state)
+        assertSame(disabled, holder.api.target)
+        assertEquals(listOf("instantiate", "enable", "close", "failed:onTransition", "failed:disable"), calls)
     }
 
     @Test
@@ -237,7 +253,7 @@ internal class SdkStateHolderTest {
         assertSame(disabled, holder.api.target)
         assertEquals("disable failed", errorHandler.sdkErrorMessages.single().throwable?.message)
         holder.close()
-        assertEquals(listOf("instantiate", "enable", "onTransition", "disable", "disabled:disable"), calls)
+        assertEquals(listOf("instantiate", "enable", "onTransition", "disable"), calls)
     }
 
     @Test
@@ -507,7 +523,8 @@ internal class SdkStateHolderTest {
         assertEquals(SdkState.DISABLED, holder.state)
         assertSame(disabled, holder.api.target)
 
-        // the instance is disabled rather than closed, as the responsibility of closing falls to the disablement
+        // the holder disables the instance rather than closing it, so the instance deletes the telemetry once its own workers
+        // finish, and the holder doesn't delete it again
         assertEquals(listOf("instantiate", "enable", "disable", "failed:onTransition", "failed:disable"), calls)
     }
 
@@ -577,16 +594,23 @@ internal class SdkStateHolderTest {
         bufferedErrorHandler.guardSdkCode(SdkErrorType.PublicApiFail) { throw IllegalStateException() }
     }
 
-    private fun createHolder(instance: SdkInstance) = createHolder { instance }
+    private fun createHolder(
+        instance: SdkInstance,
+        persistedTelemetryDeletion: PersistedTelemetryDeletion = recordDeletion,
+    ) = createHolder(persistedTelemetryDeletion) { instance }
 
-    private fun createHolder(instanceFactory: () -> SdkInstance?) = SdkStateHolder(
+    private fun createHolder(
+        persistedTelemetryDeletion: PersistedTelemetryDeletion = recordDeletion,
+        instanceFactory: () -> SdkInstance?,
+    ) = SdkStateHolder(
         realSdkInstanceFactory = {
             calls += "instantiate"
             instanceFactory()
         },
         preStart = buffer,
-        failed = lazy { failed },
-        disabled = lazy { disabled },
+        failed = { failed },
+        disabled = { disabled },
+        persistedTelemetryDeletion = persistedTelemetryDeletion,
         telemetryService = FakeInternalTelemetryService(),
         errorHandler = errorHandler,
     )

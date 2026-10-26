@@ -35,14 +35,12 @@ import io.opentelemetry.kotlin.tracing.export.SpanProcessor
 /**
  * A no-op implementation of [SdkApi]. The first API call that gets dropped logs [message] along
  * with the name of the action that could not be performed. It implements the [SdkLifecycleApi]
- * calls too, so that it can back the public API on its own when the SDK can't be created. Standing in for an instance that
- * a start didn't leave, disabling it runs [deleteData], once, which deletes what the SDK persisted.
+ * calls too, so that it can back the public API on its own when the SDK can't be created.
  */
 internal class NoopSdkInstance(
     private val clock: Clock,
     private val errorHandler: ErrorHandler,
     private val message: String,
-    deleteData: (() -> Unit)? = null,
 ) : SdkInstance, SdkApi, InternalInterfaceApi by NoopInternalInterfaceApi {
 
     companion object {
@@ -53,10 +51,6 @@ internal class NoopSdkInstance(
 
     @Volatile
     private var logged: Boolean = false
-
-    // cleared once run, so that disabling this instance again deletes nothing
-    @Volatile
-    private var pendingDeletion: (() -> Unit)? = deleteData
 
     private fun logDropped(action: String) {
         if (!logged) {
@@ -268,11 +262,7 @@ internal class NoopSdkInstance(
         return false
     }
 
-    override fun disable() {
-        val deletion = pendingDeletion ?: return
-        pendingDeletion = null
-        deletion()
-    }
+    override fun disable() {}
 
     override fun close() {}
 

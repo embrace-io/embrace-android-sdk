@@ -3,7 +3,7 @@ package io.embrace.android.embracesdk.internal.instance
 import android.content.Context
 import android.util.Log
 import io.embrace.android.embracesdk.internal.api.delegate.PreStartOTelApi
-import io.embrace.android.embracesdk.internal.delivery.storage.deleteSdkFiles
+import io.embrace.android.embracesdk.internal.delivery.storage.deletePersistedTelemetry
 import io.embrace.android.embracesdk.internal.injection.ConfigLoadServices
 import io.embrace.android.embracesdk.internal.injection.ConfigLoadServicesSupplier
 import io.embrace.android.embracesdk.internal.injection.PreStartServices
@@ -33,13 +33,9 @@ internal fun createSdkStateHolder(
             errorHandler = errorHandler,
         )
     }
-    // the context the SDK is started with, recorded before its instance is created, so that the instances standing in
-    // for one a start didn't leave can find the SDK's files to delete
-    var startContext: Context? = null
     return EmbTrace.trace("sdk-state-holder-init") {
         SdkStateHolder(
             realSdkInstanceFactory = { context ->
-                startContext = context
                 EmbTrace.trace(sectionName = "modules-init", recordDuration = true) {
                     createSdkInstance(
                         context,
@@ -52,22 +48,9 @@ internal fun createSdkStateHolder(
                 }
             },
             preStart = buffer,
-            failed = lazy {
-                NoopSdkInstance(
-                    clock = clock::now,
-                    errorHandler = errorHandler,
-                    message = NoopSdkInstance.SDK_START_FAILED,
-                    deleteData = startContext?.let(::sdkFileDeletion),
-                )
-            },
-            disabled = lazy {
-                NoopSdkInstance(
-                    clock = clock::now,
-                    errorHandler = errorHandler,
-                    message = NoopSdkInstance.SDK_DISABLED,
-                    deleteData = startContext?.let(::sdkFileDeletion),
-                )
-            },
+            failed = { NoopSdkInstance(clock::now, errorHandler, NoopSdkInstance.SDK_START_FAILED) },
+            disabled = { NoopSdkInstance(clock::now, errorHandler, NoopSdkInstance.SDK_DISABLED) },
+            persistedTelemetryDeletion = ::persistedTelemetryDeletion,
             telemetryService = preStartServices.telemetryService,
             errorHandler = errorHandler,
         )
@@ -139,17 +122,17 @@ private fun createSdkInstance(
 }
 
 /**
- * Returns what deletes the SDK's files for an instance that stands in for one a start didn't leave, or null if the
- * [context] can't say where they are. Each deletion, which is rare, runs on a thread of its own, as no worker exists then.
+ * Returns a function that deletes, on a new thread, the telemetry the SDK persisted, or null if the directories
+ * can't be found through [context]. The directories are resolved here so [context] is not kept.
  */
-private fun sdkFileDeletion(context: Context): (() -> Unit)? {
+private fun persistedTelemetryDeletion(context: Context): (() -> Unit)? {
     val rootDir = runCatching { context.filesDir }.getOrNull() ?: return null
     val fallbackDir = runCatching { context.cacheDir }.getOrNull() ?: return null
     return {
         Executors.newSingleThreadExecutor().apply {
             execute {
                 runCatching {
-                    deleteSdkFiles(rootDir, fallbackDir)
+                    deletePersistedTelemetry(rootDir, fallbackDir)
                 }.onFailure { exception ->
                     Log.e("[Embrace]", "An error occurred while trying to disable Embrace SDK.", exception)
                 }

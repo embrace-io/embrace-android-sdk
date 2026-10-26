@@ -19,21 +19,21 @@ internal class StorageLocationExtTest {
     }
 
     @Test
-    fun `sdk files are deleted under both directories and other files are kept`() {
-        val sdkFiles = StorageLocation.entries.flatMap { location ->
+    fun `persisted telemetry is deleted under both directories and other files are kept`() {
+        val telemetryFiles = StorageLocation.entries.flatMap { location ->
             listOf(rootDir, fallbackDir).map { File(File(it, location.dir), "payload").apply { writeData() } }
         }
         val otherFiles = listOf(rootDir, fallbackDir).map { File(it, "app-file").apply { writeData() } }
 
-        deleteSdkFiles(rootDir, fallbackDir)
+        deletePersistedTelemetry(rootDir, fallbackDir)
 
-        sdkFiles.forEach { assertFalse(it.parentFile.exists()) }
+        telemetryFiles.forEach { assertFalse(it.parentFile.exists()) }
         otherFiles.forEach { assertTrue(it.exists()) }
     }
 
     @Test
-    fun `deleting sdk files that were never written does nothing`() {
-        deleteSdkFiles(rootDir, fallbackDir)
+    fun `deleting persisted telemetry that was never written does nothing`() {
+        deletePersistedTelemetry(rootDir, fallbackDir)
 
         assertTrue(rootDir.exists())
         assertTrue(fallbackDir.exists())

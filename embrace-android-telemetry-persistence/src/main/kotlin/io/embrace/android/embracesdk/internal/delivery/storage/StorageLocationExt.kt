@@ -21,10 +21,10 @@ fun StorageLocation.asFile(
 }
 
 /**
- * Deletes every [StorageLocation]'s directory, and everything in it, under [rootDir] and under [fallbackDir], where a
- * location goes if it can't be created under [rootDir]. It runs on the calling thread, so the caller chooses the thread.
+ * Synchronously deletes the telemetry the SDK persisted: every [StorageLocation]'s directory, and everything in it,
+ * under [rootDir] and [fallbackDir]. Nothing else the SDK stores is deleted, e.g. remote config.
  */
-fun deleteSdkFiles(rootDir: File, fallbackDir: File) {
+fun deletePersistedTelemetry(rootDir: File, fallbackDir: File) {
     StorageLocation.entries.forEach {
         File(rootDir, it.dir).deleteRecursively()
         File(fallbackDir, it.dir).deleteRecursively()

@@ -135,7 +135,7 @@ internal class SdkIntegrationTestRule(
         serverResponseConfigJson: String? = null,
         serverResponseConfigEtag: String = "server_etag_value",
         expectSdkToStart: Boolean = startSdk,
-        expectedSdkState: SdkState = if (expectSdkToStart) SdkState.STARTED else SdkState.DISABLED,
+        expectedSdkState: SdkState = if (expectSdkToStart) SdkState.ENABLED else SdkState.DISABLED,
         setupAction: EmbraceSetupInterface.() -> Unit = {},
         preSdkStartAction: EmbracePreSdkStartInterface.() -> Unit = {},
         testCaseAction: EmbraceActionInterface.() -> Unit,

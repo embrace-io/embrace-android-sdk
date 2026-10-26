@@ -28,6 +28,7 @@ import io.embrace.android.embracesdk.internal.injection.lazyOkHttpClient
 import io.embrace.android.embracesdk.internal.instance.RealSdkInstance
 import io.embrace.android.embracesdk.internal.instance.createRealSdkInstance
 import io.embrace.android.embracesdk.internal.instrumentation.crash.CrashFileMarker
+import io.embrace.android.embracesdk.internal.instrumentation.crash.jvm.JvmCrashDataSource
 import io.embrace.android.embracesdk.internal.instrumentation.startup.SdkInitResourceUsageTracker
 import io.embrace.android.embracesdk.internal.instrumentation.thread.blockage.ThreadBlockageService
 import io.embrace.android.embracesdk.internal.logs.LogOrchestrator
@@ -46,6 +47,7 @@ import okhttp3.mockwebserver.MockWebServer
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNotNull
+import org.junit.Assert.assertNull
 import org.junit.Assert.assertSame
 import org.junit.Assert.assertTrue
 import org.junit.Before
@@ -181,6 +183,23 @@ internal class RealSdkInstanceFactoryTest {
             sdkInitResourceUsageTracker = SdkInitResourceUsageTracker(errorHandler),
             overrides = overrides,
         )
+    }
+
+    /**
+     * The instance serves public API calls, and the calls buffered before start, once it is enabled. Instrumentation loads
+     * only as its init finishes, so calls made while it loads aren't dropped.
+     */
+    @Test
+    fun `instrumentation loads in onEnabled rather than in enable`() {
+        val instance = createInstance()
+        try {
+            instance.enable(context)
+            assertNull(checkNotNull(instrumentationRegistry).findByType(JvmCrashDataSource::class))
+            instance.onEnabled()
+            assertNotNull(checkNotNull(instrumentationRegistry).findByType(JvmCrashDataSource::class))
+        } finally {
+            instance.close()
+        }
     }
 
     @Test

@@ -3,7 +3,6 @@ package io.embrace.android.embracesdk.internal.logging
 import android.util.Log
 import io.embrace.android.embracesdk.internal.clock.Clock
 import io.embrace.android.embracesdk.internal.clock.NormalizedIntervalClock
-import java.util.concurrent.atomic.AtomicInteger
 import java.util.concurrent.atomic.AtomicReference
 
 internal const val EMBRACE_TAG = "[Embrace]"
@@ -32,7 +31,13 @@ class ErrorHandlerImpl(
      * a [close] will transition it to [HandlerState.Closed] and all new errors will be rejected.
      */
     private val handlerState = AtomicReference<HandlerState>(HandlerState.Empty)
-    private val count = AtomicInteger(0)
+
+    /**
+     * Replaced on [resetLimit] for each session part. An error racing the reset may count
+     * against the previous part.
+     */
+    @Volatile
+    private var limiter = SdkErrorLimiter(limit)
 
     override fun log(msg: String, throwable: Throwable?, severity: ErrorHandler.Severity) {
         when (severity) {
@@ -56,7 +61,7 @@ class ErrorHandlerImpl(
 
     private fun capture(type: SdkErrorType, throwable: Throwable) {
         runCatching {
-            if (!type.shouldCapture() || handlerState.get() === HandlerState.Closed || count.incrementAndGet() > limit) {
+            if (!type.shouldCapture() || handlerState.get() === HandlerState.Closed || !limiter.tryAcquire(type, throwable)) {
                 return
             }
             val timestampMs = clock.now()
@@ -113,7 +118,7 @@ class ErrorHandlerImpl(
     }
 
     override fun resetLimit() {
-        count.set(0)
+        limiter = SdkErrorLimiter(limit)
     }
 
     override fun close() {

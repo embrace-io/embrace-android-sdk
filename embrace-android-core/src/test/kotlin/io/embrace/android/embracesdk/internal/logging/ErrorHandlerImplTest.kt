@@ -1,10 +1,12 @@
 package io.embrace.android.embracesdk.internal.logging
 
+import io.embrace.android.embracesdk.concurrency.runConcurrently
 import io.embrace.android.embracesdk.fakes.FakeClock
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
+import java.util.concurrent.ConcurrentLinkedQueue
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicBoolean
@@ -170,17 +172,78 @@ internal class ErrorHandlerImplTest {
 
     @Test
     fun `limit applies to buffered and sent errors until reset`() {
-        repeat(8) { fail() }
+        repeat(8) { fail(distinctError(it)) }
         handler.drain(sink)
-        repeat(5) { fail() }
+        repeat(5) { fail(distinctError(it + 8)) }
         assertEquals(10, errors.size)
 
         handler.resetLimit()
-        fail()
+        fail(distinctError(0))
         assertEquals(11, errors.size)
     }
 
-    private fun fail(exc: Throwable = IllegalStateException()) {
+    @Test
+    fun `repeated errors are recorded once per reset, including across a drain`() {
+        fail(distinctError(0))
+        handler.drain(sink)
+        repeat(5) { fail(distinctError(0)) }
+        assertEquals(1, errors.size)
+
+        handler.resetLimit()
+        fail(distinctError(0))
+        assertEquals(2, errors.size)
+    }
+
+    @Test
+    fun `repeated and uncaptured errors do not use the limit`() {
+        handler.drain(sink)
+        repeat(15) { fail(distinctError(0)) }
+        repeat(5) {
+            handler.trackSdkError(SdkErrorType.NativeReadFail, distinctError(100 + it))
+            handler.trackSdkError(SdkErrorType.Ignored, distinctError(200 + it))
+            handler.guardSdkCode(type) { handler.guardUserCode { throw distinctError(300 + it) } }
+        }
+        repeat(9) { fail(distinctError(it + 1)) }
+        assertEquals(10, errors.size)
+    }
+
+    @Test
+    fun `errors of a different type or exception class are not repeats`() {
+        handler.drain(sink)
+        val stackTrace = distinctError(0).stackTrace
+        fail(IllegalStateException().apply { this.stackTrace = stackTrace })
+        fail(IllegalArgumentException().apply { this.stackTrace = stackTrace })
+        handler.trackSdkError(SdkErrorType.PayloadStorageFail, IllegalStateException().apply { this.stackTrace = stackTrace })
+        assertEquals(3, errors.size)
+    }
+
+    @Test
+    fun `racing threads record each repeated error once and never exceed the limit`() {
+        handler = ErrorHandlerImpl(clock, limit = 2)
+        val recorded = ConcurrentLinkedQueue<Throwable>()
+        handler.drain { _, throwable, _ -> recorded.add(throwable) }
+        val repeated = distinctError(-1)
+
+        runConcurrently(threadCount = 8) { thread ->
+            repeat(50) {
+                fail(repeated)
+                fail(distinctError(thread * 50 + it))
+            }
+        }
+        assertEquals(2, recorded.size)
+        assertEquals(2, recorded.map { it.stackTrace.single() }.distinct().size)
+    }
+
+    private var defaultErrors = 0
+
+    /**
+     * Fails with [exc], which by default is distinct from every other error so it isn't dropped as a repeat.
+     */
+    private fun fail(exc: Throwable = distinctError(1_000 + defaultErrors++)) {
         handler.guardSdkCode(type) { throw exc }
+    }
+
+    private fun distinctError(index: Int) = IllegalStateException().apply {
+        stackTrace = arrayOf(StackTraceElement("Foo", "bar", "Foo.kt", index))
     }
 }

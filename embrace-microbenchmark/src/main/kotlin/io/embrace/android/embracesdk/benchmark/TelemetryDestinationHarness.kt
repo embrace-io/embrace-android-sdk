@@ -77,6 +77,7 @@ internal class TelemetryDestinationHarness(
     val currentSessionPartSpan: CurrentSessionPartSpan = createCurrentSessionPartSpan(
         openTelemetryClock = openTelemetryClock,
         telemetryService = initServices.telemetryService,
+        errorHandler = initServices.errorHandler,
         spanRepository = spanRepository,
         tracerSupplier = { otelSdkWrapper.sdkTracer },
         openTelemetrySupplier = { otelSdkWrapper.openTelemetryKotlin },

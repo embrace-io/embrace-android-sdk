@@ -71,6 +71,7 @@ internal class CurrentSessionPartSpanImplTests(
     private lateinit var spanRepository: SpanRepository
     private lateinit var otelLimitsConfig: OtelLimitsConfig
     private lateinit var telemetryService: FakeInternalTelemetryService
+    private lateinit var errorHandler: FakeErrorHandler
     private lateinit var currentSessionPartSpan: CurrentSessionPartSpanImpl
     private lateinit var spanService: SpanService
     private lateinit var tracer: Tracer
@@ -80,8 +81,13 @@ internal class CurrentSessionPartSpanImplTests(
     @Before
     fun setup() {
         telemetryService = FakeInternalTelemetryService()
-        val initServices =
-            TestInitServices(clock = clock, fakeTelemetryService = telemetryService, otelSdkMode = otelSdkMode)
+        errorHandler = FakeErrorHandler(throwOnSdkError = false)
+        val initServices = TestInitServices(
+            clock = clock,
+            fakeTelemetryService = telemetryService,
+            otelSdkMode = otelSdkMode,
+            errorHandler = errorHandler,
+        )
         spanRepository = initServices.otelStack.spanRepository
         currentSessionPartSpan = initServices.otelStack.currentSessionPartSpan as CurrentSessionPartSpanImpl
         tracer = initServices.otelStack.otelSdkWrapper.sdkTracer
@@ -99,7 +105,11 @@ internal class CurrentSessionPartSpanImplTests(
 
     @Test
     fun `cannot create span before session is created`() {
-        val uninitialized = TestInitServices(clock = clock, otelSdkMode = otelSdkMode).otelStack.currentSessionPartSpan
+        val uninitialized = TestInitServices(
+            clock = clock,
+            otelSdkMode = otelSdkMode,
+            errorHandler = errorHandler,
+        ).otelStack.currentSessionPartSpan
         assertFalse(uninitialized.initialized())
         uninitialized.assertNoSessionPartSpan()
     }
@@ -470,6 +480,7 @@ internal class CurrentSessionPartSpanImplTests(
         return CurrentSessionPartSpanImpl(
             openTelemetryClock = otelClock,
             telemetryService = telemetryService,
+            errorHandler = errorHandler,
             spanRepository = repository,
             tracerSupplier = { tracer },
             openTelemetrySupplier = ::openTelemetry,
@@ -847,6 +858,28 @@ internal class CurrentSessionPartSpanImplTests(
     }
 
     @Test
+    fun `ending a session normally tracks no error`() {
+        currentSessionPartSpan.endSession(startNewSession = true)
+        currentSessionPartSpan.endSession(startNewSession = false)
+        assertTrue(errorHandler.sdkErrorMessages.isEmpty())
+    }
+
+    @Test
+    fun `ending a session with no session part span tracks an error`() {
+        currentSessionPartSpan.endSession(startNewSession = false)
+        assertTrue(currentSessionPartSpan.endSession(startNewSession = true).isEmpty())
+        assertEquals("SessionPartEndMissed", errorHandler.sdkErrorMessages.single().msg)
+    }
+
+    @Test
+    fun `ending a session whose span stopped recording tracks an error`() {
+        currentSessionPartSpan.endSession(startNewSession = false, AppTerminationCause.Crash)
+        assertTrue(errorHandler.sdkErrorMessages.isEmpty())
+        assertTrue(currentSessionPartSpan.endSession(startNewSession = true).isEmpty())
+        assertEquals("SessionPartEndMissed", errorHandler.sdkErrorMessages.single().msg)
+    }
+
+    @Test
     fun `calling readySession creates a session part span if not present`() {
         currentSessionPartSpan.endSession(startNewSession = false)
         currentSessionPartSpan.assertNoSessionPartSpan()
@@ -866,6 +899,7 @@ internal class CurrentSessionPartSpanImplTests(
         val sessionPartSpan = CurrentSessionPartSpanImpl(
             openTelemetryClock = FakeOtelKotlinClock(),
             telemetryService = telemetryService,
+            errorHandler = errorHandler,
             spanRepository = spanRepository,
             embraceSpanFactorySupplier = { FakeEmbraceSpanFactory() },
             tracerSupplier = { FakeTracer() },

@@ -48,6 +48,26 @@ internal class SpanRepositoryTest {
     }
 
     @Test
+    fun `tracking a span twice is not reported`() {
+        val span = FakeEmbraceSdkSpan.started()
+        repository.trackStartedEmbraceSpan(span)
+        repository.trackStartedEmbraceSpan(span)
+        assertTrue(errorHandler.sdkErrorMessages.isEmpty())
+    }
+
+    @Test
+    fun `a second span with a tracked span ID is reported and not tracked`() {
+        val original = FakeEmbraceSdkSpan.started()
+        val duplicate = object : EmbraceSdkSpan by FakeEmbraceSdkSpan.started() {
+            override val spanId: String? = original.spanId
+        }
+        repository.trackStartedEmbraceSpan(original)
+        repository.trackStartedEmbraceSpan(duplicate)
+        assertSame(original, repository.getEmbraceSpan(checkNotNull(original.spanId)))
+        assertEquals(SdkErrorType.DuplicateSpanIds.toString(), errorHandler.sdkErrorMessages.single().msg)
+    }
+
+    @Test
     fun `completed span tracked`() {
         val completedSpan = FakeEmbraceSdkSpan.stopped()
         repository.trackStartedEmbraceSpan(completedSpan)

@@ -37,6 +37,7 @@ internal class OpenTelemetryFactoriesTest {
         val span = createCurrentSessionPartSpan(
             openTelemetryClock = EmbClock(initServices.clock),
             telemetryService = initServices.telemetryService,
+            errorHandler = initServices.errorHandler,
             spanRepository = spanRepository,
             tracerSupplier = { error("unused") },
             openTelemetrySupplier = { error("unused") },

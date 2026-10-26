@@ -503,13 +503,36 @@ internal class SessionPartWriterImplTest {
     }
 
     @Test
-    fun `a session part that ends before any session part starts writes nothing`() {
+    fun `a session part that ends before any session part starts writes nothing and is reported`() {
         val writer = createWriter()
         writer.onSessionPartEnded(SESSION_PART_ID)
         drain()
 
         assertEquals(emptyList<SessionPartDirectory>(), sessionPartDirs())
         assertEquals(0, executor.submitCount)
+        assertSdkErrors("SessionPartEndUnexpected")
+    }
+
+    @Test
+    fun `a session part that ends twice is reported`() {
+        val writer = createWriter()
+        writer.onSessionPartStarted(clock.now(), USER_SESSION_ID, SESSION_PART_ID)
+        writer.onSessionPartEnded(SESSION_PART_ID)
+        drain()
+        assertNoSdkErrors()
+
+        writer.onSessionPartEnded(SESSION_PART_ID)
+        drain()
+        assertSdkErrors("SessionPartEndUnexpected")
+    }
+
+    @Test
+    fun `a session part that ends after the writer closed is not reported`() {
+        val writer = createWriter()
+        writer.onSessionPartStarted(clock.now(), USER_SESSION_ID, SESSION_PART_ID)
+        writer.close()
+        writer.onSessionPartEnded(SESSION_PART_ID)
+        drain()
         assertNoSdkErrors()
     }
 

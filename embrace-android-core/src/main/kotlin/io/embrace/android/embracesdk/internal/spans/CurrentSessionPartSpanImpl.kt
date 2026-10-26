@@ -10,6 +10,8 @@ import io.embrace.android.embracesdk.internal.config.behavior.DEFAULT_MAX_INTERN
 import io.embrace.android.embracesdk.internal.config.behavior.DEFAULT_MAX_NETWORK_SPANS_PER_SESSION_PART
 import io.embrace.android.embracesdk.internal.config.behavior.OtelBehavior
 import io.embrace.android.embracesdk.internal.config.behavior.OtelBehavior.Companion.DEFAULT_MAX_SPAN_EVENTS_PER_SESSION_PART
+import io.embrace.android.embracesdk.internal.logging.ErrorHandler
+import io.embrace.android.embracesdk.internal.logging.SdkErrorType
 import io.embrace.android.embracesdk.internal.otel.spans.EmbraceLinkData
 import io.embrace.android.embracesdk.internal.otel.spans.EmbraceSdkSpan
 import io.embrace.android.embracesdk.internal.otel.spans.EmbraceSpanFactory
@@ -30,6 +32,7 @@ import java.util.concurrent.atomic.AtomicInteger
 internal class CurrentSessionPartSpanImpl(
     private val openTelemetryClock: Clock,
     private val telemetryService: InternalTelemetryService,
+    private val errorHandler: ErrorHandler,
     private val spanRepository: SpanRepository,
     private val tracerSupplier: Provider<Tracer>,
     private val openTelemetrySupplier: Provider<OpenTelemetry>,
@@ -184,7 +187,10 @@ internal class CurrentSessionPartSpanImpl(
         appTerminationCause: AppTerminationCause?,
     ): List<Span> {
         synchronized(sessionTransitionLock) {
-            val endingState = sessionPartState ?: return emptyList()
+            val endingState = sessionPartState ?: run {
+                reportMissedEnd("Session part ended with no session part span")
+                return emptyList()
+            }
             val endingSessionPartSpan = endingState.span
             return if (endingSessionPartSpan.isRecording) {
                 // Right now, session part spans don't survive native crashes and sudden process terminations,
@@ -217,10 +223,14 @@ internal class CurrentSessionPartSpanImpl(
                 }
                 spanRepository.flushOtelSpans()
             } else {
+                reportMissedEnd("Session part ended after its span stopped recording")
                 emptyList()
             }
         }
     }
+
+    private fun reportMissedEnd(msg: String) =
+        errorHandler.trackSdkError(SdkErrorType.SessionPartEndMissed, IllegalStateException(msg))
 
     override fun current(): EmbraceSdkSpan? = sessionPartState?.span
 

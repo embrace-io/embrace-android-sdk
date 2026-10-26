@@ -13,14 +13,19 @@ import android.view.Window
 internal class VitalsWindowCallback(
     private val delegate: Window.Callback,
     focalCallbacks: FocalInteractionCallbacks,
+    errors: OnceUiCallbackErrorTracker,
 ) : Window.Callback by delegate, AutoCloseable {
 
     // nulled on close so that a window outliving the SDK does not retain it
     @Volatile
     private var focalCallbacks: FocalInteractionCallbacks? = focalCallbacks
 
+    @Volatile
+    private var errors: OnceUiCallbackErrorTracker? = errors
+
     override fun close() {
         focalCallbacks = null
+        errors = null
     }
 
     override fun dispatchTouchEvent(event: MotionEvent?): Boolean {
@@ -38,7 +43,8 @@ internal class VitalsWindowCallback(
 
                 MotionEvent.ACTION_CANCEL -> focalCallbacks.onInteractionEnd()
             }
-        } catch (_: Throwable) {
+        } catch (exc: Throwable) {
+            errors?.track(exc)
         }
 
         return delegate.dispatchTouchEvent(event)
@@ -51,7 +57,8 @@ internal class VitalsWindowCallback(
             if (hasFocus) {
                 focalCallbacks.onWindowFocused()
             }
-        } catch (_: Throwable) {
+        } catch (exc: Throwable) {
+            errors?.track(exc)
         }
 
         delegate.onWindowFocusChanged(hasFocus)

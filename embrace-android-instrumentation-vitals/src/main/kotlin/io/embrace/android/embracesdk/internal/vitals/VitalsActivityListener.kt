@@ -9,6 +9,7 @@ import android.os.Looper
 import android.os.SystemClock
 import android.view.Window
 import androidx.annotation.RequiresApi
+import io.embrace.android.embracesdk.internal.logging.ErrorHandler
 import java.lang.ref.WeakReference
 import java.util.WeakHashMap
 
@@ -23,7 +24,12 @@ internal class VitalsActivityListener(
     private val navSource: ActivityNavigationSource,
     private val frameMetricsHandler: Handler,
     private val frameMetricsStrategy: FrameMetricsStrategy,
+    errorHandler: ErrorHandler,
 ) : ActivityLifecycleCallbacks, AutoCloseable {
+
+    private val activityErrors = OnceUiCallbackErrorTracker(errorHandler)
+    private val frameErrors = OnceUiCallbackErrorTracker(errorHandler)
+    private val windowErrors = OnceUiCallbackErrorTracker(errorHandler)
 
     private val frameListeners = WeakHashMap<Window, VitalsFrameMetricsListener>()
 
@@ -43,7 +49,8 @@ internal class VitalsActivityListener(
         try {
             // a non-null bundle means the Activity is being recreated (config change / restore), not navigated to
             navSource.onActivityCreated(activity.localClassName, recreated = bundle != null, eventTime = eventTime)
-        } catch (_: Throwable) {
+        } catch (exc: Throwable) {
+            activityErrors.track(exc)
         }
     }
 
@@ -57,7 +64,8 @@ internal class VitalsActivityListener(
             focalCallbacks.onScreenStart()
             // a resumed Activity is the navigation end onto its screen
             navSource.onActivityResumed(activity.localClassName, eventTime)
-        } catch (_: Throwable) {
+        } catch (exc: Throwable) {
+            activityErrors.track(exc)
         }
     }
 
@@ -66,7 +74,8 @@ internal class VitalsActivityListener(
             // Close any in-flight focal moment.
             focalCallbacks.onScreenStop()
             activity.window?.let(::removeFrameMetricsListener)
-        } catch (_: Throwable) {
+        } catch (exc: Throwable) {
+            activityErrors.track(exc)
         }
     }
 
@@ -78,6 +87,7 @@ internal class VitalsActivityListener(
             val callback = VitalsWindowCallback(
                 delegate = window.callback,
                 focalCallbacks = focalCallbacks,
+                errors = windowErrors,
             )
             interactionCallbacks[window] = WeakReference(callback)
             window.callback = callback
@@ -89,7 +99,7 @@ internal class VitalsActivityListener(
             if (closed || frameListeners.containsKey(window)) {
                 return
             }
-            val listener = VitalsFrameMetricsListener(focalCallbacks, frameMetricsStrategy)
+            val listener = VitalsFrameMetricsListener(focalCallbacks, frameMetricsStrategy, frameErrors)
             frameListeners[window] = listener
             window.addOnFrameMetricsAvailableListener(listener, frameMetricsHandler)
         }

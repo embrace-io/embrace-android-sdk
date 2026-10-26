@@ -6,7 +6,9 @@ import android.view.MotionEvent
 import android.view.Window
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
+import io.embrace.android.embracesdk.fakes.FakeErrorHandler
 import io.embrace.android.embracesdk.fakes.FakeInstrumentationArgs
+import io.embrace.android.embracesdk.internal.logging.SdkErrorType
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Before
@@ -38,7 +40,7 @@ internal class VitalsWindowCallbackTest {
                 delegateFocusChanges++
             }
         }
-        callback = VitalsWindowCallback(delegate, focalCallbacks)
+        callback = VitalsWindowCallback(delegate, focalCallbacks, OnceUiCallbackErrorTracker(args.errorHandler))
     }
 
     @Test
@@ -119,6 +121,19 @@ internal class VitalsWindowCallbackTest {
 
         assertEquals(1, delegateCalls)
         assertEquals(0, focalCallbacks.interactionStartCount)
+    }
+
+    @Test
+    fun `a callback that throws repeatedly tracks one error and still forwards to the delegate`() {
+        val errorHandler = FakeErrorHandler(throwOnSdkError = false)
+        val throwing = object : FocalInteractionCallbacks by focalCallbacks {
+            override fun onInteractionStart() = error("boom")
+        }
+        callback = VitalsWindowCallback(callback, throwing, OnceUiCallbackErrorTracker(errorHandler))
+        repeat(3) { dispatch(MotionEvent.ACTION_DOWN) }
+
+        assertEquals(3, delegateCalls)
+        assertEquals(listOf(SdkErrorType.UiCallbackFail.toString()), errorHandler.sdkErrorMessages.map { it.msg })
     }
 
     private fun dispatch(action: Int): Boolean {

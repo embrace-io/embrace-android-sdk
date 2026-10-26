@@ -149,6 +149,7 @@ internal class VitalsDataSource(
             navSource = ActivityNavigationSource(callbacks = tracker),
             frameMetricsHandler = handler,
             frameMetricsStrategy = frameMetricsStrategy,
+            errorHandler = args.errorHandler,
         )
         activityListener = listener
         args.application.registerActivityLifecycleCallbacks(listener)

@@ -25,6 +25,7 @@ internal fun createConfigService(
         deviceIdProvider = { persistedConfig.deviceId },
         sdkVersion = BuildConfig.VERSION_NAME,
         apiLevel = Build.VERSION.SDK_INT,
+        errorHandler = preStartServices.errorHandler,
     ),
 ): ConfigServiceImpl = ConfigServiceImpl(
     instrumentedConfig = instrumentedConfig,

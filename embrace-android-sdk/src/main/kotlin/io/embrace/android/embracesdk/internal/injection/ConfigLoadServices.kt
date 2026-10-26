@@ -53,6 +53,7 @@ internal class ConfigLoadServices(
             keyValueStore = keyValueStore,
             uuidSource = uuidSource,
             clock = preStartServices.clock,
+            errorHandler = preStartServices.errorHandler,
         )
     }
 

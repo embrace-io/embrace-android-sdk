@@ -1,6 +1,7 @@
 package io.embrace.android.embracesdk.internal.config
 
 import io.embrace.android.embracesdk.fakes.FakeClock
+import io.embrace.android.embracesdk.fakes.FakeErrorHandler
 import io.embrace.android.embracesdk.fakes.FakeKeyValueStore
 import io.embrace.android.embracesdk.fakes.TestPlatformSerializer
 import io.embrace.android.embracesdk.fakes.TestUuidSource
@@ -27,6 +28,7 @@ internal class PersistedConfigTest {
     val temporaryFolder: TemporaryFolder = TemporaryFolder()
 
     private val serializer = TestPlatformSerializer()
+    private val errorHandler = FakeErrorHandler(throwOnSdkError = false)
 
     @Test
     fun `remote config is loaded from disk`() {
@@ -123,6 +125,7 @@ internal class PersistedConfigTest {
         assertNull(persistedConfig.response)
         assertNull(persistedConfig.remoteConfig)
         assertFalse(persistedConfig.otelBehavior.shouldUseKotlinSdk())
+        assertEquals("RemoteConfigStoreFail", errorHandler.sdkErrorMessages.single().msg)
     }
 
     @Test
@@ -167,6 +170,7 @@ internal class PersistedConfigTest {
                 storageDir = File(filesDir, PersistedConfig.STORAGE_DIR_NAME),
                 deviceIdProvider = { cachedDeviceId },
                 deliveredAtProvider = { 1L },
+                errorHandler = errorHandler,
             ).saveResponse(ConfigHttpResponse(persisted, "etag"))
         } else if (persisted != null) {
             val storageDir = File(filesDir, PersistedConfig.STORAGE_DIR_NAME).apply { mkdirs() }
@@ -184,6 +188,7 @@ internal class PersistedConfigTest {
             keyValueStore = store,
             uuidSource = TestUuidSource(),
             clock = FakeClock(),
+            errorHandler = errorHandler,
         )
     }
 }

@@ -2,6 +2,9 @@ package io.embrace.android.embracesdk.internal.config.source
 
 import io.embrace.android.embracesdk.internal.config.store.RemoteConfigStore
 import io.embrace.android.embracesdk.internal.config.store.StoredConfigResponse
+import io.embrace.android.embracesdk.internal.logging.ErrorHandler
+import io.embrace.android.embracesdk.internal.logging.SdkErrorType
+import io.embrace.android.embracesdk.internal.logging.guardSdkCode
 import io.embrace.android.embracesdk.internal.worker.BackgroundWorker
 import java.util.concurrent.TimeUnit
 
@@ -10,6 +13,7 @@ internal class CombinedRemoteConfigSource(
     private val response: StoredConfigResponse?,
     private val httpSource: RemoteConfigSource,
     private val worker: BackgroundWorker,
+    private val errorHandler: ErrorHandler,
     private val intervalMs: Long = 60 * 60 * 1000,
 ) {
 
@@ -23,7 +27,7 @@ internal class CombinedRemoteConfigSource(
     }
 
     private fun attemptConfigRequest() {
-        runCatching {
+        errorHandler.guardSdkCode(SdkErrorType.RemoteConfigFetchFail) {
             response?.etag?.let {
                 httpSource.setInitialEtag(it)
             }

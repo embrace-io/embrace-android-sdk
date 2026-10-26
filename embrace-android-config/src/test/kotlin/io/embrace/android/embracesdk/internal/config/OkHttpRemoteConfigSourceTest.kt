@@ -1,5 +1,6 @@
 package io.embrace.android.embracesdk.internal.config
 
+import io.embrace.android.embracesdk.fakes.FakeErrorHandler
 import io.embrace.android.embracesdk.fakes.TestPlatformSerializer
 import io.embrace.android.embracesdk.fakes.config.FakeBaseUrlConfig
 import io.embrace.android.embracesdk.fakes.config.FakeInstrumentedConfig
@@ -7,6 +8,7 @@ import io.embrace.android.embracesdk.internal.config.remote.BackgroundActivityRe
 import io.embrace.android.embracesdk.internal.config.remote.RemoteConfig
 import io.embrace.android.embracesdk.internal.config.source.ConfigEndpoint
 import io.embrace.android.embracesdk.internal.config.source.OkHttpRemoteConfigSource
+import io.embrace.android.embracesdk.internal.logging.SdkErrorType
 import okhttp3.OkHttpClient
 import okhttp3.Protocol
 import okhttp3.mockwebserver.MockResponse
@@ -17,6 +19,7 @@ import okio.GzipSink
 import okio.buffer
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
+import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
 import java.util.concurrent.TimeUnit
@@ -26,6 +29,7 @@ class OkHttpRemoteConfigSourceTest {
     private lateinit var server: MockWebServer
     private lateinit var client: OkHttpClient
     private lateinit var source: OkHttpRemoteConfigSource
+    private val errorHandler = FakeErrorHandler(throwOnSdkError = false)
 
     private val remoteConfig = RemoteConfig(
         backgroundActivityConfig = BackgroundActivityRemoteConfig(100f),
@@ -61,6 +65,7 @@ class OkHttpRemoteConfigSourceTest {
                     36,
                 ),
             ),
+            errorHandler,
         )
     }
 
@@ -80,6 +85,7 @@ class OkHttpRemoteConfigSourceTest {
         )
         assertConfigRequestReceived(request)
         assertConfigResponseNotDeserialized(cfg)
+        assertTrue(errorHandler.sdkErrorMessages.isEmpty())
     }
 
     @Test
@@ -89,6 +95,7 @@ class OkHttpRemoteConfigSourceTest {
         )
         assertConfigRequestReceived(request)
         assertConfigResponseNotDeserialized(cfg)
+        assertTrue(errorHandler.sdkErrorMessages.isEmpty())
     }
 
     @Test
@@ -97,6 +104,25 @@ class OkHttpRemoteConfigSourceTest {
         val (cfg, request) = executeRequest(null)
         assertConfigRequestNotReceived(request)
         assertConfigResponseNotDeserialized(cfg)
+    }
+
+    @Test
+    fun `a socket error is not tracked`() {
+        server.shutdown()
+        assertNull(source.getConfig())
+        assertTrue(errorHandler.sdkErrorMessages.isEmpty())
+    }
+
+    @Test
+    fun `malformed json is tracked`() {
+        val body = Buffer()
+        GzipSink(body).buffer().use { it.writeUtf8("{") }
+        val (cfg, request) = executeRequest(
+            MockResponse().setResponseCode(200).setBody(body),
+        )
+        assertConfigRequestReceived(request)
+        assertConfigResponseNotDeserialized(cfg)
+        assertErrorTracked(SdkErrorType.RemoteConfigParseFail)
     }
 
     @Test
@@ -124,6 +150,7 @@ class OkHttpRemoteConfigSourceTest {
         )
         assertConfigRequestReceived(request)
         assertConfigResponseNotDeserialized(cfg)
+        assertErrorTracked(SdkErrorType.RemoteConfigParseFail)
     }
 
     @Test
@@ -146,6 +173,7 @@ class OkHttpRemoteConfigSourceTest {
         assertConfigRequestReceived(secondRequest)
         assertEquals(etagValue, secondRequest?.getHeader("If-None-Match"))
         assertConfigResponseNotDeserialized(secondCfg)
+        assertTrue(errorHandler.sdkErrorMessages.isEmpty())
     }
 
     @Test
@@ -207,6 +235,10 @@ class OkHttpRemoteConfigSourceTest {
 
     private fun assertConfigResponseNotDeserialized(cfg: RemoteConfig?) {
         assertNull(cfg)
+    }
+
+    private fun assertErrorTracked(type: SdkErrorType) {
+        assertEquals(type.toString(), errorHandler.sdkErrorMessages.single().msg)
     }
 
     private data class CallData(

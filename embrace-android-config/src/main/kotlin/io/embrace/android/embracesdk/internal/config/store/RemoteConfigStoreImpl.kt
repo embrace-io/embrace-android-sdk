@@ -4,16 +4,20 @@ import io.embrace.android.embracesdk.internal.config.PersistedConfig
 import io.embrace.android.embracesdk.internal.config.cache.CachedConfiguration
 import io.embrace.android.embracesdk.internal.config.remote.RemoteConfig
 import io.embrace.android.embracesdk.internal.config.source.ConfigHttpResponse
+import io.embrace.android.embracesdk.internal.logging.ErrorHandler
+import io.embrace.android.embracesdk.internal.logging.SdkErrorType
 import io.embrace.android.embracesdk.internal.serialization.EmbraceBinary
 import io.embrace.android.embracesdk.internal.serialization.PlatformSerializer
 import kotlinx.serialization.builtins.nullable
 import java.io.File
+import java.io.IOException
 
 internal class RemoteConfigStoreImpl(
     private val serializer: PlatformSerializer,
     private val storageDir: File,
     private val deliveredAtProvider: () -> Long = { 0L },
     private val deviceIdProvider: () -> String,
+    private val errorHandler: ErrorHandler,
 ) : RemoteConfigStore {
 
     private val configFile by lazy { File(storageDir, PersistedConfig.CONFIG_RESPONSE_FILE_NAME) }
@@ -40,8 +44,11 @@ internal class RemoteConfigStoreImpl(
             // delete the cache file if it appears to be corrupted
             deleteQuietly(cachedConfigFile)
             null
-        } catch (_: Throwable) {
+        } catch (_: IOException) {
             // assume error may be recoverable (e.g. transient IO)
+            null
+        } catch (exc: Throwable) {
+            errorHandler.trackSdkError(SdkErrorType.RemoteConfigStoreFail, exc)
             null
         }
     }
@@ -57,12 +64,16 @@ internal class RemoteConfigStoreImpl(
                 etag = null,
                 deviceId = null,
             )
-        } catch (_: IllegalArgumentException) {
+        } catch (exc: IllegalArgumentException) {
+            errorHandler.trackSdkError(SdkErrorType.RemoteConfigStoreFail, exc)
             // delete the cache file if it appears to be corrupted
             deleteQuietly(configFile)
             null
-        } catch (_: Throwable) {
+        } catch (_: IOException) {
             // assume error may be recoverable (e.g. transient IO)
+            null
+        } catch (exc: Throwable) {
+            errorHandler.trackSdkError(SdkErrorType.RemoteConfigStoreFail, exc)
             null
         }
     }
@@ -74,7 +85,8 @@ internal class RemoteConfigStoreImpl(
                 serializer.toJson(response.cfg, RemoteConfig.serializer().nullable, stream)
             }
             response.etag?.let(etagFile::writeText)
-        } catch (exc: Exception) {
+        } catch (exc: Throwable) {
+            trackUnlessIo(exc)
             // paranoia: purge the cache
             // to avoid the possibility of getting trapped with stale config
             // where the SDK is disabled & persistence fails. In that scenario we prefer
@@ -104,7 +116,8 @@ internal class RemoteConfigStoreImpl(
             cachedConfigFile.outputStream().buffered().use { stream ->
                 EmbraceBinary.encodeToStream(CachedConfiguration.serializer(), cached, stream)
             }
-        } catch (exc: Exception) {
+        } catch (exc: Throwable) {
+            trackUnlessIo(exc)
             // a partially-written or failed blob must not be read back: delete it and rely on the
             // fallback path that was already written successfully.
             deleteQuietly(cachedConfigFile)
@@ -115,6 +128,12 @@ internal class RemoteConfigStoreImpl(
         deleteQuietly(configFile)
         deleteQuietly(etagFile)
         deleteQuietly(cachedConfigFile)
+    }
+
+    private fun trackUnlessIo(exc: Throwable) {
+        if (exc !is IOException) {
+            errorHandler.trackSdkError(SdkErrorType.RemoteConfigStoreFail, exc)
+        }
     }
 
     private fun deleteQuietly(file: File) {

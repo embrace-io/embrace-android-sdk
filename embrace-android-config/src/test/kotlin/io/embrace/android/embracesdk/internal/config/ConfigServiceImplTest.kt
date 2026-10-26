@@ -92,6 +92,7 @@ internal class ConfigServiceImplTest {
                 storageDir = File(filesDir, PersistedConfig.STORAGE_DIR_NAME),
                 deviceIdProvider = { DEVICE_ID },
                 deliveredAtProvider = { 1L },
+                errorHandler = FakeErrorHandler(),
             ).saveResponse(ConfigHttpResponse(persisted, "etag"))
         }
         return ConfigServiceImpl(
@@ -103,6 +104,7 @@ internal class ConfigServiceImplTest {
                 keyValueStore = lazyOf(FakeKeyValueStore()),
                 uuidSource = TestUuidSource(),
                 clock = FakeClock(),
+                errorHandler = FakeErrorHandler(),
             ),
             worker = fakeBackgroundWorker(),
             serializer = serializer,

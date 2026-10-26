@@ -9,6 +9,9 @@ import io.embrace.android.embracesdk.internal.config.remote.RemoteConfig
 import io.embrace.android.embracesdk.internal.config.store.RemoteConfigStore
 import io.embrace.android.embracesdk.internal.config.store.RemoteConfigStoreImpl
 import io.embrace.android.embracesdk.internal.config.store.StoredConfigResponse
+import io.embrace.android.embracesdk.internal.logging.ErrorHandler
+import io.embrace.android.embracesdk.internal.logging.SdkErrorType
+import io.embrace.android.embracesdk.internal.logging.guardSdkCode
 import io.embrace.android.embracesdk.internal.serialization.PlatformSerializer
 import io.embrace.android.embracesdk.internal.store.KeyValueStore
 import io.embrace.android.embracesdk.internal.utils.UuidSource
@@ -29,6 +32,7 @@ class PersistedConfig(
     keyValueStore: Lazy<KeyValueStore>,
     uuidSource: UuidSource,
     clock: Clock,
+    errorHandler: ErrorHandler,
 ) {
 
     /**
@@ -44,10 +48,13 @@ class PersistedConfig(
             storageDir = File(filesDir, STORAGE_DIR_NAME),
             deviceIdProvider = { deviceId },
             deliveredAtProvider = { clock.now() },
+            errorHandler = errorHandler,
         )
     }
 
-    internal val response: StoredConfigResponse? = runCatching { store?.loadResponse() }.getOrNull()
+    internal val response: StoredConfigResponse? = errorHandler.guardSdkCode(SdkErrorType.RemoteConfigStoreFail, null) {
+        store?.loadResponse()
+    }
 
     internal val remoteConfig: RemoteConfig? = response?.cfg
 

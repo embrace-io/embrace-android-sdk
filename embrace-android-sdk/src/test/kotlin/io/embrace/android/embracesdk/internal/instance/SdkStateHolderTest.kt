@@ -48,7 +48,7 @@ internal class SdkStateHolderTest {
         holder.api.logInfo("message")
         assertEquals(SdkState.STARTED, holder.state)
         assertSame(instance, holder.api.target)
-        assertEquals(listOf("instantiate", "start", "onPostStart", "logInfo/1"), calls)
+        assertEquals(listOf("instantiate", "enable", "onTransition", "logInfo/1"), calls)
     }
 
     @Test
@@ -57,7 +57,7 @@ internal class SdkStateHolderTest {
         holder.start(context)
         holder.start(context)
         assertEquals(SdkState.STARTED, holder.state)
-        assertEquals(listOf("instantiate", "start", "onPostStart"), calls)
+        assertEquals(listOf("instantiate", "enable", "onTransition"), calls)
     }
 
     @Test
@@ -71,7 +71,7 @@ internal class SdkStateHolderTest {
         holder.api.logInfo("message")
         assertEquals(SdkState.FAILED, holder.state)
         assertSame(failed, holder.api.target)
-        assertEquals(listOf("instantiate", "start", "close", "failed:onPostStart", "failed:logInfo/1"), calls)
+        assertEquals(listOf("instantiate", "enable", "close", "failed:onTransition", "failed:logInfo/1"), calls)
     }
 
     @Test
@@ -82,7 +82,7 @@ internal class SdkStateHolderTest {
         holder.start(context)
         assertEquals(SdkState.FAILED, holder.state)
         assertSame(failed, holder.api.target)
-        assertEquals(listOf("instantiate", "start", "close", "failed:onPostStart"), calls)
+        assertEquals(listOf("instantiate", "enable", "close", "failed:onTransition"), calls)
         assertEquals("start failed", errorHandler.sdkErrorMessages.single().throwable?.message)
     }
 
@@ -93,7 +93,7 @@ internal class SdkStateHolderTest {
         holder.start(context)
         assertEquals(SdkState.FAILED, holder.state)
         assertSame(failed, holder.api.target)
-        assertEquals(listOf("instantiate", "start", "close", "failed:onPostStart"), calls)
+        assertEquals(listOf("instantiate", "enable", "close", "failed:onTransition"), calls)
         assertEquals("close failed", errorHandler.sdkErrorMessages.single().throwable?.message)
     }
 
@@ -109,12 +109,12 @@ internal class SdkStateHolderTest {
 
     @Test
     fun `start fails even if the handover to the failed instance fails`() {
-        failed.postStartThrows = true
+        failed.transitionThrows = true
         val holder = createHolder(FakeInstance(calls, startSucceeds = false))
         holder.start(context)
         assertEquals(SdkState.FAILED, holder.state)
         assertSame(failed, holder.api.target)
-        assertEquals("post start failed", errorHandler.sdkErrorMessages.single().throwable?.message)
+        assertEquals("transition failed", errorHandler.sdkErrorMessages.single().throwable?.message)
     }
 
     @Test
@@ -126,7 +126,7 @@ internal class SdkStateHolderTest {
         holder.api.logInfo("message")
         assertEquals(SdkState.DISABLED, holder.state)
         assertSame(disabled, holder.api.target)
-        assertEquals(listOf("instantiate", "start", "onPostStart", "disable", "disabled:logInfo/1"), calls)
+        assertEquals(listOf("instantiate", "enable", "onTransition", "disable", "disabled:logInfo/1"), calls)
     }
 
     @Test
@@ -136,7 +136,7 @@ internal class SdkStateHolderTest {
         holder.start(context)
         instance.onDisable = { holder.api.logInfo("message") }
         holder.close()
-        assertEquals(listOf("instantiate", "start", "onPostStart", "disable", "disabled:logInfo/1"), calls)
+        assertEquals(listOf("instantiate", "enable", "onTransition", "disable", "disabled:logInfo/1"), calls)
     }
 
     @Test
@@ -146,7 +146,7 @@ internal class SdkStateHolderTest {
         holder.close()
         holder.close()
         assertEquals(SdkState.DISABLED, holder.state)
-        assertEquals(listOf("instantiate", "start", "onPostStart", "disable"), calls)
+        assertEquals(listOf("instantiate", "enable", "onTransition", "disable"), calls)
     }
 
     @Test
@@ -156,7 +156,7 @@ internal class SdkStateHolderTest {
         holder.close()
         holder.start(context)
         assertEquals(SdkState.DISABLED, holder.state)
-        assertEquals(listOf("instantiate", "start", "onPostStart", "disable"), calls)
+        assertEquals(listOf("instantiate", "enable", "onTransition", "disable"), calls)
     }
 
     @Test
@@ -168,7 +168,7 @@ internal class SdkStateHolderTest {
         holder.start(context)
         assertEquals(SdkState.DISABLED, holder.state)
         assertSame(disabled, holder.api.target)
-        assertEquals(listOf("disabled:onPostStart"), calls)
+        assertEquals(listOf("disabled:onTransition"), calls)
     }
 
     @Test
@@ -182,7 +182,7 @@ internal class SdkStateHolderTest {
         instance.startSucceeds = true
         holder.start(context)
         assertEquals(SdkState.DISABLED, holder.state)
-        assertEquals(listOf("instantiate", "start", "close", "failed:onPostStart", "failed:disable"), calls)
+        assertEquals(listOf("instantiate", "enable", "close", "failed:onTransition", "failed:disable"), calls)
     }
 
     @Test
@@ -195,7 +195,7 @@ internal class SdkStateHolderTest {
         assertSame(disabled, holder.api.target)
         assertEquals("disable failed", errorHandler.sdkErrorMessages.single().throwable?.message)
         holder.close()
-        assertEquals(listOf("instantiate", "start", "onPostStart", "disable"), calls)
+        assertEquals(listOf("instantiate", "enable", "onTransition", "disable"), calls)
     }
 
     @Test
@@ -208,7 +208,7 @@ internal class SdkStateHolderTest {
         assertEquals(SdkState.DISABLED, holder.state)
         holder.api.start(context)
         assertEquals(SdkState.DISABLED, holder.state)
-        assertEquals(listOf("instantiate", "start", "onPostStart", "logInfo/1", "disable"), calls)
+        assertEquals(listOf("instantiate", "enable", "onTransition", "logInfo/1", "disable"), calls)
     }
 
     @Test
@@ -262,12 +262,12 @@ internal class SdkStateHolderTest {
     }
 
     @Test
-    fun `failed post start hook still starts the sdk`() {
-        val instance = FakeInstance(calls, postStartThrows = true)
+    fun `failed transition hook still starts the sdk`() {
+        val instance = FakeInstance(calls = calls, transitionThrows = true)
         val holder = createHolder(instance)
         holder.start(context)
         assertEquals(SdkState.STARTED, holder.state)
-        assertEquals("post start failed", errorHandler.sdkErrorMessages.single().throwable?.message)
+        assertEquals("transition failed", errorHandler.sdkErrorMessages.single().throwable?.message)
     }
 
     @Test
@@ -282,7 +282,7 @@ internal class SdkStateHolderTest {
         holder.start(context)
         assertEquals(SdkState.DISABLED, holder.state)
         assertSame(disabled, holder.api.target)
-        assertEquals(listOf("instantiate", "disabled:onPostStart"), calls)
+        assertEquals(listOf("instantiate", "disabled:onTransition"), calls)
     }
 
     @Test
@@ -309,17 +309,17 @@ internal class SdkStateHolderTest {
         val holder = createHolder(FakeInstance(calls))
         holder.close()
         holder.start(context)
-        assertEquals(listOf("disabled:onPostStart"), calls)
+        assertEquals(listOf("disabled:onTransition"), calls)
     }
 
     @Test
     fun `close before start is terminal even if the handover fails`() {
-        disabled.postStartThrows = true
+        disabled.transitionThrows = true
         val holder = createHolder(FakeInstance(calls))
         holder.close()
         assertEquals(SdkState.DISABLED, holder.state)
         assertSame(disabled, holder.api.target)
-        assertEquals("post start failed", errorHandler.sdkErrorMessages.single().throwable?.message)
+        assertEquals("transition failed", errorHandler.sdkErrorMessages.single().throwable?.message)
     }
 
     @Test
@@ -328,7 +328,7 @@ internal class SdkStateHolderTest {
         val threads = List(8) { thread { holder.start(context) } }
         threads.forEach(Thread::join)
         assertEquals(SdkState.STARTED, holder.state)
-        assertEquals(listOf("instantiate", "start", "onPostStart"), calls)
+        assertEquals(listOf("instantiate", "enable", "onTransition"), calls)
     }
 
     @Test
@@ -426,7 +426,7 @@ internal class SdkStateHolderTest {
         var startSucceeds: Boolean = true,
         private val startThrows: Boolean = false,
         val closeThrows: Boolean = false,
-        var postStartThrows: Boolean = false,
+        var transitionThrows: Boolean = false,
         private val prefix: String = "",
     ) : SdkInstance, InternalSdkApi by recordingSdkApi(calls, prefix) {
 
@@ -438,17 +438,17 @@ internal class SdkStateHolderTest {
 
         var onDisable: () -> Unit = {}
 
-        override fun onPostStart(buffer: BufferingSdkInstance) {
-            calls += "${prefix}onPostStart"
+        override fun onTransition(buffer: BufferingSdkInstance) {
+            calls += "${prefix}onTransition"
             handedOver += buffer
             buffer.drainCompletedSpans(recordingSdkApi(drained, prefix))
-            check(!postStartThrows) { "post start failed" }
+            check(!transitionThrows) { "transition failed" }
         }
 
         override val isStarted: Boolean get() = started
 
-        override fun start(context: Context) {
-            calls += "start"
+        override fun enable(context: Context) {
+            calls += "enable"
             check(!startThrows) { "start failed" }
             if (startSucceeds) {
                 started = true

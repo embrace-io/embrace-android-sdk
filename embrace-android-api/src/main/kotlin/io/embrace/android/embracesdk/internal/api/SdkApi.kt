@@ -14,6 +14,7 @@ public interface SdkApi :
     UserApi,
     TracingApi,
     EmbraceAndroidApi,
+    SdkLifecycleApi,
     SdkStateApi,
     OTelApi,
     BreadcrumbApi,

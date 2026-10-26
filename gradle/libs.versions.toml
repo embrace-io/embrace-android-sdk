@@ -41,7 +41,7 @@ appcompat = "1.8.0"
 fragment = "1.9.1"
 navigation = "2.10.2"
 navigation3 = "1.1.5"
-asmUtil = "9.11"
+asmUtil = "9.11.1"
 gradleTestKit = "8.11.1"
 # 1.5.7-18+ ships Java 22 classes that Gradle 8.0.x can't instrument. See .github/dependabot.yml.
 zstdJni = "1.5.7-17"

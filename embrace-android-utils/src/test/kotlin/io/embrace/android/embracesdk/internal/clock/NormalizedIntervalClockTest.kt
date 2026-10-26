@@ -1,6 +1,7 @@
 package io.embrace.android.embracesdk.internal.clock
 
 import io.embrace.android.embracesdk.fakes.FakeErrorHandler
+import io.embrace.android.embracesdk.internal.logging.SdkErrorType
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Before
@@ -43,7 +44,21 @@ internal class NormalizedIntervalClockTest {
         clock.now() // record high-water mark
         elapsedMs -= 60_001L // drift back by just over 60s
         clock.now()
-        assertEquals(1, errorHandler.sdkErrorMessages.size)
+        assertEquals(SdkErrorType.ClockDrift.toString(), errorHandler.sdkErrorMessages.single().msg)
+    }
+
+    @Test
+    fun `cas exhaustion returns current time and tracks error once`() {
+        val clock = NormalizedIntervalClock(
+            errorHandler = errorHandler,
+            wallClock = { 1_000_000L },
+            monotonicClock = elapsedProvider,
+            casLimit = 0,
+        )
+        assertEquals(1_000_000L, clock.now())
+        elapsedMs += 1_000L
+        assertEquals(1_001_000L, clock.now())
+        assertEquals(SdkErrorType.ClockCasExhausted.toString(), errorHandler.sdkErrorMessages.single().msg)
     }
 
     @Test

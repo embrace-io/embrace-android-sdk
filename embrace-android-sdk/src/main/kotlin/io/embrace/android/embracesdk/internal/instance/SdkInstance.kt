@@ -28,12 +28,16 @@ internal interface SdkInstance : InternalSdkApi, AutoCloseable {
     fun onTransition(buffer: BufferingSdkInstance)
 
     /**
-     * Disables the instance: does everything [close] does, then deletes the data the instance persisted.
+     * Disables the instance: does everything [close] does, and also deletes any telemetry that it persists.
+     *
+     * A more generalized cleanup step is coordinated by [SdkStateHolder], deleting persisted telemetry globally that might
+     * have been left by aborted or partial SDK starts that are no longer wanted, when appropriate.
      */
     fun disable()
 
     /**
-     * Closes the instance: it stops serving calls and releases its resources, but keeps the data it persisted.
+     * Closes the instance: it stops serving calls and releases its resources, but doesn't delete any telemetry that's
+     * already persisted.
      */
     override fun close()
 }

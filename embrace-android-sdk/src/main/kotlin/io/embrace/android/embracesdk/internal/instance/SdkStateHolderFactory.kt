@@ -1,7 +1,9 @@
 package io.embrace.android.embracesdk.internal.instance
 
 import android.content.Context
+import android.util.Log
 import io.embrace.android.embracesdk.internal.api.delegate.PreStartOTelApi
+import io.embrace.android.embracesdk.internal.delivery.storage.deletePersistedTelemetry
 import io.embrace.android.embracesdk.internal.injection.ConfigLoadServices
 import io.embrace.android.embracesdk.internal.injection.ConfigLoadServicesSupplier
 import io.embrace.android.embracesdk.internal.injection.PreStartServices
@@ -11,6 +13,7 @@ import io.embrace.android.embracesdk.internal.utils.AndroidSectionRecorder
 import io.embrace.android.embracesdk.internal.utils.EmbTrace
 import io.embrace.android.embracesdk.internal.utils.Provider
 import io.embrace.android.embracesdk.internal.utils.SystemTrace
+import java.util.concurrent.Executors
 
 /**
  * Assembles the [SdkStateHolder] that backs the public `Embrace` object. Production code and integration tests both
@@ -47,6 +50,7 @@ internal fun createSdkStateHolder(
             preStart = buffer,
             failed = { NoopSdkInstance(clock::now, errorHandler, NoopSdkInstance.SDK_START_FAILED) },
             disabled = { NoopSdkInstance(clock::now, errorHandler, NoopSdkInstance.SDK_DISABLED) },
+            persistedTelemetryDeletion = ::persistedTelemetryDeletion,
             telemetryService = preStartServices.telemetryService,
             errorHandler = errorHandler,
         )
@@ -115,4 +119,25 @@ private fun createSdkInstance(
         configLoadServices.close()
     }
     return instance
+}
+
+/**
+ * Returns a function that deletes, on a new thread, the telemetry the SDK persisted, or null if the directories
+ * can't be found through [context]. The directories are resolved here so [context] is not kept.
+ */
+private fun persistedTelemetryDeletion(context: Context): (() -> Unit)? {
+    val rootDir = runCatching { context.filesDir }.getOrNull() ?: return null
+    val fallbackDir = runCatching { context.cacheDir }.getOrNull() ?: return null
+    return {
+        Executors.newSingleThreadExecutor().apply {
+            execute {
+                runCatching {
+                    deletePersistedTelemetry(rootDir, fallbackDir)
+                }.onFailure { exception ->
+                    Log.e("[Embrace]", "An error occurred while trying to disable Embrace SDK.", exception)
+                }
+            }
+            shutdown()
+        }
+    }
 }

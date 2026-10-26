@@ -523,6 +523,9 @@ internal class SdkStateIntegrationTest(
         testRule.runTest(
             persistedRemoteConfig = sdkDisabledConfig,
             expectSdkToStart = false,
+            setupAction = {
+                createSentinelFiles()
+            },
             testCaseAction = {
                 embrace.disable()
                 assertEquals(SdkState.DISABLED, sdkState)
@@ -530,6 +533,10 @@ internal class SdkStateIntegrationTest(
                 assertEquals(SdkState.DISABLED, sdkState)
                 assertFalse(embrace.isStarted)
                 assertInternalApiIsNoop()
+            },
+            assertAction = {
+                // no instance was started to disable, so the state holder deletes what earlier launches persisted itself
+                awaitStorageDeleted()
             },
         )
     }
@@ -571,6 +578,21 @@ internal class SdkStateIntegrationTest(
         assertNotSame(NoopInternalInterfaceApi.flutterInternalInterface, api.flutterInternalInterface)
     }
 
+    /**
+     * Writes a file into every SDK storage directory, so a test can wait for disable to delete them.
+     */
+    private fun createSentinelFiles() {
+        embraceDirs.values.forEach {
+            it.sentinelFile().apply {
+                parentFile?.mkdirs()
+                writeText(DUMMY_CONTENT)
+            }
+        }
+    }
+
+    /**
+     * Waits for disable to delete the files [createSentinelFiles] wrote.
+     */
     private fun awaitStorageDeleted() {
         returnIfConditionMet(
             desiredValueSupplier = { true },

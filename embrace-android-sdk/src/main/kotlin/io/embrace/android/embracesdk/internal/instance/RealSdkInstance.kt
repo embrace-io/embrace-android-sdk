@@ -38,8 +38,7 @@ import io.embrace.android.embracesdk.internal.config.ConfigService
 import io.embrace.android.embracesdk.internal.delivery.caching.PayloadCachingService
 import io.embrace.android.embracesdk.internal.delivery.scheduling.SchedulingService
 import io.embrace.android.embracesdk.internal.delivery.storage.PayloadStorageService
-import io.embrace.android.embracesdk.internal.delivery.storage.StorageLocation
-import io.embrace.android.embracesdk.internal.delivery.storage.asFile
+import io.embrace.android.embracesdk.internal.delivery.storage.deletePersistedTelemetry
 import io.embrace.android.embracesdk.internal.injection.WorkerThreadPool
 import io.embrace.android.embracesdk.internal.injection.evictConnections
 import io.embrace.android.embracesdk.internal.instrumentation.crash.CrashFileMarker
@@ -215,14 +214,14 @@ internal class RealSdkInstance(
         }
     }
 
-    override fun disable() = tearDown(deleteData = true)
-    override fun close() = tearDown(deleteData = false)
+    override fun disable() = tearDown(deletePersistedTelemetry = true)
+    override fun close() = tearDown(deletePersistedTelemetry = false)
 
     /**
      * Tears down the SDK. Each step tolerates failure independently so that a failing step does not prevent
      * the remaining steps from running.
      */
-    private fun tearDown(deleteData: Boolean) {
+    private fun tearDown(deletePersistedTelemetry: Boolean) {
         enabled = false
         runCatching { errorHandler.close() }
         runCatching { otelSdkConfig.value.disableDataExport() }
@@ -248,7 +247,7 @@ internal class RealSdkInstance(
         runCatching { workerThreadPool.close() }
         runCatching { eventBus.stop() }
 
-        if (!deleteData || rootDir == null || fallbackDir == null) {
+        if (!deletePersistedTelemetry || rootDir == null || fallbackDir == null) {
             return
         }
         val executor = runCatching { Executors.newSingleThreadExecutor() }.getOrNull() ?: return
@@ -257,15 +256,7 @@ internal class RealSdkInstance(
                 if (!workerThreadPool.awaitTermination(WORKER_TERMINATION_TIMEOUT_MS)) {
                     Log.w("[Embrace]", "Timed out waiting for Embrace workers to finish before deleting data.")
                 }
-                StorageLocation.entries.map {
-                    it.asFile(
-                        errorHandler = null,
-                        rootDirSupplier = { rootDir },
-                        fallbackDirSupplier = { fallbackDir },
-                    ).value
-                }.forEach {
-                    it.deleteRecursively()
-                }
+                deletePersistedTelemetry(rootDir, fallbackDir)
             }.onFailure { exception ->
                 Log.e("[Embrace]", "An error occurred while trying to disable Embrace SDK.", exception)
             }

@@ -30,17 +30,22 @@ import io.embrace.android.embracesdk.internal.utils.Provider
  * calls in the new state. The calls buffered before the SDK is enabled are handed to the instance before it is published,
  * so none is overtaken by a call made directly.
  *
- * Only one attempt is made to start the SDK. A start that does not succeed closes any instance that was created without
- * deleting its persisted data, moves the SDK to [SdkState.FAILED], routes all subsequent calls to [failed] and discards
- * any buffered calls. Only calling [close] deletes persisted data. Neither [SdkState.FAILED] nor [SdkState.DISABLED]
- * can be started again. Exceptions are reported to [errorHandler] rather than thrown. A disable made during start, by code
- * running on the start thread, is applied once the start completes rather than interrupting it.
+ * Only one attempt is made to start the SDK. A start that does not succeed closes any instance that was created, keeping
+ * the telemetry the SDK persisted, moves the SDK to [SdkState.FAILED], routes all subsequent calls to [failed] and
+ * discards any buffered calls. The holder coordinates deleting that telemetry, which only [close] does, once.
+ * It disables the instance a start enabled, which deletes the telemetry once its own workers have stopped. After a start
+ * that failed or was disabled by config, and so left no instance to disable, it runs the deletion that
+ * [persistedTelemetryDeletion] returned for the start's context instead. Nothing else the SDK stores, such as remote
+ * config, is deleted. Neither [SdkState.FAILED] nor [SdkState.DISABLED] can be started again. Exceptions are reported to
+ * [errorHandler] rather than thrown. A disable made during start, by code running on the start thread, is applied once
+ * the start completes rather than interrupting it.
  */
 internal class SdkStateHolder(
     realSdkInstanceFactory: SdkInstanceFactory,
     preStart: BufferingSdkInstance,
     private val failed: Provider<SdkInstance>,
     private val disabled: Provider<SdkInstance>,
+    private val persistedTelemetryDeletion: PersistedTelemetryDeletion,
     telemetryService: InternalTelemetryService,
     private val errorHandler: ErrorHandler,
 ) : AutoCloseable {
@@ -58,6 +63,10 @@ internal class SdkStateHolder(
 
     // only read and written under lock
     private var pendingCall: PendingCall = PendingCall.None(realSdkInstanceFactory)
+
+    // deletes the telemetry the SDK persisted, held after a start that left no instance to disable and run once by the next
+    // disable. Only read and written under lock
+    private var telemetryDeletionOnDisable: (() -> Unit)? = null
 
     /**
      * Starts the SDK. Has no effect unless the SDK is in [SdkState.NOT_STARTED].
@@ -77,13 +86,12 @@ internal class SdkStateHolder(
     }
 
     /**
-     * Disables the SDK. Has no effect if the SDK is already in [SdkState.DISABLED].
+     * Disables the SDK, as the public `disable()` asks, which is the only way it's called. It is also the only call that
+     * deletes the telemetry the SDK persisted: a start that leaves no instance holds a deletion for it but never runs one.
+     * Disabling it again has no further effect.
      */
     override fun close() {
         synchronized(lock) {
-            if (state == SdkState.DISABLED) {
-                return
-            }
             if (pendingCall == PendingCall.Start || pendingCall == PendingCall.Disable) {
                 // only code running on the start thread gets here, as the lock is held for the whole start. The disable is
                 // applied once the start completes rather than interrupting it.
@@ -91,10 +99,23 @@ internal class SdkStateHolder(
                 return
             }
             pendingCall = PendingCall.Done
-            val previous = api.target
-            transition(disabled(), SdkState.DISABLED)
-            errorHandler.guardSdkCode(SdkErrorType.PublicApiFail) { previous.disable() }
-            errorHandler.guardSdkCode(SdkErrorType.PublicApiFail) { errorHandler.close() }
+
+            // Unless the SDK is already disabled, disable the instance, which deletes the telemetry if a start enabled it,
+            // and shut down the error handler.
+            if (state != SdkState.DISABLED) {
+                val previous = api.target
+                transition(disabled(), SdkState.DISABLED)
+                errorHandler.guardSdkCode(SdkErrorType.PublicApiFail) { previous.disable() }
+                errorHandler.guardSdkCode(SdkErrorType.PublicApiFail) { errorHandler.close() }
+            }
+
+            // Run the deletion held by a start that left no instance to disable. When a start enabled an instance,
+            // disabling it above deletes the telemetry instead.
+            val deletion = telemetryDeletionOnDisable
+            if (deletion != null) {
+                telemetryDeletionOnDisable = null
+                errorHandler.guardSdkCode(SdkErrorType.PublicApiFail) { deletion() }
+            }
         }
     }
 
@@ -108,19 +129,47 @@ internal class SdkStateHolder(
                 factory(context)
             } catch (exc: Throwable) {
                 reportStartFailure(exc)
-                terminate(failed(), SdkState.FAILED)
+                terminate(
+                    next = failed(),
+                    nextState = SdkState.FAILED,
+                    context = context,
+                    deleteTelemetryOnDisable = true,
+                )
                 return
             }
-            when {
-                // a null instance means the SDK is disabled by config
-                next == null -> terminate(disabled(), SdkState.DISABLED)
-                tryEnable(next, context) -> {
+
+            // A null instance means the SDK is disabled by config, so no instance is left to disable: hold the deletion of
+            // the telemetry earlier launches persisted for a later disable.
+            if (next == null) {
+                terminate(
+                    next = disabled(),
+                    nextState = SdkState.DISABLED,
+                    context = context,
+                    deleteTelemetryOnDisable = true,
+                )
+            } else {
+                val enabled = tryEnable(next, context)
+                if (enabled) {
                     transition(next, SdkState.ENABLED)
                     next.onEnabled()
-                }
-                else -> {
+                } else if (pendingCall == PendingCall.Disable) {
+                    // A disable was made during this start, so disable the instance, which deletes the telemetry once its
+                    // own workers have finished, so we don't need to queue a deletion on disable.
+                    errorHandler.guardSdkCode(SdkErrorType.PublicApiFail) { next.disable() }
+                    terminate(
+                        next = failed(),
+                        nextState = SdkState.FAILED,
+                        context = context,
+                        deleteTelemetryOnDisable = false,
+                    )
+                } else {
                     errorHandler.guardSdkCode(SdkErrorType.PublicApiFail) { next.close() }
-                    terminate(failed(), SdkState.FAILED)
+                    terminate(
+                        next = failed(),
+                        nextState = SdkState.FAILED,
+                        context = context,
+                        deleteTelemetryOnDisable = true,
+                    )
                 }
             }
         } finally {
@@ -145,7 +194,16 @@ internal class SdkStateHolder(
         return true
     }
 
-    private fun terminate(next: SdkInstance, nextState: SdkState) {
+    /**
+     * Transitions the SDK to a no-op instance. When [deleteTelemetryOnDisable] is true, holds a deletion of the telemetry
+     * the SDK persisted for the next disable to run, as no instance is left whose own disable would delete it.
+     */
+    private fun terminate(next: SdkInstance, nextState: SdkState, context: Context, deleteTelemetryOnDisable: Boolean) {
+        if (deleteTelemetryOnDisable) {
+            telemetryDeletionOnDisable = errorHandler.guardSdkCode(SdkErrorType.PublicApiFail, null) {
+                persistedTelemetryDeletion(context)
+            }
+        }
         transition(next, nextState)
         errorHandler.guardSdkCode(SdkErrorType.PublicApiFail) { errorHandler.close() }
     }
@@ -208,3 +266,9 @@ internal class SdkStateHolder(
  * Creates the [SdkInstance] that a start enables, or returns null if the SDK is disabled by config.
  */
 internal typealias SdkInstanceFactory = (Context) -> SdkInstance?
+
+/**
+ * Finds the telemetry the SDK persisted through the [Context] it was started with, and returns a function
+ * that deletes it if the location can be found through the context. Otherwise, it returns null.
+ */
+internal typealias PersistedTelemetryDeletion = (Context) -> (() -> Unit)?

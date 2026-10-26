@@ -19,3 +19,14 @@ fun StorageLocation.asFile(
         File(fallbackDirSupplier(), dir).apply(File::mkdirs)
     }
 }
+
+/**
+ * Synchronously deletes the telemetry the SDK persisted: every [StorageLocation]'s directory, and everything in it,
+ * under [rootDir] and [fallbackDir]. Nothing else the SDK stores is deleted, e.g. remote config.
+ */
+fun deletePersistedTelemetry(rootDir: File, fallbackDir: File) {
+    StorageLocation.entries.forEach {
+        File(rootDir, it.dir).deleteRecursively()
+        File(fallbackDir, it.dir).deleteRecursively()
+    }
+}

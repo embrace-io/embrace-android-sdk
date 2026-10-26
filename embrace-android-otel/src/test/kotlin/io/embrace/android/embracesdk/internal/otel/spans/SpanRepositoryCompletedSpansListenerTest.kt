@@ -1,6 +1,7 @@
 package io.embrace.android.embracesdk.internal.otel.spans
 
 import io.embrace.android.embracesdk.fakes.FakeErrorHandler
+import io.embrace.android.embracesdk.internal.logging.SdkErrorType
 import io.embrace.android.embracesdk.internal.otel.sdk.StoreDataResult
 import io.embrace.android.embracesdk.internal.payload.Span
 import org.junit.Assert.assertEquals
@@ -10,12 +11,14 @@ import org.junit.Test
 
 internal class SpanRepositoryCompletedSpansListenerTest {
 
+    private lateinit var errorHandler: FakeErrorHandler
     private lateinit var repository: SpanRepository
     private val observed = mutableListOf<List<Span>>()
 
     @Before
     fun setup() {
-        repository = SpanRepository(FakeErrorHandler())
+        errorHandler = FakeErrorHandler(throwOnSdkError = false)
+        repository = SpanRepository(errorHandler)
         observed.clear()
     }
 
@@ -83,6 +86,7 @@ internal class SpanRepositoryCompletedSpansListenerTest {
         repository.addCompletedOtelSpansListener { error("listener failed") }
         repository.addCompletedOtelSpansListener(recorder(observed))
         assertEquals(listOf(listOf("a")), observed.map { batch -> batch.map(Span::name) })
+        assertEquals(SdkErrorType.SpanOperationFail.toString(), errorHandler.sdkErrorMessages.single().msg)
     }
 
     @Test
@@ -104,6 +108,7 @@ internal class SpanRepositoryCompletedSpansListenerTest {
 
         assertEquals(listOf("a"), observed.single().map(Span::name))
         assertEquals(listOf("a"), repository.completedOtelSpans().map(Span::name))
+        assertEquals(SdkErrorType.SpanOperationFail.toString(), errorHandler.sdkErrorMessages.single().msg)
     }
 
     @Test

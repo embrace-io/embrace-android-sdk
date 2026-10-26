@@ -37,7 +37,9 @@ fun createProcessStateTracker(
     lifecycleTracker: LifecycleTracker,
 ): ProcessStateTracker = ProcessStateTrackerImpl(errorHandler, lifecycleTracker)
 
-fun createNavigationTrackingService(): NavigationTrackingService = NavigationTrackingServiceImpl()
+fun createNavigationTrackingService(
+    errorHandler: ErrorHandler,
+): NavigationTrackingService = NavigationTrackingServiceImpl(errorHandler)
 
 fun createNetworkConnectivityService(
     context: Context,

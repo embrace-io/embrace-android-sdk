@@ -3,6 +3,10 @@ package io.embrace.android.embracesdk.internal.envelope.resource
 import io.embrace.android.embracesdk.internal.capture.metadata.AppEnvironment
 import io.embrace.android.embracesdk.internal.config.ConfigService
 import io.embrace.android.embracesdk.internal.envelope.metadata.HostedSdkVersionInfo
+import io.embrace.android.embracesdk.internal.logging.ErrorHandler
+import io.embrace.android.embracesdk.internal.logging.SdkErrorType
+import io.embrace.android.embracesdk.internal.logging.guardSdkCode
+import io.embrace.android.embracesdk.internal.logging.guardSdkCodeEach
 import io.embrace.android.embracesdk.internal.payload.EnvelopeResource
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.CopyOnWriteArrayList
@@ -16,6 +20,7 @@ class EnvelopeResourceSourceImpl(
     private val versionCode: Int?,
     private val rnBundleIdProvider: () -> String?,
     private val useKotlinSdkProvider: () -> Boolean,
+    private val errorHandler: ErrorHandler,
 ) : EnvelopeResourceSource {
 
     private val extras = ConcurrentHashMap<String, String>()
@@ -100,16 +105,11 @@ class EnvelopeResourceSourceImpl(
             }
         } ?: return
 
-        listeners.forEach { listener ->
-            notifyListener(listener, changed)
-        }
+        errorHandler.guardSdkCodeEach(SdkErrorType.SessionPartListenerFail, listeners) { it(changed) }
     }
 
     private fun notifyListener(listener: (EnvelopeResource) -> Unit, resource: EnvelopeResource) {
-        try {
-            listener(resource)
-        } catch (ignored: Throwable) {
-        }
+        errorHandler.guardSdkCode(SdkErrorType.SessionPartListenerFail) { listener(resource) }
     }
 
     companion object {

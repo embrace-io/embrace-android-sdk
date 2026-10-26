@@ -43,7 +43,7 @@ internal class OTelApiDelegateTest(
     fun setUp() {
         cfg = OtelSdkConfig(
             spanRepository = SpanRepository(FakeErrorHandler()),
-            logSink = LogSinkImpl(),
+            logSink = LogSinkImpl(FakeErrorHandler()),
             sdkName = "sdk",
             sdkVersion = "1.0",
             appVersion = "1.0.0",

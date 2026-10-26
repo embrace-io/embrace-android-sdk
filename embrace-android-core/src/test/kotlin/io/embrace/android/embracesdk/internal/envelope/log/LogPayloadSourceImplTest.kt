@@ -1,5 +1,6 @@
 package io.embrace.android.embracesdk.internal.envelope.log
 
+import io.embrace.android.embracesdk.fakes.FakeErrorHandler
 import io.embrace.android.embracesdk.fixtures.deferredLog
 import io.embrace.android.embracesdk.fixtures.sendImmediatelyLog
 import io.embrace.android.embracesdk.fixtures.testLog
@@ -20,7 +21,7 @@ internal class LogPayloadSourceImplTest {
 
     @Before
     fun setUp() {
-        sink = LogSinkImpl()
+        sink = LogSinkImpl(FakeErrorHandler())
         impl = LogPayloadSourceImpl(sink)
     }
 

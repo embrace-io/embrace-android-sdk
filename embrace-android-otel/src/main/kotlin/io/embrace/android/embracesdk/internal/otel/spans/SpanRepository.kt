@@ -144,9 +144,11 @@ class SpanRepository(
      */
     fun storeCompletedOtelSpans(spans: List<Span>): StoreDataResult {
         synchronized(flushLock) {
-            try {
+            val stored = errorHandler.guardSdkCode(SdkErrorType.SpanOperationFail, false) {
                 completedSpanData += spans
-            } catch (t: Throwable) {
+                true
+            }
+            if (!stored) {
                 return StoreDataResult.FAILURE
             }
             handOver(spans, completedSpansListeners)
@@ -202,18 +204,11 @@ class SpanRepository(
     }
 
     private fun <T> notifyListener(listener: (T) -> Unit, value: T) {
-        try {
-            listener(value)
-        } catch (ignored: Throwable) {
-        }
+        errorHandler.guardSdkCode(SdkErrorType.SpanOperationFail) { listener(value) }
     }
 
     private fun notifyOwningListener(listener: (List<Span>) -> Boolean, spans: List<Span>): Boolean {
-        return try {
-            listener(spans)
-        } catch (ignored: Throwable) {
-            false
-        }
+        return errorHandler.guardSdkCode(SdkErrorType.SpanOperationFail, false) { listener(spans) }
     }
 
     /**

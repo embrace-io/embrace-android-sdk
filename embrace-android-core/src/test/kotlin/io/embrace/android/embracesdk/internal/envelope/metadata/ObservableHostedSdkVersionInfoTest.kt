@@ -1,14 +1,18 @@
 package io.embrace.android.embracesdk.internal.envelope.metadata
 
+import io.embrace.android.embracesdk.fakes.FakeErrorHandler
 import io.embrace.android.embracesdk.fakes.FakeKeyValueStore
+import io.embrace.android.embracesdk.internal.logging.SdkErrorType
 import org.junit.Assert.assertEquals
 import org.junit.Test
 
 internal class ObservableHostedSdkVersionInfoTest {
 
+    private val errorHandler = FakeErrorHandler(throwOnSdkError = false)
+
     @Test
     fun `each setter notifies listeners`() {
-        val observable = ObservableHostedSdkVersionInfo(UnitySdkVersionInfo(FakeKeyValueStore()))
+        val observable = ObservableHostedSdkVersionInfo(UnitySdkVersionInfo(FakeKeyValueStore()), errorHandler)
         var count = 0
         observable.addChangeListener { count++ }
 
@@ -24,7 +28,7 @@ internal class ObservableHostedSdkVersionInfoTest {
 
     @Test
     fun `a batch notifies once rather than once per write`() {
-        val observable = ObservableHostedSdkVersionInfo(UnitySdkVersionInfo(FakeKeyValueStore()))
+        val observable = ObservableHostedSdkVersionInfo(UnitySdkVersionInfo(FakeKeyValueStore()), errorHandler)
         var count = 0
         observable.addChangeListener { count++ }
 
@@ -43,7 +47,7 @@ internal class ObservableHostedSdkVersionInfoTest {
     @Test
     fun `getters and setters pass through to the wrapped instance`() {
         val impl = ReactNativeSdkVersionInfo(FakeKeyValueStore())
-        val observable = ObservableHostedSdkVersionInfo(impl)
+        val observable = ObservableHostedSdkVersionInfo(impl, errorHandler)
 
         observable.hostedSdkVersion = "4.1.0"
         observable.hostedPlatformVersion = "0.72"
@@ -56,12 +60,13 @@ internal class ObservableHostedSdkVersionInfoTest {
 
     @Test
     fun `a throwing listener does not prevent the others from being notified`() {
-        val observable = ObservableHostedSdkVersionInfo(NativeSdkVersionInfo())
+        val observable = ObservableHostedSdkVersionInfo(NativeSdkVersionInfo(), errorHandler)
         var count = 0
         observable.addChangeListener { error("listener failed") }
         observable.addChangeListener { count++ }
         observable.hostedSdkVersion = "1.2.0"
 
         assertEquals(1, count)
+        assertEquals(SdkErrorType.SessionPartListenerFail.toString(), errorHandler.sdkErrorMessages.single().msg)
     }
 }

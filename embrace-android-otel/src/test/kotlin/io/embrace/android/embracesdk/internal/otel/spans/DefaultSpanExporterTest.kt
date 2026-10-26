@@ -103,7 +103,7 @@ internal class DefaultSpanExporterTest {
 
     @Test
     fun `a throwing completed spans listener neither fails the export nor stops external exporters`() {
-        val spanRepository = SpanRepository(FakeErrorHandler())
+        val spanRepository = SpanRepository(FakeErrorHandler(throwOnSdkError = false))
         spanRepository.addCompletedOtelSpansListener { error("listener failed") }
         val externalExporter = FakeSpanExporter()
 

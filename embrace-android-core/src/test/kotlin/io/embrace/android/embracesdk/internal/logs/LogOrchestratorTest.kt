@@ -47,7 +47,7 @@ internal class LogOrchestratorTest {
         executorService = BlockingScheduledExecutorService()
         worker =
             BackgroundWorker(executorService)
-        logSink = LogSinkImpl()
+        logSink = LogSinkImpl(FakeErrorHandler())
         store = FakePayloadStore()
         errorHandler = FakeErrorHandler(throwOnSdkError = false)
         clock.setCurrentTime(NOW)

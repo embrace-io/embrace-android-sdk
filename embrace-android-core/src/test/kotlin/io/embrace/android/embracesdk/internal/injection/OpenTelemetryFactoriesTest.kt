@@ -27,7 +27,7 @@ internal class OpenTelemetryFactoriesTest {
         assertNotNull(
             createOtelSdkConfig(
                 spanRepository = spanRepository,
-                logSink = LogSinkImpl(),
+                logSink = LogSinkImpl(FakeErrorHandler()),
                 instrumentedConfig = initServices.instrumentedConfig,
                 systemInfo = initServices.systemInfo,
                 uuidSource = initServices.uuidSource,

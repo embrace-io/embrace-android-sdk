@@ -2,9 +2,11 @@ package io.embrace.android.embracesdk.internal.envelope.resource
 
 import io.embrace.android.embracesdk.fakes.FakeConfigService
 import io.embrace.android.embracesdk.fakes.FakeDevice
+import io.embrace.android.embracesdk.fakes.FakeErrorHandler
 import io.embrace.android.embracesdk.fakes.FakeKeyValueStore
 import io.embrace.android.embracesdk.internal.capture.metadata.AppEnvironment
 import io.embrace.android.embracesdk.internal.envelope.metadata.UnitySdkVersionInfo
+import io.embrace.android.embracesdk.internal.logging.SdkErrorType
 import io.embrace.android.embracesdk.internal.payload.AppFramework
 import io.embrace.android.embracesdk.internal.payload.EnvelopeResource
 import org.junit.Assert.assertEquals
@@ -14,6 +16,8 @@ import org.junit.Assert.assertTrue
 import org.junit.Test
 
 internal class EnvelopeResourceSourceImplTest {
+
+    private val errorHandler = FakeErrorHandler(throwOnSdkError = false)
 
     @Test
     fun getEnvelopeResource() {
@@ -30,6 +34,7 @@ internal class EnvelopeResourceSourceImplTest {
             53,
             { "fakeReactNativeBundleId" },
             { false },
+            errorHandler,
         )
         val envelope = source.getEnvelopeResource()
 
@@ -131,6 +136,10 @@ internal class EnvelopeResourceSourceImplTest {
 
         assertEquals(2, observed.size)
         assertEquals("1920x1080", observed.last().screenResolution)
+        assertEquals(
+            List(2) { SdkErrorType.SessionPartListenerFail.toString() },
+            errorHandler.sdkErrorMessages.map { it.msg },
+        )
     }
 
     @Test
@@ -205,5 +214,6 @@ internal class EnvelopeResourceSourceImplTest {
         53,
         { "fakeReactNativeBundleId" },
         { useKotlinSdk },
+        errorHandler,
     )
 }

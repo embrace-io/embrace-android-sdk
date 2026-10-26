@@ -30,7 +30,7 @@ class TestOtelStack(
 
     val spanRepository: SpanRepository = SpanRepository(initServices.errorHandler)
 
-    val logSink: LogSink = LogSinkImpl()
+    val logSink: LogSink = LogSinkImpl(initServices.errorHandler)
 
     val otelSdkConfig: OtelSdkConfig by lazy {
         createOtelSdkConfig(

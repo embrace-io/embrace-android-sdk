@@ -57,6 +57,7 @@ CANONICAL_SECTIONS = [
     ("emb-session-orchestrator-init", 1),
     ("emb-current-session-part-span-initialize-service", 1),
     ("emb-post-init", 0),
+    ("emb-setup-services", 0),
     ("emb-post-services-setup", 0),
     ("emb-load-instrumentation", 1),
 ]

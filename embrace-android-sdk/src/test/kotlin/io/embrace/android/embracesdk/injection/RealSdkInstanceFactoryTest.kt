@@ -136,7 +136,7 @@ internal class RealSdkInstanceFactoryTest {
 
     /**
      * The persisted config decides which OTel SDK implementation is built, so it has to be read
-     * before that construction happens. Note that [RealSdkInstance.postInit] is deliberately not called.
+     * before that construction happens. Note that [RealSdkInstance.setupServices] is deliberately not called.
      */
     @Test
     fun `kotlin otel sdk selected from persisted config during init`() {

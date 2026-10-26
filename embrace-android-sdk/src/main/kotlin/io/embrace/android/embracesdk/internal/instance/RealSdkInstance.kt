@@ -191,7 +191,7 @@ internal class RealSdkInstance(
             EmbTrace.trace(sectionName = "process-state-tracker-register", recordDuration = true) {
                 processStateTracker.register()
             }
-            postInit()
+            setupServices()
 
             EmbTrace.trace(sectionName = "post-services-setup", recordDuration = true) {
                 // not fully initialized, but the SDK shouldn't catastrophically throw after this point,
@@ -281,11 +281,10 @@ internal class RealSdkInstance(
     }
 
     /**
-     * Performs bootstrapping by setting required values where there is an interdependency
-     * between modules.
+     * Wires up services that depend on each other once they have all been created, and opens the first session part.
      */
-    internal fun postInit() {
-        EmbTrace.trace(sectionName = "post-init", recordDuration = true) {
+    internal fun setupServices() {
+        EmbTrace.trace(sectionName = "setup-services", recordDuration = true) {
             payloadCachingService?.run {
                 spanRepository.addSpanChangeListener { reportBackgroundActivityStateChange() }
             }

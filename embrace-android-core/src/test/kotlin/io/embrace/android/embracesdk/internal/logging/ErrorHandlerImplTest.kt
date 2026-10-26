@@ -234,6 +234,118 @@ internal class ErrorHandlerImplTest {
         assertEquals(2, recorded.map { it.stackTrace.single() }.distinct().size)
     }
 
+    @Test
+    fun `an error raised by the sink is not recorded and does not use the limit`() {
+        handler = ErrorHandlerImpl(clock, limit = 2)
+        val first = distinctError(0)
+        val second = distinctError(1)
+        val recorded = mutableListOf<Throwable>()
+        handler.drain { _, throwable, _ ->
+            recorded.add(throwable)
+            fail()
+        }
+        fail(first)
+        fail(second)
+        assertEquals(listOf(first, second), recorded)
+    }
+
+    @Test
+    fun `an error raised by the sink while draining the buffer is not recorded`() {
+        val first = distinctError(0)
+        val second = distinctError(1)
+        fail(first)
+        fail(second)
+        val recorded = mutableListOf<Throwable>()
+        handler.drain { _, throwable, _ ->
+            recorded.add(throwable)
+            fail()
+        }
+        assertEquals(listOf(first, second), recorded)
+    }
+
+    @Test
+    fun `a throwing sink does not stop later errors being recorded`() {
+        val buffered = listOf(distinctError(0), distinctError(1))
+        val direct = listOf(distinctError(2), distinctError(3))
+        buffered.forEach(::fail)
+        val recorded = mutableListOf<Throwable>()
+        handler.drain { _, throwable, _ ->
+            recorded.add(throwable)
+            error("sink failed")
+        }
+        direct.forEach(::fail)
+        assertEquals(buffered + direct, recorded)
+    }
+
+    @Test
+    fun `a failure to log falls back to logging a warning`() {
+        val logged = mutableListOf<Logged>()
+        handler = ErrorHandlerImpl(clock, logcat = { severity, msg, throwable ->
+            check(severity == ErrorHandler.Severity.WARNING) { "logcat failed" }
+            logged.add(Logged(severity, msg, throwable))
+        })
+        handler.log("Whoops!", severity = ErrorHandler.Severity.ERROR)
+        val warning = logged.single()
+        assertEquals(ErrorHandler.Severity.WARNING, warning.severity)
+        assertEquals("Failed to log message", warning.msg)
+        assertEquals("logcat failed", warning.throwable?.message)
+    }
+
+    @Test
+    fun `a throwing sink is logged as a warning`() {
+        val logged = mutableListOf<Logged>()
+        handler = ErrorHandlerImpl(clock, logcat = { severity, msg, throwable -> logged.add(Logged(severity, msg, throwable)) })
+        val sinkFailure = IllegalStateException("sink failed")
+        handler.drain { _, _, _ -> throw sinkFailure }
+        fail()
+        assertEquals(listOf(Logged(ErrorHandler.Severity.WARNING, "Failed to record SDK error ($type)", sinkFailure)), logged)
+    }
+
+    @Test
+    fun `a failure to track an error is logged as a warning`() {
+        val logged = mutableListOf<Logged>()
+        val clockFailure = IllegalStateException("clock failed")
+        handler = ErrorHandlerImpl(
+            clock = { throw clockFailure },
+            logcat = { severity, msg, throwable -> logged.add(Logged(severity, msg, throwable)) },
+        )
+        fail()
+        assertEquals(listOf(Logged(ErrorHandler.Severity.WARNING, "Failed to track SDK error", clockFailure)), logged)
+    }
+
+    @Test
+    fun `nothing throws when every dependency throws`() {
+        handler = ErrorHandlerImpl(
+            clock = { error("clock failed") },
+            beforeBuffering = { error("buffering failed") },
+            logcat = { _, _, _ -> error("logcat failed") },
+        )
+        handler.log("Whoops!")
+        fail()
+        handler.guardSdkCode(type) { handler.guardUserCode { error("user code failed") } }
+        handler.drain { _, _, _ -> error("sink failed") }
+        fail()
+        handler.resetLimit()
+        handler.close()
+    }
+
+    @Test
+    fun `nothing throws when the sink and logcat throw, and every error reaches the sink`() {
+        handler = ErrorHandlerImpl(clock, logcat = { _, _, _ -> error("logcat failed") })
+        val buffered = listOf(distinctError(0), distinctError(1))
+        val direct = listOf(distinctError(2), distinctError(3))
+        buffered.forEach(::fail)
+        val recorded = mutableListOf<Throwable>()
+        handler.drain { _, throwable, _ ->
+            recorded.add(throwable)
+            error("sink failed")
+        }
+        direct.forEach(::fail)
+        assertEquals(buffered + direct, recorded)
+    }
+
+    private data class Logged(val severity: ErrorHandler.Severity, val msg: String, val throwable: Throwable?)
+
     private var defaultErrors = 0
 
     /**

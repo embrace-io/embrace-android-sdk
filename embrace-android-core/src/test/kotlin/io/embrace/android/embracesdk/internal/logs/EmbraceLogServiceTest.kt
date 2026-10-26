@@ -1,6 +1,7 @@
 package io.embrace.android.embracesdk.internal.logs
 
 import io.embrace.android.embracesdk.fakes.FakeConfigService
+import io.embrace.android.embracesdk.fakes.FakeErrorHandler
 import io.embrace.android.embracesdk.fakes.FakeInternalTelemetryService
 import io.embrace.android.embracesdk.fakes.FakePayloadStore
 import io.embrace.android.embracesdk.fakes.FakeTelemetryDestination
@@ -11,6 +12,7 @@ import io.embrace.android.embracesdk.internal.config.behavior.REDACTED_LABEL
 import io.embrace.android.embracesdk.internal.config.resolved.EmbraceConfig
 import io.embrace.android.embracesdk.internal.config.resolved.LogConfig
 import io.embrace.android.embracesdk.internal.config.resolved.SensitiveKeysConfig
+import io.embrace.android.embracesdk.internal.logging.SdkErrorType
 import io.embrace.android.embracesdk.internal.payload.AppFramework
 import io.embrace.android.embracesdk.internal.telemetry.AppliedLimitType
 import org.junit.Assert.assertEquals
@@ -28,6 +30,7 @@ internal class EmbraceLogServiceTest {
     private lateinit var logLimitingService: LogLimitingService
     private lateinit var payloadStore: FakePayloadStore
     private lateinit var fakeTelemetryService: FakeInternalTelemetryService
+    private lateinit var errorHandler: FakeErrorHandler
 
     @Before
     fun setUp() {
@@ -40,6 +43,7 @@ internal class EmbraceLogServiceTest {
         destination = FakeTelemetryDestination()
         payloadStore = FakePayloadStore()
         fakeTelemetryService = FakeInternalTelemetryService()
+        errorHandler = FakeErrorHandler(throwOnSdkError = false)
         logLimitingService = LogLimitingServiceImpl(fakeConfigService)
         logService = createEmbraceLogService()
     }
@@ -49,6 +53,7 @@ internal class EmbraceLogServiceTest {
         configService = fakeConfigService,
         logLimitingService = logLimitingService,
         telemetryService = fakeTelemetryService,
+        errorHandler = errorHandler,
     )
 
     @Test
@@ -281,6 +286,7 @@ internal class EmbraceLogServiceTest {
         assertEquals("trace", attributes["exception.stacktrace"])
         assertEquals("ok", attributes["status"])
         assertTrue("bad" !in attributes)
+        assertEquals(SdkErrorType.SafeDataCaptureFail.toString(), errorHandler.sdkErrorMessages.single().msg)
     }
 
     @Test

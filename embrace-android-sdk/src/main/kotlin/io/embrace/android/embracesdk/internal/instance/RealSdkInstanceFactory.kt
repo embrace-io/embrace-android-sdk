@@ -691,6 +691,7 @@ internal fun createRealSdkInstance(
             configService,
             logLimitingService,
             telemetryService,
+            errorHandler,
         )
     }
 

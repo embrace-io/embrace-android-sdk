@@ -28,7 +28,12 @@ internal interface SdkInstance : InternalSdkApi, AutoCloseable {
     fun onTransition(buffer: BufferingSdkInstance)
 
     /**
-     * Disables the instance: tears it down and deletes the data it persisted.
+     * Disables the instance: does everything [close] does, then deletes the data the instance persisted.
      */
     fun disable()
+
+    /**
+     * Closes the instance: it stops serving calls and releases its resources, but keeps the data it persisted.
+     */
+    override fun close()
 }

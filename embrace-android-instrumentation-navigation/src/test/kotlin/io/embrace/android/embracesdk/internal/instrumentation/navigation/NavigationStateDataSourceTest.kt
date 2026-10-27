@@ -6,7 +6,6 @@ import io.embrace.android.embracesdk.internal.arch.navigation.CurrentScreen
 import io.embrace.android.embracesdk.internal.arch.navigation.NavigationSignal
 import io.embrace.android.embracesdk.internal.arch.navigation.ScreenAttributesSource
 import io.embrace.android.embracesdk.internal.arch.schema.SchemaType.NavigationState.Screen
-import io.embrace.android.embracesdk.internal.utils.event.EventHandler
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotEquals
 import org.junit.Assert.assertTrue
@@ -175,16 +174,15 @@ internal class NavigationStateDataSourceTest {
 
     @Test
     fun `activity lifecycle callbacks and event handlers are released when data capture is disabled`() {
+        // the broker is registered before the activity callbacks that feed it, so a callback fired as they are registered
+        // is resolved
+        application.resumedActivity = DopeActivity()
+        val source = NavigationStateInstrumentationProvider().factoryProvider(args)().apply { onDataCaptureEnabled() }
+        val resumedScreen = Screen.Named("DopeActivity")
+        assertEquals(resumedScreen, args.eventBus.currentState(CurrentScreen.KEY)?.screen)
+
         val signals = mutableListOf<NavigationSignal>()
         args.eventBus.addHandler(NavigationSignal.KEY) { signals.add(it) }
-        val brokered = mutableListOf<NavigationSignal>()
-        val broker = EventHandler<NavigationSignal> { brokered.add(it) }
-        args.eventBus.addHandler(NavigationSignal.KEY, broker)
-        val tracker =
-            ActivityNavigationTracker(args.clock, args.eventBus, args.navigationTrackingService, args.errorHandler)
-        args.application.registerActivityLifecycleCallbacks(tracker)
-        val source = NavigationStateDataSource(args, tracker, broker).apply { onDataCaptureEnabled() }
-
         source.onDataCaptureDisabled()
         val activity = Activity()
         application.start(activity)
@@ -193,10 +191,10 @@ internal class NavigationStateDataSourceTest {
 
         args.eventBus.emit(NavigationSignal.KEY, NavigationSignal.Backgrounded(args.clock.tick()))
         assertEquals(1, signals.size)
-        assertTrue(brokered.isEmpty())
+        assertEquals(resumedScreen, args.eventBus.currentState(CurrentScreen.KEY)?.screen)
 
-        showScreen(Screen.Named("home"))
-        assertEquals(Screen.Initializing, source.getCurrentStateValue())
+        showScreen(Screen.Named("settings"))
+        assertEquals(resumedScreen, source.getCurrentStateValue())
     }
 
     private class CountingScreenAttributesSource : ScreenAttributesSource {

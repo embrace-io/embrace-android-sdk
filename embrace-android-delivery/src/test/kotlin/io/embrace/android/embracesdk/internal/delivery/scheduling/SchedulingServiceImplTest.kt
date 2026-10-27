@@ -21,6 +21,8 @@ import io.embrace.android.embracesdk.internal.delivery.execution.ExecutionResult
 import io.embrace.android.embracesdk.internal.delivery.execution.ExecutionResult.Failure
 import io.embrace.android.embracesdk.internal.delivery.execution.ExecutionResult.Incomplete
 import io.embrace.android.embracesdk.internal.delivery.scheduling.SchedulingServiceImpl.Companion.INITIAL_DELAY_MS
+import io.embrace.android.embracesdk.internal.delivery.scheduling.SchedulingServiceImpl.Companion.MAX_DELAY_MS
+import io.embrace.android.embracesdk.internal.delivery.scheduling.SchedulingServiceImpl.Companion.calculateNextRetryTime
 import io.embrace.android.embracesdk.internal.delivery.storage.PayloadStorageService
 import io.embrace.android.embracesdk.internal.logging.SdkErrorType
 import io.embrace.android.embracesdk.internal.payload.Envelope
@@ -134,9 +136,19 @@ internal class SchedulingServiceImplTest {
                 executionService.sendAttempts(),
             )
             assertEquals("Send attempt $iteration failed", 2, storageService.storedPayloadCount())
-            delay *= 2
+            delay = minOf(delay * 2, MAX_DELAY_MS)
             // switch to different type of retryable error
             allSendsMessedUpByTransport()
+        }
+    }
+
+    @Test
+    fun `retry delay is capped and does not overflow`() {
+        val now = clock.now()
+        assertEquals(now + INITIAL_DELAY_MS, clock.calculateNextRetryTime(-1))
+        assertEquals(now + MAX_DELAY_MS / 2, clock.calculateNextRetryTime(4))
+        listOf(5, 6, 31, 40, 64, Int.MAX_VALUE).forEach { attempts ->
+            assertEquals("$attempts attempts", now + MAX_DELAY_MS, clock.calculateNextRetryTime(attempts))
         }
     }
 
@@ -349,13 +361,19 @@ internal class SchedulingServiceImplTest {
         waitForResurrectionAndDeliveryAttempt(2)
         var delay = INITIAL_DELAY_MS
         repeat(10) { iteration ->
-            tickAndWaitForDeliveryAttempts(delay)
+            tickAndWaitForDeliveryAttempts(delay - 1)
+            assertEquals(
+                "Connection retry attempt ${iteration + 1} was made before $delay ms",
+                iteration + 1,
+                executionService.sendAttempts(),
+            )
+            tickAndWaitForDeliveryAttempts(1)
             assertEquals(
                 "Connection retry attempt ${iteration + 1} did not result in the right number of sends after $delay ms",
                 iteration + 2,
                 executionService.sendAttempts(),
             )
-            delay *= 2
+            delay = minOf(delay * 2, MAX_DELAY_MS)
         }
         assertEquals(2, storageService.storedPayloadCount())
     }
@@ -732,7 +750,7 @@ internal class SchedulingServiceImplTest {
     }
 
     @Test
-    fun `network change while connection blocked will trigger retry that fails and delays unblocking attempt`() {
+    fun `network change while connection blocked will trigger retry that fails and restarts the backoff`() {
         blockConnection()
         waitForResurrectionAndDeliveryAttempt(2)
         assertEquals(1, executionService.sendAttempts())
@@ -741,16 +759,13 @@ internal class SchedulingServiceImplTest {
         switchToConnectionType(ConnectionType.WAN, 2)
         assertEquals(2, executionService.sendAttempts())
 
-        // The original unblocking would run but since the connection is still blocked, no delivery attempt will be made
-        tickAndWaitForDeliveryAttempts(INITIAL_DELAY_MS)
-        assertEquals(2, executionService.sendAttempts())
-
-        // But the failed attempt due to the block will schedule a run for when the connection will actually unblock, so it will run then
+        // The new network restarted the backoff, so the failed attempt only blocks for INITIAL_DELAY_MS and the original
+        // unblocking attempt delivers
         tickAndWaitForDeliveryAttempts(INITIAL_DELAY_MS)
         assertEquals(3, executionService.sendAttempts())
 
         // Move time ahead to before the next unblocking, still no more attempts
-        tickAndWaitForDeliveryAttempts(INITIAL_DELAY_MS * 2)
+        tickAndWaitForDeliveryAttempts(INITIAL_DELAY_MS * 2 - 1)
         assertEquals(3, executionService.sendAttempts())
 
         // Switch to wifi which will trigger an unblocking attempt, which will yield two failed attempts as we are not blocked anymore
@@ -758,12 +773,52 @@ internal class SchedulingServiceImplTest {
         switchToConnectionType(ConnectionType.WIFI, 2)
         assertEquals(5, executionService.sendAttempts())
 
-        // After the retry wait is over, we try again
+        // After the retry wait is over, the pending unblocking attempt runs and we try again
         tickAndWaitForDeliveryAttempts(INITIAL_DELAY_MS, 2)
         assertEquals(7, executionService.sendAttempts())
 
-        // As we are no longer blocked, the original unblocking time will not yield a delivery attempt
+        // The payload retry backoff has doubled, so no attempt yet
         tickAndWaitForDeliveryAttempts(INITIAL_DELAY_MS, 2)
+        assertEquals(7, executionService.sendAttempts())
+    }
+
+    @Test
+    fun `connected status while already connected unblocks without restarting the backoff`() {
+        disconnect()
+        waitForResurrectionAndDeliveryAttempt(2)
+        tickAndWaitForDeliveryAttempts(INITIAL_DELAY_MS)
+        assertEquals(2, executionService.sendAttempts())
+
+        // not a newly acquired network; the failed retry blocks for the third backoff step
+        switchToConnectivityStatus(ConnectivityStatus.Wan(true))
+        assertEquals(3, executionService.sendAttempts())
+        allSendsSucceed()
+        tickAndWaitForDeliveryAttempts(INITIAL_DELAY_MS * 4 - 1)
+        assertEquals(3, executionService.sendAttempts())
+        tickAndWaitForDeliveryAttempts(1, 2)
+        assertEquals(5, executionService.sendAttempts())
+    }
+
+    @Test
+    fun `reaching the server restarts the connection backoff`() {
+        disconnect()
+        waitForResurrectionAndDeliveryAttempt(2)
+        tickAndWaitForDeliveryAttempts(INITIAL_DELAY_MS)
+        assertEquals(2, executionService.sendAttempts())
+
+        // server is reached and responds with an error, validating the connection
+        allSendsFail()
+        tickAndWaitForDeliveryAttempts(INITIAL_DELAY_MS * 2, 2)
+        assertEquals(4, executionService.sendAttempts())
+
+        // connection drops again on the payload retry, which blocks for the first backoff step
+        disconnect()
+        tickAndWaitForDeliveryAttempts(INITIAL_DELAY_MS, 2)
+        assertEquals(5, executionService.sendAttempts())
+        allSendsSucceed()
+        tickAndWaitForDeliveryAttempts(INITIAL_DELAY_MS - 1)
+        assertEquals(5, executionService.sendAttempts())
+        tickAndWaitForDeliveryAttempts(1, 2)
         assertEquals(7, executionService.sendAttempts())
     }
 

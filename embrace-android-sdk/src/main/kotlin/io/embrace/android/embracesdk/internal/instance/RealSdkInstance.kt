@@ -348,7 +348,16 @@ internal class RealSdkInstance(
     private fun loadInstrumentation() {
         errorHandler.guardSdkCode(SdkErrorType.SdkInitPhaseFail) {
             EmbTrace.trace(sectionName = "load-instrumentation", recordDuration = true) {
-                instrumentationRegistry.loadInstrumentations(loadInstrumentationProviders(), instrumentationArgs)
+                instrumentationRegistry.loadInstrumentations(
+                    instrumentationProviders = loadInstrumentationProviders(),
+                    args = instrumentationArgs,
+                ) { dataSource ->
+                    // Register the crash teardown handlers as soon as the datasource is loaded.
+                    // This allows the crash teardown to operate as expected before another instrumentation provider is loaded.
+                    if (dataSource is JvmCrashDataSource) {
+                        registerCrashTeardownHandlers(dataSource)
+                    }
+                }
 
                 threadBlockageService?.startCapture()
                 lastRunCrashVerifier.readAndCleanMarkerAsync(
@@ -426,19 +435,26 @@ internal class RealSdkInstance(
     }
 
     /**
-     * Performs post-load instrumentation tasks such as setting listeners.
+     * Gives the JVM crash data source the services that must be torn down when the app crashes.
      */
-    internal fun postLoadInstrumentation() {
+    internal fun registerCrashTeardownHandlers(dataSource: JvmCrashDataSource) {
         errorHandler.guardSdkCode(SdkErrorType.SdkInitPhaseFail) {
-            // setup crash teardown handlers
-            val registry = instrumentationRegistry
-            registry.findByType(JvmCrashDataSource::class)?.apply {
+            with(dataSource) {
                 threadBlockageService?.let(::addCrashTeardownHandler)
                 addCrashTeardownHandler(logOrchestrator)
                 addCrashTeardownHandler(sessionOrchestrator)
                 addCrashTeardownHandler(crashMarker)
                 payloadStore?.let(::addCrashTeardownHandler)
             }
+        }
+    }
+
+    /**
+     * Performs post-load instrumentation tasks such as setting listeners.
+     */
+    private fun postLoadInstrumentation() {
+        errorHandler.guardSdkCode(SdkErrorType.SdkInitPhaseFail) {
+            val registry = instrumentationRegistry
             workerThreadPool.backgroundWorker(Worker.Background.NonIoRegWorker).submit {
                 if (!enabled) {
                     return@submit

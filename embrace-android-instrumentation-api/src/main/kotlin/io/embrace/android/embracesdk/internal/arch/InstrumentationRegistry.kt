@@ -23,10 +23,14 @@ interface InstrumentationRegistry : SessionPartEndListener, SessionPartChangeLis
 
     /**
      * Loads instrumentation via SPI and registers it with the SDK.
+     *
+     * [onDataSourceAdded] is invoked with each data source right after it is added, before the next provider registers, on
+     * the thread that registered its provider. It is for setup that must be in place as soon as a data source exists.
      */
     fun loadInstrumentations(
         instrumentationProviders: Iterable<InstrumentationProvider>,
         args: InstrumentationArgs,
+        onDataSourceAdded: (DataSource) -> Unit = {},
     )
 
     /**

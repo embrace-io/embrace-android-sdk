@@ -5,7 +5,6 @@ import io.embrace.android.embracesdk.internal.arch.schema.ErrorCodeAttribute
 import io.embrace.android.embracesdk.internal.telemetry.AppliedLimitType
 import io.embrace.android.embracesdk.internal.utils.NetworkUtils
 import io.embrace.android.embracesdk.internal.utils.NetworkUtils.stripUrl
-import io.embrace.android.embracesdk.internal.utils.UuidSource
 import io.embrace.android.embracesdk.semconv.EmbNetworkRequestAttributes
 import io.opentelemetry.kotlin.semconv.ErrorAttributes
 import io.opentelemetry.kotlin.semconv.ExceptionAttributes
@@ -294,9 +293,7 @@ internal class NetworkRequestDataSourceStatefulApiTest {
         // every id the fake generates is the inbound trace id, so the span joins the inbound trace
         harness = NetworkRequestDataSourceTestHarness(
             FakeTelemetryDestination(
-                object : UuidSource {
-                    override fun createUuid(): String = INBOUND_TRACE_ID
-                },
+                { INBOUND_TRACE_ID },
             ),
         )
         harness.networkSpanForwardingBehavior.networkSpanForwardingEnabled = true
@@ -385,7 +382,6 @@ internal class NetworkRequestDataSourceStatefulApiTest {
         endUrl: String = url,
         errorType: String? = null,
         errorMessage: String? = null,
-
     ) {
         startRequest(
             url = url,

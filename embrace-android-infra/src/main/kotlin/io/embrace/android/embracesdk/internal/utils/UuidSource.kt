@@ -1,6 +1,6 @@
 package io.embrace.android.embracesdk.internal.utils
 
-interface UuidSource {
+fun interface UuidSource {
 
     fun createUuid(): String
 }

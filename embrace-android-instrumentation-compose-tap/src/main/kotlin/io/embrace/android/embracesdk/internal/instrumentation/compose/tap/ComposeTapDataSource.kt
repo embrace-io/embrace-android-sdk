@@ -4,6 +4,8 @@ import io.embrace.android.embracesdk.internal.arch.InstrumentationArgs
 import io.embrace.android.embracesdk.internal.arch.datasource.DataSourceImpl
 import io.embrace.android.embracesdk.internal.arch.limits.UpToLimitStrategy
 import io.embrace.android.embracesdk.internal.arch.ui.TapSignal
+import io.embrace.android.embracesdk.internal.logging.SdkErrorType
+import io.embrace.android.embracesdk.internal.logging.guardSdkCode
 
 /**
  * Captures custom breadcrumbs for compose taps.
@@ -30,9 +32,12 @@ internal class ComposeTapDataSource(
     }
 
     override fun onDataCaptureDisabled() {
+        // each step is guarded on its own, so that one failing does not leave the other in place
         activityListener?.let { listener ->
-            args.application.unregisterActivityLifecycleCallbacks(listener)
-            listener.close()
+            errorHandler.guardSdkCode(SdkErrorType.InstrumentationDisableFail) {
+                args.application.unregisterActivityLifecycleCallbacks(listener)
+            }
+            errorHandler.guardSdkCode(SdkErrorType.InstrumentationDisableFail, listener::close)
         }
         activityListener = null
     }

@@ -4,12 +4,14 @@ import android.app.Activity
 import android.app.Application
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
+import io.embrace.android.embracesdk.fakes.FakeErrorHandler
 import io.embrace.android.embracesdk.fakes.FakeInstrumentationArgs
 import io.embrace.android.embracesdk.fakes.FakeInternalTelemetryService
 import io.embrace.android.embracesdk.fakes.FakeProcessStateTracker
 import io.embrace.android.embracesdk.internal.arch.state.ProcessState
 import io.embrace.android.embracesdk.internal.config.resolved.EmbraceConfig
 import io.embrace.android.embracesdk.internal.config.resolved.VitalsConfig
+import io.embrace.android.embracesdk.internal.logging.SdkErrorType
 import io.embrace.android.embracesdk.internal.telemetry.AppliedLimitType
 import io.embrace.android.embracesdk.semconv.EmbFrameCountsAttributes
 import org.junit.Assert.assertEquals
@@ -180,6 +182,36 @@ internal class VitalsDataSourceTest {
         assertFalse(activity.window.callback is VitalsWindowCallback)
     }
 
+    @Test
+    fun `the vitals thread stops when an earlier step of disabling data capture throws`() {
+        val args = FakeInstrumentationArgs(
+            application = UnregisterFailingApplication(),
+            errorHandler = FakeErrorHandler(throwOnSdkError = false),
+        )
+        val alreadyRunning = vitalsThreads()
+        val dataSource = VitalsDataSource(args).apply { onDataCaptureEnabled() }
+        val vitalsThread = (vitalsThreads() - alreadyRunning).single()
+
+        dataSource.onDataCaptureDisabled()
+        vitalsThread.join(THREAD_STOP_TIMEOUT_MS)
+
+        assertFalse(vitalsThread.isAlive)
+        assertEquals(
+            listOf(SdkErrorType.InstrumentationDisableFail.toString()),
+            args.errorHandler.sdkErrorMessages.map { it.msg },
+        )
+    }
+
+    private fun vitalsThreads(): Set<Thread> = Thread.getAllStackTraces().keys.filter {
+        it.name == VITALS_THREAD_NAME
+    }.toSet()
+
+    private class UnregisterFailingApplication : Application() {
+        override fun unregisterActivityLifecycleCallbacks(callback: ActivityLifecycleCallbacks) {
+            error("unregister failed")
+        }
+    }
+
     private fun FakeInstrumentationArgs.collectScreenAttributes(): Map<String, String> {
         val attributes = mutableMapOf<String, String>()
         navigationTrackingService.collectScreenAttributes(attributes::set)
@@ -190,4 +222,9 @@ internal class VitalsDataSourceTest {
         EmbFrameCountsAttributes.SMOOTHNESS_DROPPED_FRAMES to dropped.toString(),
         EmbFrameCountsAttributes.SMOOTHNESS_EXPECTED_FRAMES to expected.toString(),
     )
+
+    private companion object {
+        const val VITALS_THREAD_NAME = "emb-vitals"
+        const val THREAD_STOP_TIMEOUT_MS = 5000L
+    }
 }

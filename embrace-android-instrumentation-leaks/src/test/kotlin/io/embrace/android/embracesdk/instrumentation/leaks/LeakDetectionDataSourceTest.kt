@@ -1,9 +1,13 @@
 package io.embrace.android.embracesdk.instrumentation.leaks
 
+import android.app.Application
+import io.embrace.android.embracesdk.fakes.FakeErrorHandler
 import io.embrace.android.embracesdk.fakes.FakeInstrumentationArgs
+import io.embrace.android.embracesdk.internal.logging.SdkErrorType
 import io.embrace.android.embracesdk.internal.session.id.SessionIdsSnapshot
 import io.embrace.android.embracesdk.semconv.EmbSessionAttributes
 import org.junit.After
+import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Before
@@ -81,6 +85,31 @@ internal class LeakDetectionDataSourceTest {
         assertFalse(args.destination.attributes.containsKey(EmbSessionAttributes.EMB_MEMORY_LEAK_SUSPECTS))
     }
 
+    @Test
+    fun `the detector stops when an earlier step of disabling data capture throws`() {
+        dataSource.leakDetector.stop()
+        args = FakeInstrumentationArgs(
+            application = UnregisterFailingApplication(),
+            errorHandler = FakeErrorHandler(throwOnSdkError = false),
+        )
+        dataSource = LeakDetectionDataSource(args).apply { onDataCaptureEnabled() }
+        val leaked = Any()
+        val detector = dataSource.leakDetector
+        detector.trackOpened(leaked, OWNER)
+        val ref = checkNotNull(
+            detector.trackClosed(leaked, OWNER, LeakContext(OBJECT_TYPE, SESSION_IDS, leaked.javaClass)),
+        )
+
+        dataSource.onDataCaptureDisabled()
+        detector.onSentinelReclaimed(ref)
+
+        assertTrue(detector.suspects().isEmpty())
+        assertEquals(
+            listOf(SdkErrorType.InstrumentationDisableFail.toString()),
+            args.errorHandler.sdkErrorMessages.map { it.msg },
+        )
+    }
+
     /**
      * Drives both reclamations the detector thread would otherwise drive, confirming the suspect.
      */
@@ -93,6 +122,12 @@ internal class LeakDetectionDataSourceTest {
 
         val confirmation = checkNotNull(detector.onSentinelReclaimed(ref))
         detector.onSentinelReclaimed(confirmation)
+    }
+
+    private class UnregisterFailingApplication : Application() {
+        override fun unregisterActivityLifecycleCallbacks(callback: ActivityLifecycleCallbacks) {
+            error("unregister failed")
+        }
     }
 
     private companion object {

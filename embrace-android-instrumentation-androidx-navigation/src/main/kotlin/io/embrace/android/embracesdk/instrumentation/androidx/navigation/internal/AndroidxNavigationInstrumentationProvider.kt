@@ -11,6 +11,8 @@ import io.embrace.android.embracesdk.internal.arch.navigation.NavigationSignal
 import io.embrace.android.embracesdk.internal.arch.navigation.NavigationSignal.ScreenChanged
 import io.embrace.android.embracesdk.internal.arch.navigation.NavigationSignal.ScreenSourceAttached
 import io.embrace.android.embracesdk.internal.arch.navigation.getId
+import io.embrace.android.embracesdk.internal.logging.SdkErrorType
+import io.embrace.android.embracesdk.internal.logging.guardSdkCode
 
 /**
  * Initializes androidx navigation tracking instrumentation
@@ -50,7 +52,8 @@ internal class AndroidxNavigationDataSource(
     }
 
     override fun onDataCaptureDisabled() {
-        tracker.onDataCaptureDisabled()
+        // guarded on its own, so that the hooks are still removed if it fails
+        errorHandler.guardSdkCode(SdkErrorType.InstrumentationDisableFail, tracker::onDataCaptureDisabled)
 
         // don't clobber hooks installed by a newer data source
         if (trackNavigation === trackNavigationHook) {

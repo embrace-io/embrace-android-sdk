@@ -158,15 +158,20 @@ internal class VitalsDataSource(
     }
 
     override fun onDataCaptureDisabled() {
+        // each step is guarded on its own, so that one failing does not leave the others running
         activityListener?.let { listener ->
-            args.application.unregisterActivityLifecycleCallbacks(listener)
-            listener.close()
+            errorHandler.guardSdkCode(SdkErrorType.InstrumentationDisableFail) {
+                args.application.unregisterActivityLifecycleCallbacks(listener)
+            }
+            errorHandler.guardSdkCode(SdkErrorType.InstrumentationDisableFail, listener::close)
         }
         activityListener = null
         if (Build.VERSION.SDK_INT < Build.VERSION_CODES.S) {
-            args.systemService<DisplayManager>(Context.DISPLAY_SERVICE)?.unregisterDisplayListener(displayListener)
+            errorHandler.guardSdkCode(SdkErrorType.InstrumentationDisableFail) {
+                args.systemService<DisplayManager>(Context.DISPLAY_SERVICE)?.unregisterDisplayListener(displayListener)
+            }
         }
-        vitalsScheduler?.stop()
+        vitalsScheduler?.let { errorHandler.guardSdkCode(SdkErrorType.InstrumentationDisableFail, it::stop) }
         vitalsScheduler = null
         focalTracker = null
     }

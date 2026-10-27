@@ -295,6 +295,21 @@ class SessionPartWriterImpl(
         }
     }
 
+    /**
+     * Handles [spans] that were queued on a part that sealed before they could be written. In this
+     * scenario they are written to the current part straight away or are held if no part is active.
+     */
+    internal fun redirect(spans: List<Span>) {
+        val writers = current ?: synchronized(bufferLock) {
+            current ?: return carryOver(spans)
+        }
+        val (sessionSpans, others) = spans.partition { it.hasEmbraceAttribute(EmbType.Ux.Session) }
+        sessionSpans.forEach { reportOrphanedSessionSpan() }
+        if (others.isNotEmpty()) {
+            writers.completedSpans.write(others)
+        }
+    }
+
     private fun reportOrphanedSessionSpan() = errorHandler.trackSdkError(
         SdkErrorType.OrphanedSessionSpan,
         IllegalStateException("Session span completed with no session part to write it to"),
@@ -422,8 +437,7 @@ class SessionPartWriterImpl(
         private fun writeCompletedSpans(spans: List<Span>) {
             when {
                 spans.isEmpty() -> Unit
-                // the part sealed while this write was queued. Hold the spans for the next one
-                sealed -> synchronized(bufferLock) { carryOver(spans) }
+                sealed -> redirect(spans)
                 else -> completedSpans.write(spans)
             }
         }

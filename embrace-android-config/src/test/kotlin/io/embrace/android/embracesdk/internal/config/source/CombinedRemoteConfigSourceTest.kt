@@ -2,10 +2,12 @@ package io.embrace.android.embracesdk.internal.config.source
 
 import io.embrace.android.embracesdk.assertions.assertCountedDown
 import io.embrace.android.embracesdk.concurrency.BlockingScheduledExecutorService
+import io.embrace.android.embracesdk.fakes.FakeErrorHandler
 import io.embrace.android.embracesdk.fakes.FakeRemoteConfigSource
 import io.embrace.android.embracesdk.fakes.FakeRemoteConfigStore
 import io.embrace.android.embracesdk.internal.config.remote.RemoteConfig
 import io.embrace.android.embracesdk.internal.config.store.StoredConfigResponse
+import io.embrace.android.embracesdk.internal.logging.SdkErrorType
 import io.embrace.android.embracesdk.internal.worker.BackgroundWorker
 import kotlinx.serialization.SerializationException
 import org.junit.Assert.assertEquals
@@ -22,6 +24,7 @@ class CombinedRemoteConfigSourceTest {
     private lateinit var executorService: BlockingScheduledExecutorService
     private lateinit var remoteConfigSource: FakeRemoteConfigSource
     private lateinit var remoteConfigStore: FakeRemoteConfigStore
+    private lateinit var errorHandler: FakeErrorHandler
 
     @Before
     fun setUp() {
@@ -29,6 +32,7 @@ class CombinedRemoteConfigSourceTest {
         executorService = BlockingScheduledExecutorService()
         remoteConfigSource = FakeRemoteConfigSource(ConfigHttpResponse(remoteConfig, "another"))
         remoteConfigStore = FakeRemoteConfigStore()
+        errorHandler = FakeErrorHandler(throwOnSdkError = false)
     }
 
     @Test
@@ -72,6 +76,7 @@ class CombinedRemoteConfigSourceTest {
 
         // the config that arrived after the failure was still persisted
         assertTrue("expected at least one config to be saved", remoteConfigStore.saveCount > 0)
+        assertEquals(SdkErrorType.RemoteConfigFetchFail.toString(), errorHandler.sdkErrorMessages.first().msg)
     }
 
     private fun createSource(
@@ -83,6 +88,7 @@ class CombinedRemoteConfigSourceTest {
         response,
         remoteConfigSource,
         worker,
+        errorHandler,
         intervalMs,
     )
 }

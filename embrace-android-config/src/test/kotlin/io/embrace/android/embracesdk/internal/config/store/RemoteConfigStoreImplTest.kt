@@ -1,10 +1,13 @@
 package io.embrace.android.embracesdk.internal.config.store
 
+import io.embrace.android.embracesdk.fakes.FakeErrorHandler
 import io.embrace.android.embracesdk.fakes.FakeThrowingSerializer
 import io.embrace.android.embracesdk.fakes.TestPlatformSerializer
 import io.embrace.android.embracesdk.internal.config.PersistedConfig
 import io.embrace.android.embracesdk.internal.config.remote.RemoteConfig
 import io.embrace.android.embracesdk.internal.config.source.ConfigHttpResponse
+import io.embrace.android.embracesdk.internal.logging.SdkErrorType
+import io.embrace.android.embracesdk.internal.serialization.PlatformSerializer
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNull
@@ -19,17 +22,18 @@ internal class RemoteConfigStoreImplTest {
     private lateinit var store: RemoteConfigStoreImpl
     private lateinit var dir: File
     private var deviceId: String = "device-id"
+    private val errorHandler = FakeErrorHandler(throwOnSdkError = false)
 
     @Before
     fun setUp() {
         dir = Files.createTempDirectory("test").toFile()
-        store = RemoteConfigStoreImpl(TestPlatformSerializer(), dir) { deviceId }
+        store = createStore(TestPlatformSerializer(), dir)
     }
 
     @Test
     fun `construction does not touch the filesystem`() {
         val emptyDir = Files.createTempDirectory("empty").toFile()
-        RemoteConfigStoreImpl(TestPlatformSerializer(), emptyDir) { deviceId }
+        createStore(TestPlatformSerializer(), emptyDir)
 
         assertFalse(File(emptyDir, PersistedConfig.CONFIG_RESPONSE_FILE_NAME).exists())
         assertFalse(File(emptyDir, PersistedConfig.ETAG_FILE_NAME).exists())
@@ -40,7 +44,7 @@ internal class RemoteConfigStoreImplTest {
     fun `storage dir is created on first save`() {
         val nestedDir = File(dir, "nested/config")
         assertFalse(nestedDir.exists())
-        store = RemoteConfigStoreImpl(TestPlatformSerializer(), nestedDir) { deviceId }
+        store = createStore(TestPlatformSerializer(), nestedDir)
         assertFalse(nestedDir.exists())
 
         val config = RemoteConfig(50)
@@ -156,6 +160,7 @@ internal class RemoteConfigStoreImplTest {
         assertEquals(config, loaded.cfg)
         // ...and the corrupt blob is purged so it is never read a second time.
         assertFalse(cachedConfigFile().exists())
+        assertTrue(errorHandler.sdkErrorMessages.isEmpty())
     }
 
     @Test
@@ -188,12 +193,13 @@ internal class RemoteConfigStoreImplTest {
         assertNull(store.loadResponse())
         // ...and the corrupt file is purged so it is never read a second time.
         assertFalse(configFile().exists())
+        assertStoreFailTracked()
     }
 
     @Test
     fun `unreadable json config is preserved as the error may be recoverable`() {
         val serializer = TestPlatformSerializer()
-        store = RemoteConfigStoreImpl(serializer, dir) { deviceId }
+        store = createStore(serializer, dir)
 
         val config = RemoteConfig(50)
         store.saveResponse(ConfigHttpResponse(config, "etag"))
@@ -209,6 +215,7 @@ internal class RemoteConfigStoreImplTest {
         assertNull(store.loadResponse())
         // ...but the file is intact so a later attempt can succeed once the error clears.
         assertTrue(configFile().exists())
+        assertStoreFailTracked()
     }
 
     @Test
@@ -217,19 +224,33 @@ internal class RemoteConfigStoreImplTest {
         store.saveResponse(ConfigHttpResponse(config, "etag"))
         cachedConfigFile().delete()
 
-        store = RemoteConfigStoreImpl(FakeThrowingSerializer(StackOverflowError()), dir) { deviceId }
+        store = createStore(FakeThrowingSerializer(StackOverflowError()))
 
         assertNull(store.loadResponse())
         assertTrue(configFile().exists())
+        assertStoreFailTracked()
+    }
+
+    @Test
+    fun `missing or truncated files are not tracked`() {
+        assertNull(store.loadResponse())
+        store.saveResponse(ConfigHttpResponse(RemoteConfig(50), "etag"))
+        cachedConfigFile().writeBytes(byteArrayOf(1, 2, 3, 4))
+        checkNotNull(store.loadResponse())
+        assertTrue(errorHandler.sdkErrorMessages.isEmpty())
+    }
+
+    @Test
+    fun `an io failure during save is not tracked`() {
+        store = createStore(storageDir = File(dir, "file").apply { writeText("") })
+        store.saveResponse(ConfigHttpResponse(RemoteConfig(50), "etag"))
+        assertTrue(errorHandler.sdkErrorMessages.isEmpty())
     }
 
     @Test
     fun `binary cache only written after json files succeed`() {
         // force the binary write to fail while the canonical json + etag files still succeed
-        store = RemoteConfigStoreImpl(
-            TestPlatformSerializer(),
-            dir,
-        ) { error("device id unavailable") }
+        store = createStore(deviceIdProvider = { error("device id unavailable") })
 
         val config = RemoteConfig(50)
         store.saveResponse(ConfigHttpResponse(config, "etag"))
@@ -237,11 +258,28 @@ internal class RemoteConfigStoreImplTest {
         // the failed blob is deleted so the fast path is skipped...
         assertFalse(cachedConfigFile().exists())
 
+        assertStoreFailTracked()
+
         // ...but the json fallback was written successfully and still loads
         val loaded = checkNotNull(store.loadResponse())
         assertEquals(config, loaded.cfg)
         assertNull(loaded.etag)
         assertNull(loaded.deviceId)
+    }
+
+    private fun createStore(
+        serializer: PlatformSerializer = TestPlatformSerializer(),
+        storageDir: File = dir,
+        deviceIdProvider: () -> String = { deviceId },
+    ) = RemoteConfigStoreImpl(
+        serializer = serializer,
+        storageDir = storageDir,
+        deviceIdProvider = deviceIdProvider,
+        errorHandler = errorHandler,
+    )
+
+    private fun assertStoreFailTracked() {
+        assertEquals(SdkErrorType.RemoteConfigStoreFail.toString(), errorHandler.sdkErrorMessages.single().msg)
     }
 
     private fun cachedConfigFile() = File(dir, PersistedConfig.CACHED_CONFIG_FILE_NAME)

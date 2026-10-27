@@ -9,6 +9,7 @@ import io.embrace.android.embracesdk.fakes.TestUuidSource
 import io.embrace.android.embracesdk.fakes.config.FakeBase64SharedObjectFilesMap
 import io.embrace.android.embracesdk.fakes.config.FakeInstrumentedConfig
 import io.embrace.android.embracesdk.fakes.fakeBackgroundWorker
+import io.embrace.android.embracesdk.internal.logging.SdkErrorType
 import io.embrace.android.embracesdk.internal.payload.NativeSymbols
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
@@ -27,6 +28,7 @@ class NativeSymbolTest {
     )
 
     private val serializer = TestPlatformSerializer()
+    private val errorHandler = FakeErrorHandler(throwOnSdkError = false)
 
     private val limitedMap = symbolMap.filter { it.key != "arm64-v8a" }
 
@@ -34,6 +36,13 @@ class NativeSymbolTest {
     fun `missing symbols`() {
         val service = createService(null)
         assertNull(service.nativeSymbolMap)
+    }
+
+    @Test
+    fun `invalid base64 symbols are tracked`() {
+        val cfg = FakeInstrumentedConfig(symbols = FakeBase64SharedObjectFilesMap("!!!"))
+        assertNull(createService(cfg, "arm64-v8a").nativeSymbolMap)
+        assertEquals(SdkErrorType.InvalidNativeSymbols.toString(), errorHandler.sdkErrorMessages.single().msg)
     }
 
     @Test
@@ -72,7 +81,10 @@ class NativeSymbolTest {
         } else {
             FakeInstrumentedConfig()
         }
+        return createService(cfg, arch)
+    }
 
+    private fun createService(cfg: FakeInstrumentedConfig, arch: String): ConfigService {
         return ConfigServiceImpl(
             instrumentedConfig = cfg,
             persistedConfig = PersistedConfig(
@@ -82,12 +94,13 @@ class NativeSymbolTest {
                 keyValueStore = lazyOf(FakeKeyValueStore()),
                 uuidSource = TestUuidSource(),
                 clock = FakeClock(),
+                errorHandler = errorHandler,
             ),
             worker = fakeBackgroundWorker(),
             serializer = serializer,
             remoteConfigSource = FakeRemoteConfigSource(),
             primaryAbi = arch,
-            errorHandler = FakeErrorHandler(),
+            errorHandler = errorHandler,
             hasConfiguredOtlpExport = { false },
         )
     }

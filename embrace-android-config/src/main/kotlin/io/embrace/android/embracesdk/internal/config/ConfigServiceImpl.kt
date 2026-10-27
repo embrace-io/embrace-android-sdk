@@ -54,6 +54,7 @@ class ConfigServiceImpl(
             response = persistedConfig.response,
             httpSource = remoteConfigSource,
             worker = worker,
+            errorHandler = errorHandler,
         )
     }
 
@@ -121,7 +122,7 @@ class ConfigServiceImpl(
 
     private fun getNativeSymbols(): NativeSymbols? = errorHandler.guardSdkCode(SdkErrorType.InvalidNativeSymbols, null) {
         val encodedSymbols = instrumentedConfig.symbols.getBase64SharedObjectFilesMap() ?: return@guardSdkCode null
-        val decodedSymbols: String = encodedSymbols.decodeBase64()?.utf8() ?: return@guardSdkCode null
+        val decodedSymbols: String = requireNotNull(encodedSymbols.decodeBase64()) { "invalid base64 symbols" }.utf8()
         serializer.fromJson(decodedSymbols, NativeSymbols.serializer())
     }
 

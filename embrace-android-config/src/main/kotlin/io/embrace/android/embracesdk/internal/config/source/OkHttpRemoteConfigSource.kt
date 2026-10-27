@@ -2,17 +2,21 @@ package io.embrace.android.embracesdk.internal.config.source
 
 import io.embrace.android.embracesdk.internal.config.instrumented.schema.InstrumentedConfig
 import io.embrace.android.embracesdk.internal.config.remote.RemoteConfig
+import io.embrace.android.embracesdk.internal.logging.ErrorHandler
+import io.embrace.android.embracesdk.internal.logging.SdkErrorType
 import io.embrace.android.embracesdk.internal.serialization.PlatformSerializer
 import okhttp3.OkHttpClient
 import okhttp3.Request
 import okhttp3.Response
 import okio.GzipSource
 import okio.buffer
+import java.io.IOException
 
 class OkHttpRemoteConfigSource internal constructor(
     private val okhttpClient: Lazy<OkHttpClient>,
     private val serializer: PlatformSerializer,
     configEndpoint: Lazy<ConfigEndpoint>,
+    private val errorHandler: ErrorHandler,
 ) : RemoteConfigSource {
 
     /**
@@ -26,6 +30,7 @@ class OkHttpRemoteConfigSource internal constructor(
         deviceIdProvider: () -> String,
         sdkVersion: String,
         apiLevel: Int,
+        errorHandler: ErrorHandler,
     ) : this(
         okhttpClient,
         serializer,
@@ -38,13 +43,19 @@ class OkHttpRemoteConfigSource internal constructor(
                 apiLevel,
             )
         },
+        errorHandler,
     )
 
     private val configEndpoint: ConfigEndpoint by configEndpoint
 
-    override fun getConfig(): ConfigHttpResponse? = runCatching {
+    override fun getConfig(): ConfigHttpResponse? = try {
         fetchConfigImpl()
-    }.getOrNull()
+    } catch (_: IOException) {
+        null
+    } catch (exc: Throwable) {
+        errorHandler.trackSdkError(SdkErrorType.RemoteConfigFetchFail, exc)
+        null
+    }
 
     override fun setInitialEtag(etag: String) {
         this.etag = etag
@@ -78,11 +89,18 @@ class OkHttpRemoteConfigSource internal constructor(
         if (!response.isSuccessful) {
             return null
         }
-        val cfg = response.body?.source()?.use { src ->
-            val gzipSource = GzipSource(src)
-            gzipSource.buffer().inputStream().use { stream ->
-                serializer.fromJson(stream, RemoteConfig.serializer())
+        val cfg = try {
+            response.body?.source()?.use { src ->
+                val gzipSource = GzipSource(src)
+                gzipSource.buffer().inputStream().use { stream ->
+                    serializer.fromJson(stream, RemoteConfig.serializer())
+                }
             }
+        } catch (exc: IOException) {
+            throw exc
+        } catch (exc: Throwable) {
+            errorHandler.trackSdkError(SdkErrorType.RemoteConfigParseFail, exc)
+            return null
         }
         ConfigHttpResponse(cfg, etag)
     }

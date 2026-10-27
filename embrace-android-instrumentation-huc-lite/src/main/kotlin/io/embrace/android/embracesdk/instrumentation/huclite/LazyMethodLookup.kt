@@ -12,6 +12,7 @@ internal class LazyMethodLookup(
     parentClass: Class<*>,
     methodName: String,
     args: Array<Class<*>>,
+    private val onLookupFailure: (Throwable) -> Unit,
 ) {
     private var state: Any = MethodLookup(parentClass, methodName, args)
 
@@ -23,9 +24,10 @@ internal class LazyMethodLookup(
                 try {
                     val method = s.resolve()
                     state = method
-                } catch (_: NoSuchMethodException) {
-                    val error = IOException("Failed to instrument ${s.parentClass.simpleName}")
+                } catch (e: NoSuchMethodException) {
+                    val error = MethodLookupException("Failed to instrument ${s.parentClass.simpleName}", e)
                     state = error
+                    onLookupFailure(error)
                 }
             }
             is Throwable -> throw s
@@ -45,4 +47,6 @@ internal class LazyMethodLookup(
             return ReflectionUtils.findDeclaredMethod(parentClass, methodName, args)
         }
     }
+
+    class MethodLookupException(message: String, cause: Throwable) : IOException(message, cause)
 }

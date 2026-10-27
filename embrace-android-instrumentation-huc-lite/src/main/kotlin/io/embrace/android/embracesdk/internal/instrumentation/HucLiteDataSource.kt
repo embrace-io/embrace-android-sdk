@@ -133,7 +133,7 @@ class HucLiteDataSource(
         }
     }
 
-    private fun trackCaptureError(t: Throwable) {
+    internal fun trackCaptureError(t: Throwable) {
         errorHandler.trackSdkError(SdkErrorType.DataSourceDataCaptureFail, InstrumentationException(t))
     }
 

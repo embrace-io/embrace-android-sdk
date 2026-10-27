@@ -48,7 +48,14 @@ class InstrumentationRegistryImpl(
                 return null
             }
             val dataSource = state() ?: return null
-            dataSource.onDataCaptureEnabled()
+            try {
+                dataSource.onDataCaptureEnabled()
+            } catch (exc: Throwable) {
+                // Enabling may have registered callbacks before it failed, so if we detect a failure during that,
+                // we proactively disable it to avoid having a potentially-broken datasource enabled.
+                disable(dataSource)
+                throw exc
+            }
             dataSources += dataSource // copy-on-write
             dataSource
         }

@@ -10,6 +10,9 @@ class FakeSessionPartStateToken<T>(
     private val clock: Clock = FakeClock(),
 ) : SessionPartStateToken<T> {
     var endTimeMs = 0L
+    val updateUnrecordedTransitions: MutableList<UnrecordedTransitions> = mutableListOf()
+    var endUnrecordedTransitions: UnrecordedTransitions? = null
+
     override fun update(
         newValue: T,
         transitionTimeMs: Long,
@@ -18,10 +21,12 @@ class FakeSessionPartStateToken<T>(
     ): Boolean {
         transitions.add(Pair(transitionTimeMs, newValue))
         this.transitionAttributes.add(transitionAttributes)
+        updateUnrecordedTransitions.add(unrecordedTransitions)
         return true
     }
 
     override fun end(unrecordedTransitions: UnrecordedTransitions) {
         endTimeMs = clock.now()
+        endUnrecordedTransitions = unrecordedTransitions
     }
 }

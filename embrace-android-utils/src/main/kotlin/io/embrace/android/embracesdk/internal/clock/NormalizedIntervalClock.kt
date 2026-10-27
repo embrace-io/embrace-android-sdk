@@ -3,7 +3,7 @@ package io.embrace.android.embracesdk.internal.clock
 import android.os.SystemClock
 import io.embrace.android.embracesdk.internal.logging.ErrorHandler
 import io.embrace.android.embracesdk.internal.logging.SdkErrorType
-import java.util.concurrent.atomic.AtomicBoolean
+import io.embrace.android.embracesdk.internal.utils.concurrent.OneShot
 import java.util.concurrent.atomic.AtomicLong
 import kotlin.math.max
 
@@ -36,8 +36,8 @@ class NormalizedIntervalClock(
      * The lastTime that `now` was called - `Long.MIN_VALUE` as a "not yet tracked" sentinel.
      */
     private val lastTime = AtomicLong(Long.MIN_VALUE)
-    private val hasLoggedDrift = AtomicBoolean(false)
-    private val hasLoggedCasExhausted = AtomicBoolean(false)
+    private val reportDriftOnce = OneShot()
+    private val reportCasExhaustedOnce = OneShot()
 
     override fun now(): Long {
         repeat(casLimit) {
@@ -45,7 +45,7 @@ class NormalizedIntervalClock(
             val newTime = baseline + monotonicClock()
 
             if (prev != Long.MIN_VALUE && newTime < prev - driftThresholdMs) {
-                if (hasLoggedDrift.compareAndSet(false, true)) {
+                reportDriftOnce {
                     errorHandler?.trackSdkError(
                         SdkErrorType.ClockDrift,
                         IllegalStateException(
@@ -62,7 +62,7 @@ class NormalizedIntervalClock(
             }
         }
 
-        if (hasLoggedCasExhausted.compareAndSet(false, true)) {
+        reportCasExhaustedOnce {
             errorHandler?.trackSdkError(
                 SdkErrorType.ClockCasExhausted,
                 IllegalStateException("NormalizedIntervalClock exhausted CAS attempts."),

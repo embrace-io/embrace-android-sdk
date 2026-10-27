@@ -13,6 +13,7 @@ import io.embrace.android.embracesdk.internal.delivery.storedTelemetryComparator
 import io.embrace.android.embracesdk.internal.logging.ErrorHandler
 import io.embrace.android.embracesdk.internal.logging.SdkErrorType
 import io.embrace.android.embracesdk.internal.logging.guardSdkCode
+import io.embrace.android.embracesdk.internal.utils.concurrent.OneShot
 import io.embrace.android.embracesdk.internal.worker.BackgroundWorker
 import java.io.IOException
 import java.io.InputStream
@@ -44,7 +45,7 @@ class SchedulingServiceImpl(
     private val activeSends: MutableSet<StoredTelemetryMetadata> = Collections.newSetFromMap(ConcurrentHashMap())
     private val deleteInProgress: MutableSet<StoredTelemetryMetadata> = Collections.newSetFromMap(ConcurrentHashMap())
     private val payloadsToRetry: MutableMap<StoredTelemetryMetadata, RetryInstance> = ConcurrentHashMap()
-    private val resurrectionComplete = AtomicBoolean(false)
+    private val resurrectionComplete = OneShot()
     private val payloadsInProgress = ConcurrentHashMap<SupportedEnvelopeType, StoredTelemetryMetadata>()
     private val intakeDeliveryPending = AtomicBoolean(false)
     private val stopped = AtomicBoolean(false)
@@ -66,7 +67,7 @@ class SchedulingServiceImpl(
     }
 
     override fun onResurrectionComplete() {
-        if (!resurrectionComplete.getAndSet(true)) {
+        resurrectionComplete {
             queueDeliveryAttempt()
         }
     }
@@ -325,7 +326,7 @@ class SchedulingServiceImpl(
             return false
         }
 
-        if (envelopeType != SupportedEnvelopeType.CRASH && !resurrectionComplete.get()) {
+        if (envelopeType != SupportedEnvelopeType.CRASH && resurrectionComplete.isAvailable) {
             return false
         }
 

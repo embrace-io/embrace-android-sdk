@@ -6,13 +6,13 @@ import io.embrace.android.embracesdk.internal.instrumentation.HucLiteDataSource
 import io.embrace.android.embracesdk.internal.instrumentation.HucLiteDataSource.RequestData
 import io.embrace.android.embracesdk.internal.utils.BuildVersionChecker
 import io.embrace.android.embracesdk.internal.utils.VersionChecker
+import io.embrace.android.embracesdk.internal.utils.concurrent.OneShot
 import java.io.InputStream
 import java.io.OutputStream
 import java.net.URL
 import java.security.Permission
 import java.security.Principal
 import java.security.cert.Certificate
-import java.util.concurrent.atomic.AtomicBoolean
 import javax.net.ssl.HostnameVerifier
 import javax.net.ssl.HttpsURLConnection
 import javax.net.ssl.SSLSocketFactory
@@ -28,7 +28,7 @@ internal class InstrumentedHttpsURLConnection(
     private val versionChecker: VersionChecker = BuildVersionChecker,
 ) : HttpsURLConnection(wrappedConnection.url) {
 
-    private val requestTriggered = AtomicBoolean(false)
+    private val requestTriggered = OneShot()
     private val requestData: RequestData? =
         hucLiteDataSource.createRequestData(
             wrappedConnection = wrappedConnection,
@@ -289,7 +289,7 @@ internal class InstrumentedHttpsURLConnection(
     override fun getReadTimeout(): Int = wrappedConnection.readTimeout
 
     private inline fun <T> invokeRequestTriggeringMethod(wrappedMethod: () -> T): T {
-        val instrument = requestTriggered.compareAndSet(false, true)
+        val instrument = requestTriggered.tryClaim()
         if (instrument) {
             requestData?.startRequest()
         }

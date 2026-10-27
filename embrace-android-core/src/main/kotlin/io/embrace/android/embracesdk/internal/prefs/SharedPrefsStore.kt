@@ -12,10 +12,10 @@ import io.embrace.android.embracesdk.internal.serialization.PlatformSerializer
 import io.embrace.android.embracesdk.internal.store.KeyValueStore
 import io.embrace.android.embracesdk.internal.store.KeyValueStoreEditor
 import io.embrace.android.embracesdk.internal.utils.EmbTrace
+import io.embrace.android.embracesdk.internal.utils.concurrent.OneShot
 import kotlinx.serialization.KSerializer
 import kotlinx.serialization.builtins.MapSerializer
 import kotlinx.serialization.builtins.serializer
-import java.util.concurrent.atomic.AtomicBoolean
 
 /**
  * Creates the SDK's [KeyValueStore], backed by the default [SharedPreferences].
@@ -39,7 +39,7 @@ internal class SharedPrefsStore(
 ) : KeyValueStore {
 
     private val openBatch = ThreadLocal<Batch?>()
-    private val firstAccessTraced = AtomicBoolean(false)
+    private val firstAccessTraced = OneShot()
 
     override fun getString(key: String): String? {
         return pending(key) { impl.getString(key, null) }
@@ -134,7 +134,7 @@ internal class SharedPrefsStore(
      * that call was the first to load it.
      */
     private fun <T> measureFirstAccess(read: () -> T): T =
-        if (firstAccessTraced.compareAndSet(false, true)) {
+        if (firstAccessTraced.tryClaim()) {
             EmbTrace.trace(sectionName = "prefs-first-read", recordDuration = true) { read() }
         } else {
             read()

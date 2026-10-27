@@ -4,11 +4,11 @@ import io.embrace.android.embracesdk.internal.logging.ErrorHandler
 import io.embrace.android.embracesdk.internal.logging.SdkErrorType
 import io.embrace.android.embracesdk.internal.logging.UserCodeException
 import io.embrace.android.embracesdk.internal.logging.guardSdkCodeEach
+import io.embrace.android.embracesdk.internal.utils.concurrent.OneShot
 import io.embrace.android.embracesdk.network.http.HttpRequestInfo
 import io.embrace.android.embracesdk.network.http.HttpRequestInfoModifier
 import io.embrace.android.embracesdk.network.http.MutableHttpRequestInfo
 import java.util.concurrent.CopyOnWriteArrayList
-import java.util.concurrent.atomic.AtomicBoolean
 
 /**
  * Holds the [HttpRequestInfoModifier]s registered by the consumer and applies them to the HTTP
@@ -22,7 +22,7 @@ class HttpRequestInfoModifierChain(
     private val modifiers = CopyOnWriteArrayList<HttpRequestInfoModifier>()
 
     // we only handle a single user callback failure per process to avoid generating a flood of errors for a faulty callback
-    private val loggedFailure = AtomicBoolean(false)
+    private val reportFailureOnce = OneShot()
 
     fun add(modifier: HttpRequestInfoModifier) {
         modifiers.addIfAbsent(modifier)
@@ -41,7 +41,7 @@ class HttpRequestInfoModifierChain(
             try {
                 modifier.modifyHttpRequestInfo(info)
             } catch (exc: Throwable) {
-                if (loggedFailure.compareAndSet(false, true)) {
+                reportFailureOnce {
                     throw UserCodeException(exc)
                 }
             }

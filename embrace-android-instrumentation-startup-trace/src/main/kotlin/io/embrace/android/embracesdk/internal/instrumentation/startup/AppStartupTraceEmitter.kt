@@ -15,11 +15,11 @@ import io.embrace.android.embracesdk.internal.logging.SdkErrorType
 import io.embrace.android.embracesdk.internal.utils.EmbTrace
 import io.embrace.android.embracesdk.internal.utils.Provider
 import io.embrace.android.embracesdk.internal.utils.VersionChecker
+import io.embrace.android.embracesdk.internal.utils.concurrent.OneShot
 import io.embrace.android.embracesdk.semconv.EmbAppAttributes
 import io.embrace.android.embracesdk.semconv.EmbSessionAttributes
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.ConcurrentLinkedQueue
-import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicReference
 
 /**
@@ -57,7 +57,7 @@ internal class AppStartupTraceEmitter(
     private val trackRender = hasRenderEvent(versionChecker)
     private val trackFrameCommit = supportFrameCommitCallback(versionChecker)
     private val appStartupRootSpan = AtomicReference<SpanToken?>(null)
-    private val dataCollectionComplete = AtomicBoolean(false)
+    private val recordStartupOnce = OneShot()
     private val traceEnd = if (manualEnd) {
         TraceEnd.READY
     } else if (trackRender) {
@@ -216,7 +216,7 @@ internal class AppStartupTraceEmitter(
      * Called when app startup is considered complete, i.e. the data can be used and any additional updates can be ignored
      */
     private fun dataCollectionComplete(traceEndTimeMs: Long, completed: Boolean = true) {
-        if (!dataCollectionComplete.getAndSet(true)) {
+        recordStartupOnce {
             EmbTrace.trace("record-startup") {
                 recordStartup(traceEndTimeMs, completed)
             }

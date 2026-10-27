@@ -92,7 +92,7 @@ internal class LogOrchestratorImpl(
         val nextInactivityCheck = MAX_INACTIVITY_TIME - (now - lastLogTime.get())
         scheduledCheckFuture?.cancel(false)
         scheduledCheckFuture = worker.schedule<Unit>(
-            ::sendLogsIfNeeded,
+            { errorHandler.guardSdkCode(SdkErrorType.SafeDataCaptureFail) { sendLogsIfNeeded() } },
             min(nextBatchCheck, nextInactivityCheck),
             TimeUnit.MILLISECONDS,
         )

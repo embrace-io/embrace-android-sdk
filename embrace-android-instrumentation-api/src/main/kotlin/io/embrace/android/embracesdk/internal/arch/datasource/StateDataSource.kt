@@ -67,6 +67,7 @@ abstract class StateDataSource<T : Any>(
         // Track the number of transitions dropped by instrumentation that didn't cause this to be invoked
         unrecordedTransitions.updateDroppedByInstrumentation(droppedTransitions)
         if (currentStateToken != null) {
+            var droppedByLimit = newState != oldState
             captureTelemetry(
                 inputValidation = { newState != oldState },
                 invalidInputCallback = {
@@ -74,6 +75,7 @@ abstract class StateDataSource<T : Any>(
                     unrecordedTransitions.updateDroppedByInstrumentation(1)
                 },
             ) {
+                droppedByLimit = false
                 val droppedTransitions = unrecordedTransitions.getAndSet(noUnrecordedTransitions)
                 val transitionRecorded = currentStateToken.update(
                     newValue = newState,
@@ -93,6 +95,10 @@ abstract class StateDataSource<T : Any>(
                         droppedByInstrumentation = droppedTransitions.droppedByInstrumentation,
                     )
                 }
+            }
+            // A valid transition that never reached the action was refused by the limit strategy
+            if (droppedByLimit) {
+                unrecordedTransitions.updateDroppedByInstrumentation(1)
             }
         } else {
             // The token not existing means a session hasn't been created yet
@@ -138,7 +144,7 @@ abstract class StateDataSource<T : Any>(
     @CallSuper
     override fun onPreSessionEnd() {
         partStateToken.getAndSet(null)?.apply {
-            end(unrecordedTransitions.get())
+            end(unrecordedTransitions.getAndSet(noUnrecordedTransitions))
         }
     }
 

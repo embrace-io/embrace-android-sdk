@@ -18,6 +18,13 @@ class ErrorHandlerImpl(
     private val clock: Clock = NormalizedIntervalClock(),
     private val limit: Int = 10,
     private val beforeBuffering: () -> Unit = {},
+    private val logcat: (ErrorHandler.Severity, String, Throwable?) -> Unit = { severity, msg, throwable ->
+        when (severity) {
+            ErrorHandler.Severity.INFO -> Log.i(EMBRACE_TAG, msg, throwable)
+            ErrorHandler.Severity.WARNING -> Log.w(EMBRACE_TAG, msg, throwable)
+            ErrorHandler.Severity.ERROR -> Log.e(EMBRACE_TAG, msg, throwable)
+        }
+    },
 ) : ErrorHandler {
 
     /**
@@ -39,16 +46,22 @@ class ErrorHandlerImpl(
     @Volatile
     private var limiter = SdkErrorLimiter(limit)
 
+    /**
+     * Set while the current thread is in the sink. Errors raised by the sink itself are
+     * dropped rather than recorded
+     */
+    private val inSink = ThreadLocal<Boolean>()
+
     override fun log(msg: String, throwable: Throwable?, severity: ErrorHandler.Severity) {
-        when (severity) {
-            ErrorHandler.Severity.INFO -> Log.i(EMBRACE_TAG, msg, throwable)
-            ErrorHandler.Severity.WARNING -> Log.w(EMBRACE_TAG, msg, throwable)
-            ErrorHandler.Severity.ERROR -> Log.e(EMBRACE_TAG, msg, throwable)
+        runSafely("Failed to log message", logcat) {
+            logcat(severity, msg, throwable)
         }
     }
 
     override fun trackSdkError(type: SdkErrorType, throwable: Throwable) {
-        report(type, throwable)
+        runSafely("Failed to track SDK error", logcat) {
+            report(type, throwable)
+        }
     }
 
     private fun report(type: SdkErrorType, exc: Throwable) {
@@ -60,34 +73,35 @@ class ErrorHandlerImpl(
     }
 
     private fun capture(type: SdkErrorType, throwable: Throwable) {
-        runCatching {
-            if (!type.shouldCapture() || handlerState.get() === HandlerState.Closed || !limiter.tryAcquire(type, throwable)) {
-                return
-            }
-            val timestampMs = clock.now()
+        if (!type.shouldCapture() || handlerState.get() === HandlerState.Closed) {
+            return
+        }
+        if (inSink.get() == true || !limiter.tryAcquire(type, throwable)) {
+            return
+        }
+        val timestampMs = clock.now()
 
-            // The buffer is a Treiber stack on a HandlerState instance that indicates that it is buffering errors. An error
-            // is added by swapping in a new Buffering instance contains the latest error and links back to the last one.
-            // The swap retries if another thread changed the HandlerState since it was read, and that retry will proceed
-            // according to what the new state is. So when it says the handler is no longer buffering, it will either
-            // record the error directly or drop it, bypassing the buffer either way since it's no longer buffering.
-            while (true) {
-                when (val state = handlerState.get()) {
-                    // Drop the error if the handler is closed
-                    HandlerState.Closed -> return
+        // The buffer is a Treiber stack on a HandlerState instance that indicates that it is buffering errors. An error
+        // is added by swapping in a new Buffering instance contains the latest error and links back to the last one.
+        // The swap retries if another thread changed the HandlerState since it was read, and that retry will proceed
+        // according to what the new state is. So when it says the handler is no longer buffering, it will either
+        // record the error directly or drop it, bypassing the buffer either way since it's no longer buffering.
+        while (true) {
+            when (val state = handlerState.get()) {
+                // Drop the error if the handler is closed
+                HandlerState.Closed -> return
 
-                    // Once the handler is recording, record the error directly rather than buffering it
-                    is HandlerState.Recording -> {
-                        state.record(type, throwable, timestampMs)
+                // Once the handler is recording, record the error directly rather than buffering it
+                is HandlerState.Recording -> {
+                    record(state.recorder, type, throwable, timestampMs)
+                    return
+                }
+
+                // Still buffering: push the error on top of what is buffered so far
+                is HandlerState.Buffering -> {
+                    beforeBuffering()
+                    if (handlerState.compareAndSet(state, HandlerState.Buffered(type, timestampMs, throwable, state))) {
                         return
-                    }
-
-                    // Still buffering: push the error on top of what is buffered so far
-                    is HandlerState.Buffering -> {
-                        beforeBuffering()
-                        if (handlerState.compareAndSet(state, HandlerState.Buffered(type, timestampMs, throwable, state))) {
-                            return
-                        }
                     }
                 }
             }
@@ -99,30 +113,36 @@ class ErrorHandlerImpl(
             close()
             return
         }
-        val recording = HandlerState.Recording(sink)
-        while (true) {
-            val current = handlerState.get()
-            if (current === HandlerState.Closed) {
-                return
-            }
+        runSafely("Failed to drain SDK errors", logcat) {
+            val recording = HandlerState.Recording(sink)
+            while (true) {
+                val current = handlerState.get()
+                if (current === HandlerState.Closed) {
+                    return
+                }
 
-            // Swap whatever was read for Recording, taking the buffered errors with it. From this point on, no thread
-            // can add to that buffer, and new errors bypass the buffer and are recorded directly if the handler hasn't
-            // been closed. The swap fails if another thread changed the state since it was read, and the loop retries
-            // against the new state. Once it succeeds, the errors it took are recorded and the drain returns.
-            if (handlerState.compareAndSet(current, recording)) {
-                (current as? HandlerState.Buffered)?.let { recordBufferedErrors(it, sink) }
-                return
+                // Swap whatever was read for Recording, taking the buffered errors with it. From this point on, no thread
+                // can add to that buffer, and new errors bypass the buffer and are recorded directly if the handler hasn't
+                // been closed. The swap fails if another thread changed the state since it was read, and the loop retries
+                // against the new state. Once it succeeds, the errors it took are recorded and the drain returns.
+                if (handlerState.compareAndSet(current, recording)) {
+                    (current as? HandlerState.Buffered)?.let { recordBufferedErrors(it, sink) }
+                    return
+                }
             }
         }
     }
 
     override fun resetLimit() {
-        limiter = SdkErrorLimiter(limit)
+        runSafely("Failed to reset SDK error limit", logcat) {
+            limiter = SdkErrorLimiter(limit)
+        }
     }
 
     override fun close() {
-        handlerState.set(HandlerState.Closed)
+        runSafely("Failed to close error handler", logcat) {
+            handlerState.set(HandlerState.Closed)
+        }
     }
 
     /**
@@ -130,11 +150,27 @@ class ErrorHandlerImpl(
      */
     private fun recordBufferedErrors(newest: HandlerState.Buffered, sink: ErrorRecorder) {
         generateSequence(newest) { it.previous as? HandlerState.Buffered }.toList().asReversed().forEach { error ->
-            try {
-                sink(error.type, error.throwable, error.timestampMs)
-            } catch (_: Throwable) {
-                // A failure to record one error doesn't stop the rest from being recorded
+            record(sink, error.type, error.throwable, error.timestampMs)
+        }
+    }
+
+    /**
+     * Records an error with [sink]. A sink failure is logged, and doesn't stop later errors from being recorded.
+     */
+    private fun record(
+        sink: ErrorRecorder,
+        type: SdkErrorType,
+        throwable: Throwable,
+        timestampMs: Long,
+    ) {
+        inSink.set(true)
+        try {
+            // do NOT attempt to capture another SDK error...
+            runSafely("Failed to record SDK error ($type)", logcat) {
+                sink(type, throwable, timestampMs)
             }
+        } finally {
+            inSink.remove()
         }
     }
 
@@ -167,17 +203,27 @@ class ErrorHandlerImpl(
          * The handler is ready to record errors directly with [recorder], the one the drain was invoked with, without going
          * through the buffer.
          */
-        class Recording(private val recorder: ErrorRecorder) : HandlerState() {
-            fun record(
-                type: SdkErrorType,
-                throwable: Throwable,
-                timestampMs: Long,
-            ) = recorder(type, throwable, timestampMs)
-        }
+        class Recording(val recorder: ErrorRecorder) : HandlerState()
 
         /**
          * The handler is closed and any new errors will be discarded.
          */
         object Closed : HandlerState()
+    }
+
+    private inline fun runSafely(
+        msg: String,
+        logcat: (ErrorHandler.Severity, String, Throwable?) -> Unit,
+        action: () -> Unit,
+    ) {
+        try {
+            action()
+        } catch (exc: Throwable) {
+            try {
+                logcat(ErrorHandler.Severity.WARNING, msg, exc)
+            } catch (_: Throwable) {
+                // no-op
+            }
+        }
     }
 }

@@ -77,8 +77,8 @@ class HucLiteDataSource(
         wrappedConnection: HttpsURLConnection,
         clock: Clock,
     ): RequestData? {
-        return if (recordForUrl(wrappedConnection.url.toString())) {
-            runCatching {
+        return errorHandler.guardSdkCode(SdkErrorType.DataSourceDataCaptureFail, null) {
+            if (recordForUrl(wrappedConnection.url.toString())) {
                 RequestData(
                     connection = wrappedConnection,
                     shouldRecord = domainCountLimiter::canLogNetworkRequest,
@@ -87,14 +87,12 @@ class HucLiteDataSource(
                     },
                     clock = clock,
                     telemetryDestination = telemetryDestination,
-                    errorHandler = ::trackCaptureError,
+                    errorHandler = errorHandler,
                     httpRequestInfoModifierChain = args.httpRequestInfoModifierChain,
                 )
-            }.onFailure {
-                trackCaptureError(it)
-            }.getOrNull()
-        } else {
-            null
+            } else {
+                null
+            }
         }
     }
 
@@ -143,7 +141,7 @@ class HucLiteDataSource(
         val onLimitReached: () -> Unit,
         val clock: Clock,
         val telemetryDestination: TelemetryDestination,
-        val errorHandler: (t: Throwable) -> Unit,
+        private val errorHandler: ErrorHandler,
         private val httpRequestInfoModifierChain: HttpRequestInfoModifierChain,
     ) {
         private val creationTimeMs = clock.now()
@@ -161,12 +159,11 @@ class HucLiteDataSource(
         private val startTimeMs = AtomicLong(INVALID_START_TIME)
         private val recordOnce = OneShot()
 
-        fun startRequest() =
-            runCatching {
+        fun startRequest() {
+            errorHandler.guardSdkCode(SdkErrorType.DataSourceDataCaptureFail) {
                 startTimeMs.compareAndSet(INVALID_START_TIME, clock.now())
-            }.onFailure {
-                errorHandler(it)
             }
+        }
 
         fun completeRequest(responseCode: Int) {
             recordRequest { info ->
@@ -252,7 +249,7 @@ class HucLiteDataSource(
         private fun recordRequest(
             recordingFunction: (info: HttpRequestInfo) -> Unit,
         ) {
-            runCatching {
+            errorHandler.guardSdkCode(SdkErrorType.DataSourceDataCaptureFail) {
                 recordOnce {
                     // Apply any registered modifiers so the reported url/method reflect the
                     // consumer's changes. The underlying HTTP request is not affected.
@@ -270,8 +267,6 @@ class HucLiteDataSource(
                         }
                     }
                 }
-            }.onFailure {
-                errorHandler(it)
             }
         }
 

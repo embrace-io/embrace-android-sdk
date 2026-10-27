@@ -1,5 +1,6 @@
 package io.embrace.android.embracesdk.internal.envelope.resource
 
+import android.view.WindowManager
 import io.embrace.android.embracesdk.concurrency.BlockingScheduledExecutorService
 import io.embrace.android.embracesdk.fakes.FakeErrorHandler
 import io.embrace.android.embracesdk.internal.SystemInfo
@@ -54,11 +55,29 @@ internal class DeviceImplChangeListenerTest {
         assertEquals(3, count)
     }
 
+    @Test
+    fun `listeners are notified when the window manager can't be retrieved`() {
+        val executor = BlockingScheduledExecutorService(blockingMode = true)
+        val device = createDevice(
+            executor = executor,
+            errorHandler = FakeErrorHandler(throwOnSdkError = false),
+            windowManagerProvider = { error("no window manager") },
+        )
+
+        var count = 0
+        device.addChangeListener { count++ }
+
+        executor.runCurrentlyBlocked()
+        assertEquals(3, count)
+        assertEquals("", device.screenResolution)
+    }
+
     private fun createDevice(
         executor: BlockingScheduledExecutorService,
         errorHandler: FakeErrorHandler = FakeErrorHandler(),
+        windowManagerProvider: () -> WindowManager? = { null },
     ) = DeviceImpl(
-        windowManagerProvider = { null },
+        windowManagerProvider = windowManagerProvider,
         backgroundWorker = BackgroundWorker(executor),
         systemInfo = SystemInfo(),
         errorHandler = errorHandler,

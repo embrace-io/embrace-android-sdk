@@ -8,8 +8,11 @@ import android.os.Build.VERSION_CODES.TIRAMISU
 import io.embrace.android.embracesdk.fakes.FakeClock
 import io.embrace.android.embracesdk.fakes.FakeConfigService
 import io.embrace.android.embracesdk.fakes.FakeEnvelopeResourceSource
+import io.embrace.android.embracesdk.fakes.FakeErrorHandler
 import io.embrace.android.embracesdk.fakes.FakeKeyValueStore
 import io.embrace.android.embracesdk.fakes.fakeBackgroundWorker
+import io.embrace.android.embracesdk.internal.envelope.resource.EnvelopeResourceSource
+import io.embrace.android.embracesdk.internal.logging.SdkErrorType
 import io.embrace.android.embracesdk.internal.utils.VersionChecker
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
@@ -94,19 +97,44 @@ internal class EmbraceMetadataServiceClockDriftTest {
         assertNull(computeClockDrift(sdkInt = TIRAMISU))
     }
 
-    private fun computeClockDrift(sdkInt: Int): ClockDrift? {
-        val service = EmbraceMetadataService(
-            resourceSource = lazy { FakeEnvelopeResourceSource() },
-            context = Application(),
-            configService = FakeConfigService(),
-            store = FakeKeyValueStore(),
-            clock = FakeClock(currentTime = wallTimeMillis),
-            metadataBackgroundWorker = fakeBackgroundWorker(),
-            versionChecker = VersionChecker { min -> sdkInt >= min },
+    @Test
+    fun `clock drift is computed when capturing other metadata fails`() {
+        gnssTimeMillis = wallTimeMillis - 50
+        val errorHandler = FakeErrorHandler(throwOnSdkError = false)
+        val service = createService(
+            sdkInt = TIRAMISU,
+            resourceSource = lazy { error("resource failure") },
+            errorHandler = errorHandler,
         )
-        return service.computeClockDrift(
-            gnssTimeMillis = { gnssTimeMillis ?: throw DateTimeException("GNSS based time is not available") },
-            networkTimeMillis = { networkTimeMillis ?: throw DateTimeException("Network based time is not available") },
-        )
+
+        service.precomputeValues()
+
+        assertEquals(50L, service.getClockDrift()?.gnssDriftMillis)
+        // the disk usage can't be captured on the JVM either, so it may be reported too
+        assertEquals(setOf(SdkErrorType.SafeDataCaptureFail.toString()), errorHandler.sdkErrorMessages.map { it.msg }.toSet())
     }
+
+    private fun computeClockDrift(sdkInt: Int): ClockDrift? =
+        createService(sdkInt = sdkInt).computeClockDrift(gnssTimeMillis = ::gnssTime, networkTimeMillis = ::networkTime)
+
+    private fun createService(
+        sdkInt: Int,
+        resourceSource: Lazy<EnvelopeResourceSource> = lazy { FakeEnvelopeResourceSource() },
+        errorHandler: FakeErrorHandler = FakeErrorHandler(),
+    ) = EmbraceMetadataService(
+        resourceSource = resourceSource,
+        context = Application(),
+        configService = FakeConfigService(),
+        store = FakeKeyValueStore(),
+        clock = FakeClock(currentTime = wallTimeMillis),
+        metadataBackgroundWorker = fakeBackgroundWorker(),
+        errorHandler = errorHandler,
+        versionChecker = VersionChecker { min -> sdkInt >= min },
+        gnssTimeMillis = ::gnssTime,
+        networkTimeMillis = ::networkTime,
+    )
+
+    private fun gnssTime(): Long = gnssTimeMillis ?: throw DateTimeException("GNSS based time is not available")
+
+    private fun networkTime(): Long = networkTimeMillis ?: throw DateTimeException("Network based time is not available")
 }

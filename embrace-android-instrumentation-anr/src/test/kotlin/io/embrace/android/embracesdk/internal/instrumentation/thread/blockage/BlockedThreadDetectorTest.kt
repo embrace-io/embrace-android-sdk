@@ -7,6 +7,7 @@ import io.embrace.android.embracesdk.fakes.FakeErrorHandler
 import io.embrace.android.embracesdk.fakes.FakeThreadBlockageListener
 import io.embrace.android.embracesdk.internal.config.resolved.ThreadBlockageConfig
 import io.embrace.android.embracesdk.internal.logging.ErrorHandler
+import io.embrace.android.embracesdk.internal.logging.SdkErrorType
 import io.embrace.android.embracesdk.internal.worker.BackgroundWorker
 import io.mockk.every
 import io.mockk.mockk
@@ -84,6 +85,29 @@ internal class BlockedThreadDetectorTest {
         clock.setCurrentTime(now)
         detector.onMonitorThreadInterval(BASELINE_MS + 2000)
         assertEquals(1, listener.intervalCount)
+    }
+
+    @Test
+    fun `a failure reporting the thread as unblocked is reported rather than thrown`() {
+        val errorHandler = FakeErrorHandler(throwOnSdkError = false)
+        val detector = BlockedThreadDetector(
+            watchdogWorker = BackgroundWorker(watchdogExecutorService),
+            clock = clock,
+            looper = looper,
+            blockedDurationThreshold = config.minDurationMs,
+            intervalMs = config.sampleIntervalMs,
+            errorHandler = errorHandler,
+            listener = listener,
+        )
+        detector.onMonitorThreadInterval(BASELINE_MS + 2000)
+        listener.unblockedFailure = IllegalStateException("listener failed")
+
+        detector.onTargetThreadProcessedMessage(BASELINE_MS + 3000)
+
+        assertEquals(
+            listOf(SdkErrorType.ThreadBlockageHeartbeatCheckFail.toString()),
+            errorHandler.sdkErrorMessages.map { it.msg },
+        )
     }
 
     @Test

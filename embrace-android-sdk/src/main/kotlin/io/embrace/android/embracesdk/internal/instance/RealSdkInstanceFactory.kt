@@ -648,6 +648,7 @@ internal fun createRealSdkInstance(
             store = store,
             clock = clock,
             worker = workerThreadPool.backgroundWorker(Worker.Background.NonIoRegWorker),
+            errorHandler = errorHandler,
         )
     }
 

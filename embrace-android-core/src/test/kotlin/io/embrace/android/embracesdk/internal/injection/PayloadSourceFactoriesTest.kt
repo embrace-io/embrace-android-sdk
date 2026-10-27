@@ -55,6 +55,7 @@ internal class PayloadSourceFactoriesTest {
             store,
             initServices.clock,
             worker,
+            initServices.errorHandler,
         )
         assertTrue(metadataService is EmbraceMetadataService)
         assertNotNull(

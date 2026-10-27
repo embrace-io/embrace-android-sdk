@@ -14,6 +14,9 @@ import io.embrace.android.embracesdk.internal.clock.Clock
 import io.embrace.android.embracesdk.internal.config.ConfigService
 import io.embrace.android.embracesdk.internal.envelope.resource.EnvelopeResourceSource
 import io.embrace.android.embracesdk.internal.injection.getSystemServiceSafe
+import io.embrace.android.embracesdk.internal.logging.ErrorHandler
+import io.embrace.android.embracesdk.internal.logging.SdkErrorType
+import io.embrace.android.embracesdk.internal.logging.guardSdkCode
 import io.embrace.android.embracesdk.internal.store.KeyValueStore
 import io.embrace.android.embracesdk.internal.utils.BuildVersionChecker
 import io.embrace.android.embracesdk.internal.utils.VersionChecker
@@ -30,7 +33,10 @@ internal class EmbraceMetadataService(
     private val store: KeyValueStore,
     private val clock: Clock,
     private val metadataBackgroundWorker: BackgroundWorker,
+    private val errorHandler: ErrorHandler,
     private val versionChecker: VersionChecker = BuildVersionChecker,
+    private val gnssTimeMillis: () -> Long = @SuppressLint("NewApi") { SystemClock.currentGnssTimeClock().millis() },
+    private val networkTimeMillis: () -> Long = @SuppressLint("NewApi") { SystemClock.currentNetworkTimeClock().millis() },
 ) : MetadataService {
 
     private val res by lazy { resourceSource.value.getEnvelopeResource() }
@@ -56,26 +62,30 @@ internal class EmbraceMetadataService(
      */
     override fun precomputeValues() {
         metadataBackgroundWorker.submit {
-            store.batch {
-                appVersion = res.appVersion
-                osVersion = res.osVersion
-            }
-            val free = statFs.freeBytes
-            if (versionChecker.isAtLeast(Build.VERSION_CODES.O) && configService.config.autoDataCapture.diskUsageCaptureEnabled) {
-                val deviceDiskAppUsage = getDeviceDiskAppUsage(
-                    context.getSystemServiceSafe(Context.STORAGE_STATS_SERVICE),
-                )
-                if (deviceDiskAppUsage != null) {
-                    diskUsage = DiskUsage(deviceDiskAppUsage, free)
+            // each value is captured on its own, so that one failing does not lose the others
+            errorHandler.guardSdkCode(SdkErrorType.SafeDataCaptureFail) {
+                store.batch {
+                    appVersion = res.appVersion
+                    osVersion = res.osVersion
                 }
             }
-            if (diskUsage == null) {
-                diskUsage = DiskUsage(null, free)
+            errorHandler.guardSdkCode(SdkErrorType.SafeDataCaptureFail) {
+                val free = statFs.freeBytes
+                if (versionChecker.isAtLeast(Build.VERSION_CODES.O) && configService.config.autoDataCapture.diskUsageCaptureEnabled) {
+                    val deviceDiskAppUsage = getDeviceDiskAppUsage(
+                        context.getSystemServiceSafe(Context.STORAGE_STATS_SERVICE),
+                    )
+                    if (deviceDiskAppUsage != null) {
+                        diskUsage = DiskUsage(deviceDiskAppUsage, free)
+                    }
+                }
+                if (diskUsage == null) {
+                    diskUsage = DiskUsage(null, free)
+                }
             }
-            clockDrift = computeClockDrift(
-                gnssTimeMillis = @SuppressLint("NewApi") { SystemClock.currentGnssTimeClock().millis() },
-                networkTimeMillis = @SuppressLint("NewApi") { SystemClock.currentNetworkTimeClock().millis() },
-            )
+            errorHandler.guardSdkCode(SdkErrorType.SafeDataCaptureFail) {
+                clockDrift = computeClockDrift(gnssTimeMillis = gnssTimeMillis, networkTimeMillis = networkTimeMillis)
+            }
         }
     }
 

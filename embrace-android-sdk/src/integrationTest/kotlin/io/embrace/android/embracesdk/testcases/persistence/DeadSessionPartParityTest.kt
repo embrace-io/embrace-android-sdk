@@ -40,12 +40,12 @@ import org.robolectric.ParameterizedRobolectricTestRunner
  * Verifies what the next launch delivers for a foreground session part that its process died in,
  * under both persistence modes.
  *
- * Neither mode ends the part at the death of the process: a user idle in the foreground before a kill
- * does not lengthen the session. The multi-file mode ends it when the part's files were last written,
- * which follows the last change by up to one write interval, whether the change records a time of its
- * own, such as a breadcrumb, or not, such as a session property. The single-file mode has no such
- * record, so it ends the part at the latest time a span in it started or ended, which neither change
- * moves.
+ * Both modes end the part at the last time it was persisted, which the process had to be alive to do.
+ * The single-file mode stores a snapshot of the part on every periodic cache tick, whether or not
+ * anything changed, so the part ends within one interval of the death of the process. The multi-file
+ * mode writes only when something changes, so it ends the part up to one write interval after the last
+ * change, whether the change records a time of its own, such as a breadcrumb, or not, such as a session
+ * property: there, a user idle in the foreground before a kill does not lengthen the session.
  *
  * These tests pin down what each mode persisted before the process died, and that the delivered end
  * follows from it. The rules that pick the end from a part's data are covered by SessionPartResurrectorTest.
@@ -74,7 +74,7 @@ internal class DeadSessionPartParityTest(
     }
 
     @Test
-    fun `a breadcrumb moves the estimated end time only under the multi-file mode`() {
+    fun `a part ends when a breadcrumb added last was persisted`() {
         var breadcrumbMs = 0L
         var lastWriteMs = 0L
         killActiveSessionPart {
@@ -86,12 +86,12 @@ internal class DeadSessionPartParityTest(
         }
         relaunch {
             assertEquals(listOf(breadcrumbMs), deliveredBreadcrumbTimesMs())
-            assertDeliveredPartEnd(multiFileEndMs = lastWriteMs)
+            assertDeliveredPartEnd(multiFileEndMs = lastWriteMs, singleFileEndMs = lastWriteMs)
         }
     }
 
     @Test
-    fun `a session property update moves the estimated end time only under the multi-file mode`() {
+    fun `a part ends when a session property updated last was persisted`() {
         var breadcrumbMs = 0L
         var lastWriteMs = 0L
         killActiveSessionPart {
@@ -108,19 +108,41 @@ internal class DeadSessionPartParityTest(
         relaunch {
             assertEquals(listOf(breadcrumbMs), deliveredBreadcrumbTimesMs())
             assertEquals("value", deliveredSessionSpan().getSessionProperty("late"))
-            assertDeliveredPartEnd(multiFileEndMs = lastWriteMs)
+            assertDeliveredPartEnd(multiFileEndMs = lastWriteMs, singleFileEndMs = lastWriteMs)
+        }
+    }
+
+    @Test
+    fun `an idle stretch before the kill moves the end only under the single-file mode`() {
+        var lastWriteMs = 0L
+        var lastTickMs = 0L
+        killActiveSessionPart {
+            clock.tick(5_000)
+            embrace.addBreadcrumb("last-thing-the-user-did")
+            persistAfterOneInterval()
+            lastWriteMs = clock.now()
+
+            repeat(3) {
+                persistAfterOneInterval()
+            }
+            lastTickMs = clock.now()
+        }
+        relaunch {
+            assertDeliveredPartEnd(multiFileEndMs = lastWriteMs, singleFileEndMs = lastTickMs)
         }
     }
 
     @Test
     fun `a change whose write never ran does not move the end`() {
+        var firstTickMs = 0L
         killActiveSessionPart {
+            firstTickMs = clock.now()
             clock.tick(5_000)
             embrace.addBreadcrumb("last-thing-the-user-did")
         }
         relaunch {
             assertEquals(emptyList<Long>(), deliveredBreadcrumbTimesMs())
-            assertDeliveredPartEnd()
+            assertDeliveredPartEnd(singleFileEndMs = firstTickMs)
         }
     }
 
@@ -228,8 +250,8 @@ internal class DeadSessionPartParityTest(
 
     /**
      * Asserts the delivered part's session span ended at [multiFileEndMs] under the multi-file mode and at
-     * [singleFileEndMs] under the single-file mode. Null means when the span started, as no other span in
-     * the part starts or ends later.
+     * [singleFileEndMs] under the single-file mode. Null means when the span started, as nothing was
+     * persisted after the part started.
      */
     private fun EmbracePayloadAssertionInterface.assertDeliveredPartEnd(
         multiFileEndMs: Long? = null,

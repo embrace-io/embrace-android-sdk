@@ -293,6 +293,7 @@ internal class PayloadResurrectionServiceImpl(
                         onNativeCrashProcessed = postNativeCrashProcessingCallback,
                         userSessionTerminationReason = userSessionTerminationReason,
                         isBackgroundOnly = isBackgroundOnly,
+                        lastWrittenMs = timestamp,
                     ) ?: throw IllegalArgumentException(
                         "Session resurrection failed. Payload does not contain exactly one session part span.",
                     )

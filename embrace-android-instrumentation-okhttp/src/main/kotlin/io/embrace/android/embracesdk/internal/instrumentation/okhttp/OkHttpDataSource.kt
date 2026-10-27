@@ -11,7 +11,7 @@ import io.embrace.android.embracesdk.internal.instrumentation.network.NetworkCap
 import io.embrace.android.embracesdk.internal.instrumentation.network.NetworkRequestDataSource
 import io.embrace.android.embracesdk.internal.instrumentation.network.RequestEndData
 import io.embrace.android.embracesdk.internal.instrumentation.network.RequestStartData
-import io.embrace.android.embracesdk.internal.instrumentation.network.W3cTraceparent
+import io.embrace.android.embracesdk.internal.instrumentation.network.TraceParent
 import io.embrace.android.embracesdk.internal.instrumentation.network.getOverriddenURLString
 import io.embrace.android.embracesdk.internal.logging.SdkErrorType
 import io.embrace.android.embracesdk.internal.logging.guardSdkCode
@@ -96,7 +96,7 @@ internal class OkHttpDataSource(
             id = callId,
             clockOffset = clockOffset,
             sdkClockStartTime = sdkClockStartTime,
-            inboundTraceparent = inboundTraceparent,
+            inboundTraceparent = inboundTraceparent?.let(TraceParent::parse),
         ).also {
             activeCalls[call] = it
         }
@@ -245,8 +245,9 @@ internal class OkHttpDataSource(
      */
     private fun Request.withTraceparent(callData: CallData, host: String): Request {
         val existing = header(TRACEPARENT_HEADER_NAME)
+        val inbound = callData.inboundTraceparent
         val settable = existing == null ||
-            (existing == callData.inboundTraceparent && W3cTraceparent.isSameTrace(existing, callData.id))
+            (inbound != null && existing == inbound.value && inbound.isSameTrace(callData.id))
 
         return if (settable && configService.traceparentInjectionBehavior.shouldInjectTraceparent(host)) {
             newBuilder().header(TRACEPARENT_HEADER_NAME, callData.id).build()
@@ -441,7 +442,7 @@ internal class OkHttpDataSource(
         val id: String,
         val clockOffset: Long,
         val sdkClockStartTime: Long,
-        val inboundTraceparent: String?,
+        val inboundTraceparent: TraceParent?,
     )
 
     internal companion object {

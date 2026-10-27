@@ -1,20 +1,23 @@
 package io.embrace.android.embracesdk.internal.instrumentation.network
 
+import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
+import org.junit.Assert.assertNotNull
+import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
 
-internal class W3cTraceparentTest {
+internal class TraceParentTest {
 
     @Test
-    fun `well-formed traceparents are valid`() {
-        assertTrue(W3cTraceparent.isValid(VALID))
-        assertTrue(W3cTraceparent.isValid("00-0af7651916cd43dd8448eb211c80319c-b7ad6b7169203331-00"))
-        assertTrue(W3cTraceparent.isValid("00-00000000000000000000000000000001-0000000000000001-ff"))
+    fun `well-formed traceparents are parsed`() {
+        assertNotNull(TraceParent.parse(VALID))
+        assertNotNull(TraceParent.parse("00-0af7651916cd43dd8448eb211c80319c-b7ad6b7169203331-00"))
+        assertNotNull(TraceParent.parse("00-00000000000000000000000000000001-0000000000000001-ff"))
     }
 
     @Test
-    fun `malformed traceparents are invalid`() {
+    fun `malformed traceparents are not parsed`() {
         listOf(
             "",
             "not-a-traceparent",
@@ -34,15 +37,26 @@ internal class W3cTraceparentTest {
             "00-0af7651916cd43dd8448eb211c80319c_b7ad6b7169203331-01",
             "00-0af7651916cd43dd8448eb211c80319c-b7ad6b7169203331_01",
         ).forEach {
-            assertFalse(it, W3cTraceparent.isValid(it))
+            assertNull(it, TraceParent.parse(it))
+        }
+    }
+
+    @Test
+    fun `fields are read from the traceparent`() {
+        with(checkNotNull(TraceParent.parse(VALID))) {
+            assertEquals(VALID, value)
+            assertEquals("0af7651916cd43dd8448eb211c80319c", traceId)
+            assertEquals("b7ad6b7169203331", spanId)
+            assertEquals("01", flags)
         }
     }
 
     @Test
     fun `traceparents with the same trace id share a trace`() {
-        assertTrue(W3cTraceparent.isSameTrace(VALID, "00-0af7651916cd43dd8448eb211c80319c-1111111111111111-00"))
-        assertFalse(W3cTraceparent.isSameTrace(VALID, "00-1af7651916cd43dd8448eb211c80319c-b7ad6b7169203331-01"))
-        assertFalse(W3cTraceparent.isSameTrace(VALID, "not-a-traceparent"))
+        val traceparent = checkNotNull(TraceParent.parse(VALID))
+        assertTrue(traceparent.isSameTrace("00-0af7651916cd43dd8448eb211c80319c-1111111111111111-00"))
+        assertFalse(traceparent.isSameTrace("00-1af7651916cd43dd8448eb211c80319c-b7ad6b7169203331-01"))
+        assertFalse(traceparent.isSameTrace("not-a-traceparent"))
     }
 
     private companion object {

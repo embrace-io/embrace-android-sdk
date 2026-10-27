@@ -298,6 +298,30 @@ internal class SdkStateIntegrationTest(
     }
 
     @Test
+    fun `NOT_STARTED to FAILED - start is rejected when instance start throws`() {
+        lateinit var errorHandler: FakeErrorHandler
+        val failure = IllegalStateException("instance start failure")
+        testRule.runTest(
+            expectSdkToStart = false,
+            expectedSdkState = SdkState.FAILED,
+            setupAction = {
+                errorHandler = getFakeErrorHandler().apply {
+                    throwOnSdkError = false
+                }
+                startFailure = failure
+            },
+            testCaseAction = {
+                assertEquals(SdkState.FAILED, sdkState)
+                assertFalse(embrace.isStarted)
+            },
+            assertAction = {
+                val error = errorHandler.sdkErrorMessages.single { it.msg == SdkErrorType.SdkInitPhaseFail.toString() }
+                assertSame(failure, error.throwable)
+            },
+        )
+    }
+
+    @Test
     fun `ENABLED - repeated start is ignored`() {
         testRule.runTest(
             testCaseAction = {

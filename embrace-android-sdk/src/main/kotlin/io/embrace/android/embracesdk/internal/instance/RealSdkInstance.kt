@@ -195,8 +195,9 @@ internal class RealSdkInstance(
             // not fully initialized, but the SDK shouldn't catastrophically throw after this point,
             // so we allow external calls.
             enabled = true
-        } catch (ignored: Throwable) {
-            Log.w("Embrace", "Failed to initialize Embrace SDK", ignored)
+        } catch (exc: Throwable) {
+            Log.w("Embrace", "Failed to initialize Embrace SDK", exc)
+            errorHandler.trackSdkError(SdkErrorType.SdkInitPhaseFail, exc)
         }
     }
 
@@ -209,8 +210,9 @@ internal class RealSdkInstance(
                 triggerPayloadSend()
             }
             markSdkInitComplete(EmbTrace.durationTracker::flush)
-        } catch (ignored: Throwable) {
-            Log.w("Embrace", "Embrace SDK started with some failures", ignored)
+        } catch (exc: Throwable) {
+            Log.w("Embrace", "Embrace SDK started with some failures", exc)
+            errorHandler.trackSdkError(SdkErrorType.SdkInitPhaseFail, exc)
         }
     }
 

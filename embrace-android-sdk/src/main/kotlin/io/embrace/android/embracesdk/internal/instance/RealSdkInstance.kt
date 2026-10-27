@@ -250,6 +250,9 @@ internal class RealSdkInstance(
         val executor = runCatching { Executors.newSingleThreadExecutor() }.getOrNull() ?: return
         executor.execute {
             runCatching {
+                // deleted at once so that nothing is left to send if the process ends during the wait, then again once the
+                // workers have finished, as work still running can write again
+                deletePersistedTelemetry(rootDir, fallbackDir)
                 if (!workerThreadPool.awaitTermination(WORKER_TERMINATION_TIMEOUT_MS)) {
                     Log.w("[Embrace]", "Timed out waiting for Embrace workers to finish before deleting data.")
                 }

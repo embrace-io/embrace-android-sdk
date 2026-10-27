@@ -7,6 +7,7 @@ import android.content.Context
 import android.os.Looper
 import android.os.Process
 import androidx.test.ext.junit.runners.AndroidJUnit4
+import io.embrace.android.embracesdk.assertions.waitUntilConditionMet
 import io.embrace.android.embracesdk.fakes.FakeClock
 import io.embrace.android.embracesdk.fakes.FakeConfigService
 import io.embrace.android.embracesdk.fakes.FakeErrorHandler
@@ -46,6 +47,7 @@ import io.embrace.android.embracesdk.internal.otel.sdk.OtelSdkWrapper
 import io.embrace.android.embracesdk.internal.session.lifecycle.LifecycleTracker
 import io.embrace.android.embracesdk.internal.session.orchestrator.PayloadStore
 import io.embrace.android.embracesdk.internal.session.orchestrator.SessionOrchestrator
+import io.embrace.android.embracesdk.internal.worker.BackgroundWorker
 import io.embrace.android.embracesdk.internal.worker.Worker
 import io.embrace.android.embracesdk.semconv.EmbSessionAttributes
 import io.opentelemetry.kotlin.NoopOpenTelemetry
@@ -67,6 +69,8 @@ import org.robolectric.Robolectric
 import org.robolectric.RuntimeEnvironment
 import org.robolectric.Shadows.shadowOf
 import java.io.File
+import java.util.concurrent.CountDownLatch
+import java.util.concurrent.TimeUnit
 
 @RunWith(AndroidJUnit4::class)
 internal class RealSdkInstanceFactoryTest {
@@ -81,6 +85,7 @@ internal class RealSdkInstanceFactoryTest {
     private var sessionOrchestrator: SessionOrchestrator? = null
     private var threadBlockageService: ThreadBlockageService? = null
     private var intakeService: IntakeService? = null
+    private var logOrchestratorWorker: BackgroundWorker? = null
     private var lifecycleTrackerRegistered = false
 
     private val overrides = SdkOverrides(
@@ -96,6 +101,7 @@ internal class RealSdkInstanceFactoryTest {
         otelSdkConfig = { real -> real().also { otelSdkConfig = it } },
         otelSdkWrapper = { real -> real().also { otelSdkWrapper = it } },
         instrumentationRegistry = { real -> real().also { instrumentationRegistry = it } },
+        logOrchestratorWorker = { real -> real().also { logOrchestratorWorker = it } },
         sessionOrchestrator = { real -> real().also { sessionOrchestrator = it } },
         threadBlockageService = { real -> real().also { threadBlockageService = it } },
         intakeService = { real -> real().also { intakeService = it } },
@@ -266,6 +272,35 @@ internal class RealSdkInstanceFactoryTest {
         assertEquals(resetsAtStart + 1, limitResets)
     }
 
+    /**
+     * Once the user opts out, the data must be gone even if the process ends while disable waits for busy workers to finish.
+     * The instance isn't started, so nothing else touches storage meanwhile.
+     */
+    @Test
+    fun `disable deletes data without waiting for busy workers`() {
+        val instance = createInstance()
+        val sentinels = storageDirs().map {
+            File(it, "sentinel").apply { writeText("data") }
+        }
+        val releaseWorker = CountDownLatch(1)
+        checkNotNull(logOrchestratorWorker).submit {
+            releaseWorker.await(10, TimeUnit.SECONDS)
+        }
+
+        try {
+            instance.disable()
+
+            // well within the wait for the blocked worker
+            waitUntilConditionMet(
+                waitTimeMs = 1000,
+                dataProvider = { sentinels.none(File::exists) },
+                condition = { it },
+            )
+        } finally {
+            releaseWorker.countDown()
+        }
+    }
+
     @Test
     fun `post load instrumentation hooks up listeners`() {
         val instance = createInstance()
@@ -343,6 +378,10 @@ internal class RealSdkInstanceFactoryTest {
     private fun RealSdkInstance.runInit() {
         enable(context)
         onEnabled()
+    }
+
+    private fun storageDirs(): List<File> = StorageLocation.entries.map {
+        File(context.filesDir, it.dir).apply { mkdirs() }
     }
 
     private fun emittedLogState(): Any? {

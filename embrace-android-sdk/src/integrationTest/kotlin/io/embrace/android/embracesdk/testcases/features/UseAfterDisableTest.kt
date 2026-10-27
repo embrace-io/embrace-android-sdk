@@ -1,6 +1,7 @@
 package io.embrace.android.embracesdk.testcases.features
 
 import android.content.Context
+import android.os.Build
 import androidx.test.core.app.ApplicationProvider
 import io.embrace.android.embracesdk.assertions.returnIfConditionMet
 import io.embrace.android.embracesdk.fakes.FakeErrorHandler
@@ -22,16 +23,23 @@ import java.io.File
 /**
  * Work the SDK queued or registered while it was running must not throw, or write data, once it has been disabled:
  * activity callbacks still arrive, init work queued on a worker still runs, and the app can still crash.
+ *
+ * Startup and UI load tracking take different activity and first-frame callback paths before API 29, so these run with
+ * the instrumentation taking both.
  */
 @RunWith(ParameterizedRobolectricTestRunner::class)
 internal class UseAfterDisableTest(
     private val otelSdkMode: OtelSdkMode,
+    private val platform: Platform,
 ) {
 
     @Rule
     @JvmField
     val testRule: SdkIntegrationTestRule = SdkIntegrationTestRule(otelSdkMode = otelSdkMode) {
-        EmbraceSetupInterface(workersToFake = listOf(Worker.Background.NonIoRegWorker))
+        EmbraceSetupInterface(
+            workersToFake = listOf(Worker.Background.NonIoRegWorker),
+            simulatedSdkInt = platform.simulatedSdkInt,
+        )
     }
 
     private val context: Context = ApplicationProvider.getApplicationContext()
@@ -130,9 +138,19 @@ internal class UseAfterDisableTest(
         runCatching { dir.walkTopDown().filter(File::isFile).toList() }.getOrElse { listOf(dir) }
     }
 
+    /**
+     * The platform the version-dependent instrumentation behaves as: [simulatedSdkInt] is null for the runtime's own.
+     */
+    internal enum class Platform(val simulatedSdkInt: Int?) {
+        PRE_Q(Build.VERSION_CODES.LOLLIPOP),
+        CURRENT(null),
+    }
+
     internal companion object {
         @JvmStatic
-        @ParameterizedRobolectricTestRunner.Parameters(name = "{0}")
-        fun modes(): List<Array<Any>> = OtelSdkMode.parameters()
+        @ParameterizedRobolectricTestRunner.Parameters(name = "{0}, {1}")
+        fun parameters(): List<Array<Any>> = OtelSdkMode.entries.flatMap { mode ->
+            Platform.entries.map { platform -> arrayOf(mode, platform) }
+        }
     }
 }

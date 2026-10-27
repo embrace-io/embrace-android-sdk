@@ -909,7 +909,7 @@ internal class SchedulingServiceImplTest {
         storageService.addFakePayload(fakeSessionStoredTelemetryMetadata2)
         recreateSchedulingService(
             storage = object : PayloadStorageService by storageService {
-                override fun payloadSizeBytes(metadata: StoredTelemetryMetadata): Long {
+                override fun payloadSizeBytes(metadata: StoredTelemetryMetadata): Long? {
                     if (metadata == fakeSessionStoredTelemetryMetadata) {
                         error("size check failed")
                     }
@@ -925,6 +925,21 @@ internal class SchedulingServiceImplTest {
             SdkErrorType.DeliverySchedulingFail.toString(),
             errorHandler.sdkErrorMessages.single().msg,
         )
+    }
+
+    @Test
+    fun `a payload whose size cannot be read is kept for another attempt`() {
+        storageService.clearStorage()
+        storageService.addFakePayload(fakeSessionStoredTelemetryMetadata)
+        recreateSchedulingService(
+            storage = object : PayloadStorageService by storageService {
+                override fun payloadSizeBytes(metadata: StoredTelemetryMetadata): Long? = null
+            },
+        )
+        waitForResurrectionAndDeliveryAttempt()
+
+        assertEquals(0, executionService.sendAttempts())
+        assertEquals(1, storageService.storedPayloadCount())
     }
 
     @Test
@@ -1048,7 +1063,7 @@ internal class SchedulingServiceImplTest {
     }
 
     private fun storedSizeOf(metadata: StoredTelemetryMetadata): Long =
-        storageService.payloadSizeBytes(metadata)
+        checkNotNull(storageService.payloadSizeBytes(metadata))
 
     private fun useMaxPayloadBytes(maxPayloadBytes: Long) = recreateSchedulingService(maxPayloadBytes = maxPayloadBytes)
 

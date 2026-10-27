@@ -910,7 +910,7 @@ class PayloadResurrectionServiceImplTest {
     }
 
     private fun cachedSizeOf(metadata: StoredTelemetryMetadata): Long =
-        cacheStorageService.payloadSizeBytes(metadata)
+        checkNotNull(cacheStorageService.payloadSizeBytes(metadata))
 
     private fun serviceWithMaxPayloadBytes(maxPayloadBytes: Long): PayloadResurrectionServiceImpl {
         return PayloadResurrectionServiceImpl(

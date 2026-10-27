@@ -79,7 +79,7 @@ class PayloadStorageServiceImplTest {
         }
         val file = outputDir.listFiles()?.single() ?: error("File not found")
 
-        val observed = service.payloadSizeBytes(metadata)
+        val observed = checkNotNull(service.payloadSizeBytes(metadata))
         assertEquals(file.length(), observed)
 
         // the payload is persisted gzipped, so the size reported is the compressed size

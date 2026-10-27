@@ -551,6 +551,18 @@ internal class OkHttpDataSourceTest {
     }
 
     @Test
+    fun `a failure discarding a request after the response does not fail the app's request`() {
+        args.errorHandler.throwOnSdkError = false
+        networkRequestDataSource.endRequestFailure = RuntimeException("instrumentation failure")
+        networkRequestDataSource.discardRequestFailure = RuntimeException("discard failure")
+        server.enqueue(createBaseMockResponse().setBody(RESPONSE_BODY))
+
+        val response = runPostRequest()
+        assertEquals(200, response.code)
+        assertEquals(2, args.errorHandler.sdkErrorMessages.size)
+    }
+
+    @Test
     fun `a failure starting instrumentation does not fail the app's request`() {
         args.errorHandler.throwOnSdkError = false
         networkRequestDataSource.startRequestFailure = RuntimeException("instrumentation failure")

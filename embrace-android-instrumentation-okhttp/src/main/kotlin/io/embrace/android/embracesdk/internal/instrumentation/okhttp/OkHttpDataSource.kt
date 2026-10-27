@@ -235,7 +235,9 @@ internal class OkHttpDataSource(
             }
         } catch (exc: Throwable) {
             errorHandler.trackSdkError(SdkErrorType.DataSourceDataCaptureFail, exc)
-            networkRequestDataSource?.discardRequest(callData.id)
+            errorHandler.guardSdkCode(SdkErrorType.DataSourceDataCaptureFail) {
+                networkRequestDataSource?.discardRequest(callData.id)
+            }
         } finally {
             activeCalls.remove(chain.call())
         }

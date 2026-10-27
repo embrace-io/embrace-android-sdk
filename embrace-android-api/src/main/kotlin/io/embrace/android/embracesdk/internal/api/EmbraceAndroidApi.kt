@@ -4,9 +4,9 @@ import io.embrace.android.embracesdk.annotation.InternalApi
 
 /**
  * Declares the functions that consist of Embrace's public API - specifically
- * those that are only declared on Android. You should not use
+ * those that are only declared on Android. You should not use the interface
  * [EmbraceAndroidApi] directly or implement it in your own custom classes,
- * as new functions may be added in future. Use the Embrace class instead.
+ * as new functions may be added in the future. Use the Embrace class instead.
  */
 @InternalApi
 public interface EmbraceAndroidApi {

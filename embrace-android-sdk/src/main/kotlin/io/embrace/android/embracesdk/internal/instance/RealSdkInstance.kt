@@ -75,7 +75,6 @@ import io.embrace.android.embracesdk.internal.utils.EmbTrace
 import io.embrace.android.embracesdk.internal.utils.event.EventBus
 import io.embrace.android.embracesdk.internal.worker.Worker
 import io.embrace.android.embracesdk.spans.TracingApi
-import io.opentelemetry.kotlin.NoopOpenTelemetry
 import io.opentelemetry.kotlin.OpenTelemetry
 import okhttp3.OkHttpClient
 import java.io.File
@@ -165,11 +164,7 @@ internal class RealSdkInstance(
     override val isStarted: Boolean
         get() = enabled
 
-    override fun getOpenTelemetryKotlin(): OpenTelemetry = if (enabled) {
-        otelApiDelegate.getOpenTelemetryKotlin()
-    } else {
-        NoopOpenTelemetry
-    }
+    override fun getOpenTelemetryKotlin(): OpenTelemetry = otelApiDelegate.getOpenTelemetryKotlin()
 
     override fun onTransition(buffer: BufferingSdkInstance) {
         buffer.drainCompletedSpans(tracingApi)
@@ -211,7 +206,7 @@ internal class RealSdkInstance(
             }
             markSdkInitComplete(EmbTrace.durationTracker::flush)
         } catch (exc: Throwable) {
-            Log.w("Embrace", "Embrace SDK started with some failures", exc)
+            Log.w("Embrace", "Failed to initialize Embrace SDK", exc)
             errorHandler.trackSdkError(SdkErrorType.SdkInitPhaseFail, exc)
         }
     }

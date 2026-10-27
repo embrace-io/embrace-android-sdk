@@ -3,9 +3,11 @@ package io.embrace.android.embracesdk.internal.session.orchestrator
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Test
+import java.util.concurrent.ConcurrentLinkedDeque
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.Executors
 import java.util.concurrent.TimeUnit
+import kotlin.concurrent.thread
 
 internal class CompactingTelemetryQueueTest {
 
@@ -250,6 +252,28 @@ internal class CompactingTelemetryQueueTest {
 
         queue.add(record("a", 2))
         assertEquals(listOf(record("a", 2)), queue.drain())
+    }
+
+    @Test
+    fun `a record added while a compaction is walking the queue survives a pending removal`() {
+        var onWalk: (() -> Unit)? = null
+        val deque = object : ConcurrentLinkedDeque<Record>() {
+            override fun descendingIterator(): MutableIterator<Record> {
+                onWalk?.invoke()
+                onWalk = null
+                return super.descendingIterator()
+            }
+        }
+        val queue = CompactingTelemetryQueue(compactThreshold = THRESHOLD, queue = deque, identityOf = Record::key)
+        queue.add(record("a", 1))
+        queue.remove(record("a", 1))
+
+        onWalk = {
+            val adder = thread { queue.add(record("a", 2)) }
+            adder.join()
+        }
+        assertEquals(listOf(record("a", 2)), queue.drain())
+        assertEquals(0, queue.size)
     }
 
     @Test

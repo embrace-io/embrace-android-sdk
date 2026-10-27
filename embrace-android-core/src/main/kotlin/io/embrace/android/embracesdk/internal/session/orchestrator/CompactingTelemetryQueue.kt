@@ -17,9 +17,9 @@ import java.util.concurrent.atomic.AtomicInteger
  */
 internal class CompactingTelemetryQueue<T>(
     private val compactThreshold: Int = COMPACT_THRESHOLD,
+    private val queue: Deque<T> = ConcurrentLinkedDeque(),
     private val identityOf: (T) -> Any?,
 ) : TelemetryQueue<T> {
-    private val queue: Deque<T> = ConcurrentLinkedDeque()
     private val pendingRemovals: MutableSet<Any> = Collections.newSetFromMap(ConcurrentHashMap())
     private val buffered = AtomicInteger()
     private val drainLock = Any()
@@ -82,7 +82,8 @@ internal class CompactingTelemetryQueue<T>(
         while (items.hasNext()) {
             val key = identityOf(items.next()) ?: continue
 
-            if (!superseding.add(key) || key in removals) {
+            // an add() for this key during the walk clears the live entry, so the record it added survives
+            if (!superseding.add(key) || (key in removals && key in pendingRemovals)) {
                 items.remove()
                 buffered.decrementAndGet()
             }

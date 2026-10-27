@@ -539,16 +539,25 @@ class PayloadResurrectionServiceImplTest {
     }
 
     @Test
-    fun `session payload skipped without error when gzip stream is invalid`() {
-        cacheStorageService.addFakePayload(sessionMetadata)
-        val service = serviceWithPayloadStream("hi there".byteInputStream())
+    fun `session payload skipped without error and stream closed when gzip header is bad or truncated`() {
+        val badHeaders = listOf(
+            "hi there".toByteArray(),
+            // the gzip magic and compression method, then EOF before the rest of the header
+            byteArrayOf(0x1f, 0x8b.toByte(), 0x08),
+        )
+        badHeaders.forEachIndexed { index, bytes ->
+            cacheStorageService.addFakePayload(sessionMetadata)
+            val stream = CloseTrackingInputStream(bytes)
+            val service = serviceWithPayloadStream(stream)
 
-        service.resurrectOldPayloads(nativeCrashServiceProvider = { nativeCrashService })
+            service.resurrectOldPayloads(nativeCrashServiceProvider = { nativeCrashService })
 
-        assertEquals(0, payloadStorageService.storedPayloadCount())
-        assertEquals(0, cacheStorageService.storedPayloadCount())
-        assertEquals(1, cacheStorageService.deleteCount.get())
-        assertTrue(errorHandler.sdkErrorMessages.isEmpty())
+            assertEquals(0, payloadStorageService.storedPayloadCount())
+            assertEquals(0, cacheStorageService.storedPayloadCount())
+            assertEquals(index + 1, cacheStorageService.deleteCount.get())
+            assertTrue(errorHandler.sdkErrorMessages.isEmpty())
+            assertTrue(stream.closed)
+        }
     }
 
     @Test
@@ -1022,5 +1031,14 @@ class PayloadResurrectionServiceImplTest {
             complete = false,
             payloadType = PayloadType.UNKNOWN,
         )
+    }
+
+    private class CloseTrackingInputStream(bytes: ByteArray) : ByteArrayInputStream(bytes) {
+        var closed = false
+
+        override fun close() {
+            closed = true
+            super.close()
+        }
     }
 }

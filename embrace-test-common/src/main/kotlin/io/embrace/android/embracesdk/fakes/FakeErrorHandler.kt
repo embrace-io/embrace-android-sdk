@@ -25,6 +25,13 @@ class FakeErrorHandler(
     var errorMessages: MutableList<LogMessage> = mutableListOf()
     var sdkErrorMessages: MutableList<LogMessage> = mutableListOf()
 
+    /**
+     * Set once closed, or drained with no sink, after which SDK errors are dropped as the real handler drops them.
+     */
+    @Volatile
+    var closed: Boolean = false
+        private set
+
     override fun log(msg: String, throwable: Throwable?, severity: ErrorHandler.Severity) {
         val messages = when (severity) {
             ErrorHandler.Severity.INFO -> infoMessages
@@ -38,6 +45,7 @@ class FakeErrorHandler(
         when {
             type == SdkErrorType.Ignored || ignoredErrors.contains(type) -> return
             throwable is UserCodeException -> log("App-supplied code threw an exception ($type)", throwable.cause)
+            closed -> {}
             throwOnSdkError -> throw IllegalStateException("SDK error: $type", throwable)
             else -> sdkErrorMessages.add(LogMessage(type.toString(), throwable))
         }
@@ -45,6 +53,9 @@ class FakeErrorHandler(
     }
 
     override fun drain(sink: ErrorRecorder?) {
+        if (sink == null) {
+            closed = true
+        }
         delegate?.drain(sink)
     }
 
@@ -53,6 +64,7 @@ class FakeErrorHandler(
     }
 
     override fun close() {
+        closed = true
         delegate?.close()
     }
 }

@@ -81,6 +81,7 @@ sealed class SdkErrorType(private val severity: Severity) {
     object ClockCasExhausted : SdkErrorType(ERROR)
     object ErrorSinkFail : SdkErrorType(ERROR)
     object LogStoreFail : SdkErrorType(ERROR)
+    object NetworkCaptureEncryptFail : SdkErrorType(ERROR)
 
     /**
      * A failure that can be ignored.

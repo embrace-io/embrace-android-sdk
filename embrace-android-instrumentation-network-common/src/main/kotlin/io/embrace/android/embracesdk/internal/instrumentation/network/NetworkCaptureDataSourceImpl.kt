@@ -6,6 +6,7 @@ import io.embrace.android.embracesdk.internal.arch.datasource.LogSeverity
 import io.embrace.android.embracesdk.internal.arch.limits.NoopLimitStrategy
 import io.embrace.android.embracesdk.internal.arch.schema.SchemaType
 import io.embrace.android.embracesdk.internal.config.remote.NetworkCaptureRuleRemoteConfig
+import io.embrace.android.embracesdk.internal.logging.SdkErrorType
 import io.embrace.android.embracesdk.internal.payload.NetworkCapturedCall
 import io.embrace.android.embracesdk.internal.serialization.PlatformSerializer
 import io.embrace.android.embracesdk.internal.store.KeyValueStore
@@ -107,8 +108,7 @@ class NetworkCaptureDataSourceImpl internal constructor(
                     errorMessage = errorMessage,
                 )
 
-                val networkLog = getNetworkPayload(capturedNetworkCall)
-                logNetworkCapturedCall(networkLog)
+                getNetworkPayload(capturedNetworkCall)?.let(::logNetworkCapturedCall)
 
                 // if the network captured match at least one rule criteria, we logged that body and finish the foreach.
                 return
@@ -204,21 +204,20 @@ class NetworkCaptureDataSourceImpl internal constructor(
         return keyValueStore.getInt(NETWORK_CAPTURE_RULE_PREFIX_KEY + id) ?: maxCount
     }
 
-    private fun getNetworkPayload(capturedNetworkCall: NetworkCapturedCall): NetworkCapturedCall {
+    private fun getNetworkPayload(capturedNetworkCall: NetworkCapturedCall): NetworkCapturedCall? {
         return if (configService.networkBehavior.isCaptureBodyEncryptionEnabled()) {
-            val encryptedPayload = encryptNetworkCall(capturedNetworkCall)
+            val capturePublicKey = configService.networkBehavior.getNetworkBodyCapturePublicKey()
+                ?: return NetworkCapturedCall(encryptedPayload = null)
+            val encryptedPayload = networkCaptureEncryptionManager.encrypt(
+                serializer.toJson(capturedNetworkCall, NetworkCapturedCall.serializer()),
+                capturePublicKey,
+            ) {
+                args.errorHandler.trackSdkError(SdkErrorType.NetworkCaptureEncryptFail, it)
+            } ?: return null
             NetworkCapturedCall(encryptedPayload = encryptedPayload)
         } else {
             capturedNetworkCall
         }
-    }
-
-    private fun encryptNetworkCall(capturedNetworkCall: NetworkCapturedCall): String? {
-        val capturePublicKey = configService.networkBehavior.getNetworkBodyCapturePublicKey() ?: return null
-        return networkCaptureEncryptionManager.encrypt(
-            serializer.toJson(capturedNetworkCall, NetworkCapturedCall.serializer()),
-            capturePublicKey,
-        )
     }
 
     private fun shouldApplyRule(rule: NetworkCaptureRuleRemoteConfig, duration: Long, statusCode: Int): Boolean {

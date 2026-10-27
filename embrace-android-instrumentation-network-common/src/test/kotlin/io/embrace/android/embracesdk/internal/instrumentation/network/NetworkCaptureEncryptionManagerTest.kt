@@ -3,11 +3,15 @@ package io.embrace.android.embracesdk.internal.instrumentation.network
 import org.junit.Assert
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotNull
+import org.junit.Assert.assertNull
+import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
 import java.security.KeyFactory
+import java.security.KeyPairGenerator
 import java.security.spec.PKCS8EncodedKeySpec
 import java.util.Base64
+import javax.crypto.IllegalBlockSizeException
 
 internal class NetworkCaptureEncryptionManagerTest {
 
@@ -32,6 +36,30 @@ internal class NetworkCaptureEncryptionManagerTest {
         val encryptedText = networkCaptureEncryptionManager.encrypt(textToEncrypt, "12345")
 
         Assert.assertEquals(encryptedText, null)
+    }
+
+    @Test
+    fun `cipher failure returns null and reports the error`() {
+        val errors = mutableListOf<Throwable>()
+        val encryptedText = networkCaptureEncryptionManager.encrypt("a".repeat(100), smallPublicKey()) { errors.add(it) }
+        assertNull(encryptedText)
+        assertTrue(errors.single() is IllegalBlockSizeException)
+    }
+
+    @Test
+    fun `invalid key returns null and reports the error`() {
+        val errors = mutableListOf<Throwable>()
+        val encryptedText = networkCaptureEncryptionManager.encrypt("text to encrypt", "12345") { errors.add(it) }
+        assertNull(encryptedText)
+        assertEquals(1, errors.size)
+    }
+
+    /**
+     * A 512-bit key can only encrypt 53 bytes per block, so the 245-byte blocks used by the manager fail.
+     */
+    private fun smallPublicKey(): String {
+        val keyPair = KeyPairGenerator.getInstance("RSA").apply { initialize(512) }.generateKeyPair()
+        return Base64.getMimeEncoder().encodeToString(keyPair.public.encoded)
     }
 
     @Test

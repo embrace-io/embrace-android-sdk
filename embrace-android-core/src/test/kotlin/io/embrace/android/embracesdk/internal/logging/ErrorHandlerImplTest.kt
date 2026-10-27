@@ -235,46 +235,158 @@ internal class ErrorHandlerImplTest {
     }
 
     @Test
-    fun `an error raised by the sink is not recorded and does not use the limit`() {
-        handler = ErrorHandlerImpl(clock, limit = 2)
+    fun `an error tracked by the sink is recorded once as a sink failure`() {
         val first = distinctError(0)
-        val second = distinctError(1)
-        val recorded = mutableListOf<Throwable>()
-        handler.drain { _, throwable, _ ->
-            recorded.add(throwable)
-            fail()
+        val raised = ArrayDeque((1..4).map(::distinctError))
+        val firstRaised = raised.first()
+        val recorded = mutableListOf<Pair<SdkErrorType, Throwable>>()
+        handler.drain { type, throwable, _ ->
+            recorded.add(type to throwable)
+            fail(raised.removeFirst())
+            fail(raised.removeFirst())
         }
         fail(first)
-        fail(second)
-        assertEquals(listOf(first, second), recorded)
+        assertEquals(listOf(type to first, SdkErrorType.ErrorSinkFail to firstRaised), recorded)
     }
 
     @Test
-    fun `an error raised by the sink while draining the buffer is not recorded`() {
+    fun `an error thrown by the sink is recorded once as a sink failure`() {
+        val first = distinctError(0)
+        val thrown = ArrayDeque((1..2).map(::distinctError))
+        val firstThrown = thrown.first()
+        val recorded = mutableListOf<Pair<SdkErrorType, Throwable>>()
+        handler.drain { type, throwable, _ ->
+            recorded.add(type to throwable)
+            throw thrown.removeFirst()
+        }
+        fail(first)
+        assertEquals(listOf(type to first, SdkErrorType.ErrorSinkFail to firstThrown), recorded)
+    }
+
+    @Test
+    fun `an error raised by the sink while draining the buffer is recorded as a sink failure`() {
         val first = distinctError(0)
         val second = distinctError(1)
         fail(first)
         fail(second)
+        val sinkFailures = ArrayDeque((2..3).map(::distinctError))
+        val expectedFailures = sinkFailures.toList()
+        val recorded = mutableListOf<Pair<SdkErrorType, Throwable>>()
+        handler.drain { type, throwable, _ ->
+            recorded.add(type to throwable)
+            if (type != SdkErrorType.ErrorSinkFail) {
+                fail(sinkFailures.removeFirst())
+            }
+        }
+        assertEquals(
+            listOf(
+                type to first,
+                SdkErrorType.ErrorSinkFail to expectedFailures[0],
+                type to second,
+                SdkErrorType.ErrorSinkFail to expectedFailures[1],
+            ),
+            recorded,
+        )
+    }
+
+    @Test
+    fun `a sink failure uses the limit`() {
+        handler = ErrorHandlerImpl(clock, limit = 1)
+        val first = distinctError(0)
         val recorded = mutableListOf<Throwable>()
         handler.drain { _, throwable, _ ->
             recorded.add(throwable)
-            fail()
+            error("sink failed")
         }
-        assertEquals(listOf(first, second), recorded)
+        fail(first)
+        assertEquals(listOf(first), recorded)
+    }
+
+    @Test
+    fun `a repeated sink failure is not recorded again for later errors`() {
+        val errors = (0..2).map(::distinctError)
+        val sinkFailure = distinctError(3)
+        val recorded = mutableListOf<Pair<SdkErrorType, Throwable>>()
+        handler.drain { type, throwable, _ ->
+            recorded.add(type to throwable)
+            throw sinkFailure
+        }
+        errors.forEach(::fail)
+        assertEquals(
+            listOf(
+                type to errors[0],
+                SdkErrorType.ErrorSinkFail to sinkFailure,
+                type to errors[1],
+                type to errors[2],
+            ),
+            recorded,
+        )
+    }
+
+    @Test
+    fun `a separate error thrown by the sink whilst recording a sink failure is not recorded`() {
+        val errors = (0..1).map(::distinctError)
+        val sinkFailure = distinctError(2)
+        val retryFailure = distinctError(3)
+        val recorded = mutableListOf<Pair<SdkErrorType, Throwable>>()
+        handler.drain { type, throwable, _ ->
+            recorded.add(type to throwable)
+            throw if (type == SdkErrorType.ErrorSinkFail) retryFailure else sinkFailure
+        }
+        errors.forEach(::fail)
+        assertEquals(
+            listOf(
+                type to errors[0],
+                SdkErrorType.ErrorSinkFail to sinkFailure,
+                type to errors[1],
+            ),
+            recorded,
+        )
+    }
+
+    @Test
+    fun `distinct sink failures follow the same limit as other errors`() {
+        handler = ErrorHandlerImpl(clock, limit = 5)
+        val errors = (0..3).map(::distinctError)
+        val sinkFailures = ArrayDeque((4..7).map(::distinctError))
+        val expectedSinkFailures = sinkFailures.toList()
+        val recorded = mutableListOf<Pair<SdkErrorType, Throwable>>()
+        handler.drain { type, throwable, _ ->
+            recorded.add(type to throwable)
+            if (type != SdkErrorType.ErrorSinkFail) {
+                throw sinkFailures.removeFirst()
+            }
+        }
+        errors.forEach(::fail)
+
+        // each distinct sink failure uses the limit, so the third is dropped and the fourth error is too
+        assertEquals(
+            listOf(
+                type to errors[0],
+                SdkErrorType.ErrorSinkFail to expectedSinkFailures[0],
+                type to errors[1],
+                SdkErrorType.ErrorSinkFail to expectedSinkFailures[1],
+                type to errors[2],
+            ),
+            recorded,
+        )
     }
 
     @Test
     fun `a throwing sink does not stop later errors being recorded`() {
         val buffered = listOf(distinctError(0), distinctError(1))
         val direct = listOf(distinctError(2), distinctError(3))
+        val sinkFailure = distinctError(4)
         buffered.forEach(::fail)
         val recorded = mutableListOf<Throwable>()
         handler.drain { _, throwable, _ ->
             recorded.add(throwable)
-            error("sink failed")
+            throw sinkFailure
         }
         direct.forEach(::fail)
-        assertEquals(buffered + direct, recorded)
+
+        // repeats of the same sink failure are dropped by the limit
+        assertEquals(listOf(buffered[0], sinkFailure, buffered[1]) + direct, recorded)
     }
 
     @Test
@@ -298,7 +410,13 @@ internal class ErrorHandlerImplTest {
         val sinkFailure = IllegalStateException("sink failed")
         handler.drain { _, _, _ -> throw sinkFailure }
         fail()
-        assertEquals(listOf(Logged(ErrorHandler.Severity.WARNING, "Failed to record SDK error ($type)", sinkFailure)), logged)
+        assertEquals(
+            listOf(
+                Logged(ErrorHandler.Severity.WARNING, "Failed to record SDK error ($type)", sinkFailure),
+                Logged(ErrorHandler.Severity.WARNING, "Failed to record SDK error (ErrorSinkFail)", sinkFailure),
+            ),
+            logged,
+        )
     }
 
     @Test
@@ -335,13 +453,14 @@ internal class ErrorHandlerImplTest {
         val buffered = listOf(distinctError(0), distinctError(1))
         val direct = listOf(distinctError(2), distinctError(3))
         buffered.forEach(::fail)
-        val recorded = mutableListOf<Throwable>()
-        handler.drain { _, throwable, _ ->
-            recorded.add(throwable)
+        val recorded = mutableListOf<Pair<SdkErrorType, Throwable>>()
+        handler.drain { type, throwable, _ ->
+            recorded.add(type to throwable)
             error("sink failed")
         }
         direct.forEach(::fail)
-        assertEquals(buffered + direct, recorded)
+        assertEquals(buffered + direct, recorded.filter { it.first == type }.map { it.second })
+        assertEquals(1, recorded.count { it.first == SdkErrorType.ErrorSinkFail })
     }
 
     private data class Logged(val severity: ErrorHandler.Severity, val msg: String, val throwable: Throwable?)

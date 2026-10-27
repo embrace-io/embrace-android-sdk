@@ -16,13 +16,13 @@ import io.embrace.android.embracesdk.internal.payload.ThreadInfo
 import io.embrace.android.embracesdk.internal.serialization.PlatformSerializer
 import io.embrace.android.embracesdk.internal.serialization.stringListSerializer
 import io.embrace.android.embracesdk.internal.store.Ordinal
+import io.embrace.android.embracesdk.internal.utils.concurrent.OneShot
 import io.embrace.android.embracesdk.internal.utils.encodeToUTF8String
 import io.embrace.android.embracesdk.semconv.EmbAndroidAttributes
 import io.opentelemetry.kotlin.semconv.ExceptionAttributes
 import io.opentelemetry.kotlin.semconv.LogAttributes
 import kotlinx.serialization.builtins.ListSerializer
 import java.util.concurrent.CopyOnWriteArrayList
-import java.util.concurrent.atomic.AtomicBoolean
 
 /**
  * Intercept and track uncaught Android Runtime exceptions
@@ -37,7 +37,7 @@ class JvmCrashDataSourceImpl(
     ) {
 
     private val serializer: PlatformSerializer = args.serializer
-    private val mainCrashHandled = AtomicBoolean(false)
+    private val handleMainCrashOnce = OneShot()
     private val handlers: CopyOnWriteArrayList<CrashTeardownHandler> = CopyOnWriteArrayList()
 
     @Volatile
@@ -52,7 +52,7 @@ class JvmCrashDataSourceImpl(
     override var telemetryModifier: ((TelemetryAttributes) -> SchemaType)? = null
 
     override fun onDataCaptureDisabled() {
-        mainCrashHandled.set(true)
+        handleMainCrashOnce.tryClaim()
         exceptionHandler?.detach()
         exceptionHandler = null
     }
@@ -65,7 +65,7 @@ class JvmCrashDataSourceImpl(
      * @param exception the exception thrown by the thread
      */
     override fun logUnhandledJvmThrowable(exception: Throwable) {
-        if (!mainCrashHandled.getAndSet(true)) {
+        handleMainCrashOnce {
             val crashId = args.uuidSource.createUuid()
             captureTelemetry(inputValidation = configService.config.autoDataCapture::jvmCrashCaptureEnabled) {
                 val attrs = TelemetryAttributes().apply {

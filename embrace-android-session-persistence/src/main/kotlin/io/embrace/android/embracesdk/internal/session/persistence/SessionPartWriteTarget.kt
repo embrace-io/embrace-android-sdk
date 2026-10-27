@@ -2,9 +2,9 @@ package io.embrace.android.embracesdk.internal.session.persistence
 
 import io.embrace.android.embracesdk.internal.clock.Clock
 import io.embrace.android.embracesdk.internal.utils.FileWriteCounters
+import io.embrace.android.embracesdk.internal.utils.concurrent.OneShot
 import java.io.File
 import java.io.IOException
-import java.util.concurrent.atomic.AtomicBoolean
 
 internal const val MISSING_PART_DIR_MSG = "Not a session part directory"
 
@@ -21,12 +21,12 @@ class SessionPartWriteTarget(
     private val sessionPartDirectorySource: () -> SessionPartDirectory?,
 ) {
 
-    private val givenUp = AtomicBoolean(false)
+    private val giveUp = OneShot()
 
     val counters: FileWriteCounters = FileWriteCounters(MULTI_FILE_BYTES_COUNTER, MULTI_FILE_FILES_COUNTER)
 
     val failed: Boolean
-        get() = givenUp.get()
+        get() = giveUp.isClaimed
 
     /**
      * The session part to write telemetry for, or null if there is nothing to write for.
@@ -64,7 +64,7 @@ class SessionPartWriteTarget(
     fun partDir(directory: SessionPartDirectory, onMissing: (Throwable) -> Unit): File? {
         val partDir = File(sessionsDir.value, directory.dirName)
         if (!partDir.isDirectory) {
-            if (givenUp.compareAndSet(false, true)) {
+            giveUp {
                 onMissing(IOException(MISSING_PART_DIR_MSG))
             }
             return null

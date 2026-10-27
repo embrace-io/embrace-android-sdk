@@ -22,6 +22,7 @@ import io.embrace.android.embracesdk.internal.network.http.HttpRequestInfoModifi
 import io.embrace.android.embracesdk.internal.network.http.MutableHttpRequestInfoImpl
 import io.embrace.android.embracesdk.internal.telemetry.AppliedLimitType
 import io.embrace.android.embracesdk.internal.utils.NetworkUtils
+import io.embrace.android.embracesdk.internal.utils.concurrent.OneShot
 import io.embrace.android.embracesdk.network.http.HttpRequestInfo
 import io.opentelemetry.kotlin.semconv.ErrorAttributes
 import io.opentelemetry.kotlin.semconv.ExceptionAttributes
@@ -33,7 +34,6 @@ import java.lang.reflect.Modifier
 import java.net.URL
 import java.net.URLStreamHandler
 import java.net.URLStreamHandlerFactory
-import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicLong
 import java.util.concurrent.atomic.AtomicReference
 import javax.net.ssl.HttpsURLConnection
@@ -159,7 +159,7 @@ class HucLiteDataSource(
         private val methodProvider = { connection.requestMethod }
         private val pathProvider = { connection.url.path }
         private val startTimeMs = AtomicLong(INVALID_START_TIME)
-        private val requestRecorded = AtomicBoolean(false)
+        private val recordOnce = OneShot()
 
         fun startRequest() =
             runCatching {
@@ -253,7 +253,7 @@ class HucLiteDataSource(
             recordingFunction: (info: HttpRequestInfo) -> Unit,
         ) {
             runCatching {
-                if (requestRecorded.compareAndSet(false, true)) {
+                recordOnce {
                     // Apply any registered modifiers so the reported url/method reflect the
                     // consumer's changes. The underlying HTTP request is not affected.
                     val info = httpRequestInfoModifierChain.apply(

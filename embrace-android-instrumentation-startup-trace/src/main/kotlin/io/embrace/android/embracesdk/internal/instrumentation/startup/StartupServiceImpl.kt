@@ -5,8 +5,8 @@ import io.embrace.android.embracesdk.internal.arch.state.ProcessState
 import io.embrace.android.embracesdk.internal.logging.ErrorHandler
 import io.embrace.android.embracesdk.internal.logging.SdkErrorType
 import io.embrace.android.embracesdk.internal.logging.guardSdkCode
+import io.embrace.android.embracesdk.internal.utils.concurrent.OneShot
 import io.embrace.android.embracesdk.semconv.EmbAppAttributes
-import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicReference
 
 internal class StartupServiceImpl(
@@ -44,7 +44,7 @@ internal class StartupServiceImpl(
      */
     private val sdkInitAttributes = AtomicReference<Map<String, String>?>(null)
 
-    private val sdkInitSpanRecorded = AtomicBoolean(false)
+    private val recordSdkInitSpanOnce = OneShot()
 
     override fun setSdkStartupInfo(
         startTimeMs: Long,
@@ -65,7 +65,7 @@ internal class StartupServiceImpl(
     override fun recordSdkInitSpan() {
         val startTimeMs = sdkInitStartMs ?: return
         val endTimeMs = sdkInitEndMs ?: return
-        if (sdkInitSpanRecorded.compareAndSet(false, true)) {
+        recordSdkInitSpanOnce {
             val attributes = buildMap {
                 put("ended-in-foreground", endedInForeground.toString())
                 put("thread-name", threadName)

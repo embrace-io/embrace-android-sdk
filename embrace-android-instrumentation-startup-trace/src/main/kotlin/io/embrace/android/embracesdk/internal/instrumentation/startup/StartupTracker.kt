@@ -9,7 +9,7 @@ import io.embrace.android.embracesdk.internal.instrumentation.startup.ui.DrawEve
 import io.embrace.android.embracesdk.internal.logging.ErrorHandler
 import io.embrace.android.embracesdk.internal.logging.SdkErrorType
 import io.embrace.android.embracesdk.internal.logging.guardSdkCode
-import java.util.concurrent.atomic.AtomicBoolean
+import io.embrace.android.embracesdk.internal.utils.concurrent.OneShot
 
 /**
  * Component that captures various timestamps throughout the startup process and uses that information to log spans that approximates to
@@ -42,8 +42,8 @@ class StartupTracker(
     @Volatile
     private var application: Application? = null
 
-    private val startupDataCollectionComplete = AtomicBoolean(false)
-    private val firstActivitySeen = AtomicBoolean(false)
+    private val completeStartup = OneShot()
+    private val onFirstActivity = OneShot()
     private var startupActivityId: Int? = null
 
     override fun onActivityPreCreated(activity: Activity, savedInstanceState: Bundle?) {
@@ -106,7 +106,7 @@ class StartupTracker(
     override fun onActivityDestroyed(activity: Activity) {}
 
     private fun firstActivityInit(activity: Activity) {
-        if (!firstActivitySeen.getAndSet(true)) {
+        onFirstActivity {
             val app = activity.application
             appStartupDataCollector.firstActivityInit(startupCompleteCallback = { startupComplete(app) })
         }
@@ -114,7 +114,7 @@ class StartupTracker(
 
     private fun startupComplete(application: Application) {
         synchronized(lock) {
-            if (!startupDataCollectionComplete.getAndSet(true)) {
+            completeStartup {
                 application.unregisterActivityLifecycleCallbacks(this)
                 if (activityLoadEventEmitter != null) {
                     application.registerActivityLifecycleCallbacks(activityLoadEventEmitter)
@@ -137,7 +137,7 @@ class StartupTracker(
      */
     override fun close() {
         synchronized(lock) {
-            startupDataCollectionComplete.set(true)
+            completeStartup.tryClaim()
             errorHandler.guardSdkCode(SdkErrorType.ResourceCloseFail) { drawEventEmitter?.close() }
             errorHandler.guardSdkCode(SdkErrorType.ResourceCloseFail) { (activityLoadEventEmitter as? AutoCloseable)?.close() }
             val application = application ?: return

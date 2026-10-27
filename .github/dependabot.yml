@@ -12,9 +12,7 @@ updates:
         patterns:
           - "actions/*"
   - package-ecosystem: "gradle"
-    directories:
-      - "/"
-      - "/examples/ExampleApp"
+    directory: "/"
     schedule:
       interval: "daily"
     open-pull-requests-limit: 50
@@ -25,5 +23,20 @@ updates:
       # classes. Gradle 8.0.x's ASM can't instrument them, so builds that apply the Embrace Gradle
       # plugin fail with "Unsupported class file major version 66" before the plugin can run.
       # Remove this once the plugin's minimum supported Gradle version can read Java 22 classes.
+      - dependency-name: "com.github.luben:zstd-jni"
+        versions: ["[1.5.7-18,)"]
+      # kotlinx.serialization is pinned in gradle/libs.versions.toml: newer releases are built with
+      # newer Kotlin versions than the SDK's minimum supported Kotlin (and the Gradle plugin's
+      # Gradle 8.0.2 build-script Kotlin) can read. Bump it manually when the minimum is raised.
+      - dependency-name: "org.jetbrains.kotlinx:kotlinx-serialization-*"
+  - package-ecosystem: "gradle"
+    directory: "/examples/ExampleApp"
+    schedule:
+      interval: "daily"
+    open-pull-requests-limit: 50
+    cooldown:
+      default-days: 7
+    ignore:
+      # See the zstd-jni comment above.
       - dependency-name: "com.github.luben:zstd-jni"
         versions: ["[1.5.7-18,)"]

@@ -15,12 +15,14 @@ import io.embrace.android.embracesdk.instrumentation.huclite.FAKE_TIME_MS
 import io.embrace.android.embracesdk.instrumentation.huclite.InstrumentedHttpsURLConnection
 import io.embrace.android.embracesdk.instrumentation.huclite.InstrumentedUrlStreamHandlerFactory
 import io.embrace.android.embracesdk.instrumentation.huclite.testUrl
+import io.embrace.android.embracesdk.internal.logging.SdkErrorType
 import io.embrace.android.embracesdk.internal.network.http.HttpRequestInfoModifierChain
 import io.embrace.android.embracesdk.internal.network.logging.EmbraceDomainCountLimiter
 import io.embrace.android.embracesdk.internal.telemetry.AppliedLimitType
 import io.opentelemetry.kotlin.semconv.HttpAttributes
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
+import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
@@ -168,6 +170,18 @@ class HucLiteDataSourceTest {
             completeRequest(200)
         }
         assertEquals(0, fakeTelemetryDestination.createdSpans.size)
+    }
+
+    @Test
+    fun `a failure deciding whether to record a connection leaves it uninstrumented`() {
+        wrappedConnection.urlProvider = { throw IllegalStateException("sdk failure") }
+
+        assertNull(hucLiteDataSource.createRequestData(wrappedConnection = wrappedConnection, clock = fakeClock))
+        assertEquals(0, fakeTelemetryDestination.createdSpans.size)
+        assertEquals(
+            listOf(SdkErrorType.DataSourceDataCaptureFail.toString()),
+            fakeErrorHandler.sdkErrorMessages.map { it.msg },
+        )
     }
 
     @Test

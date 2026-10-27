@@ -13,6 +13,7 @@ import androidx.annotation.RequiresApi
 internal class VitalsFrameMetricsListener(
     private val focalCallbacks: FocalInteractionCallbacks,
     private val frameMetricsStrategy: FrameMetricsStrategy,
+    private val errors: OnceUiCallbackErrorTracker,
 ) : Window.OnFrameMetricsAvailableListener {
 
     override fun onFrameMetricsAvailable(
@@ -26,7 +27,8 @@ internal class VitalsFrameMetricsListener(
             val jankNanos = frameMetricsStrategy.jankNanos(frameMetrics)
             val expectedFrames = frameMetricsStrategy.expectedFrames(frameMetrics, jankNanos)
             focalCallbacks.onFrame(vsyncNanos, frameDispatchNanos, jankNanos, expectedFrames)
-        } catch (_: Throwable) {
+        } catch (exc: Throwable) {
+            errors.track(exc)
         }
     }
 }

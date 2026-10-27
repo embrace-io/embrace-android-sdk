@@ -46,6 +46,7 @@ internal class VitalsActivityListenerTest {
             navSource = ActivityNavigationSource(callbacks = focalCallbacks),
             frameMetricsHandler = Handler(Looper.getMainLooper()),
             frameMetricsStrategy = fakeStrategy,
+            errorHandler = args.errorHandler,
         )
     }
 

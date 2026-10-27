@@ -24,8 +24,6 @@ import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.ScheduledFuture
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicBoolean
-import java.util.concurrent.atomic.AtomicInteger
-import java.util.concurrent.atomic.AtomicLong
 import javax.net.ssl.SSLException
 
 class SchedulingServiceImpl(
@@ -377,22 +375,28 @@ class SchedulingServiceImpl(
          * A network connection is considered not blocked if this time is not 0.
          * The use of [isBlocked] internally as the solo method to check this should assure that.
          */
-        private val connectionUnblockTime = AtomicLong(0L)
-        private val hasNetworkConnection = AtomicBoolean(true)
+        @Volatile
+        private var connectionUnblockTime = 0L
+
+        @Volatile
+        private var hasNetworkConnection = true
         private val blockedPayloads: MutableSet<StoredTelemetryMetadata> = Collections.newSetFromMap(ConcurrentHashMap())
-        private var consecutiveFailures = AtomicInteger(0)
+        private var consecutiveFailures = 0
+        private val lock = Any()
 
         /**
          * Return true if we went from not having a network connection to having one
          *
          * Called on main thread
          */
-        fun updateConnectivityStatus(newStatus: Boolean): Boolean =
-            if (!hasNetworkConnection.getAndSet(newStatus)) {
-                newStatus
-            } else {
-                false
+        fun updateConnectivityStatus(newStatus: Boolean): Boolean = synchronized(lock) {
+            val acquired = !hasNetworkConnection && newStatus
+            hasNetworkConnection = newStatus
+            if (acquired) {
+                consecutiveFailures = 0
             }
+            acquired
+        }
 
         /**
          * Connection is ready to be used.
@@ -400,39 +404,28 @@ class SchedulingServiceImpl(
          * Called on the scheduling thread for authoritative checks of network readiness, and on the delivery thread to only attempt
          * delivery if it could possibly succeed.
          */
-        fun ready(): Boolean = hasNetworkConnection.get() && !isBlocked()
+        fun ready(): Boolean = hasNetworkConnection && !isBlocked()
 
         /**
          * Block connection. If already blocked, the unblock time will be updated, which will be returned.
          *
-         * Called on the delivery thread and must be synchronized with [unblock] which happens on the scheduling thread.
+         * Called on the delivery thread.
          */
-        fun block(): Long {
-            while (true) {
-                val current = connectionUnblockTime.get()
-                val next = clock.calculateNextRetryTime(consecutiveFailures.getAndIncrement())
-                if (connectionUnblockTime.compareAndSet(current, next)) {
-                    return next
-                }
+        fun block(): Long = synchronized(lock) {
+            clock.calculateNextRetryTime(consecutiveFailures++).also {
+                connectionUnblockTime = it
             }
         }
 
         /**
          * Unblock connection if currently blocked.
          *
-         * Only called on the scheduling thread. Must be synchronized with [block] which happens on the delivery thread
+         * Only called on the scheduling thread.
          */
-        fun unblock() {
-            while (true) {
-                val current = connectionUnblockTime.get()
-                if (current == 0L) {
-                    return
-                }
-
-                if (connectionUnblockTime.compareAndSet(current, 0L)) {
-                    blockedPayloads.clear()
-                    return
-                }
+        fun unblock() = synchronized(lock) {
+            if (isBlocked()) {
+                connectionUnblockTime = 0L
+                blockedPayloads.clear()
             }
         }
 
@@ -441,8 +434,8 @@ class SchedulingServiceImpl(
          *
          * Only called on the scheduling thread.
          */
-        fun unblockIfWaitTimeExceeded(currentTime: Long) {
-            if (isBlocked() && currentTime >= connectionUnblockTime.get()) {
+        fun unblockIfWaitTimeExceeded(currentTime: Long) = synchronized(lock) {
+            if (isBlocked() && currentTime >= connectionUnblockTime) {
                 unblock()
             }
         }
@@ -452,7 +445,7 @@ class SchedulingServiceImpl(
          *
          * Only called on the scheduling thread.
          */
-        fun getUnblockTime(): Long = connectionUnblockTime.get()
+        fun getUnblockTime(): Long = connectionUnblockTime
 
         /**
          * Track a payload that was prevented from being sent because the connection is blocked.
@@ -475,10 +468,8 @@ class SchedulingServiceImpl(
         /**
          * Validate that the Embrace server can be contacted, i.e. the next failure to connect is not the retrying of a blocked connection
          */
-        fun connectionValidated() {
-            if (consecutiveFailures.get() > 0) {
-                consecutiveFailures.set(0)
-            }
+        fun connectionValidated() = synchronized(lock) {
+            consecutiveFailures = 0
         }
 
         /**
@@ -486,7 +477,7 @@ class SchedulingServiceImpl(
          *
          * Called from both the scheduling and delivery threads, as well as the thread that handles network change listeners
          */
-        fun isBlocked(): Boolean = connectionUnblockTime.get() > 0
+        fun isBlocked(): Boolean = connectionUnblockTime > 0
     }
 
     /**
@@ -525,6 +516,8 @@ class SchedulingServiceImpl(
 
     companion object {
         const val INITIAL_DELAY_MS = 15_000L
+        const val MAX_DELAY_MS = 480_000L
+        private const val MAX_RETRY_SHIFT = 5
 
         /**
          * The set of exceptions thrown during network request execution which consider to be likely unrecoverable without a new
@@ -539,12 +532,13 @@ class SchedulingServiceImpl(
             )
 
         /**
-         * Note: bit-shifting is used to raise 2 to the power of [retryAttempts]. This is the most efficient way of
-         * doing this, and as much as it pains me to do this, it's isolated and tested, and the runtime penalty, however
-         * tiny, is not worth incurring if we can instead do this.
+         * Note: bit-shifting is used to raise 2 to the power of [retryAttempts], clamped to [MAX_RETRY_SHIFT]. This is
+         * the most efficient way of doing this, and as much as it pains me to do this, it's isolated and tested, and the
+         * runtime penalty, however tiny, is not worth incurring if we can instead do this. The delay is capped at
+         * [MAX_DELAY_MS].
          */
         internal fun Clock.calculateNextRetryTime(
             retryAttempts: Int,
-        ): Long = now() + (INITIAL_DELAY_MS * (1 shl retryAttempts))
+        ): Long = now() + minOf(INITIAL_DELAY_MS shl retryAttempts.coerceIn(0, MAX_RETRY_SHIFT), MAX_DELAY_MS)
     }
 }

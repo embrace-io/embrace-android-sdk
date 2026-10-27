@@ -15,7 +15,11 @@ internal class StartupServiceImpl(
     appVersionStartupCounterProvider: () -> Int?,
 ) : StartupService {
 
-    private val startupCounter: Int? by lazy { appVersionStartupCounterProvider()?.takeIf { it > 0 } }
+    private val startupCounter: Int? by lazy {
+        errorHandler.guardSdkCode(SdkErrorType.SdkInitAttributeCaptureFail, null) {
+            appVersionStartupCounterProvider()?.takeIf { it > 0 }
+        }
+    }
 
     @Volatile
     private var sdkInitStartMs: Long? = null
@@ -66,21 +70,23 @@ internal class StartupServiceImpl(
         val startTimeMs = sdkInitStartMs ?: return
         val endTimeMs = sdkInitEndMs ?: return
         recordSdkInitSpanOnce {
-            val attributes = buildMap {
-                put("ended-in-foreground", endedInForeground.toString())
-                put("thread-name", threadName)
-                startupCounter?.let { counter ->
-                    put(EmbAppAttributes.EMB_APP_VERSION_STARTUP_COUNTER, counter.toString())
+            errorHandler.guardSdkCode(SdkErrorType.SdkInitPhaseFail) {
+                val attributes = buildMap {
+                    put("ended-in-foreground", endedInForeground.toString())
+                    put("thread-name", threadName)
+                    startupCounter?.let { counter ->
+                        put(EmbAppAttributes.EMB_APP_VERSION_STARTUP_COUNTER, counter.toString())
+                    }
+                    putAll(getSdkInitAttributes())
                 }
-                putAll(getSdkInitAttributes())
+                destination.recordCompletedSpan(
+                    name = "sdk-init",
+                    startTimeMs = startTimeMs,
+                    endTimeMs = endTimeMs,
+                    private = true,
+                    attributes = attributes,
+                )
             }
-            destination.recordCompletedSpan(
-                name = "sdk-init",
-                startTimeMs = startTimeMs,
-                endTimeMs = endTimeMs,
-                private = true,
-                attributes = attributes,
-            )
         }
     }
 

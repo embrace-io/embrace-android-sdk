@@ -12,6 +12,7 @@ import io.embrace.android.embracesdk.internal.instrumentation.startup.ui.hasRend
 import io.embrace.android.embracesdk.internal.instrumentation.startup.ui.supportFrameCommitCallback
 import io.embrace.android.embracesdk.internal.logging.ErrorHandler
 import io.embrace.android.embracesdk.internal.logging.SdkErrorType
+import io.embrace.android.embracesdk.internal.logging.guardSdkCode
 import io.embrace.android.embracesdk.internal.utils.EmbTrace
 import io.embrace.android.embracesdk.internal.utils.Provider
 import io.embrace.android.embracesdk.internal.utils.VersionChecker
@@ -217,10 +218,12 @@ internal class AppStartupTraceEmitter(
      */
     private fun dataCollectionComplete(traceEndTimeMs: Long, completed: Boolean = true) {
         recordStartupOnce {
-            EmbTrace.trace("record-startup") {
-                recordStartup(traceEndTimeMs, completed)
+            errorHandler.guardSdkCode(SdkErrorType.AppLaunchTraceFail) {
+                EmbTrace.trace("record-startup") {
+                    recordStartup(traceEndTimeMs, completed)
+                }
             }
-            appStartupCompleteCallback?.invoke()
+            appStartupCompleteCallback?.let { errorHandler.guardSdkCode(SdkErrorType.AppLaunchTraceFail, it) }
         }
     }
 

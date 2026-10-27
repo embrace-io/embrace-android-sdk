@@ -39,7 +39,7 @@ internal class OtelSdkConfigTest {
 
         val configuration = OtelSdkConfig(
             spanRepository = SpanRepository(FakeErrorHandler()),
-            logSink = LogSinkImpl(),
+            logSink = LogSinkImpl(FakeErrorHandler()),
             sdkName = "sdk",
             sdkVersion = "1.0",
             appVersion = "2.5.1",
@@ -112,7 +112,7 @@ internal class OtelSdkConfigTest {
 
     private fun config(externalConfig: ExternalOtelConfig) = OtelSdkConfig(
         spanRepository = SpanRepository(FakeErrorHandler()),
-        logSink = LogSinkImpl(),
+        logSink = LogSinkImpl(FakeErrorHandler()),
         sdkName = "sdk",
         sdkVersion = "1.0",
         appVersion = "2.5.1",

@@ -48,16 +48,19 @@ fun createRnBundleIdTracker(
     configService: ConfigService,
     store: KeyValueStore,
     worker: BackgroundWorker,
+    errorHandler: ErrorHandler,
 ): RnBundleIdTracker = RnBundleIdTrackerImpl(
     { context.assets.open(it) },
     configService,
     store,
     worker,
+    errorHandler,
 ).apply { startAsyncRetrieval() }
 
 fun createHostedSdkVersionInfo(
     appFramework: AppFramework,
     store: KeyValueStore,
+    errorHandler: ErrorHandler,
 ): ObservableHostedSdkVersionInfo = ObservableHostedSdkVersionInfo(
     when (appFramework) {
         AppFramework.REACT_NATIVE -> ReactNativeSdkVersionInfo(store)
@@ -65,6 +68,7 @@ fun createHostedSdkVersionInfo(
         AppFramework.FLUTTER -> FlutterSdkVersionInfo(store)
         else -> NativeSdkVersionInfo()
     },
+    errorHandler,
 )
 
 fun createEnvelopeResourceSource(
@@ -100,6 +104,7 @@ fun createEnvelopeResourceSource(
             device = device,
             rnBundleIdProvider = { rnBundleIdTracker.value.getReactNativeBundleId() },
             useKotlinSdkProvider = useKotlinSdkProvider,
+            errorHandler = errorHandler,
             versionName = BuildConfig.VERSION_NAME,
             versionCode = BuildConfig.VERSION_CODE.toIntOrNull(),
         ).apply {

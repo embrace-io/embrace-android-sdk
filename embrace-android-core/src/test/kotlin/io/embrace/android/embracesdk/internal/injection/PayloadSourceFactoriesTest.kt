@@ -44,8 +44,8 @@ internal class PayloadSourceFactoriesTest {
             worker = worker,
             systemInfo = initServices.systemInfo,
             errorHandler = initServices.errorHandler,
-            hostedSdkVersionInfo = createHostedSdkVersionInfo(AppFramework.NATIVE, store),
-            rnBundleIdTracker = lazy { createRnBundleIdTracker(context, configService, store, worker) },
+            hostedSdkVersionInfo = createHostedSdkVersionInfo(AppFramework.NATIVE, store, initServices.errorHandler),
+            rnBundleIdTracker = lazy { createRnBundleIdTracker(context, configService, store, worker, initServices.errorHandler) },
             useKotlinSdkProvider = { false },
         )
         val metadataService = createMetadataService(
@@ -72,7 +72,7 @@ internal class PayloadSourceFactoriesTest {
         )
         assertNotNull(
             createLogEnvelopeSource(
-                LogSinkImpl(),
+                LogSinkImpl(FakeErrorHandler()),
                 envelopeMetadataSource,
                 resourceSource,
                 cachedLogEnvelopeStore,

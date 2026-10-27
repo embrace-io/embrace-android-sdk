@@ -2,6 +2,7 @@ package io.embrace.android.embracesdk.internal.otel.spans
 
 import io.embrace.android.embracesdk.fakes.FakeEmbraceSdkSpan
 import io.embrace.android.embracesdk.fakes.FakeErrorHandler
+import io.embrace.android.embracesdk.internal.logging.SdkErrorType
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Before
@@ -9,12 +10,14 @@ import org.junit.Test
 
 internal class SpanRepositorySpanChangeListenerTest {
 
+    private lateinit var errorHandler: FakeErrorHandler
     private lateinit var repository: SpanRepository
     private val observed = mutableListOf<EmbraceSdkSpan>()
 
     @Before
     fun setup() {
-        repository = SpanRepository(FakeErrorHandler())
+        errorHandler = FakeErrorHandler(throwOnSdkError = false)
+        repository = SpanRepository(errorHandler)
         observed.clear()
     }
 
@@ -62,6 +65,7 @@ internal class SpanRepositorySpanChangeListenerTest {
         repository.addSpanChangeListener(observed::add)
         repository.notifySpanChanged(span)
         assertEquals(listOf(span), observed)
+        assertEquals(SdkErrorType.SpanOperationFail.toString(), errorHandler.sdkErrorMessages.single().msg)
     }
 
     @Test

@@ -174,7 +174,7 @@ internal fun createRealSdkInstance(
         overrides?.spanRepository.resolve { SpanRepository(errorHandler) }
     }
 
-    val logSink = init("log-sink") { LogSinkImpl() }
+    val logSink = init("log-sink") { LogSinkImpl(errorHandler) }
 
     val otelSdkConfig = lazy {
         EmbTrace.trace("otel-sdk-config-init") {
@@ -293,7 +293,7 @@ internal fun createRealSdkInstance(
     }
 
     val navigationTrackingService = init("navigation-tracking-service") {
-        createNavigationTrackingService()
+        createNavigationTrackingService(errorHandler)
     }
 
     val networkConnectivityService = init("network-connectivity-service") {
@@ -590,12 +590,13 @@ internal fun createRealSdkInstance(
                 configService = configService,
                 store = store,
                 worker = workerThreadPool.backgroundWorker(Worker.Background.NonIoRegWorker),
+                errorHandler = errorHandler,
             )
         }
     }
 
     val hostedSdkVersionInfo = init("hosted-sdk-version-info") {
-        createHostedSdkVersionInfo(configService.appFramework, store)
+        createHostedSdkVersionInfo(configService.appFramework, store, errorHandler)
     }
 
     val resourceSource = init(name = "resource-source", recordDuration = true) {

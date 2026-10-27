@@ -700,7 +700,7 @@ internal class SpanServiceImplTest(
     ): SpanServiceImpl {
         val otelSdkConfig = OtelSdkConfig(
             spanRepository = spanRepository,
-            logSink = LogSinkImpl(),
+            logSink = LogSinkImpl(FakeErrorHandler()),
             sdkName = "test-sdk",
             sdkVersion = "1.0",
             appVersion = "1.0.0",

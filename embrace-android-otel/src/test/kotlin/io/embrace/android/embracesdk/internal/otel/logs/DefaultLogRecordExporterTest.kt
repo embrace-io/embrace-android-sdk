@@ -32,7 +32,7 @@ internal class DefaultLogRecordExporterTest {
 
     @Test
     fun `export() should store logs in LogSink`() {
-        val logSink: LogSink = LogSinkImpl()
+        val logSink: LogSink = LogSinkImpl(FakeErrorHandler())
         val data = FakeReadWriteLogRecord()
 
         runBlocking { exporter(logSink).export(listOf(FakeReadWriteLogRecord())) }
@@ -43,7 +43,7 @@ internal class DefaultLogRecordExporterTest {
 
     @Test
     fun `logs reach the sink before exportInline() returns`() {
-        val logSink: LogSink = LogSinkImpl()
+        val logSink: LogSink = LogSinkImpl(FakeErrorHandler())
         val exporter =
             exporter(logSink, listOf(FakeLogRecordExporter()), ExternalExportDispatcher(FakeErrorHandler()))
 
@@ -65,7 +65,7 @@ internal class DefaultLogRecordExporterTest {
             override suspend fun shutdown(): OperationResultCode = OperationResultCode.Success
         }
         val exporter =
-            exporter(LogSinkImpl(), listOf(threadRecordingExporter), ExternalExportDispatcher(FakeErrorHandler()))
+            exporter(LogSinkImpl(FakeErrorHandler()), listOf(threadRecordingExporter), ExternalExportDispatcher(FakeErrorHandler()))
 
         exporter.exportInline(listOf(FakeReadWriteLogRecord()))
         runBlocking { exporter.forceFlush() }
@@ -81,7 +81,7 @@ internal class DefaultLogRecordExporterTest {
         val externalExporter = FakeLogRecordExporter()
         val log = FakeReadWriteLogRecord(body = "original")
 
-        exporter(LogSinkImpl(), listOf(externalExporter), dispatcher).exportInline(listOf(log))
+        exporter(LogSinkImpl(FakeErrorHandler()), listOf(externalExporter), dispatcher).exportInline(listOf(log))
         log.body = "mutated"
         log.setStringAttribute("late", "value")
         while (pendingExports.isNotEmpty()) {
@@ -95,7 +95,7 @@ internal class DefaultLogRecordExporterTest {
 
     @Test
     fun `a throwing external exporter neither stops the others nor fails the internal store`() {
-        val logSink: LogSink = LogSinkImpl()
+        val logSink: LogSink = LogSinkImpl(FakeErrorHandler())
         val throwingExporter = object : LogRecordExporter {
             override suspend fun export(telemetry: List<LogRecordData>): OperationResultCode =
                 throw RuntimeException("boom")
@@ -115,7 +115,7 @@ internal class DefaultLogRecordExporterTest {
 
     @Test
     fun `nothing is exported when the export check fails`() {
-        val logSink: LogSink = LogSinkImpl()
+        val logSink: LogSink = LogSinkImpl(FakeErrorHandler())
         val externalExporter = FakeLogRecordExporter()
         val exporter = DefaultLogRecordExporter(
             logSink = logSink,

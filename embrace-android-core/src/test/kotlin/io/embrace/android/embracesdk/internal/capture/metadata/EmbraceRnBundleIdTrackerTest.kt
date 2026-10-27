@@ -2,12 +2,14 @@ package io.embrace.android.embracesdk.internal.capture.metadata
 
 import io.embrace.android.embracesdk.concurrency.BlockingScheduledExecutorService
 import io.embrace.android.embracesdk.fakes.FakeConfigService
+import io.embrace.android.embracesdk.fakes.FakeErrorHandler
 import io.embrace.android.embracesdk.fakes.FakeKeyValueStore
 import io.embrace.android.embracesdk.fakes.fakeBackgroundWorker
 import io.embrace.android.embracesdk.internal.config.BuildInfo
 import io.embrace.android.embracesdk.internal.config.ConfigService
 import io.embrace.android.embracesdk.internal.envelope.metadata.HostedSdkVersionInfo
 import io.embrace.android.embracesdk.internal.envelope.metadata.ReactNativeSdkVersionInfo
+import io.embrace.android.embracesdk.internal.logging.SdkErrorType
 import io.embrace.android.embracesdk.internal.payload.AppFramework
 import io.embrace.android.embracesdk.internal.worker.BackgroundWorker
 import org.junit.Assert.assertEquals
@@ -29,9 +31,11 @@ internal class EmbraceRnBundleIdTrackerTest {
     private lateinit var buildInfo: BuildInfo
     private lateinit var configService: ConfigService
     private lateinit var store: FakeKeyValueStore
+    private lateinit var errorHandler: FakeErrorHandler
 
     @Before
     fun setUp() {
+        errorHandler = FakeErrorHandler(throwOnSdkError = false)
         openedAssets = mutableListOf()
         configService = FakeConfigService().apply {
             appFramework = AppFramework.REACT_NATIVE
@@ -51,6 +55,7 @@ internal class EmbraceRnBundleIdTrackerTest {
         configService,
         store,
         fakeBackgroundWorker(),
+        errorHandler,
     ).apply { startAsyncRetrieval() }
 
     @Test
@@ -212,7 +217,7 @@ internal class EmbraceRnBundleIdTrackerTest {
     @Test
     fun `listener is notified once the bundle ID has been computed in the background`() {
         val executor = BlockingScheduledExecutorService(blockingMode = true)
-        val tracker = RnBundleIdTrackerImpl(::openAsset, configService, store, BackgroundWorker(executor)).apply {
+        val tracker = RnBundleIdTrackerImpl(::openAsset, configService, store, BackgroundWorker(executor), errorHandler).apply {
             startAsyncRetrieval()
         }
         val observed = mutableListOf<String?>()
@@ -228,7 +233,7 @@ internal class EmbraceRnBundleIdTrackerTest {
     @Test
     fun `listener is notified when the JavaScript bundle URL changes`() {
         val executor = BlockingScheduledExecutorService(blockingMode = true)
-        val tracker = RnBundleIdTrackerImpl(::openAsset, configService, store, BackgroundWorker(executor)).apply {
+        val tracker = RnBundleIdTrackerImpl(::openAsset, configService, store, BackgroundWorker(executor), errorHandler).apply {
             startAsyncRetrieval()
         }
         executor.runCurrentlyBlocked()
@@ -251,5 +256,19 @@ internal class EmbraceRnBundleIdTrackerTest {
         tracker.addChangeListener { count++ }
         tracker.setReactNativeBundleId("index.android.bundle")
         assertEquals(0, count)
+    }
+
+    @Test
+    fun `a throwing listener is tracked and does not stop the others`() {
+        val executor = BlockingScheduledExecutorService(blockingMode = true)
+        val tracker = RnBundleIdTrackerImpl(::openAsset, configService, store, BackgroundWorker(executor), errorHandler).apply {
+            startAsyncRetrieval()
+        }
+        var count = 0
+        tracker.addChangeListener { error("listener failed") }
+        tracker.addChangeListener { count++ }
+        executor.runCurrentlyBlocked()
+        assertEquals(1, count)
+        assertEquals(SdkErrorType.SessionPartListenerFail.toString(), errorHandler.sdkErrorMessages.single().msg)
     }
 }

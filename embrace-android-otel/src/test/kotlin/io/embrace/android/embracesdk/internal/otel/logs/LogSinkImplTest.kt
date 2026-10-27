@@ -1,8 +1,10 @@
 package io.embrace.android.embracesdk.internal.otel.logs
 
 import io.embrace.android.embracesdk.concurrency.SingleThreadTestScheduledExecutor
+import io.embrace.android.embracesdk.fakes.FakeErrorHandler
 import io.embrace.android.embracesdk.fixtures.deferredLog
 import io.embrace.android.embracesdk.fixtures.sendImmediatelyLog
+import io.embrace.android.embracesdk.internal.logging.SdkErrorType
 import io.embrace.android.embracesdk.internal.otel.sdk.StoreDataResult
 import io.embrace.android.embracesdk.internal.payload.Log
 import org.junit.Assert.assertEquals
@@ -20,7 +22,7 @@ internal class LogSinkImplTest {
 
     @Before
     fun setup() {
-        logSink = LogSinkImpl()
+        logSink = LogSinkImpl(FakeErrorHandler())
     }
 
     @Test
@@ -119,6 +121,15 @@ internal class LogSinkImplTest {
         (logSink as LogSinkImpl).registerLogStoredCallback { onStoreCalled = true }
         logSink.storeLogs(listOf(Log()))
         assertEquals(true, onStoreCalled)
+    }
+
+    @Test
+    fun `a throwing onStore callback is tracked as a store failure`() {
+        val errorHandler = FakeErrorHandler(throwOnSdkError = false)
+        val sink = LogSinkImpl(errorHandler)
+        sink.registerLogStoredCallback { error("callback failed") }
+        assertEquals(StoreDataResult.FAILURE, sink.storeLogs(listOf(Log())))
+        assertEquals(SdkErrorType.LogStoreFail.toString(), errorHandler.sdkErrorMessages.single().msg)
     }
 
     @Test

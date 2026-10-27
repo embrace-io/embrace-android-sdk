@@ -47,7 +47,7 @@ internal class OpenTelemetrySdkTest(
     @Before
     fun setup() {
         spanRepository = SpanRepository(FakeErrorHandler())
-        logSink = LogSinkImpl()
+        logSink = LogSinkImpl(FakeErrorHandler())
         systemInfo = SystemInfo()
         sdk = createSdkWrapper()
     }

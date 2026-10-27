@@ -1,6 +1,9 @@
 package io.embrace.android.embracesdk.internal.capture.metadata
 
 import io.embrace.android.embracesdk.internal.config.ConfigService
+import io.embrace.android.embracesdk.internal.logging.ErrorHandler
+import io.embrace.android.embracesdk.internal.logging.SdkErrorType
+import io.embrace.android.embracesdk.internal.logging.guardSdkCodeEach
 import io.embrace.android.embracesdk.internal.payload.AppFramework
 import io.embrace.android.embracesdk.internal.store.KeyValueStore
 import io.embrace.android.embracesdk.internal.worker.BackgroundWorker
@@ -15,6 +18,7 @@ internal class RnBundleIdTrackerImpl(
     private val configService: ConfigService,
     private val store: KeyValueStore,
     private val metadataBackgroundWorker: BackgroundWorker,
+    private val errorHandler: ErrorHandler,
 ) : RnBundleIdTracker {
 
     @Volatile
@@ -68,12 +72,7 @@ internal class RnBundleIdTrackerImpl(
      */
     private fun updateBundleId(bundleId: String?) {
         computedBundleId = bundleId
-        listeners.forEach { listener ->
-            try {
-                listener()
-            } catch (ignored: Throwable) {
-            }
-        }
+        errorHandler.guardSdkCodeEach(SdkErrorType.SessionPartListenerFail, listeners) { it() }
     }
 
     override fun setReactNativeBundleId(

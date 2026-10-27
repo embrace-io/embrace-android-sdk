@@ -1,5 +1,8 @@
 package io.embrace.android.embracesdk.internal.envelope.metadata
 
+import io.embrace.android.embracesdk.internal.logging.ErrorHandler
+import io.embrace.android.embracesdk.internal.logging.SdkErrorType
+import io.embrace.android.embracesdk.internal.logging.guardSdkCodeEach
 import java.util.concurrent.CopyOnWriteArrayList
 
 /**
@@ -7,6 +10,7 @@ import java.util.concurrent.CopyOnWriteArrayList
  */
 class ObservableHostedSdkVersionInfo(
     private val impl: HostedSdkVersionInfo,
+    private val errorHandler: ErrorHandler,
 ) : HostedSdkVersionInfo {
 
     private val listeners = CopyOnWriteArrayList<() -> Unit>()
@@ -63,11 +67,6 @@ class ObservableHostedSdkVersionInfo(
         if (batching) {
             return
         }
-        listeners.forEach { listener ->
-            try {
-                listener()
-            } catch (ignored: Throwable) {
-            }
-        }
+        errorHandler.guardSdkCodeEach(SdkErrorType.SessionPartListenerFail, listeners) { it() }
     }
 }

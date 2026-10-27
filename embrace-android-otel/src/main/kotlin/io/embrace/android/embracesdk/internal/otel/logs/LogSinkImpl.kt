@@ -1,6 +1,9 @@
 package io.embrace.android.embracesdk.internal.otel.logs
 
 import io.embrace.android.embracesdk.internal.arch.schema.SendMode
+import io.embrace.android.embracesdk.internal.logging.ErrorHandler
+import io.embrace.android.embracesdk.internal.logging.SdkErrorType
+import io.embrace.android.embracesdk.internal.logging.guardSdkCode
 import io.embrace.android.embracesdk.internal.otel.sdk.StoreDataResult
 import io.embrace.android.embracesdk.internal.otel.sdk.findAttributeValue
 import io.embrace.android.embracesdk.internal.payload.Log
@@ -8,14 +11,16 @@ import io.embrace.android.embracesdk.internal.utils.threadSafeToList
 import io.embrace.android.embracesdk.semconv.EmbSessionAttributes
 import java.util.concurrent.ConcurrentLinkedQueue
 
-class LogSinkImpl : LogSink {
+class LogSinkImpl(
+    private val errorHandler: ErrorHandler,
+) : LogSink {
     private val storedLogs: ConcurrentLinkedQueue<Log> = ConcurrentLinkedQueue()
     private val logRequests: ConcurrentLinkedQueue<LogRequest<Log>> = ConcurrentLinkedQueue()
     private var onLogsStored: (() -> Unit)? = null
     private val flushLock = Any()
 
-    override fun storeLogs(logs: List<Log>): StoreDataResult {
-        try {
+    override fun storeLogs(logs: List<Log>): StoreDataResult =
+        errorHandler.guardSdkCode(SdkErrorType.LogStoreFail, StoreDataResult.FAILURE) {
             logs.forEach { log ->
                 val mode = log.attributes?.findAttributeValue(EmbSessionAttributes.EMB_PRIVATE_SEND_MODE)
                 val sendMode = SendMode.fromString(mode)
@@ -31,11 +36,8 @@ class LogSinkImpl : LogSink {
                 }
             }
             onLogsStored?.invoke()
-        } catch (t: Throwable) {
-            return StoreDataResult.FAILURE
+            StoreDataResult.SUCCESS
         }
-        return StoreDataResult.SUCCESS
-    }
 
     override fun logsForNextBatch(): List<Log> {
         return storedLogs.threadSafeToList()

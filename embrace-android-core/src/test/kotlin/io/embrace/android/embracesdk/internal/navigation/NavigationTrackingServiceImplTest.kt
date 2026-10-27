@@ -1,11 +1,14 @@
 package io.embrace.android.embracesdk.internal.navigation
 
+import io.embrace.android.embracesdk.fakes.FakeErrorHandler
+import io.embrace.android.embracesdk.internal.logging.SdkErrorType
 import org.junit.Assert.assertEquals
 import org.junit.Test
 
 internal class NavigationTrackingServiceImplTest {
 
-    private val service = NavigationTrackingServiceImpl()
+    private val errorHandler = FakeErrorHandler(throwOnSdkError = false)
+    private val service = NavigationTrackingServiceImpl(errorHandler)
 
     @Test
     fun `attributes from every source are written to the sink`() {
@@ -21,6 +24,7 @@ internal class NavigationTrackingServiceImplTest {
         service.addScreenAttributesSource { sink -> sink("b", "2") }
 
         assertEquals(mapOf("b" to "2"), collect())
+        assertEquals(SdkErrorType.SessionPartListenerFail.toString(), errorHandler.sdkErrorMessages.single().msg)
     }
 
     private fun collect(): Map<String, String> {

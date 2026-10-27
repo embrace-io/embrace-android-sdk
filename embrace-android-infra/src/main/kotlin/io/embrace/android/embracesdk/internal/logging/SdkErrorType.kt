@@ -83,6 +83,7 @@ sealed class SdkErrorType(private val severity: Severity) {
     object LogStoreFail : SdkErrorType(ERROR)
     object NetworkCaptureEncryptFail : SdkErrorType(ERROR)
     object KeyValueStoreReadFail : SdkErrorType(ERROR)
+    object RegistrationFail : SdkErrorType(ERROR)
 
     /**
      * A failure that can be ignored.

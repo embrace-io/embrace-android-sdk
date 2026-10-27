@@ -7,12 +7,16 @@ import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.LifecycleOwner
 import io.embrace.android.embracesdk.internal.arch.state.ProcessState
 import io.embrace.android.embracesdk.internal.arch.state.ProcessStateListener
+import io.embrace.android.embracesdk.internal.logging.ErrorHandler
+import io.embrace.android.embracesdk.internal.logging.SdkErrorType
+import io.embrace.android.embracesdk.internal.logging.guardSdkCode
 
 /**
  * Reports process state transitions as observed by androidx's ProcessLifecycleOwner.
  */
 class AndroidxProcessLifecycleTracker(
     private val lifecycleOwner: LifecycleOwner,
+    private val errorHandler: ErrorHandler,
     private val isMainThread: () -> Boolean = { Thread.currentThread() === Looper.getMainLooper().thread },
     private val postToMainThread: (Runnable) -> Unit = { Handler(Looper.getMainLooper()).post(it) },
 ) : LifecycleTracker, LifecycleEventObserver {
@@ -31,9 +35,11 @@ class AndroidxProcessLifecycleTracker(
     override fun register(listener: ProcessStateListener) {
         this.listener = listener
         runOnMainThread {
-            // close() may have been called before a posted registration ran
-            if (!closed) {
-                lifecycleOwner.lifecycle.addObserver(this)
+            errorHandler.guardSdkCode(SdkErrorType.RegistrationFail) {
+                // close() may have been called before a posted registration ran
+                if (!closed) {
+                    lifecycleOwner.lifecycle.addObserver(this)
+                }
             }
         }
     }
@@ -42,7 +48,9 @@ class AndroidxProcessLifecycleTracker(
         closed = true
         listener = null
         runOnMainThread {
-            lifecycleOwner.lifecycle.removeObserver(this)
+            errorHandler.guardSdkCode(SdkErrorType.RegistrationFail) {
+                lifecycleOwner.lifecycle.removeObserver(this)
+            }
         }
     }
 
@@ -51,13 +59,10 @@ class AndroidxProcessLifecycleTracker(
      * androidx.lifecycle.
      */
     private fun runOnMainThread(action: () -> Unit) {
-        val wrappedRunnable = Runnable {
-            runCatching(action)
-        }
         if (!isMainThread()) {
-            postToMainThread(wrappedRunnable)
+            postToMainThread(Runnable(action))
         } else {
-            wrappedRunnable.run()
+            action()
         }
     }
 

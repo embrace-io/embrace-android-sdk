@@ -2,14 +2,17 @@ package io.embrace.android.embracesdk.internal.instrumentation.thermalstate
 
 import android.os.PowerManager
 import io.embrace.android.embracesdk.concurrency.BlockingScheduledExecutorService
+import io.embrace.android.embracesdk.fakes.FakeErrorHandler
 import io.embrace.android.embracesdk.fakes.FakeInstrumentationArgs
 import io.embrace.android.embracesdk.internal.arch.schema.EmbType
+import io.embrace.android.embracesdk.internal.logging.SdkErrorType
 import io.embrace.android.embracesdk.internal.worker.BackgroundWorker
 import io.embrace.android.embracesdk.semconv.EmbThermalStateAttributes
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
+import java.util.concurrent.Executor
 
 internal class ThermalStateDataSourceTest {
 
@@ -100,5 +103,25 @@ internal class ThermalStateDataSourceTest {
 
         assertTrue(notifier.addedListeners.isEmpty())
         assertTrue(notifier.removedListeners.isEmpty())
+    }
+
+    @Test
+    fun `a failed registration is tracked`() {
+        val failure = IllegalStateException("addThermalStatusListener failed")
+        val failingArgs = FakeInstrumentationArgs(errorHandler = FakeErrorHandler(throwOnSdkError = false))
+        val throwingNotifier = object : ThermalStatusNotifier {
+            override fun addThermalStatusListener(
+                executor: Executor,
+                listener: PowerManager.OnThermalStatusChangedListener,
+            ) =
+                throw failure
+
+            override fun removeThermalStatusListener(listener: PowerManager.OnThermalStatusChangedListener) {}
+        }
+        ThermalStateDataSource(failingArgs) { throwingNotifier }.onDataCaptureEnabled()
+
+        val error = failingArgs.errorHandler.sdkErrorMessages.single()
+        assertEquals(SdkErrorType.RegistrationFail.toString(), error.msg)
+        assertEquals(failure, error.throwable)
     }
 }

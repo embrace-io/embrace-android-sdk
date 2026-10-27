@@ -1,12 +1,17 @@
 package io.embrace.android.embracesdk.internal.instrumentation.powersave
 
+import android.app.Application
+import android.content.BroadcastReceiver
 import android.content.Intent
+import android.content.IntentFilter
 import android.os.PowerManager
 import io.embrace.android.embracesdk.concurrency.BlockingScheduledExecutorService
+import io.embrace.android.embracesdk.fakes.FakeErrorHandler
 import io.embrace.android.embracesdk.fakes.FakeInstrumentationArgs
 import io.embrace.android.embracesdk.fakes.fakeBackgroundWorker
 import io.embrace.android.embracesdk.internal.arch.attrs.asPair
 import io.embrace.android.embracesdk.internal.arch.schema.EmbType
+import io.embrace.android.embracesdk.internal.logging.SdkErrorType
 import io.embrace.android.embracesdk.internal.worker.BackgroundWorker
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
@@ -105,6 +110,23 @@ internal class LowPowerDataSourceTest {
         pending.onDataCaptureDisabled()
         executor.runCurrentlyBlocked()
         assertFalse(hasPowerSaveReceiver())
+    }
+
+    @Test
+    fun `a failed registration is tracked`() {
+        val failure = IllegalStateException("registerReceiver failed")
+        val throwingApplication = object : Application() {
+            override fun registerReceiver(receiver: BroadcastReceiver?, filter: IntentFilter?): Intent? = throw failure
+        }
+        val failingArgs = FakeInstrumentationArgs(
+            application = throwingApplication,
+            errorHandler = FakeErrorHandler(throwOnSdkError = false),
+        )
+        LowPowerDataSource(failingArgs, fakeBackgroundWorker()) { PowerSaveModeSource { false } }.onDataCaptureEnabled()
+
+        val error = failingArgs.errorHandler.sdkErrorMessages.single()
+        assertEquals(SdkErrorType.RegistrationFail.toString(), error.msg)
+        assertEquals(failure, error.throwable)
     }
 
     private fun hasPowerSaveReceiver(): Boolean = application.receivers.any { it is PowerSaveModeReceiver }

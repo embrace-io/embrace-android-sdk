@@ -2,12 +2,15 @@ package io.embrace.android.embracesdk.internal.session
 
 import android.app.Activity
 import android.app.ActivityManager.RunningAppProcessInfo
+import android.app.Application
 import android.content.Context
 import android.content.ContextWrapper
 import android.os.Process
 import io.embrace.android.embracesdk.fakes.FakeApplication
+import io.embrace.android.embracesdk.fakes.FakeErrorHandler
 import io.embrace.android.embracesdk.fakes.FakeProcessStateListener
 import io.embrace.android.embracesdk.internal.arch.state.ProcessState
+import io.embrace.android.embracesdk.internal.logging.SdkErrorType
 import io.embrace.android.embracesdk.internal.session.lifecycle.ActivityProcessLifecycleTracker
 import org.junit.Assert.assertEquals
 import org.junit.Before
@@ -24,10 +27,12 @@ internal class ActivityProcessLifecycleTrackerTest {
     private lateinit var listener: FakeProcessStateListener
     private var processes: List<RunningAppProcessInfo>? = null
     private lateinit var pendingTasks: MutableList<Pair<Runnable, Long>>
+    private lateinit var errorHandler: FakeErrorHandler
 
     @Before
     fun before() {
         application = FakeApplication()
+        errorHandler = FakeErrorHandler(throwOnSdkError = false)
         pendingTasks = mutableListOf()
         listener = FakeProcessStateListener()
         setProcessImportance(RunningAppProcessInfo.IMPORTANCE_CACHED)
@@ -287,12 +292,26 @@ internal class ActivityProcessLifecycleTrackerTest {
         assertEquals(0, listener.backgroundCount.get())
     }
 
+    @Test
+    fun `a failed registration is tracked`() {
+        val failure = IllegalStateException("register failed")
+        val throwingApplication = object : Application() {
+            override fun registerActivityLifecycleCallbacks(callback: ActivityLifecycleCallbacks) = throw failure
+        }
+        ActivityProcessLifecycleTracker(throwingApplication, throwingApplication, errorHandler).register(listener)
+
+        val error = errorHandler.sdkErrorMessages.single()
+        assertEquals(SdkErrorType.RegistrationFail.toString(), error.msg)
+        assertEquals(failure, error.throwable)
+    }
+
     private fun createTracker(
         startupContext: Context? = application,
         registerTracker: Boolean = true,
     ): ActivityProcessLifecycleTracker = ActivityProcessLifecycleTracker(
         application,
         startupContext,
+        errorHandler,
         postDelayed = { runnable, delayMs -> pendingTasks.add(runnable to delayMs) },
         removeCallbacks = { runnable -> pendingTasks.removeAll { it.first === runnable } },
         runningAppProcesses = { processes },

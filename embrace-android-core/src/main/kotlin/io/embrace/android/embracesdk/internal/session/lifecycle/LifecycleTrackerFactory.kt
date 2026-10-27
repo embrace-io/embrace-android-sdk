@@ -4,6 +4,7 @@ import android.app.Application
 import android.content.Context
 import androidx.lifecycle.ProcessLifecycleOwner
 import io.embrace.android.embracesdk.internal.config.ConfigService
+import io.embrace.android.embracesdk.internal.logging.ErrorHandler
 
 /**
  * Creates the [LifecycleTracker] that detects process state transitions.
@@ -18,13 +19,14 @@ fun createLifecycleTracker(
     configService: ConfigService,
     application: Application,
     startupContext: Context?,
+    errorHandler: ErrorHandler,
 ): LifecycleTracker {
     return when {
         configService.config.autoDataCapture.activityProcessLifecycleTrackerEnabled -> {
-            ActivityProcessLifecycleTracker(application, startupContext)
+            ActivityProcessLifecycleTracker(application, startupContext, errorHandler)
         }
         else -> {
-            AndroidxProcessLifecycleTracker(ProcessLifecycleOwner.get())
+            AndroidxProcessLifecycleTracker(ProcessLifecycleOwner.get(), errorHandler)
         }
     }
 }

@@ -108,7 +108,7 @@ internal class BufferingSdkInstance(
         errorHandler.drain(
             destination?.let {
                 {
-                        throwable: Throwable, timestampMs: Long ->
+                        _: SdkErrorType, throwable: Throwable, timestampMs: Long ->
                     it.addLog(
                         schemaType = SdkError(throwable),
                         severity = LogSeverity.ERROR,

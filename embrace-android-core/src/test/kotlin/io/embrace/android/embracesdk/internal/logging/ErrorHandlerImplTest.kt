@@ -16,13 +16,18 @@ internal class ErrorHandlerImplTest {
     private lateinit var clock: FakeClock
     private lateinit var handler: ErrorHandlerImpl
     private lateinit var errors: MutableList<Pair<Throwable, Long>>
-    private val sink: ErrorRecorder = { throwable, timestampMs -> errors.add(throwable to timestampMs) }
+    private lateinit var types: MutableList<SdkErrorType>
+    private val sink: ErrorRecorder = { type, throwable, timestampMs ->
+        types.add(type)
+        errors.add(throwable to timestampMs)
+    }
 
     @Before
     fun setUp() {
         clock = FakeClock()
         handler = ErrorHandlerImpl(clock)
         errors = mutableListOf()
+        types = mutableListOf()
     }
 
     @Test
@@ -81,6 +86,14 @@ internal class ErrorHandlerImplTest {
         logger.join()
 
         assertEquals(listOf(buffered, late), errors.map { it.first })
+    }
+
+    @Test
+    fun `buffered and direct errors are recorded with their type`() {
+        handler.guardSdkCode(SdkErrorType.PayloadStorageFail) { throw IllegalStateException() }
+        handler.drain(sink)
+        handler.guardSdkCode(SdkErrorType.SpanOperationFail) { throw IllegalStateException() }
+        assertEquals(listOf(SdkErrorType.PayloadStorageFail, SdkErrorType.SpanOperationFail), types)
     }
 
     @Test
@@ -149,7 +162,7 @@ internal class ErrorHandlerImplTest {
         fail()
 
         val otherErrors = mutableListOf<Throwable>()
-        handler.drain { throwable, _ -> otherErrors += throwable }
+        handler.drain { _, throwable, _ -> otherErrors += throwable }
         fail()
         assertTrue(errors.isEmpty())
         assertTrue(otherErrors.isEmpty())

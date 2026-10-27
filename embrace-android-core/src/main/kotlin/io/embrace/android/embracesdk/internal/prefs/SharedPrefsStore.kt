@@ -5,6 +5,9 @@ package io.embrace.android.embracesdk.internal.prefs
 import android.content.Context
 import android.content.SharedPreferences
 import android.preference.PreferenceManager
+import io.embrace.android.embracesdk.internal.logging.ErrorHandler
+import io.embrace.android.embracesdk.internal.logging.SdkErrorType
+import io.embrace.android.embracesdk.internal.logging.guardSdkCode
 import io.embrace.android.embracesdk.internal.serialization.PlatformSerializer
 import io.embrace.android.embracesdk.internal.store.KeyValueStore
 import io.embrace.android.embracesdk.internal.store.KeyValueStoreEditor
@@ -20,14 +23,19 @@ import java.util.concurrent.atomic.AtomicBoolean
  * Loading the underlying preferences blocks on disk, so callers should hold this behind a [Lazy] and
  * share that one instance rather than resolving it eagerly.
  */
-fun createKeyValueStore(context: Context, serializer: PlatformSerializer): KeyValueStore =
+fun createKeyValueStore(
+    context: Context,
+    serializer: PlatformSerializer,
+    errorHandler: ErrorHandler,
+): KeyValueStore =
     EmbTrace.trace(sectionName = "key-value-store-init", recordDuration = true) {
-        SharedPrefsStore(PreferenceManager.getDefaultSharedPreferences(context), serializer)
+        SharedPrefsStore(PreferenceManager.getDefaultSharedPreferences(context), serializer, errorHandler)
     }
 
 internal class SharedPrefsStore(
     private val impl: SharedPreferences,
     private val serializer: PlatformSerializer,
+    private val errorHandler: ErrorHandler,
 ) : KeyValueStore {
 
     private val openBatch = ThreadLocal<Batch?>()
@@ -68,7 +76,9 @@ internal class SharedPrefsStore(
     override fun getStringMap(key: String): Map<String, String>? {
         return pending(key) {
             val mapString = impl.getString(key, null) ?: return@pending null
-            serializer.fromJson(mapString, stringMapSerializer)
+            errorHandler.guardSdkCode(SdkErrorType.KeyValueStoreReadFail, null) {
+                serializer.fromJson(mapString, stringMapSerializer)
+            }
         }
     }
 
@@ -112,7 +122,7 @@ internal class SharedPrefsStore(
 
     /**
      * The default [SharedPreferences] are shared with the host app, so a key can hold a value of a
-     * different type or malformed JSON. Treat any value that can't be read as absent.
+     * different type. Treat any value that can't be read as absent.
      */
     private inline fun <T> safeRead(
         crossinline read: () -> T?,

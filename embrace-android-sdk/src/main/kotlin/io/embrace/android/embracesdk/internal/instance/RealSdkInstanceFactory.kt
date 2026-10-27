@@ -267,7 +267,7 @@ internal fun createRealSdkInstance(
     val store: KeyValueStore by configLoadServices.keyValueStore
 
     val ordinalStore: OrdinalStore by lazy {
-        EmbTrace.trace("ordinal-store-init") { OrdinalStoreImpl(store) }
+        EmbTrace.trace("ordinal-store-init") { OrdinalStoreImpl(store, errorHandler) }
     }
 
     val eventBus: EventBus by lazy {
@@ -394,6 +394,7 @@ internal fun createRealSdkInstance(
     val crashMarker = init("crash-marker") {
         CrashFileMarkerImpl(
             lazy { storageService.getFileForWrite(CrashFileMarkerImpl.CRASH_MARKER_FILE_NAME) },
+            errorHandler,
         )
     }
 

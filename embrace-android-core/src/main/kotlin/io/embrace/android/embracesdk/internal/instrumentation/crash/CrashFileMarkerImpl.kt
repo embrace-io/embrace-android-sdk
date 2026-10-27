@@ -1,5 +1,7 @@
 package io.embrace.android.embracesdk.internal.instrumentation.crash
 
+import io.embrace.android.embracesdk.internal.logging.ErrorHandler
+import io.embrace.android.embracesdk.internal.logging.SdkErrorType
 import java.io.File
 
 /**
@@ -8,15 +10,18 @@ import java.io.File
  */
 class CrashFileMarkerImpl(
     private val markerFile: Lazy<File>,
+    private val errorHandler: ErrorHandler,
 ) : CrashFileMarker {
 
     private val lock = Any()
 
     override fun mark() {
         synchronized(lock) {
-            val markerFileCreated = createMarkerFile()
-            if (!markerFileCreated) {
-                createMarkerFile()
+            if (createMarkerFile() != null) {
+                createMarkerFile()?.let {
+                    // without the marker the next launch can't tell that this one crashed
+                    errorHandler.trackSdkError(SdkErrorType.PayloadStorageFail, it)
+                }
             }
         }
     }
@@ -50,12 +55,12 @@ class CrashFileMarkerImpl(
         mark()
     }
 
-    private fun createMarkerFile(): Boolean {
+    private fun createMarkerFile(): Throwable? {
         return try {
             markerFile.value.writeText(CRASH_MARKER_SOURCE_JVM)
-            true
-        } catch (e: Exception) {
-            false
+            null
+        } catch (e: Throwable) {
+            e
         }
     }
 

@@ -1,7 +1,9 @@
 package io.embrace.android.embracesdk.internal.arch.store
 
+import io.embrace.android.embracesdk.fakes.FakeErrorHandler
 import io.embrace.android.embracesdk.fakes.FakeSharedPreferences
 import io.embrace.android.embracesdk.fakes.TestPlatformSerializer
+import io.embrace.android.embracesdk.internal.logging.SdkErrorType
 import io.embrace.android.embracesdk.internal.prefs.SharedPrefsStore
 import io.embrace.android.embracesdk.internal.store.KeyValueStore
 import org.junit.Assert.assertEquals
@@ -14,11 +16,13 @@ import org.junit.Test
 
 internal class KeyValueStoreTest {
 
+    private lateinit var errorHandler: FakeErrorHandler
     private lateinit var store: KeyValueStore
 
     @Before
     fun setUp() {
-        store = SharedPrefsStore(FakeSharedPreferences(), TestPlatformSerializer())
+        errorHandler = FakeErrorHandler(throwOnSdkError = false)
+        store = SharedPrefsStore(FakeSharedPreferences(), TestPlatformSerializer(), errorHandler)
     }
 
     @Test
@@ -44,6 +48,23 @@ internal class KeyValueStoreTest {
         assertNull(store.getInt("string"))
         assertNull(store.getLong("string"))
         assertTrue(store.getBoolean("string", true))
+    }
+
+    @Test
+    fun `a value of another type is not tracked as an error`() {
+        store.editAndCommit { putInt("int", 1) }
+        assertNull(store.getStringMap("int"))
+        assertTrue(errorHandler.sdkErrorMessages.isEmpty())
+    }
+
+    @Test
+    fun `malformed JSON in a string map is tracked`() {
+        store.editAndCommit { putString("map", "{not json") }
+        assertNull(store.getStringMap("map"))
+        assertEquals(
+            listOf(SdkErrorType.KeyValueStoreReadFail.toString()),
+            errorHandler.sdkErrorMessages.map { it.msg },
+        )
     }
 
     @Test

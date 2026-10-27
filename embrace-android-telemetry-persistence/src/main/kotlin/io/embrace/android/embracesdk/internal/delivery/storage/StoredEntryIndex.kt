@@ -8,6 +8,7 @@ import io.embrace.android.embracesdk.internal.utils.SystemTrace
 import io.embrace.android.embracesdk.internal.utils.threadSafeToList
 import java.io.File
 import java.io.FileNotFoundException
+import java.io.IOException
 import java.util.concurrent.CopyOnWriteArraySet
 
 /**
@@ -33,9 +34,7 @@ class StoredEntryIndex<T>(
     }
 
     private val entries: CopyOnWriteArraySet<T> by lazy {
-        val result = errorHandler.guardSdkCode(SdkErrorType.Ignored, null) { rootDir.listFiles() }
-        val files = result?.toList() ?: emptyList()
-        val parsed = files.mapNotNull { file ->
+        val parsed = listStoredFiles().mapNotNull { file ->
             val entry = layout.fromName(file.name)
             if (entry == null) {
                 // discard anything that can't be parsed (e.g. leftover .tmp files from killed
@@ -45,6 +44,15 @@ class StoredEntryIndex<T>(
             entry
         }
         CopyOnWriteArraySet(parsed)
+    }
+
+    private fun listStoredFiles(): List<File> {
+        val dir = errorHandler.guardSdkCode(SdkErrorType.Ignored, null) {
+            rootDir.takeIf(File::isDirectory)
+        } ?: return emptyList()
+        return errorHandler.guardSdkCode(errorType, null) {
+            dir.listFiles()?.toList() ?: throw IOException("Failed to list ${dir.path}")
+        } ?: emptyList()
     }
 
     /**

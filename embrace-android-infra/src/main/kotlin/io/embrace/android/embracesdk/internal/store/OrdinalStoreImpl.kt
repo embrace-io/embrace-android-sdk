@@ -1,7 +1,12 @@
 package io.embrace.android.embracesdk.internal.store
 
+import io.embrace.android.embracesdk.internal.logging.ErrorHandler
+import io.embrace.android.embracesdk.internal.logging.SdkErrorType
+import io.embrace.android.embracesdk.internal.logging.guardSdkCode
+
 class OrdinalStoreImpl(
     private val impl: KeyValueStore,
+    private val errorHandler: ErrorHandler,
 ) : OrdinalStore {
 
     private val lock = Any()
@@ -16,7 +21,7 @@ class OrdinalStoreImpl(
         if (scopeKey != null && scope == null) {
             return -1
         }
-        try {
+        errorHandler.guardSdkCode(SdkErrorType.PayloadStorageFail, -1) {
             val newScope = when {
                 scopeKey != null && impl.getString(scopeKey) != scope -> scope
                 else -> null
@@ -32,8 +37,6 @@ class OrdinalStoreImpl(
                 putInt(sanitized.key, next)
             }
             next
-        } catch (tr: Throwable) {
-            -1
         }
     }
 

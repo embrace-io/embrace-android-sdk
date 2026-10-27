@@ -220,6 +220,7 @@ internal fun createRealSdkInstance(
         createCurrentSessionPartSpan(
             openTelemetryClock = openTelemetryClock,
             telemetryService = telemetryService,
+            errorHandler = errorHandler,
             spanRepository = spanRepository,
             tracerSupplier = { otelSdkWrapper.value.sdkTracer },
             openTelemetrySupplier = { otelSdkWrapper.value.openTelemetryKotlin },

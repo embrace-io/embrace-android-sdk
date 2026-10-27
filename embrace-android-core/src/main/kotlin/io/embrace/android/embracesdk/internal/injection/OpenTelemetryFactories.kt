@@ -54,6 +54,7 @@ fun createOtelSdkConfig(
 fun createCurrentSessionPartSpan(
     openTelemetryClock: Clock,
     telemetryService: InternalTelemetryService,
+    errorHandler: ErrorHandler,
     spanRepository: SpanRepository,
     tracerSupplier: () -> Tracer,
     openTelemetrySupplier: () -> OpenTelemetry,
@@ -64,6 +65,7 @@ fun createCurrentSessionPartSpan(
 ): CurrentSessionPartSpan = CurrentSessionPartSpanImpl(
     openTelemetryClock = openTelemetryClock,
     telemetryService = telemetryService,
+    errorHandler = errorHandler,
     spanRepository = spanRepository,
     tracerSupplier = tracerSupplier,
     openTelemetrySupplier = openTelemetrySupplier,

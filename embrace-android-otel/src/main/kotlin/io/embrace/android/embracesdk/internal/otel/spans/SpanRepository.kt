@@ -42,7 +42,13 @@ class SpanRepository(
      */
     fun trackStartedEmbraceSpan(embraceSpan: EmbraceSdkSpan) {
         val spanId = embraceSpan.spanId ?: return
-        spans.putIfAbsent(spanId, embraceSpan)
+        val existing = spans.putIfAbsent(spanId, embraceSpan)
+        if (existing != null && existing !== embraceSpan) {
+            errorHandler.trackSdkError(
+                SdkErrorType.DuplicateSpanIds,
+                IllegalStateException("Span ID already tracked by another span"),
+            )
+        }
     }
 
     /**

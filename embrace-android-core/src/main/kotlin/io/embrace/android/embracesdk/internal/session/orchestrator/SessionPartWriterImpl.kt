@@ -79,6 +79,9 @@ class SessionPartWriterImpl(
     private var processTerminating = false
 
     @Volatile
+    private var closed = false
+
+    @Volatile
     private var resourceListenerRegistered = false
 
     private val bufferLock = Any()
@@ -129,7 +132,15 @@ class SessionPartWriterImpl(
         }
         EmbTrace.trace("mf-part-ended") {
             val writers = synchronized(bufferLock) {
-                val ref = current ?: return
+                val ref = current ?: run {
+                    if (!closed) {
+                        errorHandler.trackSdkError(
+                            SdkErrorType.SessionPartEndUnexpected,
+                            IllegalStateException("Session part ended with no current part"),
+                        )
+                    }
+                    return
+                }
                 if (ref.directory.sessionPartId != sessionPartId) {
                     reportMissedEnd("Session part ended after another had started")
                     return
@@ -222,6 +233,7 @@ class SessionPartWriterImpl(
     }
 
     override fun close() {
+        closed = true
         val writers = synchronized(bufferLock) { current.also { current = null } } ?: return
         writers.flushPendingWrites()
         if (!processTerminating) {

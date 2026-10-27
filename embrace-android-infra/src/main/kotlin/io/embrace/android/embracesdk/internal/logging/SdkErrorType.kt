@@ -43,6 +43,7 @@ sealed class SdkErrorType(private val severity: Severity) {
     object SessionPartReadFail : SdkErrorType(ERROR)
     object SessionPartWritesCompleteFail : SdkErrorType(ERROR)
     object SessionPartEndMissed : SdkErrorType(ERROR)
+    object SessionPartEndUnexpected : SdkErrorType(ERROR)
     object OrphanedSessionSpan : SdkErrorType(ERROR)
     object DuplicateSpanIds : SdkErrorType(ERROR)
     object CompletedSpansWriteFail : SdkErrorType(ERROR)

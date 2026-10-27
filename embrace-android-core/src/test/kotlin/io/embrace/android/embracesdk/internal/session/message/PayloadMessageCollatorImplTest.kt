@@ -16,6 +16,7 @@ import io.embrace.android.embracesdk.internal.session.orchestrator.SessionPartSn
 import io.embrace.android.embracesdk.internal.spans.CurrentSessionPartSpan
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotNull
+import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
@@ -169,7 +170,7 @@ internal class PayloadMessageCollatorImplTest(
 
     @Test
     fun `session part span is created when session payload is built if it did not exist before`() {
-        currentSessionPartSpan.endSession(startNewSession = false)
+        assertNull(currentSessionPartSpan.current())
         listOf(true, false).forEach { startupTemperature ->
             LifeEventType.entries.forEach { lifeEventType ->
                 ProcessState.entries.forEach { previousState ->

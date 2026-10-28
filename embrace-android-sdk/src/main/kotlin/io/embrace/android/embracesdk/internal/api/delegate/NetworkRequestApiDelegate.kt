@@ -7,9 +7,14 @@ import io.embrace.android.embracesdk.internal.instrumentation.network.HttpNetwor
 import io.embrace.android.embracesdk.internal.instrumentation.network.NetworkCaptureDataSource
 import io.embrace.android.embracesdk.internal.instrumentation.network.NetworkRequestDataSource
 import io.embrace.android.embracesdk.internal.network.http.HttpRequestInfoModifierChain
+import io.embrace.android.embracesdk.internal.network.parent.NoopNetworkSpanParentToken
 import io.embrace.android.embracesdk.internal.session.orchestrator.SessionOrchestrator
 import io.embrace.android.embracesdk.network.EmbraceNetworkRequest
+import io.embrace.android.embracesdk.network.NetworkSpanParentProvider
+import io.embrace.android.embracesdk.network.NetworkSpanParentToken
 import io.embrace.android.embracesdk.network.http.HttpRequestInfoModifier
+import io.embrace.android.embracesdk.spans.EmbraceSpan
+import io.opentelemetry.kotlin.tracing.SpanContext
 
 internal class NetworkRequestApiDelegate(
     private val registry: InstrumentationRegistry,
@@ -28,6 +33,14 @@ internal class NetworkRequestApiDelegate(
     override fun removeHttpRequestInfoModifier(modifier: HttpRequestInfoModifier) {
         httpRequestInfoModifierChain.remove(modifier)
     }
+
+    override fun setNetworkSpanParent(span: EmbraceSpan): NetworkSpanParentToken = NoopNetworkSpanParentToken
+
+    override fun setNetworkSpanParent(spanContext: SpanContext): NetworkSpanParentToken = NoopNetworkSpanParentToken
+
+    override fun clearNetworkSpanParent(token: NetworkSpanParentToken) {}
+
+    override fun setNetworkSpanParentProvider(provider: NetworkSpanParentProvider) {}
 
     @Deprecated("This is no longer supported")
     override fun generateW3cTraceparent(): String = DefaultTraceparentGenerator.generateW3cTraceparent()

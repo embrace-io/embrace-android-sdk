@@ -18,8 +18,11 @@ import io.embrace.android.embracesdk.internal.api.delegate.TrackedExperimentImpl
 import io.embrace.android.embracesdk.internal.api.delegate.TrackedFeatureFlagImpl
 import io.embrace.android.embracesdk.internal.clock.Clock
 import io.embrace.android.embracesdk.internal.logging.ErrorHandler
+import io.embrace.android.embracesdk.internal.network.parent.NoopNetworkSpanParentToken
 import io.embrace.android.embracesdk.internal.otel.spans.NoopEmbraceSdkSpan
 import io.embrace.android.embracesdk.network.EmbraceNetworkRequest
+import io.embrace.android.embracesdk.network.NetworkSpanParentProvider
+import io.embrace.android.embracesdk.network.NetworkSpanParentToken
 import io.embrace.android.embracesdk.network.http.HttpRequestInfoModifier
 import io.embrace.android.embracesdk.spans.AutoTerminationMode
 import io.embrace.android.embracesdk.spans.EmbraceSpan
@@ -29,6 +32,7 @@ import io.opentelemetry.kotlin.NoopOpenTelemetry
 import io.opentelemetry.kotlin.OpenTelemetry
 import io.opentelemetry.kotlin.logging.export.LogRecordExporter
 import io.opentelemetry.kotlin.logging.export.LogRecordProcessor
+import io.opentelemetry.kotlin.tracing.SpanContext
 import io.opentelemetry.kotlin.tracing.export.SpanExporter
 import io.opentelemetry.kotlin.tracing.export.SpanProcessor
 
@@ -140,6 +144,24 @@ internal class NoopSdkInstance(
 
     override fun removeHttpRequestInfoModifier(modifier: HttpRequestInfoModifier) {
         logDropped("remove_http_request_info_modifier")
+    }
+
+    override fun setNetworkSpanParent(span: EmbraceSpan): NetworkSpanParentToken {
+        logDropped("set_network_span_parent")
+        return NoopNetworkSpanParentToken
+    }
+
+    override fun setNetworkSpanParent(spanContext: SpanContext): NetworkSpanParentToken {
+        logDropped("set_network_span_parent")
+        return NoopNetworkSpanParentToken
+    }
+
+    override fun clearNetworkSpanParent(token: NetworkSpanParentToken) {
+        logDropped("clear_network_span_parent")
+    }
+
+    override fun setNetworkSpanParentProvider(provider: NetworkSpanParentProvider) {
+        logDropped("set_network_span_parent_provider")
     }
 
     @Deprecated("This is no longer supported")

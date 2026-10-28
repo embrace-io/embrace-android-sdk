@@ -4,6 +4,8 @@ import io.embrace.android.embracesdk.LastRunEndState
 import io.embrace.android.embracesdk.PropertyScope
 import io.embrace.android.embracesdk.fakes.FakeClock
 import io.embrace.android.embracesdk.fakes.FakeErrorHandler
+import io.embrace.android.embracesdk.fakes.FakeSpanContext
+import io.embrace.android.embracesdk.internal.network.parent.NoopNetworkSpanParentToken
 import io.embrace.android.embracesdk.internal.otel.spans.NoopEmbraceSdkSpan
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
@@ -41,6 +43,8 @@ internal class NoopSdkInstanceTest {
         assertFalse(instance.recordCompletedSpan("span", 1, 2))
         assertSame(NoopEmbraceSdkSpan, instance.startSpan("span"))
         assertNull(instance.getSpan("id"))
+        assertSame(NoopNetworkSpanParentToken, instance.setNetworkSpanParent(NoopEmbraceSdkSpan))
+        assertSame(NoopNetworkSpanParentToken, instance.setNetworkSpanParent(FakeSpanContext()))
     }
 
     @Test

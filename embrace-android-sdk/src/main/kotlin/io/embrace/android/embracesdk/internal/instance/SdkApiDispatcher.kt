@@ -18,9 +18,12 @@ import io.embrace.android.embracesdk.internal.api.delegate.TrackedFeatureFlagImp
 import io.embrace.android.embracesdk.internal.logging.ErrorHandler
 import io.embrace.android.embracesdk.internal.logging.SdkErrorType
 import io.embrace.android.embracesdk.internal.logging.guardSdkCode
+import io.embrace.android.embracesdk.internal.network.parent.NoopNetworkSpanParentToken
 import io.embrace.android.embracesdk.internal.otel.spans.NoopEmbraceSdkSpan
 import io.embrace.android.embracesdk.internal.telemetry.InternalTelemetryService
 import io.embrace.android.embracesdk.network.EmbraceNetworkRequest
+import io.embrace.android.embracesdk.network.NetworkSpanParentProvider
+import io.embrace.android.embracesdk.network.NetworkSpanParentToken
 import io.embrace.android.embracesdk.network.http.HttpRequestInfoModifier
 import io.embrace.android.embracesdk.spans.AutoTerminationMode
 import io.embrace.android.embracesdk.spans.EmbraceSpan
@@ -30,6 +33,7 @@ import io.opentelemetry.kotlin.NoopOpenTelemetry
 import io.opentelemetry.kotlin.OpenTelemetry
 import io.opentelemetry.kotlin.logging.export.LogRecordExporter
 import io.opentelemetry.kotlin.logging.export.LogRecordProcessor
+import io.opentelemetry.kotlin.tracing.SpanContext
 import io.opentelemetry.kotlin.tracing.export.SpanExporter
 import io.opentelemetry.kotlin.tracing.export.SpanProcessor
 
@@ -125,6 +129,18 @@ internal class SdkApiDispatcher(
 
     override fun removeHttpRequestInfoModifier(modifier: HttpRequestInfoModifier) =
         record("remove_http_request_info_modifier") { target.removeHttpRequestInfoModifier(modifier) }
+
+    override fun setNetworkSpanParent(span: EmbraceSpan): NetworkSpanParentToken =
+        record("set_network_span_parent", NoopNetworkSpanParentToken) { target.setNetworkSpanParent(span) }
+
+    override fun setNetworkSpanParent(spanContext: SpanContext): NetworkSpanParentToken =
+        record("set_network_span_parent", NoopNetworkSpanParentToken) { target.setNetworkSpanParent(spanContext) }
+
+    override fun clearNetworkSpanParent(token: NetworkSpanParentToken) =
+        record("clear_network_span_parent") { target.clearNetworkSpanParent(token) }
+
+    override fun setNetworkSpanParentProvider(provider: NetworkSpanParentProvider) =
+        record("set_network_span_parent_provider") { target.setNetworkSpanParentProvider(provider) }
 
     @Deprecated("This is no longer supported")
     override fun generateW3cTraceparent(): String? =

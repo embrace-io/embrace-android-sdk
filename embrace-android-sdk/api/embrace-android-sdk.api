@@ -20,6 +20,7 @@ public final class io/embrace/android/embracesdk/Embrace : io/embrace/android/em
 	public fun applicationInitEnd ()V
 	public fun applicationInitStart ()V
 	public fun clearAllUserPersonas ()V
+	public fun clearNetworkSpanParent (Lio/embrace/android/embracesdk/network/NetworkSpanParentToken;)V
 	public fun clearUserEmail ()V
 	public fun clearUserIdentifier ()V
 	public fun clearUserPersona (Ljava/lang/String;)V
@@ -55,6 +56,9 @@ public final class io/embrace/android/embracesdk/Embrace : io/embrace/android/em
 	public fun removeHttpRequestInfoModifier (Lio/embrace/android/embracesdk/network/http/HttpRequestInfoModifier;)V
 	public fun removeUserSessionListener (Lio/embrace/android/embracesdk/UserSessionListener;)V
 	public fun removeUserSessionProperty (Ljava/lang/String;)Z
+	public fun setNetworkSpanParent (Lio/embrace/android/embracesdk/spans/EmbraceSpan;)Lio/embrace/android/embracesdk/network/NetworkSpanParentToken;
+	public fun setNetworkSpanParent (Lio/opentelemetry/kotlin/tracing/SpanContext;)Lio/embrace/android/embracesdk/network/NetworkSpanParentToken;
+	public fun setNetworkSpanParentProvider (Lio/embrace/android/embracesdk/network/NetworkSpanParentProvider;)V
 	public fun setResourceAttribute (Ljava/lang/String;Ljava/lang/String;)V
 	public fun setUserEmail (Ljava/lang/String;)V
 	public fun setUserIdentifier (Ljava/lang/String;)V

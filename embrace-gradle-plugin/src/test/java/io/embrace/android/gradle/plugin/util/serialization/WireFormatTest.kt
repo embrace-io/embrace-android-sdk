@@ -7,6 +7,8 @@ import io.embrace.android.gradle.plugin.tasks.buildinfo.BuildInfoExport
 import io.embrace.android.gradle.plugin.tasks.ndk.ArchitecturesToHashedSharedObjectFilesMap
 import io.embrace.android.gradle.plugin.tasks.ndk.NdkUploadHandshakeRequest
 import io.embrace.android.gradle.plugin.tasks.ndk.NdkUploadHandshakeResponse
+import io.embrace.android.gradle.plugin.tasks.reactnative.BundleAndSourcemap
+import io.embrace.android.gradle.plugin.tasks.reactnative.writeBundleAndSourcemapJson
 import kotlinx.serialization.SerializationStrategy
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
@@ -104,6 +106,30 @@ class WireFormatTest {
         val expected = readExpectedJson("wire_format_hashed_shared_object_files_map.json")
         assertEquals(expected, encode(map, ArchitecturesToHashedSharedObjectFilesMap.serializer()))
         assertEquals(map, serializer.fromJson(expected, ArchitecturesToHashedSharedObjectFilesMap.serializer()))
+    }
+
+    @Test
+    fun `react native bundle and sourcemap escapes contents`() {
+        val payload = BundleAndSourcemap(bundle = "var a = \"x\";\nb", sourcemap = "{\"version\":3}")
+        val expected = """{"bundle":"var a = \"x\";\nb","sourcemap":"{\"version\":3}"}"""
+        assertEquals(expected, encode(payload, BundleAndSourcemap.serializer()))
+        assertEquals(expected, streamBundleAndSourcemap(payload))
+    }
+
+    @Test
+    fun `streamed react native payload matches kotlinx serialization`() {
+        val controlChars = (0 until 0x20).map(Int::toChar).joinToString("")
+        val bundle = controlChars + "\"\\/ é 中 😀" + "x".repeat(DEFAULT_BUFFER_SIZE - 1) + "😀"
+        val payload = BundleAndSourcemap(bundle = bundle, sourcemap = "")
+        assertEquals(encode(payload, BundleAndSourcemap.serializer()), streamBundleAndSourcemap(payload))
+    }
+
+    private fun streamBundleAndSourcemap(payload: BundleAndSourcemap): String {
+        val stream = ByteArrayOutputStream()
+        stream.bufferedWriter().use {
+            writeBundleAndSourcemapJson(payload.bundle.reader(), payload.sourcemap.reader(), it)
+        }
+        return stream.toString(Charsets.UTF_8.name())
     }
 
     private fun <T> encode(value: T, strategy: SerializationStrategy<T>): String {

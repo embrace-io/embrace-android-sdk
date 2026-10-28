@@ -6,8 +6,6 @@ import io.embrace.android.gradle.plugin.network.OkHttpNetworkService
 import io.embrace.android.gradle.plugin.tasks.EmbraceUploadTask
 import io.embrace.android.gradle.plugin.tasks.EmbraceUploadTaskImpl
 import io.embrace.android.gradle.plugin.tasks.handleHttpCallResult
-import kotlinx.serialization.json.buildJsonObject
-import kotlinx.serialization.json.put
 import okio.buffer
 import okio.gzip
 import okio.sink
@@ -95,12 +93,12 @@ abstract class GenerateRnSourcemapTask @Inject constructor(
     ): File {
         try {
             sourceMapAndBundleJsonFile.parentFile.mkdirs()
-            sourceMapAndBundleJsonFile.sink().gzip().buffer().use { sink ->
-                val json = buildJsonObject {
-                    put(KEY_NAME_BUNDLE, bundleFile.readText())
-                    put(KEY_NAME_SOURCE_MAP, sourceMapFile.readText())
+            sourceMapAndBundleJsonFile.sink().gzip().buffer().outputStream().bufferedWriter().use { out ->
+                bundleFile.reader().use { bundle ->
+                    sourceMapFile.reader().use { sourcemap ->
+                        writeBundleAndSourcemapJson(bundle, sourcemap, out)
+                    }
                 }
-                sink.writeUtf8(json.toString())
             }
         } catch (e: Exception) {
             val msg = "Failed to generate bundle zip file with bundleFile: $bundleFile and sourceMapFile: $sourceMapFile"
@@ -112,7 +110,5 @@ abstract class GenerateRnSourcemapTask @Inject constructor(
 
     companion object {
         const val NAME = "generateRnSourcemap"
-        private const val KEY_NAME_BUNDLE = "bundle"
-        private const val KEY_NAME_SOURCE_MAP = "sourcemap"
     }
 }

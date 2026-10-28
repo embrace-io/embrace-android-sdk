@@ -1,5 +1,6 @@
 package io.embrace.android.embracesdk.internal.arch.schema
 
+import io.embrace.android.embracesdk.internal.utils.stacktraceTextWithCauses
 import io.embrace.android.embracesdk.semconv.EmbAeiAttributes
 import io.embrace.android.embracesdk.semconv.EmbAndroidAttributes
 import io.embrace.android.embracesdk.semconv.EmbBreadcrumbAttributes
@@ -10,6 +11,7 @@ import io.embrace.android.embracesdk.semconv.EmbNetworkStatusAttributes
 import io.embrace.android.embracesdk.semconv.EmbPowerStateAttributes
 import io.embrace.android.embracesdk.semconv.EmbPushNotificationAttributes
 import io.embrace.android.embracesdk.semconv.EmbScreenLoadAttributes
+import io.embrace.android.embracesdk.semconv.EmbSdkErrorAttributes
 import io.embrace.android.embracesdk.semconv.EmbSessionAttributes
 import io.embrace.android.embracesdk.semconv.EmbSmoothnessAttributes
 import io.embrace.android.embracesdk.semconv.EmbStateTransitionAttributes
@@ -319,16 +321,14 @@ sealed class SchemaType(
         )
     }
 
-    class SdkError(throwable: Throwable) : SchemaType(
+    class SdkError(type: String, throwable: Throwable) : SchemaType(
         telemetryType = EmbType.System.SdkError,
         fixedObjectName = "internal-error",
     ) {
         override val schemaAttributes: Map<String, String> = mapOf(
+            EmbSdkErrorAttributes.EMB_SDK_ERROR_TYPE to type,
             ExceptionAttributes.EXCEPTION_TYPE to throwable.javaClass.name,
-            ExceptionAttributes.EXCEPTION_STACKTRACE to throwable.stackTrace.joinToString(
-                "\n",
-                transform = StackTraceElement::toString,
-            ),
+            ExceptionAttributes.EXCEPTION_STACKTRACE to throwable.stacktraceTextWithCauses(),
             ExceptionAttributes.EXCEPTION_MESSAGE to (throwable.message ?: ""),
         )
     }

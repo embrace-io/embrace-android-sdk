@@ -38,7 +38,8 @@ class SessionPartResurrector(
     /**
      * Returns the envelope [deadPart] should be delivered as, or null if it does not contain exactly one
      * session part span. [processIdentifier] is the process that persisted it, and [lastWrittenMs] is the
-     * last time its files were written, if they record it.
+     * last time it was persisted, if known: when its snapshot was stored in single-file mode, or when its
+     * files were last written in multi-file mode.
      *
      * The native crash recorded for [deadPart], if any, is attached to the envelope, then sent and reported to
      * [onNativeCrashProcessed] by the work handed to [sendNativeCrash]. That work runs at once unless the caller
@@ -118,12 +119,14 @@ class SessionPartResurrector(
 
         val persistedSpans = data.spans.orEmpty()
 
-        // In multi-file mode, lastWrittenMs is the last time the part's files were written, which the process had
-        // to be alive to do. It is the end of the part even when a span in the payload records a later time, as
-        // span times can be set by the app. A span that started after lastWrittenMs will have its end time set to
-        // its start time rather than the lastWrittenMs because a span can't end before its starts.
-        // For files where we don't have lastWrittenMs or if we are in single-file mode, estimate the end from the
-        // payload's span times.
+        // lastWrittenMs is the last time the part was persisted, which the process had to be alive to do. In
+        // single-file mode, it's when its snapshot was stored, which happens on every periodic cache tick in the
+        // foreground. In multi-file mode, it's when its files were last written. It is the end of the part even when
+        // a span in the payload records a later time, as span times can be set by the app. A span that started
+        // after lastWrittenMs will have its end time set to its start time rather than the lastWrittenMs because a
+        // span can't end before its starts.
+        // For multi-file parts whose files don't record when they were written, estimate the end from the payload's
+        // span times.
         val estimatedEndTimeMs = lastWrittenMs ?: estimateEndTimeMs(persistedSpans, snapshots.orEmpty())
         val failedSpans = snapshots
             ?.map { it.toFailedSpan(endTimeMs = maxOf(estimatedEndTimeMs, it.startTimeMs())) }

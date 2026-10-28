@@ -159,42 +159,22 @@ class PayloadResurrectionServiceImplTest {
     }
 
     @Test
-    fun `dead session end time from completed span`() {
-        val startTimeMs = checkNotNull(deadSessionEnvelope.getSessionPartSpan()?.startTimeNanos).nanosToMillis()
-        val max = startTimeMs + 20000L
+    fun `dead session ends when its snapshot was stored, after the last span activity in it`() {
+        val startTimeMs = deadSessionEnvelope.getStartTime()
+        val storedMs = startTimeMs + 30_000L
         val envelope = deadSessionEnvelope.copy(
             data = deadSessionEnvelope.data.copy(
                 spans = listOf(
-                    Span(endTimeNanos = max.millisToNanos()),
-                    Span(endTimeNanos = (startTimeMs + 10000).millisToNanos()),
-                    Span(endTimeNanos = (startTimeMs + 7000).millisToNanos()),
+                    Span(endTimeNanos = (startTimeMs + 20_000L).millisToNanos()),
+                ),
+                spanSnapshots = deadSessionEnvelope.data.spanSnapshots?.plus(
+                    Span(startTimeNanos = (startTimeMs + 10_000L).millisToNanos()),
                 ),
             ),
         )
-        envelope.resurrectPayload()
+        envelope.resurrectPayload(metadata = sessionMetadata.copy(timestamp = storedMs))
         val sessionEnvelope = getStoredParts().single()
-        assertEquals(max, sessionEnvelope.getSessionPartSpan()?.endTimeNanos?.nanosToMillis())
-    }
-
-    @Test
-    fun `dead session end time from snapshots due to no completed spans`() {
-        val startTimeMs = deadSessionEnvelope.getStartTime()
-        val max = startTimeMs + 10000
-        val spanSnapshots = deadSessionEnvelope.data.spanSnapshots?.plus(
-            listOf(
-                Span(startTimeNanos = max.millisToNanos()),
-                Span(startTimeNanos = (startTimeMs + 8000).millisToNanos()),
-                Span(startTimeNanos = (startTimeMs + 7000).millisToNanos()),
-            ),
-        )
-        val envelope = deadSessionEnvelope.copy(
-            data = deadSessionEnvelope.data.copy(
-                spanSnapshots = spanSnapshots,
-            ),
-        )
-        envelope.resurrectPayload()
-        val sessionEnvelope = getStoredParts().single()
-        assertEquals(max.millisToNanos(), sessionEnvelope.getSessionPartSpan()?.endTimeNanos)
+        assertEquals(storedMs, sessionEnvelope.getSessionPartSpan()?.endTimeNanos?.nanosToMillis())
     }
 
     @Test
@@ -912,9 +892,9 @@ class PayloadResurrectionServiceImplTest {
         thread.join(5000)
     }
 
-    private fun Envelope<SessionPartPayload>.resurrectPayload() {
+    private fun Envelope<SessionPartPayload>.resurrectPayload(metadata: StoredTelemetryMetadata = sessionMetadata) {
         cacheStorageService.addPayload(
-            metadata = sessionMetadata,
+            metadata = metadata,
             data = this,
         )
         resurrectInBackground()

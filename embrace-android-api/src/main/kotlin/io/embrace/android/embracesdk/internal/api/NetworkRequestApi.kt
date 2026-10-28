@@ -2,7 +2,11 @@ package io.embrace.android.embracesdk.internal.api
 
 import io.embrace.android.embracesdk.annotation.InternalApi
 import io.embrace.android.embracesdk.network.EmbraceNetworkRequest
+import io.embrace.android.embracesdk.network.NetworkSpanParentProvider
+import io.embrace.android.embracesdk.network.NetworkSpanParentToken
 import io.embrace.android.embracesdk.network.http.HttpRequestInfoModifier
+import io.embrace.android.embracesdk.spans.EmbraceSpan
+import io.opentelemetry.kotlin.tracing.SpanContext
 
 /**
  * The public API that is used for capturing network requests manually
@@ -31,6 +35,31 @@ public interface NetworkRequestApi {
      * [addHttpRequestInfoModifier].
      */
     public fun removeHttpRequestInfoModifier(modifier: HttpRequestInfoModifier)
+
+    /**
+     * Sets the span that network spans started from now on are parented to, returning a token that clears only this set.
+     */
+    public fun setNetworkSpanParent(span: EmbraceSpan): NetworkSpanParentToken
+
+    /**
+     * Sets the span context that network spans started from now on are parented to, returning a token that clears only this set.
+     */
+    public fun setNetworkSpanParent(spanContext: SpanContext): NetworkSpanParentToken
+
+    /**
+     * Clears the network span parent and returns `true` if [token] is from the most recent set, otherwise does nothing and returns `false`.
+     */
+    public fun clearNetworkSpanParent(token: NetworkSpanParentToken): Boolean
+
+    /**
+     * Clears the network span parent unconditionally.
+     */
+    public fun clearNetworkSpanParent()
+
+    /**
+     * Registers the provider consulted for each captured request's network span parent; it must be called after start.
+     */
+    public fun setNetworkSpanParentProvider(provider: NetworkSpanParentProvider)
 
     @Deprecated("This is no longer supported")
     public fun generateW3cTraceparent(): String?

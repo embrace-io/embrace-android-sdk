@@ -4,10 +4,13 @@ import android.app.Activity
 import io.embrace.android.embracesdk.PropertyScope
 import io.embrace.android.embracesdk.fakes.FakeErrorHandler
 import io.embrace.android.embracesdk.fakes.FakeInternalTelemetryService
+import io.embrace.android.embracesdk.fakes.FakeSpanContext
 import io.embrace.android.embracesdk.internal.EmbraceInternalApi
 import io.embrace.android.embracesdk.internal.InternalInterfaceApi
 import io.embrace.android.embracesdk.internal.NoopInternalInterfaceApi
+import io.embrace.android.embracesdk.internal.network.parent.NoopNetworkSpanParentToken
 import io.embrace.android.embracesdk.internal.otel.spans.NoopEmbraceSdkSpan
+import io.embrace.android.embracesdk.network.NetworkSpanParent
 import io.embrace.android.embracesdk.spans.AutoTerminationMode
 import io.embrace.android.embracesdk.spans.EmbraceSpan
 import io.embrace.android.embracesdk.spans.EmbraceSpanEvent
@@ -113,6 +116,10 @@ internal class SdkApiDispatcherTest {
         sdk.untrackFeatureFlags(emptyList())
         sdk.deviceId
         sdk.applicationInitEnd()
+        sdk.setNetworkSpanParent(NoopEmbraceSdkSpan)
+        sdk.setNetworkSpanParent(FakeSpanContext())
+        sdk.clearNetworkSpanParent(NoopNetworkSpanParentToken)
+        sdk.setNetworkSpanParentProvider { _, _ -> NetworkSpanParent.USE_DEFAULT }
         assertEquals(
             listOf(
                 "log_message",
@@ -124,6 +131,10 @@ internal class SdkApiDispatcherTest {
                 "untrack_feature_flag",
                 "get_device_id",
                 "application_init_end",
+                "set_network_span_parent",
+                "set_network_span_parent",
+                "clear_network_span_parent",
+                "set_network_span_parent_provider",
             ),
             telemetryService.apiCalls,
         )
@@ -147,7 +158,9 @@ internal class SdkApiDispatcherTest {
         assertFalse(sdk.startView("view"))
         assertSame(NoopEmbraceSdkSpan, sdk.startSpan("span"))
         assertEquals("", sdk.deviceId)
-        assertEquals(4, errorHandler.sdkErrorMessages.size)
+        assertSame(NoopNetworkSpanParentToken, sdk.setNetworkSpanParent(NoopEmbraceSdkSpan))
+        assertSame(NoopNetworkSpanParentToken, sdk.setNetworkSpanParent(FakeSpanContext()))
+        assertEquals(6, errorHandler.sdkErrorMessages.size)
     }
 
     @Test

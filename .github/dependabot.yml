@@ -38,6 +38,11 @@ updates:
       # need into -Werror failures. Remove this once OkHttp 4 support is dropped.
       - dependency-name: "com.squareup.okhttp3:okhttp-bom"
         versions: ["[5.0.0,)"]
+      # androidx.lifecycle 2.9.0+ declares minAndroidGradlePluginVersion 8.1.1 in its AAR metadata,
+      # above the SDK's minAgpVersion, and 2.11.0+ needs kotlin-stdlib 2.1.20, above the SDK's
+      # minimum supported Kotlin. Remove this once both minimums are raised.
+      - dependency-name: "androidx.lifecycle:*"
+        versions: ["[2.9.0,)"]
   - package-ecosystem: "gradle"
     directory: "/examples/ExampleApp"
     schedule:

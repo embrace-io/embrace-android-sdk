@@ -38,12 +38,6 @@ enum class Ordinal(
     SESSION("io.embrace.sessionnumber"),
 
     /**
-     * Increments at the start of every background activity. This allows us to check
-     * the % of background activities that didn't get delivered to the backend.
-     */
-    BACKGROUND_ACTIVITY("io.embrace.bgactivitynumber"),
-
-    /**
      * Increments at the start of every user session. This allows us to check the % of user sessions
      * that didn't get delivered to the backend.
      */

@@ -29,6 +29,15 @@ updates:
       # newer Kotlin versions than the SDK's minimum supported Kotlin (and the Gradle plugin's
       # Gradle 8.0.2 build-script Kotlin) can read. Bump it manually when the minimum is raised.
       - dependency-name: "org.jetbrains.kotlinx:kotlinx-serialization-*"
+      # kotlinx-coroutines 1.11.0+ depends on kotlin-stdlib 2.2.20, whose metadata can't be read by the
+      # SDK's minimum supported Kotlin (2.0.21). Remove this once the minimum supported Kotlin is 2.1+.
+      - dependency-name: "org.jetbrains.kotlinx:kotlinx-coroutines-*"
+        versions: ["[1.11.0,)"]
+      # OkHttp is compileOnly: the instrumentation must compile against the oldest OkHttp it supports.
+      # OkHttp 5 makes Response.body non-null, which turns the null checks that OkHttp 4 users still
+      # need into -Werror failures. Remove this once OkHttp 4 support is dropped.
+      - dependency-name: "com.squareup.okhttp3:okhttp-bom"
+        versions: ["[5.0.0,)"]
   - package-ecosystem: "gradle"
     directory: "/examples/ExampleApp"
     schedule:

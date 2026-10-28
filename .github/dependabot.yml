@@ -43,6 +43,11 @@ updates:
       # minimum supported Kotlin. Remove this once both minimums are raised.
       - dependency-name: "androidx.lifecycle:*"
         versions: ["[2.9.0,)"]
+      # gradle-api is pinned in gradle/libs.versions.toml under two aliases. agp-api-min must
+      # equal minAgpVersion: the integration test plugin ships it at runtime, and a newer one overrides
+      # the fixture's gradle-api on TestMatrix.MinVersion.
+      # agp-api is the plugin's compile-only API; anything newer than minAgpVersion must be gated on AgpVersion.
+      - dependency-name: "com.android.tools.build:gradle-api"
   - package-ecosystem: "gradle"
     directory: "/examples/ExampleApp"
     schedule:

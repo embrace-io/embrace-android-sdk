@@ -45,7 +45,9 @@ gradleTestKit = "8.11.1"
 zstdJni = "1.5.7-17"
 detekt = "1.23.8"
 buildconfig = "6.1.2"
-agp-api = "8.0.2"
+# bump aliases manually: see .github/dependabot.yml.
+agp-api = "8.1.0"
+agp-api-min = "8.0.2"
 smali = "3.0.10"
 bundletool = "1.18.3"
 vanniktechMavenPublish = "0.37.0"
@@ -111,6 +113,7 @@ asm-util = { module = "org.ow2.asm:asm-util", version.ref = "asmUtil" }
 gradle-test-kit = { module = "dev.gradleplugins:gradle-test-kit", version.ref = "gradleTestKit" }
 zstd-jni = { module = "com.github.luben:zstd-jni", version.ref = "zstdJni" }
 agp-api = { module = "com.android.tools.build:gradle-api", version.ref = "agp-api" }
+agp-api-min = { module = "com.android.tools.build:gradle-api", version.ref = "agp-api-min" }
 smali-baksmali = { module = "com.android.tools.smali:smali-baksmali", version.ref = "smali" }
 bundletool = { module = "com.android.tools.build:bundletool", version.ref = "bundletool" }
 kotlinx-coroutines-core = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-core", version.ref = "kotlinxCoroutines" }

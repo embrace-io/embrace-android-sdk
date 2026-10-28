@@ -21,12 +21,21 @@ interface DataSource {
      * any state (if applicable).
      *
      * You should NOT attempt to track state within the [DataSource] with a boolean flag.
+     *
+     * This runs while the instrumentation registry holds the lock every other data source's registration needs,
+     * including those made on the main thread while the SDK starts, so it must return quickly. Submit binder calls,
+     * I/O and other slow work to a background worker instead, as the power save and thermal state data sources do
+     * for their system registrations.
      */
     fun onDataCaptureEnabled()
 
     /**
      * Permanently disables data capture because the SDK has been disabled. This should stop anything that would
      * otherwise capture data or write to disk outside of [captureTelemetry], such as crash handlers.
+     *
+     * Currently, it is also the job of this method to clean up any resources allocated in the construction of the
+     * data source via [DataSourceFactory], regardless of whether [onDataCaptureEnabled] ever ran. This should be
+     * changed later so that the responsibility of this method is narrowed.
      */
     fun onDataCaptureDisabled()
 

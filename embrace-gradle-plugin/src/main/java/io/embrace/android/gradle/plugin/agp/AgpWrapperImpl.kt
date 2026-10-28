@@ -6,7 +6,7 @@ import org.gradle.api.Project
 
 class AgpWrapperImpl(project: Project) : AgpWrapper {
 
-    private val extension: CommonExtension<*, *, *, *> = checkNotNull(
+    private val extension: CommonExtension<*, *, *, *, *> = checkNotNull(
         project.extensions.findByType(CommonExtension::class.java),
     )
 

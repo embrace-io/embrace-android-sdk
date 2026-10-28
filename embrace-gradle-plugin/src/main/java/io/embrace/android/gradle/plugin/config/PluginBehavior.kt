@@ -64,6 +64,12 @@ interface PluginBehavior {
     val customSymbolsDirectory: String?
 
     /**
+     * Whether NDK symbol upload should use the legacy `merge<Variant>NativeLibs` task lookup, set via
+     * `embrace.legacyNativeLibsLookup`.
+     */
+    val legacyNativeLibsLookup: Boolean
+
+    /**
      * Whether bytecode instrumentation is disabled for this variant, set via `embrace.buildVariantFilter`.
      */
     fun isInstrumentationDisabledForVariant(variantName: String): Boolean

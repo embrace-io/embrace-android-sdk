@@ -43,6 +43,17 @@ abstract class EmbraceExtension @Inject internal constructor(objectFactory: Obje
     val customSymbolsDirectory: Property<String> = objectFactory.property(String::class.java)
 
     /**
+     * Forces the plugin to find merged native libraries for NDK symbol upload by inspecting the outputs of the
+     * `merge<Variant>NativeLibs` task, instead of using AGP's `SingleArtifact.MERGED_NATIVE_LIBS` artifact.
+     *
+     * This is ignored when [customSymbolsDirectory] is set. AGP versions older than 8.1 always use the legacy lookup.
+     * Defaults to false.
+     *
+     * This property will be removed in a future major release.
+     */
+    val legacyNativeLibsLookup: Property<Boolean> = objectFactory.property(Boolean::class.java).convention(false)
+
+    /**
      * DSL for configuring how Embrace instruments bytecode.
      */
     val bytecodeInstrumentation: EmbraceBytecodeInstrumentation =

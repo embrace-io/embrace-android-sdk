@@ -2,7 +2,13 @@ plugins {
     id("com.android.application")
     id("io.embrace.gradle")
     id("io.embrace.android.testplugin")
+    // puts KGP on the classpath for customLibrary's `apply plugin` on AGP < 9 (AGP 9+ has built-in Kotlin)
+    id("org.jetbrains.kotlin.android") apply false
 }
 
 integrationTest.configureAndroidProject(project)
 integrationTest.configure3rdPartyLibrary(project)
+
+embrace {
+    legacyNativeLibsLookup.set((project.findProperty("legacyNativeLibsLookup") ?: "false").toBoolean())
+}

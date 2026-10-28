@@ -17,11 +17,11 @@ import kotlin.reflect.safeCast
  */
 class InstrumentationRegistryImpl(
     private val errorHandler: ErrorHandler,
+    private val lock: Any = Any(),
 ) : InstrumentationRegistry {
 
     @Volatile
     private var dataSources: Array<DataSource> = emptyArray()
-    private val lock = Any()
 
     @Volatile
     private var closed = false
@@ -43,16 +43,24 @@ class InstrumentationRegistryImpl(
     }
 
     override fun <T : DataSource> add(state: DataSourceFactory<T>): T? {
-        val added = synchronized(lock) {
-            if (closed) {
-                return null
-            }
-            val dataSource = state() ?: return null
-            dataSource.onDataCaptureEnabled()
-            dataSources += dataSource // copy-on-write
-            dataSource
+        if (closed) {
+            return null
         }
-        return added
+        // built outside the lock, so that one data source's class loading and construction never holds up another
+        // thread registering its own
+        val dataSource = state() ?: return null
+        synchronized(lock) {
+            if (!closed) {
+                dataSource.onDataCaptureEnabled()
+                dataSources += dataSource // copy-on-write
+                return dataSource
+            }
+        }
+
+        // If we get to this block, it means the registry was before it could be enabled.
+        // When that happens, clean up whatever the constructor left around using disable before returning null.
+        disable(dataSource)
+        return null
     }
 
     override fun close() {

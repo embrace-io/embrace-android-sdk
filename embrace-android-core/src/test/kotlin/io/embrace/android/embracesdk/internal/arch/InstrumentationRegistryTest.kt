@@ -108,6 +108,32 @@ internal class InstrumentationRegistryTest {
     }
 
     @Test
+    fun `a data source is built without holding the registry's lock`() {
+        val lock = Any()
+        registry = InstrumentationRegistryImpl(ErrorHandlerImpl(), lock)
+        var lockHeldWhileBuilding = true
+        registry.add {
+            lockHeldWhileBuilding = Thread.holdsLock(lock)
+            dataSource
+        }
+        assertFalse(lockHeldWhileBuilding)
+        assertEquals(1, dataSource.enableDataCaptureCount)
+    }
+
+    @Test
+    fun `a data source built while the registry closes is disabled without being enabled`() {
+        assertNull(
+            registry.add {
+                registry.close()
+                dataSource
+            },
+        )
+        assertNull(registry.findByType(FakeDataSource::class))
+        assertEquals(0, dataSource.enableDataCaptureCount)
+        assertEquals(1, dataSource.disableDataCaptureCount)
+    }
+
+    @Test
     fun `verify session lifecycle listeners`() {
         val provider =
             FakeInstrumentationProvider(

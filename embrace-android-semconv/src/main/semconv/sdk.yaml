@@ -12,6 +12,12 @@ attribute_groups:
       - ref: emb.is_emulator
       - ref: emb.storage.used
       - ref: emb.storage.available
+  - id: emb.sdk_error
+    visibility: public
+    stability: development
+    brief: "Embrace SDK error log attributes"
+    attributes:
+      - ref: emb.sdk_error.type
 
 attributes:
   - key: emb.okhttp3
@@ -44,3 +50,8 @@ attributes:
     brief: "Storage available on the device in bytes."
     stability: development
     examples: ["1073741824"]
+  - key: emb.sdk_error.type
+    type: string
+    brief: "The type of SDK error that was tracked."
+    stability: development
+    examples: ["InternalInterfaceFail", "PayloadStorageFail"]

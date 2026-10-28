@@ -6,8 +6,11 @@ import io.embrace.android.gradle.plugin.model.AndroidCompactedVariantData
 import io.embrace.android.gradle.plugin.system.JavaSystemWrapper
 import io.embrace.android.gradle.plugin.system.SystemWrapper
 import io.embrace.android.gradle.plugin.util.serialization.configFileJson
+import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.SerializationException
 import kotlinx.serialization.builtins.nullable
+import kotlinx.serialization.json.JsonElement
+import kotlinx.serialization.json.decodeFromStream
 import org.gradle.api.file.Directory
 import java.io.File
 
@@ -112,8 +115,11 @@ private fun getAppIdFromEnv(config: EmbraceVariantConfig, systemWrapper: SystemW
     return null
 }
 
+@OptIn(ExperimentalSerializationApi::class)
 private fun readConfigurationFromFile(configFile: File): EmbraceVariantConfig? {
-    val text = configFile.readText()
-    return configFileJson.decodeFromString(EmbraceVariantConfig.serializer().nullable, text)
-        ?.copy(json = configFileJson.parseToJsonElement(text).toString())
+    val element = configFile.inputStream().buffered().use {
+        configFileJson.decodeFromStream(JsonElement.serializer(), it)
+    }
+    return configFileJson.decodeFromJsonElement(EmbraceVariantConfig.serializer().nullable, element)
+        ?.copy(json = element.toString())
 }

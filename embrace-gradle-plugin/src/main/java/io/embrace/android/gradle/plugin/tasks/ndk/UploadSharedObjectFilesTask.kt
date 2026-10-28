@@ -73,7 +73,7 @@ abstract class UploadSharedObjectFilesTask @Inject constructor(
 
     private fun getArchToFilenameToHashMap() = try {
         serializer.fromJson(
-            architecturesToHashedSharedObjectFilesMapJson.get().asFile.bufferedReader().use { it.readText() },
+            architecturesToHashedSharedObjectFilesMapJson.get().asFile.inputStream(),
             ArchitecturesToHashedSharedObjectFilesMap.serializer(),
         ).symbols
     } catch (exception: Exception) {

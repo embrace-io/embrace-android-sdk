@@ -6,7 +6,7 @@ import io.opentelemetry.kotlin.tracing.SpanContext
 /**
  * Holds the network span parent that network spans started from now on are parented to.
  */
-interface NetworkSpanParentService {
+interface NetworkSpanParentService : NetworkSpanParents {
 
     /**
      * Sets [spanContext] as the network span parent, returning a token that clears only this set, or one that clears nothing if rejected.
@@ -22,11 +22,6 @@ interface NetworkSpanParentService {
      * Clears the network span parent unconditionally.
      */
     fun clear()
-
-    /**
-     * Returns the network span parent currently set, or null if none is.
-     */
-    fun currentParent(): SpanContext?
 
     /**
      * Clears the network span parent if it is the span with [spanId], which has just stopped.

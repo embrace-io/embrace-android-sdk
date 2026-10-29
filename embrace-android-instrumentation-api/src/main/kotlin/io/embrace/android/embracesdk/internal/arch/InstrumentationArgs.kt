@@ -12,6 +12,7 @@ import io.embrace.android.embracesdk.internal.clock.Clock
 import io.embrace.android.embracesdk.internal.config.ConfigService
 import io.embrace.android.embracesdk.internal.logging.ErrorHandler
 import io.embrace.android.embracesdk.internal.network.http.HttpRequestInfoModifierChain
+import io.embrace.android.embracesdk.internal.network.parent.NetworkSpanParents
 import io.embrace.android.embracesdk.internal.serialization.PlatformSerializer
 import io.embrace.android.embracesdk.internal.session.id.SessionIdsSnapshot
 import io.embrace.android.embracesdk.internal.storage.SdkStorage
@@ -60,6 +61,11 @@ interface InstrumentationArgs {
      * reported as telemetry.
      */
     val httpRequestInfoModifierChain: HttpRequestInfoModifierChain
+
+    /**
+     * Supplies the network span parents the app has set, which network instrumentation applies to the spans it starts.
+     */
+    val networkSpanParents: NetworkSpanParents
 
     /**
      * Service for tracking telemetry usage and limits.

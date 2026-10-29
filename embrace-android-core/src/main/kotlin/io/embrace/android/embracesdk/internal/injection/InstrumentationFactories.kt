@@ -13,6 +13,7 @@ import io.embrace.android.embracesdk.internal.capture.session.UserSessionPropert
 import io.embrace.android.embracesdk.internal.clock.Clock
 import io.embrace.android.embracesdk.internal.config.ConfigService
 import io.embrace.android.embracesdk.internal.logging.ErrorHandler
+import io.embrace.android.embracesdk.internal.network.parent.NetworkSpanParents
 import io.embrace.android.embracesdk.internal.serialization.PlatformSerializer
 import io.embrace.android.embracesdk.internal.session.id.SessionIdsSnapshot
 import io.embrace.android.embracesdk.internal.session.id.SessionPartTracker
@@ -48,6 +49,7 @@ fun createInstrumentationArgs(
     crashMarkerFileProvider: () -> File,
     sdkStorage: SdkStorage,
     eventBus: EventBus,
+    networkSpanParents: NetworkSpanParents,
 ): InstrumentationArgs = InstrumentationArgsImpl(
     configService = configService,
     destination = destination,
@@ -72,4 +74,5 @@ fun createInstrumentationArgs(
     crashMarkerFileProvider = crashMarkerFileProvider,
     sdkStorage = sdkStorage,
     eventBus = eventBus,
+    networkSpanParents = networkSpanParents,
 )

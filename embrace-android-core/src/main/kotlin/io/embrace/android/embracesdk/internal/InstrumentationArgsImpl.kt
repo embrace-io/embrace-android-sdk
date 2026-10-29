@@ -19,6 +19,7 @@ import io.embrace.android.embracesdk.internal.logging.ErrorHandler
 import io.embrace.android.embracesdk.internal.logging.SdkErrorType
 import io.embrace.android.embracesdk.internal.logging.guardSdkCode
 import io.embrace.android.embracesdk.internal.network.http.HttpRequestInfoModifierChain
+import io.embrace.android.embracesdk.internal.network.parent.NetworkSpanParents
 import io.embrace.android.embracesdk.internal.serialization.PlatformSerializer
 import io.embrace.android.embracesdk.internal.session.id.SessionIdsSnapshot
 import io.embrace.android.embracesdk.internal.session.id.SessionPartTracker
@@ -57,6 +58,7 @@ internal class InstrumentationArgsImpl(
     crashMarkerFileProvider: () -> File,
     override val sdkStorage: SdkStorage,
     override val eventBus: EventBus,
+    override val networkSpanParents: NetworkSpanParents,
 ) : InstrumentationArgs {
 
     override val crashMarkerFile: File by lazy { crashMarkerFileProvider() }

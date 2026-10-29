@@ -410,6 +410,13 @@ internal fun createRealSdkInstance(
             crashMarkerFileProvider = crashMarkerFile::value,
             sdkStorage = sdkStorage,
             eventBus = eventBus,
+            networkSpanParents = {
+                if (networkSpanParentService.isInitialized()) {
+                    networkSpanParentService.value.currentParent()
+                } else {
+                    null
+                }
+            },
         )
     }
 

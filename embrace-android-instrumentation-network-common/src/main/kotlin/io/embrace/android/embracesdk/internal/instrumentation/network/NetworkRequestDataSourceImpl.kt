@@ -15,6 +15,7 @@ import io.embrace.android.embracesdk.internal.utils.NetworkUtils.getDomain
 import io.embrace.android.embracesdk.internal.utils.NetworkUtils.getUrlPath
 import io.embrace.android.embracesdk.internal.utils.NetworkUtils.getValidTraceId
 import io.embrace.android.embracesdk.internal.utils.NetworkUtils.stripUrl
+import io.embrace.android.embracesdk.internal.utils.concurrent.OneShot
 import io.embrace.android.embracesdk.internal.utils.putIfNotNull
 import io.embrace.android.embracesdk.semconv.EmbNetworkRequestAttributes
 import io.opentelemetry.kotlin.semconv.ErrorAttributes
@@ -41,6 +42,7 @@ class NetworkRequestDataSourceImpl(
     private val activeRequests: MutableMap<String, ActiveRequest> = ConcurrentHashMap()
     private val domainCountLimiter: DomainCountLimiter = args.configService.networkBehavior.domainCountLimiter
     private val httpRequestInfoModifierChain = args.httpRequestInfoModifierChain
+    private val reportMalformedTraceparent = OneShot()
 
     override fun onDataCaptureDisabled() {
         if (networkRequestDataSource === this) {
@@ -106,6 +108,14 @@ class NetworkRequestDataSourceImpl(
             stripUrl(url),
         ) ?: return null
 
+        val inboundTraceparent = startData.traceparent
+        val validTraceparent = inboundTraceparent?.let(TraceParent::parse)
+        if (inboundTraceparent != null && validTraceparent == null) {
+            reportMalformedTraceparent {
+                errorHandler.log("Ignoring malformed traceparent header on a request")
+            }
+        }
+
         return captureTelemetry(
             inputValidation = { domainCountLimiter.canLogNetworkRequest(domain) },
             invalidInputCallback = {
@@ -116,16 +126,30 @@ class NetworkRequestDataSourceImpl(
                 schemaType = SchemaType.NetworkRequest(requestStartAttributes(url, httpMethod)),
                 startTimeMs = startData.sdkClockStartTime,
                 name = getNetworkSpanName(httpMethod, url),
-                parentSpanId = startData.traceparent?.getSpanIdFromTraceparent(),
+                parentSpanId = validTraceparent?.spanId,
+                parentTraceId = validTraceparent?.traceId,
                 timeoutMs = startData.timeoutMs,
             )
 
-            spanToken.asW3cTraceparent()?.also { traceparent ->
-                if (configService.networkSpanForwardingBehavior.shouldForwardForDomain(domain)) {
-                    spanToken.setSystemAttribute(EmbNetworkRequestAttributes.EMB_W3C_TRACEPARENT, traceparent)
+            spanToken.asW3cTraceparent()?.let(TraceParent::parse)?.let { spanTraceparent ->
+                // Only name this span in the inbound trace when the span actually joined it, keeping the inbound sampling flags
+                val joinedTraceparent = validTraceparent?.takeIf(spanTraceparent::isSameTrace)
+                val traceparent = joinedTraceparent?.let(spanTraceparent::withFlagsOf) ?: spanTraceparent
+
+                // The traceparent sent with the request: a malformed header is left as is and never forwarded
+                val sentTraceparent =
+                    if (inboundTraceparent == null || joinedTraceparent != null) {
+                        traceparent
+                    } else {
+                        validTraceparent
+                    }
+
+                if (sentTraceparent != null && configService.networkSpanForwardingBehavior.shouldForwardForDomain(domain)) {
+                    spanToken.setSystemAttribute(EmbNetworkRequestAttributes.EMB_W3C_TRACEPARENT, sentTraceparent.value)
                     spanToken.setSystemAttribute(EmbNetworkRequestAttributes.EMB_FORWARD_TELEMETRY, "true")
                 }
-                activeRequests[traceparent] = ActiveRequest(spanToken, httpMethod)
+                activeRequests[traceparent.value] = ActiveRequest(spanToken, httpMethod)
+                traceparent.value
             }
         }
     }
@@ -205,11 +229,6 @@ class NetworkRequestDataSourceImpl(
     private fun getNetworkSpanName(httpMethod: String, url: String) = "$httpMethod ${getUrlPath(stripUrl(url))}"
 
     /**
-     * Returns the span-id of this string if it is a valid W3C traceparent, or null if it is not.
-     */
-    private fun String.getSpanIdFromTraceparent(): String? = SPAN_ID_FROM_TRACEPARENT_REGEX.matchEntire(this)?.groupValues?.get(1)
-
-    /**
      * Tracks an in-flight request span. [httpMethod] is the post-modifier method captured at request
      * start, retained so the modifiers can be re-applied to the final url when the request ends. Any
      * timeout for the span is enforced by the timeout sweep via the span's own termination mode.
@@ -218,9 +237,4 @@ class NetworkRequestDataSourceImpl(
         val spanToken: SpanToken,
         val httpMethod: String,
     )
-
-    private companion object {
-        // version(2)-traceId(32)-spanId(16)-flags(2), lowercase hex per the W3C traceparent spec.
-        private val SPAN_ID_FROM_TRACEPARENT_REGEX = Regex("[0-9a-f]{2}-[0-9a-f]{32}-([0-9a-f]{16})-[0-9a-f]{2}")
-    }
 }

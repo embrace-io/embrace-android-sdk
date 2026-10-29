@@ -24,6 +24,7 @@ import io.embrace.android.embracesdk.semconv.EmbStateTransitionAttributes
 import io.embrace.android.embracesdk.spans.EmbraceSpan
 import io.opentelemetry.kotlin.logging.Logger
 import io.opentelemetry.kotlin.logging.SeverityNumber
+import io.opentelemetry.kotlin.tracing.createSpanContext
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicInteger
 
@@ -78,6 +79,7 @@ class TelemetryDestinationImpl(
         startTimeMs: Long,
         name: String,
         parentSpanId: String?,
+        parentTraceId: String?,
         autoTerminate: Boolean,
         private: Boolean,
         timeoutMs: Long?,
@@ -88,9 +90,13 @@ class TelemetryDestinationImpl(
             else -> SpanTerminationMode.None
         }
 
-        val parent = if (parentSpanId != null) {
-            // Only allow parents created by this SDK instance to parent a new span
-            spanService.getSpan(parentSpanId)
+        val parent = parentSpanId?.let(spanService::getSpan)?.takeIf { parentTraceId == null || it.traceId == parentTraceId }
+        val remoteParent = if (parent == null && parentTraceId != null && parentSpanId != null) {
+            // Marked as sampled so the ParentBased sampler records the span whatever the remote parent's sampling decision
+            createSpanContext(parentTraceId, parentSpanId) {
+                isRemote = true
+                isSampled = true
+            }.takeIf { it.isValid }
         } else {
             null
         }
@@ -102,6 +108,7 @@ class TelemetryDestinationImpl(
             terminationMode = mode,
             private = private,
             type = schemaType.telemetryType,
+            parentSpanContext = remoteParent,
         ).apply {
             schemaType.attributes().forEach {
                 addCustomAttribute(it.key, it.value)
@@ -137,7 +144,6 @@ class TelemetryDestinationImpl(
         val spanToken = startSpanCapture(
             schemaType = state,
             startTimeMs = clock.now(),
-            private = false,
         )
 
         return SessionPartStateTokenImpl(

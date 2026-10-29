@@ -52,6 +52,7 @@ class FakeTelemetryDestination(
         startTimeMs: Long,
         name: String,
         parentSpanId: String?,
+        parentTraceId: String?,
         autoTerminate: Boolean,
         private: Boolean,
         timeoutMs: Long?,

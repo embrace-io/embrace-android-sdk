@@ -37,13 +37,15 @@ interface TelemetryDestination {
     fun removeSessionPartAttribute(key: String)
 
     /**
-     * Starts a new span with the given parameters
+     * Starts a new span with the given parameters. A parent not created by this SDK is used when both [parentTraceId]
+     * and [parentSpanId] are supplied.
      */
     fun startSpanCapture(
         schemaType: SchemaType,
         startTimeMs: Long,
         name: String = schemaType.fixedObjectName,
         parentSpanId: String? = null,
+        parentTraceId: String? = null,
         autoTerminate: Boolean = false,
         private: Boolean = false,
         timeoutMs: Long? = null,

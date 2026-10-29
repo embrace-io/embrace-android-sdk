@@ -1,5 +1,6 @@
 package io.embrace.android.embracesdk.internal.instrumentation.network
 
+import io.embrace.android.embracesdk.fakes.FakeTelemetryDestination
 import io.embrace.android.embracesdk.internal.arch.schema.ErrorCodeAttribute
 import io.embrace.android.embracesdk.internal.telemetry.AppliedLimitType
 import io.embrace.android.embracesdk.internal.utils.NetworkUtils
@@ -288,6 +289,61 @@ internal class NetworkRequestDataSourceStatefulApiTest {
     }
 
     @Test
+    fun `span that joins the inbound trace is named in it with the inbound flags`() {
+        // every id the fake generates is the inbound trace id, so the span joins the inbound trace
+        harness = NetworkRequestDataSourceTestHarness(
+            FakeTelemetryDestination(
+                { INBOUND_TRACE_ID },
+            ),
+        )
+        harness.networkSpanForwardingBehavior.networkSpanForwardingEnabled = true
+        listOf("00", "01").forEachIndexed { index, flags ->
+            val callId = startRequest(
+                url = "https://www.example.com/$index",
+                traceparent = "00-$INBOUND_TRACE_ID-$INBOUND_SPAN_ID-$flags",
+            )
+            val span = harness.getNetworkSpans()[index]
+            assertEquals("00-$INBOUND_TRACE_ID-${INBOUND_TRACE_ID.take(16)}-$flags", callId)
+            assertEquals(callId, span.attributes[EmbNetworkRequestAttributes.EMB_W3C_TRACEPARENT])
+            assertEquals("true", span.attributes[EmbNetworkRequestAttributes.EMB_FORWARD_TELEMETRY])
+        }
+    }
+
+    @Test
+    fun `span that does not join the inbound trace forwards the inbound traceparent`() {
+        harness.networkSpanForwardingBehavior.networkSpanForwardingEnabled = true
+        val inbound = "00-$INBOUND_TRACE_ID-$INBOUND_SPAN_ID-01"
+        val callId = startRequest(url = "https://www.example.com/api", traceparent = inbound)
+        val span = harness.getNetworkSpans().single()
+        assertEquals(span.asW3cTraceparent(), callId)
+        assertEquals(inbound, span.attributes[EmbNetworkRequestAttributes.EMB_W3C_TRACEPARENT])
+    }
+
+    @Test
+    fun `malformed traceparent is not forwarded and logged once`() {
+        harness.networkSpanForwardingBehavior.networkSpanForwardingEnabled = true
+        startRequest(url = "https://www.example.com/1", traceparent = "not-a-traceparent")
+        startRequest(url = "https://www.example.com/2", traceparent = "00-$INBOUND_TRACE_ID-0000000000000000-01")
+
+        harness.getNetworkSpans().forEach {
+            assertNull(it.parent)
+            assertNull(it.attributes[EmbNetworkRequestAttributes.EMB_W3C_TRACEPARENT])
+            assertNull(it.attributes[EmbNetworkRequestAttributes.EMB_FORWARD_TELEMETRY])
+        }
+        assertEquals(1, harness.args.errorHandler.warningMessages.size)
+    }
+
+    @Test
+    fun `span without an inbound traceparent forwards its own traceparent`() {
+        harness.networkSpanForwardingBehavior.networkSpanForwardingEnabled = true
+        val callId = startRequest(url = "https://www.example.com/api")
+        val span = harness.getNetworkSpans().single()
+        assertNull(span.parent)
+        assertEquals(span.asW3cTraceparent(), callId)
+        assertEquals(callId, span.attributes[EmbNetworkRequestAttributes.EMB_W3C_TRACEPARENT])
+    }
+
+    @Test
     fun `a registered modifier alters the url and method of a span-based request`() {
         harness.args.httpRequestInfoModifierChain.add {
             it.url = "https://redacted.com/api"
@@ -326,7 +382,6 @@ internal class NetworkRequestDataSourceStatefulApiTest {
         endUrl: String = url,
         errorType: String? = null,
         errorMessage: String? = null,
-
     ) {
         startRequest(
             url = url,
@@ -389,5 +444,10 @@ internal class NetworkRequestDataSourceStatefulApiTest {
                 userAgentVersion = userAgentVersion,
             ),
         )
+    }
+
+    private companion object {
+        const val INBOUND_TRACE_ID = "0af7651916cd43dd8448eb211c80319c"
+        const val INBOUND_SPAN_ID = "b7ad6b7169203331"
     }
 }

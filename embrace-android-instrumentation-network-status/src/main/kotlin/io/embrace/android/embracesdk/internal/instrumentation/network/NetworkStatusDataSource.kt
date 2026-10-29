@@ -28,7 +28,10 @@ class NetworkStatusDataSource(
             span?.stop(endTimeMs = timestamp)
             // start a new span with the new connect type
             captureTelemetry {
-                span = startSpanCapture(SchemaType.NetworkStatus(newConnectionType.typeName), timestamp)
+                span = startSpanCapture(
+                    SchemaType.NetworkStatus(newConnectionType.typeName),
+                    timestamp,
+                )
             }
         }
     }

@@ -5,6 +5,8 @@ import io.embrace.android.embracesdk.fakes.FakeConfigService
 import io.embrace.android.embracesdk.fakes.FakeInstrumentationArgs
 import io.embrace.android.embracesdk.fakes.FakeLogData
 import io.embrace.android.embracesdk.fakes.FakeSpanToken
+import io.embrace.android.embracesdk.fakes.FakeTelemetryDestination
+import io.embrace.android.embracesdk.fakes.TestUuidSource
 import io.embrace.android.embracesdk.fakes.behavior.FakeNetworkBehavior
 import io.embrace.android.embracesdk.fakes.behavior.FakeNetworkSpanForwardingBehavior
 import io.embrace.android.embracesdk.fakes.behavior.FakeTraceparentInjectionBehavior
@@ -16,6 +18,7 @@ import io.embrace.android.embracesdk.internal.instrumentation.network.NetworkReq
 import io.embrace.android.embracesdk.internal.instrumentation.network.RequestEndData
 import io.embrace.android.embracesdk.internal.instrumentation.network.RequestStartData
 import io.embrace.android.embracesdk.internal.utils.NetworkUtils.getValidTraceId
+import io.embrace.android.embracesdk.internal.utils.UuidSource
 import io.embrace.android.embracesdk.okhttp3.EmbraceCustomPathException
 import io.embrace.android.embracesdk.semconv.EmbNetworkCapturedRequestAttributes
 import io.embrace.android.embracesdk.semconv.EmbNetworkRequestAttributes
@@ -65,6 +68,10 @@ internal class OkHttpDataSourceTest {
         private const val RESPONSE_BODY_GZIPPED_SIZE = 43
         private const val RESPONSE_HEADER_VALUE = "responseHeaderVal"
         private const val TRACEPARENT_HEADER = "traceparent"
+        private const val TRACESTATE_HEADER = "tracestate"
+        private const val INBOUND_TRACE_ID = "0af7651916cd43dd8448eb211c80319c"
+        private const val INBOUND_TRACEPARENT_UNSAMPLED = "00-$INBOUND_TRACE_ID-b7ad6b7169203331-00"
+        private const val INBOUND_TRACESTATE = "vendor=value,other=1"
         private const val OKHTTP_USER_AGENT_NAME = "okhttp"
         private const val ENCODING_GZIP = "gzip"
         private const val CONTENT_LENGTH_HEADER_NAME = "Content-Length"
@@ -94,6 +101,7 @@ internal class OkHttpDataSourceTest {
         { request -> request }
     private var postNetworkInterceptorAfterResponseSupplier: (Response) -> Response =
         { response -> response }
+    private var fakeSpanIdSource: String? = null
     private var isNetworkSpanForwardingEnabled = false
         set(value) {
             field = value
@@ -106,9 +114,16 @@ internal class OkHttpDataSourceTest {
         server = MockWebServer()
         configService = FakeConfigService()
         sdkClock = FakeClock(System.currentTimeMillis())
+        val uuidSource = TestUuidSource()
         args = FakeInstrumentationArgs(
             configService = configService,
             clock = sdkClock,
+            // lets a test make every span the fake creates join the inbound trace
+            destination = FakeTelemetryDestination(
+                object : UuidSource {
+                    override fun createUuid(): String = fakeSpanIdSource ?: uuidSource.createUuid()
+                },
+            ),
         )
         networkRequestDataSource = RecordingNetworkRequestDataSource(NetworkRequestDataSourceImpl(args))
         val networkCaptureDataSource = NetworkCaptureDataSourceImpl(args)
@@ -437,18 +452,76 @@ internal class OkHttpDataSourceTest {
     }
 
     @Test
-    fun `existing traceparent header is preserved and not used for the forwarded network span`() {
-        configService.traceparentInjectionBehavior = FakeTraceparentInjectionBehavior(traceparentInjectionEnabled = true)
-        configService.networkSpanForwardingBehavior = FakeNetworkSpanForwardingBehavior(networkSpanForwardingEnabled = true)
-        val appTraceparent = "00-0af7651916cd43dd8448eb211c80319c-b7ad6b7169203331-01"
-        postRequestBuilder.header(TRACEPARENT_HEADER, appTraceparent)
+    fun `existing traceparent is replaced with the network span's when the span joined its trace`() {
+        isNetworkSpanForwardingEnabled = true
+        fakeSpanIdSource = INBOUND_TRACE_ID
+        postRequestBuilder.header(TRACEPARENT_HEADER, INBOUND_TRACEPARENT_UNSAMPLED)
+        postRequestBuilder.header(TRACESTATE_HEADER, INBOUND_TRACESTATE)
         server.enqueue(createBaseMockResponse())
-        val response = runPostRequest()
+        runPostRequest()
+        val sent = server.takeRequest()
         assertNetworkRequestReceived { span ->
-            assertEquals(appTraceparent, response.networkResponse?.request?.header(TRACEPARENT_HEADER))
-            assertEquals(span.asW3cTraceparent(), span.attributes[EmbNetworkRequestAttributes.EMB_W3C_TRACEPARENT])
+            val expected = "00-$INBOUND_TRACE_ID-${INBOUND_TRACE_ID.take(16)}-00"
+            assertEquals(expected, sent.getHeader(TRACEPARENT_HEADER))
+            assertEquals(INBOUND_TRACESTATE, sent.getHeader(TRACESTATE_HEADER))
+            assertEquals(expected, span.attributes[EmbNetworkRequestAttributes.EMB_W3C_TRACEPARENT])
             assertEquals("true", span.attributes[EmbNetworkRequestAttributes.EMB_FORWARD_TELEMETRY])
         }
+    }
+
+    @Test
+    fun `existing traceparent is sent unchanged when injection does not apply to the host`() {
+        configService.traceparentInjectionBehavior = FakeTraceparentInjectionBehavior(
+            traceparentInjectionEnabled = true,
+            hostCheckSucceeds = false,
+        )
+        fakeSpanIdSource = INBOUND_TRACE_ID
+        postRequestBuilder.header(TRACEPARENT_HEADER, INBOUND_TRACEPARENT_UNSAMPLED)
+        postRequestBuilder.header(TRACESTATE_HEADER, INBOUND_TRACESTATE)
+        server.enqueue(createBaseMockResponse())
+        runPostRequest()
+        val sent = server.takeRequest()
+        assertEquals(INBOUND_TRACEPARENT_UNSAMPLED, sent.getHeader(TRACEPARENT_HEADER))
+        assertEquals(INBOUND_TRACESTATE, sent.getHeader(TRACESTATE_HEADER))
+    }
+
+    @Test
+    fun `existing traceparent is sent unchanged and forwarded when the span did not join its trace`() {
+        isNetworkSpanForwardingEnabled = true
+        postRequestBuilder.header(TRACEPARENT_HEADER, INBOUND_TRACEPARENT_UNSAMPLED)
+        server.enqueue(createBaseMockResponse())
+        runPostRequest()
+        assertEquals(INBOUND_TRACEPARENT_UNSAMPLED, server.takeRequest().getHeader(TRACEPARENT_HEADER))
+        assertNetworkRequestReceived { span ->
+            assertEquals(INBOUND_TRACEPARENT_UNSAMPLED, span.attributes[EmbNetworkRequestAttributes.EMB_W3C_TRACEPARENT])
+        }
+    }
+
+    @Test
+    fun `malformed traceparent is sent unchanged and not forwarded`() {
+        isNetworkSpanForwardingEnabled = true
+        val malformed = "00-not-a-traceparent"
+        postRequestBuilder.header(TRACEPARENT_HEADER, malformed)
+        server.enqueue(createBaseMockResponse())
+        runPostRequest()
+        assertEquals(malformed, server.takeRequest().getHeader(TRACEPARENT_HEADER))
+        assertNetworkRequestReceived { span ->
+            assertNull(span.parent)
+            assertNull(span.attributes[EmbNetworkRequestAttributes.EMB_W3C_TRACEPARENT])
+            assertNull(span.attributes[EmbNetworkRequestAttributes.EMB_FORWARD_TELEMETRY])
+        }
+    }
+
+    @Test
+    fun `traceparent changed after the span started is not replaced`() {
+        isNetworkSpanForwardingEnabled = true
+        fakeSpanIdSource = INBOUND_TRACE_ID
+        val changed = "00-1af7651916cd43dd8448eb211c80319c-c7ad6b7169203331-01"
+        postRequestBuilder.header(TRACEPARENT_HEADER, INBOUND_TRACEPARENT_UNSAMPLED)
+        preNetworkInterceptorBeforeRequestSupplier = { it.newBuilder().header(TRACEPARENT_HEADER, changed).build() }
+        server.enqueue(createBaseMockResponse())
+        runPostRequest()
+        assertEquals(changed, server.takeRequest().getHeader(TRACEPARENT_HEADER))
     }
 
     @Test

@@ -8,6 +8,7 @@ import io.embrace.android.embracesdk.internal.clock.normalizeTimestampAsMillis
 import io.embrace.android.embracesdk.internal.otel.sdk.DataValidator
 import io.embrace.android.embracesdk.spans.EmbraceSpan
 import io.opentelemetry.kotlin.OpenTelemetry
+import io.opentelemetry.kotlin.tracing.SpanContext
 import io.opentelemetry.kotlin.tracing.Tracer
 
 /**
@@ -25,6 +26,7 @@ class SpanServiceImpl(
     override fun createSpan(
         name: String,
         parent: EmbraceSpan?,
+        parentSpanContext: SpanContext?,
         type: EmbType,
         internal: Boolean,
         private: Boolean,
@@ -39,7 +41,8 @@ class SpanServiceImpl(
                     private = private,
                     tracer = tracer,
                     terminationMode = terminationMode,
-                    parentCtx = (parent as? EmbraceSdkSpan)?.createContext(openTelemetry),
+                    parentCtx = (parent as? EmbraceSdkSpan)?.createContext(openTelemetry)
+                        ?: parentSpanContext?.let { openTelemetry.context.root().storeSpan(openTelemetry.span.fromSpanContext(it)) },
                     openTelemetry = openTelemetry,
                 ),
             )
@@ -71,10 +74,12 @@ class SpanServiceImpl(
         internal: Boolean,
         private: Boolean,
         terminationMode: SpanTerminationMode,
+        parentSpanContext: SpanContext?,
     ): EmbraceSdkSpan {
         val newSpan = createSpan(
             name = name,
             parent = parent,
+            parentSpanContext = parentSpanContext,
             type = type,
             internal = internal,
             private = private,

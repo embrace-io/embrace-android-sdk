@@ -45,9 +45,9 @@ public interface EmbraceSpan {
     public fun start(startTimeMs: Long? = null): Boolean
 
     /**
-     * Stop the recording of the Span with an [ErrorCode] the the specific time, a non-null value indicating an unsuccessful completion of
+     * Stop the recording of the Span with an [ErrorCode] at the specific time, a non-null value indicating an unsuccessful completion of
      * the underlying operation with the given reason. Returns true if this call triggered the stopping of the recording. Returns false if
-     * the Span has not been started or if has already been stopped.
+     * the Span has not been started or if it has already been stopped.
      */
     public fun stop(
         errorCode: ErrorCode? = null,

@@ -5,6 +5,7 @@ import io.embrace.android.embracesdk.internal.clock.Clock
 import io.embrace.android.embracesdk.internal.clock.NormalizedIntervalClock
 import io.embrace.android.embracesdk.internal.logging.ErrorHandler
 import io.embrace.android.embracesdk.internal.logging.ErrorHandlerImpl
+import io.embrace.android.embracesdk.internal.logging.androidLogcat
 import io.embrace.android.embracesdk.internal.otel.config.ExternalOtelConfig
 import io.embrace.android.embracesdk.internal.telemetry.InternalTelemetryService
 import io.embrace.android.embracesdk.internal.telemetry.InternalTelemetryServiceImpl
@@ -13,7 +14,7 @@ import io.embrace.android.embracesdk.internal.telemetry.InternalTelemetryService
  * Services created when the Embrace object is first loaded, before start() is called
  */
 class PreStartServices(
-    val errorHandler: ErrorHandler = ErrorHandlerImpl(),
+    val errorHandler: ErrorHandler = ErrorHandlerImpl(NormalizedIntervalClock()::now, ::androidLogcat),
     val clock: Clock = NormalizedIntervalClock(errorHandler = errorHandler),
     val systemInfo: SystemInfo = SystemInfo(),
     val telemetryService: InternalTelemetryService = InternalTelemetryServiceImpl(systemInfo = systemInfo),

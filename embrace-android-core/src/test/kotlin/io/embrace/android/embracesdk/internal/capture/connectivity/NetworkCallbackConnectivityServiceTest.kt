@@ -10,8 +10,8 @@ import android.net.NetworkCapabilities.NET_CAPABILITY_VALIDATED
 import android.net.NetworkCapabilities.TRANSPORT_CELLULAR
 import android.net.NetworkCapabilities.TRANSPORT_WIFI
 import io.embrace.android.embracesdk.concurrency.BlockingScheduledExecutorService
+import io.embrace.android.embracesdk.fakes.FakeErrorHandler
 import io.embrace.android.embracesdk.fakes.fakeBackgroundWorker
-import io.embrace.android.embracesdk.internal.logging.ErrorHandlerImpl
 import io.embrace.android.embracesdk.internal.worker.BackgroundWorker
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
@@ -248,7 +248,7 @@ internal class NetworkCallbackConnectivityServiceTest {
         connectivityManager: Lazy<ConnectivityManager?>,
     ) = NetworkCallbackConnectivityService(
         backgroundWorker,
-        ErrorHandlerImpl(),
+        FakeErrorHandler(),
         connectivityManager,
     ) { caps ->
         val network = TestNetwork.entries.single { it.capabilities === caps }

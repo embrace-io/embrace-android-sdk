@@ -9,9 +9,9 @@ import android.content.IntentFilter
 import android.net.ConnectivityManager
 import android.net.NetworkInfo
 import io.embrace.android.embracesdk.concurrency.BlockingScheduledExecutorService
+import io.embrace.android.embracesdk.fakes.FakeErrorHandler
 import io.embrace.android.embracesdk.fakes.fakeBackgroundWorker
 import io.embrace.android.embracesdk.internal.logging.ErrorHandler
-import io.embrace.android.embracesdk.internal.logging.ErrorHandlerImpl
 import io.embrace.android.embracesdk.internal.worker.BackgroundWorker
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
@@ -32,7 +32,7 @@ internal class EmbraceNetworkConnectivityServiceTest {
     @Before
     fun setup() {
         context = ReceiverRecordingContext()
-        errorHandler = ErrorHandlerImpl()
+        errorHandler = FakeErrorHandler(throwOnSdkError = false)
         worker = fakeBackgroundWorker()
         service = createService()
 

@@ -14,6 +14,7 @@ val integrationTestPublishedProjects: Set<String> = setOf(
     ":embrace-android-core",
     ":embrace-android-delivery",
     ":embrace-android-envelope",
+    ":embrace-android-error-handling",
     ":embrace-android-infra",
     ":embrace-android-instrumentation-androidx-navigation",
     ":embrace-android-instrumentation-anr",

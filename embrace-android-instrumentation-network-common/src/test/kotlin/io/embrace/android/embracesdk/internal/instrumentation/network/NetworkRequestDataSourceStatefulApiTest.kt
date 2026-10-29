@@ -13,6 +13,7 @@ import io.opentelemetry.kotlin.semconv.UserAgentAttributes
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertNull
+import org.junit.Assert.assertSame
 import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
@@ -370,6 +371,19 @@ internal class NetworkRequestDataSourceStatefulApiTest {
             assertEquals("https://secret.com/api?token=abc", url)
             assertEquals("GET", httpMethod)
         }
+    }
+
+    @Test
+    fun `only the network span's request carries the native request, not the one modifiers receive`() {
+        val nativeRequest = Any()
+        val modifierNativeRequests = mutableListOf<Any?>()
+        harness.args.httpRequestInfoModifierChain.add { modifierNativeRequests.add(it.nativeRequest) }
+        harness.dataSource.startRequest(
+            RequestStartData(url = "https://example.com/api", httpMethod = "GET", sdkClockStartTime = 100, nativeRequest = nativeRequest),
+        )
+
+        assertSame(nativeRequest, harness.args.destination.networkRequests.single().nativeRequest)
+        assertEquals(listOf<Any?>(null), modifierNativeRequests)
     }
 
     @Test

@@ -89,6 +89,7 @@ internal class OkHttpDataSource(
                 sdkClockStartTime = sdkClockStartTime,
                 traceparent = inboundTraceparent,
                 timeoutMs = resolveTimeoutMs(call),
+                nativeRequest = request,
             ),
         ) ?: return null
 

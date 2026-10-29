@@ -5,6 +5,7 @@ import io.embrace.android.embracesdk.internal.instrumentation.network.RequestEnd
 import io.embrace.android.embracesdk.internal.instrumentation.network.RequestStartData
 import io.embrace.android.embracesdk.internal.otel.sdk.findAttributeValue
 import io.embrace.android.embracesdk.internal.payload.Span
+import io.embrace.android.embracesdk.network.NetworkSpanParent
 import io.embrace.android.embracesdk.testframework.OtelSdkMode
 import io.embrace.android.embracesdk.testframework.SdkIntegrationTestRule
 import io.embrace.android.embracesdk.testframework.actions.EmbraceActionInterface
@@ -89,6 +90,27 @@ internal class NetworkSpanParentFeatureTest(
         )
     }
 
+    @Test
+    fun `the network span parent provider decides before the network span parent`() {
+        testRule.runTest(
+            testCaseAction = {
+                recordSession {
+                    embrace.setNetworkSpanParent(createSpanContext(REMOTE_TRACE_ID, REMOTE_SPAN_ID) { isSampled = true })
+                    embrace.setNetworkSpanParentProvider { request, _ ->
+                        if (request.url == CHILD_URL) NetworkSpanParent.NO_PARENT else NetworkSpanParent.USE_DEFAULT
+                    }
+                    runRequest(CHILD_URL)
+                    runRequest(OTHER_URL)
+                }
+            },
+            assertAction = {
+                val spans = checkNotNull(getSingleSessionEnvelope().data.spans)
+                assertNotEquals(REMOTE_TRACE_ID, spans.networkSpan(CHILD_URL).traceId)
+                assertEquals(REMOTE_SPAN_ID, spans.networkSpan(OTHER_URL).parentSpanId)
+            }
+        )
+    }
+
     private fun EmbraceActionInterface.startRequest(url: String): String =
         checkNotNull(findDataSource<NetworkRequestDataSource>().startRequest(RequestStartData(url, "GET", clock.now())))
 
@@ -113,6 +135,7 @@ internal class NetworkSpanParentFeatureTest(
         private const val CHILD_URL = "https://example.com/cart"
         private const val IN_FLIGHT_URL = "https://example.com/payment"
         private const val AFTER_END_URL = "https://example.com/receipt"
+        private const val OTHER_URL = "https://example.com/search"
         private const val REMOTE_TRACE_ID = "4bf92f3577b34da6a3ce929d0e0e4736"
         private const val REMOTE_SPAN_ID = "00f067aa0ba902b7"
     }

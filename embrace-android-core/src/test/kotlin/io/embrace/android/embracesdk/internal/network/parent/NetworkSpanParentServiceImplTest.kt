@@ -211,6 +211,83 @@ internal class NetworkSpanParentServiceImplTest {
         assertNull(none.orDefault { chosen })
     }
 
+    @Test
+    fun `the app's provider is given the network span parent, never the traceparent header`() {
+        val received = mutableListOf<SpanContext?>()
+        service.setAppProvider { _, currentParent ->
+            received.add(currentParent)
+            NetworkSpanParent.USE_DEFAULT
+        }
+        val header = untrackedContext()
+        service.provider.getNetworkSpanParent(request, header)
+        val parent = untrackedContext()
+        service.set(parent)
+        service.provider.getNetworkSpanParent(request, header)
+        service.provider.getNetworkSpanParent(request, null)
+
+        assertEquals(listOf(null, parent, parent), received)
+    }
+
+    @Test
+    fun `the decision of the most recently registered app provider applies unless it is the default`() {
+        val parent = untrackedContext()
+        service.set(parent)
+        val chosen = NetworkSpanParent.parent(untrackedContext())
+
+        service.setAppProvider { _, _ -> chosen }
+        assertSame(chosen, service.provider.getNetworkSpanParent(request, null))
+        service.setAppProvider { _, _ -> NetworkSpanParent.NO_PARENT }
+        assertSame(NetworkSpanParent.NO_PARENT, service.provider.getNetworkSpanParent(request, null))
+        service.setAppProvider { _, _ -> NetworkSpanParent.USE_DEFAULT }
+        assertSame(parent, service.provider.getNetworkSpanParent(request, null).spanContext)
+    }
+
+    @Test
+    fun `an app provider that throws is treated as the default and reported`() {
+        service.setAppProvider { _, _ -> throw IllegalStateException("provider failed") }
+
+        assertSame(NetworkSpanParent.USE_DEFAULT, service.provider.getNetworkSpanParent(request, null))
+        assertEquals(
+            "App-supplied code threw an exception (NetworkSpanParentProviderFail)",
+            errorHandler.warningMessages.single().msg,
+        )
+    }
+
+    @Test
+    fun `an invalid span context from the app provider is treated as the default and warned about once`() {
+        service.setAppProvider { _, _ -> NetworkSpanParent.parent(FakeSpanContext()) }
+
+        repeat(2) { assertSame(NetworkSpanParent.USE_DEFAULT, service.provider.getNetworkSpanParent(request, null)) }
+        assertEquals(1, errorHandler.warningMessages.size)
+    }
+
+    @Test
+    fun `a request the app provider makes on the same thread is not decided by it`() {
+        var calls = 0
+        var nested: NetworkSpanParent? = null
+        service.setAppProvider { _, _ ->
+            calls++
+            nested = service.provider.getNetworkSpanParent(request, null)
+            NetworkSpanParent.NO_PARENT
+        }
+
+        assertSame(NetworkSpanParent.NO_PARENT, service.provider.getNetworkSpanParent(request, null))
+        assertSame(NetworkSpanParent.USE_DEFAULT, nested)
+        assertEquals(1, calls)
+    }
+
+    @Test
+    fun `the app provider runs while the service holds no lock`() {
+        val context = untrackedContext()
+        service.setAppProvider { _, _ ->
+            thread { service.set(context) }.join(1000)
+            NetworkSpanParent.USE_DEFAULT
+        }
+
+        service.provider.getNetworkSpanParent(request, null)
+        assertSame(context, currentParent())
+    }
+
     private fun currentParent(): SpanContext? = service.currentParent()
 
     private fun untrackedContext(): SpanContext = checkNotNull(FakeEmbraceSdkSpan.started().spanContext)

@@ -52,7 +52,7 @@ public interface NetworkRequestApi {
     public fun clearNetworkSpanParent(token: NetworkSpanParentToken)
 
     /**
-     * Registers the provider consulted for each captured request's network span parent; it must be called before start.
+     * Registers the provider consulted for the network span parent of each request captured after this call, replacing any previous one.
      */
     public fun setNetworkSpanParentProvider(provider: NetworkSpanParentProvider)
 

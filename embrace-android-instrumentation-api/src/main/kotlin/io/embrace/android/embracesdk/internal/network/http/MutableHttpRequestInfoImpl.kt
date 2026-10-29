@@ -11,4 +11,5 @@ import io.embrace.android.embracesdk.network.http.MutableHttpRequestInfo
 class MutableHttpRequestInfoImpl(
     override var httpMethod: String,
     override var url: String,
+    override val nativeRequest: Any? = null,
 ) : MutableHttpRequestInfo

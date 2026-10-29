@@ -33,7 +33,6 @@ dependencies {
     implementation(libs.appcompat)
 
     testImplementation(project(":embrace-gradle-plugin"))
-    testImplementation(libs.agp.api)
     testImplementation(libs.junit)
     testImplementation(libs.asm.util)
     testImplementation(libs.gradle.test.kit)

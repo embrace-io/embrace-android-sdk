@@ -328,7 +328,7 @@ internal fun createRealSdkInstance(
 
     userSessionPropertiesService = init("user-session-properties-service") {
         createUserSessionPropertiesService(
-            store = lazy { store },
+            stateStore = configLoadServices.persistedSdkStateStore,
             configService = configService,
             destination = telemetryDestination,
             telemetryService = telemetryService,
@@ -337,7 +337,7 @@ internal fun createRealSdkInstance(
 
     userService = lazy {
         EmbTrace.trace("user-service-init") {
-            createUserService(store, persistedSdkStateStore, clock, errorHandler)
+            createUserService(persistedSdkStateStore, clock, errorHandler)
         }
     }
 

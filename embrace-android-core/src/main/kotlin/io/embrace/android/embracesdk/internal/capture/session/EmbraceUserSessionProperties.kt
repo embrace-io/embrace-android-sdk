@@ -3,12 +3,12 @@ package io.embrace.android.embracesdk.internal.capture.session
 import io.embrace.android.embracesdk.internal.arch.attrs.toEmbraceAttributeName
 import io.embrace.android.embracesdk.internal.arch.datasource.TelemetryDestination
 import io.embrace.android.embracesdk.internal.config.ConfigService
-import io.embrace.android.embracesdk.internal.store.KeyValueStore
+import io.embrace.android.embracesdk.internal.store.PersistedSdkStateStore
 import io.embrace.android.embracesdk.internal.telemetry.AppliedLimitType
 import io.embrace.android.embracesdk.internal.telemetry.InternalTelemetryService
 
 internal class EmbraceUserSessionProperties(
-    private val store: KeyValueStore,
+    private val stateStore: PersistedSdkStateStore,
     configService: ConfigService,
     private val destination: TelemetryDestination,
     private val telemetryService: InternalTelemetryService,
@@ -20,19 +20,16 @@ internal class EmbraceUserSessionProperties(
     private val lock = Any()
 
     private val properties: MutableMap<String, PropertyEntry> by lazy {
-        store.getStringMap(SESSION_PROPERTIES_KEY)?.mapValues {
+        stateStore.snapshot().sessionProperties.mapValues {
             PropertyEntry(it.value, PropertyScope.PERMANENT)
-        }?.toMutableMap() ?: mutableMapOf()
+        }.toMutableMap()
     }
 
     private fun persistPermanentProperties() {
-        store.editAndCommit {
-            putStringMap(
-                SESSION_PROPERTIES_KEY,
-                properties.entries
-                    .filter { it.value.scope == PropertyScope.PERMANENT }
-                    .associate { it.key to it.value.value },
-            )
+        stateStore.update {
+            sessionProperties = properties.entries
+                .filter { it.value.scope == PropertyScope.PERMANENT }
+                .associate { it.key to it.value.value }
         }
     }
 
@@ -103,9 +100,5 @@ internal class EmbraceUserSessionProperties(
                 destination.addSessionPartAttribute(key.toEmbraceAttributeName(), entry.value)
             }
         }
-    }
-
-    private companion object {
-        private const val SESSION_PROPERTIES_KEY = "io.embrace.session.properties"
     }
 }

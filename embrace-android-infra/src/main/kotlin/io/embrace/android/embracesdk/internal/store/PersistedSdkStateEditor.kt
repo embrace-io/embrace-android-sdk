@@ -5,7 +5,19 @@ package io.embrace.android.embracesdk.internal.store
  * current value.
  */
 class PersistedSdkStateEditor internal constructor(private val state: PersistedSdkState) {
-    internal fun build(): PersistedSdkState = state
+    var userId: String? = state.userId
+    var userEmail: String? = state.userEmail
+    var userName: String? = state.userName
+    var userPersonas: Set<String>? = state.userPersonas
+    var sessionProperties: Map<String, String> = state.sessionProperties
+
+    internal fun build(): PersistedSdkState = state.copy(
+        userId = userId,
+        userEmail = userEmail,
+        userName = userName,
+        userPersonas = userPersonas,
+        sessionProperties = sessionProperties,
+    )
 }
 
 /**

@@ -2,7 +2,7 @@ package io.embrace.android.embracesdk.internal.capture.session
 
 import io.embrace.android.embracesdk.fakes.FakeConfigService
 import io.embrace.android.embracesdk.fakes.FakeInternalTelemetryService
-import io.embrace.android.embracesdk.fakes.FakeKeyValueStore
+import io.embrace.android.embracesdk.fakes.FakePersistedSdkStateStore
 import io.embrace.android.embracesdk.fakes.FakeTelemetryDestination
 import io.embrace.android.embracesdk.internal.config.behavior.REDACTED_LABEL
 import io.embrace.android.embracesdk.internal.config.resolved.EmbraceConfig
@@ -32,7 +32,7 @@ internal class UserSessionPropertiesServiceImplTest {
         destination = FakeTelemetryDestination()
         telemetryService = FakeInternalTelemetryService()
         service = UserSessionPropertiesServiceImpl(
-            lazyOf(FakeKeyValueStore()),
+            lazyOf(FakePersistedSdkStateStore()),
             fakeConfigService,
             destination,
             telemetryService,

@@ -109,5 +109,6 @@ fun createExperimentTrackingService(
 fun createNetworkSpanParentService(
     spanService: SpanService,
     errorHandler: ErrorHandler,
+    telemetryService: InternalTelemetryService,
     currentUserSessionIdProvider: () -> String,
-): NetworkSpanParentService = NetworkSpanParentServiceImpl(spanService, errorHandler, currentUserSessionIdProvider)
+): NetworkSpanParentService = NetworkSpanParentServiceImpl(spanService, errorHandler, telemetryService, currentUserSessionIdProvider)

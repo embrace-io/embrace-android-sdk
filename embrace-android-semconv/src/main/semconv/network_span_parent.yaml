@@ -1,0 +1,22 @@
+file_format: definition/2
+
+attribute_groups:
+  - id: emb.network_span_parent
+    visibility: public
+    stability: development
+    brief: "Embrace network span parent attributes"
+    attributes:
+      - ref: emb.replaced_by.span_id
+      - ref: emb.replaced_by.name
+
+attributes:
+  - key: emb.replaced_by.span_id
+    type: string
+    brief: "The span ID of the span that replaced this span as the network span parent while it was still active."
+    stability: development
+    examples: ["00f067aa0ba902b7"]
+  - key: emb.replaced_by.name
+    type: string
+    brief: "The name of the span that replaced this span as the network span parent, if Embrace records it."
+    stability: development
+    examples: ["search"]

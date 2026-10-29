@@ -1,10 +1,12 @@
 package io.embrace.android.embracesdk.internal.instrumentation.network
 
+import io.embrace.android.embracesdk.fakes.FakeSpanToken
 import io.embrace.android.embracesdk.fakes.FakeTelemetryDestination
 import io.embrace.android.embracesdk.internal.arch.schema.ErrorCodeAttribute
 import io.embrace.android.embracesdk.internal.telemetry.AppliedLimitType
 import io.embrace.android.embracesdk.internal.utils.NetworkUtils
 import io.embrace.android.embracesdk.internal.utils.NetworkUtils.stripUrl
+import io.embrace.android.embracesdk.network.NetworkSpanParent
 import io.embrace.android.embracesdk.semconv.EmbNetworkRequestAttributes
 import io.opentelemetry.kotlin.semconv.ErrorAttributes
 import io.opentelemetry.kotlin.semconv.ExceptionAttributes
@@ -334,6 +336,27 @@ internal class NetworkRequestDataSourceStatefulApiTest {
     }
 
     @Test
+    fun `network span is parented to the network span parent when the request has no traceparent`() {
+        harness.args.networkSpanParent = networkSpanParent()
+        startRequest(url = "https://www.example.com/api")
+        assertEquals(PARENT_SPAN_ID, parentSpanId())
+    }
+
+    @Test
+    fun `a valid traceparent parents the network span ahead of the network span parent`() {
+        harness.args.networkSpanParent = networkSpanParent()
+        startRequest(url = "https://www.example.com/api", traceparent = "00-$INBOUND_TRACE_ID-$INBOUND_SPAN_ID-01")
+        assertEquals(INBOUND_SPAN_ID, parentSpanId())
+    }
+
+    @Test
+    fun `a malformed traceparent counts as none, so the network span parent is used`() {
+        harness.args.networkSpanParent = networkSpanParent()
+        startRequest(url = "https://www.example.com/api", traceparent = "not-a-traceparent")
+        assertEquals(PARENT_SPAN_ID, parentSpanId())
+    }
+
+    @Test
     fun `span that joins the inbound trace is named in it with the inbound flags`() {
         // every id the fake generates is the inbound trace id, so the span joins the inbound trace
         harness = NetworkRequestDataSourceTestHarness(
@@ -491,8 +514,18 @@ internal class NetworkRequestDataSourceStatefulApiTest {
         )
     }
 
+    private fun networkSpanParent() = object : NetworkSpanParent {
+        override val traceId = PARENT_TRACE_ID
+        override val spanId = PARENT_SPAN_ID
+    }
+
+    // the fake destination models a span's parent as a token named for the parent span ID it was given
+    private fun parentSpanId(): String? = (harness.getNetworkSpans().single().parent as? FakeSpanToken)?.name
+
     private companion object {
         const val INBOUND_TRACE_ID = "0af7651916cd43dd8448eb211c80319c"
         const val INBOUND_SPAN_ID = "b7ad6b7169203331"
+        const val PARENT_TRACE_ID = "4bf92f3577b34da6a3ce929d0e0e4736"
+        const val PARENT_SPAN_ID = "00f067aa0ba902b7"
     }
 }

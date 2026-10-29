@@ -42,6 +42,7 @@ class NetworkRequestDataSourceImpl(
     private val activeRequests: MutableMap<String, ActiveRequest> = ConcurrentHashMap()
     private val domainCountLimiter: DomainCountLimiter = args.configService.networkBehavior.domainCountLimiter
     private val httpRequestInfoModifierChain = args.httpRequestInfoModifierChain
+    private val networkSpanParents = args.networkSpanParents
     private val reportMalformedTraceparent = OneShot()
 
     override fun onDataCaptureDisabled() {
@@ -116,12 +117,14 @@ class NetworkRequestDataSourceImpl(
                 telemetryService.trackAppliedLimit("network_request", AppliedLimitType.DROP)
             },
         ) {
+            // A valid traceparent header names the span's parent, otherwise the network span parent does if one is set
+            val networkSpanParent = if (validTraceparent == null) networkSpanParents.currentParent() else null
             val spanToken = destination.startSpanCapture(
                 schemaType = SchemaType.NetworkRequest(requestStartAttributes(url, httpMethod)),
                 startTimeMs = startData.sdkClockStartTime,
                 name = getNetworkSpanName(httpMethod, url),
-                parentSpanId = validTraceparent?.spanId,
-                parentTraceId = validTraceparent?.traceId,
+                parentSpanId = validTraceparent?.spanId ?: networkSpanParent?.spanId,
+                parentTraceId = validTraceparent?.traceId ?: networkSpanParent?.traceId,
                 timeoutMs = startData.timeoutMs,
             )
 

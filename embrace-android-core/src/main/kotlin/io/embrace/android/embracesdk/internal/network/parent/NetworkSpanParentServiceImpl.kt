@@ -7,6 +7,7 @@ import io.embrace.android.embracesdk.internal.otel.spans.SpanService
 import io.embrace.android.embracesdk.internal.telemetry.AppliedLimitType
 import io.embrace.android.embracesdk.internal.telemetry.InternalTelemetryService
 import io.embrace.android.embracesdk.internal.utils.concurrent.OneShot
+import io.embrace.android.embracesdk.network.NetworkSpanParent
 import io.embrace.android.embracesdk.network.NetworkSpanParentToken
 import io.embrace.android.embracesdk.semconv.EmbNetworkSpanParentAttributes
 import io.embrace.android.embracesdk.spans.EmbraceSpan
@@ -81,7 +82,7 @@ internal class NetworkSpanParentServiceImpl(
         }
     }
 
-    override fun currentParent(): SpanContext? = active?.spanContext
+    override fun currentParent(): NetworkSpanParent? = active?.parent
 
     override fun onSpanStopped(spanId: String) {
         val parent = active ?: return
@@ -150,6 +151,7 @@ internal class NetworkSpanParentServiceImpl(
         val name: String?,
     ) : NetworkSpanParentToken {
         val label: String = name ?: spanContext.spanId
+        val parent: NetworkSpanParent = NetworkSpanParent.parent(spanContext)
     }
 }
 

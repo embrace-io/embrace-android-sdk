@@ -18,6 +18,7 @@ import org.junit.Assert.assertSame
 import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
+import kotlin.concurrent.thread
 
 internal class NetworkSpanParentServiceImplTest {
 
@@ -40,16 +41,16 @@ internal class NetworkSpanParentServiceImplTest {
         val first = untrackedContext()
         val second = untrackedContext()
         val firstToken = service.set(first)
-        assertSame(first, currentParent())
+        assertEquals(first.spanId, currentParentSpanId())
 
         val secondToken = service.set(second)
         assertNotSame(firstToken, secondToken)
-        assertSame(second, currentParent())
+        assertEquals(second.spanId, currentParentSpanId())
 
         assertFalse(service.clear(firstToken))
-        assertSame(second, currentParent())
+        assertEquals(second.spanId, currentParentSpanId())
         assertTrue(service.clear(secondToken))
-        assertNull(currentParent())
+        assertNull(currentParentSpanId())
         assertFalse(service.clear(secondToken))
     }
 
@@ -57,7 +58,7 @@ internal class NetworkSpanParentServiceImplTest {
     fun `clearing unconditionally clears the parent and invalidates its token`() {
         val token = service.set(untrackedContext())
         service.clear()
-        assertNull(currentParent())
+        assertNull(currentParentSpanId())
         assertFalse(service.clear(token))
     }
 
@@ -67,9 +68,9 @@ internal class NetworkSpanParentServiceImplTest {
         service.set(span.spanContext)
 
         service.onSpanStopped(checkNotNull(trackedSpan().spanId))
-        assertSame(span.spanContext, currentParent())
+        assertEquals(span.spanContext?.spanId, currentParentSpanId())
         service.onSpanStopped(checkNotNull(span.spanId))
-        assertNull(currentParent())
+        assertNull(currentParentSpanId())
     }
 
     @Test
@@ -77,16 +78,16 @@ internal class NetworkSpanParentServiceImplTest {
         val context = untrackedContext()
         service.set(context)
         service.onSpanStopped(context.spanId)
-        assertSame(context, currentParent())
+        assertEquals(context.spanId, currentParentSpanId())
     }
 
     @Test
     fun `the parent is cleared when the user session it was set in ends`() {
         service.set(untrackedContext())
         service.onUserSessionEnded("session-2")
-        assertNotNull(currentParent())
+        assertNotNull(currentParentSpanId())
         service.onUserSessionEnded("session-1")
-        assertNull(currentParent())
+        assertNull(currentParentSpanId())
     }
 
     @Test
@@ -94,7 +95,7 @@ internal class NetworkSpanParentServiceImplTest {
         userSessionId = ""
         service.set(untrackedContext())
         service.onUserSessionEnded("session-2")
-        assertNull(currentParent())
+        assertNull(currentParentSpanId())
     }
 
     @Test
@@ -107,7 +108,7 @@ internal class NetworkSpanParentServiceImplTest {
         assertSame(NoopNetworkSpanParentToken, service.set(null))
         assertSame(NoopNetworkSpanParentToken, service.set(ended.spanContext))
         assertSame(NoopNetworkSpanParentToken, service.set(FakeEmbraceSdkSpan.started().apply { stop() }))
-        assertSame(context, currentParent())
+        assertEquals(context.spanId, currentParentSpanId())
         assertEquals(1, errorHandler.warningMessages.size)
     }
 
@@ -227,7 +228,14 @@ internal class NetworkSpanParentServiceImplTest {
         assertEquals(11, errorHandler.warningMessages.size)
     }
 
-    private fun currentParent(): SpanContext? = service.currentParent()
+    @Test
+    fun `a network span parent set on another thread is visible`() {
+        val context = untrackedContext()
+        thread { service.set(context) }.join()
+        assertEquals(context.spanId, currentParentSpanId())
+    }
+
+    private fun currentParentSpanId(): String? = service.currentParent()?.spanId
 
     private fun untrackedContext(): SpanContext = checkNotNull(FakeEmbraceSdkSpan.started().spanContext)
 

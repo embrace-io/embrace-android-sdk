@@ -3,6 +3,7 @@ package io.embrace.android.embracesdk.internal.instance
 import android.app.ActivityManager
 import android.app.Application
 import android.content.Context
+import io.embrace.android.embracesdk.SessionStateEvent
 import io.embrace.android.embracesdk.internal.api.delegate.BreadcrumbApiDelegate
 import io.embrace.android.embracesdk.internal.api.delegate.ExperimentApiDelegate
 import io.embrace.android.embracesdk.internal.api.delegate.HostedSdkInternalInterfaceImpl
@@ -46,6 +47,7 @@ import io.embrace.android.embracesdk.internal.injection.createLogOrchestrator
 import io.embrace.android.embracesdk.internal.injection.createMetadataService
 import io.embrace.android.embracesdk.internal.injection.createNavigationTrackingService
 import io.embrace.android.embracesdk.internal.injection.createNetworkConnectivityService
+import io.embrace.android.embracesdk.internal.injection.createNetworkSpanParentService
 import io.embrace.android.embracesdk.internal.injection.createOtelSdkConfig
 import io.embrace.android.embracesdk.internal.injection.createPayloadCachingService
 import io.embrace.android.embracesdk.internal.injection.createPayloadResurrectionService
@@ -216,6 +218,17 @@ internal fun createRealSdkInstance(
         )
     }
 
+    // Deferred: only created once the app sets a network span parent.
+    val networkSpanParentService = lazy {
+        EmbTrace.trace("network-span-parent-service-init") {
+            createNetworkSpanParentService(
+                spanService = spanService.value,
+                errorHandler = errorHandler,
+                currentUserSessionIdProvider = sessionIdsProvider::getCurrentUserSessionId,
+            )
+        }
+    }
+
     val currentSessionPartSpan = init("current-session-part-span") {
         createCurrentSessionPartSpan(
             openTelemetryClock = openTelemetryClock,
@@ -236,7 +249,12 @@ internal fun createRealSdkInstance(
             openTelemetryClock = openTelemetryClock,
             spanRepository = spanRepository,
             dataValidator = dataValidator,
-            stopCallback = currentSessionPartSpan::spanStopCallback,
+            stopCallback = { spanId ->
+                currentSessionPartSpan.spanStopCallback(spanId)
+                if (networkSpanParentService.isInitialized()) {
+                    networkSpanParentService.value.onSpanStopped(spanId)
+                }
+            },
             redactionFunction = createRedactionFunction(sensitiveKeysBehavior),
             telemetryService = telemetryService,
             errorHandler = errorHandler,
@@ -758,6 +776,13 @@ internal fun createRealSdkInstance(
         }
     }
 
+    // registered here, not when the service is created, so creating it never waits on the orchestrator's lock
+    sessionOrchestrator.addUserSessionListener { event ->
+        if (event is SessionStateEvent.UserSessionEnded && networkSpanParentService.isInitialized()) {
+            networkSpanParentService.value.onUserSessionEnded(event.userSessionId)
+        }
+    }
+
     // the side effects of initialization, once every service is constructed
     EmbTrace.trace("sdk-services-start") {
         EmbTrace.trace(sectionName = "current-session-part-span-initialize-service", recordDuration = true) {
@@ -831,6 +856,7 @@ internal fun createRealSdkInstance(
                 registry = instrumentationRegistry,
                 httpRequestInfoModifierChain = instrumentationArgs.httpRequestInfoModifierChain,
                 sessionOrchestrator = sessionOrchestrator,
+                networkSpanParentService = networkSpanParentService,
             ),
             logsApiDelegate = logsApiDelegate,
             hostedSdkInternalInterface = HostedSdkInternalInterfaceImpl(

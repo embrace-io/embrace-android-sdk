@@ -20,6 +20,9 @@ import io.embrace.android.embracesdk.internal.clock.Clock
 import io.embrace.android.embracesdk.internal.config.ConfigService
 import io.embrace.android.embracesdk.internal.logging.ErrorHandler
 import io.embrace.android.embracesdk.internal.navigation.NavigationTrackingServiceImpl
+import io.embrace.android.embracesdk.internal.network.parent.NetworkSpanParentService
+import io.embrace.android.embracesdk.internal.network.parent.NetworkSpanParentServiceImpl
+import io.embrace.android.embracesdk.internal.otel.spans.SpanService
 import io.embrace.android.embracesdk.internal.session.id.SessionIdsProvider
 import io.embrace.android.embracesdk.internal.session.id.SessionIdsProviderImpl
 import io.embrace.android.embracesdk.internal.session.id.SessionPartTracker
@@ -102,3 +105,9 @@ fun createExperimentTrackingService(
     telemetryService: InternalTelemetryService,
     telemetryDestination: TelemetryDestination,
 ): ExperimentTrackingService = ExperimentTrackingServiceImpl(configService, telemetryService, telemetryDestination)
+
+fun createNetworkSpanParentService(
+    spanService: SpanService,
+    errorHandler: ErrorHandler,
+    currentUserSessionIdProvider: () -> String,
+): NetworkSpanParentService = NetworkSpanParentServiceImpl(spanService, errorHandler, currentUserSessionIdProvider)

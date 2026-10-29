@@ -13,8 +13,7 @@ import io.embrace.android.embracesdk.internal.logging.ErrorHandler
 import io.embrace.android.embracesdk.internal.logging.SdkErrorType
 import io.embrace.android.embracesdk.internal.logging.guardSdkCode
 import io.embrace.android.embracesdk.internal.serialization.PlatformSerializer
-import io.embrace.android.embracesdk.internal.store.KeyValueStore
-import io.embrace.android.embracesdk.internal.utils.UuidSource
+import io.embrace.android.embracesdk.internal.store.PersistedSdkStateStore
 import java.io.File
 
 /**
@@ -29,8 +28,7 @@ class PersistedConfig(
     serializer: PlatformSerializer,
     filesDir: File,
     instrumentedConfig: InstrumentedConfig,
-    keyValueStore: Lazy<KeyValueStore>,
-    uuidSource: UuidSource,
+    stateStore: Lazy<PersistedSdkStateStore>,
     clock: Clock,
     errorHandler: ErrorHandler,
 ) {
@@ -64,10 +62,10 @@ class PersistedConfig(
     val configDeliveredAt: Long = response?.deliveredAt ?: clock.now()
 
     /**
-     * Resolved lazily so that the common case (binary cache) never has to touch the [KeyValueStore].
+     * Resolved lazily so that the common case (binary cache) never has to touch the [PersistedSdkStateStore].
      */
     val deviceId: String by lazy {
-        DeviceIdProvider(keyValueStore, response?.deviceId, uuidSource).deviceId
+        response?.deviceId ?: stateStore.value.snapshot().deviceId
     }
 
     internal val thresholdCheck: BehaviorThresholdCheck = BehaviorThresholdCheck {

@@ -28,6 +28,7 @@ import io.embrace.android.embracesdk.internal.session.lifecycle.LifecycleTracker
 import io.embrace.android.embracesdk.internal.session.lifecycle.ProcessStateTrackerImpl
 import io.embrace.android.embracesdk.internal.session.orchestrator.SessionOrchestrator
 import io.embrace.android.embracesdk.internal.store.KeyValueStore
+import io.embrace.android.embracesdk.internal.store.PersistedSdkStateStore
 import io.embrace.android.embracesdk.internal.telemetry.InternalTelemetryService
 import io.embrace.android.embracesdk.internal.utils.EmbTrace
 import io.embrace.android.embracesdk.internal.worker.BackgroundWorker
@@ -93,9 +94,10 @@ fun createUserSessionPropertiesService(
 
 fun createUserService(
     store: KeyValueStore,
+    stateStore: PersistedSdkStateStore,
     clock: Clock,
     errorHandler: ErrorHandler,
-): UserService = EmbraceUserService(store, clock, errorHandler).apply { recordInstallDateIfAbsent() }
+): UserService = EmbraceUserService(store, stateStore, clock, errorHandler)
 
 fun createExperimentTrackingService(
     configService: ConfigService,

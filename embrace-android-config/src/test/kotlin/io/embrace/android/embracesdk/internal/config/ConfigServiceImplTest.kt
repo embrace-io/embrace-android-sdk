@@ -2,10 +2,9 @@ package io.embrace.android.embracesdk.internal.config
 
 import io.embrace.android.embracesdk.fakes.FakeClock
 import io.embrace.android.embracesdk.fakes.FakeErrorHandler
-import io.embrace.android.embracesdk.fakes.FakeKeyValueStore
+import io.embrace.android.embracesdk.fakes.FakePersistedSdkStateStore
 import io.embrace.android.embracesdk.fakes.FakeRemoteConfigSource
 import io.embrace.android.embracesdk.fakes.TestPlatformSerializer
-import io.embrace.android.embracesdk.fakes.TestUuidSource
 import io.embrace.android.embracesdk.fakes.config.FakeInstrumentedConfig
 import io.embrace.android.embracesdk.fakes.config.FakeProjectConfig
 import io.embrace.android.embracesdk.fakes.fakeBackgroundWorker
@@ -101,8 +100,7 @@ internal class ConfigServiceImplTest {
                 serializer = serializer,
                 filesDir = filesDir,
                 instrumentedConfig = instrumentedConfig,
-                keyValueStore = lazyOf(FakeKeyValueStore()),
-                uuidSource = TestUuidSource(),
+                stateStore = lazyOf(FakePersistedSdkStateStore()),
                 clock = FakeClock(),
                 errorHandler = FakeErrorHandler(),
             ),

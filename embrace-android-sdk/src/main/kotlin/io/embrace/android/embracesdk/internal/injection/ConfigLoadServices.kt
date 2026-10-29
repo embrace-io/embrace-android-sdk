@@ -8,10 +8,12 @@ import io.embrace.android.embracesdk.internal.config.ConfigService
 import io.embrace.android.embracesdk.internal.config.PersistedConfig
 import io.embrace.android.embracesdk.internal.config.instrumented.InstrumentedConfigImpl
 import io.embrace.android.embracesdk.internal.config.instrumented.schema.InstrumentedConfig
+import io.embrace.android.embracesdk.internal.prefs.PrefsPersistedSdkStateStore
 import io.embrace.android.embracesdk.internal.prefs.createKeyValueStore
 import io.embrace.android.embracesdk.internal.serialization.EmbraceSerializer
 import io.embrace.android.embracesdk.internal.serialization.PlatformSerializer
 import io.embrace.android.embracesdk.internal.store.KeyValueStore
+import io.embrace.android.embracesdk.internal.store.PersistedSdkStateStore
 import io.embrace.android.embracesdk.internal.utils.EmbTrace
 import io.embrace.android.embracesdk.internal.utils.UuidSource
 import io.embrace.android.embracesdk.internal.utils.UuidSourceImpl
@@ -42,6 +44,10 @@ internal class ConfigLoadServices(
         createKeyValueStore(context, jsonSerializer, preStartServices.errorHandler)
     }
 
+    val persistedSdkStateStore: Lazy<PersistedSdkStateStore> = lazy {
+        PrefsPersistedSdkStateStore(keyValueStore.value, preStartServices.clock, uuidSource)
+    }
+
     val persistedConfig: PersistedConfig = EmbTrace.trace(
         sectionName = "persisted-config-init",
         recordDuration = true,
@@ -50,8 +56,7 @@ internal class ConfigLoadServices(
             serializer = jsonSerializer,
             filesDir = context.filesDir,
             instrumentedConfig = instrumentedConfig,
-            keyValueStore = keyValueStore,
-            uuidSource = uuidSource,
+            stateStore = persistedSdkStateStore,
             clock = preStartServices.clock,
             errorHandler = preStartServices.errorHandler,
         )

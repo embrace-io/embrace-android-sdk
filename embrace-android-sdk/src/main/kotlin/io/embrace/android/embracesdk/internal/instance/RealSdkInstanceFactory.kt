@@ -96,6 +96,7 @@ import io.embrace.android.embracesdk.internal.store.KeyValueStore
 import io.embrace.android.embracesdk.internal.store.Ordinal
 import io.embrace.android.embracesdk.internal.store.OrdinalStore
 import io.embrace.android.embracesdk.internal.store.OrdinalStoreImpl
+import io.embrace.android.embracesdk.internal.store.PersistedSdkStateStore
 import io.embrace.android.embracesdk.internal.utils.BuildVersionChecker
 import io.embrace.android.embracesdk.internal.utils.EmbTrace
 import io.embrace.android.embracesdk.internal.utils.event.EventBus
@@ -265,6 +266,7 @@ internal fun createRealSdkInstance(
     }
 
     val store: KeyValueStore by configLoadServices.keyValueStore
+    val persistedSdkStateStore: PersistedSdkStateStore by configLoadServices.persistedSdkStateStore
 
     val ordinalStore: OrdinalStore by lazy {
         EmbTrace.trace("ordinal-store-init") { OrdinalStoreImpl(store, errorHandler) }
@@ -335,7 +337,7 @@ internal fun createRealSdkInstance(
 
     userService = lazy {
         EmbTrace.trace("user-service-init") {
-            createUserService(store, clock, errorHandler)
+            createUserService(store, persistedSdkStateStore, clock, errorHandler)
         }
     }
 

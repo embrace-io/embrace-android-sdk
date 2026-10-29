@@ -1,9 +1,9 @@
-package io.embrace.android.gradle.plugin.tasks.ndk
+package io.embrace.android.gradle.plugin.ndk
 
 import io.embrace.android.gradle.plugin.network.EmbraceEndpoint
 import io.embrace.android.gradle.plugin.network.HttpCallResult
 import io.embrace.android.gradle.plugin.network.NetworkService
-import io.embrace.android.gradle.plugin.tasks.handleHttpCallResult
+import io.embrace.android.gradle.plugin.network.handleHttpCallResult
 
 /**
  * This class is responsible for performing the NDK upload handshake.

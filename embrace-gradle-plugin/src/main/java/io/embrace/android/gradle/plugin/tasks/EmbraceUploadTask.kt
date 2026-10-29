@@ -1,6 +1,6 @@
 package io.embrace.android.gradle.plugin.tasks
 
-import io.embrace.android.gradle.plugin.tasks.common.RequestParams
+import io.embrace.android.gradle.plugin.network.RequestParams
 import org.gradle.api.provider.Property
 import org.gradle.api.tasks.Input
 

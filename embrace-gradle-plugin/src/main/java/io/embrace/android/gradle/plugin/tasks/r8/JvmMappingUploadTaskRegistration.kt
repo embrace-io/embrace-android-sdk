@@ -7,9 +7,9 @@ import io.embrace.android.gradle.plugin.gradle.registerTask
 import io.embrace.android.gradle.plugin.gradle.safeFlatMap
 import io.embrace.android.gradle.plugin.gradle.safeMap
 import io.embrace.android.gradle.plugin.network.EmbraceEndpoint
+import io.embrace.android.gradle.plugin.network.RequestParams
 import io.embrace.android.gradle.plugin.tasks.common.FileCompressionTask
 import io.embrace.android.gradle.plugin.tasks.common.MultipartUploadTask
-import io.embrace.android.gradle.plugin.tasks.common.RequestParams
 import io.embrace.android.gradle.plugin.tasks.registration.MappingTaskRegistration
 import io.embrace.android.gradle.plugin.tasks.registration.RegistrationParams
 import org.gradle.api.Task

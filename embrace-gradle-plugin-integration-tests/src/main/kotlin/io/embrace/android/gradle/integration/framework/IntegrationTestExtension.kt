@@ -4,9 +4,9 @@ import com.android.build.api.dsl.ApplicationExtension
 import io.embrace.android.gradle.plugin.api.EmbraceExtension
 import io.embrace.android.gradle.plugin.model.AndroidCompactedVariantData
 import io.embrace.android.gradle.plugin.network.EmbraceEndpoint
+import io.embrace.android.gradle.plugin.network.RequestParams
 import io.embrace.android.gradle.plugin.tasks.EmbraceTask
 import io.embrace.android.gradle.plugin.tasks.EmbraceUploadTask
-import io.embrace.android.gradle.plugin.tasks.common.RequestParams
 import org.gradle.api.JavaVersion
 import org.gradle.api.Project
 import org.gradle.api.model.ObjectFactory

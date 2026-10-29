@@ -1,4 +1,4 @@
-package io.embrace.android.gradle.plugin.buildreporter
+package io.embrace.android.gradle.plugin.network
 
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable

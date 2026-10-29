@@ -1,10 +1,12 @@
 package io.embrace.android.gradle.plugin.tasks.ndk
 
 import io.embrace.android.gradle.plugin.EmbraceLogger
+import io.embrace.android.gradle.plugin.ndk.NdkUploadHandshake
+import io.embrace.android.gradle.plugin.ndk.NdkUploadHandshakeRequest
 import io.embrace.android.gradle.plugin.network.OkHttpNetworkService
+import io.embrace.android.gradle.plugin.network.handleHttpCallResult
 import io.embrace.android.gradle.plugin.tasks.EmbraceUploadTask
 import io.embrace.android.gradle.plugin.tasks.EmbraceUploadTaskImpl
-import io.embrace.android.gradle.plugin.tasks.handleHttpCallResult
 import io.embrace.android.gradle.plugin.util.serialization.JsonSerializer
 import org.gradle.api.file.DirectoryProperty
 import org.gradle.api.file.RegularFileProperty

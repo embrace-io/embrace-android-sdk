@@ -7,10 +7,10 @@ import io.embrace.android.embracesdk.validateBodyAppId
 import io.embrace.android.embracesdk.validateBodyBuildId
 import io.embrace.android.embracesdk.validateMappingFile
 import io.embrace.android.gradle.config.TestMatrix
-import io.embrace.android.gradle.plugin.buildreporter.BuildTelemetryRequest
+import io.embrace.android.gradle.plugin.ndk.NdkUploadHandshakeRequest
+import io.embrace.android.gradle.plugin.network.BuildTelemetryRequest
 import io.embrace.android.gradle.plugin.network.EmbraceEndpoint
 import io.embrace.android.gradle.plugin.tasks.buildinfo.BuildInfoExport
-import io.embrace.android.gradle.plugin.tasks.ndk.NdkUploadHandshakeRequest
 import io.embrace.android.gradle.plugin.util.INVALID_BUILD_ID
 import io.embrace.android.gradle.plugin.util.serialization.JsonSerializer
 import kotlinx.serialization.serializer

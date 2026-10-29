@@ -3,9 +3,9 @@ package io.embrace.android.gradle.plugin.tasks.reactnative
 import io.embrace.android.gradle.plugin.EmbraceLogger
 import io.embrace.android.gradle.plugin.hash.calculateMD5ForFile
 import io.embrace.android.gradle.plugin.network.OkHttpNetworkService
+import io.embrace.android.gradle.plugin.network.handleHttpCallResult
 import io.embrace.android.gradle.plugin.tasks.EmbraceUploadTask
 import io.embrace.android.gradle.plugin.tasks.EmbraceUploadTaskImpl
-import io.embrace.android.gradle.plugin.tasks.handleHttpCallResult
 import okio.buffer
 import okio.gzip
 import okio.sink

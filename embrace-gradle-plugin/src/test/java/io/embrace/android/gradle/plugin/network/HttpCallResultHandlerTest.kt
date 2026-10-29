@@ -1,7 +1,5 @@
-package io.embrace.android.gradle.plugin.tasks
+package io.embrace.android.gradle.plugin.network
 
-import io.embrace.android.gradle.plugin.network.EmbraceEndpoint
-import io.embrace.android.gradle.plugin.network.HttpCallResult
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertThrows
 import org.junit.Assert.assertTrue

@@ -1,4 +1,4 @@
-package io.embrace.android.gradle.plugin.tasks.ndk
+package io.embrace.android.gradle.plugin.ndk
 
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable

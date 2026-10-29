@@ -1,11 +1,8 @@
-package io.embrace.android.gradle.plugin.tasks
+package io.embrace.android.gradle.plugin.network
 
-import io.embrace.android.gradle.plugin.network.EmbraceEndpoint
-import io.embrace.android.gradle.plugin.network.HttpCallResult
 import io.embrace.android.gradle.plugin.network.HttpCallResult.Error
 import io.embrace.android.gradle.plugin.network.HttpCallResult.Failure
 import io.embrace.android.gradle.plugin.network.HttpCallResult.Success
-import io.embrace.android.gradle.plugin.tasks.common.RequestParams
 
 /**
  * Handles a HTTP call result by throwing an error that stops the build (if configured) _or_ logging the error.

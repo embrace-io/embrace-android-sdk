@@ -1,12 +1,12 @@
 package io.embrace.android.gradle.plugin.util.serialization
 
 import io.embrace.android.gradle.ResourceReader
-import io.embrace.android.gradle.plugin.buildreporter.BuildTelemetryRequest
-import io.embrace.android.gradle.plugin.buildreporter.VariantBuildTelemetry
+import io.embrace.android.gradle.plugin.ndk.NdkUploadHandshakeRequest
+import io.embrace.android.gradle.plugin.ndk.NdkUploadHandshakeResponse
+import io.embrace.android.gradle.plugin.network.BuildTelemetryRequest
+import io.embrace.android.gradle.plugin.network.VariantBuildTelemetry
 import io.embrace.android.gradle.plugin.tasks.buildinfo.BuildInfoExport
 import io.embrace.android.gradle.plugin.tasks.ndk.ArchitecturesToHashedSharedObjectFilesMap
-import io.embrace.android.gradle.plugin.tasks.ndk.NdkUploadHandshakeRequest
-import io.embrace.android.gradle.plugin.tasks.ndk.NdkUploadHandshakeResponse
 import io.embrace.android.gradle.plugin.tasks.reactnative.BundleAndSourcemap
 import io.embrace.android.gradle.plugin.tasks.reactnative.writeBundleAndSourcemapJson
 import kotlinx.serialization.SerializationStrategy

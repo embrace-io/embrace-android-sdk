@@ -171,8 +171,8 @@ class TaskRegistrar(
     ) {
         // the build ID is deliberately omitted as this would invalidate configuration cache
         val fullVariantConfiguration = embraceVariantConfiguration
-            .map { VariantConfig.from(it, androidCompactedVariantData) }
-            .orElse(VariantConfig.from(null, androidCompactedVariantData))
+            .map { androidCompactedVariantData.toVariantConfig(it) }
+            .orElse(androidCompactedVariantData.toVariantConfig(null))
 
         // let's add configuration for current variant to our property
         variantConfigurationsListProperty.add(fullVariantConfiguration)

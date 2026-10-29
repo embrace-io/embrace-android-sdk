@@ -1,6 +1,8 @@
 package io.embrace.android.gradle.plugin.model
 
 import com.android.build.api.variant.Variant
+import io.embrace.android.gradle.plugin.instrumentation.config.model.EmbraceVariantConfig
+import io.embrace.android.gradle.plugin.instrumentation.config.model.VariantConfig
 import java.io.Serializable
 
 /**
@@ -14,6 +16,13 @@ data class AndroidCompactedVariantData(
     val productFlavors: List<String>,
     val sourceMapPath: String,
 ) : Serializable {
+
+    fun toVariantConfig(embraceConfig: EmbraceVariantConfig?): VariantConfig = VariantConfig(
+        variantName = name,
+        buildType = buildTypeName,
+        buildFlavor = flavorName,
+        embraceConfig = embraceConfig,
+    )
 
     companion object {
         @Suppress("ConstPropertyName")

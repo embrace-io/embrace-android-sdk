@@ -1,6 +1,5 @@
 package io.embrace.android.gradle.plugin.instrumentation.config.model
 
-import io.embrace.android.gradle.plugin.model.AndroidCompactedVariantData
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.Transient
@@ -21,22 +20,6 @@ data class VariantConfig(
     companion object {
         @Suppress("ConstPropertyName")
         private const val serialVersionUID = 1L
-
-        /**
-         * It builds a full configuration for a variant.
-         */
-        fun from(
-            embraceVariantConfig: EmbraceVariantConfig?,
-            androidVariantConfig: AndroidCompactedVariantData,
-            buildId: String? = null,
-        ) =
-            VariantConfig(
-                embraceConfig = embraceVariantConfig,
-                variantName = androidVariantConfig.name,
-                buildType = androidVariantConfig.buildTypeName,
-                buildFlavor = androidVariantConfig.flavorName,
-                buildId = buildId,
-            )
     }
 }
 

@@ -1,1 +1,1 @@
-sourceset_dependencies = '{":embrace-android-api/release":[],":embrace-android-sdk/release":[]}'
+sourceset_dependencies = '{":embrace-android-otel-java/release":[],":embrace-android-api/release":[],":embrace-android-sdk/release":[]}'

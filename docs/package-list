@@ -8,5 +8,7 @@ io.embrace.android.embracesdk.experiments
 io.embrace.android.embracesdk.network
 io.embrace.android.embracesdk.network.http
 io.embrace.android.embracesdk.spans
+module:embrace-android-otel-java
+io.embrace.android.embracesdk.otel.java
 module:embrace-android-sdk
 io.embrace.android.embracesdk

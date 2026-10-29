@@ -345,7 +345,8 @@ HSPLio/embrace/android/embracesdk/internal/arch/InstrumentationRegistryImpl$load
 HSPLio/embrace/android/embracesdk/internal/arch/InstrumentationRegistryImpl$loadInstrumentations$$inlined$sortedBy$1;->compare(Ljava/lang/Object;Ljava/lang/Object;)I
 Lio/embrace/android/embracesdk/internal/arch/InstrumentationRegistryImpl;
 HSPLio/embrace/android/embracesdk/internal/arch/InstrumentationRegistryImpl;->$r8$lambda$91Wnfi2iuRV5CakR7MlsmTMKGyk(Lio/embrace/android/embracesdk/internal/arch/InstrumentationRegistryImpl;Lio/embrace/android/embracesdk/internal/arch/InstrumentationProvider;Lio/embrace/android/embracesdk/internal/arch/InstrumentationArgs;)V
-HSPLio/embrace/android/embracesdk/internal/arch/InstrumentationRegistryImpl;-><init>(Lio/embrace/android/embracesdk/internal/logging/ErrorHandler;)V
+HSPLio/embrace/android/embracesdk/internal/arch/InstrumentationRegistryImpl;-><init>(Lio/embrace/android/embracesdk/internal/logging/ErrorHandler;Ljava/lang/Object;)V
+HSPLio/embrace/android/embracesdk/internal/arch/InstrumentationRegistryImpl;-><init>(Lio/embrace/android/embracesdk/internal/logging/ErrorHandler;Ljava/lang/Object;ILkotlin/jvm/internal/DefaultConstructorMarker;)V
 HSPLio/embrace/android/embracesdk/internal/arch/InstrumentationRegistryImpl;->add(Lkotlin/jvm/functions/Function0;)Lio/embrace/android/embracesdk/internal/arch/datasource/DataSource;
 HSPLio/embrace/android/embracesdk/internal/arch/InstrumentationRegistryImpl;->findByType(Lkotlin/reflect/KClass;)Lio/embrace/android/embracesdk/internal/arch/datasource/DataSource;
 HSPLio/embrace/android/embracesdk/internal/arch/InstrumentationRegistryImpl;->getCurrentStates()Ljava/util/Map;
@@ -710,6 +711,7 @@ HSPLio/embrace/android/embracesdk/internal/arch/stacktrace/ThreadExtKt;->compatT
 HSPLio/embrace/android/embracesdk/internal/arch/stacktrace/ThreadExtKt;->truncateStacktrace(Ljava/lang/Thread;[Ljava/lang/StackTraceElement;I)Lio/embrace/android/embracesdk/internal/arch/stacktrace/ThreadSample;
 Lio/embrace/android/embracesdk/internal/arch/stacktrace/ThreadSample;
 HSPLio/embrace/android/embracesdk/internal/arch/stacktrace/ThreadSample;-><init>(JLjava/lang/Thread$State;Ljava/lang/String;ILjava/util/List;I)V
+HSPLio/embrace/android/embracesdk/internal/arch/stacktrace/ThreadSample;->equals(Ljava/lang/Object;)Z
 HSPLio/embrace/android/embracesdk/internal/arch/stacktrace/ThreadSample;->getFrameCount()I
 HSPLio/embrace/android/embracesdk/internal/arch/stacktrace/ThreadSample;->getLines()Ljava/util/List;
 HSPLio/embrace/android/embracesdk/internal/arch/stacktrace/ThreadSample;->getPriority()I
@@ -754,9 +756,9 @@ HSPLio/embrace/android/embracesdk/internal/capture/connectivity/ConnectivityStat
 HSPLio/embrace/android/embracesdk/internal/capture/connectivity/ConnectivityStatus$Unverified;->isConnected()Z
 Lio/embrace/android/embracesdk/internal/capture/connectivity/ConnectivityStatus$Wan;
 HSPLio/embrace/android/embracesdk/internal/capture/connectivity/ConnectivityStatus$Wan;-><init>(Z)V
-HSPLio/embrace/android/embracesdk/internal/capture/connectivity/ConnectivityStatus$Wan;->isConnected()Z
 Lio/embrace/android/embracesdk/internal/capture/connectivity/ConnectivityStatus$Wifi;
 HSPLio/embrace/android/embracesdk/internal/capture/connectivity/ConnectivityStatus$Wifi;-><init>(Z)V
+HSPLio/embrace/android/embracesdk/internal/capture/connectivity/ConnectivityStatus$Wifi;->isConnected()Z
 Lio/embrace/android/embracesdk/internal/capture/connectivity/ConnectivityStatus;
 HSPLio/embrace/android/embracesdk/internal/capture/connectivity/ConnectivityStatus;-><init>(Lio/embrace/android/embracesdk/internal/capture/connectivity/ConnectionType;)V
 HSPLio/embrace/android/embracesdk/internal/capture/connectivity/ConnectivityStatus;-><init>(Lio/embrace/android/embracesdk/internal/capture/connectivity/ConnectionType;Lkotlin/jvm/internal/DefaultConstructorMarker;)V
@@ -765,7 +767,7 @@ HSPLio/embrace/android/embracesdk/internal/capture/connectivity/ConnectivityStat
 Lio/embrace/android/embracesdk/internal/capture/connectivity/ConnectivityStatusKt;
 HSPLio/embrace/android/embracesdk/internal/capture/connectivity/ConnectivityStatusKt;-><clinit>()V
 HSPLio/embrace/android/embracesdk/internal/capture/connectivity/ConnectivityStatusKt;->getOptimisticUnknown()Lio/embrace/android/embracesdk/internal/capture/connectivity/ConnectivityStatus$Unknown;
-HSPLio/embrace/android/embracesdk/internal/capture/connectivity/ConnectivityStatusKt;->getOptimisticWan()Lio/embrace/android/embracesdk/internal/capture/connectivity/ConnectivityStatus$Wan;
+HSPLio/embrace/android/embracesdk/internal/capture/connectivity/ConnectivityStatusKt;->getOptimisticWifi()Lio/embrace/android/embracesdk/internal/capture/connectivity/ConnectivityStatus$Wifi;
 Lio/embrace/android/embracesdk/internal/capture/connectivity/EmbraceNetworkConnectivityService$$ExternalSyntheticLambda0;
 HSPLio/embrace/android/embracesdk/internal/capture/connectivity/EmbraceNetworkConnectivityService$$ExternalSyntheticLambda0;-><init>(Lio/embrace/android/embracesdk/internal/capture/connectivity/EmbraceNetworkConnectivityService;)V
 HSPLio/embrace/android/embracesdk/internal/capture/connectivity/EmbraceNetworkConnectivityService$$ExternalSyntheticLambda0;->run()V
@@ -2397,7 +2399,6 @@ HSPLio/embrace/android/embracesdk/internal/injection/OpenTelemetryFactoriesKt;->
 HSPLio/embrace/android/embracesdk/internal/injection/OpenTelemetryFactoriesKt;->createRedactionFunction(Lio/embrace/android/embracesdk/internal/config/behavior/SensitiveKeysBehavior;)Lkotlin/jvm/functions/Function2;
 Lio/embrace/android/embracesdk/internal/injection/OtelSignalContext;
 HSPLio/embrace/android/embracesdk/internal/injection/OtelSignalContext;-><init>(Lkotlin/jvm/functions/Function0;Lkotlin/jvm/functions/Function0;Lkotlin/jvm/functions/Function0;Lkotlin/jvm/functions/Function0;Lkotlin/jvm/functions/Function0;Lkotlin/jvm/functions/Function0;Lkotlin/jvm/functions/Function0;)V
-HSPLio/embrace/android/embracesdk/internal/injection/OtelSignalContext;->getEventMetadata()Ljava/util/Map;
 HSPLio/embrace/android/embracesdk/internal/injection/OtelSignalContext;->getSessionIdsProvider()Lio/embrace/android/embracesdk/internal/session/id/SessionIdsProvider;
 HSPLio/embrace/android/embracesdk/internal/injection/OtelSignalContext;->getUserId()Ljava/lang/String;
 HSPLio/embrace/android/embracesdk/internal/injection/OtelSignalContext;->markReady()V
@@ -5184,7 +5185,6 @@ HSPLio/embrace/android/embracesdk/internal/payload/Span;->access$get$childSerial
 HSPLio/embrace/android/embracesdk/internal/payload/Span;->copy$default(Lio/embrace/android/embracesdk/internal/payload/Span;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/Long;Ljava/lang/Long;Lio/embrace/android/embracesdk/internal/payload/Span$Status;Ljava/util/List;Ljava/util/List;Ljava/util/List;ILjava/lang/Object;)Lio/embrace/android/embracesdk/internal/payload/Span;
 HSPLio/embrace/android/embracesdk/internal/payload/Span;->copy(Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/Long;Ljava/lang/Long;Lio/embrace/android/embracesdk/internal/payload/Span$Status;Ljava/util/List;Ljava/util/List;Ljava/util/List;)Lio/embrace/android/embracesdk/internal/payload/Span;
 HSPLio/embrace/android/embracesdk/internal/payload/Span;->getAttributes()Ljava/util/List;
-HSPLio/embrace/android/embracesdk/internal/payload/Span;->getEndTimeNanos()Ljava/lang/Long;
 HSPLio/embrace/android/embracesdk/internal/payload/Span;->getParentSpanId()Ljava/lang/String;
 HSPLio/embrace/android/embracesdk/internal/payload/Span;->getSpanId()Ljava/lang/String;
 HSPLio/embrace/android/embracesdk/internal/payload/Span;->getStartTimeNanos()Ljava/lang/Long;
@@ -5347,7 +5347,6 @@ Lio/embrace/android/embracesdk/internal/resurrection/SessionPartResurrector$$Ext
 HSPLio/embrace/android/embracesdk/internal/resurrection/SessionPartResurrector$$ExternalSyntheticLambda0;-><init>()V
 Lio/embrace/android/embracesdk/internal/resurrection/SessionPartResurrector;
 HSPLio/embrace/android/embracesdk/internal/resurrection/SessionPartResurrector;-><init>(Lio/embrace/android/embracesdk/internal/delivery/storage/CachedLogEnvelopeStore;)V
-HSPLio/embrace/android/embracesdk/internal/resurrection/SessionPartResurrector;->estimateEndTimeMs(Ljava/util/List;Ljava/util/List;)J
 HSPLio/embrace/android/embracesdk/internal/resurrection/SessionPartResurrector;->resolveSessionPartIdForCrashMatch(Lio/embrace/android/embracesdk/internal/payload/Span;)Ljava/lang/String;
 HSPLio/embrace/android/embracesdk/internal/resurrection/SessionPartResurrector;->resurrect$default(Lio/embrace/android/embracesdk/internal/resurrection/SessionPartResurrector;Lio/embrace/android/embracesdk/internal/payload/Envelope;Ljava/lang/String;Lio/embrace/android/embracesdk/internal/instrumentation/crash/ndk/NativeCrashService;Lkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function1;Ljava/lang/String;ZLjava/lang/Long;Lkotlin/jvm/functions/Function1;ILjava/lang/Object;)Lio/embrace/android/embracesdk/internal/payload/Envelope;
 HSPLio/embrace/android/embracesdk/internal/resurrection/SessionPartResurrector;->resurrect(Lio/embrace/android/embracesdk/internal/payload/Envelope;Ljava/lang/String;Lio/embrace/android/embracesdk/internal/instrumentation/crash/ndk/NativeCrashService;Lkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function1;Ljava/lang/String;ZLjava/lang/Long;Lkotlin/jvm/functions/Function1;)Lio/embrace/android/embracesdk/internal/payload/Envelope;
@@ -5714,6 +5713,7 @@ Lio/embrace/android/embracesdk/internal/session/orchestrator/SessionPartWriter;
 Lio/embrace/android/embracesdk/internal/session/orchestrator/SessionPartWriterImpl$Companion;
 HSPLio/embrace/android/embracesdk/internal/session/orchestrator/SessionPartWriterImpl$Companion;-><init>()V
 HSPLio/embrace/android/embracesdk/internal/session/orchestrator/SessionPartWriterImpl$Companion;-><init>(Lkotlin/jvm/internal/DefaultConstructorMarker;)V
+Lio/embrace/android/embracesdk/internal/session/orchestrator/SessionPartWriterImpl$PartWriters;
 Lio/embrace/android/embracesdk/internal/session/orchestrator/SessionPartWriterImpl;
 HSPLio/embrace/android/embracesdk/internal/session/orchestrator/SessionPartWriterImpl;-><clinit>()V
 HSPLio/embrace/android/embracesdk/internal/session/orchestrator/SessionPartWriterImpl;-><init>(Lkotlin/Lazy;Lio/embrace/android/embracesdk/internal/worker/BackgroundWorker;Lio/embrace/android/embracesdk/internal/config/ConfigService;Lio/embrace/android/embracesdk/internal/utils/UuidSource;Lio/embrace/android/embracesdk/internal/clock/Clock;Lio/embrace/android/embracesdk/internal/logging/ErrorHandler;Lio/embrace/android/embracesdk/internal/envelope/resource/EnvelopeResourceSource;Lio/embrace/android/embracesdk/internal/envelope/metadata/EnvelopeMetadataSource;Lio/embrace/android/embracesdk/internal/spans/CurrentSessionPartSpan;Lkotlin/jvm/functions/Function0;Lio/embrace/android/embracesdk/internal/telemetry/InternalTelemetryService;Lio/embrace/android/embracesdk/internal/session/persistence/SessionPartDirectoryStore;Lio/embrace/android/embracesdk/internal/session/persistence/SessionPartWriteTracker;Lkotlin/jvm/functions/Function0;)V
@@ -5726,6 +5726,8 @@ HSPLio/embrace/android/embracesdk/internal/session/orchestrator/SessionPartWrite
 Lio/embrace/android/embracesdk/internal/session/orchestrator/SessionTimerState;
 HSPLio/embrace/android/embracesdk/internal/session/orchestrator/SessionTimerState;-><init>(Ljava/util/concurrent/ScheduledFuture;)V
 HSPLio/embrace/android/embracesdk/internal/session/orchestrator/SessionTimerState;->cancel()V
+Lio/embrace/android/embracesdk/internal/session/orchestrator/TelemetryWriteScheduler$WriteStrategy;
+Lio/embrace/android/embracesdk/internal/session/orchestrator/TelemetryWriteScheduler;
 Lio/embrace/android/embracesdk/internal/session/orchestrator/TransitionType$$ExternalSyntheticLambda0;
 HSPLio/embrace/android/embracesdk/internal/session/orchestrator/TransitionType$$ExternalSyntheticLambda0;-><init>(Lio/embrace/android/embracesdk/internal/session/orchestrator/TransitionType;)V
 Lio/embrace/android/embracesdk/internal/session/orchestrator/TransitionType;
@@ -7533,7 +7535,6 @@ HSPLio/opentelemetry/kotlin/logging/export/ReadWriteLogRecordAdapter;->getSeveri
 HSPLio/opentelemetry/kotlin/logging/export/ReadWriteLogRecordAdapter;->getSeverityText()Ljava/lang/String;
 HSPLio/opentelemetry/kotlin/logging/export/ReadWriteLogRecordAdapter;->getSpanContext()Lio/opentelemetry/kotlin/tracing/SpanContext;
 HSPLio/opentelemetry/kotlin/logging/export/ReadWriteLogRecordAdapter;->getTimestamp()Ljava/lang/Long;
-HSPLio/opentelemetry/kotlin/logging/export/ReadWriteLogRecordAdapter;->setStringAttribute(Ljava/lang/String;Ljava/lang/String;)V
 Lio/opentelemetry/kotlin/logging/model/LogRecordModel$$ExternalSyntheticLambda0;
 HSPLio/opentelemetry/kotlin/logging/model/LogRecordModel$$ExternalSyntheticLambda0;-><init>(Lio/opentelemetry/kotlin/behavior/AttributeLimitsBehavior;)V
 HSPLio/opentelemetry/kotlin/logging/model/LogRecordModel$$ExternalSyntheticLambda0;->invoke()Ljava/lang/Object;
@@ -8067,10 +8068,11 @@ HSPLio/opentelemetry/kotlin/tracing/model/SpanModel;->getResource()Lio/opentelem
 HSPLio/opentelemetry/kotlin/tracing/model/SpanModel;->getSpanContext()Lio/opentelemetry/kotlin/tracing/SpanContext;
 HSPLio/opentelemetry/kotlin/tracing/model/SpanModel;->getSpanKind()Lio/opentelemetry/kotlin/tracing/SpanKind;
 HSPLio/opentelemetry/kotlin/tracing/model/SpanModel;->getStartTimestamp()J
-HSPLio/opentelemetry/kotlin/tracing/model/SpanModel;->isRecording()Z
 HSPLio/opentelemetry/kotlin/tracing/model/SpanModel;->isRecordingInternal()Z
 HSPLio/opentelemetry/kotlin/tracing/model/SpanModel;->setName(Ljava/lang/String;)V
 HSPLio/opentelemetry/kotlin/tracing/model/SpanModel;->setStatus(Lio/opentelemetry/kotlin/tracing/StatusData;)V
+HSPLio/opentelemetry/kotlin/tracing/model/SpanModel;->setStringAttribute(Ljava/lang/String;Ljava/lang/String;)V
+HSPLio/opentelemetry/kotlin/tracing/model/SpanModel;->toSpanData()Lio/opentelemetry/kotlin/tracing/model/ReadableSpan;
 Lio/opentelemetry/kotlin/tracing/model/TraceFlagsExtKt;
 HSPLio/opentelemetry/kotlin/tracing/model/TraceFlagsExtKt;->getHex(Lio/opentelemetry/kotlin/tracing/TraceFlags;)Ljava/lang/String;
 Lio/opentelemetry/kotlin/tracing/sampling/AlwaysOffSampler;
@@ -8279,7 +8281,6 @@ HSPLio/opentelemetry/sdk/logs/SdkReadWriteLogRecord;->getSeverity()Lio/opentelem
 HSPLio/opentelemetry/sdk/logs/SdkReadWriteLogRecord;->getSeverityText()Ljava/lang/String;
 HSPLio/opentelemetry/sdk/logs/SdkReadWriteLogRecord;->getSpanContext()Lio/opentelemetry/api/trace/SpanContext;
 HSPLio/opentelemetry/sdk/logs/SdkReadWriteLogRecord;->getTimestampEpochNanos()J
-HSPLio/opentelemetry/sdk/logs/SdkReadWriteLogRecord;->setAttribute(Lio/opentelemetry/api/common/AttributeKey;Ljava/lang/Object;)Lio/opentelemetry/sdk/logs/ReadWriteLogRecord;
 Lio/opentelemetry/sdk/logs/internal/AutoValue_LoggerConfig;
 HSPLio/opentelemetry/sdk/logs/internal/AutoValue_LoggerConfig;-><init>(ZLio/opentelemetry/api/logs/Severity;Z)V
 HSPLio/opentelemetry/sdk/logs/internal/AutoValue_LoggerConfig;->getMinimumSeverity()Lio/opentelemetry/api/logs/Severity;
@@ -9936,8 +9937,6 @@ HSPLkotlinx/serialization/json/Json;->encodeToString(Lkotlinx/serialization/Seri
 HSPLkotlinx/serialization/json/Json;->getConfiguration()Lkotlinx/serialization/json/JsonConfiguration;
 HSPLkotlinx/serialization/json/Json;->getSerializersModule()Lkotlinx/serialization/modules/SerializersModule;
 HSPLkotlinx/serialization/json/Json;->get_schemaCache$kotlinx_serialization_json()Lkotlinx/serialization/json/internal/DescriptorSchemaCache;
-Lkotlinx/serialization/json/JsonArray;
-Lkotlinx/serialization/json/JsonArraySerializer;
 Lkotlinx/serialization/json/JsonBuilder;
 HSPLkotlinx/serialization/json/JsonBuilder;-><init>(Lkotlinx/serialization/json/Json;)V
 HSPLkotlinx/serialization/json/JsonBuilder;->build$kotlinx_serialization_json()Lkotlinx/serialization/json/JsonConfiguration;
@@ -10164,7 +10163,6 @@ HSPLkotlinx/serialization/json/internal/Composer;->getWritingFirst()Z
 HSPLkotlinx/serialization/json/internal/Composer;->indent()V
 HSPLkotlinx/serialization/json/internal/Composer;->nextItem()V
 HSPLkotlinx/serialization/json/internal/Composer;->nextItemIfNotFirst()V
-HSPLkotlinx/serialization/json/internal/Composer;->print(C)V
 HSPLkotlinx/serialization/json/internal/Composer;->print(I)V
 HSPLkotlinx/serialization/json/internal/Composer;->print(J)V
 HSPLkotlinx/serialization/json/internal/Composer;->print(Z)V
@@ -11229,9 +11227,6 @@ HSPLokhttp3/internal/http2/Http2Connection$ReaderRunnable;->invoke()Ljava/lang/O
 HSPLokhttp3/internal/http2/Http2Connection$ReaderRunnable;->invoke()V
 HSPLokhttp3/internal/http2/Http2Connection$ReaderRunnable;->settings(ZLokhttp3/internal/http2/Settings;)V
 HSPLokhttp3/internal/http2/Http2Connection$ReaderRunnable;->windowUpdate(IJ)V
-Lokhttp3/internal/http2/Http2Connection$writeSynResetLater$$inlined$execute$default$1;
-HSPLokhttp3/internal/http2/Http2Connection$writeSynResetLater$$inlined$execute$default$1;-><init>(Ljava/lang/String;ZLokhttp3/internal/http2/Http2Connection;ILokhttp3/internal/http2/ErrorCode;)V
-HSPLokhttp3/internal/http2/Http2Connection$writeSynResetLater$$inlined$execute$default$1;->runOnce()J
 Lokhttp3/internal/http2/Http2Connection;
 HSPLokhttp3/internal/http2/Http2Connection;-><clinit>()V
 HSPLokhttp3/internal/http2/Http2Connection;-><init>(Lokhttp3/internal/http2/Http2Connection$Builder;)V
@@ -11262,8 +11257,6 @@ HSPLokhttp3/internal/http2/Http2Connection;->start$default(Lokhttp3/internal/htt
 HSPLokhttp3/internal/http2/Http2Connection;->start(ZLokhttp3/internal/concurrent/TaskRunner;)V
 HSPLokhttp3/internal/http2/Http2Connection;->updateConnectionFlowControl$okhttp(J)V
 HSPLokhttp3/internal/http2/Http2Connection;->writeData(IZLokio/Buffer;J)V
-HSPLokhttp3/internal/http2/Http2Connection;->writeSynReset$okhttp(ILokhttp3/internal/http2/ErrorCode;)V
-HSPLokhttp3/internal/http2/Http2Connection;->writeSynResetLater$okhttp(ILokhttp3/internal/http2/ErrorCode;)V
 Lokhttp3/internal/http2/Http2ExchangeCodec$Companion;
 HSPLokhttp3/internal/http2/Http2ExchangeCodec$Companion;-><init>()V
 HSPLokhttp3/internal/http2/Http2ExchangeCodec$Companion;-><init>(Lkotlin/jvm/internal/DefaultConstructorMarker;)V
@@ -11336,7 +11329,6 @@ HSPLokhttp3/internal/http2/Http2Stream;-><init>(ILokhttp3/internal/http2/Http2Co
 HSPLokhttp3/internal/http2/Http2Stream;->addBytesToWriteWindow(J)V
 HSPLokhttp3/internal/http2/Http2Stream;->cancelStreamIfNecessary$okhttp()V
 HSPLokhttp3/internal/http2/Http2Stream;->checkOutNotClosed$okhttp()V
-HSPLokhttp3/internal/http2/Http2Stream;->closeInternal(Lokhttp3/internal/http2/ErrorCode;Ljava/io/IOException;)Z
 HSPLokhttp3/internal/http2/Http2Stream;->getConnection()Lokhttp3/internal/http2/Http2Connection;
 HSPLokhttp3/internal/http2/Http2Stream;->getErrorCode$okhttp()Lokhttp3/internal/http2/ErrorCode;
 HSPLokhttp3/internal/http2/Http2Stream;->getId()I
@@ -11374,7 +11366,6 @@ HSPLokhttp3/internal/http2/Http2Writer;->flush()V
 HSPLokhttp3/internal/http2/Http2Writer;->frameHeader(IIII)V
 HSPLokhttp3/internal/http2/Http2Writer;->headers(ZILjava/util/List;)V
 HSPLokhttp3/internal/http2/Http2Writer;->maxDataLength()I
-HSPLokhttp3/internal/http2/Http2Writer;->rstStream(ILokhttp3/internal/http2/ErrorCode;)V
 HSPLokhttp3/internal/http2/Http2Writer;->settings(Lokhttp3/internal/http2/Settings;)V
 HSPLokhttp3/internal/http2/Http2Writer;->windowUpdate(IJ)V
 Lokhttp3/internal/http2/Huffman$Node;

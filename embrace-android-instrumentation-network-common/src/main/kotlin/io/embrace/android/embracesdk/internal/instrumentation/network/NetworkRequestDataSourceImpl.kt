@@ -129,6 +129,7 @@ class NetworkRequestDataSourceImpl(
                 parentSpanId = validTraceparent?.spanId,
                 parentTraceId = validTraceparent?.traceId,
                 timeoutMs = startData.timeoutMs,
+                networkRequest = MutableHttpRequestInfoImpl(startData.httpMethod, startData.url),
             )
 
             spanToken.asW3cTraceparent()?.let(TraceParent::parse)?.let { spanTraceparent ->

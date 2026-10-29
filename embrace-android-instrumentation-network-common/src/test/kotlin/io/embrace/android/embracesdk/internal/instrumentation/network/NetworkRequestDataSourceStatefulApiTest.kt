@@ -359,6 +359,20 @@ internal class NetworkRequestDataSourceStatefulApiTest {
     }
 
     @Test
+    fun `a network span is started with its request as captured, before modifiers change it`() {
+        harness.args.httpRequestInfoModifierChain.add {
+            it.url = "https://redacted.com/api"
+            it.httpMethod = "POST"
+        }
+        startRequest(url = "https://secret.com/api?token=abc")
+
+        with(harness.args.destination.networkRequests.single()) {
+            assertEquals("https://secret.com/api?token=abc", url)
+            assertEquals("GET", httpMethod)
+        }
+    }
+
+    @Test
     fun `a modifier is applied to the final end url when it differs from the start url`() {
         harness.args.httpRequestInfoModifierChain.add { it.url = it.url.replace("example", "redacted") }
         runRequest(

@@ -3,6 +3,7 @@ package io.embrace.android.embracesdk.internal.arch.datasource
 import io.embrace.android.embracesdk.internal.arch.schema.EmbType
 import io.embrace.android.embracesdk.internal.arch.schema.ErrorCodeAttribute
 import io.embrace.android.embracesdk.internal.arch.schema.SchemaType
+import io.embrace.android.embracesdk.network.http.HttpRequestInfo
 
 /**
  * Declares functions for capturing telemetry.
@@ -38,7 +39,8 @@ interface TelemetryDestination {
 
     /**
      * Starts a new span with the given parameters. A parent not created by this SDK is used when both [parentTraceId]
-     * and [parentSpanId] are supplied.
+     * and [parentSpanId] are supplied, and the network span parent rules can replace the parent of a span started for a
+     * [networkRequest].
      */
     fun startSpanCapture(
         schemaType: SchemaType,
@@ -49,6 +51,7 @@ interface TelemetryDestination {
         autoTerminate: Boolean = false,
         private: Boolean = false,
         timeoutMs: Long? = null,
+        networkRequest: HttpRequestInfo? = null,
     ): SpanToken
 
     /**

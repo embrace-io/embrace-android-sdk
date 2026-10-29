@@ -5,7 +5,9 @@ import io.embrace.android.embracesdk.fakes.FakeErrorHandler
 import io.embrace.android.embracesdk.fakes.FakeInternalTelemetryService
 import io.embrace.android.embracesdk.fakes.FakeSpanContext
 import io.embrace.android.embracesdk.fakes.FakeSpanService
+import io.embrace.android.embracesdk.internal.network.http.MutableHttpRequestInfoImpl
 import io.embrace.android.embracesdk.internal.telemetry.AppliedLimitType
+import io.embrace.android.embracesdk.network.NetworkSpanParent
 import io.embrace.android.embracesdk.semconv.EmbNetworkSpanParentAttributes
 import io.opentelemetry.kotlin.tracing.SpanContext
 import org.junit.Assert.assertEquals
@@ -16,6 +18,7 @@ import org.junit.Assert.assertSame
 import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
+import kotlin.concurrent.thread
 
 internal class NetworkSpanParentServiceImplTest {
 
@@ -24,6 +27,7 @@ internal class NetworkSpanParentServiceImplTest {
     private lateinit var telemetryService: FakeInternalTelemetryService
     private lateinit var service: NetworkSpanParentServiceImpl
     private var userSessionId = "session-1"
+    private val request = MutableHttpRequestInfoImpl("GET", "https://example.com")
 
     @Before
     fun setUp() {
@@ -178,6 +182,33 @@ internal class NetworkSpanParentServiceImplTest {
         service.set(untrackedContext())
         service.set(untrackedContext())
         assertEquals(11, errorHandler.warningMessages.size)
+    }
+
+    @Test
+    fun `network spans are parented to the network span parent unless their request has a traceparent header`() {
+        assertSame(NetworkSpanParent.USE_DEFAULT, service.provider.getNetworkSpanParent(request, null))
+
+        val context = untrackedContext()
+        service.set(context)
+        assertSame(context, service.provider.getNetworkSpanParent(request, null).spanContext)
+        assertSame(NetworkSpanParent.USE_DEFAULT, service.provider.getNetworkSpanParent(request, untrackedContext()))
+    }
+
+    @Test
+    fun `a network span parent set on another thread is used`() {
+        val context = untrackedContext()
+        thread { service.set(context) }.join()
+        assertSame(context, service.provider.getNetworkSpanParent(request, null).spanContext)
+    }
+
+    @Test
+    fun `orDefault replaces only the default decision`() {
+        val chosen = NetworkSpanParent.parent(untrackedContext())
+        assertSame(chosen, NetworkSpanParent.USE_DEFAULT.orDefault { chosen })
+        assertSame(NetworkSpanParent.NO_PARENT, NetworkSpanParent.NO_PARENT.orDefault { chosen })
+        assertSame(chosen, chosen.orDefault { NetworkSpanParent.NO_PARENT })
+        val none: NetworkSpanParent? = null
+        assertNull(none.orDefault { chosen })
     }
 
     private fun currentParent(): SpanContext? = service.currentParent()

@@ -7,6 +7,8 @@ import io.embrace.android.embracesdk.internal.otel.spans.SpanService
 import io.embrace.android.embracesdk.internal.telemetry.AppliedLimitType
 import io.embrace.android.embracesdk.internal.telemetry.InternalTelemetryService
 import io.embrace.android.embracesdk.internal.utils.concurrent.OneShot
+import io.embrace.android.embracesdk.network.NetworkSpanParent
+import io.embrace.android.embracesdk.network.NetworkSpanParentProvider
 import io.embrace.android.embracesdk.network.NetworkSpanParentToken
 import io.embrace.android.embracesdk.semconv.EmbNetworkSpanParentAttributes
 import io.opentelemetry.kotlin.tracing.SpanContext
@@ -30,6 +32,15 @@ internal class NetworkSpanParentServiceImpl(
 
     @Volatile
     private var active: ActiveParent? = null
+
+    override val provider = NetworkSpanParentProvider { _, currentParent ->
+        val active = active
+        when {
+            currentParent != null || active == null -> NetworkSpanParent.USE_DEFAULT
+            else -> NetworkSpanParent.parent(active.spanContext)
+        }
+    }
+
     override fun set(spanContext: SpanContext?): NetworkSpanParentToken {
         if (spanContext == null || !spanContext.isValid) {
             return rejectParent()
@@ -122,6 +133,12 @@ internal class NetworkSpanParentServiceImpl(
         val label: String,
     ) : NetworkSpanParentToken
 }
+
+/**
+ * Returns this decision, or the one [default] returns when this is [NetworkSpanParent.USE_DEFAULT].
+ */
+internal inline fun <T : NetworkSpanParent?> T.orDefault(default: () -> T): T =
+    if (this === NetworkSpanParent.USE_DEFAULT) default() else this
 
 /**
  * Tracks which network span parent conflicts have been reported in the current user session, bounded by [maxReportedConflicts].

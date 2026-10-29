@@ -5,10 +5,6 @@ import io.embrace.android.gradle.plugin.api.EmbraceExtension
 import io.embrace.android.gradle.plugin.config.PluginBehavior
 import io.embrace.android.gradle.plugin.config.PluginBehaviorImpl
 import io.embrace.android.gradle.plugin.gradle.isTaskRegistered
-import io.embrace.android.gradle.plugin.instrumentation.config.model.EmbraceVariantConfig
-import io.embrace.android.gradle.plugin.instrumentation.config.model.SdkLocalConfig
-import io.embrace.android.gradle.plugin.instrumentation.config.model.UnityConfig
-import io.embrace.android.gradle.plugin.instrumentation.config.model.VariantConfig
 import io.embrace.android.gradle.plugin.model.AndroidCompactedVariantData
 import io.embrace.android.gradle.plugin.tasks.ndk.CompressSharedObjectFilesTask
 import io.embrace.android.gradle.plugin.tasks.ndk.EncodeFileToBase64Task
@@ -17,6 +13,10 @@ import io.embrace.android.gradle.plugin.tasks.ndk.NdkUploadTasksRegistration
 import io.embrace.android.gradle.plugin.tasks.ndk.UploadSharedObjectFilesTask
 import io.embrace.android.gradle.plugin.tasks.registration.RegistrationParams
 import io.embrace.android.gradle.plugin.util.capitalizedString
+import io.embrace.bytecode.config.model.EmbraceVariantConfig
+import io.embrace.bytecode.config.model.SdkLocalConfig
+import io.embrace.bytecode.config.model.UnityConfig
+import io.embrace.bytecode.config.model.VariantConfig
 import org.gradle.api.DefaultTask
 import org.gradle.api.Project
 import org.gradle.api.internal.provider.AbstractProperty.PropertyQueryException

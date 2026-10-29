@@ -2,10 +2,10 @@ package io.embrace.android.gradle.plugin.config.variant
 
 import io.embrace.android.gradle.ResourceReader
 import io.embrace.android.gradle.fakes.FakeConfigFileDirectory
-import io.embrace.android.gradle.plugin.instrumentation.config.model.EmbraceVariantConfig
-import io.embrace.android.gradle.plugin.instrumentation.config.model.WebViewLocalConfig
 import io.embrace.android.gradle.plugin.model.AndroidCompactedVariantData
 import io.embrace.android.gradle.plugin.util.serialization.JsonSerializer
+import io.embrace.bytecode.config.model.EmbraceVariantConfig
+import io.embrace.bytecode.config.model.WebViewLocalConfig
 import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull

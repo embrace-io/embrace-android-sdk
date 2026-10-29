@@ -7,9 +7,9 @@ import io.embrace.android.gradle.plugin.agp.AgpWrapperImpl
 import io.embrace.android.gradle.plugin.api.EmbraceExtension
 import io.embrace.android.gradle.plugin.config.PluginBehaviorImpl
 import io.embrace.android.gradle.plugin.config.variant.EmbraceVariantConfigurationBuilder
-import io.embrace.android.gradle.plugin.instrumentation.config.model.VariantConfig
 import io.embrace.android.gradle.plugin.tasks.registration.TaskRegistrar
 import io.embrace.android.gradle.plugin.util.getProperty
+import io.embrace.bytecode.config.model.VariantConfig
 import org.gradle.api.Project
 import org.gradle.api.provider.ListProperty
 

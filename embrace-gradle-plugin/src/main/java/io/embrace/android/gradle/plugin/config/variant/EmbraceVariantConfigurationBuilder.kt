@@ -1,7 +1,7 @@
 package io.embrace.android.gradle.plugin.config.variant
 
-import io.embrace.android.gradle.plugin.instrumentation.config.model.EmbraceVariantConfig
 import io.embrace.android.gradle.plugin.model.AndroidCompactedVariantData
+import io.embrace.bytecode.config.model.EmbraceVariantConfig
 import org.gradle.api.file.Directory
 import org.gradle.api.file.DirectoryProperty
 import org.gradle.api.provider.Property

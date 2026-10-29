@@ -1,0 +1,67 @@
+package io.embrace.bytecode.config.arch.sdk
+
+import io.embrace.bytecode.config.model.EmbraceVariantConfig
+import io.embrace.bytecode.config.model.SdkLocalConfig
+import io.embrace.bytecode.config.model.VariantConfig
+import io.embrace.bytecode.config.model.VariantOutputInfo
+import org.junit.Test
+
+class ProjectConfigInstrumentationKtTest {
+
+    private val cfg = VariantConfig(
+        "",
+        null,
+        null,
+        null,
+        embraceConfig = EmbraceVariantConfig(
+            "",
+            "",
+            null,
+            null,
+            null,
+        ),
+    )
+
+    private val variantOutputInfo = VariantOutputInfo("", "", "")
+
+    private val methods = listOf(
+        ConfigMethod("getAppFramework", "()Ljava/lang/String;", "native"),
+        ConfigMethod("getBuildId", "()Ljava/lang/String;", "my_id"),
+        ConfigMethod("getBuildType", "()Ljava/lang/String;", "build_type"),
+        ConfigMethod("getBuildFlavor", "()Ljava/lang/String;", "build_flavor"),
+    )
+
+    @Test
+    fun `test empty cfg`() {
+        val instrumentation = createProjectConfigInstrumentation(cfg, null, variantOutputInfo)
+        verifyConfigMethodVisitor(instrumentation, ConfigMethod("getAppId", "()Ljava/lang/String;", ""))
+
+        methods.map { it.copy(result = null) }.forEach { method ->
+            verifyConfigMethodVisitor(instrumentation, method)
+        }
+    }
+
+    @Test
+    fun `test instrumentation`() {
+        val instrumentation = createProjectConfigInstrumentation(
+            cfg.copy(
+                embraceConfig = EmbraceVariantConfig(
+                    appId = "abcde",
+                    apiToken = null,
+                    ndkEnabled = null,
+                    sdkConfig = SdkLocalConfig(appFramework = "native"),
+                    unityConfig = null,
+                ),
+                buildId = "my_id",
+                buildType = "build_type",
+                buildFlavor = "build_flavor",
+            ),
+            reactNativeBundleId = "a1B2c3",
+            variantOutputInfo,
+        )
+        verifyConfigMethodVisitor(instrumentation, ConfigMethod("getAppId", "()Ljava/lang/String;", "abcde"))
+        methods.forEach { method ->
+            verifyConfigMethodVisitor(instrumentation, method)
+        }
+    }
+}

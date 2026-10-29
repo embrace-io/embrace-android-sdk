@@ -1,9 +1,9 @@
 package io.embrace.gradle.plugin.instrumentation
 
-import io.embrace.android.gradle.plugin.instrumentation.InstrumentationFeatureFlags
-import io.embrace.android.gradle.plugin.instrumentation.VisitorFactoryImpl
-import io.embrace.android.gradle.plugin.instrumentation.json.readBytecodeInstrumentationFeatures
-import io.embrace.android.gradle.plugin.instrumentation.strategy.ClassInfo
+import io.embrace.bytecode.InstrumentationFeatureFlags
+import io.embrace.bytecode.VisitorFactoryImpl
+import io.embrace.bytecode.json.readBytecodeInstrumentationFeatures
+import io.embrace.bytecode.strategy.ClassInfo
 import io.embrace.test.fixtures.ActivityOnClickListener
 import io.embrace.test.fixtures.AnonInnerClassOnClickListener
 import io.embrace.test.fixtures.AnonInnerClassOnLongClickListener

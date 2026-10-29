@@ -9,8 +9,6 @@ import io.embrace.android.gradle.plugin.config.PluginBehavior
 import io.embrace.android.gradle.plugin.config.variant.EmbraceVariantConfigurationBuilder
 import io.embrace.android.gradle.plugin.dependency.installDependenciesForVariant
 import io.embrace.android.gradle.plugin.instrumentation.AsmTaskRegistration
-import io.embrace.android.gradle.plugin.instrumentation.config.model.EmbraceVariantConfig
-import io.embrace.android.gradle.plugin.instrumentation.config.model.VariantConfig
 import io.embrace.android.gradle.plugin.model.AndroidCompactedVariantData
 import io.embrace.android.gradle.plugin.tasks.buildinfo.ExportBuildInfoTaskRegistration
 import io.embrace.android.gradle.plugin.tasks.il2cpp.Il2CppUploadTaskRegistration
@@ -19,6 +17,8 @@ import io.embrace.android.gradle.plugin.tasks.r8.JvmMappingUploadTaskRegistratio
 import io.embrace.android.gradle.plugin.tasks.reactnative.GenerateRnSourcemapTaskRegistration
 import io.embrace.android.gradle.plugin.util.BuildIdValueSource
 import io.embrace.android.gradle.plugin.util.buildIdProvider
+import io.embrace.bytecode.config.model.EmbraceVariantConfig
+import io.embrace.bytecode.config.model.VariantConfig
 import org.gradle.api.Project
 import org.gradle.api.provider.ListProperty
 import org.gradle.api.provider.MapProperty

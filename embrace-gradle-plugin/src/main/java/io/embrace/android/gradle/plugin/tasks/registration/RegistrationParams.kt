@@ -2,8 +2,8 @@ package io.embrace.android.gradle.plugin.tasks.registration
 
 import com.android.build.api.variant.Variant
 import io.embrace.android.gradle.plugin.config.PluginBehavior
-import io.embrace.android.gradle.plugin.instrumentation.config.model.VariantConfig
 import io.embrace.android.gradle.plugin.model.AndroidCompactedVariantData
+import io.embrace.bytecode.config.model.VariantConfig
 import org.gradle.api.Project
 import org.gradle.api.provider.ListProperty
 import org.gradle.api.provider.Provider

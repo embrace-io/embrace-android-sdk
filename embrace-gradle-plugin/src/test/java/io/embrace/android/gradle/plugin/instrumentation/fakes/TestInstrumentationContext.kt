@@ -1,7 +1,7 @@
 package io.embrace.android.gradle.plugin.instrumentation.fakes
 
 import com.android.build.api.instrumentation.InstrumentationContext
-import io.embrace.android.gradle.plugin.instrumentation.ASM_API_VERSION
+import io.embrace.bytecode.ASM_API_VERSION
 import org.gradle.api.internal.provider.DefaultProperty
 import org.gradle.api.internal.provider.PropertyHost
 import org.gradle.api.provider.Property

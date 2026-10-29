@@ -1,6 +1,6 @@
 package io.embrace.android.gradle.plugin.config.variant
 
-import io.embrace.android.gradle.plugin.instrumentation.config.model.EmbraceVariantConfig
+import io.embrace.bytecode.config.model.EmbraceVariantConfig
 import org.junit.Assert.assertThrows
 import org.junit.Assert.assertTrue
 import org.junit.Test

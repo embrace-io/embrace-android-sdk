@@ -3,7 +3,9 @@ package io.embrace.android.gradle.plugin.instrumentation
 import com.android.build.api.instrumentation.AsmClassVisitorFactory
 import com.android.build.api.instrumentation.ClassContext
 import com.android.build.api.instrumentation.ClassData
-import io.embrace.android.gradle.plugin.instrumentation.strategy.ClassInfo
+import io.embrace.bytecode.BytecodeInstrumenter
+import io.embrace.bytecode.InstrumentationFeatureFlags
+import io.embrace.bytecode.strategy.ClassInfo
 import org.gradle.api.file.RegularFileProperty
 import org.objectweb.asm.ClassVisitor
 

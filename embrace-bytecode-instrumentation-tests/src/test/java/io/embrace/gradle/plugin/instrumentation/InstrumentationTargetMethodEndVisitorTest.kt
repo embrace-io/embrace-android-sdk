@@ -1,7 +1,7 @@
 package io.embrace.gradle.plugin.instrumentation
 
-import io.embrace.android.gradle.plugin.instrumentation.visitor.BytecodeMethodInsertionParams
-import io.embrace.android.gradle.plugin.instrumentation.visitor.InstrumentationTargetMethodEndVisitor
+import io.embrace.bytecode.visitor.BytecodeMethodInsertionParams
+import io.embrace.bytecode.visitor.InstrumentationTargetMethodEndVisitor
 import io.embrace.test.fixtures.MethodReturnValueVisitorObj
 import io.embrace.test.fixtures.TargetMethodEndVisitorObj
 import org.junit.Test

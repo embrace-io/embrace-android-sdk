@@ -11,6 +11,7 @@ import io.embrace.android.gradle.plugin.tasks.reactnative.GenerateRnSourcemapTas
 import io.embrace.android.gradle.plugin.tasks.registration.EmbraceTaskRegistration
 import io.embrace.android.gradle.plugin.tasks.registration.RegistrationParams
 import io.embrace.android.gradle.plugin.util.capitalizedString
+import io.embrace.bytecode.ClassInstrumentationFilter
 
 class AsmTaskRegistration : EmbraceTaskRegistration {
 

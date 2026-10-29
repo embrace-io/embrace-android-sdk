@@ -1,8 +1,8 @@
 package io.embrace.android.gradle.plugin.model
 
 import com.android.build.api.variant.Variant
-import io.embrace.android.gradle.plugin.instrumentation.config.model.EmbraceVariantConfig
-import io.embrace.android.gradle.plugin.instrumentation.config.model.VariantConfig
+import io.embrace.bytecode.config.model.EmbraceVariantConfig
+import io.embrace.bytecode.config.model.VariantConfig
 import java.io.Serializable
 
 /**

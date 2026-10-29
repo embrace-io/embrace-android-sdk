@@ -2,8 +2,8 @@ package io.embrace.android.gradle.plugin.buildreporter
 
 import io.embrace.android.gradle.plugin.agp.AgpWrapper
 import io.embrace.android.gradle.plugin.config.PluginBehavior
-import io.embrace.android.gradle.plugin.instrumentation.config.model.VariantConfig
 import io.embrace.android.gradle.plugin.network.OkHttpNetworkService
+import io.embrace.bytecode.config.model.VariantConfig
 import org.gradle.api.Project
 import org.gradle.api.provider.ListProperty
 import org.gradle.api.provider.Property

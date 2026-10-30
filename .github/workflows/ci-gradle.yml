@@ -125,7 +125,7 @@ jobs:
 
       - name: Gradle (build -x embrace-gradle-plugin-integration-tests:test)
         if: ${{ matrix.gradle-task == 'build' }}
-        run: ./gradlew ciBuild -x embrace-gradle-plugin-integration-tests:test -x embrace-minified-test-app:assemble -x embrace-macrobenchmark:assemble -x embrace-macrobenchmark-app:assemble -Pembrace.coverage --warn
+        run: ./gradlew ciBuild -x embrace-gradle-plugin-integration-tests:test -x embrace-minified-test-app:assemble -x embrace-macrobenchmark:assemble -x embrace-macrobenchmark-app:assemble -x embrace-apk-size:assemble -Pembrace.coverage --warn
 
       - name: Gradle (examples/ExampleApp/ bundleRelease)
         if: ${{ matrix.gradle-task == 'bundleReleaseExampleApp' }}
@@ -146,3 +146,80 @@ jobs:
           token: ${{ secrets.CODECOV_TOKEN }} # zizmor: ignore[secrets-outside-env]
           fail_ci_if_error: true
           files: build/reports/kover/reportRelease.xml
+
+  apk-size:
+    needs: environment
+    runs-on: ${{ needs.environment.outputs.where }}
+    timeout-minutes: 20
+    permissions:
+      contents: read
+      pull-requests: write
+    steps:
+      - name: Checkout Branch
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Setup Java
+        uses: actions/setup-java@b843ebf9b913146b38da2eaa7aeddf76074ae1ad # v6.1.0
+        with:
+          distribution: 'temurin'
+          java-version: 21
+
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@3f5f9adaf7d9fecd50b5935e54106014257a94e6 # v6.4.0
+
+      # stacked PRs are compared with main too, so they show the size change of the whole stack
+      - name: Measure APK size on main
+        if: ${{ github.event_name == 'pull_request' }}
+        run: |
+          git fetch --depth=1 origin main
+          git worktree add "$RUNNER_TEMP/main" FETCH_HEAD
+          cd "$RUNNER_TEMP/main"
+          if [ -f embrace-apk-size/build.gradle.kts ]; then
+            ./gradlew :embrace-apk-size:apkSizeReport --warn
+          else
+            echo "::notice::main has no embrace-apk-size module, so there is nothing to compare with."
+            echo "No comparison with main: it has no embrace-apk-size module." >> "$RUNNER_TEMP/apk-size-notes.md"
+          fi
+
+      - name: Measure APK size
+        run: |
+          main_sizes="$RUNNER_TEMP/main/embrace-apk-size/build/reports/apk-size/apk-size.properties"
+          if [ -f "$main_sizes" ]; then
+            ./gradlew :embrace-apk-size:apkSizeReport --warn -Pembrace.apkSizeMain="$main_sizes"
+          else
+            if [ -f "$RUNNER_TEMP/main/embrace-apk-size/build.gradle.kts" ]; then
+              echo "::warning::main built, but $main_sizes is missing, so there is no comparison."
+              echo "No comparison with main: its build wrote no apk-size.properties." >> "$RUNNER_TEMP/apk-size-notes.md"
+            fi
+            ./gradlew :embrace-apk-size:apkSizeReport --warn
+          fi
+
+      # One comment per PR, edited on every change
+      - name: Comment on PR
+        if: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name == github.repository && github.actor != 'dependabot[bot]' }}
+        env:
+          GH_TOKEN: ${{ github.token }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+          HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+        run: |
+          marker="<!-- embrace-apk-size -->"
+          body="$RUNNER_TEMP/apk-size-comment.md"
+          {
+            echo "$marker"
+            cat embrace-apk-size/build/reports/apk-size/apk-size.md
+            if [ -f "$RUNNER_TEMP/apk-size-notes.md" ]; then
+              echo
+              cat "$RUNNER_TEMP/apk-size-notes.md"
+            fi
+            echo
+            echo "_Measured at $HEAD_SHA._"
+          } > "$body"
+          comment_id=$(gh api --paginate "repos/$GITHUB_REPOSITORY/issues/$PR_NUMBER/comments" \
+            --jq ".[] | select(.user.login == \"github-actions[bot]\" and (.body | startswith(\"$marker\"))) | .id" | head -n 1)
+          if [ -n "$comment_id" ]; then
+            gh api --method PATCH "repos/$GITHUB_REPOSITORY/issues/comments/$comment_id" -F body=@"$body" > /dev/null
+          else
+            gh api --method POST "repos/$GITHUB_REPOSITORY/issues/$PR_NUMBER/comments" -F body=@"$body" > /dev/null
+          fi

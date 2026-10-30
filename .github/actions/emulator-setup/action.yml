@@ -1,0 +1,73 @@
+name: Emulator setup
+description: >
+  Prepares a runner to run Android emulator (or Gradle managed device) tests: opens up KVM, installs Java and
+  Gradle, and optionally restores the AVD cache and creates the AVD snapshot. The caller still runs
+  reactivecircus/android-emulator-runner itself, since that is where the caller's commands run.
+
+inputs:
+  api-level:
+    description: API level of the AVD to cache. Required when avd-cache is 'true', unused otherwise.
+    required: false
+    default: ''
+  avd-cache:
+    description: >
+      'true' restores the AVD cache and, on a miss, creates the AVD and its snapshot so the job's post step saves
+      them. 'false' skips both: use it where the job runs code that should not be able to write a cache.
+    required: false
+    default: 'true'
+  cache-read-only:
+    description: >
+      'true' lets the job read the Gradle cache but never write it. The default is setup-gradle's own: read-write on
+      the repository's default branch and read-only elsewhere.
+    required: false
+    default: ${{ github.event.repository != null && github.ref_name != github.event.repository.default_branch }}
+
+runs:
+  using: composite
+  steps:
+    - name: Check inputs
+      shell: bash
+      env:
+        AVD_CACHE: ${{ inputs.avd-cache }}
+        API_LEVEL: ${{ inputs.api-level }}
+      run: |
+        [[ "$AVD_CACHE" == true || "$AVD_CACHE" == false ]] || { echo "::error::avd-cache must be 'true' or 'false'"; exit 1; }
+        [[ "$AVD_CACHE" == false || -n "$API_LEVEL" ]] || { echo "::error::api-level is required when avd-cache is true"; exit 1; }
+
+    - name: Enable KVM group perms
+      shell: bash
+      run: |
+        echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
+        sudo udevadm control --reload-rules
+        sudo udevadm trigger --name-match=kvm
+
+    - name: Setup Java
+      uses: actions/setup-java@b843ebf9b913146b38da2eaa7aeddf76074ae1ad # v6.1.0
+      with:
+        distribution: 'temurin'
+        java-version: 21
+
+    - name: Setup Gradle
+      uses: gradle/actions/setup-gradle@3f5f9adaf7d9fecd50b5935e54106014257a94e6 # v6.4.0
+      with:
+        cache-read-only: ${{ inputs.cache-read-only }}
+
+    # Cache the emulator
+    - name: AVD cache
+      if: ${{ inputs.avd-cache == 'true' }}
+      uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+      id: avd-cache
+      with:
+        path: |
+          ~/.android/avd/*
+          ~/.android/adb*
+        key: avd-${{ inputs.api-level }}
+
+    - name: create AVD and generate snapshot for caching
+      if: ${{ inputs.avd-cache == 'true' && steps.avd-cache.outputs.cache-hit != 'true' }}
+      uses: reactivecircus/android-emulator-runner@a421e43855164a8197daf9d8d40fe71c6996bb0d # v2.38.0
+      with:
+        api-level: ${{ inputs.api-level }}
+        force-avd-creation: false
+        disable-animations: false
+        script: echo 'Generated AVD snapshot for caching.'

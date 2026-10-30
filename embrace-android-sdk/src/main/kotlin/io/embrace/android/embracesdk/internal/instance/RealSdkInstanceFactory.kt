@@ -753,6 +753,7 @@ internal fun createRealSdkInstance(
                 logLimitingService = logLimitingService,
                 ordinalStore = ordinalStore,
                 store = store,
+                stateStore = persistedSdkStateStore,
                 backgroundWorker = workerThreadPool.backgroundWorker(Worker.Background.NonIoRegWorker),
                 sessionPersistenceWorker = workerThreadPool.backgroundWorker(Worker.Background.SessionPersistenceWorker),
                 sessionReadWorker = workerThreadPool.backgroundWorker(Worker.Background.IoRegWorker),

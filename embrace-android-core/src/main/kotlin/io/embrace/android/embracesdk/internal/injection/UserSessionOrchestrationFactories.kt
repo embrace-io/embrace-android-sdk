@@ -26,7 +26,6 @@ import io.embrace.android.embracesdk.internal.otel.spans.SpanRepository
 import io.embrace.android.embracesdk.internal.resurrection.MultiFileDeadPartResurrector
 import io.embrace.android.embracesdk.internal.resurrection.SessionPartReader
 import io.embrace.android.embracesdk.internal.resurrection.SessionPartResurrector
-import io.embrace.android.embracesdk.internal.session.UserSessionMetadataStore
 import io.embrace.android.embracesdk.internal.session.UserSessionRestoreDecision
 import io.embrace.android.embracesdk.internal.session.id.SessionIdsProvider
 import io.embrace.android.embracesdk.internal.session.id.SessionPartTracker
@@ -44,6 +43,7 @@ import io.embrace.android.embracesdk.internal.session.persistence.SessionReconst
 import io.embrace.android.embracesdk.internal.spans.CurrentSessionPartSpan
 import io.embrace.android.embracesdk.internal.store.KeyValueStore
 import io.embrace.android.embracesdk.internal.store.OrdinalStore
+import io.embrace.android.embracesdk.internal.store.PersistedSdkStateStore
 import io.embrace.android.embracesdk.internal.telemetry.InternalTelemetryService
 import io.embrace.android.embracesdk.internal.utils.EmbTrace
 import io.embrace.android.embracesdk.internal.utils.UuidSource
@@ -122,6 +122,7 @@ fun createSessionOrchestrator(
     logLimitingService: LogLimitingService,
     ordinalStore: OrdinalStore,
     store: KeyValueStore,
+    stateStore: PersistedSdkStateStore,
     backgroundWorker: BackgroundWorker,
     sessionPersistenceWorker: BackgroundWorker,
     sessionReadWorker: BackgroundWorker,
@@ -193,7 +194,7 @@ fun createSessionOrchestrator(
         sessionPartSpanAttrPopulator,
         ordinalStore,
         store,
-        UserSessionMetadataStore(store),
+        stateStore,
         errorHandler,
         backgroundWorker,
         uuidSource,

@@ -18,10 +18,10 @@ import io.embrace.android.embracesdk.internal.logging.SdkErrorType
 import io.embrace.android.embracesdk.internal.logging.guardSdkCode
 import io.embrace.android.embracesdk.internal.payload.Envelope
 import io.embrace.android.embracesdk.internal.payload.SessionPartPayload
+import io.embrace.android.embracesdk.internal.session.BACKGROUND_ONLY_MARKER
 import io.embrace.android.embracesdk.internal.session.SessionPartToken
 import io.embrace.android.embracesdk.internal.session.UserSessionListener
 import io.embrace.android.embracesdk.internal.session.UserSessionMetadata
-import io.embrace.android.embracesdk.internal.session.UserSessionMetadataStore
 import io.embrace.android.embracesdk.internal.session.UserSessionRestoreDecision
 import io.embrace.android.embracesdk.internal.session.UserSessionState
 import io.embrace.android.embracesdk.internal.session.UserSessionState.Active
@@ -30,6 +30,7 @@ import io.embrace.android.embracesdk.internal.session.message.PayloadFactory
 import io.embrace.android.embracesdk.internal.store.KeyValueStore
 import io.embrace.android.embracesdk.internal.store.Ordinal
 import io.embrace.android.embracesdk.internal.store.OrdinalStore
+import io.embrace.android.embracesdk.internal.store.PersistedSdkStateStore
 import io.embrace.android.embracesdk.internal.utils.EmbTrace
 import io.embrace.android.embracesdk.internal.utils.Provider
 import io.embrace.android.embracesdk.internal.utils.UuidSource
@@ -54,7 +55,7 @@ internal class SessionOrchestratorImpl(
     private val sessionPartSpanAttrPopulator: SessionPartSpanAttrPopulator,
     private val ordinalStore: OrdinalStore,
     private val store: KeyValueStore,
-    private val metadataStore: UserSessionMetadataStore,
+    private val stateStore: PersistedSdkStateStore,
     private val errorHandler: ErrorHandler,
     private val backgroundWorker: BackgroundWorker,
     private val uuidSource: UuidSource,
@@ -104,7 +105,7 @@ internal class SessionOrchestratorImpl(
     private fun loadPersistedUserSession() {
         synchronized(lock) {
             userSessionState = errorHandler.guardSdkCode(SdkErrorType.UserSessionLoadFail, UserSessionState.NoActiveSession) {
-                val stored = metadataStore.load()
+                val stored = stateStore.snapshot().userSession
                 val overMaxDuration = stored?.isOverMaxDuration(clock) ?: false
                 val inactive = stored?.isInactive(clock) ?: false
                 when {
@@ -118,7 +119,7 @@ internal class SessionOrchestratorImpl(
                                 "Clock shifted backwards from previous user session.",
                             ),
                         )
-                        metadataStore.clear()
+                        stateStore.update { userSession = null }
                         userSessionRestoreDecision = stored.toTerminatedDecision(EmbUserSessionTerminationReasonValues.CLOCK_MISMATCH)
                         UserSessionState.NoActiveSession
                     }
@@ -694,7 +695,7 @@ internal class SessionOrchestratorImpl(
                     setActiveUserSession(userSession.classify(isBackgroundOnly = true))
                     destination.addSessionPartAttribute(
                         EmbSessionAttributes.EMB_IS_BACKGROUND_ONLY_PART,
-                        UserSessionMetadata.BACKGROUND_ONLY_MARKER,
+                        BACKGROUND_ONLY_MARKER,
                     )
                 }
             }
@@ -737,7 +738,7 @@ internal class SessionOrchestratorImpl(
             maxDurationTimerState = null
             inactivityTimerState?.cancel()
             inactivityTimerState = null
-            metadataStore.clear()
+            stateStore.update { userSession = null }
             userSessionState = UserSessionState.Terminated
             boundaryDelegate.cleanupAfterUserSessionEnd()
             userSessionEvents.enqueue(UserSessionEnded(it.userSessionId))
@@ -754,7 +755,7 @@ internal class SessionOrchestratorImpl(
             is UserSessionMetadata.Classified -> metadata
             is UserSessionMetadata.Unclassified -> metadata.classify(isBackgroundOnly = true)
         }
-        metadataStore.save(persisted)
+        stateStore.update { userSession = persisted }
         userSessionState = Active(metadata)
     }
 

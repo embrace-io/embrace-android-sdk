@@ -1,6 +1,11 @@
+@file:OptIn(ExperimentalSemconv::class)
+
 package io.embrace.android.embracesdk.internal.prefs
 
 import io.embrace.android.embracesdk.internal.clock.Clock
+import io.embrace.android.embracesdk.internal.session.BACKGROUND_ONLY_MARKER
+import io.embrace.android.embracesdk.internal.session.UserSessionMetadata
+import io.embrace.android.embracesdk.internal.session.attributes
 import io.embrace.android.embracesdk.internal.store.KeyValueStore
 import io.embrace.android.embracesdk.internal.store.KeyValueStoreEditor
 import io.embrace.android.embracesdk.internal.store.PersistedSdkState
@@ -8,6 +13,8 @@ import io.embrace.android.embracesdk.internal.store.PersistedSdkStateEditor
 import io.embrace.android.embracesdk.internal.store.PersistedSdkStateStore
 import io.embrace.android.embracesdk.internal.store.edit
 import io.embrace.android.embracesdk.internal.utils.UuidSource
+import io.embrace.android.embracesdk.semconv.EmbSessionAttributes
+import io.embrace.android.embracesdk.semconv.ExperimentalSemconv
 
 /**
  * A [PersistedSdkStateStore] backed by a [KeyValueStore]. This uses the same keys and encoding as the existing
@@ -57,6 +64,7 @@ class PrefsPersistedSdkStateStore(
             userName = store.getString(KEY_USER_NAME),
             userPersonas = loadPersonas(),
             sessionProperties = store.getStringMap(KEY_SESSION_PROPERTIES) ?: emptyMap(),
+            userSession = store.getStringMap(KEY_USER_SESSION)?.let(::decodeUserSession),
         )
     }
 
@@ -85,6 +93,33 @@ class PrefsPersistedSdkStateStore(
         putString(KEY_USER_NAME, state.userName)
         putStringSet(KEY_USER_PERSONAS, state.userPersonas)
         putStringMap(KEY_SESSION_PROPERTIES, state.sessionProperties.takeIf { it.isNotEmpty() })
+        putStringMap(KEY_USER_SESSION, state.userSession?.let(::encodeUserSession))
+    }
+
+    /**
+     * Encodes the user session as a string map.
+     */
+    private fun encodeUserSession(session: UserSessionMetadata.Classified): Map<String, String> =
+        session.attributes.mapValues { it.value.toString() } + mapOf(
+            EmbSessionAttributes.EMB_USER_SESSION_PART_INDEX to session.partIndex.toString(),
+            KEY_LAST_ACTIVITY_TS to session.lastActivityMs.toString(),
+        )
+
+    /**
+     * Returns null if any required attribute is absent or can't be parsed.
+     */
+    private fun decodeUserSession(attrs: Map<String, String>): UserSessionMetadata.Classified? {
+        return UserSessionMetadata.Classified(
+            startTimeMs = attrs[EmbSessionAttributes.EMB_USER_SESSION_START_TS]?.toLongOrNull() ?: return null,
+            userSessionId = attrs[EmbSessionAttributes.EMB_USER_SESSION_ID] ?: return null,
+            userSessionNumber = attrs[EmbSessionAttributes.EMB_USER_SESSION_NUMBER]?.toLongOrNull() ?: return null,
+            maxDurationSecs = attrs[EmbSessionAttributes.EMB_USER_SESSION_MAX_DURATION_SECONDS]?.toLongOrNull() ?: return null,
+            inactivityTimeoutSecs = attrs[EmbSessionAttributes.EMB_USER_SESSION_INACTIVITY_TIMEOUT_SECONDS]?.toLongOrNull()
+                ?: return null,
+            partIndex = attrs[EmbSessionAttributes.EMB_USER_SESSION_PART_INDEX]?.toIntOrNull() ?: return null,
+            lastActivityMs = attrs[KEY_LAST_ACTIVITY_TS]?.toLongOrNull() ?: return null,
+            isBackgroundOnly = attrs[EmbSessionAttributes.EMB_IS_BACKGROUND_ONLY_PART] == BACKGROUND_ONLY_MARKER,
+        )
     }
 
     private companion object {
@@ -96,6 +131,8 @@ class PrefsPersistedSdkStateStore(
         const val KEY_USER_PERSONAS = "io.embrace.userpersonas"
         const val KEY_SESSION_PROPERTIES = "io.embrace.session.properties"
         const val KEY_LEGACY_USER_IS_PAYER = "io.embrace.userispayer"
+        const val KEY_USER_SESSION = "embrace.user_session"
+        const val KEY_LAST_ACTIVITY_TS = "emb.user_session_last_activity_ts"
         const val PERSONA_PAYER = "payer"
     }
 }

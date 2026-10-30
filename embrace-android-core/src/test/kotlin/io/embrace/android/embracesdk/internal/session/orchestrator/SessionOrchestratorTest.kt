@@ -18,6 +18,7 @@ import io.embrace.android.embracesdk.fakes.FakeMetadataService
 import io.embrace.android.embracesdk.fakes.FakeOrdinalStore
 import io.embrace.android.embracesdk.fakes.FakePayloadMessageCollator
 import io.embrace.android.embracesdk.fakes.FakePayloadStore
+import io.embrace.android.embracesdk.fakes.FakePersistedSdkStateStore
 import io.embrace.android.embracesdk.fakes.FakeProcessStateTracker
 import io.embrace.android.embracesdk.fakes.FakeTelemetryDestination
 import io.embrace.android.embracesdk.fakes.FakeUserSessionPropertiesService
@@ -39,10 +40,11 @@ import io.embrace.android.embracesdk.internal.delivery.caching.PayloadCachingSer
 import io.embrace.android.embracesdk.internal.delivery.caching.PayloadCachingServiceImpl
 import io.embrace.android.embracesdk.internal.logging.SdkErrorType
 import io.embrace.android.embracesdk.internal.otel.spans.EmbraceSdkSpan
+import io.embrace.android.embracesdk.internal.prefs.PrefsPersistedSdkStateStore
 import io.embrace.android.embracesdk.internal.session.LifeEventType
 import io.embrace.android.embracesdk.internal.session.UserSessionMetadata
-import io.embrace.android.embracesdk.internal.session.UserSessionMetadataStore
 import io.embrace.android.embracesdk.internal.session.UserSessionRestoreDecision
+import io.embrace.android.embracesdk.internal.session.attributes
 import io.embrace.android.embracesdk.internal.session.caching.PeriodicSessionPartCacher
 import io.embrace.android.embracesdk.internal.session.id.SessionIdsProvider
 import io.embrace.android.embracesdk.internal.session.id.SessionIdsSnapshot
@@ -53,9 +55,11 @@ import io.embrace.android.embracesdk.internal.session.persistence.SessionPartDir
 import io.embrace.android.embracesdk.internal.session.persistence.SpanCollection
 import io.embrace.android.embracesdk.internal.session.persistence.SpanProto
 import io.embrace.android.embracesdk.internal.store.KeyValueStore
-import io.embrace.android.embracesdk.internal.store.KeyValueStoreEditor
 import io.embrace.android.embracesdk.internal.store.OrdinalStore
 import io.embrace.android.embracesdk.internal.store.OrdinalStoreImpl
+import io.embrace.android.embracesdk.internal.store.PersistedSdkState
+import io.embrace.android.embracesdk.internal.store.PersistedSdkStateEditor
+import io.embrace.android.embracesdk.internal.store.PersistedSdkStateStore
 import io.embrace.android.embracesdk.internal.worker.BackgroundWorker
 import io.embrace.android.embracesdk.semconv.EmbSessionAttributes
 import io.embrace.android.embracesdk.semconv.EmbSessionAttributes.EmbUserSessionTerminationReasonValues
@@ -145,25 +149,29 @@ internal class SessionOrchestratorTest {
     @Test
     fun `each transition performs a single commit to the key-value store`() {
         val kvStore = FakeKeyValueStore()
+        val stateStore = PrefsPersistedSdkStateStore(kvStore, clock, TestUuidSource())
+        stateStore.snapshot()
+        val initialCommits = kvStore.commitCount
+
         createOrchestrator(
             startingProcessState = ProcessState.FOREGROUND,
             ordinalStoreOverride = OrdinalStoreImpl(kvStore, FakeErrorHandler()),
-            metadataStoreOverride = UserSessionMetadataStore(kvStore),
+            stateStoreOverride = stateStore,
             keyValueStoreOverride = kvStore,
         )
 
         // the user session ordinal, the session part ordinal, and both saves of the user session
         // metadata all land in one commit
-        assertEquals(1, kvStore.commitCount)
+        assertEquals(initialCommits + 1, kvStore.commitCount)
         assertNotNull(orchestrator.currentUserSession())
 
         clock.tick(10_000)
         orchestrator.onBackground()
-        assertEquals(2, kvStore.commitCount)
+        assertEquals(initialCommits + 2, kvStore.commitCount)
 
         clock.tick(10_000)
         orchestrator.onForeground()
-        assertEquals(3, kvStore.commitCount)
+        assertEquals(initialCommits + 3, kvStore.commitCount)
     }
 
     @Test
@@ -491,16 +499,14 @@ internal class SessionOrchestratorTest {
     @Test
     fun `user session last activity time keeps updating after an update fails`() {
         var failWrites = false
-        val backing = FakeKeyValueStore()
-        val flakyStore = UserSessionMetadataStore(
-            object : KeyValueStore by backing {
-                override fun editAndCommit(action: KeyValueStoreEditor.() -> Unit) {
-                    check(!failWrites) { "simulated write failure" }
-                    backing.editAndCommit(action)
-                }
-            },
-        )
-        createOrchestrator(startingProcessState = ProcessState.FOREGROUND, metadataStoreOverride = flakyStore)
+        val backing = FakePersistedSdkStateStore()
+        val flakyStore = object : PersistedSdkStateStore by backing {
+            override fun update(action: PersistedSdkStateEditor.() -> Unit): PersistedSdkState {
+                check(!failWrites) { "simulated write failure" }
+                return backing.update(action)
+            }
+        }
+        createOrchestrator(startingProcessState = ProcessState.FOREGROUND, stateStoreOverride = flakyStore)
 
         failWrites = true
         clock.tick(61_000)
@@ -626,7 +632,7 @@ internal class SessionOrchestratorTest {
             startingProcessState = ProcessState.FOREGROUND,
             configService = sessionLimitsConfigService(),
             ordinalStoreOverride = sharedOrdinalStore,
-            metadataStoreOverride = UserSessionMetadataStore(FakeKeyValueStore()),
+            stateStoreOverride = FakePersistedSdkStateStore(),
         )
         assertEquals(2L, activeUserSession().userSessionNumber)
     }
@@ -654,7 +660,7 @@ internal class SessionOrchestratorTest {
         createOrchestrator(
             startingProcessState = ProcessState.FOREGROUND,
             configService = sessionLimitsConfigService(),
-            metadataStoreOverride = prePopulated,
+            stateStoreOverride = prePopulated,
         )
 
         val session = activeUserSession()
@@ -665,24 +671,14 @@ internal class SessionOrchestratorTest {
 
     @Test
     fun `exception in loadPersistedUserSession falls back to NoActiveSession`() {
-        val throwingStore = UserSessionMetadataStore(
-            object : KeyValueStore {
-                override fun getString(key: String): String? = null
-                override fun getInt(key: String): Int? = null
-                override fun getLong(key: String): Long? = null
-                override fun getBoolean(key: String, defaultValue: Boolean): Boolean = defaultValue
-                override fun getStringSet(key: String): Set<String>? = null
-                override fun getStringMap(key: String): Map<String, String> =
-                    error("simulated store failure")
-
-                override fun editAndCommit(action: KeyValueStoreEditor.() -> Unit) = FakeKeyValueStore().editAndCommit(action)
-            },
-        )
+        val throwingStore = object : PersistedSdkStateStore by FakePersistedSdkStateStore() {
+            override fun snapshot(): PersistedSdkState = error("simulated store failure")
+        }
 
         createOrchestrator(
             startingProcessState = ProcessState.FOREGROUND,
             configService = sessionLimitsConfigService(),
-            metadataStoreOverride = throwingStore,
+            stateStoreOverride = throwingStore,
         )
         assertNotNull(orchestrator.currentUserSession())
     }
@@ -695,7 +691,7 @@ internal class SessionOrchestratorTest {
         createOrchestrator(
             startingProcessState = ProcessState.FOREGROUND,
             configService = sessionLimitsConfigService(),
-            metadataStoreOverride = expiredStore,
+            stateStoreOverride = expiredStore,
         )
 
         // Expired session is discarded; a fresh user session is created instead
@@ -712,7 +708,7 @@ internal class SessionOrchestratorTest {
         createOrchestrator(
             startingProcessState = ProcessState.FOREGROUND,
             configService = sessionLimitsConfigService(),
-            metadataStoreOverride = store,
+            stateStoreOverride = store,
         )
 
         val session = activeUserSession()
@@ -728,7 +724,7 @@ internal class SessionOrchestratorTest {
         createOrchestrator(
             startingProcessState = ProcessState.FOREGROUND,
             configService = sessionLimitsConfigService(),
-            metadataStoreOverride = store,
+            stateStoreOverride = store,
         )
 
         val session = activeUserSession()
@@ -737,15 +733,15 @@ internal class SessionOrchestratorTest {
 
     @Test
     fun `session is persisted when started`() {
-        val freshStore = UserSessionMetadataStore(FakeKeyValueStore())
+        val freshStore = FakePersistedSdkStateStore()
         createOrchestrator(
             startingProcessState = ProcessState.FOREGROUND,
             configService = sessionLimitsConfigService(),
-            metadataStoreOverride = freshStore,
+            stateStoreOverride = freshStore,
         )
 
         val session = activeUserSession()
-        val stored = checkNotNull(freshStore.load())
+        val stored = checkNotNull(freshStore.state.userSession)
         assertEquals(session.userSessionId, stored.userSessionId)
         assertEquals(session.startTimeMs, stored.startTimeMs)
         assertEquals(session.userSessionNumber, stored.userSessionNumber)
@@ -753,11 +749,11 @@ internal class SessionOrchestratorTest {
 
     @Test
     fun `store is overridden for new user session`() {
-        val sharedStore = UserSessionMetadataStore(FakeKeyValueStore())
+        val sharedStore = FakePersistedSdkStateStore()
         createOrchestrator(
             startingProcessState = ProcessState.FOREGROUND,
             configService = sessionLimitsConfigService(),
-            metadataStoreOverride = sharedStore,
+            stateStoreOverride = sharedStore,
         )
 
         val firstId = activeUserSession().userSessionId
@@ -766,7 +762,7 @@ internal class SessionOrchestratorTest {
         val secondId = activeUserSession().userSessionId
         assertNotEquals(firstId, secondId)
 
-        val stored = checkNotNull(sharedStore.load())
+        val stored = checkNotNull(sharedStore.state.userSession)
         assertEquals(secondId, stored.userSessionId)
     }
 
@@ -796,7 +792,7 @@ internal class SessionOrchestratorTest {
         createOrchestrator(
             startingProcessState = ProcessState.FOREGROUND,
             configService = sessionLimitsConfigService(customMaxSessionDurationMs = configMaxMs),
-            metadataStoreOverride = persistedStore,
+            stateStoreOverride = persistedStore,
         )
 
         // persisted 10-min duration used
@@ -825,7 +821,7 @@ internal class SessionOrchestratorTest {
             configService = sessionLimitsConfigService(
                 customInactivityTimeoutMs = TimeUnit.SECONDS.toMillis(configInactivitySecs),
             ),
-            metadataStoreOverride = persistedStore,
+            stateStoreOverride = persistedStore,
         )
 
         // restored session retains persisted inactivity timeout
@@ -852,7 +848,7 @@ internal class SessionOrchestratorTest {
         createOrchestrator(
             startingProcessState = ProcessState.FOREGROUND,
             configService = sessionLimitsConfigService(),
-            metadataStoreOverride = store,
+            stateStoreOverride = store,
         )
 
         val session = activeUserSession()
@@ -1145,7 +1141,7 @@ internal class SessionOrchestratorTest {
         configService: FakeConfigService =
             FakeConfigService(config = backgroundActivityConfig(true)),
         ordinalStoreOverride: OrdinalStore? = null,
-        metadataStoreOverride: UserSessionMetadataStore? = null,
+        stateStoreOverride: PersistedSdkStateStore? = null,
         keyValueStoreOverride: KeyValueStore? = null,
     ) {
         store = FakePayloadStore()
@@ -1228,7 +1224,7 @@ internal class SessionOrchestratorTest {
             ),
             ordinalStoreOverride ?: FakeOrdinalStore(),
             keyValueStoreOverride ?: FakeKeyValueStore(),
-            metadataStoreOverride ?: UserSessionMetadataStore(FakeKeyValueStore()),
+            stateStoreOverride ?: FakePersistedSdkStateStore(),
             errorHandler,
             BackgroundWorker(inactivityWorkerExecutor),
             TestUuidSource(),
@@ -1315,7 +1311,7 @@ internal class SessionOrchestratorTest {
         createOrchestrator(
             startingProcessState = ProcessState.FOREGROUND,
             configService = backgroundEnabledConfigService(),
-            metadataStoreOverride = restoredStore,
+            stateStoreOverride = restoredStore,
         )
 
         val restored = activeUserSession()
@@ -1573,7 +1569,7 @@ internal class SessionOrchestratorTest {
         createOrchestrator(
             startingProcessState = ProcessState.BACKGROUND,
             configService = backgroundEnabledConfigService(),
-            metadataStoreOverride = store,
+            stateStoreOverride = store,
         )
 
         val restored = activeUserSession()
@@ -1597,7 +1593,7 @@ internal class SessionOrchestratorTest {
         createOrchestrator(
             startingProcessState = ProcessState.BACKGROUND,
             configService = backgroundEnabledConfigService(),
-            metadataStoreOverride = store,
+            stateStoreOverride = store,
         )
 
         // the expired session is not restored - a new unclassified one is active instead
@@ -1623,7 +1619,7 @@ internal class SessionOrchestratorTest {
         createOrchestrator(
             startingProcessState = ProcessState.FOREGROUND,
             configService = backgroundEnabledConfigService(),
-            metadataStoreOverride = store,
+            stateStoreOverride = store,
         )
 
         val session = activeUserSession()
@@ -1638,7 +1634,7 @@ internal class SessionOrchestratorTest {
         createOrchestrator(
             startingProcessState = ProcessState.FOREGROUND,
             configService = backgroundEnabledConfigService(),
-            metadataStoreOverride = store,
+            stateStoreOverride = store,
         )
 
         assertEquals(
@@ -1658,7 +1654,7 @@ internal class SessionOrchestratorTest {
         createOrchestrator(
             startingProcessState = ProcessState.FOREGROUND,
             configService = backgroundEnabledConfigService(),
-            metadataStoreOverride = store,
+            stateStoreOverride = store,
         )
 
         assertEquals(
@@ -1678,7 +1674,7 @@ internal class SessionOrchestratorTest {
         createOrchestrator(
             startingProcessState = ProcessState.BACKGROUND,
             configService = backgroundEnabledConfigService(),
-            metadataStoreOverride = store,
+            stateStoreOverride = store,
         )
 
         assertEquals(
@@ -1697,7 +1693,7 @@ internal class SessionOrchestratorTest {
         createOrchestrator(
             startingProcessState = ProcessState.FOREGROUND,
             configService = backgroundEnabledConfigService(),
-            metadataStoreOverride = store,
+            stateStoreOverride = store,
         )
 
         assertEquals("live-id", activeUserSession().userSessionId)
@@ -1713,7 +1709,7 @@ internal class SessionOrchestratorTest {
         createOrchestrator(
             startingProcessState = ProcessState.BACKGROUND,
             configService = backgroundEnabledConfigService(),
-            metadataStoreOverride = store,
+            stateStoreOverride = store,
         )
 
         assertEquals("bg-live", activeUserSession().userSessionId)
@@ -1739,7 +1735,7 @@ internal class SessionOrchestratorTest {
         createOrchestrator(
             startingProcessState = ProcessState.FOREGROUND,
             configService = backgroundEnabledConfigService(),
-            metadataStoreOverride = store,
+            stateStoreOverride = store,
         )
 
         assertEquals(
@@ -1804,11 +1800,11 @@ internal class SessionOrchestratorTest {
 
     @Test
     fun `unclassified user session is persisted as background-only during the window`() {
-        val store = UserSessionMetadataStore(FakeKeyValueStore())
+        val store = FakePersistedSdkStateStore()
         createOrchestrator(
             startingProcessState = ProcessState.BACKGROUND,
             configService = backgroundEnabledConfigService(),
-            metadataStoreOverride = store,
+            stateStoreOverride = store,
         )
 
         val initialUserSession = activeUserSession()
@@ -1816,14 +1812,14 @@ internal class SessionOrchestratorTest {
 
         // persisted user session will presume it's background-only because it will only be read in this state if the process dies with
         // it being further classified
-        val persisted = checkNotNull(store.load())
+        val persisted = checkNotNull(store.state.userSession)
         assertEquals(initialUserSession.userSessionId, persisted.userSessionId)
         assertEquals(true, persisted.isBackgroundOnly)
 
         // foregrounding within the window rewrites the persisted copy as a regular session
         clock.tick(1000)
         orchestrator.onForeground()
-        assertEquals(false, checkNotNull(store.load()).isBackgroundOnly)
+        assertEquals(false, checkNotNull(store.state.userSession).isBackgroundOnly)
     }
 
     @Test
@@ -1849,18 +1845,18 @@ internal class SessionOrchestratorTest {
 
     @Test
     fun `crash during the background-startup window leaves the pending session untouched`() {
-        val store = UserSessionMetadataStore(FakeKeyValueStore())
+        val store = FakePersistedSdkStateStore()
         createOrchestrator(
             startingProcessState = ProcessState.BACKGROUND,
             configService = backgroundEnabledConfigService(),
-            metadataStoreOverride = store,
+            stateStoreOverride = store,
         )
         val initialUserSession = activeUserSession()
 
         orchestrator.handleCrash("crash-id")
 
         assertEquals(initialUserSession.userSessionId, activeUserSession().userSessionId)
-        assertEquals(true, checkNotNull(store.load()).isBackgroundOnly)
+        assertEquals(true, checkNotNull(store.state.userSession).isBackgroundOnly)
     }
 
     @Test
@@ -1871,7 +1867,7 @@ internal class SessionOrchestratorTest {
         createOrchestrator(
             startingProcessState = ProcessState.BACKGROUND,
             configService = backgroundEnabledConfigService(),
-            metadataStoreOverride = store,
+            stateStoreOverride = store,
         )
 
         with(checkNotNull(activeUserSession())) {
@@ -1983,9 +1979,9 @@ internal class SessionOrchestratorTest {
         isBackgroundOnly: Boolean = false,
         persistedMaxDurationMs: Long = maxDurationMs,
         persistedInactivityTimeoutMs: Long = inactivityMs,
-    ): UserSessionMetadataStore = UserSessionMetadataStore(FakeKeyValueStore()).apply {
-        save(
-            UserSessionMetadata.Classified(
+    ): FakePersistedSdkStateStore = FakePersistedSdkStateStore().apply {
+        update {
+            userSession = UserSessionMetadata.Classified(
                 startTimeMs = startTimeMs,
                 userSessionId = userSessionId,
                 userSessionNumber = userSessionNumber,
@@ -1994,8 +1990,8 @@ internal class SessionOrchestratorTest {
                 partIndex = partIndex,
                 lastActivityMs = lastActivityMs,
                 isBackgroundOnly = isBackgroundOnly,
-            ),
-        )
+            )
+        }
     }
 
     private fun multiFilePersistenceConfigService(backgroundActivity: Boolean = true) = FakeConfigService(

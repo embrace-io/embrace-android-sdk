@@ -1,5 +1,7 @@
 package io.embrace.android.embracesdk.internal.store
 
+import io.embrace.android.embracesdk.internal.session.UserSessionMetadata
+
 /**
  * Mutable view of [PersistedSdkState] used by [PersistedSdkStateStore.update]. Each value starts as the state's
  * current value.
@@ -10,6 +12,7 @@ class PersistedSdkStateEditor internal constructor(private val state: PersistedS
     var userName: String? = state.userName
     var userPersonas: Set<String>? = state.userPersonas
     var sessionProperties: Map<String, String> = state.sessionProperties
+    var userSession: UserSessionMetadata.Classified? = state.userSession
 
     internal fun build(): PersistedSdkState = state.copy(
         userId = userId,
@@ -17,6 +20,7 @@ class PersistedSdkStateEditor internal constructor(private val state: PersistedS
         userName = userName,
         userPersonas = userPersonas,
         sessionProperties = sessionProperties,
+        userSession = userSession,
     )
 }
 

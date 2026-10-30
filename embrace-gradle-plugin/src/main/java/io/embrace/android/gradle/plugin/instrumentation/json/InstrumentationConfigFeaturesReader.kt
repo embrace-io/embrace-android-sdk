@@ -1,3 +1,5 @@
+@file:OptIn(ExperimentalSerializationApi::class)
+
 package io.embrace.android.gradle.plugin.instrumentation.json
 
 import io.embrace.android.gradle.plugin.instrumentation.strategy.ClassVisitStrategy
@@ -5,7 +7,14 @@ import io.embrace.android.gradle.plugin.instrumentation.visitor.BytecodeClassIns
 import io.embrace.android.gradle.plugin.instrumentation.visitor.BytecodeInstrumentationFeature
 import io.embrace.android.gradle.plugin.instrumentation.visitor.BytecodeMethodInsertionParams
 import io.embrace.android.gradle.plugin.instrumentation.visitor.BytecodeMethodOverrideParams
-import io.embrace.android.gradle.plugin.util.serialization.JsonSerializer
+import kotlinx.serialization.ExperimentalSerializationApi
+import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.decodeFromStream
+
+private val json = Json {
+    explicitNulls = false
+    ignoreUnknownKeys = true
+}
 
 private val bytecodeInstrumentationFeatures: List<BytecodeInstrumentationFeature> by lazy {
     readBytecodeInstrumentationConfig().features.map(InstrumentationConfigFeature::convertInstrumentationConfigFeature)
@@ -18,7 +27,7 @@ private fun readBytecodeInstrumentationConfig(): InstrumentationConfigFeatures {
     val stream = classLoader.getResourceAsStream("bytecode_instrumentation_features.json")
         ?: error("Bytecode instrumentation config file not found")
 
-    return JsonSerializer().fromJson(stream, InstrumentationConfigFeatures.serializer())
+    return stream.buffered().use { json.decodeFromStream(InstrumentationConfigFeatures.serializer(), it) }
 }
 
 private fun InstrumentationConfigFeature.convertInstrumentationConfigFeature(): BytecodeInstrumentationFeature =

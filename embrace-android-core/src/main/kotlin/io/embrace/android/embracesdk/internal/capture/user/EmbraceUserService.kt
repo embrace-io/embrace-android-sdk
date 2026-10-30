@@ -7,6 +7,7 @@ import io.embrace.android.embracesdk.internal.logging.guardSdkCode
 import io.embrace.android.embracesdk.internal.logging.guardSdkCodeEach
 import io.embrace.android.embracesdk.internal.payload.UserInfo
 import io.embrace.android.embracesdk.internal.store.KeyValueStore
+import io.embrace.android.embracesdk.internal.store.PersistedSdkStateStore
 import io.embrace.android.embracesdk.internal.utils.EmbTrace
 import io.embrace.android.embracesdk.internal.utils.Provider
 import java.util.concurrent.CopyOnWriteArraySet
@@ -15,6 +16,7 @@ import java.util.regex.Pattern
 
 internal class EmbraceUserService(
     private val impl: KeyValueStore,
+    private val stateStore: PersistedSdkStateStore,
     private val clock: Clock,
     private val errorHandler: ErrorHandler,
 ) : UserService {
@@ -47,21 +49,7 @@ internal class EmbraceUserService(
         set(value) = impl.editAndCommit { putString(USER_USERNAME_KEY, value) }
 
     private fun isUsersFirstDay(): Boolean {
-        val installDate = installDate
-        return installDate != null && clock.now() - installDate <= DAY_IN_MS
-    }
-
-    private var installDate: Long?
-        get() = impl.getLong(INSTALL_DATE_KEY)
-        set(value) = impl.editAndCommit { putLong(INSTALL_DATE_KEY, value) }
-
-    /**
-     * Persists the install date if none has been stored yet. Must be called once, straight after construction.
-     */
-    fun recordInstallDateIfAbsent() {
-        if (installDate == null) {
-            installDate = clock.now()
-        }
+        return clock.now() - stateStore.snapshot().installTimestampMs <= DAY_IN_MS
     }
 
     override fun loadUserInfoFromDisk(): UserInfo? {
@@ -235,7 +223,6 @@ internal class EmbraceUserService(
         const val USER_USERNAME_KEY = "io.embrace.username"
         const val USER_IS_PAYER_KEY = "io.embrace.userispayer"
         const val USER_PERSONAS_KEY = "io.embrace.userpersonas"
-        const val INSTALL_DATE_KEY = "io.embrace.installtimestamp"
         const val PERSONA_PAYER = "payer"
         const val PERSONA_FIRST_DAY_USER = "first_day"
         const val DAY_IN_MS: Long = 60 * 60 * 24 * 1000L

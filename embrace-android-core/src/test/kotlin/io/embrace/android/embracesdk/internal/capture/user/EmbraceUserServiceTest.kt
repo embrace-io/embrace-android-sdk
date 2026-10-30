@@ -3,8 +3,10 @@ package io.embrace.android.embracesdk.internal.capture.user
 import io.embrace.android.embracesdk.fakes.FakeClock
 import io.embrace.android.embracesdk.fakes.FakeErrorHandler
 import io.embrace.android.embracesdk.fakes.FakeKeyValueStore
+import io.embrace.android.embracesdk.fakes.TestUuidSource
 import io.embrace.android.embracesdk.internal.logging.ErrorHandler
 import io.embrace.android.embracesdk.internal.payload.UserInfo
+import io.embrace.android.embracesdk.internal.prefs.PrefsPersistedSdkStateStore
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNotNull
@@ -48,7 +50,7 @@ internal class EmbraceUserServiceTest {
         )
 
         // load user info
-        service = EmbraceUserService(store, clock, errorHandler).apply { recordInstallDateIfAbsent() }
+        service = EmbraceUserService(store, PrefsPersistedSdkStateStore(store, clock, TestUuidSource()), clock, errorHandler)
     }
 
     @Test
@@ -158,12 +160,6 @@ internal class EmbraceUserServiceTest {
             ),
             personas.toList(),
         )
-    }
-
-    @Test
-    fun `test startup complete`() {
-        val timestamp = store.values()["io.embrace.installtimestamp"]
-        assertEquals(clock.now(), timestamp)
     }
 
     private fun setUserInfo(

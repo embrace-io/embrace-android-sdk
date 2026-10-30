@@ -50,7 +50,7 @@ internal val KNOWN_VIOLATIONS: List<KnownViolation> = listOf(
     KnownViolation(
         signature = "internal.prefs.SharedPrefsStore.getString",
         violation = DiskReadViolation::class,
-        reason = "A binary cache miss makes DeviceIdProvider read the device ID out of SharedPreferences. " +
+        reason = "A binary cache miss makes PrefsPersistedSdkStateStore read the device ID out of SharedPreferences. " +
             "Only fires when it beats ConfigLoadServices.prewarmSharedPreferences and has to block in " +
             "awaitLoadedLocked",
     ),

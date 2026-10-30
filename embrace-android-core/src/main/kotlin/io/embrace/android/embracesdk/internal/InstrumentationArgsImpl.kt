@@ -9,6 +9,8 @@ import io.embrace.android.embracesdk.internal.arch.SessionPartEndListener
 import io.embrace.android.embracesdk.internal.arch.datasource.TelemetryDestination
 import io.embrace.android.embracesdk.internal.arch.navigation.NavigationTrackingService
 import io.embrace.android.embracesdk.internal.arch.state.ProcessStateTracker
+import io.embrace.android.embracesdk.internal.arch.store.DeliveredAeiStore
+import io.embrace.android.embracesdk.internal.arch.store.NetworkCaptureRuleStore
 import io.embrace.android.embracesdk.internal.capture.session.UserSessionPropertiesService
 import io.embrace.android.embracesdk.internal.clock.Clock
 import io.embrace.android.embracesdk.internal.config.ConfigService
@@ -20,7 +22,6 @@ import io.embrace.android.embracesdk.internal.network.http.HttpRequestInfoModifi
 import io.embrace.android.embracesdk.internal.serialization.PlatformSerializer
 import io.embrace.android.embracesdk.internal.session.id.SessionIdsSnapshot
 import io.embrace.android.embracesdk.internal.session.id.SessionPartTracker
-import io.embrace.android.embracesdk.internal.store.KeyValueStore
 import io.embrace.android.embracesdk.internal.store.OrdinalStore
 import io.embrace.android.embracesdk.internal.telemetry.InternalTelemetryService
 import io.embrace.android.embracesdk.internal.utils.UuidSource
@@ -38,7 +39,8 @@ internal class InstrumentationArgsImpl(
     override val clock: Clock,
     override val context: Context,
     override val application: Application,
-    storeProvider: () -> KeyValueStore,
+    deliveredAeiStoreProvider: () -> DeliveredAeiStore,
+    networkCaptureRuleStoreProvider: () -> NetworkCaptureRuleStore,
     override val serializer: PlatformSerializer,
     override val uuidSource: UuidSource,
     override val ordinalStore: OrdinalStore,
@@ -57,7 +59,9 @@ internal class InstrumentationArgsImpl(
 
     override val crashMarkerFile: File by lazy { crashMarkerFileProvider() }
 
-    override val store: KeyValueStore by lazy { storeProvider() }
+    override val deliveredAeiStore: DeliveredAeiStore by lazy { deliveredAeiStoreProvider() }
+
+    override val networkCaptureRuleStore: NetworkCaptureRuleStore by lazy { networkCaptureRuleStoreProvider() }
 
     override val packageInfo: PackageInfo? by lazy {
         errorHandler.guardSdkCode(SdkErrorType.Ignored, null) { context.packageManager.getPackageInfo(context.packageName, 0) }

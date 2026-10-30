@@ -5,11 +5,11 @@ import io.embrace.android.embracesdk.internal.arch.datasource.DataSourceImpl
 import io.embrace.android.embracesdk.internal.arch.datasource.LogSeverity
 import io.embrace.android.embracesdk.internal.arch.limits.NoopLimitStrategy
 import io.embrace.android.embracesdk.internal.arch.schema.SchemaType
+import io.embrace.android.embracesdk.internal.arch.store.NetworkCaptureRuleStore
 import io.embrace.android.embracesdk.internal.config.remote.NetworkCaptureRuleRemoteConfig
 import io.embrace.android.embracesdk.internal.logging.SdkErrorType
 import io.embrace.android.embracesdk.internal.payload.NetworkCapturedCall
 import io.embrace.android.embracesdk.internal.serialization.PlatformSerializer
-import io.embrace.android.embracesdk.internal.store.KeyValueStore
 import io.embrace.android.embracesdk.internal.telemetry.AppliedLimitType
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.TimeUnit
@@ -24,7 +24,7 @@ class NetworkCaptureDataSourceImpl internal constructor(
     instrumentationName = "network_capture_data_source",
 ) {
 
-    private val keyValueStore: KeyValueStore = args.store
+    private val ruleStore: NetworkCaptureRuleStore = args.networkCaptureRuleStore
     private val serializer: PlatformSerializer = args.serializer
     private val urlRegexCache = ConcurrentHashMap<String, Result<Regex>>()
 
@@ -32,7 +32,6 @@ class NetworkCaptureDataSourceImpl internal constructor(
 
     internal companion object {
         const val NETWORK_ERROR_CODE = -1
-        const val NETWORK_CAPTURE_RULE_PREFIX_KEY = "io.embrace.networkcapturerule"
         private const val EMB_DATA_URL: String = "data.emb-api.com"
     }
 
@@ -84,7 +83,7 @@ class NetworkCaptureDataSourceImpl internal constructor(
                         requestBody.capturedResponseBody,
                         rule.maxSize,
                     )
-                decreaseNetworkCaptureRuleRemainingCount(rule.id, rule.maxCount)
+                ruleStore.decrement(rule.id, rule.maxCount)
 
                 val capturedNetworkCall = NetworkCapturedCall(
                     duration = duration,
@@ -191,17 +190,7 @@ class NetworkCaptureDataSourceImpl internal constructor(
     }
 
     private fun isNetworkCaptureRuleOver(id: String): Boolean {
-        return getNetworkCaptureRuleRemainingCount(id, 1) <= 0
-    }
-
-    private fun decreaseNetworkCaptureRuleRemainingCount(id: String, maxCount: Int) {
-        keyValueStore.editAndCommit {
-            putInt(NETWORK_CAPTURE_RULE_PREFIX_KEY + id, getNetworkCaptureRuleRemainingCount(id, maxCount) - 1)
-        }
-    }
-
-    private fun getNetworkCaptureRuleRemainingCount(id: String, maxCount: Int): Int {
-        return keyValueStore.getInt(NETWORK_CAPTURE_RULE_PREFIX_KEY + id) ?: maxCount
+        return ruleStore.remaining(id, 1) <= 0
     }
 
     private fun getNetworkPayload(capturedNetworkCall: NetworkCapturedCall): NetworkCapturedCall? {

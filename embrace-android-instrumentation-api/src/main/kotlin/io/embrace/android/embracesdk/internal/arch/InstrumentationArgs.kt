@@ -6,13 +6,14 @@ import android.content.pm.PackageInfo
 import io.embrace.android.embracesdk.internal.arch.datasource.TelemetryDestination
 import io.embrace.android.embracesdk.internal.arch.navigation.NavigationTrackingService
 import io.embrace.android.embracesdk.internal.arch.state.ProcessStateTracker
+import io.embrace.android.embracesdk.internal.arch.store.DeliveredAeiStore
+import io.embrace.android.embracesdk.internal.arch.store.NetworkCaptureRuleStore
 import io.embrace.android.embracesdk.internal.clock.Clock
 import io.embrace.android.embracesdk.internal.config.ConfigService
 import io.embrace.android.embracesdk.internal.logging.ErrorHandler
 import io.embrace.android.embracesdk.internal.network.http.HttpRequestInfoModifierChain
 import io.embrace.android.embracesdk.internal.serialization.PlatformSerializer
 import io.embrace.android.embracesdk.internal.session.id.SessionIdsSnapshot
-import io.embrace.android.embracesdk.internal.store.KeyValueStore
 import io.embrace.android.embracesdk.internal.store.OrdinalStore
 import io.embrace.android.embracesdk.internal.telemetry.InternalTelemetryService
 import io.embrace.android.embracesdk.internal.utils.UuidSource
@@ -75,11 +76,14 @@ interface InstrumentationArgs {
     val application: Application
 
     /**
-     * A key-value store that is shared by all instrumentation used by this SDK. Individual
-     * instrumentation should write values to this using their own abstractions, and
-     * should make good efforts to use unique keys.
+     * Persists the IDs of ApplicationExitInfo records that have already been delivered.
      */
-    val store: KeyValueStore
+    val deliveredAeiStore: DeliveredAeiStore
+
+    /**
+     * Persists how many more times each network capture rule can be applied.
+     */
+    val networkCaptureRuleStore: NetworkCaptureRuleStore
 
     /**
      * A serializer that can be used to serialize and deserialize data.

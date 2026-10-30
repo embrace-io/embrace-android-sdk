@@ -3,9 +3,9 @@ package io.embrace.android.embracesdk.internal.instrumentation.aei
 import android.app.ApplicationExitInfo
 import io.embrace.android.embracesdk.concurrency.BlockingScheduledExecutorService
 import io.embrace.android.embracesdk.fakes.FakeConfigService
+import io.embrace.android.embracesdk.fakes.FakeDeliveredAeiStore
 import io.embrace.android.embracesdk.fakes.FakeErrorHandler
 import io.embrace.android.embracesdk.fakes.FakeInstrumentationArgs
-import io.embrace.android.embracesdk.fakes.FakeKeyValueStore
 import io.embrace.android.embracesdk.fakes.FakeOrdinalStore
 import io.embrace.android.embracesdk.fakes.fakeBackgroundWorker
 import io.embrace.android.embracesdk.internal.arch.datasource.LogSeverity
@@ -50,7 +50,7 @@ internal class AeiDataSourceImplTest {
 
     private val worker = fakeBackgroundWorker()
 
-    private val store = FakeKeyValueStore()
+    private val store = FakeDeliveredAeiStore()
 
     private var records: () -> List<AeiRecord> = { emptyList() }
     private val recordSource = AeiRecordSource { records() }
@@ -178,9 +178,7 @@ internal class AeiDataSourceImplTest {
 
         records = { listOf(appExitInfo1, appExitInfo2, appExitInfo3) }
 
-        store.editAndCommit {
-            putStringSet("io.embrace.aeiHashCode", setOf(appExitInfo1Hash, appExitInfo2Hash))
-        }
+        store.storedIds = setOf(appExitInfo1Hash, appExitInfo2Hash)
 
         startApplicationExitInfoService()
 
@@ -189,6 +187,16 @@ internal class AeiDataSourceImplTest {
 
         // then captured data should only have applicationExitInfo
         assertEquals("3", attrs[EmbAeiAttributes.TIMESTAMP])
+    }
+
+    @Test
+    fun `delivered ids are pruned to current records and include newly sent records`() {
+        val appExitInfo1 = FakeAeiRecord(timestamp = 1L, pid = 1, traceProvider = { TRACE.byteInputStream() })
+        val appExitInfo2 = FakeAeiRecord(timestamp = 2L, pid = 2, traceProvider = { TRACE.byteInputStream() })
+        records = { listOf(appExitInfo1, appExitInfo2) }
+        store.storedIds = setOf("1_1", "stale")
+        startApplicationExitInfoService()
+        assertEquals(setOf("1_1", "2_2"), store.storedIds)
     }
 
     @Test
@@ -403,7 +411,7 @@ internal class AeiDataSourceImplTest {
         source.onDataCaptureDisabled()
         executor.runCurrentlyBlocked()
         assertTrue(args.destination.logEvents.isEmpty())
-        assertNull(store.getStringSet("io.embrace.aeiHashCode"))
+        assertNull(store.storedIds)
     }
 
     @Test
@@ -420,7 +428,7 @@ internal class AeiDataSourceImplTest {
         source.onDataCaptureEnabled()
 
         assertTrue(args.destination.logEvents.isEmpty())
-        assertNull(store.getStringSet("io.embrace.aeiHashCode"))
+        assertNull(store.storedIds)
         assertEquals(1, ordinalStore.incrementAndGet(Ordinal.CRASH) { 1 })
         assertEquals(1, ordinalStore.incrementAndGet(Ordinal.AEI_CRASH) { 1 })
     }

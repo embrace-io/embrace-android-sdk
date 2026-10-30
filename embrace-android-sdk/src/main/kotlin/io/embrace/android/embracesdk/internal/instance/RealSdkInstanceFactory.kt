@@ -225,6 +225,7 @@ internal fun createRealSdkInstance(
             createNetworkSpanParentService(
                 spanService = spanService.value,
                 errorHandler = errorHandler,
+                telemetryService = telemetryService,
                 currentUserSessionIdProvider = sessionIdsProvider::getCurrentUserSessionId,
             ).also { service ->
                 sessionOrchestrator.addUserSessionListener { event ->

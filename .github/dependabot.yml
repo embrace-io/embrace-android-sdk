@@ -29,6 +29,11 @@ updates:
       # newer Kotlin versions than the SDK's minimum supported Kotlin (and the Gradle plugin's
       # Gradle 8.0.2 build-script Kotlin) can read. Bump it manually when the minimum is raised.
       - dependency-name: "org.jetbrains.kotlinx:kotlinx-serialization-*"
+      # OkHttp is compileOnly and must stay on 4.x so the instrumentation keeps working for apps still
+      # on OkHttp 4. 5.x makes Response.body non-null, so the null checks that 4.x needs fail
+      # compilation under -Werror ("Condition is always 'true'").
+      - dependency-name: "com.squareup.okhttp3:*"
+        update-types: ["version-update:semver-major"]
   - package-ecosystem: "gradle"
     directory: "/examples/ExampleApp"
     schedule:

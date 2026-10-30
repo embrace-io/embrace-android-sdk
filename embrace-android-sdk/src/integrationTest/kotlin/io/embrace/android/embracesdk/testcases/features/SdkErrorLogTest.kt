@@ -10,6 +10,7 @@ import io.embrace.android.embracesdk.testframework.assertions.assertSessionIdsCo
 import io.opentelemetry.kotlin.semconv.ExceptionAttributes
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotNull
+import org.junit.Assert.assertTrue
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -35,7 +36,10 @@ internal class SdkErrorLogTest(
             },
             testCaseAction = {
                 recordSession {
-                    errorHandler.trackSdkError(SdkErrorType.InternalInterfaceFail, RuntimeException("Some error message"))
+                    errorHandler.trackSdkError(
+                        SdkErrorType.InternalInterfaceFail,
+                        RuntimeException("Some error message", IllegalStateException("Root cause")),
+                    )
                 }
             },
             assertAction = {
@@ -55,7 +59,9 @@ internal class SdkErrorLogTest(
                     )
                     assertNotNull(attrs.findAttributeValue("log.record.uid"))
                     assertSessionIdsConsistent()
-                    checkNotNull(attrs.findAttributeValue(ExceptionAttributes.EXCEPTION_STACKTRACE))
+                    assertEquals("InternalInterfaceFail", attrs.findAttributeValue("emb.sdk_error.type"))
+                    val stacktrace = checkNotNull(attrs.findAttributeValue(ExceptionAttributes.EXCEPTION_STACKTRACE))
+                    assertTrue(stacktrace.contains("Caused by: java.lang.IllegalStateException: Root cause"))
                 }
             }
         )

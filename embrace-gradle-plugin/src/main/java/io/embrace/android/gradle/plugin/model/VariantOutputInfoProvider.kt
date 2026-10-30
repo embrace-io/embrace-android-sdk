@@ -37,10 +37,10 @@ fun Variant.toVariantOutputInfoProvider(project: Project): Provider<VariantOutpu
 
     return versionName
         .zip(versionCode) { name, code -> name to code }
-        .zip(packageName) { versionPair, pkg ->
+        .zip(packageName) { (name, code), pkg ->
             VariantOutputInfo(
-                versionName = versionPair.first,
-                versionCode = versionPair.second,
+                versionName = name,
+                versionCode = code,
                 packageName = pkg,
             )
         }

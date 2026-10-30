@@ -1,11 +1,11 @@
 package io.embrace.gradle.plugin.instrumentation
 
-import io.embrace.android.gradle.plugin.instrumentation.config.BooleanReturnValueMethodVisitor
-import io.embrace.android.gradle.plugin.instrumentation.config.IntReturnValueMethodVisitor
-import io.embrace.android.gradle.plugin.instrumentation.config.LongReturnValueMethodVisitor
-import io.embrace.android.gradle.plugin.instrumentation.config.MapReturnValueMethodVisitor
-import io.embrace.android.gradle.plugin.instrumentation.config.StringListReturnValueMethodVisitor
-import io.embrace.android.gradle.plugin.instrumentation.config.StringReturnValueMethodVisitor
+import io.embrace.bytecode.config.BooleanReturnValueMethodVisitor
+import io.embrace.bytecode.config.IntReturnValueMethodVisitor
+import io.embrace.bytecode.config.LongReturnValueMethodVisitor
+import io.embrace.bytecode.config.MapReturnValueMethodVisitor
+import io.embrace.bytecode.config.StringListReturnValueMethodVisitor
+import io.embrace.bytecode.config.StringReturnValueMethodVisitor
 import io.embrace.test.fixtures.MethodReturnValueVisitorObj
 import org.junit.Test
 import org.objectweb.asm.ClassVisitor

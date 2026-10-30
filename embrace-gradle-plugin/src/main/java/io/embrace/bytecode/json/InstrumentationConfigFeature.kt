@@ -1,0 +1,12 @@
+package io.embrace.bytecode.json
+
+import kotlinx.serialization.Serializable
+
+@Serializable
+internal data class InstrumentationConfigFeature(
+    val name: String,
+    val target: InstrumentationConfigTarget,
+    val insert: InstrumentationConfigInsert,
+    val visitStrategy: InstrumentationConfigVisitStrategy,
+    val addOverride: InstrumentationConfigAddOverride?,
+)

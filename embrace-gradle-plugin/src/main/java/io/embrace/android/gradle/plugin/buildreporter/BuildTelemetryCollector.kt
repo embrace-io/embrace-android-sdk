@@ -4,9 +4,9 @@ import io.embrace.android.gradle.plugin.agp.AgpWrapper
 import io.embrace.android.gradle.plugin.config.PluginBehavior
 import io.embrace.android.gradle.plugin.gradle.GradleVersion
 import io.embrace.android.gradle.plugin.gradle.GradleVersion.Companion.isAtLeast
-import io.embrace.android.gradle.plugin.instrumentation.config.model.VariantConfig
 import io.embrace.android.gradle.plugin.system.JavaSystemWrapper
 import io.embrace.android.gradle.plugin.util.getProperty
+import io.embrace.bytecode.config.model.VariantConfig
 import io.embrace.embrace_gradle_plugin.BuildConfig
 import org.gradle.api.Project
 import org.gradle.api.provider.ListProperty

@@ -2,13 +2,13 @@ package io.embrace.android.gradle.plugin.tasks.il2cpp
 
 import io.embrace.android.gradle.plugin.config.PluginBehavior
 import io.embrace.android.gradle.plugin.gradle.registerTask
-import io.embrace.android.gradle.plugin.instrumentation.config.model.VariantConfig
 import io.embrace.android.gradle.plugin.model.AndroidCompactedVariantData
 import io.embrace.android.gradle.plugin.tasks.common.FileCompressionTask
 import io.embrace.android.gradle.plugin.tasks.common.MultipartUploadTask
 import io.embrace.android.gradle.plugin.tasks.common.RequestParams
 import io.embrace.android.gradle.plugin.tasks.registration.EmbraceTaskRegistration
 import io.embrace.android.gradle.plugin.tasks.registration.RegistrationParams
+import io.embrace.bytecode.config.model.VariantConfig
 import org.gradle.api.Project
 import org.gradle.api.Task
 import org.gradle.api.provider.ListProperty

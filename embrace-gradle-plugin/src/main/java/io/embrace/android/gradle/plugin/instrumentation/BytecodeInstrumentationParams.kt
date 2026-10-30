@@ -1,8 +1,9 @@
 package io.embrace.android.gradle.plugin.instrumentation
 
 import com.android.build.api.instrumentation.InstrumentationParameters
-import io.embrace.android.gradle.plugin.instrumentation.config.model.VariantConfig
-import io.embrace.android.gradle.plugin.model.VariantOutputInfo
+import io.embrace.bytecode.ClassInstrumentationFilter
+import io.embrace.bytecode.config.model.VariantConfig
+import io.embrace.bytecode.config.model.VariantOutputInfo
 import org.gradle.api.file.RegularFileProperty
 import org.gradle.api.provider.Property
 import org.gradle.api.tasks.Input

@@ -4,8 +4,9 @@ import com.android.build.api.instrumentation.ClassContext
 import com.android.build.api.instrumentation.ClassData
 import io.embrace.android.gradle.plugin.instrumentation.fakes.TestBytecodeInstrumentationParams
 import io.embrace.android.gradle.plugin.instrumentation.fakes.TestClassData
-import io.embrace.android.gradle.plugin.instrumentation.fakes.TestClassVisitor
 import io.embrace.android.gradle.plugin.instrumentation.fakes.TestVisitorFactoryImpl
+import io.embrace.bytecode.ClassInstrumentationFilter
+import io.embrace.bytecode.fakes.TestClassVisitor
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNotSame
 import org.junit.Assert.assertSame

@@ -1,6 +1,6 @@
 package io.embrace.gradle.plugin.config
 
-import io.embrace.android.gradle.plugin.instrumentation.ClassInstrumentationFilter
+import io.embrace.bytecode.ClassInstrumentationFilter
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Test

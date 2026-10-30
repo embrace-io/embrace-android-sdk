@@ -153,7 +153,7 @@ val generateExpectedNames = tasks.register<GenerateExpectedNamesTask>("generateE
     )
     bytecodeFeatures.set(root.file("embrace-gradle-plugin/src/main/resources/bytecode_instrumentation_features.json"))
     configInstrumentationFiles.from(
-        root.dir("embrace-gradle-plugin/src/main/java/io/embrace/android/gradle/plugin/instrumentation/config/arch/sdk")
+        root.dir("embrace-gradle-plugin/src/main/java/io/embrace/bytecode/config/arch/sdk")
             .asFileTree.matching { include("*Instrumentation.kt") }
     )
     outputDir.set(layout.buildDirectory.dir("generated/expectedNames"))

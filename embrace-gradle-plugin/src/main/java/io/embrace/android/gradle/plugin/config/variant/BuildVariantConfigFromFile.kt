@@ -1,11 +1,11 @@
 package io.embrace.android.gradle.plugin.config.variant
 
 import io.embrace.android.gradle.plugin.EmbraceLogger
-import io.embrace.android.gradle.plugin.instrumentation.config.model.EmbraceVariantConfig
 import io.embrace.android.gradle.plugin.model.AndroidCompactedVariantData
 import io.embrace.android.gradle.plugin.system.JavaSystemWrapper
 import io.embrace.android.gradle.plugin.system.SystemWrapper
 import io.embrace.android.gradle.plugin.util.serialization.configFileJson
+import io.embrace.bytecode.config.model.EmbraceVariantConfig
 import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.SerializationException
 import kotlinx.serialization.builtins.nullable

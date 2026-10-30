@@ -1,9 +1,9 @@
 package io.embrace.android.gradle.plugin.instrumentation.fakes
 
 import io.embrace.android.gradle.plugin.instrumentation.BytecodeInstrumentationParams
-import io.embrace.android.gradle.plugin.instrumentation.ClassInstrumentationFilter
-import io.embrace.android.gradle.plugin.instrumentation.config.model.VariantConfig
-import io.embrace.android.gradle.plugin.model.VariantOutputInfo
+import io.embrace.bytecode.ClassInstrumentationFilter
+import io.embrace.bytecode.config.model.VariantConfig
+import io.embrace.bytecode.config.model.VariantOutputInfo
 import org.gradle.api.file.RegularFileProperty
 import org.gradle.api.internal.provider.DefaultProperty
 import org.gradle.api.internal.provider.PropertyHost

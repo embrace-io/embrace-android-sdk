@@ -4,6 +4,7 @@ import com.android.build.api.variant.ApplicationVariant
 import com.android.build.api.variant.Variant
 import com.android.build.api.variant.VariantOutput
 import com.android.build.api.variant.VariantOutputConfiguration
+import io.embrace.bytecode.config.model.VariantOutputInfo
 import org.gradle.api.Project
 import org.gradle.api.provider.Provider
 

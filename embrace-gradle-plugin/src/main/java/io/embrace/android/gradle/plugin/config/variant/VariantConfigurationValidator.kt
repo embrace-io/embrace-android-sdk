@@ -1,6 +1,6 @@
 package io.embrace.android.gradle.plugin.config.variant
 
-import io.embrace.android.gradle.plugin.instrumentation.config.model.EmbraceVariantConfig
+import io.embrace.bytecode.config.model.EmbraceVariantConfig
 
 private const val API_TOKEN_MIN_LENGTH = 32
 private const val APP_ID_LENGTH = 5

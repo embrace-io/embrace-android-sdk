@@ -1,8 +1,8 @@
 package io.embrace.android.gradle.plugin.config
 
 import io.embrace.android.gradle.ResourceReader
-import io.embrace.android.gradle.plugin.instrumentation.config.model.EmbraceVariantConfig
 import io.embrace.android.gradle.plugin.util.serialization.JsonSerializer
+import io.embrace.bytecode.config.model.EmbraceVariantConfig
 import org.junit.Assert.assertNotNull
 import org.junit.Test
 

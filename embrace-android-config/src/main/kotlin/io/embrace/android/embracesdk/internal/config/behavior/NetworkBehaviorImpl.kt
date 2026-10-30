@@ -24,6 +24,8 @@ class NetworkBehaviorImpl(
 
         const val DEFAULT_REQUEST_SPAN_TIMEOUT_MS: Long = 600_000L
 
+        const val DEFAULT_NETWORK_SPAN_PARENT_PROVIDER_SLOW_MS: Long = 5L
+
         private val dirtyKeyList = listOf(
             "-----BEGIN PUBLIC KEY-----",
             "-----END PUBLIC KEY-----",
@@ -73,6 +75,9 @@ class NetworkBehaviorImpl(
 
     override fun getRequestSpanTimeoutMs(): Long =
         remote?.dataConfig?.networkRequestSpanTimeoutMs ?: DEFAULT_REQUEST_SPAN_TIMEOUT_MS
+
+    override fun getNetworkSpanParentProviderSlowMs(): Long =
+        remote?.dataConfig?.networkSpanParentProviderSlowMs ?: DEFAULT_NETWORK_SPAN_PARENT_PROVIDER_SLOW_MS
 
     override fun isUrlEnabled(url: String): Boolean {
         val patterns = disabledUrlPatterns

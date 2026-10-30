@@ -24,7 +24,7 @@ internal class NetworkBehaviorImplTest {
                 "google.com" to 50,
             ),
         ),
-        dataConfig = DataRemoteConfig(networkRequestSpanTimeoutMs = 120_000L),
+        dataConfig = DataRemoteConfig(networkRequestSpanTimeoutMs = 120_000L, networkSpanParentProviderSlowMs = 20L),
         disabledUrlPatterns = setOf("example.com"),
         networkCaptureRules = setOf(
             NetworkCaptureRuleRemoteConfig(
@@ -44,6 +44,7 @@ internal class NetworkBehaviorImplTest {
             assertTrue(isHucLiteInstrumentationEnabled())
             assertEquals(1000, getRequestLimitPerDomain())
             assertEquals(600_000L, getRequestSpanTimeoutMs())
+            assertEquals(5L, getNetworkSpanParentProviderSlowMs())
             assertEquals(emptyMap<String, Int>(), getLimitsByDomain())
             assertTrue(isUrlEnabled("google.com"))
             assertFalse(isCaptureBodyEncryptionEnabled())
@@ -58,6 +59,7 @@ internal class NetworkBehaviorImplTest {
         with(createNetworkBehavior(remoteCfg = remote)) {
             assertEquals(409, getRequestLimitPerDomain())
             assertEquals(120_000L, getRequestSpanTimeoutMs())
+            assertEquals(20L, getNetworkSpanParentProviderSlowMs())
             assertEquals(mapOf("google.com" to 50), getLimitsByDomain())
             assertTrue(isUrlEnabled("google.com"))
             assertFalse(isUrlEnabled("example.com"))

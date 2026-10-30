@@ -110,5 +110,7 @@ fun createNetworkSpanParentService(
     spanService: SpanService,
     errorHandler: ErrorHandler,
     telemetryService: InternalTelemetryService,
+    slowProviderThresholdMs: Long,
     currentUserSessionIdProvider: () -> String,
-): NetworkSpanParentService = NetworkSpanParentServiceImpl(spanService, errorHandler, telemetryService, currentUserSessionIdProvider)
+): NetworkSpanParentService =
+    NetworkSpanParentServiceImpl(spanService, errorHandler, telemetryService, slowProviderThresholdMs, currentUserSessionIdProvider)

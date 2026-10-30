@@ -10,5 +10,6 @@ internal object NoopInternalTelemetryService : InternalTelemetryService {
     override fun onPublicApiCalled(name: String) {}
     override fun logStorageTelemetry(storageTelemetry: Map<String, String>) {}
     override fun trackAppliedLimit(telemetryType: String, limitType: AppliedLimitType) {}
+    override fun trackSlowCallback(name: String, durationMs: Long) {}
     override fun getAndClearTelemetryAttributes(): Map<String, String> = emptyMap()
 }

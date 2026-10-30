@@ -20,8 +20,9 @@ import io.embrace.android.embracesdk.internal.arch.InstrumentationRegistryImpl
 import io.embrace.android.embracesdk.internal.arch.schema.EmbType
 import io.embrace.android.embracesdk.internal.arch.schema.EmbType.System.ReactNativeCrash.embAndroidReactNativeCrashJsException
 import io.embrace.android.embracesdk.internal.envelope.metadata.HostedSdkVersionInfo
-import io.embrace.android.embracesdk.internal.envelope.metadata.ReactNativeSdkVersionInfo
+import io.embrace.android.embracesdk.internal.injection.createHostedSdkVersionInfo
 import io.embrace.android.embracesdk.internal.instrumentation.crash.jvm.JvmCrashDataSourceImpl
+import io.embrace.android.embracesdk.internal.payload.AppFramework
 import io.opentelemetry.kotlin.semconv.ExceptionAttributes
 import org.junit.Assert.assertEquals
 import org.junit.Before
@@ -42,7 +43,7 @@ internal class ReactNativeInternalInterfaceImplTest {
     fun setUp() {
         store = FakeKeyValueStore()
         rnBundleIdTracker = FakeRnBundleIdTracker()
-        hostedSdkVersionInfo = ReactNativeSdkVersionInfo(store)
+        hostedSdkVersionInfo = createHostedSdkVersionInfo(AppFramework.REACT_NATIVE, store, FakeErrorHandler())
         errorHandler = FakeErrorHandler(false)
         context = fakeContext()
         instrumentationRegistry = InstrumentationRegistryImpl(FakeErrorHandler())

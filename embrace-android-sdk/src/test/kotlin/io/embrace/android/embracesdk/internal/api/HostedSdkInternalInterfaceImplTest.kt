@@ -8,8 +8,9 @@ import io.embrace.android.embracesdk.fakes.FakeKeyValueStore
 import io.embrace.android.embracesdk.fakes.fakeContext
 import io.embrace.android.embracesdk.fakes.unimplemented
 import io.embrace.android.embracesdk.internal.api.delegate.HostedSdkInternalInterfaceImpl
-import io.embrace.android.embracesdk.internal.envelope.metadata.FlutterSdkVersionInfo
+import io.embrace.android.embracesdk.internal.injection.createHostedSdkVersionInfo
 import io.embrace.android.embracesdk.internal.logging.SdkErrorType
+import io.embrace.android.embracesdk.internal.payload.AppFramework
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Before
@@ -32,7 +33,7 @@ internal class HostedSdkInternalInterfaceImplTest {
             instrumentationRegistry = unimplemented(),
             serializer = unimplemented(),
             rnBundleIdTracker = lazy { error("rn bundle id tracker failure") },
-            hostedSdkVersionInfo = FlutterSdkVersionInfo(FakeKeyValueStore()),
+            hostedSdkVersionInfo = createHostedSdkVersionInfo(AppFramework.FLUTTER, FakeKeyValueStore(), errorHandler),
             errorHandler = errorHandler,
             telemetryService = telemetryService,
         )

@@ -156,13 +156,11 @@ fun createLogEnvelopeSource(
 }
 
 fun createMetadataService(
-    resourceSource: EnvelopeResourceSource,
     context: Context,
     configService: ConfigService,
-    store: KeyValueStore,
     clock: Clock,
     worker: BackgroundWorker,
-): MetadataService = EmbraceMetadataService(lazyOf(resourceSource), context, configService, store, clock, worker)
+): MetadataService = EmbraceMetadataService(context, configService, clock, worker)
 
 fun createPayloadResurrectionService(
     intakeService: IntakeService,

@@ -49,10 +49,8 @@ internal class PayloadSourceFactoriesTest {
             useKotlinSdkProvider = { false },
         )
         val metadataService = createMetadataService(
-            resourceSource,
             context,
             configService,
-            store,
             initServices.clock,
             worker,
         )

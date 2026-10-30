@@ -48,7 +48,9 @@ internal class NetworkRequestApiDelegate(
         }
     }
 
-    override fun setNetworkSpanParentProvider(provider: NetworkSpanParentProvider) {}
+    override fun setNetworkSpanParentProvider(provider: NetworkSpanParentProvider) {
+        networkSpanParentService.value.setAppProvider(provider)
+    }
 
     @Deprecated("This is no longer supported")
     override fun generateW3cTraceparent(): String = DefaultTraceparentGenerator.generateW3cTraceparent()

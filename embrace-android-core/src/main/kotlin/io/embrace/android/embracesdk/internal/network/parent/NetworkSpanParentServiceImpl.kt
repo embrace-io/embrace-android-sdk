@@ -1,15 +1,20 @@
 package io.embrace.android.embracesdk.internal.network.parent
 
 import io.embrace.android.embracesdk.internal.logging.ErrorHandler
+import io.embrace.android.embracesdk.internal.logging.SdkErrorType
+import io.embrace.android.embracesdk.internal.logging.guardSdkCode
+import io.embrace.android.embracesdk.internal.logging.guardUserCode
 import io.embrace.android.embracesdk.internal.otel.sdk.toEmbraceObjectName
 import io.embrace.android.embracesdk.internal.otel.spans.EmbraceSdkSpan
 import io.embrace.android.embracesdk.internal.otel.spans.SpanService
 import io.embrace.android.embracesdk.internal.telemetry.AppliedLimitType
 import io.embrace.android.embracesdk.internal.telemetry.InternalTelemetryService
 import io.embrace.android.embracesdk.internal.utils.concurrent.OneShot
+import io.embrace.android.embracesdk.internal.utils.concurrent.ReentrancyGuard
 import io.embrace.android.embracesdk.network.NetworkSpanParent
 import io.embrace.android.embracesdk.network.NetworkSpanParentProvider
 import io.embrace.android.embracesdk.network.NetworkSpanParentToken
+import io.embrace.android.embracesdk.network.http.HttpRequestInfo
 import io.embrace.android.embracesdk.semconv.EmbNetworkSpanParentAttributes
 import io.opentelemetry.kotlin.tracing.SpanContext
 
@@ -28,17 +33,31 @@ internal class NetworkSpanParentServiceImpl(
 
     private val reportRejectedOnce = OneShot()
 
+    private val reportInvalidDecisionOnce = OneShot()
+
+    // so that a request the app's provider makes isn't decided by it again
+    private val providerGuard = ReentrancyGuard()
+
     private val lock = Any()
 
     @Volatile
     private var active: ActiveParent? = null
 
-    override val provider = NetworkSpanParentProvider { _, currentParent ->
+    @Volatile
+    private var appProvider: NetworkSpanParentProvider? = null
+
+    override val provider = NetworkSpanParentProvider { request, currentParent ->
         val active = active
-        when {
-            currentParent != null || active == null -> NetworkSpanParent.USE_DEFAULT
-            else -> NetworkSpanParent.parent(active.spanContext)
+        decide(request, active?.spanContext).orDefault {
+            when {
+                currentParent != null || active == null -> NetworkSpanParent.USE_DEFAULT
+                else -> NetworkSpanParent.parent(active.spanContext)
+            }
         }
+    }
+
+    override fun setAppProvider(provider: NetworkSpanParentProvider) {
+        appProvider = provider
     }
 
     override fun set(spanContext: SpanContext?): NetworkSpanParentToken {
@@ -86,6 +105,27 @@ internal class NetworkSpanParentServiceImpl(
         val parent = active ?: return
         if (parent.userSessionId == userSessionId || parent.userSessionId.isEmpty()) {
             clearIfActive(parent)
+        }
+    }
+
+    /**
+     * Returns the app provider's decision, or [NetworkSpanParent.USE_DEFAULT] if there is none, it fails, or it is already running on
+     * this thread. The provider is given the network span parent, never the traceparent header.
+     */
+    private fun decide(request: HttpRequestInfo, networkSpanParent: SpanContext?): NetworkSpanParent {
+        val appProvider = appProvider ?: return NetworkSpanParent.USE_DEFAULT
+        val decision = providerGuard.runExclusive(onReentry = { NetworkSpanParent.USE_DEFAULT }) {
+            errorHandler.guardSdkCode(SdkErrorType.NetworkSpanParentProviderFail, NetworkSpanParent.USE_DEFAULT) {
+                errorHandler.guardUserCode { appProvider.getNetworkSpanParent(request, networkSpanParent) }
+            }
+        }
+        return if (decision.spanContext?.isValid == false) {
+            reportInvalidDecisionOnce {
+                errorHandler.log("Ignored an invalid span context from the network span parent provider")
+            }
+            NetworkSpanParent.USE_DEFAULT
+        } else {
+            decision
         }
     }
 

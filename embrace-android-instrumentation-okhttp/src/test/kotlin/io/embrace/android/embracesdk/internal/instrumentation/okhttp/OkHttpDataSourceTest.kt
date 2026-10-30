@@ -42,6 +42,7 @@ import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertNull
+import org.junit.Assert.assertSame
 import org.junit.Assert.assertThrows
 import org.junit.Assert.assertTrue
 import org.junit.Before
@@ -684,6 +685,14 @@ internal class OkHttpDataSourceTest {
         server.enqueue(createBaseMockResponse())
         timedClient.newCall(postRequestBuilder.build()).execute()
         assertEquals(35_000L, networkRequestDataSource.startedRequests.single().timeoutMs)
+    }
+
+    @Test
+    fun `the network span's request carries the okhttp request as its native request`() {
+        server.enqueue(createBaseMockResponse())
+        val request = getRequestBuilder.build()
+        okHttpClient.newCall(request).execute()
+        assertSame(request, args.destination.networkRequests.single().nativeRequest)
     }
 
     private fun assertNetworkBodyNotCaptured() {

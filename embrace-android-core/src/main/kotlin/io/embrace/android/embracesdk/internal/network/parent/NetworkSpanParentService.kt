@@ -15,6 +15,11 @@ interface NetworkSpanParentService {
     val provider: NetworkSpanParentProvider
 
     /**
+     * Registers the app's provider, which decides each network span's parent before the default rules, replacing any previous one.
+     */
+    fun setAppProvider(provider: NetworkSpanParentProvider)
+
+    /**
      * Sets [spanContext] as the network span parent, returning a token that clears only this set, or one that clears nothing if rejected.
      */
     fun set(spanContext: SpanContext?): NetworkSpanParentToken

@@ -418,6 +418,21 @@ internal class TelemetryDestinationImplTest {
         assertEquals(REMOTE_SPAN_ID, headerChild.parentContext.extractSpan().spanContext.spanId)
     }
 
+    @Test
+    fun `a parent chosen by the app provider wins over both a traceparent header and the network span parent`() {
+        val service =
+            NetworkSpanParentServiceImpl(spanService, FakeErrorHandler(), FakeInternalTelemetryService()) { "session" }
+        impl = createDestination(service.provider)
+        service.set(FakeEmbraceSdkSpan.started().spanContext)
+        service.setAppProvider { _, _ -> NetworkSpanParent.parent(createSpanContext(CHOSEN_TRACE_ID, CHOSEN_SPAN_ID)) }
+        startNetworkSpan(parentSpanId = REMOTE_SPAN_ID, parentTraceId = REMOTE_TRACE_ID)
+
+        with(spanService.createdSpans.single().parentContext.extractSpan().spanContext) {
+            assertEquals(CHOSEN_TRACE_ID, traceId)
+            assertEquals(CHOSEN_SPAN_ID, spanId)
+        }
+    }
+
     private fun startNetworkSpan(parentSpanId: String? = null, parentTraceId: String? = null) {
         impl.startSpanCapture(
             schemaType = SchemaType.NetworkRequest(emptyMap()),

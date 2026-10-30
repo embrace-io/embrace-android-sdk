@@ -4,13 +4,13 @@ import io.embrace.android.embracesdk.internal.arch.datasource.TelemetryDestinati
 import io.embrace.android.embracesdk.internal.config.ConfigService
 import io.embrace.android.embracesdk.internal.config.behavior.REDACTED_LABEL
 import io.embrace.android.embracesdk.internal.config.behavior.SensitiveKeysBehavior
-import io.embrace.android.embracesdk.internal.store.KeyValueStore
+import io.embrace.android.embracesdk.internal.store.PersistedSdkStateStore
 import io.embrace.android.embracesdk.internal.telemetry.AppliedLimitType
 import io.embrace.android.embracesdk.internal.telemetry.InternalTelemetryService
 import io.embrace.android.embracesdk.internal.utils.PropertyUtils
 
 internal class UserSessionPropertiesServiceImpl(
-    private val store: Lazy<KeyValueStore>,
+    private val stateStore: Lazy<PersistedSdkStateStore>,
     private val configService: ConfigService,
     destination: TelemetryDestination,
     private val telemetryService: InternalTelemetryService,
@@ -20,7 +20,7 @@ internal class UserSessionPropertiesServiceImpl(
     private val sensitiveKeysBehavior = SensitiveKeysBehavior(configService.config.sensitiveKeys)
 
     private val props by lazy {
-        EmbraceUserSessionProperties(store.value, configService, destination, telemetryService)
+        EmbraceUserSessionProperties(stateStore.value, configService, destination, telemetryService)
     }
 
     override fun addProperty(originalKey: String, originalValue: String, scope: PropertyScope): Boolean {

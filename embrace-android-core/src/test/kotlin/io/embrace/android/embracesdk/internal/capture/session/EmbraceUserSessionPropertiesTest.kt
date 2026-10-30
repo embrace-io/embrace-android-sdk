@@ -1,10 +1,13 @@
 package io.embrace.android.embracesdk.internal.capture.session
 
+import io.embrace.android.embracesdk.fakes.FakeClock
 import io.embrace.android.embracesdk.fakes.FakeConfigService
 import io.embrace.android.embracesdk.fakes.FakeInternalTelemetryService
 import io.embrace.android.embracesdk.fakes.FakeKeyValueStore
 import io.embrace.android.embracesdk.fakes.FakeTelemetryDestination
+import io.embrace.android.embracesdk.fakes.TestUuidSource
 import io.embrace.android.embracesdk.fakes.behavior.FakeUserSessionBehavior
+import io.embrace.android.embracesdk.internal.prefs.PrefsPersistedSdkStateStore
 import io.embrace.android.embracesdk.internal.telemetry.AppliedLimitType
 import org.junit.Assert
 import org.junit.Assert.assertEquals
@@ -42,12 +45,14 @@ internal class EmbraceUserSessionPropertiesTest {
         destination = FakeTelemetryDestination()
         telemetryService = FakeInternalTelemetryService()
         props = EmbraceUserSessionProperties(
-            store,
+            stateStore(),
             configService,
             destination,
             telemetryService,
         )
     }
+
+    private fun stateStore() = PrefsPersistedSdkStateStore(store, FakeClock(), TestUuidSource())
 
     @Test
     fun `Add user session property with no error when maxSessionProperties is absent`() {
@@ -63,7 +68,7 @@ internal class EmbraceUserSessionPropertiesTest {
 
         // user session property should not have been persisted
         val sessionProperties2 =
-            EmbraceUserSessionProperties(store, configService, destination, FakeInternalTelemetryService())
+            EmbraceUserSessionProperties(stateStore(), configService, destination, FakeInternalTelemetryService())
         assertTrue(sessionProperties2.get().isEmpty())
     }
 
@@ -80,7 +85,7 @@ internal class EmbraceUserSessionPropertiesTest {
 
         // permanent property should have been persisted
         val sessionProperties2 =
-            EmbraceUserSessionProperties(store, configService, destination, FakeInternalTelemetryService())
+            EmbraceUserSessionProperties(stateStore(), configService, destination, FakeInternalTelemetryService())
         assertEquals(1, sessionProperties2.get().size.toLong())
         assertEquals(VALUE_VALID, sessionProperties2.get()[KEY_VALID])
 
@@ -89,7 +94,7 @@ internal class EmbraceUserSessionPropertiesTest {
 
         // permanent property should no longer have been persisted
         val sessionProperties3 =
-            EmbraceUserSessionProperties(store, configService, destination, FakeInternalTelemetryService())
+            EmbraceUserSessionProperties(stateStore(), configService, destination, FakeInternalTelemetryService())
         assertTrue(sessionProperties3.get().isEmpty())
     }
 
@@ -110,7 +115,8 @@ internal class EmbraceUserSessionPropertiesTest {
         assertEquals(1, props.get().size.toLong())
 
         // fresh instance with same store — process prop must be absent
-        val props2 = EmbraceUserSessionProperties(store, configService, destination, FakeInternalTelemetryService())
+        val props2 =
+            EmbraceUserSessionProperties(stateStore(), configService, destination, FakeInternalTelemetryService())
         assertTrue(props2.get().isEmpty())
     }
 
@@ -171,14 +177,16 @@ internal class EmbraceUserSessionPropertiesTest {
         props.add(KEY_VALID, VALUE_VALID, PropertyScope.PERMANENT)
 
         // verify persisted
-        val props2 = EmbraceUserSessionProperties(store, configService, destination, FakeInternalTelemetryService())
+        val props2 =
+            EmbraceUserSessionProperties(stateStore(), configService, destination, FakeInternalTelemetryService())
         assertEquals(1, props2.get().size.toLong())
 
         // move to process scope
         props.add(KEY_VALID, VALUE_VALID, PropertyScope.PROCESS)
 
         // disk store should no longer have the key
-        val props3 = EmbraceUserSessionProperties(store, configService, destination, FakeInternalTelemetryService())
+        val props3 =
+            EmbraceUserSessionProperties(stateStore(), configService, destination, FakeInternalTelemetryService())
         assertTrue(props3.get().isEmpty())
     }
 
@@ -272,7 +280,7 @@ internal class EmbraceUserSessionPropertiesTest {
     @Test
     fun addPropertyTooManyWithRemoteConfigMax() {
         configService.sessionBehavior = FakeUserSessionBehavior(maxUserSessionProperties = MAX_SESSION_PROPERTIES_FROM_CONFIG)
-        props = EmbraceUserSessionProperties(store, configService, destination, telemetryService)
+        props = EmbraceUserSessionProperties(stateStore(), configService, destination, telemetryService)
         var scope = PropertyScope.PERMANENT
         for (i in 0 until MAX_SESSION_PROPERTIES_FROM_CONFIG) {
             val currentScope = if (i % 2 == 0) PropertyScope.PERMANENT else PropertyScope.USER_SESSION
@@ -317,14 +325,14 @@ internal class EmbraceUserSessionPropertiesTest {
 
         // permanent property should have been persisted
         val sessionProperties2 =
-            EmbraceUserSessionProperties(store, configService, destination, FakeInternalTelemetryService())
+            EmbraceUserSessionProperties(stateStore(), configService, destination, FakeInternalTelemetryService())
         assertEquals(1, sessionProperties2.get().size.toLong())
         assertTrue(props.remove(KEY_VALID))
         assertTrue(props.get().isEmpty())
 
         // permanent property should have been removed
         val sessionProperties3 =
-            EmbraceUserSessionProperties(store, configService, destination, FakeInternalTelemetryService())
+            EmbraceUserSessionProperties(stateStore(), configService, destination, FakeInternalTelemetryService())
         assertTrue(sessionProperties3.get().isEmpty())
     }
 

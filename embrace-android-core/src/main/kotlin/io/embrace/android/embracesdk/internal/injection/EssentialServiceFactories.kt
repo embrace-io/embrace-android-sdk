@@ -27,7 +27,6 @@ import io.embrace.android.embracesdk.internal.session.id.SessionPartTrackerImpl
 import io.embrace.android.embracesdk.internal.session.lifecycle.LifecycleTracker
 import io.embrace.android.embracesdk.internal.session.lifecycle.ProcessStateTrackerImpl
 import io.embrace.android.embracesdk.internal.session.orchestrator.SessionOrchestrator
-import io.embrace.android.embracesdk.internal.store.KeyValueStore
 import io.embrace.android.embracesdk.internal.store.PersistedSdkStateStore
 import io.embrace.android.embracesdk.internal.telemetry.InternalTelemetryService
 import io.embrace.android.embracesdk.internal.utils.EmbTrace
@@ -86,18 +85,17 @@ fun createSessionIdsProvider(
 ): SessionIdsProvider = SessionIdsProviderImpl(sessionOrchestratorProvider, sessionPartTracker)
 
 fun createUserSessionPropertiesService(
-    store: Lazy<KeyValueStore>,
+    stateStore: Lazy<PersistedSdkStateStore>,
     configService: ConfigService,
     destination: TelemetryDestination,
     telemetryService: InternalTelemetryService,
-): UserSessionPropertiesService = UserSessionPropertiesServiceImpl(store, configService, destination, telemetryService)
+): UserSessionPropertiesService = UserSessionPropertiesServiceImpl(stateStore, configService, destination, telemetryService)
 
 fun createUserService(
-    store: KeyValueStore,
     stateStore: PersistedSdkStateStore,
     clock: Clock,
     errorHandler: ErrorHandler,
-): UserService = EmbraceUserService(store, stateStore, clock, errorHandler)
+): UserService = EmbraceUserService(stateStore, clock, errorHandler)
 
 fun createExperimentTrackingService(
     configService: ConfigService,

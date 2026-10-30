@@ -55,6 +55,7 @@ include(
     ":embrace-macrobenchmark",
     ":embrace-macrobenchmark-app",
     ":embrace-minified-test-app",
+    ":embrace-apk-size",
 )
 
 pluginManagement {

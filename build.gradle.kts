@@ -21,6 +21,7 @@ val koverIgnoreList = listOf(
     "embrace-macrobenchmark",
     "embrace-macrobenchmark-app",
     "embrace-benchmark-common",
+    "embrace-apk-size",
 )
 
 fun Project.hasCoverage() = !name.contains("-test") && !name.contains("-fakes") && !koverIgnoreList.contains(name)

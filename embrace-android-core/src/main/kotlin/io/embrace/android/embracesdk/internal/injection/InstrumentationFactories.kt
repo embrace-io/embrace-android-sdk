@@ -11,6 +11,8 @@ import io.embrace.android.embracesdk.internal.capture.session.UserSessionPropert
 import io.embrace.android.embracesdk.internal.clock.Clock
 import io.embrace.android.embracesdk.internal.config.ConfigService
 import io.embrace.android.embracesdk.internal.logging.ErrorHandler
+import io.embrace.android.embracesdk.internal.prefs.PrefsDeliveredAeiStore
+import io.embrace.android.embracesdk.internal.prefs.PrefsNetworkCaptureRuleStore
 import io.embrace.android.embracesdk.internal.serialization.PlatformSerializer
 import io.embrace.android.embracesdk.internal.session.id.SessionIdsSnapshot
 import io.embrace.android.embracesdk.internal.session.id.SessionPartTracker
@@ -51,7 +53,8 @@ fun createInstrumentationArgs(
     clock = clock,
     context = context,
     application = application,
-    storeProvider = storeProvider,
+    deliveredAeiStoreProvider = { PrefsDeliveredAeiStore(storeProvider()) },
+    networkCaptureRuleStoreProvider = { PrefsNetworkCaptureRuleStore(storeProvider()) },
     serializer = serializer,
     uuidSource = uuidSource,
     ordinalStore = ordinalStore,

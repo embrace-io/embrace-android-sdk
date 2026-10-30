@@ -2,6 +2,10 @@
 
 Measures how much the Embrace SDK adds to an app's APK. It builds the same app twice, with (`embrace` flavor) and without
 (`baseline` flavor) the SDK, and reports the difference broken down by code, native libraries, resources and other files.
+It also breaks the code down by the library each dex class came from, in uncompressed dex bytes, and the native
+libraries down by file, listing only the libraries the SDK adds or grows.
+`libembrace-native.so` is further split by source (Embrace code, vendored and C++ runtime libraries, ELF metadata),
+using the debug info of the unstripped library and the NDK's LLVM tools.
 Both are release builds with R8 and resource shrinking, packaging only `arm64-v8a` native libraries.
 
 The `embrace` flavor includes only the core SDK, without optional instrumentation modules. The app has no code:

@@ -5,6 +5,7 @@ import com.android.build.api.instrumentation.ClassContext
 import com.android.build.api.instrumentation.ClassData
 import io.embrace.android.gradle.plugin.instrumentation.config.ConfigClassVisitorFactory
 import io.embrace.android.gradle.plugin.instrumentation.json.readBytecodeInstrumentationFeatures
+import io.embrace.android.gradle.plugin.instrumentation.strategy.ClassInfo
 import org.gradle.api.file.RegularFileProperty
 import org.objectweb.asm.ClassVisitor
 
@@ -24,7 +25,8 @@ abstract class EmbraceClassVisitorFactory : AsmClassVisitorFactory<BytecodeInstr
     ): ClassVisitor {
         val api = instrumentationContext.apiVersion.get()
         var visitor = nextClassVisitor
-        val className = classContext.currentClassData.className
+        val classData = classContext.currentClassData
+        val className = classData.className
 
         // Add a visitor if this is a config class provided by the SDK. Only config classes need the inputs read
         // from files, so skip reading them for every other class.
@@ -44,10 +46,20 @@ abstract class EmbraceClassVisitorFactory : AsmClassVisitorFactory<BytecodeInstr
         }
 
         val features = readBytecodeInstrumentationFeatures()
-        val factory = VisitorFactoryImpl(api, params)
+        val flags = InstrumentationFeatureFlags(
+            shouldInstrumentFirebaseMessaging = params.shouldInstrumentFirebaseMessaging.get(),
+            shouldInstrumentWebview = params.shouldInstrumentWebview.get(),
+            shouldInstrumentAutoSdkInitialization = params.shouldInstrumentAutoSdkInitialization.get(),
+            shouldInstrumentOkHttp = params.shouldInstrumentOkHttp.get(),
+            shouldInstrumentOnLongClick = params.shouldInstrumentOnLongClick.get(),
+            shouldInstrumentOnClick = params.shouldInstrumentOnClick.get(),
+            applicationInitTimingEnabled = params.applicationInitTimingEnabled.get(),
+        )
+        val factory = VisitorFactoryImpl(api, flags)
+        val classInfo = ClassInfo(className, classData.superClasses)
 
         features.forEach { feature ->
-            visitor = factory.createClassVisitor(feature, classContext, visitor)
+            visitor = factory.createClassVisitor(feature, classInfo, visitor)
         }
         return visitor
     }

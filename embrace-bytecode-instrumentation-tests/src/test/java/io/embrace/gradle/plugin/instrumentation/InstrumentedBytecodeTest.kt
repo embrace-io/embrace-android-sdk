@@ -1,7 +1,9 @@
 package io.embrace.gradle.plugin.instrumentation
 
+import io.embrace.android.gradle.plugin.instrumentation.InstrumentationFeatureFlags
 import io.embrace.android.gradle.plugin.instrumentation.VisitorFactoryImpl
 import io.embrace.android.gradle.plugin.instrumentation.json.readBytecodeInstrumentationFeatures
+import io.embrace.android.gradle.plugin.instrumentation.strategy.ClassInfo
 import io.embrace.test.fixtures.ActivityOnClickListener
 import io.embrace.test.fixtures.AnonInnerClassOnClickListener
 import io.embrace.test.fixtures.AnonInnerClassOnLongClickListener
@@ -35,7 +37,18 @@ import org.objectweb.asm.ClassVisitor
 import org.objectweb.asm.util.TraceClassVisitor
 
 private val features = readBytecodeInstrumentationFeatures()
-private val factory = VisitorFactoryImpl(ASM_API_VERSION, FakeBytecodeInstrumentationParams())
+private val factory = VisitorFactoryImpl(
+    ASM_API_VERSION,
+    InstrumentationFeatureFlags(
+        shouldInstrumentFirebaseMessaging = false,
+        shouldInstrumentWebview = true,
+        shouldInstrumentAutoSdkInitialization = true,
+        shouldInstrumentOkHttp = true,
+        shouldInstrumentOnLongClick = true,
+        shouldInstrumentOnClick = true,
+        applicationInitTimingEnabled = true,
+    ),
+)
 
 private fun createFactory(
     params: BytecodeTestParams,
@@ -49,7 +62,7 @@ private fun createFactory(
     }
     return factory.createClassVisitor(
         feature = features.single { it.name == name },
-        classContext = FakeClassContext(FakeClassData(className = params.qualifiedClzName, superClasses = superClasses)),
+        classInfo = ClassInfo(className = params.qualifiedClzName, superClasses = superClasses),
         nextVisitor = visitor
     )
 }

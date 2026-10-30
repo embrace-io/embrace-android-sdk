@@ -8,6 +8,7 @@ class FakeInternalTelemetryService : InternalTelemetryService {
     val storageTelemetryMap: MutableMap<String, String> = mutableMapOf()
     val apiCalls: MutableList<String> = mutableListOf()
     val appliedLimits: MutableList<Pair<String, AppliedLimitType>> = mutableListOf()
+    val slowCallbacks: MutableList<Pair<String, Long>> = mutableListOf()
 
     override fun onPublicApiCalled(name: String) {
         apiCalls.add(name)
@@ -19,6 +20,10 @@ class FakeInternalTelemetryService : InternalTelemetryService {
 
     override fun trackAppliedLimit(telemetryType: String, limitType: AppliedLimitType) {
         appliedLimits.add(telemetryType to limitType)
+    }
+
+    override fun trackSlowCallback(name: String, durationMs: Long) {
+        slowCallbacks.add(name to durationMs)
     }
 
     override fun getAndClearTelemetryAttributes(): Map<String, String> {

@@ -50,6 +50,11 @@ interface NetworkBehavior {
     fun getRequestSpanTimeoutMs(): Long
 
     /**
+     * The duration in milliseconds above which a call to the network span parent provider is reported as slow.
+     */
+    fun getNetworkSpanParentProviderSlowMs(): Long
+
+    /**
      * Checks if the url is allowed to be reported based on the specified disabled pattern.
      *
      * @param url the url to test

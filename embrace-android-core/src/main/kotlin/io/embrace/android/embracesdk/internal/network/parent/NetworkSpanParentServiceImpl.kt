@@ -9,6 +9,7 @@ import io.embrace.android.embracesdk.internal.otel.spans.EmbraceSdkSpan
 import io.embrace.android.embracesdk.internal.otel.spans.SpanService
 import io.embrace.android.embracesdk.internal.telemetry.AppliedLimitType
 import io.embrace.android.embracesdk.internal.telemetry.InternalTelemetryService
+import io.embrace.android.embracesdk.internal.utils.NetworkUtils.stripUrl
 import io.embrace.android.embracesdk.internal.utils.concurrent.OneShot
 import io.embrace.android.embracesdk.internal.utils.concurrent.ReentrancyGuard
 import io.embrace.android.embracesdk.network.NetworkSpanParent
@@ -17,23 +18,30 @@ import io.embrace.android.embracesdk.network.NetworkSpanParentToken
 import io.embrace.android.embracesdk.network.http.HttpRequestInfo
 import io.embrace.android.embracesdk.semconv.EmbNetworkSpanParentAttributes
 import io.opentelemetry.kotlin.tracing.SpanContext
+import java.util.concurrent.TimeUnit
 
 private const val MAX_REPORTED_CONFLICTS = 10
 private const val CONFLICT_EVENT_NAME = "network-span-parent-replaced"
 private const val CONFLICT_TELEMETRY_TYPE = "network_span_parent_conflict"
+private const val SLOW_CALLBACK_NAME = "network_span_parent_provider"
 
 internal class NetworkSpanParentServiceImpl(
     private val spanService: SpanService,
     private val errorHandler: ErrorHandler,
     private val telemetryService: InternalTelemetryService,
+    slowProviderThresholdMs: Long,
     private val currentUserSessionIdProvider: () -> String,
 ) : NetworkSpanParentService {
 
     private val conflictTracker = NetworkSpanParentConflictTracker(MAX_REPORTED_CONFLICTS)
 
+    private val slowProviderThresholdNs = TimeUnit.MILLISECONDS.toNanos(slowProviderThresholdMs)
+
     private val reportRejectedOnce = OneShot()
 
     private val reportInvalidDecisionOnce = OneShot()
+
+    private val reportSlowProviderOnce = OneShot()
 
     // so that a request the app's provider makes isn't decided by it again
     private val providerGuard = ReentrancyGuard()
@@ -115,8 +123,11 @@ internal class NetworkSpanParentServiceImpl(
     private fun decide(request: HttpRequestInfo, networkSpanParent: SpanContext?): NetworkSpanParent {
         val appProvider = appProvider ?: return NetworkSpanParent.USE_DEFAULT
         val decision = providerGuard.runExclusive(onReentry = { NetworkSpanParent.USE_DEFAULT }) {
+            val startNs = System.nanoTime()
             errorHandler.guardSdkCode(SdkErrorType.NetworkSpanParentProviderFail, NetworkSpanParent.USE_DEFAULT) {
                 errorHandler.guardUserCode { appProvider.getNetworkSpanParent(request, networkSpanParent) }
+            }.also {
+                reportIfSlow(request, System.nanoTime() - startNs)
             }
         }
         return if (decision.spanContext?.isValid == false) {
@@ -127,6 +138,17 @@ internal class NetworkSpanParentServiceImpl(
         } else {
             decision
         }
+    }
+
+    private fun reportIfSlow(request: HttpRequestInfo, durationNs: Long) {
+        if (durationNs <= slowProviderThresholdNs) {
+            return
+        }
+        val durationMs = TimeUnit.NANOSECONDS.toMillis(durationNs)
+        reportSlowProviderOnce {
+            errorHandler.log("Network span parent provider took $durationMs ms for ${stripUrl(request.url)}")
+        }
+        telemetryService.trackSlowCallback(SLOW_CALLBACK_NAME, durationMs)
     }
 
     private fun rejectParent(): NetworkSpanParentToken {

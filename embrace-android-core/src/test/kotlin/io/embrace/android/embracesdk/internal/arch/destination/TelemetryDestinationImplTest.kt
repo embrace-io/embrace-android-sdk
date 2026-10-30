@@ -403,7 +403,9 @@ internal class TelemetryDestinationImplTest {
     @Test
     fun `network spans are parented to the network span parent unless they have a traceparent header`() {
         val service =
-            NetworkSpanParentServiceImpl(spanService, FakeErrorHandler(), FakeInternalTelemetryService()) { "session" }
+            NetworkSpanParentServiceImpl(spanService, FakeErrorHandler(), FakeInternalTelemetryService(), Long.MAX_VALUE) {
+                "session"
+            }
         impl = createDestination(service.provider)
         val checkout = FakeEmbraceSdkSpan.started().also(spanService::addKnownSpan)
         service.set(checkout.spanContext)
@@ -421,7 +423,9 @@ internal class TelemetryDestinationImplTest {
     @Test
     fun `a parent chosen by the app provider wins over both a traceparent header and the network span parent`() {
         val service =
-            NetworkSpanParentServiceImpl(spanService, FakeErrorHandler(), FakeInternalTelemetryService()) { "session" }
+            NetworkSpanParentServiceImpl(spanService, FakeErrorHandler(), FakeInternalTelemetryService(), Long.MAX_VALUE) {
+                "session"
+            }
         impl = createDestination(service.provider)
         service.set(FakeEmbraceSdkSpan.started().spanContext)
         service.setAppProvider { _, _ -> NetworkSpanParent.parent(createSpanContext(CHOSEN_TRACE_ID, CHOSEN_SPAN_ID)) }

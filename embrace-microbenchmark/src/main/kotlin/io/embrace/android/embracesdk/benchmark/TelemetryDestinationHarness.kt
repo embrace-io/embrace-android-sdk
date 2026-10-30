@@ -160,6 +160,9 @@ internal class TelemetryDestinationHarness(
         override fun trackAppliedLimit(telemetryType: String, limitType: AppliedLimitType) {
         }
 
+        override fun trackSlowCallback(name: String, durationMs: Long) {
+        }
+
         override fun getAndClearTelemetryAttributes(): Map<String, String> = emptyMap()
     }
 }

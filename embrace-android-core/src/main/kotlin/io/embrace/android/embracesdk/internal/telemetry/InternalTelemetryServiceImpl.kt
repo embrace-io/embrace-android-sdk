@@ -17,6 +17,8 @@ class InternalTelemetryServiceImpl(
     private val usageCountMap = ConcurrentHashMap<String, Int>()
     private val storageTelemetryMap = ConcurrentHashMap<String, String>()
     private val appliedLimitCountMap = ConcurrentHashMap<String, Int>()
+    private val slowCallbackCountMap = ConcurrentHashMap<String, Int>()
+    private val slowCallbackMaxMsMap = ConcurrentHashMap<String, Long>()
     private val appAttributes: Map<String, String> by lazy { computeAppAttributes() }
 
     override fun onPublicApiCalled(name: String) {
@@ -32,10 +34,17 @@ class InternalTelemetryServiceImpl(
         appliedLimitCountMap.increment("emb.private.$id")
     }
 
+    override fun trackSlowCallback(name: String, durationMs: Long) {
+        slowCallbackCountMap.increment("emb.private.slow_callback.$name.count")
+        slowCallbackMaxMsMap.max("emb.private.slow_callback.$name.max_ms", durationMs)
+    }
+
     override fun getAndClearTelemetryAttributes(): Map<String, String> {
         return getAndClearUsageCountTelemetry()
             .plus(getAndClearStorageTelemetry())
             .plus(getAndClearAppliedLimitTelemetry())
+            .plus(slowCallbackCountMap.drain { it.toString() })
+            .plus(slowCallbackMaxMsMap.drain { it.toString() })
             .plus(appAttributes)
     }
 
@@ -79,6 +88,20 @@ class InternalTelemetryServiceImpl(
                 putIfAbsent(key, 1) == null
             } else {
                 replace(key, current, current + 1)
+            }
+        } while (!updated)
+    }
+
+    /**
+     * Raises the value for [key] to [value] if it is larger, without locking via CAS.
+     */
+    private fun ConcurrentHashMap<String, Long>.max(key: String, value: Long) {
+        do {
+            val current = this[key]
+            val updated = when {
+                current == null -> putIfAbsent(key, value) == null
+                current >= value -> true
+                else -> replace(key, current, value)
             }
         } while (!updated)
     }

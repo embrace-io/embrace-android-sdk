@@ -3,20 +3,12 @@ package io.embrace.android.embracesdk.internal.envelope.metadata
 import io.embrace.android.embracesdk.internal.store.KeyValueStore
 
 class UnitySdkVersionInfo(
-    private val impl: KeyValueStore,
-) : HostedSdkVersionInfo {
-
-    override var hostedPlatformVersion: String?
-        get() = impl.getString(UNITY_VERSION_NUMBER_KEY)
-        set(value) = impl.editAndCommit { putString(UNITY_VERSION_NUMBER_KEY, value) }
+    impl: KeyValueStore,
+) : SdkVersionInfo(impl, UNITY_SDK_VERSION_NUMBER_KEY, UNITY_VERSION_NUMBER_KEY) {
 
     override var unityBuildIdNumber: String?
         get() = impl.getString(UNITY_BUILD_ID_NUMBER_KEY)
         set(value) = impl.editAndCommit { putString(UNITY_BUILD_ID_NUMBER_KEY, value) }
-
-    override var hostedSdkVersion: String?
-        get() = impl.getString(UNITY_SDK_VERSION_NUMBER_KEY)
-        set(value) = impl.editAndCommit { putString(UNITY_SDK_VERSION_NUMBER_KEY, value) }
 
     override fun batch(action: () -> Unit) = impl.batch(action)
 

@@ -1,5 +1,6 @@
 package io.embrace.android.embracesdk.testframework.server
 
+import io.embrace.android.embracesdk.assertions.getSessionPartId
 import io.embrace.android.embracesdk.assertions.getUserSessionId
 import io.embrace.android.embracesdk.fakes.TestPlatformSerializer
 import io.embrace.android.embracesdk.internal.comms.api.Endpoint
@@ -18,6 +19,7 @@ import okhttp3.mockwebserver.Dispatcher
 import okhttp3.mockwebserver.MockResponse
 import okhttp3.mockwebserver.RecordedRequest
 import okio.Buffer
+import okio.ByteString
 import okio.GzipSink
 import okio.buffer
 import org.junit.Assert.assertEquals
@@ -31,6 +33,7 @@ internal class FakeApiServer(
     private val deliveryTracer: DeliveryTracer,
     private val configResponseJson: String? = null,
     private val configEtag: String = "server_etag_value",
+    private val forwarder: DataUploadForwarder? = null,
 ) : Dispatcher() {
 
     private val serializer by threadLocal { TestPlatformSerializer() }
@@ -73,6 +76,20 @@ internal class FakeApiServer(
      */
     fun getPayloadTypesHeaders(): List<String> = payloadTypesHeaders.toList()
 
+    /**
+     * Returns the outcome of each upload forwarded by the test's [DataUploadForwarder], in the order the server
+     * received them. Empty when the test has none.
+     */
+    fun getForwardResults(): List<DataUploadForwarder.ForwardResult> = forwarder?.getResults().orEmpty()
+
+    /**
+     * Fails if any upload forwarded by the test's [DataUploadForwarder] was not accepted. Does nothing when the
+     * test has none.
+     */
+    fun assertForwardsSucceeded() {
+        forwarder?.assertAllSucceeded()
+    }
+
     override fun dispatch(request: RecordedRequest): MockResponse {
         val endpoint = request.asEndpoint()
         deliveryTracer.onServerReceivedRequest(endpoint.name)
@@ -89,9 +106,16 @@ internal class FakeApiServer(
         request: RecordedRequest,
         endpoint: Endpoint,
     ): MockResponse {
+        // deserializing consumes the body, so take the bytes to forward first
+        val forwardBody = forwarder?.let { request.body.snapshot() }
         val envelope = deserializeEnvelope(request, endpoint)
         val headers = request.headers.toMultimap().mapValues { it.value.joinToString() }
         validateHeaders(headers)
+
+        // forward before recording, so that a test that has seen the envelope also has its forward result
+        if (forwarder != null && forwardBody != null) {
+            forwardUpload(forwarder, request, endpoint, forwardBody, envelope)
+        }
 
         // Capture X-EM-PAYLOAD-TYPES header
         headers["x-em-payload-types"]?.let { payloadTypesHeaders.add(it) }
@@ -102,6 +126,24 @@ internal class FakeApiServer(
             else -> error("Unsupported endpoint $endpoint")
         }
         return MockResponse().setResponseCode(200)
+    }
+
+    @Suppress("UNCHECKED_CAST")
+    private fun forwardUpload(
+        forwarder: DataUploadForwarder,
+        request: RecordedRequest,
+        endpoint: Endpoint,
+        body: ByteString,
+        envelope: Envelope<*>,
+    ) {
+        val sessionEnvelope = if (endpoint == Endpoint.SESSIONS) envelope as Envelope<SessionPartPayload> else null
+        forwarder.forward(
+            request = request,
+            endpoint = endpoint,
+            body = body,
+            userSessionId = sessionEnvelope?.getUserSessionId(),
+            sessionPartId = sessionEnvelope?.getSessionPartId(),
+        )
     }
 
     @Suppress("UNCHECKED_CAST")

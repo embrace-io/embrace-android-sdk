@@ -26,6 +26,7 @@ import io.embrace.android.embracesdk.testframework.actions.EmbracePreSdkStartInt
 import io.embrace.android.embracesdk.testframework.actions.EmbraceSetupInterface
 import io.embrace.android.embracesdk.testframework.export.FilteredLogExporter
 import io.embrace.android.embracesdk.testframework.export.FilteredSpanExporter
+import io.embrace.android.embracesdk.testframework.server.DataUploadForwarder
 import io.embrace.android.embracesdk.testframework.server.FakeApiServer
 import io.opentelemetry.kotlin.logging.export.toOtelKotlinLogRecordExporter
 import io.opentelemetry.kotlin.tracing.export.toOtelKotlinSpanExporter
@@ -141,13 +142,20 @@ internal class SdkIntegrationTestRule(
         testCaseAction: EmbraceActionInterface.() -> Unit,
         assertAction: EmbracePayloadAssertionInterface.() -> Unit = {},
         otelExportAssertion: EmbraceOtelExportAssertionInterface.() -> Unit = {},
+        forwarder: DataUploadForwarder? = null,
     ) {
         val localConfig = otelSdkMode.applyTo(instrumentedConfig)
         val persistedConfig = otelSdkMode.applyTo(persistedRemoteConfig)
         val serverConfig = otelSdkMode.applyTo(serverResponseConfig)
         setup = embraceSetupInterfaceSupplier()
         val deliveryTracer = DeliveryTracer()
-        val apiServer = FakeApiServer(serverConfig, deliveryTracer, serverResponseConfigJson, serverResponseConfigEtag)
+        val apiServer = FakeApiServer(
+            serverConfig,
+            deliveryTracer,
+            serverResponseConfigJson,
+            serverResponseConfigEtag,
+            forwarder,
+        )
         server = MockWebServer().apply {
             protocols = listOf(Protocol.HTTP_2, Protocol.HTTP_1_1)
             dispatcher = apiServer
@@ -215,6 +223,7 @@ internal class SdkIntegrationTestRule(
         setup.runDueLogBatchChecks()
         drainExternalExports()
         assertAction(payloadAssertion)
+        apiServer.assertForwardsSucceeded()
         spanExporter.failOnDuplicate()
         otelExportAssertion(otelAssertion)
     }

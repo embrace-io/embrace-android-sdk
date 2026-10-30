@@ -30,6 +30,7 @@ import io.embrace.android.embracesdk.semconv.EmbSessionAttributes
 import io.embrace.android.embracesdk.testframework.assertions.JsonComparator.compare
 import io.embrace.android.embracesdk.testframework.assertions.JsonComparator.sortAttributesByKey
 import io.embrace.android.embracesdk.testframework.assertions.Placeholder
+import io.embrace.android.embracesdk.testframework.server.DataUploadForwarder
 import io.embrace.android.embracesdk.testframework.server.FakeApiServer
 import io.embrace.android.embracesdk.testframework.server.FormPart
 import kotlinx.serialization.builtins.MapSerializer
@@ -183,6 +184,15 @@ internal class EmbracePayloadAssertionInterface(
         val value = state.uppercase(Locale.ENGLISH)
         return ProcessState.valueOf(value)
     }
+
+    /*** FORWARDED UPLOADS ***/
+
+    /**
+     * Returns the outcome of each upload forwarded by the [DataUploadForwarder] passed to
+     * [io.embrace.android.embracesdk.testframework.SdkIntegrationTestRule.runTest]. Empty when none was.
+     */
+    internal fun getForwardedUploads(): List<DataUploadForwarder.ForwardResult> =
+        checkNotNull(apiServer).getForwardResults()
 
     /*** Config ***/
 

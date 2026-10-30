@@ -7,6 +7,8 @@ import io.embrace.android.embracesdk.fakes.FakeClock
 import io.embrace.android.embracesdk.fakes.FakeClock.Companion.DEFAULT_FAKE_CURRENT_TIME
 import io.embrace.android.embracesdk.fakes.FakeCurrentSessionPartSpan
 import io.embrace.android.embracesdk.fakes.FakeEmbraceSdkSpan
+import io.embrace.android.embracesdk.fakes.FakeErrorHandler
+import io.embrace.android.embracesdk.fakes.FakeInternalTelemetryService
 import io.embrace.android.embracesdk.fakes.FakeLogRecord
 import io.embrace.android.embracesdk.fakes.FakeOpenTelemetryLogger
 import io.embrace.android.embracesdk.fakes.FakeSpanService
@@ -24,11 +26,17 @@ import io.embrace.android.embracesdk.internal.arch.schema.SchemaType
 import io.embrace.android.embracesdk.internal.arch.schema.SchemaType.Log
 import io.embrace.android.embracesdk.internal.arch.schema.TelemetryAttributes
 import io.embrace.android.embracesdk.internal.clock.millisToNanos
+import io.embrace.android.embracesdk.internal.network.http.MutableHttpRequestInfoImpl
+import io.embrace.android.embracesdk.internal.network.parent.NetworkSpanParentServiceImpl
 import io.embrace.android.embracesdk.internal.otel.sdk.hasEmbraceAttribute
 import io.embrace.android.embracesdk.internal.otel.toEmbracePayload
 import io.embrace.android.embracesdk.internal.payload.Span
+import io.embrace.android.embracesdk.network.NetworkSpanParent
+import io.embrace.android.embracesdk.network.NetworkSpanParentProvider
 import io.embrace.android.embracesdk.semconv.EmbStateTransitionAttributes
+import io.opentelemetry.kotlin.tracing.SpanContext
 import io.opentelemetry.kotlin.tracing.StatusCode
+import io.opentelemetry.kotlin.tracing.createSpanContext
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNotNull
@@ -44,6 +52,8 @@ internal class TelemetryDestinationImplTest {
     private lateinit var logger: FakeOpenTelemetryLogger
     private lateinit var currentSessionPartSpan: FakeCurrentSessionPartSpan
     private var sessionDataUpdated = false
+    private val askedParents = mutableListOf<SpanContext?>()
+    private var networkSpanParent: NetworkSpanParent = NetworkSpanParent.USE_DEFAULT
 
     @Before
     fun setup() {
@@ -54,12 +64,18 @@ internal class TelemetryDestinationImplTest {
         impl = createDestination()
     }
 
-    private fun createDestination(): TelemetryDestination =
+    private fun createDestination(
+        networkSpanParentProvider: NetworkSpanParentProvider = NetworkSpanParentProvider { _, currentParent ->
+            askedParents.add(currentParent)
+            networkSpanParent
+        },
+    ): TelemetryDestination =
         TelemetryDestinationImpl(
             clock = clock,
             spanService = spanService,
             loggerSupplier = { logger },
             currentSessionPartSpan = currentSessionPartSpan,
+            networkSpanParentProvider = networkSpanParentProvider,
         ).also {
             it.sessionUpdateAction = { sessionDataUpdated = true }
         }
@@ -331,6 +347,88 @@ internal class TelemetryDestinationImplTest {
     }
 
     @Test
+    fun `spans started without a network request ignore the network span parent`() {
+        networkSpanParent = NetworkSpanParent.NO_PARENT
+        impl.startSpanCapture(
+            schemaType = SchemaType.NetworkRequest(emptyMap()),
+            startTimeMs = 5,
+            parentSpanId = REMOTE_SPAN_ID,
+            parentTraceId = REMOTE_TRACE_ID,
+        )
+
+        assertTrue(askedParents.isEmpty())
+        assertEquals(REMOTE_SPAN_ID, spanService.createdSpans.single().parentContext.extractSpan().spanContext.spanId)
+    }
+
+    @Test
+    fun `a network span keeps its traceparent parent when the default rules apply`() {
+        val parentSpan = FakeEmbraceSdkSpan.started()
+        spanService.addKnownSpan(parentSpan)
+        startNetworkSpan()
+        startNetworkSpan(parentSpanId = checkNotNull(parentSpan.spanId), parentTraceId = checkNotNull(parentSpan.traceId))
+        startNetworkSpan(parentSpanId = REMOTE_SPAN_ID, parentTraceId = REMOTE_TRACE_ID)
+
+        val (noHeader, trackedHeader, remoteHeader) = spanService.createdSpans
+        assertFalse(noHeader.parentContext.extractSpan().spanContext.isValid)
+        assertEquals(parentSpan, trackedHeader.parent)
+        assertEquals(REMOTE_SPAN_ID, remoteHeader.parentContext.extractSpan().spanContext.spanId)
+        assertEquals(listOf(null, parentSpan.spanContext), askedParents.take(2))
+        assertEquals(REMOTE_SPAN_ID, askedParents[2]?.spanId)
+    }
+
+    @Test
+    fun `no parent makes a network span a root span despite a traceparent header`() {
+        networkSpanParent = NetworkSpanParent.NO_PARENT
+        startNetworkSpan(parentSpanId = REMOTE_SPAN_ID, parentTraceId = REMOTE_TRACE_ID)
+
+        val span = spanService.createdSpans.single()
+        assertNull(span.parent)
+        assertFalse(span.parentContext.extractSpan().spanContext.isValid)
+    }
+
+    @Test
+    fun `a chosen parent replaces a traceparent header and is marked sampled`() {
+        networkSpanParent = NetworkSpanParent.parent(createSpanContext(CHOSEN_TRACE_ID, CHOSEN_SPAN_ID) { isSampled = false })
+        startNetworkSpan(parentSpanId = REMOTE_SPAN_ID, parentTraceId = REMOTE_TRACE_ID)
+
+        val span = spanService.createdSpans.single()
+        assertNull(span.parent)
+        with(span.parentContext.extractSpan().spanContext) {
+            assertEquals(CHOSEN_TRACE_ID, traceId)
+            assertEquals(CHOSEN_SPAN_ID, spanId)
+            assertTrue(traceFlags.isSampled)
+        }
+    }
+
+    @Test
+    fun `network spans are parented to the network span parent unless they have a traceparent header`() {
+        val service =
+            NetworkSpanParentServiceImpl(spanService, FakeErrorHandler(), FakeInternalTelemetryService()) { "session" }
+        impl = createDestination(service.provider)
+        val checkout = FakeEmbraceSdkSpan.started().also(spanService::addKnownSpan)
+        service.set(checkout.spanContext)
+        startNetworkSpan()
+        startNetworkSpan(parentSpanId = REMOTE_SPAN_ID, parentTraceId = REMOTE_TRACE_ID)
+
+        val (child, headerChild) = spanService.createdSpans
+        with(child.parentContext.extractSpan().spanContext) {
+            assertEquals(checkout.traceId, traceId)
+            assertEquals(checkout.spanId, spanId)
+        }
+        assertEquals(REMOTE_SPAN_ID, headerChild.parentContext.extractSpan().spanContext.spanId)
+    }
+
+    private fun startNetworkSpan(parentSpanId: String? = null, parentTraceId: String? = null) {
+        impl.startSpanCapture(
+            schemaType = SchemaType.NetworkRequest(emptyMap()),
+            startTimeMs = 5,
+            parentSpanId = parentSpanId,
+            parentTraceId = parentTraceId,
+            networkRequest = MutableHttpRequestInfoImpl("GET", "https://example.com"),
+        )
+    }
+
+    @Test
     fun `test record successful span`() {
         val name = "success-span"
         val clock = FakeClock()
@@ -468,5 +566,7 @@ internal class TelemetryDestinationImplTest {
     private companion object {
         const val REMOTE_TRACE_ID = "0af7651916cd43dd8448eb211c80319c"
         const val REMOTE_SPAN_ID = "b7ad6b7169203331"
+        const val CHOSEN_TRACE_ID = "4bf92f3577b34da6a3ce929d0e0e4736"
+        const val CHOSEN_SPAN_ID = "00f067aa0ba902b7"
     }
 }

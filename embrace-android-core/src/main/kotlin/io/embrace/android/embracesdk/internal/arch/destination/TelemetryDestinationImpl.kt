@@ -12,6 +12,7 @@ import io.embrace.android.embracesdk.internal.arch.schema.ErrorCodeAttribute
 import io.embrace.android.embracesdk.internal.arch.schema.PrivateSpan
 import io.embrace.android.embracesdk.internal.arch.schema.SchemaType
 import io.embrace.android.embracesdk.internal.clock.Clock
+import io.embrace.android.embracesdk.internal.network.parent.orDefault
 import io.embrace.android.embracesdk.internal.otel.payload.toPayloadString
 import io.embrace.android.embracesdk.internal.otel.sdk.setEmbraceAttribute
 import io.embrace.android.embracesdk.internal.otel.sdk.toEmbraceObjectName
@@ -20,10 +21,14 @@ import io.embrace.android.embracesdk.internal.otel.spans.SpanService
 import io.embrace.android.embracesdk.internal.otel.spans.SpanTerminationMode
 import io.embrace.android.embracesdk.internal.spans.CurrentSessionPartSpan
 import io.embrace.android.embracesdk.internal.utils.Provider
+import io.embrace.android.embracesdk.network.NetworkSpanParent
+import io.embrace.android.embracesdk.network.NetworkSpanParentProvider
+import io.embrace.android.embracesdk.network.http.HttpRequestInfo
 import io.embrace.android.embracesdk.semconv.EmbStateTransitionAttributes
 import io.embrace.android.embracesdk.spans.EmbraceSpan
 import io.opentelemetry.kotlin.logging.Logger
 import io.opentelemetry.kotlin.logging.SeverityNumber
+import io.opentelemetry.kotlin.tracing.SpanContext
 import io.opentelemetry.kotlin.tracing.createSpanContext
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicInteger
@@ -33,6 +38,10 @@ class TelemetryDestinationImpl(
     private val spanService: SpanService,
     private val loggerSupplier: Provider<Logger>,
     private val currentSessionPartSpan: CurrentSessionPartSpan,
+    private val networkSpanParentProvider: NetworkSpanParentProvider =
+        NetworkSpanParentProvider { _, _ ->
+            NetworkSpanParent.USE_DEFAULT
+        },
 ) : TelemetryDestination {
 
     override var sessionUpdateAction: (() -> Unit)? = null
@@ -83,6 +92,7 @@ class TelemetryDestinationImpl(
         autoTerminate: Boolean,
         private: Boolean,
         timeoutMs: Long?,
+        networkRequest: HttpRequestInfo?,
     ): SpanToken {
         val mode = when {
             timeoutMs != null -> SpanTerminationMode.Timeout(timeoutMs)
@@ -100,15 +110,18 @@ class TelemetryDestinationImpl(
         } else {
             null
         }
+        val decision = networkRequest
+            ?.let { networkSpanParentProvider.getNetworkSpanParent(it, parent?.spanContext ?: remoteParent) }
+            .orDefault { null }
 
         val span = spanService.startSpan(
             name = name,
-            parent = parent,
+            parent = if (decision == null) parent else null,
             startTimeMs = startTimeMs,
             terminationMode = mode,
             private = private,
             type = schemaType.telemetryType,
-            parentSpanContext = remoteParent,
+            parentSpanContext = if (decision == null) remoteParent else decision.spanContext?.asSampled(),
         ).apply {
             schemaType.attributes().forEach {
                 addCustomAttribute(it.key, it.value)
@@ -206,6 +219,18 @@ class TelemetryDestinationImpl(
     }
 
     private fun retrieveParentReference(parent: SpanToken?): EmbraceSpan? = (parent as? SpanTokenImpl)?.span
+
+    // Marked as sampled so the ParentBased sampler records the span whatever the parent's sampling decision
+    private fun SpanContext.asSampled(): SpanContext {
+        if (traceFlags.isSampled) {
+            return this
+        }
+        val remote = isRemote
+        return createSpanContext(traceId, spanId) {
+            isRemote = remote
+            isSampled = true
+        }
+    }
 
     private fun getSeverityText(severity: SeverityNumber) = when (severity) {
         SeverityNumber.WARN -> "WARNING"

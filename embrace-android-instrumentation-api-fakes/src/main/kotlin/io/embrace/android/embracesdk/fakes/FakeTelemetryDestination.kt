@@ -10,6 +10,7 @@ import io.embrace.android.embracesdk.internal.arch.schema.EmbType
 import io.embrace.android.embracesdk.internal.arch.schema.ErrorCodeAttribute
 import io.embrace.android.embracesdk.internal.arch.schema.SchemaType
 import io.embrace.android.embracesdk.internal.utils.UuidSource
+import io.embrace.android.embracesdk.network.http.HttpRequestInfo
 
 class FakeTelemetryDestination(
     private val uuidSource: UuidSource = TestUuidSource(),
@@ -21,6 +22,7 @@ class FakeTelemetryDestination(
     val sessionPartAttributeWrites: MutableList<Pair<String, String>> = mutableListOf()
     val createdSpans: MutableList<FakeSpanToken> = mutableListOf()
     val createdStateTokens: MutableList<FakeSessionPartStateToken<*>> = mutableListOf()
+    val networkRequests: MutableList<HttpRequestInfo> = mutableListOf()
     fun completedSpans(): List<FakeSpanToken> = createdSpans.filterNot(FakeSpanToken::isRecording)
 
     override fun addLog(
@@ -56,7 +58,9 @@ class FakeTelemetryDestination(
         autoTerminate: Boolean,
         private: Boolean,
         timeoutMs: Long?,
+        networkRequest: HttpRequestInfo?,
     ): SpanToken {
+        networkRequest?.let(networkRequests::add)
         // Model the resolved parent as its own span token, named for the span id it represents, so the
         // resulting span can adopt it as a parent and derive its traceparent from it.
         val parent = parentSpanId?.let { spanId ->

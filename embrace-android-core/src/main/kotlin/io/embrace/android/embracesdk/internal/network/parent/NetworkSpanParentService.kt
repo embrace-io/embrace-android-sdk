@@ -1,5 +1,6 @@
 package io.embrace.android.embracesdk.internal.network.parent
 
+import io.embrace.android.embracesdk.network.NetworkSpanParentProvider
 import io.embrace.android.embracesdk.network.NetworkSpanParentToken
 import io.opentelemetry.kotlin.tracing.SpanContext
 
@@ -7,6 +8,11 @@ import io.opentelemetry.kotlin.tracing.SpanContext
  * Holds the network span parent that network spans started from now on are parented to.
  */
 interface NetworkSpanParentService {
+
+    /**
+     * Decides the parent of each network span from the network span parent currently set.
+     */
+    val provider: NetworkSpanParentProvider
 
     /**
      * Sets [spanContext] as the network span parent, returning a token that clears only this set, or one that clears nothing if rejected.

@@ -104,6 +104,7 @@ import io.embrace.android.embracesdk.internal.utils.EmbTrace
 import io.embrace.android.embracesdk.internal.utils.event.EventBus
 import io.embrace.android.embracesdk.internal.worker.PriorityWorker
 import io.embrace.android.embracesdk.internal.worker.Worker
+import io.embrace.android.embracesdk.network.NetworkSpanParent
 import io.embrace.android.embracesdk.spans.TracingApi
 import java.util.concurrent.TimeUnit
 
@@ -348,6 +349,13 @@ internal fun createRealSdkInstance(
             spanService = spanService.value,
             loggerSupplier = { otelSdkWrapper.value.sdkLogger },
             currentSessionPartSpan = currentSessionPartSpan,
+            networkSpanParentProvider = { request, currentParent ->
+                if (networkSpanParentService.isInitialized()) {
+                    networkSpanParentService.value.provider.getNetworkSpanParent(request, currentParent)
+                } else {
+                    NetworkSpanParent.USE_DEFAULT
+                }
+            },
         )
     }
 

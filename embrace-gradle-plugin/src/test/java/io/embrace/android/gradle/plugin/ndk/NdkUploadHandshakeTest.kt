@@ -1,7 +1,5 @@
 package io.embrace.android.gradle.plugin.ndk
 
-import io.embrace.android.gradle.plugin.tasks.ndk.NdkUploadHandshakeRequest
-import io.embrace.android.gradle.plugin.tasks.ndk.NdkUploadHandshakeResponse
 import io.embrace.android.gradle.plugin.util.serialization.JsonSerializer
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotNull

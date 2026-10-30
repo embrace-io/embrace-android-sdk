@@ -1,10 +1,8 @@
 package io.embrace.android.gradle.plugin.network
 
 import io.embrace.android.gradle.plugin.EmbraceLogger
-import io.embrace.android.gradle.plugin.buildreporter.BuildTelemetryRequest
-import io.embrace.android.gradle.plugin.tasks.common.RequestParams
-import io.embrace.android.gradle.plugin.tasks.ndk.NdkUploadHandshakeRequest
-import io.embrace.android.gradle.plugin.tasks.ndk.NdkUploadHandshakeResponse
+import io.embrace.android.gradle.plugin.ndk.NdkUploadHandshakeRequest
+import io.embrace.android.gradle.plugin.ndk.NdkUploadHandshakeResponse
 import io.embrace.android.gradle.plugin.util.serialization.EmbraceSerializer
 import io.embrace.android.gradle.plugin.util.serialization.JsonSerializer
 import kotlinx.serialization.SerializationStrategy

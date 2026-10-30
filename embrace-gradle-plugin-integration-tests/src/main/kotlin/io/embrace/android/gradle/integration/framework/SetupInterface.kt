@@ -1,7 +1,7 @@
 package io.embrace.android.gradle.integration.framework
 
+import io.embrace.android.gradle.plugin.ndk.NdkUploadHandshakeResponse
 import io.embrace.android.gradle.plugin.network.EmbraceEndpoint
-import io.embrace.android.gradle.plugin.tasks.ndk.NdkUploadHandshakeResponse
 import io.embrace.android.gradle.plugin.util.serialization.JsonSerializer
 import kotlinx.serialization.SerializationStrategy
 import okhttp3.mockwebserver.MockResponse

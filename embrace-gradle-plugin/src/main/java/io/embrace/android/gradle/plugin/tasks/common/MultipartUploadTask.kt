@@ -1,9 +1,9 @@
 package io.embrace.android.gradle.plugin.tasks.common
 
 import io.embrace.android.gradle.plugin.network.OkHttpNetworkService
+import io.embrace.android.gradle.plugin.network.handleHttpCallResult
 import io.embrace.android.gradle.plugin.tasks.EmbraceUploadTask
 import io.embrace.android.gradle.plugin.tasks.EmbraceUploadTaskImpl
-import io.embrace.android.gradle.plugin.tasks.handleHttpCallResult
 import org.gradle.api.file.RegularFileProperty
 import org.gradle.api.model.ObjectFactory
 import org.gradle.api.tasks.InputFiles

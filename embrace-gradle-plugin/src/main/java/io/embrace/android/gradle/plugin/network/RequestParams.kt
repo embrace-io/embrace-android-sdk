@@ -1,6 +1,5 @@
-package io.embrace.android.gradle.plugin.tasks.common
+package io.embrace.android.gradle.plugin.network
 
-import io.embrace.android.gradle.plugin.network.EmbraceEndpoint
 import java.io.Serializable
 
 data class RequestParams(

@@ -1,7 +1,7 @@
 package io.embrace.android.gradle.plugin.tasks
 
 import io.embrace.android.gradle.plugin.model.AndroidCompactedVariantData
-import io.embrace.android.gradle.plugin.tasks.common.RequestParams
+import io.embrace.android.gradle.plugin.network.RequestParams
 import org.gradle.api.DefaultTask
 import org.gradle.api.model.ObjectFactory
 import org.gradle.api.provider.Property

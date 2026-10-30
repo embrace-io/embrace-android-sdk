@@ -7,7 +7,7 @@ import io.embrace.android.gradle.plugin.gradle.safeFlatMap
 import io.embrace.android.gradle.plugin.gradle.safeMap
 import io.embrace.android.gradle.plugin.gradle.tryGetTaskProvider
 import io.embrace.android.gradle.plugin.network.EmbraceEndpoint
-import io.embrace.android.gradle.plugin.tasks.common.RequestParams
+import io.embrace.android.gradle.plugin.network.RequestParams
 import io.embrace.android.gradle.plugin.tasks.registration.EmbraceTaskRegistration
 import io.embrace.android.gradle.plugin.tasks.registration.RegistrationParams
 import io.embrace.android.gradle.plugin.util.capitalizedString

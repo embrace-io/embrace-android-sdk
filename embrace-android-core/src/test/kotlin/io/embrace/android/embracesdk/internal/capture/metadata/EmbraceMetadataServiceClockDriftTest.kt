@@ -7,8 +7,6 @@ import android.os.Build.VERSION_CODES.S
 import android.os.Build.VERSION_CODES.TIRAMISU
 import io.embrace.android.embracesdk.fakes.FakeClock
 import io.embrace.android.embracesdk.fakes.FakeConfigService
-import io.embrace.android.embracesdk.fakes.FakeEnvelopeResourceSource
-import io.embrace.android.embracesdk.fakes.FakeKeyValueStore
 import io.embrace.android.embracesdk.fakes.fakeBackgroundWorker
 import io.embrace.android.embracesdk.internal.utils.VersionChecker
 import org.junit.Assert.assertEquals
@@ -96,10 +94,8 @@ internal class EmbraceMetadataServiceClockDriftTest {
 
     private fun computeClockDrift(sdkInt: Int): ClockDrift? {
         val service = EmbraceMetadataService(
-            resourceSource = lazy { FakeEnvelopeResourceSource() },
             context = Application(),
             configService = FakeConfigService(),
-            store = FakeKeyValueStore(),
             clock = FakeClock(currentTime = wallTimeMillis),
             metadataBackgroundWorker = fakeBackgroundWorker(),
             versionChecker = VersionChecker { min -> sdkInt >= min },

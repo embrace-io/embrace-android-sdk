@@ -16,6 +16,7 @@ import io.embrace.android.embracesdk.fakes.FakeMetadataService
 import io.embrace.android.embracesdk.fakes.FakeOrdinalStore
 import io.embrace.android.embracesdk.fakes.FakePayloadMessageCollator
 import io.embrace.android.embracesdk.fakes.FakePayloadStore
+import io.embrace.android.embracesdk.fakes.FakePersistedSdkStateStore
 import io.embrace.android.embracesdk.fakes.FakeProcessStateTracker
 import io.embrace.android.embracesdk.fakes.FakeTelemetryDestination
 import io.embrace.android.embracesdk.fakes.FakeUserService
@@ -36,13 +37,13 @@ import io.embrace.android.embracesdk.internal.delivery.caching.PayloadCachingSer
 import io.embrace.android.embracesdk.internal.session.SessionPartToken
 import io.embrace.android.embracesdk.internal.session.UserSessionListener
 import io.embrace.android.embracesdk.internal.session.UserSessionMetadata
-import io.embrace.android.embracesdk.internal.session.UserSessionMetadataStore
 import io.embrace.android.embracesdk.internal.session.caching.PeriodicSessionPartCacher
 import io.embrace.android.embracesdk.internal.session.id.SessionIdsProvider
 import io.embrace.android.embracesdk.internal.session.id.SessionIdsSnapshot
 import io.embrace.android.embracesdk.internal.session.id.SessionPartTracker
 import io.embrace.android.embracesdk.internal.session.id.SessionPartTrackerImpl
 import io.embrace.android.embracesdk.internal.session.message.PayloadFactoryImpl
+import io.embrace.android.embracesdk.internal.store.PersistedSdkStateStore
 import io.embrace.android.embracesdk.internal.worker.BackgroundWorker
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
@@ -119,7 +120,7 @@ internal class SessionOrchestratorListenerTest {
     @Test
     fun `USER_SESSION_ACTIVE not fired by session part transitions when restored session continues`() {
         configService = sessionBehaviorConfig()
-        createOrchestrator(ProcessState.FOREGROUND, metadataStoreOverride = restoredMetadataStore())
+        createOrchestrator(ProcessState.FOREGROUND, stateStoreOverride = restoredStateStore())
         // registration fires immediately since the restored session is still active
         val events = collectEvents(SessionStateEvent.UserSessionActive::class)
         assertEquals(1, events.size)
@@ -338,9 +339,9 @@ internal class SessionOrchestratorListenerTest {
         assertTrue(events.size > sizeAfterRegistration)
     }
 
-    private fun restoredMetadataStore() = UserSessionMetadataStore(FakeKeyValueStore()).also { store ->
-        store.save(
-            UserSessionMetadata.Classified(
+    private fun restoredStateStore() = FakePersistedSdkStateStore().apply {
+        update {
+            userSession = UserSessionMetadata.Classified(
                 startTimeMs = clock.now(),
                 userSessionId = "restored-id",
                 userSessionNumber = 7L,
@@ -349,8 +350,8 @@ internal class SessionOrchestratorListenerTest {
                 partIndex = 1,
                 lastActivityMs = clock.now(),
                 isBackgroundOnly = false,
-            ),
-        )
+            )
+        }
     }
 
     private fun sessionBehaviorConfig() = FakeConfigService(
@@ -374,7 +375,7 @@ internal class SessionOrchestratorListenerTest {
     private fun createOrchestrator(
         state: ProcessState,
         ordinalStoreOverride: FakeOrdinalStore? = null,
-        metadataStoreOverride: UserSessionMetadataStore? = null,
+        stateStoreOverride: PersistedSdkStateStore? = null,
     ) {
         store = FakePayloadStore()
         appStateTracker = FakeProcessStateTracker(state)
@@ -440,7 +441,7 @@ internal class SessionOrchestratorListenerTest {
             ),
             ordinalStoreOverride ?: FakeOrdinalStore(),
             FakeKeyValueStore(),
-            metadataStoreOverride ?: UserSessionMetadataStore(FakeKeyValueStore()),
+            stateStoreOverride ?: FakePersistedSdkStateStore(),
             errorHandler,
             fakeBackgroundWorker(),
             TestUuidSource(),

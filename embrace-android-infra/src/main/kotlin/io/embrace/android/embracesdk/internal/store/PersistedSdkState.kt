@@ -1,5 +1,7 @@
 package io.embrace.android.embracesdk.internal.store
 
+import io.embrace.android.embracesdk.internal.session.UserSessionMetadata
+
 /**
  * The SDK's persisted mutable state.
  */
@@ -40,4 +42,9 @@ data class PersistedSdkState(
      * Session properties that persist across user sessions.
      */
     val sessionProperties: Map<String, String> = emptyMap(),
+
+    /**
+     * The user session that was last persisted, or null if there is none.
+     */
+    val userSession: UserSessionMetadata.Classified? = null,
 )

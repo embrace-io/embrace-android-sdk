@@ -12,6 +12,7 @@ import io.embrace.android.embracesdk.fakes.FakeLogEnvelopeSource
 import io.embrace.android.embracesdk.fakes.FakeLogLimitingService
 import io.embrace.android.embracesdk.fakes.FakeMetadataService
 import io.embrace.android.embracesdk.fakes.FakeOrdinalStore
+import io.embrace.android.embracesdk.fakes.FakePersistedSdkStateStore
 import io.embrace.android.embracesdk.fakes.FakeProcessStateTracker
 import io.embrace.android.embracesdk.fakes.FakeSessionIdsProvider
 import io.embrace.android.embracesdk.fakes.FakeSessionPartEnvelopeSource
@@ -109,6 +110,7 @@ internal class UserSessionOrchestrationFactoriesTest {
             logLimitingService = FakeLogLimitingService(),
             ordinalStore = FakeOrdinalStore(),
             store = store,
+            stateStore = FakePersistedSdkStateStore(),
             backgroundWorker = workerThreadPool.backgroundWorker(Worker.Background.NonIoRegWorker),
             sessionPersistenceWorker = workerThreadPool.backgroundWorker(Worker.Background.SessionPersistenceWorker),
             sessionReadWorker = workerThreadPool.backgroundWorker(Worker.Background.IoRegWorker),

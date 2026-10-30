@@ -3,8 +3,10 @@ package io.embrace.android.embracesdk.internal.prefs
 import io.embrace.android.embracesdk.fakes.FakeClock
 import io.embrace.android.embracesdk.fakes.FakeKeyValueStore
 import io.embrace.android.embracesdk.fakes.TestUuidSource
+import io.embrace.android.embracesdk.internal.session.UserSessionMetadata
 import io.embrace.android.embracesdk.internal.store.PersistedSdkState
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertNull
 import org.junit.Before
 import org.junit.Test
 
@@ -16,6 +18,27 @@ internal class PrefsPersistedSdkStateStoreTest {
 
     private val expectedDeviceId = TestUuidSource().createUuid()
 
+    private val legacyUserSessionAttrs: Map<String, String> = mapOf(
+        "emb.user_session_start_ts" to "1000",
+        "emb.user_session_id" to "session-id",
+        "emb.user_session_number" to "3",
+        "emb.user_session_max_duration_seconds" to "3600",
+        "emb.user_session_inactivity_timeout_seconds" to "1800",
+        "emb.user_session_part_index" to "2",
+        "emb.user_session_last_activity_ts" to "5000",
+    )
+
+    private val userSession = UserSessionMetadata.Classified(
+        startTimeMs = 1000L,
+        userSessionId = "session-id",
+        userSessionNumber = 3L,
+        maxDurationSecs = 3600L,
+        inactivityTimeoutSecs = 1800L,
+        partIndex = 2,
+        lastActivityMs = 5000L,
+        isBackgroundOnly = false,
+    )
+
     private val legacyValues: Map<String, Any> = mapOf(
         "io.embrace.deviceid" to "legacy-id",
         "io.embrace.installtimestamp" to 99L,
@@ -24,6 +47,7 @@ internal class PrefsPersistedSdkStateStoreTest {
         "io.embrace.username" to "user-name",
         "io.embrace.userpersonas" to setOf("persona"),
         "io.embrace.session.properties" to mapOf("prop" to "value"),
+        "embrace.user_session" to legacyUserSessionAttrs,
     )
 
     private val legacyState = PersistedSdkState(
@@ -34,6 +58,7 @@ internal class PrefsPersistedSdkStateStoreTest {
         userName = "user-name",
         userPersonas = setOf("persona"),
         sessionProperties = mapOf("prop" to "value"),
+        userSession = userSession,
     )
 
     @Before
@@ -76,6 +101,7 @@ internal class PrefsPersistedSdkStateStoreTest {
             userName = "user-name"
             userPersonas = setOf("persona")
             sessionProperties = mapOf("prop" to "value")
+            userSession = this@PrefsPersistedSdkStateStoreTest.userSession
         }
         val expected = legacyState.copy(deviceId = expectedDeviceId, installTimestampMs = clock.now())
         assertEquals(expected, state)
@@ -96,6 +122,7 @@ internal class PrefsPersistedSdkStateStoreTest {
             userName = null
             userPersonas = null
             sessionProperties = emptyMap()
+            userSession = null
         }
         assertEquals(
             mapOf("io.embrace.deviceid" to "legacy-id", "io.embrace.installtimestamp" to 99L),
@@ -139,6 +166,42 @@ internal class PrefsPersistedSdkStateStoreTest {
         seedLegacyValues()
         kvStore.editAndCommit { putBoolean("io.embrace.userispayer", false) }
         assertEquals(legacyState, store.snapshot())
+    }
+
+    @Test
+    fun `a background-only user session is written with the legacy marker`() {
+        store.update { userSession = this@PrefsPersistedSdkStateStoreTest.userSession.copy(isBackgroundOnly = true) }
+        val expectedAttrs = legacyUserSessionAttrs + ("emb.is_background_only_part" to "1")
+        assertEquals(expectedAttrs, kvStore.getStringMap("embrace.user_session"))
+        assertEquals(
+            userSession.copy(isBackgroundOnly = true),
+            PrefsPersistedSdkStateStore(kvStore, clock, TestUuidSource()).snapshot().userSession,
+        )
+    }
+
+    @Test
+    fun `a user session with an unrecognised background marker is read as not background-only`() {
+        seedUserSession(legacyUserSessionAttrs + ("emb.is_background_only_part" to "true"))
+        assertEquals(userSession, store.snapshot().userSession)
+    }
+
+    @Test
+    fun `a user session missing a required attribute is read as absent`() {
+        legacyUserSessionAttrs.keys.forEach { key ->
+            kvStore = FakeKeyValueStore()
+            seedUserSession(legacyUserSessionAttrs - key)
+            assertNull(key, PrefsPersistedSdkStateStore(kvStore, clock, TestUuidSource()).snapshot().userSession)
+        }
+    }
+
+    @Test
+    fun `a user session with an unparseable attribute is read as absent`() {
+        seedUserSession(legacyUserSessionAttrs + ("emb.user_session_part_index" to "not-a-number"))
+        assertNull(store.snapshot().userSession)
+    }
+
+    private fun seedUserSession(attrs: Map<String, String>) {
+        kvStore.editAndCommit { putStringMap("embrace.user_session", attrs) }
     }
 
     private fun seedLegacyValues() {

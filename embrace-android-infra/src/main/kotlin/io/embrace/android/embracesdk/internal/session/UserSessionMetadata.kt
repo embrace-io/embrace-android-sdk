@@ -1,7 +1,6 @@
 package io.embrace.android.embracesdk.internal.session
 
 import io.embrace.android.embracesdk.internal.clock.Clock
-import io.embrace.android.embracesdk.semconv.EmbSessionAttributes
 
 /**
  * Holds metadata about the user session. Creating new instances with updated attributes is only permitted to support specific
@@ -36,22 +35,10 @@ sealed interface UserSessionMetadata {
     fun isInactive(clock: Clock): Boolean =
         clock.now() - lastActivityMs > inactivityTimeoutSecs * 1_000L
 
-    val attributes: Map<String, Any>
-        get() = buildMap {
-            put(EmbSessionAttributes.EMB_USER_SESSION_START_TS, startTimeMs)
-            put(EmbSessionAttributes.EMB_USER_SESSION_ID, userSessionId)
-            put(EmbSessionAttributes.EMB_USER_SESSION_NUMBER, userSessionNumber)
-            put(EmbSessionAttributes.EMB_USER_SESSION_MAX_DURATION_SECONDS, maxDurationSecs)
-            put(EmbSessionAttributes.EMB_USER_SESSION_INACTIVITY_TIMEOUT_SECONDS, inactivityTimeoutSecs)
-            if (isBackgroundOnly == true) {
-                put(EmbSessionAttributes.EMB_IS_BACKGROUND_ONLY_PART, BACKGROUND_ONLY_MARKER)
-            }
-        }
-
     /**
      * A user session where whether it is background-only or not is known
      */
-    class Classified(
+    data class Classified(
         override val startTimeMs: Long,
         override val userSessionId: String,
         override val userSessionNumber: Long,
@@ -132,13 +119,5 @@ sealed interface UserSessionMetadata {
             lastActivityMs = updatedLastActivityMs,
             isBackgroundOnly = isBackgroundOnly,
         )
-    }
-
-    companion object {
-        /**
-         * The value of the [EmbSessionAttributes.EMB_IS_BACKGROUND_ONLY_PART] attribute when
-         * the user session is background-only. The attribute is omitted otherwise.
-         */
-        internal const val BACKGROUND_ONLY_MARKER = "1"
     }
 }

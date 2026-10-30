@@ -149,9 +149,13 @@ public final class io/embrace/android/embracesdk/internal/api/LogsApi$DefaultImp
 
 public abstract interface class io/embrace/android/embracesdk/internal/api/NetworkRequestApi {
 	public abstract fun addHttpRequestInfoModifier (Lio/embrace/android/embracesdk/network/http/HttpRequestInfoModifier;)V
+	public abstract fun clearNetworkSpanParent (Lio/embrace/android/embracesdk/network/NetworkSpanParentToken;)V
 	public abstract fun generateW3cTraceparent ()Ljava/lang/String;
 	public abstract fun recordNetworkRequest (Lio/embrace/android/embracesdk/network/EmbraceNetworkRequest;)V
 	public abstract fun removeHttpRequestInfoModifier (Lio/embrace/android/embracesdk/network/http/HttpRequestInfoModifier;)V
+	public abstract fun setNetworkSpanParent (Lio/embrace/android/embracesdk/spans/EmbraceSpan;)Lio/embrace/android/embracesdk/network/NetworkSpanParentToken;
+	public abstract fun setNetworkSpanParent (Lio/opentelemetry/kotlin/tracing/SpanContext;)Lio/embrace/android/embracesdk/network/NetworkSpanParentToken;
+	public abstract fun setNetworkSpanParentProvider (Lio/embrace/android/embracesdk/network/NetworkSpanParentProvider;)V
 }
 
 public abstract interface class io/embrace/android/embracesdk/internal/api/OTelApi {
@@ -272,6 +276,26 @@ public final class io/embrace/android/embracesdk/network/EmbraceNetworkRequest$C
 	public static synthetic fun fromIncompleteRequest$default (Lio/embrace/android/embracesdk/network/EmbraceNetworkRequest$Companion;Ljava/lang/String;Lio/embrace/android/embracesdk/network/http/HttpMethod;JJLjava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Lio/embrace/android/embracesdk/internal/network/http/NetworkCaptureData;ILjava/lang/Object;)Lio/embrace/android/embracesdk/network/EmbraceNetworkRequest;
 }
 
+public final class io/embrace/android/embracesdk/network/NetworkSpanParent {
+	public static final field Companion Lio/embrace/android/embracesdk/network/NetworkSpanParent$Companion;
+	public static final field NO_PARENT Lio/embrace/android/embracesdk/network/NetworkSpanParent;
+	public static final field USE_DEFAULT Lio/embrace/android/embracesdk/network/NetworkSpanParent;
+	public synthetic fun <init> (Lio/opentelemetry/kotlin/tracing/SpanContext;Lkotlin/jvm/internal/DefaultConstructorMarker;)V
+	public final fun getSpanContext ()Lio/opentelemetry/kotlin/tracing/SpanContext;
+	public static final fun parent (Lio/opentelemetry/kotlin/tracing/SpanContext;)Lio/embrace/android/embracesdk/network/NetworkSpanParent;
+}
+
+public final class io/embrace/android/embracesdk/network/NetworkSpanParent$Companion {
+	public final fun parent (Lio/opentelemetry/kotlin/tracing/SpanContext;)Lio/embrace/android/embracesdk/network/NetworkSpanParent;
+}
+
+public abstract interface class io/embrace/android/embracesdk/network/NetworkSpanParentProvider {
+	public abstract fun getNetworkSpanParent (Lio/embrace/android/embracesdk/network/http/HttpRequestInfo;Lio/opentelemetry/kotlin/tracing/SpanContext;)Lio/embrace/android/embracesdk/network/NetworkSpanParent;
+}
+
+public abstract interface class io/embrace/android/embracesdk/network/NetworkSpanParentToken {
+}
+
 public final class io/embrace/android/embracesdk/network/http/HttpMethod : java/lang/Enum {
 	public static final field CONNECT Lio/embrace/android/embracesdk/network/http/HttpMethod;
 	public static final field Companion Lio/embrace/android/embracesdk/network/http/HttpMethod$Companion;
@@ -295,7 +319,12 @@ public final class io/embrace/android/embracesdk/network/http/HttpMethod$Compani
 
 public abstract interface class io/embrace/android/embracesdk/network/http/HttpRequestInfo {
 	public abstract fun getHttpMethod ()Ljava/lang/String;
+	public abstract fun getNativeRequest ()Ljava/lang/Object;
 	public abstract fun getUrl ()Ljava/lang/String;
+}
+
+public final class io/embrace/android/embracesdk/network/http/HttpRequestInfo$DefaultImpls {
+	public static fun getNativeRequest (Lio/embrace/android/embracesdk/network/http/HttpRequestInfo;)Ljava/lang/Object;
 }
 
 public abstract interface class io/embrace/android/embracesdk/network/http/HttpRequestInfoModifier {
@@ -307,6 +336,10 @@ public abstract interface class io/embrace/android/embracesdk/network/http/Mutab
 	public abstract fun getUrl ()Ljava/lang/String;
 	public abstract fun setHttpMethod (Ljava/lang/String;)V
 	public abstract fun setUrl (Ljava/lang/String;)V
+}
+
+public final class io/embrace/android/embracesdk/network/http/MutableHttpRequestInfo$DefaultImpls {
+	public static fun getNativeRequest (Lio/embrace/android/embracesdk/network/http/MutableHttpRequestInfo;)Ljava/lang/Object;
 }
 
 public final class io/embrace/android/embracesdk/spans/AutoTerminationMode : java/lang/Enum {

@@ -1,30 +1,19 @@
 package io.embrace.android.embracesdk.internal.logging
 
-import android.util.Log
-import io.embrace.android.embracesdk.internal.clock.Clock
-import io.embrace.android.embracesdk.internal.clock.NormalizedIntervalClock
 import java.util.concurrent.atomic.AtomicReference
 
-internal const val EMBRACE_TAG = "[Embrace]"
-
 /**
- * Implementation of [ErrorHandler] that logs to Android logcat & buffers SDK errors until they can be sent
- * to our internal telemetry.
+ * Implementation of [ErrorHandler] that logs with [logcat] & buffers SDK errors until they can be sent
+ * to our internal telemetry. [now] supplies the time in milliseconds that an error was captured.
  *
  * [beforeBuffering] runs after an error is found to need buffering and just before it is buffered. Only set
  * for testing purposes.
  */
 class ErrorHandlerImpl(
-    private val clock: Clock = NormalizedIntervalClock(),
+    private val now: () -> Long,
+    private val logcat: (ErrorHandler.Severity, String, Throwable?) -> Unit,
     private val limit: Int = 10,
     private val beforeBuffering: () -> Unit = {},
-    private val logcat: (ErrorHandler.Severity, String, Throwable?) -> Unit = { severity, msg, throwable ->
-        when (severity) {
-            ErrorHandler.Severity.INFO -> Log.i(EMBRACE_TAG, msg, throwable)
-            ErrorHandler.Severity.WARNING -> Log.w(EMBRACE_TAG, msg, throwable)
-            ErrorHandler.Severity.ERROR -> Log.e(EMBRACE_TAG, msg, throwable)
-        }
-    },
 ) : ErrorHandler {
 
     /**
@@ -90,7 +79,7 @@ class ErrorHandlerImpl(
         if (!limiter.tryAcquire(type, throwable)) {
             return
         }
-        val timestampMs = clock.now()
+        val timestampMs = now()
 
         // The buffer is a Treiber stack on a HandlerState instance that indicates that it is buffering errors. An error
         // is added by swapping in a new Buffering instance contains the latest error and links back to the last one.
@@ -189,7 +178,7 @@ class ErrorHandlerImpl(
             val failure = sinkFailure.get() ?: return
             runSafely("Failed to record SDK error (${SdkErrorType.ErrorSinkFail})", logcat) {
                 if (limiter.tryAcquire(SdkErrorType.ErrorSinkFail, failure)) {
-                    sink(SdkErrorType.ErrorSinkFail, failure, clock.now())
+                    sink(SdkErrorType.ErrorSinkFail, failure, now())
                 }
             }
         } finally {

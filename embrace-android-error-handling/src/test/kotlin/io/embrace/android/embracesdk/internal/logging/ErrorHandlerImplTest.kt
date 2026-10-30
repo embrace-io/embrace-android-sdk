@@ -19,6 +19,7 @@ internal class ErrorHandlerImplTest {
     private lateinit var handler: ErrorHandlerImpl
     private lateinit var errors: MutableList<Pair<Throwable, Long>>
     private lateinit var types: MutableList<SdkErrorType>
+    private val noopLogcat: (ErrorHandler.Severity, String, Throwable?) -> Unit = { _, _, _ -> }
     private val sink: ErrorRecorder = { type, throwable, timestampMs ->
         types.add(type)
         errors.add(throwable to timestampMs)
@@ -27,7 +28,7 @@ internal class ErrorHandlerImplTest {
     @Before
     fun setUp() {
         clock = FakeClock()
-        handler = ErrorHandlerImpl(clock)
+        handler = ErrorHandlerImpl(clock::now, noopLogcat)
         errors = mutableListOf()
         types = mutableListOf()
     }
@@ -68,7 +69,8 @@ internal class ErrorHandlerImplTest {
         val release = CountDownLatch(1)
         val holdNext = AtomicBoolean(false)
         handler = ErrorHandlerImpl(
-            clock,
+            clock::now,
+            noopLogcat,
             beforeBuffering = {
                 if (holdNext.getAndSet(false)) {
                     atBuffering.countDown()
@@ -219,7 +221,7 @@ internal class ErrorHandlerImplTest {
 
     @Test
     fun `racing threads record each repeated error once and never exceed the limit`() {
-        handler = ErrorHandlerImpl(clock, limit = 2)
+        handler = ErrorHandlerImpl(clock::now, noopLogcat, limit = 2)
         val recorded = ConcurrentLinkedQueue<Throwable>()
         handler.drain { _, throwable, _ -> recorded.add(throwable) }
         val repeated = distinctError(-1)
@@ -291,7 +293,7 @@ internal class ErrorHandlerImplTest {
 
     @Test
     fun `a sink failure uses the limit`() {
-        handler = ErrorHandlerImpl(clock, limit = 1)
+        handler = ErrorHandlerImpl(clock::now, noopLogcat, limit = 1)
         val first = distinctError(0)
         val recorded = mutableListOf<Throwable>()
         handler.drain { _, throwable, _ ->
@@ -346,7 +348,7 @@ internal class ErrorHandlerImplTest {
 
     @Test
     fun `distinct sink failures follow the same limit as other errors`() {
-        handler = ErrorHandlerImpl(clock, limit = 5)
+        handler = ErrorHandlerImpl(clock::now, noopLogcat, limit = 5)
         val errors = (0..3).map(::distinctError)
         val sinkFailures = ArrayDeque((4..7).map(::distinctError))
         val expectedSinkFailures = sinkFailures.toList()
@@ -392,7 +394,7 @@ internal class ErrorHandlerImplTest {
     @Test
     fun `a failure to log falls back to logging a warning`() {
         val logged = mutableListOf<Logged>()
-        handler = ErrorHandlerImpl(clock, logcat = { severity, msg, throwable ->
+        handler = ErrorHandlerImpl(clock::now, logcat = { severity, msg, throwable ->
             check(severity == ErrorHandler.Severity.WARNING) { "logcat failed" }
             logged.add(Logged(severity, msg, throwable))
         })
@@ -406,7 +408,7 @@ internal class ErrorHandlerImplTest {
     @Test
     fun `a throwing sink is logged as a warning`() {
         val logged = mutableListOf<Logged>()
-        handler = ErrorHandlerImpl(clock, logcat = { severity, msg, throwable -> logged.add(Logged(severity, msg, throwable)) })
+        handler = ErrorHandlerImpl(clock::now, logcat = { severity, msg, throwable -> logged.add(Logged(severity, msg, throwable)) })
         val sinkFailure = IllegalStateException("sink failed")
         handler.drain { _, _, _ -> throw sinkFailure }
         fail()
@@ -424,7 +426,7 @@ internal class ErrorHandlerImplTest {
         val logged = mutableListOf<Logged>()
         val clockFailure = IllegalStateException("clock failed")
         handler = ErrorHandlerImpl(
-            clock = { throw clockFailure },
+            now = { throw clockFailure },
             logcat = { severity, msg, throwable -> logged.add(Logged(severity, msg, throwable)) },
         )
         fail()
@@ -434,7 +436,7 @@ internal class ErrorHandlerImplTest {
     @Test
     fun `nothing throws when every dependency throws`() {
         handler = ErrorHandlerImpl(
-            clock = { error("clock failed") },
+            now = { error("clock failed") },
             beforeBuffering = { error("buffering failed") },
             logcat = { _, _, _ -> error("logcat failed") },
         )
@@ -449,7 +451,7 @@ internal class ErrorHandlerImplTest {
 
     @Test
     fun `nothing throws when the sink and logcat throw, and every error reaches the sink`() {
-        handler = ErrorHandlerImpl(clock, logcat = { _, _, _ -> error("logcat failed") })
+        handler = ErrorHandlerImpl(clock::now, logcat = { _, _, _ -> error("logcat failed") })
         val buffered = listOf(distinctError(0), distinctError(1))
         val direct = listOf(distinctError(2), distinctError(3))
         buffered.forEach(::fail)

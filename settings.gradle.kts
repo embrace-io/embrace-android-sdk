@@ -6,6 +6,7 @@ include(
     ":embrace-android-config",
     ":embrace-android-config-fakes",
     ":embrace-android-envelope",
+    ":embrace-android-error-handling",
     ":embrace-android-infra",
     ":embrace-android-limits",
     ":embrace-android-utils",

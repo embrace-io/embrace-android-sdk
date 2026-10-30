@@ -21,6 +21,7 @@ import io.embrace.android.embracesdk.internal.instrumentation.network.DefaultTra
 import io.embrace.android.embracesdk.internal.logging.ErrorHandler
 import io.embrace.android.embracesdk.internal.logging.ErrorHandlerImpl
 import io.embrace.android.embracesdk.internal.logging.SdkErrorType
+import io.embrace.android.embracesdk.internal.logging.androidLogcat
 import io.embrace.android.embracesdk.internal.logging.guardSdkCode
 import io.embrace.android.embracesdk.internal.logging.guardSdkCodeEach
 import io.embrace.android.embracesdk.spans.EmbraceSpan
@@ -45,7 +46,7 @@ import java.util.concurrent.TimeUnit
  */
 internal class BufferingSdkInstance(
     private val clock: Clock,
-    private val errorHandler: ErrorHandler = ErrorHandlerImpl(clock),
+    private val errorHandler: ErrorHandler = ErrorHandlerImpl(clock::now, ::androidLogcat),
 ) : SdkInstance,
     InternalSdkApi by NoopSdkInstance(clock, errorHandler, NoopSdkInstance.SDK_NOT_INITIALIZED) {
 

@@ -644,10 +644,8 @@ internal fun createRealSdkInstance(
 
     val metadataService = init("metadata-service") {
         createMetadataService(
-            resourceSource = resourceSource,
             context = appContext,
             configService = configService,
-            store = store,
             clock = clock,
             worker = workerThreadPool.backgroundWorker(Worker.Background.NonIoRegWorker),
         )

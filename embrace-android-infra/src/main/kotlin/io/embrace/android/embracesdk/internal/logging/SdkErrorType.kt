@@ -87,6 +87,7 @@ sealed class SdkErrorType(private val severity: Severity) {
     object RemoteConfigFetchFail : SdkErrorType(ERROR)
     object RemoteConfigParseFail : SdkErrorType(ERROR)
     object RemoteConfigStoreFail : SdkErrorType(ERROR)
+    object StorageRootFail : SdkErrorType(ERROR)
 
     /**
      * A failure that can be ignored.

@@ -6,6 +6,7 @@ sealed class AgpVersion(private val version: AndroidPluginVersion) : Comparable<
 
     class CURRENT(version: AndroidPluginVersion) : AgpVersion(version)
     object MIN_VERSION : AgpVersion(AndroidPluginVersion(8, 0, 2))
+    object AGP_8_1_0 : AgpVersion(AndroidPluginVersion(8, 1, 0))
     object AGP_8_3_0 : AgpVersion(AndroidPluginVersion(8, 3, 0))
 
     override fun compareTo(other: AgpVersion): Int {

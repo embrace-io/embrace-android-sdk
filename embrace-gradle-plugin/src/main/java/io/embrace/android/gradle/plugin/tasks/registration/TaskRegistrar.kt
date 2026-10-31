@@ -138,7 +138,7 @@ class TaskRegistrar(
     private fun registerUploadTasks(params: RegistrationParams, variant: AndroidCompactedVariantData) {
         JvmMappingUploadTaskRegistration().register(params)
         val variantConfig = variantConfigurationsListProperty.get().first { it.variantName == variant.name }
-        NdkUploadTasksRegistration(behavior, variantConfig).register(params)
+        NdkUploadTasksRegistration(behavior, variantConfig, agpWrapper.version).register(params)
         if (behavior.isIl2CppMappingFilesUploadEnabled) {
             Il2CppUploadTaskRegistration().register(params)
         }

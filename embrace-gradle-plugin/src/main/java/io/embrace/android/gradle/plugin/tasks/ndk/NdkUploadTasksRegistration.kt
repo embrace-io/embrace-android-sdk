@@ -1,5 +1,8 @@
 package io.embrace.android.gradle.plugin.tasks.ndk
 
+import com.android.build.api.artifact.SingleArtifact
+import com.android.build.api.variant.Variant
+import io.embrace.android.gradle.plugin.agp.AgpVersion
 import io.embrace.android.gradle.plugin.config.PluginBehavior
 import io.embrace.android.gradle.plugin.gradle.lazyTaskLookup
 import io.embrace.android.gradle.plugin.gradle.registerTask
@@ -24,6 +27,7 @@ import java.io.File
 class NdkUploadTasksRegistration(
     private val behavior: PluginBehavior,
     private val variantConfig: VariantConfig,
+    private val agpVersion: AgpVersion,
 ) : EmbraceTaskRegistration {
 
     override fun register(params: RegistrationParams) {
@@ -41,9 +45,10 @@ class NdkUploadTasksRegistration(
             return
         }
 
-        val mergeNativeLibsTaskProvider = project.lazyTaskLookup<Task>("merge${variant.name.capitalizedString()}NativeLibs")
-
-        val sharedObjectFilesProvider = getSharedObjectFilesProvider(project, mergeNativeLibsTaskProvider)
+        val useArtifactApi = behavior.customSymbolsDirectory.isNullOrEmpty() &&
+            !behavior.legacyNativeLibsLookup &&
+            agpVersion >= AgpVersion.AGP_8_1_0
+        val sharedObjectFilesProvider = getSharedObjectFilesProvider(project, variant, useArtifactApi)
 
         val compressionTaskProvider = project.registerTask(
             CompressSharedObjectFilesTask.NAME,
@@ -56,11 +61,15 @@ class NdkUploadTasksRegistration(
                 project.layout.buildDirectory.dir("intermediates/embrace/compressed/${data.name}"),
             )
 
-            // dependsOn doesn't accept null providers, so we use an empty list if the task is not found.
-            val dependsOnTaskProvider = project.provider {
-                project.tryGetTaskProvider("merge${variant.name.capitalizedString()}NativeLibs") ?: emptyList<Task>()
+            // The artifact provider carries its producer task dependency; other lookups don't.
+            if (!useArtifactApi) {
+                // dependsOn doesn't accept null providers, so we use an empty list if the task is not found.
+                val mergeNativeLibsTaskName = mergeNativeLibsTaskName(variant)
+                val dependsOnTaskProvider = project.provider {
+                    project.tryGetTaskProvider(mergeNativeLibsTaskName) ?: emptyList<Task>()
+                }
+                task.dependsOn(dependsOnTaskProvider)
             }
-            task.dependsOn(dependsOnTaskProvider)
         }
 
         val hashTaskProvider = project.registerTask(
@@ -125,22 +134,28 @@ class NdkUploadTasksRegistration(
     }
 
     /**
-     * If a custom symbols directory is specified, use that directory to find the shared object files. If not, use the
-     * output of the mergeNativeLibs task to find the shared object files. If no directory can be resolved this yields an
-     * empty provider.
+     * Resolves the directory that contains shared object files. In order of precedence:
+     *
+     * 1. A custom symbols directory, if one is specified.
+     * 2. On AGP 8.1+ (unless `legacyNativeLibsLookup` is set), the `lib/` directory of AGP's
+     *    `SingleArtifact.MERGED_NATIVE_LIBS` artifact.
+     * 3. Otherwise, the outputs of the `merge<Variant>NativeLibs` task.
+     *
+     * A missing custom directory fails when queried. Otherwise, no native libraries yields an empty provider.
      */
     private fun getSharedObjectFilesProvider(
         project: Project,
-        mergeNativeLibsTaskProvider: Provider<Task>,
+        variant: Variant,
+        useArtifactApi: Boolean,
     ): Provider<Directory> {
         val customSymbolsDirectory = behavior.customSymbolsDirectory
-        return project.layout.dir(
-            if (!customSymbolsDirectory.isNullOrEmpty()) {
-                project.provider { getNativeSharedObjectFilesFromCustomDirectory(customSymbolsDirectory, project) }
-            } else {
-                getDefaultNativeSharedObjectFiles(mergeNativeLibsTaskProvider)
-            },
-        )
+        return when {
+            !customSymbolsDirectory.isNullOrEmpty() -> project.layout.dir(
+                project.provider { getNativeSharedObjectFilesFromCustomDirectory(customSymbolsDirectory, project) },
+            )
+            useArtifactApi -> getArtifactNativeSharedObjectFiles(variant)
+            else -> project.layout.dir(getDefaultNativeSharedObjectFiles(project, variant))
+        }
     }
 
     private fun getNativeSharedObjectFilesFromCustomDirectory(
@@ -153,14 +168,30 @@ class NdkUploadTasksRegistration(
     }
 
     /*
-     * Find the first .so file in the mergeNativeLibs task output and go up two levels to get the architecture directory.
-     * This is a workaround to get the architecture directory without hardcoding the path.
+     * Must only be called on AGP >=8.1 as SingleArtifact.MERGED_NATIVE_LIBS doesn't exist below that.
+     *
+     * The artifact is the merge task's out/ directory, which contains lib/<abi>/<lib>.so. If the variant has no native
+     * libraries then lib/ doesn't exist, and this yields an empty provider.
+     */
+    private fun getArtifactNativeSharedObjectFiles(variant: Variant): Provider<Directory> {
+        return variant.artifacts.get(SingleArtifact.MERGED_NATIVE_LIBS).safeMap { dir ->
+            dir.dir("lib").takeIf { it.asFile.exists() }
+        }
+    }
+
+    /*
+     * Legacy lookup, used on AGP < 8.1 or when `legacyNativeLibsLookup` is set.
+     *
+     * Find the first .so file in the mergeNativeLibs task output and go up two levels to get the lib/ directory that
+     * contains the architecture directories. This avoids hardcoding the path.
      * We expect the task outputs to be in the following format:
      * app/build/intermediates/merged_native_libs/release/out/lib/armeabi-v7a/libembrace-native.so
      */
     private fun getDefaultNativeSharedObjectFiles(
-        mergeNativeLibsTaskProvider: Provider<Task>,
+        project: Project,
+        variant: Variant,
     ): Provider<File> {
+        val mergeNativeLibsTaskProvider = project.lazyTaskLookup<Task>(mergeNativeLibsTaskName(variant))
         return mergeNativeLibsTaskProvider.safeFlatMap { task ->
             task.outputs.files.asFileTree.elements.safeMap { files ->
                 files
@@ -171,4 +202,6 @@ class NdkUploadTasksRegistration(
             }
         }
     }
+
+    private fun mergeNativeLibsTaskName(variant: Variant) = "merge${variant.name.capitalizedString()}NativeLibs"
 }

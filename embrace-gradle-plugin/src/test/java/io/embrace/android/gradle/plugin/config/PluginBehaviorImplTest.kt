@@ -180,6 +180,17 @@ class PluginBehaviorImplTest {
     }
 
     @Test
+    fun `legacyNativeLibsLookup default`() {
+        assertFalse(behavior.legacyNativeLibsLookup)
+    }
+
+    @Test
+    fun `legacyNativeLibsLookup enabled via embrace`() {
+        embrace.legacyNativeLibsLookup.set(true)
+        assertTrue(behavior.legacyNativeLibsLookup)
+    }
+
+    @Test
     fun `instrumentation enabled for variant`() {
         assertFalse(behavior.isInstrumentationDisabledForVariant("foo"))
     }

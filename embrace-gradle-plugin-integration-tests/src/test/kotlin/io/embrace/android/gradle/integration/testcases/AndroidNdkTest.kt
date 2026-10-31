@@ -1,5 +1,6 @@
 package io.embrace.android.gradle.integration.testcases
 
+import io.embrace.android.gradle.config.TestMatrix
 import io.embrace.android.gradle.integration.framework.PluginIntegrationTestRule
 import io.embrace.android.gradle.integration.framework.ProjectType
 import org.junit.Rule
@@ -59,6 +60,28 @@ class AndroidNdkTest {
             },
             assertions = {
                 verifyBuildTelemetryRequestSent(variantsSentInBuildTelemetry)
+                verifyHandshakes(defaultExpectedLibs, defaultExpectedArchs, defaultExpectedVariants)
+                verifyUploads(defaultExpectedLibs, defaultExpectedArchs, defaultExpectedVariants)
+            },
+        )
+    }
+
+    @Test
+    fun `send 3rd party native library symbols on the minimum AGP version`() {
+        rule.runTest(
+            fixture = "android-3rd-party-symbols",
+            testMatrix = TestMatrix.MinVersion,
+            tasks = listOf("build"),
+            projectType = ProjectType.ANDROID,
+            setup = {
+                setupMockResponses(
+                    defaultExpectedLibs,
+                    defaultExpectedArchs,
+                    defaultExpectedVariants,
+                )
+            },
+            assertions = {
+                verifyBuildTelemetryRequestSent(variantsSentInBuildTelemetry, testMatrix = TestMatrix.MinVersion)
                 verifyHandshakes(defaultExpectedLibs, defaultExpectedArchs, defaultExpectedVariants)
                 verifyUploads(defaultExpectedLibs, defaultExpectedArchs, defaultExpectedVariants)
             },

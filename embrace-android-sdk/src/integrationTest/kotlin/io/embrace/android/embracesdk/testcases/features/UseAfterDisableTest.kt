@@ -8,11 +8,13 @@ import io.embrace.android.embracesdk.fakes.config.FakeEnabledFeatureConfig
 import io.embrace.android.embracesdk.fakes.config.FakeInstrumentedConfig
 import io.embrace.android.embracesdk.internal.delivery.storage.StorageLocation
 import io.embrace.android.embracesdk.internal.delivery.storage.asFile
+import io.embrace.android.embracesdk.internal.logging.SdkErrorType
 import io.embrace.android.embracesdk.internal.worker.Worker
 import io.embrace.android.embracesdk.testframework.OtelSdkMode
 import io.embrace.android.embracesdk.testframework.SdkIntegrationTestRule
 import io.embrace.android.embracesdk.testframework.actions.EmbraceSetupInterface
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertTrue
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -96,6 +98,10 @@ internal class UseAfterDisableTest(
                 recordSession {
                     embrace.disable()
                 }
+                // payload writes still in flight when disable() runs can fail as the directory is
+                // deleted underneath it. Discard those errors
+                assertTrue(testRule.setup.awaitWorkerTermination())
+                errorHandler.sdkErrorMessages.removeAll { it.msg == SdkErrorType.PayloadStorageFail.toString() }
                 returnIfConditionMet(
                     desiredValueSupplier = { true },
                     dataProvider = { persistedFiles() },

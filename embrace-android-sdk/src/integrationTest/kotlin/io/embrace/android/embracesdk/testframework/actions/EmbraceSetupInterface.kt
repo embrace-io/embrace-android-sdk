@@ -449,6 +449,11 @@ internal class EmbraceSetupInterface(
     fun getFakedWorkerExecutor(worker: Worker.Background): BlockingScheduledExecutorService =
         (workerThreadPool as FakeWorkerThreadPool).executorFor(worker)
 
+    /**
+     * Waits for work already running on real workers to finish once the SDK has shut them down.
+     */
+    fun awaitWorkerTermination(timeoutMs: Long = 10_000L): Boolean = workerThreadPool.awaitTermination(timeoutMs)
+
     fun getStore(): KeyValueStore = keyValueStore
 
     /**

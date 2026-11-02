@@ -12,9 +12,7 @@ import android.os.storage.StorageManager
 import androidx.annotation.RequiresApi
 import io.embrace.android.embracesdk.internal.clock.Clock
 import io.embrace.android.embracesdk.internal.config.ConfigService
-import io.embrace.android.embracesdk.internal.envelope.resource.EnvelopeResourceSource
 import io.embrace.android.embracesdk.internal.injection.getSystemServiceSafe
-import io.embrace.android.embracesdk.internal.store.KeyValueStore
 import io.embrace.android.embracesdk.internal.utils.BuildVersionChecker
 import io.embrace.android.embracesdk.internal.utils.VersionChecker
 import io.embrace.android.embracesdk.internal.worker.BackgroundWorker
@@ -24,16 +22,12 @@ import io.embrace.android.embracesdk.internal.worker.BackgroundWorker
  * which is used as metadata with telemetry submitted to the Embrace API.
  */
 internal class EmbraceMetadataService(
-    resourceSource: Lazy<EnvelopeResourceSource>,
     private val context: Context,
     private val configService: ConfigService,
-    private val store: KeyValueStore,
     private val clock: Clock,
     private val metadataBackgroundWorker: BackgroundWorker,
     private val versionChecker: VersionChecker = BuildVersionChecker,
 ) : MetadataService {
-
-    private val res by lazy { resourceSource.value.getEnvelopeResource() }
 
     private val statFs by lazy { StatFs(Environment.getDataDirectory().path) }
 
@@ -43,23 +37,11 @@ internal class EmbraceMetadataService(
     @Volatile
     private var clockDrift: ClockDrift? = null
 
-    private var appVersion: String?
-        get() = store.getString(PREVIOUS_APP_VERSION_KEY)
-        set(value) = store.editAndCommit { putString(PREVIOUS_APP_VERSION_KEY, value) }
-
-    private var osVersion: String?
-        get() = store.getString(PREVIOUS_OS_VERSION_KEY)
-        set(value) = store.editAndCommit { putString(PREVIOUS_OS_VERSION_KEY, value) }
-
     /**
      * Queues in a single thread executor callables to retrieve values in background
      */
     override fun precomputeValues() {
         metadataBackgroundWorker.submit {
-            store.batch {
-                appVersion = res.appVersion
-                osVersion = res.osVersion
-            }
             val free = statFs.freeBytes
             if (versionChecker.isAtLeast(Build.VERSION_CODES.O) && configService.config.autoDataCapture.diskUsageCaptureEnabled) {
                 val deviceDiskAppUsage = getDeviceDiskAppUsage(
@@ -127,10 +109,5 @@ internal class EmbraceMetadataService(
         }
 
         return ClockDrift(networkDriftMillis = networkDrift, gnssDriftMillis = gnssDrift)
-    }
-
-    private companion object {
-        const val PREVIOUS_APP_VERSION_KEY = "io.embrace.lastappversion"
-        const val PREVIOUS_OS_VERSION_KEY = "io.embrace.lastosversion"
     }
 }

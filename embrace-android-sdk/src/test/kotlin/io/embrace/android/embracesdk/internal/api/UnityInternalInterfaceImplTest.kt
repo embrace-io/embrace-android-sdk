@@ -39,11 +39,21 @@ internal class UnityInternalInterfaceImplTest {
     }
 
     @Test
+    fun testSetUnityBuildGuid() {
+        impl.setUnityBuildGuid("buildGuid")
+        impl.setUnityBuildGuid(null)
+        impl.setUnityBuildGuid("")
+        assertEquals("buildGuid", hostedSdkVersionInfo.unityBuildIdNumber)
+    }
+
+    @Suppress("DEPRECATION")
+    @Test
     fun testSetUnityMetaDataNull() {
         impl.setUnityMetaData(null, null, "unitySdkVersion")
         assertEquals(emptyMap<String, Any?>(), store.values())
     }
 
+    @Suppress("DEPRECATION")
     @Test
     fun testSetUnityMetaDataUsesSingleCommit() {
         impl.setUnityMetaData("unityVersion", "buildGuid", "unitySdkVersion")

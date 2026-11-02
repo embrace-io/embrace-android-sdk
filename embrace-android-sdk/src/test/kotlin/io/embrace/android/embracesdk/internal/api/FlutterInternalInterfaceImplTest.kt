@@ -34,16 +34,16 @@ internal class FlutterInternalInterfaceImplTest {
     }
 
     @Test
-    fun testSetFlutterSdkVersion() {
-        impl.setEmbraceFlutterSdkVersion("2.12")
-        impl.setEmbraceFlutterSdkVersion(null)
+    fun testSetHostedSdkVersion() {
+        impl.setHostedSdkVersion("2.12")
+        impl.setHostedSdkVersion(null)
         assertEquals("2.12", hostedSdkVersionInfo.hostedSdkVersion)
     }
 
     @Test
-    fun testSetDartVersion() {
-        impl.setDartVersion("3.1")
-        impl.setDartVersion(null)
+    fun testSetHostedPlatformVersion() {
+        impl.setHostedPlatformVersion("3.1")
+        impl.setHostedPlatformVersion(null)
         assertEquals("3.1", hostedSdkVersionInfo.hostedPlatformVersion)
     }
 }

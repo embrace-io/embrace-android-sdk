@@ -63,8 +63,8 @@ internal class FlutterInternalInterfaceTest(
             instrumentedConfig = instrumentedConfig,
             testCaseAction = {
                 recordSession {
-                    EmbraceInternalApi.flutterInternalInterface.setDartVersion("28.9.1")
-                    EmbraceInternalApi.flutterInternalInterface.setEmbraceFlutterSdkVersion("1.2.3")
+                    EmbraceInternalApi.flutterInternalInterface.setHostedPlatformVersion("28.9.1")
+                    EmbraceInternalApi.flutterInternalInterface.setHostedSdkVersion("1.2.3")
                 }
             },
             assertAction = {
@@ -83,8 +83,8 @@ internal class FlutterInternalInterfaceTest(
             instrumentedConfig = instrumentedConfig,
             testCaseAction = {
                 recordSession {
-                    EmbraceInternalApi.flutterInternalInterface.setDartVersion("28.9.1")
-                    EmbraceInternalApi.flutterInternalInterface.setEmbraceFlutterSdkVersion("1.2.3")
+                    EmbraceInternalApi.flutterInternalInterface.setHostedPlatformVersion("28.9.1")
+                    EmbraceInternalApi.flutterInternalInterface.setHostedSdkVersion("1.2.3")
                 }
                 recordSession()
             },
@@ -104,13 +104,13 @@ internal class FlutterInternalInterfaceTest(
             instrumentedConfig = instrumentedConfig,
             testCaseAction = {
                 recordSession {
-                    EmbraceInternalApi.flutterInternalInterface.setDartVersion("28.9.1")
-                    EmbraceInternalApi.flutterInternalInterface.setEmbraceFlutterSdkVersion("1.2.3")
+                    EmbraceInternalApi.flutterInternalInterface.setHostedPlatformVersion("28.9.1")
+                    EmbraceInternalApi.flutterInternalInterface.setHostedSdkVersion("1.2.3")
                 }
 
                 recordSession {
-                    EmbraceInternalApi.flutterInternalInterface.setDartVersion(null)
-                    EmbraceInternalApi.flutterInternalInterface.setEmbraceFlutterSdkVersion(null)
+                    EmbraceInternalApi.flutterInternalInterface.setHostedPlatformVersion(null)
+                    EmbraceInternalApi.flutterInternalInterface.setHostedSdkVersion(null)
                 }
             },
             assertAction = {
@@ -129,13 +129,13 @@ internal class FlutterInternalInterfaceTest(
             instrumentedConfig = instrumentedConfig,
             testCaseAction = {
                 recordSession {
-                    EmbraceInternalApi.flutterInternalInterface.setDartVersion("28.9.1")
-                    EmbraceInternalApi.flutterInternalInterface.setEmbraceFlutterSdkVersion("1.2.3")
+                    EmbraceInternalApi.flutterInternalInterface.setHostedPlatformVersion("28.9.1")
+                    EmbraceInternalApi.flutterInternalInterface.setHostedSdkVersion("1.2.3")
                 }
 
                 recordSession {
-                    EmbraceInternalApi.flutterInternalInterface.setDartVersion("28.9.2")
-                    EmbraceInternalApi.flutterInternalInterface.setEmbraceFlutterSdkVersion("1.2.4")
+                    EmbraceInternalApi.flutterInternalInterface.setHostedPlatformVersion("28.9.2")
+                    EmbraceInternalApi.flutterInternalInterface.setHostedSdkVersion("1.2.4")
                 }
             },
             assertAction = {

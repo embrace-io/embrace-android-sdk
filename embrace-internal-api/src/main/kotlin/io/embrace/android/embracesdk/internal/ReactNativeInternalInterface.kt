@@ -27,11 +27,13 @@ interface ReactNativeInternalInterface : EmbraceInternalInterface {
     /**
      * @suppress
      */
+    @Deprecated("Use setHostedSdkVersion() instead.", ReplaceWith("setHostedSdkVersion(version)"))
     fun setReactNativeSdkVersion(version: String?)
 
     /**
      * @suppress
      */
+    @Deprecated("Use setHostedPlatformVersion() instead.", ReplaceWith("setHostedPlatformVersion(version)"))
     fun setReactNativeVersionNumber(version: String?)
 
     /**

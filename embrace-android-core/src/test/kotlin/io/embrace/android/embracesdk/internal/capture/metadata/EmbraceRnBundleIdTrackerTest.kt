@@ -7,8 +7,6 @@ import io.embrace.android.embracesdk.fakes.FakeKeyValueStore
 import io.embrace.android.embracesdk.fakes.fakeBackgroundWorker
 import io.embrace.android.embracesdk.internal.config.BuildInfo
 import io.embrace.android.embracesdk.internal.config.ConfigService
-import io.embrace.android.embracesdk.internal.envelope.metadata.HostedSdkVersionInfo
-import io.embrace.android.embracesdk.internal.injection.createHostedSdkVersionInfo
 import io.embrace.android.embracesdk.internal.logging.SdkErrorType
 import io.embrace.android.embracesdk.internal.payload.AppFramework
 import io.embrace.android.embracesdk.internal.worker.BackgroundWorker
@@ -25,7 +23,6 @@ import java.util.Locale
 
 internal class EmbraceRnBundleIdTrackerTest {
 
-    private lateinit var hostedSdkVersionInfo: HostedSdkVersionInfo
     private lateinit var openedAssets: MutableList<String>
     private var assetStream: InputStream? = null
     private lateinit var buildInfo: BuildInfo
@@ -42,7 +39,6 @@ internal class EmbraceRnBundleIdTrackerTest {
         }
         buildInfo = configService.buildInfo
         store = FakeKeyValueStore()
-        hostedSdkVersionInfo = createHostedSdkVersionInfo(AppFramework.REACT_NATIVE, store, FakeErrorHandler())
     }
 
     private fun openAsset(name: String): InputStream {

@@ -3,6 +3,7 @@ package io.embrace.android.embracesdk.internal.prefs
 import io.embrace.android.embracesdk.fakes.FakeClock
 import io.embrace.android.embracesdk.fakes.FakeKeyValueStore
 import io.embrace.android.embracesdk.fakes.TestUuidSource
+import io.embrace.android.embracesdk.internal.payload.AppFramework
 import io.embrace.android.embracesdk.internal.session.UserSessionMetadata
 import io.embrace.android.embracesdk.internal.store.PersistedSdkState
 import org.junit.Assert.assertEquals
@@ -48,6 +49,20 @@ internal class PrefsPersistedSdkStateStoreTest {
         "io.embrace.userpersonas" to setOf("persona"),
         "io.embrace.session.properties" to mapOf("prop" to "value"),
         "embrace.user_session" to legacyUserSessionAttrs,
+        "io.embrace.unity.sdk.version" to "1.2.0",
+        "io.embrace.unity.version" to "2022.3",
+        "io.embrace.unity.build.id" to "5092abc",
+    )
+
+    private val allHostedSdkKeys = listOf(
+        "io.embrace.reactnative.sdk.version",
+        "io.embrace.reactnative.version",
+        "io.embrace.javascript.patch",
+        "io.embrace.unity.sdk.version",
+        "io.embrace.unity.version",
+        "io.embrace.unity.build.id",
+        "io.embrace.flutter.sdk.version",
+        "io.embrace.dart.sdk.version",
     )
 
     private val legacyState = PersistedSdkState(
@@ -59,13 +74,16 @@ internal class PrefsPersistedSdkStateStoreTest {
         userPersonas = setOf("persona"),
         sessionProperties = mapOf("prop" to "value"),
         userSession = userSession,
+        hostedSdkVersion = "1.2.0",
+        hostedPlatformVersion = "2022.3",
+        unityBuildIdNumber = "5092abc",
     )
 
     @Before
     fun setUp() {
         kvStore = FakeKeyValueStore()
         clock = FakeClock()
-        store = PrefsPersistedSdkStateStore(kvStore, clock, TestUuidSource())
+        store = PrefsPersistedSdkStateStore(kvStore, clock, TestUuidSource(), AppFramework.UNITY)
     }
 
     @Test
@@ -82,7 +100,7 @@ internal class PrefsPersistedSdkStateStoreTest {
         val expected = store.snapshot()
         clock.tick(1000L)
         assertEquals(expected, store.snapshot())
-        assertEquals(expected, PrefsPersistedSdkStateStore(kvStore, clock, TestUuidSource(seed = 1)).snapshot())
+        assertEquals(expected, PrefsPersistedSdkStateStore(kvStore, clock, TestUuidSource(seed = 1), AppFramework.UNITY).snapshot())
         assertEquals(1, kvStore.commitCount)
     }
 
@@ -102,6 +120,9 @@ internal class PrefsPersistedSdkStateStoreTest {
             userPersonas = setOf("persona")
             sessionProperties = mapOf("prop" to "value")
             userSession = this@PrefsPersistedSdkStateStoreTest.userSession
+            hostedSdkVersion = "1.2.0"
+            hostedPlatformVersion = "2022.3"
+            unityBuildIdNumber = "5092abc"
         }
         val expected = legacyState.copy(deviceId = expectedDeviceId, installTimestampMs = clock.now())
         assertEquals(expected, state)
@@ -110,7 +131,7 @@ internal class PrefsPersistedSdkStateStoreTest {
             storedValues(),
         )
         assertEquals(2, kvStore.commitCount)
-        assertEquals(expected, PrefsPersistedSdkStateStore(kvStore, clock, TestUuidSource()).snapshot())
+        assertEquals(expected, PrefsPersistedSdkStateStore(kvStore, clock, TestUuidSource(), AppFramework.UNITY).snapshot())
     }
 
     @Test
@@ -123,6 +144,9 @@ internal class PrefsPersistedSdkStateStoreTest {
             userPersonas = null
             sessionProperties = emptyMap()
             userSession = null
+            hostedSdkVersion = null
+            hostedPlatformVersion = null
+            unityBuildIdNumber = null
         }
         assertEquals(
             mapOf("io.embrace.deviceid" to "legacy-id", "io.embrace.installtimestamp" to 99L),
@@ -130,7 +154,7 @@ internal class PrefsPersistedSdkStateStoreTest {
         )
         assertEquals(
             PersistedSdkState(deviceId = "legacy-id", installTimestampMs = 99L),
-            PrefsPersistedSdkStateStore(kvStore, clock, TestUuidSource()).snapshot(),
+            PrefsPersistedSdkStateStore(kvStore, clock, TestUuidSource(), AppFramework.UNITY).snapshot(),
         )
     }
 
@@ -139,6 +163,49 @@ internal class PrefsPersistedSdkStateStoreTest {
         seedLegacyValues()
         assertEquals(legacyState.copy(userId = "new-id"), store.update { userId = "new-id" })
         assertEquals(legacyValues + ("io.embrace.userid" to "new-id"), storedValues())
+    }
+
+    @Test
+    fun `each framework reads and writes only its own hosted SDK keys`() {
+        mapOf(
+            AppFramework.REACT_NATIVE to listOf(
+                "io.embrace.reactnative.sdk.version",
+                "io.embrace.reactnative.version",
+                null,
+                "io.embrace.javascript.patch",
+            ),
+            AppFramework.UNITY to listOf(
+                "io.embrace.unity.sdk.version",
+                "io.embrace.unity.version",
+                "io.embrace.unity.build.id",
+                null,
+            ),
+            AppFramework.FLUTTER to listOf("io.embrace.flutter.sdk.version", "io.embrace.dart.sdk.version", null, null),
+            AppFramework.NATIVE to listOf(null, null, null, null),
+        ).forEach { (framework, keys) ->
+            kvStore = FakeKeyValueStore()
+            kvStore.editAndCommit { allHostedSdkKeys.forEach { putString(it, "old") } }
+            val store = PrefsPersistedSdkStateStore(kvStore, clock, TestUuidSource(), framework)
+            val state = store.snapshot()
+            assertEquals(
+                framework.name,
+                keys.map { key -> key?.let { "old" } },
+                listOf(state.hostedSdkVersion, state.hostedPlatformVersion, state.unityBuildIdNumber, state.javaScriptPatchNumber),
+            )
+
+            store.update {
+                hostedSdkVersion = "1"
+                hostedPlatformVersion = "2"
+                unityBuildIdNumber = "3"
+                javaScriptPatchNumber = null
+            }
+            val written = keys.zip(listOf("1", "2", "3", null)).mapNotNull { (key, value) -> key?.let { it to value } }
+            assertEquals(
+                framework.name,
+                allHostedSdkKeys.associateWith { "old" } + written,
+                allHostedSdkKeys.associateWith(kvStore::getString),
+            )
+        }
     }
 
     @Test
@@ -175,7 +242,7 @@ internal class PrefsPersistedSdkStateStoreTest {
         assertEquals(expectedAttrs, kvStore.getStringMap("embrace.user_session"))
         assertEquals(
             userSession.copy(isBackgroundOnly = true),
-            PrefsPersistedSdkStateStore(kvStore, clock, TestUuidSource()).snapshot().userSession,
+            PrefsPersistedSdkStateStore(kvStore, clock, TestUuidSource(), AppFramework.UNITY).snapshot().userSession,
         )
     }
 
@@ -190,7 +257,7 @@ internal class PrefsPersistedSdkStateStoreTest {
         legacyUserSessionAttrs.keys.forEach { key ->
             kvStore = FakeKeyValueStore()
             seedUserSession(legacyUserSessionAttrs - key)
-            assertNull(key, PrefsPersistedSdkStateStore(kvStore, clock, TestUuidSource()).snapshot().userSession)
+            assertNull(key, PrefsPersistedSdkStateStore(kvStore, clock, TestUuidSource(), AppFramework.UNITY).snapshot().userSession)
         }
     }
 

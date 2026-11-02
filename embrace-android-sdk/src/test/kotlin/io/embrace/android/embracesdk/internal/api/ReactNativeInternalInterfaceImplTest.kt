@@ -6,7 +6,7 @@ import io.embrace.android.embracesdk.fakes.FakeEnvelopeResourceSource
 import io.embrace.android.embracesdk.fakes.FakeErrorHandler
 import io.embrace.android.embracesdk.fakes.FakeInstrumentationArgs
 import io.embrace.android.embracesdk.fakes.FakeInternalTelemetryService
-import io.embrace.android.embracesdk.fakes.FakeKeyValueStore
+import io.embrace.android.embracesdk.fakes.FakePersistedSdkStateStore
 import io.embrace.android.embracesdk.fakes.FakeRnBundleIdTracker
 import io.embrace.android.embracesdk.fakes.FakeTelemetryDestination
 import io.embrace.android.embracesdk.fakes.TestPlatformSerializer
@@ -31,7 +31,7 @@ import org.junit.Test
 internal class ReactNativeInternalInterfaceImplTest {
 
     private lateinit var impl: HostedSdkInternalInterfaceImpl
-    private lateinit var store: FakeKeyValueStore
+    private lateinit var store: FakePersistedSdkStateStore
     private lateinit var instrumentationRegistry: InstrumentationRegistry
     private lateinit var instrumentationArgs: InstrumentationArgs
     private lateinit var rnBundleIdTracker: FakeRnBundleIdTracker
@@ -41,7 +41,7 @@ internal class ReactNativeInternalInterfaceImplTest {
 
     @Before
     fun setUp() {
-        store = FakeKeyValueStore()
+        store = FakePersistedSdkStateStore()
         rnBundleIdTracker = FakeRnBundleIdTracker()
         hostedSdkVersionInfo = createHostedSdkVersionInfo(AppFramework.REACT_NATIVE, store, FakeErrorHandler())
         errorHandler = FakeErrorHandler(false)
@@ -65,28 +65,28 @@ internal class ReactNativeInternalInterfaceImplTest {
     fun testSetJavaScriptPatchNumberNull() {
         impl.setJavaScriptPatchNumber("123")
         impl.setJavaScriptPatchNumber(null)
-        assertEquals("123", store.values().values.single())
+        assertEquals("123", store.state.javaScriptPatchNumber)
     }
 
     @Test
     fun testSetJavaScriptPatchNumberEmpty() {
         impl.setJavaScriptPatchNumber("123")
         impl.setJavaScriptPatchNumber("")
-        assertEquals("123", store.values().values.single())
+        assertEquals("123", store.state.javaScriptPatchNumber)
     }
 
     @Test
     fun testSetHostedPlatformVersionNull() {
         impl.setHostedPlatformVersion("0.1")
         impl.setHostedPlatformVersion(null)
-        assertEquals("0.1", store.values().values.single())
+        assertEquals("0.1", store.state.hostedPlatformVersion)
     }
 
     @Test
     fun testSetHostedPlatformVersionEmpty() {
         impl.setHostedPlatformVersion("0.1")
         impl.setHostedPlatformVersion("")
-        assertEquals("0.1", store.values().values.single())
+        assertEquals("0.1", store.state.hostedPlatformVersion)
     }
 
     @Test

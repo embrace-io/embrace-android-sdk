@@ -2,7 +2,7 @@ package io.embrace.android.embracesdk.internal.api
 
 import io.embrace.android.embracesdk.fakes.FakeErrorHandler
 import io.embrace.android.embracesdk.fakes.FakeInternalTelemetryService
-import io.embrace.android.embracesdk.fakes.FakeKeyValueStore
+import io.embrace.android.embracesdk.fakes.FakePersistedSdkStateStore
 import io.embrace.android.embracesdk.fakes.unimplemented
 import io.embrace.android.embracesdk.internal.api.delegate.HostedSdkInternalInterfaceImpl
 import io.embrace.android.embracesdk.internal.envelope.metadata.HostedSdkVersionInfo
@@ -17,12 +17,12 @@ internal class UnityInternalInterfaceImplTest {
 
     private lateinit var hostedSdkVersionInfo: HostedSdkVersionInfo
     private lateinit var impl: HostedSdkInternalInterfaceImpl
-    private lateinit var store: FakeKeyValueStore
+    private lateinit var store: FakePersistedSdkStateStore
     private lateinit var errorHandler: ErrorHandler
 
     @Before
     fun setUp() {
-        store = FakeKeyValueStore()
+        store = FakePersistedSdkStateStore()
         errorHandler = FakeErrorHandler()
         hostedSdkVersionInfo = createHostedSdkVersionInfo(AppFramework.UNITY, store, errorHandler)
         impl = HostedSdkInternalInterfaceImpl(
@@ -50,15 +50,15 @@ internal class UnityInternalInterfaceImplTest {
     @Test
     fun testSetUnityMetaDataNull() {
         impl.setUnityMetaData(null, null, "unitySdkVersion")
-        assertEquals(emptyMap<String, Any?>(), store.values())
+        assertEquals(0, store.updateCount)
     }
 
     @Suppress("DEPRECATION")
     @Test
-    fun testSetUnityMetaDataUsesSingleCommit() {
+    fun testSetUnityMetaDataUsesSingleUpdate() {
         impl.setUnityMetaData("unityVersion", "buildGuid", "unitySdkVersion")
 
-        assertEquals(1, store.commitCount)
+        assertEquals(1, store.updateCount)
         assertEquals("unityVersion", hostedSdkVersionInfo.hostedPlatformVersion)
         assertEquals("unitySdkVersion", hostedSdkVersionInfo.hostedSdkVersion)
         assertEquals("buildGuid", hostedSdkVersionInfo.unityBuildIdNumber)

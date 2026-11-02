@@ -47,4 +47,24 @@ data class PersistedSdkState(
      * The user session that was last persisted, or null if there is none.
      */
     val userSession: UserSessionMetadata.Classified? = null,
+
+    /**
+     * The version of the hosted (React Native, Unity or Flutter) SDK.
+     */
+    val hostedSdkVersion: String? = null,
+
+    /**
+     * The version of the hosted platform (React Native, Unity or Dart).
+     */
+    val hostedPlatformVersion: String? = null,
+
+    /**
+     * The Unity build ID.
+     */
+    val unityBuildIdNumber: String? = null,
+
+    /**
+     * The React Native JavaScript patch number.
+     */
+    val javaScriptPatchNumber: String? = null,
 )

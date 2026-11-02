@@ -3,51 +3,40 @@ package io.embrace.android.embracesdk.internal.envelope.metadata
 import io.embrace.android.embracesdk.internal.logging.ErrorHandler
 import io.embrace.android.embracesdk.internal.logging.SdkErrorType
 import io.embrace.android.embracesdk.internal.logging.guardSdkCodeEach
-import io.embrace.android.embracesdk.internal.store.KeyValueStore
+import io.embrace.android.embracesdk.internal.payload.AppFramework
+import io.embrace.android.embracesdk.internal.store.PersistedSdkStateEditor
+import io.embrace.android.embracesdk.internal.store.PersistedSdkStateStore
+import io.embrace.android.embracesdk.internal.store.edit
 import java.util.concurrent.CopyOnWriteArrayList
 
 /**
- * Stores the values hosted SDKs report under the given keys. A value without a key is never stored.
+ * Stores the values hosted SDKs report in [PersistedSdkStateStore]. Values that [appFramework] doesn't report are
+ * never stored.
  */
 class SdkVersionInfo(
-    private val impl: KeyValueStore,
+    private val stateStore: PersistedSdkStateStore,
     private val errorHandler: ErrorHandler,
-    private val sdkVersionKey: String? = null,
-    private val platformVersionKey: String? = null,
-    private val unityBuildIdKey: String? = null,
-    private val javaScriptPatchKey: String? = null,
+    private val appFramework: AppFramework,
 ) : HostedSdkVersionInfo {
 
     private val listeners = CopyOnWriteArrayList<() -> Unit>()
 
     override val hostedSdkVersion: String?
-        get() = sdkVersionKey?.let(impl::getString)
+        get() = stateStore.snapshot().hostedSdkVersion
 
     override val hostedPlatformVersion: String?
-        get() = platformVersionKey?.let(impl::getString)
+        get() = stateStore.snapshot().hostedPlatformVersion
 
     override val unityBuildIdNumber: String?
-        get() = unityBuildIdKey?.let(impl::getString)
+        get() = stateStore.snapshot().unityBuildIdNumber
 
     override val javaScriptPatchNumber: String?
-        get() = javaScriptPatchKey?.let(impl::getString)
+        get() = stateStore.snapshot().javaScriptPatchNumber
 
     override fun update(action: HostedSdkVersionEditor.() -> Unit) {
-        val sdkVersion = hostedSdkVersion
-        val platformVersion = hostedPlatformVersion
-        val unityBuildId = unityBuildIdNumber
-        val javaScriptPatch = javaScriptPatchNumber
-        val editor = HostedSdkVersionEditor(sdkVersion, platformVersion, unityBuildId, javaScriptPatch).apply(action)
-        val changes = listOfNotNull(
-            changeOf(sdkVersionKey, sdkVersion, editor.hostedSdkVersion),
-            changeOf(platformVersionKey, platformVersion, editor.hostedPlatformVersion),
-            changeOf(unityBuildIdKey, unityBuildId, editor.unityBuildIdNumber),
-            changeOf(javaScriptPatchKey, javaScriptPatch, editor.javaScriptPatchNumber),
-        )
-        if (changes.isNotEmpty()) {
-            impl.editAndCommit {
-                changes.forEach { (key, value) -> putString(key, value) }
-            }
+        val current = stateStore.snapshot()
+        if (current.edit { applyHosted(action) } != current) {
+            stateStore.update { applyHosted(action) }
             errorHandler.guardSdkCodeEach(SdkErrorType.SessionPartListenerFail, listeners) { it() }
         }
     }
@@ -59,6 +48,23 @@ class SdkVersionInfo(
         listeners.add(listener)
     }
 
-    private fun changeOf(key: String?, old: String?, new: String?): Pair<String, String?>? =
-        if (key != null && old != new) key to new else null
+    private fun PersistedSdkStateEditor.applyHosted(action: HostedSdkVersionEditor.() -> Unit) {
+        if (appFramework == AppFramework.NATIVE) {
+            return
+        }
+        val editor = HostedSdkVersionEditor(
+            hostedSdkVersion,
+            hostedPlatformVersion,
+            unityBuildIdNumber,
+            javaScriptPatchNumber,
+        ).apply(action)
+        hostedSdkVersion = editor.hostedSdkVersion
+        hostedPlatformVersion = editor.hostedPlatformVersion
+        if (appFramework == AppFramework.UNITY) {
+            unityBuildIdNumber = editor.unityBuildIdNumber
+        }
+        if (appFramework == AppFramework.REACT_NATIVE) {
+            javaScriptPatchNumber = editor.javaScriptPatchNumber
+        }
+    }
 }

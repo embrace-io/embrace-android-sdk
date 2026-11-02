@@ -36,6 +36,7 @@ import io.embrace.android.embracesdk.internal.resurrection.PayloadResurrectionSe
 import io.embrace.android.embracesdk.internal.serialization.PlatformSerializer
 import io.embrace.android.embracesdk.internal.spans.CurrentSessionPartSpan
 import io.embrace.android.embracesdk.internal.store.KeyValueStore
+import io.embrace.android.embracesdk.internal.store.PersistedSdkStateStore
 import io.embrace.android.embracesdk.internal.utils.EmbTrace
 import io.embrace.android.embracesdk.internal.worker.BackgroundWorker
 
@@ -55,31 +56,9 @@ fun createRnBundleIdTracker(
 
 fun createHostedSdkVersionInfo(
     appFramework: AppFramework,
-    store: KeyValueStore,
+    stateStore: PersistedSdkStateStore,
     errorHandler: ErrorHandler,
-): SdkVersionInfo = when (appFramework) {
-    AppFramework.REACT_NATIVE -> SdkVersionInfo(
-        store,
-        errorHandler,
-        sdkVersionKey = "io.embrace.reactnative.sdk.version",
-        platformVersionKey = "io.embrace.reactnative.version",
-        javaScriptPatchKey = "io.embrace.javascript.patch",
-    )
-    AppFramework.UNITY -> SdkVersionInfo(
-        store,
-        errorHandler,
-        sdkVersionKey = "io.embrace.unity.sdk.version",
-        platformVersionKey = "io.embrace.unity.version",
-        unityBuildIdKey = "io.embrace.unity.build.id",
-    )
-    AppFramework.FLUTTER -> SdkVersionInfo(
-        store,
-        errorHandler,
-        sdkVersionKey = "io.embrace.flutter.sdk.version",
-        platformVersionKey = "io.embrace.dart.sdk.version",
-    )
-    else -> SdkVersionInfo(store, errorHandler)
-}
+): SdkVersionInfo = SdkVersionInfo(stateStore, errorHandler, appFramework)
 
 fun createEnvelopeResourceSource(
     context: Context,

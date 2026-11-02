@@ -8,6 +8,7 @@ import io.embrace.android.embracesdk.internal.config.ConfigService
 import io.embrace.android.embracesdk.internal.config.PersistedConfig
 import io.embrace.android.embracesdk.internal.config.instrumented.InstrumentedConfigImpl
 import io.embrace.android.embracesdk.internal.config.instrumented.schema.InstrumentedConfig
+import io.embrace.android.embracesdk.internal.payload.AppFramework
 import io.embrace.android.embracesdk.internal.prefs.PrefsPersistedSdkStateStore
 import io.embrace.android.embracesdk.internal.prefs.createKeyValueStore
 import io.embrace.android.embracesdk.internal.serialization.EmbraceSerializer
@@ -45,7 +46,12 @@ internal class ConfigLoadServices(
     }
 
     val persistedSdkStateStore: Lazy<PersistedSdkStateStore> = lazy {
-        PrefsPersistedSdkStateStore(keyValueStore.value, preStartServices.clock, uuidSource)
+        PrefsPersistedSdkStateStore(
+            keyValueStore.value,
+            preStartServices.clock,
+            uuidSource,
+            AppFramework.fromString(instrumentedConfig.project.getAppFramework()) ?: AppFramework.NATIVE,
+        )
     }
 
     val persistedConfig: PersistedConfig = EmbTrace.trace(

@@ -35,7 +35,6 @@ import io.embrace.android.embracesdk.internal.resurrection.PayloadResurrectionSe
 import io.embrace.android.embracesdk.internal.resurrection.PayloadResurrectionServiceImpl
 import io.embrace.android.embracesdk.internal.serialization.PlatformSerializer
 import io.embrace.android.embracesdk.internal.spans.CurrentSessionPartSpan
-import io.embrace.android.embracesdk.internal.store.KeyValueStore
 import io.embrace.android.embracesdk.internal.store.PersistedSdkStateStore
 import io.embrace.android.embracesdk.internal.utils.EmbTrace
 import io.embrace.android.embracesdk.internal.worker.BackgroundWorker
@@ -43,13 +42,13 @@ import io.embrace.android.embracesdk.internal.worker.BackgroundWorker
 fun createRnBundleIdTracker(
     context: Context,
     configService: ConfigService,
-    store: KeyValueStore,
+    stateStore: PersistedSdkStateStore,
     worker: BackgroundWorker,
     errorHandler: ErrorHandler,
 ): RnBundleIdTracker = RnBundleIdTrackerImpl(
     { context.assets.open(it) },
     configService,
-    store,
+    stateStore,
     worker,
     errorHandler,
 ).apply { startAsyncRetrieval() }

@@ -591,7 +591,7 @@ internal fun createRealSdkInstance(
             createRnBundleIdTracker(
                 context = appContext,
                 configService = configService,
-                store = store,
+                stateStore = persistedSdkStateStore,
                 worker = workerThreadPool.backgroundWorker(Worker.Background.NonIoRegWorker),
                 errorHandler = errorHandler,
             )

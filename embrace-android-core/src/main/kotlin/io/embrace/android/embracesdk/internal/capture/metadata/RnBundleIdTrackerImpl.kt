@@ -5,7 +5,7 @@ import io.embrace.android.embracesdk.internal.logging.ErrorHandler
 import io.embrace.android.embracesdk.internal.logging.SdkErrorType
 import io.embrace.android.embracesdk.internal.logging.guardSdkCodeEach
 import io.embrace.android.embracesdk.internal.payload.AppFramework
-import io.embrace.android.embracesdk.internal.store.KeyValueStore
+import io.embrace.android.embracesdk.internal.store.PersistedSdkStateStore
 import io.embrace.android.embracesdk.internal.worker.BackgroundWorker
 import java.io.FileInputStream
 import java.io.InputStream
@@ -16,7 +16,7 @@ import java.util.concurrent.CopyOnWriteArrayList
 internal class RnBundleIdTrackerImpl(
     private val openAsset: (String) -> InputStream,
     private val configService: ConfigService,
-    private val store: KeyValueStore,
+    private val stateStore: PersistedSdkStateStore,
     private val metadataBackgroundWorker: BackgroundWorker,
     private val errorHandler: ErrorHandler,
 ) : RnBundleIdTracker {
@@ -102,17 +102,18 @@ internal class RnBundleIdTrackerImpl(
     }
 
     private var javaScriptBundleURL: String?
-        get() = store.getString(JAVA_SCRIPT_BUNDLE_URL_KEY)
-        set(value) = store.editAndCommit { putString(JAVA_SCRIPT_BUNDLE_URL_KEY, value) }
+        get() = stateStore.snapshot().rnBundleUrl
+        set(value) {
+            stateStore.update { rnBundleUrl = value }
+        }
 
     private var javaScriptBundleId: String?
-        get() = store.getString(JAVA_SCRIPT_BUNDLE_ID_KEY)
-        set(value) = store.editAndCommit { putString(JAVA_SCRIPT_BUNDLE_ID_KEY, value) }
+        get() = stateStore.snapshot().rnBundleId
+        set(value) {
+            stateStore.update { rnBundleId = value }
+        }
 
     companion object {
-        private const val JAVA_SCRIPT_BUNDLE_URL_KEY = "io.embrace.jsbundle.url"
-        private const val JAVA_SCRIPT_BUNDLE_ID_KEY = "io.embrace.jsbundle.id"
-
         private fun getBundleAssetName(bundleUrl: String): String {
             return bundleUrl.substring(bundleUrl.indexOf("://") + 3)
         }

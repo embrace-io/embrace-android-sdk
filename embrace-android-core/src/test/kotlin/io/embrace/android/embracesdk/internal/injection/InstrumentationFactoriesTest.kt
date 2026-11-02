@@ -17,6 +17,7 @@ import io.embrace.android.embracesdk.fakes.injection.FakeWorkerThreadPool
 import io.embrace.android.embracesdk.fakes.injection.TestInitServices
 import io.embrace.android.embracesdk.internal.utils.event.EventBus
 import io.embrace.android.embracesdk.internal.worker.Worker
+import org.junit.Assert.assertEquals
 import org.junit.Assert.assertSame
 import org.junit.Test
 
@@ -59,6 +60,12 @@ internal class InstrumentationFactoriesTest {
         )
         assertSame(configService, args.configService)
         assertSame(destination, args.destination)
-        assertSame(store, args.store)
+
+        args.deliveredAeiStore.add("aei-id")
+        args.networkCaptureRuleStore.decrement("rule-id", 5)
+        assertEquals(
+            mapOf("io.embrace.aeiHashCode" to setOf("aei-id"), "io.embrace.networkcapturerulerule-id" to 4),
+            store.values(),
+        )
     }
 }

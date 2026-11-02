@@ -27,7 +27,7 @@ class AeiInstrumentationProvider : InstrumentationProvider {
                     recordSourceProvider = {
                         args.systemService<ActivityManager>(Context.ACTIVITY_SERVICE)?.let(::ActivityManagerAeiRecordSource)
                     },
-                    store = args.store,
+                    store = args.deliveredAeiStore,
                     ordinalStore = args.ordinalStore,
                 )
             } else {

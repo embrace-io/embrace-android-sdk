@@ -112,6 +112,7 @@ gradle-test-kit = { module = "dev.gradleplugins:gradle-test-kit", version.ref = 
 zstd-jni = { module = "com.github.luben:zstd-jni", version.ref = "zstdJni" }
 agp-api = { module = "com.android.tools.build:gradle-api", version.ref = "agp-api" }
 smali-baksmali = { module = "com.android.tools.smali:smali-baksmali", version.ref = "smali" }
+smali-dexlib2 = { module = "com.android.tools.smali:smali-dexlib2", version.ref = "smali" }
 bundletool = { module = "com.android.tools.build:bundletool", version.ref = "bundletool" }
 kotlinx-coroutines-core = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-core", version.ref = "kotlinxCoroutines" }
 kotlinx-serialization-core = { module = "org.jetbrains.kotlinx:kotlinx-serialization-core", version.ref = "kotlinxSerialization" }

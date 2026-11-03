@@ -232,6 +232,10 @@ class EventBus(private val errorHandler: ErrorHandler) {
 
     private fun <E : Any> deliverTo(registered: Array<EventHandler<*>>, event: E) {
         for (handler in registered) {
+            // the handlers were taken before a stop that a handler or another thread may have made since
+            if (stopped) {
+                return
+            }
             @Suppress("UNCHECKED_CAST") // addHandler and addStateHandler pair a key with handlers of that key's own type
             val typed = handler as EventHandler<E>
             try {

@@ -5,7 +5,7 @@ import io.embrace.android.embracesdk.fakes.FakeDevice
 import io.embrace.android.embracesdk.fakes.FakeErrorHandler
 import io.embrace.android.embracesdk.fakes.FakeKeyValueStore
 import io.embrace.android.embracesdk.internal.capture.metadata.AppEnvironment
-import io.embrace.android.embracesdk.internal.envelope.metadata.UnitySdkVersionInfo
+import io.embrace.android.embracesdk.internal.injection.createHostedSdkVersionInfo
 import io.embrace.android.embracesdk.internal.logging.SdkErrorType
 import io.embrace.android.embracesdk.internal.payload.AppFramework
 import io.embrace.android.embracesdk.internal.payload.EnvelopeResource
@@ -21,10 +21,12 @@ internal class EnvelopeResourceSourceImplTest {
 
     @Test
     fun getEnvelopeResource() {
-        val hostedSdkVersionInfo = UnitySdkVersionInfo(FakeKeyValueStore())
-        hostedSdkVersionInfo.hostedSdkVersion = "1.2.0"
-        hostedSdkVersionInfo.hostedPlatformVersion = "19"
-        hostedSdkVersionInfo.unityBuildIdNumber = "5092abc"
+        val hostedSdkVersionInfo = createHostedSdkVersionInfo(AppFramework.UNITY, FakeKeyValueStore(), errorHandler)
+        hostedSdkVersionInfo.update {
+            hostedSdkVersion = "1.2.0"
+            hostedPlatformVersion = "19"
+            unityBuildIdNumber = "5092abc"
+        }
         val source = EnvelopeResourceSourceImpl(
             FakeConfigService(),
             hostedSdkVersionInfo,
@@ -207,7 +209,7 @@ internal class EnvelopeResourceSourceImplTest {
         useKotlinSdk: Boolean = false,
     ) = EnvelopeResourceSourceImpl(
         configService,
-        UnitySdkVersionInfo(FakeKeyValueStore()),
+        createHostedSdkVersionInfo(AppFramework.UNITY, FakeKeyValueStore(), errorHandler),
         AppEnvironment.Environment.PROD,
         device,
         "",

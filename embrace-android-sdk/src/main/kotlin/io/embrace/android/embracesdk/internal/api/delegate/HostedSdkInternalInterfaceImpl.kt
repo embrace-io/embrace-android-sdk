@@ -78,17 +78,17 @@ internal class HostedSdkInternalInterfaceImpl(
 
     override fun setJavaScriptPatchNumber(number: String?) = record("set_javascript_patch_number") {
         if (!number.isNullOrEmpty()) {
-            hostedSdkVersionInfo.javaScriptPatchNumber = number
+            hostedSdkVersionInfo.update { javaScriptPatchNumber = number }
         }
     }
 
     override fun setReactNativeSdkVersion(version: String?) = record("set_react_native_sdk_version") {
-        hostedSdkVersionInfo.hostedSdkVersion = version
+        hostedSdkVersionInfo.update { hostedSdkVersion = version }
     }
 
     override fun setReactNativeVersionNumber(version: String?) = record("set_react_native_version_number") {
         if (!version.isNullOrEmpty()) {
-            hostedSdkVersionInfo.hostedPlatformVersion = version
+            hostedSdkVersionInfo.update { hostedPlatformVersion = version }
         }
     }
 
@@ -110,10 +110,10 @@ internal class HostedSdkInternalInterfaceImpl(
                 severity = ErrorHandler.Severity.ERROR,
             )
         } else if (unitySdkVersion != null) {
-            hostedSdkVersionInfo.batch {
-                hostedSdkVersionInfo.hostedPlatformVersion = unityVersion
-                hostedSdkVersionInfo.hostedSdkVersion = unitySdkVersion
-                hostedSdkVersionInfo.unityBuildIdNumber = buildGuid
+            hostedSdkVersionInfo.update {
+                hostedPlatformVersion = unityVersion
+                hostedSdkVersion = unitySdkVersion
+                unityBuildIdNumber = buildGuid
             }
         }
     }
@@ -157,13 +157,13 @@ internal class HostedSdkInternalInterfaceImpl(
 
     override fun setEmbraceFlutterSdkVersion(version: String?) = record("set_embrace_flutter_sdk_version") {
         if (version != null) {
-            hostedSdkVersionInfo.hostedSdkVersion = version
+            hostedSdkVersionInfo.update { hostedSdkVersion = version }
         }
     }
 
     override fun setDartVersion(version: String?) = record("set_dart_version") {
         if (version != null) {
-            hostedSdkVersionInfo.hostedPlatformVersion = version
+            hostedSdkVersionInfo.update { hostedPlatformVersion = version }
         }
     }
 

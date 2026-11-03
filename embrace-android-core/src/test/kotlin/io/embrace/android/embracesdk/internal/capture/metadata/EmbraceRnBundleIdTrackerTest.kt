@@ -8,7 +8,7 @@ import io.embrace.android.embracesdk.fakes.fakeBackgroundWorker
 import io.embrace.android.embracesdk.internal.config.BuildInfo
 import io.embrace.android.embracesdk.internal.config.ConfigService
 import io.embrace.android.embracesdk.internal.envelope.metadata.HostedSdkVersionInfo
-import io.embrace.android.embracesdk.internal.envelope.metadata.ReactNativeSdkVersionInfo
+import io.embrace.android.embracesdk.internal.injection.createHostedSdkVersionInfo
 import io.embrace.android.embracesdk.internal.logging.SdkErrorType
 import io.embrace.android.embracesdk.internal.payload.AppFramework
 import io.embrace.android.embracesdk.internal.worker.BackgroundWorker
@@ -42,7 +42,7 @@ internal class EmbraceRnBundleIdTrackerTest {
         }
         buildInfo = configService.buildInfo
         store = FakeKeyValueStore()
-        hostedSdkVersionInfo = ReactNativeSdkVersionInfo(store)
+        hostedSdkVersionInfo = createHostedSdkVersionInfo(AppFramework.REACT_NATIVE, store, FakeErrorHandler())
     }
 
     private fun openAsset(name: String): InputStream {

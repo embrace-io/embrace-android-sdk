@@ -19,11 +19,7 @@ import io.embrace.android.embracesdk.internal.envelope.log.LogEnvelopeSource
 import io.embrace.android.embracesdk.internal.envelope.log.LogEnvelopeSourceImpl
 import io.embrace.android.embracesdk.internal.envelope.log.LogPayloadSourceImpl
 import io.embrace.android.embracesdk.internal.envelope.metadata.EnvelopeMetadataSource
-import io.embrace.android.embracesdk.internal.envelope.metadata.FlutterSdkVersionInfo
-import io.embrace.android.embracesdk.internal.envelope.metadata.NativeSdkVersionInfo
-import io.embrace.android.embracesdk.internal.envelope.metadata.ObservableHostedSdkVersionInfo
-import io.embrace.android.embracesdk.internal.envelope.metadata.ReactNativeSdkVersionInfo
-import io.embrace.android.embracesdk.internal.envelope.metadata.UnitySdkVersionInfo
+import io.embrace.android.embracesdk.internal.envelope.metadata.SdkVersionInfo
 import io.embrace.android.embracesdk.internal.envelope.resource.DeviceImpl
 import io.embrace.android.embracesdk.internal.envelope.resource.EnvelopeResourceSource
 import io.embrace.android.embracesdk.internal.envelope.resource.EnvelopeResourceSourceImpl
@@ -61,15 +57,29 @@ fun createHostedSdkVersionInfo(
     appFramework: AppFramework,
     store: KeyValueStore,
     errorHandler: ErrorHandler,
-): ObservableHostedSdkVersionInfo = ObservableHostedSdkVersionInfo(
-    when (appFramework) {
-        AppFramework.REACT_NATIVE -> ReactNativeSdkVersionInfo(store)
-        AppFramework.UNITY -> UnitySdkVersionInfo(store)
-        AppFramework.FLUTTER -> FlutterSdkVersionInfo(store)
-        else -> NativeSdkVersionInfo()
-    },
-    errorHandler,
-)
+): SdkVersionInfo = when (appFramework) {
+    AppFramework.REACT_NATIVE -> SdkVersionInfo(
+        store,
+        errorHandler,
+        sdkVersionKey = "io.embrace.reactnative.sdk.version",
+        platformVersionKey = "io.embrace.reactnative.version",
+        javaScriptPatchKey = "io.embrace.javascript.patch",
+    )
+    AppFramework.UNITY -> SdkVersionInfo(
+        store,
+        errorHandler,
+        sdkVersionKey = "io.embrace.unity.sdk.version",
+        platformVersionKey = "io.embrace.unity.version",
+        unityBuildIdKey = "io.embrace.unity.build.id",
+    )
+    AppFramework.FLUTTER -> SdkVersionInfo(
+        store,
+        errorHandler,
+        sdkVersionKey = "io.embrace.flutter.sdk.version",
+        platformVersionKey = "io.embrace.dart.sdk.version",
+    )
+    else -> SdkVersionInfo(store, errorHandler)
+}
 
 fun createEnvelopeResourceSource(
     context: Context,
@@ -77,7 +87,7 @@ fun createEnvelopeResourceSource(
     worker: BackgroundWorker,
     systemInfo: SystemInfo,
     errorHandler: ErrorHandler,
-    hostedSdkVersionInfo: ObservableHostedSdkVersionInfo,
+    hostedSdkVersionInfo: SdkVersionInfo,
     rnBundleIdTracker: Lazy<RnBundleIdTracker>,
     useKotlinSdkProvider: () -> Boolean,
 ): EnvelopeResourceSource {

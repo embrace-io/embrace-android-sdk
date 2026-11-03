@@ -19,7 +19,8 @@ import io.opentelemetry.kotlin.tracing.Tracer
 import io.opentelemetry.kotlin.tracing.TracerProvider
 
 /**
- * Resolves the backing [OpenTelemetry] on every call, so tracers and loggers obtained before SDK start work after it.
+ * Resolves the backing [OpenTelemetry] on every call, so tracers and loggers obtained before SDK start work after it. A tracer or
+ * logger keeps the one it got from the backing [OpenTelemetry] until a different one is resolved, as on start or disable.
  */
 internal class LateBindingOpenTelemetry(
     private val resolve: () -> OpenTelemetry,
@@ -31,7 +32,9 @@ internal class LateBindingOpenTelemetry(
             version: String?,
             schemaUrl: String?,
             attributes: (AttributesMutator.() -> Unit)?,
-        ): Tracer = LateBindingTracer { resolve().tracerProvider.getTracer(name, version, schemaUrl, attributes) }
+        ): Tracer = LateBindingTracer(
+            BoundToResolved(resolve) { it.tracerProvider.getTracer(name, version, schemaUrl, attributes) }::get,
+        )
     }
 
     override val loggerProvider: LoggerProvider = object : LoggerProvider {
@@ -40,7 +43,9 @@ internal class LateBindingOpenTelemetry(
             version: String?,
             schemaUrl: String?,
             attributes: (AttributesMutator.() -> Unit)?,
-        ): Logger = LateBindingLogger { resolve().loggerProvider.getLogger(name, version, schemaUrl, attributes) }
+        ): Logger = LateBindingLogger(
+            BoundToResolved(resolve) { it.loggerProvider.getLogger(name, version, schemaUrl, attributes) }::get,
+        )
     }
 
     override val meterProvider: MeterProvider get() = resolve().meterProvider
@@ -104,4 +109,28 @@ private class LateBindingLogger(private val resolve: () -> Logger) : Logger {
         exception,
         attributes,
     )
+}
+
+/**
+ * The value [derive] gives for the [OpenTelemetry] that [resolve] returns, derived again only when [resolve] returns a different
+ * one. Two threads that find it stale at once may both derive it, and the last to finish is kept.
+ */
+private class BoundToResolved<T>(
+    private val resolve: () -> OpenTelemetry,
+    private val derive: (OpenTelemetry) -> T,
+) {
+
+    @Volatile
+    private var bound: Bound<T>? = null
+
+    fun get(): T {
+        val openTelemetry = resolve()
+        val current = bound
+        if (current != null && current.source === openTelemetry) {
+            return current.value
+        }
+        return derive(openTelemetry).also { bound = Bound(openTelemetry, it) }
+    }
+
+    private class Bound<T>(val source: OpenTelemetry, val value: T)
 }

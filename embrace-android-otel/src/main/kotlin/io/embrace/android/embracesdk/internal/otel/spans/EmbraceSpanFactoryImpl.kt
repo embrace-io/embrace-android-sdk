@@ -271,15 +271,17 @@ private class EmbraceSpanImpl(
         } else {
             deps.openTelemetryClock.now().nanosToMillis()
         }
-        val attemptedEndTimeMs = if (endOrNowMs > spanStartTimeMs) {
-            endOrNowMs
-        } else {
-            spanStartTimeMs
-        }
 
         synchronized(startedSpan) {
             if (!isRecording) {
                 return@guard false
+            }
+
+            // read under the lock start() sets the start time under, so a stop racing a start clamps against the real start
+            val attemptedEndTimeMs = if (endOrNowMs > spanStartTimeMs) {
+                endOrNowMs
+            } else {
+                spanStartTimeMs
             }
 
             startedSpan.get()?.let { spanToStop ->

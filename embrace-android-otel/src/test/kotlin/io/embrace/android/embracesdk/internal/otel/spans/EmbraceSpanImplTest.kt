@@ -75,6 +75,7 @@ import java.util.concurrent.CountDownLatch
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicInteger
+import kotlin.concurrent.thread
 import io.opentelemetry.kotlin.tracing.Span as OtelSpan
 
 @RunWith(Parameterized::class)
@@ -421,6 +422,35 @@ internal class EmbraceSpanImplTest(
         assertFalse(span.isRecording)
         assertTrue(spanRepository.getActiveEmbraceSpans().isEmpty())
         assertEquals(listOf(SdkErrorType.SpanOperationFail.toString()), errorHandler.sdkErrorMessages.map { it.msg })
+    }
+
+    @Test
+    fun `a stop racing a start clamps its end time to the start time the start sets`() {
+        val inStart = CountDownLatch(1)
+        val release = CountDownLatch(1)
+        val span = createSpan(
+            SingleSpanTracer(
+                ControlledSpan {
+                    inStart.countDown()
+                    release.await(THREAD_JOIN_TIMEOUT_MS, TimeUnit.MILLISECONDS)
+                },
+            ),
+        )
+        val startTimeMs = fakeClock.now()
+        val starter = thread { span.start(startTimeMs) }
+        inStart.await(THREAD_JOIN_TIMEOUT_MS, TimeUnit.MILLISECONDS)
+
+        // the stop has read its end time and waits for the start, which still holds the span's lock
+        val stopper = thread { span.stop(endTimeMs = startTimeMs - 1000) }
+        val deadline = System.currentTimeMillis() + THREAD_JOIN_TIMEOUT_MS
+        while (stopper.state != Thread.State.BLOCKED && System.currentTimeMillis() < deadline) {
+            Thread.yield()
+        }
+        release.countDown()
+        starter.join(THREAD_JOIN_TIMEOUT_MS)
+        stopper.join(THREAD_JOIN_TIMEOUT_MS)
+
+        assertEquals(startTimeMs.millisToNanos(), span.snapshot()?.endTimeNanos)
     }
 
     @Test

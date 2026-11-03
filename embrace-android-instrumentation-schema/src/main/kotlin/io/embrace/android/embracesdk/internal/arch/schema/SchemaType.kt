@@ -1,5 +1,6 @@
 package io.embrace.android.embracesdk.internal.arch.schema
 
+import io.embrace.android.embracesdk.internal.logging.SdkErrorSnapshot
 import io.embrace.android.embracesdk.semconv.EmbAeiAttributes
 import io.embrace.android.embracesdk.semconv.EmbAndroidAttributes
 import io.embrace.android.embracesdk.semconv.EmbBreadcrumbAttributes
@@ -319,17 +320,14 @@ sealed class SchemaType(
         )
     }
 
-    class SdkError(throwable: Throwable) : SchemaType(
+    class SdkError(snapshot: SdkErrorSnapshot) : SchemaType(
         telemetryType = EmbType.System.SdkError,
         fixedObjectName = "internal-error",
     ) {
         override val schemaAttributes: Map<String, String> = mapOf(
-            ExceptionAttributes.EXCEPTION_TYPE to throwable.javaClass.name,
-            ExceptionAttributes.EXCEPTION_STACKTRACE to throwable.stackTrace.joinToString(
-                "\n",
-                transform = StackTraceElement::toString,
-            ),
-            ExceptionAttributes.EXCEPTION_MESSAGE to (throwable.message ?: ""),
+            ExceptionAttributes.EXCEPTION_TYPE to snapshot.top.className,
+            ExceptionAttributes.EXCEPTION_STACKTRACE to snapshot.top.frames.joinToString("\n"),
+            ExceptionAttributes.EXCEPTION_MESSAGE to (snapshot.top.message ?: ""),
         )
     }
 

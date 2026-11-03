@@ -6,6 +6,7 @@ import io.embrace.android.embracesdk.fakes.FakeInternalTelemetryService
 import io.embrace.android.embracesdk.fakes.fakeContext
 import io.embrace.android.embracesdk.internal.EmbraceInternalApi
 import io.embrace.android.embracesdk.internal.logging.ErrorHandlerImpl
+import io.embrace.android.embracesdk.internal.logging.SdkErrorSnapshot
 import io.embrace.android.embracesdk.internal.logging.SdkErrorType
 import io.embrace.android.embracesdk.internal.logging.androidLogcat
 import io.embrace.android.embracesdk.internal.logging.guardSdkCode
@@ -394,8 +395,8 @@ internal class SdkStateHolderTest {
     fun `SDK error handler is closed when the sdk is disabled`() {
         val holder = createHolder(FakeInstance(calls))
         holder.start(context)
-        val errors = mutableListOf<Throwable>()
-        bufferedErrorHandler.drain { _, throwable, _ -> errors += throwable }
+        val errors = mutableListOf<SdkErrorSnapshot>()
+        bufferedErrorHandler.drain { errors += it }
         holder.close()
         trackError()
         assertTrue(errors.isEmpty())
@@ -404,8 +405,8 @@ internal class SdkStateHolderTest {
     @Test
     fun `SDK error handler is closed when the sdk fails to start`() {
         val holder = createHolder(FakeInstance(calls, startSucceeds = false))
-        val errors = mutableListOf<Throwable>()
-        bufferedErrorHandler.drain { _, throwable, _ -> errors += throwable }
+        val errors = mutableListOf<SdkErrorSnapshot>()
+        bufferedErrorHandler.drain { errors += it }
         holder.start(context)
         assertEquals(SdkState.FAILED, holder.state)
         trackError()
@@ -591,8 +592,8 @@ internal class SdkStateHolderTest {
     }
 
     private fun assertErrorHandlerClosedOnStart(holder: SdkStateHolder, expected: SdkState) {
-        val errors = mutableListOf<Throwable>()
-        bufferedErrorHandler.drain { _, throwable, _ -> errors += throwable }
+        val errors = mutableListOf<SdkErrorSnapshot>()
+        bufferedErrorHandler.drain { errors += it }
         holder.start(context)
         assertEquals(expected, holder.state)
         errors.clear()

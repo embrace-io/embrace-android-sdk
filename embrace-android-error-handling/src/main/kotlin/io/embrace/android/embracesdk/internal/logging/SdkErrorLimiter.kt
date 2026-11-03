@@ -13,13 +13,13 @@ internal class SdkErrorLimiter(limit: Int) {
     private val recorded = ConcurrentHashMap<SdkErrorKey, Unit>()
 
     /**
-     * Returns true if [throwable] should be recorded as an error of [type], which uses one from the limit.
+     * Returns true if [snapshot] should be recorded, which uses one from the limit.
      */
-    fun tryAcquire(type: SdkErrorType, throwable: Throwable): Boolean {
+    fun tryAcquire(snapshot: SdkErrorSnapshot): Boolean {
         if (remaining.get() <= 0) {
             return false
         }
-        val key = SdkErrorKey(type, throwable.javaClass, throwable.stackTrace.firstOrNull())
+        val key = SdkErrorKey(snapshot.type, snapshot.top.className, snapshot.top.frames.firstOrNull())
         if (recorded.putIfAbsent(key, Unit) != null) {
             return false
         }

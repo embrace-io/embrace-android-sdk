@@ -5,6 +5,6 @@ package io.embrace.android.embracesdk.internal.logging
  */
 internal data class SdkErrorKey(
     val type: SdkErrorType,
-    val exceptionClass: Class<out Throwable>,
-    val topFrame: StackTraceElement?,
+    val exceptionClass: String,
+    val topFrame: String?,
 )

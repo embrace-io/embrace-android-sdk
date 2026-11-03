@@ -5,6 +5,7 @@ import io.embrace.android.embracesdk.fakes.FakeClock
 import io.embrace.android.embracesdk.fakes.FakeConfigService
 import io.embrace.android.embracesdk.fakes.FakeEnvelopeMetadataSource
 import io.embrace.android.embracesdk.fakes.FakeEnvelopeResourceSource
+import io.embrace.android.embracesdk.fakes.FakeErrorHandler
 import io.embrace.android.embracesdk.fakes.FakeLogEnvelopeSource
 import io.embrace.android.embracesdk.fakes.FakeMetadataService
 import io.embrace.android.embracesdk.fakes.FakeOtelPayloadMapper
@@ -24,7 +25,6 @@ import io.embrace.android.embracesdk.internal.config.resolved.PersistenceConfig
 import io.embrace.android.embracesdk.internal.envelope.session.SessionPartEnvelopeSourceImpl
 import io.embrace.android.embracesdk.internal.envelope.session.SessionPartPayloadSourceImpl
 import io.embrace.android.embracesdk.internal.logging.ErrorHandler
-import io.embrace.android.embracesdk.internal.logging.ErrorHandlerImpl
 import io.embrace.android.embracesdk.internal.otel.spans.SpanRepository
 import io.embrace.android.embracesdk.internal.otel.spans.SpanService
 import io.embrace.android.embracesdk.internal.payload.Envelope
@@ -79,7 +79,7 @@ internal class UserSessionHandlerTest(
     fun before() {
         executorService = BlockingScheduledExecutorService()
         worker = BackgroundWorker(executorService)
-        errorHandler = ErrorHandlerImpl()
+        errorHandler = FakeErrorHandler()
         clock.setCurrentTime(NOW)
         userSessionPropertiesService = FakeUserSessionPropertiesService()
         metadataService = FakeMetadataService()

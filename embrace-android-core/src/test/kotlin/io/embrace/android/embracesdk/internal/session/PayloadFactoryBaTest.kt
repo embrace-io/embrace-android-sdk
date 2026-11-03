@@ -3,6 +3,7 @@ package io.embrace.android.embracesdk.internal.session
 import io.embrace.android.embracesdk.concurrency.BlockingScheduledExecutorService
 import io.embrace.android.embracesdk.fakes.FakeClock
 import io.embrace.android.embracesdk.fakes.FakeConfigService
+import io.embrace.android.embracesdk.fakes.FakeErrorHandler
 import io.embrace.android.embracesdk.fakes.FakeLogEnvelopeSource
 import io.embrace.android.embracesdk.fakes.FakeMetadataService
 import io.embrace.android.embracesdk.fakes.FakeOtelPayloadMapper
@@ -20,7 +21,6 @@ import io.embrace.android.embracesdk.internal.capture.user.UserService
 import io.embrace.android.embracesdk.internal.config.resolved.BackgroundActivityConfig
 import io.embrace.android.embracesdk.internal.config.resolved.EmbraceConfig
 import io.embrace.android.embracesdk.internal.envelope.session.SessionPartPayloadSourceImpl
-import io.embrace.android.embracesdk.internal.logging.ErrorHandlerImpl
 import io.embrace.android.embracesdk.internal.otel.spans.SpanRepository
 import io.embrace.android.embracesdk.internal.session.message.PayloadFactoryImpl
 import io.embrace.android.embracesdk.internal.session.message.PayloadMessageCollatorImpl
@@ -113,7 +113,7 @@ internal class PayloadFactoryBaTest(
     }
 
     private fun createService(createInitialSession: Boolean = true): PayloadFactoryImpl {
-        val errorHandler = ErrorHandlerImpl()
+        val errorHandler = FakeErrorHandler()
         val sessionPartEnvelopeSource = FakeSessionPartEnvelopeSource(
             partPayloadSource = SessionPartPayloadSourceImpl(
                 null,

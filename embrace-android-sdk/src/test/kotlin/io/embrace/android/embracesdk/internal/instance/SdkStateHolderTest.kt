@@ -7,6 +7,7 @@ import io.embrace.android.embracesdk.fakes.fakeContext
 import io.embrace.android.embracesdk.internal.EmbraceInternalApi
 import io.embrace.android.embracesdk.internal.logging.ErrorHandlerImpl
 import io.embrace.android.embracesdk.internal.logging.SdkErrorType
+import io.embrace.android.embracesdk.internal.logging.androidLogcat
 import io.embrace.android.embracesdk.internal.logging.guardSdkCode
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
@@ -19,7 +20,7 @@ internal class SdkStateHolderTest {
 
     private val context = fakeContext()
     private val calls = mutableListOf<String>()
-    private val bufferedErrorHandler = ErrorHandlerImpl({ 0 })
+    private val bufferedErrorHandler = ErrorHandlerImpl({ 0 }, ::androidLogcat)
     private val errorHandler = FakeErrorHandler(throwOnSdkError = false, delegate = bufferedErrorHandler)
     private val buffer = BufferingSdkInstance({ 0 }, errorHandler)
     private val failed = FakeInstance(calls, prefix = "failed:")

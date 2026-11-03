@@ -9,7 +9,6 @@ import io.embrace.android.embracesdk.fakes.FakeProcessStateTracker
 import io.embrace.android.embracesdk.internal.arch.schema.EmbType
 import io.embrace.android.embracesdk.internal.arch.schema.ErrorCodeAttribute
 import io.embrace.android.embracesdk.internal.arch.state.ProcessState
-import io.embrace.android.embracesdk.internal.logging.ErrorHandlerImpl
 import io.embrace.android.embracesdk.internal.otel.spans.SpanRepository
 import io.embrace.android.embracesdk.internal.otel.spans.SpanTerminationMode
 import io.embrace.android.embracesdk.internal.otel.spans.hasEmbraceAttribute
@@ -51,7 +50,7 @@ internal class SessionPartPayloadSourceImplTest {
             FakeOtelPayloadMapper(),
             FakeProcessStateTracker(),
             FakeClock(),
-            ErrorHandlerImpl(),
+            FakeErrorHandler(),
         )
     }
 
@@ -94,7 +93,7 @@ internal class SessionPartPayloadSourceImplTest {
             FakeOtelPayloadMapper(),
             FakeProcessStateTracker(),
             clock,
-            ErrorHandlerImpl(),
+            FakeErrorHandler(),
         )
 
         clock.tick(2000L)
@@ -141,7 +140,7 @@ internal class SessionPartPayloadSourceImplTest {
             FakeOtelPayloadMapper(),
             FakeProcessStateTracker(),
             clock,
-            ErrorHandlerImpl(),
+            FakeErrorHandler(),
         )
 
         clock.tick(2000L)
@@ -167,7 +166,7 @@ internal class SessionPartPayloadSourceImplTest {
             FakeOtelPayloadMapper(),
             FakeProcessStateTracker(ProcessState.BACKGROUND),
             FakeClock(),
-            ErrorHandlerImpl(),
+            FakeErrorHandler(),
         )
         source.endSessionPart(SessionPartSnapshotType.NORMAL_END, true)
         assertFalse(terminatedSpan.isRecording)
@@ -192,7 +191,7 @@ internal class SessionPartPayloadSourceImplTest {
             otelPayloadMapper,
             FakeProcessStateTracker(),
             FakeClock(),
-            ErrorHandlerImpl(),
+            FakeErrorHandler(),
         )
         source.endSessionPart(SessionPartSnapshotType.NORMAL_END, true)
         assertTrue(otelPayloadMapper.recordCalled)

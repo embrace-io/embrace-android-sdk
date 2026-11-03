@@ -14,6 +14,7 @@ import io.embrace.android.embracesdk.internal.config.behavior.SensitiveKeysBehav
 import io.embrace.android.embracesdk.internal.injection.createCurrentSessionPartSpan
 import io.embrace.android.embracesdk.internal.injection.createOtelSdkConfig
 import io.embrace.android.embracesdk.internal.injection.createRedactionFunction
+import io.embrace.android.embracesdk.internal.logging.androidLogcat
 import io.embrace.android.embracesdk.internal.otel.logs.LogSinkImpl
 import io.embrace.android.embracesdk.internal.otel.sdk.OtelSdkWrapper
 import io.embrace.android.embracesdk.internal.spans.CurrentSessionPartSpan
@@ -144,7 +145,7 @@ internal class TelemetryDestinationHarness(
 
     private class TestInitServices(val clock: Clock) {
         val telemetryService: InternalTelemetryService = NoopInternalTelemetryService
-        val errorHandler: ErrorHandler = ErrorHandlerImpl(clock)
+        val errorHandler: ErrorHandler = ErrorHandlerImpl(clock::now, ::androidLogcat)
         val systemInfo: SystemInfo = SystemInfo()
         val uuidSource: UuidSource = UuidSourceImpl()
         val instrumentedConfig: InstrumentedConfig = InstrumentedConfigImpl

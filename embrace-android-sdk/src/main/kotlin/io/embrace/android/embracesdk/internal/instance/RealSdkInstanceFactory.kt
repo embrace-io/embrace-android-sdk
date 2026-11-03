@@ -85,7 +85,6 @@ import io.embrace.android.embracesdk.internal.otel.spans.EmbraceSpanFactoryImpl
 import io.embrace.android.embracesdk.internal.otel.spans.SpanRepository
 import io.embrace.android.embracesdk.internal.otel.spans.SpanService
 import io.embrace.android.embracesdk.internal.otel.spans.SpanServiceImpl
-import io.embrace.android.embracesdk.internal.prefs.PrefsStoreWriteBatcher
 import io.embrace.android.embracesdk.internal.session.id.SessionIdsProvider
 import io.embrace.android.embracesdk.internal.session.id.SessionPartTracker
 import io.embrace.android.embracesdk.internal.session.lifecycle.createLifecycleTracker
@@ -96,7 +95,6 @@ import io.embrace.android.embracesdk.internal.storage.StatFsAvailabilityChecker
 import io.embrace.android.embracesdk.internal.store.KeyValueStore
 import io.embrace.android.embracesdk.internal.store.Ordinal
 import io.embrace.android.embracesdk.internal.store.OrdinalStore
-import io.embrace.android.embracesdk.internal.store.OrdinalStoreImpl
 import io.embrace.android.embracesdk.internal.store.PersistedSdkStateStore
 import io.embrace.android.embracesdk.internal.utils.BuildVersionChecker
 import io.embrace.android.embracesdk.internal.utils.EmbTrace
@@ -268,10 +266,7 @@ internal fun createRealSdkInstance(
 
     val store: KeyValueStore by configLoadServices.keyValueStore
     val persistedSdkStateStore: PersistedSdkStateStore by configLoadServices.persistedSdkStateStore
-
-    val ordinalStore: OrdinalStore by lazy {
-        EmbTrace.trace("ordinal-store-init") { OrdinalStoreImpl(store, errorHandler) }
-    }
+    val ordinalStore: OrdinalStore by configLoadServices.ordinalStore
 
     val eventBus: EventBus by lazy {
         EmbTrace.trace("event-bus-init") { overrides?.eventBus.resolve { EventBus(errorHandler) } }
@@ -751,7 +746,7 @@ internal fun createRealSdkInstance(
                 appVersionStartupCounterProvider = startupService::getAppVersionStartupCounter,
                 logLimitingService = logLimitingService,
                 ordinalStore = ordinalStore,
-                writeBatcher = PrefsStoreWriteBatcher(store),
+                writeBatcher = configLoadServices.writeBatcher.value,
                 stateStore = persistedSdkStateStore,
                 backgroundWorker = workerThreadPool.backgroundWorker(Worker.Background.NonIoRegWorker),
                 sessionPersistenceWorker = workerThreadPool.backgroundWorker(Worker.Background.SessionPersistenceWorker),

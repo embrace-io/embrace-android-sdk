@@ -10,11 +10,15 @@ import io.embrace.android.embracesdk.internal.config.instrumented.InstrumentedCo
 import io.embrace.android.embracesdk.internal.config.instrumented.schema.InstrumentedConfig
 import io.embrace.android.embracesdk.internal.payload.AppFramework
 import io.embrace.android.embracesdk.internal.prefs.PrefsPersistedSdkStateStore
+import io.embrace.android.embracesdk.internal.prefs.PrefsStoreWriteBatcher
 import io.embrace.android.embracesdk.internal.prefs.createKeyValueStore
 import io.embrace.android.embracesdk.internal.serialization.EmbraceSerializer
 import io.embrace.android.embracesdk.internal.serialization.PlatformSerializer
 import io.embrace.android.embracesdk.internal.store.KeyValueStore
+import io.embrace.android.embracesdk.internal.store.OrdinalStore
+import io.embrace.android.embracesdk.internal.store.OrdinalStoreImpl
 import io.embrace.android.embracesdk.internal.store.PersistedSdkStateStore
+import io.embrace.android.embracesdk.internal.store.StoreWriteBatcher
 import io.embrace.android.embracesdk.internal.utils.EmbTrace
 import io.embrace.android.embracesdk.internal.utils.UuidSource
 import io.embrace.android.embracesdk.internal.utils.UuidSourceImpl
@@ -52,6 +56,14 @@ internal class ConfigLoadServices(
             uuidSource,
             AppFramework.fromString(instrumentedConfig.project.getAppFramework()) ?: AppFramework.NATIVE,
         )
+    }
+
+    val ordinalStore: Lazy<OrdinalStore> = lazy {
+        EmbTrace.trace("ordinal-store-init") { OrdinalStoreImpl(keyValueStore.value, preStartServices.errorHandler) }
+    }
+
+    val writeBatcher: Lazy<StoreWriteBatcher> = lazy {
+        PrefsStoreWriteBatcher(keyValueStore.value)
     }
 
     val persistedConfig: PersistedConfig = EmbTrace.trace(

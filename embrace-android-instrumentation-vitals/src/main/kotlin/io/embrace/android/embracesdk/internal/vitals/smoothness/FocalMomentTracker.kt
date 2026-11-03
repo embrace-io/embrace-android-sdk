@@ -51,7 +51,7 @@ internal class FocalMomentTracker(
 
     // Runs only while a focal moment is capturing; each block is reported on the main thread and hops onto the Vitals thread.
     private val probe: MainThreadProbe? = probeFactory?.invoke(
-        MainThreadProbe.BlockCallback { _, durationMs -> scheduler.post { handleBlock(durationMs) } },
+        MainThreadProbe.BlockCallback { endUptimeMs, durationMs -> scheduler.post { handleBlock(endUptimeMs, durationMs) } },
     )
 
     private var capturing = false
@@ -203,11 +203,17 @@ internal class FocalMomentTracker(
     }
 
     @WorkerThread
-    private fun handleBlock(durationMs: Long) {
-        // A held moment still counts it: the report can trail the settle check that held the moment.
-        if (capturing || held) {
-            responsivenessReporter?.onBlock(durationMs)
+    private fun handleBlock(endUptimeMs: Long, durationMs: Long) {
+        if (held) {
+            // The report trailed the settle check that held the moment; the block is activity, so resume.
+            held = false
+            capturing = true
+            probe?.start()
+        } else if (!capturing) {
+            return
         }
+        responsivenessReporter?.onBlock(durationMs)
+        settle.notifyActivity(endUptimeMs)
     }
 
     @WorkerThread
@@ -231,6 +237,10 @@ internal class FocalMomentTracker(
     @WorkerThread
     private fun onSettled(lastActivityMs: Long) {
         if (!capturing) {
+            return
+        }
+        // A blocked main thread renders nothing, so wait for the probe's block report rather than settle mid-block.
+        if (probe?.isOverdue(nowMs()) == true) {
             return
         }
         enterHeld(endNanos = lastActivityMs.millisToNanos())

@@ -421,8 +421,8 @@ internal class FocalMomentTrackerTest {
     @Test
     fun `a main-thread block during a moment is counted in its result`() {
         responsiveTracker.onInteractionStart(nowMs())
-        mainHandler.post { advance(200) } // a 200ms block queued ahead of the probe
-        mainLooper.idleFor(Duration.ofMillis(250))
+        mainHandler.post { blockMainThread(200) } // a 200ms block queued ahead of the probe
+        advance(250)
         responsiveTracker.onScreenStop()
 
         val result = responsivenessEmitted.single()
@@ -448,19 +448,57 @@ internal class FocalMomentTrackerTest {
     }
 
     @Test
-    fun `a block reported after the moment is held but before it is flushed is counted`() {
+    fun `a block in progress at the settle check defers the settle until after the block`() {
         responsiveTracker.onInteractionStart(nowMs())
         responsiveTracker.onInteractionEnd()
-        settleAfter(100) // held
+        responsiveTracker.onFrame(vsyncNanos = start + 16.ms, frameDispatchNanos = start + 16.ms, jankNanos = 0L, expectedFrames = 1)
+
+        // the settle check comes due 150ms into a 400ms main-thread block
+        blockMainThread(150)
+        scheduler.runPending()
+        assertNotEquals("not held: the probe still waits to run", Duration.ZERO, mainLooper.nextScheduledTaskTime)
+        assertFalse("the settle waits for the block report", scheduler.scheduled)
+
+        blockMainThread(250)
+        mainLooper.idle() // the block ends; the probe runs and reports it
+
+        settleAfter(99)
+        assertTrue("99ms after the block: not settled", scheduler.scheduled)
+        settleAfter(1)
+        assertFalse("100ms after the block: settled", scheduler.scheduled)
+
+        responsiveTracker.onScreenStop()
+        val result = responsivenessEmitted.single()
+        assertEquals(FocalOutcome.SETTLED, result.outcome)
+        assertEquals(1, result.blockCount)
+        assertEquals("the whole block: the first probe is due at the moment start", 400L, result.longestBlockMs)
+        assertEquals("ends at the block's end", 400L, result.durationMs)
+        assertEquals("smoothness covers the block too", 400L, emitted.single().durationMs)
+    }
+
+    @Test
+    fun `a block reported after the moment is held resumes it until after the block`() {
+        responsiveTracker.onInteractionStart(nowMs())
+        responsiveTracker.onInteractionEnd()
+        responsiveTracker.onFrame(vsyncNanos = start + 16.ms, frameDispatchNanos = start + 16.ms, jankNanos = 0L, expectedFrames = 1)
+        settleAfter(120) // held at the frame
+        assertEquals(Duration.ZERO, mainLooper.nextScheduledTaskTime)
 
         // the probe posted this report just before the settle check held the moment
         blockCallback.onBlock(nowMs(), 80L)
+        assertNotEquals("resuming restarts the probe", Duration.ZERO, mainLooper.nextScheduledTaskTime)
+
+        settleAfter(99)
+        assertTrue("99ms after the block: not settled", scheduler.scheduled)
+        settleAfter(1)
         responsiveTracker.onScreenStop() // flushes the held moment
 
         val result = responsivenessEmitted.single()
         assertEquals(FocalOutcome.SETTLED, result.outcome)
         assertEquals(1, result.blockCount)
         assertEquals(80L, result.longestBlockMs)
+        assertEquals("ends at the block's end, not the buffered settle", 120L, result.durationMs)
+        assertEquals(120L, emitted.single().durationMs)
     }
 
     @Test
@@ -487,7 +525,11 @@ internal class FocalMomentTrackerTest {
 
     private fun nowMs() = SystemClock.uptimeMillis()
 
-    private fun advance(millis: Long) = ShadowSystemClock.advanceBy(Duration.ofMillis(millis))
+    /** Advances the clock by [millis] with a responsive main thread, so a running probe stays on time. */
+    private fun advance(millis: Long) = mainLooper.idleFor(Duration.ofMillis(millis))
+
+    /** Advances the clock by [millis] without running the main looper, as a blocked main thread would. */
+    private fun blockMainThread(millis: Long) = ShadowSystemClock.advanceBy(Duration.ofMillis(millis))
 
     /** Advances the clock by [millis] and then runs the pending settle check. */
     private fun settleAfter(millis: Long) {

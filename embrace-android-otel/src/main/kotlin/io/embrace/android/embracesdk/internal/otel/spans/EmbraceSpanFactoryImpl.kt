@@ -232,10 +232,22 @@ private class EmbraceSpanImpl(
                 return@guard false
             }
 
-            deps.spanRepository.trackStartedEmbraceSpan(this)
-            newSpan.setName(spanName)
-            if (currentStatus != StatusData.Unset) {
-                newSpan.setStatus(currentStatus)
+            val started = guard(false) {
+                deps.spanRepository.trackStartedEmbraceSpan(this)
+                newSpan.setName(spanName)
+                if (currentStatus != StatusData.Unset) {
+                    newSpan.setStatus(currentStatus)
+                }
+                true
+            }
+            if (!started) {
+                // the start fails after the OTel span was started, so end it, and this span with it, rather than leave the
+                // OTel span recording while this one reports a failed start. If it was tracked, it is then a completed span.
+                spanStartTimeMs = attemptedStartTimeMs
+                spanEndTimeMs = attemptedStartTimeMs
+                guard(Unit) { newSpan.end(attemptedStartTimeMs.millisToNanos()) }
+                releaseRetainedData()
+                return@guard false
             }
 
             spanStartTimeMs = attemptedStartTimeMs

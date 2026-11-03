@@ -9,6 +9,7 @@ import io.embrace.android.embracesdk.fakes.FakeEmbraceSdkSpan
 import io.embrace.android.embracesdk.fakes.FakeErrorHandler
 import io.embrace.android.embracesdk.fakes.FakeInternalTelemetryService
 import io.embrace.android.embracesdk.fakes.FakeOtelKotlinClock
+import io.embrace.android.embracesdk.fakes.FakeSpan
 import io.embrace.android.embracesdk.fakes.FakeSpanExporter
 import io.embrace.android.embracesdk.fakes.OtelSdkMode
 import io.embrace.android.embracesdk.fakes.TestPlatformSerializer
@@ -55,6 +56,7 @@ import io.embrace.android.embracesdk.spans.ErrorCode
 import io.opentelemetry.kotlin.context.Context
 import io.opentelemetry.kotlin.getTracer
 import io.opentelemetry.kotlin.semconv.ExceptionAttributes
+import io.opentelemetry.kotlin.tracing.SpanCreationAction
 import io.opentelemetry.kotlin.tracing.SpanKind
 import io.opentelemetry.kotlin.tracing.StatusData
 import io.opentelemetry.kotlin.tracing.Tracer
@@ -73,6 +75,7 @@ import java.util.concurrent.CountDownLatch
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicInteger
+import io.opentelemetry.kotlin.tracing.Span as OtelSpan
 
 @RunWith(Parameterized::class)
 internal class EmbraceSpanImplTest(
@@ -404,6 +407,20 @@ internal class EmbraceSpanImplTest(
             ),
             types,
         )
+    }
+
+    @Test
+    fun `a start that fails after the OTel span is started ends both spans`() {
+        errorHandler.throwOnSdkError = false
+        val otelSpan = FakeSpan()
+        val span = createSpan(SingleSpanTracer(ControlledSpan(otelSpan) { error("broken setName") }))
+
+        assertFalse(span.start())
+
+        assertFalse(otelSpan.isRecording())
+        assertFalse(span.isRecording)
+        assertTrue(spanRepository.getActiveEmbraceSpans().isEmpty())
+        assertEquals(listOf(SdkErrorType.SpanOperationFail.toString()), errorHandler.sdkErrorMessages.map { it.msg })
     }
 
     @Test
@@ -1270,6 +1287,42 @@ internal class EmbraceSpanImplTest(
 
     private fun stopCallback(spanId: String) {
         stoppedSpanId = spanId
+    }
+
+    private fun createSpan(tracer: Tracer): EmbraceSdkSpan = embraceSpanFactory.create(
+        otelSpanStartArgs = OtelSpanStartArgs(
+            name = EXPECTED_SPAN_NAME,
+            type = EmbType.Performance.Default,
+            internal = false,
+            private = false,
+            tracer = tracer,
+            openTelemetry = fakeOpenTelemetry(otelSdkMode),
+        ),
+    )
+
+    /**
+     * A recording span that runs [onSetName] when it is named, which [EmbraceSdkSpan.start] does while holding the span's lock.
+     */
+    private class ControlledSpan(
+        private val delegate: FakeSpan = FakeSpan(),
+        private val onSetName: () -> Unit,
+    ) : OtelSpan by delegate {
+        override fun setName(name: String) {
+            onSetName()
+            delegate.setName(name)
+        }
+    }
+
+    private class SingleSpanTracer(private val span: OtelSpan) : Tracer {
+        override fun enabled(): Boolean = true
+
+        override fun startSpan(
+            name: String,
+            parentContext: Context?,
+            spanKind: SpanKind,
+            startTimestamp: Long?,
+            action: (SpanCreationAction.() -> Unit)?,
+        ): OtelSpan = span
     }
 
     private class NestedException : RuntimeException("nested")

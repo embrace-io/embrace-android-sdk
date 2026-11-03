@@ -1,6 +1,5 @@
 package io.embrace.android.embracesdk.internal.injection
 
-import android.content.Context
 import io.embrace.android.embracesdk.core.BuildConfig
 import io.embrace.android.embracesdk.internal.clock.Clock
 import io.embrace.android.embracesdk.internal.comms.api.Endpoint
@@ -17,8 +16,6 @@ import io.embrace.android.embracesdk.internal.delivery.storage.CachedLogEnvelope
 import io.embrace.android.embracesdk.internal.delivery.storage.CachedLogEnvelopeStoreImpl
 import io.embrace.android.embracesdk.internal.delivery.storage.PayloadStorageService
 import io.embrace.android.embracesdk.internal.delivery.storage.PayloadStorageServiceImpl
-import io.embrace.android.embracesdk.internal.delivery.storage.StorageLocation
-import io.embrace.android.embracesdk.internal.delivery.storage.asFile
 import io.embrace.android.embracesdk.internal.logging.ErrorHandler
 import io.embrace.android.embracesdk.internal.serialization.PlatformSerializer
 import io.embrace.android.embracesdk.internal.session.caching.PeriodicSessionPartCacher
@@ -26,6 +23,9 @@ import io.embrace.android.embracesdk.internal.session.id.SessionIdsProvider
 import io.embrace.android.embracesdk.internal.session.id.SessionIdsSnapshot
 import io.embrace.android.embracesdk.internal.session.orchestrator.PayloadStore
 import io.embrace.android.embracesdk.internal.session.orchestrator.PayloadStoreImpl
+import io.embrace.android.embracesdk.internal.storage.SdkDir
+import io.embrace.android.embracesdk.internal.storage.SdkStorage
+import io.embrace.android.embracesdk.internal.storage.lazyFile
 import io.embrace.android.embracesdk.internal.utils.EmbTrace
 import io.embrace.android.embracesdk.internal.utils.UuidSource
 import io.embrace.android.embracesdk.internal.worker.BackgroundWorker
@@ -33,8 +33,8 @@ import io.embrace.android.embracesdk.internal.worker.PriorityWorker
 import okhttp3.OkHttpClient
 
 fun createPayloadStorageService(
-    location: StorageLocation,
-    context: Context,
+    dir: SdkDir,
+    storage: SdkStorage,
     worker: PriorityWorker<StoredTelemetryMetadata>,
     processIdProvider: () -> String,
     errorHandler: ErrorHandler,
@@ -42,11 +42,7 @@ fun createPayloadStorageService(
     deliveryTracer: DeliveryTracer?,
     limit: Int = PayloadStorageServiceImpl.DEFAULT_STORAGE_LIMIT,
 ): PayloadStorageService = PayloadStorageServiceImpl(
-    location.asFile(
-        errorHandler = errorHandler,
-        rootDirSupplier = { context.filesDir },
-        fallbackDirSupplier = { context.cacheDir },
-    ),
+    storage.lazyFile(dir),
     worker,
     processIdProvider,
     errorHandler,
@@ -102,17 +98,13 @@ fun createPayloadCachingService(
 )
 
 fun createCachedLogEnvelopeStore(
-    context: Context,
+    storage: SdkStorage,
     worker: PriorityWorker<StoredTelemetryMetadata>,
     errorHandler: ErrorHandler,
     serializer: PlatformSerializer,
     clock: Clock,
 ): CachedLogEnvelopeStore = CachedLogEnvelopeStoreImpl(
-    outputDir = StorageLocation.ENVELOPE.asFile(
-        errorHandler = errorHandler,
-        rootDirSupplier = { context.filesDir },
-        fallbackDirSupplier = { context.cacheDir },
-    ),
+    outputDir = storage.lazyFile(SdkDir.TELEMETRY_LOG_ENVELOPES),
     worker = worker,
     errorHandler = errorHandler,
     serializer = serializer,

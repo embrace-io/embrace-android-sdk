@@ -4,11 +4,11 @@ import io.embrace.android.embracesdk.internal.arch.InstrumentationArgs
 import io.embrace.android.embracesdk.internal.arch.InstrumentationProvider
 import io.embrace.android.embracesdk.internal.arch.datasource.DataSource
 import io.embrace.android.embracesdk.internal.arch.datasource.DataSourceFactory
-import io.embrace.android.embracesdk.internal.delivery.storage.StorageLocation
-import io.embrace.android.embracesdk.internal.delivery.storage.asFile
 import io.embrace.android.embracesdk.internal.handler.AndroidMainThreadHandler
 import io.embrace.android.embracesdk.internal.instrumentation.crash.ndk.jni.JniDelegate
 import io.embrace.android.embracesdk.internal.instrumentation.crash.ndk.jni.JniDelegateImpl
+import io.embrace.android.embracesdk.internal.storage.SdkDir
+import io.embrace.android.embracesdk.internal.storage.lazyFile
 import io.embrace.android.embracesdk.internal.worker.Worker
 
 var jniDelegateTestOverride: JniDelegate? = null
@@ -24,11 +24,7 @@ class NdkCrashInstrumentationProvider : InstrumentationProvider {
             val delegate = jniDelegateTestOverride ?: JniDelegateImpl()
             val sharedObjectLoader =
                 sharedObjectLoaderTestOverride ?: SharedObjectLoaderImpl(args.errorHandler)
-            val nativeOutputDir = StorageLocation.NATIVE.asFile(
-                errorHandler = args.errorHandler,
-                rootDirSupplier = { args.context.filesDir },
-                fallbackDirSupplier = { args.context.cacheDir },
-            )
+            val nativeOutputDir = args.sdkStorage.lazyFile(SdkDir.TELEMETRY_PENDING_NATIVE_CRASHES)
 
             val processor = NativeCrashProcessorImpl(
                 args,

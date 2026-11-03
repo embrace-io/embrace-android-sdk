@@ -22,6 +22,7 @@ import io.embrace.android.embracesdk.internal.network.http.HttpRequestInfoModifi
 import io.embrace.android.embracesdk.internal.serialization.PlatformSerializer
 import io.embrace.android.embracesdk.internal.session.id.SessionIdsSnapshot
 import io.embrace.android.embracesdk.internal.session.id.SessionPartTracker
+import io.embrace.android.embracesdk.internal.storage.SdkStorage
 import io.embrace.android.embracesdk.internal.store.OrdinalStore
 import io.embrace.android.embracesdk.internal.telemetry.InternalTelemetryService
 import io.embrace.android.embracesdk.internal.utils.UuidSource
@@ -54,6 +55,7 @@ internal class InstrumentationArgsImpl(
     private val userSessionIdsProvider: () -> String?,
     private val activeSessionIdsProvider: () -> SessionIdsSnapshot,
     crashMarkerFileProvider: () -> File,
+    override val sdkStorage: SdkStorage,
     override val eventBus: EventBus,
 ) : InstrumentationArgs {
 

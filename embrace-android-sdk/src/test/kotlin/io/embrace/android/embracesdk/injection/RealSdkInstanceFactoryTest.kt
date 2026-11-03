@@ -14,9 +14,11 @@ import io.embrace.android.embracesdk.fakes.FakeErrorHandler
 import io.embrace.android.embracesdk.fakes.FakeNetworkConnectivityService
 import io.embrace.android.embracesdk.fakes.FakeReadWriteLogRecord
 import io.embrace.android.embracesdk.fakes.OtelSdkMode
+import io.embrace.android.embracesdk.fakes.TELEMETRY_DIRS
 import io.embrace.android.embracesdk.fakes.TestPlatformSerializer
 import io.embrace.android.embracesdk.fakes.injection.FakeWorkerThreadPool
 import io.embrace.android.embracesdk.fakes.injection.TestInitServices
+import io.embrace.android.embracesdk.fakes.testSdkStorage
 import io.embrace.android.embracesdk.internal.arch.InstrumentationArgs
 import io.embrace.android.embracesdk.internal.arch.InstrumentationProvider
 import io.embrace.android.embracesdk.internal.arch.InstrumentationRegistry
@@ -34,7 +36,6 @@ import io.embrace.android.embracesdk.internal.config.remote.RemoteConfig
 import io.embrace.android.embracesdk.internal.config.resolved.AutoDataCaptureConfig
 import io.embrace.android.embracesdk.internal.config.resolved.EmbraceConfig
 import io.embrace.android.embracesdk.internal.delivery.intake.IntakeService
-import io.embrace.android.embracesdk.internal.delivery.storage.StorageLocation
 import io.embrace.android.embracesdk.internal.injection.ConfigLoadServices
 import io.embrace.android.embracesdk.internal.injection.PreStartServices
 import io.embrace.android.embracesdk.internal.injection.SdkOverrides
@@ -54,6 +55,7 @@ import io.embrace.android.embracesdk.internal.otel.sdk.OtelSdkWrapper
 import io.embrace.android.embracesdk.internal.session.lifecycle.LifecycleTracker
 import io.embrace.android.embracesdk.internal.session.orchestrator.PayloadStore
 import io.embrace.android.embracesdk.internal.session.orchestrator.SessionOrchestrator
+import io.embrace.android.embracesdk.internal.storage.SdkDir
 import io.embrace.android.embracesdk.internal.utils.event.EventBus
 import io.embrace.android.embracesdk.internal.worker.BackgroundWorker
 import io.embrace.android.embracesdk.internal.worker.Worker
@@ -196,7 +198,7 @@ internal class RealSdkInstanceFactoryTest {
     }
 
     private fun createInstanceWithPersistedConfig(cfg: RemoteConfig): RealSdkInstance {
-        val storageDir = File(context.filesDir, PersistedConfig.STORAGE_DIR_NAME).apply { mkdirs() }
+        val storageDir = testSdkStorage(context).dir(SdkDir.REMOTE_CONFIG).toFile()
         File(storageDir, PersistedConfig.CONFIG_RESPONSE_FILE_NAME).outputStream().buffered().use { stream ->
             TestPlatformSerializer().toJson(cfg, RemoteConfig.serializer(), stream)
         }
@@ -348,7 +350,7 @@ internal class RealSdkInstanceFactoryTest {
         okHttpClient.value.newCall(Request.Builder().url(server.url("/")).build()).execute().close()
         assertEquals(1, okHttpClient.value.connectionPool.idleConnectionCount())
 
-        val storageDirs = StorageLocation.entries.map { File(context.filesDir, it.dir) }
+        val storageDirs = TELEMETRY_DIRS.map { testSdkStorage(context).dir(it).toFile() }
         File(storageDirs.first().apply(File::mkdirs), "payload").writeText("{}")
 
         val instance = createInstance(
@@ -467,8 +469,8 @@ internal class RealSdkInstanceFactoryTest {
         onEnabled()
     }
 
-    private fun storageDirs(): List<File> = StorageLocation.entries.map {
-        File(context.filesDir, it.dir).apply { mkdirs() }
+    private fun storageDirs(): List<File> = TELEMETRY_DIRS.map {
+        testSdkStorage(context).dir(it).toFile()
     }
 
     private fun emittedLogState(): Any? {

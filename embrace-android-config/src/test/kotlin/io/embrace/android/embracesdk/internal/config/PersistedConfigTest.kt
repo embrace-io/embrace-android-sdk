@@ -114,12 +114,11 @@ internal class PersistedConfigTest {
 
     @Test
     fun `corrupt config on disk degrades to no config rather than throwing`() {
-        val filesDir = temporaryFolder.newFolder()
-        val storageDir = File(filesDir, PersistedConfig.STORAGE_DIR_NAME).apply { mkdirs() }
+        val storageDir = temporaryFolder.newFolder()
         File(storageDir, PersistedConfig.CONFIG_RESPONSE_FILE_NAME).writeText("!!! not json !!!")
         File(storageDir, PersistedConfig.CACHED_CONFIG_FILE_NAME).writeBytes(ByteArray(8))
 
-        val persistedConfig = createPersistedConfig(filesDir = filesDir)
+        val persistedConfig = createPersistedConfig(storageDir = storageDir)
 
         assertNull(persistedConfig.response)
         assertNull(persistedConfig.remoteConfig)
@@ -161,25 +160,24 @@ internal class PersistedConfigTest {
         appId: String? = "abcde",
         store: Lazy<FakePersistedSdkStateStore> = lazyOf(FakePersistedSdkStateStore()),
         cachedDeviceId: String? = null,
-        filesDir: File = temporaryFolder.newFolder(),
+        storageDir: File = temporaryFolder.newFolder(),
     ): PersistedConfig {
         if (persisted != null && cachedDeviceId != null) {
             RemoteConfigStoreImpl(
                 serializer = serializer,
-                storageDir = File(filesDir, PersistedConfig.STORAGE_DIR_NAME),
+                storageDir = storageDir,
                 deviceIdProvider = { cachedDeviceId },
                 deliveredAtProvider = { 1L },
                 errorHandler = errorHandler,
             ).saveResponse(ConfigHttpResponse(persisted, "etag"))
         } else if (persisted != null) {
-            val storageDir = File(filesDir, PersistedConfig.STORAGE_DIR_NAME).apply { mkdirs() }
             File(storageDir, PersistedConfig.CONFIG_RESPONSE_FILE_NAME).outputStream().buffered().use {
                 serializer.toJson(persisted, RemoteConfig.serializer(), it)
             }
         }
         return PersistedConfig(
             serializer = serializer,
-            filesDir = filesDir,
+            storageDir = storageDir,
             instrumentedConfig = FakeInstrumentedConfig(
                 enabledFeatures = FakeEnabledFeatureConfig(otelKotlinSdkEnabled = localEnabled),
                 project = FakeProjectConfig(appId = appId),

@@ -38,7 +38,6 @@ import io.embrace.android.embracesdk.internal.config.ConfigService
 import io.embrace.android.embracesdk.internal.delivery.caching.PayloadCachingService
 import io.embrace.android.embracesdk.internal.delivery.scheduling.SchedulingService
 import io.embrace.android.embracesdk.internal.delivery.storage.PayloadStorageService
-import io.embrace.android.embracesdk.internal.delivery.storage.deletePersistedTelemetry
 import io.embrace.android.embracesdk.internal.injection.WorkerThreadPool
 import io.embrace.android.embracesdk.internal.injection.evictConnections
 import io.embrace.android.embracesdk.internal.instrumentation.crash.CrashFileMarker
@@ -72,6 +71,7 @@ import io.embrace.android.embracesdk.internal.resurrection.SessionPartReader
 import io.embrace.android.embracesdk.internal.session.id.SessionPartTracker
 import io.embrace.android.embracesdk.internal.session.orchestrator.PayloadStore
 import io.embrace.android.embracesdk.internal.session.orchestrator.SessionOrchestrator
+import io.embrace.android.embracesdk.internal.storage.SdkStorage
 import io.embrace.android.embracesdk.internal.utils.EmbTrace
 import io.embrace.android.embracesdk.internal.utils.event.EventBus
 import io.embrace.android.embracesdk.internal.worker.Worker
@@ -102,6 +102,7 @@ internal class RealSdkInstance(
     private val okHttpClient: Lazy<OkHttpClient>,
     private val eventBus: EventBus,
     private val appContext: Context,
+    private val sdkStorage: SdkStorage,
     private val spanRepository: SpanRepository,
     private val logSink: LogSink,
     private val otelSdkConfig: Lazy<OtelSdkConfig>,
@@ -231,9 +232,6 @@ internal class RealSdkInstance(
         runCatching { instrumentationRegistry.close() }
         runCatching { resetHucInstrumentation() }
         runCatching { threadBlockageService?.close() }
-
-        val rootDir = runCatching { appContext.filesDir }.getOrNull()
-        val fallbackDir = runCatching { appContext.cacheDir }.getOrNull()
         runCatching { startupTracker.close() }
         runCatching { otelSdkConfig.value.close() }
         runCatching { sessionOrchestrator.close() }
@@ -247,7 +245,7 @@ internal class RealSdkInstance(
         runCatching { cancelHttpRequests() }
         runCatching { workerThreadPool.close() }
 
-        if (!deletePersistedTelemetry || rootDir == null || fallbackDir == null) {
+        if (!deletePersistedTelemetry) {
             return
         }
         val executor = runCatching { Executors.newSingleThreadExecutor() }.getOrNull() ?: return
@@ -255,11 +253,11 @@ internal class RealSdkInstance(
             runCatching {
                 // deleted at once so that nothing is left to send if the process ends during the wait, then again once the
                 // workers have finished, as work still running can write again
-                deletePersistedTelemetry(rootDir, fallbackDir)
+                sdkStorage.deleteTelemetry()
                 if (!workerThreadPool.awaitTermination(WORKER_TERMINATION_TIMEOUT_MS)) {
                     Log.w("[Embrace]", "Timed out waiting for Embrace workers to finish before deleting data.")
                 }
-                deletePersistedTelemetry(rootDir, fallbackDir)
+                sdkStorage.deleteTelemetry()
             }.onFailure { exception ->
                 Log.e("[Embrace]", "An error occurred while trying to disable Embrace SDK.", exception)
             }

@@ -7,14 +7,15 @@ import io.embrace.android.embracesdk.fakes.FakeConfigService
 import io.embrace.android.embracesdk.fakes.FakeErrorHandler
 import io.embrace.android.embracesdk.fakes.FakeSpanExporter
 import io.embrace.android.embracesdk.fakes.FilesDirApplication
+import io.embrace.android.embracesdk.fakes.testSdkStorage
 import io.embrace.android.embracesdk.internal.config.ConfigService
 import io.embrace.android.embracesdk.internal.config.resolved.EmbraceConfig
 import io.embrace.android.embracesdk.internal.config.resolved.SdkModeConfig
-import io.embrace.android.embracesdk.internal.delivery.storage.StorageLocation
 import io.embrace.android.embracesdk.internal.injection.ConfigLoadServices
 import io.embrace.android.embracesdk.internal.injection.ConfigServiceSupplier
 import io.embrace.android.embracesdk.internal.injection.PreStartServices
 import io.embrace.android.embracesdk.internal.injection.SdkOverrides
+import io.embrace.android.embracesdk.internal.storage.SdkDir
 import io.embrace.android.embracesdk.internal.worker.Worker
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
@@ -137,7 +138,7 @@ internal class SdkStateHolderFactoryTest {
         assertEquals(SdkState.DISABLED, holder.state)
     }
 
-    private fun createSdkFile(): File = File(File(context.filesDir, StorageLocation.PAYLOAD.dir), "payload").apply {
+    private fun createSdkFile(): File = File(testSdkStorage(context).dir(SdkDir.TELEMETRY_READY).toFile(), "payload").apply {
         parentFile?.mkdirs()
         writeText("data")
     }

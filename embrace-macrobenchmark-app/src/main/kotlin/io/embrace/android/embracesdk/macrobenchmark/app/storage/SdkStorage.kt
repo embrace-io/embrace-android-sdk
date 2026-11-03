@@ -1,7 +1,8 @@
 package io.embrace.android.embracesdk.macrobenchmark.app.storage
 
 import io.embrace.android.embracesdk.internal.config.PersistedConfig
-import io.embrace.android.embracesdk.internal.delivery.storage.StorageLocation
+import io.embrace.android.embracesdk.internal.storage.LegacySdkStorage
+import io.embrace.android.embracesdk.internal.storage.SdkDir
 import java.io.File
 
 /**
@@ -14,20 +15,22 @@ internal class SdkStorage(private val dataDir: File) {
     private val filesDir = File(dataDir, FILES_DIR)
 
     /**
-     * Where multi-file mode keeps session parts: [StorageLocation.SESSION_SPLIT].
+     * Where multi-file mode keeps session parts: [SdkDir.TELEMETRY_PENDING_SESSION_PARTS].
      */
-    val sessionsDir: File = File(filesDir, StorageLocation.SESSION_SPLIT.dir)
+    val sessionsDir: File = sdkDir(SdkDir.TELEMETRY_PENDING_SESSION_PARTS)
 
     /**
      * The cache of incomplete payloads, which the SDK may pass resurrected parts through on their way to
-     * being stored: [StorageLocation.CACHE].
+     * being stored: [SdkDir.TELEMETRY_PENDING_SNAPSHOTS].
      */
-    val cacheDir: File = File(filesDir, StorageLocation.CACHE.dir)
+    val cacheDir: File = sdkDir(SdkDir.TELEMETRY_PENDING_SNAPSHOTS)
 
     /**
-     * Where the SDK persists the remote config: [PersistedConfig.STORAGE_DIR_NAME].
+     * Where the SDK persists the remote config: [SdkDir.REMOTE_CONFIG].
      */
-    val remoteConfigDir: File = File(filesDir, PersistedConfig.STORAGE_DIR_NAME)
+    val remoteConfigDir: File = sdkDir(SdkDir.REMOTE_CONFIG)
+
+    private fun sdkDir(dir: SdkDir): File = File(filesDir, LegacySdkStorage.LEGACY_DIR_NAMES.getValue(dir))
 
     /**
      * The directory names of the session parts in [sessionsDir].

@@ -14,6 +14,7 @@ import io.embrace.android.embracesdk.internal.logging.ErrorHandler
 import io.embrace.android.embracesdk.internal.network.http.HttpRequestInfoModifierChain
 import io.embrace.android.embracesdk.internal.serialization.PlatformSerializer
 import io.embrace.android.embracesdk.internal.session.id.SessionIdsSnapshot
+import io.embrace.android.embracesdk.internal.storage.SdkStorage
 import io.embrace.android.embracesdk.internal.store.OrdinalStore
 import io.embrace.android.embracesdk.internal.telemetry.InternalTelemetryService
 import io.embrace.android.embracesdk.internal.utils.UuidSource
@@ -156,6 +157,11 @@ interface InstrumentationArgs {
      * Retrieves the crash marker file.
      */
     val crashMarkerFile: File
+
+    /**
+     * Resolves the directories the SDK stores data in.
+     */
+    val sdkStorage: SdkStorage
 
     /**
      * Service where navigation controllers and navigation event listeners can be registered

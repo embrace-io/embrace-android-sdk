@@ -2,6 +2,7 @@ package io.embrace.android.embracesdk.testframework.actions
 
 import android.content.Context
 import androidx.test.core.app.ApplicationProvider
+import io.embrace.android.embracesdk.fakes.testSdkStorage
 import io.embrace.android.embracesdk.ResourceReader
 import io.embrace.android.embracesdk.fakes.FakeErrorHandler
 import io.embrace.android.embracesdk.fakes.fakeEmptyLogEnvelope
@@ -10,8 +11,7 @@ import io.embrace.android.embracesdk.fakes.fakeEnvelopeResource
 import io.embrace.android.embracesdk.fakes.fakeIncompleteSessionEnvelope
 import io.embrace.android.embracesdk.internal.delivery.StoredTelemetryMetadata
 import io.embrace.android.embracesdk.internal.delivery.SupportedEnvelopeType
-import io.embrace.android.embracesdk.internal.delivery.storage.StorageLocation
-import io.embrace.android.embracesdk.internal.delivery.storage.asFile
+import io.embrace.android.embracesdk.internal.storage.SdkDir
 import io.embrace.android.embracesdk.internal.payload.Envelope
 import io.embrace.android.embracesdk.internal.payload.EnvelopeMetadata
 import io.embrace.android.embracesdk.internal.payload.EnvelopeResource
@@ -33,11 +33,7 @@ internal data class StoredNativeCrashData(
 
     fun getCrashFile(): File {
         val ctx = ApplicationProvider.getApplicationContext<Context>()
-        val outputDir = StorageLocation.NATIVE.asFile(
-            errorHandler = FakeErrorHandler(),
-            rootDirSupplier = { ctx.filesDir },
-            fallbackDirSupplier = { ctx.cacheDir },
-        ).value.apply {
+        val outputDir = testSdkStorage(ctx).dir(SdkDir.TELEMETRY_PENDING_NATIVE_CRASHES).toFile().apply {
             mkdirs()
         }
         return File(outputDir, crashMetadata.filename)

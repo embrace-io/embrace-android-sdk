@@ -24,7 +24,7 @@ internal val KNOWN_VIOLATIONS: List<KnownViolation> = listOf(
     KnownViolation(
         signature = "internal.injection.ConfigLoadServices.<init>",
         violation = DiskReadViolation::class,
-        reason = "context.filesDir is passed to PersistedConfig as a ctor arg, and ContextImpl.getFilesDir " +
+        reason = "context.filesDir is passed to the SDK's storage as a ctor arg, and ContextImpl.getFilesDir " +
             "stats the directory on every call",
     ),
     KnownViolation(

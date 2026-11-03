@@ -2,6 +2,7 @@ package io.embrace.android.embracesdk.testcases.persistence
 
 import android.content.Context
 import androidx.test.core.app.ApplicationProvider
+import io.embrace.android.embracesdk.fakes.testSdkStorage
 import io.embrace.android.embracesdk.assertions.findSessionPartSpan
 import io.embrace.android.embracesdk.assertions.getSessionPartId
 import io.embrace.android.embracesdk.assertions.waitUntilConditionMet
@@ -13,8 +14,7 @@ import io.embrace.android.embracesdk.internal.config.behavior.DEFAULT_PERIODIC_C
 import io.embrace.android.embracesdk.internal.config.remote.BackgroundActivityRemoteConfig
 import io.embrace.android.embracesdk.internal.delivery.StoredTelemetryMetadata
 import io.embrace.android.embracesdk.internal.delivery.SupportedEnvelopeType
-import io.embrace.android.embracesdk.internal.delivery.storage.StorageLocation
-import io.embrace.android.embracesdk.internal.delivery.storage.asFile
+import io.embrace.android.embracesdk.internal.storage.SdkDir
 import io.embrace.android.embracesdk.internal.logging.SdkErrorType
 import io.embrace.android.embracesdk.internal.otel.sdk.findAttributeValue
 import io.embrace.android.embracesdk.internal.otel.spans.hasEmbraceAttribute
@@ -592,15 +592,11 @@ internal class MultiFilePersistenceLifecycleParityTest(
     private fun storedSessionPartDirectories(): List<SessionPartDirectory> =
         (sessionsDir().list() ?: emptyArray()).mapNotNull(SessionPartDirectory::fromDirName)
 
-    private fun sessionsDir(): File = storageDir(StorageLocation.SESSION_SPLIT)
+    private fun sessionsDir(): File = storageDir(SdkDir.TELEMETRY_PENDING_SESSION_PARTS)
 
-    private fun storageDir(location: StorageLocation): File {
+    private fun storageDir(location: SdkDir): File {
         val ctx = ApplicationProvider.getApplicationContext<Context>()
-        return location.asFile(
-            errorHandler = FakeErrorHandler(),
-            rootDirSupplier = { ctx.filesDir },
-            fallbackDirSupplier = { ctx.cacheDir },
-        ).value
+        return testSdkStorage(ctx).dir(location).toFile()
     }
 
     /**
@@ -609,7 +605,7 @@ internal class MultiFilePersistenceLifecycleParityTest(
      * than evicting one of them. Returns what was stored so a test can free the space again.
      */
     private fun fillPayloadStorage(): List<StoredTelemetryMetadata> {
-        val dir = storageDir(StorageLocation.PAYLOAD)
+        val dir = storageDir(SdkDir.TELEMETRY_READY)
         return (0 until PAYLOAD_STORAGE_LIMIT).map { index ->
             StoredTelemetryMetadata(
                 timestamp = SdkIntegrationTestRule.DEFAULT_SDK_START_TIME_MS - 1000L,

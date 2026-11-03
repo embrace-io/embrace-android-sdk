@@ -1,6 +1,8 @@
 
 package io.embrace.android.embracesdk.testframework
 
+import io.embrace.android.embracesdk.internal.storage.SdkDir
+import io.embrace.android.embracesdk.fakes.testSdkStorage
 import android.content.Context
 import androidx.test.core.app.ApplicationProvider
 import io.embrace.android.embracesdk.fakes.FakeClock
@@ -232,9 +234,7 @@ internal class SdkIntegrationTestRule(
      */
     private fun persistConfig(persistedRemoteConfig: RemoteConfig) {
         val ctx = ApplicationProvider.getApplicationContext<Context>()
-        val storageDir = File(ctx.filesDir, PersistedConfig.STORAGE_DIR_NAME).apply {
-            mkdirs()
-        }
+        val storageDir = testSdkStorage(ctx).dir(SdkDir.REMOTE_CONFIG).toFile()
         File(storageDir, PersistedConfig.ETAG_FILE_NAME).writeText("persisted_etag")
         val responseFile = File(storageDir, PersistedConfig.CONFIG_RESPONSE_FILE_NAME)
 

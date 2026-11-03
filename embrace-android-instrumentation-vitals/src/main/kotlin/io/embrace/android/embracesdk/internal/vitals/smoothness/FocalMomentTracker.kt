@@ -7,6 +7,7 @@ import io.embrace.android.embracesdk.internal.clock.Clock
 import io.embrace.android.embracesdk.internal.clock.millisToNanos
 import io.embrace.android.embracesdk.internal.clock.nanosToMillis
 import io.embrace.android.embracesdk.internal.vitals.FocalInteractionCallbacks
+import io.embrace.android.embracesdk.internal.vitals.MainThreadProbe
 import io.embrace.android.embracesdk.internal.vitals.SettleTracker
 import io.embrace.android.embracesdk.internal.vitals.VitalsScheduler
 import io.embrace.android.embracesdk.internal.vitals.responsiveness.InteractionResponsivenessReporter
@@ -32,9 +33,11 @@ internal class FocalMomentTracker(
     private val frameTraceRecorder: FrameTraceRecorder? = null,
     // Only non-null when interaction responsiveness is captured; called on the Vitals thread.
     private val responsivenessReporter: InteractionResponsivenessReporter? = null,
+    // Only non-null when interaction responsiveness is captured; builds the probe that reports main-thread blocks.
+    probeFactory: ((MainThreadProbe.BlockCallback) -> MainThreadProbe)? = null,
     // Receives every frame, whatever the smoothness state; called on the Vitals thread.
     private val onFrameCounted: (dropped: Boolean, expectedFrames: Int) -> Unit = { _, _ -> },
-) : FocalInteractionCallbacks {
+) : FocalInteractionCallbacks, AutoCloseable {
 
     // Reused hop Runnable instances (main thread -> Vitals thread); allocate them here to make certain they're off the hot path
     private val interactionStartRunnable = Runnable { startOrResume(openedByDown = true) }
@@ -45,6 +48,11 @@ internal class FocalMomentTracker(
     // The settle baseline (the latest of redraw vsync / move) lives inside [settle]; we feed every activity
     // event to it via notifyActivity rather than holding the per-source timestamps here.
     private val settle = SettleTracker(scheduler, ::currentThresholdMs, ::onSettled)
+
+    // Runs only while a focal moment is capturing; each block is reported on the main thread and hops onto the Vitals thread.
+    private val probe: MainThreadProbe? = probeFactory?.invoke(
+        MainThreadProbe.BlockCallback { _, durationMs -> scheduler.post { handleBlock(durationMs) } },
+    )
 
     private var capturing = false
     private var held = false
@@ -73,6 +81,7 @@ internal class FocalMomentTracker(
                 // Frame is contiguous with the buffered settle: resume capturing so its jank is included.
                 held = false
                 capturing = true
+                probe?.start()
                 recordFrame(vsyncNanos, frameDispatchNanos, jankNanos)
                 settle.notifyActivity(vsyncNanos.nanosToMillis())
             } else {
@@ -188,7 +197,17 @@ internal class FocalMomentTracker(
                 responsivenessReporter.onFocalMomentStart(null)
             }
         }
+        // Started on the Vitals thread, not at the touch-down's processing time, so hop latency is never reported as a block.
+        probe?.start()
         settle.notifyActivity(nowMs)
+    }
+
+    @WorkerThread
+    private fun handleBlock(durationMs: Long) {
+        // A held moment still counts it: the report can trail the settle check that held the moment.
+        if (capturing || held) {
+            responsivenessReporter?.onBlock(durationMs)
+        }
     }
 
     @WorkerThread
@@ -238,6 +257,7 @@ internal class FocalMomentTracker(
         capturing = false
         held = false
         settle.cancel()
+        probe?.stop()
         val durationMs = (endNanos - focalMomentStartNanos).nanosToMillis()
         reporter.onFocalMomentEnd(outcome, focalMomentStartEpochMs, durationMs, frameTraceRecorder?.toBase64())
         if (responsivenessReporter != null) {
@@ -259,6 +279,14 @@ internal class FocalMomentTracker(
         capturing = false
         held = true
         settle.cancel()
+        probe?.stop()
+    }
+
+    /**
+     * Stops the main-thread probe so no probe message outlives the tracker.
+     */
+    override fun close() {
+        probe?.stop()
     }
 
     private fun nowMs(): Long = SystemClock.uptimeMillis()

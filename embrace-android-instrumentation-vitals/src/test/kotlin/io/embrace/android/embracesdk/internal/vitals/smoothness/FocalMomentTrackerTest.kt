@@ -1,8 +1,12 @@
 package io.embrace.android.embracesdk.internal.vitals.smoothness
 
+import android.os.Handler
+import android.os.Looper
 import android.os.SystemClock
 import androidx.test.ext.junit.runners.AndroidJUnit4
+import io.embrace.android.embracesdk.fakes.FakeErrorHandler
 import io.embrace.android.embracesdk.internal.vitals.FrameCounts
+import io.embrace.android.embracesdk.internal.vitals.MainThreadProbe
 import io.embrace.android.embracesdk.internal.vitals.counts
 import io.embrace.android.embracesdk.internal.vitals.fake.FakeVitalsScheduler
 import io.embrace.android.embracesdk.internal.vitals.responsiveness.InteractionResponsivenessReporter
@@ -10,11 +14,13 @@ import io.embrace.android.embracesdk.internal.vitals.responsiveness.InteractionR
 import io.embrace.android.embracesdk.internal.vitals.screenload.ScreenLoadTracker
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
+import org.junit.Assert.assertNotEquals
 import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
 import org.junit.runner.RunWith
+import org.robolectric.Shadows.shadowOf
 import org.robolectric.shadows.ShadowSystemClock
 import java.time.Duration
 
@@ -41,13 +47,28 @@ internal class FocalMomentTrackerTest {
         probeIntervalMs = 16L,
     )
 
-    // Captures interaction responsiveness too; its smoothness results share [emitted].
+    private val mainLooper = shadowOf(Looper.getMainLooper())
+    private val mainHandler = Handler(Looper.getMainLooper())
+
+    // The probe's block callback, so a test can deliver a report at a chosen point in the moment.
+    private lateinit var blockCallback: MainThreadProbe.BlockCallback
+
+    // Captures interaction responsiveness too, probing the paused Robolectric main looper; its smoothness results share [emitted].
     private val responsiveTracker = FocalMomentTracker(
         scheduler = scheduler,
         reporter = SmoothnessReporter(emit = emitted::add),
         clock = { 0L },
         screenLoadTracker = ScreenLoadTracker(scheduler = scheduler, clock = { 0L }, emit = {}),
         responsivenessReporter = responsivenessReporter,
+        probeFactory = { onBlock ->
+            blockCallback = onBlock
+            MainThreadProbe(
+                looper = Looper.getMainLooper(),
+                blockThresholdMs = 50L,
+                onBlock = onBlock,
+                errorHandler = FakeErrorHandler(),
+            )
+        },
     )
 
     // The tracker reads time from SystemClock.uptimeMillis; Robolectric keeps it paused until advance()
@@ -395,6 +416,73 @@ internal class FocalMomentTrackerTest {
         assertEquals(0L, unblocked.totalBlockedMs)
         assertEquals(0, unblocked.blockCount)
         assertTrue("smoothness skips moments with no frames", emitted.isEmpty())
+    }
+
+    @Test
+    fun `a main-thread block during a moment is counted in its result`() {
+        responsiveTracker.onInteractionStart(nowMs())
+        mainHandler.post { advance(200) } // a 200ms block queued ahead of the probe
+        mainLooper.idleFor(Duration.ofMillis(250))
+        responsiveTracker.onScreenStop()
+
+        val result = responsivenessEmitted.single()
+        assertEquals(1, result.blockCount)
+        assertEquals("late by the block less the probe's pace", 184L, result.longestBlockMs)
+        assertEquals(184L, result.totalBlockedMs)
+        assertEquals("the end stops the probe", Duration.ZERO, mainLooper.nextScheduledTaskTime)
+    }
+
+    @Test
+    fun `the probe stops while the moment is held and restarts when it resumes`() {
+        responsiveTracker.onInteractionStart(nowMs())
+        responsiveTracker.onInteractionEnd()
+        responsiveTracker.onFrame(vsyncNanos = start + 16.ms, frameDispatchNanos = start + 16.ms, jankNanos = 0L, expectedFrames = 1)
+        assertNotEquals("a capturing moment probes", Duration.ZERO, mainLooper.nextScheduledTaskTime)
+
+        settleAfter(120)
+        assertEquals("holding stops the probe", Duration.ZERO, mainLooper.nextScheduledTaskTime)
+
+        // contiguous with the buffered settle: the moment resumes
+        responsiveTracker.onFrame(vsyncNanos = start + 20.ms, frameDispatchNanos = start + 20.ms, jankNanos = 0L, expectedFrames = 1)
+        assertEquals("resuming restarts the probe from now", Duration.ofMillis(nowMs()), mainLooper.nextScheduledTaskTime)
+    }
+
+    @Test
+    fun `a block reported after the moment is held but before it is flushed is counted`() {
+        responsiveTracker.onInteractionStart(nowMs())
+        responsiveTracker.onInteractionEnd()
+        settleAfter(100) // held
+
+        // the probe posted this report just before the settle check held the moment
+        blockCallback.onBlock(nowMs(), 80L)
+        responsiveTracker.onScreenStop() // flushes the held moment
+
+        val result = responsivenessEmitted.single()
+        assertEquals(FocalOutcome.SETTLED, result.outcome)
+        assertEquals(1, result.blockCount)
+        assertEquals(80L, result.longestBlockMs)
+    }
+
+    @Test
+    fun `a block reported after the moment completed is ignored`() {
+        responsiveTracker.onInteractionStart(nowMs())
+        responsiveTracker.onScreenStop()
+
+        blockCallback.onBlock(nowMs(), 80L)
+        assertFalse("a completed moment schedules nothing", scheduler.scheduled)
+
+        responsiveTracker.onInteractionStart(nowMs())
+        responsiveTracker.onScreenStop()
+        assertEquals(listOf(0, 0), responsivenessEmitted.map { it.blockCount })
+    }
+
+    @Test
+    fun `close stops the probe of an open moment`() {
+        responsiveTracker.onInteractionStart(nowMs())
+        assertNotEquals(Duration.ZERO, mainLooper.nextScheduledTaskTime)
+
+        responsiveTracker.close()
+        assertEquals(Duration.ZERO, mainLooper.nextScheduledTaskTime)
     }
 
     private fun nowMs() = SystemClock.uptimeMillis()

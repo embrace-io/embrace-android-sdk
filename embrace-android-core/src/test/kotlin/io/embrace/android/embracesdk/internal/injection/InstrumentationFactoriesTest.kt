@@ -18,6 +18,7 @@ import io.embrace.android.embracesdk.fakes.injection.TestInitServices
 import io.embrace.android.embracesdk.fakes.testSdkStorage
 import io.embrace.android.embracesdk.internal.utils.event.EventBus
 import io.embrace.android.embracesdk.internal.worker.Worker
+import org.junit.Assert.assertNull
 import org.junit.Assert.assertSame
 import org.junit.Test
 import java.io.File
@@ -68,5 +69,9 @@ internal class InstrumentationFactoriesTest {
 
         assertSame(deliveredAeiStore, args.deliveredAeiStore)
         assertSame(networkCaptureRuleStore, args.networkCaptureRuleStore)
+
+        // a service that isn't found is returned as null each time rather than throwing
+        assertNull(args.systemService<Any>("no-such-service"))
+        assertNull(args.systemService<Any>("no-such-service"))
     }
 }

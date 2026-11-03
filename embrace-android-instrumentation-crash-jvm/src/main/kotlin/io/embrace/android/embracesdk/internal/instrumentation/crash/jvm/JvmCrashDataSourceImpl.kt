@@ -23,6 +23,8 @@ import io.opentelemetry.kotlin.semconv.ExceptionAttributes
 import io.opentelemetry.kotlin.semconv.LogAttributes
 import kotlinx.serialization.builtins.ListSerializer
 import java.util.concurrent.CopyOnWriteArrayList
+import java.util.concurrent.CountDownLatch
+import java.util.concurrent.TimeUnit
 
 /**
  * Intercept and track uncaught Android Runtime exceptions
@@ -38,6 +40,7 @@ class JvmCrashDataSourceImpl(
 
     private val serializer: PlatformSerializer = args.serializer
     private val handleMainCrashOnce = OneShot()
+    private val mainCrashTornDown = CountDownLatch(1)
     private val handlers: CopyOnWriteArrayList<CrashTeardownHandler> = CopyOnWriteArrayList()
 
     @Volatile
@@ -53,6 +56,7 @@ class JvmCrashDataSourceImpl(
 
     override fun onDataCaptureDisabled() {
         handleMainCrashOnce.tryClaim()
+        mainCrashTornDown.countDown()
         exceptionHandler?.detach()
         exceptionHandler = null
     }
@@ -65,7 +69,12 @@ class JvmCrashDataSourceImpl(
      * @param exception the exception thrown by the thread
      */
     override fun logUnhandledJvmThrowable(exception: Throwable) {
-        handleMainCrashOnce {
+        // Block other threads that attempt to handle an uncaught exception until the first one is done.
+        if (!handleMainCrashOnce.tryClaim()) {
+            awaitMainCrashTeardown()
+            return
+        }
+        try {
             val crashId = args.uuidSource.createUuid()
             captureTelemetry(inputValidation = configService.config.autoDataCapture::jvmCrashCaptureEnabled) {
                 val attrs = TelemetryAttributes().apply {
@@ -107,11 +116,21 @@ class JvmCrashDataSourceImpl(
 
             // finally, notify other services that need to perform tear down
             errorHandler.guardSdkCodeEach(SdkErrorType.CrashTeardownFail, handlers) { it.handleCrash(crashId) }
+        } finally {
+            mainCrashTornDown.countDown()
         }
     }
 
     override fun addCrashTeardownHandler(handler: CrashTeardownHandler) {
         handlers.add(handler)
+    }
+
+    private fun awaitMainCrashTeardown() {
+        try {
+            mainCrashTornDown.await(LATER_CRASH_TEARDOWN_WAIT_MS, TimeUnit.MILLISECONDS)
+        } catch (_: InterruptedException) {
+            Thread.currentThread().interrupt()
+        }
     }
 
     /**
@@ -152,3 +171,8 @@ class JvmCrashDataSourceImpl(
         }
     }
 }
+
+// Amount of time to block threads that try to handle an unhandled exception if a crash is already being handled
+// Blocking instead of returning right away gives a chance for the crash handling and teardown to finish before
+// handing control to another handler which may prematurely kill the process.
+private const val LATER_CRASH_TEARDOWN_WAIT_MS = 5000L

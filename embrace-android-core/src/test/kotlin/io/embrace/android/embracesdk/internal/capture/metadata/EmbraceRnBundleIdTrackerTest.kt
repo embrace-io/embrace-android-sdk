@@ -3,7 +3,7 @@ package io.embrace.android.embracesdk.internal.capture.metadata
 import io.embrace.android.embracesdk.concurrency.BlockingScheduledExecutorService
 import io.embrace.android.embracesdk.fakes.FakeConfigService
 import io.embrace.android.embracesdk.fakes.FakeErrorHandler
-import io.embrace.android.embracesdk.fakes.FakeKeyValueStore
+import io.embrace.android.embracesdk.fakes.FakePersistedSdkStateStore
 import io.embrace.android.embracesdk.fakes.fakeBackgroundWorker
 import io.embrace.android.embracesdk.internal.config.BuildInfo
 import io.embrace.android.embracesdk.internal.config.ConfigService
@@ -27,7 +27,7 @@ internal class EmbraceRnBundleIdTrackerTest {
     private var assetStream: InputStream? = null
     private lateinit var buildInfo: BuildInfo
     private lateinit var configService: ConfigService
-    private lateinit var store: FakeKeyValueStore
+    private lateinit var stateStore: FakePersistedSdkStateStore
     private lateinit var errorHandler: FakeErrorHandler
 
     @Before
@@ -38,7 +38,7 @@ internal class EmbraceRnBundleIdTrackerTest {
             appFramework = AppFramework.REACT_NATIVE
         }
         buildInfo = configService.buildInfo
-        store = FakeKeyValueStore()
+        stateStore = FakePersistedSdkStateStore()
     }
 
     private fun openAsset(name: String): InputStream {
@@ -49,7 +49,7 @@ internal class EmbraceRnBundleIdTrackerTest {
     private fun createRnBundleIdTracker(): RnBundleIdTrackerImpl = RnBundleIdTrackerImpl(
         ::openAsset,
         configService,
-        store,
+        stateStore,
         fakeBackgroundWorker(),
         errorHandler,
     ).apply { startAsyncRetrieval() }
@@ -69,8 +69,8 @@ internal class EmbraceRnBundleIdTrackerTest {
 
     @Test
     fun `test React Native bundle ID from preference if jsBundleIdUrl is the same as the value persisted `() {
-        store.editAndCommit {
-            putString(JAVA_SCRIPT_BUNDLE_URL_KEY, "javaScriptBundleURL")
+        stateStore.update {
+            rnBundleUrl = "javaScriptBundleURL"
         }
         val metadataService = createRnBundleIdTracker()
 
@@ -80,8 +80,8 @@ internal class EmbraceRnBundleIdTrackerTest {
 
     @Test
     fun `test React Native bundle ID from preference if jsBundleIdUrl is a new value`() {
-        store.editAndCommit {
-            putString(JAVA_SCRIPT_BUNDLE_URL_KEY, "oldJavaScriptBundleURL")
+        stateStore.update {
+            rnBundleUrl = "oldJavaScriptBundleURL"
         }
         val metadataService = createRnBundleIdTracker()
 
@@ -119,16 +119,16 @@ internal class EmbraceRnBundleIdTrackerTest {
 
         assertNotEquals(buildInfo.rnBundleId, metadataService.getReactNativeBundleId())
         assertEquals("D41D8CD98F00B204E9800998ECF8427E", metadataService.getReactNativeBundleId())
-        assertEquals("D41D8CD98F00B204E9800998ECF8427E", store.getString(JAVA_SCRIPT_BUNDLE_ID_KEY))
+        assertEquals("D41D8CD98F00B204E9800998ECF8427E", stateStore.snapshot().rnBundleId)
     }
 
     @Test
     fun `test React Native bundle ID url as Asset with forceUpdate param in false`() {
         val bundleIdFile = Files.createTempFile("bundle-test", ".temp").toFile()
         val inputStream = FileInputStream(bundleIdFile)
-        store.editAndCommit {
-            putString(JAVA_SCRIPT_BUNDLE_URL_KEY, "assets://index.android.bundle")
-            putString(JAVA_SCRIPT_BUNDLE_ID_KEY, "persistedBundleId")
+        stateStore.update {
+            rnBundleUrl = "assets://index.android.bundle"
+            rnBundleId = "persistedBundleId"
         }
 
         assetStream = inputStream
@@ -138,7 +138,7 @@ internal class EmbraceRnBundleIdTrackerTest {
 
         assertNotEquals(buildInfo.rnBundleId, metadataService.getReactNativeBundleId())
         assertEquals("persistedBundleId", metadataService.getReactNativeBundleId())
-        assertEquals("persistedBundleId", store.getString(JAVA_SCRIPT_BUNDLE_ID_KEY))
+        assertEquals("persistedBundleId", stateStore.snapshot().rnBundleId)
     }
 
     @Test
@@ -153,7 +153,7 @@ internal class EmbraceRnBundleIdTrackerTest {
 
         assertNotEquals(buildInfo.rnBundleId, metadataService.getReactNativeBundleId())
         assertEquals("D41D8CD98F00B204E9800998ECF8427E", metadataService.getReactNativeBundleId())
-        assertEquals(null, store.getString(JAVA_SCRIPT_BUNDLE_ID_KEY))
+        assertEquals(null, stateStore.snapshot().rnBundleId)
     }
 
     @Test
@@ -185,8 +185,8 @@ internal class EmbraceRnBundleIdTrackerTest {
 
     @Test
     fun `test computeReactNativeBundleId with wrong assets path`() {
-        store.editAndCommit {
-            putString(JAVA_SCRIPT_BUNDLE_URL_KEY, "assets")
+        stateStore.update {
+            rnBundleUrl = "assets"
         }
         assetStream = null
 
@@ -197,23 +197,18 @@ internal class EmbraceRnBundleIdTrackerTest {
 
     @Test
     fun `test computeReactNativeBundleId with wrong custom bundle stream`() {
-        store.editAndCommit {
-            putString(JAVA_SCRIPT_BUNDLE_URL_KEY, "wrongFilePath")
+        stateStore.update {
+            rnBundleUrl = "wrongFilePath"
         }
 
         // computing is null, so reactNativeBundleID should be set to the default value
         assertEquals(createRnBundleIdTracker().getReactNativeBundleId(), buildInfo.rnBundleId)
     }
 
-    private companion object {
-        private const val JAVA_SCRIPT_BUNDLE_URL_KEY = "io.embrace.jsbundle.url"
-        private const val JAVA_SCRIPT_BUNDLE_ID_KEY = "io.embrace.jsbundle.id"
-    }
-
     @Test
     fun `listener is notified once the bundle ID has been computed in the background`() {
         val executor = BlockingScheduledExecutorService(blockingMode = true)
-        val tracker = RnBundleIdTrackerImpl(::openAsset, configService, store, BackgroundWorker(executor), errorHandler).apply {
+        val tracker = RnBundleIdTrackerImpl(::openAsset, configService, stateStore, BackgroundWorker(executor), errorHandler).apply {
             startAsyncRetrieval()
         }
         val observed = mutableListOf<String?>()
@@ -229,7 +224,7 @@ internal class EmbraceRnBundleIdTrackerTest {
     @Test
     fun `listener is notified when the JavaScript bundle URL changes`() {
         val executor = BlockingScheduledExecutorService(blockingMode = true)
-        val tracker = RnBundleIdTrackerImpl(::openAsset, configService, store, BackgroundWorker(executor), errorHandler).apply {
+        val tracker = RnBundleIdTrackerImpl(::openAsset, configService, stateStore, BackgroundWorker(executor), errorHandler).apply {
             startAsyncRetrieval()
         }
         executor.runCurrentlyBlocked()
@@ -257,7 +252,7 @@ internal class EmbraceRnBundleIdTrackerTest {
     @Test
     fun `a throwing listener is tracked and does not stop the others`() {
         val executor = BlockingScheduledExecutorService(blockingMode = true)
-        val tracker = RnBundleIdTrackerImpl(::openAsset, configService, store, BackgroundWorker(executor), errorHandler).apply {
+        val tracker = RnBundleIdTrackerImpl(::openAsset, configService, stateStore, BackgroundWorker(executor), errorHandler).apply {
             startAsyncRetrieval()
         }
         var count = 0

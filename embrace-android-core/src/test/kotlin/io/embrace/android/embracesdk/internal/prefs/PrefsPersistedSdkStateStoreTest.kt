@@ -52,6 +52,8 @@ internal class PrefsPersistedSdkStateStoreTest {
         "io.embrace.unity.sdk.version" to "1.2.0",
         "io.embrace.unity.version" to "2022.3",
         "io.embrace.unity.build.id" to "5092abc",
+        "io.embrace.jsbundle.url" to "assets://index.android.bundle",
+        "io.embrace.jsbundle.id" to "bundle-id",
     )
 
     private val allHostedSdkKeys = listOf(
@@ -77,6 +79,8 @@ internal class PrefsPersistedSdkStateStoreTest {
         hostedSdkVersion = "1.2.0",
         hostedPlatformVersion = "2022.3",
         unityBuildIdNumber = "5092abc",
+        rnBundleUrl = "assets://index.android.bundle",
+        rnBundleId = "bundle-id",
     )
 
     @Before
@@ -123,6 +127,8 @@ internal class PrefsPersistedSdkStateStoreTest {
             hostedSdkVersion = "1.2.0"
             hostedPlatformVersion = "2022.3"
             unityBuildIdNumber = "5092abc"
+            rnBundleUrl = "assets://index.android.bundle"
+            rnBundleId = "bundle-id"
         }
         val expected = legacyState.copy(deviceId = expectedDeviceId, installTimestampMs = clock.now())
         assertEquals(expected, state)
@@ -147,6 +153,8 @@ internal class PrefsPersistedSdkStateStoreTest {
             hostedSdkVersion = null
             hostedPlatformVersion = null
             unityBuildIdNumber = null
+            rnBundleUrl = null
+            rnBundleId = null
         }
         assertEquals(
             mapOf("io.embrace.deviceid" to "legacy-id", "io.embrace.installtimestamp" to 99L),

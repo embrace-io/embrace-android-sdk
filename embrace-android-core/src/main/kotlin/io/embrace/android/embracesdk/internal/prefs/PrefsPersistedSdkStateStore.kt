@@ -89,6 +89,8 @@ class PrefsPersistedSdkStateStore(
             hostedPlatformVersion = hostedPlatformVersionKey?.let(store::getString),
             unityBuildIdNumber = unityBuildIdKey?.let(store::getString),
             javaScriptPatchNumber = javaScriptPatchKey?.let(store::getString),
+            rnBundleUrl = store.getString(KEY_RN_BUNDLE_URL),
+            rnBundleId = store.getString(KEY_RN_BUNDLE_ID),
         )
     }
 
@@ -122,6 +124,8 @@ class PrefsPersistedSdkStateStore(
         hostedPlatformVersionKey?.let { putString(it, state.hostedPlatformVersion) }
         unityBuildIdKey?.let { putString(it, state.unityBuildIdNumber) }
         javaScriptPatchKey?.let { putString(it, state.javaScriptPatchNumber) }
+        putString(KEY_RN_BUNDLE_URL, state.rnBundleUrl)
+        putString(KEY_RN_BUNDLE_ID, state.rnBundleId)
     }
 
     /**
@@ -170,5 +174,7 @@ class PrefsPersistedSdkStateStore(
         const val KEY_UNITY_BUILD_ID = "io.embrace.unity.build.id"
         const val KEY_FLUTTER_SDK_VERSION = "io.embrace.flutter.sdk.version"
         const val KEY_DART_SDK_VERSION = "io.embrace.dart.sdk.version"
+        const val KEY_RN_BUNDLE_URL = "io.embrace.jsbundle.url"
+        const val KEY_RN_BUNDLE_ID = "io.embrace.jsbundle.id"
     }
 }

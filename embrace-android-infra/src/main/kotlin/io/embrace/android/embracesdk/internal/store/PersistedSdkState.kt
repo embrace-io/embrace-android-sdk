@@ -67,4 +67,14 @@ data class PersistedSdkState(
      * The React Native JavaScript patch number.
      */
     val javaScriptPatchNumber: String? = null,
+
+    /**
+     * The React Native JavaScript bundle URL last set by the hosted SDK.
+     */
+    val rnBundleUrl: String? = null,
+
+    /**
+     * The React Native bundle ID computed for [rnBundleUrl], if the hosted SDK asked for it to be cached.
+     */
+    val rnBundleId: String? = null,
 )

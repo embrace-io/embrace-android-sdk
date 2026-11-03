@@ -9,6 +9,7 @@ import io.embrace.android.embracesdk.internal.clock.nanosToMillis
 import io.embrace.android.embracesdk.internal.vitals.FocalInteractionCallbacks
 import io.embrace.android.embracesdk.internal.vitals.SettleTracker
 import io.embrace.android.embracesdk.internal.vitals.VitalsScheduler
+import io.embrace.android.embracesdk.internal.vitals.responsiveness.InteractionResponsivenessReporter
 import io.embrace.android.embracesdk.internal.vitals.screenload.ScreenLoadTracker
 
 /**
@@ -29,12 +30,15 @@ internal class FocalMomentTracker(
     private val heldIdleThresholdMs: Long = DEFAULT_HELD_IDLE_THRESHOLD_MS,
     // Only non-null for a sampled fraction of devices; see VitalsConfig.smoothnessFrameTraceEnabled.
     private val frameTraceRecorder: FrameTraceRecorder? = null,
+    // Only non-null when interaction responsiveness is captured; called on the Vitals thread.
+    private val responsivenessReporter: InteractionResponsivenessReporter? = null,
     // Receives every frame, whatever the smoothness state; called on the Vitals thread.
     private val onFrameCounted: (dropped: Boolean, expectedFrames: Int) -> Unit = { _, _ -> },
 ) : FocalInteractionCallbacks {
 
     // Reused hop Runnable instances (main thread -> Vitals thread); allocate them here to make certain they're off the hot path
-    private val interactionRunnable = Runnable { startOrResume() }
+    private val interactionStartRunnable = Runnable { startOrResume(openedByDown = true) }
+    private val interactionMoveRunnable = Runnable { startOrResume(openedByDown = false) }
     private val interactionEndRunnable = Runnable { handleInteractionEnd() }
     private val screenChangeRunnable = Runnable { handleScreenChange() }
 
@@ -48,6 +52,16 @@ internal class FocalMomentTracker(
     private var focalMomentStartEpochMs = 0L
     private var interacting = false
     private var bufferedEndNanos = 0L
+
+    // The latest touch-down, written on the main thread only when responsiveness is captured.
+    @Volatile
+    private var pendingDownEventMs = 0L
+
+    @Volatile
+    private var pendingDownProcessedMs = 0L
+
+    // The earlier of the opening touch-down's event and processing times, or NO_DOWN_EVENT if a move opened the moment.
+    private var downStartMs = NO_DOWN_EVENT
 
     @WorkerThread
     override fun onFrame(vsyncNanos: Long, frameDispatchNanos: Long, jankNanos: Long, expectedFrames: Int) {
@@ -73,26 +87,31 @@ internal class FocalMomentTracker(
     }
 
     @WorkerThread
-    private fun startOrResume() {
+    private fun startOrResume(openedByDown: Boolean) {
         if (held) {
             // Emit the buffered result, then open a fresh interaction.
             flushHeld()
-            startFocalMoment()
+            startFocalMoment(openedByDown)
         } else if (capturing) {
             interacting = true
             settle.notifyActivity(nowMs())
         } else {
-            startFocalMoment()
+            startFocalMoment(openedByDown)
         }
     }
 
     @MainThread
-    override fun onInteractionStart() =
-        scheduler.post(interactionRunnable)
+    override fun onInteractionStart(eventTime: Long) {
+        if (responsivenessReporter != null) {
+            pendingDownEventMs = eventTime
+            pendingDownProcessedMs = nowMs()
+        }
+        scheduler.post(interactionStartRunnable)
+    }
 
     @MainThread
     override fun onInteractionMove() =
-        scheduler.post(interactionRunnable)
+        scheduler.post(interactionMoveRunnable)
 
     @MainThread
     override fun onInteractionEnd() =
@@ -149,7 +168,7 @@ internal class FocalMomentTracker(
     }
 
     @WorkerThread
-    private fun startFocalMoment() {
+    private fun startFocalMoment(openedByDown: Boolean) {
         val nowMs = nowMs()
         focalMomentStartNanos = nowMs.millisToNanos()
         focalMomentStartEpochMs = clock.now()
@@ -158,6 +177,17 @@ internal class FocalMomentTracker(
         capturing = true
         reporter.onFocalMomentStart()
         frameTraceRecorder?.onFocalMomentStart()
+        if (responsivenessReporter != null) {
+            if (openedByDown) {
+                val eventMs = pendingDownEventMs
+                val processedMs = pendingDownProcessedMs
+                downStartMs = minOf(eventMs, processedMs)
+                responsivenessReporter.onFocalMomentStart((processedMs - eventMs).coerceAtLeast(0L))
+            } else {
+                downStartMs = NO_DOWN_EVENT
+                responsivenessReporter.onFocalMomentStart(null)
+            }
+        }
         settle.notifyActivity(nowMs)
     }
 
@@ -210,6 +240,14 @@ internal class FocalMomentTracker(
         settle.cancel()
         val durationMs = (endNanos - focalMomentStartNanos).nanosToMillis()
         reporter.onFocalMomentEnd(outcome, focalMomentStartEpochMs, durationMs, frameTraceRecorder?.toBase64())
+        if (responsivenessReporter != null) {
+            val startNanos = if (downStartMs == NO_DOWN_EVENT) focalMomentStartNanos else downStartMs.millisToNanos()
+            responsivenessReporter.onFocalMomentEnd(
+                outcome = outcome,
+                startTimeMs = focalMomentStartEpochMs + (startNanos - focalMomentStartNanos).nanosToMillis(),
+                durationMs = (endNanos - startNanos).nanosToMillis(),
+            )
+        }
     }
 
     /**
@@ -233,5 +271,7 @@ internal class FocalMomentTracker(
          * interaction / focal moment settled.
          */
         const val DEFAULT_HELD_IDLE_THRESHOLD_MS = 500L
+
+        private const val NO_DOWN_EVENT = -1L
     }
 }

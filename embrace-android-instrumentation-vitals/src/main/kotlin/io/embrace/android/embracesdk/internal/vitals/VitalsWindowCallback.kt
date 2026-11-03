@@ -32,7 +32,7 @@ internal class VitalsWindowCallback(
         val focalCallbacks = focalCallbacks ?: return delegate.dispatchTouchEvent(event)
         try {
             when (event?.actionMasked) {
-                MotionEvent.ACTION_DOWN -> focalCallbacks.onInteractionStart()
+                MotionEvent.ACTION_DOWN -> focalCallbacks.onInteractionStart(event.eventTime)
                 MotionEvent.ACTION_MOVE -> focalCallbacks.onInteractionMove()
                 MotionEvent.ACTION_UP -> {
                     focalCallbacks.onInteractionEnd()

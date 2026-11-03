@@ -25,9 +25,9 @@ internal interface FocalInteractionCallbacks {
     fun onScreenStop()
 
     /**
-     * A user interaction began (touch down).
+     * A user interaction began (touch down) at [eventTime], the [android.os.SystemClock.uptimeMillis] that the event occurred.
      */
-    fun onInteractionStart()
+    fun onInteractionStart(eventTime: Long)
 
     /**
      * A user interaction moved (touch move) — a liveness signal while a finger is down.

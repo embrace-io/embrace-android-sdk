@@ -2,6 +2,7 @@ package io.embrace.android.embracesdk.testcases
 
 import io.embrace.android.embracesdk.Severity
 import io.embrace.android.embracesdk.assertions.getLogWithAttributeValue
+import io.embrace.android.embracesdk.fakes.FakeErrorHandler
 import io.embrace.android.embracesdk.fakes.FakeLogRecordExporter
 import io.embrace.android.embracesdk.fakes.FakeLogRecordProcessor
 import io.embrace.android.embracesdk.fakes.FakeOtelJavaLogRecordExporter
@@ -17,6 +18,7 @@ import io.embrace.android.embracesdk.internal.clock.millisToNanos
 import io.embrace.android.embracesdk.internal.logging.ErrorHandler
 import io.embrace.android.embracesdk.internal.logging.SdkErrorType
 import io.embrace.android.embracesdk.internal.toStringMap
+import io.embrace.android.embracesdk.internal.worker.Worker
 import io.embrace.android.embracesdk.otel.java.addJavaLogRecordExporter
 import io.embrace.android.embracesdk.otel.java.addJavaLogRecordProcessor
 import io.embrace.android.embracesdk.otel.java.addJavaSpanExporter
@@ -33,6 +35,7 @@ import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.ParameterizedRobolectricTestRunner
+import java.util.concurrent.TimeUnit
 
 @Suppress("DEPRECATION")
 @RunWith(ParameterizedRobolectricTestRunner::class)
@@ -323,11 +326,15 @@ internal class OTelExportTest(
         val spanExporter = FakeSpanExporter()
         val spanName = "test"
         val logMessage = "Hello, World!"
+        lateinit var errorHandler: FakeErrorHandler
 
         testRule.runTest(
             instrumentedConfig = FakeInstrumentedConfig(
                 project = FakeProjectConfig(appId = null)
             ),
+            setupAction = {
+                errorHandler = getFakeErrorHandler().apply { throwOnSdkError = false }
+            },
             preSdkStartAction = {
                 embrace.addLogRecordExporter(logRecordExporter)
                 embrace.addSpanExporter(spanExporter)
@@ -341,6 +348,11 @@ internal class OTelExportTest(
             assertAction = {
                 assertEquals(0, getSessionEnvelopes(0).size)
                 assertEquals(0, getLogEnvelopes(0).size)
+
+                // without an app ID, SDK errors would reach no one, so none are recorded, including the missing resurrection's
+                testRule.services.workerThreadPool.backgroundWorker(Worker.Background.IoRegWorker).submit {}
+                    .get(WORKER_DRAIN_TIMEOUT_SECONDS, TimeUnit.SECONDS)
+                assertEquals(emptyList<String>(), errorHandler.sdkErrorMessages.map { it.msg })
             },
             otelExportAssertion = {
                 awaitSpans(1) { it.name == spanName }
@@ -480,5 +492,7 @@ internal class OTelExportTest(
         @JvmStatic
         @ParameterizedRobolectricTestRunner.Parameters(name = "{0}")
         fun modes(): List<Array<Any>> = OtelSdkMode.parameters()
+
+        private const val WORKER_DRAIN_TIMEOUT_SECONDS = 5L
     }
 }

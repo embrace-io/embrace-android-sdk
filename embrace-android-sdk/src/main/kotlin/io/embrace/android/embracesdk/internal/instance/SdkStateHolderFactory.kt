@@ -94,6 +94,11 @@ private fun createSdkInstance(
         EmbTrace.trace("config-load-services-start") {
             configLoadServices.start()
         }
+        // nothing is sent to Embrace when only OTel exporters are used, so the error handler stops capturing SDK errors
+        // from here on, discarding any it has buffered, and only logs
+        if (configLoadServices.configService.isOnlyUsingOtelExporters()) {
+            preStartServices.errorHandler.close()
+        }
         val sdkDisabled = EmbTrace.trace("sdk-disable-check") {
             configLoadServices.configService.config.sdkMode.sdkDisabled
         }

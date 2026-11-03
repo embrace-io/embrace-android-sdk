@@ -13,4 +13,10 @@ class FakeEmbraceInternalInterface(
 
     override fun addEnvelopeResource(key: String, value: String) {
     }
+
+    override fun setHostedSdkVersion(version: String?) {
+    }
+
+    override fun setHostedPlatformVersion(version: String?) {
+    }
 }

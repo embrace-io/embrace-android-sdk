@@ -20,23 +20,35 @@ internal class ForwardingInternalInterface(
     override fun addEnvelopeResource(key: String, value: String) =
         target().internalInterface.addEnvelopeResource(key, value)
 
+    override fun setHostedSdkVersion(version: String?) =
+        target().internalInterface.setHostedSdkVersion(version)
+
+    override fun setHostedPlatformVersion(version: String?) =
+        target().internalInterface.setHostedPlatformVersion(version)
+
     override fun logUnhandledJsException(name: String, message: String, type: String?, stacktrace: String?) =
         target().reactNativeInternalInterface.logUnhandledJsException(name, message, type, stacktrace)
 
     override fun setJavaScriptPatchNumber(number: String?) =
         target().reactNativeInternalInterface.setJavaScriptPatchNumber(number)
 
+    @Suppress("OVERRIDE_DEPRECATION", "DEPRECATION")
     override fun setReactNativeSdkVersion(version: String?) =
         target().reactNativeInternalInterface.setReactNativeSdkVersion(version)
 
+    @Suppress("OVERRIDE_DEPRECATION", "DEPRECATION")
     override fun setReactNativeVersionNumber(version: String?) =
         target().reactNativeInternalInterface.setReactNativeVersionNumber(version)
 
     override fun setJavaScriptBundleUrl(context: Context, url: String) =
         target().reactNativeInternalInterface.setJavaScriptBundleUrl(context, url)
 
+    @Suppress("OVERRIDE_DEPRECATION", "DEPRECATION")
     override fun setUnityMetaData(unityVersion: String?, buildGuid: String?, unitySdkVersion: String?) =
         target().unityInternalInterface.setUnityMetaData(unityVersion, buildGuid, unitySdkVersion)
+
+    override fun setUnityBuildGuid(buildGuid: String?) =
+        target().unityInternalInterface.setUnityBuildGuid(buildGuid)
 
     override fun logUnhandledUnityException(name: String, message: String, stacktrace: String?) =
         target().unityInternalInterface.logUnhandledUnityException(name, message, stacktrace)
@@ -44,9 +56,11 @@ internal class ForwardingInternalInterface(
     override fun logHandledUnityException(name: String, message: String, stacktrace: String?) =
         target().unityInternalInterface.logHandledUnityException(name, message, stacktrace)
 
+    @Suppress("OVERRIDE_DEPRECATION", "DEPRECATION")
     override fun setEmbraceFlutterSdkVersion(version: String?) =
         target().flutterInternalInterface.setEmbraceFlutterSdkVersion(version)
 
+    @Suppress("OVERRIDE_DEPRECATION", "DEPRECATION")
     override fun setDartVersion(version: String?) =
         target().flutterInternalInterface.setDartVersion(version)
 }

@@ -8,6 +8,7 @@ import io.embrace.android.embracesdk.fakes.FakeKeyValueStore
 import io.embrace.android.embracesdk.fakes.fakeContext
 import io.embrace.android.embracesdk.fakes.unimplemented
 import io.embrace.android.embracesdk.internal.api.delegate.HostedSdkInternalInterfaceImpl
+import io.embrace.android.embracesdk.internal.envelope.metadata.HostedSdkVersionInfo
 import io.embrace.android.embracesdk.internal.injection.createHostedSdkVersionInfo
 import io.embrace.android.embracesdk.internal.logging.SdkErrorType
 import io.embrace.android.embracesdk.internal.payload.AppFramework
@@ -20,12 +21,14 @@ internal class HostedSdkInternalInterfaceImplTest {
 
     private lateinit var telemetryService: FakeInternalTelemetryService
     private lateinit var errorHandler: FakeErrorHandler
+    private lateinit var hostedSdkVersionInfo: HostedSdkVersionInfo
     private lateinit var impl: HostedSdkInternalInterfaceImpl
 
     @Before
     fun setUp() {
         telemetryService = FakeInternalTelemetryService()
         errorHandler = FakeErrorHandler(throwOnSdkError = false)
+        hostedSdkVersionInfo = createHostedSdkVersionInfo(AppFramework.FLUTTER, FakeKeyValueStore(), errorHandler)
         impl = HostedSdkInternalInterfaceImpl(
             logsApi = unimplemented(),
             configService = FakeConfigService(),
@@ -33,7 +36,7 @@ internal class HostedSdkInternalInterfaceImplTest {
             instrumentationRegistry = unimplemented(),
             serializer = unimplemented(),
             rnBundleIdTracker = lazy { error("rn bundle id tracker failure") },
-            hostedSdkVersionInfo = createHostedSdkVersionInfo(AppFramework.FLUTTER, FakeKeyValueStore(), errorHandler),
+            hostedSdkVersionInfo = hostedSdkVersionInfo,
             errorHandler = errorHandler,
             telemetryService = telemetryService,
         )
@@ -42,11 +45,35 @@ internal class HostedSdkInternalInterfaceImplTest {
     @Test
     fun `internal api usage is recorded`() {
         impl.addEnvelopeResource("key", "value")
-        impl.setDartVersion("3.0")
-        impl.setEmbraceFlutterSdkVersion("1.0")
+        impl.setHostedPlatformVersion("3.0")
+        impl.setHostedSdkVersion("1.0")
         impl.isNetworkSpanForwardingEnabled()
         assertEquals(
-            listOf("add_envelope_resource", "set_dart_version", "set_embrace_flutter_sdk_version"),
+            listOf("add_envelope_resource", "set_hosted_platform_version", "set_hosted_sdk_version"),
+            telemetryService.apiCalls,
+        )
+    }
+
+    @Suppress("DEPRECATION")
+    @Test
+    fun `deprecated version setters update hosted sdk version info`() {
+        impl.setReactNativeSdkVersion("1.0")
+        impl.setReactNativeVersionNumber("0.7")
+        assertEquals("1.0", hostedSdkVersionInfo.hostedSdkVersion)
+        assertEquals("0.7", hostedSdkVersionInfo.hostedPlatformVersion)
+
+        impl.setEmbraceFlutterSdkVersion("2.0")
+        impl.setDartVersion("3.0")
+        assertEquals("2.0", hostedSdkVersionInfo.hostedSdkVersion)
+        assertEquals("3.0", hostedSdkVersionInfo.hostedPlatformVersion)
+
+        assertEquals(
+            listOf(
+                "set_react_native_sdk_version",
+                "set_react_native_version_number",
+                "set_embrace_flutter_sdk_version",
+                "set_dart_version",
+            ),
             telemetryService.apiCalls,
         )
     }

@@ -132,7 +132,7 @@ internal abstract class MultiFilePersistenceParityTestBase(
         embrace.setUserEmail("$token@domain.com")
         embrace.clearAllUserPersonas()
         embrace.addUserPersona("${token}_persona")
-        EmbraceInternalApi.flutterInternalInterface.setEmbraceFlutterSdkVersion("$token-sdk")
+        EmbraceInternalApi.flutterInternalInterface.setHostedSdkVersion("$token-sdk")
     }
 
     protected fun Envelope<SessionPartPayload>.assertEnvelopeMetadata(token: String) {

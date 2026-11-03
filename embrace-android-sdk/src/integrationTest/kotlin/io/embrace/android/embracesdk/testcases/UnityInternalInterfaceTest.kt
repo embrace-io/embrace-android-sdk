@@ -63,11 +63,9 @@ internal class UnityInternalInterfaceTest(
             instrumentedConfig = instrumentedConfig,
             testCaseAction = {
                 recordSession {
-                    EmbraceInternalApi.unityInternalInterface.setUnityMetaData(
-                        "28.9.1",
-                        "unity build id",
-                        "1.2.3"
-                    )
+                    EmbraceInternalApi.unityInternalInterface.setHostedPlatformVersion("28.9.1")
+                    EmbraceInternalApi.unityInternalInterface.setHostedSdkVersion("1.2.3")
+                    EmbraceInternalApi.unityInternalInterface.setUnityBuildGuid("unity build id")
                 }
             },
             assertAction = {
@@ -87,11 +85,9 @@ internal class UnityInternalInterfaceTest(
             instrumentedConfig = instrumentedConfig,
             testCaseAction = {
                 recordSession {
-                    EmbraceInternalApi.unityInternalInterface.setUnityMetaData(
-                        "28.9.1",
-                        "unity build id",
-                        "1.2.3"
-                    )
+                    EmbraceInternalApi.unityInternalInterface.setHostedPlatformVersion("28.9.1")
+                    EmbraceInternalApi.unityInternalInterface.setHostedSdkVersion("1.2.3")
+                    EmbraceInternalApi.unityInternalInterface.setUnityBuildGuid("unity build id")
                 }
                 recordSession()
             },
@@ -112,19 +108,15 @@ internal class UnityInternalInterfaceTest(
             instrumentedConfig = instrumentedConfig,
             testCaseAction = {
                 recordSession {
-                    EmbraceInternalApi.unityInternalInterface.setUnityMetaData(
-                        "28.9.1",
-                        "unity build id",
-                        "1.2.3"
-                    )
+                    EmbraceInternalApi.unityInternalInterface.setHostedPlatformVersion("28.9.1")
+                    EmbraceInternalApi.unityInternalInterface.setHostedSdkVersion("1.2.3")
+                    EmbraceInternalApi.unityInternalInterface.setUnityBuildGuid("unity build id")
                 }
 
                 recordSession {
-                    EmbraceInternalApi.unityInternalInterface.setUnityMetaData(
-                        "28.9.2",
-                        "new unity build id",
-                        "1.2.4"
-                    )
+                    EmbraceInternalApi.unityInternalInterface.setHostedPlatformVersion("28.9.2")
+                    EmbraceInternalApi.unityInternalInterface.setHostedSdkVersion("1.2.4")
+                    EmbraceInternalApi.unityInternalInterface.setUnityBuildGuid("new unity build id")
                 }
             },
             assertAction = {

@@ -7,6 +7,7 @@ import io.embrace.android.embracesdk.fakes.FakeKeyValueStore
 import io.embrace.android.embracesdk.fakes.FakeTelemetryDestination
 import io.embrace.android.embracesdk.fakes.TestUuidSource
 import io.embrace.android.embracesdk.fakes.behavior.FakeUserSessionBehavior
+import io.embrace.android.embracesdk.internal.payload.AppFramework
 import io.embrace.android.embracesdk.internal.prefs.PrefsPersistedSdkStateStore
 import io.embrace.android.embracesdk.internal.telemetry.AppliedLimitType
 import org.junit.Assert
@@ -52,7 +53,7 @@ internal class EmbraceUserSessionPropertiesTest {
         )
     }
 
-    private fun stateStore() = PrefsPersistedSdkStateStore(store, FakeClock(), TestUuidSource())
+    private fun stateStore() = PrefsPersistedSdkStateStore(store, FakeClock(), TestUuidSource(), AppFramework.NATIVE)
 
     @Test
     fun `Add user session property with no error when maxSessionProperties is absent`() {

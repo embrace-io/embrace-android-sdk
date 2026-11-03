@@ -40,6 +40,7 @@ import io.embrace.android.embracesdk.internal.delivery.caching.PayloadCachingSer
 import io.embrace.android.embracesdk.internal.delivery.caching.PayloadCachingServiceImpl
 import io.embrace.android.embracesdk.internal.logging.SdkErrorType
 import io.embrace.android.embracesdk.internal.otel.spans.EmbraceSdkSpan
+import io.embrace.android.embracesdk.internal.payload.AppFramework
 import io.embrace.android.embracesdk.internal.prefs.PrefsPersistedSdkStateStore
 import io.embrace.android.embracesdk.internal.session.LifeEventType
 import io.embrace.android.embracesdk.internal.session.UserSessionMetadata
@@ -149,7 +150,7 @@ internal class SessionOrchestratorTest {
     @Test
     fun `each transition performs a single commit to the key-value store`() {
         val kvStore = FakeKeyValueStore()
-        val stateStore = PrefsPersistedSdkStateStore(kvStore, clock, TestUuidSource())
+        val stateStore = PrefsPersistedSdkStateStore(kvStore, clock, TestUuidSource(), AppFramework.NATIVE)
         stateStore.snapshot()
         val initialCommits = kvStore.commitCount
 

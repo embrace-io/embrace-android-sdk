@@ -2,7 +2,7 @@ package io.embrace.android.embracesdk.internal.api
 
 import io.embrace.android.embracesdk.fakes.FakeErrorHandler
 import io.embrace.android.embracesdk.fakes.FakeInternalTelemetryService
-import io.embrace.android.embracesdk.fakes.FakeKeyValueStore
+import io.embrace.android.embracesdk.fakes.FakePersistedSdkStateStore
 import io.embrace.android.embracesdk.fakes.unimplemented
 import io.embrace.android.embracesdk.internal.api.delegate.HostedSdkInternalInterfaceImpl
 import io.embrace.android.embracesdk.internal.envelope.metadata.HostedSdkVersionInfo
@@ -19,7 +19,7 @@ internal class FlutterInternalInterfaceImplTest {
 
     @Before
     fun setUp() {
-        hostedSdkVersionInfo = createHostedSdkVersionInfo(AppFramework.FLUTTER, FakeKeyValueStore(), FakeErrorHandler())
+        hostedSdkVersionInfo = createHostedSdkVersionInfo(AppFramework.FLUTTER, FakePersistedSdkStateStore(), FakeErrorHandler())
         impl = HostedSdkInternalInterfaceImpl(
             logsApi = unimplemented(),
             configService = unimplemented(),

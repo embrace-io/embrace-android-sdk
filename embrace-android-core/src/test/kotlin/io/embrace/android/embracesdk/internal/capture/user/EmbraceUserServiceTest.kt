@@ -5,6 +5,7 @@ import io.embrace.android.embracesdk.fakes.FakeErrorHandler
 import io.embrace.android.embracesdk.fakes.FakeKeyValueStore
 import io.embrace.android.embracesdk.fakes.TestUuidSource
 import io.embrace.android.embracesdk.internal.logging.ErrorHandler
+import io.embrace.android.embracesdk.internal.payload.AppFramework
 import io.embrace.android.embracesdk.internal.payload.UserInfo
 import io.embrace.android.embracesdk.internal.prefs.PrefsPersistedSdkStateStore
 import org.junit.Assert.assertEquals
@@ -49,7 +50,7 @@ internal class EmbraceUserServiceTest {
         )
 
         // load user info
-        service = EmbraceUserService(PrefsPersistedSdkStateStore(store, clock, TestUuidSource()), clock, errorHandler)
+        service = EmbraceUserService(PrefsPersistedSdkStateStore(store, clock, TestUuidSource(), AppFramework.NATIVE), clock, errorHandler)
     }
 
     @Test

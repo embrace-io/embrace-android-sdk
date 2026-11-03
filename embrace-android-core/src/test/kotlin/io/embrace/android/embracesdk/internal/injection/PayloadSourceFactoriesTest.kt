@@ -9,6 +9,7 @@ import io.embrace.android.embracesdk.fakes.FakeIntakeService
 import io.embrace.android.embracesdk.fakes.FakeKeyValueStore
 import io.embrace.android.embracesdk.fakes.FakeOtelPayloadMapper
 import io.embrace.android.embracesdk.fakes.FakePayloadStorageService
+import io.embrace.android.embracesdk.fakes.FakePersistedSdkStateStore
 import io.embrace.android.embracesdk.fakes.FakeProcessStateTracker
 import io.embrace.android.embracesdk.fakes.OtelSdkMode
 import io.embrace.android.embracesdk.fakes.fakeApplication
@@ -32,6 +33,7 @@ internal class PayloadSourceFactoriesTest {
         val application = fakeApplication()
         val context = fakeContext(application)
         val store = FakeKeyValueStore()
+        val stateStore = FakePersistedSdkStateStore()
         val configService = FakeConfigService()
         val spanRepository = SpanRepository(FakeErrorHandler())
         val cachedLogEnvelopeStore = FakeCachedLogEnvelopeStore()
@@ -44,7 +46,7 @@ internal class PayloadSourceFactoriesTest {
             worker = worker,
             systemInfo = initServices.systemInfo,
             errorHandler = initServices.errorHandler,
-            hostedSdkVersionInfo = createHostedSdkVersionInfo(AppFramework.NATIVE, store, initServices.errorHandler),
+            hostedSdkVersionInfo = createHostedSdkVersionInfo(AppFramework.NATIVE, stateStore, initServices.errorHandler),
             rnBundleIdTracker = lazy { createRnBundleIdTracker(context, configService, store, worker, initServices.errorHandler) },
             useKotlinSdkProvider = { false },
         )

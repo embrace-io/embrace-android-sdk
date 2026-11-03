@@ -4,7 +4,7 @@ import io.embrace.android.embracesdk.fakes.FakeConfigService
 import io.embrace.android.embracesdk.fakes.FakeEnvelopeResourceSource
 import io.embrace.android.embracesdk.fakes.FakeErrorHandler
 import io.embrace.android.embracesdk.fakes.FakeInternalTelemetryService
-import io.embrace.android.embracesdk.fakes.FakeKeyValueStore
+import io.embrace.android.embracesdk.fakes.FakePersistedSdkStateStore
 import io.embrace.android.embracesdk.fakes.fakeContext
 import io.embrace.android.embracesdk.fakes.unimplemented
 import io.embrace.android.embracesdk.internal.api.delegate.HostedSdkInternalInterfaceImpl
@@ -28,7 +28,7 @@ internal class HostedSdkInternalInterfaceImplTest {
     fun setUp() {
         telemetryService = FakeInternalTelemetryService()
         errorHandler = FakeErrorHandler(throwOnSdkError = false)
-        hostedSdkVersionInfo = createHostedSdkVersionInfo(AppFramework.FLUTTER, FakeKeyValueStore(), errorHandler)
+        hostedSdkVersionInfo = createHostedSdkVersionInfo(AppFramework.FLUTTER, FakePersistedSdkStateStore(), errorHandler)
         impl = HostedSdkInternalInterfaceImpl(
             logsApi = unimplemented(),
             configService = FakeConfigService(),

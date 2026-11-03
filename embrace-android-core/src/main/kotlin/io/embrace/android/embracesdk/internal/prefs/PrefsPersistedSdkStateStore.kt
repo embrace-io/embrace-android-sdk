@@ -3,6 +3,7 @@
 package io.embrace.android.embracesdk.internal.prefs
 
 import io.embrace.android.embracesdk.internal.clock.Clock
+import io.embrace.android.embracesdk.internal.payload.AppFramework
 import io.embrace.android.embracesdk.internal.session.BACKGROUND_ONLY_MARKER
 import io.embrace.android.embracesdk.internal.session.UserSessionMetadata
 import io.embrace.android.embracesdk.internal.session.attributes
@@ -18,13 +19,32 @@ import io.embrace.android.embracesdk.semconv.ExperimentalSemconv
 
 /**
  * A [PersistedSdkStateStore] backed by a [KeyValueStore]. This uses the same keys and encoding as the existing
- * [SharedPreferences] store.
+ * [SharedPreferences] store. Hosted SDK values are stored under [appFramework]'s keys, and dropped when it has none.
  */
 class PrefsPersistedSdkStateStore(
     private val store: KeyValueStore,
     private val clock: Clock,
     private val uuidSource: UuidSource,
+    appFramework: AppFramework,
 ) : PersistedSdkStateStore {
+
+    private val hostedSdkVersionKey: String? = when (appFramework) {
+        AppFramework.REACT_NATIVE -> KEY_REACT_NATIVE_SDK_VERSION
+        AppFramework.UNITY -> KEY_UNITY_SDK_VERSION
+        AppFramework.FLUTTER -> KEY_FLUTTER_SDK_VERSION
+        AppFramework.NATIVE -> null
+    }
+
+    private val hostedPlatformVersionKey: String? = when (appFramework) {
+        AppFramework.REACT_NATIVE -> KEY_REACT_NATIVE_VERSION
+        AppFramework.UNITY -> KEY_UNITY_VERSION
+        AppFramework.FLUTTER -> KEY_DART_SDK_VERSION
+        AppFramework.NATIVE -> null
+    }
+
+    private val unityBuildIdKey: String? = KEY_UNITY_BUILD_ID.takeIf { appFramework == AppFramework.UNITY }
+
+    private val javaScriptPatchKey: String? = KEY_JAVASCRIPT_PATCH.takeIf { appFramework == AppFramework.REACT_NATIVE }
 
     private val lock = Any()
 
@@ -65,6 +85,10 @@ class PrefsPersistedSdkStateStore(
             userPersonas = loadPersonas(),
             sessionProperties = store.getStringMap(KEY_SESSION_PROPERTIES) ?: emptyMap(),
             userSession = store.getStringMap(KEY_USER_SESSION)?.let(::decodeUserSession),
+            hostedSdkVersion = hostedSdkVersionKey?.let(store::getString),
+            hostedPlatformVersion = hostedPlatformVersionKey?.let(store::getString),
+            unityBuildIdNumber = unityBuildIdKey?.let(store::getString),
+            javaScriptPatchNumber = javaScriptPatchKey?.let(store::getString),
         )
     }
 
@@ -94,6 +118,10 @@ class PrefsPersistedSdkStateStore(
         putStringSet(KEY_USER_PERSONAS, state.userPersonas)
         putStringMap(KEY_SESSION_PROPERTIES, state.sessionProperties.takeIf { it.isNotEmpty() })
         putStringMap(KEY_USER_SESSION, state.userSession?.let(::encodeUserSession))
+        hostedSdkVersionKey?.let { putString(it, state.hostedSdkVersion) }
+        hostedPlatformVersionKey?.let { putString(it, state.hostedPlatformVersion) }
+        unityBuildIdKey?.let { putString(it, state.unityBuildIdNumber) }
+        javaScriptPatchKey?.let { putString(it, state.javaScriptPatchNumber) }
     }
 
     /**
@@ -134,5 +162,13 @@ class PrefsPersistedSdkStateStore(
         const val KEY_USER_SESSION = "embrace.user_session"
         const val KEY_LAST_ACTIVITY_TS = "emb.user_session_last_activity_ts"
         const val PERSONA_PAYER = "payer"
+        const val KEY_REACT_NATIVE_SDK_VERSION = "io.embrace.reactnative.sdk.version"
+        const val KEY_REACT_NATIVE_VERSION = "io.embrace.reactnative.version"
+        const val KEY_JAVASCRIPT_PATCH = "io.embrace.javascript.patch"
+        const val KEY_UNITY_SDK_VERSION = "io.embrace.unity.sdk.version"
+        const val KEY_UNITY_VERSION = "io.embrace.unity.version"
+        const val KEY_UNITY_BUILD_ID = "io.embrace.unity.build.id"
+        const val KEY_FLUTTER_SDK_VERSION = "io.embrace.flutter.sdk.version"
+        const val KEY_DART_SDK_VERSION = "io.embrace.dart.sdk.version"
     }
 }

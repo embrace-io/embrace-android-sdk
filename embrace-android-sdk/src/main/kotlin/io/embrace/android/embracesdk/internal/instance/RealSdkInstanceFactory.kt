@@ -599,7 +599,7 @@ internal fun createRealSdkInstance(
     }
 
     val hostedSdkVersionInfo = init("hosted-sdk-version-info") {
-        createHostedSdkVersionInfo(configService.appFramework, store, errorHandler)
+        createHostedSdkVersionInfo(configService.appFramework, persistedSdkStateStore, errorHandler)
     }
 
     val resourceSource = init(name = "resource-source", recordDuration = true) {

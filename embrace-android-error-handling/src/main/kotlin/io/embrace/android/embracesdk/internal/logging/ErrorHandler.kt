@@ -39,12 +39,15 @@ interface ErrorHandler : AutoCloseable {
 
 /**
  * Runs SDK code safely, returning [default] if it throws. The [Throwable] is tracked as an SDK error of
- * [type]. [SdkErrorType.Ignored] reports nothing.
+ * [type]. [SdkErrorType.Ignored] reports nothing. An [InterruptedException] restores the thread's interrupt status.
  */
 inline fun <T> ErrorHandler.guardSdkCode(type: SdkErrorType, default: T, action: () -> T): T = try {
     action()
 } catch (exc: Throwable) {
     trackSdkError(type, exc)
+    if (exc is InterruptedException) {
+        Thread.currentThread().interrupt()
+    }
     default
 }
 

@@ -206,6 +206,50 @@ internal class FragmentLeakDetectionLifecycleCallbacksTest {
     }
 
     @Test
+    fun `a webview a fragment adds when it resumes is tracked as opened, when enabled`() {
+        val webViewCallbacks = FragmentLeakDetectionLifecycleCallbacks(
+            leakDetector,
+            { SESSION_IDS },
+            errorHandler,
+            webViewLeakDetectionEnabled = true,
+        )
+        val activity = registerOnWith(webViewCallbacks)
+        val fragment = WebViewOnResumeFragment()
+
+        activity.supportFragmentManager.beginTransaction().add(content, fragment).commitNow()
+
+        assertNotNull(
+            "resuming a fragment that adds a WebView to its view should have opened a sentinel for it",
+            leakDetector.trackClosed(fragment.webView, OWNER, WEBVIEW_CONTEXT),
+        )
+    }
+
+    @Test
+    fun `a webview in a fragment's view that the activity opened is tracked as closed when the view is destroyed`() {
+        val webViewCallbacks = FragmentLeakDetectionLifecycleCallbacks(
+            leakDetector,
+            { SESSION_IDS },
+            errorHandler,
+            webViewLeakDetectionEnabled = true,
+        )
+        val activity = buildActivity(FragmentActivity::class.java).setup().get()
+        val fragmentManager = activity.supportFragmentManager
+        val fragment = Fragment()
+        val webView = WebView(activity)
+        val view = FrameLayout(activity).apply { addView(webView) }
+
+        webViewCallbacks.onFragmentViewCreated(fragmentManager, fragment, view, null)
+        // as the Activity's own scan does when it resumes before the fragment has opened the WebView
+        leakDetector.trackOpened(webView, TrackingSource.ACTIVITY)
+        webViewCallbacks.onFragmentViewDestroyed(fragmentManager, fragment)
+
+        assertNull(
+            "onFragmentViewDestroyed should already have released the sentinel the activity opened",
+            leakDetector.trackClosed(webView, TrackingSource.ACTIVITY, WEBVIEW_CONTEXT),
+        )
+    }
+
+    @Test
     fun `a webview nested in a fragment's view is not tracked when webview leak detection is disabled`() {
         val activity = registerOn(buildActivity(FragmentActivity::class.java).setup().get())
         val fragment = WebViewFragment()
@@ -263,6 +307,23 @@ internal class WebViewFragment : Fragment() {
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View {
         webView = WebView(requireContext())
         return FrameLayout(requireContext()).apply { addView(webView) }
+    }
+}
+
+/**
+ * A [Fragment] that only adds its [WebView] once it resumes. Must be a top-level, non-private class - same requirement as
+ * [ViewFragment].
+ */
+internal class WebViewOnResumeFragment : Fragment() {
+    lateinit var webView: WebView
+
+    override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View =
+        FrameLayout(requireContext())
+
+    override fun onResume() {
+        super.onResume()
+        webView = WebView(requireContext())
+        (requireView() as FrameLayout).addView(webView)
     }
 }
 

@@ -75,16 +75,15 @@ internal class FragmentLeakDetectionLifecycleCallbacks(
         }
     }
 
-    // started rather than resumed: Fragments start before their Activity's onActivityResumed, so this opens their WebViews
-    // ahead of the Activity's own scan, and owns them
+    // Fragments start before their Activity's onActivityResumed, so this opens their WebViews ahead of the Activity's own
+    // scan, and owns them
     override fun onFragmentStarted(fm: FragmentManager, f: Fragment) {
-        errorHandler.guardSdkCode(SdkErrorType.UiCallbackFail) {
-            if (webViewLeakDetectionEnabled) {
-                WebViewLeakScanner.scan(f.view, errorHandler) { webView ->
-                    leakDetector.trackOpened(webView, TrackingSource.FRAGMENT)
-                }
-            }
-        }
+        scanFragment(f)
+    }
+
+    // Do another scan on resume in case another got added so that it can be tracked properly.
+    override fun onFragmentResumed(fm: FragmentManager, f: Fragment) {
+        scanFragment(f)
     }
 
     override fun onFragmentViewDestroyed(fm: FragmentManager, f: Fragment) {
@@ -94,12 +93,21 @@ internal class FragmentLeakDetectionLifecycleCallbacks(
             leakDetector.trackClosed(view, TrackingSource.FRAGMENT, LeakContext(FRAGMENT_VIEW_OBJECT_TYPE, sessionIds, f.javaClass))
 
             if (webViewLeakDetectionEnabled) {
+                val webViewContext = LeakContext(WebViewLeakScanner.WEBVIEW_OBJECT_TYPE, sessionIds, f.javaClass)
                 WebViewLeakScanner.scan(view, errorHandler) { webView ->
-                    leakDetector.trackClosed(
-                        webView,
-                        TrackingSource.FRAGMENT,
-                        LeakContext(WebViewLeakScanner.WEBVIEW_OBJECT_TYPE, sessionIds, f.javaClass),
-                    )
+                    // If the reference can't be found within the fragment, look for it in the activity instead
+                    leakDetector.trackClosed(webView, TrackingSource.FRAGMENT, webViewContext)
+                        ?: leakDetector.trackClosed(webView, TrackingSource.ACTIVITY, webViewContext)
+                }
+            }
+        }
+    }
+
+    private fun scanFragment(f: Fragment) {
+        errorHandler.guardSdkCode(SdkErrorType.UiCallbackFail) {
+            if (webViewLeakDetectionEnabled) {
+                WebViewLeakScanner.scan(f.view, errorHandler) { webView ->
+                    leakDetector.trackOpened(webView, TrackingSource.FRAGMENT)
                 }
             }
         }

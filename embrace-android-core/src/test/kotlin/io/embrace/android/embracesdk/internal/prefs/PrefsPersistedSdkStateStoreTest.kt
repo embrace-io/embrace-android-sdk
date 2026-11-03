@@ -234,29 +234,9 @@ internal class PrefsPersistedSdkStateStoreTest {
     }
 
     @Test
-    fun `a legacy payer flag adds the payer persona and is never written`() {
+    fun `a legacy payer flag is ignored`() {
         seedLegacyValues()
         kvStore.editAndCommit { putBoolean("io.embrace.userispayer", true) }
-        val expected = legacyState.copy(userPersonas = setOf("persona", "payer"))
-        assertEquals(expected, store.snapshot())
-
-        store.update { userPersonas = setOf("persona") }
-        assertEquals(
-            legacyValues + ("io.embrace.userispayer" to true),
-            storedValues(),
-        )
-    }
-
-    @Test
-    fun `a legacy payer flag with no personas becomes the payer persona`() {
-        kvStore.editAndCommit { putBoolean("io.embrace.userispayer", true) }
-        assertEquals(setOf("payer"), store.snapshot().userPersonas)
-    }
-
-    @Test
-    fun `a legacy payer flag that is false adds nothing`() {
-        seedLegacyValues()
-        kvStore.editAndCommit { putBoolean("io.embrace.userispayer", false) }
         assertEquals(legacyState, store.snapshot())
     }
 

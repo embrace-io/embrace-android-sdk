@@ -83,7 +83,7 @@ class PrefsPersistedSdkStateStore(
             userId = store.getString(KEY_USER_ID),
             userEmail = store.getString(KEY_USER_EMAIL),
             userName = store.getString(KEY_USER_NAME),
-            userPersonas = loadPersonas(),
+            userPersonas = store.getStringSet(KEY_USER_PERSONAS),
             sessionProperties = store.getStringMap(KEY_SESSION_PROPERTIES) ?: emptyMap(),
             userSession = store.getStringMap(KEY_USER_SESSION)?.let(::decodeUserSession),
             hostedSdkVersion = hostedSdkVersionKey?.let(store::getString),
@@ -93,19 +93,6 @@ class PrefsPersistedSdkStateStore(
             rnBundleUrl = store.getString(KEY_RN_BUNDLE_URL),
             rnBundleId = store.getString(KEY_RN_BUNDLE_ID),
         )
-    }
-
-    /**
-     * Reads the personas. Earlier SDK versions could record the payer persona as a separate flag, so a set flag
-     * adds the payer persona. The flag is never written.
-     */
-    private fun loadPersonas(): Set<String>? {
-        val personas = store.getStringSet(KEY_USER_PERSONAS)
-        return if (store.getBoolean(KEY_LEGACY_USER_IS_PAYER, false)) {
-            personas.orEmpty() + PERSONA_PAYER
-        } else {
-            personas
-        }
     }
 
     /**
@@ -182,10 +169,8 @@ class PrefsPersistedSdkStateStore(
         const val KEY_USER_NAME = "io.embrace.username"
         const val KEY_USER_PERSONAS = "io.embrace.userpersonas"
         const val KEY_SESSION_PROPERTIES = "io.embrace.session.properties"
-        const val KEY_LEGACY_USER_IS_PAYER = "io.embrace.userispayer"
         const val KEY_USER_SESSION = "embrace.user_session"
         const val KEY_LAST_ACTIVITY_TS = "emb.user_session_last_activity_ts"
-        const val PERSONA_PAYER = "payer"
         const val KEY_REACT_NATIVE_SDK_VERSION = "io.embrace.reactnative.sdk.version"
         const val KEY_REACT_NATIVE_VERSION = "io.embrace.reactnative.version"
         const val KEY_JAVASCRIPT_PATCH = "io.embrace.javascript.patch"

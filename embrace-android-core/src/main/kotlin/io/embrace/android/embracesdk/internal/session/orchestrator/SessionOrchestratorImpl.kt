@@ -347,102 +347,108 @@ internal class SessionOrchestratorImpl(
                 return
             }
 
-            // batch the writes made by the ordinal & persisted state stores into a single commit
-            writeBatcher.batch {
-                EmbTrace.trace("transition-state-start") {
-                    // first, disable any previous periodic caching so the job doesn't overwrite the to-be saved session
-                    payloadCachingService?.stopCaching()
-                    lastActivityTimerState?.cancel()
+            // the user session events queued so far are delivered even if the transition throws partway, so that one ending
+            // isn't held back and delivered after the next has started
+            try {
+                // batch the writes made by the ordinal & persisted state stores into a single commit
+                writeBatcher.batch {
+                    EmbTrace.trace("transition-state-start") {
+                        // first, disable any previous periodic caching so the job doesn't overwrite the to-be saved session
+                        payloadCachingService?.stopCaching()
+                        lastActivityTimerState?.cancel()
 
-                    val endingSession = sessionTracker.getActiveSessionPart()
-                    if (endingSession != null) {
-                        sessionPartSpanAttrPopulator.populateSessionPartSpanEndAttrs(
-                            endType = transitionType.lifeEventType(state),
-                            crashId = crashId,
-                            coldStart = endingSession.isColdStart,
-                            endAttributes = transitionType.endAttributes,
-                        )
-                    }
-
-                    // calculate new session state
-                    val endAppState = transitionType.postTransitionEndState(state)
-                    val newSessionPart = sessionTracker.newActiveSessionPart(
-                        endSessionPartCallback = {
-                            // End the current session or background activity, if either exist.
-                            EmbTrace.trace("end-current-session") {
-                                processEndMessage(oldSessionAction?.invoke(this))
-                            }
-
-                            // persist the stopped session part span
-                            sessionPartWriter?.onSessionPartEnded(
-                                sessionPartId = sessionPartId,
-                                crashing = transitionType == TransitionType.CRASH,
+                        val endingSession = sessionTracker.getActiveSessionPart()
+                        if (endingSession != null) {
+                            sessionPartSpanAttrPopulator.populateSessionPartSpanEndAttrs(
+                                endType = transitionType.lifeEventType(state),
+                                crashId = crashId,
+                                coldStart = endingSession.isColdStart,
+                                endAttributes = transitionType.endAttributes,
                             )
-                        },
-                        startSessionPartCallback = {
-                            // the previous session part has fully ended at this point. Transition the user session
-                            // before creating the new session part so that the user session is always ready
-                            transitionUserSession(transitionType, endAppState, timestamp)
-
-                            // create the next session part span if we should, and update the SDK state to reflect the transition
-                            EmbTrace.trace("create-new-session") {
-                                newSessionAction?.invoke()
-                            }
-                        },
-                        postTransitionProcessState = endAppState,
-                    )
-
-                    // update the current state of the SDK
-                    state = endAppState
-
-                    // update newly created session part and user session, if applicable
-                    val userSession = currentUserSession()
-                    if (newSessionPart != null) {
-                        if (userSession != null) {
-                            // persist partIndex to handle user session restoration in new process
-                            setActiveUserSession(userSession.withPartIndex(newSessionPart.userSessionPartIndex))
-
-                            if (endAppState == ProcessState.FOREGROUND) {
-                                sessionTracker.setProcessStateSummary(newSessionPart.sessionPartId, userSession.userSessionId)
-                            }
                         }
-                        boundaryDelegate.prepareForNewSessionPart()
-                        sessionPartSpanAttrPopulator.populateSessionPartSpanStartAttrs(newSessionPart, userSession)
-                        if (transitionType != TransitionType.CRASH) {
-                            // create the directory that holds this session part's telemetry
-                            sessionPartWriter?.onSessionPartStarted(
-                                timestamp = timestamp,
-                                userSessionId = userSession?.userSessionId ?: "",
-                                sessionPartId = newSessionPart.sessionPartId,
-                            )
 
-                            scheduleLastActivityUpdate(userSession, endAppState)
+                        // calculate new session state
+                        val endAppState = transitionType.postTransitionEndState(state)
+                        val newSessionPart = sessionTracker.newActiveSessionPart(
+                            endSessionPartCallback = {
+                                // End the current session or background activity, if either exist.
+                                EmbTrace.trace("end-current-session") {
+                                    processEndMessage(oldSessionAction?.invoke(this))
+                                }
 
-                            // initiate periodic caching of the payload if a new session has started.
-                            // multi-file mode writes as telemetry changes, so it needs no tick.
-                            if (!multiFilePersistenceEnabled()) {
-                                EmbTrace.trace("initiate-periodic-caching") {
-                                    updatePeriodicCacheAttrs()
-                                    payloadCachingService?.startCaching(
-                                        newSessionPart,
-                                        endAppState,
-                                    ) { state, timestamp, zygote, onSnapshot ->
-                                        synchronized(lock) {
-                                            updatePeriodicCacheAttrs()
-                                            payloadFactory.snapshotPayload(state, timestamp, zygote)?.let(onSnapshot)
+                                // persist the stopped session part span
+                                sessionPartWriter?.onSessionPartEnded(
+                                    sessionPartId = sessionPartId,
+                                    crashing = transitionType == TransitionType.CRASH,
+                                )
+                            },
+                            startSessionPartCallback = {
+                                // the previous session part has fully ended at this point. Transition the user session
+                                // before creating the new session part so that the user session is always ready
+                                transitionUserSession(transitionType, endAppState, timestamp)
+
+                                // create the next session part span if we should, and update the SDK state to reflect the
+                                // transition
+                                EmbTrace.trace("create-new-session") {
+                                    newSessionAction?.invoke()
+                                }
+                            },
+                            postTransitionProcessState = endAppState,
+                        )
+
+                        // update the current state of the SDK
+                        state = endAppState
+
+                        // update newly created session part and user session, if applicable
+                        val userSession = currentUserSession()
+                        if (newSessionPart != null) {
+                            if (userSession != null) {
+                                // persist partIndex to handle user session restoration in new process
+                                setActiveUserSession(userSession.withPartIndex(newSessionPart.userSessionPartIndex))
+
+                                if (endAppState == ProcessState.FOREGROUND) {
+                                    sessionTracker.setProcessStateSummary(newSessionPart.sessionPartId, userSession.userSessionId)
+                                }
+                            }
+                            boundaryDelegate.prepareForNewSessionPart()
+                            sessionPartSpanAttrPopulator.populateSessionPartSpanStartAttrs(newSessionPart, userSession)
+                            if (transitionType != TransitionType.CRASH) {
+                                // create the directory that holds this session part's telemetry
+                                sessionPartWriter?.onSessionPartStarted(
+                                    timestamp = timestamp,
+                                    userSessionId = userSession?.userSessionId ?: "",
+                                    sessionPartId = newSessionPart.sessionPartId,
+                                )
+
+                                scheduleLastActivityUpdate(userSession, endAppState)
+
+                                // initiate periodic caching of the payload if a new session has started.
+                                // multi-file mode writes as telemetry changes, so it needs no tick.
+                                if (!multiFilePersistenceEnabled()) {
+                                    EmbTrace.trace("initiate-periodic-caching") {
+                                        updatePeriodicCacheAttrs()
+                                        payloadCachingService?.startCaching(
+                                            newSessionPart,
+                                            endAppState,
+                                        ) { state, timestamp, zygote, onSnapshot ->
+                                            synchronized(lock) {
+                                                updatePeriodicCacheAttrs()
+                                                payloadFactory.snapshotPayload(state, timestamp, zygote)?.let(onSnapshot)
+                                            }
                                         }
                                     }
                                 }
                             }
+                        } else if (transitionType == TransitionType.ON_BACKGROUND) {
+                            // if a new session hasn't been created when we background, cache an empty envelope to be used
+                            // in case a native crash needs to be sent in the future after the current process dies
+                            payloadStore?.cacheEmptyCrashEnvelope(payloadFactory.createEmptyLogEnvelope())
                         }
-                    } else if (transitionType == TransitionType.ON_BACKGROUND) {
-                        // if a new session hasn't been created when we background, cache an empty envelope to be used
-                        // in case a native crash needs to be sent in the future after the current process dies
-                        payloadStore?.cacheEmptyCrashEnvelope(payloadFactory.createEmptyLogEnvelope())
                     }
                 }
+            } finally {
+                userSessionEvents.deliverPending()
             }
-            userSessionEvents.deliverPending()
         }
     }
 

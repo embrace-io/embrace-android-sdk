@@ -1,0 +1,52 @@
+file_format: definition/2
+
+attribute_groups:
+  - id: emb.interaction_responsiveness
+    visibility: public
+    stability: development
+    brief: "Embrace interaction responsiveness vital attributes (experimental)"
+    attributes:
+      - ref: interaction_responsiveness.outcome
+      - ref: interaction_responsiveness.dispatch_delay_ms
+      - ref: interaction_responsiveness.longest_block_ms
+      - ref: interaction_responsiveness.total_blocked_ms
+      - ref: interaction_responsiveness.block_count
+      - ref: interaction_responsiveness.block_threshold_ms
+      - ref: interaction_responsiveness.probe_interval_ms
+
+attributes:
+  - key: interaction_responsiveness.outcome
+    type: string
+    brief: "How the focal moment ended."
+    stability: development
+    examples: ["settled", "interrupted"]
+  - key: interaction_responsiveness.dispatch_delay_ms
+    type: int
+    brief: "Delay between the opening touch-down's event time and the app processing it, in milliseconds. Absent when a move opened the focal moment."
+    stability: development
+    examples: [2, 30]
+  - key: interaction_responsiveness.longest_block_ms
+    type: int
+    brief: "Duration of the longest main-thread block observed during the focal moment, in milliseconds."
+    stability: development
+    examples: [0, 300]
+  - key: interaction_responsiveness.total_blocked_ms
+    type: int
+    brief: "Sum of the durations of all main-thread blocks observed during the focal moment, in milliseconds."
+    stability: development
+    examples: [0, 450]
+  - key: interaction_responsiveness.block_count
+    type: int
+    brief: "Number of main-thread blocks observed during the focal moment."
+    stability: development
+    examples: [0, 3]
+  - key: interaction_responsiveness.block_threshold_ms
+    type: int
+    brief: "The minimum main-thread probe lateness that was applied before a delay counted as a block, in milliseconds."
+    stability: development
+    examples: [50, 100]
+  - key: interaction_responsiveness.probe_interval_ms
+    type: int
+    brief: "The interval at which the main-thread probe was scheduled, in milliseconds."
+    stability: development
+    examples: [16]

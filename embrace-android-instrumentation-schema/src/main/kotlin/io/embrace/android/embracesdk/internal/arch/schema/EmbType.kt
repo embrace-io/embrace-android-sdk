@@ -32,6 +32,8 @@ sealed class EmbType(type: String, subtype: String?) : EmbraceAttribute {
         object Smoothness : Performance("smoothness")
 
         object ScreenLoad : Performance("screen_load")
+
+        object InteractionResponsiveness : Performance("interaction_responsiveness")
     }
 
     /**

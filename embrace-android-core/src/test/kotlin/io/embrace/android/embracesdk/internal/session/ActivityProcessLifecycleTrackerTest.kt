@@ -48,7 +48,35 @@ internal class ActivityProcessLifecycleTrackerTest {
     }
 
     @Test
-    fun `an activity context counts as foreground`() {
+    fun `an activity context in a foreground process counts as foreground`() {
+        setProcessImportance(RunningAppProcessInfo.IMPORTANCE_FOREGROUND)
+
+        val tracker = createTracker(startupContext = buildActivity().get())
+
+        assertEquals(ProcessState.FOREGROUND, tracker.getProcessState())
+    }
+
+    @Test
+    fun `an activity context in a background process counts as background`() {
+        // an Activity that stopped before the SDK started is neither finishing nor destroyed
+        val tracker = createTracker(startupContext = buildActivity().get())
+
+        assertEquals(ProcessState.BACKGROUND, tracker.getProcessState())
+        assertEquals(0, listener.foregroundCount.get())
+
+        val next = buildActivity().start()
+        assertEquals(1, listener.foregroundCount.get())
+
+        next.stop()
+        elapseDebounce()
+        assertEquals(1, listener.backgroundCount.get())
+        assertEquals(ProcessState.BACKGROUND, tracker.getProcessState())
+    }
+
+    @Test
+    fun `an activity context counts as foreground when the process importance can't be read`() {
+        processes = null
+
         val tracker = createTracker(startupContext = buildActivity().get())
 
         assertEquals(ProcessState.FOREGROUND, tracker.getProcessState())
@@ -56,6 +84,7 @@ internal class ActivityProcessLifecycleTrackerTest {
 
     @Test
     fun `an activity wrapped in a ContextWrapper counts as foreground`() {
+        processes = null
         val activity = buildActivity().get()
         val tracker = createTracker(startupContext = TestContextWrapper(TestContextWrapper(activity)))
 
@@ -64,6 +93,7 @@ internal class ActivityProcessLifecycleTrackerTest {
 
     @Test
     fun `a finishing activity does not count as foreground`() {
+        processes = null
         val controller = buildActivity()
         controller.get().finishing = true
 
@@ -74,6 +104,7 @@ internal class ActivityProcessLifecycleTrackerTest {
 
     @Test
     fun `a destroyed activity does not count as foreground`() {
+        processes = null
         val controller = buildActivity()
         val activity = controller.get()
         controller.get().destroyed = true
@@ -112,6 +143,7 @@ internal class ActivityProcessLifecycleTrackerTest {
 
     @Test
     fun `registering while already in the foreground reports a foreground transition`() {
+        setProcessImportance(RunningAppProcessInfo.IMPORTANCE_FOREGROUND)
         createTracker(startupContext = buildActivity().get())
 
         assertEquals(1, listener.foregroundCount.get())
@@ -206,6 +238,7 @@ internal class ActivityProcessLifecycleTrackerTest {
 
     @Test
     fun `stopping an activity that started before registration reports a background transition`() {
+        setProcessImportance(RunningAppProcessInfo.IMPORTANCE_FOREGROUND)
         val controller = buildActivity().start()
         val tracker = createTracker(startupContext = controller.get())
         assertEquals(1, listener.foregroundCount.get())
@@ -232,7 +265,72 @@ internal class ActivityProcessLifecycleTrackerTest {
     }
 
     @Test
+    fun `starting from an activity whose own start is then observed still reports background`() {
+        // as when the SDK starts in the activity's onCreate, before its onStart
+        setProcessImportance(RunningAppProcessInfo.IMPORTANCE_FOREGROUND)
+        val controller = buildActivity()
+        val tracker = createTracker(startupContext = controller.get())
+
+        controller.start()
+        controller.stop()
+        elapseDebounce()
+
+        assertEquals(1, listener.backgroundCount.get())
+        assertEquals(ProcessState.BACKGROUND, tracker.getProcessState())
+    }
+
+    @Test
+    fun `a foreground process whose launching activity starts after registration still reports background`() {
+        // as when the SDK starts in Application.onCreate and the system already reports the process as foreground
+        setProcessImportance(RunningAppProcessInfo.IMPORTANCE_FOREGROUND)
+        val tracker = createTracker()
+
+        buildActivity().start().stop()
+        elapseDebounce()
+
+        assertEquals(1, listener.backgroundCount.get())
+        assertEquals(ProcessState.BACKGROUND, tracker.getProcessState())
+    }
+
+    @Test
+    fun `destroying the startup activity after its stop was missed reports a background transition`() {
+        setProcessImportance(RunningAppProcessInfo.IMPORTANCE_FOREGROUND)
+        val startup = buildActivity()
+        val tracker = createTracker(startupContext = startup.get())
+
+        // the startup activity's stop came before registration, so it is still taken to be started after the next one stops
+        val next = buildActivity().start().stop()
+        next.destroy()
+        elapseDebounce()
+        assertEquals(0, listener.backgroundCount.get())
+        assertEquals(ProcessState.FOREGROUND, tracker.getProcessState())
+
+        startup.destroy()
+        elapseDebounce()
+        assertEquals(1, listener.backgroundCount.get())
+        assertEquals(ProcessState.BACKGROUND, tracker.getProcessState())
+    }
+
+    @Test
+    fun `destroying the startup activity while another shows stays in the foreground`() {
+        setProcessImportance(RunningAppProcessInfo.IMPORTANCE_FOREGROUND)
+        val startup = buildActivity()
+        val tracker = createTracker(startupContext = startup.get())
+        val next = buildActivity().start()
+
+        startup.destroy()
+        elapseDebounce()
+        assertEquals(0, listener.backgroundCount.get())
+        assertEquals(ProcessState.FOREGROUND, tracker.getProcessState())
+
+        next.stop()
+        elapseDebounce()
+        assertEquals(1, listener.backgroundCount.get())
+    }
+
+    @Test
     fun `navigating away from an activity that started before registration stays in the foreground`() {
+        setProcessImportance(RunningAppProcessInfo.IMPORTANCE_FOREGROUND)
         val first = buildActivity().start()
         val tracker = createTracker(startupContext = first.get())
         val second = buildActivity()
@@ -346,6 +444,8 @@ internal class ActivityProcessLifecycleTrackerTest {
         fun start() = apply { application.lifecycleCallbacks.toList().forEach { it.onActivityStarted(activity) } }
 
         fun stop() = apply { application.lifecycleCallbacks.toList().forEach { it.onActivityStopped(activity) } }
+
+        fun destroy() = apply { application.lifecycleCallbacks.toList().forEach { it.onActivityDestroyed(activity) } }
     }
 
     private class TestActivity : Activity() {

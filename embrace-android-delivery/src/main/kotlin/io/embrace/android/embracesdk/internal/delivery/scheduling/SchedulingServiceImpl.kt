@@ -295,7 +295,9 @@ class SchedulingServiceImpl(
             // If delivery of this payload should be retried, add or replace the entry in the retry map
             // with the new values for how many times it has failed, and when the next retry should happen
             val retryAttempts = payloadsToRetry[payload]?.failedAttempts ?: 0
-            val nextRetryTimeMs = if (this is ExecutionResult.TooManyRequests && retryAfterMs != null) {
+
+            // A non-positive retryAfterMs value is discarded as invalid, and we will treat it like we don't have one
+            val nextRetryTimeMs = if (this is ExecutionResult.TooManyRequests && retryAfterMs != null && retryAfterMs > 0) {
                 val unblockedTimestampMs = clock.now() + retryAfterMs
                 blockedEndpoints[endpoint] = unblockedTimestampMs
                 unblockedTimestampMs + 1L

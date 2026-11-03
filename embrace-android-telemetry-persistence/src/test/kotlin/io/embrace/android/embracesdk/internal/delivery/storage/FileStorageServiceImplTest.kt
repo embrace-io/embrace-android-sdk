@@ -21,6 +21,9 @@ import java.io.IOException
 import java.nio.file.Files
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.Executors
+import java.util.concurrent.Future
+import java.util.concurrent.LinkedBlockingQueue
+import java.util.concurrent.ThreadPoolExecutor
 import java.util.concurrent.TimeUnit
 
 class FileStorageServiceImplTest {
@@ -67,6 +70,25 @@ class FileStorageServiceImplTest {
         service.delete(fakeSessionStoredTelemetryMetadata)
         executor.queueCompletionTask()
         assertNull(service.loadPayloadAsStream(fakeSessionStoredTelemetryMetadata))
+    }
+
+    @Test
+    fun `a delete runs inline once the worker has shut down`() {
+        storeDummyFile(fakeSessionStoredTelemetryMetadata)
+        // like the SDK's worker pool, the shut-down executor cancels rejected work rather than throwing
+        val shutDownExecutor = ThreadPoolExecutor(1, 1, 0, TimeUnit.MILLISECONDS, LinkedBlockingQueue()) { runnable, _ ->
+            (runnable as? Future<*>)?.cancel(false)
+        }.apply { shutdown() }
+        val crashedService = FileStorageServiceImpl(
+            lazy { outputDir },
+            PriorityWorker(shutDownExecutor),
+            errorHandler,
+            clock,
+            maxAgeMs = MAX_AGE_MS,
+        )
+
+        crashedService.delete(fakeSessionStoredTelemetryMetadata)
+        assertNull(crashedService.loadPayloadAsStream(fakeSessionStoredTelemetryMetadata))
     }
 
     @Test

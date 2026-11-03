@@ -1,0 +1,9 @@
+{
+  "emb.user_session_start_ts": "1000",
+  "emb.user_session_id": "session-id",
+  "emb.user_session_number": "3",
+  "emb.user_session_max_duration_seconds": "3600",
+  "emb.user_session_inactivity_timeout_seconds": "1800",
+  "emb.user_session_part_index": "2",
+  "emb.user_session_last_activity_ts": "5000"
+}

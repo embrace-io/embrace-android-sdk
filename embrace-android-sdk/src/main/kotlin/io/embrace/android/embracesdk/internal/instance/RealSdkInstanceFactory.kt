@@ -85,6 +85,7 @@ import io.embrace.android.embracesdk.internal.otel.spans.EmbraceSpanFactoryImpl
 import io.embrace.android.embracesdk.internal.otel.spans.SpanRepository
 import io.embrace.android.embracesdk.internal.otel.spans.SpanService
 import io.embrace.android.embracesdk.internal.otel.spans.SpanServiceImpl
+import io.embrace.android.embracesdk.internal.prefs.PrefsStoreWriteBatcher
 import io.embrace.android.embracesdk.internal.session.id.SessionIdsProvider
 import io.embrace.android.embracesdk.internal.session.id.SessionPartTracker
 import io.embrace.android.embracesdk.internal.session.lifecycle.createLifecycleTracker
@@ -750,7 +751,7 @@ internal fun createRealSdkInstance(
                 appVersionStartupCounterProvider = startupService::getAppVersionStartupCounter,
                 logLimitingService = logLimitingService,
                 ordinalStore = ordinalStore,
-                store = store,
+                writeBatcher = PrefsStoreWriteBatcher(store),
                 stateStore = persistedSdkStateStore,
                 backgroundWorker = workerThreadPool.backgroundWorker(Worker.Background.NonIoRegWorker),
                 sessionPersistenceWorker = workerThreadPool.backgroundWorker(Worker.Background.SessionPersistenceWorker),

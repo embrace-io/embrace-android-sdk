@@ -42,6 +42,7 @@ import io.embrace.android.embracesdk.internal.logging.SdkErrorType
 import io.embrace.android.embracesdk.internal.otel.spans.EmbraceSdkSpan
 import io.embrace.android.embracesdk.internal.payload.AppFramework
 import io.embrace.android.embracesdk.internal.prefs.PrefsPersistedSdkStateStore
+import io.embrace.android.embracesdk.internal.prefs.PrefsStoreWriteBatcher
 import io.embrace.android.embracesdk.internal.session.LifeEventType
 import io.embrace.android.embracesdk.internal.session.UserSessionMetadata
 import io.embrace.android.embracesdk.internal.session.UserSessionRestoreDecision
@@ -55,12 +56,12 @@ import io.embrace.android.embracesdk.internal.session.message.PayloadFactoryImpl
 import io.embrace.android.embracesdk.internal.session.persistence.SessionPartDirectory
 import io.embrace.android.embracesdk.internal.session.persistence.SpanCollection
 import io.embrace.android.embracesdk.internal.session.persistence.SpanProto
-import io.embrace.android.embracesdk.internal.store.KeyValueStore
 import io.embrace.android.embracesdk.internal.store.OrdinalStore
 import io.embrace.android.embracesdk.internal.store.OrdinalStoreImpl
 import io.embrace.android.embracesdk.internal.store.PersistedSdkState
 import io.embrace.android.embracesdk.internal.store.PersistedSdkStateEditor
 import io.embrace.android.embracesdk.internal.store.PersistedSdkStateStore
+import io.embrace.android.embracesdk.internal.store.StoreWriteBatcher
 import io.embrace.android.embracesdk.internal.worker.BackgroundWorker
 import io.embrace.android.embracesdk.semconv.EmbSessionAttributes
 import io.embrace.android.embracesdk.semconv.EmbSessionAttributes.EmbUserSessionTerminationReasonValues
@@ -158,7 +159,7 @@ internal class SessionOrchestratorTest {
             startingProcessState = ProcessState.FOREGROUND,
             ordinalStoreOverride = OrdinalStoreImpl(kvStore, FakeErrorHandler()),
             stateStoreOverride = stateStore,
-            keyValueStoreOverride = kvStore,
+            writeBatcherOverride = PrefsStoreWriteBatcher(kvStore),
         )
 
         // the user session ordinal, the session part ordinal, and both saves of the user session
@@ -1143,7 +1144,7 @@ internal class SessionOrchestratorTest {
             FakeConfigService(config = backgroundActivityConfig(true)),
         ordinalStoreOverride: OrdinalStore? = null,
         stateStoreOverride: PersistedSdkStateStore? = null,
-        keyValueStoreOverride: KeyValueStore? = null,
+        writeBatcherOverride: StoreWriteBatcher? = null,
     ) {
         store = FakePayloadStore()
         appStateTracker = FakeProcessStateTracker(startingProcessState)
@@ -1224,7 +1225,7 @@ internal class SessionOrchestratorTest {
                 experimentRecordsProvider = { null },
             ),
             ordinalStoreOverride ?: FakeOrdinalStore(),
-            keyValueStoreOverride ?: FakeKeyValueStore(),
+            writeBatcherOverride ?: StoreWriteBatcher { it() },
             stateStoreOverride ?: FakePersistedSdkStateStore(),
             errorHandler,
             BackgroundWorker(inactivityWorkerExecutor),

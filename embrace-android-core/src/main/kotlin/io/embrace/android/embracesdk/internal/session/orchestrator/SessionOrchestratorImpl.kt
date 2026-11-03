@@ -27,10 +27,10 @@ import io.embrace.android.embracesdk.internal.session.UserSessionState
 import io.embrace.android.embracesdk.internal.session.UserSessionState.Active
 import io.embrace.android.embracesdk.internal.session.id.SessionPartTracker
 import io.embrace.android.embracesdk.internal.session.message.PayloadFactory
-import io.embrace.android.embracesdk.internal.store.KeyValueStore
 import io.embrace.android.embracesdk.internal.store.Ordinal
 import io.embrace.android.embracesdk.internal.store.OrdinalStore
 import io.embrace.android.embracesdk.internal.store.PersistedSdkStateStore
+import io.embrace.android.embracesdk.internal.store.StoreWriteBatcher
 import io.embrace.android.embracesdk.internal.utils.EmbTrace
 import io.embrace.android.embracesdk.internal.utils.Provider
 import io.embrace.android.embracesdk.internal.utils.UuidSource
@@ -54,7 +54,7 @@ internal class SessionOrchestratorImpl(
     private val destination: TelemetryDestination,
     private val sessionPartSpanAttrPopulator: SessionPartSpanAttrPopulator,
     private val ordinalStore: OrdinalStore,
-    private val store: KeyValueStore,
+    private val writeBatcher: StoreWriteBatcher,
     private val stateStore: PersistedSdkStateStore,
     private val errorHandler: ErrorHandler,
     private val backgroundWorker: BackgroundWorker,
@@ -347,8 +347,8 @@ internal class SessionOrchestratorImpl(
                 return
             }
 
-            // batch the prefs writes made by the ordinal & metadata stores into a single commit
-            store.batch {
+            // batch the writes made by the ordinal & persisted state stores into a single commit
+            writeBatcher.batch {
                 EmbTrace.trace("transition-state-start") {
                     // first, disable any previous periodic caching so the job doesn't overwrite the to-be saved session
                     payloadCachingService?.stopCaching()

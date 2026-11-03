@@ -7,7 +7,6 @@ import io.embrace.android.embracesdk.fakes.FakeEnvelopeMetadataSource
 import io.embrace.android.embracesdk.fakes.FakeEnvelopeResourceSource
 import io.embrace.android.embracesdk.fakes.FakeErrorHandler
 import io.embrace.android.embracesdk.fakes.FakeIntakeService
-import io.embrace.android.embracesdk.fakes.FakeKeyValueStore
 import io.embrace.android.embracesdk.fakes.FakeLogEnvelopeSource
 import io.embrace.android.embracesdk.fakes.FakeLogLimitingService
 import io.embrace.android.embracesdk.fakes.FakeMetadataService
@@ -45,7 +44,6 @@ internal class UserSessionOrchestrationFactoriesTest {
     )
     private val application = fakeApplication()
     private val context = fakeContext(application)
-    private val store = FakeKeyValueStore()
     private val destination = FakeTelemetryDestination()
 
     @Test
@@ -109,7 +107,7 @@ internal class UserSessionOrchestrationFactoriesTest {
             appVersionStartupCounterProvider = { null },
             logLimitingService = FakeLogLimitingService(),
             ordinalStore = FakeOrdinalStore(),
-            store = store,
+            writeBatcher = { it() },
             stateStore = FakePersistedSdkStateStore(),
             backgroundWorker = workerThreadPool.backgroundWorker(Worker.Background.NonIoRegWorker),
             sessionPersistenceWorker = workerThreadPool.backgroundWorker(Worker.Background.SessionPersistenceWorker),

@@ -44,6 +44,7 @@ import io.embrace.android.embracesdk.internal.injection.evictConnections
 import io.embrace.android.embracesdk.internal.instrumentation.crash.CrashFileMarker
 import io.embrace.android.embracesdk.internal.instrumentation.crash.LastRunCrashVerifier
 import io.embrace.android.embracesdk.internal.instrumentation.crash.jvm.JvmCrashDataSource
+import io.embrace.android.embracesdk.internal.instrumentation.crash.jvm.JvmCrashInstrumentationProvider
 import io.embrace.android.embracesdk.internal.instrumentation.crash.ndk.NativeCrashDataSource
 import io.embrace.android.embracesdk.internal.instrumentation.network.NetworkCaptureDataSource
 import io.embrace.android.embracesdk.internal.instrumentation.network.NetworkRequestDataSource
@@ -348,6 +349,14 @@ internal class RealSdkInstance(
     private fun loadInstrumentation() {
         errorHandler.guardSdkCode(SdkErrorType.SdkInitPhaseFail) {
             EmbTrace.trace(sectionName = "load-instrumentation", recordDuration = true) {
+                // Register JVM crash datasource directly so its teardown handlers are in place before any other instrumentation loads.
+                errorHandler.guardSdkCode(SdkErrorType.InstrumentationRegFail) {
+                    instrumentationRegistry.add(
+                        JvmCrashInstrumentationProvider().register(instrumentationArgs),
+                    )?.also { dataSource ->
+                        registerCrashTeardownHandlers(dataSource)
+                    }
+                }
                 instrumentationRegistry.loadInstrumentations(loadInstrumentationProviders(), instrumentationArgs)
 
                 threadBlockageService?.startCapture()
@@ -426,19 +435,26 @@ internal class RealSdkInstance(
     }
 
     /**
-     * Performs post-load instrumentation tasks such as setting listeners.
+     * Gives the JVM crash data source the services that must be torn down when the app crashes.
      */
-    internal fun postLoadInstrumentation() {
+    internal fun registerCrashTeardownHandlers(dataSource: JvmCrashDataSource) {
         errorHandler.guardSdkCode(SdkErrorType.SdkInitPhaseFail) {
-            // setup crash teardown handlers
-            val registry = instrumentationRegistry
-            registry.findByType(JvmCrashDataSource::class)?.apply {
+            with(dataSource) {
                 threadBlockageService?.let(::addCrashTeardownHandler)
                 addCrashTeardownHandler(logOrchestrator)
                 addCrashTeardownHandler(sessionOrchestrator)
                 addCrashTeardownHandler(crashMarker)
                 payloadStore?.let(::addCrashTeardownHandler)
             }
+        }
+    }
+
+    /**
+     * Performs post-load instrumentation tasks such as setting listeners.
+     */
+    private fun postLoadInstrumentation() {
+        errorHandler.guardSdkCode(SdkErrorType.SdkInitPhaseFail) {
+            val registry = instrumentationRegistry
             workerThreadPool.backgroundWorker(Worker.Background.NonIoRegWorker).submit {
                 if (!enabled) {
                     return@submit

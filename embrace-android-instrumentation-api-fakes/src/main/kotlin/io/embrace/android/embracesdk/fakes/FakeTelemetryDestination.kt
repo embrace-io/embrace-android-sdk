@@ -147,7 +147,13 @@ class FakeTelemetryDestination(
         createdSpans.add(token)
     }
 
+    /**
+     * Runs as each state token is started, before it is created, so tests can see which thread starts one or hold it there.
+     */
+    var onStartSessionPartStateCapture: () -> Unit = {}
+
     override fun <T : Any> startSessionPartStateCapture(state: SchemaType.State<T>): SessionPartStateToken<T> {
+        onStartSessionPartStateCapture()
         val token = FakeSessionPartStateToken<T>()
         createdStateTokens.add(token)
         return token

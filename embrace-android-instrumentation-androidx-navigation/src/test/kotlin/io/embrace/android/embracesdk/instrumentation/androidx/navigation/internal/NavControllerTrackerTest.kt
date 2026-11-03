@@ -30,6 +30,7 @@ import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.Robolectric.buildActivity
+import java.lang.ref.WeakReference
 import java.util.concurrent.CopyOnWriteArrayList
 
 @RunWith(AndroidJUnit4::class)
@@ -41,6 +42,7 @@ internal class NavControllerTrackerTest {
     private lateinit var tracker: NavControllerTracker
     private lateinit var errorHandler: FakeErrorHandler
     private lateinit var activity: FragmentActivity
+    private lateinit var controllerRefs: MutableList<WeakReference<NavController>>
 
     private val attached get() = signals.filterIsInstance<ScreenSourceAttached>()
     private val screenChanges get() = signals.filterIsInstance<ScreenChanged>()
@@ -52,7 +54,10 @@ internal class NavControllerTrackerTest {
         signals = CopyOnWriteArrayList()
         eventBus = EventBus(errorHandler)
         eventBus.addHandler(NavigationSignal.KEY) { signals.add(it) }
-        tracker = NavControllerTracker(eventBus, clock, errorHandler)
+        controllerRefs = CopyOnWriteArrayList()
+        tracker = NavControllerTracker(eventBus, clock, errorHandler) { controller ->
+            WeakReference(controller).also { controllerRefs.add(it) }
+        }
         activity = createActivity()
     }
 
@@ -115,11 +120,12 @@ internal class NavControllerTrackerTest {
 
     @Test
     fun `activity will always be associated with the first NavController it tracks`() {
-        tracker.trackNavigation(activity, createTestNavController("foo"))
+        val first = createTestNavController("foo")
+        tracker.trackNavigation(activity, first)
         tracker.trackNavigation(activity, createTestNavController("bar"))
         tracker.trackNavigation(activity)
         assertEquals(1, attached.size)
-        assertEquals("foo", screenChanges[0].name)
+        assertEquals(listOf("foo"), screenChanges.map { it.name })
     }
 
     @Test
@@ -127,7 +133,37 @@ internal class NavControllerTrackerTest {
         tracker.trackNavigation(activity)
         tracker.trackNavigation(activity, createTestNavController("foo"))
         assertEquals(1, attached.size)
-        assertEquals("home", screenChanges[0].name)
+        assertEquals(listOf("home"), screenChanges.map { it.name })
+    }
+
+    @Test
+    fun `a NavController is tracked once the one tracked before it is collected`() {
+        tracker.trackNavigation(activity, createTestNavController("foo"))
+        controllerRefs.single().clear()
+        tracker.trackNavigation(activity, createTestNavController("bar"))
+        assertEquals(2, attached.size)
+        assertEquals(listOf("foo", "bar"), screenChanges.map { it.name })
+    }
+
+    @Test
+    fun `a NavController is tracked once however it is reached`() {
+        tracker.trackNavigation(activity)
+        tracker.trackNavigation(activity, activity.navHostController())
+        tracker.trackNavigation(activity)
+        assertEquals(1, attached.size)
+        assertEquals(listOf("home"), screenChanges.map { it.name })
+    }
+
+    @Test
+    fun `a NavHostFragment added after the activity first resumes is tracked`() {
+        val laterActivity = buildActivity(FragmentActivity::class.java).setup().get()
+        tracker.trackNavigation(laterActivity)
+        assertTrue(signals.isEmpty())
+
+        addNavHostFragment(laterActivity)
+        tracker.trackNavigation(laterActivity)
+        assertEquals(1, attached.size)
+        assertEquals(listOf("home"), screenChanges.map { it.name })
     }
 
     @Test
@@ -190,21 +226,30 @@ internal class NavControllerTrackerTest {
     }
 
     private fun createActivity(
-        navGraphProvider: (navController: NavController) -> NavGraph = { navController ->
-            navController.createGraph(startDestination = "home") {
-                fragment<Fragment>("home")
-            }
-        },
-    ): FragmentActivity {
-        val activity = buildActivity(FragmentActivity::class.java).setup().get()
+        navGraphProvider: (navController: NavController) -> NavGraph = ::homeGraph,
+    ): FragmentActivity = buildActivity(FragmentActivity::class.java).setup().get().apply {
+        addNavHostFragment(this, navGraphProvider)
+    }
+
+    private fun addNavHostFragment(
+        activity: FragmentActivity,
+        navGraphProvider: (navController: NavController) -> NavGraph = ::homeGraph,
+    ) {
         val navHostFragment = NavHostFragment()
         activity.supportFragmentManager
             .beginTransaction()
             .add(content, navHostFragment)
             .commitNow()
         navHostFragment.navController.graph = navGraphProvider(navHostFragment.navController)
-        return activity
     }
+
+    private fun FragmentActivity.navHostController(): NavController =
+        supportFragmentManager.fragments.filterIsInstance<NavHostFragment>().single().navController
+
+    private fun homeGraph(navController: NavController): NavGraph =
+        navController.createGraph(startDestination = "home") {
+            fragment<Fragment>("home")
+        }
 
     private fun graphWithRoutelessDestinationWithLabel(navController: NavController): NavGraph =
         graphWithRoutelessDestination(navController, "My Home")

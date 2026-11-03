@@ -20,6 +20,8 @@ import io.embrace.android.embracesdk.fakes.injection.TestInitServices
 import io.embrace.android.embracesdk.internal.arch.InstrumentationRegistry
 import io.embrace.android.embracesdk.internal.arch.state.ProcessState
 import io.embrace.android.embracesdk.internal.arch.state.ProcessStateListener
+import io.embrace.android.embracesdk.internal.arch.ui.TapSignal
+import io.embrace.android.embracesdk.internal.capture.connectivity.NetworkConnectivityService
 import io.embrace.android.embracesdk.internal.clock.Clock
 import io.embrace.android.embracesdk.internal.config.ConfigService
 import io.embrace.android.embracesdk.internal.config.PersistedConfig
@@ -47,6 +49,7 @@ import io.embrace.android.embracesdk.internal.otel.sdk.OtelSdkWrapper
 import io.embrace.android.embracesdk.internal.session.lifecycle.LifecycleTracker
 import io.embrace.android.embracesdk.internal.session.orchestrator.PayloadStore
 import io.embrace.android.embracesdk.internal.session.orchestrator.SessionOrchestrator
+import io.embrace.android.embracesdk.internal.utils.event.EventBus
 import io.embrace.android.embracesdk.internal.worker.BackgroundWorker
 import io.embrace.android.embracesdk.internal.worker.Worker
 import io.embrace.android.embracesdk.semconv.EmbSessionAttributes
@@ -372,6 +375,60 @@ internal class RealSdkInstanceFactoryTest {
         assertFalse(connectivityService.registered)
         assertTrue(connectivityService.listeners.isEmpty())
         server.shutdown()
+    }
+
+    @Test
+    fun `event sources stop before data sources are disabled`() {
+        var eventBus: EventBus? = null
+        var taps = 0
+        var tapsWhenDisabling: Int? = null
+        val closed = mutableListOf<String>()
+        var closedWhenDisabling: List<String>? = null
+        val instance = createInstance(
+            overrides = SdkOverrides(
+                lifecycleTracker = { real ->
+                    val tracker = real()
+                    object : LifecycleTracker by tracker {
+                        override fun close() {
+                            closed += "process state"
+                            tracker.close()
+                        }
+                    }
+                },
+                networkConnectivityService = { real ->
+                    val service = real()
+                    object : NetworkConnectivityService by service {
+                        override fun close() {
+                            closed += "connectivity"
+                            service.close()
+                        }
+                    }
+                },
+                eventBus = { real -> real().also { eventBus = it } },
+                instrumentationRegistry = { real ->
+                    val registry = real()
+                    object : InstrumentationRegistry by registry {
+                        override fun close() {
+                            checkNotNull(eventBus).emit(TapSignal.KEY, TapSignal("tap", 0f, 0f))
+                            tapsWhenDisabling = taps
+                            closedWhenDisabling = closed.toList()
+                            registry.close()
+                        }
+                    }
+                },
+            ),
+        )
+        instance.runInit()
+        val bus = checkNotNull(eventBus)
+        bus.addHandler(TapSignal.KEY) { taps++ }
+        bus.emit(TapSignal.KEY, TapSignal("tap", 0f, 0f))
+        assertEquals(1, taps)
+
+        instance.disable()
+
+        // the event bus delivers nothing more, and the process state and connectivity listeners are released
+        assertEquals(1, tapsWhenDisabling)
+        assertEquals(listOf("process state", "connectivity"), closedWhenDisabling)
     }
 
     // runs the instance's init as SdkStateHolder does, without a pre-start buffer to transition from

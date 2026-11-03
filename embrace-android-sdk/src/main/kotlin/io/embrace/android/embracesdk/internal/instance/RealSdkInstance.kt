@@ -222,14 +222,17 @@ internal class RealSdkInstance(
         enabled = false
         runCatching { errorHandler.close() }
         runCatching { otelSdkConfig.value.disableDataExport() }
+        // the sources of events that data sources and their providers listen to are stopped before the data sources are
+        // disabled, so that none of their handlers or listeners runs once disabling starts, whoever registered it
+        runCatching { eventBus.stop() }
+        runCatching { processStateTracker.close() }
+        runCatching { networkConnectivityService.close() }
         runCatching { instrumentationRegistry.close() }
         runCatching { resetHucInstrumentation() }
         runCatching { threadBlockageService?.close() }
 
         val rootDir = runCatching { appContext.filesDir }.getOrNull()
         val fallbackDir = runCatching { appContext.cacheDir }.getOrNull()
-        runCatching { processStateTracker.close() }
-        runCatching { networkConnectivityService.close() }
         runCatching { startupTracker.close() }
         runCatching { otelSdkConfig.value.close() }
         runCatching { sessionOrchestrator.close() }
@@ -242,7 +245,6 @@ internal class RealSdkInstance(
         runCatching { schedulingService?.shutdown() }
         runCatching { cancelHttpRequests() }
         runCatching { workerThreadPool.close() }
-        runCatching { eventBus.stop() }
 
         if (!deletePersistedTelemetry || rootDir == null || fallbackDir == null) {
             return

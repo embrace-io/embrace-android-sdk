@@ -15,8 +15,17 @@ class CrashFileMarkerImpl(
 
     private val lock = Any()
 
+    // Whether the last run left a crash marker, kept once known. Use this one read so the actual file
+    // can be removed without affecting this answer. Once this is initialized, the file itself becomes
+    // the current process's own marker and the SDK no longer needs to rely on it to know whether the
+    // previous run crashed.
+    private var previousRunMarked: Boolean? = null
+
     override fun mark() {
         synchronized(lock) {
+            if (previousRunMarked == null) {
+                previousRunMarked = isMarked()
+            }
             if (createMarkerFile() != null) {
                 createMarkerFile()?.let {
                     // without the marker the next launch can't tell that this one crashed
@@ -45,8 +54,10 @@ class CrashFileMarkerImpl(
 
     override fun getAndCleanMarker(): Boolean {
         synchronized(lock) {
+            previousRunMarked?.let { return it }
             val isMarked = isMarked()
             removeMark()
+            previousRunMarked = isMarked
             return isMarked
         }
     }

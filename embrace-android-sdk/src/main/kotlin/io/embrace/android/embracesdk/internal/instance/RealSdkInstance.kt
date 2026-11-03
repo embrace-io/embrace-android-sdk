@@ -173,11 +173,10 @@ internal class RealSdkInstance(
         // the buffered value was recorded first, so takes precedence
         buffer.applicationInitStartMs?.let { applicationInitStartMs = it }
 
-        // drained last so errors raised by the drains above are captured, and only if their capture is enabled and we
-        // are sending data back to Embrace
+        // drained last so errors raised by the drains above are captured
         buffer.drainSdkErrors(
             telemetryDestination.takeIf {
-                configService.config.dataCaptureEvent.internalExceptionCaptureEnabled && !configService.isOnlyUsingOtelExporters()
+                configService.config.dataCaptureEvent.internalExceptionCaptureEnabled
             },
         )
     }

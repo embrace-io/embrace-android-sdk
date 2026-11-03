@@ -9,6 +9,7 @@ import java.io.FilenameFilter
 /**
  * Measures the storage the SDK uses, for storage telemetry.
  */
+@Suppress("EmbraceContextDirAccess")
 class EmbraceStorageService(
     private val context: Context,
     private val telemetryService: InternalTelemetryService,

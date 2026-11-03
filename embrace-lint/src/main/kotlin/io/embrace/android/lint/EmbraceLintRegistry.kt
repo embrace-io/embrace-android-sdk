@@ -10,7 +10,10 @@ import com.android.tools.lint.detector.api.Issue
  */
 class EmbraceLintRegistry : IssueRegistry() {
 
-    override val issues: List<Issue> = listOf(EmbracePublicApiPackageRule.ISSUE)
+    override val issues: List<Issue> = listOf(
+        EmbracePublicApiPackageRule.ISSUE,
+        ContextDirAccessRule.ISSUE,
+    )
 
     override val api: Int = CURRENT_API
 

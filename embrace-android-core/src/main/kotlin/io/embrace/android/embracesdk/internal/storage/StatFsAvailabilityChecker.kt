@@ -6,6 +6,7 @@ import android.os.StatFs
 class StatFsAvailabilityChecker(
     context: Context,
 ) : StorageAvailabilityChecker {
+    @Suppress("EmbraceContextDirAccess")
     private val statFs: StatFs by lazy {
         StatFs(context.filesDir.path)
     }

@@ -51,8 +51,7 @@ internal class ConfigLoadServices(
     configServiceSupplier: ConfigServiceSupplier? = null,
 ) : Closeable {
 
-    val sdkStorage: SdkStorage =
-        createLegacySdkStorage(context.filesDir, context::getCacheDir, preStartServices.errorHandler)
+    val sdkStorage: SdkStorage = createLegacySdkStorage(context, preStartServices.errorHandler)
 
     val keyValueStore: Lazy<KeyValueStore> = lazy {
         createKeyValueStore(context, jsonSerializer, preStartServices.errorHandler)

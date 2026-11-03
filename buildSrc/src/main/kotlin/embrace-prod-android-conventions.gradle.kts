@@ -38,6 +38,7 @@ dependencies {
     add("testImplementation", findLibrary("junit"))
     add("testImplementation", findLibrary("androidx.test.core"))
     add("testImplementation", findLibrary("androidx.test.junit"))
+    add("lintChecks", project(":embrace-lint"))
 }
 
 // Kover is only applied on CI by the root project

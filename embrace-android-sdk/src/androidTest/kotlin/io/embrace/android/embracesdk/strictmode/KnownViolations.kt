@@ -22,10 +22,10 @@ internal data class KnownViolation(
 @RequiresApi(Build.VERSION_CODES.P)
 internal val KNOWN_VIOLATIONS: List<KnownViolation> = listOf(
     KnownViolation(
-        signature = "internal.injection.ConfigLoadServices.<init>",
+        signature = "internal.injection.SdkStorageFactoriesKt.createLegacySdkStorage",
         violation = DiskReadViolation::class,
-        reason = "context.filesDir is passed to the SDK's storage as a ctor arg, and ContextImpl.getFilesDir " +
-            "stats the directory on every call",
+        reason = "ConfigLoadServices creates the SDK's storage eagerly, which reads context.filesDir, and " +
+            "ContextImpl.getFilesDir stats the directory on every call",
     ),
     KnownViolation(
         signature = "internal.instrumentation.startup.SdkInitResourceUsageTrackerKt.readProcFile",

@@ -129,12 +129,10 @@ private fun createSdkInstance(
 
 /**
  * Returns a function that deletes, on a new thread, the telemetry the SDK persisted, or null if the directories
- * can't be found through [context]. The directories are resolved here so [context] is not kept.
+ * can't be found through [context].
  */
 private fun persistedTelemetryDeletion(context: Context, errorHandler: ErrorHandler): (() -> Unit)? {
-    val filesDir = runCatching { context.filesDir }.getOrNull() ?: return null
-    val cacheDir = runCatching { context.cacheDir }.getOrNull() ?: return null
-    val storage = createLegacySdkStorage(filesDir, { cacheDir }, errorHandler)
+    val storage = runCatching { createLegacySdkStorage(context, errorHandler) }.getOrNull() ?: return null
     return {
         Executors.newSingleThreadExecutor().apply {
             execute {

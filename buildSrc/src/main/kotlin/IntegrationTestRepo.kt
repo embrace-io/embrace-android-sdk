@@ -47,6 +47,7 @@ val integrationTestPublishedProjects: Set<String> = setOf(
     ":embrace-android-sdk",
     ":embrace-android-semconv",
     ":embrace-android-session-persistence",
+    ":embrace-android-storage",
     ":embrace-android-telemetry-persistence",
     ":embrace-android-utils",
     ":embrace-gradle-plugin",

@@ -4,7 +4,7 @@ import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 
 /**
- * Configuration values relating to the thresholds used by the vitals (smoothness / screen-load) feature.
+ * Configuration values relating to the thresholds used by the vitals (smoothness / screen-load / interaction responsiveness) feature.
  */
 @Serializable
 data class VitalsRemoteConfig(

@@ -44,6 +44,7 @@ internal class FocalMomentTracker(
     private val interactionMoveRunnable = Runnable { startOrResume(openedByDown = false) }
     private val interactionEndRunnable = Runnable { handleInteractionEnd() }
     private val screenChangeRunnable = Runnable { handleScreenChange() }
+    private val closeRunnable = Runnable { handleClose() }
 
     // The settle baseline (the latest of redraw vsync / move) lives inside [settle]; we feed every activity
     // event to it via notifyActivity rather than holding the per-source timestamps here.
@@ -60,6 +61,7 @@ internal class FocalMomentTracker(
     private var focalMomentStartEpochMs = 0L
     private var interacting = false
     private var bufferedEndNanos = 0L
+    private var closed = false
 
     // The latest touch-down, written on the main thread only when responsiveness is captured.
     @Volatile
@@ -81,7 +83,7 @@ internal class FocalMomentTracker(
                 // Frame is contiguous with the buffered settle: resume capturing so its jank is included.
                 held = false
                 capturing = true
-                probe?.start()
+                startProbe()
                 recordFrame(vsyncNanos, frameDispatchNanos, jankNanos)
                 settle.notifyActivity(vsyncNanos.nanosToMillis())
             } else {
@@ -198,8 +200,15 @@ internal class FocalMomentTracker(
             }
         }
         // Started on the Vitals thread, not at the touch-down's processing time, so hop latency is never reported as a block.
-        probe?.start()
+        startProbe()
         settle.notifyActivity(nowMs)
+    }
+
+    @WorkerThread
+    private fun startProbe() {
+        if (!closed) {
+            probe?.start()
+        }
     }
 
     @WorkerThread
@@ -208,7 +217,7 @@ internal class FocalMomentTracker(
             // The report trailed the settle check that held the moment; the block is activity, so resume.
             held = false
             capturing = true
-            probe?.start()
+            startProbe()
         } else if (!capturing) {
             return
         }
@@ -293,9 +302,13 @@ internal class FocalMomentTracker(
     }
 
     /**
-     * Stops the main-thread probe so no probe message outlives the tracker.
+     * Stops the main-thread probe on the Vitals thread and keeps it stopped, so no probe message outlives the tracker.
      */
-    override fun close() {
+    override fun close() = scheduler.post(closeRunnable)
+
+    @WorkerThread
+    private fun handleClose() {
+        closed = true
         probe?.stop()
     }
 

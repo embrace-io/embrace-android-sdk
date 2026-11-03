@@ -1,7 +1,7 @@
 package io.embrace.android.embracesdk.internal.config.resolved
 
 /**
- * Resolved vitals (smoothness / screen-load) config.
+ * Resolved vitals (smoothness / screen-load / interaction responsiveness) config.
  */
 interface VitalsConfig {
 
@@ -42,7 +42,7 @@ interface VitalsConfig {
     val smoothnessFrameTraceEnabled: Boolean
 
     /**
-     * The maximum number of vitals spans (smoothness and screen-load combined) that may be emitted per session
+     * The maximum number of vitals spans (smoothness, screen-load and interaction responsiveness combined) that may be emitted per session
      * part. Vitals emits a span per user gesture and per navigation, so this caps the share of the session's
      * span budget that the feature can consume.
      */

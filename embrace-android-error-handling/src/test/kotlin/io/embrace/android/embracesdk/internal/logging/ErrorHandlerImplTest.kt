@@ -436,28 +436,28 @@ internal class ErrorHandlerImplTest {
     }
 
     @Test
-    fun `a failure to track an error is logged as a warning`() {
-        val logged = mutableListOf<Logged>()
-        val clockFailure = IllegalStateException("clock failed")
-        handler = ErrorHandlerImpl(
-            now = { throw clockFailure },
-            logcat = { severity, msg, throwable -> logged.add(Logged(severity, msg, throwable)) },
-        )
-        fail()
-        assertEquals(listOf(Logged(ErrorHandler.Severity.WARNING, "Failed to track SDK error", clockFailure)), logged)
+    fun `a throwing clock and logcat are tolerated, and the time falls back to the system clock`() {
+        handler = ErrorHandlerImpl(now = { error("clock failed") }, logcat = { _, _, _ -> error("logcat failed") })
+        val before = System.currentTimeMillis()
+        repeat(5) { fail() }
+        handler.log("Whoops!")
+        handler.drain(sink)
+        repeat(5) { fail() }
+        assertEquals(List(10) { type }, types)
+        assertTrue(errors.all { it.second in before..System.currentTimeMillis() })
     }
 
     @Test
     fun `nothing throws when every dependency throws`() {
         handler = ErrorHandlerImpl(
-            now = { error("clock failed") },
-            beforeBuffering = { error("buffering failed") },
-            logcat = { _, _, _ -> error("logcat failed") },
+            now = { raise(StackOverflowError()) },
+            beforeBuffering = { raise(OutOfMemoryError("buffering failed")) },
+            logcat = { _, _, _ -> raise(AssertionError("logcat failed")) },
         )
         handler.log("Whoops!")
         fail()
-        handler.guardSdkCode(type) { handler.guardUserCode { error("user code failed") } }
-        handler.drain { error("sink failed") }
+        handler.guardSdkCode(type) { handler.guardUserCode { raise(LinkageError("user code failed")) } }
+        handler.drain { raise(StackOverflowError()) }
         fail()
         handler.resetLimit()
         handler.close()
@@ -477,6 +477,174 @@ internal class ErrorHandlerImplTest {
         direct.forEach(::fail)
         assertEquals((buffered + direct).map { it.top() }, recorded.filter { it.first == type }.map { it.second })
         assertEquals(1, recorded.count { it.first == SdkErrorType.ErrorSinkFail })
+    }
+
+    @Test
+    fun `a sink that always throws records one sink failure per part and keeps recording later errors`() {
+        val recorded = mutableListOf<SdkErrorType>()
+        handler.drain {
+            recorded.add(it.type)
+            error("sink failed")
+        }
+        repeat(10) { part ->
+            repeat(100) { fail(distinctError(part * 100 + it)) }
+            handler.resetLimit()
+        }
+        assertEquals(10, recorded.count { it == SdkErrorType.ErrorSinkFail })
+        assertEquals(90, recorded.count { it == type })
+    }
+
+    @Test
+    fun `a sink that tracks errors from another thread is bounded by the limit`() {
+        var raised = 0
+        handler.drain {
+            sink(it)
+            val exc = distinctError(10_000 + raised++)
+            thread { handler.trackSdkError(type, exc) }.join()
+        }
+        fail()
+        assertEquals(10, errors.size)
+        assertTrue(types.none { it == SdkErrorType.ErrorSinkFail })
+    }
+
+    @Test
+    fun `a failure escaping the handler is logged and reported as a sink failure without stopping later errors`() {
+        val logged = mutableListOf<Logged>()
+        val failure = IllegalStateException("buffering failed")
+        var escapes = 1
+        handler = ErrorHandlerImpl(
+            now = clock::now,
+            logcat = { severity, msg, exc -> logged.add(Logged(severity, msg, exc)) },
+            beforeBuffering = {
+                if (escapes-- > 0) {
+                    throw failure
+                }
+            },
+        )
+        val dropped = distinctError(0)
+        val buffered = distinctError(1)
+        fail(dropped)
+        fail(buffered)
+        handler.drain(sink)
+        assertEquals(listOf(SdkErrorType.ErrorSinkFail, type), types)
+        assertEquals(listOf(failure.top(), buffered.top()), errors.map { it.first })
+        assertEquals(
+            listOf(
+                Logged(ErrorHandler.Severity.WARNING, "Failed to track SDK error", failure),
+                Logged(ErrorHandler.Severity.WARNING, "Failed to track SDK error: tracked error", dropped),
+            ),
+            logged,
+        )
+    }
+
+    @Test
+    fun `a failure escaping the handler while recording is recorded straight away`() {
+        handler = ErrorHandlerImpl(clock::now, noopLogcat, beforeBuffering = {
+            thread { handler.drain(sink) }.join()
+            error("buffering failed")
+        })
+        fail()
+        fail()
+        assertEquals(listOf(SdkErrorType.ErrorSinkFail, type), types)
+    }
+
+    @Test
+    fun `a failure escaping the handler whilst reporting a failure is dropped, and later errors are still recorded`() {
+        val logged = mutableListOf<Logged>()
+        val failures = ArrayDeque(listOf(IllegalStateException("first"), IllegalStateException("second")))
+        val expected = failures.toList()
+        handler = ErrorHandlerImpl(
+            now = clock::now,
+            logcat = { severity, msg, exc -> logged.add(Logged(severity, msg, exc)) },
+            beforeBuffering = { failures.removeFirstOrNull()?.let { throw it } },
+        )
+        val later = distinctError(0)
+        fail()
+        fail(later)
+        handler.drain(sink)
+        assertEquals(listOf(later.top()), errors.map { it.first })
+        assertEquals(expected.take(1), logged.filter { it.msg == "Failed to track SDK error" }.map { it.throwable })
+    }
+
+    @Test
+    fun `a sink that throws an Error has it recorded as a sink failure`() {
+        val sinkFailure = StackOverflowError()
+        var throwNext = true
+        handler.drain {
+            sink(it)
+            if (throwNext) {
+                throwNext = false
+                throw sinkFailure
+            }
+        }
+        fail()
+        assertEquals(listOf(type, SdkErrorType.ErrorSinkFail), types)
+        assertEquals(sinkFailure.top(), errors[1].first)
+    }
+
+    @Test
+    fun `a distinct sink failure is still recorded after one raised by recording a sink failure was dropped`() {
+        val thrown = (0..3).map { distinctError(100 + it) }
+        val toThrow = ArrayDeque(thrown)
+        val recorded = mutableListOf<Pair<SdkErrorType, ThrowableSnapshot>>()
+        handler.drain { (type, _, chain) ->
+            recorded.add(type to chain.first())
+            throw toThrow.removeFirst()
+        }
+        val errors = (0..1).map(::distinctError)
+        errors.forEach(::fail)
+        assertEquals(
+            listOf(
+                type to errors[0].top(),
+                SdkErrorType.ErrorSinkFail to thrown[0].top(),
+                type to errors[1].top(),
+                SdkErrorType.ErrorSinkFail to thrown[2].top(),
+            ),
+            recorded,
+        )
+    }
+
+    @Test
+    fun `a distinct tracked sink failure is still recorded after one tracked whilst recording a sink failure was dropped`() {
+        val raised = (0..3).map { distinctError(100 + it) }
+        val toRaise = ArrayDeque(raised)
+        val recorded = mutableListOf<Pair<SdkErrorType, ThrowableSnapshot>>()
+        handler.drain { (type, _, chain) ->
+            recorded.add(type to chain.first())
+            fail(toRaise.removeFirst())
+        }
+        val errors = (0..1).map(::distinctError)
+        errors.forEach(::fail)
+        assertEquals(
+            listOf(
+                type to errors[0].top(),
+                SdkErrorType.ErrorSinkFail to raised[0].top(),
+                type to errors[1].top(),
+                SdkErrorType.ErrorSinkFail to raised[2].top(),
+            ),
+            recorded,
+        )
+    }
+
+    @Test
+    fun `an error tracked by the sink whilst recording a buffered sink failure is dropped`() {
+        val failure = IllegalStateException("buffering failed")
+        var escapes = 1
+        handler = ErrorHandlerImpl(clock::now, noopLogcat, beforeBuffering = {
+            if (escapes-- > 0) {
+                throw failure
+            }
+        })
+        fail()
+        handler.drain {
+            sink(it)
+            if (it.type == SdkErrorType.ErrorSinkFail) {
+                fail()
+            }
+        }
+        val later = distinctError(0)
+        fail(later)
+        assertEquals(listOf(failure.top(), later.top()), errors.map { it.first })
     }
 
     @Test
@@ -507,6 +675,8 @@ internal class ErrorHandlerImplTest {
     private fun fail(exc: Throwable = distinctError(1_000 + defaultErrors++)) {
         handler.guardSdkCode(type) { throw exc }
     }
+
+    private fun raise(error: Error): Nothing = throw error
 
     private fun Throwable.top() = ThrowableSnapshotter.snapshot(type, this, 0).top
 

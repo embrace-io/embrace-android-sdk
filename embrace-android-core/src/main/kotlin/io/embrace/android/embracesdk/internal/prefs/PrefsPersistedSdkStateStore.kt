@@ -56,8 +56,9 @@ class PrefsPersistedSdkStateStore(
     }
 
     override fun update(action: PersistedSdkStateEditor.() -> Unit): PersistedSdkState = synchronized(lock) {
-        val state = snapshot().edit(action)
-        store.editAndCommit { write(state) }
+        val previous = snapshot()
+        val state = previous.edit(action)
+        store.editAndCommit { write(previous, state) }
         current = state
         state
     }
@@ -108,24 +109,43 @@ class PrefsPersistedSdkStateStore(
     }
 
     /**
-     * Writes every field. A null value or an empty session-properties map removes its key, which the legacy code read
-     * as that value.
+     * Writes the fields that changed from [previous] to [state]. A write can be held back, as in a batch, and committed after
+     * another thread's update, so writing a field it didn't change would put back the value it captured over the newer one.
+     * A null value or an empty session-properties map removes its key, which the legacy code read as that value.
      */
-    private fun KeyValueStoreEditor.write(state: PersistedSdkState) {
-        putString(KEY_DEVICE_ID, state.deviceId)
-        putLong(KEY_INSTALL_TIMESTAMP, state.installTimestampMs)
-        putString(KEY_USER_ID, state.userId)
-        putString(KEY_USER_EMAIL, state.userEmail)
-        putString(KEY_USER_NAME, state.userName)
-        putStringSet(KEY_USER_PERSONAS, state.userPersonas)
-        putStringMap(KEY_SESSION_PROPERTIES, state.sessionProperties.takeIf { it.isNotEmpty() })
-        putStringMap(KEY_USER_SESSION, state.userSession?.let(::encodeUserSession))
-        hostedSdkVersionKey?.let { putString(it, state.hostedSdkVersion) }
-        hostedPlatformVersionKey?.let { putString(it, state.hostedPlatformVersion) }
-        unityBuildIdKey?.let { putString(it, state.unityBuildIdNumber) }
-        javaScriptPatchKey?.let { putString(it, state.javaScriptPatchNumber) }
-        putString(KEY_RN_BUNDLE_URL, state.rnBundleUrl)
-        putString(KEY_RN_BUNDLE_ID, state.rnBundleId)
+    private fun KeyValueStoreEditor.write(previous: PersistedSdkState, state: PersistedSdkState) {
+        putIfChanged(previous.deviceId, state.deviceId) { putString(KEY_DEVICE_ID, it) }
+        putIfChanged(previous.installTimestampMs, state.installTimestampMs) { putLong(KEY_INSTALL_TIMESTAMP, it) }
+        putIfChanged(previous.userId, state.userId) { putString(KEY_USER_ID, it) }
+        putIfChanged(previous.userEmail, state.userEmail) { putString(KEY_USER_EMAIL, it) }
+        putIfChanged(previous.userName, state.userName) { putString(KEY_USER_NAME, it) }
+        putIfChanged(previous.userPersonas, state.userPersonas) { putStringSet(KEY_USER_PERSONAS, it) }
+        putIfChanged(previous.sessionProperties, state.sessionProperties) {
+            putStringMap(KEY_SESSION_PROPERTIES, it.takeIf { properties -> properties.isNotEmpty() })
+        }
+        putIfChanged(previous.userSession, state.userSession) {
+            putStringMap(KEY_USER_SESSION, it?.let(::encodeUserSession))
+        }
+        hostedSdkVersionKey?.let { key ->
+            putIfChanged(previous.hostedSdkVersion, state.hostedSdkVersion) { putString(key, it) }
+        }
+        hostedPlatformVersionKey?.let { key ->
+            putIfChanged(previous.hostedPlatformVersion, state.hostedPlatformVersion) { putString(key, it) }
+        }
+        unityBuildIdKey?.let { key ->
+            putIfChanged(previous.unityBuildIdNumber, state.unityBuildIdNumber) { putString(key, it) }
+        }
+        javaScriptPatchKey?.let { key ->
+            putIfChanged(previous.javaScriptPatchNumber, state.javaScriptPatchNumber) { putString(key, it) }
+        }
+        putIfChanged(previous.rnBundleUrl, state.rnBundleUrl) { putString(KEY_RN_BUNDLE_URL, it) }
+        putIfChanged(previous.rnBundleId, state.rnBundleId) { putString(KEY_RN_BUNDLE_ID, it) }
+    }
+
+    private inline fun <T> putIfChanged(previous: T, value: T, put: (T) -> Unit) {
+        if (value != previous) {
+            put(value)
+        }
     }
 
     /**

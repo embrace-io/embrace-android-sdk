@@ -7,6 +7,7 @@ import io.embrace.android.embracesdk.internal.payload.AppFramework
 import io.embrace.android.embracesdk.internal.session.UserSessionMetadata
 import io.embrace.android.embracesdk.internal.store.PersistedSdkState
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertNotEquals
 import org.junit.Assert.assertNull
 import org.junit.Before
 import org.junit.Test
@@ -171,6 +172,22 @@ internal class PrefsPersistedSdkStateStoreTest {
         seedLegacyValues()
         assertEquals(legacyState.copy(userId = "new-id"), store.update { userId = "new-id" })
         assertEquals(legacyValues + ("io.embrace.userid" to "new-id"), storedValues())
+    }
+
+    @Test
+    fun `an update only modifies the fields it intentionally changed`() {
+        seedLegacyValues()
+        store.snapshot()
+        // written by another thread after the store read its state
+        kvStore.editAndCommit { putString("io.embrace.userid", "newer-id") }
+        val before = storedValues()
+
+        store.update { userSession = this@PrefsPersistedSdkStateStoreTest.userSession.copy(partIndex = 3) }
+
+        val after = storedValues()
+        assertEquals(before - "embrace.user_session", after - "embrace.user_session")
+        assertNotEquals(before["embrace.user_session"], after["embrace.user_session"])
+        assertEquals("newer-id", after["io.embrace.userid"])
     }
 
     @Test

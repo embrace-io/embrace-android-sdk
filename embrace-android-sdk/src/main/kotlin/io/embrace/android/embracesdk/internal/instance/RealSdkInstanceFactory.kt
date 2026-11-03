@@ -92,7 +92,6 @@ import io.embrace.android.embracesdk.internal.session.orchestrator.SessionOrches
 import io.embrace.android.embracesdk.internal.spans.TracingApiDelegate
 import io.embrace.android.embracesdk.internal.storage.EmbraceStorageService
 import io.embrace.android.embracesdk.internal.storage.StatFsAvailabilityChecker
-import io.embrace.android.embracesdk.internal.store.KeyValueStore
 import io.embrace.android.embracesdk.internal.store.Ordinal
 import io.embrace.android.embracesdk.internal.store.OrdinalStore
 import io.embrace.android.embracesdk.internal.store.PersistedSdkStateStore
@@ -264,7 +263,6 @@ internal fun createRealSdkInstance(
         overrides?.appContext.resolve { context.applicationContextOrSelf() }
     }
 
-    val store: KeyValueStore by configLoadServices.keyValueStore
     val persistedSdkStateStore: PersistedSdkStateStore by configLoadServices.persistedSdkStateStore
     val ordinalStore: OrdinalStore by configLoadServices.ordinalStore
 
@@ -365,7 +363,8 @@ internal fun createRealSdkInstance(
             clock = clock,
             context = appContext,
             application = appContext as Application,
-            storeProvider = { store },
+            deliveredAeiStoreProvider = { configLoadServices.deliveredAeiStore.value },
+            networkCaptureRuleStoreProvider = { configLoadServices.networkCaptureRuleStore.value },
             serializer = jsonSerializer,
             uuidSource = uuidSource,
             ordinalStore = ordinalStore,

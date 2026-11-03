@@ -134,6 +134,18 @@ internal class ErrorHandlerImplTest {
     }
 
     @Test
+    fun `guards restore the interrupt status after an InterruptedException`() {
+        try {
+            assertEquals(0, handler.guardSdkCode(type, 0) { throw InterruptedException() })
+            assertTrue(Thread.interrupted())
+            handler.guardSdkCodeEach(type, listOf(1)) { throw InterruptedException() }
+            assertTrue(Thread.interrupted())
+        } finally {
+            Thread.interrupted()
+        }
+    }
+
+    @Test
     fun `guardSdkCodeEach guards concurrent modification while iterating`() {
         handler.drain(sink)
         val items = mutableListOf(1, 2, 3)

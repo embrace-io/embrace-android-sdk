@@ -21,6 +21,8 @@ kotlinxSerialization = "1.8.1"
 kotlinxSerializationGradlePlugin = "1.7.3"
 protobuf = "4.36.2"
 wire = "7.1.0"
+# Keep in step with the okio version wire-runtime brings
+okio = "3.18.2"
 profileinstaller = "1.4.1"
 okhttp = "4.12.1"
 firebase = "26.0.1"
@@ -81,6 +83,8 @@ opentelemetry-context = { group = "io.opentelemetry", name = "opentelemetry-cont
 protobuf-java = { group = "com.google.protobuf", name = "protobuf-java", version.ref = "protobuf" }
 protobuf-java-util = { group = "com.google.protobuf", name = "protobuf-java-util", version.ref = "protobuf" }
 wire-runtime = { group = "com.squareup.wire", name = "wire-runtime", version.ref = "wire" }
+okio = { group = "com.squareup.okio", name = "okio", version.ref = "okio" }
+okio-fakefilesystem = { group = "com.squareup.okio", name = "okio-fakefilesystem", version.ref = "okio" }
 profileinstaller = { group = "androidx.profileinstaller", name = "profileinstaller", version.ref = "profileinstaller" }
 lint-api = { group = "com.android.tools.lint", name = "lint-api", version.ref = "lint" }
 lint-tests = { group = "com.android.tools.lint", name = "lint-tests", version.ref = "lint" }
@@ -120,6 +124,7 @@ bundletool = { module = "com.android.tools.build:bundletool", version.ref = "bun
 kotlinx-coroutines-core = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-core", version.ref = "kotlinxCoroutines" }
 kotlinx-serialization-core = { module = "org.jetbrains.kotlinx:kotlinx-serialization-core", version.ref = "kotlinxSerialization" }
 kotlinx-serialization-json = { module = "org.jetbrains.kotlinx:kotlinx-serialization-json", version.ref = "kotlinxSerialization" }
+kotlinx-serialization-json-okio = { module = "org.jetbrains.kotlinx:kotlinx-serialization-json-okio", version.ref = "kotlinxSerialization" }
 kotlinx-serialization-json-gradle-plugin = { module = "org.jetbrains.kotlinx:kotlinx-serialization-json", version.ref = "kotlinxSerializationGradlePlugin" }
 opentelemetry-kotlin = { module = "io.opentelemetry.kotlin:core", version.ref = "otelKotlin" }
 opentelemetry-kotlin-api = { module = "io.opentelemetry.kotlin:api", version.ref = "otelKotlin" }

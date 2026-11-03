@@ -4,6 +4,7 @@ import io.embrace.android.embracesdk.fakes.FakeClock
 import io.embrace.android.embracesdk.fakes.FakeErrorHandler
 import io.embrace.android.embracesdk.internal.arch.navigation.CurrentScreen
 import io.embrace.android.embracesdk.internal.arch.navigation.NavigationSignal
+import io.embrace.android.embracesdk.internal.arch.navigation.NavigationSignal.ActivityDestroyed
 import io.embrace.android.embracesdk.internal.arch.navigation.NavigationSignal.ActivityPaused
 import io.embrace.android.embracesdk.internal.arch.navigation.NavigationSignal.ActivityResumed
 import io.embrace.android.embracesdk.internal.arch.navigation.NavigationSignal.ActivityStarted
@@ -205,6 +206,19 @@ internal class NavigationEventBrokerTest {
                 Screen.Named("settings"),
             ),
         )
+    }
+
+    @Test
+    fun `a destroyed activity's screen is not applied to a later activity with the same id`() {
+        loadTimes.add(broker.simulateActivityStartWithScreenSource(HOME_ID, "home"))
+        broker.submitAndTick(ActivityResumed(HOME_ID, HOME, clock.now()))
+        broker.submitAndTick(ActivityPaused(HOME_ID, clock.now()))
+        broker.submitAndTick(ActivityDestroyed(HOME_ID, clock.now()))
+
+        // ids are identity hash codes, which a later Activity can reuse once the destroyed one is collected
+        loadTimes.add(broker.submitAndTick(ActivityStarted(HOME_ID, clock.now())))
+        broker.submitAndTick(ActivityResumed(HOME_ID, SETTINGS, clock.now()))
+        assertStateTransitions(listOf(Screen.Named("home"), Screen.Named(SETTINGS)))
     }
 
     /**

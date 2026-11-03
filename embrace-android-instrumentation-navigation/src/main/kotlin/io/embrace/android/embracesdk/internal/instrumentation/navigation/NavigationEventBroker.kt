@@ -35,6 +35,13 @@ internal class NavigationEventBroker(
                 visibleScreens.remove(event.instanceId)
             }
 
+            // the state kept for an Activity goes with it, as its id is never seen again
+            is NavigationSignal.ActivityDestroyed -> {
+                activityStartTimes.remove(event.instanceId)
+                visibleScreens.remove(event.instanceId)
+                lastScreenSourceScreens.remove(event.instanceId)
+            }
+
             is NavigationSignal.ScreenSourceAttached -> {
                 lastScreenSourceScreens[event.instanceId] = Screen.NavControllerInitializing
             }

@@ -1,5 +1,6 @@
 package io.embrace.android.embracesdk.internal.config.resolved
 
+import io.embrace.android.embracesdk.fakes.TestPlatformSerializer
 import io.embrace.android.embracesdk.internal.config.instrumented.InstrumentedConfigImpl
 import io.embrace.android.embracesdk.internal.config.remote.RemoteConfig
 import io.embrace.android.embracesdk.internal.config.remote.VitalsRemoteConfig
@@ -23,23 +24,30 @@ internal class VitalsConfigTest {
             assertEquals(500L, screenLoadNavTimeoutMs)
             assertFalse(smoothnessFrameTraceEnabled)
             assertEquals(250, spanLimit)
+            assertEquals(50L, interactionResponsivenessBlockThresholdMs)
         }
         assertEquals(defaults.snapshot(), resolved.snapshot())
     }
 
     @Test
     fun `remote values override defaults`() {
-        val remote = VitalsRemoteConfig(
-            smoothnessIdleThresholdMs = 150,
-            smoothnessHeldIdleThresholdMs = 600,
-            jankHeuristicMultiplier = 2.5,
-            screenLoadIdleThresholdMs = 1500,
-            screenLoadTimeoutMs = 45_000,
-            screenLoadNavTimeoutMs = 750,
-            smoothnessFrameTracePctEnabled = 100f,
-            spanLimit = 25,
-        )
-        with(resolveVitals(RemoteConfig(vitalsRemoteConfig = remote), unreadBucket)) {
+        val json = """
+            {
+              "vitals": {
+                "smoothness_idle_threshold_ms": 150,
+                "smoothness_held_idle_threshold_ms": 600,
+                "jank_heuristic_multiplier": 2.5,
+                "screen_load_idle_threshold_ms": 1500,
+                "screen_load_timeout_ms": 45000,
+                "screen_load_nav_timeout_ms": 750,
+                "smoothness_frame_trace_pct_enabled": 100,
+                "span_limit": 25,
+                "interaction_responsiveness_block_threshold_ms": 75
+              }
+            }
+        """.trimIndent()
+        val remote = TestPlatformSerializer().fromJson(json, RemoteConfig.serializer())
+        with(resolveVitals(remote, unreadBucket)) {
             assertEquals(150L, smoothnessIdleThresholdMs)
             assertEquals(600L, smoothnessHeldIdleThresholdMs)
             assertEquals(2.5, jankHeuristicMultiplier, 0.0)
@@ -48,6 +56,7 @@ internal class VitalsConfigTest {
             assertEquals(750L, screenLoadNavTimeoutMs)
             assertTrue(smoothnessFrameTraceEnabled)
             assertEquals(25, spanLimit)
+            assertEquals(75L, interactionResponsivenessBlockThresholdMs)
         }
     }
 
@@ -67,5 +76,6 @@ internal class VitalsConfigTest {
         screenLoadNavTimeoutMs,
         smoothnessFrameTraceEnabled,
         spanLimit,
+        interactionResponsivenessBlockThresholdMs,
     )
 }

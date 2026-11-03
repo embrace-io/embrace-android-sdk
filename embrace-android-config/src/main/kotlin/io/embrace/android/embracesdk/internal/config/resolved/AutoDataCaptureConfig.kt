@@ -92,6 +92,11 @@ interface AutoDataCaptureConfig {
     val screenLoadCaptureEnabled: Boolean
 
     /**
+     * Whether interaction-responsiveness vital capture is enabled.
+     */
+    val interactionResponsivenessCaptureEnabled: Boolean
+
+    /**
      * Whether the activity-callback-based process lifecycle tracker should be used instead of the
      * androidx ProcessLifecycleOwner implementation.
      */
@@ -135,6 +140,7 @@ inline fun AutoDataCaptureConfig(
     crossinline navigationStateCaptureEnabled: () -> Boolean? = { null },
     crossinline smoothnessCaptureEnabled: () -> Boolean? = { null },
     crossinline screenLoadCaptureEnabled: () -> Boolean? = { null },
+    crossinline interactionResponsivenessCaptureEnabled: () -> Boolean? = { null },
     crossinline activityProcessLifecycleTrackerEnabled: () -> Boolean? = { null },
     crossinline activityLeakDetectionEnabled: () -> Boolean? = { null },
     crossinline fragmentLeakDetectionEnabled: () -> Boolean? = { null },
@@ -157,6 +163,7 @@ inline fun AutoDataCaptureConfig(
     override val navigationStateCaptureEnabled: Boolean = navigationStateCaptureEnabled() ?: true
     override val smoothnessCaptureEnabled: Boolean = smoothnessCaptureEnabled() ?: false
     override val screenLoadCaptureEnabled: Boolean = screenLoadCaptureEnabled() ?: false
+    override val interactionResponsivenessCaptureEnabled: Boolean = interactionResponsivenessCaptureEnabled() ?: false
     override val activityProcessLifecycleTrackerEnabled: Boolean = activityProcessLifecycleTrackerEnabled() ?: false
     override val activityLeakDetectionEnabled: Boolean = activityLeakDetectionEnabled() ?: false
     override val fragmentLeakDetectionEnabled: Boolean = fragmentLeakDetectionEnabled() ?: false

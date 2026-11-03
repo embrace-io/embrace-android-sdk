@@ -32,4 +32,7 @@ data class VitalsRemoteConfig(
 
     @SerialName("span_limit")
     val spanLimit: Int? = null,
+
+    @SerialName("interaction_responsiveness_block_threshold_ms")
+    val interactionResponsivenessBlockThresholdMs: Long? = null,
 )

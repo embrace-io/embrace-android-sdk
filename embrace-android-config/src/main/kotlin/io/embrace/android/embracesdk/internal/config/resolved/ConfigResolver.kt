@@ -76,6 +76,7 @@ fun resolveVitals(remote: RemoteConfig?, bucket: Lazy<Float>): VitalsConfig {
         screenLoadNavTimeoutMs = { cfg?.screenLoadNavTimeoutMs },
         smoothnessFrameTraceEnabled = { rolloutEnabled(cfg?.smoothnessFrameTracePctEnabled, bucket) },
         spanLimit = { cfg?.spanLimit },
+        interactionResponsivenessBlockThresholdMs = { cfg?.interactionResponsivenessBlockThresholdMs },
     )
 }
 
@@ -124,6 +125,7 @@ fun resolveAutoDataCapture(
         navigationStateCaptureEnabled = { rolloutEnabled(remote?.pctNavigationStateCaptureEnabled, bucket) },
         smoothnessCaptureEnabled = { rolloutEnabled(remote?.pctSmoothnessEnabled, bucket) },
         screenLoadCaptureEnabled = { rolloutEnabled(remote?.pctScreenLoadEnabled, bucket) },
+        interactionResponsivenessCaptureEnabled = { rolloutEnabled(remote?.pctInteractionResponsivenessEnabled, bucket) },
         activityProcessLifecycleTrackerEnabled = {
             rolloutEnabled(remote?.pctActivityProcessLifecycleTrackerEnabled, bucket)
                 ?: features.isActivityProcessLifecycleTrackerEnabled()

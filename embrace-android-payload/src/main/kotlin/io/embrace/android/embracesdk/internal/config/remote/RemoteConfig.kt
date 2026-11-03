@@ -162,6 +162,12 @@ data class RemoteConfig(
     val pctScreenLoadEnabled: Float? = null,
 
     /**
+     * Percentage of devices for which the interaction-responsiveness vital is captured.
+     */
+    @SerialName("pct_interaction_responsiveness_enabled")
+    val pctInteractionResponsivenessEnabled: Float? = null,
+
+    /**
      * Settings defining the thresholds used by the vitals (smoothness / screen-load) feature.
      */
     @SerialName("vitals")

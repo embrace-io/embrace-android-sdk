@@ -1,5 +1,7 @@
 package io.embrace.android.embracesdk.instrumentation.androidx.navigation
 
+import android.os.Handler
+import android.os.Looper
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.mutableStateListOf
@@ -66,8 +68,19 @@ public fun <T : Any> rememberObservedBackStack(vararg keys: T): SnapshotStateLis
         }
 
         reportTopIfChanged()
-        val handle = Snapshot.Companion.registerApplyObserver { _, _ -> reportTopIfChanged() }
-        onDispose { handle.dispose() }
+        // apply observers run on the thread that applied the snapshot, but navigation is handled on the main thread
+        val mainHandler = Handler(Looper.getMainLooper())
+        val handle = Snapshot.Companion.registerApplyObserver { _, _ ->
+            if (Looper.myLooper() == Looper.getMainLooper()) {
+                reportTopIfChanged()
+            } else {
+                mainHandler.post { reportTopIfChanged() }
+            }
+        }
+        onDispose {
+            handle.dispose()
+            mainHandler.removeCallbacksAndMessages(null)
+        }
     }
     return backStack
 }

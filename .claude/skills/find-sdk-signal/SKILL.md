@@ -20,7 +20,7 @@ if a cleaner attribute would help, note it for the user rather than planning an 
 |---|---|
 | `emb.type` | `instrumentation-schema/.../schema/EmbType.kt` is the full list (24 types + `Custom`). `SchemaType.kt` is **not** complete: `ui_load` and `thread_blockage` are missing |
 | Span name and attributes | The `SchemaType` entry, else the data source or emitter. SDK span names get an `emb-` prefix (`internal` defaults to true, `SpanService.kt:43`) |
-| Shape | Root span, child span, session-part event, or private span (below) |
+| Shape | Root span, child span, session-part event, session-span attribute, or private span (below) |
 | Snapshot? | Whether the current state stays open and is sent as a snapshot on the session payload |
 | Values | Value types and ranges as the code enforces them, not as examples suggest |
 | Gates | API level (`@RequiresApi`, the instrumentation provider), remote config flag and its default, caps |
@@ -34,6 +34,11 @@ if a cleaner attribute would help, note it for the user rather than planning an 
   child's type separately from its root's.
 - **Session-part event:** an event on the session span, carrying `emb.type` (`core/.../destination/TelemetryDestinationImpl.kt:182-194`).
   Caps: 100 custom breadcrumbs, 1000 others (`core/.../spans/CurrentSessionPartSpanImpl.kt:118-133`), both remote-configurable.
+- **Session-span attribute:** a key on the session span itself, not an event on it. Keys are listed in
+  `semconv/src/main/semconv/session.yaml`, constants in `semconv/.../EmbSessionAttributes.kt`. Most describe one part,
+  e.g. `emb.session_end_type` (`EmbSessionAttributes.kt:89`). A few describe the whole user session and appear only on
+  its last part, the one that carries `emb.is_final_session_part` (`EmbSessionAttributes.kt:65`). Several keys have
+  near-identical names, so copy the key from the catalog before reporting it.
 - **Private:** `emb.private=true` (`otel/.../spans/OtelSpanStartArgs.kt:35-36`). Never served to the dashboard.
 - **State span:** `emb.type=state`, with `transition` events carrying `emb.state.new_value`; the event itself has no
   `emb.type` (`TelemetryDestinationImpl.kt:261-283`, `StateDataSource.kt:145-171`).
@@ -45,6 +50,11 @@ Once the answer is found, check it against a running SDK. Everything runs locall
 1. Find the test: `grep -rl <DataSourceClass> embrace-android-sdk/src/integrationTest/kotlin`. These tests boot the
    full SDK with `SdkIntegrationTestRule`, which sends each upload to a local fake API server
    (`testframework/SdkIntegrationTestRule.kt:56-58`). If there is none, report that. Gate 1 cannot pass without one.
+   A session-span attribute has no data source class. Grep its key and its constant across
+   `embrace-android-sdk/src/integrationTest`, both the Kotlin and the JSON goldens in `resources/` (a golden's file
+   name leads to its test class), then pick a test whose assertion or golden sets the key. A match is not proof: a
+   test can upload the session span while its expected attributes leave the key out, and a test can assert the key is
+   absent.
 2. Start a local server that stores what it receives, then run that one class with forwarding on:
 
    ```sh

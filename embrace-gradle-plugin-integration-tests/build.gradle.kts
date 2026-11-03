@@ -10,7 +10,7 @@ dependencies {
     implementation(gradleApi())
     implementation(gradleTestKit())
     implementation(project(":embrace-gradle-plugin"))
-    implementation(libs.agp.api)
+    implementation(libs.agp.api.min)
 
     // JSON construction and parsing
     implementation(libs.kotlinx.serialization.json.gradle.plugin)

@@ -17,7 +17,7 @@ allprojects {
 
 android {
     namespace 'com.example.customLibrary'
-    compileSdk 36
+    compileSdk((project.findProperty("compileAndTargetSdk") ?: "36").toString().toInteger())
     ndkVersion "27.0.12077973"
 
     defaultConfig {

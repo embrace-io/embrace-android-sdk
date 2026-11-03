@@ -85,27 +85,22 @@ class InstrumentationRegistryImpl(
     override fun loadInstrumentations(
         instrumentationProviders: Iterable<InstrumentationProvider>,
         args: InstrumentationArgs,
-        onDataSourceAdded: (DataSource) -> Unit,
     ) {
         val loader = instrumentationProviders.sortedBy { it.priority }
         errorHandler.guardSdkCodeEach(SdkErrorType.InstrumentationRegFail, loader) { provider ->
             if (provider.asyncInit) {
                 args.backgroundWorker(Worker.Background.NonIoRegWorker).submit {
-                    registerProvider(provider, args, onDataSourceAdded)
+                    registerProvider(provider, args)
                 }
             } else {
-                registerProvider(provider, args, onDataSourceAdded)
+                registerProvider(provider, args)
             }
         }
     }
 
-    private fun registerProvider(
-        provider: InstrumentationProvider,
-        args: InstrumentationArgs,
-        onDataSourceAdded: (DataSource) -> Unit,
-    ) {
+    private fun registerProvider(provider: InstrumentationProvider, args: InstrumentationArgs) {
         errorHandler.guardSdkCode(SdkErrorType.InstrumentationRegFail) {
-            provider.register(args)?.let { add(it) }?.let(onDataSourceAdded)
+            provider.register(args)?.let { add(it) }
         }
     }
 

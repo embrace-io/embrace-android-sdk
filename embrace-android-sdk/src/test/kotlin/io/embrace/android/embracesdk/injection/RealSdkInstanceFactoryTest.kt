@@ -77,6 +77,7 @@ import org.robolectric.Robolectric
 import org.robolectric.RuntimeEnvironment
 import org.robolectric.Shadows.shadowOf
 import java.io.File
+import java.util.ServiceLoader
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.TimeUnit
 
@@ -450,6 +451,16 @@ internal class RealSdkInstanceFactoryTest {
         assertTrue(crashTornDown)
     }
 
+    /**
+     * The SDK registers the JVM crash instrumentation itself, so it must not also be discovered via SPI, which would register
+     * it a second time.
+     */
+    @Test
+    fun `the JVM crash provider is not discovered via SPI`() {
+        val discovered = ServiceLoader.load(InstrumentationProvider::class.java, InstrumentationProvider::class.java.classLoader)
+        assertFalse(discovered.any { it is JvmCrashInstrumentationProvider })
+    }
+
     // runs the instance's init as SdkStateHolder does, without a pre-start buffer to transition from
     private fun RealSdkInstance.runInit() {
         enable(context)
@@ -475,15 +486,14 @@ internal class RealSdkInstanceFactoryTest {
         override fun loadInstrumentations(
             instrumentationProviders: Iterable<InstrumentationProvider>,
             args: InstrumentationArgs,
-            onDataSourceAdded: (DataSource) -> Unit,
         ) {
-            impl.loadInstrumentations(instrumentationProviders.map { CrashingProvider(it) }, args, onDataSourceAdded)
+            impl.loadInstrumentations(instrumentationProviders.map { CrashingProvider(it) }, args)
         }
 
         private inner class CrashingProvider(private val provider: InstrumentationProvider) : InstrumentationProvider by provider {
             override fun register(args: InstrumentationArgs): DataSourceFactory<DataSource>? {
                 val crashSource = impl.findByType(JvmCrashDataSource::class)
-                if (crashWhileLoading && provider !is JvmCrashInstrumentationProvider && crashSource != null) {
+                if (crashWhileLoading && crashSource != null) {
                     crashWhileLoading = false
                     crashSource.logUnhandledJvmThrowable(IllegalStateException("crash while loading"))
                 }

@@ -44,6 +44,7 @@ import io.embrace.android.embracesdk.internal.injection.evictConnections
 import io.embrace.android.embracesdk.internal.instrumentation.crash.CrashFileMarker
 import io.embrace.android.embracesdk.internal.instrumentation.crash.LastRunCrashVerifier
 import io.embrace.android.embracesdk.internal.instrumentation.crash.jvm.JvmCrashDataSource
+import io.embrace.android.embracesdk.internal.instrumentation.crash.jvm.JvmCrashInstrumentationProvider
 import io.embrace.android.embracesdk.internal.instrumentation.crash.ndk.NativeCrashDataSource
 import io.embrace.android.embracesdk.internal.instrumentation.network.NetworkCaptureDataSource
 import io.embrace.android.embracesdk.internal.instrumentation.network.NetworkRequestDataSource
@@ -348,16 +349,15 @@ internal class RealSdkInstance(
     private fun loadInstrumentation() {
         errorHandler.guardSdkCode(SdkErrorType.SdkInitPhaseFail) {
             EmbTrace.trace(sectionName = "load-instrumentation", recordDuration = true) {
-                instrumentationRegistry.loadInstrumentations(
-                    instrumentationProviders = loadInstrumentationProviders(),
-                    args = instrumentationArgs,
-                ) { dataSource ->
-                    // Register the crash teardown handlers as soon as the datasource is loaded.
-                    // This allows the crash teardown to operate as expected before another instrumentation provider is loaded.
-                    if (dataSource is JvmCrashDataSource) {
+                // Register JVM crash datasource directly so its teardown handlers are in place before any other instrumentation loads.
+                errorHandler.guardSdkCode(SdkErrorType.InstrumentationRegFail) {
+                    instrumentationRegistry.add(
+                        JvmCrashInstrumentationProvider().register(instrumentationArgs),
+                    )?.also { dataSource ->
                         registerCrashTeardownHandlers(dataSource)
                     }
                 }
+                instrumentationRegistry.loadInstrumentations(loadInstrumentationProviders(), instrumentationArgs)
 
                 threadBlockageService?.startCapture()
                 lastRunCrashVerifier.readAndCleanMarkerAsync(

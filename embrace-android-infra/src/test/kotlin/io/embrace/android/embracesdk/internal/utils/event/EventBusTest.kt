@@ -7,7 +7,9 @@ import org.junit.Assert.assertNull
 import org.junit.Assert.assertSame
 import org.junit.Test
 import java.util.concurrent.ConcurrentLinkedQueue
+import java.util.concurrent.CountDownLatch
 import java.util.concurrent.CyclicBarrier
+import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicInteger
 import kotlin.concurrent.thread
 
@@ -279,6 +281,68 @@ internal class EventBusTest {
 
         bus.emit(appKey, ForegroundEvent())
         assertEquals(1, added.get())
+    }
+
+    @Test
+    fun `handler removed during an emit still receives the in-flight dispatch`() {
+        val received = AtomicInteger()
+        val removed = EventHandler<AppEvent> { received.incrementAndGet() }
+        bus.addHandler(appKey) { bus.removeHandler(appKey, removed) }
+        bus.addHandler(appKey, removed)
+
+        bus.emit(appKey, ForegroundEvent())
+        assertEquals("handler removed mid-emit missed the in-flight event", 1, received.get())
+
+        bus.emit(appKey, ForegroundEvent())
+        assertEquals(1, received.get())
+    }
+
+    @Test
+    fun `a value emitted while another thread grows the retained values is not lost`() {
+        // nothing can pause an emit between reading the retained values and writing to them, so this races them once, as a best
+        // effort
+        val keys = List(RACING_EMITTERS) { StateKey<ScreenState>() }
+        val laterKey = keyBeyondCapacityFor(keys.last()) { StateKey<ScreenState>() }
+        // sized to hold every key, so the emits below write in place while laterKey grows the values
+        keys.forEach { bus.emitState(it, ScreenState("initial")) }
+        val latest = keys.associateWith { ScreenState("latest") }
+        val start = CyclicBarrier(RACING_EMITTERS + 1)
+
+        val emitters = keys.map { key ->
+            thread {
+                start.await()
+                bus.emitState(key, latest.getValue(key))
+            }
+        }
+        val grower = thread {
+            start.await()
+            bus.emitState(laterKey, ScreenState("later"))
+        }
+        (emitters + grower).forEach(Thread::join)
+
+        keys.forEach { assertSame(latest.getValue(it), bus.currentState(it)) }
+    }
+
+    @Test
+    fun `a handler registered while a value is delivered receives it once`() {
+        val value = ScreenState("home")
+        val delivering = CountDownLatch(1)
+        val release = CountDownLatch(1)
+        // holds the emit in its delivery, after it has retained the value and taken the handlers to deliver it to
+        bus.addStateHandler(screenKey) {
+            delivering.countDown()
+            check(release.await(LATCH_TIMEOUT_MS, TimeUnit.MILLISECONDS))
+        }
+        val emitter = thread { bus.emitState(screenKey, value) }
+        check(delivering.await(LATCH_TIMEOUT_MS, TimeUnit.MILLISECONDS))
+
+        val received = mutableListOf<ScreenState>()
+        bus.addStateHandler(screenKey) { received.add(it) }
+        release.countDown()
+        emitter.join()
+
+        // not among the handlers the emit delivers to, so it receives the value only as it is replayed on registering
+        assertEquals(listOf(value), received)
     }
 
     @Test
@@ -640,5 +704,7 @@ internal class EventBusTest {
 
     private companion object {
         const val PRODUCER_CREATION_MS = 50L
+        const val RACING_EMITTERS = 7
+        const val LATCH_TIMEOUT_MS = 1000L
     }
 }

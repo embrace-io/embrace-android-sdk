@@ -3,8 +3,6 @@ package io.embrace.android.embracesdk.internal.delivery.caching
 import io.embrace.android.embracesdk.internal.arch.state.ProcessState
 import io.embrace.android.embracesdk.internal.clock.Clock
 import io.embrace.android.embracesdk.internal.delivery.debug.DeliveryTracer
-import io.embrace.android.embracesdk.internal.payload.Envelope
-import io.embrace.android.embracesdk.internal.payload.SessionPartPayload
 import io.embrace.android.embracesdk.internal.session.SessionPartToken
 import io.embrace.android.embracesdk.internal.session.caching.PeriodicSessionPartCacher
 import io.embrace.android.embracesdk.internal.session.id.SessionIdsProvider
@@ -34,36 +32,36 @@ internal class PayloadCachingServiceImpl(
     override fun startCaching(
         initial: SessionPartToken,
         state: ProcessState,
-        supplier: SessionPartPayloadSupplier,
+        snapshotter: SessionPartSnapshotter,
     ) {
         deliveryTracer?.onCachingStarted()
         partCacher.start {
-            if (state == ProcessState.BACKGROUND) {
-                if (stateChanged.getAndSet(false)) {
-                    onSessionCache(initial, state, supplier)
-                } else {
-                    null
-                }
-            } else {
-                onSessionCache(initial, state, supplier)
+            if (state != ProcessState.BACKGROUND || stateChanged.getAndSet(false)) {
+                onSessionCache(initial, state, snapshotter)
             }
+            null
         }
     }
 
     private fun onSessionCache(
         initial: SessionPartToken,
         endProcessState: ProcessState,
-        supplier: SessionPartPayloadSupplier,
-    ): Envelope<SessionPartPayload>? {
+        snapshotter: SessionPartSnapshotter,
+    ) {
         deliveryTracer?.onSessionCache()
 
         EmbTrace.trace("sf-periodic-cache-supply") {
-            if (initial.sessionPartId != sessionIdsProvider.getCurrentSessionPartId()) {
-                return null
+            if (!isCurrentPart(initial)) {
+                return
             }
-            return supplier(endProcessState, clock.now(), initial)?.apply {
-                payloadStore.cacheSessionPartSnapshot(this)
+            snapshotter(endProcessState, clock.now(), initial) { envelope ->
+                // checked again inside the snapshotter's critical section, as the part may have ended since the check above
+                if (isCurrentPart(initial)) {
+                    payloadStore.cacheSessionPartSnapshot(envelope)
+                }
             }
         }
     }
+
+    private fun isCurrentPart(part: SessionPartToken) = part.sessionPartId == sessionIdsProvider.getCurrentSessionPartId()
 }

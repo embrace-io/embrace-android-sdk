@@ -423,10 +423,13 @@ internal class SessionOrchestratorImpl(
                             if (!multiFilePersistenceEnabled()) {
                                 EmbTrace.trace("initiate-periodic-caching") {
                                     updatePeriodicCacheAttrs()
-                                    payloadCachingService?.startCaching(newSessionPart, endAppState) { state, timestamp, zygote ->
+                                    payloadCachingService?.startCaching(
+                                        newSessionPart,
+                                        endAppState,
+                                    ) { state, timestamp, zygote, onSnapshot ->
                                         synchronized(lock) {
                                             updatePeriodicCacheAttrs()
-                                            payloadFactory.snapshotPayload(state, timestamp, zygote)
+                                            payloadFactory.snapshotPayload(state, timestamp, zygote)?.let(onSnapshot)
                                         }
                                     }
                                 }

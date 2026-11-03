@@ -40,6 +40,7 @@ import io.embrace.android.embracesdk.internal.instrumentation.crash.ndk.sharedOb
 import io.embrace.android.embracesdk.internal.instrumentation.startup.SdkInitResourceUsageTracker
 import io.embrace.android.embracesdk.internal.logging.ErrorHandlerImpl
 import io.embrace.android.embracesdk.internal.logging.SdkErrorType
+import io.embrace.android.embracesdk.internal.logging.androidLogcat
 import io.embrace.android.embracesdk.internal.payload.Attribute
 import io.embrace.android.embracesdk.internal.payload.Envelope
 import io.embrace.android.embracesdk.internal.payload.EnvelopeMetadata
@@ -139,7 +140,7 @@ internal class EmbraceSetupInterface(
 
     private val fakeInitServices: TestInitServices = TestInitServices(
         clock = fakeClock,
-        errorHandler = FakeErrorHandler(ignoredErrors = ignoredSdkErrors, delegate = ErrorHandlerImpl(fakeClock)),
+        errorHandler = FakeErrorHandler(ignoredErrors = ignoredSdkErrors, delegate = ErrorHandlerImpl(fakeClock::now, ::androidLogcat)),
         uuidSource = uuidSource,
         // unused: the module graph builds its OTel stack from the SDK's ConfigService
         otelSdkMode = OtelSdkMode.COMPAT,

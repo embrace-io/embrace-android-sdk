@@ -3,6 +3,7 @@ package io.embrace.android.embracesdk.internal.session
 import io.embrace.android.embracesdk.concurrency.BlockingScheduledExecutorService
 import io.embrace.android.embracesdk.fakes.FakeClock
 import io.embrace.android.embracesdk.fakes.FakeConfigService
+import io.embrace.android.embracesdk.fakes.FakeErrorHandler
 import io.embrace.android.embracesdk.fakes.FakeLogEnvelopeSource
 import io.embrace.android.embracesdk.fakes.FakeMetadataService
 import io.embrace.android.embracesdk.fakes.FakeProcessStateTracker
@@ -15,7 +16,6 @@ import io.embrace.android.embracesdk.fakes.injection.TestInitServices
 import io.embrace.android.embracesdk.internal.arch.state.ProcessState
 import io.embrace.android.embracesdk.internal.capture.metadata.MetadataService
 import io.embrace.android.embracesdk.internal.capture.user.UserService
-import io.embrace.android.embracesdk.internal.logging.ErrorHandlerImpl
 import io.embrace.android.embracesdk.internal.otel.spans.SpanRepository
 import io.embrace.android.embracesdk.internal.otel.spans.SpanService
 import io.embrace.android.embracesdk.internal.session.message.PayloadFactory
@@ -78,7 +78,7 @@ internal class PayloadFactorySessionPartTest(
     private fun initializeSessionService() {
         appStateTracker.state = ProcessState.BACKGROUND
 
-        val errorHandler = ErrorHandlerImpl()
+        val errorHandler = FakeErrorHandler()
         val collator = PayloadMessageCollatorImpl(
             FakeSessionPartEnvelopeSource(),
             currentSessionPartSpan,

@@ -18,6 +18,7 @@ import io.embrace.android.embracesdk.internal.injection.PreStartServices
 import io.embrace.android.embracesdk.internal.injection.lazyOkHttpClient
 import io.embrace.android.embracesdk.internal.logging.ErrorHandler
 import io.embrace.android.embracesdk.internal.logging.ErrorHandlerImpl
+import io.embrace.android.embracesdk.internal.logging.androidLogcat
 import io.embrace.android.embracesdk.internal.serialization.EmbraceSerializer
 import io.embrace.android.embracesdk.internal.serialization.PlatformSerializer
 import io.embrace.android.embracesdk.internal.telemetry.InternalTelemetryService
@@ -30,7 +31,7 @@ import okhttp3.OkHttpClient
  */
 class TestInitServices(
     clock: Clock = FakeClock(),
-    errorHandler: ErrorHandler = FakeErrorHandler(delegate = ErrorHandlerImpl(clock)),
+    errorHandler: ErrorHandler = FakeErrorHandler(delegate = ErrorHandlerImpl(clock::now, ::androidLogcat)),
     fakeTelemetryService: InternalTelemetryService? = null,
     val uuidSource: UuidSource = TestUuidSource(),
     private val remoteConfig: RemoteConfig = RemoteConfig(),

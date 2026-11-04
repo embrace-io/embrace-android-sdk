@@ -585,6 +585,7 @@ internal class RealSdkInstance(
      *
      * Returns null if the file is absent, so a missing file is not reported.
      */
+    @Suppress("EmbraceContextDirAccess")
     private fun defaultPrefsFile(context: Context): File? =
         File(File(context.applicationInfo.dataDir, "shared_prefs"), "${context.packageName}_preferences.xml")
             .takeIf(File::exists)

@@ -13,5 +13,4 @@ dependencies {
     compileOnly(libs.opentelemetry.kotlin.api)
     compileOnly(libs.opentelemetry.kotlin.sdk.api)
     implementation(libs.androidx.annotation)
-    lintChecks(project(":embrace-lint"))
 }

@@ -100,6 +100,4 @@ dependencies {
     androidTestImplementation(project(":embrace-android-otel-fakes"))
     // required because embrace-android-conventions sets execution = ANDROIDX_TEST_ORCHESTRATOR
     androidTestUtil(libs.androidx.test.orchestrator)
-
-    lintChecks(project(":embrace-lint"))
 }

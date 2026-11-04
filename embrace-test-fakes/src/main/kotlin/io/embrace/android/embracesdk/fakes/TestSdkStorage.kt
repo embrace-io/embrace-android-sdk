@@ -21,6 +21,6 @@ val TELEMETRY_DIRS: List<SdkDir> = listOf(
 )
 
 fun testSdkStorage(context: Context): SdkStorage =
-    createLegacySdkStorage(context.filesDir, context::getCacheDir, FakeErrorHandler())
+    createLegacySdkStorage(context, FakeErrorHandler())
 
 fun testSdkStorage(root: File): SdkStorage = SdkStorageImpl(FileSystem.SYSTEM, root.toOkioPath(), FakeErrorHandler())

@@ -18,6 +18,8 @@ import io.embrace.android.embracesdk.internal.prefs.PrefsStoreWriteBatcher
 import io.embrace.android.embracesdk.internal.prefs.createKeyValueStore
 import io.embrace.android.embracesdk.internal.serialization.EmbraceSerializer
 import io.embrace.android.embracesdk.internal.serialization.PlatformSerializer
+import io.embrace.android.embracesdk.internal.storage.SdkDir
+import io.embrace.android.embracesdk.internal.storage.SdkStorage
 import io.embrace.android.embracesdk.internal.store.KeyValueStore
 import io.embrace.android.embracesdk.internal.store.OrdinalStore
 import io.embrace.android.embracesdk.internal.store.OrdinalStoreImpl
@@ -48,6 +50,9 @@ internal class ConfigLoadServices(
     workerThreadPoolSupplier: WorkerThreadPoolSupplier? = null,
     configServiceSupplier: ConfigServiceSupplier? = null,
 ) : Closeable {
+
+    val sdkStorage: SdkStorage =
+        createLegacySdkStorage(context.filesDir, context::getCacheDir, preStartServices.errorHandler)
 
     val keyValueStore: Lazy<KeyValueStore> = lazy {
         createKeyValueStore(context, jsonSerializer, preStartServices.errorHandler)
@@ -84,7 +89,7 @@ internal class ConfigLoadServices(
     ) {
         PersistedConfig(
             serializer = jsonSerializer,
-            filesDir = context.filesDir,
+            storageDir = sdkStorage.path(SdkDir.REMOTE_CONFIG).toFile(),
             instrumentedConfig = instrumentedConfig,
             stateStore = persistedSdkStateStore,
             clock = preStartServices.clock,

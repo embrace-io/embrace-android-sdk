@@ -29,7 +29,6 @@ import io.embrace.android.embracesdk.internal.delivery.debug.DeliveryTracer
 import io.embrace.android.embracesdk.internal.delivery.intake.IntakeServiceImpl
 import io.embrace.android.embracesdk.internal.delivery.scheduling.SchedulingServiceImpl
 import io.embrace.android.embracesdk.internal.delivery.storage.PayloadStorageServiceImpl
-import io.embrace.android.embracesdk.internal.delivery.storage.StorageLocation
 import io.embrace.android.embracesdk.internal.envelope.metadata.EnvelopeMetadataSourceImpl
 import io.embrace.android.embracesdk.internal.injection.ConfigLoadServices
 import io.embrace.android.embracesdk.internal.injection.OtelSignalContext
@@ -91,6 +90,7 @@ import io.embrace.android.embracesdk.internal.session.lifecycle.createLifecycleT
 import io.embrace.android.embracesdk.internal.session.orchestrator.SessionOrchestrator
 import io.embrace.android.embracesdk.internal.spans.TracingApiDelegate
 import io.embrace.android.embracesdk.internal.storage.EmbraceStorageService
+import io.embrace.android.embracesdk.internal.storage.SdkDir
 import io.embrace.android.embracesdk.internal.storage.StatFsAvailabilityChecker
 import io.embrace.android.embracesdk.internal.store.Ordinal
 import io.embrace.android.embracesdk.internal.store.OrdinalStore
@@ -131,6 +131,7 @@ internal fun createRealSdkInstance(
     val instrumentedConfig = configLoadServices.instrumentedConfig
     val okHttpClient = configLoadServices.okHttpClient
     val uuidSource = configLoadServices.uuidSource
+    val sdkStorage = configLoadServices.sdkStorage
 
     // forward references that break dependency cycles
     lateinit var sessionIdsProvider: SessionIdsProvider
@@ -351,6 +352,10 @@ internal fun createRealSdkInstance(
         )
     }
 
+    val crashMarkerFile = lazy {
+        (sdkStorage.dir(SdkDir.INSTALL_STATE) / CrashFileMarkerImpl.CRASH_MARKER_FILE_NAME).toFile()
+    }
+
     instrumentationRegistry = init("instrumentation-registry") {
         overrides?.instrumentationRegistry.resolve { InstrumentationRegistryImpl(errorHandler) }
     }
@@ -377,7 +382,8 @@ internal fun createRealSdkInstance(
             userSessionPropertiesService = userSessionPropertiesService,
             userSessionIdsProvider = { sessionIdsProvider.getCurrentUserSessionId() },
             activeSessionIdsProvider = { sessionIdsProvider.getActiveSessionIds() },
-            crashMarkerFileProvider = { storageService.getFileForWrite("embrace_crash_marker") },
+            crashMarkerFileProvider = crashMarkerFile::value,
+            sdkStorage = sdkStorage,
             eventBus = eventBus,
         )
     }
@@ -389,10 +395,7 @@ internal fun createRealSdkInstance(
     }
 
     val crashMarker = init("crash-marker") {
-        CrashFileMarkerImpl(
-            lazy { storageService.getFileForWrite(CrashFileMarkerImpl.CRASH_MARKER_FILE_NAME) },
-            errorHandler,
-        )
+        CrashFileMarkerImpl(crashMarkerFile, errorHandler)
     }
 
     val lastRunCrashVerifier = init("last-run-crash-verifier") {
@@ -457,8 +460,8 @@ internal fun createRealSdkInstance(
         dataPersistenceWorker?.let { worker ->
             overrides?.payloadStorageService.resolve {
                 createPayloadStorageService(
-                    location = StorageLocation.PAYLOAD,
-                    context = appContext,
+                    dir = SdkDir.TELEMETRY_READY,
+                    storage = sdkStorage,
                     worker = worker,
                     processIdProvider = processIdProvider,
                     errorHandler = errorHandler,
@@ -474,8 +477,8 @@ internal fun createRealSdkInstance(
         dataPersistenceWorker?.let { worker ->
             overrides?.cacheStorageService.resolve {
                 createPayloadStorageService(
-                    location = StorageLocation.CACHE,
-                    context = appContext,
+                    dir = SdkDir.TELEMETRY_PENDING_SNAPSHOTS,
+                    storage = sdkStorage,
                     worker = worker,
                     processIdProvider = processIdProvider,
                     errorHandler = errorHandler,
@@ -567,7 +570,7 @@ internal fun createRealSdkInstance(
     val cachedLogEnvelopeStore = init("cached-log-envelope-store") {
         dataPersistenceWorker?.let { worker ->
             createCachedLogEnvelopeStore(
-                context = appContext,
+                storage = sdkStorage,
                 worker = worker,
                 errorHandler = errorHandler,
                 serializer = jsonSerializer,
@@ -696,7 +699,7 @@ internal fun createRealSdkInstance(
     val sessionPartReader = init("session-part-reader") {
         if (intakeService != null && cachedLogEnvelopeStore != null) {
             createSessionPartReader(
-                context = appContext,
+                storage = sdkStorage,
                 clock = clock,
                 errorHandler = errorHandler,
                 configService = configService,
@@ -788,6 +791,7 @@ internal fun createRealSdkInstance(
             okHttpClient = okHttpClient,
             eventBus = eventBus,
             appContext = appContext,
+            sdkStorage = sdkStorage,
             spanRepository = spanRepository,
             logSink = logSink,
             otelSdkConfig = otelSdkConfig,

@@ -2,10 +2,12 @@
 
 package io.embrace.android.embracesdk.testcases
 
+import io.embrace.android.embracesdk.fakes.TELEMETRY_DIRS
 import android.app.Activity
 import android.content.Context
 import androidx.lifecycle.testing.TestLifecycleOwner
 import androidx.test.core.app.ApplicationProvider
+import io.embrace.android.embracesdk.fakes.testSdkStorage
 import io.embrace.android.embracesdk.LastRunEndState
 import io.embrace.android.embracesdk.PropertyScope
 import io.embrace.android.embracesdk.Severity
@@ -23,8 +25,7 @@ import io.embrace.android.embracesdk.internal.NoopInternalInterfaceApi
 import io.embrace.android.embracesdk.internal.api.SdkApi
 import io.embrace.android.embracesdk.internal.clock.millisToNanos
 import io.embrace.android.embracesdk.internal.config.remote.RemoteConfig
-import io.embrace.android.embracesdk.internal.delivery.storage.StorageLocation
-import io.embrace.android.embracesdk.internal.delivery.storage.asFile
+import io.embrace.android.embracesdk.internal.storage.SdkDir
 import io.embrace.android.embracesdk.internal.instance.SdkState
 import io.embrace.android.embracesdk.internal.logging.SdkErrorType
 import io.embrace.android.embracesdk.internal.otel.sdk.findAttributeValue
@@ -85,7 +86,7 @@ internal class SdkStateIntegrationTest(
         private const val DUMMY_CONTENT = "Hello, world!"
         private const val WORKER_TERMINATION_WAIT_MS = 1000L
         private const val STORAGE_KEPT_WAIT_MS = 500
-        private val STARTUP_SWEPT_DIRS = setOf(StorageLocation.SESSION_SPLIT)
+        private val STARTUP_SWEPT_DIRS = setOf(SdkDir.TELEMETRY_PENDING_SESSION_PARTS)
         private val sdkDisabledConfig = RemoteConfig(threshold = 0)
         private fun File.sentinelFile(): File = File(File(this, TEST_SUBDIR_NAME), TEST_FILE_NAME)
 
@@ -99,16 +100,12 @@ internal class SdkStateIntegrationTest(
     val testRule: SdkIntegrationTestRule = SdkIntegrationTestRule(otelSdkMode = otelSdkMode)
 
     private val context: Context = ApplicationProvider.getApplicationContext()
-    private lateinit var embraceDirs: Map<StorageLocation, File>
+    private lateinit var embraceDirs: Map<SdkDir, File>
 
     @Before
     fun setUp() {
-        embraceDirs = StorageLocation.entries.associateWith {
-            it.asFile(
-                errorHandler = FakeErrorHandler(),
-                rootDirSupplier = { context.filesDir },
-                fallbackDirSupplier = { context.cacheDir },
-            ).value
+        embraceDirs = TELEMETRY_DIRS.associateWith {
+            testSdkStorage(context).dir(it).toFile()
         }
     }
 

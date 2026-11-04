@@ -1,5 +1,7 @@
 package io.embrace.android.embracesdk.testframework.actions
 
+import io.embrace.android.embracesdk.internal.storage.SdkDir
+import io.embrace.android.embracesdk.fakes.testSdkStorage
 import android.content.Context
 import androidx.test.core.app.ApplicationProvider
 import io.embrace.android.embracesdk.fakes.FakeClock
@@ -21,7 +23,7 @@ internal class EmbracePreSdkStartInterface(
      */
     internal fun assertNoConfigPersisted() {
         val ctx = ApplicationProvider.getApplicationContext<Context>()
-        val storageDir = File(ctx.filesDir, PersistedConfig.STORAGE_DIR_NAME)
+        val storageDir = testSdkStorage(ctx).path(SdkDir.REMOTE_CONFIG).toFile()
         if (storageDir.exists()) {
             throw IllegalStateException("Did not expect config storage directory to exist.")
         }

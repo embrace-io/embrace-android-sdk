@@ -1,28 +1,29 @@
 package io.embrace.android.embracesdk.internal.injection
 
-import android.app.Application
 import io.embrace.android.embracesdk.fakes.FakeIntakeService
 import io.embrace.android.embracesdk.fakes.FakeSessionIdsProvider
 import io.embrace.android.embracesdk.fakes.OtelSdkMode
 import io.embrace.android.embracesdk.fakes.injection.FakeWorkerThreadPool
 import io.embrace.android.embracesdk.fakes.injection.TestInitServices
-import io.embrace.android.embracesdk.internal.delivery.storage.StorageLocation
+import io.embrace.android.embracesdk.fakes.testSdkStorage
+import io.embrace.android.embracesdk.internal.storage.SdkDir
 import io.embrace.android.embracesdk.internal.worker.Worker
 import org.junit.Assert.assertNotNull
 import org.junit.Test
+import java.io.File
 
 class DeliveryServiceFactoriesTest {
 
     private val initServices = TestInitServices(otelSdkMode = OtelSdkMode.COMPAT)
-    private val context = Application()
+    private val storage = testSdkStorage(File("unused"))
     private val workerThreadPool = FakeWorkerThreadPool()
 
     @Test
     fun testFactories() {
         assertNotNull(
             createPayloadStorageService(
-                location = StorageLocation.PAYLOAD,
-                context = context,
+                dir = SdkDir.TELEMETRY_READY,
+                storage = storage,
                 worker = workerThreadPool.priorityWorker(Worker.Priority.DataPersistenceWorker),
                 processIdProvider = { "pid" },
                 errorHandler = initServices.errorHandler,
@@ -50,7 +51,7 @@ class DeliveryServiceFactoriesTest {
         )
         assertNotNull(
             createCachedLogEnvelopeStore(
-                context = context,
+                storage = storage,
                 worker = workerThreadPool.priorityWorker(Worker.Priority.DataPersistenceWorker),
                 errorHandler = initServices.errorHandler,
                 serializer = initServices.jsonSerializer,

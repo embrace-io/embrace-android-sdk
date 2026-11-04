@@ -10,6 +10,8 @@ import io.embrace.android.embracesdk.internal.arch.state.ProcessStateTracker
 import io.embrace.android.embracesdk.internal.network.http.HttpRequestInfoModifierChain
 import io.embrace.android.embracesdk.internal.serialization.PlatformSerializer
 import io.embrace.android.embracesdk.internal.session.id.SessionIdsSnapshot
+import io.embrace.android.embracesdk.internal.storage.SdkStorage
+import io.embrace.android.embracesdk.internal.storage.SdkStorageImpl
 import io.embrace.android.embracesdk.internal.store.OrdinalStore
 import io.embrace.android.embracesdk.internal.telemetry.InternalTelemetryService
 import io.embrace.android.embracesdk.internal.utils.UuidSource
@@ -17,7 +19,9 @@ import io.embrace.android.embracesdk.internal.utils.event.EventBus
 import io.embrace.android.embracesdk.internal.worker.BackgroundWorker
 import io.embrace.android.embracesdk.internal.worker.PriorityWorker
 import io.embrace.android.embracesdk.internal.worker.Worker
+import okio.FileSystem
 import java.io.File
+import java.util.UUID
 
 class FakeInstrumentationArgs(
     override val application: Application = Application(),
@@ -35,6 +39,11 @@ class FakeInstrumentationArgs(
     override val processStateTracker: ProcessStateTracker = FakeProcessStateTracker(),
     override val telemetryService: InternalTelemetryService = FakeInternalTelemetryService(),
     override val packageInfo: PackageInfo? = null,
+    override val sdkStorage: SdkStorage = SdkStorageImpl(
+        FileSystem.SYSTEM,
+        FileSystem.SYSTEM_TEMPORARY_DIRECTORY / "fake-sdk-storage-${UUID.randomUUID()}",
+        errorHandler,
+    ),
     val backgroundWorkerSupplier: (worker: Worker.Background) -> BackgroundWorker = { fakeBackgroundWorker() },
     val priorityWorkerSupplier: (worker: Worker.Priority) -> PriorityWorker<*> = { fakePriorityWorker<Any>() },
     val sessionPartIdSupplier: () -> String? = { null },

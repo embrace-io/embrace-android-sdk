@@ -5,6 +5,7 @@ import android.content.Context
 import android.os.Looper
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.testing.TestLifecycleOwner
+import io.embrace.android.embracesdk.fakes.testSdkStorage
 import io.embrace.android.embracesdk.concurrency.BlockingScheduledExecutorService
 import io.embrace.android.embracesdk.fakes.FakeClock
 import io.embrace.android.embracesdk.fakes.FakeErrorHandler
@@ -26,8 +27,8 @@ import io.embrace.android.embracesdk.internal.config.BuildInfo
 import io.embrace.android.embracesdk.internal.config.ConfigService
 import io.embrace.android.embracesdk.internal.delivery.debug.DeliveryTracer
 import io.embrace.android.embracesdk.internal.delivery.storage.PayloadStorageServiceImpl
-import io.embrace.android.embracesdk.internal.delivery.storage.StorageLocation
-import io.embrace.android.embracesdk.internal.delivery.storage.asFile
+import io.embrace.android.embracesdk.internal.storage.SdkDir
+import io.embrace.android.embracesdk.internal.storage.lazyFile
 import io.embrace.android.embracesdk.internal.injection.ConfigLoadServices
 import io.embrace.android.embracesdk.internal.injection.ConfigLoadServicesSupplier
 import io.embrace.android.embracesdk.internal.injection.PreStartServices
@@ -278,11 +279,7 @@ internal class EmbraceSetupInterface(
             userSessionId = userSessionId,
             sessionPartId = sessionPartId,
         )
-        val sessionsDir = StorageLocation.SESSION_SPLIT.asFile(
-            errorHandler = fakeInitServices.errorHandler,
-            rootDirSupplier = { fakeContext.filesDir },
-            fallbackDirSupplier = { fakeContext.cacheDir },
-        )
+        val sessionsDir = testSdkStorage(fakeContext).lazyFile(SdkDir.TELEMETRY_PENDING_SESSION_PARTS)
         check(File(sessionsDir.value, directory.dirName).mkdirs()) {
             "Could not create session part directory ${directory.dirName}"
         }

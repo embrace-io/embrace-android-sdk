@@ -1,5 +1,7 @@
 package io.embrace.android.embracesdk.testcases.features
 
+import io.embrace.android.embracesdk.internal.storage.SdkStorage
+import io.embrace.android.embracesdk.fakes.testSdkStorage
 import io.embrace.android.embracesdk.assertions.getLastLog
 import io.embrace.android.embracesdk.assertions.getSessionPartId
 import io.embrace.android.embracesdk.assertions.getUserSessionId
@@ -17,7 +19,7 @@ import io.embrace.android.embracesdk.internal.config.remote.RemoteConfig
 import io.embrace.android.embracesdk.internal.delivery.PayloadType
 import io.embrace.android.embracesdk.internal.delivery.StoredTelemetryMetadata
 import io.embrace.android.embracesdk.internal.delivery.SupportedEnvelopeType
-import io.embrace.android.embracesdk.internal.delivery.storage.StorageLocation
+import io.embrace.android.embracesdk.internal.storage.SdkDir
 import io.embrace.android.embracesdk.internal.otel.sdk.findAttributeValue
 import io.embrace.android.embracesdk.internal.payload.Envelope
 import io.embrace.android.embracesdk.internal.payload.SessionPartPayload
@@ -102,7 +104,7 @@ internal class ResurrectionFeatureTest(
 
     @Test
     fun `crashed multi-file session part with no native crash resurrected and sent properly`() {
-        var filesDir: File? = null
+        var storage: SdkStorage? = null
         var sessionPartDir: SessionPartDirectory? = null
 
         testRule.runTest(
@@ -112,12 +114,12 @@ internal class ResurrectionFeatureTest(
                 symbols = symbols,
             ),
             testCaseAction = {
-                filesDir = testRule.services.appContext.filesDir
+                storage = testSdkStorage(testRule.services.appContext)
                 recordSession(isBackgroundActivityEnabled = true, endInBackground = false)
                 shutdownSdkWithIncompleteSession()
             },
             assertAction = {
-                sessionPartDir = obtainSessionPartDirectory(filesDir)
+                sessionPartDir = obtainSessionPartDirectory(storage)
             },
         )
         val dir = checkNotNull(sessionPartDir)
@@ -148,7 +150,7 @@ internal class ResurrectionFeatureTest(
 
     @Test
     fun `crashed multi-file session part and native crash resurrected and sent properly`() {
-        var filesDir: File? = null
+        var storage: SdkStorage? = null
         var sessionPartDir: SessionPartDirectory? = null
 
         testRule.runTest(
@@ -158,12 +160,12 @@ internal class ResurrectionFeatureTest(
                 symbols = symbols,
             ),
             testCaseAction = {
-                filesDir = testRule.services.appContext.filesDir
+                storage = testSdkStorage(testRule.services.appContext)
                 recordSession(isBackgroundActivityEnabled = true, endInBackground = false)
                 shutdownSdkWithIncompleteSession()
             },
             assertAction = {
-                sessionPartDir = obtainSessionPartDirectory(filesDir)
+                sessionPartDir = obtainSessionPartDirectory(storage)
             },
         )
 
@@ -211,9 +213,9 @@ internal class ResurrectionFeatureTest(
     }
 
     private fun obtainSessionPartDirectory(
-        filesDir: File?,
+        storage: SdkStorage?,
     ): SessionPartDirectory? {
-        val sessionDir = File(filesDir, StorageLocation.SESSION_SPLIT.dir)
+        val sessionDir = checkNotNull(storage).dir(SdkDir.TELEMETRY_PENDING_SESSION_PARTS).toFile()
         val sessionParts = checkNotNull(sessionDir.listFiles())
         assertEquals(1, sessionParts.size)
         return SessionPartDirectory.fromDirName(sessionParts.single().name)

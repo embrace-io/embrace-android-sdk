@@ -8,6 +8,7 @@ import java.io.File
 internal class FilesDirApplication(
     private val filesDir: File,
     private val cacheDir: File = filesDir.resolveSibling("${filesDir.name}-cache"),
+    private val noBackupFilesDir: File = filesDir.resolveSibling("${filesDir.name}-no-backup"),
 ) : Application() {
     private val appInfo = ApplicationInfo()
 
@@ -16,4 +17,5 @@ internal class FilesDirApplication(
     override fun getApplicationInfo(): ApplicationInfo = appInfo
     override fun getFilesDir(): File = filesDir
     override fun getCacheDir(): File = cacheDir
+    override fun getNoBackupFilesDir(): File = noBackupFilesDir
 }

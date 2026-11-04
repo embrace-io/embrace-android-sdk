@@ -16,6 +16,7 @@ import io.embrace.android.embracesdk.internal.logging.ErrorHandler
 import io.embrace.android.embracesdk.internal.serialization.PlatformSerializer
 import io.embrace.android.embracesdk.internal.session.id.SessionIdsSnapshot
 import io.embrace.android.embracesdk.internal.session.id.SessionPartTracker
+import io.embrace.android.embracesdk.internal.storage.SdkStorage
 import io.embrace.android.embracesdk.internal.store.OrdinalStore
 import io.embrace.android.embracesdk.internal.telemetry.InternalTelemetryService
 import io.embrace.android.embracesdk.internal.utils.UuidSource
@@ -45,6 +46,7 @@ fun createInstrumentationArgs(
     userSessionIdsProvider: () -> String?,
     activeSessionIdsProvider: () -> SessionIdsSnapshot,
     crashMarkerFileProvider: () -> File,
+    sdkStorage: SdkStorage,
     eventBus: EventBus,
 ): InstrumentationArgs = InstrumentationArgsImpl(
     configService = configService,
@@ -68,5 +70,6 @@ fun createInstrumentationArgs(
     userSessionIdsProvider = userSessionIdsProvider,
     activeSessionIdsProvider = activeSessionIdsProvider,
     crashMarkerFileProvider = crashMarkerFileProvider,
+    sdkStorage = sdkStorage,
     eventBus = eventBus,
 )

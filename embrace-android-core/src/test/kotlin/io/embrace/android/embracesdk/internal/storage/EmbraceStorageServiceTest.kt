@@ -5,7 +5,6 @@ import android.content.ContextWrapper
 import io.embrace.android.embracesdk.fakes.FakeInternalTelemetryService
 import io.embrace.android.embracesdk.semconv.EmbTelemetryAttributes
 import org.junit.Assert.assertEquals
-import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
@@ -38,31 +37,6 @@ internal class EmbraceStorageServiceTest {
     }
 
     @Test
-    fun `test getFileForWrite returns File instance from files dir`() {
-        val file = storageManager.getFileForWrite("test.txt")
-        assertNotNull(file)
-        assertEquals("$embraceFilesDir/test.txt", file.absolutePath)
-    }
-
-    @Test
-    fun `test getFileForRead returns File instance from files dir if exists`() {
-        val fileToAdd = File(embraceFilesDir, "test.txt")
-        val addedFile = Files.createFile(fileToAdd.toPath()).toFile()
-        val resultFile = storageManager.getFileForRead("test.txt")
-        assertNotNull(resultFile)
-        assertEquals(addedFile, resultFile)
-    }
-
-    @Test
-    fun `test getFileForRead returns File instance from cache dir if doesn't exist in files`() {
-        val fileToAdd = File(cacheDir, "test.txt")
-        val addedFile = Files.createFile(fileToAdd.toPath()).toFile()
-        val resultFile = storageManager.getFileForRead("test.txt")
-        assertNotNull(resultFile)
-        assertEquals(addedFile, resultFile)
-    }
-
-    @Test
     fun `test listFiles when files and cache dirs contains files`() {
         val fileToAddInCache = File(cacheDir, "test_cache.txt")
         val addedFileInCache = Files.createFile(fileToAddInCache.toPath()).toFile()
@@ -82,13 +56,6 @@ internal class EmbraceStorageServiceTest {
         storageManager = EmbraceStorageService(ctx, fakeTelemetryService, fakeStorageAvailabilityChecker)
         val files = storageManager.listFiles { _, _ -> true }
         assertEquals(0, files.size)
-    }
-
-    @Test
-    fun `test getConfigCacheDir returns cache dir`() {
-        val storageDirForConfigCache = storageManager.getConfigCacheDir()
-        assertNotNull(storageDirForConfigCache)
-        assertEquals(cacheDir.absolutePath + "/emb_config_cache", storageDirForConfigCache.absolutePath)
     }
 
     @Test

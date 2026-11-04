@@ -19,7 +19,6 @@ import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
-import java.io.File
 import java.nio.file.Files
 
 internal class ConfigServiceImplTest {
@@ -84,11 +83,11 @@ internal class ConfigServiceImplTest {
         persisted: RemoteConfig? = null,
     ): ConfigServiceImpl {
         val instrumentedConfig = FakeInstrumentedConfig(project = FakeProjectConfig(appId = appId))
-        val filesDir = Files.createTempDirectory("tmp").toFile()
+        val storageDir = Files.createTempDirectory("tmp").toFile()
         if (persisted != null) {
             RemoteConfigStoreImpl(
                 serializer = serializer,
-                storageDir = File(filesDir, PersistedConfig.STORAGE_DIR_NAME),
+                storageDir = storageDir,
                 deviceIdProvider = { DEVICE_ID },
                 deliveredAtProvider = { 1L },
                 errorHandler = FakeErrorHandler(),
@@ -98,7 +97,7 @@ internal class ConfigServiceImplTest {
             instrumentedConfig = instrumentedConfig,
             persistedConfig = PersistedConfig(
                 serializer = serializer,
-                filesDir = filesDir,
+                storageDir = storageDir,
                 instrumentedConfig = instrumentedConfig,
                 stateStore = lazyOf(FakePersistedSdkStateStore()),
                 clock = FakeClock(),

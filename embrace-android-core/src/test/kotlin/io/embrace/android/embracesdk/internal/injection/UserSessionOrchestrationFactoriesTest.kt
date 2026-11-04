@@ -20,10 +20,9 @@ import io.embrace.android.embracesdk.fakes.FakeTelemetryDestination
 import io.embrace.android.embracesdk.fakes.FakeUserService
 import io.embrace.android.embracesdk.fakes.FakeUserSessionPropertiesService
 import io.embrace.android.embracesdk.fakes.OtelSdkMode
-import io.embrace.android.embracesdk.fakes.fakeApplication
-import io.embrace.android.embracesdk.fakes.fakeContext
 import io.embrace.android.embracesdk.fakes.injection.FakeWorkerThreadPool
 import io.embrace.android.embracesdk.fakes.injection.TestInitServices
+import io.embrace.android.embracesdk.fakes.testSdkStorage
 import io.embrace.android.embracesdk.internal.arch.InstrumentationRegistryImpl
 import io.embrace.android.embracesdk.internal.config.resolved.EmbraceConfig
 import io.embrace.android.embracesdk.internal.config.resolved.PersistenceConfig
@@ -32,7 +31,9 @@ import io.embrace.android.embracesdk.internal.payload.Span
 import io.embrace.android.embracesdk.internal.resurrection.SessionPartReader
 import io.embrace.android.embracesdk.internal.worker.Worker
 import org.junit.Assert.assertEquals
+import org.junit.Rule
 import org.junit.Test
+import org.junit.rules.TemporaryFolder
 
 internal class UserSessionOrchestrationFactoriesTest {
 
@@ -42,9 +43,10 @@ internal class UserSessionOrchestrationFactoriesTest {
     private val configService = FakeConfigService(
         config = EmbraceConfig(persistence = { PersistenceConfig(multiFileEnabled = { true }) }),
     )
-    private val application = fakeApplication()
-    private val context = fakeContext(application)
     private val destination = FakeTelemetryDestination()
+
+    @get:Rule
+    val tmp = TemporaryFolder()
 
     @Test
     fun `session parts are written when they can be read back`() {
@@ -65,7 +67,7 @@ internal class UserSessionOrchestrationFactoriesTest {
     }
 
     private fun createSessionPartReader(): SessionPartReader = createSessionPartReader(
-        context = context,
+        storage = testSdkStorage(tmp.newFolder()),
         clock = initServices.clock,
         errorHandler = initServices.errorHandler,
         configService = configService,

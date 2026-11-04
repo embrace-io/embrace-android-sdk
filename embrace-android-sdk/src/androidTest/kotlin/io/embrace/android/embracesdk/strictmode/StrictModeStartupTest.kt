@@ -10,7 +10,6 @@ import io.embrace.android.embracesdk.fakes.OtelSdkMode
 import io.embrace.android.embracesdk.fakes.config.FakeBaseUrlConfig
 import io.embrace.android.embracesdk.fakes.config.FakeEnabledFeatureConfig
 import io.embrace.android.embracesdk.fakes.config.FakeInstrumentedConfig
-import io.embrace.android.embracesdk.internal.config.PersistedConfig
 import io.embrace.android.embracesdk.internal.injection.ConfigLoadServices
 import io.embrace.android.embracesdk.internal.injection.SdkOverrides
 import io.embrace.android.embracesdk.internal.otel.sdk.OtelSdkWrapper
@@ -20,7 +19,6 @@ import io.embrace.android.embracesdk.internal.instance.createSdkStateHolder
 import io.embrace.android.embracesdk.internal.worker.Worker
 import org.junit.After
 import org.junit.Assert.assertEquals
-import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
@@ -120,15 +118,13 @@ internal class StrictModeStartupTest(
      * first-launch path.
      */
     private fun simulateColdStart() {
-        context.filesDir.deleteContents()
-        context.cacheDir.deleteContents()
+        val sdkDirs = listOf(context.filesDir, context.cacheDir, context.noBackupFilesDir)
+        sdkDirs.forEach { it.deleteContents() }
 
         // don't warm shared prefs
         File(context.applicationInfo.dataDir, "shared_prefs").deleteRecursively()
 
-        assertFalse(
-            File(context.filesDir, PersistedConfig.STORAGE_DIR_NAME).exists(),
-        )
+        assertTrue(sdkDirs.all { it.list().isNullOrEmpty() })
     }
 
     private fun File.deleteContents() {

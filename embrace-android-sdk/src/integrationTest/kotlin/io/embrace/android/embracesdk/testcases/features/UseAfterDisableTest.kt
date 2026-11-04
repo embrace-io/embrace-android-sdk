@@ -1,14 +1,15 @@
 package io.embrace.android.embracesdk.testcases.features
 
+import io.embrace.android.embracesdk.fakes.TELEMETRY_DIRS
 import android.content.Context
 import android.os.Build
 import androidx.test.core.app.ApplicationProvider
+import io.embrace.android.embracesdk.fakes.testSdkStorage
 import io.embrace.android.embracesdk.assertions.returnIfConditionMet
 import io.embrace.android.embracesdk.fakes.FakeErrorHandler
 import io.embrace.android.embracesdk.fakes.config.FakeEnabledFeatureConfig
 import io.embrace.android.embracesdk.fakes.config.FakeInstrumentedConfig
-import io.embrace.android.embracesdk.internal.delivery.storage.StorageLocation
-import io.embrace.android.embracesdk.internal.delivery.storage.asFile
+import io.embrace.android.embracesdk.internal.storage.SdkDir
 import io.embrace.android.embracesdk.internal.logging.SdkErrorType
 import io.embrace.android.embracesdk.internal.worker.Worker
 import io.embrace.android.embracesdk.testframework.OtelSdkMode
@@ -135,12 +136,8 @@ internal class UseAfterDisableTest(
      * Lists the files left in the SDK's storage. A directory deleted mid-walk counts as not yet settled, so a
      * caller waiting for an empty result tries again.
      */
-    private fun persistedFiles(): List<File> = StorageLocation.entries.flatMap { location ->
-        val dir = location.asFile(
-            errorHandler = FakeErrorHandler(),
-            rootDirSupplier = { context.filesDir },
-            fallbackDirSupplier = { context.cacheDir },
-        ).value
+    private fun persistedFiles(): List<File> = TELEMETRY_DIRS.flatMap { location ->
+        val dir = testSdkStorage(context).dir(location).toFile()
         runCatching { dir.walkTopDown().filter(File::isFile).toList() }.getOrElse { listOf(dir) }
     }
 

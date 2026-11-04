@@ -88,7 +88,7 @@ class NativeSymbolTest {
             instrumentedConfig = cfg,
             persistedConfig = PersistedConfig(
                 serializer = serializer,
-                filesDir = Files.createTempDirectory("tmp").toFile(),
+                storageDir = Files.createTempDirectory("tmp").toFile(),
                 instrumentedConfig = cfg,
                 stateStore = lazyOf(FakePersistedSdkStateStore()),
                 clock = FakeClock(),

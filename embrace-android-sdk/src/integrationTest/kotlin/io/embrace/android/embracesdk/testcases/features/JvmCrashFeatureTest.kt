@@ -2,6 +2,7 @@ package io.embrace.android.embracesdk.testcases.features
 
 import android.content.Context
 import androidx.test.core.app.ApplicationProvider
+import io.embrace.android.embracesdk.fakes.testSdkStorage
 import io.embrace.android.embracesdk.PropertyScope
 import io.embrace.android.embracesdk.assertions.assertMatches
 import io.embrace.android.embracesdk.assertions.assertOtelLogReceived
@@ -24,8 +25,7 @@ import io.embrace.android.embracesdk.internal.config.remote.BackgroundActivityRe
 import io.embrace.android.embracesdk.internal.config.remote.RemoteConfig
 import io.embrace.android.embracesdk.internal.config.remote.UserSessionRemoteConfig
 import io.embrace.android.embracesdk.internal.delivery.PayloadType
-import io.embrace.android.embracesdk.internal.delivery.storage.StorageLocation
-import io.embrace.android.embracesdk.internal.delivery.storage.asFile
+import io.embrace.android.embracesdk.internal.storage.SdkDir
 import io.embrace.android.embracesdk.internal.otel.sdk.findAttributeValue
 import io.embrace.android.embracesdk.internal.payload.Envelope
 import io.embrace.android.embracesdk.internal.payload.LegacyExceptionInfo
@@ -439,11 +439,7 @@ internal class JvmCrashFeatureTest(
      */
     private fun readSessionSpanOnDisk(sessionPartId: String): SpanProto? {
         val ctx = ApplicationProvider.getApplicationContext<Context>()
-        val sessionsDir = StorageLocation.SESSION_SPLIT.asFile(
-            errorHandler = FakeErrorHandler(),
-            rootDirSupplier = { ctx.filesDir },
-            fallbackDirSupplier = { ctx.cacheDir },
-        ).value
+        val sessionsDir = testSdkStorage(ctx).dir(SdkDir.TELEMETRY_PENDING_SESSION_PARTS).toFile()
         val partDir = (sessionsDir.list() ?: emptyArray())
             .mapNotNull(SessionPartDirectory::fromDirName)
             .singleOrNull { it.sessionPartId == sessionPartId }

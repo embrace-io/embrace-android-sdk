@@ -5,6 +5,7 @@ import io.embrace.android.embracesdk.internal.logging.SdkErrorType
 import io.embrace.android.embracesdk.internal.logging.guardSdkCode
 import okio.FileSystem
 import okio.Path
+import java.io.File
 
 /**
  * Resolves each [SdkDir] to a directory the SDK can write to.
@@ -43,6 +44,11 @@ fun createSdkStorage(fileSystem: FileSystem, noBackupFilesDir: Path, errorHandle
     }
     return SdkStorageImpl(fileSystem, root, errorHandler)
 }
+
+/**
+ * Returns [dir] as a [File], resolved on first access.
+ */
+fun SdkStorage.lazyFile(dir: SdkDir): Lazy<File> = lazy { dir(dir).toFile() }
 
 /**
  * Whether this directory is, or is in, [SdkDir.TELEMETRY].

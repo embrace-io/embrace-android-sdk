@@ -7,10 +7,7 @@ import java.io.File
 import java.io.FilenameFilter
 
 /**
- * Provides File instances for files and directories used to store data.
- * Previous versions of the SDK used the cache directory for cached files.
- * Since v6.3.0, the files directory is used instead and the cache directory is only used for
- * cached config files.
+ * Measures the storage the SDK uses, for storage telemetry.
  */
 class EmbraceStorageService(
     private val context: Context,
@@ -24,26 +21,6 @@ class EmbraceStorageService(
 
     private val filesDirectory: File by lazy {
         getOrCreateEmbraceFilesDir() ?: cacheDirectory
-    }
-
-    override fun getFileForRead(name: String): File {
-        val fileInFilesDir = File(filesDirectory, name)
-
-        if (!fileInFilesDir.exists()) {
-            val fileInCacheDir = File(cacheDirectory, name)
-            if (fileInCacheDir.exists()) {
-                return fileInCacheDir
-            }
-        }
-        return fileInFilesDir
-    }
-
-    override fun getFileForWrite(name: String): File {
-        return File(filesDirectory, name)
-    }
-
-    override fun getConfigCacheDir(): File {
-        return File(cacheDirectory, EMBRACE_CONFIG_CACHE_DIRECTORY)
     }
 
     override fun listFiles(filter: FilenameFilter): List<File> {
@@ -85,8 +62,3 @@ class EmbraceStorageService(
  * Directory name for files that are stored in the files directory.
  */
 private const val EMBRACE_DIRECTORY = "embrace"
-
-/**
- * Directory name for the config files that are stored in the cache directory.
- */
-private const val EMBRACE_CONFIG_CACHE_DIRECTORY = "emb_config_cache"

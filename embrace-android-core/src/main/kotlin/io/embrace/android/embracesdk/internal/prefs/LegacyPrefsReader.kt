@@ -13,6 +13,7 @@ import io.embrace.android.embracesdk.internal.store.Ordinal
  * Returns null if no device ID or install timestamp was stored, as the SDK writes both on first run, so their
  * absence means there is no useful data to migrate.
  */
+@Suppress("SharedPreferencesUsage")
 class LegacyPrefsReader(
     private val prefs: SharedPreferences,
     private val serializer: PlatformSerializer,

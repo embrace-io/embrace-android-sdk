@@ -1,0 +1,43 @@
+syntax = "proto3";
+
+package embrace.storage;
+
+option java_package = "io.embrace.android.embracesdk.internal.store.file";
+
+// Mirrors PersistedSdkState.
+//
+// Fields may be added but never renumbered or reused. An older SDK then reads a newer file, and keeps the fields it
+// doesn't know about when it rewrites it. An incompatible change needs a new magic number.
+message PersistedSdkStateProto {
+  optional string device_id = 1;
+  optional int64 install_timestamp_ms = 2;
+  optional string user_id = 3;
+  optional string user_email = 4;
+  optional string user_name = 5;
+
+  Personas user_personas = 6;
+  map<string, string> session_properties = 7;
+  UserSessionProto user_session = 8;
+  optional string hosted_sdk_version = 9;
+  optional string hosted_platform_version = 10;
+  optional string unity_build_id_number = 11;
+  optional string java_script_patch_number = 12;
+  optional string rn_bundle_url = 13;
+  optional string rn_bundle_id = 14;
+}
+
+message Personas {
+  repeated string values = 1;
+}
+
+// Mirrors UserSessionMetadata.Classified.
+message UserSessionProto {
+  int64 start_time_ms = 1;
+  string user_session_id = 2;
+  int64 user_session_number = 3;
+  int64 max_duration_secs = 4;
+  int64 inactivity_timeout_secs = 5;
+  int32 part_index = 6;
+  int64 last_activity_ms = 7;
+  bool is_background_only = 8;
+}

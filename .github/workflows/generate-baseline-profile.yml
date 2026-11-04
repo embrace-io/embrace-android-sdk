@@ -41,7 +41,7 @@ jobs:
       - name: Generate Baseline Profile
         run: |
           set -- --gradle-arg -Pandroid.testoptions.manageddevices.emulator.gpu=swiftshader_indirect \
-            --gradle-arg -Pandroid.experimental.testOptions.managedDevices.maxConcurrentDevices=1
+            --gradle-arg -Pandroid.experimental.testOptions.managedDevices.maxConcurrentDevices=1 --gradle-arg --warn
           scripts/generate-baseline-profile.sh "$@" || scripts/generate-baseline-profile.sh --no-publish "$@"
 
       - name: Archive generator outputs

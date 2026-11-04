@@ -14,6 +14,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import io.embrace.android.embracesdk.Embrace
 
+// The username and email APIs are deprecated because they store PII, but the example still demonstrates them.
+@Suppress("DEPRECATION")
 @Composable
 fun UserExample() {
     var usernameValue by remember { mutableStateOf("my-user-name") }

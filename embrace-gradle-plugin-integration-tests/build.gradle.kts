@@ -67,7 +67,7 @@ tasks.register<Test>("sanityTest") {
 }
 
 group = "io.embrace"
-version = project.properties["version"] as String
+version = providers.gradleProperty("version").get()
 
 gradlePlugin {
     plugins {

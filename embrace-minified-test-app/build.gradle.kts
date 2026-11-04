@@ -57,12 +57,14 @@ android {
         checkDependencies = false
         checkReleaseBuilds = false
         ignoreTestSources = true
+        quiet = true
     }
 }
 
 kotlin {
     compilerOptions {
         jvmTarget.set(JvmTarget.JVM_11)
+        optIn.add("io.opentelemetry.kotlin.ExperimentalApi")
     }
 }
 

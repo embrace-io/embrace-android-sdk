@@ -52,7 +52,6 @@ android {
             initWith(buildTypes.getByName("release"))
             signingConfig = signingConfigs.getByName("debug")
             matchingFallbacks += listOf("release")
-            isDebuggable = true
         }
         create("otelRegular") {
             initWith(buildTypes.getByName("debug"))

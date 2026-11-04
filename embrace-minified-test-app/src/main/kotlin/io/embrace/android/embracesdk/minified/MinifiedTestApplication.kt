@@ -9,7 +9,7 @@ class MinifiedTestApplication : Application() {
         super.onCreate()
         Embrace.addSpanExporter(RecordingSpanExporter)
         Embrace.start(this)
-        Embrace.startSpan(STARTUP_SPAN_NAME)?.stop()
+        Embrace.startSpan(STARTUP_SPAN_NAME).stop()
     }
 
     companion object {

@@ -42,14 +42,13 @@ val instrumentConfig = extra["embracePluginPublished"] as Boolean
 if (instrumentConfig) {
     apply(plugin = "io.embrace.gradle")
 
-    // The plugin auto-adds io.embrace:embrace-android-sdk at its own version. Point that at the
-    // working tree instead, so the benchmark measures this checkout rather than a published copy.
-    configurations.configureEach {
-        resolutionStrategy.dependencySubstitution {
-            substitute(module("io.embrace:embrace-android-sdk"))
-                .using(project(":embrace-android-sdk"))
-        }
-    }
+    // Stop the plugin adding io.embrace:embrace-android-sdk at its own version, so the benchmark measures
+    // the working tree's SDK, which is already a project dependency. A dependency substitution would also
+    // work, but it forces Gradle to resolve every configuration at configuration time to find task
+    // dependencies. The extension class is only on the classpath when the plugin is, hence the dynamic call.
+    @Suppress("UNCHECKED_CAST")
+    (extensions.getByName("embrace").withGroovyBuilder { getProperty("autoAddEmbraceDependencies") } as Property<Boolean>)
+        .set(false)
 }
 
 android {
@@ -89,6 +88,7 @@ android {
         checkDependencies = false
         checkReleaseBuilds = false
         ignoreTestSources = true
+        quiet = true
     }
 }
 

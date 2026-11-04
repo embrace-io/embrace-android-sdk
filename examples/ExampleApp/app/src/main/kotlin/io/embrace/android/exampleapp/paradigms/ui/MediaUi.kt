@@ -1,5 +1,6 @@
 package io.embrace.android.exampleapp.paradigms.ui
 
+import androidx.annotation.OptIn
 import androidx.compose.animation.core.LinearEasing
 import androidx.compose.animation.core.RepeatMode
 import androidx.compose.animation.core.animateFloat

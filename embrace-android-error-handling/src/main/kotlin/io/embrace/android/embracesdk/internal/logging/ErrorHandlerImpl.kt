@@ -6,6 +6,9 @@ import java.util.concurrent.atomic.AtomicReference
  * Implementation of [ErrorHandler] that logs with [logcat] & buffers SDK errors until they can be sent
  * to our internal telemetry. [now] supplies the time in milliseconds that an error was captured.
  *
+ * Nothing thrown escapes the handler. A failure within it is reported as [SdkErrorType.ErrorSinkFail].
+ * That covers the sink throwing, an error tracked on the same thread while the sink runs.
+ *
  * [beforeBuffering] runs after an error is found to need buffering and just before it is buffered. Only set
  * for testing purposes.
  */
@@ -42,20 +45,20 @@ class ErrorHandlerImpl(
     private val inSink = ThreadLocal<Boolean>()
 
     /**
-     * An error the sink raised on the current thread whilst attempting to track an SDK error, snapshotted as
-     * [SdkErrorType.ErrorSinkFail]. This is recorded once the sink returns but is only attempted once so
-     * failing again in the same way can't recurse.
+     * The first error raised on the current thread while [record] runs, snapshotted as [SdkErrorType.ErrorSinkFail]. It is
+     * recorded once the sink returns, unless the snapshot being recorded was itself an [SdkErrorType.ErrorSinkFail], in
+     * which case it is dropped. Either way it is only attempted once, so failing again in the same way can't recurse.
      */
     private val sinkFailure = ThreadLocal<SdkErrorSnapshot>()
 
     override fun log(msg: String, throwable: Throwable?, severity: ErrorHandler.Severity) {
-        runSafely("Failed to log message", logcat) {
+        runSafely({ "Failed to log message" }, logcat) {
             logcat(severity, msg, throwable)
         }
     }
 
     override fun trackSdkError(type: SdkErrorType, throwable: Throwable) {
-        runSafely("Failed to track SDK error", logcat) {
+        entryPoint("Failed to track SDK error", throwable) {
             report(type, throwable)
         }
     }
@@ -73,12 +76,16 @@ class ErrorHandlerImpl(
             return
         }
         val snapshot = try {
-            ThrowableSnapshotter.snapshot(type, throwable, now())
+            ThrowableSnapshotter.snapshot(type, throwable, safeNow())
         } catch (_: OutOfMemoryError) {
             return
         }
         if (inSink.get() == true) {
-            holdSinkFailure(snapshot.copy(type = SdkErrorType.ErrorSinkFail))
+            if (sinkFailure.get() == null) {
+                sinkFailure.set(snapshot.copy(type = SdkErrorType.ErrorSinkFail))
+            } else {
+                logSafely(ErrorHandler.Severity.WARNING, "Dropped SDK error tracked whilst one is being recorded", throwable)
+            }
             return
         }
         if (!limiter.tryAcquire(snapshot)) {
@@ -86,7 +93,7 @@ class ErrorHandlerImpl(
         }
 
         // The buffer is a Treiber stack on a HandlerState instance that indicates that it is buffering errors. An error
-        // is added by swapping in a new Buffering instance contains the latest error and links back to the last one.
+        // is added by swapping in a new Buffered instance that contains the latest error and links back to the last one.
         // The swap retries if another thread changed the HandlerState since it was read, and that retry will proceed
         // according to what the new state is. So when it says the handler is no longer buffering, it will either
         // record the error directly or drop it, bypassing the buffer either way since it's no longer buffering.
@@ -117,7 +124,7 @@ class ErrorHandlerImpl(
             close()
             return
         }
-        runSafely("Failed to drain SDK errors", logcat) {
+        entryPoint("Failed to drain SDK errors") {
             val recording = HandlerState.Recording(sink)
             while (true) {
                 val current = handlerState.get()
@@ -138,13 +145,13 @@ class ErrorHandlerImpl(
     }
 
     override fun resetLimit() {
-        runSafely("Failed to reset SDK error limit", logcat) {
+        entryPoint("Failed to reset SDK error limit") {
             limiter = SdkErrorLimiter(limit)
         }
     }
 
     override fun close() {
-        runSafely("Failed to close error handler", logcat) {
+        entryPoint("Failed to close error handler") {
             handlerState.set(HandlerState.Closed)
         }
     }
@@ -159,23 +166,35 @@ class ErrorHandlerImpl(
     }
 
     /**
-     * Records [snapshot] with [sink]. A sink failure is logged, and doesn't stop later errors from being recorded. The first
-     * error the sink raises is then recorded with [sink] as [SdkErrorType.ErrorSinkFail], and anything raised by that
-     * attempt is logged and dropped.
+     * Records [snapshot] with [sink]. A throw from the sink is logged and doesn't stop later errors being recorded. The first
+     * error raised while the sink runs, thrown or tracked, is then recorded as [SdkErrorType.ErrorSinkFail], subject to the
+     * limit. Anything raised while recording an [SdkErrorType.ErrorSinkFail], whether that follow-up or a [snapshot] already
+     * of that type, is dropped; a throw is still logged.
      */
     private fun record(sink: ErrorRecorder, snapshot: SdkErrorSnapshot) {
         inSink.set(true)
         try {
-            runSafely("Failed to record SDK error (${snapshot.type})", logcat) {
+            if (snapshot.type == SdkErrorType.ErrorSinkFail) {
+                holdSinkFailure(snapshot)
+                runSafely({ "Failed to record SDK error (${snapshot.type})" }, logcat) {
+                    sink(snapshot)
+                }
+                return
+            }
+            runSafely({ "Failed to record SDK error (${snapshot.type})" }, logcat) {
                 try {
                     sink(snapshot)
                 } catch (exc: Throwable) {
-                    holdSinkFailure(ThrowableSnapshotter.snapshot(SdkErrorType.ErrorSinkFail, exc, now()))
+                    try {
+                        holdSinkFailure(ThrowableSnapshotter.snapshot(SdkErrorType.ErrorSinkFail, exc, safeNow()))
+                    } catch (_: Throwable) {
+                        // no-op: a failure while handling a sink failure is not reported
+                    }
                     throw exc
                 }
             }
             val failure = sinkFailure.get() ?: return
-            runSafely("Failed to record SDK error (${SdkErrorType.ErrorSinkFail})", logcat) {
+            runSafely({ "Failed to record SDK error (${SdkErrorType.ErrorSinkFail})" }, logcat) {
                 if (limiter.tryAcquire(failure)) {
                     sink(failure)
                 }
@@ -226,8 +245,42 @@ class ErrorHandlerImpl(
         object Closed : HandlerState()
     }
 
+    private inline fun entryPoint(msg: String, tracked: Throwable? = null, action: () -> Unit) {
+        try {
+            action()
+        } catch (exc: Throwable) {
+            try {
+                logSafely(ErrorHandler.Severity.WARNING, msg, exc)
+                if (tracked != null) {
+                    logSafely(ErrorHandler.Severity.WARNING, "$msg: tracked error", tracked)
+                }
+                capture(SdkErrorType.ErrorSinkFail, exc)
+            } catch (_: Throwable) {
+                // no-op
+            }
+        }
+    }
+
+    private fun safeNow(): Long = try {
+        now()
+    } catch (_: Throwable) {
+        try {
+            System.currentTimeMillis()
+        } catch (_: Throwable) {
+            0L
+        }
+    }
+
+    private fun logSafely(severity: ErrorHandler.Severity, msg: String, throwable: Throwable?) {
+        try {
+            logcat(severity, msg, throwable)
+        } catch (_: Throwable) {
+            // no-op
+        }
+    }
+
     private inline fun runSafely(
-        msg: String,
+        msg: () -> String,
         logcat: (ErrorHandler.Severity, String, Throwable?) -> Unit,
         action: () -> Unit,
     ) {
@@ -235,7 +288,7 @@ class ErrorHandlerImpl(
             action()
         } catch (exc: Throwable) {
             try {
-                logcat(ErrorHandler.Severity.WARNING, msg, exc)
+                logcat(ErrorHandler.Severity.WARNING, msg(), exc)
             } catch (_: Throwable) {
                 // no-op
             }

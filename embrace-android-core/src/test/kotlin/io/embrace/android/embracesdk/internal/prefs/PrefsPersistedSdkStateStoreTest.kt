@@ -7,6 +7,7 @@ import io.embrace.android.embracesdk.internal.payload.AppFramework
 import io.embrace.android.embracesdk.internal.session.UserSessionMetadata
 import io.embrace.android.embracesdk.internal.store.PersistedSdkState
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertNotEquals
 import org.junit.Assert.assertNull
 import org.junit.Before
 import org.junit.Test
@@ -174,6 +175,22 @@ internal class PrefsPersistedSdkStateStoreTest {
     }
 
     @Test
+    fun `an update only modifies the fields it intentionally changed`() {
+        seedLegacyValues()
+        store.snapshot()
+        // written by another thread after the store read its state
+        kvStore.editAndCommit { putString("io.embrace.userid", "newer-id") }
+        val before = storedValues()
+
+        store.update { userSession = this@PrefsPersistedSdkStateStoreTest.userSession.copy(partIndex = 3) }
+
+        val after = storedValues()
+        assertEquals(before - "embrace.user_session", after - "embrace.user_session")
+        assertNotEquals(before["embrace.user_session"], after["embrace.user_session"])
+        assertEquals("newer-id", after["io.embrace.userid"])
+    }
+
+    @Test
     fun `each framework reads and writes only its own hosted SDK keys`() {
         mapOf(
             AppFramework.REACT_NATIVE to listOf(
@@ -217,29 +234,9 @@ internal class PrefsPersistedSdkStateStoreTest {
     }
 
     @Test
-    fun `a legacy payer flag adds the payer persona and is never written`() {
+    fun `a legacy payer flag is ignored`() {
         seedLegacyValues()
         kvStore.editAndCommit { putBoolean("io.embrace.userispayer", true) }
-        val expected = legacyState.copy(userPersonas = setOf("persona", "payer"))
-        assertEquals(expected, store.snapshot())
-
-        store.update { userPersonas = setOf("persona") }
-        assertEquals(
-            legacyValues + ("io.embrace.userispayer" to true),
-            storedValues(),
-        )
-    }
-
-    @Test
-    fun `a legacy payer flag with no personas becomes the payer persona`() {
-        kvStore.editAndCommit { putBoolean("io.embrace.userispayer", true) }
-        assertEquals(setOf("payer"), store.snapshot().userPersonas)
-    }
-
-    @Test
-    fun `a legacy payer flag that is false adds nothing`() {
-        seedLegacyValues()
-        kvStore.editAndCommit { putBoolean("io.embrace.userispayer", false) }
         assertEquals(legacyState, store.snapshot())
     }
 

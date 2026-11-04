@@ -42,11 +42,11 @@ class ErrorHandlerImpl(
     private val inSink = ThreadLocal<Boolean>()
 
     /**
-     * An error the sink raised on the current thread whilst attempting to track an SDK error. This is
-     * recorded as [SdkErrorType.ErrorSinkFail] once the sink returns but is only attempted once so
+     * An error the sink raised on the current thread whilst attempting to track an SDK error, snapshotted as
+     * [SdkErrorType.ErrorSinkFail]. This is recorded once the sink returns but is only attempted once so
      * failing again in the same way can't recurse.
      */
-    private val sinkFailure = ThreadLocal<Throwable>()
+    private val sinkFailure = ThreadLocal<SdkErrorSnapshot>()
 
     override fun log(msg: String, throwable: Throwable?, severity: ErrorHandler.Severity) {
         runSafely("Failed to log message", logcat) {
@@ -72,14 +72,18 @@ class ErrorHandlerImpl(
         if (!type.shouldCapture() || handlerState.get() === HandlerState.Closed) {
             return
         }
+        val snapshot = try {
+            ThrowableSnapshotter.snapshot(type, throwable, now())
+        } catch (_: OutOfMemoryError) {
+            return
+        }
         if (inSink.get() == true) {
-            holdSinkFailure(throwable)
+            holdSinkFailure(snapshot.copy(type = SdkErrorType.ErrorSinkFail))
             return
         }
-        if (!limiter.tryAcquire(type, throwable)) {
+        if (!limiter.tryAcquire(snapshot)) {
             return
         }
-        val timestampMs = now()
 
         // The buffer is a Treiber stack on a HandlerState instance that indicates that it is buffering errors. An error
         // is added by swapping in a new Buffering instance contains the latest error and links back to the last one.
@@ -93,14 +97,14 @@ class ErrorHandlerImpl(
 
                 // Once the handler is recording, record the error directly rather than buffering it
                 is HandlerState.Recording -> {
-                    record(state.recorder, type, throwable, timestampMs)
+                    record(state.recorder, snapshot)
                     return
                 }
 
                 // Still buffering: push the error on top of what is buffered so far
                 is HandlerState.Buffering -> {
                     beforeBuffering()
-                    if (handlerState.compareAndSet(state, HandlerState.Buffered(type, timestampMs, throwable, state))) {
+                    if (handlerState.compareAndSet(state, HandlerState.Buffered(snapshot, state))) {
                         return
                     }
                 }
@@ -150,35 +154,30 @@ class ErrorHandlerImpl(
      */
     private fun recordBufferedErrors(newest: HandlerState.Buffered, sink: ErrorRecorder) {
         generateSequence(newest) { it.previous as? HandlerState.Buffered }.toList().asReversed().forEach { error ->
-            record(sink, error.type, error.throwable, error.timestampMs)
+            record(sink, error.snapshot)
         }
     }
 
     /**
-     * Records an error with [sink]. A sink failure is logged, and doesn't stop later errors from being recorded. The first
+     * Records [snapshot] with [sink]. A sink failure is logged, and doesn't stop later errors from being recorded. The first
      * error the sink raises is then recorded with [sink] as [SdkErrorType.ErrorSinkFail], and anything raised by that
      * attempt is logged and dropped.
      */
-    private fun record(
-        sink: ErrorRecorder,
-        type: SdkErrorType,
-        throwable: Throwable,
-        timestampMs: Long,
-    ) {
+    private fun record(sink: ErrorRecorder, snapshot: SdkErrorSnapshot) {
         inSink.set(true)
         try {
-            runSafely("Failed to record SDK error ($type)", logcat) {
+            runSafely("Failed to record SDK error (${snapshot.type})", logcat) {
                 try {
-                    sink(type, throwable, timestampMs)
+                    sink(snapshot)
                 } catch (exc: Throwable) {
-                    holdSinkFailure(exc)
+                    holdSinkFailure(ThrowableSnapshotter.snapshot(SdkErrorType.ErrorSinkFail, exc, now()))
                     throw exc
                 }
             }
             val failure = sinkFailure.get() ?: return
             runSafely("Failed to record SDK error (${SdkErrorType.ErrorSinkFail})", logcat) {
-                if (limiter.tryAcquire(SdkErrorType.ErrorSinkFail, failure)) {
-                    sink(SdkErrorType.ErrorSinkFail, failure, now())
+                if (limiter.tryAcquire(failure)) {
+                    sink(failure)
                 }
             }
         } finally {
@@ -187,9 +186,9 @@ class ErrorHandlerImpl(
         }
     }
 
-    private fun holdSinkFailure(exc: Throwable) {
+    private fun holdSinkFailure(snapshot: SdkErrorSnapshot) {
         if (sinkFailure.get() == null) {
-            sinkFailure.set(exc)
+            sinkFailure.set(snapshot)
         }
     }
 
@@ -208,13 +207,10 @@ class ErrorHandlerImpl(
         object Empty : Buffering()
 
         /**
-         * Buffering: [type], [timestampMs] and [throwable] are the newest buffered error, and [previous] is what was buffered
-         * before it.
+         * Buffering: [snapshot] is the newest buffered error, and [previous] is what was buffered before it.
          */
         class Buffered(
-            val type: SdkErrorType,
-            val timestampMs: Long,
-            val throwable: Throwable,
+            val snapshot: SdkErrorSnapshot,
             val previous: Buffering,
         ) : Buffering()
 

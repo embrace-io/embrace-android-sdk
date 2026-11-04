@@ -20,6 +20,7 @@ import io.embrace.android.embracesdk.internal.config.resolved.ExperimentConfig
 import io.embrace.android.embracesdk.internal.instrumentation.network.DefaultTraceparentGenerator
 import io.embrace.android.embracesdk.internal.logging.ErrorHandler
 import io.embrace.android.embracesdk.internal.logging.ErrorHandlerImpl
+import io.embrace.android.embracesdk.internal.logging.SdkErrorSnapshot
 import io.embrace.android.embracesdk.internal.logging.SdkErrorType
 import io.embrace.android.embracesdk.internal.logging.androidLogcat
 import io.embrace.android.embracesdk.internal.logging.guardSdkCode
@@ -109,13 +110,13 @@ internal class BufferingSdkInstance(
         errorHandler.drain(
             destination?.let {
                 {
-                        _: SdkErrorType, throwable: Throwable, timestampMs: Long ->
+                        snapshot: SdkErrorSnapshot ->
                     it.addLog(
-                        schemaType = SdkError(throwable),
+                        schemaType = SdkError(snapshot),
                         severity = LogSeverity.ERROR,
                         message = "",
                         isPrivate = true,
-                        timestampMs = timestampMs,
+                        timestampMs = snapshot.timestampMs,
                     )
                 }
             },

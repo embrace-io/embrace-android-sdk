@@ -26,8 +26,8 @@ interface ErrorHandler : AutoCloseable {
     fun trackSdkError(type: SdkErrorType, throwable: Throwable)
 
     /**
-     * Drains buffered errors to [sink] (type, throwable, timestampMs) on an SDK state transition. Errors captured after that go to
-     * [sink] directly. A null [sink] closes this object completely.
+     * Drains buffered errors to [sink] on an SDK state transition. Errors captured after that go to [sink] directly. A null
+     * [sink] closes this object completely.
      */
     fun drain(sink: ErrorRecorder?)
 
@@ -86,6 +86,6 @@ inline fun <T> ErrorHandler.guardUserCode(action: () -> T): T = try {
 class UserCodeException(override val cause: Throwable) : RuntimeException(cause)
 
 /**
- * Signature for a function that records a [Throwable] as an SDK error of the given [SdkErrorType] at the given timestamp [Long]
+ * Signature for a function that records an SDK error
  */
-typealias ErrorRecorder = (SdkErrorType, Throwable, Long) -> Unit
+typealias ErrorRecorder = (SdkErrorSnapshot) -> Unit

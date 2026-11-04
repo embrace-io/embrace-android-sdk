@@ -1,0 +1,10 @@
+syntax = "proto3";
+
+package embrace.storage;
+
+option java_package = "io.embrace.android.embracesdk.internal.store.file";
+
+// The IDs of delivered ApplicationExitInfo records.
+message DeliveredAeiProto {
+  repeated string ids = 1;
+}

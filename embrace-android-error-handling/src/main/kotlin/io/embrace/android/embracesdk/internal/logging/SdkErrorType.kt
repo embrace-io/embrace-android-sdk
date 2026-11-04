@@ -88,6 +88,8 @@ sealed class SdkErrorType(private val severity: Severity) {
     object RemoteConfigParseFail : SdkErrorType(ERROR)
     object RemoteConfigStoreFail : SdkErrorType(ERROR)
     object StorageRootFail : SdkErrorType(ERROR)
+    object DeliveredAeiLoadFail : SdkErrorType(ERROR)
+    object DeliveredAeiWriteFail : SdkErrorType(ERROR)
 
     /**
      * A failure that can be ignored.

@@ -21,14 +21,9 @@ interface EmbraceInternalInterface {
     fun addEnvelopeResource(key: String, value: String)
 
     /**
-     * Sets the version of the hosted SDK, e.g. the Embrace React Native/Flutter/Unity SDK. Null or empty values
-     * are ignored.
+     * Sets the version of the hosted SDK, e.g. the Embrace React Native/Flutter/Unity SDK, and the version of the
+     * platform it runs on, e.g. React Native/Dart/Unity, in a single write. A null or empty value leaves that version
+     * unchanged.
      */
-    fun setHostedSdkVersion(version: String?)
-
-    /**
-     * Sets the version of the platform the hosted SDK runs on, e.g. React Native/Dart/Unity. Null or empty values
-     * are ignored.
-     */
-    fun setHostedPlatformVersion(version: String?)
+    fun setHostedSdkVersions(sdkVersion: String?, platformVersion: String?)
 }

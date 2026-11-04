@@ -11,10 +11,9 @@ interface UnityInternalInterface : EmbraceInternalInterface {
      * @suppress
      */
     @Deprecated(
-        "Use setHostedPlatformVersion(), setHostedSdkVersion() and setUnityBuildGuid() instead.",
+        "Use setHostedSdkVersions() and setUnityBuildGuid() instead.",
         ReplaceWith(
-            "run { setHostedPlatformVersion(unityVersion); setHostedSdkVersion(unitySdkVersion); " +
-                "setUnityBuildGuid(buildGuid) }",
+            "run { setHostedSdkVersions(unitySdkVersion, unityVersion); setUnityBuildGuid(buildGuid) }",
         ),
     )
     fun setUnityMetaData(unityVersion: String?, buildGuid: String?, unitySdkVersion: String?)

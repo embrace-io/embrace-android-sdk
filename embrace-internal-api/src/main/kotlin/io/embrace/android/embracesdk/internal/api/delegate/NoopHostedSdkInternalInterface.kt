@@ -16,9 +16,7 @@ internal object NoopHostedSdkInternalInterface :
 
     override fun addEnvelopeResource(key: String, value: String) {}
 
-    override fun setHostedSdkVersion(version: String?) {}
-
-    override fun setHostedPlatformVersion(version: String?) {}
+    override fun setHostedSdkVersions(sdkVersion: String?, platformVersion: String?) {}
 
     override fun logUnhandledJsException(name: String, message: String, type: String?, stacktrace: String?) {}
 

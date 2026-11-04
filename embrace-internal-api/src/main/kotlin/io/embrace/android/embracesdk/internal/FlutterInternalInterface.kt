@@ -11,13 +11,13 @@ interface FlutterInternalInterface : EmbraceInternalInterface {
      * Sets the Embrace Flutter SDK version - this is not intended for public use.
      * @suppress
      */
-    @Deprecated("Use setHostedSdkVersion() instead.", ReplaceWith("setHostedSdkVersion(version)"))
+    @Deprecated("Use setHostedSdkVersions() instead.", ReplaceWith("setHostedSdkVersions(version, null)"))
     fun setEmbraceFlutterSdkVersion(version: String?)
 
     /**
      * Sets the Dart version - this is not intended for public use.
      * @suppress
      */
-    @Deprecated("Use setHostedPlatformVersion() instead.", ReplaceWith("setHostedPlatformVersion(version)"))
+    @Deprecated("Use setHostedSdkVersions() instead.", ReplaceWith("setHostedSdkVersions(null, version)"))
     fun setDartVersion(version: String?)
 }

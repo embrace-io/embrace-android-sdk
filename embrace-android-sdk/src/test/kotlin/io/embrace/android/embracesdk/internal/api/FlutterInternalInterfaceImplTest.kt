@@ -16,10 +16,12 @@ internal class FlutterInternalInterfaceImplTest {
 
     private lateinit var impl: HostedSdkInternalInterfaceImpl
     private lateinit var hostedSdkVersionInfo: HostedSdkVersionInfo
+    private lateinit var store: FakePersistedSdkStateStore
 
     @Before
     fun setUp() {
-        hostedSdkVersionInfo = createHostedSdkVersionInfo(AppFramework.FLUTTER, FakePersistedSdkStateStore(), FakeErrorHandler())
+        store = FakePersistedSdkStateStore()
+        hostedSdkVersionInfo = createHostedSdkVersionInfo(AppFramework.FLUTTER, store, FakeErrorHandler())
         impl = HostedSdkInternalInterfaceImpl(
             logsApi = unimplemented(),
             configService = unimplemented(),
@@ -34,16 +36,27 @@ internal class FlutterInternalInterfaceImplTest {
     }
 
     @Test
-    fun testSetHostedSdkVersion() {
-        impl.setHostedSdkVersion("2.12")
-        impl.setHostedSdkVersion(null)
+    fun testSetHostedSdkVersions() {
+        impl.setHostedSdkVersions("2.12", "3.1")
+        assertEquals(1, store.updateCount)
         assertEquals("2.12", hostedSdkVersionInfo.hostedSdkVersion)
+        assertEquals("3.1", hostedSdkVersionInfo.hostedPlatformVersion)
     }
 
     @Test
-    fun testSetHostedPlatformVersion() {
-        impl.setHostedPlatformVersion("3.1")
-        impl.setHostedPlatformVersion(null)
+    fun testSetHostedSdkVersionsNullKeepsValues() {
+        impl.setHostedSdkVersions("2.12", "3.1")
+        impl.setHostedSdkVersions(null, null)
+        assertEquals(1, store.updateCount)
+        assertEquals("2.12", hostedSdkVersionInfo.hostedSdkVersion)
+        assertEquals("3.1", hostedSdkVersionInfo.hostedPlatformVersion)
+    }
+
+    @Test
+    fun testSetHostedSdkVersionsPartial() {
+        impl.setHostedSdkVersions("2.12", "3.1")
+        impl.setHostedSdkVersions("2.13", null)
+        assertEquals("2.13", hostedSdkVersionInfo.hostedSdkVersion)
         assertEquals("3.1", hostedSdkVersionInfo.hostedPlatformVersion)
     }
 }

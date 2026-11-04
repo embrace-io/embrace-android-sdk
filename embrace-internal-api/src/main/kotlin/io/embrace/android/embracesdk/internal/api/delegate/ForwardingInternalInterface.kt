@@ -20,11 +20,8 @@ internal class ForwardingInternalInterface(
     override fun addEnvelopeResource(key: String, value: String) =
         target().internalInterface.addEnvelopeResource(key, value)
 
-    override fun setHostedSdkVersion(version: String?) =
-        target().internalInterface.setHostedSdkVersion(version)
-
-    override fun setHostedPlatformVersion(version: String?) =
-        target().internalInterface.setHostedPlatformVersion(version)
+    override fun setHostedSdkVersions(sdkVersion: String?, platformVersion: String?) =
+        target().internalInterface.setHostedSdkVersions(sdkVersion, platformVersion)
 
     override fun logUnhandledJsException(name: String, message: String, type: String?, stacktrace: String?) =
         target().reactNativeInternalInterface.logUnhandledJsException(name, message, type, stacktrace)

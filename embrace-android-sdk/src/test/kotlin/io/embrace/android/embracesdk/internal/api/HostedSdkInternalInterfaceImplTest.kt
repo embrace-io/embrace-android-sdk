@@ -45,11 +45,10 @@ internal class HostedSdkInternalInterfaceImplTest {
     @Test
     fun `internal api usage is recorded`() {
         impl.addEnvelopeResource("key", "value")
-        impl.setHostedPlatformVersion("3.0")
-        impl.setHostedSdkVersion("1.0")
+        impl.setHostedSdkVersions("1.0", "3.0")
         impl.isNetworkSpanForwardingEnabled()
         assertEquals(
-            listOf("add_envelope_resource", "set_hosted_platform_version", "set_hosted_sdk_version"),
+            listOf("add_envelope_resource", "set_hosted_sdk_versions"),
             telemetryService.apiCalls,
         )
     }

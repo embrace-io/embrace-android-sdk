@@ -55,8 +55,7 @@ internal class ReactNativeInternalInterfaceTest(
             instrumentedConfig = instrumentedConfig,
             testCaseAction = {
                 recordSession {
-                    EmbraceInternalApi.reactNativeInternalInterface.setHostedPlatformVersion("28.9.1")
-                    EmbraceInternalApi.reactNativeInternalInterface.setHostedSdkVersion("1.2.3")
+                    EmbraceInternalApi.reactNativeInternalInterface.setHostedSdkVersions("1.2.3", "28.9.1")
                     EmbraceInternalApi.reactNativeInternalInterface.setJavaScriptPatchNumber("666")
                 }
             },
@@ -77,8 +76,7 @@ internal class ReactNativeInternalInterfaceTest(
             instrumentedConfig = instrumentedConfig,
             testCaseAction = {
                 recordSession {
-                    EmbraceInternalApi.reactNativeInternalInterface.setHostedPlatformVersion("28.9.1")
-                    EmbraceInternalApi.reactNativeInternalInterface.setHostedSdkVersion("1.2.3")
+                    EmbraceInternalApi.reactNativeInternalInterface.setHostedSdkVersions("1.2.3", "28.9.1")
                     EmbraceInternalApi.reactNativeInternalInterface.setJavaScriptPatchNumber("666")
                 }
 
@@ -101,14 +99,12 @@ internal class ReactNativeInternalInterfaceTest(
             instrumentedConfig = instrumentedConfig,
             testCaseAction = {
                 recordSession {
-                    EmbraceInternalApi.reactNativeInternalInterface.setHostedPlatformVersion("28.9.1")
-                    EmbraceInternalApi.reactNativeInternalInterface.setHostedSdkVersion("1.2.3")
+                    EmbraceInternalApi.reactNativeInternalInterface.setHostedSdkVersions("1.2.3", "28.9.1")
                     EmbraceInternalApi.reactNativeInternalInterface.setJavaScriptPatchNumber("666")
                 }
 
                 recordSession {
-                    EmbraceInternalApi.reactNativeInternalInterface.setHostedPlatformVersion("28.9.2")
-                    EmbraceInternalApi.reactNativeInternalInterface.setHostedSdkVersion("1.2.4")
+                    EmbraceInternalApi.reactNativeInternalInterface.setHostedSdkVersions("1.2.4", "28.9.2")
                     EmbraceInternalApi.reactNativeInternalInterface.setJavaScriptPatchNumber("999")
                 }
             },

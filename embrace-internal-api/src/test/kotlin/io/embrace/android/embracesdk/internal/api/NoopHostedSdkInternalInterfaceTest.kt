@@ -16,8 +16,7 @@ internal class NoopHostedSdkInternalInterfaceTest {
     fun `check no errors thrown when invoked`() {
         with(NoopHostedSdkInternalInterface) {
             addEnvelopeResource("key", "value")
-            setHostedSdkVersion("version")
-            setHostedPlatformVersion("version")
+            setHostedSdkVersions("version", "version")
             logUnhandledJsException("name", "message", "type", "stacktrace")
             setJavaScriptPatchNumber("number")
             setJavaScriptBundleUrl(Application(), "url")

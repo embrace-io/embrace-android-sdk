@@ -63,8 +63,7 @@ internal class UnityInternalInterfaceTest(
             instrumentedConfig = instrumentedConfig,
             testCaseAction = {
                 recordSession {
-                    EmbraceInternalApi.unityInternalInterface.setHostedPlatformVersion("28.9.1")
-                    EmbraceInternalApi.unityInternalInterface.setHostedSdkVersion("1.2.3")
+                    EmbraceInternalApi.unityInternalInterface.setHostedSdkVersions("1.2.3", "28.9.1")
                     EmbraceInternalApi.unityInternalInterface.setUnityBuildGuid("unity build id")
                 }
             },
@@ -85,8 +84,7 @@ internal class UnityInternalInterfaceTest(
             instrumentedConfig = instrumentedConfig,
             testCaseAction = {
                 recordSession {
-                    EmbraceInternalApi.unityInternalInterface.setHostedPlatformVersion("28.9.1")
-                    EmbraceInternalApi.unityInternalInterface.setHostedSdkVersion("1.2.3")
+                    EmbraceInternalApi.unityInternalInterface.setHostedSdkVersions("1.2.3", "28.9.1")
                     EmbraceInternalApi.unityInternalInterface.setUnityBuildGuid("unity build id")
                 }
                 recordSession()
@@ -108,14 +106,12 @@ internal class UnityInternalInterfaceTest(
             instrumentedConfig = instrumentedConfig,
             testCaseAction = {
                 recordSession {
-                    EmbraceInternalApi.unityInternalInterface.setHostedPlatformVersion("28.9.1")
-                    EmbraceInternalApi.unityInternalInterface.setHostedSdkVersion("1.2.3")
+                    EmbraceInternalApi.unityInternalInterface.setHostedSdkVersions("1.2.3", "28.9.1")
                     EmbraceInternalApi.unityInternalInterface.setUnityBuildGuid("unity build id")
                 }
 
                 recordSession {
-                    EmbraceInternalApi.unityInternalInterface.setHostedPlatformVersion("28.9.2")
-                    EmbraceInternalApi.unityInternalInterface.setHostedSdkVersion("1.2.4")
+                    EmbraceInternalApi.unityInternalInterface.setHostedSdkVersions("1.2.4", "28.9.2")
                     EmbraceInternalApi.unityInternalInterface.setUnityBuildGuid("new unity build id")
                 }
             },

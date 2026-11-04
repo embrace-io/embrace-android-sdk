@@ -57,13 +57,10 @@ internal class HostedSdkInternalInterfaceImpl(
         resourceSource.add(key, value)
     }
 
-    override fun setHostedSdkVersion(version: String?) = record("set_hosted_sdk_version") {
-        updateHostedSdkVersion(version)
-    }
-
-    override fun setHostedPlatformVersion(version: String?) = record("set_hosted_platform_version") {
-        updateHostedPlatformVersion(version)
-    }
+    override fun setHostedSdkVersions(sdkVersion: String?, platformVersion: String?) =
+        record("set_hosted_sdk_versions") {
+            updateHostedSdkVersions(sdkVersion, platformVersion)
+        }
 
     override fun logUnhandledJsException(
         name: String,
@@ -92,12 +89,12 @@ internal class HostedSdkInternalInterfaceImpl(
 
     @Suppress("OVERRIDE_DEPRECATION")
     override fun setReactNativeSdkVersion(version: String?) = record("set_react_native_sdk_version") {
-        updateHostedSdkVersion(version)
+        updateHostedSdkVersions(version, null)
     }
 
     @Suppress("OVERRIDE_DEPRECATION")
     override fun setReactNativeVersionNumber(version: String?) = record("set_react_native_version_number") {
-        updateHostedPlatformVersion(version)
+        updateHostedSdkVersions(null, version)
     }
 
     override fun setJavaScriptBundleUrl(context: Context, url: String) = record("set_javascript_bundle_url") {
@@ -172,23 +169,25 @@ internal class HostedSdkInternalInterfaceImpl(
 
     @Suppress("OVERRIDE_DEPRECATION")
     override fun setEmbraceFlutterSdkVersion(version: String?) = record("set_embrace_flutter_sdk_version") {
-        updateHostedSdkVersion(version)
+        updateHostedSdkVersions(version, null)
     }
 
     @Suppress("OVERRIDE_DEPRECATION")
     override fun setDartVersion(version: String?) = record("set_dart_version") {
-        updateHostedPlatformVersion(version)
+        updateHostedSdkVersions(null, version)
     }
 
-    private fun updateHostedSdkVersion(version: String?) {
-        if (!version.isNullOrEmpty()) {
-            hostedSdkVersionInfo.update { hostedSdkVersion = version }
+    private fun updateHostedSdkVersions(sdkVersion: String?, platformVersion: String?) {
+        if (sdkVersion.isNullOrEmpty() && platformVersion.isNullOrEmpty()) {
+            return
         }
-    }
-
-    private fun updateHostedPlatformVersion(version: String?) {
-        if (!version.isNullOrEmpty()) {
-            hostedSdkVersionInfo.update { hostedPlatformVersion = version }
+        hostedSdkVersionInfo.update {
+            if (!sdkVersion.isNullOrEmpty()) {
+                hostedSdkVersion = sdkVersion
+            }
+            if (!platformVersion.isNullOrEmpty()) {
+                hostedPlatformVersion = platformVersion
+            }
         }
     }
 

@@ -76,16 +76,18 @@ internal class ReactNativeInternalInterfaceImplTest {
     }
 
     @Test
-    fun testSetHostedPlatformVersionNull() {
-        impl.setHostedPlatformVersion("0.1")
-        impl.setHostedPlatformVersion(null)
+    fun testSetHostedSdkVersionsNull() {
+        impl.setHostedSdkVersions("1.0", "0.1")
+        impl.setHostedSdkVersions(null, null)
+        assertEquals("1.0", store.state.hostedSdkVersion)
         assertEquals("0.1", store.state.hostedPlatformVersion)
     }
 
     @Test
-    fun testSetHostedPlatformVersionEmpty() {
-        impl.setHostedPlatformVersion("0.1")
-        impl.setHostedPlatformVersion("")
+    fun testSetHostedSdkVersionsEmpty() {
+        impl.setHostedSdkVersions("1.0", "0.1")
+        impl.setHostedSdkVersions("", "")
+        assertEquals("1.0", store.state.hostedSdkVersion)
         assertEquals("0.1", store.state.hostedPlatformVersion)
     }
 

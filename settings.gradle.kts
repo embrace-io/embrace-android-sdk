@@ -8,6 +8,7 @@ include(
     ":embrace-android-envelope",
     ":embrace-android-error-handling",
     ":embrace-android-infra",
+    ":embrace-android-storage",
     ":embrace-android-limits",
     ":embrace-android-utils",
     ":embrace-android-instrumentation-vitals",

@@ -1,8 +1,9 @@
 package io.embrace.android.embracesdk.internal.injection
 
 import io.embrace.android.embracesdk.fakes.FakeConfigService
-import io.embrace.android.embracesdk.fakes.FakeKeyValueStore
+import io.embrace.android.embracesdk.fakes.FakeDeliveredAeiStore
 import io.embrace.android.embracesdk.fakes.FakeNavigationTrackingService
+import io.embrace.android.embracesdk.fakes.FakeNetworkCaptureRuleStore
 import io.embrace.android.embracesdk.fakes.FakeOrdinalStore
 import io.embrace.android.embracesdk.fakes.FakeProcessStateTracker
 import io.embrace.android.embracesdk.fakes.FakeSessionIdsProvider
@@ -17,7 +18,6 @@ import io.embrace.android.embracesdk.fakes.injection.FakeWorkerThreadPool
 import io.embrace.android.embracesdk.fakes.injection.TestInitServices
 import io.embrace.android.embracesdk.internal.utils.event.EventBus
 import io.embrace.android.embracesdk.internal.worker.Worker
-import org.junit.Assert.assertEquals
 import org.junit.Assert.assertSame
 import org.junit.Test
 
@@ -30,7 +30,8 @@ internal class InstrumentationFactoriesTest {
         val destination = FakeTelemetryDestination()
         val application = fakeApplication()
         val context = fakeContext(application)
-        val store = FakeKeyValueStore()
+        val deliveredAeiStore = FakeDeliveredAeiStore()
+        val networkCaptureRuleStore = FakeNetworkCaptureRuleStore()
         val storageService = FakeStorageService()
         val args = createInstrumentationArgs(
             configService = configService,
@@ -39,7 +40,8 @@ internal class InstrumentationFactoriesTest {
             clock = initServices.clock,
             context = context,
             application = application,
-            storeProvider = { store },
+            deliveredAeiStoreProvider = { deliveredAeiStore },
+            networkCaptureRuleStoreProvider = { networkCaptureRuleStore },
             serializer = initServices.jsonSerializer,
             uuidSource = initServices.uuidSource,
             ordinalStore = FakeOrdinalStore(),
@@ -61,11 +63,7 @@ internal class InstrumentationFactoriesTest {
         assertSame(configService, args.configService)
         assertSame(destination, args.destination)
 
-        args.deliveredAeiStore.add("aei-id")
-        args.networkCaptureRuleStore.decrement("rule-id", 5)
-        assertEquals(
-            mapOf("io.embrace.aeiHashCode" to setOf("aei-id"), "io.embrace.networkcapturerulerule-id" to 4),
-            store.values(),
-        )
+        assertSame(deliveredAeiStore, args.deliveredAeiStore)
+        assertSame(networkCaptureRuleStore, args.networkCaptureRuleStore)
     }
 }

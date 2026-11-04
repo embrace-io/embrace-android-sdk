@@ -4,11 +4,15 @@ package io.embrace.android.embracesdk.internal.injection
 
 import android.content.Context
 import android.preference.PreferenceManager
+import io.embrace.android.embracesdk.internal.arch.store.DeliveredAeiStore
+import io.embrace.android.embracesdk.internal.arch.store.NetworkCaptureRuleStore
 import io.embrace.android.embracesdk.internal.config.ConfigService
 import io.embrace.android.embracesdk.internal.config.PersistedConfig
 import io.embrace.android.embracesdk.internal.config.instrumented.InstrumentedConfigImpl
 import io.embrace.android.embracesdk.internal.config.instrumented.schema.InstrumentedConfig
 import io.embrace.android.embracesdk.internal.payload.AppFramework
+import io.embrace.android.embracesdk.internal.prefs.PrefsDeliveredAeiStore
+import io.embrace.android.embracesdk.internal.prefs.PrefsNetworkCaptureRuleStore
 import io.embrace.android.embracesdk.internal.prefs.PrefsPersistedSdkStateStore
 import io.embrace.android.embracesdk.internal.prefs.PrefsStoreWriteBatcher
 import io.embrace.android.embracesdk.internal.prefs.createKeyValueStore
@@ -64,6 +68,14 @@ internal class ConfigLoadServices(
 
     val writeBatcher: Lazy<StoreWriteBatcher> = lazy {
         PrefsStoreWriteBatcher(keyValueStore.value)
+    }
+
+    val deliveredAeiStore: Lazy<DeliveredAeiStore> = lazy {
+        PrefsDeliveredAeiStore(keyValueStore.value)
+    }
+
+    val networkCaptureRuleStore: Lazy<NetworkCaptureRuleStore> = lazy {
+        PrefsNetworkCaptureRuleStore(keyValueStore.value)
     }
 
     val persistedConfig: PersistedConfig = EmbTrace.trace(

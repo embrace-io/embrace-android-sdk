@@ -369,6 +369,7 @@ internal class SdkStateIntegrationTest(
             },
             assertAction = {
                 awaitStorageDeleted()
+                discardDisableStorageErrors(errorHandler)
                 assertNoSdkErrors(errorHandler)
                 assertEquals(0, getLogEnvelopes(0).size)
                 assertEquals(0, getSessionEnvelopes(0).size)
@@ -458,6 +459,7 @@ internal class SdkStateIntegrationTest(
                 recordSession()
             },
             assertAction = {
+                discardDisableStorageErrors(errorHandler)
                 calls.assertDropped(errorHandler, disabled = true)
                 calls.assertOTelConfigNotApplied()
                 awaitStorageDeleted()
@@ -511,6 +513,7 @@ internal class SdkStateIntegrationTest(
                 recordSession()
             },
             assertAction = {
+                discardDisableStorageErrors(errorHandler)
                 calls.assertDropped(errorHandler, disabled = true)
 
                 // calls made while disabled are not replayed
@@ -648,6 +651,15 @@ internal class SdkStateIntegrationTest(
                 writeText(DUMMY_CONTENT)
             }
         }
+    }
+
+    /**
+     * Waits for disable's teardown to finish, then discards [SdkErrorType.PayloadStorageFail]: payload writes still in
+     * flight when disable() runs can fail as the directory is deleted underneath them.
+     */
+    private fun discardDisableStorageErrors(errorHandler: FakeErrorHandler) {
+        assertTrue(testRule.setup.awaitWorkerTermination())
+        errorHandler.sdkErrorMessages.removeAll { it.msg == SdkErrorType.PayloadStorageFail.toString() }
     }
 
     /**

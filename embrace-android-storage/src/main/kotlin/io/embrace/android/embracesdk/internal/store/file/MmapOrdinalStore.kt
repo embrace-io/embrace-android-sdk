@@ -41,6 +41,15 @@ class MmapOrdinalStore internal constructor(
         }
     }
 
+    /**
+     * Overwrites [ordinal]'s slot with [value].
+     */
+    internal fun reset(ordinal: Ordinal, value: Int) {
+        synchronized(lock) {
+            buffer.putInt(OrdinalFileFormat.slotOffset(ordinal), value)
+        }
+    }
+
     companion object {
 
         /**

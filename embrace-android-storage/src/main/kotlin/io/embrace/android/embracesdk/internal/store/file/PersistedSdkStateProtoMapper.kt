@@ -23,6 +23,7 @@ fun PersistedSdkStateProto.toPersistedSdkState(deviceId: String, installTimestam
         javaScriptPatchNumber = java_script_patch_number,
         rnBundleUrl = rn_bundle_url,
         rnBundleId = rn_bundle_id,
+        appVersionStartupScope = app_version_startup_scope,
     )
 
 /**
@@ -45,6 +46,7 @@ fun PersistedSdkState.toProto(base: PersistedSdkStateProto): PersistedSdkStatePr
     java_script_patch_number = javaScriptPatchNumber,
     rn_bundle_url = rnBundleUrl,
     rn_bundle_id = rnBundleId,
+    app_version_startup_scope = appVersionStartupScope,
 )
 
 private fun UserSessionProto.toUserSession(): UserSessionMetadata.Classified = UserSessionMetadata.Classified(

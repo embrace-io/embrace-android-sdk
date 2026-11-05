@@ -45,6 +45,7 @@ import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertNull
+import org.junit.Assert.assertSame
 import org.junit.Assert.assertThrows
 import org.junit.Assert.assertTrue
 import org.junit.Before
@@ -513,6 +514,40 @@ internal class OkHttpDataSourceTest {
             assertNull(span.attributes[EmbNetworkRequestAttributes.EMB_W3C_TRACEPARENT])
             assertNull(span.attributes[EmbNetworkRequestAttributes.EMB_FORWARD_TELEMETRY])
         }
+    }
+
+    @Test
+    fun `existing traceparent is replaced with the network span's when the app provider chooses a parent in another trace`() {
+        isNetworkSpanForwardingEnabled = true
+        args.networkSpanParentDecision = {
+            object : NetworkSpanParent {
+                override val traceId = "4bf92f3577b34da6a3ce929d0e0e4736"
+                override val spanId = "00f067aa0ba902b7"
+            }
+        }
+        postRequestBuilder.header(TRACEPARENT_HEADER, INBOUND_TRACEPARENT_UNSAMPLED)
+        postRequestBuilder.header(TRACESTATE_HEADER, INBOUND_TRACESTATE)
+        server.enqueue(createBaseMockResponse())
+        runPostRequest()
+        val sent = server.takeRequest()
+        assertNetworkRequestReceived { span ->
+            assertEquals(span.asW3cTraceparent(), sent.getHeader(TRACEPARENT_HEADER))
+            assertEquals(INBOUND_TRACESTATE, sent.getHeader(TRACESTATE_HEADER))
+            assertEquals(span.asW3cTraceparent(), span.attributes[EmbNetworkRequestAttributes.EMB_W3C_TRACEPARENT])
+        }
+    }
+
+    @Test
+    fun `the app provider is given the okhttp request as its native request`() {
+        val received = mutableListOf<Any?>()
+        args.networkSpanParentDecision = {
+            received.add(it.nativeRequest)
+            NetworkSpanParent.USE_DEFAULT
+        }
+        server.enqueue(createBaseMockResponse())
+        val request = getRequestBuilder.build()
+        okHttpClient.newCall(request).execute()
+        assertSame(request, received.single())
     }
 
     @Test

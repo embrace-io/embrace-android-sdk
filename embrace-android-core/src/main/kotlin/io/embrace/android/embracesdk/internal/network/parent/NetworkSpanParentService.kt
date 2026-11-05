@@ -1,5 +1,6 @@
 package io.embrace.android.embracesdk.internal.network.parent
 
+import io.embrace.android.embracesdk.network.NetworkSpanParentProvider
 import io.embrace.android.embracesdk.network.NetworkSpanParentToken
 import io.embrace.android.embracesdk.spans.EmbraceSpan
 import io.opentelemetry.kotlin.tracing.SpanContext
@@ -8,6 +9,11 @@ import io.opentelemetry.kotlin.tracing.SpanContext
  * Holds the network span parent that network spans started from now on are parented to.
  */
 interface NetworkSpanParentService : NetworkSpanParents {
+
+    /**
+     * Registers the app's provider, which decides each network span's parent before the default rules, replacing any previous one.
+     */
+    fun setAppProvider(provider: NetworkSpanParentProvider)
 
     /**
      * Sets [span] as the network span parent as for its span context, rejecting it if it isn't recording.

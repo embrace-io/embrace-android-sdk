@@ -89,6 +89,7 @@ internal class OkHttpDataSource(
                 traceparent = inboundTraceparent,
                 timeoutMs = resolveTimeoutMs(call),
                 host = request.url.host,
+                nativeRequest = request,
             ),
         ) ?: return null
 

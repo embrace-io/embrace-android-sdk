@@ -30,4 +30,8 @@ data class RequestStartData(
      * The host the client sends the request to
      */
     val host: String? = null,
+    /**
+     * The HTTP client's own request object, if the instrumentation provides one
+     */
+    val nativeRequest: Any? = null,
 )

@@ -16,8 +16,11 @@ import io.embrace.android.embracesdk.fakes.fakeContext
 import io.embrace.android.embracesdk.fakes.injection.FakeWorkerThreadPool
 import io.embrace.android.embracesdk.fakes.injection.TestInitServices
 import io.embrace.android.embracesdk.fakes.testSdkStorage
+import io.embrace.android.embracesdk.internal.network.parent.NetworkSpanParents
 import io.embrace.android.embracesdk.internal.utils.event.EventBus
 import io.embrace.android.embracesdk.internal.worker.Worker
+import io.embrace.android.embracesdk.network.NetworkSpanParent
+import io.embrace.android.embracesdk.network.http.HttpRequestInfo
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertSame
 import org.junit.Test
@@ -62,7 +65,10 @@ internal class InstrumentationFactoriesTest {
             crashMarkerFileProvider = { File("unused") },
             sdkStorage = sdkStorage,
             eventBus = EventBus(initServices.errorHandler),
-            networkSpanParents = { null },
+            networkSpanParents = object : NetworkSpanParents {
+                override fun currentParent(): NetworkSpanParent? = null
+                override fun appDecision(request: HttpRequestInfo): NetworkSpanParent = NetworkSpanParent.USE_DEFAULT
+            },
         )
         assertSame(configService, args.configService)
         assertSame(destination, args.destination)

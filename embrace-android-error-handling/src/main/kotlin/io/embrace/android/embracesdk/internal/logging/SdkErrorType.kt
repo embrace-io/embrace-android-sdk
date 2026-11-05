@@ -91,6 +91,7 @@ sealed class SdkErrorType(private val severity: Severity) {
     object DeliveredAeiLoadFail : SdkErrorType(ERROR)
     object DeliveredAeiWriteFail : SdkErrorType(ERROR)
     object OrphanSweepFail : SdkErrorType(ERROR)
+    object StorageMigrationFail : SdkErrorType(ERROR)
 
     /**
      * A failure that can be ignored.

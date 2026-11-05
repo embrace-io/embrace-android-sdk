@@ -190,7 +190,7 @@ internal class NetworkRequestDataSourceTest {
                     timeoutMs = 1000L,
                 ),
             ),
-        )
+        ).id
         val span = harness.getNetworkSpans().single()
 
         // timeout sweep stopps span at its deadline
@@ -224,7 +224,7 @@ internal class NetworkRequestDataSourceTest {
                     timeoutMs = 1000L,
                 ),
             ),
-        )
+        ).id
         val span = harness.getNetworkSpans().single()
         assertTrue(span.isRecording())
 

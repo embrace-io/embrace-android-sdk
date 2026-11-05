@@ -3,6 +3,7 @@ package io.embrace.android.embracesdk.internal.instrumentation.network
 import io.embrace.android.embracesdk.fakes.FakeSpanToken
 import io.embrace.android.embracesdk.fakes.FakeTelemetryDestination
 import io.embrace.android.embracesdk.internal.arch.schema.ErrorCodeAttribute
+import io.embrace.android.embracesdk.internal.config.behavior.NetworkSpanForwardingBehavior
 import io.embrace.android.embracesdk.internal.telemetry.AppliedLimitType
 import io.embrace.android.embracesdk.internal.utils.NetworkUtils
 import io.embrace.android.embracesdk.internal.utils.NetworkUtils.stripUrl
@@ -367,6 +368,53 @@ internal class NetworkRequestDataSourceStatefulApiTest {
     }
 
     @Test
+    fun `a request without a traceparent is sent the span's own`() {
+        val start = checkNotNull(start(url = "https://www.example.com/api"))
+        assertEquals(harness.getNetworkSpans().single().asW3cTraceparent(), start.traceparent)
+    }
+
+    @Test
+    fun `a valid traceparent is replaced with one naming the span in the inbound trace with the inbound flags`() {
+        // every id the fake generates is the inbound trace id, so the span joins the inbound trace
+        harness = NetworkRequestDataSourceTestHarness(FakeTelemetryDestination({ INBOUND_TRACE_ID }))
+        val start =
+            checkNotNull(start(url = "https://www.example.com/api", traceparent = "00-$INBOUND_TRACE_ID-$INBOUND_SPAN_ID-00"))
+        assertEquals("00-$INBOUND_TRACE_ID-${INBOUND_TRACE_ID.take(16)}-00", start.traceparent)
+    }
+
+    @Test
+    fun `a malformed traceparent is left unchanged when the span has no parent`() {
+        harness.networkSpanForwardingBehavior.networkSpanForwardingEnabled = true
+        val start = checkNotNull(start(url = "https://www.example.com/api", traceparent = "not-a-traceparent"))
+        assertNull(start.traceparent)
+        assertNull(harness.getNetworkSpans().single().attributes[EmbNetworkRequestAttributes.EMB_W3C_TRACEPARENT])
+    }
+
+    @Test
+    fun `a malformed traceparent is replaced with the span's own when the network span parent parents the span`() {
+        harness.networkSpanForwardingBehavior.networkSpanForwardingEnabled = true
+        harness.args.networkSpanParent = networkSpanParent()
+        val start = checkNotNull(start(url = "https://www.example.com/api", traceparent = "not-a-traceparent"))
+        val span = harness.getNetworkSpans().single()
+        assertEquals(span.asW3cTraceparent(), start.traceparent)
+        assertEquals(start.traceparent, span.attributes[EmbNetworkRequestAttributes.EMB_W3C_TRACEPARENT])
+    }
+
+    @Test
+    fun `forwarding is decided on the host the request is sent to, not its domain`() {
+        harness.args.configService.networkSpanForwardingBehavior = object : NetworkSpanForwardingBehavior {
+            override fun isNetworkSpanForwardingEnabled(): Boolean = true
+            override fun shouldForwardForDomain(host: String?): Boolean = host == "example.com"
+        }
+        start(url = "https://api.example.com/api", host = "api.example.com")
+        start(url = "https://example.com/api", host = "example.com")
+
+        val forwarded = harness.getNetworkSpans().map { it.attributes[EmbNetworkRequestAttributes.EMB_W3C_TRACEPARENT] }
+        assertNull(forwarded[0])
+        assertNotNull(forwarded[1])
+    }
+
+    @Test
     fun `a registered modifier alters the url and method of a span-based request`() {
         harness.args.httpRequestInfoModifierChain.add {
             it.url = "https://redacted.com/api"
@@ -427,13 +475,22 @@ internal class NetworkRequestDataSourceStatefulApiTest {
         httpMethod: String = "GET",
         startTime: Long = 100,
         traceparent: String? = null,
-    ): String? =
+    ): String? = start(url = url, httpMethod = httpMethod, startTime = startTime, traceparent = traceparent)?.id
+
+    private fun start(
+        url: String,
+        httpMethod: String = "GET",
+        startTime: Long = 100,
+        traceparent: String? = null,
+        host: String? = null,
+    ): RequestStart? =
         harness.dataSource.startRequest(
             startData = RequestStartData(
                 url = url,
                 httpMethod = httpMethod,
                 sdkClockStartTime = startTime,
                 traceparent = traceparent,
+                host = host,
             ),
         )
 

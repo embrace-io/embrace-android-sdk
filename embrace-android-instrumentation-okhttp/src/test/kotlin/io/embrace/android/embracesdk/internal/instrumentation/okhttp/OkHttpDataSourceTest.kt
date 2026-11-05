@@ -16,9 +16,11 @@ import io.embrace.android.embracesdk.internal.instrumentation.network.NetworkCap
 import io.embrace.android.embracesdk.internal.instrumentation.network.NetworkRequestDataSource
 import io.embrace.android.embracesdk.internal.instrumentation.network.NetworkRequestDataSourceImpl
 import io.embrace.android.embracesdk.internal.instrumentation.network.RequestEndData
+import io.embrace.android.embracesdk.internal.instrumentation.network.RequestStart
 import io.embrace.android.embracesdk.internal.instrumentation.network.RequestStartData
 import io.embrace.android.embracesdk.internal.utils.NetworkUtils.getValidTraceId
 import io.embrace.android.embracesdk.internal.utils.UuidSource
+import io.embrace.android.embracesdk.network.NetworkSpanParent
 import io.embrace.android.embracesdk.okhttp3.EmbraceCustomPathException
 import io.embrace.android.embracesdk.semconv.EmbNetworkCapturedRequestAttributes
 import io.embrace.android.embracesdk.semconv.EmbNetworkRequestAttributes
@@ -513,6 +515,25 @@ internal class OkHttpDataSourceTest {
     }
 
     @Test
+    fun `malformed traceparent is replaced with the network span's when the network span parent parents the span`() {
+        isNetworkSpanForwardingEnabled = true
+        args.networkSpanParent = object : NetworkSpanParent {
+            override val traceId = "4bf92f3577b34da6a3ce929d0e0e4736"
+            override val spanId = "00f067aa0ba902b7"
+        }
+        postRequestBuilder.header(TRACEPARENT_HEADER, "00-not-a-traceparent")
+        postRequestBuilder.header(TRACESTATE_HEADER, INBOUND_TRACESTATE)
+        server.enqueue(createBaseMockResponse())
+        runPostRequest()
+        val sent = server.takeRequest()
+        assertNetworkRequestReceived { span ->
+            assertEquals(span.asW3cTraceparent(), sent.getHeader(TRACEPARENT_HEADER))
+            assertEquals(INBOUND_TRACESTATE, sent.getHeader(TRACESTATE_HEADER))
+            assertEquals(span.asW3cTraceparent(), span.attributes[EmbNetworkRequestAttributes.EMB_W3C_TRACEPARENT])
+        }
+    }
+
+    @Test
     fun `traceparent changed after the span started is not replaced`() {
         isNetworkSpanForwardingEnabled = true
         fakeSpanIdSource = INBOUND_TRACE_ID
@@ -891,7 +912,7 @@ private class RecordingNetworkRequestDataSource(
     var endRequestFailure: Throwable? = null
     var discardRequestFailure: Throwable? = null
 
-    override fun startRequest(startData: RequestStartData): String? {
+    override fun startRequest(startData: RequestStartData): RequestStart? {
         startRequestFailure?.let { throw it }
         startedRequests.add(startData)
         return delegate.startRequest(startData)

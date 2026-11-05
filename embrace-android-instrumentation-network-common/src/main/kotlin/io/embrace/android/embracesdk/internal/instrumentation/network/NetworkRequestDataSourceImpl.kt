@@ -93,7 +93,7 @@ class NetworkRequestDataSourceImpl(
         }
     }
 
-    override fun startRequest(startData: RequestStartData): String? {
+    override fun startRequest(startData: RequestStartData): RequestStart? {
         // Apply any registered modifiers so the reported url/method reflect the consumer's changes.
         // The underlying HTTP request is not affected.
         val info = httpRequestInfoModifierChain.apply(MutableHttpRequestInfoImpl(startData.httpMethod, startData.url))
@@ -139,22 +139,42 @@ class NetworkRequestDataSourceImpl(
                 val joinedTraceparent = validTraceparent?.takeIf(spanTraceparent::isSameTrace)
                 val traceparent = joinedTraceparent?.let(spanTraceparent::withFlagsOf) ?: spanTraceparent
 
-                // The traceparent sent with the request: a malformed header is left as is and never forwarded
-                val sentTraceparent =
-                    if (inboundTraceparent == null || joinedTraceparent != null) {
-                        traceparent
-                    } else {
-                        validTraceparent
-                    }
+                val outboundTraceparent = outboundTraceparent(
+                    traceparent = traceparent,
+                    joinedTraceparent = joinedTraceparent,
+                    validTraceparent = validTraceparent,
+                    inboundTraceparent = inboundTraceparent,
+                    hasNetworkSpanParent = networkSpanParent != null,
+                )
 
-                if (sentTraceparent != null && configService.networkSpanForwardingBehavior.shouldForwardForDomain(domain)) {
-                    spanToken.setSystemAttribute(EmbNetworkRequestAttributes.EMB_W3C_TRACEPARENT, sentTraceparent.value)
+                // Forward the traceparent the request is sent with: the outbound one, or the inbound header left as is
+                val forwardedTraceparent = outboundTraceparent ?: validTraceparent
+                if (forwardedTraceparent != null &&
+                    configService.networkSpanForwardingBehavior.shouldForwardForDomain(startData.host)
+                ) {
+                    spanToken.setSystemAttribute(EmbNetworkRequestAttributes.EMB_W3C_TRACEPARENT, forwardedTraceparent.value)
                     spanToken.setSystemAttribute(EmbNetworkRequestAttributes.EMB_FORWARD_TELEMETRY, "true")
                 }
                 activeRequests[traceparent.value] = ActiveRequest(spanToken, httpMethod)
-                traceparent.value
+                RequestStart(traceparent.value, outboundTraceparent?.value)
             }
         }
+    }
+
+    /**
+     * Returns the traceparent to send with a request: a valid inbound header is replaced only if the span joined its trace, and a
+     * malformed one only if the span has a parent.
+     */
+    private fun outboundTraceparent(
+        traceparent: TraceParent,
+        joinedTraceparent: TraceParent?,
+        validTraceparent: TraceParent?,
+        inboundTraceparent: String?,
+        hasNetworkSpanParent: Boolean,
+    ): TraceParent? = when {
+        validTraceparent != null -> traceparent.takeIf { joinedTraceparent != null }
+        hasNetworkSpanParent || inboundTraceparent == null -> traceparent
+        else -> null
     }
 
     override fun endRequest(endData: RequestEndData) {

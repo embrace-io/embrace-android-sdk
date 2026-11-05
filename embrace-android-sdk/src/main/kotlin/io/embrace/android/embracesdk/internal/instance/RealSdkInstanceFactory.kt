@@ -228,6 +228,7 @@ internal fun createRealSdkInstance(
                 spanService = spanService.value,
                 errorHandler = errorHandler,
                 telemetryService = telemetryService,
+                slowProviderThresholdMs = configService.networkBehavior.getNetworkSpanParentProviderSlowMs(),
                 currentUserSessionIdProvider = sessionIdsProvider::getCurrentUserSessionId,
             )
         }

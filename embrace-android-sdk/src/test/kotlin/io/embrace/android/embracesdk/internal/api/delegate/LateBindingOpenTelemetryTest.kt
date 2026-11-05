@@ -19,8 +19,8 @@ internal class LateBindingOpenTelemetryTest {
         val sdk = object : OpenTelemetry by NoopOpenTelemetry {
             override val propagator: TextMapPropagator = object : TextMapPropagator {
                 override fun fields(): Collection<String> = fields
-                override fun <T> inject(context: Context, carrier: T?, setter: TextMapSetter<T>) = Unit
-                override fun <T> extract(context: Context, carrier: T?, getter: TextMapGetter<T>): Context = context
+                override fun <T> inject(context: Context, carrier: T, setter: TextMapSetter<T>) = Unit
+                override fun <T> extract(context: Context, carrier: T, getter: TextMapGetter<T>): Context = context
             }
         }
         val otel = LateBindingOpenTelemetry { if (started) sdk else NoopOpenTelemetry }

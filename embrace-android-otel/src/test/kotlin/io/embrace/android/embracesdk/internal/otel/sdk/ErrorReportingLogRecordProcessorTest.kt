@@ -18,7 +18,7 @@ internal class ErrorReportingLogRecordProcessorTest {
     fun `onEmit is forwarded`() {
         val delegate = FakeLogRecordProcessor()
         val processor = ErrorReportingLogRecordProcessor(delegate, errorHandler)
-        processor.onEmit(FakeReadWriteLogRecord(body = "log"), NoopOpenTelemetry.context.implicit())
+        processor.onEmit(FakeReadWriteLogRecord(body = "log"), NoopOpenTelemetry.context.current())
         assertEquals(listOf("log"), delegate.processedLogBodies)
         assertTrue(errorHandler.sdkErrorMessages.isEmpty())
     }
@@ -27,7 +27,7 @@ internal class ErrorReportingLogRecordProcessorTest {
     fun `onEmit failure is tracked`() {
         val cause = IllegalStateException("boom")
         val processor = ErrorReportingLogRecordProcessor(FakeLogRecordProcessor { throw cause }, errorHandler)
-        processor.onEmit(FakeReadWriteLogRecord(body = "log"), NoopOpenTelemetry.context.implicit())
+        processor.onEmit(FakeReadWriteLogRecord(body = "log"), NoopOpenTelemetry.context.current())
 
         val msg = errorHandler.sdkErrorMessages.single()
         assertEquals(SdkErrorType.OtelProcessorFail.toString(), msg.msg)

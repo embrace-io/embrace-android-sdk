@@ -130,7 +130,7 @@ object ProfileJourney {
         child.setStatus(StatusData.Error("profile"))
         child.end()
 
-        val scope = otel.context.implicit().storeSpan(parent).attach()
+        val scope = otel.context.current().storeSpan(parent).attach()
         tracer.startSpan("otel-kotlin-implicit-child").end()
         logger.emit(body = "otel-kotlin log in span", severityNumber = SeverityNumber.INFO) {
             setStringAttribute("key", "value")

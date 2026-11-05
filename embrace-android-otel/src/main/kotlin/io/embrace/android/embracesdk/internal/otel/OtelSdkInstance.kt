@@ -38,5 +38,5 @@ internal fun createSdkOtelInstance(
 }
 
 internal fun OpenTelemetry.getDefaultContext(): Context? {
-    return context.implicit().getEmbraceSpan(this)?.createContext(this)
+    return context.current().getEmbraceSpan()?.createContext(this)
 }

@@ -31,7 +31,7 @@ class FakeSpanService : SpanService {
         name = name,
         parentContext = (parent as? EmbraceSdkSpan)?.createContext(fakeOpenTelemetry(OtelSdkMode.REGULAR))
             ?: fakeOpenTelemetry(OtelSdkMode.REGULAR).run {
-                parentSpanContext?.let { context.root().storeSpan(span.fromSpanContext(it)) } ?: context.root()
+                parentSpanContext?.let { context.root().storeSpanContext(it) } ?: context.root()
             },
         type = type,
         internal = internal,

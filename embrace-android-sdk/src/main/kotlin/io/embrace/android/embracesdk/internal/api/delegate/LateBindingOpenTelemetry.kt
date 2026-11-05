@@ -2,10 +2,9 @@ package io.embrace.android.embracesdk.internal.api.delegate
 
 import io.opentelemetry.kotlin.OpenTelemetry
 import io.opentelemetry.kotlin.attributes.AttributesMutator
+import io.opentelemetry.kotlin.config.ConfigProvider
 import io.opentelemetry.kotlin.context.Context
-import io.opentelemetry.kotlin.context.ContextKey
 import io.opentelemetry.kotlin.factory.ContextFactory
-import io.opentelemetry.kotlin.factory.SpanFactory
 import io.opentelemetry.kotlin.logging.Logger
 import io.opentelemetry.kotlin.logging.LoggerProvider
 import io.opentelemetry.kotlin.logging.SeverityNumber
@@ -45,22 +44,21 @@ internal class LateBindingOpenTelemetry(
     }
 
     override val meterProvider: MeterProvider get() = resolve().meterProvider
+    override val configProvider: ConfigProvider get() = resolve().configProvider
     override val context: ContextFactory = LateBindingContextFactory { resolve().context }
-    override val span: SpanFactory get() = resolve().span
     override val propagator: TextMapPropagator = LateBindingTextMapPropagator { resolve().propagator }
 }
 
 private class LateBindingContextFactory(private val resolve: () -> ContextFactory) : ContextFactory {
     override fun root(): Context = resolve().root()
-    override fun implicit(): Context = resolve().implicit()
-    override fun <T> createKey(name: String): ContextKey<T> = resolve().createKey(name)
+    override fun current(): Context = resolve().current()
 }
 
 private class LateBindingTextMapPropagator(private val resolve: () -> TextMapPropagator) : TextMapPropagator {
     override fun fields(): Collection<String> = resolve().fields()
-    override fun <T> inject(context: Context, carrier: T?, setter: TextMapSetter<T>) =
+    override fun <T> inject(context: Context, carrier: T, setter: TextMapSetter<T>) =
         resolve().inject(context, carrier, setter)
-    override fun <T> extract(context: Context, carrier: T?, getter: TextMapGetter<T>): Context =
+    override fun <T> extract(context: Context, carrier: T, getter: TextMapGetter<T>): Context =
         resolve().extract(context, carrier, getter)
 }
 

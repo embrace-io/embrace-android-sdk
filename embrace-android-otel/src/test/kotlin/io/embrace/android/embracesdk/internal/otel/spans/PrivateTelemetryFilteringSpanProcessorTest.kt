@@ -19,7 +19,7 @@ internal class PrivateTelemetryFilteringSpanProcessorTest {
             FakeReadWriteSpan(FakeSpan(name = "public")),
             FakeReadWriteSpan(FakeSpan(name = "private").apply { attrs[PrivateSpan.key] = PrivateSpan.value }),
         ).forEach { span ->
-            processor.onStart(span, NoopOpenTelemetry.context.implicit())
+            processor.onStart(span, NoopOpenTelemetry.context.current())
             processor.onEnding(span)
             processor.onEnd(span)
         }
@@ -33,7 +33,7 @@ internal class PrivateTelemetryFilteringSpanProcessorTest {
         val delegate = FakeSpanProcessor()
         val processor = PrivateTelemetryFilteringSpanProcessor(delegate) { false }
         val span = FakeReadWriteSpan(FakeSpan(name = "public"))
-        processor.onStart(span, NoopOpenTelemetry.context.implicit())
+        processor.onStart(span, NoopOpenTelemetry.context.current())
         processor.onEnding(span)
         processor.onEnd(span)
         assertTrue(delegate.startedSpanNames.isEmpty())

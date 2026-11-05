@@ -12,7 +12,7 @@ openTelemetryCore = "1.67.0"
 # which breaks our minimum supported Kotlin (2.0.21). See .github/dependabot.yml.
 lifecycle = "2.8.7"
 annotation = "1.11.0"
-otelKotlin = "0.9.0"
+otelKotlin = "0.10.0"
 # Pinned to 1.10.x: 1.11.0+ requires kotlin-stdlib 2.2.20, which breaks our minimum supported Kotlin (2.0.21).
 kotlinxCoroutines = "1.10.2"
 kotlinxSerialization = "1.8.1"

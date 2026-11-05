@@ -4758,8 +4758,7 @@ Lio/embrace/android/embracesdk/internal/otel/spans/EmbraceSdkSpan;
 Lio/embrace/android/embracesdk/internal/otel/spans/EmbraceSdkSpanKt;
 HSPLio/embrace/android/embracesdk/internal/otel/spans/EmbraceSdkSpanKt;-><clinit>()V
 HSPLio/embrace/android/embracesdk/internal/otel/spans/EmbraceSdkSpanKt;->createContext(Lio/embrace/android/embracesdk/internal/otel/spans/EmbraceSdkSpan;Lio/opentelemetry/kotlin/OpenTelemetry;)Lio/opentelemetry/kotlin/context/Context;
-HSPLio/embrace/android/embracesdk/internal/otel/spans/EmbraceSdkSpanKt;->getEmbraceSpan(Lio/opentelemetry/kotlin/context/Context;Lio/opentelemetry/kotlin/OpenTelemetry;)Lio/embrace/android/embracesdk/internal/otel/spans/EmbraceSdkSpan;
-HSPLio/embrace/android/embracesdk/internal/otel/spans/EmbraceSdkSpanKt;->getOrCreateSpanKey(Lio/opentelemetry/kotlin/OpenTelemetry;)Lio/opentelemetry/kotlin/context/ContextKey;
+HSPLio/embrace/android/embracesdk/internal/otel/spans/EmbraceSdkSpanKt;->getEmbraceSpan(Lio/opentelemetry/kotlin/context/Context;)Lio/embrace/android/embracesdk/internal/otel/spans/EmbraceSdkSpan;
 Lio/embrace/android/embracesdk/internal/otel/spans/EmbraceSpanFactory;
 Lio/embrace/android/embracesdk/internal/otel/spans/EmbraceSpanFactoryImpl;
 HSPLio/embrace/android/embracesdk/internal/otel/spans/EmbraceSpanFactoryImpl;-><init>(Lio/opentelemetry/kotlin/Clock;Lio/embrace/android/embracesdk/internal/otel/spans/SpanRepository;Lio/embrace/android/embracesdk/internal/otel/sdk/DataValidator;Lkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function2;Lio/embrace/android/embracesdk/internal/telemetry/InternalTelemetryService;Lio/embrace/android/embracesdk/internal/logging/ErrorHandler;)V

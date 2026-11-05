@@ -14,8 +14,8 @@ private const val CLOSE_POLL_NS = 100_000L
  * Nothing thrown escapes the handler. A failure within it is reported as [SdkErrorType.ErrorSinkFail].
  * That covers the sink throwing, an error tracked on the same thread while the sink runs.
  *
- * [beforeBuffering] runs after an error is found to need buffering and just before the capacity check. Only set
- * for testing purposes.
+ * [beforeBuffering] runs after an error is found to need buffering and just before the capacity check. [beforeStep] runs
+ * before the `"drain"`, `"buffer"` and `"record"` steps. Only set for testing purposes.
  */
 class ErrorHandlerImpl(
     private val now: () -> Long,
@@ -23,6 +23,7 @@ class ErrorHandlerImpl(
     private val limit: Int = 10,
     private val closeTimeoutMs: Long = 500,
     private val beforeBuffering: () -> Unit = {},
+    private val beforeStep: (String) -> Unit = {},
 ) : ErrorHandler {
 
     /**
@@ -97,10 +98,18 @@ class ErrorHandlerImpl(
             BufferRoom.RESERVED -> true
             BufferRoom.OPEN -> false
         }
+        val limiter = limiter
         if (!reserved && !limiter.tryAcquire(snapshot)) {
             return
         }
-        bufferOrRecord(snapshot, reserved)
+        var kept = false
+        try {
+            kept = bufferOrRecord(snapshot, reserved)
+        } finally {
+            if (!kept && !reserved) {
+                limiter.release(snapshot)
+            }
+        }
     }
 
     /**
@@ -118,7 +127,10 @@ class ErrorHandlerImpl(
 
     private enum class BufferRoom { OPEN, RESERVED, NONE }
 
-    private fun bufferOrRecord(snapshot: SdkErrorSnapshot, reserved: Boolean) {
+    /**
+     * Returns false if [snapshot] was dropped.
+     */
+    private fun bufferOrRecord(snapshot: SdkErrorSnapshot, reserved: Boolean): Boolean {
         // The buffer is a Treiber stack on a HandlerState instance that indicates that it is buffering errors. An error
         // is added by swapping in a new Buffered instance that contains the latest error and links back to the last one.
         // The swap retries if another thread changed the HandlerState since it was read, and that retry will proceed
@@ -127,24 +139,25 @@ class ErrorHandlerImpl(
         while (true) {
             when (val state = handlerState.get()) {
                 // Drop the error if the handler is closed
-                HandlerState.Closed -> return
+                HandlerState.Closed -> return false
 
                 // Once the handler is recording, record the error directly rather than buffering it
                 is HandlerState.Recording -> {
                     if (!reserved || limiter.tryAcquire(snapshot)) {
                         record(state.recorder, snapshot)
                     }
-                    return
+                    return true
                 }
 
                 // Still buffering: push the error on top of what is buffered so far, or drop it if the buffer is full
                 is HandlerState.Buffering -> {
                     val capacity = if (snapshot.type == SdkErrorType.ErrorSinkFail) limit + 1 else limit
                     if (state.size >= capacity) {
-                        return
+                        return false
                     }
+                    beforeStep("buffer")
                     if (handlerState.compareAndSet(state, HandlerState.Buffered(snapshot, state))) {
-                        return
+                        return true
                     }
                 }
             }
@@ -157,21 +170,34 @@ class ErrorHandlerImpl(
             return
         }
         entryPoint("Failed to drain SDK errors") {
-            val recording = HandlerState.Recording(sink)
-            while (true) {
-                val current = handlerState.get()
-                if (current === HandlerState.Closed) {
-                    return
-                }
+            try {
+                drainOnce(sink)
+            } catch (exc: Throwable) {
+                drainOnce(sink)
+                throw exc
+            }
+        }
+    }
 
-                // Swap whatever was read for Recording, taking the buffered errors with it. From this point on, no thread
-                // can add to that buffer, and new errors bypass the buffer and are recorded directly if the handler hasn't
-                // been closed. The swap fails if another thread changed the state since it was read, and the loop retries
-                // against the new state. Once it succeeds, the errors it took are recorded and the drain returns.
-                if (handlerState.compareAndSet(current, recording)) {
-                    (current as? HandlerState.Buffered)?.let { recordBufferedErrors(it, sink) }
-                    return
-                }
+    /**
+     * If this fails before taking the buffer, the buffer is kept for a later drain.
+     */
+    private fun drainOnce(sink: ErrorRecorder) {
+        beforeStep("drain")
+        val recording = HandlerState.Recording(sink)
+        while (true) {
+            val current = handlerState.get()
+            if (current === HandlerState.Closed) {
+                return
+            }
+
+            // Swap whatever was read for Recording, taking the buffered errors with it. From this point on, no thread
+            // can add to that buffer, and new errors bypass the buffer and are recorded directly if the handler hasn't
+            // been closed. The swap fails if another thread changed the state since it was read, and the loop retries
+            // against the new state. Once it succeeds, the errors it took are recorded and the drain returns.
+            if (handlerState.compareAndSet(current, recording)) {
+                (current as? HandlerState.Buffered)?.let { recordBufferedErrors(it, sink) }
+                return
             }
         }
     }
@@ -184,8 +210,9 @@ class ErrorHandlerImpl(
 
     override fun close() {
         entryPoint("Failed to close error handler") {
-            handlerState.set(HandlerState.Closed)
-            awaitRecordsInFlight()
+            if (handlerState.getAndSet(HandlerState.Closed) !== HandlerState.Closed) {
+                awaitRecordsInFlight()
+            }
         }
     }
 
@@ -206,9 +233,8 @@ class ErrorHandlerImpl(
      * Records the errors buffered up to [newest], oldest first, with the [sink] the drain was invoked with.
      */
     private fun recordBufferedErrors(newest: HandlerState.Buffered, sink: ErrorRecorder) {
-        generateSequence(newest) { it.previous as? HandlerState.Buffered }.toList().asReversed().forEach { error ->
-            record(sink, error.snapshot)
-        }
+        (newest.previous as? HandlerState.Buffered)?.let { recordBufferedErrors(it, sink) }
+        record(sink, newest.snapshot)
     }
 
     /**
@@ -219,8 +245,9 @@ class ErrorHandlerImpl(
      */
     private fun record(sink: ErrorRecorder, snapshot: SdkErrorSnapshot) {
         recordsInFlight.incrementAndGet()
-        inSink.set(true)
         try {
+            beforeStep("record")
+            inSink.set(true)
             if (handlerState.get() === HandlerState.Closed) {
                 return
             }

@@ -1,6 +1,7 @@
 package io.embrace.android.embracesdk.internal.logging
 
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertTrue
 import org.junit.Test
 
 internal class ThrowableSnapshotterTest {
@@ -140,6 +141,30 @@ internal class ThrowableSnapshotterTest {
     fun `frames are capped at 200`() {
         val exc = CustomException(Array(10_000) { frame })
         assertEquals(200, snapshot(exc).top.frames.size)
+    }
+
+    @Test
+    fun `frames with huge class names are capped at 512 chars`() {
+        val huge = "a".repeat(1024 * 1024)
+        val exc = CustomException(Array(200) { StackTraceElement(huge, "b", "A.kt", 1) })
+        val frames = snapshot(exc).top.frames
+        assertEquals(200, frames.size)
+        assertTrue(frames.all { it == "a".repeat(512) })
+    }
+
+    @Test
+    fun `a capped frame matches the start of toString`() {
+        val className = "a".repeat(510)
+        val elements = listOf(
+            StackTraceElement(className, "b", "A.kt", 1),
+            StackTraceElement(className, "b", "A.kt", -1),
+            StackTraceElement(className, "b", null, 1),
+            StackTraceElement(className, "b", "A.kt", -2),
+            StackTraceElement("A", "b".repeat(1024), "A.kt", 1),
+            StackTraceElement("A", "b", "c".repeat(1024), 1),
+        )
+        val frames = snapshot(CustomException(elements.toTypedArray())).top.frames
+        assertEquals(elements.map { it.toString().take(512) }, frames)
     }
 
     @Test

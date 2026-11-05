@@ -8,6 +8,7 @@ import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
+import java.io.InterruptedIOException
 import java.lang.ref.WeakReference
 import java.util.concurrent.ConcurrentLinkedQueue
 import java.util.concurrent.CountDownLatch
@@ -156,6 +157,49 @@ internal class ErrorHandlerImplTest {
         val items = mutableListOf(1, 2, 3)
         handler.guardSdkCodeEach(type, items) { items.add(it) }
         assertEquals(ConcurrentModificationException::class.java.name, errors.single().first.className)
+    }
+
+    @Test
+    fun `guardSdkCodeEach guards an iterator that throws`() {
+        handler.drain(sink)
+        val items = Iterable<Int> { throw IllegalStateException("iterator") }
+        handler.guardSdkCodeEach(type, items) { }
+        assertEquals("iterator", errors.single().first.message)
+    }
+
+    @Test
+    fun `guardSdkCodeEach guards a sequence that throws in next`() {
+        handler.drain(sink)
+        val visited = mutableListOf<Int>()
+        val items = sequenceOf(1, 2).map {
+            check(it != 2) { "next" }
+            it
+        }.asIterable()
+        handler.guardSdkCodeEach(type, items) { visited.add(it) }
+        assertEquals(listOf(1), visited)
+        assertEquals("next", errors.single().first.message)
+    }
+
+    @Test
+    fun `guards return normally when trackSdkError throws`() {
+        val throwing = object : ErrorHandler by handler {
+            override fun trackSdkError(type: SdkErrorType, throwable: Throwable) = error("track")
+        }
+        assertEquals(0, throwing.guardSdkCode(type, 0) { error("action") })
+        throwing.guardSdkCodeEach(type, listOf(1)) { error("action") }
+        throwing.guardSdkCodeEach(type, Iterable<Int> { error("iterator") }) { }
+    }
+
+    @Test
+    fun `guards restore the interrupt status after an InterruptedIOException`() {
+        try {
+            handler.guardSdkCode(type) { throw InterruptedIOException() }
+            assertTrue(Thread.interrupted())
+            handler.guardSdkCode(type) { error("not an interrupt") }
+            assertFalse(Thread.interrupted())
+        } finally {
+            Thread.interrupted()
+        }
     }
 
     @Test

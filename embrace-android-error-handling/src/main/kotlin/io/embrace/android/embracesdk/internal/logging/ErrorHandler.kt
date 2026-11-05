@@ -1,5 +1,7 @@
 package io.embrace.android.embracesdk.internal.logging
 
+import java.io.InterruptedIOException
+
 /**
  * Handles errors for all code in the SDK. It achieves this by wrapping operations in try-catch. If [Throwable] is thrown unexpectedly
  * then for SDK code [guardSdkCode] will report internal diagnostics, and for user-supplied code [guardUserCode] will log a warning.
@@ -39,14 +41,14 @@ interface ErrorHandler : AutoCloseable {
 
 /**
  * Runs SDK code safely, returning [default] if it throws. The [Throwable] is tracked as an SDK error of
- * [type]. [SdkErrorType.Ignored] reports nothing. An [InterruptedException] restores the thread's interrupt status.
+ * [type]. [SdkErrorType.Ignored] reports nothing. An interrupt restores the thread's interrupt status.
  */
 inline fun <T> ErrorHandler.guardSdkCode(type: SdkErrorType, default: T, action: () -> T): T = try {
     action()
 } catch (exc: Throwable) {
-    trackSdkError(type, exc)
-    if (exc is InterruptedException) {
-        Thread.currentThread().interrupt()
+    try {
+        onGuardFailure(type, exc)
+    } catch (_: Throwable) {
     }
     default
 }
@@ -59,14 +61,41 @@ inline fun ErrorHandler.guardSdkCode(type: SdkErrorType, action: () -> Unit): Un
 
 /**
  * Runs [action] for each of [items], guarding each call separately so one failure doesn't skip the rest.
- * [ConcurrentModificationException] thrown whilst iterating is also guarded.
+ * A [Throwable] thrown whilst iterating is also guarded.
  */
 inline fun <T> ErrorHandler.guardSdkCodeEach(type: SdkErrorType, items: Iterable<T>, action: (T) -> Unit) {
     try {
         items.forEach { item -> guardSdkCode(type) { action(item) } }
-    } catch (exc: ConcurrentModificationException) {
-        trackSdkError(type, exc)
+    } catch (exc: Throwable) {
+        try {
+            onGuardFailure(type, exc)
+        } catch (_: Throwable) {
+        }
     }
+}
+
+/**
+ * Tracks [exc] and restores the interrupt status if it is an interrupt. Never throws.
+ */
+@PublishedApi
+internal fun ErrorHandler.onGuardFailure(type: SdkErrorType, exc: Throwable) {
+    try {
+        trackSdkError(type, exc)
+    } catch (_: Throwable) {
+    }
+    try {
+        if (isInterrupt(exc)) {
+            Thread.currentThread().interrupt()
+        }
+    } catch (_: Throwable) {
+    }
+}
+
+private fun isInterrupt(exc: Throwable): Boolean {
+    if (exc is InterruptedException || exc is InterruptedIOException) {
+        return true
+    }
+    return false
 }
 
 /**

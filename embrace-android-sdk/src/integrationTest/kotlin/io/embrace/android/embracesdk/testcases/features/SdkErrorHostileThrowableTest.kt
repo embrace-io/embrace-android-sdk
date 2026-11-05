@@ -99,6 +99,19 @@ internal class SdkErrorHostileThrowableTest(
     }
 
     @Test
+    fun `huge frame strings are capped`() {
+        val huge = "a".repeat(1024 * 1024)
+        val exc = RuntimeException("huge frames").apply {
+            stackTrace = Array(200) { StackTraceElement(huge, "b", "Hostile.kt", 1) }
+        }
+        verifyHostileThrowable(exc) { attrs ->
+            val lines = attrs.stacktraceLines()
+            assertEquals(200, lines.size)
+            assertTrue(lines.all { it == "a".repeat(512) })
+        }
+    }
+
+    @Test
     fun `huge message with control chars and lone surrogates is capped`() {
         val unit = "a\u0000\u0007\n\r\t\u001b\uD800b\uDC00"
         val message = unit.repeat(1024 * 1024 / unit.length)

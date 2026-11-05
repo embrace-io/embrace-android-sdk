@@ -20,7 +20,7 @@ kotlinxSerialization = "1.8.1"
 # which can't read 2.1 module metadata
 kotlinxSerializationGradlePlugin = "1.7.3"
 protobuf = "4.36.2"
-wire = "7.1.0"
+wire = "7.1.2"
 # Keep in step with the okio version wire-runtime brings
 okio = "3.18.2"
 profileinstaller = "1.4.1"

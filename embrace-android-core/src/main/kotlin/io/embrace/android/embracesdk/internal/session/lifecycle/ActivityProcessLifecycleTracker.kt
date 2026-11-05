@@ -30,6 +30,7 @@ import io.embrace.android.embracesdk.internal.injection.getSystemServiceSafe
 import io.embrace.android.embracesdk.internal.logging.ErrorHandler
 import io.embrace.android.embracesdk.internal.logging.SdkErrorType
 import io.embrace.android.embracesdk.internal.logging.guardSdkCode
+import java.lang.ref.WeakReference
 
 /**
  * Reports process state transitions by counting started activities, without depending on
@@ -39,8 +40,8 @@ import io.embrace.android.embracesdk.internal.logging.guardSdkCode
  * There are a few differences:
  *
  * 1. Tracking begins when the class is constructed, rather than in `InitializationProvider`. We attempt to
- * address this by setting the initial process state via ActivityManager if Context is an activity at init. Otherwise,
- * we assume we're in the background.
+ *    address this by setting the initial process state from the process importance ActivityManager reports,
+ *    falling back to whether Context is a live activity when the importance can't be read.
  * 2. The implementation is simplified as several concepts/classes are not relevant to our SDK
  */
 class ActivityProcessLifecycleTracker(
@@ -58,15 +59,16 @@ class ActivityProcessLifecycleTracker(
     private val lock = Any()
 
     /**
-     * Number of activities whose start we have observed and whose stop we have not.
+     * The identity hash codes of the activities whose start we have observed and whose stop we have not. The hash code stands in
+     * for the activity's identity, so an activity whose stop is never reported isn't held.
      */
-    private var startedCounter = 0
+    private val startedActivities = mutableSetOf<Int>()
 
     /**
-     * Whether an activity was already started when this class was constructed. It absorbs the one
-     * unmatched stop that will eventually be reported for that activity.
+     * A weakly held reference to an activity taken to be already started when this class was constructed, which absorbs the one
+     * unmatched stop that will eventually be reported for it.
      */
-    private var unobservedStartedActivity = false
+    private var unobservedStartedActivity: WeakReference<Activity>? = null
 
     @Volatile
     private var foreground = false
@@ -88,12 +90,17 @@ class ActivityProcessLifecycleTracker(
     }
 
     init {
-        // resolve the initial process state here. If Context is an Activity it indicates misuse of the SDK
-        // that would suggest the process could be in the foreground. Otherwise, we assume Application#onCreate()
-        // or a ContentProvider, that would mean we're in the background.
-        val hasLiveActivity = startupContext.findLiveActivity() != null
-        foreground = hasLiveActivity || startupContext.isForegroundProcess()
-        unobservedStartedActivity = foreground
+        // Only track an activity as a startup activity if the process is in the foreground
+        val liveActivity = startupContext.findLiveActivity()
+        val foregroundProcess = startupContext.isForegroundProcess() ?: (liveActivity != null)
+        synchronized(lock) {
+            foreground = foregroundProcess
+            unobservedStartedActivity = when {
+                !foregroundProcess -> null
+                liveActivity != null -> WeakReference(liveActivity)
+                else -> UNKNOWN_ACTIVITY
+            }
+        }
     }
 
     override fun getProcessState(): ProcessState = when {
@@ -120,13 +127,21 @@ class ActivityProcessLifecycleTracker(
             application.unregisterActivityLifecycleCallbacks(this)
         }
         runCatching { removeCallbacks(backgroundRunnable) }
+        synchronized(lock) {
+            startedActivities.clear()
+            unobservedStartedActivity = null
+        }
     }
 
     override fun onActivityStarted(activity: Activity) {
         removeCallbacks(backgroundRunnable)
 
         val transitioned = synchronized(lock) {
-            startedCounter++
+            startedActivities.add(System.identityHashCode(activity))
+            val reserved = unobservedStartedActivity
+            if (reserved === UNKNOWN_ACTIVITY || reserved?.get() === activity) {
+                unobservedStartedActivity = null
+            }
             val wasBackground = !foreground
             foreground = true
             wasBackground
@@ -138,10 +153,8 @@ class ActivityProcessLifecycleTracker(
 
     override fun onActivityStopped(activity: Activity) {
         val debounce = synchronized(lock) {
-            if (startedCounter > 0) {
-                startedCounter--
-            } else {
-                unobservedStartedActivity = false
+            if (!startedActivities.remove(System.identityHashCode(activity))) {
+                unobservedStartedActivity = null
             }
             foreground && startedActivityCount() == 0
         }
@@ -158,9 +171,26 @@ class ActivityProcessLifecycleTracker(
 
     override fun onActivitySaveInstanceState(activity: Activity, outState: Bundle) {}
 
-    override fun onActivityDestroyed(activity: Activity) {}
+    override fun onActivityDestroyed(activity: Activity) {
+        val debounce = synchronized(lock) {
+            val released = unobservedStartedActivity?.get() === activity
+            if (released) {
+                unobservedStartedActivity = null
+            }
+            released && foreground && startedActivityCount() == 0
+        }
+        if (debounce) {
+            postDelayed(backgroundRunnable, BACKGROUND_DEBOUNCE_MS)
+        }
+    }
 
-    private fun startedActivityCount(): Int = startedCounter + if (unobservedStartedActivity) 1 else 0
+    private fun startedActivityCount(): Int =
+        startedActivities.size +
+            if (unobservedStartedActivity != null) {
+                1
+            } else {
+                0
+            }
 
     /**
      * Walks the [ContextWrapper] chain looking for an activity that has neither finished nor been
@@ -179,14 +209,14 @@ class ActivityProcessLifecycleTracker(
     }
 
     /**
-     * Fallback for when the SDK was not started from an activity. Only IMPORTANCE_FOREGROUND counts -
-     * a process running a foreground service is not showing any UI.
+     * Whether the process importance is IMPORTANCE_FOREGROUND, or null if it can't be read. A process running a foreground service
+     * is not showing any UI, so only IMPORTANCE_FOREGROUND counts.
      */
-    private fun Context?.isForegroundProcess(): Boolean = runCatching {
+    private fun Context?.isForegroundProcess(): Boolean? = runCatching {
         val pid = Process.myPid()
         val process = this?.let(runningAppProcesses)?.firstOrNull { it.pid == pid }
-        process?.importance == ActivityManager.RunningAppProcessInfo.IMPORTANCE_FOREGROUND
-    }.getOrDefault(false)
+        process?.let { it.importance == ActivityManager.RunningAppProcessInfo.IMPORTANCE_FOREGROUND }
+    }.getOrNull()
 
     internal companion object {
 
@@ -194,5 +224,10 @@ class ActivityProcessLifecycleTracker(
          * Matches the TIMEOUT_MS value used by androidx's ProcessLifecycleOwner.
          */
         const val BACKGROUND_DEBOUNCE_MS = 700L
+
+        /**
+         * Stub used when the process is in the foreground but the activity cannot be found.
+         */
+        private val UNKNOWN_ACTIVITY = WeakReference<Activity>(null)
     }
 }

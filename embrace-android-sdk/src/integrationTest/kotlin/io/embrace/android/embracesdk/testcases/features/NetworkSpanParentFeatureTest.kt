@@ -90,7 +90,7 @@ internal class NetworkSpanParentFeatureTest(
     }
 
     private fun EmbraceActionInterface.startRequest(url: String): String =
-        checkNotNull(findDataSource<NetworkRequestDataSource>().startRequest(RequestStartData(url, "GET", clock.now())))
+        checkNotNull(findDataSource<NetworkRequestDataSource>().startRequest(RequestStartData(url, "GET", clock.now()))).id
 
     private fun EmbraceActionInterface.endRequest(id: String, url: String) {
         findDataSource<NetworkRequestDataSource>().endRequest(RequestEndData(id, url, clock.now(), clock.now(), 200))

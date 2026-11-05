@@ -178,7 +178,7 @@ class NetworkCaptureDataSourceImpl internal constructor(
 
         val rulesToRemove = mutableSetOf<NetworkCaptureRuleRemoteConfig>()
         applicableRules.forEach { rule ->
-            if (isNetworkCaptureRuleOver(rule.id)) {
+            if (isNetworkCaptureRuleOver(rule)) {
                 rulesToRemove.add(rule)
             }
         }
@@ -189,8 +189,8 @@ class NetworkCaptureDataSourceImpl internal constructor(
         return applicableRules
     }
 
-    private fun isNetworkCaptureRuleOver(id: String): Boolean {
-        return ruleStore.remaining(id, 1) <= 0
+    private fun isNetworkCaptureRuleOver(rule: NetworkCaptureRuleRemoteConfig): Boolean {
+        return ruleStore.remaining(rule.id, rule.maxCount) <= 0
     }
 
     private fun getNetworkPayload(capturedNetworkCall: NetworkCapturedCall): NetworkCapturedCall? {

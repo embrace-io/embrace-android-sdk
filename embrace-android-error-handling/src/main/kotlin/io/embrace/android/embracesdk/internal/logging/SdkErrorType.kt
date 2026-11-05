@@ -93,6 +93,8 @@ sealed class SdkErrorType(private val severity: Severity) {
     object DeliveredAeiWriteFail : SdkErrorType(ERROR)
     object PersistedSdkStateLoadFail : SdkErrorType(ERROR)
     object PersistedSdkStateWriteFail : SdkErrorType(ERROR)
+    object NetworkCaptureLoadFail : SdkErrorType(ERROR)
+    object NetworkCaptureWriteFail : SdkErrorType(ERROR)
     object OrphanSweepFail : SdkErrorType(ERROR)
     object StorageMigrationFail : SdkErrorType(ERROR)
 

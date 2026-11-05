@@ -1,0 +1,10 @@
+syntax = "proto3";
+
+package embrace.storage;
+
+option java_package = "io.embrace.android.embracesdk.internal.store.file";
+
+// How many times each network capture rule has been applied. Rules that haven't been applied have no entry.
+message NetworkCaptureProto {
+  map<string, int32> used = 1;
+}

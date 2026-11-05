@@ -97,13 +97,32 @@ internal class CrashFileMarkerImplTest {
     }
 
     @Test
-    fun `test testGetAndCleanMarker() verifies if marker exists and cleans the marker`() {
+    fun `getAndCleanMarker reports the last run's marker once and deletes it`() {
         assertEquals(false, testFile.exists())
         assertEquals(false, crashMarker.getAndCleanMarker())
         crashMarker.mark()
         assertEquals(true, testFile.exists())
-        assertEquals(true, crashMarker.getAndCleanMarker())
-        assertEquals(false, crashMarker.getAndCleanMarker())
+
+        val nextLaunch = CrashFileMarkerImpl(markerLazyFile, errorHandler)
+        assertEquals(true, nextLaunch.getAndCleanMarker())
+        assertEquals(true, nextLaunch.getAndCleanMarker())
         assertEquals(false, testFile.exists())
+    }
+
+    @Test
+    fun `a crash before the last run's marker is read keeps both answers`() {
+        crashMarker.mark()
+
+        assertEquals(false, crashMarker.getAndCleanMarker())
+        assertEquals(true, testFile.exists())
+    }
+
+    @Test
+    fun `the last run's marker is still reported when this run crashes before reading it`() {
+        testFile.writeText("1")
+        crashMarker.mark()
+
+        assertEquals(true, crashMarker.getAndCleanMarker())
+        assertEquals(true, testFile.exists())
     }
 }

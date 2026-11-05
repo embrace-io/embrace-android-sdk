@@ -12,7 +12,10 @@ class LastRunCrashVerifier(
     private val crashFileMarker: CrashFileMarker,
 ) {
 
+    @Volatile
     private var didLastRunCrashFuture: Future<Boolean>? = null
+
+    @Volatile
     private var didLastRunCrash: Boolean? = null
 
     /**

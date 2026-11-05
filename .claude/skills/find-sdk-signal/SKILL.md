@@ -5,90 +5,81 @@ description: Use when asked what the Android SDK actually sends for a signal (sp
 
 # Find exactly what the SDK emits for a signal
 
-A read-only lookup: what the SDK sends for X, answered from the code, for any consumer (docs, dashboards, support).
+A read-only lookup, answered from the code. The SDK is a fixed input: if a cleaner attribute would help, say so,
+don't plan an SDK change.
 
 > Lines are from `origin/main` `1a9b23546` (2026-10-30). Module prefixes `embrace-android-` are shortened.
 
-## Read-only
+## 1. Settle the shape first
 
-This is a lookup, not a change. When the question comes from work outside the SDK, the SDK is a fixed input:
-if a cleaner attribute would help, note it for the user rather than planning an SDK change.
+The shape decides everything downstream (which go code, which gates), so report it before anything else.
 
-## The answer to produce
+| Shape | How to tell | On the timeline gate chain? |
+|---|---|---|
+| Public root span | `TelemetryDestination.startSpanCapture` with no parent (`instrumentation-api/.../TelemetryDestination.kt:43-52`) | Yes |
+| Child span | Has a parent. Usually keeps the default `emb.type=perf`, not the root's type: report it separately | Yes, under its root |
+| Session-part event | An event on the session span, carrying `emb.type` (`core/.../TelemetryDestinationImpl.kt:182-194`). Caps: 100 custom breadcrumbs, 1000 others | Yes |
+| Session-span attribute | A key on the session span itself. Catalog: `semconv/src/main/semconv/session.yaml`, constants in `semconv/.../EmbSessionAttributes.kt` | Yes |
+| State span | `emb.type=state`, `transition` events carrying `emb.state.new_value` (`TelemetryDestinationImpl.kt:261-283`) | Yes |
+| Private span | `emb.private=true` (`otel/.../OtelSpanStartArgs.kt:35-36`) | No: never served. Stop and say so |
+| Log | Sent to `/v2/logs`, not `/v2/spans` | No: not on the span gate chain. Stop and say so |
 
-| Field | Where to find it |
+**GOOD:** `SHAPE: session-span attribute emb.user_session_termination_reason (EmbSessionAttributes.kt:260), set only on the part with emb.is_final_session_part`
+**BAD:** `SHAPE: span`. A session-span attribute is never its own span row: go reads it as a field in the *existing*
+session mapper, so the downstream path is "add a field to the session mapper", not "new mapper".
+
+## 2. Copy the key from the catalog, never from a near match
+
+Several session keys have near-identical names. Grep the catalog for the meaning, then copy the exact key.
+
+**GOOD:** "why the user session ended" → `emb.user_session_termination_reason` (`EmbSessionAttributes.kt:260`):
+whole-user-session, on the final part only.
+**BAD:** "why the user session ended" → `emb.session_end_type` (`:89`): that is per part. Round 2's discover run
+took it and planned the wrong go field (`EndMethod`).
+
+**GOOD:** "thermal state" → `ThermalStateDataSource.kt:79-94`, span `emb-thermal-state`, `emb.type=perf.thermal_state`.
+**BAD:** "thermal state" → `startup-trace/.../SdkInitAttributeKeys.kt:20-27` (`thermal-status`): context on the
+private `sdk-init` span, not the customer signal. `grep thermal` finds it first.
+
+## 3. The rest of the answer
+
+| Field | Where |
 |---|---|
-| `emb.type` | `instrumentation-schema/.../schema/EmbType.kt` is the full list (24 types + `Custom`). `SchemaType.kt` is **not** complete: `ui_load` and `thread_blockage` are missing |
-| Span name and attributes | The `SchemaType` entry, else the data source or emitter. SDK span names get an `emb-` prefix (`internal` defaults to true, `SpanService.kt:43`) |
-| Shape | Root span, child span, session-part event, session-span attribute, or private span (below) |
-| Snapshot? | Whether the current state stays open and is sent as a snapshot on the session payload |
-| Values | Value types and ranges as the code enforces them, not as examples suggest |
-| Gates | API level (`@RequiresApi`, the instrumentation provider), remote config flag and its default, caps |
-| First SDK version | `git log --diff-filter=A --format=%h -- <data source file>`, then `git tag --contains <sha> \| sort -V \| head -1` |
+| `emb.type` | `instrumentation-schema/.../EmbType.kt` (24 + `Custom`). `SchemaType.kt` is incomplete: no `ui_load`, `thread_blockage` |
+| Span name, attributes | The `SchemaType` entry, else the data source. SDK spans get an `emb-` prefix (`SpanService.kt:43`) |
+| Snapshot? | Whether the open state is sent as a snapshot on the session payload |
+| Values | Types and ranges the code enforces, not what examples suggest |
+| Gates | API level (`@RequiresApi`, the provider), remote config flag and default, caps |
+| First SDK version | `git log --diff-filter=A --format=%h -- <data source>`, then `git tag --contains <sha> \| sort -V \| head -1`. Report the first version of the span form, not an older legacy form |
 
-## Shapes
+If the information lives only in the span name (ui_load's `emb-<Activity>-<cold|hot>-time-to-initial-display`,
+`UiLoadTraceEmitter.kt:314-317`), report that a consumer must parse the name.
 
-- **Public root span:** `TelemetryDestination.startSpanCapture` with no parent starts on `context.root()`, private
-  false (`instrumentation-api/.../datasource/TelemetryDestination.kt:43-52`).
-- **Child span:** has a parent. Children usually keep the default `emb.type=perf`, not the root's type, so report a
-  child's type separately from its root's.
-- **Session-part event:** an event on the session span, carrying `emb.type` (`core/.../destination/TelemetryDestinationImpl.kt:182-194`).
-  Caps: 100 custom breadcrumbs, 1000 others (`core/.../spans/CurrentSessionPartSpanImpl.kt:118-133`), both remote-configurable.
-- **Session-span attribute:** a key on the session span itself, not an event on it. Keys are listed in
-  `semconv/src/main/semconv/session.yaml`, constants in `semconv/.../EmbSessionAttributes.kt`. Most describe one part,
-  e.g. `emb.session_end_type` (`EmbSessionAttributes.kt:89`). A few describe the whole user session and appear only on
-  its last part, the one that carries `emb.is_final_session_part` (`EmbSessionAttributes.kt:65`). Several keys have
-  near-identical names, so copy the key from the catalog before reporting it.
-- **Private:** `emb.private=true` (`otel/.../spans/OtelSpanStartArgs.kt:35-36`). Never served to the dashboard.
-- **State span:** `emb.type=state`, with `transition` events carrying `emb.state.new_value`; the event itself has no
-  `emb.type` (`TelemetryDestinationImpl.kt:261-283`, `StateDataSource.kt:145-171`).
+## 4. Gate 1: run the signal's integration test
 
-## Gate 1 check: run the signal's integration test
+Local JVM, no device. `SdkIntegrationTestRule` sends each upload to a fake API (`testframework/SdkIntegrationTestRule.kt:56-58`).
 
-Once the answer is found, check it against a running SDK. Everything runs locally on the JVM, with no device.
+1. **Find a test whose upload carries the signal.** Data source: `grep -rl <DataSourceClass> embrace-android-sdk/src/integrationTest/kotlin`.
+   Session-span attribute: grep the key and constant across `src/integrationTest`, including the JSON goldens in
+   `resources/`; a golden's file name leads to its test class. A match is not proof: check the expected attributes
+   include the key and the test doesn't assert it absent. No test: report it, gate 1 can't pass.
 
-1. Find the test: `grep -rl <DataSourceClass> embrace-android-sdk/src/integrationTest/kotlin`. These tests boot the
-   full SDK with `SdkIntegrationTestRule`, which sends each upload to a local fake API server
-   (`testframework/SdkIntegrationTestRule.kt:56-58`). If there is none, report that. Gate 1 cannot pass without one.
-   A session-span attribute has no data source class. Grep its key and its constant across
-   `embrace-android-sdk/src/integrationTest`, both the Kotlin and the JSON goldens in `resources/` (a golden's file
-   name leads to its test class), then pick a test whose assertion or golden sets the key. A match is not proof: a
-   test can upload the session span while its expected attributes leave the key out, and a test can assert the key is
-   absent.
-2. Start a local server that stores what it receives, then run that one class with forwarding on:
+   **GOOD:** termination reason → `user_session_manual_end_1.json` → `UserSessionManualEndGoldenFileTest` (its golden sets the key)
+   **BAD:** termination reason → `SessionPartIdentityTest` because grep matched it: `:103` asserts the key is *absent*
+
+2. **Run that one class with forwarding on** to a local server that stores what it receives:
 
    ```sh
    EMBRACE_IT_FORWARD_DATA_URL=<server base URL> ./gradlew :embrace-android-sdk:testDebugUnitTest \
-     --tests 'io.embrace.android.embracesdk.testcases.features.ThermalStateFeatureTest' --rerun --no-build-cache -i
+     --tests '<fully.qualified.TestClass>' --rerun --no-build-cache -i
    ```
 
-   The test framework's `DataUploadForwarder` re-posts each upload, unchanged and still gzipped, to
-   `<base>/v2/spans` or `<base>/v2/logs`, and fails the test if the server doesn't answer 2xx. `-i` shows one
-   `EMBRACE_IT_FORWARD status=...` line per upload. `--rerun --no-build-cache` because the variable isn't a Gradle
-   input. `--tests` takes the class name, which can differ from the file name: `ThermalStateTest.kt` holds
-   `ThermalStateFeatureTest`. This is a lookup check. It does not replace `./gradlew verify --continue` for a code
-   change.
-3. Save the upload from the server. Without forwarding, only golden-file tests show it (`Dump of full JSON` on a
-   mismatch, `testframework/actions/EmbracePayloadAssertionInterface.kt:349-354`). Tests that assert fields directly,
-   like `ThermalStateFeatureTest`, print nothing.
-4. Report pass or fail, the command, and the path of the saved upload.
-
-## Worked example: thermal state
-
-`instrumentation-thermal-state/.../ThermalStateDataSource.kt:79-94`: each change ends the previous span and opens
-`emb-thermal-state`, `emb.type=perf.thermal_state`, `status` = the Android code as a string. Only `null` is
-dropped, so `0` (none) is sent too. The open state is a snapshot (`ThermalStateTest.kt:100-106`). 100-state cap.
-API gate in `ThermalStateInstrumentationProvider.kt:14`. Remote config `pct_thermal_status_enabled`, default on.
-First span form: 6.8.0 (commit `d2b20938d`). The `0`–`6` range is Android's `PowerManager`, not an SDK check.
-
-## Traps
-
-| Trap | Why |
-|---|---|
-| `grep thermal` finds `startup-trace/.../SdkInitAttributeKeys.kt` (`thermal-status`, CPU %, memory) first | Performance-anomaly context on the private `sdk-init` span and cold-start `embrace-init` (`:20-27`). Not the customer signal |
-| Information only in the span name (e.g. ui_load's `emb-<Activity>-<cold\|hot>-time-to-initial-display`, `traceName` in `UiLoadTraceEmitter.kt:314-317`) | A consumer has to parse the name to get it. Report it, don't change the SDK |
-| `git log -S <Name>` reaching `first commit: 6.0.0` | A legacy non-OTel form existed earlier. Report the first version of the span form |
+   The forwarder re-posts each upload unchanged to `<base>/v2/spans` or `/v2/logs` and fails on non-2xx; `-i` prints
+   one `EMBRACE_IT_FORWARD status=...` line per upload. `--tests` takes the class name, which can differ from the
+   file: `ThermalStateTest.kt` holds `ThermalStateFeatureTest`.
+3. **Save the upload** from the server: it is gate 3's fixture. Without forwarding, only golden tests show it.
+4. **Report** pass or fail, the command, and the saved upload's path.
 
 ## Before done
 
-The gate 1 check runs one test class and changes nothing. Any code change here must pass `./gradlew verify --continue` (`AGENTS.md:15-24`).
+Gate 1 runs one class and changes nothing. Any SDK code change must pass `./gradlew verify --continue` (`AGENTS.md:15-24`).

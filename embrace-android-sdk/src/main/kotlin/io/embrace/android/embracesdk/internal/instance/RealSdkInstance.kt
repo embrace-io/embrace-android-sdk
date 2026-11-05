@@ -66,6 +66,7 @@ import io.embrace.android.embracesdk.internal.logs.attachments.AttachmentService
 import io.embrace.android.embracesdk.internal.otel.config.OtelSdkConfig
 import io.embrace.android.embracesdk.internal.otel.logs.LogSink
 import io.embrace.android.embracesdk.internal.otel.spans.SpanRepository
+import io.embrace.android.embracesdk.internal.prefs.defaultPrefsFile
 import io.embrace.android.embracesdk.internal.resurrection.PayloadResurrectionService
 import io.embrace.android.embracesdk.internal.resurrection.SessionPartReader
 import io.embrace.android.embracesdk.internal.session.id.SessionPartTracker
@@ -553,7 +554,7 @@ internal class RealSdkInstance(
                                 activityManagerProvider = {
                                     instrumentationArgs.systemService(Context.ACTIVITY_SERVICE)
                                 },
-                                prefsFileSizeProvider = { defaultPrefsFile(appContext)?.length() },
+                                prefsFileSizeProvider = { existingPrefsFile(appContext)?.length() },
                             ) {
                                 appContext.applicationInfo?.sourceDir?.let { sourceDir ->
                                     ArtOptimizationState.create(
@@ -585,10 +586,7 @@ internal class RealSdkInstance(
      *
      * Returns null if the file is absent, so a missing file is not reported.
      */
-    @Suppress("EmbraceContextDirAccess")
-    private fun defaultPrefsFile(context: Context): File? =
-        File(File(context.applicationInfo.dataDir, "shared_prefs"), "${context.packageName}_preferences.xml")
-            .takeIf(File::exists)
+    private fun existingPrefsFile(context: Context): File? = defaultPrefsFile(context).takeIf(File::exists)
 }
 
 private const val SPAN_TIMEOUT_SWEEP_INTERVAL_MS = 30_000L

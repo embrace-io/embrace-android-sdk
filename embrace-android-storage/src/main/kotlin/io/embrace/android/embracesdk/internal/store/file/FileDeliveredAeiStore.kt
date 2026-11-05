@@ -63,7 +63,17 @@ class FileDeliveredAeiStore(
     private fun write() {
         writePending.set(false)
         errorHandler.guardSdkCode(SdkErrorType.DeliveredAeiWriteFail) {
-            val proto = synchronized(lock) { base.copy(ids = loaded().toList()) }
+            writeFile(fileSystem, path, synchronized(lock) { base.copy(ids = loaded().toList()) })
+        }
+    }
+
+    companion object {
+
+        fun create(fileSystem: FileSystem, path: Path, ids: Set<String>) {
+            writeFile(fileSystem, path, DeliveredAeiProto(ids = ids.toList()))
+        }
+
+        private fun writeFile(fileSystem: FileSystem, path: Path, proto: DeliveredAeiProto) {
             fileSystem.writeAtomically(path) { DeliveredAeiCodec.encode(proto, it) }
         }
     }

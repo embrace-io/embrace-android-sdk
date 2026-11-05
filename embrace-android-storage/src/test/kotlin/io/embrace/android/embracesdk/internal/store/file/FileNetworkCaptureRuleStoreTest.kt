@@ -170,6 +170,14 @@ internal class FileNetworkCaptureRuleStoreTest {
 
     private fun readFile() = fsRule.fileSystem.read(path) { NetworkCaptureCodec.decode(this) }
 
+    @Test
+    fun `created file is read back by a store`() {
+        FileNetworkCaptureRuleStore.create(fsRule.fileSystem, path, mapOf("a" to 2, "b" to 5))
+        val store = createStore()
+        assertEquals(3, store.remaining("a", 5))
+        assertEquals(0, store.remaining("b", 5))
+    }
+
     private fun createStore() = FileNetworkCaptureRuleStore(
         fileSystem = object : ForwardingFileSystem(fsRule.fileSystem) {
             override fun atomicMove(source: Path, target: Path) {

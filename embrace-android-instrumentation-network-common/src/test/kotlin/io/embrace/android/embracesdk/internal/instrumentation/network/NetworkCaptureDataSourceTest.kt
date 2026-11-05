@@ -160,6 +160,13 @@ internal class NetworkCaptureDataSourceTest {
     }
 
     @Test
+    fun `test capture rule with zero maxCount never applies`() {
+        cfg = RemoteConfig(networkCaptureRules = setOf(getDefaultRule(maxCount = 0)))
+        val result = getService().getNetworkCaptureRules("https://embrace.io/changelog", "GET")
+        assertEquals(0, result.size)
+    }
+
+    @Test
     fun `test capture rule matches URL and method `() {
         val rule = getDefaultRule()
         cfg = RemoteConfig(networkCaptureRules = setOf(rule))

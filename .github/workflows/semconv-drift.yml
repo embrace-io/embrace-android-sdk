@@ -75,7 +75,7 @@ jobs:
           version: ${{ steps.weaver.outputs.version }}
 
       - name: Regenerate semantic-convention source code
-        run: ./gradlew :embrace-android-semconv:generateEmbraceSemanticConventions --stacktrace
+        run: ./gradlew :embrace-android-semconv:generateEmbraceSemanticConventions --stacktrace --warn
 
       - name: Check committed generated source code is in sync
         # Pinned to the SHA of the embrace-semconv v0.2.0 release.

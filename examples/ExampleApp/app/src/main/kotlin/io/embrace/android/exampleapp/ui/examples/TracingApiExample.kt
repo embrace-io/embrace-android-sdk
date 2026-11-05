@@ -29,8 +29,8 @@ fun TracingApiExample() {
     }
 
     Button(onClick = {
-        val span = Embrace.startSpan("my-span") ?: return@Button
-        val childSpan = Embrace.startSpan("my-subspan", span) ?: return@Button
+        val span = Embrace.startSpan("my-span")
+        val childSpan = Embrace.startSpan("my-subspan", span)
 
         // Do some work
         Thread.sleep(50)

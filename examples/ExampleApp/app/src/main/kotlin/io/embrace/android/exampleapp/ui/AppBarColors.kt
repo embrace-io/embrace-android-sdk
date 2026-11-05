@@ -13,5 +13,6 @@ fun appBarColors() = TopAppBarColors(
     scrolledContainerColor = EmbraceBlack,
     navigationIconContentColor = EmbraceBlack,
     titleContentColor = Color.White,
+    subtitleContentColor = Color.White,
     actionIconContentColor = Color.White,
 )

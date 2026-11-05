@@ -26,7 +26,7 @@ dependencies {
 }
 
 buildConfig {
-    val version: String by project
+    val version = providers.gradleProperty("version").get()
     buildConfigField("String", "VERSION", "\"$version\"")
 }
 

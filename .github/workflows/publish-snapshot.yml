@@ -52,4 +52,4 @@ jobs:
 
       - name: Publish to Maven Central
         run: |
-          ./gradlew publishToMavenCentral --no-configuration-cache --stacktrace
+          ./gradlew publishToMavenCentral --no-configuration-cache --stacktrace --warn

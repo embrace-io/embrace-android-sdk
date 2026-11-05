@@ -25,3 +25,7 @@ dependencies {
     testImplementation(libs.lint.tests)
     testImplementation(libs.junit)
 }
+
+lint {
+    quiet = true
+}

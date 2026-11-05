@@ -31,8 +31,6 @@ import io.embrace.android.embracesdk.internal.logging.ErrorHandler
 import io.embrace.android.embracesdk.internal.logging.SdkErrorType
 import io.embrace.android.embracesdk.internal.logging.guardSdkCode
 import java.lang.ref.WeakReference
-import java.util.Collections
-import java.util.IdentityHashMap
 
 /**
  * Reports process state transitions by counting started activities, without depending on
@@ -61,9 +59,10 @@ class ActivityProcessLifecycleTracker(
     private val lock = Any()
 
     /**
-     * The activities whose start we have observed and whose stop we have not, by identity.
+     * The identity hash codes of the activities whose start we have observed and whose stop we have not. The hash code stands in
+     * for the activity's identity, so an activity whose stop is never reported isn't held.
      */
-    private val startedActivities: MutableSet<Activity> = Collections.newSetFromMap(IdentityHashMap())
+    private val startedActivities = mutableSetOf<Int>()
 
     /**
      * A weakly held reference to an activity taken to be already started when this class was constructed, which absorbs the one
@@ -138,7 +137,7 @@ class ActivityProcessLifecycleTracker(
         removeCallbacks(backgroundRunnable)
 
         val transitioned = synchronized(lock) {
-            startedActivities.add(activity)
+            startedActivities.add(System.identityHashCode(activity))
             val reserved = unobservedStartedActivity
             if (reserved === UNKNOWN_ACTIVITY || reserved?.get() === activity) {
                 unobservedStartedActivity = null
@@ -154,7 +153,7 @@ class ActivityProcessLifecycleTracker(
 
     override fun onActivityStopped(activity: Activity) {
         val debounce = synchronized(lock) {
-            if (!startedActivities.remove(activity)) {
+            if (!startedActivities.remove(System.identityHashCode(activity))) {
                 unobservedStartedActivity = null
             }
             foreground && startedActivityCount() == 0

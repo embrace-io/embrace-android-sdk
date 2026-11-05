@@ -63,7 +63,7 @@ class FilePersistedSdkStateStore(
     }
 
     private fun write() {
-        writePending.set(false)
+        writePending.lazySet(false)
         errorHandler.guardSdkCode(SdkErrorType.PersistedSdkStateWriteFail) {
             val proto = synchronized(lock) { snapshot().toProto(base) }
             fileSystem.writeAtomically(path) { PersistedSdkStateCodec.encode(proto, it) }

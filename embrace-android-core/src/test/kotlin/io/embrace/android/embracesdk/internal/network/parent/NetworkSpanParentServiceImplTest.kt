@@ -5,7 +5,9 @@ import io.embrace.android.embracesdk.fakes.FakeErrorHandler
 import io.embrace.android.embracesdk.fakes.FakeInternalTelemetryService
 import io.embrace.android.embracesdk.fakes.FakeSpanContext
 import io.embrace.android.embracesdk.fakes.FakeSpanService
+import io.embrace.android.embracesdk.internal.network.http.MutableHttpRequestInfoImpl
 import io.embrace.android.embracesdk.internal.telemetry.AppliedLimitType
+import io.embrace.android.embracesdk.network.NetworkSpanParent
 import io.embrace.android.embracesdk.semconv.EmbNetworkSpanParentAttributes
 import io.opentelemetry.kotlin.tracing.SpanContext
 import io.opentelemetry.kotlin.tracing.createSpanContext
@@ -27,6 +29,7 @@ internal class NetworkSpanParentServiceImplTest {
     private lateinit var telemetryService: FakeInternalTelemetryService
     private lateinit var service: NetworkSpanParentServiceImpl
     private var userSessionId = "session-1"
+    private val request = MutableHttpRequestInfoImpl("GET", "https://example.com")
 
     @Before
     fun setUp() {
@@ -233,6 +236,93 @@ internal class NetworkSpanParentServiceImplTest {
         thread { service.set(context) }.join()
         assertEquals(context.spanId, currentParentSpanId())
     }
+
+    @Test
+    fun `the app's provider is given the network span parent`() {
+        val received = mutableListOf<SpanContext?>()
+        service.setAppProvider { _, currentParent ->
+            received.add(currentParent)
+            NetworkSpanParent.USE_DEFAULT
+        }
+        service.appDecision(request)
+        val parent = untrackedContext()
+        service.set(parent)
+        service.appDecision(request)
+
+        assertEquals(listOf(null, parent), received)
+    }
+
+    @Test
+    fun `the decision of the most recently registered app provider applies`() {
+        assertSame(NetworkSpanParent.USE_DEFAULT, service.appDecision(request))
+        val chosen = NetworkSpanParent.parent(untrackedContext())
+        service.setAppProvider { _, _ -> chosen }
+        assertSame(chosen, service.appDecision(request))
+        service.setAppProvider { _, _ -> NetworkSpanParent.NO_PARENT }
+        assertSame(NetworkSpanParent.NO_PARENT, service.appDecision(request))
+    }
+
+    @Test
+    fun `an app provider that throws is treated as the default and reported`() {
+        service.setAppProvider { _, _ -> throw IllegalStateException("provider failed") }
+
+        assertSame(NetworkSpanParent.USE_DEFAULT, service.appDecision(request))
+        assertEquals(
+            "App-supplied code threw an exception (NetworkSpanParentProviderFail)",
+            errorHandler.warningMessages.single().msg,
+        )
+    }
+
+    @Test
+    fun `an app provider that returns null is treated as the default`() {
+        service.setAppProvider { _, _ -> javaNull() }
+        assertSame(NetworkSpanParent.USE_DEFAULT, service.appDecision(request))
+    }
+
+    @Test
+    fun `invalid IDs from the app provider are treated as the default and warned about once`() {
+        service.setAppProvider { _, _ -> NetworkSpanParent.parent(FakeSpanContext()) }
+        assertSame(NetworkSpanParent.USE_DEFAULT, service.appDecision(request))
+        service.setAppProvider { _, _ ->
+            object : NetworkSpanParent {
+                override val traceId = "4BF92F3577B34DA6A3CE929D0E0E4736"
+                override val spanId = "00f067aa0ba902b7"
+            }
+        }
+        assertSame(NetworkSpanParent.USE_DEFAULT, service.appDecision(request))
+        assertEquals(1, errorHandler.warningMessages.size)
+    }
+
+    @Test
+    fun `a request the app provider makes on the same thread is not decided by it`() {
+        var calls = 0
+        var nested: NetworkSpanParent? = null
+        service.setAppProvider { _, _ ->
+            calls++
+            nested = service.appDecision(request)
+            NetworkSpanParent.NO_PARENT
+        }
+
+        assertSame(NetworkSpanParent.NO_PARENT, service.appDecision(request))
+        assertSame(NetworkSpanParent.USE_DEFAULT, nested)
+        assertEquals(1, calls)
+    }
+
+    @Test
+    fun `the app provider runs while the service holds no lock`() {
+        val context = untrackedContext()
+        service.setAppProvider { _, _ ->
+            thread { service.set(context) }.join(1000)
+            NetworkSpanParent.USE_DEFAULT
+        }
+
+        service.appDecision(request)
+        assertEquals(context.spanId, currentParentSpanId())
+    }
+
+    // a NetworkSpanParentProvider implemented in Java can return null despite the Kotlin signature
+    @Suppress("UNCHECKED_CAST")
+    private fun <T> javaNull(): T = null as T
 
     private fun currentParentSpanId(): String? = service.currentParent()?.spanId
 

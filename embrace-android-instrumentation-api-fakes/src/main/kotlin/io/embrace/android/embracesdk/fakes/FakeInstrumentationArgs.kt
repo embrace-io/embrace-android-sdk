@@ -21,6 +21,7 @@ import io.embrace.android.embracesdk.internal.worker.BackgroundWorker
 import io.embrace.android.embracesdk.internal.worker.PriorityWorker
 import io.embrace.android.embracesdk.internal.worker.Worker
 import io.embrace.android.embracesdk.network.NetworkSpanParent
+import io.embrace.android.embracesdk.network.http.HttpRequestInfo
 import okio.FileSystem
 import java.io.File
 import java.util.UUID
@@ -83,7 +84,12 @@ class FakeInstrumentationArgs(
 
     var networkSpanParent: NetworkSpanParent? = null
 
-    override val networkSpanParents: NetworkSpanParents = NetworkSpanParents { networkSpanParent }
+    var networkSpanParentDecision: (HttpRequestInfo) -> NetworkSpanParent = { NetworkSpanParent.USE_DEFAULT }
+
+    override val networkSpanParents: NetworkSpanParents = object : NetworkSpanParents {
+        override fun currentParent(): NetworkSpanParent? = networkSpanParent
+        override fun appDecision(request: HttpRequestInfo): NetworkSpanParent = networkSpanParentDecision(request)
+    }
 
     override fun registerSessionPartChangeListener(listener: SessionPartChangeListener) {
         sessionChangeListeners.add(listener)

@@ -63,6 +63,7 @@ sealed class SdkErrorType(private val severity: Severity) {
     object UserSessionCallbackFail : SdkErrorType(ERROR)
     object UserInfoCallbackFail : SdkErrorType(ERROR)
     object HttpRequestInfoModifierFail : SdkErrorType(Severity.WARNING)
+    object NetworkSpanParentProviderFail : SdkErrorType(Severity.WARNING)
     object SdkInitPhaseFail : SdkErrorType(ERROR)
     object SdkInitAttributeCaptureFail : SdkErrorType(ERROR)
     object OtelSdkCodeError : SdkErrorType(ERROR)

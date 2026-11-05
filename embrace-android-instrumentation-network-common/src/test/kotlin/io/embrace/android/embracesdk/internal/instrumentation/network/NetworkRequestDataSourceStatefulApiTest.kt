@@ -2,20 +2,24 @@ package io.embrace.android.embracesdk.internal.instrumentation.network
 
 import io.embrace.android.embracesdk.fakes.FakeSpanToken
 import io.embrace.android.embracesdk.fakes.FakeTelemetryDestination
+import io.embrace.android.embracesdk.fakes.behavior.FakeNetworkBehavior
 import io.embrace.android.embracesdk.internal.arch.schema.ErrorCodeAttribute
 import io.embrace.android.embracesdk.internal.config.behavior.NetworkSpanForwardingBehavior
 import io.embrace.android.embracesdk.internal.telemetry.AppliedLimitType
 import io.embrace.android.embracesdk.internal.utils.NetworkUtils
 import io.embrace.android.embracesdk.internal.utils.NetworkUtils.stripUrl
 import io.embrace.android.embracesdk.network.NetworkSpanParent
+import io.embrace.android.embracesdk.network.http.HttpRequestInfo
 import io.embrace.android.embracesdk.semconv.EmbNetworkRequestAttributes
 import io.opentelemetry.kotlin.semconv.ErrorAttributes
 import io.opentelemetry.kotlin.semconv.ExceptionAttributes
 import io.opentelemetry.kotlin.semconv.HttpAttributes
 import io.opentelemetry.kotlin.semconv.UserAgentAttributes
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertNull
+import org.junit.Assert.assertSame
 import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
@@ -415,6 +419,65 @@ internal class NetworkRequestDataSourceStatefulApiTest {
     }
 
     @Test
+    fun `a parent chosen by the app provider beats both a traceparent header and the network span parent`() {
+        harness.args.networkSpanParent = networkSpanParent()
+        harness.args.networkSpanParentDecision = { chosenParent() }
+        startRequest(url = "https://www.example.com/api", traceparent = "00-$INBOUND_TRACE_ID-$INBOUND_SPAN_ID-01")
+        assertEquals(CHOSEN_SPAN_ID, parentSpanId())
+    }
+
+    @Test
+    fun `no parent from the app provider makes the network span a root despite a traceparent header and the network span parent`() {
+        harness.args.networkSpanParent = networkSpanParent()
+        harness.args.networkSpanParentDecision = { NetworkSpanParent.NO_PARENT }
+        startRequest(url = "https://www.example.com/api", traceparent = "00-$INBOUND_TRACE_ID-$INBOUND_SPAN_ID-01")
+        assertNull(harness.getNetworkSpans().single().parent)
+    }
+
+    @Test
+    fun `a decision by the app provider sends the span's own traceparent whatever the header`() {
+        harness.networkSpanForwardingBehavior.networkSpanForwardingEnabled = true
+        val decisions = listOf(chosenParent(), NetworkSpanParent.NO_PARENT, chosenParent())
+        val headers =
+            listOf("00-$INBOUND_TRACE_ID-$INBOUND_SPAN_ID-01", "00-$INBOUND_TRACE_ID-$INBOUND_SPAN_ID-01", "not-a-traceparent")
+        decisions.zip(headers).forEachIndexed { index, (decision, header) ->
+            harness.args.networkSpanParentDecision = { decision }
+            val start = checkNotNull(start(url = "https://www.example.com/$index", traceparent = header))
+            val span = harness.getNetworkSpans()[index]
+            assertEquals(span.asW3cTraceparent(), start.traceparent)
+            assertEquals(start.traceparent, span.attributes[EmbNetworkRequestAttributes.EMB_W3C_TRACEPARENT])
+        }
+    }
+
+    @Test
+    fun `the app provider is not asked about a request whose url is not captured`() {
+        var asked = false
+        harness.args.networkSpanParentDecision = {
+            asked = true
+            NetworkSpanParent.USE_DEFAULT
+        }
+        harness.args.configService.networkBehavior = FakeNetworkBehavior(urlEnabled = false)
+        assertNull(start(url = "https://www.example.com/api"))
+        assertFalse(asked)
+    }
+
+    @Test
+    fun `the app provider is given the native request and the url before modifiers`() {
+        val nativeRequest = Any()
+        val received = mutableListOf<HttpRequestInfo>()
+        harness.args.networkSpanParentDecision = {
+            received.add(it)
+            NetworkSpanParent.USE_DEFAULT
+        }
+        harness.args.httpRequestInfoModifierChain.add { it.url = it.url.replace("example", "redacted") }
+        start(url = "https://www.example.com/api", nativeRequest = nativeRequest)
+
+        val request = received.single()
+        assertEquals("https://www.example.com/api", request.url)
+        assertSame(nativeRequest, request.nativeRequest)
+    }
+
+    @Test
     fun `a registered modifier alters the url and method of a span-based request`() {
         harness.args.httpRequestInfoModifierChain.add {
             it.url = "https://redacted.com/api"
@@ -483,6 +546,7 @@ internal class NetworkRequestDataSourceStatefulApiTest {
         startTime: Long = 100,
         traceparent: String? = null,
         host: String? = null,
+        nativeRequest: Any? = null,
     ): RequestStart? =
         harness.dataSource.startRequest(
             startData = RequestStartData(
@@ -491,6 +555,7 @@ internal class NetworkRequestDataSourceStatefulApiTest {
                 sdkClockStartTime = startTime,
                 traceparent = traceparent,
                 host = host,
+                nativeRequest = nativeRequest,
             ),
         )
 
@@ -531,6 +596,11 @@ internal class NetworkRequestDataSourceStatefulApiTest {
         override val spanId = PARENT_SPAN_ID
     }
 
+    private fun chosenParent() = object : NetworkSpanParent {
+        override val traceId = CHOSEN_TRACE_ID
+        override val spanId = CHOSEN_SPAN_ID
+    }
+
     // the fake destination models a span's parent as a token named for the parent span ID it was given
     private fun parentSpanId(): String? = (harness.getNetworkSpans().single().parent as? FakeSpanToken)?.name
 
@@ -539,5 +609,7 @@ internal class NetworkRequestDataSourceStatefulApiTest {
         const val INBOUND_SPAN_ID = "b7ad6b7169203331"
         const val PARENT_TRACE_ID = "4bf92f3577b34da6a3ce929d0e0e4736"
         const val PARENT_SPAN_ID = "00f067aa0ba902b7"
+        const val CHOSEN_TRACE_ID = "5bf92f3577b34da6a3ce929d0e0e4737"
+        const val CHOSEN_SPAN_ID = "10f067aa0ba902b8"
     }
 }

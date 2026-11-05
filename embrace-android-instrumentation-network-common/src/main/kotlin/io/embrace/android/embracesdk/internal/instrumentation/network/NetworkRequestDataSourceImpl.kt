@@ -17,6 +17,7 @@ import io.embrace.android.embracesdk.internal.utils.NetworkUtils.getValidTraceId
 import io.embrace.android.embracesdk.internal.utils.NetworkUtils.stripUrl
 import io.embrace.android.embracesdk.internal.utils.concurrent.OneShot
 import io.embrace.android.embracesdk.internal.utils.putIfNotNull
+import io.embrace.android.embracesdk.network.NetworkSpanParent
 import io.embrace.android.embracesdk.semconv.EmbNetworkRequestAttributes
 import io.opentelemetry.kotlin.semconv.ErrorAttributes
 import io.opentelemetry.kotlin.semconv.ExceptionAttributes
@@ -123,32 +124,36 @@ class NetworkRequestDataSourceImpl(
                 telemetryService.trackAppliedLimit("network_request", AppliedLimitType.DROP)
             },
         ) {
-            // A valid traceparent header names the span's parent, otherwise the network span parent does if one is set
-            val networkSpanParent = if (validTraceparent == null) networkSpanParents.currentParent() else null
+            // The app's provider decides first, then a valid traceparent header, then the network span parent if one is set
+            val decision = networkSpanParents.appDecision(
+                MutableHttpRequestInfoImpl(startData.httpMethod, startData.url, startData.nativeRequest),
+            )
+            val headerParent = validTraceparent.takeIf { decision === NetworkSpanParent.USE_DEFAULT }
+            val chosenParent = chosenParent(decision, headerParent)
             val spanToken = destination.startSpanCapture(
                 schemaType = SchemaType.NetworkRequest(requestStartAttributes(url, httpMethod)),
                 startTimeMs = startData.sdkClockStartTime,
                 name = getNetworkSpanName(httpMethod, url),
-                parentSpanId = validTraceparent?.spanId ?: networkSpanParent?.spanId,
-                parentTraceId = validTraceparent?.traceId ?: networkSpanParent?.traceId,
+                parentSpanId = headerParent?.spanId ?: chosenParent?.spanId,
+                parentTraceId = headerParent?.traceId ?: chosenParent?.traceId,
                 timeoutMs = startData.timeoutMs,
             )
 
             spanToken.asW3cTraceparent()?.let(TraceParent::parse)?.let { spanTraceparent ->
                 // Only name this span in the inbound trace when the span actually joined it, keeping the inbound sampling flags
-                val joinedTraceparent = validTraceparent?.takeIf(spanTraceparent::isSameTrace)
+                val joinedTraceparent = headerParent?.takeIf(spanTraceparent::isSameTrace)
                 val traceparent = joinedTraceparent?.let(spanTraceparent::withFlagsOf) ?: spanTraceparent
 
                 val outboundTraceparent = outboundTraceparent(
                     traceparent = traceparent,
                     joinedTraceparent = joinedTraceparent,
-                    validTraceparent = validTraceparent,
+                    headerParent = headerParent,
                     inboundTraceparent = inboundTraceparent,
-                    hasNetworkSpanParent = networkSpanParent != null,
+                    parentChosen = chosenParent != null,
                 )
 
                 // Forward the traceparent the request is sent with: the outbound one, or the inbound header left as is
-                val forwardedTraceparent = outboundTraceparent ?: validTraceparent
+                val forwardedTraceparent = outboundTraceparent ?: headerParent
                 if (forwardedTraceparent != null &&
                     configService.networkSpanForwardingBehavior.shouldForwardForDomain(startData.host)
                 ) {
@@ -162,18 +167,28 @@ class NetworkRequestDataSourceImpl(
     }
 
     /**
-     * Returns the traceparent to send with a request: a valid inbound header is replaced only if the span joined its trace, and a
-     * malformed one only if the span has a parent.
+     * Returns the parent chosen without the traceparent header: the app provider's [decision], or else the network span parent when no
+     * [headerParent] names one.
+     */
+    private fun chosenParent(decision: NetworkSpanParent, headerParent: TraceParent?): NetworkSpanParent? = when {
+        decision !== NetworkSpanParent.USE_DEFAULT -> decision
+        headerParent == null -> networkSpanParents.currentParent()
+        else -> null
+    }
+
+    /**
+     * Returns the traceparent to send with a request: a header that parented the span is replaced only if the span joined its trace, and
+     * any other header only if the span's parent was chosen without it.
      */
     private fun outboundTraceparent(
         traceparent: TraceParent,
         joinedTraceparent: TraceParent?,
-        validTraceparent: TraceParent?,
+        headerParent: TraceParent?,
         inboundTraceparent: String?,
-        hasNetworkSpanParent: Boolean,
+        parentChosen: Boolean,
     ): TraceParent? = when {
-        validTraceparent != null -> traceparent.takeIf { joinedTraceparent != null }
-        hasNetworkSpanParent || inboundTraceparent == null -> traceparent
+        headerParent != null -> traceparent.takeIf { joinedTraceparent != null }
+        parentChosen || inboundTraceparent == null -> traceparent
         else -> null
     }
 

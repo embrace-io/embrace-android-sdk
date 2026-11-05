@@ -77,6 +77,7 @@ import io.embrace.android.embracesdk.internal.instrumentation.thread.blockage.cr
 import io.embrace.android.embracesdk.internal.logs.LogLimitingServiceImpl
 import io.embrace.android.embracesdk.internal.logs.LogServiceImpl
 import io.embrace.android.embracesdk.internal.logs.attachments.AttachmentService
+import io.embrace.android.embracesdk.internal.network.parent.NetworkSpanParents
 import io.embrace.android.embracesdk.internal.otel.impl.EmbClock
 import io.embrace.android.embracesdk.internal.otel.logs.LogSinkImpl
 import io.embrace.android.embracesdk.internal.otel.sdk.DataValidator
@@ -102,6 +103,8 @@ import io.embrace.android.embracesdk.internal.utils.EmbTrace
 import io.embrace.android.embracesdk.internal.utils.event.EventBus
 import io.embrace.android.embracesdk.internal.worker.PriorityWorker
 import io.embrace.android.embracesdk.internal.worker.Worker
+import io.embrace.android.embracesdk.network.NetworkSpanParent
+import io.embrace.android.embracesdk.network.http.HttpRequestInfo
 import io.embrace.android.embracesdk.spans.TracingApi
 import java.util.concurrent.TimeUnit
 
@@ -410,12 +413,20 @@ internal fun createRealSdkInstance(
             crashMarkerFileProvider = crashMarkerFile::value,
             sdkStorage = sdkStorage,
             eventBus = eventBus,
-            networkSpanParents = {
-                if (networkSpanParentService.isInitialized()) {
-                    networkSpanParentService.value.currentParent()
-                } else {
-                    null
-                }
+            networkSpanParents = object : NetworkSpanParents {
+                override fun currentParent(): NetworkSpanParent? =
+                    if (networkSpanParentService.isInitialized()) {
+                        networkSpanParentService.value.currentParent()
+                    } else {
+                        null
+                    }
+
+                override fun appDecision(request: HttpRequestInfo): NetworkSpanParent =
+                    if (networkSpanParentService.isInitialized()) {
+                        networkSpanParentService.value.appDecision(request)
+                    } else {
+                        NetworkSpanParent.USE_DEFAULT
+                    }
             },
         )
     }

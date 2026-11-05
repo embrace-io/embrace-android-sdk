@@ -1,20 +1,28 @@
 package io.embrace.android.embracesdk.internal.network.parent
 
 import io.embrace.android.embracesdk.internal.logging.ErrorHandler
+import io.embrace.android.embracesdk.internal.logging.SdkErrorType
+import io.embrace.android.embracesdk.internal.logging.guardSdkCode
+import io.embrace.android.embracesdk.internal.logging.guardUserCode
 import io.embrace.android.embracesdk.internal.otel.sdk.toEmbraceObjectName
 import io.embrace.android.embracesdk.internal.otel.spans.EmbraceSdkSpan
 import io.embrace.android.embracesdk.internal.otel.spans.SpanService
 import io.embrace.android.embracesdk.internal.telemetry.AppliedLimitType
 import io.embrace.android.embracesdk.internal.telemetry.InternalTelemetryService
 import io.embrace.android.embracesdk.internal.utils.concurrent.OneShot
+import io.embrace.android.embracesdk.internal.utils.concurrent.ReentrancyGuard
 import io.embrace.android.embracesdk.network.NetworkSpanParent
+import io.embrace.android.embracesdk.network.NetworkSpanParentProvider
 import io.embrace.android.embracesdk.network.NetworkSpanParentToken
+import io.embrace.android.embracesdk.network.http.HttpRequestInfo
 import io.embrace.android.embracesdk.semconv.EmbNetworkSpanParentAttributes
 import io.opentelemetry.kotlin.tracing.SpanContext
 
 private const val MAX_REPORTED_CONFLICTS = 10
 private const val CONFLICT_EVENT_NAME = "network-span-parent-replaced"
 private const val CONFLICT_TELEMETRY_TYPE = "network_span_parent_conflict"
+private const val TRACE_ID_LENGTH = 32
+private const val SPAN_ID_LENGTH = 16
 
 internal class NetworkSpanParentServiceImpl(
     private val spanService: SpanService,
@@ -27,10 +35,24 @@ internal class NetworkSpanParentServiceImpl(
 
     private val reportRejectedOnce = OneShot()
 
+    private val reportInvalidDecisionOnce = OneShot()
+
+    // so that a request the app's provider makes isn't decided by it again
+    private val providerGuard = ReentrancyGuard()
+
     private val lock = Any()
 
     @Volatile
     private var active: ActiveParent? = null
+
+    @Volatile
+    private var appProvider: NetworkSpanParentProvider? = null
+
+    override fun setAppProvider(provider: NetworkSpanParentProvider) {
+        appProvider = provider
+    }
+
+    override fun appDecision(request: HttpRequestInfo): NetworkSpanParent = decide(request, active?.spanContext)
 
     override fun set(spanContext: SpanContext?): NetworkSpanParentToken {
         if (spanContext == null || !spanContext.isValid) {
@@ -94,6 +116,34 @@ internal class NetworkSpanParentServiceImpl(
             clearIfActive(parent)
         }
     }
+
+    /**
+     * Returns the app provider's decision, or [NetworkSpanParent.USE_DEFAULT] if there is none, it fails, returns null or invalid IDs,
+     * or it is already running on this thread. The provider is given the network span parent, never the traceparent header.
+     */
+    private fun decide(request: HttpRequestInfo, networkSpanParent: SpanContext?): NetworkSpanParent {
+        val appProvider = appProvider ?: return NetworkSpanParent.USE_DEFAULT
+        // Handle cases where NetworkSpanParentProvider was implemented in Java and returns null
+        val decision: NetworkSpanParent? = providerGuard.runExclusive(onReentry = { NetworkSpanParent.USE_DEFAULT }) {
+            errorHandler.guardSdkCode(SdkErrorType.NetworkSpanParentProviderFail, NetworkSpanParent.USE_DEFAULT) {
+                errorHandler.guardUserCode { appProvider.getNetworkSpanParent(request, networkSpanParent) }
+            }
+        }
+        return when {
+            decision == null -> NetworkSpanParent.USE_DEFAULT
+            decision.traceId == null && decision.spanId == null -> decision
+            decision.traceId.isValidId(TRACE_ID_LENGTH) && decision.spanId.isValidId(SPAN_ID_LENGTH) -> decision
+            else -> {
+                reportInvalidDecisionOnce {
+                    errorHandler.log("Ignored an invalid span context from the network span parent provider")
+                }
+                NetworkSpanParent.USE_DEFAULT
+            }
+        }
+    }
+
+    private fun String?.isValidId(length: Int): Boolean =
+        this != null && this.length == length && all { it in '0'..'9' || it in 'a'..'f' } && any { it != '0' }
 
     private fun rejectParent(): NetworkSpanParentToken {
         reportRejectedOnce {

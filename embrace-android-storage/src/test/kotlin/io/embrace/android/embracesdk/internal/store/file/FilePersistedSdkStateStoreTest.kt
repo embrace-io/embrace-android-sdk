@@ -4,6 +4,7 @@ import io.embrace.android.embracesdk.concurrency.BlockingScheduledExecutorServic
 import io.embrace.android.embracesdk.fakes.FakeClock
 import io.embrace.android.embracesdk.fakes.FakeErrorHandler
 import io.embrace.android.embracesdk.fs.FakeFileSystemRule
+import io.embrace.android.embracesdk.internal.session.UserSessionMetadata
 import io.embrace.android.embracesdk.internal.store.PersistedSdkState
 import io.embrace.android.embracesdk.internal.worker.BackgroundWorker
 import okio.ForwardingFileSystem
@@ -78,6 +79,32 @@ internal class FilePersistedSdkStateStoreTest {
 
         assertEquals("PersistedSdkStateWriteFail", errorHandler.sdkErrorMessages.single().msg)
         assertEquals("kept", createStore().snapshot().userId)
+    }
+
+    @Test
+    fun `created file is read back by a store`() {
+        val state = PersistedSdkState(
+            deviceId = "created-id",
+            installTimestampMs = 1000L,
+            userId = "user-id",
+            userEmail = "user@example.com",
+            userName = "user-name",
+            userPersonas = setOf("persona"),
+            sessionProperties = mapOf("key" to "value"),
+            userSession = UserSessionMetadata.Classified(2000L, "session-id", 3L, 4L, 5L, 6, 7000L, true),
+            hostedSdkVersion = "1.2.3",
+            hostedPlatformVersion = "0.79.0",
+            unityBuildIdNumber = "unity-build",
+            javaScriptPatchNumber = "patch",
+            rnBundleUrl = "assets://index.android.bundle",
+            rnBundleId = "bundle-id",
+            appVersionStartupScope = "2.1.0",
+        )
+        FilePersistedSdkStateStore.create(fsRule.fileSystem, path, state)
+
+        assertEquals(state, createStore().snapshot())
+        executor.runCurrentlyBlocked()
+        assertEquals(0, writes)
     }
 
     private fun createStore(uuid: String = "device-id") = FilePersistedSdkStateStore(

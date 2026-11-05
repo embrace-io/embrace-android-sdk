@@ -123,6 +123,12 @@ internal class FileDeliveredAeiStoreTest {
         ).forEach { assertThrows(IOException::class.java) { DeliveredAeiCodec.decode(it) } }
     }
 
+    @Test
+    fun `created file is read back by a store`() {
+        FileDeliveredAeiStore.create(fsRule.fileSystem, path, setOf("a", "b"))
+        assertEquals(setOf("a", "b"), createStore().ids())
+    }
+
     private fun createStore() = FileDeliveredAeiStore(
         fileSystem = object : ForwardingFileSystem(fsRule.fileSystem) {
             override fun atomicMove(source: Path, target: Path) {

@@ -72,6 +72,17 @@ class FileNetworkCaptureRuleStore(
                 current = next
                 base.copy(used = next)
             }
+            writeFile(fileSystem, path, proto)
+        }
+    }
+
+    companion object {
+
+        fun create(fileSystem: FileSystem, path: Path, used: Map<String, Int>) {
+            writeFile(fileSystem, path, NetworkCaptureProto(used = used))
+        }
+
+        private fun writeFile(fileSystem: FileSystem, path: Path, proto: NetworkCaptureProto) {
             fileSystem.writeAtomically(path) { NetworkCaptureCodec.encode(proto, it) }
         }
     }

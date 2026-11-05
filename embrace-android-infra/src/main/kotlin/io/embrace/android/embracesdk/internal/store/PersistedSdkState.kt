@@ -77,4 +77,9 @@ data class PersistedSdkState(
      * The React Native bundle ID computed for [rnBundleUrl], if the hosted SDK asked for it to be cached.
      */
     val rnBundleId: String? = null,
+
+    /**
+     * The scope that [Ordinal.APP_VERSION_STARTUP] was last reset for, or null if it never has been.
+     */
+    val appVersionStartupScope: String? = null,
 )

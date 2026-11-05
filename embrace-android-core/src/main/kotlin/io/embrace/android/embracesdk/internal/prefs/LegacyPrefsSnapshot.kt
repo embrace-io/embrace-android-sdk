@@ -19,7 +19,7 @@ data class LegacyPrefsSnapshot(
     val ordinals: Map<Ordinal, Int>,
 
     /**
-     * The raw scope of [Ordinal.APP_VERSION_STARTUP], destined for `ordinals.bin`.
+     * The raw scope of [Ordinal.APP_VERSION_STARTUP], destined for `persisted_sdk_state.bin`.
      */
     val appVersionStartupScope: String?,
 

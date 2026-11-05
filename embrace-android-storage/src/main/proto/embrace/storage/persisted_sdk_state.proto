@@ -24,6 +24,7 @@ message PersistedSdkStateProto {
   optional string java_script_patch_number = 12;
   optional string rn_bundle_url = 13;
   optional string rn_bundle_id = 14;
+  optional string app_version_startup_scope = 15;
 }
 
 message Personas {

@@ -32,6 +32,7 @@ internal class PersistedSdkStateCodecTest {
         javaScriptPatchNumber = "patch",
         rnBundleUrl = "assets://index.android.bundle",
         rnBundleId = "bundle-id",
+        appVersionStartupScope = "2.1.0",
     )
 
     @Test
@@ -39,6 +40,7 @@ internal class PersistedSdkStateCodecTest {
         listOf(
             emptyState,
             emptyState.copy(userPersonas = emptySet()),
+            emptyState.copy(appVersionStartupScope = ""),
             emptyState.copy(sessionProperties = mapOf("big" to "x".repeat(70_000))),
             fullState,
         ).forEach { assertEquals(it, decode(encode(it))) }

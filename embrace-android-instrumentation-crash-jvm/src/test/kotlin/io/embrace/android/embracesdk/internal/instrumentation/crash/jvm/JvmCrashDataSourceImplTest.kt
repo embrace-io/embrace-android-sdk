@@ -10,9 +10,15 @@ import io.embrace.android.embracesdk.internal.config.resolved.AutoDataCaptureCon
 import io.embrace.android.embracesdk.internal.config.resolved.EmbraceConfig
 import io.embrace.android.embracesdk.internal.logging.SdkErrorType
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
+import org.junit.Assert.assertNotEquals
 import org.junit.Assert.assertSame
+import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
+import java.util.concurrent.CountDownLatch
+import java.util.concurrent.TimeUnit
+import kotlin.concurrent.thread
 
 internal class JvmCrashDataSourceImplTest {
 
@@ -67,6 +73,36 @@ internal class JvmCrashDataSourceImplTest {
         assertEquals(listOf(1, 3), observedOrder)
         assertEquals(1, args.destination.logEvents.size)
         assertEquals(listOf(SdkErrorType.CrashTeardownFail.toString()), errorHandler.sdkErrorMessages.map { it.msg })
+    }
+
+    @Test
+    fun `a crash on another thread waits for the first crash's teardown`() {
+        setupForHandleCrash(true)
+        val releaseTeardown = CountDownLatch(1)
+        val firstCrash = startFirstCrashWithBlockedTeardown(releaseTeardown)
+
+        val laterCrash = thread { crashDataSource.logUnhandledJvmThrowable(RuntimeException("later crash")) }
+        assertWaiting(laterCrash)
+
+        releaseTeardown.countDown()
+        assertReturns(laterCrash)
+        assertReturns(firstCrash)
+        assertEquals(1, args.destination.logEvents.size)
+    }
+
+    @Test
+    fun `disabling data capture releases a crash waiting for the first crash's teardown`() {
+        setupForHandleCrash(true)
+        val releaseTeardown = CountDownLatch(1)
+        val firstCrash = startFirstCrashWithBlockedTeardown(releaseTeardown)
+        val laterCrash = thread { crashDataSource.logUnhandledJvmThrowable(RuntimeException("later crash")) }
+        assertWaiting(laterCrash)
+
+        crashDataSource.onDataCaptureDisabled()
+        assertReturns(laterCrash)
+
+        releaseTeardown.countDown()
+        assertReturns(firstCrash)
     }
 
     @Test
@@ -143,5 +179,47 @@ internal class JvmCrashDataSourceImplTest {
         setupForHandleCrash(false)
         assert(Thread.getDefaultUncaughtExceptionHandler() is EmbraceUncaughtExceptionHandler)
         assertEquals(0, args.destination.logEvents.size)
+    }
+
+    /**
+     * Starts a crash on another thread and returns that thread once the crash's teardown has begun. The teardown then blocks
+     * until [releaseTeardown] is released.
+     */
+    private fun startFirstCrashWithBlockedTeardown(releaseTeardown: CountDownLatch): Thread {
+        val tearingDown = CountDownLatch(1)
+        crashDataSource.addCrashTeardownHandler {
+            tearingDown.countDown()
+            releaseTeardown.await(TEARDOWN_BLOCKED_MS, TimeUnit.MILLISECONDS)
+        }
+        val firstCrash = thread { crashDataSource.logUnhandledJvmThrowable(testException) }
+        assertTrue(tearingDown.await(TIMEOUT_MS, TimeUnit.MILLISECONDS))
+        return firstCrash
+    }
+
+    /**
+     * Waits until [crash] is parked with a timeout, which a later crash's thread only is while it waits for the first crash's
+     * teardown. Fails as soon as the thread ends instead, as a later crash that doesn't wait returns straight away.
+     */
+    private fun assertWaiting(crash: Thread) {
+        val deadline = System.nanoTime() + TimeUnit.MILLISECONDS.toNanos(TIMEOUT_MS)
+        while (crash.state != Thread.State.TIMED_WAITING) {
+            assertNotEquals("the crash returned without waiting", Thread.State.TERMINATED, crash.state)
+            assertTrue("the crash never started waiting", System.nanoTime() < deadline)
+            Thread.sleep(1)
+        }
+    }
+
+    private fun assertReturns(crash: Thread) {
+        crash.join(TIMEOUT_MS)
+        assertFalse("the crash is still waiting", crash.isAlive)
+    }
+
+    private companion object {
+        // well inside the 5 s a later crash waits at most, so that a crash returns in time only when it is released, not when
+        // its wait runs out
+        const val TIMEOUT_MS = 2000L
+
+        // longer than any wait in a test and than the 5 s a later crash waits, so that only the test ends a blocked teardown
+        const val TEARDOWN_BLOCKED_MS = 10_000L
     }
 }

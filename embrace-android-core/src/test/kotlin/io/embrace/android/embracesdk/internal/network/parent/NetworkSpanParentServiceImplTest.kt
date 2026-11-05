@@ -36,7 +36,7 @@ internal class NetworkSpanParentServiceImplTest {
         spanService = FakeSpanService()
         errorHandler = FakeErrorHandler()
         telemetryService = FakeInternalTelemetryService()
-        service = NetworkSpanParentServiceImpl(spanService, errorHandler, telemetryService) { userSessionId }
+        service = NetworkSpanParentServiceImpl(spanService, errorHandler, telemetryService, Long.MAX_VALUE) { userSessionId }
     }
 
     @Test
@@ -324,6 +324,32 @@ internal class NetworkSpanParentServiceImplTest {
 
         service.appDecision(request)
         assertEquals(context.spanId, currentParentSpanId())
+    }
+
+    @Test
+    fun `slow app provider calls are counted, and the first is logged with the request's host and path`() {
+        service = NetworkSpanParentServiceImpl(spanService, errorHandler, telemetryService, 0) { userSessionId }
+        service.setAppProvider { _, _ ->
+            Thread.sleep(1)
+            NetworkSpanParent.USE_DEFAULT
+        }
+        val request = MutableHttpRequestInfoImpl("GET", "https://example.com/cart?token=secret")
+        repeat(2) { service.appDecision(request) }
+
+        assertTrue(errorHandler.warningMessages.single().msg.endsWith(" ms for https://example.com/cart"))
+        assertEquals(
+            listOf("network_span_parent_provider", "network_span_parent_provider"),
+            telemetryService.slowCallbacks.map { it.first },
+        )
+    }
+
+    @Test
+    fun `app provider calls within the threshold are not reported`() {
+        service.setAppProvider { _, _ -> NetworkSpanParent.USE_DEFAULT }
+        service.appDecision(request)
+
+        assertTrue(errorHandler.warningMessages.isEmpty())
+        assertTrue(telemetryService.slowCallbacks.isEmpty())
     }
 
     // a NetworkSpanParentProvider implemented in Java can return null despite the Kotlin signature

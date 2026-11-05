@@ -805,6 +805,83 @@ internal class ErrorHandlerImplTest {
         tracker.join(5_000)
     }
 
+    @Test
+    fun `only the first close waits for a hanging sink`() {
+        handler = ErrorHandlerImpl(clock::now, noopLogcat, closeTimeoutMs = 200)
+        val inSink = CountDownLatch(1)
+        val release = CountDownLatch(1)
+        handler.drain {
+            inSink.countDown()
+            release.await()
+        }
+        val tracker = thread(isDaemon = true) { fail() }
+        try {
+            assertTrue(inSink.await(5, TimeUnit.SECONDS))
+            val first = measureMs { handler.close() }
+            val second = measureMs { handler.close() }
+            assertTrue("first close took ${first}ms", first in 190..2_000)
+            assertTrue("second close took ${second}ms", second < 10)
+        } finally {
+            release.countDown()
+        }
+        tracker.join(5_000)
+    }
+
+    @Test
+    fun `a failure starting a record leaves no record in flight and is reported`() {
+        handler = ErrorHandlerImpl(clock::now, noopLogcat, closeTimeoutMs = 60_000, beforeStep = failOnceAt("record"))
+        handler.drain(sink)
+        val lost = distinctError(0)
+        fail(lost)
+        fail(lost)
+        assertEquals(listOf(SdkErrorType.ErrorSinkFail, type), types)
+        assertEquals(lost.top(), errors[1].first)
+        assertTrue(measureMs { handler.close() } < 1_000)
+    }
+
+    @Test
+    fun `a failure buffering an error gives back its limiter slot`() {
+        handler = ErrorHandlerImpl(clock::now, noopLogcat, beforeStep = failOnceAt("buffer"))
+        val lost = distinctError(0)
+        fail(lost)
+        fail(lost)
+        handler.drain(sink)
+        assertEquals(listOf(SdkErrorType.ErrorSinkFail, type), types)
+        assertEquals(lost.top(), errors[1].first)
+    }
+
+    @Test
+    fun `a drain that fails once is retried and the failure reported`() {
+        handler = ErrorHandlerImpl(clock::now, noopLogcat, beforeStep = failOnceAt("drain"))
+        val buffered = distinctError(0)
+        fail(buffered)
+        handler.drain(sink)
+        assertEquals(listOf(type, SdkErrorType.ErrorSinkFail), types)
+        assertEquals(buffered.top(), errors[0].first)
+    }
+
+    @Test
+    fun `a drain that fails twice keeps the buffer for a later drain`() {
+        handler = ErrorHandlerImpl(clock::now, noopLogcat, beforeStep = failOnceAt("drain", times = 2))
+        val buffered = distinctError(0)
+        fail(buffered)
+        handler.drain(sink)
+        assertTrue(types.isEmpty())
+        handler.drain(sink)
+        assertEquals(listOf(type, SdkErrorType.ErrorSinkFail), types)
+        assertEquals(buffered.top(), errors[0].first)
+    }
+
+    @Test
+    fun `a buffered error that fails to record is reported`() {
+        handler = ErrorHandlerImpl(clock::now, noopLogcat, beforeStep = failOnceAt("record"))
+        fail(distinctError(0))
+        handler.drain(sink)
+        assertEquals(listOf(SdkErrorType.ErrorSinkFail), types)
+        fail(distinctError(1))
+        assertEquals(listOf(SdkErrorType.ErrorSinkFail, type), types)
+    }
+
     @Test(timeout = 10_000)
     fun `an interrupt during the close wait ends it and keeps the interrupt status`() {
         handler = ErrorHandlerImpl(clock::now, noopLogcat, closeTimeoutMs = 60_000)
@@ -906,6 +983,21 @@ internal class ErrorHandlerImplTest {
     }
 
     private fun raise(error: Error): Nothing = throw error
+
+    private fun failOnceAt(step: String, times: Int = 1): (String) -> Unit {
+        var remaining = times
+        return {
+            if (it == step && remaining-- > 0) {
+                raise(OutOfMemoryError(step))
+            }
+        }
+    }
+
+    private fun measureMs(action: () -> Unit): Long {
+        val start = System.nanoTime()
+        action()
+        return TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - start)
+    }
 
     private fun Throwable.top() = ThrowableSnapshotter.snapshot(type, this, 0).top
 

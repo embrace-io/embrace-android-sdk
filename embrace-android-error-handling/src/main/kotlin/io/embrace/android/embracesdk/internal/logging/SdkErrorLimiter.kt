@@ -16,7 +16,7 @@ internal class SdkErrorLimiter(limit: Int) {
      * Returns true if [snapshot] should be recorded, which uses one from the limit.
      */
     fun tryAcquire(snapshot: SdkErrorSnapshot): Boolean {
-        val key = SdkErrorKey(snapshot.type, snapshot.top.className, snapshot.top.frames.firstOrNull())
+        val key = snapshot.key()
         if (recorded.containsKey(key) || !reserve()) {
             return false
         }
@@ -26,6 +26,17 @@ internal class SdkErrorLimiter(limit: Int) {
         }
         return true
     }
+
+    /**
+     * Gives back the slot taken by [tryAcquire] for an error that wasn't recorded.
+     */
+    fun release(snapshot: SdkErrorSnapshot) {
+        if (recorded.remove(snapshot.key()) != null) {
+            remaining.incrementAndGet()
+        }
+    }
+
+    private fun SdkErrorSnapshot.key() = SdkErrorKey(type, top.className, top.frames.firstOrNull())
 
     private fun reserve(): Boolean {
         while (true) {

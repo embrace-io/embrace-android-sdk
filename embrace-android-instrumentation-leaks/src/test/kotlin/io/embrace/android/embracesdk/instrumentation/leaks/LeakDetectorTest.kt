@@ -178,6 +178,47 @@ internal class LeakDetectorTest {
     }
 
     @Test
+    fun `reopening an object after it was closed stops tracking it`() {
+        val reused = Any()
+        detector.trackOpened(reused, OWNER)
+        val ref = checkNotNull(detector.trackClosed(reused, OWNER))
+
+        detector.trackOpened(reused, OTHER_OWNER)
+
+        assertNull("the previous lifecycle is no longer watched", detector.onSentinelReclaimed(ref))
+        assertNull("not by the owner that first opened it", detector.trackClosed(reused, OWNER))
+        assertNull("nor by the owner that reopened it", detector.trackClosed(reused, OTHER_OWNER))
+
+        detector.trackOpened(reused, OWNER)
+        assertNull("nor in any later lifecycle", detector.trackClosed(reused, OWNER))
+    }
+
+    @Test
+    fun `reopening an object awaiting confirmation cancels the confirmation`() {
+        val reused = Any()
+        detector.trackOpened(reused, OWNER)
+        val confirmation = checkNotNull(detector.onSentinelReclaimed(checkNotNull(detector.trackClosed(reused, OWNER))))
+
+        detector.trackOpened(reused, OWNER)
+
+        assertNull(detector.onSentinelReclaimed(confirmation))
+        assertTrue("an object put back into use is not a leak", detector.suspects().isEmpty())
+    }
+
+    @Test
+    fun `reopening a confirmed suspect discards it`() {
+        val reused = Any()
+        detector.trackOpened(reused, OWNER)
+        confirmAfterSecondSentinel(checkNotNull(detector.trackClosed(reused, OWNER)))
+        assertEquals(1, detector.suspects().size)
+
+        detector.trackOpened(reused, OWNER)
+
+        assertTrue("an object put back into use is not a leak", detector.suspects().isEmpty())
+        assertTrue(detector.confirmedSuspects().isEmpty())
+    }
+
+    @Test
     fun `each tracked object becomes a suspect independently of the others`() {
         val first = Any()
         val second = Any()
@@ -348,6 +389,43 @@ internal class LeakDetectorTest {
             "every reference has already been handled, so none may still be watched",
             reclaimed.all { detector.onSentinelReclaimed(it) == null },
         )
+    }
+
+    @Test
+    fun `concurrent reopens and onSentinelReclaimed never report a reused object`() {
+        val threadCount = 8
+        val opsPerThread = 500
+        val total = threadCount * opsPerThread
+        // held strongly for the duration of the test so that nothing tracked can be collected for real
+        val referents = ConcurrentLinkedQueue<Any>()
+        val closedRefs = LinkedBlockingQueue<LeakDetector.TrackedReference>()
+
+        val workers = List(threadCount) { _ ->
+            {
+                repeat(opsPerThread) {
+                    val referent = Any()
+                    referents.add(referent)
+                    detector.trackOpened(referent, OWNER)
+                    closedRefs.add(checkNotNull(detector.trackClosed(referent, OWNER)))
+                    detector.trackOpened(referent, OWNER)
+                    if (detector.trackClosed(referent, OWNER) != null) {
+                        error("a reused object must not be tracked again")
+                    }
+                }
+            }
+        }
+        // each lifecycle can be reclaimed, and even confirmed, before, during or after its object is reopened
+        val reclaimer: () -> Unit = {
+            repeat(total) {
+                val ref = checkNotNull(closedRefs.poll(10, TimeUnit.SECONDS))
+                detector.onSentinelReclaimed(ref)?.let { detector.onSentinelReclaimed(it) }
+            }
+        }
+
+        runActionsConcurrently(workers + reclaimer)
+
+        assertEquals(total, referents.size)
+        assertTrue("no reused object may be reported", detector.suspects().isEmpty())
     }
 
     /**

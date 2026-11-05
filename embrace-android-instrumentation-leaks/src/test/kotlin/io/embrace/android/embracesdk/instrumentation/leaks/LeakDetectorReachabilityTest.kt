@@ -56,6 +56,11 @@ internal class LeakDetectorReachabilityTest {
         assertCollectible(confirm())
     }
 
+    @Test
+    fun `an object reopened after being confirmed as a leak suspect can still be collected`() {
+        assertCollectible(reopenConfirmed())
+    }
+
     /**
      * Opens tracking for a new object without ever closing it, and returns only a [WeakReference] to it. The object
      * itself never survives this function's own stack frame, so nothing outside [detector] can be keeping it
@@ -103,6 +108,19 @@ internal class LeakDetectorReachabilityTest {
     private fun confirm(): LeakDetector.ConfirmedSuspect {
         detector.onSentinelReclaimed(suspect())
         return detector.confirmedSuspects().single()
+    }
+
+    /**
+     * Confirms the tracked object as a leak suspect, then opens it again so that it is no longer tracked. Same isolation
+     * as [openWithoutClosing].
+     */
+    private fun reopenConfirmed(): WeakReference<Any> {
+        val referent = Any()
+        detector.trackOpened(referent, OWNER)
+        val ref = checkNotNull(detector.trackClosed(referent, OWNER, "token"))
+        detector.onSentinelReclaimed(checkNotNull(detector.onSentinelReclaimed(ref)))
+        detector.trackOpened(referent, OWNER)
+        return WeakReference(referent)
     }
 
     /**

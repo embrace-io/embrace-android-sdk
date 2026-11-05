@@ -80,9 +80,9 @@ internal class InstrumentationArgsImpl(
 
     @Suppress("UNCHECKED_CAST")
     override fun <T> systemService(name: String): T? {
-        return memo.getOrPut(name) {
-            context.getSystemServiceSafe<T>(name)
-        } as? T
+        // Only memoize a service lookup if it was actually found
+        val service = memo[name] ?: context.getSystemServiceSafe<Any>(name)?.let { memo.putIfAbsent(name, it) ?: it }
+        return service as? T
     }
 
     override fun sessionPartId(): String? = sessionPartTracker.getActiveSessionPartId()

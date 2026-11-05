@@ -97,6 +97,7 @@ sealed class SdkErrorType(private val severity: Severity) {
     object NetworkCaptureWriteFail : SdkErrorType(ERROR)
     object OrphanSweepFail : SdkErrorType(ERROR)
     object StorageMigrationFail : SdkErrorType(ERROR)
+    object PrefsMigrationFail : SdkErrorType(ERROR)
 
     /**
      * A failure that can be ignored.

@@ -30,4 +30,5 @@ dependencies {
     implementation(project(":embrace-android-telemetry-persistence"))
 
     testImplementation(project(":embrace-test-common"))
+    testImplementation(project(":embrace-android-storage"))
 }

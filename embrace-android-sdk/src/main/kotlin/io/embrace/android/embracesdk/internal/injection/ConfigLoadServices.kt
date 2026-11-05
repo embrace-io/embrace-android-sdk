@@ -139,6 +139,7 @@ internal class ConfigLoadServices(
      * Touches the default `SharedPreferences` on a background worker as early as possible to speculatively
      * attempt to reduce the amount of time Android blocks with `awaitLoadedLocked` later on in SDK init.
      */
+    @Suppress("SharedPreferencesUsage")
     private fun prewarmSharedPreferences() {
         workerThreadPool.backgroundWorker(Worker.Background.IoRegWorker).submit {
             try {

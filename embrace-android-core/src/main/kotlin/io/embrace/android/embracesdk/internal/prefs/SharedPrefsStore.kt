@@ -1,4 +1,4 @@
-@file:Suppress("DEPRECATION")
+@file:Suppress("DEPRECATION", "SharedPreferencesUsage")
 
 package io.embrace.android.embracesdk.internal.prefs
 

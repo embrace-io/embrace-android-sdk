@@ -4,6 +4,7 @@ import android.content.SharedPreferences
 import io.embrace.android.embracesdk.internal.serialization.PlatformSerializer
 import io.embrace.android.embracesdk.internal.store.KeyValueStoreEditor
 
+@Suppress("SharedPreferencesUsage")
 internal class SharedPrefsStoreEditor(
     private val editor: SharedPreferences.Editor,
     private val serializer: PlatformSerializer,

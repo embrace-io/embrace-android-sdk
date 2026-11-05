@@ -13,6 +13,7 @@ class EmbraceLintRegistry : IssueRegistry() {
     override val issues: List<Issue> = listOf(
         EmbracePublicApiPackageRule.ISSUE,
         ContextDirAccessRule.ISSUE,
+        SharedPreferencesRule.ISSUE,
     )
 
     override val api: Int = CURRENT_API

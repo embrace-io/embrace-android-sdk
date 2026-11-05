@@ -16,7 +16,7 @@ import org.junit.Test
 class EmbraceSpanProcessorTest {
 
     private val processIdentifier = "pid"
-    private val context = NoopOpenTelemetry.context.implicit()
+    private val context = NoopOpenTelemetry.context.current()
 
     private lateinit var spanExporter: FakeSpanExporter
     private lateinit var sessionIdsProvider: FakeSessionIdsProvider

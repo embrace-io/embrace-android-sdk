@@ -62,7 +62,7 @@ class FakeEmbraceSdkSpan(
     val links: ConcurrentLinkedQueue<EmbraceLinkData> = ConcurrentLinkedQueue()
 
     override val parent: EmbraceSpan?
-        get() = parentContext.getEmbraceSpan(openTelemetry)
+        get() = parentContext.getEmbraceSpan()
 
     override val spanContext: SpanContext?
         get() = sdkSpan?.spanContext
@@ -92,7 +92,7 @@ class FakeEmbraceSdkSpan(
             spanId = Random.nextBytes(8).toHexString(),
         ),
         startTimestamp = timestampMs.millisToNanos(),
-        parent = parentContext.getEmbraceSpan(openTelemetry)?.spanContext
+        parent = parentContext.getEmbraceSpan()?.spanContext
             ?: createInvalidSpanContext()
     )
 

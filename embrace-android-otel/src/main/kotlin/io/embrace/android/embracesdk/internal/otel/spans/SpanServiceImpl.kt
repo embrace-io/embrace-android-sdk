@@ -42,7 +42,7 @@ class SpanServiceImpl(
                     tracer = tracer,
                     terminationMode = terminationMode,
                     parentCtx = (parent as? EmbraceSdkSpan)?.createContext(openTelemetry)
-                        ?: parentSpanContext?.let { openTelemetry.context.root().storeSpan(openTelemetry.span.fromSpanContext(it)) },
+                        ?: parentSpanContext?.let { openTelemetry.context.root().storeSpanContext(it) },
                     openTelemetry = openTelemetry,
                 ),
             )
@@ -55,7 +55,7 @@ class SpanServiceImpl(
         return if (
             otelSpanStartArgs.initialSpanName.isNotBlank() &&
             canStartNewSpan(
-                otelSpanStartArgs.parentContext.getEmbraceSpan(openTelemetry),
+                otelSpanStartArgs.parentContext.getEmbraceSpan(),
                 otelSpanStartArgs.internal,
                 otelSpanStartArgs.type,
             )

@@ -196,7 +196,7 @@ private class EmbraceSpanImpl(
 
     private val parentContext = otelSpanStartArgs.parentContext
 
-    override val parent: EmbraceSpan? = parentContext.getEmbraceSpan(otelSpanStartArgs.openTelemetry)
+    override val parent: EmbraceSpan? = parentContext.getEmbraceSpan()
 
     override val spanContext: SpanContext?
         get() = startedSpan.get()?.spanContext

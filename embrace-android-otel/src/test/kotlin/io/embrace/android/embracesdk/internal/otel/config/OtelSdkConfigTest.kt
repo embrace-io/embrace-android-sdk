@@ -79,7 +79,7 @@ internal class OtelSdkConfigTest {
         )
         val span = FakeReadWriteSpan(FakeSpan(name = "span"))
         val log = FakeReadWriteLogRecord(body = "log")
-        val context = NoopOpenTelemetry.context.implicit()
+        val context = NoopOpenTelemetry.context.current()
         configuration.externalSpanProcessors.single().onEnd(span)
         configuration.externalLogRecordProcessors.single().onEmit(log, context)
         configuration.disableDataExport()

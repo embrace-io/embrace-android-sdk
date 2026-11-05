@@ -173,7 +173,7 @@ internal class RealSdkInstanceFactoryTest {
         val processor = checkNotNull(otelSdkConfig).logRecordProcessor
 
         val log = FakeReadWriteLogRecord()
-        processor.onEmit(log, NoopOpenTelemetry.context.implicit())
+        processor.onEmit(log, NoopOpenTelemetry.context.current())
         assertTrue(log.attributes.containsKey(EmbSessionAttributes.EMB_STATE))
     }
 
@@ -475,7 +475,7 @@ internal class RealSdkInstanceFactoryTest {
 
     private fun emittedLogState(): Any? {
         val log = FakeReadWriteLogRecord()
-        checkNotNull(otelSdkConfig).logRecordProcessor.onEmit(log, NoopOpenTelemetry.context.implicit())
+        checkNotNull(otelSdkConfig).logRecordProcessor.onEmit(log, NoopOpenTelemetry.context.current())
         return log.attributes[EmbSessionAttributes.EMB_STATE]
     }
 

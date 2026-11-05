@@ -66,7 +66,7 @@ internal class OtelApiInteropTest(
         span.addEvent(EVENT) {
             setStringAttribute(ATTR_KEY, ATTR_VALUE)
         }
-        val scope = otel.context.implicit().storeSpan(span).attach()
+        val scope = otel.context.current().storeSpan(span).attach()
         otel.loggerProvider.getLogger(LOGGER_NAME).emit(body = LOG) {
             setStringAttribute(ATTR_KEY, ATTR_VALUE)
         }

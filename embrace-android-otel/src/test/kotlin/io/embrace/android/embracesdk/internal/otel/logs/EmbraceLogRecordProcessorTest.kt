@@ -192,7 +192,7 @@ internal class EmbraceLogRecordProcessorTest {
     }
 
     private fun EmbraceLogRecordProcessor.onEmit(log: FakeReadWriteLogRecord) =
-        onEmit(log, NoopOpenTelemetry.context.implicit())
+        onEmit(log, NoopOpenTelemetry.context.current())
 
     private companion object {
         const val SESSION_ATTRIBUTE_NAME = "session-attr"

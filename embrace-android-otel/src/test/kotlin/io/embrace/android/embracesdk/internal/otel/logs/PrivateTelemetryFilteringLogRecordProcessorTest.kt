@@ -17,7 +17,7 @@ internal class PrivateTelemetryFilteringLogRecordProcessorTest {
         listOf(
             FakeReadWriteLogRecord(body = "public"),
             FakeReadWriteLogRecord(body = "private").apply { setStringAttribute(PrivateSpan.key, PrivateSpan.value) },
-        ).forEach { processor.onEmit(it, NoopOpenTelemetry.context.implicit()) }
+        ).forEach { processor.onEmit(it, NoopOpenTelemetry.context.current()) }
         assertEquals(listOf("public"), delegate.processedLogBodies)
     }
 
@@ -25,7 +25,7 @@ internal class PrivateTelemetryFilteringLogRecordProcessorTest {
     fun `nothing is forwarded when the export check fails`() {
         val delegate = FakeLogRecordProcessor()
         val processor = PrivateTelemetryFilteringLogRecordProcessor(delegate) { false }
-        processor.onEmit(FakeReadWriteLogRecord(body = "public"), NoopOpenTelemetry.context.implicit())
+        processor.onEmit(FakeReadWriteLogRecord(body = "public"), NoopOpenTelemetry.context.current())
         assertTrue(delegate.processedLogBodies.isEmpty())
     }
 }

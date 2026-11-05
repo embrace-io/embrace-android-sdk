@@ -20,7 +20,7 @@ internal class ErrorReportingSpanProcessorTest {
     fun `calls are forwarded`() {
         val delegate = FakeSpanProcessor()
         val processor = ErrorReportingSpanProcessor(delegate, errorHandler)
-        processor.onStart(span, NoopOpenTelemetry.context.implicit())
+        processor.onStart(span, NoopOpenTelemetry.context.current())
         processor.onEnding(span)
         processor.onEnd(span)
         assertEquals(listOf("span"), delegate.startedSpanNames)
@@ -33,7 +33,7 @@ internal class ErrorReportingSpanProcessorTest {
     fun `onStart failure is tracked`() {
         val cause = IllegalStateException("boom")
         val processor = ErrorReportingSpanProcessor(FakeSpanProcessor(onStartAction = { throw cause }), errorHandler)
-        processor.onStart(span, NoopOpenTelemetry.context.implicit())
+        processor.onStart(span, NoopOpenTelemetry.context.current())
         assertTracked(cause)
     }
 

@@ -11,6 +11,7 @@ import io.embrace.android.embracesdk.spans.EmbraceSpan
 import io.opentelemetry.kotlin.OpenTelemetry
 import io.opentelemetry.kotlin.context.Context
 import io.opentelemetry.kotlin.context.ContextKey
+import io.opentelemetry.kotlin.context.createContextKey
 import io.opentelemetry.kotlin.tracing.SpanContext
 import io.opentelemetry.kotlin.tracing.SpanKind
 import io.opentelemetry.kotlin.tracing.StatusData
@@ -140,23 +141,11 @@ interface EmbraceSdkSpan : EmbraceSpan {
     fun links(): List<Link>
 }
 
-private val lock = Any()
-private var embraceSpanContextKey: ContextKey<EmbraceSdkSpan>? = null
+private val embraceSpanContextKey: ContextKey<EmbraceSdkSpan> = createContextKey("embrace-span-key")
 
-fun Context.getEmbraceSpan(openTelemetry: OpenTelemetry): EmbraceSdkSpan? = get(getOrCreateSpanKey(openTelemetry))
+fun Context.getEmbraceSpan(): EmbraceSdkSpan? = get(embraceSpanContextKey)
 
 fun EmbraceSdkSpan.createContext(openTelemetry: OpenTelemetry): Context {
     val newParentContext = asNewContext() ?: openTelemetry.context.root()
-    return newParentContext.set(getOrCreateSpanKey(openTelemetry), this)
-}
-
-fun getOrCreateSpanKey(openTelemetry: OpenTelemetry): ContextKey<EmbraceSdkSpan> {
-    if (embraceSpanContextKey == null) {
-        synchronized(lock) {
-            if (embraceSpanContextKey == null) {
-                embraceSpanContextKey = openTelemetry.context.createKey("embrace-span-key")
-            }
-        }
-    }
-    return embraceSpanContextKey ?: error("Failed to create context key")
+    return newParentContext.set(embraceSpanContextKey, this)
 }

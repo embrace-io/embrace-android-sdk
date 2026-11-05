@@ -15,6 +15,7 @@ internal object ThrowableSnapshotter {
     private const val MAX_VM_ERROR_FRAMES = 32
     private const val MAX_MESSAGE_LENGTH = 1024
     private const val MAX_CLASS_NAME_LENGTH = 256
+    private const val MAX_FRAME_LENGTH = 512
 
     /**
      * Snapshots [throwable] as an error of [type] captured at [timestampMs], along with up to 3 causes and 3 exceptions it
@@ -91,9 +92,42 @@ internal object ThrowableSnapshotter {
     }
 
     private fun frameOf(element: StackTraceElement?): String = try {
-        element?.toString() ?: unavailable("frame")
+        when {
+            element == null -> unavailable("frame")
+            partsLength(element) > MAX_FRAME_LENGTH -> cappedFrameOf(element)
+            else -> element.toString().cap(MAX_FRAME_LENGTH)
+        }
     } catch (_: Throwable) {
         unavailable("frame")
+    }
+
+    private fun partsLength(element: StackTraceElement): Long =
+        element.className.length.toLong() + element.methodName.length + (element.fileName?.length ?: 0)
+
+    private fun cappedFrameOf(element: StackTraceElement): String {
+        val builder = StringBuilder(MAX_FRAME_LENGTH)
+        builder.appendCapped(element.className).appendCapped(".").appendCapped(element.methodName).appendCapped("(")
+        val fileName = element.fileName
+        val line = element.lineNumber
+        when {
+            element.isNativeMethod -> builder.appendCapped("Native Method")
+            fileName == null -> builder.appendCapped("Unknown Source")
+            else -> {
+                builder.appendCapped(fileName)
+                if (line >= 0) {
+                    builder.appendCapped(":").appendCapped(line.toString())
+                }
+            }
+        }
+        return builder.appendCapped(")").toString()
+    }
+
+    private fun StringBuilder.appendCapped(value: String): StringBuilder {
+        val room = MAX_FRAME_LENGTH - length
+        if (room > 0) {
+            append(value, 0, minOf(value.length, room))
+        }
+        return this
     }
 
     private fun List<Throwable>.containsRef(throwable: Throwable): Boolean {

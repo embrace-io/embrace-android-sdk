@@ -174,5 +174,6 @@ class JvmCrashDataSourceImpl(
 
 // Amount of time to block threads that try to handle an unhandled exception if a crash is already being handled
 // Blocking instead of returning right away gives a chance for the crash handling and teardown to finish before
-// handing control to another handler which may prematurely kill the process.
-private const val LATER_CRASH_TEARDOWN_WAIT_MS = 5000L
+// handing control to another handler which may prematurely kill the process. This covers the longest wait in
+// the teardown, the payload store's shutdown, and keeps a blocked main thread under the 5s ANR timeout.
+private const val LATER_CRASH_TEARDOWN_WAIT_MS = 3000L

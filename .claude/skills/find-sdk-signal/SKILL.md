@@ -38,7 +38,7 @@ whole-user-session, on the final part only.
 took it and planned the wrong go field (`EndMethod`).
 
 **GOOD:** "thermal state" → `ThermalStateDataSource.kt:79-94`, span `emb-thermal-state`, `emb.type=perf.thermal_state`.
-**BAD:** "thermal state" → `startup-trace/.../SdkInitAttributeKeys.kt:20-27` (`thermal-status`): context on the
+**BAD:** "thermal state" → `instrumentation-startup-trace/.../SdkInitAttributeKeys.kt:134` (`thermal-status`): context on the
 private `sdk-init` span, not the customer signal. `grep thermal` finds it first.
 
 ## 3. The rest of the answer

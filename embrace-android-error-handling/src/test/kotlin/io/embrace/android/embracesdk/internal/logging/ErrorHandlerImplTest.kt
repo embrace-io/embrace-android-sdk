@@ -3,6 +3,7 @@ package io.embrace.android.embracesdk.internal.logging
 import io.embrace.android.embracesdk.concurrency.runConcurrently
 import io.embrace.android.embracesdk.fakes.FakeClock
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Before
@@ -12,6 +13,8 @@ import java.util.concurrent.ConcurrentLinkedQueue
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicBoolean
+import java.util.concurrent.atomic.AtomicInteger
+import java.util.concurrent.atomic.AtomicReference
 import kotlin.concurrent.thread
 
 internal class ErrorHandlerImplTest {
@@ -174,13 +177,15 @@ internal class ErrorHandlerImplTest {
     }
 
     @Test
-    fun `close drops sink and ignores later errors and drains`() {
+    fun `close is idempotent and terminal, dropping the sink and ignoring later errors, drains and resets`() {
         handler.drain(sink)
+        handler.close()
         handler.close()
         fail()
 
         val otherErrors = mutableListOf<SdkErrorSnapshot>()
         handler.drain { otherErrors += it }
+        handler.resetLimit()
         fail()
         assertTrue(errors.isEmpty())
         assertTrue(otherErrors.isEmpty())
@@ -645,6 +650,186 @@ internal class ErrorHandlerImplTest {
         val later = distinctError(0)
         fail(later)
         assertEquals(listOf(failure.top(), later.top()), errors.map { it.first })
+    }
+
+    @Test
+    fun `resetting the limit before a drain does not grow the buffer past the limit`() {
+        repeat(100) { part ->
+            repeat(10) { fail(distinctError(part * 10 + it)) }
+            handler.resetLimit()
+        }
+        handler.drain(sink)
+        assertEquals(10, errors.size)
+        assertEquals((0 until 10).map { distinctError(it).top() }, errors.map { it.first })
+    }
+
+    @Test
+    fun `an error dropped by a full buffer does not use the limit`() {
+        repeat(10) { fail(distinctError(it)) }
+        handler.resetLimit()
+        fail(distinctError(10))
+        handler.drain(sink)
+        repeat(10) { fail(distinctError(10 + it)) }
+        assertEquals((0 until 20).map { distinctError(it).top() }, errors.map { it.first })
+    }
+
+    @Test
+    fun `a full buffer takes one sink failure without a reset and rejects a second`() {
+        val failures = AtomicInteger(0)
+        handler = ErrorHandlerImpl(clock::now, noopLogcat, beforeBuffering = {
+            if (failures.getAndDecrement() > 0) {
+                error("buffering failed")
+            }
+        })
+        repeat(10) { fail(distinctError(it)) }
+        failures.set(1)
+        fail(distinctError(10))
+        failures.set(1)
+        fail(distinctError(11))
+
+        handler.drain(sink)
+        assertEquals(List(10) { type } + SdkErrorType.ErrorSinkFail, types)
+    }
+
+    @Test
+    fun `a sink failure raised while closing from inside the sink is not recorded`() {
+        handler.drain {
+            sink(it)
+            fail()
+            handler.close()
+        }
+        fail()
+        assertEquals(listOf(type), types)
+    }
+
+    @Test
+    fun `a sink that closes and then throws does not record a sink failure`() {
+        handler.drain {
+            sink(it)
+            handler.close()
+            error("sink failed")
+        }
+        fail()
+        assertEquals(listOf(type), types)
+    }
+
+    @Test(timeout = 10_000)
+    fun `close waits for a sink call in progress on another thread`() {
+        handler = ErrorHandlerImpl(clock::now, noopLogcat, closeTimeoutMs = 10_000)
+        val inSink = CountDownLatch(1)
+        val release = CountDownLatch(1)
+        handler.drain {
+            inSink.countDown()
+            release.await()
+        }
+        val tracker = thread(isDaemon = true) { fail() }
+        val closer = thread(isDaemon = true) {
+            assertTrue(inSink.await(5, TimeUnit.SECONDS))
+            handler.close()
+        }
+        try {
+            assertTrue(inSink.await(5, TimeUnit.SECONDS))
+            closer.join(200)
+            assertTrue(closer.isAlive)
+        } finally {
+            release.countDown()
+        }
+        closer.join(5_000)
+        assertFalse(closer.isAlive)
+        tracker.join(5_000)
+    }
+
+    @Test(timeout = 10_000)
+    fun `close waits no longer than the timeout for a hanging sink`() {
+        handler = ErrorHandlerImpl(clock::now, noopLogcat, closeTimeoutMs = 100)
+        val inSink = CountDownLatch(1)
+        val release = CountDownLatch(1)
+        handler.drain {
+            inSink.countDown()
+            release.await()
+        }
+        val tracker = thread(isDaemon = true) { fail() }
+        try {
+            assertTrue(inSink.await(5, TimeUnit.SECONDS))
+            val start = System.nanoTime()
+            handler.close()
+            val elapsedMs = TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - start)
+            assertTrue("close took ${elapsedMs}ms", elapsedMs >= 90)
+        } finally {
+            release.countDown()
+        }
+        tracker.join(5_000)
+    }
+
+    @Test(timeout = 10_000)
+    fun `an interrupt during the close wait ends it and keeps the interrupt status`() {
+        handler = ErrorHandlerImpl(clock::now, noopLogcat, closeTimeoutMs = 60_000)
+        val inSink = CountDownLatch(1)
+        val release = CountDownLatch(1)
+        handler.drain {
+            inSink.countDown()
+            release.await()
+        }
+        val tracker = thread(isDaemon = true) { fail() }
+        val stillInterrupted = AtomicBoolean(false)
+        try {
+            assertTrue(inSink.await(5, TimeUnit.SECONDS))
+            val closer = thread(isDaemon = true) {
+                handler.close()
+                stillInterrupted.set(Thread.currentThread().isInterrupted)
+            }
+            closer.join(100)
+            assertTrue(closer.isAlive)
+            closer.interrupt()
+            closer.join(5_000)
+            assertFalse(closer.isAlive)
+            assertTrue(stillInterrupted.get())
+        } finally {
+            release.countDown()
+        }
+        tracker.join(5_000)
+    }
+
+    @Test(timeout = 10_000)
+    fun `close from inside the sink does not wait for itself and stops later records`() {
+        handler = ErrorHandlerImpl(clock::now, noopLogcat, closeTimeoutMs = 60_000)
+        repeat(3) { fail(distinctError(it)) }
+        handler.drain {
+            sink(it)
+            handler.close()
+        }
+        assertEquals(1, errors.size)
+    }
+
+    @Test(timeout = 10_000)
+    fun `close from inside the sink still waits for sink calls on other threads`() {
+        handler = ErrorHandlerImpl(clock::now, noopLogcat, closeTimeoutMs = 10_000)
+        val heldInSink = CountDownLatch(1)
+        val releaseHeld = CountDownLatch(1)
+        val closeReturned = AtomicBoolean(false)
+        val holder = AtomicReference<Thread>()
+        handler.drain {
+            if (holder.compareAndSet(null, Thread.currentThread())) {
+                heldInSink.countDown()
+                releaseHeld.await()
+            } else {
+                handler.close()
+                closeReturned.set(true)
+            }
+        }
+        val held = thread(isDaemon = true) { fail() }
+        try {
+            assertTrue(heldInSink.await(5, TimeUnit.SECONDS))
+            val closer = thread(isDaemon = true) { fail() }
+            closer.join(200)
+            assertFalse(closeReturned.get())
+            releaseHeld.countDown()
+            closer.join(5_000)
+            assertTrue(closeReturned.get())
+        } finally {
+            releaseHeld.countDown()
+        }
+        held.join(5_000)
     }
 
     @Test

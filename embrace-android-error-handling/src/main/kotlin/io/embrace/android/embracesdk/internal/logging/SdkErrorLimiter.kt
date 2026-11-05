@@ -5,7 +5,7 @@ import java.util.concurrent.atomic.AtomicInteger
 
 /**
  * Limits SDK errors to at most [limit] unique errors per session part. Repeats are distinguished by [SdkErrorKey] and do not
- * count to the limit.
+ * count to the limit. At most [limit] keys are ever held.
  */
 internal class SdkErrorLimiter(limit: Int) {
 
@@ -16,17 +16,21 @@ internal class SdkErrorLimiter(limit: Int) {
      * Returns true if [snapshot] should be recorded, which uses one from the limit.
      */
     fun tryAcquire(snapshot: SdkErrorSnapshot): Boolean {
-        if (remaining.get() <= 0) {
-            return false
-        }
         val key = SdkErrorKey(snapshot.type, snapshot.top.className, snapshot.top.frames.firstOrNull())
-        if (recorded.putIfAbsent(key, Unit) != null) {
+        if (recorded.containsKey(key) || !reserve()) {
             return false
         }
+        if (recorded.putIfAbsent(key, Unit) != null) {
+            remaining.incrementAndGet()
+            return false
+        }
+        return true
+    }
+
+    private fun reserve(): Boolean {
         while (true) {
             val current = remaining.get()
             if (current <= 0) {
-                recorded.remove(key)
                 return false
             }
             if (remaining.compareAndSet(current, current - 1)) {

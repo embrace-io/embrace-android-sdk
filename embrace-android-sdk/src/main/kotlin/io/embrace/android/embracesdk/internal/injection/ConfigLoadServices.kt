@@ -10,6 +10,9 @@ import io.embrace.android.embracesdk.internal.config.ConfigService
 import io.embrace.android.embracesdk.internal.config.PersistedConfig
 import io.embrace.android.embracesdk.internal.config.instrumented.InstrumentedConfigImpl
 import io.embrace.android.embracesdk.internal.config.instrumented.schema.InstrumentedConfig
+import io.embrace.android.embracesdk.internal.logging.ErrorHandler
+import io.embrace.android.embracesdk.internal.logging.SdkErrorType
+import io.embrace.android.embracesdk.internal.logging.guardSdkCode
 import io.embrace.android.embracesdk.internal.payload.AppFramework
 import io.embrace.android.embracesdk.internal.prefs.PrefsDeliveredAeiStore
 import io.embrace.android.embracesdk.internal.prefs.PrefsNetworkCaptureRuleStore
@@ -27,6 +30,8 @@ import io.embrace.android.embracesdk.internal.store.OrdinalStoreImpl
 import io.embrace.android.embracesdk.internal.store.PersistedSdkStateStore
 import io.embrace.android.embracesdk.internal.store.StoreWriteBatcher
 import io.embrace.android.embracesdk.internal.store.file.FilePersistedSdkStateStore
+import io.embrace.android.embracesdk.internal.store.file.MmapOrdinalStore
+import io.embrace.android.embracesdk.internal.store.file.ScopedOrdinalStore
 import io.embrace.android.embracesdk.internal.utils.EmbTrace
 import io.embrace.android.embracesdk.internal.utils.UuidSource
 import io.embrace.android.embracesdk.internal.utils.UuidSourceImpl
@@ -88,7 +93,13 @@ internal class ConfigLoadServices(
     }
 
     val ordinalStore: Lazy<OrdinalStore> = lazy {
-        EmbTrace.trace("ordinal-store-init") { OrdinalStoreImpl(keyValueStore.value, preStartServices.errorHandler) }
+        EmbTrace.trace("ordinal-store-init") {
+            if (superiorStorageSystemEnabled) {
+                createFileOrdinalStore(preStartServices.errorHandler)
+            } else {
+                OrdinalStoreImpl(keyValueStore.value, preStartServices.errorHandler)
+            }
+        }
     }
 
     val writeBatcher: Lazy<StoreWriteBatcher> = lazy {
@@ -154,6 +165,18 @@ internal class ConfigLoadServices(
             okHttpClient.evictConnections()
             workerThreadPool.close()
         }
+    }
+
+    private fun createFileOrdinalStore(errorHandler: ErrorHandler): OrdinalStore {
+        val storage = superiorStorageSystem.value
+        val path = storage.dir(SdkDir.INSTALL_STATE) / SdkStorageLayout.ORDINALS_FILE_NAME
+        errorHandler.guardSdkCode(SdkErrorType.OrdinalStoreOpenFail, Unit) {
+            if (!storage.fileSystem.exists(path)) {
+                MmapOrdinalStore.create(storage.fileSystem, path, emptyMap())
+            }
+        }
+        val ordinals = MmapOrdinalStore.open(path.toFile(), errorHandler) ?: return UnavailableOrdinalStore
+        return ScopedOrdinalStore(ordinals, persistedSdkStateStore.value, errorHandler)
     }
 
     /**

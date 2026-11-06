@@ -8,14 +8,18 @@ import io.embrace.android.embracesdk.fs.FakeFileSystemRule
 import io.embrace.android.embracesdk.internal.injection.ConfigLoadServices
 import io.embrace.android.embracesdk.internal.injection.PreStartServices
 import io.embrace.android.embracesdk.internal.storage.SdkStorageLayout
+import io.embrace.android.embracesdk.internal.store.Ordinal
 import io.embrace.android.embracesdk.internal.store.PersistedSdkState
 import io.embrace.android.embracesdk.internal.store.file.FilePersistedSdkStateStore
 import io.embrace.android.embracesdk.internal.worker.Worker
+import okio.FileSystem
 import okio.Path.Companion.toOkioPath
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertTrue
 import org.junit.Rule
 import org.junit.Test
 import org.junit.rules.TemporaryFolder
+import java.io.File
 
 internal class ConfigLoadServicesTest {
 
@@ -62,5 +66,24 @@ internal class ConfigLoadServicesTest {
             fileSystem = fs,
         )
         assertEquals("device-id", configLoadServices.persistedSdkStateStore.value.snapshot().deviceId)
+    }
+
+    @Test
+    fun `the superior storage system keeps ordinals in install state`() {
+        val context = FilesDirApplication(tempDir.newFolder())
+        val configLoadServices = ConfigLoadServices(
+            context = context,
+            preStartServices = PreStartServices(errorHandler = FakeErrorHandler()),
+            workerThreadPoolSupplier = { FakeWorkerThreadPool(testWorkers = listOf(Worker.Background.IoRegWorker)) },
+            configServiceSupplier = { _, _, _, _, _, _ -> FakeConfigService() },
+            superiorStorageSystemEnabled = true,
+            fileSystem = FileSystem.SYSTEM,
+        )
+        val store = configLoadServices.ordinalStore.value
+        assertEquals(1, store.incrementAndGet(Ordinal.SESSION))
+        assertEquals(2, store.incrementAndGet(Ordinal.SESSION))
+
+        val installState = File(context.noBackupFilesDir, "${SdkStorageLayout.ROOT_DIR_NAME}/install_state")
+        assertTrue(File(installState, SdkStorageLayout.ORDINALS_FILE_NAME).exists())
     }
 }

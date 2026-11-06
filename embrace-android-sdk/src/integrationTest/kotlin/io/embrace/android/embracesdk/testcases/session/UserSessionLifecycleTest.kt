@@ -16,6 +16,7 @@ import io.embrace.android.embracesdk.internal.config.remote.UserSessionRemoteCon
 import io.embrace.android.embracesdk.internal.otel.sdk.findAttributeValue
 import io.embrace.android.embracesdk.internal.payload.Envelope
 import io.embrace.android.embracesdk.internal.payload.SessionPartPayload
+import io.embrace.android.embracesdk.internal.store.Ordinal
 import io.embrace.android.embracesdk.internal.worker.Worker
 import io.embrace.android.embracesdk.semconv.EmbSessionAttributes.EMB_SESSION_PART_ID
 import io.embrace.android.embracesdk.semconv.EmbSessionAttributes.EMB_USER_SESSION_ID
@@ -40,6 +41,7 @@ import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNotEquals
 import org.junit.Assert.assertNotNull
+import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Rule
 import org.junit.Test
@@ -163,6 +165,31 @@ internal class UserSessionLifecycleTest(
 
                 assertNotEquals(persistedId, fgSession.getUserSessionId())
                 assertFalse(fgSession.isBackgroundOnlyPart())
+            }
+        )
+    }
+
+    @Test
+    fun `user session numbers increment with the superior storage system enabled and stay out of prefs`() {
+        testRule.runTest(
+            setupAction = {
+                superiorStorageSystemEnabled = true
+            },
+            persistedRemoteConfig = RemoteConfig(
+                userSession = UserSessionRemoteConfig(inactivityTimeoutSeconds = 30)
+            ),
+            testCaseAction = {
+                recordSession()
+                clock.tick(31_000L)
+                recordSession()
+            },
+            assertAction = {
+                assertUserSessionNumbers(
+                    envelopes = getSessionEnvelopes(2),
+                    userSessionNumbers = listOf(1, 2),
+                    sessionPartNumbers = listOf(1, 2)
+                )
+                assertNull(testRule.setup.getStore().getInt(Ordinal.SESSION.key))
             }
         )
     }

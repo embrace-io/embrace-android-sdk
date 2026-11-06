@@ -63,12 +63,16 @@ internal class HucTestHarness(versionChecker: VersionChecker = BuildVersionCheck
         expectedEndTime: Long = FAKE_TIME_MS,
         expectedUrl: String = testUrl.toString(),
         expectedMethod: String = "GET",
+        expectedErrorType: String? = FakeIOException::class.java.canonicalName,
+        expectedErrorMessage: String = "Nope",
     ) {
         fakeTelemetryDestination.createdSpans.single().assertClientError(
             expectedStartTime = expectedStartTime,
             expectedEndTime = expectedEndTime,
             expectedUrl = expectedUrl,
             expectedMethod = expectedMethod,
+            expectedErrorType = expectedErrorType,
+            expectedErrorMessage = expectedErrorMessage,
         )
     }
 
@@ -123,14 +127,16 @@ internal class HucTestHarness(versionChecker: VersionChecker = BuildVersionCheck
         expectedEndTime: Long,
         expectedUrl: String,
         expectedMethod: String,
+        expectedErrorType: String?,
+        expectedErrorMessage: String,
     ) {
         assertNull(attributes[HttpAttributes.HTTP_RESPONSE_STATUS_CODE])
         assertEquals(expectedUrl, attributes["url.full"])
         assertEquals(expectedMethod, attributes[HttpAttributes.HTTP_REQUEST_METHOD])
         assertEquals(expectedStartTime, startTimeMs)
         assertEquals(expectedEndTime, endTimeMs)
-        assertEquals(FakeIOException::class.java.canonicalName, attributes[ErrorAttributes.ERROR_TYPE])
-        assertEquals("Nope", attributes[ExceptionAttributes.EXCEPTION_MESSAGE])
+        assertEquals(expectedErrorType, attributes[ErrorAttributes.ERROR_TYPE])
+        assertEquals(expectedErrorMessage, attributes[ExceptionAttributes.EXCEPTION_MESSAGE])
         assertEquals(expectedStartTime, startTimeMs)
         assertEquals(expectedEndTime, endTimeMs)
         assertEquals(ErrorCodeAttribute.Failure, errorCode)

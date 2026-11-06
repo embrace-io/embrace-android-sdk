@@ -14,6 +14,7 @@ import org.junit.Assert.assertThrows
 import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
+import java.io.FileNotFoundException
 import java.io.IOException
 import java.io.InputStream
 import java.io.OutputStream
@@ -183,6 +184,50 @@ internal class InstrumentedHttpsURLConnectionTest {
             instrumentedConnection.responseCode
         }
         assertSingleClientError()
+    }
+
+    @Test
+    fun `an HTTP error thrown from getInputStream is recorded with its status code`() = harness.runTest {
+        every { mockWrappedConnection.inputStream } throws FileNotFoundException(testUrl.toString())
+        every { mockWrappedConnection.responseCode } returns 404
+        val startTime = getCurrentTimeMs()
+
+        assertThrows(FileNotFoundException::class.java) {
+            instrumentedConnection.inputStream
+        }
+        assertSingleSuccessfulRequest(
+            expectedStartTime = startTime,
+            expectedEndTime = getCurrentTimeMs(),
+            expectedResponseCode = 404,
+        )
+    }
+
+    @Test
+    fun `a FileNotFoundException from getInputStream with a status under 400 is recorded as a client error`() = harness.runTest {
+        every { mockWrappedConnection.inputStream } throws FileNotFoundException(testUrl.toString())
+        every { mockWrappedConnection.responseCode } returns 200
+
+        assertThrows(FileNotFoundException::class.java) {
+            instrumentedConnection.inputStream
+        }
+        assertSingleClientError(
+            expectedErrorType = FileNotFoundException::class.java.canonicalName,
+            expectedErrorMessage = testUrl.toString(),
+        )
+    }
+
+    @Test
+    fun `a FileNotFoundException from getInputStream whose status can't be read is recorded as a client error`() = harness.runTest {
+        every { mockWrappedConnection.inputStream } throws FileNotFoundException(testUrl.toString())
+        every { mockWrappedConnection.responseCode } throws FakeIOException()
+
+        assertThrows(FileNotFoundException::class.java) {
+            instrumentedConnection.inputStream
+        }
+        assertSingleClientError(
+            expectedErrorType = FileNotFoundException::class.java.canonicalName,
+            expectedErrorMessage = testUrl.toString(),
+        )
     }
 
     @Test

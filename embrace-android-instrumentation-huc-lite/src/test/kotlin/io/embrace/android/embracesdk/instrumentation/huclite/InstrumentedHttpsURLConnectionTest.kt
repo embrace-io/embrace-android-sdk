@@ -601,11 +601,13 @@ internal class InstrumentedHttpsURLConnectionTest {
     // Test HttpURLConnection methods
 
     @Test
-    fun `getURL reflects the wrapped connection URL after a redirect`() = harness.runTest {
+    fun `getURL and toString reflect the wrapped connection after a redirect`() = harness.runTest {
         val redirectedUrl = URL("https://fakeurl.pizza/redirected")
         every { mockWrappedConnection.url } returns redirectedUrl
+        every { mockWrappedConnection.toString() } returns "connection:$redirectedUrl"
 
         assertEquals(redirectedUrl, instrumentedConnection.url)
+        assertEquals("connection:$redirectedUrl", instrumentedConnection.toString())
         assertNoRequestRecorded()
     }
 

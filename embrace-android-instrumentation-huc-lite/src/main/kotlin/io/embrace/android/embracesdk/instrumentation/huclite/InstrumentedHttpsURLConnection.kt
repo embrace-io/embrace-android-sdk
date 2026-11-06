@@ -229,6 +229,8 @@ internal class InstrumentedHttpsURLConnection(
 
     override fun getURL(): URL = wrappedConnection.url
 
+    override fun toString(): String = wrappedConnection.toString()
+
     override fun addRequestProperty(key: String?, value: String?) {
         wrappedConnection.addRequestProperty(key, value)
     }

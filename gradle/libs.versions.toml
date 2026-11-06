@@ -1,7 +1,7 @@
 [versions]
 
 binaryCompatibilityValidator = "0.18.2"
-agp = "9.4.1"
+agp = "9.5.1"
 junit = "4.13.2"
 dokka = "2.2.0"
 kotlinGradlePlugin = "2.4.21"

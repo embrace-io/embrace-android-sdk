@@ -60,7 +60,9 @@ internal class NavigationEventBroker(
     }
 
     private fun handleActivityResumed(event: NavigationSignal.ActivityResumed) {
-        val startTime = activityStartTimes.remove(event.instanceId) ?: return
+        // An Activity that was only paused, as when a translucent Activity covered it, resumes without starting again, so it
+        // became visible again when it resumed. De-duplication drops a resume that doesn't change the screen.
+        val startTime = activityStartTimes.remove(event.instanceId) ?: event.timestampMs
 
         // If the Activity doesn't have a screen source, set the Activity name as the Activity's visible screen
         // and update the destination based on what screens are visible

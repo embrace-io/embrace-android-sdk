@@ -64,6 +64,19 @@ internal class NavigationEventBrokerTest {
     }
 
     @Test
+    fun `an activity resuming after a translucent activity closes is the screen again`() {
+        loadTimes.add(broker.submitAndTick(ActivityStarted(HOME_ID, clock.now())))
+        broker.submitAndTick(ActivityResumed(HOME_ID, HOME, clock.now()))
+        // a translucent activity pauses home without stopping it, so home doesn't start again when it closes
+        broker.submitAndTick(ActivityPaused(HOME_ID, clock.now()))
+        loadTimes.add(broker.submitAndTick(ActivityStarted(SETTINGS_ID, clock.now())))
+        broker.submitAndTick(ActivityResumed(SETTINGS_ID, SETTINGS, clock.now()))
+        broker.submitAndTick(ActivityPaused(SETTINGS_ID, clock.now()))
+        loadTimes.add(broker.submitAndTick(ActivityResumed(HOME_ID, HOME, clock.now())))
+        assertStateTransitions(listOf(Screen.Named(HOME), Screen.Named(SETTINGS), Screen.Named(HOME)))
+    }
+
+    @Test
     fun `no screen load recorded for activities that do not hit resume`() {
         broker.submitAndTick(ActivityStarted(HOME_ID, clock.now()))
         loadTimes.add(broker.submitAndTick(ActivityStarted(SETTINGS_ID, clock.now())))

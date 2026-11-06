@@ -73,8 +73,11 @@ class FakeEmbraceSdkSpan(
     override val spanId: String?
         get() = spanContext?.spanId
 
+    var discarded: Boolean = false
+        private set
+
     override val isRecording: Boolean
-        get() = sdkSpan?.isRecording() ?: false
+        get() = !discarded && sdkSpan?.isRecording() ?: false
 
     override fun start(startTimeMs: Long?): Boolean {
         if (!started()) {
@@ -120,6 +123,14 @@ class FakeEmbraceSdkSpan(
 
             spanEndTimeMs = timestamp
         }
+        return true
+    }
+
+    override fun discard(): Boolean {
+        if (!isRecording) {
+            return false
+        }
+        discarded = true
         return true
     }
 

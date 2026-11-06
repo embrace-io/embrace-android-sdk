@@ -30,6 +30,8 @@ object NoopEmbraceSdkSpan : EmbraceSdkSpan {
 
     override fun stopWithErrorCode(errorCode: ErrorCodeAttribute?, endTimeMs: Long?): Boolean = false
 
+    override fun discard(): Boolean = false
+
     override fun addEvent(
         name: String,
         timestampMs: Long?,

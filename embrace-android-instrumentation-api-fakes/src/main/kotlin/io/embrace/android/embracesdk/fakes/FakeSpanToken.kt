@@ -32,12 +32,19 @@ class FakeSpanToken(
 
     private val spanId: String = uuidSource.createUuid().lowercase().take(16)
 
+    var discarded: Boolean = false
+        private set
+
     override fun stop(endTimeMs: Long?, errorCode: ErrorCodeAttribute?) {
         this.endTimeMs = endTimeMs ?: 0
         this.errorCode = errorCode
     }
 
-    override fun isRecording(): Boolean = endTimeMs == null
+    override fun discard() {
+        discarded = true
+    }
+
+    override fun isRecording(): Boolean = !discarded && endTimeMs == null
 
     override fun isValid(): Boolean = true
 

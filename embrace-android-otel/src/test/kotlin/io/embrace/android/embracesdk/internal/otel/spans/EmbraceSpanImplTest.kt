@@ -208,6 +208,26 @@ internal class EmbraceSpanImplTest(
     }
 
     @Test
+    fun `a discarded span is never exported or tracked`() {
+        with(embraceSpan) {
+            assertFalse(discard())
+            assertTrue(start())
+            val notificationsBefore = notifications.get()
+
+            assertTrue(discard())
+            assertFalse(isRecording)
+            assertTrue(spanRepository.getActiveEmbraceSpans().isEmpty())
+            assertTrue(spanRepository.getCompletedEmbraceSpans().isEmpty())
+            assertEquals(notificationsBefore + 1, notifications.get())
+
+            assertFalse(discard())
+            assertFalse(stop())
+        }
+        assertTrue(spanExporter.exportedSpans.isEmpty())
+        assertNull(stoppedSpanId)
+    }
+
+    @Test
     fun `validate starting and stopping span with specific times`() {
         with(embraceSpan) {
             val expectedStartTimeMs = fakeClock.now() + 1000

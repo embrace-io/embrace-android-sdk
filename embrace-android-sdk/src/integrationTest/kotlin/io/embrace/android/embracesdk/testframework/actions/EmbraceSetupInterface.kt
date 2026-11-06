@@ -135,6 +135,11 @@ internal class EmbraceSetupInterface(
     var constructionFailure: Throwable? = null
 
     /**
+     * When set, the SDK keeps its state in the files under `noBackupFilesDir/xcor/` rather than in prefs.
+     */
+    var superiorStorageSystemEnabled: Boolean = false
+
+    /**
      * When set, the SDK's start throws this partway through, as the session orchestrator starts.
      */
     var startFailure: Throwable? = null
@@ -207,6 +212,7 @@ internal class EmbraceSetupInterface(
                         createConfigService(preStartServices, instrumentedConfig, serializer, okHttpClient, workerThreadPool, persistedConfig)
                     ).also { services.configService = it }
                 },
+                superiorStorageSystemEnabled = superiorStorageSystemEnabled,
             )
         }
     }

@@ -58,6 +58,7 @@ import io.embrace.android.embracesdk.semconv.EmbSessionAttributes
 import io.embrace.android.embracesdk.semconv.EmbSessionAttributes.EmbUserSessionTerminationReasonValues
 import io.embrace.android.embracesdk.spans.ErrorCode
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Before
@@ -67,6 +68,7 @@ import java.io.EOFException
 import java.io.InputStream
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.Future
+import java.util.concurrent.FutureTask
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.TimeoutException
 import java.util.zip.GZIPInputStream
@@ -82,6 +84,7 @@ class PayloadResurrectionServiceImplTest {
     private lateinit var nativeCrashService: FakeNativeCrashService
     private lateinit var errorHandler: FakeErrorHandler
     private lateinit var serializer: TestPlatformSerializer
+    private lateinit var intakeService: IntakeServiceImpl
     private lateinit var resurrectionService: PayloadResurrectionServiceImpl
 
     @Before
@@ -94,15 +97,16 @@ class PayloadResurrectionServiceImplTest {
         nativeCrashService = FakeNativeCrashService()
         errorHandler = FakeErrorHandler(false)
         serializer = TestPlatformSerializer()
+        intakeService = IntakeServiceImpl(
+            schedulingService,
+            payloadStorageService,
+            cacheStorageService,
+            errorHandler,
+            serializer,
+            PriorityWorker(intakeExecutor),
+        )
         resurrectionService = PayloadResurrectionServiceImpl(
-            intakeService = IntakeServiceImpl(
-                schedulingService,
-                payloadStorageService,
-                cacheStorageService,
-                errorHandler,
-                serializer,
-                PriorityWorker(intakeExecutor),
-            ),
+            intakeService = intakeService,
             payloadStorageService = payloadStorageService,
             cacheStorageService = cacheStorageService,
             cachedLogEnvelopeStore = cachedLogEnvelopeStore,
@@ -786,6 +790,66 @@ class PayloadResurrectionServiceImplTest {
     }
 
     @Test
+    fun `parts and native crashes are kept for the next launch when a crash has sealed the intake`() {
+        val crashOfPart = createNativeCrashData(nativeCrashId = "native-crash-1", sessionPartId = FAKE_SESSION_PART_ID)
+        val sessionlessCrash = createNativeCrashData(nativeCrashId = "native-crash-2", sessionPartId = "no-session-id")
+        nativeCrashService.addNativeCrashData(crashOfPart)
+        nativeCrashService.addNativeCrashData(sessionlessCrash)
+        cacheStorageService.addPayload(sessionMetadata, deadSessionEnvelope)
+        cacheStorageService.addPayload(fakeCachedCrashEnvelopeMetadata, fakeEmptyLogEnvelope())
+        var listenerCalled = false
+        resurrectionService.addResurrectionCompleteListener { listenerCalled = true }
+
+        // the app crashes during the pass: the crash's log is taken, then the crash teardown shuts the intake down
+        intakeService.take(fakeEmptyLogEnvelope(), jvmCrashLogMetadata, null, null).get()
+        intakeService.shutdown()
+        resurrectInBackground()
+
+        // nothing newer may be delivered before the next launch resurrects what was left
+        assertFalse(listenerCalled)
+        assertEquals(listOf(jvmCrashLogMetadata), payloadStorageService.storedPayloadMetadata())
+        assertEquals(
+            setOf(sessionMetadata, fakeCachedCrashEnvelopeMetadata),
+            cacheStorageService.storedPayloadMetadata().toSet(),
+        )
+        assertEquals(listOf(crashOfPart, sessionlessCrash), nativeCrashService.getNativeCrashes())
+    }
+
+    @Test
+    fun `a part and native crashes are kept when the intake's worker has shut down, as when the SDK shuts down`() {
+        val crash = createNativeCrashData(nativeCrashId = "native-crash-1", sessionPartId = "no-session-id")
+        nativeCrashService.addNativeCrashData(crash)
+        val cancellingIntakeService = object : IntakeService {
+            override fun shutdown() {}
+            override fun take(
+                intake: Envelope<*>,
+                metadata: StoredTelemetryMetadata,
+                staleEntry: StoredTelemetryMetadata?,
+                onStored: (() -> Unit)?,
+            ): Future<IntakeResult> = FutureTask { IntakeResult.STORED }.apply { cancel(false) }
+        }
+        val service = PayloadResurrectionServiceImpl(
+            intakeService = cancellingIntakeService,
+            payloadStorageService = payloadStorageService,
+            cacheStorageService = cacheStorageService,
+            cachedLogEnvelopeStore = cachedLogEnvelopeStore,
+            errorHandler = errorHandler,
+            serializer = serializer,
+        )
+        cacheStorageService.addPayload(sessionMetadata, deadSessionEnvelope)
+        var listenerCalled = false
+        service.addResurrectionCompleteListener { listenerCalled = true }
+
+        assertEquals(
+            ResurrectionOutcome.INTERRUPTED,
+            service.resurrectOldPayloads(nativeCrashServiceProvider = { nativeCrashService }),
+        )
+        assertFalse(listenerCalled)
+        assertEquals(listOf(sessionMetadata), cacheStorageService.storedPayloadMetadata())
+        assertEquals(listOf(crash), nativeCrashService.getNativeCrashes())
+    }
+
+    @Test
     fun `native crashes without sessions or cached crash envelopes sent`() {
         val deadSessionCrashData = createNativeCrashData(
             nativeCrashId = "native-crash-1",
@@ -867,8 +931,10 @@ class PayloadResurrectionServiceImplTest {
 
         var listenerCalled = false
         service.addResurrectionCompleteListener { listenerCalled = true }
-        service.resurrectOldPayloads(nativeCrashServiceProvider = { nativeCrashService })
+        val outcome = service.resurrectOldPayloads(nativeCrashServiceProvider = { nativeCrashService })
 
+        // a timed-out intake isn't a refusal: the pass completes
+        assertEquals(ResurrectionOutcome.COMPLETE, outcome)
         assertTrue(listenerCalled)
         assertTrue(
             errorHandler.sdkErrorMessages.any {
@@ -1014,6 +1080,14 @@ class PayloadResurrectionServiceImplTest {
             envelopeType = CRASH,
             complete = false,
             payloadType = PayloadType.UNKNOWN,
+        )
+        val jvmCrashLogMetadata = StoredTelemetryMetadata(
+            timestamp = 2000L,
+            uuid = "jvm-crash-log",
+            processIdentifier = "new-process-id",
+            envelopeType = CRASH,
+            complete = true,
+            payloadType = PayloadType.JVM_CRASH,
         )
     }
 

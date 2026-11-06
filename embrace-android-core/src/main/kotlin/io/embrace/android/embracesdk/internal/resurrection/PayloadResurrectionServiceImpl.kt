@@ -5,6 +5,7 @@ package io.embrace.android.embracesdk.internal.resurrection
 import io.embrace.android.embracesdk.internal.arch.state.ProcessState
 import io.embrace.android.embracesdk.internal.delivery.StoredTelemetryMetadata
 import io.embrace.android.embracesdk.internal.delivery.SupportedEnvelopeType
+import io.embrace.android.embracesdk.internal.delivery.intake.IntakeResult
 import io.embrace.android.embracesdk.internal.delivery.intake.IntakeService
 import io.embrace.android.embracesdk.internal.delivery.storage.CachedLogEnvelopeStore
 import io.embrace.android.embracesdk.internal.delivery.storage.CachedLogEnvelopeStore.Companion.createNativeCrashEnvelopeMetadata
@@ -26,6 +27,7 @@ import io.embrace.android.embracesdk.semconv.EmbSessionAttributes
 import io.embrace.android.embracesdk.semconv.ExperimentalSemconv
 import java.io.IOException
 import java.io.InputStream
+import java.util.concurrent.CancellationException
 import java.util.concurrent.CopyOnWriteArrayList
 import java.util.concurrent.TimeUnit
 import java.util.zip.GZIPInputStream
@@ -52,20 +54,24 @@ internal class PayloadResurrectionServiceImpl(
         nativeCrashServiceProvider: Provider<NativeCrashService?>,
         userSessionRestoreDecisionProvider: Provider<UserSessionRestoreDecision?>,
         pendingSessionPartIdsProvider: Provider<Set<String>>,
-    ) {
-        EmbTrace.trace("resurrect-payloads") {
-            errorHandler.guardSdkCode(SdkErrorType.PayloadResurrectionFail) {
+    ): ResurrectionOutcome {
+        // a pass that fails partway is complete, so that the failure can't hold up delivery for the rest of the process
+        val outcome = EmbTrace.trace("resurrect-payloads") {
+            errorHandler.guardSdkCode(SdkErrorType.PayloadResurrectionFail, ResurrectionOutcome.COMPLETE) {
                 processTombstones(nativeCrashServiceProvider, userSessionRestoreDecisionProvider(), pendingSessionPartIdsProvider)
             }
         }
-        errorHandler.guardSdkCodeEach(SdkErrorType.PayloadResurrectionFail, completionListeners) { listener -> listener() }
+        if (outcome == ResurrectionOutcome.COMPLETE) {
+            errorHandler.guardSdkCodeEach(SdkErrorType.PayloadResurrectionFail, completionListeners) { listener -> listener() }
+        }
+        return outcome
     }
 
     private fun processTombstones(
         nativeCrashServiceProvider: Provider<NativeCrashService?>,
         restoreDecision: UserSessionRestoreDecision?,
         pendingSessionPartIdsProvider: Provider<Set<String>>,
-    ) {
+    ): ResurrectionOutcome {
         val nativeCrashService = nativeCrashServiceProvider()
         val undeliveredPayloads = cacheStorageService.getUndeliveredPayloads()
         val nonCrashPayloads = undeliveredPayloads.filterNot { it.isCrashEnvelope() }
@@ -90,7 +96,8 @@ internal class PayloadResurrectionServiceImpl(
                 null
             }
 
-            errorHandler.guardSdkCode(SdkErrorType.PayloadResurrectionPayloadFail) {
+            // a payload that fails to resurrect is handled: it is deleted below
+            val intake = errorHandler.guardSdkCode(SdkErrorType.PayloadResurrectionPayloadFail, PayloadIntake.HANDLED) {
                 payload.processUndeliveredPayload(
                     nativeCrashService = nativeCrashService,
                     nativeCrashProvider = nativeCrashes::get,
@@ -98,6 +105,13 @@ internal class PayloadResurrectionServiceImpl(
                     userSessionTerminationReason = userSessionTerminationReason,
                     isBackgroundOnly = restoreDecision?.takeIf { it.userSessionId == payload.userSessionId }?.backgroundOnly == true,
                 )
+            }
+
+            // The intake refuses payloads only once the SDK is shutting down, after a crash or when it is disabled or closed. This
+            // payload, the ones after it, the native crashes, whose logs would be refused too, and the cached crash envelope are
+            // left on disk for the next launch to resurrect before it sends anything newer.
+            if (intake == PayloadIntake.REFUSED) {
+                return ResurrectionOutcome.INTERRUPTED
             }
 
             // Delete every processed. If there's a failure resurrecting a particular payload, assume it is not recoverable
@@ -119,6 +133,7 @@ internal class PayloadResurrectionServiceImpl(
             cacheStorageService.delete(crashEnvelopeMetadata)
         }
         cachedLogEnvelopeStore.clear()
+        return ResurrectionOutcome.COMPLETE
     }
 
     private fun processNativeCrashes(
@@ -272,13 +287,16 @@ internal class PayloadResurrectionServiceImpl(
 
     private data class SessionKey(val userSessionId: String, val sessionPartId: String)
 
+    /**
+     * Resurrects the payload and hands it to the intake, returning what the intake did with it.
+     */
     private fun StoredTelemetryMetadata.processUndeliveredPayload(
         nativeCrashService: NativeCrashService?,
         nativeCrashProvider: (String) -> NativeCrashData?,
         postNativeCrashProcessingCallback: (NativeCrashData) -> Unit,
         userSessionTerminationReason: String?,
         isBackgroundOnly: Boolean,
-    ) {
+    ): PayloadIntake {
         val resurrectedPayload = when (envelopeType) {
             SupportedEnvelopeType.SESSION -> {
                 loadDecompressedPayload()?.let { payloadStream ->
@@ -303,14 +321,25 @@ internal class PayloadResurrectionServiceImpl(
             else -> null
         }
 
+        if (resurrectedPayload == null) {
+            return PayloadIntake.HANDLED
+        }
+
         // Synchronously provide the payload to the IntakeService, blocking on the returned Future
-        if (resurrectedPayload != null) {
-            val task = intakeService.take(
-                intake = resurrectedPayload,
-                metadata = copy(complete = true),
-                staleEntry = this,
-            )
-            errorHandler.guardSdkCode(SdkErrorType.IntakeFail) { task.get(5, TimeUnit.SECONDS) }
+        val task = intakeService.take(
+            intake = resurrectedPayload,
+            metadata = copy(complete = true),
+            staleEntry = this,
+        )
+        return errorHandler.guardSdkCode(SdkErrorType.IntakeFail, PayloadIntake.HANDLED) {
+            try {
+                when (task.get(5, TimeUnit.SECONDS)) {
+                    IntakeResult.NOT_ATTEMPTED -> PayloadIntake.REFUSED
+                    else -> PayloadIntake.HANDLED
+                }
+            } catch (_: CancellationException) {
+                PayloadIntake.REFUSED
+            }
         }
     }
 
@@ -333,5 +362,24 @@ internal class PayloadResurrectionServiceImpl(
                 throw exc
             }
         }
+    }
+
+    /**
+     * What the intake did with one resurrected payload.
+     */
+    private enum class PayloadIntake {
+
+        /**
+         * The intake took the payload, or it failed in a way that is reported and the payload deleted, such as failing to
+         * resurrect, serialize or store. The pass goes on.
+         */
+        HANDLED,
+
+        /**
+         * The intake refused the payload without trying to store it, or cancelled the attempt. It does either only once the SDK
+         * is shutting down: after a crash, whose teardown seals the intake or, with JVM crash capture off, stops its worker, or
+         * when the SDK is disabled or closed, which stops its workers. The pass is interrupted.
+         */
+        REFUSED,
     }
 }

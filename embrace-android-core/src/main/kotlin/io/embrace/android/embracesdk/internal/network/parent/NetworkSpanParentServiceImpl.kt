@@ -2,8 +2,6 @@ package io.embrace.android.embracesdk.internal.network.parent
 
 import io.embrace.android.embracesdk.internal.logging.ErrorHandler
 import io.embrace.android.embracesdk.internal.logging.SdkErrorType
-import io.embrace.android.embracesdk.internal.logging.guardSdkCode
-import io.embrace.android.embracesdk.internal.logging.guardUserCode
 import io.embrace.android.embracesdk.internal.otel.sdk.toEmbraceObjectName
 import io.embrace.android.embracesdk.internal.otel.spans.EmbraceSdkSpan
 import io.embrace.android.embracesdk.internal.otel.spans.SpanService
@@ -38,6 +36,9 @@ internal class NetworkSpanParentServiceImpl(
     private val reportRejectedOnce = OneShot()
 
     private val reportInvalidDecisionOnce = OneShot()
+
+    // we only report a single provider failure per process to avoid a flood of reports for a faulty provider
+    private val reportProviderFailureOnce = OneShot()
 
     // so that a request the app's provider makes isn't decided by it again
     private val providerGuard = ReentrancyGuard()
@@ -130,8 +131,14 @@ internal class NetworkSpanParentServiceImpl(
         val appProvider = appProvider ?: return NetworkSpanParent.USE_DEFAULT
         val info = NetworkSpanStartInfoImpl(request, active)
         return providerGuard.runExclusive(onReentry = { NetworkSpanParent.USE_DEFAULT }) {
-            errorHandler.guardSdkCode(SdkErrorType.NetworkSpanParentProviderFail, NetworkSpanParent.USE_DEFAULT) {
-                errorHandler.guardUserCode { checked(appProvider.getNetworkSpanParent(info)) }
+            try {
+                checked(appProvider.getNetworkSpanParent(info))
+            } catch (exc: Throwable) {
+                reportProviderFailureOnce {
+                    errorHandler.log("Network span parent provider threw an exception", exc)
+                    errorHandler.trackSdkError(SdkErrorType.NetworkSpanParentProviderFail, exc)
+                }
+                NetworkSpanParent.USE_DEFAULT
             }
         }
     }

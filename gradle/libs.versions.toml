@@ -21,8 +21,12 @@ kotlinxSerialization = "1.8.1"
 kotlinxSerializationGradlePlugin = "1.7.3"
 protobuf = "4.36.2"
 wire = "7.1.2"
-# Keep in step with the okio version wire-runtime brings
+# Keep in step with the okio version wire-runtime brings. 3.16.0 needs kotlin-stdlib 2.2.0, which breaks our minimum
+# supported Kotlin (2.0.21).
 okio = "3.18.2"
+# The Gradle plugin must stay on the okio OkHttp 4 brings: Gradle 8.0.2 build scripts can't read newer okio metadata.
+# Dependabot can't tell this apart from okio, so it will propose bumps to this version too: close those PRs.
+okioGradlePlugin = "3.6.0"
 profileinstaller = "1.4.1"
 okhttp = "4.12.1"
 firebase = "26.0.1"
@@ -85,6 +89,7 @@ protobuf-java-util = { group = "com.google.protobuf", name = "protobuf-java-util
 wire-runtime = { group = "com.squareup.wire", name = "wire-runtime", version.ref = "wire" }
 okio = { group = "com.squareup.okio", name = "okio", version.ref = "okio" }
 okio-fakefilesystem = { group = "com.squareup.okio", name = "okio-fakefilesystem", version.ref = "okio" }
+okio-gradle-plugin = { group = "com.squareup.okio", name = "okio", version.ref = "okioGradlePlugin" }
 profileinstaller = { group = "androidx.profileinstaller", name = "profileinstaller", version.ref = "profileinstaller" }
 lint-api = { group = "com.android.tools.lint", name = "lint-api", version.ref = "lint" }
 lint-tests = { group = "com.android.tools.lint", name = "lint-tests", version.ref = "lint" }

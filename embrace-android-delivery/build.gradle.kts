@@ -5,6 +5,7 @@ plugins {
 dependencies {
     implementation(platform(libs.okhttp.bom))
     implementation(libs.okhttp)
+    implementation(libs.okio)
     implementation(project(":embrace-android-payload"))
     api(project(":embrace-android-telemetry-persistence"))
     implementation(project(":embrace-android-infra"))

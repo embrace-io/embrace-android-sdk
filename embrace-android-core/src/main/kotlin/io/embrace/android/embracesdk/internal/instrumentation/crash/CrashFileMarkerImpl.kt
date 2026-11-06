@@ -2,6 +2,7 @@ package io.embrace.android.embracesdk.internal.instrumentation.crash
 
 import io.embrace.android.embracesdk.internal.logging.ErrorHandler
 import io.embrace.android.embracesdk.internal.logging.SdkErrorType
+import io.embrace.android.embracesdk.internal.storage.SdkStorageLayout
 import java.io.File
 
 /**
@@ -92,7 +93,7 @@ class CrashFileMarkerImpl(
     }
 
     companion object {
-        const val CRASH_MARKER_FILE_NAME: String = "embrace_crash_marker"
+        const val CRASH_MARKER_FILE_NAME: String = SdkStorageLayout.CRASH_MARKER_FILE_NAME
         private const val CRASH_MARKER_SOURCE_JVM: String = "1"
     }
 }

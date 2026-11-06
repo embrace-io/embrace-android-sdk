@@ -20,16 +20,19 @@ import io.embrace.android.embracesdk.internal.serialization.EmbraceSerializer
 import io.embrace.android.embracesdk.internal.serialization.PlatformSerializer
 import io.embrace.android.embracesdk.internal.storage.SdkDir
 import io.embrace.android.embracesdk.internal.storage.SdkStorage
+import io.embrace.android.embracesdk.internal.storage.SdkStorageLayout
 import io.embrace.android.embracesdk.internal.store.KeyValueStore
 import io.embrace.android.embracesdk.internal.store.OrdinalStore
 import io.embrace.android.embracesdk.internal.store.OrdinalStoreImpl
 import io.embrace.android.embracesdk.internal.store.PersistedSdkStateStore
 import io.embrace.android.embracesdk.internal.store.StoreWriteBatcher
+import io.embrace.android.embracesdk.internal.store.file.FilePersistedSdkStateStore
 import io.embrace.android.embracesdk.internal.utils.EmbTrace
 import io.embrace.android.embracesdk.internal.utils.UuidSource
 import io.embrace.android.embracesdk.internal.utils.UuidSourceImpl
 import io.embrace.android.embracesdk.internal.worker.Worker
 import okhttp3.OkHttpClient
+import okio.FileSystem
 import java.io.Closeable
 
 /**
@@ -49,21 +52,39 @@ internal class ConfigLoadServices(
     val uuidSource: UuidSource = UuidSourceImpl(),
     workerThreadPoolSupplier: WorkerThreadPoolSupplier? = null,
     configServiceSupplier: ConfigServiceSupplier? = null,
+    private val superiorStorageSystemEnabled: Boolean = SUPERIOR_STORAGE_SYSTEM_ENABLED,
+    private val fileSystem: FileSystem = FileSystem.SYSTEM,
 ) : Closeable {
 
     val sdkStorage: SdkStorage = createLegacySdkStorage(context, preStartServices.errorHandler)
+
+    private val superiorStorageSystem: Lazy<SdkStorage> = lazy {
+        createSdkStorage(context, preStartServices.errorHandler, fileSystem)
+    }
 
     val keyValueStore: Lazy<KeyValueStore> = lazy {
         createKeyValueStore(context, jsonSerializer, preStartServices.errorHandler)
     }
 
     val persistedSdkStateStore: Lazy<PersistedSdkStateStore> = lazy {
-        PrefsPersistedSdkStateStore(
-            keyValueStore.value,
-            preStartServices.clock,
-            uuidSource,
-            AppFramework.fromString(instrumentedConfig.project.getAppFramework()) ?: AppFramework.NATIVE,
-        )
+        if (superiorStorageSystemEnabled) {
+            val storage = superiorStorageSystem.value
+            FilePersistedSdkStateStore(
+                fileSystem = storage.fileSystem,
+                path = storage.dir(SdkDir.INSTALL_STATE) / SdkStorageLayout.PERSISTED_SDK_STATE_FILE_NAME,
+                worker = workerThreadPool.backgroundWorker(Worker.Background.IoRegWorker),
+                errorHandler = preStartServices.errorHandler,
+                clock = preStartServices.clock,
+                uuidSource = uuidSource,
+            )
+        } else {
+            PrefsPersistedSdkStateStore(
+                keyValueStore.value,
+                preStartServices.clock,
+                uuidSource,
+                AppFramework.fromString(instrumentedConfig.project.getAppFramework()) ?: AppFramework.NATIVE,
+            )
+        }
     }
 
     val ordinalStore: Lazy<OrdinalStore> = lazy {
@@ -149,3 +170,5 @@ internal class ConfigLoadServices(
         }
     }
 }
+
+private const val SUPERIOR_STORAGE_SYSTEM_ENABLED = false

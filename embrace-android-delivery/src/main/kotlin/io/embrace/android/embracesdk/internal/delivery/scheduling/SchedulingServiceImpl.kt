@@ -210,7 +210,10 @@ class SchedulingServiceImpl(
                 return ExecutionResult.NetworkNotReady
             }
 
+            // a size that can't be read points to a storage failure that may pass, so the payload is kept for another
+            // attempt rather than sent unchecked or deleted. Storage has already reported the failure
             val sizeBytes = storageService.payloadSizeBytes(payload)
+                ?: return ExecutionResult.Incomplete(exception = IOException(UNREADABLE_SIZE_MSG), retry = true)
             if (sizeBytes > maxPayloadBytes) {
                 errorHandler.trackSdkError(
                     type = SdkErrorType.PayloadDeliveryFail,

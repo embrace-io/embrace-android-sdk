@@ -110,8 +110,8 @@ class FileStorageServiceImpl(
         }
     }
 
-    override fun payloadSizeBytes(metadata: StoredTelemetryMetadata): Long =
-        errorHandler.guardSdkCode(SdkErrorType.PayloadStorageFail, 0L) { index.fileFor(metadata).length() }
+    override fun payloadSizeBytes(metadata: StoredTelemetryMetadata): Long? =
+        errorHandler.guardSdkCode(SdkErrorType.PayloadStorageFail, null) { index.fileFor(metadata).length() }
 
     override fun getStoredPayloads(): List<StoredTelemetryMetadata> = index.storedEntries()
 }

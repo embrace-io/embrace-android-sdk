@@ -1,13 +1,13 @@
 package io.embrace.android.embracesdk.internal.perfetto.cli
 
 import io.embrace.android.embracesdk.internal.perfetto.report.ReportFormat
+import okio.Path.Companion.toPath
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
-import java.io.File
 
 internal class CliParserTest {
 
@@ -34,20 +34,20 @@ internal class CliParserTest {
     fun `an input on its own reports every section as markdown, alongside the input, with dry run off`() {
         val options = checkNotNull(parseArgs(TRACE_SPEC, arrayOf("perf/run/trace.perfetto.gz")))
 
-        assertEquals(File("perf/run/trace.perfetto.gz"), options.input)
+        assertEquals("perf/run/trace.perfetto.gz".toPath(), options.input)
         assertEquals(emptyList<String>(), options.operations)
         assertTrue(options.allOperations)
         assertEquals(ReportFormat.MARKDOWN, options.format)
-        assertEquals(File("perf/run/trace-report.md"), options.output)
+        assertEquals("perf/run/trace-report.md".toPath(), options.output)
         assertFalse(options.dryRun)
         assertTrue(checkNotNull(parseArgs(TRACE_SPEC, arrayOf("--dry-run", TRACE))).dryRun)
     }
 
     @Test
     fun `the format decides what a derived report is called, and a named file wins over one`() {
-        assertEquals(File("a-report.html"), output(TRACE, "--format", "html"))
-        assertEquals(File("a-report.json"), output(TRACE, "--format", "json"))
-        assertEquals(File(OUTPUT), output(TRACE, "--output", OUTPUT))
+        assertEquals("a-report.html".toPath(), output(TRACE, "--format", "html"))
+        assertEquals("a-report.json".toPath(), output(TRACE, "--format", "json"))
+        assertEquals(OUTPUT.toPath(), output(TRACE, "--output", OUTPUT))
     }
 
     @Test
@@ -57,7 +57,7 @@ internal class CliParserTest {
         assertFalse(named.allOperations)
 
         val all = checkNotNull(parseArgs(TRACE_SPEC, arrayOf("--all-operations", "--format", "html", TRACE)))
-        assertEquals(File(TRACE), all.input)
+        assertEquals(TRACE.toPath(), all.input)
         assertTrue(all.allOperations)
         assertEquals(ReportFormat.HTML, all.format)
     }

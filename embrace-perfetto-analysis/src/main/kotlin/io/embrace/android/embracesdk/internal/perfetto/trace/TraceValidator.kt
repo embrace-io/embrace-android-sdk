@@ -1,10 +1,11 @@
 package io.embrace.android.embracesdk.internal.perfetto.trace
 
-import java.io.File
+import okio.FileSystem
+import okio.Path
 import java.io.IOException
 
 /** How many bytes are decompressed to decide what a file holds. */
-private const val HEADER_BYTES = 8
+private const val HEADER_BYTES = 8L
 
 /**
  * Field 1, wire type 2. A perfetto trace is a bare sequence of length-delimited TracePackets, so it
@@ -21,11 +22,11 @@ private const val CONTINUATION_BIT = 0x80
  * Reports whether [trace] is a perfetto trace, by unwrapping its container and reading the first few
  * bytes. Anything else - a container holding something other than a trace, an unreadable file - is
  * [UNKNOWN]. Nothing beyond the header is read: this only decides whether analysing the file is worth
- * attempting. See [traceStream] for the containers a trace arrives in.
+ * attempting. See [traceSource] for the containers a trace arrives in.
  */
-internal fun validateTrace(trace: File): TraceFormat = try {
-    traceStream(trace).use { stream ->
-        traceFormat(stream.readNBytes(HEADER_BYTES))
+internal fun validateTrace(fileSystem: FileSystem, trace: Path): TraceFormat = try {
+    traceSource(fileSystem, trace).use { source ->
+        traceFormat(source.readUpTo(HEADER_BYTES).toByteArray())
     }
 } catch (exc: IOException) {
     TraceFormat.UNKNOWN

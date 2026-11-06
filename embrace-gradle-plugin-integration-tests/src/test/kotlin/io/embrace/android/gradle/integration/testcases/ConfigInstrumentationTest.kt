@@ -1,5 +1,6 @@
 package io.embrace.android.gradle.integration.testcases
 
+import io.embrace.android.gradle.integration.framework.AssertionInterface
 import io.embrace.android.gradle.integration.framework.PluginIntegrationTestRule
 import io.embrace.android.gradle.integration.framework.ProjectType
 import io.embrace.android.gradle.integration.framework.smali.SmaliConfigReader
@@ -64,12 +65,12 @@ class ConfigInstrumentationTest {
     /**
      * Asserts the base64-encoded map of native lib hashes was instrumented on `release` for every ABI and lib.
      */
-    private fun verifyInstrumentedSharedObjectFiles(projectDir: File) {
-        val smaliFile = SmaliConfigReader().readSmaliFiles(
+    private fun AssertionInterface.verifyInstrumentedSharedObjectFiles(projectDir: File) {
+        val smaliFile = SmaliConfigReader(fileSystem).readSmaliFiles(
             projectDir,
             listOf("/io/embrace/android/embracesdk/internal/config/instrumented/Base64SharedObjectFilesMapImpl"),
         ).single()
-        val method = SmaliParser().parse(
+        val method = SmaliParser(fileSystem).parse(
             smaliFile,
             listOf(SmaliMethod("getBase64SharedObjectFilesMap()Ljava/lang/String;")),
         ).methods.single()
@@ -87,10 +88,14 @@ class ConfigInstrumentationTest {
      * Asserts the instrumented config matches [resName] and returns the instrumented build ID, which is
      * non-deterministic so is asserted separately.
      */
-    private fun verifyInstrumentedConfig(projectDir: File, buildType: String, resName: String): String {
-        val reader = SmaliConfigReader()
+    private fun AssertionInterface.verifyInstrumentedConfig(
+        projectDir: File,
+        buildType: String,
+        resName: String,
+    ): String {
+        val reader = SmaliConfigReader(fileSystem)
         val smaliFiles = reader.readSmaliFiles(projectDir, classNames, buildType)
-        val parser = SmaliParser()
+        val parser = SmaliParser(fileSystem)
         val cfg = reader.readExpectedConfig(resName)
         var buildIdMethod: SmaliMethod? = null
 

@@ -1,8 +1,11 @@
 package io.embrace.android.embracesdk.internal.perfetto.iterations
 
+import io.embrace.android.embracesdk.internal.perfetto.resolvedMetadata
 import kotlinx.serialization.SerializationException
 import kotlinx.serialization.json.Json
-import java.io.File
+import okio.BufferedSource
+import okio.FileSystem
+import okio.Path
 import java.io.IOException
 
 /** What androidx.benchmark calls the manifest it rewrites on every run. */
@@ -23,28 +26,31 @@ private val JSON = Json { ignoreUnknownKeys = true }
  * Throws [IOException] when there is no manifest, it cannot be read, or it names a trace that is not
  * there.
  */
-internal fun discoverIterations(dir: File): List<IterationTrace> {
-    val manifest = dir.listFiles { file: File -> file.isFile && file.name.endsWith(MANIFEST_SUFFIX) }
-        ?.maxByOrNull(File::lastModified)
-        ?: throw IOException("no *$MANIFEST_SUFFIX in ${dir.path}, so the run's traces cannot be told apart")
-    return manifestTraces(dir, manifest)
+internal fun discoverIterations(fileSystem: FileSystem, dir: Path): List<IterationTrace> {
+    val manifest = fileSystem.listOrNull(dir)
+        ?.mapNotNull { path -> fileSystem.resolvedMetadata(path)?.let { path to it } }
+        ?.filter { (path, metadata) -> metadata.isRegularFile && path.name.endsWith(MANIFEST_SUFFIX) }
+        ?.maxByOrNull { (_, metadata) -> metadata.lastModifiedAtMillis ?: 0L }
+        ?.first
+        ?: throw IOException("no *$MANIFEST_SUFFIX in $dir, so the run's traces cannot be told apart")
+    return manifestTraces(fileSystem, dir, manifest)
 }
 
-private fun manifestTraces(dir: File, manifest: File): List<IterationTrace> {
+private fun manifestTraces(fileSystem: FileSystem, dir: Path, manifest: Path): List<IterationTrace> {
     val data = try {
-        JSON.decodeFromString<BenchmarkData>(manifest.readText())
+        JSON.decodeFromString<BenchmarkData>(fileSystem.read(manifest, BufferedSource::readUtf8))
     } catch (exc: SerializationException) {
-        throw IOException("could not read ${manifest.path} as benchmark data: ${exc.message}", exc)
+        throw IOException("could not read $manifest as benchmark data: ${exc.message}", exc)
     }
     return data.benchmarks.flatMap { benchmark ->
         benchmark.profilerOutputs
             .filter { it.type == TRACE_PROFILER }
             .mapIndexed { index, output ->
-                IterationTrace(benchmark.label, index, File(dir, output.filename))
+                IterationTrace(benchmark.label, index, dir / output.filename)
             }
     }.onEach { iteration ->
-        if (!iteration.file.isFile) {
-            throw IOException("${manifest.path} names a trace that is not there: ${iteration.file.path}")
+        if (fileSystem.resolvedMetadata(iteration.file)?.isRegularFile != true) {
+            throw IOException("$manifest names a trace that is not there: ${iteration.file}")
         }
     }
 }

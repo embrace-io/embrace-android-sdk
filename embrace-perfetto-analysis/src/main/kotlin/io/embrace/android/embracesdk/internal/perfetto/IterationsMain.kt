@@ -7,6 +7,7 @@ import io.embrace.android.embracesdk.internal.perfetto.cli.parseArgs
 import io.embrace.android.embracesdk.internal.perfetto.iterations.IterationTrace
 import io.embrace.android.embracesdk.internal.perfetto.report.renderIterations
 import io.embrace.android.embracesdk.internal.perfetto.stats.IterationsReport
+import okio.FileSystem
 import java.io.IOException
 import kotlin.system.exitProcess
 
@@ -24,7 +25,9 @@ is ten observations of each. embrace-perfetto-analysis/README.md describes what 
 """,
 )
 
-fun main(args: Array<String>) {
+fun main(args: Array<String>) = analyseIterations(args, FileSystem.SYSTEM)
+
+internal fun analyseIterations(args: Array<String>, fileSystem: FileSystem) {
     if (asksForHelp(args)) {
         println(SPEC.usage)
         return
@@ -34,14 +37,14 @@ fun main(args: Array<String>) {
         System.err.println(SPEC.usage)
         exitProcess(EXIT_USAGE)
     }
-    val iterations = discoverRun(options.input)
+    val iterations = discoverRun(fileSystem, options.input)
     println(describeIterations(options, iterations))
     if (options.dryRun) {
         return
     }
-    val report = loadRun(options.input, iterations, options.operations)
+    val report = loadRun(fileSystem, options.input, iterations, options.operations)
     try {
-        println(writeIterations(options, report))
+        println(writeIterations(fileSystem, options, report))
     } catch (exc: IOException) {
         System.err.println("could not write the report: ${exc.message}")
         exitProcess(EXIT_BAD_OUTPUT)
@@ -50,15 +53,17 @@ fun main(args: Array<String>) {
 
 internal fun describeIterations(options: CliOptions, iterations: List<IterationTrace>): String = buildString {
     appendLine("perfetto iteration analysis")
-    appendLine("  dir: ${options.input.path}")
+    appendLine("  dir: ${options.input}")
     append(describeBenchmarks(iterations, "  "))
-    append("  report: ${options.output.path} (${options.format.flag})")
+    append("  report: ${options.output} (${options.format.flag})")
 }
 
-internal fun describeIteration(iteration: IterationTrace): String =
-    "${iteration.benchmark} iteration ${iteration.index}: ${iteration.file.name} (${iteration.file.length()} bytes)"
+internal fun describeIteration(fileSystem: FileSystem, iteration: IterationTrace): String =
+    "${iteration.benchmark} iteration ${iteration.index}: ${iteration.file.name} " +
+        "(${fileSystem.sizeOf(iteration.file)} bytes)"
 
-internal fun writeIterations(options: CliOptions, report: IterationsReport): String {
-    options.output.writeText(renderIterations(options.format, report))
-    return "wrote ${options.format.flag} statistics to ${options.output.path}"
+internal fun writeIterations(fileSystem: FileSystem, options: CliOptions, report: IterationsReport): String {
+    val rendered = renderIterations(options.format, report)
+    fileSystem.write(options.output) { writeUtf8(rendered) }
+    return "wrote ${options.format.flag} statistics to ${options.output}"
 }

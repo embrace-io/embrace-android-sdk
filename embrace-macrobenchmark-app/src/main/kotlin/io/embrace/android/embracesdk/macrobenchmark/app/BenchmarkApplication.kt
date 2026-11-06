@@ -2,6 +2,7 @@ package io.embrace.android.embracesdk.macrobenchmark.app
 
 import android.app.Application
 import io.embrace.android.embracesdk.Embrace
+import okio.FileSystem
 
 /**
  * The app the macrobenchmark measures. [ScenarioHost] does everything a benchmark needs of the app, so all the
@@ -11,6 +12,6 @@ class BenchmarkApplication : Application() {
 
     override fun onCreate() {
         super.onCreate()
-        ScenarioHost(this).start { Embrace.start(this) }
+        ScenarioHost(this, FileSystem.SYSTEM).start { Embrace.start(this) }
     }
 }

@@ -20,6 +20,12 @@ data class DataRemoteConfig(
     val networkRequestSpanTimeoutMs: Long? = null,
 
     /**
+     * The duration in milliseconds above which a call to the network span parent provider is reported as slow.
+     */
+    @SerialName("network_span_parent_provider_slow_ms")
+    val networkSpanParentProviderSlowMs: Long? = null,
+
+    /**
      * The maximum number of spans created via the public API that can be recorded in a session part.
      */
     @SerialName("max_custom_spans_per_session")

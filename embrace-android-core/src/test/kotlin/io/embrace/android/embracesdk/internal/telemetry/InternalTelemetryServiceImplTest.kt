@@ -178,6 +178,18 @@ internal class InternalTelemetryServiceImplTest {
     }
 
     @Test
+    fun `trackSlowCallback reports the count and max duration per callback until drained`() {
+        service.trackSlowCallback("provider", 12)
+        service.trackSlowCallback("provider", 30)
+        service.trackSlowCallback("provider", 7)
+
+        val attributes = service.getAndClearTelemetryAttributes()
+        assertEquals("3", attributes["emb.private.slow_callback.provider.count"])
+        assertEquals("30", attributes["emb.private.slow_callback.provider.max_ms"])
+        assertEquals(null, service.getAndClearTelemetryAttributes()["emb.private.slow_callback.provider.count"])
+    }
+
+    @Test
     fun `usage, storage, applied limits and app attributes are added correctly`() {
         // Given usage, storage, and applied limit attributes are added
         service.onPublicApiCalled("a_method")

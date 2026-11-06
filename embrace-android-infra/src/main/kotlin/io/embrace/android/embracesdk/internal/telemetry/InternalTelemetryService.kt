@@ -23,6 +23,11 @@ interface InternalTelemetryService {
     fun trackAppliedLimit(telemetryType: String, limitType: AppliedLimitType)
 
     /**
+     * Tracks a call to the app's [name] callback that took [durationMs], longer than its threshold.
+     */
+    fun trackSlowCallback(name: String, durationMs: Long)
+
+    /**
      * Returns a map with every telemetry value. This is called when the session ends.
      * We clear the usage count map so we don't count the same usages in the next session.
      */

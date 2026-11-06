@@ -141,7 +141,7 @@ internal class OkHttpDataSource(
                 errorHandler.guardSdkCode(SdkErrorType.DataSourceDataCaptureFail) {
                     if (proceeded) {
                         // the call never reached the network interceptor, as when served from the cache or answered by an
-                        // interceptor without proceeding
+                        // interceptor without proceeding, so no request was made to report
                         networkRequestDataSource?.discardRequest(callData.id)
                     } else {
                         // the call failed, and recording that failure threw (or the failure was an Error the catches above don't handle),

@@ -33,8 +33,8 @@ interface NetworkRequestDataSource : DataSource {
     fun endIncompleteRequest(id: String, sdkClockEndTime: Long, statusCode: Int?)
 
     /**
-     * Stop tracking the network request that [startRequest] returned [id] for,
-     * without stopping its span.
+     * Stop tracking the network request that [startRequest] returned [id] for, and drop its span without exporting it.
+     * Used for a request that never reaches the network, such as one served from a cache.
      */
     fun discardRequest(id: String)
 }

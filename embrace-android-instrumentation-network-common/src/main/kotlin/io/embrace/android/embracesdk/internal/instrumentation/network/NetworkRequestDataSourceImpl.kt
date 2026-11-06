@@ -173,7 +173,7 @@ class NetworkRequestDataSourceImpl(
     }
 
     override fun discardRequest(id: String) {
-        activeRequests.remove(id)
+        activeRequests.remove(id)?.spanToken?.discard()
     }
 
     /**

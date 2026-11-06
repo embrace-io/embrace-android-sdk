@@ -165,6 +165,13 @@ class NetworkRequestDataSourceImpl(
         }
     }
 
+    override fun endIncompleteRequest(id: String, sdkClockEndTime: Long, statusCode: Int?) {
+        activeRequests.remove(id)?.spanToken?.run {
+            statusCode?.let { setSystemAttribute(HttpAttributes.HTTP_RESPONSE_STATUS_CODE, it.toStatusCodeString()) }
+            stop(sdkClockEndTime, errorCodeFor(statusCode))
+        }
+    }
+
     override fun discardRequest(id: String) {
         activeRequests.remove(id)
     }

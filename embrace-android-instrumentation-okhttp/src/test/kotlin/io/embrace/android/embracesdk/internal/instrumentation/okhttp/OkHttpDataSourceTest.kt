@@ -10,6 +10,7 @@ import io.embrace.android.embracesdk.fakes.TestUuidSource
 import io.embrace.android.embracesdk.fakes.behavior.FakeNetworkBehavior
 import io.embrace.android.embracesdk.fakes.behavior.FakeNetworkSpanForwardingBehavior
 import io.embrace.android.embracesdk.fakes.behavior.FakeTraceparentInjectionBehavior
+import io.embrace.android.embracesdk.internal.arch.schema.ErrorCodeAttribute
 import io.embrace.android.embracesdk.internal.arch.schema.SchemaType
 import io.embrace.android.embracesdk.internal.config.remote.NetworkCaptureRuleRemoteConfig
 import io.embrace.android.embracesdk.internal.instrumentation.network.NetworkCaptureDataSourceImpl
@@ -618,9 +619,28 @@ internal class OkHttpDataSourceTest {
         val response = runPostRequest()
         assertEquals(200, response.code)
 
-        // the failure was contained and the request's tracking reference released
+        // the failure was contained, and the request, which was made, is still reported with its status code
         assertEquals(1, args.errorHandler.sdkErrorMessages.size)
-        assertEquals(1, networkRequestDataSource.discardedIds.size)
+        assertTrue(networkRequestDataSource.discardedIds.isEmpty())
+        assertEquals(1, networkRequestDataSource.incompleteIds.size)
+        with(args.destination.createdSpans.single()) {
+            assertNotNull(endTimeMs)
+            assertNull(errorCode)
+            assertEquals("200", attributes[HttpAttributes.HTTP_RESPONSE_STATUS_CODE])
+        }
+    }
+
+    @Test
+    fun `a failure reporting a request whose end could not be recorded does not fail the app's request`() {
+        args.errorHandler.throwOnSdkError = false
+        networkRequestDataSource.endRequestFailure = RuntimeException("instrumentation failure")
+        networkRequestDataSource.endIncompleteRequestFailure = RuntimeException("fallback failure")
+        server.enqueue(createBaseMockResponse().setBody(RESPONSE_BODY))
+
+        val response = runPostRequest()
+        assertEquals(200, response.code)
+        // only the original failure is reported
+        assertEquals(listOf("instrumentation failure"), args.errorHandler.sdkErrorMessages.map { it.throwable?.message })
     }
 
     @Test
@@ -643,7 +663,14 @@ internal class OkHttpDataSourceTest {
 
         assertThrows(SocketException::class.java) { runPostRequest() }
         assertEquals(1, args.errorHandler.sdkErrorMessages.size)
-        assertEquals(1, networkRequestDataSource.discardedIds.size)
+
+        // the request failed, so it is still reported as a failed request rather than dropped
+        assertTrue(networkRequestDataSource.discardedIds.isEmpty())
+        assertEquals(1, networkRequestDataSource.incompleteIds.size)
+        with(args.destination.createdSpans.single()) {
+            assertNotNull(endTimeMs)
+            assertEquals(ErrorCodeAttribute.Failure, errorCode)
+        }
     }
 
     @Test
@@ -878,7 +905,7 @@ internal class OkHttpDataSourceTest {
 }
 
 /**
- * Delegates to a real [NetworkRequestDataSource] while recording discarded requests and optionally
+ * Delegates to a real [NetworkRequestDataSource] while recording discarded and incompletely ended requests, and optionally
  * simulating a failure when a request ends.
  */
 private class RecordingNetworkRequestDataSource(
@@ -886,9 +913,11 @@ private class RecordingNetworkRequestDataSource(
 ) : NetworkRequestDataSource by delegate {
 
     val discardedIds: MutableList<String> = mutableListOf()
+    val incompleteIds: MutableList<String> = mutableListOf()
     val startedRequests: MutableList<RequestStartData> = mutableListOf()
     var startRequestFailure: Throwable? = null
     var endRequestFailure: Throwable? = null
+    var endIncompleteRequestFailure: Throwable? = null
     var discardRequestFailure: Throwable? = null
 
     override fun startRequest(startData: RequestStartData): String? {
@@ -900,6 +929,12 @@ private class RecordingNetworkRequestDataSource(
     override fun endRequest(endData: RequestEndData) {
         endRequestFailure?.let { throw it }
         delegate.endRequest(endData)
+    }
+
+    override fun endIncompleteRequest(id: String, sdkClockEndTime: Long, statusCode: Int?) {
+        endIncompleteRequestFailure?.let { throw it }
+        incompleteIds.add(id)
+        delegate.endIncompleteRequest(id, sdkClockEndTime, statusCode)
     }
 
     override fun discardRequest(id: String) {

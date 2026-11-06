@@ -26,6 +26,13 @@ interface NetworkRequestDataSource : DataSource {
     fun endRequest(endData: RequestEndData)
 
     /**
+     * Stop the span of the network request that [startRequest] returned [id] for when its end couldn't be recorded in full, so
+     * a request that was made is still reported. Only the end time and [statusCode] are recorded: the request failed if there
+     * is no status code, or as [endRequest] judges it from the status code otherwise.
+     */
+    fun endIncompleteRequest(id: String, sdkClockEndTime: Long, statusCode: Int?)
+
+    /**
      * Stop tracking the network request that [startRequest] returned [id] for,
      * without stopping its span.
      */

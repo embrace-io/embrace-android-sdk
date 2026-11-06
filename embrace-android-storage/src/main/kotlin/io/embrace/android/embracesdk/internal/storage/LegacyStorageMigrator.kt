@@ -9,8 +9,8 @@ import okio.FileSystem
 import okio.Path
 
 /**
- * Moves legacy directories in [filesDir] to their [SdkStorageLayout] paths under [noBackupFilesDir]. Files
- * are staged in [SdkStorageLayout.MIGRATION_DIR_NAME] so interrupted runs resume on the next launch.
+ * Moves the 9.x directories in [filesDir] to their [SdkStorageLayout] paths under [noBackupFilesDir], one directory at
+ * a time.
  */
 class LegacyStorageMigrator(
     private val fileSystem: FileSystem,
@@ -20,86 +20,83 @@ class LegacyStorageMigrator(
     private val errorHandler: ErrorHandler,
 ) {
 
-    private val root = noBackupFilesDir / SdkStorageLayout.ROOT_DIR_NAME
-    private val staging = noBackupFilesDir / SdkStorageLayout.MIGRATION_DIR_NAME
+    private val layout = SdkStorageImpl(fileSystem, noBackupFilesDir / SdkStorageLayout.ROOT_DIR_NAME, errorHandler)
 
     /**
-     * Returns true if this call committed a migration.
+     * Moves the remote config. Call before the config is read.
      */
-    fun migrate(): Boolean = errorHandler.guardSdkCode(SdkErrorType.StorageMigrationFail, false) {
-        if (fileSystem.exists(root) || !hasLegacyData()) {
-            return@guardSdkCode false
-        }
-        SystemTrace.trace("storage-migration") {
-            stageLegacyDirs()
-            fileSystem.atomicMove(staging, root)
-            true
+    fun migrateConfig() {
+        errorHandler.guardSdkCode(SdkErrorType.StorageMigrationFail) {
+            if (fileSystem.exists(legacyDir(SdkDir.REMOTE_CONFIG))) {
+                SystemTrace.trace("storage-config-migration") {
+                    migrate(SdkDir.REMOTE_CONFIG)
+                }
+            }
         }
     }
 
     /**
-     * Merges anything a failed or interrupted [migrate] left behind into the live root, without overwriting what is
-     * already there, then deletes whatever couldn't be merged along with the legacy cache dir entries. Does nothing
-     * to legacy data if the live root doesn't exist.
+     * Moves the telemetry and any remote config [migrateConfig] left behind, deletes the 9.x install state rather than
+     * moving it, then deletes the 9.x cache dir entries.
      */
-    fun collectLeftovers() {
+    fun migrateTelemetry() {
+        SystemTrace.trace("storage-telemetry-migration") {
+            MIGRATED_DIRS.forEach(::migrate)
+            delete(listOf(legacyDir(SdkDir.INSTALL_STATE)) + legacyCacheEntries(LEGACY_CACHE_DIR_ENTRIES))
+        }
+    }
+
+    /**
+     * Deletes the 9.x telemetry without moving it.
+     */
+    fun deleteLegacyTelemetry() {
+        delete(LEGACY_TELEMETRY_DIRS.map(::legacyDir) + legacyCacheEntries(emptyList()))
+    }
+
+    private fun migrate(dir: SdkDir) {
+        val source = legacyDir(dir)
         val merged = errorHandler.guardSdkCode(SdkErrorType.StorageMigrationFail, false) {
-            if (!fileSystem.exists(root)) {
-                return@guardSdkCode false
-            }
-            if (hasLegacyData()) {
-                stageLegacyDirs()
-                stage(staging, root)
-            }
-            true
+            merge(source, layout.path(dir))
         }
-        if (!merged) {
-            return
-        }
-        val cacheRoot = errorHandler.guardSdkCode(SdkErrorType.Ignored, null) { cacheDir() }
-        val cacheEntries = LEGACY_DIR_NAMES.filterKeys { it.isTelemetry }.values + LEGACY_CACHE_DIR_ENTRIES
-        val leftovers = listOf(staging) + LEGACY_DIR_NAMES.values.map { filesDir / it } +
-            listOfNotNull(cacheRoot).flatMap { dir -> cacheEntries.map { dir / it } }
-        errorHandler.guardSdkCodeEach(SdkErrorType.Ignored, leftovers) {
-            fileSystem.deleteRecursively(it)
+        if (merged) {
+            delete(listOf(source))
         }
     }
 
-    private fun hasLegacyData(): Boolean =
-        fileSystem.exists(staging) || LEGACY_DIR_NAMES.values.any { fileSystem.exists(filesDir / it) }
-
-    private fun stageLegacyDirs() {
-        fileSystem.createDirectories(staging)
-        val layout = SdkStorageImpl(fileSystem, staging, errorHandler)
-        errorHandler.guardSdkCodeEach(SdkErrorType.StorageMigrationFail, LEGACY_DIR_NAMES.entries) {
-            stage(filesDir / it.value, layout.path(it.key))
-        }
-        stripLegacyPrefixes(layout.path(SdkDir.INSTALL_STATE))
-    }
-
-    private fun stage(source: Path, target: Path) {
-        val sourceMetadata = fileSystem.metadataOrNull(source) ?: return
+    /**
+     * Moves [source] to [target], recursing into directories present on both sides. An entry already at its target is
+     * left where it is. Returns false if anything failed to move.
+     */
+    private fun merge(source: Path, target: Path): Boolean {
+        val sourceMetadata = fileSystem.metadataOrNull(source) ?: return true
         val targetMetadata = fileSystem.metadataOrNull(target)
-        if (targetMetadata == null) {
-            fileSystem.createDirectories(checkNotNull(target.parent))
-            fileSystem.atomicMove(source, target)
-        } else if (sourceMetadata.isDirectory && targetMetadata.isDirectory) {
-            errorHandler.guardSdkCodeEach(SdkErrorType.StorageMigrationFail, fileSystem.list(source)) {
-                stage(it, target / it.name)
+        return when {
+            targetMetadata == null -> {
+                fileSystem.createDirectories(checkNotNull(target.parent))
+                fileSystem.atomicMove(source, target)
+                true
             }
+
+            sourceMetadata.isDirectory && targetMetadata.isDirectory -> fileSystem.list(source).map { child ->
+                errorHandler.guardSdkCode(SdkErrorType.StorageMigrationFail, false) {
+                    merge(child, target / child.name)
+                }
+            }.all { it }
+
+            else -> true
         }
     }
 
-    private fun stripLegacyPrefixes(dir: Path) {
-        if (!fileSystem.exists(dir)) {
-            return
-        }
-        errorHandler.guardSdkCodeEach(SdkErrorType.StorageMigrationFail, fileSystem.list(dir)) { child ->
-            val prefix = LEGACY_PREFIXES.firstOrNull { child.name.startsWith(it) } ?: return@guardSdkCodeEach
-            val target = dir / child.name.removePrefix(prefix)
-            if (!fileSystem.exists(target)) {
-                fileSystem.atomicMove(child, target)
-            }
+    private fun legacyDir(dir: SdkDir): Path = filesDir / LEGACY_DIR_NAMES.getValue(dir)
+
+    private fun legacyCacheEntries(extra: List<String>): List<Path> {
+        val cacheRoot = errorHandler.guardSdkCode(SdkErrorType.Ignored, null) { cacheDir() } ?: return emptyList()
+        return (LEGACY_TELEMETRY_DIRS.map(LEGACY_DIR_NAMES::getValue) + extra).map { cacheRoot / it }
+    }
+
+    private fun delete(paths: List<Path>) {
+        errorHandler.guardSdkCodeEach(SdkErrorType.Ignored, paths) {
+            fileSystem.deleteRecursively(it)
         }
     }
 
@@ -116,7 +113,8 @@ class LegacyStorageMigrator(
                 SdkDir.TELEMETRY_LOG_ENVELOPES -> "embrace_envelopes"
             }?.let { dir to it }
         }.toMap()
-        private val LEGACY_PREFIXES = listOf("embrace_", "emb_")
+        private val LEGACY_TELEMETRY_DIRS = LEGACY_DIR_NAMES.keys.filter { it.isTelemetry }
+        private val MIGRATED_DIRS = LEGACY_DIR_NAMES.keys - SdkDir.INSTALL_STATE
         private val LEGACY_CACHE_DIR_ENTRIES = listOf("emb_config_cache", "embrace_crash_marker")
     }
 }

@@ -201,6 +201,20 @@ internal class SchedulingServiceImplTest {
     }
 
     @Test
+    fun `a 429 with a zero retry-after backs off like one without the header`() {
+        serverBusy(endpoint = Endpoint.SESSIONS, retryAfterMs = 0L)
+        resetToSingleSessionPartPayload()
+        waitForResurrectionAndDeliveryAttempt()
+        assertEquals(1, executionService.sendAttempts())
+        allSendsSucceed()
+        tickAndWaitForDeliveryAttempts(INITIAL_DELAY_MS - 1)
+        assertEquals(1, executionService.sendAttempts())
+        tickAndWaitForDeliveryAttempts(2)
+        assertEquals(2, executionService.sendAttempts())
+        assertEquals(0, storageService.storedPayloadCount())
+    }
+
+    @Test
     fun `payloads to unblocked endpoint will not affect other endpoints`() {
         serverBusy(endpoint = Endpoint.SESSIONS, retryAfterMs = SHORT_BLOCKED_DURATION)
         resetToSingleSessionPartPayload()

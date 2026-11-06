@@ -1,7 +1,7 @@
 package io.embrace.android.embracesdk.internal.config.resolved
 
 /**
- * Resolved vitals (smoothness / screen-load) config.
+ * Resolved vitals (smoothness / screen-load / interaction responsiveness) config.
  */
 interface VitalsConfig {
 
@@ -42,11 +42,16 @@ interface VitalsConfig {
     val smoothnessFrameTraceEnabled: Boolean
 
     /**
-     * The maximum number of vitals spans (smoothness and screen-load combined) that may be emitted per session
+     * The maximum number of vitals spans (smoothness, screen-load and interaction responsiveness combined) that may be emitted per session
      * part. Vitals emits a span per user gesture and per navigation, so this caps the share of the session's
      * span budget that the feature can consume.
      */
     val spanLimit: Int
+
+    /**
+     * The minimum main-thread probe lateness that the interaction-responsiveness vital counts as a block.
+     */
+    val interactionResponsivenessBlockThresholdMs: Long
 
     companion object {
         const val DEFAULT_SMOOTHNESS_IDLE_THRESHOLD_MS: Long = 100L
@@ -56,6 +61,7 @@ interface VitalsConfig {
         const val DEFAULT_SCREEN_LOAD_TIMEOUT_MS: Long = 30_000L
         const val DEFAULT_SCREEN_LOAD_NAV_TIMEOUT_MS: Long = 500L
         const val DEFAULT_SPAN_LIMIT: Int = 250
+        const val DEFAULT_INTERACTION_RESPONSIVENESS_BLOCK_THRESHOLD_MS: Long = 50L
     }
 }
 
@@ -71,6 +77,7 @@ inline fun VitalsConfig(
     crossinline screenLoadNavTimeoutMs: () -> Long? = { null },
     crossinline smoothnessFrameTraceEnabled: () -> Boolean? = { null },
     crossinline spanLimit: () -> Int? = { null },
+    crossinline interactionResponsivenessBlockThresholdMs: () -> Long? = { null },
 ): VitalsConfig = object : VitalsConfig {
     override val smoothnessIdleThresholdMs: Long =
         smoothnessIdleThresholdMs() ?: VitalsConfig.DEFAULT_SMOOTHNESS_IDLE_THRESHOLD_MS
@@ -85,4 +92,6 @@ inline fun VitalsConfig(
         screenLoadNavTimeoutMs() ?: VitalsConfig.DEFAULT_SCREEN_LOAD_NAV_TIMEOUT_MS
     override val smoothnessFrameTraceEnabled: Boolean = smoothnessFrameTraceEnabled() ?: false
     override val spanLimit: Int = spanLimit() ?: VitalsConfig.DEFAULT_SPAN_LIMIT
+    override val interactionResponsivenessBlockThresholdMs: Long =
+        interactionResponsivenessBlockThresholdMs() ?: VitalsConfig.DEFAULT_INTERACTION_RESPONSIVENESS_BLOCK_THRESHOLD_MS
 }

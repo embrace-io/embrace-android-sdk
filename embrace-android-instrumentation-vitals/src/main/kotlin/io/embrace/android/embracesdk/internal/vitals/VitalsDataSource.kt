@@ -3,6 +3,7 @@ package io.embrace.android.embracesdk.internal.vitals
 import android.content.Context
 import android.hardware.display.DisplayManager
 import android.os.Build
+import android.os.Looper
 import android.view.Display
 import androidx.annotation.RequiresApi
 import androidx.annotation.VisibleForTesting
@@ -21,6 +22,8 @@ import io.embrace.android.embracesdk.internal.logging.SdkErrorType
 import io.embrace.android.embracesdk.internal.logging.guardSdkCode
 import io.embrace.android.embracesdk.internal.utils.BuildVersionChecker
 import io.embrace.android.embracesdk.internal.utils.VersionChecker
+import io.embrace.android.embracesdk.internal.vitals.responsiveness.InteractionResponsivenessReporter
+import io.embrace.android.embracesdk.internal.vitals.responsiveness.InteractionResponsivenessResult
 import io.embrace.android.embracesdk.internal.vitals.screenload.ScreenLoadResult
 import io.embrace.android.embracesdk.internal.vitals.screenload.ScreenLoadTracker
 import io.embrace.android.embracesdk.internal.vitals.smoothness.FocalMomentTracker
@@ -94,7 +97,9 @@ internal class VitalsDataSource(
     private var focalTracker: FocalMomentTracker? = null
 
     @Volatile
-    private var vitalsScheduler: HandlerVitalsScheduler? = null
+    @VisibleForTesting
+    internal var vitalsScheduler: HandlerVitalsScheduler? = null
+        private set
 
     @Volatile
     private var activityListener: VitalsActivityListener? = null
@@ -120,6 +125,8 @@ internal class VitalsDataSource(
         }
 
         val cfg = args.configService.config.vitals
+        val responsivenessEnabled = args.configService.config.autoDataCapture.interactionResponsivenessCaptureEnabled
+        val blockThresholdMs = cfg.interactionResponsivenessBlockThresholdMs
         val tracker = FocalMomentTracker(
             scheduler = vitalsScheduler,
             reporter = SmoothnessReporter(
@@ -140,6 +147,8 @@ internal class VitalsDataSource(
             idleThresholdMs = cfg.smoothnessIdleThresholdMs,
             heldIdleThresholdMs = cfg.smoothnessHeldIdleThresholdMs,
             frameTraceRecorder = if (cfg.smoothnessFrameTraceEnabled) FrameTraceRecorder() else null,
+            responsivenessReporter = if (responsivenessEnabled) createResponsivenessReporter(blockThresholdMs) else null,
+            probeFactory = if (responsivenessEnabled) createProbeFactory(blockThresholdMs) else null,
             onFrameCounted = ::countFrames,
         )
         focalTracker = tracker
@@ -166,6 +175,8 @@ internal class VitalsDataSource(
         if (Build.VERSION.SDK_INT < Build.VERSION_CODES.S) {
             args.systemService<DisplayManager>(Context.DISPLAY_SERVICE)?.unregisterDisplayListener(displayListener)
         }
+        // posted ahead of the scheduler stopping, so it runs after any touch already queued for the Vitals thread
+        focalTracker?.close()
         vitalsScheduler?.stop()
         vitalsScheduler = null
         focalTracker = null
@@ -213,6 +224,42 @@ internal class VitalsDataSource(
                     heldIdleThresholdMs = result.heldIdleThresholdMs,
                     jankHeuristicMultiplier = result.jankHeuristicMultiplier,
                     frameTraceBase64 = result.frameTraceBase64,
+                ).attributes(),
+            )
+        }
+    }
+
+    private fun createResponsivenessReporter(blockThresholdMs: Long) = InteractionResponsivenessReporter(
+        emit = ::emitInteractionResponsivenessResult,
+        blockThresholdMs = blockThresholdMs,
+        probeIntervalMs = MainThreadProbe.DEFAULT_PACE_MS,
+    )
+
+    private fun createProbeFactory(blockThresholdMs: Long): (MainThreadProbe.BlockCallback) -> MainThreadProbe = { onBlock ->
+        MainThreadProbe(
+            looper = Looper.getMainLooper(),
+            blockThresholdMs = blockThresholdMs,
+            onBlock = onBlock,
+            errorHandler = args.errorHandler,
+        )
+    }
+
+    private fun emitInteractionResponsivenessResult(result: InteractionResponsivenessResult) {
+        captureTelemetry {
+            recordCompletedSpan(
+                name = "interaction-responsiveness",
+                startTimeMs = result.startTimeMs,
+                endTimeMs = result.startTimeMs + result.durationMs,
+                type = EmbType.Performance.InteractionResponsiveness,
+                private = true,
+                attributes = SchemaType.InteractionResponsiveness(
+                    outcome = result.outcome.name.lowercase(),
+                    dispatchDelayMs = result.dispatchDelayMs,
+                    longestBlockMs = result.longestBlockMs,
+                    totalBlockedMs = result.totalBlockedMs,
+                    blockCount = result.blockCount,
+                    blockThresholdMs = result.blockThresholdMs,
+                    probeIntervalMs = result.probeIntervalMs,
                 ).attributes(),
             )
         }

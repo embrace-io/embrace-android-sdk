@@ -6,11 +6,16 @@ import io.embrace.android.embracesdk.internal.payload.Envelope
 import io.embrace.android.embracesdk.internal.payload.SessionPartPayload
 import io.embrace.android.embracesdk.internal.session.SessionPartToken
 
-typealias SessionPartPayloadSupplier = (
+/**
+ * Builds a snapshot of the session part [initial] and hands it to `onSnapshot` inside the critical section that keeps the part
+ * from ending meanwhile, so a part's complete payload can never land between building its snapshot and caching it.
+ */
+typealias SessionPartSnapshotter = (
     state: ProcessState,
     timestamp: Long,
     initial: SessionPartToken,
-) -> Envelope<SessionPartPayload>?
+    onSnapshot: (Envelope<SessionPartPayload>) -> Unit,
+) -> Unit
 
 /**
  * This service caches in-memory data in case the process terminates. Cached data from terminated processes will be
@@ -24,7 +29,7 @@ interface PayloadCachingService : Shutdownable {
     fun startCaching(
         initial: SessionPartToken,
         state: ProcessState,
-        supplier: SessionPartPayloadSupplier,
+        snapshotter: SessionPartSnapshotter,
     )
 
     /**

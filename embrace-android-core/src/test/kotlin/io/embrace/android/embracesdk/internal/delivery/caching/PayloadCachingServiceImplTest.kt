@@ -22,6 +22,7 @@ class PayloadCachingServiceImplTest {
     private lateinit var executorService: BlockingScheduledExecutorService
     private lateinit var service: PayloadCachingService
     private lateinit var sessionIdsProvider: FakeSessionIdsProvider
+    private lateinit var payloadStore: FakePayloadStore
     private val zygote = fakeSessionPartToken()
 
     @Before
@@ -29,52 +30,63 @@ class PayloadCachingServiceImplTest {
         executorService = BlockingScheduledExecutorService(FakeClock())
         val cacher = PeriodicSessionPartCacher(BackgroundWorker(executorService), FakeErrorHandler(), INTERVAL)
         sessionIdsProvider = FakeSessionIdsProvider(sessionPartId = zygote.sessionPartId)
+        payloadStore = FakePayloadStore()
 
         service = PayloadCachingServiceImpl(
             cacher,
             FakeClock(),
             sessionIdsProvider,
-            FakePayloadStore(),
+            payloadStore,
         )
     }
 
     @Test(expected = RejectedExecutionException::class)
     fun rejection() {
         service.shutdown()
-        service.startCaching(zygote, ProcessState.FOREGROUND) { _, _, _ ->
-            null
-        }
+        service.startCaching(zygote, ProcessState.FOREGROUND) { _, _, _, _ -> }
     }
 
     @Test
     fun `session id mismatch does not cache`() {
         sessionIdsProvider.sessionPartId = "someOtherId"
         var count = 0
-        service.startCaching(zygote, ProcessState.FOREGROUND) { _, _, _ ->
+        service.startCaching(zygote, ProcessState.FOREGROUND) { _, _, _, onSnapshot ->
             count++
-            fakeSessionEnvelope()
+            onSnapshot(fakeSessionEnvelope())
         }
         executorService.moveForwardAndRunBlocked(INTERVAL)
         assertEquals(0, count)
+        assertEquals(0, payloadStore.cachedSessionPartPayloads.size)
+    }
+
+    @Test
+    fun `a snapshot of a part that ended while it was built is not cached`() {
+        service.startCaching(zygote, ProcessState.FOREGROUND) { _, _, _, onSnapshot ->
+            sessionIdsProvider.sessionPartId = "next-part"
+            onSnapshot(fakeSessionEnvelope())
+        }
+        executorService.moveForwardAndRunBlocked(INTERVAL)
+        assertEquals(0, payloadStore.cachedSessionPartPayloads.size)
     }
 
     @Test
     fun `start caching`() {
         var count = 0
-        service.startCaching(zygote, ProcessState.FOREGROUND) { _, _, _ ->
+        service.startCaching(zygote, ProcessState.FOREGROUND) { _, _, _, onSnapshot ->
             count++
-            fakeSessionEnvelope()
+            onSnapshot(fakeSessionEnvelope())
         }
         executorService.moveForwardAndRunBlocked(INTERVAL)
         assertEquals(1, count)
+        assertEquals(1, payloadStore.cachedSessionPartPayloads.size)
     }
 
     @Test
     fun `stop caching`() {
         var count = 0
-        service.startCaching(zygote, ProcessState.FOREGROUND) { _, _, _ ->
+        service.startCaching(zygote, ProcessState.FOREGROUND) { _, _, _, onSnapshot ->
             count++
-            fakeSessionEnvelope()
+            onSnapshot(fakeSessionEnvelope())
         }
         service.stopCaching()
         executorService.moveForwardAndRunBlocked(INTERVAL)

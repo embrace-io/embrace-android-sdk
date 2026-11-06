@@ -263,14 +263,20 @@ internal class NetworkSpanParentServiceImplTest {
     }
 
     @Test
-    fun `an app provider that throws is treated as the default and reported`() {
-        service.setAppProvider { _, _ -> throw IllegalStateException("provider failed") }
+    fun `an app provider that throws is treated as the default and reported once`() {
+        errorHandler.throwOnSdkError = false
+        val failure = IllegalStateException("provider failed")
+        service.setAppProvider { _, _ -> throw failure }
 
         assertSame(NetworkSpanParent.USE_DEFAULT, service.appDecision(request))
-        assertEquals(
-            "App-supplied code threw an exception (NetworkSpanParentProviderFail)",
-            errorHandler.warningMessages.single().msg,
-        )
+        assertSame(NetworkSpanParent.USE_DEFAULT, service.appDecision(request))
+
+        val warning = errorHandler.warningMessages.single()
+        assertEquals("Network span parent provider threw an exception", warning.msg)
+        assertSame(failure, warning.throwable)
+        val sdkError = errorHandler.sdkErrorMessages.single()
+        assertEquals("NetworkSpanParentProviderFail", sdkError.msg)
+        assertSame(failure, sdkError.throwable)
     }
 
     @Test

@@ -8,6 +8,7 @@ import io.embrace.android.embracesdk.internal.arch.datasource.TelemetryDestinati
 import io.embrace.android.embracesdk.internal.instrumentation.network.HttpNetworkRequest
 import io.embrace.android.embracesdk.internal.instrumentation.network.NetworkRequestDataSource
 import io.embrace.android.embracesdk.internal.instrumentation.network.RequestEndData
+import io.embrace.android.embracesdk.internal.instrumentation.network.RequestStart
 import io.embrace.android.embracesdk.internal.instrumentation.network.RequestStartData
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
@@ -75,7 +76,7 @@ internal class InternalNetworkApiImplTest {
             requests.add(request)
         }
 
-        override fun startRequest(startData: RequestStartData): String? = null
+        override fun startRequest(startData: RequestStartData): RequestStart? = null
 
         override fun endRequest(endData: RequestEndData) {
         }

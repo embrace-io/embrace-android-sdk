@@ -3,8 +3,10 @@ package io.embrace.android.embracesdk.injection
 import io.embrace.android.embracesdk.fakes.FakeConfigService
 import io.embrace.android.embracesdk.fakes.FakeErrorHandler
 import io.embrace.android.embracesdk.fakes.FilesDirApplication
+import io.embrace.android.embracesdk.fakes.behavior.FakeNetworkBehavior
 import io.embrace.android.embracesdk.fakes.injection.FakeWorkerThreadPool
 import io.embrace.android.embracesdk.fs.FakeFileSystemRule
+import io.embrace.android.embracesdk.internal.config.remote.NetworkCaptureRuleRemoteConfig
 import io.embrace.android.embracesdk.internal.injection.ConfigLoadServices
 import io.embrace.android.embracesdk.internal.injection.PreStartServices
 import io.embrace.android.embracesdk.internal.storage.SdkStorageLayout
@@ -86,4 +88,49 @@ internal class ConfigLoadServicesTest {
         val installState = File(context.noBackupFilesDir, "${SdkStorageLayout.ROOT_DIR_NAME}/install_state")
         assertTrue(File(installState, SdkStorageLayout.ORDINALS_FILE_NAME).exists())
     }
+
+    @Test
+    fun `the superior storage system skips the prefs prewarm`() {
+        val workerThreadPool = FakeWorkerThreadPool(testWorkers = listOf(Worker.Background.IoRegWorker))
+        val configLoadServices = ConfigLoadServices(
+            context = FilesDirApplication(tempDir.newFolder()),
+            preStartServices = PreStartServices(errorHandler = FakeErrorHandler()),
+            workerThreadPoolSupplier = { workerThreadPool },
+            configServiceSupplier = { _, _, _, _, _, _ -> FakeConfigService() },
+            superiorStorageSystemEnabled = true,
+            fileSystem = fsRule.fileSystem,
+        )
+        configLoadServices.start()
+        assertEquals(0, workerThreadPool.executorFor(Worker.Background.IoRegWorker).submitCount)
+    }
+
+    @Test
+    fun `the superior storage system keeps delivered AEI and network capture counts in install state`() {
+        val context = FilesDirApplication(tempDir.newFolder())
+        val rule = NetworkCaptureRuleRemoteConfig(id = "rule", duration = null, method = "GET", urlRegex = "embrace.io")
+        val configService = FakeConfigService(networkBehavior = FakeNetworkBehavior(rules = setOf(rule)))
+        val workers = listOf(Worker.Background.IoRegWorker, Worker.Background.NonIoRegWorker)
+        val workerThreadPool = FakeWorkerThreadPool(testWorkers = workers)
+        val first = createSuperiorStorageServices(context, configService, workerThreadPool)
+        first.deliveredAeiStore.value.add("aei")
+        first.networkCaptureRuleStore.value.decrement(rule.id, 5)
+        workers.forEach { workerThreadPool.executorFor(it).runCurrentlyBlocked() }
+
+        val second = createSuperiorStorageServices(context, configService, FakeWorkerThreadPool(testWorkers = workers))
+        assertEquals(setOf("aei"), second.deliveredAeiStore.value.ids())
+        assertEquals(4, second.networkCaptureRuleStore.value.remaining(rule.id, 5))
+    }
+
+    private fun createSuperiorStorageServices(
+        context: FilesDirApplication,
+        configService: FakeConfigService,
+        workerThreadPool: FakeWorkerThreadPool,
+    ) = ConfigLoadServices(
+        context = context,
+        preStartServices = PreStartServices(errorHandler = FakeErrorHandler()),
+        workerThreadPoolSupplier = { workerThreadPool },
+        configServiceSupplier = { _, _, _, _, _, _ -> configService },
+        superiorStorageSystemEnabled = true,
+        fileSystem = fsRule.fileSystem,
+    )
 }

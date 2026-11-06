@@ -27,8 +27,8 @@ object SdkStorageLayout {
     const val LAYOUT_VERSION_FILE_NAME: String = "layout_version"
 
     /*
-     * The files allowed in [SdkDir.INSTALL_STATE]. Their stores aren't wired in yet: until they are, nothing writes
-     * the .bin files, and the crash marker is still written as embrace_crash_marker.
+     * The files allowed in [SdkDir.INSTALL_STATE]. The .bin files' stores aren't wired in yet: until they are,
+     * nothing writes them.
      */
 
     const val ORDINALS_FILE_NAME: String = "ordinals.bin"

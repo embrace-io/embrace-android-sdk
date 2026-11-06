@@ -72,18 +72,7 @@ class LegacySdkStorage(
     }
 
     companion object {
-        val LEGACY_DIR_NAMES: Map<SdkDir, String> = SdkDir.entries.mapNotNull { dir ->
-            when (dir) {
-                SdkDir.REMOTE_CONFIG -> "embrace_remote_config"
-                SdkDir.INSTALL_STATE -> "embrace"
-                SdkDir.TELEMETRY, SdkDir.TELEMETRY_PENDING -> null
-                SdkDir.TELEMETRY_READY -> "embrace_payloads"
-                SdkDir.TELEMETRY_PENDING_SNAPSHOTS -> "embrace_cache"
-                SdkDir.TELEMETRY_PENDING_SESSION_PARTS -> "embrace_sessions_split"
-                SdkDir.TELEMETRY_PENDING_NATIVE_CRASHES -> "embrace_native"
-                SdkDir.TELEMETRY_LOG_ENVELOPES -> "embrace_envelopes"
-            }?.let { dir to it }
-        }.toMap()
+        val LEGACY_DIR_NAMES: Map<SdkDir, String> = LegacyStorageMigrator.LEGACY_DIR_NAMES
         val ORPHANED_CACHE_DIR_ENTRIES: List<String> = listOf("emb_config_cache")
     }
 }

@@ -4,7 +4,6 @@ import io.embrace.android.embracesdk.internal.logging.ErrorHandler
 import io.embrace.android.embracesdk.internal.logging.SdkErrorType
 import io.embrace.android.embracesdk.internal.logging.guardSdkCode
 import io.embrace.android.embracesdk.internal.logging.guardSdkCodeEach
-import io.embrace.android.embracesdk.internal.storage.LegacySdkStorage.Companion.LEGACY_DIR_NAMES
 import io.embrace.android.embracesdk.internal.utils.SystemTrace
 import okio.FileSystem
 import okio.Path
@@ -32,25 +31,34 @@ class LegacyStorageMigrator(
             return@guardSdkCode false
         }
         SystemTrace.trace("storage-migration") {
-            fileSystem.createDirectories(staging)
-            val layout = SdkStorageImpl(fileSystem, staging, errorHandler)
-            errorHandler.guardSdkCodeEach(SdkErrorType.StorageMigrationFail, LEGACY_DIR_NAMES.entries) {
-                stage(filesDir / it.value, layout.path(it.key))
-            }
-            stripLegacyPrefixes(layout.path(SdkDir.INSTALL_STATE))
+            stageLegacyDirs()
             fileSystem.atomicMove(staging, root)
             true
         }
     }
 
     /**
-     * Deletes legacy dirs that weren't migrated and the legacy cache dir entries. Should only be called
-     * after [migrate] returned true.
+     * Merges anything a failed or interrupted [migrate] left behind into the live root, without overwriting what is
+     * already there, then deletes whatever couldn't be merged along with the legacy cache dir entries. Does nothing
+     * to legacy data if the live root doesn't exist.
      */
-    fun deleteLeftovers() {
+    fun collectLeftovers() {
+        val merged = errorHandler.guardSdkCode(SdkErrorType.StorageMigrationFail, false) {
+            if (!fileSystem.exists(root)) {
+                return@guardSdkCode false
+            }
+            if (hasLegacyData()) {
+                stageLegacyDirs()
+                stage(staging, root)
+            }
+            true
+        }
+        if (!merged) {
+            return
+        }
         val cacheRoot = errorHandler.guardSdkCode(SdkErrorType.Ignored, null) { cacheDir() }
         val cacheEntries = LEGACY_DIR_NAMES.filterKeys { it.isTelemetry }.values + LEGACY_CACHE_DIR_ENTRIES
-        val leftovers = LEGACY_DIR_NAMES.values.map { filesDir / it } +
+        val leftovers = listOf(staging) + LEGACY_DIR_NAMES.values.map { filesDir / it } +
             listOfNotNull(cacheRoot).flatMap { dir -> cacheEntries.map { dir / it } }
         errorHandler.guardSdkCodeEach(SdkErrorType.Ignored, leftovers) {
             fileSystem.deleteRecursively(it)
@@ -59,6 +67,15 @@ class LegacyStorageMigrator(
 
     private fun hasLegacyData(): Boolean =
         fileSystem.exists(staging) || LEGACY_DIR_NAMES.values.any { fileSystem.exists(filesDir / it) }
+
+    private fun stageLegacyDirs() {
+        fileSystem.createDirectories(staging)
+        val layout = SdkStorageImpl(fileSystem, staging, errorHandler)
+        errorHandler.guardSdkCodeEach(SdkErrorType.StorageMigrationFail, LEGACY_DIR_NAMES.entries) {
+            stage(filesDir / it.value, layout.path(it.key))
+        }
+        stripLegacyPrefixes(layout.path(SdkDir.INSTALL_STATE))
+    }
 
     private fun stage(source: Path, target: Path) {
         val sourceMetadata = fileSystem.metadataOrNull(source) ?: return
@@ -86,8 +103,20 @@ class LegacyStorageMigrator(
         }
     }
 
-    private companion object {
-        val LEGACY_PREFIXES = listOf("embrace_", "emb_")
-        val LEGACY_CACHE_DIR_ENTRIES = LegacySdkStorage.ORPHANED_CACHE_DIR_ENTRIES + "embrace_crash_marker"
+    companion object {
+        val LEGACY_DIR_NAMES: Map<SdkDir, String> = SdkDir.entries.mapNotNull { dir ->
+            when (dir) {
+                SdkDir.REMOTE_CONFIG -> "embrace_remote_config"
+                SdkDir.INSTALL_STATE -> "embrace"
+                SdkDir.TELEMETRY, SdkDir.TELEMETRY_PENDING -> null
+                SdkDir.TELEMETRY_READY -> "embrace_payloads"
+                SdkDir.TELEMETRY_PENDING_SNAPSHOTS -> "embrace_cache"
+                SdkDir.TELEMETRY_PENDING_SESSION_PARTS -> "embrace_sessions_split"
+                SdkDir.TELEMETRY_PENDING_NATIVE_CRASHES -> "embrace_native"
+                SdkDir.TELEMETRY_LOG_ENVELOPES -> "embrace_envelopes"
+            }?.let { dir to it }
+        }.toMap()
+        private val LEGACY_PREFIXES = listOf("embrace_", "emb_")
+        private val LEGACY_CACHE_DIR_ENTRIES = listOf("emb_config_cache", "embrace_crash_marker")
     }
 }

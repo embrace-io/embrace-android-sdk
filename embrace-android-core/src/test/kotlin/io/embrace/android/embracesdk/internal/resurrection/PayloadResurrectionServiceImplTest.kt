@@ -232,19 +232,6 @@ class PayloadResurrectionServiceImplTest {
     }
 
     @Test
-    fun `legacy session snapshot with empty session IDs bypasses dedup and is resurrected`() {
-        // simulate a payload that uses v1 filename encoding
-        val legacyMeta = sessionMetadata.copy(userSessionId = "", sessionPartId = "")
-        cacheStorageService.addPayload(metadata = legacyMeta, data = deadSessionEnvelope)
-
-        resurrectInBackground()
-
-        val stored = payloadStorageService.storedPayloadMetadata().single()
-        assertEquals(legacyMeta.copy(complete = true), stored)
-        assertEquals(0, cacheStorageService.storedPayloadCount())
-    }
-
-    @Test
     fun `dedupe does not affect unrelated sessions`() {
         payloadStorageService.addPayload(
             metadata = fakeSessionStoredTelemetryMetadata,

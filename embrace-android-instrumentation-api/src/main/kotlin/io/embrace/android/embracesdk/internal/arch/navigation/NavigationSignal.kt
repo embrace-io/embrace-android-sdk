@@ -36,6 +36,11 @@ sealed interface NavigationSignal {
     data class ActivityPaused(val instanceId: Int, override val timestampMs: Long) : NavigationSignal
 
     /**
+     * An Activity is gone, so nothing more will be signalled about it.
+     */
+    data class ActivityDestroyed(val instanceId: Int, override val timestampMs: Long) : NavigationSignal
+
+    /**
      * A finer-grained source will name the screens in this Activity from now on.
      */
     data class ScreenSourceAttached(val instanceId: Int, override val timestampMs: Long) : NavigationSignal

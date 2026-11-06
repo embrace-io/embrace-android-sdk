@@ -39,7 +39,7 @@ internal class SweptEntryNamesTest {
                     }
                 }
             }
-        } + V1_PAYLOAD
+        }
         names.forEach { name ->
             assertTrue(StoredTelemetryMetadata.fromFilename(name).isSuccess)
             payloadDirs.forEach { dir ->
@@ -60,10 +60,5 @@ internal class SweptEntryNamesTest {
                 }
             }
         }
-    }
-
-    private companion object {
-        // no longer written, but still read from older installs
-        const val V1_PAYLOAD = "p3_1700000000000_uuid_pid_true_session_v1.json"
     }
 }

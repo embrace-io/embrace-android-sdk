@@ -303,6 +303,8 @@ class FileStorageServiceImplTest {
     fun `unparseable files are swept when building the index`() {
         // simulate a payload written by a format this version can't parse
         val bogus = File(outputDir, "not-a-valid-name").apply { writeText("x") }
+        // simulate a pre-9.0 payload with a v1 filename
+        val v1Payload = File(outputDir, "p3_1700000000000_uuid_pid_true_session_v1.json").apply { writeText("x") }
         // simulate a leftover temp file from a process killed mid-write
         val orphanTmp = File(outputDir, "leftover.tmp").apply { writeText("x") }
 
@@ -317,6 +319,7 @@ class FileStorageServiceImplTest {
         // trigger the lazy index init
         assertEquals(0, freshService.getStoredPayloads().size)
         assertFalse(bogus.exists())
+        assertFalse(v1Payload.exists())
         assertFalse(orphanTmp.exists())
     }
 

@@ -23,6 +23,7 @@ dependencies {
     implementation(libs.smali.baksmali)
 
     testImplementation(project(":embrace-test-common"))
+    testImplementation(libs.okio)
 }
 
 val integrationRepo = fileTree(isolated.rootProject.projectDirectory.dir(INTEGRATION_TEST_REPO_PATH)) {

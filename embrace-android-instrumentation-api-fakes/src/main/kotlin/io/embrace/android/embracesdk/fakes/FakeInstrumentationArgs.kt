@@ -8,6 +8,7 @@ import io.embrace.android.embracesdk.internal.arch.SessionPartChangeListener
 import io.embrace.android.embracesdk.internal.arch.SessionPartEndListener
 import io.embrace.android.embracesdk.internal.arch.state.ProcessStateTracker
 import io.embrace.android.embracesdk.internal.network.http.HttpRequestInfoModifierChain
+import io.embrace.android.embracesdk.internal.network.parent.NetworkSpanParents
 import io.embrace.android.embracesdk.internal.serialization.PlatformSerializer
 import io.embrace.android.embracesdk.internal.session.id.SessionIdsSnapshot
 import io.embrace.android.embracesdk.internal.storage.SdkStorage
@@ -19,6 +20,7 @@ import io.embrace.android.embracesdk.internal.utils.event.EventBus
 import io.embrace.android.embracesdk.internal.worker.BackgroundWorker
 import io.embrace.android.embracesdk.internal.worker.PriorityWorker
 import io.embrace.android.embracesdk.internal.worker.Worker
+import io.embrace.android.embracesdk.network.NetworkSpanParent
 import okio.FileSystem
 import java.io.File
 import java.util.UUID
@@ -78,6 +80,10 @@ class FakeInstrumentationArgs(
     override val navigationTrackingService = FakeNavigationTrackingService()
 
     override val httpRequestInfoModifierChain: HttpRequestInfoModifierChain = HttpRequestInfoModifierChain(errorHandler)
+
+    var networkSpanParent: NetworkSpanParent? = null
+
+    override val networkSpanParents: NetworkSpanParents = NetworkSpanParents { networkSpanParent }
 
     override fun registerSessionPartChangeListener(listener: SessionPartChangeListener) {
         sessionChangeListeners.add(listener)

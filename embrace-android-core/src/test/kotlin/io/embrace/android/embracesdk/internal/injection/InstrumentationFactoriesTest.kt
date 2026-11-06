@@ -62,6 +62,7 @@ internal class InstrumentationFactoriesTest {
             crashMarkerFileProvider = { File("unused") },
             sdkStorage = sdkStorage,
             eventBus = EventBus(initServices.errorHandler),
+            networkSpanParents = { null },
         )
         assertSame(configService, args.configService)
         assertSame(destination, args.destination)

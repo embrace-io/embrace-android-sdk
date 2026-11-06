@@ -1,24 +1,27 @@
 package io.embrace.android.embracesdk.macrobenchmark.app.storage
 
+import io.embrace.android.embracesdk.fs.FakeFileSystemRule
+import okio.Path
+import okio.Path.Companion.toPath
 import org.junit.Assert.assertEquals
 import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
-import org.junit.rules.TemporaryFolder
-import java.io.File
 
 internal class FixtureStorageTest {
 
     @get:Rule
-    val tmp = TemporaryFolder()
+    val fsRule = FakeFileSystemRule()
 
-    private lateinit var sessionsDir: File
+    private val fs get() = fsRule.fileSystem
+    private val root = "/data".toPath()
+    private val sessionsDir: Path = root / "sessions"
     private lateinit var fixture: FixtureStorage
 
     @Before
     fun setUp() {
-        sessionsDir = tmp.newFolder("sessions")
-        fixture = FixtureStorage(tmp.newFolder("data"))
+        fs.createDirectories(sessionsDir)
+        fixture = FixtureStorage(fs, root / "app")
     }
 
     @Test
@@ -26,19 +29,19 @@ internal class FixtureStorageTest {
         writePart("1000_a", "metadata")
         fixture.saveSessionParts(sessionsDir)
 
-        sessionsDir.deleteRecursively()
+        fs.deleteRecursively(sessionsDir)
         writePart("2000_b", "metadata")
         writePart("2500_c", "metadata")
         fixture.saveSessionParts(sessionsDir)
 
-        sessionsDir.deleteRecursively()
+        fs.deleteRecursively(sessionsDir)
         assertEquals(3, fixture.restoreSessionParts(sessionsDir))
-        assertEquals(listOf("1000_a", "2000_b", "2500_c"), sessionsDir.list().orEmpty().sorted())
+        assertEquals(listOf("1000_a", "2000_b", "2500_c"), listNames())
     }
 
     @Test
     fun `saving from a directory that does not exist saves nothing`() {
-        fixture.saveSessionParts(File(tmp.root, "absent"))
+        fixture.saveSessionParts(root / "absent")
 
         assertEquals(0, fixture.restoreSessionParts(sessionsDir))
     }
@@ -48,11 +51,11 @@ internal class FixtureStorageTest {
         writePart("1000_a", "first part")
         writePart("2000_b", "second part")
         fixture.saveSessionParts(sessionsDir)
-        sessionsDir.deleteRecursively()
+        fs.deleteRecursively(sessionsDir)
 
         assertEquals(2, fixture.restoreSessionParts(sessionsDir))
-        assertEquals(listOf("1000_a", "2000_b"), sessionsDir.list().orEmpty().sorted())
-        assertEquals("first part", File(sessionsDir, "1000_a/metadata.pb").readText())
+        assertEquals(listOf("1000_a", "2000_b"), listNames())
+        assertEquals("first part", fs.read(sessionsDir / "1000_a/metadata.pb") { readUtf8() })
     }
 
     @Test
@@ -61,19 +64,23 @@ internal class FixtureStorageTest {
         fixture.saveSessionParts(sessionsDir)
 
         repeat(3) {
-            sessionsDir.deleteRecursively()
+            fs.deleteRecursively(sessionsDir)
             assertEquals(1, fixture.restoreSessionParts(sessionsDir))
-            assertEquals(listOf("1000_a"), sessionsDir.list().orEmpty().toList())
+            assertEquals(listOf("1000_a"), listNames())
         }
     }
 
     @Test
     fun `restoring with nothing saved copies nothing`() {
         assertEquals(0, fixture.restoreSessionParts(sessionsDir))
-        assertEquals(emptyList<String>(), sessionsDir.list().orEmpty().toList())
+        assertEquals(emptyList<String>(), listNames())
     }
 
+    private fun listNames(): List<String> = fs.listOrNull(sessionsDir).orEmpty().map(Path::name).sorted()
+
     private fun writePart(name: String, metadata: String) {
-        File(sessionsDir, name).apply { mkdirs() }.resolve("metadata.pb").writeText(metadata)
+        val dir = sessionsDir / name
+        fs.createDirectories(dir)
+        fs.write(dir / "metadata.pb") { writeUtf8(metadata) }
     }
 }

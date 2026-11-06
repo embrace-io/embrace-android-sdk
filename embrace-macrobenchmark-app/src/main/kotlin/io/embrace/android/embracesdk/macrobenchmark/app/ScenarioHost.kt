@@ -25,7 +25,9 @@ import io.embrace.android.embracesdk.macrobenchmark.app.fixture.FixtureOutcome
 import io.embrace.android.embracesdk.macrobenchmark.app.fixture.FixtureRecorder
 import io.embrace.android.embracesdk.macrobenchmark.app.storage.FixtureStorage
 import io.embrace.android.embracesdk.macrobenchmark.app.storage.SdkStorage
-import java.io.File
+import okio.FileSystem
+import okio.Path
+import okio.Path.Companion.toPath
 import java.lang.ref.WeakReference
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.atomic.AtomicReference
@@ -41,7 +43,10 @@ import java.util.concurrent.atomic.AtomicReference
  * launch intent names, and each later time it releases a task waiting in [awaitForeground]. A task runs on a
  * thread of its own, since its calls block.
  */
-internal class ScenarioHost(private val app: Application) : ActivityLifecycleCallbacks {
+internal class ScenarioHost(
+    private val app: Application,
+    private val fileSystem: FileSystem,
+) : ActivityLifecycleCallbacks {
 
     // the activities are held weakly, so that the benchmark's own bookkeeping never keeps one alive longer than
     // the app would, which would change what is being measured
@@ -67,7 +72,7 @@ internal class ScenarioHost(private val app: Application) : ActivityLifecycleCal
         if (globalSetting(RESTORE_FIXTURE_SETTING) != null) {
             return
         }
-        val storage = SdkStorage(File(app.applicationInfo.dataDir))
+        val storage = sdkStorage()
         partsAtStart = storage.sessionPartDirs()
         seedRemoteConfig(storage)
         startSdk()
@@ -165,14 +170,12 @@ internal class ScenarioHost(private val app: Application) : ActivityLifecycleCal
         if (parts.isEmpty()) {
             return STATUS_ERROR + "no session parts were on disk when the SDK started"
         }
-        val storage = SdkStorage(File(app.applicationInfo.dataDir))
-        val sessionsDir = storage.sessionsDir
-        val cacheDir = storage.cacheDir
+        val storage = sdkStorage()
         val deadlineMs = SystemClock.uptimeMillis() + RESURRECTION_TIMEOUT_MS
-        while (parts.any { File(sessionsDir, it).exists() } || cacheDir.list().orEmpty().isNotEmpty()) {
+        while (parts.any(storage::hasSessionPart) || storage.cachedPayloadCount() > 0) {
             if (SystemClock.uptimeMillis() > deadlineMs) {
-                return STATUS_ERROR + "${parts.count { File(sessionsDir, it).exists() }} dead parts and " +
-                    "${cacheDir.list().orEmpty().size} cached payloads left after ${RESURRECTION_TIMEOUT_MS}ms"
+                return STATUS_ERROR + "${parts.count(storage::hasSessionPart)} dead parts and " +
+                    "${storage.cachedPayloadCount()} cached payloads left after ${RESURRECTION_TIMEOUT_MS}ms"
             }
             SystemClock.sleep(RESURRECTION_POLL_MS)
         }
@@ -182,13 +185,16 @@ internal class ScenarioHost(private val app: Application) : ActivityLifecycleCal
     }
 
     private fun fixtureRecorder(): FixtureRecorder {
-        val dataDir = File(app.applicationInfo.dataDir)
         return FixtureRecorder(
-            sdk = SdkStorage(dataDir),
-            fixture = FixtureStorage(dataDir),
+            sdk = sdkStorage(),
+            fixture = FixtureStorage(fileSystem, dataDir()),
             sdkStarted = { Embrace.isStarted },
         )
     }
+
+    private fun dataDir(): Path = app.applicationInfo.dataDir.toPath()
+
+    private fun sdkStorage() = SdkStorage(fileSystem, dataDir())
 
     private fun status(outcome: FixtureOutcome): String = when (outcome) {
         FixtureOutcome.Recorded, FixtureOutcome.Restored -> STATUS_OK

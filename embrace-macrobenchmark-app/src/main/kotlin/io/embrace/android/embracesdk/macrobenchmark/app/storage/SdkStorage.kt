@@ -3,48 +3,62 @@ package io.embrace.android.embracesdk.macrobenchmark.app.storage
 import io.embrace.android.embracesdk.internal.config.PersistedConfig
 import io.embrace.android.embracesdk.internal.storage.LegacySdkStorage
 import io.embrace.android.embracesdk.internal.storage.SdkDir
-import java.io.File
+import okio.FileSystem
+import okio.Path
 
 /**
  * The SDK's files in the app's data directory, [dataDir]. The benchmark app reads and writes them to set up
  * what the SDK starts from and to observe what it did, by names defined in respective modules, so every such
  * location is represented and managed by this.
  */
-internal class SdkStorage(private val dataDir: File) {
+internal class SdkStorage(
+    private val fileSystem: FileSystem,
+    private val dataDir: Path,
+) {
 
-    private val filesDir = File(dataDir, FILES_DIR)
+    private val filesDir = dataDir / FILES_DIR
 
     /**
      * Where multi-file mode keeps session parts: [SdkDir.TELEMETRY_PENDING_SESSION_PARTS].
      */
-    val sessionsDir: File = sdkDir(SdkDir.TELEMETRY_PENDING_SESSION_PARTS)
+    val sessionsDir: Path = sdkDir(SdkDir.TELEMETRY_PENDING_SESSION_PARTS)
 
     /**
      * The cache of incomplete payloads, which the SDK may pass resurrected parts through on their way to
      * being stored: [SdkDir.TELEMETRY_PENDING_SNAPSHOTS].
      */
-    val cacheDir: File = sdkDir(SdkDir.TELEMETRY_PENDING_SNAPSHOTS)
+    val cacheDir: Path = sdkDir(SdkDir.TELEMETRY_PENDING_SNAPSHOTS)
 
     /**
      * Where the SDK persists the remote config: [SdkDir.REMOTE_CONFIG].
      */
-    val remoteConfigDir: File = sdkDir(SdkDir.REMOTE_CONFIG)
+    val remoteConfigDir: Path = sdkDir(SdkDir.REMOTE_CONFIG)
 
-    private fun sdkDir(dir: SdkDir): File = File(filesDir, LegacySdkStorage.LEGACY_DIR_NAMES.getValue(dir))
+    private fun sdkDir(dir: SdkDir): Path = filesDir / LegacySdkStorage.LEGACY_DIR_NAMES.getValue(dir)
 
     /**
      * The directory names of the session parts in [sessionsDir].
      */
-    fun sessionPartDirs(): List<String> = sessionsDir.list().orEmpty().sorted()
+    fun sessionPartDirs(): List<String> = list(sessionsDir).map(Path::name).sorted()
+
+    /**
+     * How many payloads are in [cacheDir].
+     */
+    fun cachedPayloadCount(): Int = list(cacheDir).size
+
+    /**
+     * Whether the session part named [name] is in [sessionsDir].
+     */
+    fun hasSessionPart(name: String): Boolean = fileSystem.exists(sessionsDir / name)
 
     /**
      * Writes [json] as the remote config response the SDK reads at startup (RemoteConfigStoreImpl), and
      * deletes the binary config cache, which would otherwise take priority over it.
      */
     fun writeRemoteConfig(json: String) {
-        remoteConfigDir.mkdirs()
-        File(remoteConfigDir, PersistedConfig.CACHED_CONFIG_FILE_NAME).delete()
-        File(remoteConfigDir, PersistedConfig.CONFIG_RESPONSE_FILE_NAME).writeText(json)
+        fileSystem.createDirectories(remoteConfigDir)
+        fileSystem.delete(remoteConfigDir / PersistedConfig.CACHED_CONFIG_FILE_NAME)
+        fileSystem.write(remoteConfigDir / PersistedConfig.CONFIG_RESPONSE_FILE_NAME) { writeUtf8(json) }
     }
 
     /**
@@ -53,8 +67,10 @@ internal class SdkStorage(private val dataDir: File) {
      * beside these, are left alone.
      */
     fun clear() {
-        SDK_WRITABLE_DIRS.forEach { File(dataDir, it).deleteRecursively() }
+        SDK_WRITABLE_DIRS.forEach { fileSystem.deleteRecursively(dataDir / it) }
     }
+
+    private fun list(dir: Path): List<Path> = fileSystem.listOrNull(dir).orEmpty()
 
     private companion object {
         const val FILES_DIR = "files"

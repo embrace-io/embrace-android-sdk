@@ -17,7 +17,8 @@ import io.embrace.android.embracesdk.internal.perfetto.trace.threadNames
 import io.embrace.android.embracesdk.internal.perfetto.trace.traceStartNanos
 import io.embrace.android.embracesdk.internal.perfetto.trace.traceWindowNanos
 import io.embrace.android.embracesdk.internal.perfetto.trace.validateTrace
-import java.io.File
+import okio.FileSystem
+import okio.Path
 import java.io.IOException
 import kotlin.system.exitProcess
 
@@ -27,7 +28,9 @@ private val SPEC = CliSpec(
     notes = "Normally run via scripts/analyse-trace.sh.",
 )
 
-fun main(args: Array<String>) {
+fun main(args: Array<String>) = analyseTrace(args, FileSystem.SYSTEM)
+
+internal fun analyseTrace(args: Array<String>, fileSystem: FileSystem) {
     if (asksForHelp(args)) {
         println(SPEC.usage)
         return
@@ -37,28 +40,28 @@ fun main(args: Array<String>) {
         System.err.println(SPEC.usage)
         exitProcess(EXIT_USAGE)
     }
-    if (!options.input.isFile) {
-        System.err.println("no trace file at ${options.input.absolutePath}")
+    if (fileSystem.resolvedMetadata(options.input)?.isRegularFile != true) {
+        System.err.println("no trace file at ${absolute(options.input)}")
         exitProcess(EXIT_BAD_TRACE)
     }
-    val format = validateTrace(options.input)
+    val format = validateTrace(fileSystem, options.input)
     if (format != TraceFormat.PERFETTO) {
-        System.err.println("${options.input.absolutePath} is ${format.label}")
+        System.err.println("${absolute(options.input)} is ${format.label}")
         exitProcess(EXIT_BAD_TRACE)
     }
-    println(describe(options, format))
+    println(describe(fileSystem, options, format))
     if (options.dryRun) {
         return
     }
     val trace = try {
-        parseTrace(options.input)
+        parseTrace(fileSystem, options.input)
     } catch (exc: IOException) {
         System.err.println(exc.message)
         exitProcess(EXIT_BAD_TRACE)
     }
     println(summarise(trace))
     try {
-        println(writeStats(options, trace))
+        println(writeStats(fileSystem, options, trace))
     } catch (exc: IOException) {
         System.err.println("could not write the report: ${exc.message}")
         exitProcess(EXIT_BAD_OUTPUT)
@@ -66,11 +69,11 @@ fun main(args: Array<String>) {
 }
 
 /** Reports the inputs the analysis runs against. */
-internal fun describe(options: CliOptions, format: TraceFormat): String = buildString {
+internal fun describe(fileSystem: FileSystem, options: CliOptions, format: TraceFormat): String = buildString {
     appendLine("perfetto trace analysis")
-    appendLine("  trace: ${options.input.path} (${options.input.length()} bytes)")
+    appendLine("  trace: ${options.input} (${fileSystem.sizeOf(options.input)} bytes)")
     appendLine("  format: ${format.label}")
-    append("  report: ${options.output.path} (${options.format.flag})")
+    append("  report: ${options.output} (${options.format.flag})")
 }
 
 internal fun summarise(trace: Trace): String = buildString {
@@ -90,22 +93,23 @@ internal fun summarise(trace: Trace): String = buildString {
     append("  skipped: ${model.unclosed} unclosed, ${model.unopened} unopened, ${model.unsupported} unsupported")
 }
 
-internal fun writeStats(options: CliOptions, trace: Trace): String {
-    options.output.writeText(render(options.format, statsReport(options, trace)))
-    return "wrote ${options.format.flag} statistics to ${options.output.path}"
+internal fun writeStats(fileSystem: FileSystem, options: CliOptions, trace: Trace): String {
+    val report = render(options.format, statsReport(fileSystem, options, trace))
+    fileSystem.write(options.output) { writeUtf8(report) }
+    return "wrote ${options.format.flag} statistics to ${options.output}"
 }
 
-internal fun statsReport(options: CliOptions, trace: Trace): StatsReport =
-    statsReport(options.input, trace, options.operations)
+internal fun statsReport(fileSystem: FileSystem, options: CliOptions, trace: Trace): StatsReport =
+    statsReport(fileSystem, options.input, trace, options.operations)
 
-internal fun statsReport(file: File, trace: Trace, operations: List<String>): StatsReport {
+internal fun statsReport(fileSystem: FileSystem, file: Path, trace: Trace, operations: List<String>): StatsReport {
     val events = ftraceEvents(trace)
     val model = TraceInterpreter().interpret(events, threadNames(trace))
     val window = traceWindowNanos(events)
     val requested = operations.ifEmpty { model.names.sorted() }
     return StatsReport(
-        tracePath = file.path,
-        traceSizeBytes = file.length(),
+        tracePath = file.toString(),
+        traceSizeBytes = fileSystem.sizeOf(file),
         sliceCount = model.sliceCount,
         sectionCount = model.names.size,
         threadCount = model.threads.size,

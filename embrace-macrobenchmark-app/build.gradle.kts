@@ -117,8 +117,10 @@ dependencies {
     implementation(libs.opentelemetry.api)
 
     implementation(libs.profileinstaller)
+    implementation(libs.okio)
 
     testImplementation(libs.junit)
+    testImplementation(project(":embrace-test-common"))
 }
 
 // Linting this app's variant runs lintAnalyzeRelease on every library, even with checkDependencies

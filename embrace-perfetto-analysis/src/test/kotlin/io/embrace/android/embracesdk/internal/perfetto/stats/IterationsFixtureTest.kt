@@ -6,10 +6,12 @@ import io.embrace.android.embracesdk.internal.perfetto.report.renderIterationsMa
 import io.embrace.android.embracesdk.internal.perfetto.statsReport
 import io.embrace.android.embracesdk.internal.perfetto.trace.parseTrace
 import kotlinx.serialization.json.Json
+import okio.FileSystem
+import okio.Path
+import okio.Path.Companion.toPath
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Test
-import java.io.File
 
 internal class IterationsFixtureTest {
 
@@ -72,12 +74,9 @@ internal class IterationsFixtureTest {
     }
 
     private fun iteration(operations: List<String> = emptyList()) =
-        statsReport(fixture(), parseTrace(fixture()), operations)
+        statsReport(FileSystem.RESOURCES, fixture(), parseTrace(FileSystem.RESOURCES, fixture()), operations)
 
-    private fun fixture(): File {
-        val resource = checkNotNull(javaClass.getResource("/$FIXTURE")) { "missing test resource $FIXTURE" }
-        return File(resource.toURI())
-    }
+    private fun fixture(): Path = "/$FIXTURE".toPath()
 
     private companion object {
         const val FIXTURE = "macrobenchmark-session-multi-file.perfetto.gz"

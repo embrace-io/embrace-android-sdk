@@ -1,6 +1,6 @@
 package io.embrace.android.embracesdk.internal.perfetto.iterations
 
-import java.io.File
+import okio.Path
 
 /**
  * One iteration's trace within a macrobenchmark run.
@@ -12,5 +12,5 @@ import java.io.File
 internal data class IterationTrace(
     val benchmark: String,
     val index: Int,
-    val file: File,
+    val file: Path,
 )

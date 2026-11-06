@@ -1,5 +1,6 @@
 package io.embrace.android.embracesdk.internal.perfetto
 
+import io.embrace.android.embracesdk.fs.FakeFileSystemRule
 import io.embrace.android.embracesdk.internal.perfetto.cli.CliOptions
 import io.embrace.android.embracesdk.internal.perfetto.proto.FtraceEvent
 import io.embrace.android.embracesdk.internal.perfetto.proto.FtraceEventBundle
@@ -13,19 +14,22 @@ import io.embrace.android.embracesdk.internal.perfetto.stats.OperationStats
 import io.embrace.android.embracesdk.internal.perfetto.stats.StatsReport
 import io.embrace.android.embracesdk.internal.perfetto.stats.TraceStats
 import io.embrace.android.embracesdk.internal.perfetto.trace.TraceFormat
+import okio.BufferedSource
+import okio.Path
+import okio.Path.Companion.toPath
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertThrows
 import org.junit.Assert.assertTrue
 import org.junit.Rule
 import org.junit.Test
-import org.junit.rules.TemporaryFolder
-import java.io.File
 import java.io.IOException
 
 internal class MainTest {
 
     @get:Rule
-    val folder = TemporaryFolder()
+    val fsRule = FakeFileSystemRule()
+
+    private val fs get() = fsRule.fileSystem
 
     @Test
     fun `the format decides the document, which is the whole of what a statistics run writes`() {
@@ -38,17 +42,25 @@ internal class MainTest {
     @Test
     fun `a statistics run writes the document to the file it was given, and reports where that went`() {
         val events = trace(print(1000, "B|$TID|emb-zeta", tid = TID), print(1100, "E|$TID", tid = TID))
-        val output = File(folder.root, "report.html")
+        val output = "/report.html".toPath()
         val options = options(operations = listOf("emb-zeta"), format = ReportFormat.HTML, output = output)
 
-        assertEquals("wrote html statistics to ${output.path}", writeStats(options, events))
-        assertEquals(renderHtml(statsReport(options, events)), output.readText())
+        assertEquals("wrote html statistics to $output", writeStats(fs, options, events))
+        assertEquals(renderHtml(statsReport(fs, options, events)), fs.read(output, BufferedSource::readUtf8))
     }
 
     @Test
     fun `a document that cannot be written fails rather than being dropped`() {
-        val options = options(output = File(folder.root, "absent/report"))
-        assertThrows(IOException::class.java) { writeStats(options, Trace()) }
+        val options = options(output = "/absent/report".toPath())
+        assertThrows(IOException::class.java) { writeStats(fs, options, Trace()) }
+    }
+
+    @Test
+    fun `the inputs report the trace's size, or none when it is not there`() {
+        fs.write(TRACE.toPath()) { writeUtf8("0123456789") }
+        assertTrue(describe(fs, options(), TraceFormat.PERFETTO).contains("trace: $TRACE (10 bytes)"))
+        fs.delete(TRACE.toPath())
+        assertTrue(describe(fs, options(), TraceFormat.PERFETTO).contains("trace: $TRACE (0 bytes)"))
     }
 
     @Test
@@ -59,14 +71,14 @@ internal class MainTest {
             print(1200, "B|$TID|emb-alpha", tid = TID),
             print(1300, "E|$TID", tid = TID),
         )
-        val named = statsReport(options(operations = listOf("emb-zeta", "emb-absent")), events)
+        val named = statsReport(fs, options(operations = listOf("emb-zeta", "emb-absent")), events)
         assertEquals(listOf("emb-zeta"), named.stats.operations.map(OperationStats::name))
         assertEquals(listOf("emb-absent"), named.stats.missing)
         assertEquals(2, named.sliceCount)
         assertEquals(2, named.sectionCount)
         assertEquals(1, named.threadCount)
 
-        val all = statsReport(options(), events)
+        val all = statsReport(fs, options(), events)
         assertEquals(listOf("emb-alpha", "emb-zeta"), all.stats.operations.map(OperationStats::name))
     }
 
@@ -77,14 +89,14 @@ internal class MainTest {
             print(2000, "E|$TID", tid = TID),
             FtraceEvent(timestamp = 5000, pid = TID),
         )
-        val report = statsReport(options(operations = listOf("emb-zeta")), events)
+        val report = statsReport(fs, options(operations = listOf("emb-zeta")), events)
         assertEquals(4000L, report.traceWindowNanos)
         assertEquals(25.0, report.stats.operations.single().traceWindowPercent, 0.0)
     }
 
     @Test
     fun `the inputs are reported before anything is read`() {
-        val text = describe(options(format = ReportFormat.JSON), TraceFormat.PERFETTO)
+        val text = describe(fs, options(format = ReportFormat.JSON), TraceFormat.PERFETTO)
         assertTrue(text, text.contains("trace: $TRACE"))
         assertTrue(text, text.contains("format: ${TraceFormat.PERFETTO.label}"))
         assertTrue(text, text.contains("report: $OUTPUT (json)"))
@@ -156,8 +168,8 @@ internal class MainTest {
     private fun options(
         operations: List<String> = emptyList(),
         format: ReportFormat = ReportFormat.MARKDOWN,
-        output: File = File(OUTPUT),
-    ) = CliOptions(inputs = listOf(File(TRACE)), operations = operations, format = format, output = output)
+        output: Path = OUTPUT.toPath(),
+    ) = CliOptions(inputs = listOf(TRACE.toPath()), operations = operations, format = format, output = output)
 
     private fun trace(vararg events: FtraceEvent) =
         Trace(packet = listOf(TracePacket(ftrace_events = FtraceEventBundle(event = events.toList()))))

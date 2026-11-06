@@ -16,6 +16,8 @@ import io.embrace.android.gradle.plugin.util.serialization.JsonSerializer
 import kotlinx.serialization.serializer
 import okhttp3.mockwebserver.RecordedRequest
 import okio.Buffer
+import okio.FileSystem
+import okio.Path.Companion.toOkioPath
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNotEquals
@@ -25,6 +27,7 @@ import java.io.File
 
 class AssertionInterface(
     private val apiServer: FakeApiServer,
+    val fileSystem: FileSystem,
 ) {
 
     private val multipartFormReader: MultipartFormReader = MultipartFormReader()
@@ -74,7 +77,7 @@ class AssertionInterface(
         projectDir: File,
         expectedPath: String,
     ): T {
-        val json = projectDir.file(expectedPath).readText()
+        val json = fileSystem.read(projectDir.file(expectedPath).toOkioPath()) { readUtf8() }
         return JsonSerializer().fromJson(json, serializer<T>())
     }
 
@@ -334,15 +337,15 @@ class AssertionInterface(
      * Reads and deserializes the `embrace-build-info.json` file exported for the given variant.
      */
     fun AssertionInterface.readBuildInfoExport(projectDir: File, variant: String): BuildInfoExport {
-        val file = projectDir.buildFile("outputs/embrace/build-info/$variant/embrace-build-info.json")
-        return JsonSerializer().fromJson(file.readText(), BuildInfoExport.serializer())
+        val file = projectDir.buildFile("outputs/embrace/build-info/$variant/embrace-build-info.json").toOkioPath()
+        return JsonSerializer().fromJson(fileSystem.read(file) { readUtf8() }, BuildInfoExport.serializer())
     }
 
     /**
      * Asserts that no `embrace-build-info.json` file was exported for the given variant.
      */
     fun AssertionInterface.verifyNoBuildInfoExported(projectDir: File, variant: String) {
-        val file = projectDir.buildFile("outputs/embrace/build-info/$variant/embrace-build-info.json")
-        assertFalse("Expected no build info file at ${file.absolutePath}", file.exists())
+        val file = projectDir.buildFile("outputs/embrace/build-info/$variant/embrace-build-info.json").toOkioPath()
+        assertFalse("Expected no build info file at $file", fileSystem.exists(file))
     }
 }

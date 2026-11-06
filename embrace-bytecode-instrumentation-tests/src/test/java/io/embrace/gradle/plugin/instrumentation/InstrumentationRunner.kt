@@ -1,5 +1,8 @@
 package io.embrace.gradle.plugin.instrumentation
 
+import okio.BufferedSource
+import okio.buffer
+import okio.source
 import org.junit.Assert.assertArrayEquals
 import org.junit.Assert.assertEquals
 import org.objectweb.asm.ClassReader
@@ -62,7 +65,7 @@ object InstrumentationRunner {
         val classLoader = checkNotNull(javaClass.classLoader)
         val res = classLoader.getResourceAsStream(resName)
             ?: error("Could not find expected fixture resource named '$resName'")
-        return res.bufferedReader().use { it.readText() }
+        return res.source().buffer().use(BufferedSource::readUtf8)
     }
 
     /**

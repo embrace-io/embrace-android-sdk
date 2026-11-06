@@ -1,11 +1,13 @@
 package io.embrace.android.embracesdk.internal.perfetto.trace
 
 import io.embrace.android.embracesdk.internal.perfetto.proto.FtraceEvent
+import okio.FileSystem
+import okio.Path
+import okio.Path.Companion.toPath
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
-import java.io.File
 
 /**
  * Reads the committed macrobenchmark capture. Every expected value was measured from that file, so
@@ -13,7 +15,7 @@ import java.io.File
  */
 internal class PerfettoTraceFixtureTest {
 
-    private val trace = parseTrace(fixture())
+    private val trace = parseTrace(FileSystem.RESOURCES, fixture())
     private val events = ftraceEvents(trace)
 
     @Test
@@ -72,10 +74,7 @@ internal class PerfettoTraceFixtureTest {
         assertTrue("the trace happened to be sorted", timestamps != timestamps.sorted())
     }
 
-    private fun fixture(): File {
-        val resource = checkNotNull(javaClass.getResource("/$FIXTURE")) { "missing test resource $FIXTURE" }
-        return File(resource.toURI())
-    }
+    private fun fixture(): Path = "/$FIXTURE".toPath()
 
     private companion object {
         const val FIXTURE = "macrobenchmark-session-multi-file.perfetto.gz"

@@ -22,6 +22,7 @@ dependencies {
     implementation(libs.bundletool)
     implementation(libs.smali.baksmali)
 
+    testImplementation(libs.okio)
     testImplementation(project(":embrace-test-common"))
 }
 

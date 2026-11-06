@@ -5,29 +5,31 @@ import io.embrace.android.embracesdk.internal.perfetto.proto.FtraceEventBundle
 import io.embrace.android.embracesdk.internal.perfetto.proto.ProcessTree
 import io.embrace.android.embracesdk.internal.perfetto.proto.Trace
 import io.embrace.android.embracesdk.internal.perfetto.proto.TracePacket
+import okio.BufferedSource
+import okio.ByteString
+import okio.ByteString.Companion.toByteString
+import okio.FileSystem
+import okio.Path
 import okio.buffer
+import okio.gzip
 import okio.source
-import java.io.BufferedInputStream
-import java.io.File
 import java.io.IOException
-import java.io.InputStream
-import java.util.zip.GZIPInputStream
 import java.util.zip.ZipInputStream
 
-private const val MAGIC_BYTES = 2
+private const val MAGIC_BYTES = 2L
 
-private val ZIP_MAGIC = byteArrayOf(0x50, 0x4b)
-private val GZIP_MAGIC = byteArrayOf(0x1f, 0x8b.toByte())
+private val ZIP_MAGIC = byteArrayOf(0x50, 0x4b).toByteString()
+private val GZIP_MAGIC = byteArrayOf(0x1f, 0x8b.toByte()).toByteString()
 
 /**
  * Decodes a perfetto trace onto the wire model generated from `trace.proto`.
  *
  * Throws [IOException] when the file is not a trace this can decode
  */
-internal fun parseTrace(trace: File): Trace = try {
-    traceStream(trace).source().buffer().use(Trace.ADAPTER::decode)
+internal fun parseTrace(fileSystem: FileSystem, trace: Path): Trace = try {
+    traceSource(fileSystem, trace).use(Trace.ADAPTER::decode)
 } catch (exc: IOException) {
-    throw IOException("could not read ${trace.path} as a perfetto trace: ${exc.message}", exc)
+    throw IOException("could not read $trace as a perfetto trace: ${exc.message}", exc)
 }
 
 /**
@@ -38,33 +40,40 @@ internal fun parseTrace(trace: File): Trace = try {
  *
  * Throws [IOException] when the file cannot be opened or is invalid.
  */
-internal fun traceStream(trace: File): InputStream {
-    val stream = BufferedInputStream(trace.inputStream())
-    stream.mark(MAGIC_BYTES)
-    val magic = stream.readNBytes(MAGIC_BYTES)
-    stream.reset()
-    return when {
-        magic.contentEquals(ZIP_MAGIC) -> bundleStream(trace, stream)
-        magic.contentEquals(GZIP_MAGIC) -> GZIPInputStream(stream)
-        else -> stream
+internal fun traceSource(fileSystem: FileSystem, trace: Path): BufferedSource {
+    val source = fileSystem.source(trace).buffer()
+    return try {
+        when (source.peek().readUpTo(MAGIC_BYTES)) {
+            ZIP_MAGIC -> bundleSource(trace, source)
+            GZIP_MAGIC -> source.gzip().buffer()
+            else -> source
+        }
+    } catch (exc: IOException) {
+        source.close()
+        throw exc
     }
+}
+
+/** Reads at most [byteCount] bytes, fewer if the source ends first. */
+internal fun BufferedSource.readUpTo(byteCount: Long): ByteString {
+    request(byteCount)
+    return readByteString(minOf(byteCount, buffer.size))
 }
 
 /**
  * Advances a bundle to the trace inside it, which is its first file. The entry is normally named
  * `Trace_output.pb`.
  */
-private fun bundleStream(trace: File, stream: InputStream): InputStream {
-    val zip = ZipInputStream(stream)
+private fun bundleSource(trace: Path, source: BufferedSource): BufferedSource {
+    val zip = ZipInputStream(source.inputStream())
     var entry = zip.nextEntry
     while (entry != null && entry.isDirectory) {
         entry = zip.nextEntry
     }
     if (entry == null) {
-        zip.close()
-        throw IOException("${trace.path} is a zip holding no trace")
+        throw IOException("$trace is a zip holding no trace")
     }
-    return zip
+    return zip.source().buffer()
 }
 
 /** Flattens a trace to the ftrace events its bundles carry, in the order the trace holds them. */

@@ -1,5 +1,9 @@
 package io.embrace.android.embracesdk
 
+import okio.BufferedSource
+import okio.ByteString
+import okio.buffer
+import okio.source
 import java.io.InputStream
 
 object ResourceReader {
@@ -9,7 +13,9 @@ object ResourceReader {
             ?: error("Could not find resource '$name'")
     }
 
-    fun readResourceAsText(name: String): String {
-        return readResource(name).bufferedReader().readText()
-    }
+    fun readResourceAsSource(name: String): BufferedSource = readResource(name).source().buffer()
+
+    fun readResourceAsByteString(name: String): ByteString = readResourceAsSource(name).use(BufferedSource::readByteString)
+
+    fun readResourceAsText(name: String): String = readResourceAsSource(name).use(BufferedSource::readUtf8)
 }

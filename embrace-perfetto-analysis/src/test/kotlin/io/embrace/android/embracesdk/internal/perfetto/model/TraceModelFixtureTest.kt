@@ -2,11 +2,13 @@ package io.embrace.android.embracesdk.internal.perfetto.model
 
 import io.embrace.android.embracesdk.internal.perfetto.trace.ftraceEvents
 import io.embrace.android.embracesdk.internal.perfetto.trace.parseTrace
+import okio.FileSystem
+import okio.Path
+import okio.Path.Companion.toPath
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
-import java.io.File
 
 /**
  * Builds the model from the committed macrobenchmark capture. Every expected value was measured from
@@ -14,7 +16,7 @@ import java.io.File
  */
 internal class TraceModelFixtureTest {
 
-    private val model = TraceInterpreter().interpret(ftraceEvents(parseTrace(fixture())))
+    private val model = TraceInterpreter().interpret(ftraceEvents(parseTrace(FileSystem.RESOURCES, fixture())))
 
     @Test
     fun `every atrace event in the capture pairs into a slice`() {
@@ -122,10 +124,7 @@ internal class TraceModelFixtureTest {
         assertNull(model.first("emb-not-in-this-trace"))
     }
 
-    private fun fixture(): File {
-        val resource = checkNotNull(javaClass.getResource("/$FIXTURE")) { "missing test resource $FIXTURE" }
-        return File(resource.toURI())
-    }
+    private fun fixture(): Path = "/$FIXTURE".toPath()
 
     private companion object {
         const val FIXTURE = "macrobenchmark-session-multi-file.perfetto.gz"

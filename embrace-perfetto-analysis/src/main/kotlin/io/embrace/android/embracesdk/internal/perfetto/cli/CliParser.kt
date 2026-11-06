@@ -1,7 +1,8 @@
 package io.embrace.android.embracesdk.internal.perfetto.cli
 
 import io.embrace.android.embracesdk.internal.perfetto.report.ReportFormat
-import java.io.File
+import okio.Path
+import okio.Path.Companion.toPath
 
 private val VALUED = setOf("--operations", "--format", "--output")
 private val FLAGS = setOf("--all-operations", "--dry-run")
@@ -47,13 +48,13 @@ private fun build(spec: CliSpec, inputs: List<String>, values: Map<String, Strin
     if (operations.any(String::isBlank)) return null
 
     val format = ReportFormat.from(values["--format"] ?: ReportFormat.MARKDOWN.flag) ?: return null
-    val files = inputs.map(::File)
+    val paths = inputs.map { it.toPath() }
     return CliOptions(
-        inputs = files,
+        inputs = paths,
         dryRun = "--dry-run" in flags,
         operations = operations,
         format = format,
-        output = values["--output"]?.let(::File) ?: reportPath(files, format),
+        output = values["--output"]?.toPath() ?: reportPath(paths, format),
     )
 }
 
@@ -63,10 +64,11 @@ private fun build(spec: CliSpec, inputs: List<String>, values: Map<String, Strin
  * `perf/run/trace.perfetto.gz` reports to `perf/run/trace-report.md`. Everything from the first dot is an
  * extension to drop, since a trace arrives as `.perfetto.gz` or `.perfetto-trace`.
  */
-private fun reportPath(inputs: List<File>, format: ReportFormat): File {
+private fun reportPath(inputs: List<Path>, format: ReportFormat): Path {
     val bases = inputs.map { it.name.substringBefore('.') }.filter(String::isNotBlank)
     val name = if (bases.isEmpty()) "report" else bases.joinToString("-vs-") + "-report"
-    return File(inputs.first().parentFile, "$name.${format.extension}")
+    val file = "$name.${format.extension}"
+    return inputs.first().parent?.div(file) ?: file.toPath()
 }
 
 /** An option's value is whatever follows it, unless that is another option or nothing at all. */

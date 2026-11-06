@@ -89,9 +89,13 @@ class FileStorageServiceImpl(
             index.delete(metadata)
             callback()
         }
-        try {
+        // delete the given payload synchronously if the worker is shut down or the job is cancelled
+        val submitted = try {
             worker.submit(metadata, action)
-        } catch (_: RejectedExecutionException) { // handle JVM crash case where worker is shutdown
+        } catch (_: RejectedExecutionException) {
+            null
+        }
+        if (submitted == null || submitted.isCancelled) {
             action()
         }
     }

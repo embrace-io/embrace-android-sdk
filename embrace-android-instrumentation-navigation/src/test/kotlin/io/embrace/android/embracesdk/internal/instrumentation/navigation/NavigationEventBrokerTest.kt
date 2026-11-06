@@ -152,7 +152,6 @@ internal class NavigationEventBrokerTest {
         broker.submitAndTick(ScreenSourceAttached(HOME_ID, clock.now()))
         loadTimes.add(broker.submitAndTick(ActivityStarted(HOME_ID, clock.now())))
         broker.submitAndTick(ActivityResumed(HOME_ID, HOME, clock.now()))
-        broker.submitAndTick(ActivityPaused(HOME_ID, clock.now()))
         loadTimes.add(
             broker.submitAndTick(ScreenChanged(HOME_ID, Screen.NavControllerInitializing.toString(), clock.now())),
         )
@@ -205,6 +204,37 @@ internal class NavigationEventBrokerTest {
                 Screen.Backgrounded,
                 Screen.Named("settings"),
             ),
+        )
+    }
+
+    @Test
+    fun `a screen change while the app is in the background is shown when its activity resumes`() {
+        loadTimes.add(broker.simulateActivityStartWithScreenSource(HOME_ID, "home"))
+        broker.submitAndTick(ActivityResumed(HOME_ID, HOME, clock.now()))
+        broker.submitAndTick(ActivityPaused(HOME_ID, clock.now()))
+        loadTimes.add(broker.submitAndTick(Backgrounded(clock.now())))
+
+        // as when an app shows a lock screen as it goes to the background
+        broker.submitAndTick(ScreenChanged(HOME_ID, "lock", clock.now()))
+        loadTimes.add(broker.submitAndTick(ActivityResumed(HOME_ID, HOME, clock.now())))
+        assertStateTransitions(listOf(Screen.Named("home"), Screen.Backgrounded, Screen.Named("lock")))
+    }
+
+    @Test
+    fun `a screen change while another app's activity covers it is shown when the activity resumes`() {
+        loadTimes.add(broker.simulateActivityStartWithScreenSource(HOME_ID, "home"))
+        broker.submitAndTick(ActivityResumed(HOME_ID, HOME, clock.now()))
+        broker.submitAndTick(ActivityPaused(HOME_ID, clock.now()))
+        loadTimes.add(broker.submitAndTick(Backgrounded(clock.now())))
+        loadTimes.add(broker.submitAndTick(ActivityStarted(HOME_ID, clock.now())))
+        broker.submitAndTick(ActivityResumed(HOME_ID, HOME, clock.now()))
+
+        // as when a permission prompt, shown by another app, pauses it and the result navigates before it resumes
+        broker.submitAndTick(ActivityPaused(HOME_ID, clock.now()))
+        broker.submitAndTick(ScreenChanged(HOME_ID, "camera", clock.now()))
+        loadTimes.add(broker.submitAndTick(ActivityResumed(HOME_ID, HOME, clock.now())))
+        assertStateTransitions(
+            listOf(Screen.Named("home"), Screen.Backgrounded, Screen.Named("home"), Screen.Named("camera")),
         )
     }
 

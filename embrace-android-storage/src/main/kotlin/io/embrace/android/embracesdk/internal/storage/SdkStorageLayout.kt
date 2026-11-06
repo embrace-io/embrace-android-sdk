@@ -1,5 +1,7 @@
 package io.embrace.android.embracesdk.internal.storage
 
+import okio.Path
+
 /**
  * Declares where the SDK's storage root lives and which [SdkDir]s sit in each directory.
  */
@@ -41,4 +43,9 @@ object SdkStorageLayout {
      * Returns the directories declared directly in [dir], or directly in the root if [dir] is null.
      */
     fun children(dir: SdkDir?): List<SdkDir> = SdkDir.entries.filter { it.parent == dir }
+
+    /**
+     * Returns where [dir] sits under the storage [root].
+     */
+    fun path(root: Path, dir: SdkDir): Path = (dir.parent?.let { path(root, it) } ?: root) / dir.dirName
 }

@@ -1,20 +1,20 @@
 package io.embrace.android.embracesdk.macrobenchmark.app.fixture
 
+import io.embrace.android.embracesdk.macrobenchmark.app.storage.AppDataStorage
 import io.embrace.android.embracesdk.macrobenchmark.app.storage.FixtureStorage
-import io.embrace.android.embracesdk.macrobenchmark.app.storage.SdkStorage
 
 /**
  * Builds a benchmark's fixture one app instance at a time, and restores it before every iteration, between
  * the SDK's storage, [sdk], and the fixture's, [fixture]. It runs wherever it is called from: what launched
  * the app, and how the outcome is reported, are the caller's.
  *
- * Only what the SDK writes to [SdkStorage.sessionsDir] is supported: that is all a fixture records and restores,
+ * Only what the SDK writes to [AppDataStorage.sessionsDir] is supported: that is all a fixture records and restores,
  * and anything else an app instance writes is lost.
  *
  * [sdkStarted] says whether the SDK under test is running in this process.
  */
 internal class FixtureRecorder(
-    private val sdk: SdkStorage,
+    private val sdk: AppDataStorage,
     private val fixture: FixtureStorage,
     private val sdkStarted: () -> Boolean,
     private val writeSettleMs: Long = WRITE_SETTLE_MS,

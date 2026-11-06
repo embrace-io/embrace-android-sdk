@@ -11,11 +11,6 @@ object SdkStorageLayout {
     const val ROOT_DIR_NAME: String = "xcor"
 
     /**
-     * The name of the directory the legacy storage migration stages files in before renaming it to [ROOT_DIR_NAME]
-     */
-    const val MIGRATION_DIR_NAME: String = "xcor.migration"
-
-    /**
      * The version of this layout. Raise it whenever the layout starts allowing a directory or entry it didn't before,
      * so that an older SDK running after a downgrade doesn't sweep what a newer one wrote.
      */
@@ -27,8 +22,8 @@ object SdkStorageLayout {
     const val LAYOUT_VERSION_FILE_NAME: String = "layout_version"
 
     /*
-     * The files allowed in [SdkDir.INSTALL_STATE]. Their stores aren't wired in yet: until they are, nothing writes
-     * the .bin files, and the crash marker is still written as embrace_crash_marker.
+     * The files allowed in [SdkDir.INSTALL_STATE]. The .bin files' stores aren't wired in yet: until they are,
+     * nothing writes them.
      */
 
     const val ORDINALS_FILE_NAME: String = "ordinals.bin"

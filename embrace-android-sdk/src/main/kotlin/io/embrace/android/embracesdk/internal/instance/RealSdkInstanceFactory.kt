@@ -89,9 +89,10 @@ import io.embrace.android.embracesdk.internal.session.id.SessionPartTracker
 import io.embrace.android.embracesdk.internal.session.lifecycle.createLifecycleTracker
 import io.embrace.android.embracesdk.internal.session.orchestrator.SessionOrchestrator
 import io.embrace.android.embracesdk.internal.spans.TracingApiDelegate
-import io.embrace.android.embracesdk.internal.storage.EmbraceStorageService
 import io.embrace.android.embracesdk.internal.storage.SdkDir
 import io.embrace.android.embracesdk.internal.storage.StatFsAvailabilityChecker
+import io.embrace.android.embracesdk.internal.storage.StorageTelemetry
+import io.embrace.android.embracesdk.internal.storage.lazyFile
 import io.embrace.android.embracesdk.internal.store.Ordinal
 import io.embrace.android.embracesdk.internal.store.OrdinalStore
 import io.embrace.android.embracesdk.internal.store.PersistedSdkStateStore
@@ -344,11 +345,11 @@ internal fun createRealSdkInstance(
         }
     }
 
-    val storageService = init("storage-service") {
-        EmbraceStorageService(
-            appContext,
+    val storageTelemetry = init("storage-telemetry") {
+        StorageTelemetry(
+            sdkStorage,
             telemetryService,
-            StatFsAvailabilityChecker(appContext),
+            StatFsAvailabilityChecker(sdkStorage.lazyFile(SdkDir.REMOTE_CONFIG)),
         )
     }
 
@@ -766,7 +767,7 @@ internal fun createRealSdkInstance(
         EmbTrace.trace("storage-telemetry-schedule") {
             workerThreadPool
                 .backgroundWorker(Worker.Background.IoRegWorker)
-                .schedule<Unit>({ storageService.logStorageTelemetry() }, 1, TimeUnit.MINUTES)
+                .schedule<Unit>({ storageTelemetry.log() }, 1, TimeUnit.MINUTES)
         }
         EmbTrace.trace("otel-signal-context-mark-ready") {
             otelSignalContext.markReady()

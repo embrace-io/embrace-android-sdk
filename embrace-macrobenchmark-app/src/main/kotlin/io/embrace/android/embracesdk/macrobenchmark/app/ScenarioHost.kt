@@ -23,8 +23,8 @@ import io.embrace.android.embracesdk.benchmark.scenario.ScenarioSpec
 import io.embrace.android.embracesdk.benchmark.scenario.hostTaskFrom
 import io.embrace.android.embracesdk.macrobenchmark.app.fixture.FixtureOutcome
 import io.embrace.android.embracesdk.macrobenchmark.app.fixture.FixtureRecorder
+import io.embrace.android.embracesdk.macrobenchmark.app.storage.AppDataStorage
 import io.embrace.android.embracesdk.macrobenchmark.app.storage.FixtureStorage
-import io.embrace.android.embracesdk.macrobenchmark.app.storage.SdkStorage
 import java.io.File
 import java.lang.ref.WeakReference
 import java.util.concurrent.CountDownLatch
@@ -67,7 +67,7 @@ internal class ScenarioHost(private val app: Application) : ActivityLifecycleCal
         if (globalSetting(RESTORE_FIXTURE_SETTING) != null) {
             return
         }
-        val storage = SdkStorage(File(app.applicationInfo.dataDir))
+        val storage = AppDataStorage(File(app.applicationInfo.dataDir))
         partsAtStart = storage.sessionPartDirs()
         seedRemoteConfig(storage)
         startSdk()
@@ -165,7 +165,7 @@ internal class ScenarioHost(private val app: Application) : ActivityLifecycleCal
         if (parts.isEmpty()) {
             return STATUS_ERROR + "no session parts were on disk when the SDK started"
         }
-        val storage = SdkStorage(File(app.applicationInfo.dataDir))
+        val storage = AppDataStorage(File(app.applicationInfo.dataDir))
         val sessionsDir = storage.sessionsDir
         val cacheDir = storage.cacheDir
         val deadlineMs = SystemClock.uptimeMillis() + RESURRECTION_TIMEOUT_MS
@@ -184,7 +184,7 @@ internal class ScenarioHost(private val app: Application) : ActivityLifecycleCal
     private fun fixtureRecorder(): FixtureRecorder {
         val dataDir = File(app.applicationInfo.dataDir)
         return FixtureRecorder(
-            sdk = SdkStorage(dataDir),
+            sdk = AppDataStorage(dataDir),
             fixture = FixtureStorage(dataDir),
             sdkStarted = { Embrace.isStarted },
         )
@@ -210,7 +210,7 @@ internal class ScenarioHost(private val app: Application) : ActivityLifecycleCal
      *
      * This is required as the APK is non-debuggable in typical conditions.
      */
-    private fun seedRemoteConfig(storage: SdkStorage) {
+    private fun seedRemoteConfig(storage: AppDataStorage) {
         val fields = listOfNotNull(
             globalSetting(MULTI_FILE_PERSISTENCE_SETTING)?.let { "\"pct_multi_file_persistence_enabled\":$it" },
             globalSetting(OTEL_KOTLIN_SDK_SETTING)?.let { "\"otel_kotlin_sdk\":{\"pct_enabled\":$it}" },

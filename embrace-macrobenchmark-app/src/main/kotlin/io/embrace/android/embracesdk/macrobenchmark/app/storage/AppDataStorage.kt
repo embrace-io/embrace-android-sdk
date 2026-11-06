@@ -10,7 +10,7 @@ import java.io.File
  * what the SDK starts from and to observe what it did, by names defined in respective modules, so every such
  * location is represented and managed by this.
  */
-internal class SdkStorage(private val dataDir: File) {
+internal class AppDataStorage(private val dataDir: File) {
 
     private val filesDir = File(dataDir, FILES_DIR)
 

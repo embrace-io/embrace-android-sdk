@@ -9,18 +9,18 @@ import org.junit.Test
 import org.junit.rules.TemporaryFolder
 import java.io.File
 
-internal class SdkStorageTest {
+internal class AppDataStorageTest {
 
     @get:Rule
     val tmp = TemporaryFolder()
 
     private lateinit var dataDir: File
-    private lateinit var sdk: SdkStorage
+    private lateinit var sdk: AppDataStorage
 
     @Before
     fun setUp() {
         dataDir = tmp.newFolder("data")
-        sdk = SdkStorage(dataDir)
+        sdk = AppDataStorage(dataDir)
     }
 
     @Test

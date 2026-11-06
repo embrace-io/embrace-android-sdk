@@ -1,7 +1,7 @@
 package io.embrace.android.embracesdk.macrobenchmark.app.fixture
 
+import io.embrace.android.embracesdk.macrobenchmark.app.storage.AppDataStorage
 import io.embrace.android.embracesdk.macrobenchmark.app.storage.FixtureStorage
-import io.embrace.android.embracesdk.macrobenchmark.app.storage.SdkStorage
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
@@ -17,14 +17,14 @@ internal class FixtureRecorderTest {
     val tmp = TemporaryFolder()
 
     private lateinit var dataDir: File
-    private lateinit var sdk: SdkStorage
+    private lateinit var sdk: AppDataStorage
     private lateinit var recorder: FixtureRecorder
     private var sdkStarted = true
 
     @Before
     fun setUp() {
         dataDir = tmp.newFolder("data")
-        sdk = SdkStorage(dataDir)
+        sdk = AppDataStorage(dataDir)
         sdkStarted = true
         recorder = FixtureRecorder(sdk, FixtureStorage(dataDir), { sdkStarted }, writeSettleMs = 0)
     }

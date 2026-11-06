@@ -29,6 +29,8 @@ import io.embrace.android.embracesdk.internal.store.OrdinalStore
 import io.embrace.android.embracesdk.internal.store.OrdinalStoreImpl
 import io.embrace.android.embracesdk.internal.store.PersistedSdkStateStore
 import io.embrace.android.embracesdk.internal.store.StoreWriteBatcher
+import io.embrace.android.embracesdk.internal.store.file.FileDeliveredAeiStore
+import io.embrace.android.embracesdk.internal.store.file.FileNetworkCaptureRuleStore
 import io.embrace.android.embracesdk.internal.store.file.FilePersistedSdkStateStore
 import io.embrace.android.embracesdk.internal.store.file.MmapOrdinalStore
 import io.embrace.android.embracesdk.internal.store.file.ScopedOrdinalStore
@@ -103,15 +105,40 @@ internal class ConfigLoadServices(
     }
 
     val writeBatcher: Lazy<StoreWriteBatcher> = lazy {
-        PrefsStoreWriteBatcher(keyValueStore.value)
+        if (superiorStorageSystemEnabled) {
+            StoreWriteBatcher { it() }
+        } else {
+            PrefsStoreWriteBatcher(keyValueStore.value)
+        }
     }
 
     val deliveredAeiStore: Lazy<DeliveredAeiStore> = lazy {
-        PrefsDeliveredAeiStore(keyValueStore.value)
+        if (superiorStorageSystemEnabled) {
+            val storage = superiorStorageSystem.value
+            FileDeliveredAeiStore(
+                fileSystem = storage.fileSystem,
+                path = storage.dir(SdkDir.INSTALL_STATE) / SdkStorageLayout.AEI_DELIVERED_FILE_NAME,
+                worker = workerThreadPool.backgroundWorker(Worker.Background.NonIoRegWorker),
+                errorHandler = preStartServices.errorHandler,
+            )
+        } else {
+            PrefsDeliveredAeiStore(keyValueStore.value)
+        }
     }
 
     val networkCaptureRuleStore: Lazy<NetworkCaptureRuleStore> = lazy {
-        PrefsNetworkCaptureRuleStore(keyValueStore.value)
+        if (superiorStorageSystemEnabled) {
+            val storage = superiorStorageSystem.value
+            FileNetworkCaptureRuleStore(
+                fileSystem = storage.fileSystem,
+                path = storage.dir(SdkDir.INSTALL_STATE) / SdkStorageLayout.NETWORK_CAPTURE_FILE_NAME,
+                worker = workerThreadPool.backgroundWorker(Worker.Background.IoRegWorker),
+                errorHandler = preStartServices.errorHandler,
+                liveRuleIds = { configService.networkBehavior.getNetworkCaptureRules().mapTo(HashSet()) { it.id } },
+            )
+        } else {
+            PrefsNetworkCaptureRuleStore(keyValueStore.value)
+        }
     }
 
     val persistedConfig: PersistedConfig = EmbTrace.trace(
@@ -154,7 +181,9 @@ internal class ConfigLoadServices(
      * Begins the background work needed during SDK init. Call this as early as possible after construction.
      */
     fun start() {
-        prewarmSharedPreferences()
+        if (!superiorStorageSystemEnabled) {
+            prewarmSharedPreferences()
+        }
 
         // kick off config HTTP request early so the SDK can't get in a permanently disabled state.
         configService.scheduleConfigRequests()

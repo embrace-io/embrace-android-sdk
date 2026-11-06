@@ -3,6 +3,7 @@
 package io.embrace.android.embracesdk.testcases.features
 
 import android.app.ApplicationExitInfo
+import android.content.Context
 import android.preference.PreferenceManager
 import androidx.test.core.app.ApplicationProvider
 import io.embrace.android.embracesdk.assertions.assertMatches
@@ -18,11 +19,15 @@ import io.embrace.android.embracesdk.internal.config.remote.AppExitInfoConfig
 import io.embrace.android.embracesdk.internal.config.remote.RemoteConfig
 import io.embrace.android.embracesdk.internal.otel.sdk.findAttributeValue
 import io.embrace.android.embracesdk.internal.payload.Log
+import io.embrace.android.embracesdk.internal.storage.SdkStorageLayout
+import io.embrace.android.embracesdk.internal.store.file.FileDeliveredAeiStore
 import io.embrace.android.embracesdk.semconv.EmbAeiAttributes
 import io.embrace.android.embracesdk.semconv.EmbAndroidAttributes
 import io.embrace.android.embracesdk.testframework.InMemoryPrefsContext
 import io.embrace.android.embracesdk.testframework.OtelSdkMode
 import io.embrace.android.embracesdk.testframework.SdkIntegrationTestRule
+import okio.FileSystem
+import okio.Path.Companion.toOkioPath
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Rule
@@ -221,6 +226,31 @@ internal class AeiFeatureTest(
                     input.map { it.generateAeiId() },
                     history.toList()
                 )
+            }
+        )
+    }
+
+    @Test
+    fun `delivered aei objects are not reattempted with the superior storage system enabled`() {
+        val firstObj = anr.copy(timestamp = 17000000000L)
+        val secondObj = anr.copy(timestamp = 18000000000L)
+        val input = listOf(firstObj, secondObj)
+        val aeiFile = ApplicationProvider.getApplicationContext<Context>().noBackupFilesDir.toOkioPath() /
+            SdkStorageLayout.ROOT_DIR_NAME / "install_state" / SdkStorageLayout.AEI_DELIVERED_FILE_NAME
+
+        testRule.runTest(
+            setupAction = {
+                superiorStorageSystemEnabled = true
+                setupFakeAeiData(input.map(TestAeiData::toAeiObject))
+                FileSystem.SYSTEM.createDirectories(checkNotNull(aeiFile.parent))
+                FileDeliveredAeiStore.create(FileSystem.SYSTEM, aeiFile, setOf(firstObj.generateAeiId()))
+            },
+            testCaseAction = {
+                recordSession()
+            },
+            assertAction = {
+                getSingleLogEnvelope().getLastLog().assertContainsAeiData(secondObj)
+                assertTrue(retrieveAeiHistory().isEmpty())
             }
         )
     }

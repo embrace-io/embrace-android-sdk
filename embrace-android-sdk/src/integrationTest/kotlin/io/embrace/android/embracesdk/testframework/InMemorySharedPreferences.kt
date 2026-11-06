@@ -88,5 +88,9 @@ internal class InMemorySharedPreferences : SharedPreferences {
         fun get(context: Context, name: String): InMemorySharedPreferences = synchronized(byApplication) {
             byApplication.getOrPut(context.applicationContext, ::HashMap).getOrPut(name, ::InMemorySharedPreferences)
         }
+
+        fun requestedNames(context: Context): Set<String> = synchronized(byApplication) {
+            byApplication[context.applicationContext]?.keys?.toSet() ?: emptySet()
+        }
     }
 }

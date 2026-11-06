@@ -27,6 +27,7 @@ import io.embrace.android.embracesdk.semconv.EmbSessionAttributes.EmbUserSession
 import io.embrace.android.embracesdk.semconv.EmbSessionAttributes.EmbUserSessionTerminationReasonValues.INACTIVITY
 import io.embrace.android.embracesdk.semconv.EmbSessionAttributes.EmbUserSessionTerminationReasonValues.MANUAL
 import io.embrace.android.embracesdk.semconv.EmbSessionAttributes.EmbUserSessionTerminationReasonValues.MAX_DURATION_REACHED
+import io.embrace.android.embracesdk.testframework.InMemorySharedPreferences
 import io.embrace.android.embracesdk.testframework.OtelSdkMode
 import io.embrace.android.embracesdk.testframework.SdkIntegrationTestRule
 import io.embrace.android.embracesdk.testframework.SdkIntegrationTestRule.Companion.DEFAULT_SDK_START_TIME_MS
@@ -190,6 +191,23 @@ internal class UserSessionLifecycleTest(
                     sessionPartNumbers = listOf(1, 2)
                 )
                 assertNull(testRule.setup.getStore().getInt(Ordinal.SESSION.key))
+            }
+        )
+    }
+
+    @Test
+    fun `a full SDK start with the superior storage system enabled opens no prefs`() {
+        testRule.runTest(
+            setupAction = {
+                superiorStorageSystemEnabled = true
+            },
+            testCaseAction = {
+                recordSession()
+                recordSession()
+            },
+            assertAction = {
+                getSessionEnvelopes(2)
+                assertEquals(emptySet<String>(), InMemorySharedPreferences.requestedNames(testRule.setup.services.appContext))
             }
         )
     }

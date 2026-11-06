@@ -335,19 +335,20 @@ private class EmbraceSpanImpl(
             system = false,
             max = deps.dataValidator.otelLimitsConfig.getMaxCustomEventCount(),
         ) {
+            // the canonical name where the class has one, else the binary name, as an anonymous class has no canonical name
+            val type = runCatching { exception.javaClass.canonicalName }.getOrNull() ?: exception.javaClass.name
+
             // app-defined Throwables can override getMessage()/getStackTrace() with implementations that throw
             val exceptionAttributes = try {
                 buildMap {
-                    exception.javaClass.canonicalName?.let { type ->
-                        put(ExceptionAttributes.EXCEPTION_TYPE, type)
-                    }
+                    put(ExceptionAttributes.EXCEPTION_TYPE, type)
                     exception.message?.let { message ->
                         put(ExceptionAttributes.EXCEPTION_MESSAGE, message)
                     }
                     put(ExceptionAttributes.EXCEPTION_STACKTRACE, exception.truncatedStacktraceText())
                 }
             } catch (ignored: Throwable) {
-                mapOf(ExceptionAttributes.EXCEPTION_TYPE to exception.javaClass.name)
+                mapOf(ExceptionAttributes.EXCEPTION_TYPE to type)
             }
 
             deps.dataValidator.createTruncatedSpanEvent(

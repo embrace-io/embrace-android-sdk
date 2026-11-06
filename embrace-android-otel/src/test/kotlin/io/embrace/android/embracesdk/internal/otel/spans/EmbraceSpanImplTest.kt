@@ -383,6 +383,30 @@ internal class EmbraceSpanImplTest(
     }
 
     @Test
+    fun `an exception class is named the same whether or not its getters throw`() {
+        // an anonymous class has no canonical name, so it is named by its binary name, as it is when its getters throw
+        val anonymous = object : RuntimeException("anonymous") {}
+        with(embraceSpan) {
+            assertTrue(start())
+            assertTrue(recordException(exception = BrokenNestedException()))
+            assertTrue(recordException(exception = NestedException()))
+            assertTrue(recordException(exception = anonymous))
+        }
+
+        val types = checkNotNull(checkNotNull(embraceSpan.snapshot()).events).map { event ->
+            event.attributes.orEmpty().single { it.key == ExceptionAttributes.EXCEPTION_TYPE }.data
+        }
+        assertEquals(
+            listOf(
+                BrokenNestedException::class.java.canonicalName,
+                NestedException::class.java.canonicalName,
+                anonymous.javaClass.name,
+            ),
+            types,
+        )
+    }
+
+    @Test
     fun `span operations that throw are tracked rather than crashing the caller`() {
         errorHandler.throwOnSdkError = false
         val brokenMap = object : AbstractMap<String, String>() {
@@ -1246,6 +1270,12 @@ internal class EmbraceSpanImplTest(
 
     private fun stopCallback(spanId: String) {
         stoppedSpanId = spanId
+    }
+
+    private class NestedException : RuntimeException("nested")
+
+    private class BrokenNestedException : RuntimeException() {
+        override val message: String get() = error("broken message")
     }
 
     companion object {

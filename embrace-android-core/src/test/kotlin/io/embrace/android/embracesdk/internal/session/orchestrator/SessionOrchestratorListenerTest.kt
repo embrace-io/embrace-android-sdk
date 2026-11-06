@@ -73,6 +73,7 @@ internal class SessionOrchestratorListenerTest {
     private lateinit var currentSessionPartSpan: FakeCurrentSessionPartSpan
     private lateinit var destination: FakeTelemetryDestination
     private var orchestratorStartTimeMs: Long = 0
+    private var failNextPartPreparation = false
 
     private val maxDurationMs = TimeUnit.MINUTES.toMillis(10)
     private val inactivityMs = TimeUnit.MINUTES.toMillis(5)
@@ -115,6 +116,28 @@ internal class SessionOrchestratorListenerTest {
         // foregrounding ends background-only session
         orchestrator.onForeground()
         assertEquals(4, events.size)
+    }
+
+    @Test
+    fun `user session events queued by a transition are delivered when the transition throws`() {
+        configService = sessionBehaviorConfig()
+        createOrchestrator(ProcessState.FOREGROUND)
+        val events =
+            collectEvents(SessionStateEvent.UserSessionActive::class, SessionStateEvent.UserSessionEnded::class)
+        clock.tick(10000)
+
+        // the manual end queues the ending and the new user session, then fails preparing the new part
+        failNextPartPreparation = true
+        runCatching { orchestrator.endSessionWithManual() }
+
+        assertEquals(
+            listOf(
+                SessionStateEvent.UserSessionActive::class,
+                SessionStateEvent.UserSessionEnded::class,
+                SessionStateEvent.UserSessionActive::class,
+            ),
+            events.map { it::class },
+        )
     }
 
     @Test
@@ -389,7 +412,16 @@ internal class SessionOrchestratorListenerTest {
             configService = configService,
             errorHandler = errorHandler,
         )
-        userSessionPropertiesService = FakeUserSessionPropertiesService()
+        val propertiesService = FakeUserSessionPropertiesService()
+        userSessionPropertiesService = object : UserSessionPropertiesService by propertiesService {
+            override fun prepareForNewSessionPart() {
+                if (failNextPartPreparation) {
+                    failNextPartPreparation = false
+                    error("preparing the session part failed")
+                }
+                propertiesService.prepareForNewSessionPart()
+            }
+        }
         userService = FakeUserService()
         sessionTracker = SessionPartTrackerImpl(
             activityManager = lazyOf<ActivityManager?>(null),

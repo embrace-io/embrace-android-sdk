@@ -2,12 +2,13 @@
 -- Executed per iteration trace by analyze_startup.py (one result-returning statement, hence
 -- the UNION ALL). Rows: (what, k, val)
 --   section        k = slice name    val = duration ms of the FIRST occurrence (Mode.First)
---   window_ms      SDK-init window. Preferred source: the emb-sdk-start slice, which wraps
---                  the whole Embrace.start() call (slightly wider — <1 ms — than the exported
---                  emb-embrace-init / private emb-sdk-init span). Fallback when emb-sdk-start
---                  is absent (SDKs before 9.2.0): first emb-modules-init start -> first
---                  emb-post-services-setup end, which equals the exported span interval by
---                  construction. window_source reports which one was used.
+--   window_ms      SDK-init window: the emb-sdk-start slice, which wraps the whole
+--                  Embrace.start() call (slightly wider — <1 ms — than the exported
+--                  emb-embrace-init / private emb-sdk-init span). window_source reports the
+--                  source used.
+--                  Older SDKs (references/section-history.md): without emb-sdk-start, the
+--                  window is composed from the first emb-modules-init start to the first
+--                  emb-post-services-setup end, the exported span's interval.
 --   ttid_ms        cold-start TTID from the android.startup stdlib module (definition differs
 --                  from macrobenchmark's timeToInitialDisplayMs by a few ms — consistent
 --                  anchor, fine for comparisons, not identical to the JSON metric)

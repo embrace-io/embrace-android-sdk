@@ -1,4 +1,7 @@
-# SDK init sections: nesting, environments, and reference numbers
+# SDK init sections: nesting, environments, and slow passes
+
+The sections the SDK in this repo emits. Only for traces from a released SDK, or to compare
+versions, read `section-history.md`, which holds every version-specific rule.
 
 ## Nesting and execution order (as of 9.2.0-SNAPSHOT, 2026-08)
 
@@ -9,7 +12,7 @@ follow this order.
 embrace-impl-init            class-load: EmbraceImpl construction (before the span window)
 sdk-start                    wraps the whole Embrace.start() call — the SDK-init window proxy
 ├─ modules-init              createRealSdkInstance() — opens the SDK-init span window
-│  ├─ persisted-config-init  cached-config read; most variable section (was persisted-config-load)
+│  ├─ persisted-config-init  cached-config read; most variable section
 │  ├─ config-service-init    ConfigService construction (recorded in the harness too)
 │  ├─ startup-classifier-init
 │  ├─ otel-tracer-init             first touch of the OTel SDK assembly (the real OTel cost), reached via
@@ -27,9 +30,8 @@ sdk-start                    wraps the whole Embrace.start() call — the SDK-in
 
 The exported `emb-embrace-init` span is tiled by `modules-init + setup-services +
 post-services-setup` (± ~1 ms of unattributed sliver); `sdk-start` wraps that interval plus
-<1 ms of Embrace.start() overhead, and is what analyze_startup.py reports as the window
-(falling back to the composed interval on SDKs without it). The class-load sections run before
-the window opens.
+<1 ms of Embrace.start() overhead, and is what analyze_startup.py reports as the window. The
+class-load sections run before the window opens.
 
 ## Where each section appears
 
@@ -37,20 +39,13 @@ the window opens.
 |---|---|
 | Real device via `Embrace` entry point (this skill) | all of the above |
 | Robolectric integration harness | all EXCEPT `embrace-impl-init` (harness bypasses the entry point). Authoritative list: `SpanAssertions.expectedSdkInitSections` in embrace-android-otel-fakes |
-| Public 9.0.0 | only `embrace-impl-init`, `bootstrapper-init`, `modules-init`, `config-service-init`, `span-service-init`, `otel-tracer-init`, `post-services-setup`; no duration attributes at all |
 
-## Reference numbers (sanity check, not baselines)
+## Slow passes
 
-Samsung Galaxy A14 (SM-A145M), Android 15, R8-minified ExampleApp, 20 cold starts, 2026-08-11,
-9.2.0-SNAPSHOT, cool device: TTID median ~865 ms; SDK-init span median ~37 ms; biggest sections
-`modules-init` ~34, `span-service-init` ~15.5, `persisted-config-load` ~10, `otel-tracer-init`
-~12. Public 9.0.0 on the same device: span median ~55 ms at TTID ~857.
-
-Back-to-back passes on the same device ALTERNATE fast/slow (~37→50→39→48→39→50 ms span over six
-passes, 2026-08-11) at flat battery temperature — this is NOT thermal throttling. The inflation
-is NOT uniform: pure-CPU sections (`otel-tracer-init`, `span-service-init`) stay ≤1.04×, while
-short block-and-resume sections (`config-service-init`, `payload-source-init`, `post-init`,
-`essential-service-init`, `delivery-init`) run ~2×. Judge regressions on fast-pass numbers.
+Back-to-back passes on the same device can alternate fast/slow at flat battery temperature; this
+is not thermal throttling. The inflation is not uniform: pure-CPU sections such as
+`otel-tracer-init` barely move, while short block-and-resume sections can roughly double. Judge
+regressions on fast-pass numbers.
 
 Slow iterations/passes come in TWO trace signatures (analyze_startup.py's scheduling table
 separates them; judge regressions only on iterations showing neither):

@@ -11,11 +11,10 @@
   the expected shape/precision of each cell, not expected magnitudes (real numbers vary by an
   order of magnitude across device tiers).
 
-  SDK version: report it because it determines WHICH trace data exists, not as an identity —
-  it fixes the window source (emb-sdk-start slice on newer SDKs; composed
-  modules-init→post-services-setup fallback on older ones; analyze_startup.py names which) and
-  the set of emb-* sections present. State the expected-vs-found section set; drop table rows
-  for sections the SDK under test lacks and say so (see SKILL.md "Handling missing data").
+  SDK version: report it because it determines WHICH trace data exists, not as an identity.
+  State the expected-vs-found section set; drop table rows for sections the SDK under test
+  lacks and say so (see SKILL.md "Missing sections"). For a released SDK, its window source and
+  sections come from its entry in references/section-history.md.
 
   Keep: the CSS tokens (both light/dark themes), layout, tiles row, table structure including
   the nest1/nest2 indentation markers, and the standing footnotes (nesting/percentage caveats,

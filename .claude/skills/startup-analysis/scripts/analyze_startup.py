@@ -4,8 +4,7 @@
 Runs perfetto trace_processor with startup_metrics.sql against every iteration trace in a
 directory and prints min/median/mean/max per metric, each canonical section's share of the
 SDK-init window, and a per-iteration scheduler-contention readout. No logcat, jq, grep, or
-benchmark-JSON involvement. The window is the emb-sdk-start slice when the SDK emits it
-(9.2.0+), else composed from modules-init start -> post-services-setup end.
+benchmark-JSON involvement. The window is the emb-sdk-start slice.
 
 The summary is also written to a uniquely named file,
 <output-dir>/startup-analysis-<YYYY-MM-DD-HHMMSS>.txt (analysis start time), so successive
@@ -27,6 +26,9 @@ Notes:
 - wait_ms is main-thread R/R+ time inside the SDK-init window; iterations where it exceeds
   CONTENTION_THRESHOLD of the window are flagged CONTENDED (see references/sections.md for
   why that matters when judging regressions).
+
+Older SDKs (references/section-history.md): a trace without emb-sdk-start gets a window
+composed from the first modules-init start to the first post-services-setup end.
 """
 
 import argparse

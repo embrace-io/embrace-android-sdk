@@ -54,7 +54,7 @@ smali = "3.0.10"
 bundletool = "1.18.3"
 vanniktechMavenPublish = "0.37.0"
 androidxBenchmark = "1.5.0"
-# Perfetto's native trace_processor_shell, which :embrace-analysis-cli downloads on first use
+# Perfetto's native trace_processor_shell, used by androidx-benchmark-traceprocessor via :embrace-analysis-cli
 perfettoTraceProcessor = "59.1"
 jvmTargetCompatibility = "11"
 kotlinCoreLibrariesVersion = "2.0.21"
@@ -139,6 +139,7 @@ opentelemetry-kotlin-semconv = { module = "io.opentelemetry.kotlin:semconv", ver
 opentelemetry-java-aliases = { module = "io.opentelemetry.kotlin:java-typealiases", version.ref = "otelKotlin" }
 androidx-benchmark-junit4 = { group = "androidx.benchmark", name = "benchmark-junit4", version.ref = "androidxBenchmark" }
 androidx-benchmark-macro-junit4 = { group = "androidx.benchmark", name = "benchmark-macro-junit4", version.ref = "androidxBenchmark" }
+androidx-benchmark-traceprocessor = { group = "androidx.benchmark", name = "benchmark-traceprocessor", version.ref = "androidxBenchmark" }
 
 [plugins]
 google-ksp = { id = "com.google.devtools.ksp", version.ref = "ksp" }

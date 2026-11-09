@@ -8,6 +8,15 @@ plugins {
 
 description = "Embrace Android SDK: startup analysis tools"
 
+kotlin.compilerOptions {
+    // The AndroidX trace processor API is experimental; this module is development tooling, not shipped code.
+    optIn.add("androidx.benchmark.traceprocessor.ExperimentalTraceProcessorApi")
+}
+
+dependencies {
+    implementation(libs.androidx.benchmark.traceprocessor)
+}
+
 application {
     applicationName = "startup-tools"
     mainClass.set("io.embrace.analysis.MainKt")

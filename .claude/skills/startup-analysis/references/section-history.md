@@ -13,10 +13,10 @@ from the release before. When to add one is in `sections.md`, "Keeping these doc
 1. **Find its entry**: the newest entry at or before that version. Its "Reading its traces" notes
    say where the window comes from, which sections it records, and what to watch for.
    Its tree takes the place of the one in `sections.md`.
-2. **Read the canonical rows against that entry.** analyze_startup.py's canonical rows are the
-   current SDK's. A row the release doesn't record reads "not in these traces".
+2. **Read the canonical rows against that entry.** `tools/startup analyze`'s canonical rows are
+   the current SDK's. A row the release doesn't record reads "not in these traces".
    A row whose section was only renamed since is filled from the older name and labelled
-   `(as <old name>)` (`OLDER_SECTION_NAMES` in the script).
+   `(as <old name>)` (`OLDER_SECTION_NAMES` in the tool's `StartupReport.kt`).
    The release's own sections that are no longer canonical show under the other sections
    (`--all-sections` lists every one).
 3. **When comparing two versions**, compare a section only if both record it with the same scope.
@@ -162,7 +162,7 @@ Changes from 9.1.0:
 ```
 
 Reading its traces:
-- Window: there is no `emb-sdk-start`, so analyze_startup.py composes the window from the first
+- Window: there is no `emb-sdk-start`, so `tools/startup analyze` composes the window from the first
   `modules-init` start to the first `post-services-setup` end, the exported span's interval, and
   names it as the composed source. It doesn't compare with an `emb-sdk-start` window.
 - Recorded sections: none, so the `sdk-init` span has no duration attributes. Every section is a

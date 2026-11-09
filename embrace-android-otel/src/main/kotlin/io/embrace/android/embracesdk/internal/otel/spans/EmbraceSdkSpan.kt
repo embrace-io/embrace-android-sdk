@@ -29,6 +29,12 @@ interface EmbraceSdkSpan : EmbraceSpan {
     fun stopWithErrorCode(errorCode: ErrorCodeAttribute?, endTimeMs: Long? = null): Boolean
 
     /**
+     * Stops recording this span without ending it, so it is never exported, and stops tracking it. Returns true if the span
+     * was recording.
+     */
+    fun discard(): Boolean
+
+    /**
      * How this span terminates automatically. Unlike the public [autoTerminationMode], this can also
      * carry a [SpanTerminationMode.Timeout] used by the timeout sweep.
      */

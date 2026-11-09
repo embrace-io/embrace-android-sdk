@@ -117,6 +117,9 @@ private class EmbraceSpanImpl(
     @Volatile
     private var spanEndTimeMs: Long = UNSET_TIME
 
+    @Volatile
+    private var discarded: Boolean = false
+
     override val terminationMode: SpanTerminationMode = otelSpanStartArgs.terminationMode
 
     override val autoTerminationMode: AutoTerminationMode get() = terminationMode.toAutoTerminationMode()
@@ -208,7 +211,7 @@ private class EmbraceSpanImpl(
         get() = spanContext?.spanId
 
     override val isRecording: Boolean
-        get() = startedSpan.get()?.isRecording() == true
+        get() = !discarded && startedSpan.get()?.isRecording() == true
 
     override fun start(startTimeMs: Long?): Boolean = guard(false) {
         if (spanStarted()) {
@@ -311,6 +314,20 @@ private class EmbraceSpanImpl(
             notifyChanged()
         }
         successful
+    }
+
+    override fun discard(): Boolean = guard(false) {
+        synchronized(startedSpan) {
+            if (!isRecording) {
+                return@guard false
+            }
+            // the OTel span is never ended, so no processor or exporter sees it finish
+            discarded = true
+            releaseRetainedData()
+        }
+        deps.spanRepository.untrackEmbraceSpan(this)
+        notifyChanged()
+        true
     }
 
     /**

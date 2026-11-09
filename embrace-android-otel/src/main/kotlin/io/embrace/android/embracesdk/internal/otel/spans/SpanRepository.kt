@@ -52,6 +52,14 @@ class SpanRepository(
     }
 
     /**
+     * Stop tracking [embraceSpan], so it no longer appears among the active or completed spans.
+     */
+    fun untrackEmbraceSpan(embraceSpan: EmbraceSdkSpan) {
+        val spanId = embraceSpan.spanId ?: return
+        spans.remove(spanId, embraceSpan)
+    }
+
+    /**
      * Return the [EmbraceSdkSpan] with the corresponding [spanId] if it's tracked. Return null otherwise.
      */
     fun getEmbraceSpan(spanId: String): EmbraceSdkSpan? = spans[spanId]

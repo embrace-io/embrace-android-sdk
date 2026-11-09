@@ -3,6 +3,7 @@ package io.embrace.android.embracesdk.internal.instance
 import android.app.ActivityManager
 import android.app.Application
 import android.content.Context
+import io.embrace.android.embracesdk.SessionStateEvent
 import io.embrace.android.embracesdk.internal.api.delegate.BreadcrumbApiDelegate
 import io.embrace.android.embracesdk.internal.api.delegate.ExperimentApiDelegate
 import io.embrace.android.embracesdk.internal.api.delegate.HostedSdkInternalInterfaceImpl
@@ -46,6 +47,7 @@ import io.embrace.android.embracesdk.internal.injection.createLogOrchestrator
 import io.embrace.android.embracesdk.internal.injection.createMetadataService
 import io.embrace.android.embracesdk.internal.injection.createNavigationTrackingService
 import io.embrace.android.embracesdk.internal.injection.createNetworkConnectivityService
+import io.embrace.android.embracesdk.internal.injection.createNetworkSpanParentService
 import io.embrace.android.embracesdk.internal.injection.createOtelSdkConfig
 import io.embrace.android.embracesdk.internal.injection.createPayloadCachingService
 import io.embrace.android.embracesdk.internal.injection.createPayloadResurrectionService
@@ -75,6 +77,7 @@ import io.embrace.android.embracesdk.internal.instrumentation.thread.blockage.cr
 import io.embrace.android.embracesdk.internal.logs.LogLimitingServiceImpl
 import io.embrace.android.embracesdk.internal.logs.LogServiceImpl
 import io.embrace.android.embracesdk.internal.logs.attachments.AttachmentService
+import io.embrace.android.embracesdk.internal.network.parent.NetworkSpanParents
 import io.embrace.android.embracesdk.internal.otel.impl.EmbClock
 import io.embrace.android.embracesdk.internal.otel.logs.LogSinkImpl
 import io.embrace.android.embracesdk.internal.otel.sdk.DataValidator
@@ -100,6 +103,8 @@ import io.embrace.android.embracesdk.internal.utils.EmbTrace
 import io.embrace.android.embracesdk.internal.utils.event.EventBus
 import io.embrace.android.embracesdk.internal.worker.PriorityWorker
 import io.embrace.android.embracesdk.internal.worker.Worker
+import io.embrace.android.embracesdk.network.NetworkSpanParent
+import io.embrace.android.embracesdk.network.http.HttpRequestInfo
 import io.embrace.android.embracesdk.spans.TracingApi
 import java.util.concurrent.TimeUnit
 
@@ -216,6 +221,19 @@ internal fun createRealSdkInstance(
         )
     }
 
+    // Deferred: only created once the app sets a network span parent.
+    val networkSpanParentService = lazy {
+        EmbTrace.trace("network-span-parent-service-init") {
+            createNetworkSpanParentService(
+                spanService = spanService.value,
+                errorHandler = errorHandler,
+                telemetryService = telemetryService,
+                slowProviderThresholdMs = configService.networkBehavior.getNetworkSpanParentProviderSlowMs(),
+                currentUserSessionIdProvider = sessionIdsProvider::getCurrentUserSessionId,
+            )
+        }
+    }
+
     val currentSessionPartSpan = init("current-session-part-span") {
         createCurrentSessionPartSpan(
             openTelemetryClock = openTelemetryClock,
@@ -236,7 +254,12 @@ internal fun createRealSdkInstance(
             openTelemetryClock = openTelemetryClock,
             spanRepository = spanRepository,
             dataValidator = dataValidator,
-            stopCallback = currentSessionPartSpan::spanStopCallback,
+            stopCallback = { spanId ->
+                currentSessionPartSpan.spanStopCallback(spanId)
+                if (networkSpanParentService.isInitialized()) {
+                    networkSpanParentService.value.onSpanStopped(spanId)
+                }
+            },
             redactionFunction = createRedactionFunction(sensitiveKeysBehavior),
             telemetryService = telemetryService,
             errorHandler = errorHandler,
@@ -385,6 +408,21 @@ internal fun createRealSdkInstance(
             crashMarkerFileProvider = crashMarkerFile::value,
             sdkStorage = sdkStorage,
             eventBus = eventBus,
+            networkSpanParents = object : NetworkSpanParents {
+                override fun currentParent(): NetworkSpanParent? =
+                    if (networkSpanParentService.isInitialized()) {
+                        networkSpanParentService.value.currentParent()
+                    } else {
+                        null
+                    }
+
+                override fun appDecision(request: HttpRequestInfo): NetworkSpanParent =
+                    if (networkSpanParentService.isInitialized()) {
+                        networkSpanParentService.value.appDecision(request)
+                    } else {
+                        NetworkSpanParent.USE_DEFAULT
+                    }
+            },
         )
     }
 
@@ -758,6 +796,13 @@ internal fun createRealSdkInstance(
         }
     }
 
+    // registered here, not when the service is created, so creating it never waits on the orchestrator's lock
+    sessionOrchestrator.addUserSessionListener { event ->
+        if (event is SessionStateEvent.UserSessionEnded && networkSpanParentService.isInitialized()) {
+            networkSpanParentService.value.onUserSessionEnded(event.userSessionId)
+        }
+    }
+
     // the side effects of initialization, once every service is constructed
     EmbTrace.trace("sdk-services-start") {
         EmbTrace.trace(sectionName = "current-session-part-span-initialize-service", recordDuration = true) {
@@ -831,6 +876,7 @@ internal fun createRealSdkInstance(
                 registry = instrumentationRegistry,
                 httpRequestInfoModifierChain = instrumentationArgs.httpRequestInfoModifierChain,
                 sessionOrchestrator = sessionOrchestrator,
+                networkSpanParentService = networkSpanParentService,
             ),
             logsApiDelegate = logsApiDelegate,
             hostedSdkInternalInterface = HostedSdkInternalInterfaceImpl(

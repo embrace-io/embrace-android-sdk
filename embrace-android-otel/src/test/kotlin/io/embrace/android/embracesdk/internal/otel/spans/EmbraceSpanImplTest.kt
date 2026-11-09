@@ -1251,6 +1251,8 @@ internal class EmbraceSpanImplTest(
             appliedLimits.add(telemetryType to limitType)
         }
 
+        override fun trackSlowCallback(name: String, durationMs: Long) {}
+
         override fun getAndClearTelemetryAttributes(): Map<String, String> = emptyMap()
     }
 

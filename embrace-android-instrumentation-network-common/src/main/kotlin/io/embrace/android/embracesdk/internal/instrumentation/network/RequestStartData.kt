@@ -26,4 +26,12 @@ data class RequestStartData(
      * a locally configurable fallback. Null if no timeout could be resolved.
      */
     val timeoutMs: Long? = null,
+    /**
+     * The host the client sends the request to
+     */
+    val host: String? = null,
+    /**
+     * The HTTP client's own request object, if the instrumentation provides one
+     */
+    val nativeRequest: Any? = null,
 )

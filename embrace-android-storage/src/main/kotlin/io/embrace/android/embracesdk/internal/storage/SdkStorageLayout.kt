@@ -13,11 +13,6 @@ object SdkStorageLayout {
     const val ROOT_DIR_NAME: String = "xcor"
 
     /**
-     * The name of the directory the legacy storage migration stages files in before renaming it to [ROOT_DIR_NAME]
-     */
-    const val MIGRATION_DIR_NAME: String = "xcor.migration"
-
-    /**
      * The version of this layout. Raise it whenever the layout starts allowing a directory or entry it didn't before,
      * so that an older SDK running after a downgrade doesn't sweep what a newer one wrote.
      */

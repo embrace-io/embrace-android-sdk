@@ -118,9 +118,10 @@ internal class OkHttpDataSource(
 
     private fun interceptApplicationRequest(chain: Interceptor.Chain, callData: CallData?): Response? {
         val request: Request = chain.request()
+        var proceeded = false
         try {
             // we are not interested in response, just proceed
-            return chain.proceed(request)
+            return chain.proceed(request).also { proceeded = true }
         } catch (e: EmbraceCustomPathException) {
             errorHandler.guardSdkCode(SdkErrorType.DataSourceDataCaptureFail) {
                 val urlString = getOverriddenURLString(EmbraceOkHttpPathOverrideRequest(request), e.customPath)
@@ -135,9 +136,22 @@ internal class OkHttpDataSource(
             }
             throw e
         } finally {
+            // Still tracked: the network interceptor never got a response for this call, and no failure was recorded for it
             if (callData != null && activeCalls.remove(chain.call()) != null) {
                 errorHandler.guardSdkCode(SdkErrorType.DataSourceDataCaptureFail) {
-                    networkRequestDataSource?.discardRequest(callData.id)
+                    if (proceeded) {
+                        // the call never reached the network interceptor, as when served from the cache or answered by an
+                        // interceptor without proceeding
+                        networkRequestDataSource?.discardRequest(callData.id)
+                    } else {
+                        // the call failed, and recording that failure threw (or the failure was an Error the catches above don't handle),
+                        // so the span is ended here as a client-side failure with no status code
+                        networkRequestDataSource?.endIncompleteRequest(
+                            id = callData.id,
+                            sdkClockEndTime = clock.now(),
+                            statusCode = null,
+                        )
+                    }
                 }
             }
         }
@@ -231,8 +245,16 @@ internal class OkHttpDataSource(
                 )
             }
         } catch (exc: Throwable) {
+            // the request was made and got a response, so it is still reported, with only its end time and status code. That is
+            // best effort: if it fails too, it most likely fails for the same reason, so only the original failure is reported
+            runCatching {
+                networkRequestDataSource?.endIncompleteRequest(
+                    id = callData.id,
+                    sdkClockEndTime = clock.now(),
+                    statusCode = networkResponse.code,
+                )
+            }
             errorHandler.trackSdkError(SdkErrorType.DataSourceDataCaptureFail, exc)
-            networkRequestDataSource?.discardRequest(callData.id)
         } finally {
             activeCalls.remove(chain.call())
         }

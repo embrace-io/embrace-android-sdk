@@ -251,6 +251,50 @@ internal class NetworkRequestDataSourceStatefulApiTest {
     }
 
     @Test
+    fun `endIncompleteRequest records only the end time and status code`() {
+        val id = checkNotNull(startRequest(url = "https://www.example.com/api", startTime = 100))
+        harness.dataSource.endIncompleteRequest(id = id, sdkClockEndTime = 250, statusCode = 204)
+
+        harness.assertNetworkRequest(
+            spanToken = harness.getNetworkSpans().single(),
+            expectedName = "GET /api",
+            expectedStartTimeMs = 100,
+            expectedEndTimeMs = 250,
+            expectedAttributes = mapOf(HttpAttributes.HTTP_RESPONSE_STATUS_CODE to "204"),
+        )
+        with(harness.getNetworkSpans().single()) {
+            assertNull(attributes[HttpAttributes.HTTP_RESPONSE_BODY_SIZE])
+            assertNull(attributes[UserAgentAttributes.USER_AGENT_NAME])
+        }
+    }
+
+    @Test
+    fun `endIncompleteRequest records a failed request without a status code or with an error status`() {
+        val noStatus = checkNotNull(startRequest(url = "https://www.example.com/a"))
+        val errorStatus = checkNotNull(startRequest(url = "https://www.example.com/b"))
+        harness.dataSource.endIncompleteRequest(id = noStatus, sdkClockEndTime = 200, statusCode = null)
+        harness.dataSource.endIncompleteRequest(id = errorStatus, sdkClockEndTime = 200, statusCode = 500)
+
+        val spans = harness.getNetworkSpans()
+        assertEquals(listOf(ErrorCodeAttribute.Failure, ErrorCodeAttribute.Failure), spans.map { it.errorCode })
+        assertNull(spans[0].attributes[HttpAttributes.HTTP_RESPONSE_STATUS_CODE])
+        assertEquals("500", spans[1].attributes[HttpAttributes.HTTP_RESPONSE_STATUS_CODE])
+    }
+
+    @Test
+    fun `endIncompleteRequest only ends a request that is still tracked`() {
+        val id = checkNotNull(startRequest(url = "https://www.example.com/api"))
+        harness.dataSource.endIncompleteRequest(id = id, sdkClockEndTime = 200, statusCode = 200)
+        harness.dataSource.endIncompleteRequest(id = id, sdkClockEndTime = 300, statusCode = 500)
+        harness.dataSource.endIncompleteRequest(id = "unknown-id", sdkClockEndTime = 300, statusCode = 200)
+
+        with(harness.getNetworkSpans().single()) {
+            assertEquals(200L, endTimeMs)
+            assertNull(errorCode)
+        }
+    }
+
+    @Test
     fun `discardRequest with an unknown id is a no-op`() {
         harness.dataSource.discardRequest("unknown-id")
         assertTrue(harness.getNetworkSpans().isEmpty())

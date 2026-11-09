@@ -80,6 +80,9 @@ internal class InternalNetworkApiImplTest {
         override fun endRequest(endData: RequestEndData) {
         }
 
+        override fun endIncompleteRequest(id: String, sdkClockEndTime: Long, statusCode: Int?) {
+        }
+
         override fun discardRequest(id: String) {
         }
 

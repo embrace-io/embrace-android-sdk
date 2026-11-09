@@ -6,6 +6,7 @@ import io.embrace.android.embracesdk.assertions.getUserSessionId
 import io.embrace.android.embracesdk.assertions.getUserSessionTerminationReason
 import io.embrace.android.embracesdk.assertions.isBackgroundOnlyPart
 import io.embrace.android.embracesdk.assertions.isFinalSessionPart
+import io.embrace.android.embracesdk.fakes.FakeOrdinalStore
 import io.embrace.android.embracesdk.internal.arch.schema.EmbType
 import io.embrace.android.embracesdk.internal.arch.state.ProcessState
 import io.embrace.android.embracesdk.internal.clock.nanosToMillis
@@ -191,6 +192,31 @@ internal class UserSessionLifecycleTest(
                     sessionPartNumbers = listOf(1, 2)
                 )
                 assertNull(testRule.setup.getStore().getInt(Ordinal.SESSION.key))
+            }
+        )
+    }
+
+    @Test
+    fun `user session numbers come from the overridden ordinal store`() {
+        testRule.runTest(
+            setupAction = {
+                ordinalStore = FakeOrdinalStore()
+            },
+            persistedRemoteConfig = RemoteConfig(
+                userSession = UserSessionRemoteConfig(inactivityTimeoutSeconds = 30)
+            ),
+            testCaseAction = {
+                recordSession()
+                clock.tick(31_000L)
+                recordSession()
+            },
+            assertAction = {
+                assertUserSessionNumbers(
+                    envelopes = getSessionEnvelopes(2),
+                    userSessionNumbers = listOf(1, 2),
+                    sessionPartNumbers = listOf(1, 2)
+                )
+                assertNull(testRule.setup.getStore().getInt(Ordinal.USER_SESSION.key))
             }
         )
     }

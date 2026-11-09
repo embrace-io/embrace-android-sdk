@@ -266,7 +266,9 @@ internal fun createRealSdkInstance(
     }
 
     val persistedSdkStateStore: PersistedSdkStateStore by configLoadServices.persistedSdkStateStore
-    val ordinalStore: OrdinalStore by configLoadServices.ordinalStore
+    val ordinalStore: OrdinalStore by lazy {
+        overrides?.ordinalStore.resolve { configLoadServices.ordinalStore.value }
+    }
 
     val eventBus: EventBus by lazy {
         EmbTrace.trace("event-bus-init") { overrides?.eventBus.resolve { EventBus(errorHandler) } }

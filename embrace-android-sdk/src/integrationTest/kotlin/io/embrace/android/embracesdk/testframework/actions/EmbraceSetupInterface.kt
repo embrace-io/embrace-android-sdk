@@ -58,6 +58,7 @@ import io.embrace.android.embracesdk.internal.session.persistence.SessionMetadat
 import io.embrace.android.embracesdk.internal.session.persistence.SessionPartDirectory
 import io.embrace.android.embracesdk.internal.session.persistence.SessionPartWriteTarget
 import io.embrace.android.embracesdk.internal.store.KeyValueStore
+import io.embrace.android.embracesdk.internal.store.OrdinalStore
 import io.embrace.android.embracesdk.internal.utils.UuidSource
 import io.embrace.android.embracesdk.internal.utils.VersionChecker
 import io.embrace.android.embracesdk.internal.vitals.vitalsVersionCheckerTestOverride
@@ -138,6 +139,11 @@ internal class EmbraceSetupInterface(
      * When set, the SDK keeps its state in the files under `noBackupFilesDir/xcor/` rather than in prefs.
      */
     var superiorStorageSystemEnabled: Boolean = false
+
+    /**
+     * When set, the SDK uses this ordinal store instead of the real one.
+     */
+    var ordinalStore: OrdinalStore? = null
 
     /**
      * When set, the SDK's start throws this partway through, as the session orchestrator starts.
@@ -245,6 +251,7 @@ internal class EmbraceSetupInterface(
         experimentTrackingService = { real -> real().also { services.experimentTrackingService = it } },
         intakeService = { real -> real().also { services.intakeService = it } },
         eventBus = { real -> real().also { services.eventBus = it } },
+        ordinalStore = ordinalStore?.let { store -> { store } },
     )
 
     /**

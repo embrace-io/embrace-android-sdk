@@ -136,6 +136,7 @@ internal class SdkIntegrationTestRule(
         serverResponseConfig: RemoteConfig = persistedRemoteConfig,
         serverResponseConfigJson: String? = null,
         serverResponseConfigEtag: String = "server_etag_value",
+        persistRemoteConfig: Boolean = true,
         expectSdkToStart: Boolean = startSdk,
         expectedSdkState: SdkState = if (expectSdkToStart) SdkState.ENABLED else SdkState.DISABLED,
         setupAction: EmbraceSetupInterface.() -> Unit = {},
@@ -188,7 +189,9 @@ internal class SdkIntegrationTestRule(
             sdkStateHolder.api.addLogRecordExporter(logExporter.toOtelKotlinLogRecordExporter())
 
             // persist config here before the SDK starts up: the SDK reads it during start()
-            persistConfig(persistedConfig)
+            if (persistRemoteConfig) {
+                persistConfig(persistedConfig)
+            }
 
             if (startSdk) {
                 sdkStateHolder.api.start(ApplicationProvider.getApplicationContext())

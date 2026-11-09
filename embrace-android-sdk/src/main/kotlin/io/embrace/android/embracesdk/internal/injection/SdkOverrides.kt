@@ -47,4 +47,5 @@ internal class SdkOverrides(
     val spanRepository: Override<SpanRepository>? = null,
     val eventBus: Override<EventBus>? = null,
     val ordinalStore: Override<OrdinalStore>? = null,
+    val awaitLegacyTelemetryMigration: Override<() -> Unit>? = null,
 )

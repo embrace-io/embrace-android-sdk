@@ -35,9 +35,13 @@ class LastRunCrashVerifier(
      * Reads and clean the last run crash marker in a background thread.
      * This method is called when the SDK is started.
      */
-    fun readAndCleanMarkerAsync(backgroundWorker: BackgroundWorker) {
+    fun readAndCleanMarkerAsync(
+        backgroundWorker: BackgroundWorker,
+        awaitLegacyTelemetryMigration: () -> Unit = {},
+    ) {
         if (didLastRunCrash == null) {
             this.didLastRunCrashFuture = backgroundWorker.submit<Boolean> {
+                awaitLegacyTelemetryMigration()
                 readAndCleanMarker()
             }
         }

@@ -873,6 +873,7 @@ internal fun createRealSdkInstance(
                 experimentTrackingService = experimentTrackingService,
             ),
             tracingApi = tracingApi,
+            awaitLegacyTelemetryMigration = overrides?.awaitLegacyTelemetryMigration.resolve { {} },
         )
     }
 }

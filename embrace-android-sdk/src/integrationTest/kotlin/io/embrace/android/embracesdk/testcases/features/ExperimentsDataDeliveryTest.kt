@@ -172,6 +172,8 @@ internal class ExperimentsDataDeliveryTest(
             "key-value-store-init-duration-ms",
             "prefs-first-read-duration-ms",
             "prefs-file-bytes",
+            "persisted-sdk-state-load-duration-ms",
+            "persisted-sdk-state-bytes",
         )
 
         private const val LOG_BATCH_FLUSH_MS = 2000L

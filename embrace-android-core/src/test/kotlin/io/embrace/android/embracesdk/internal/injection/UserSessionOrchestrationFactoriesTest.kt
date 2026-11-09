@@ -71,7 +71,7 @@ internal class UserSessionOrchestrationFactoriesTest {
         clock = initServices.clock,
         errorHandler = initServices.errorHandler,
         configService = configService,
-        sessionPersistenceWorker = workerThreadPool.backgroundWorker(Worker.Background.SessionPersistenceWorker),
+        sessionPersistenceWorker = workerThreadPool.backgroundWorker(Worker.Background.PersistenceWorker),
         intakeService = FakeIntakeService(),
         cachedLogEnvelopeStore = FakeCachedLogEnvelopeStore(),
         nativeCrashServiceProvider = { null },
@@ -112,7 +112,7 @@ internal class UserSessionOrchestrationFactoriesTest {
             writeBatcher = { it() },
             stateStore = FakePersistedSdkStateStore(),
             backgroundWorker = workerThreadPool.backgroundWorker(Worker.Background.NonIoRegWorker),
-            sessionPersistenceWorker = workerThreadPool.backgroundWorker(Worker.Background.SessionPersistenceWorker),
+            sessionPersistenceWorker = workerThreadPool.backgroundWorker(Worker.Background.PersistenceWorker),
             sessionReadWorker = workerThreadPool.backgroundWorker(Worker.Background.IoRegWorker),
             sessionPartReader = sessionPartReader,
         )

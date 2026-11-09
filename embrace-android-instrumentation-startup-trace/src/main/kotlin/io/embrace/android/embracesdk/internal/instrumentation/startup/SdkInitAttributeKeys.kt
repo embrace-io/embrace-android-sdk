@@ -218,6 +218,14 @@ object SdkInitAttributeKeys {
     const val PREFS_FILE_BYTES: String = "prefs-file-bytes"
 
     /**
+     * Size in bytes of the SDK's persisted state file, which replaces [PREFS_FILE_BYTES] when the SDK keeps its
+     * state in its own files. Used to explain the `persisted-sdk-state-load` duration.
+     *
+     * A first launch has no such file yet, which is recorded as zero bytes.
+     */
+    const val PERSISTED_SDK_STATE_BYTES: String = "persisted-sdk-state-bytes"
+
+    /**
      * The compiler filter used by ART for compiling the app's primary DEX. It gives clues as to how
      * much optimization could have been done by ART to reduce DEX compilation time.
      *

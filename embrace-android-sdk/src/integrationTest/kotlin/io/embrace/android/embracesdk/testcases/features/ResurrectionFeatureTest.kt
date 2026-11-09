@@ -57,10 +57,10 @@ internal class ResurrectionFeatureTest(
     @JvmField
     val testRule: SdkIntegrationTestRule = SdkIntegrationTestRule(otelSdkMode) {
         EmbraceSetupInterface(
-            workersToFake = listOf(Worker.Background.SessionPersistenceWorker),
+            workersToFake = listOf(Worker.Background.PersistenceWorker),
             fakeStorageLayer = true,
         ).apply {
-            getFakedWorkerExecutor(Worker.Background.SessionPersistenceWorker).blockingMode = false
+            getFakedWorkerExecutor(Worker.Background.PersistenceWorker).blockingMode = false
             getFakeErrorHandler().throwOnSdkError = false
         }.also {
             cacheStorageService = checkNotNull(it.fakeCacheStorageService)
@@ -204,7 +204,7 @@ internal class ResurrectionFeatureTest(
 
     private fun shutdownSdkWithIncompleteSession() {
         // the fake runs writes still waiting on the snapshot debounce when it shuts down, without a real-time wait
-        testRule.setup.getFakedWorkerExecutor(Worker.Background.SessionPersistenceWorker).shutdown()
+        testRule.setup.getFakedWorkerExecutor(Worker.Background.PersistenceWorker).shutdown()
         testRule.services.networkConnectivityService.close()
         testRule.services.otelSdkConfig.close()
         testRule.services.workerThreadPool.close()

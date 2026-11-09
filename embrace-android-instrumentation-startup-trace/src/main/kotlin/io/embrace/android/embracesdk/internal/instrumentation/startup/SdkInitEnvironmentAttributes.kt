@@ -11,6 +11,7 @@ import io.embrace.android.embracesdk.internal.instrumentation.startup.SdkInitAtt
 import io.embrace.android.embracesdk.internal.instrumentation.startup.SdkInitAttributeKeys.LOW_MEMORY
 import io.embrace.android.embracesdk.internal.instrumentation.startup.SdkInitAttributeKeys.MEM_AVAILABLE_PCT
 import io.embrace.android.embracesdk.internal.instrumentation.startup.SdkInitAttributeKeys.NUMERIC_ERROR
+import io.embrace.android.embracesdk.internal.instrumentation.startup.SdkInitAttributeKeys.PERSISTED_SDK_STATE_BYTES
 import io.embrace.android.embracesdk.internal.instrumentation.startup.SdkInitAttributeKeys.PREFS_FILE_BYTES
 import io.embrace.android.embracesdk.internal.instrumentation.startup.SdkInitAttributeKeys.SECONDS_SINCE_BOOT
 import io.embrace.android.embracesdk.internal.instrumentation.startup.SdkInitAttributeKeys.SECONDS_SINCE_INSTALL
@@ -47,6 +48,7 @@ fun sdkInitEnvironmentAttributes(
     versionChecker: VersionChecker = BuildVersionChecker,
     uptimeMs: () -> Long = { SystemClock.uptimeMillis() },
     prefsFileSizeProvider: () -> Long? = { null },
+    persistedSdkStateFileSizeProvider: (() -> Long?)? = null,
     artOptimizationProvider: () -> ArtOptimizationState? = { null },
 ): Map<String, String> = buildMap {
     safePutAttributes(errorHandler, "thermal") {
@@ -61,8 +63,10 @@ fun sdkInitEnvironmentAttributes(
     safePutAttributes(errorHandler, SECONDS_SINCE_BOOT) {
         putSecondsSinceBoot(uptimeMs, errorHandler)
     }
-    safePutAttributes(errorHandler, PREFS_FILE_BYTES) {
-        putPrefsFileSize(prefsFileSizeProvider, errorHandler)
+    val stateFileSize = persistedSdkStateFileSizeProvider?.let { PERSISTED_SDK_STATE_BYTES to it }
+        ?: (PREFS_FILE_BYTES to prefsFileSizeProvider)
+    safePutAttributes(errorHandler, stateFileSize.first) {
+        putFileSize(stateFileSize.first, stateFileSize.second, errorHandler)
     }
     safePutAttributes(errorHandler, "art-optimization") {
         putArtOptimizationAttributes(artOptimizationProvider, errorHandler)
@@ -234,15 +238,15 @@ private fun MutableMap<String, String>.putSecondsSinceBoot(uptimeMs: () -> Long,
     )
 }
 
-private fun MutableMap<String, String>.putPrefsFileSize(prefsFileSizeProvider: () -> Long?, errorHandler: ErrorHandler) {
-    runCatching { prefsFileSizeProvider() }.fold(
+private fun MutableMap<String, String>.putFileSize(key: String, fileSizeProvider: () -> Long?, errorHandler: ErrorHandler) {
+    runCatching { fileSizeProvider() }.fold(
         onSuccess = { bytes ->
             // If the file cannot be found, treat it as no bytes are loaded
-            put(PREFS_FILE_BYTES, (bytes ?: 0L).coerceAtLeast(0L).toString())
+            put(key, (bytes ?: 0L).coerceAtLeast(0L).toString())
         },
         onFailure = { throwable ->
-            put(PREFS_FILE_BYTES, NUMERIC_ERROR)
-            errorHandler.trackAttributeError(PREFS_FILE_BYTES, throwable)
+            put(key, NUMERIC_ERROR)
+            errorHandler.trackAttributeError(key, throwable)
         },
     )
 }

@@ -71,7 +71,7 @@ internal class JvmCrashFeatureTest(
             workersToFake = listOf(
                 Worker.Background.NonIoRegWorker,
                 Worker.Background.IoRegWorker,
-                Worker.Background.SessionPersistenceWorker,
+                Worker.Background.PersistenceWorker,
             ),
         ).apply {
             getFakeErrorHandler().throwOnSdkError = false

@@ -90,6 +90,7 @@ import io.embrace.android.embracesdk.internal.session.lifecycle.createLifecycleT
 import io.embrace.android.embracesdk.internal.session.orchestrator.SessionOrchestrator
 import io.embrace.android.embracesdk.internal.spans.TracingApiDelegate
 import io.embrace.android.embracesdk.internal.storage.SdkDir
+import io.embrace.android.embracesdk.internal.storage.SdkStorageLayout
 import io.embrace.android.embracesdk.internal.storage.StatFsAvailabilityChecker
 import io.embrace.android.embracesdk.internal.storage.StorageTelemetry
 import io.embrace.android.embracesdk.internal.storage.lazyFile
@@ -706,7 +707,7 @@ internal fun createRealSdkInstance(
                 clock = clock,
                 errorHandler = errorHandler,
                 configService = configService,
-                sessionPersistenceWorker = workerThreadPool.backgroundWorker(Worker.Background.SessionPersistenceWorker),
+                sessionPersistenceWorker = workerThreadPool.backgroundWorker(Worker.Background.PersistenceWorker),
                 intakeService = intakeService,
                 cachedLogEnvelopeStore = cachedLogEnvelopeStore,
                 nativeCrashServiceProvider = {
@@ -754,7 +755,7 @@ internal fun createRealSdkInstance(
                 writeBatcher = configLoadServices.writeBatcher.value,
                 stateStore = persistedSdkStateStore,
                 backgroundWorker = workerThreadPool.backgroundWorker(Worker.Background.NonIoRegWorker),
-                sessionPersistenceWorker = workerThreadPool.backgroundWorker(Worker.Background.SessionPersistenceWorker),
+                sessionPersistenceWorker = workerThreadPool.backgroundWorker(Worker.Background.PersistenceWorker),
                 sessionReadWorker = workerThreadPool.backgroundWorker(Worker.Background.IoRegWorker),
                 sessionPartReader = sessionPartReader,
             )
@@ -795,6 +796,11 @@ internal fun createRealSdkInstance(
             eventBus = eventBus,
             appContext = appContext,
             sdkStorage = sdkStorage,
+            persistedSdkStateFile = if (configLoadServices.superiorStorageSystemEnabled) {
+                sdkStorage.path(SdkDir.INSTALL_STATE) / SdkStorageLayout.PERSISTED_SDK_STATE_FILE_NAME
+            } else {
+                null
+            },
             spanRepository = spanRepository,
             logSink = logSink,
             otelSdkConfig = otelSdkConfig,

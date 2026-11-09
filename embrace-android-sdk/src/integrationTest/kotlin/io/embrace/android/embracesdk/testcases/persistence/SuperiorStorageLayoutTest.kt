@@ -36,9 +36,9 @@ internal class SuperiorStorageLayoutTest(
     @JvmField
     val testRule: SdkIntegrationTestRule = SdkIntegrationTestRule(otelSdkMode, superiorStorageSystemEnabled = true) {
         EmbraceSetupInterface(
-            workersToFake = listOf(Worker.Background.SessionPersistenceWorker),
+            workersToFake = listOf(Worker.Background.PersistenceWorker),
         ).apply {
-            getFakedWorkerExecutor(Worker.Background.SessionPersistenceWorker).blockingMode = false
+            getFakedWorkerExecutor(Worker.Background.PersistenceWorker).blockingMode = false
         }
     }
 
@@ -85,7 +85,7 @@ internal class SuperiorStorageLayoutTest(
     }
 
     private fun shutdownSdkWithIncompleteSession() {
-        testRule.setup.getFakedWorkerExecutor(Worker.Background.SessionPersistenceWorker).shutdown()
+        testRule.setup.getFakedWorkerExecutor(Worker.Background.PersistenceWorker).shutdown()
         testRule.services.networkConnectivityService.close()
         testRule.services.otelSdkConfig.close()
         testRule.services.workerThreadPool.close()

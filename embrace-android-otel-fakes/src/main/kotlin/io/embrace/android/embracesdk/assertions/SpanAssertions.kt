@@ -14,6 +14,7 @@ import io.embrace.android.embracesdk.semconv.EmbSpanAttributes
 import io.embrace.android.embracesdk.semconv.EmbStateTransitionAttributes.EMB_STATE_INITIAL_VALUE
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotNull
+import org.junit.Assert.assertNull
 
 /**
  * Finds the first Span Event matching the given [EmbType]
@@ -119,27 +120,33 @@ private fun Span.stateSpanAttributes(): Map<String, String> {
 }
 
 /**
- * The SDK only reads prefs during init when [superiorStorageSystemEnabled] is false.
+ * The SDK reads its persisted state from prefs during init when [superiorStorageSystemEnabled] is false, and from
+ * its own file otherwise.
  */
 fun List<Attribute>?.assertSdkInitSectionDurationsRecorded(superiorStorageSystemEnabled: Boolean) {
-    expectedSdkInitSections.filterNot { superiorStorageSystemEnabled && it == PREFS_FIRST_READ_SECTION }.forEach { section ->
+    val stateReadSection = if (superiorStorageSystemEnabled) "persisted-sdk-state-load" else "prefs-first-read"
+    (expectedSdkInitSections + stateReadSection).forEach { section ->
         assertNotNull(
             "duration for init section `$section` not found",
             this?.findAttributeValue("$section-duration-ms")
         )
     }
+    val (presentSize, absentSize) = if (superiorStorageSystemEnabled) {
+        "persisted-sdk-state-bytes" to "prefs-file-bytes"
+    } else {
+        "prefs-file-bytes" to "persisted-sdk-state-bytes"
+    }
+    assertNotNull("`$presentSize` not found", this?.findAttributeValue(presentSize))
+    assertNull("`$absentSize` was recorded", this?.findAttributeValue(absentSize))
 }
 
 /**
  * Sections known to run within the SDK init flow during integration tests.
  */
-private const val PREFS_FIRST_READ_SECTION = "prefs-first-read"
-
 private val expectedSdkInitSections = listOf(
     "modules-init",
     "persisted-config-init",
     "config-service-init",
-    PREFS_FIRST_READ_SECTION,
     "current-session-part-span-initialize-service",
     "process-state-tracker-init",
     "payload-storage-service-init",

@@ -14,6 +14,7 @@ dependencies {
 
     implementation(platform(libs.okhttp.bom))
     implementation(libs.okhttp)
+    implementation(libs.okio.gradle.plugin)
     implementation(libs.kotlinx.serialization.json.gradle.plugin)
     implementation(libs.zstd.jni)
     implementation(libs.asm.util)

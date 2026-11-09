@@ -183,6 +183,26 @@ internal class ThrowableSnapshotterTest {
         assertEquals(listOf("suppressed"), snapshot.suppressed.map { it.message })
     }
 
+    @Test
+    fun `keyOf matches the key of the snapshot`() {
+        val longFrame = StackTraceElement("A".repeat(600), "b", "A.kt", 1)
+        val cases = listOf(
+            CustomException(arrayOf(frame), "msg"),
+            CustomException(emptyArray()),
+            CustomException(arrayOf(longFrame, frame)),
+            object : RuntimeException() {
+                override fun getStackTrace(): Array<StackTraceElement> = error("stackTrace")
+            },
+            object : RuntimeException() {
+                override val message: String
+                    get() = error("message")
+            },
+        )
+        cases.forEach { exc ->
+            assertEquals(snapshot(exc).key(), ThrowableSnapshotter.keyOf(type, exc))
+        }
+    }
+
     private fun snapshot(exc: Throwable, timestampMs: Long = 0) = ThrowableSnapshotter.snapshot(type, exc, timestampMs)
 
     private class CustomException(

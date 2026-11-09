@@ -64,7 +64,7 @@ class PayloadStorageServiceImpl(
         }
     }
 
-    override fun payloadSizeBytes(metadata: StoredTelemetryMetadata): Long =
+    override fun payloadSizeBytes(metadata: StoredTelemetryMetadata): Long? =
         fileStorageService.payloadSizeBytes(metadata)
 
     override fun getPayloadsByPriority(): List<StoredTelemetryMetadata> {

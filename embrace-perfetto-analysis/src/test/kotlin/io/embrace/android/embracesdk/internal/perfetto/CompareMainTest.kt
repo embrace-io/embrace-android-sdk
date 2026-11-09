@@ -9,11 +9,11 @@ import io.embrace.android.embracesdk.internal.perfetto.stats.BenchmarkComparison
 import io.embrace.android.embracesdk.internal.perfetto.stats.ComparisonReport
 import io.embrace.android.embracesdk.internal.perfetto.stats.IterationsReport
 import io.embrace.android.embracesdk.internal.perfetto.stats.OperationComparison
+import okio.Path.Companion.toPath
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
-import java.io.File
 
 internal class CompareMainTest {
 
@@ -34,8 +34,8 @@ internal class CompareMainTest {
     @Test
     fun `a comparison is named for both runs, so it does not write over either one's own report`() {
         val options = checkNotNull(parseArgs(SPEC, arrayOf(BASELINE, CANDIDATE, "--format", "json")))
-        assertEquals(listOf(File(BASELINE), File(CANDIDATE)), options.inputs)
-        assertEquals(File("perf/macrobenchmark/baseline-vs-candidate-report.json"), options.output)
+        assertEquals(listOf(BASELINE.toPath(), CANDIDATE.toPath()), options.inputs)
+        assertEquals("perf/macrobenchmark/baseline-vs-candidate-report.json".toPath(), options.output)
     }
 
     @Test
@@ -121,13 +121,13 @@ internal class CompareMainTest {
     )
 
     private fun options() = CliOptions(
-        inputs = listOf(File(BASELINE), File(CANDIDATE)),
+        inputs = listOf(BASELINE.toPath(), CANDIDATE.toPath()),
         format = ReportFormat.HTML,
-        output = File(OUTPUT),
+        output = OUTPUT.toPath(),
     )
 
     private fun iteration(dir: String, benchmark: String, index: Int) =
-        IterationTrace(benchmark, index, File(dir, "$benchmark-$index.perfetto-trace"))
+        IterationTrace(benchmark, index, dir.toPath() / "$benchmark-$index.perfetto-trace")
 
     private companion object {
         const val BASELINE = "perf/macrobenchmark/baseline"

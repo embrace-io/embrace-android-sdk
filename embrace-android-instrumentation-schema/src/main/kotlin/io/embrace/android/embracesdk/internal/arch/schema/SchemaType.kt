@@ -5,6 +5,7 @@ import io.embrace.android.embracesdk.semconv.EmbAeiAttributes
 import io.embrace.android.embracesdk.semconv.EmbAndroidAttributes
 import io.embrace.android.embracesdk.semconv.EmbBreadcrumbAttributes
 import io.embrace.android.embracesdk.semconv.EmbCommonAttributes
+import io.embrace.android.embracesdk.semconv.EmbInteractionResponsivenessAttributes
 import io.embrace.android.embracesdk.semconv.EmbNetworkCapturedRequestAttributes
 import io.embrace.android.embracesdk.semconv.EmbNetworkStateAttributes
 import io.embrace.android.embracesdk.semconv.EmbNetworkStatusAttributes
@@ -318,6 +319,32 @@ sealed class SchemaType(
             EmbScreenLoadAttributes.SCREEN_LOAD_TIMEOUT_MS to timeoutMs.toString(),
             EmbScreenLoadAttributes.SCREEN_LOAD_NAV_TIMEOUT_MS to navTimeoutMs.toString(),
         )
+    }
+
+    /**
+     * Experimental interaction responsiveness vital: touch-down dispatch delay and main-thread blocks over a focal moment.
+     */
+    class InteractionResponsiveness(
+        outcome: String,
+        dispatchDelayMs: Long?,
+        longestBlockMs: Long,
+        totalBlockedMs: Long,
+        blockCount: Int,
+        blockThresholdMs: Long,
+        probeIntervalMs: Long,
+    ) : SchemaType(
+        telemetryType = EmbType.Performance.InteractionResponsiveness,
+        fixedObjectName = "interaction-responsiveness",
+    ) {
+        override val schemaAttributes: Map<String, String> = mapOf(
+            EmbInteractionResponsivenessAttributes.INTERACTION_RESPONSIVENESS_OUTCOME to outcome,
+            EmbInteractionResponsivenessAttributes.INTERACTION_RESPONSIVENESS_DISPATCH_DELAY_MS to dispatchDelayMs?.toString(),
+            EmbInteractionResponsivenessAttributes.INTERACTION_RESPONSIVENESS_LONGEST_BLOCK_MS to longestBlockMs.toString(),
+            EmbInteractionResponsivenessAttributes.INTERACTION_RESPONSIVENESS_TOTAL_BLOCKED_MS to totalBlockedMs.toString(),
+            EmbInteractionResponsivenessAttributes.INTERACTION_RESPONSIVENESS_BLOCK_COUNT to blockCount.toString(),
+            EmbInteractionResponsivenessAttributes.INTERACTION_RESPONSIVENESS_BLOCK_THRESHOLD_MS to blockThresholdMs.toString(),
+            EmbInteractionResponsivenessAttributes.INTERACTION_RESPONSIVENESS_PROBE_INTERVAL_MS to probeIntervalMs.toString(),
+        ).toNonNullMap()
     }
 
     class SdkError(snapshot: SdkErrorSnapshot) : SchemaType(

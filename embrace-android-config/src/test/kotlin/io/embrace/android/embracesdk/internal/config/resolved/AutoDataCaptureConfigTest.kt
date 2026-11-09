@@ -1,9 +1,9 @@
 package io.embrace.android.embracesdk.internal.config.resolved
 
+import io.embrace.android.embracesdk.fakes.TestPlatformSerializer
 import io.embrace.android.embracesdk.fakes.config.FakeEnabledFeatureConfig
 import io.embrace.android.embracesdk.fakes.config.FakeInstrumentedConfig
 import io.embrace.android.embracesdk.internal.config.instrumented.InstrumentedConfigImpl
-import io.embrace.android.embracesdk.internal.config.remote.DataRemoteConfig
 import io.embrace.android.embracesdk.internal.config.remote.KillSwitchRemoteConfig
 import io.embrace.android.embracesdk.internal.config.remote.RemoteConfig
 import org.junit.Assert.assertEquals
@@ -35,6 +35,7 @@ internal class AutoDataCaptureConfigTest {
             assertTrue(navigationStateCaptureEnabled)
             assertFalse(smoothnessCaptureEnabled)
             assertFalse(screenLoadCaptureEnabled)
+            assertFalse(interactionResponsivenessCaptureEnabled)
             assertFalse(activityProcessLifecycleTrackerEnabled)
             assertFalse(activityLeakDetectionEnabled)
             assertFalse(fragmentLeakDetectionEnabled)
@@ -121,18 +122,22 @@ internal class AutoDataCaptureConfigTest {
     )
 
     private fun resolveRollouts(pct: Float, bucket: Lazy<Float>): List<Boolean> {
-        val remote = RemoteConfig(
-            dataConfig = DataRemoteConfig(pctThermalStatusEnabled = pct),
-            pctStateCaptureEnabledV2 = pct,
-            pctNetworkCallbackConnectivityServiceEnabled = pct,
-            pctNavigationStateCaptureEnabled = pct,
-            pctSmoothnessEnabled = pct,
-            pctScreenLoadEnabled = pct,
-            pctActivityProcessLifecycleTrackerEnabled = pct,
-            pctActivityLeakDetectionEnabled = pct,
-            pctFragmentLeakDetectionEnabled = pct,
-            pctWebViewLeakDetectionEnabled = pct,
-        )
+        val json = """
+            {
+              "data": {"pct_thermal_status_enabled": $pct},
+              "pct_state_enabled_v2": $pct,
+              "pct_network_callback_connectivity_service_enabled": $pct,
+              "pct_screen_tracking_enabled": $pct,
+              "pct_smoothness_enabled": $pct,
+              "pct_screen_load_enabled": $pct,
+              "pct_interaction_responsiveness_enabled": $pct,
+              "pct_activity_process_lifecycle_tracker_enabled": $pct,
+              "pct_activity_leak_detection_enabled": $pct,
+              "pct_fragment_leak_detection_enabled": $pct,
+              "pct_web_view_leak_detection_enabled": $pct
+            }
+        """.trimIndent()
+        val remote = TestPlatformSerializer().fromJson(json, RemoteConfig.serializer())
         return with(resolveAutoDataCapture(InstrumentedConfigImpl, remote, bucket)) {
             listOf(
                 thermalStatusCaptureEnabled,
@@ -141,6 +146,7 @@ internal class AutoDataCaptureConfigTest {
                 navigationStateCaptureEnabled,
                 smoothnessCaptureEnabled,
                 screenLoadCaptureEnabled,
+                interactionResponsivenessCaptureEnabled,
                 activityProcessLifecycleTrackerEnabled,
                 activityLeakDetectionEnabled,
                 fragmentLeakDetectionEnabled,
@@ -167,6 +173,7 @@ internal class AutoDataCaptureConfigTest {
         navigationStateCaptureEnabled,
         smoothnessCaptureEnabled,
         screenLoadCaptureEnabled,
+        interactionResponsivenessCaptureEnabled,
         activityProcessLifecycleTrackerEnabled,
         activityLeakDetectionEnabled,
         fragmentLeakDetectionEnabled,
@@ -174,6 +181,6 @@ internal class AutoDataCaptureConfigTest {
     )
 
     private companion object {
-        const val ROLLOUT_COUNT = 10
+        const val ROLLOUT_COUNT = 11
     }
 }

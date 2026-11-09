@@ -89,9 +89,13 @@ class FileStorageServiceImpl(
             index.delete(metadata)
             callback()
         }
-        try {
+        // delete the given payload synchronously if the worker is shut down or the job is cancelled
+        val submitted = try {
             worker.submit(metadata, action)
-        } catch (_: RejectedExecutionException) { // handle JVM crash case where worker is shutdown
+        } catch (_: RejectedExecutionException) {
+            null
+        }
+        if (submitted == null || submitted.isCancelled) {
             action()
         }
     }
@@ -106,8 +110,8 @@ class FileStorageServiceImpl(
         }
     }
 
-    override fun payloadSizeBytes(metadata: StoredTelemetryMetadata): Long =
-        errorHandler.guardSdkCode(SdkErrorType.PayloadStorageFail, 0L) { index.fileFor(metadata).length() }
+    override fun payloadSizeBytes(metadata: StoredTelemetryMetadata): Long? =
+        errorHandler.guardSdkCode(SdkErrorType.PayloadStorageFail, null) { index.fileFor(metadata).length() }
 
     override fun getStoredPayloads(): List<StoredTelemetryMetadata> = index.storedEntries()
 }

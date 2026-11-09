@@ -8,26 +8,27 @@ import io.embrace.android.embracesdk.internal.perfetto.stats.aggregateIterations
 import io.embrace.android.embracesdk.internal.perfetto.trace.TraceFormat
 import io.embrace.android.embracesdk.internal.perfetto.trace.parseTrace
 import io.embrace.android.embracesdk.internal.perfetto.trace.validateTrace
-import java.io.File
+import okio.FileSystem
+import okio.Path
 import java.io.IOException
 import kotlin.system.exitProcess
 
 /**
  * The traces of the run collected into [dir], or exits saying why there are none to read.
  */
-internal fun discoverRun(dir: File): List<IterationTrace> {
-    if (!dir.isDirectory) {
-        System.err.println("no run directory at ${dir.absolutePath}")
+internal fun discoverRun(fileSystem: FileSystem, dir: Path): List<IterationTrace> {
+    if (fileSystem.resolvedMetadata(dir)?.isDirectory != true) {
+        System.err.println("no run directory at ${absolute(dir)}")
         exitProcess(EXIT_BAD_TRACE)
     }
     val iterations = try {
-        discoverIterations(dir)
+        discoverIterations(fileSystem, dir)
     } catch (exc: IOException) {
         System.err.println(exc.message)
         exitProcess(EXIT_BAD_TRACE)
     }
     if (iterations.isEmpty()) {
-        System.err.println("no iteration traces in ${dir.absolutePath}")
+        System.err.println("no iteration traces in ${absolute(dir)}")
         exitProcess(EXIT_BAD_TRACE)
     }
     return iterations
@@ -39,10 +40,15 @@ internal fun discoverRun(dir: File): List<IterationTrace> {
  *
  * [operations] narrows the sections measured, as `--operations` names them; empty measures every one.
  */
-internal fun loadRun(dir: File, iterations: List<IterationTrace>, operations: List<String>): IterationsReport {
+internal fun loadRun(
+    fileSystem: FileSystem,
+    dir: Path,
+    iterations: List<IterationTrace>,
+    operations: List<String>,
+): IterationsReport {
     val reports = iterations.groupBy(IterationTrace::benchmark)
-        .mapValues { (_, traces) -> traces.map { loadIteration(it, operations) } }
-    return aggregateIterations(dir.path, reports)
+        .mapValues { (_, traces) -> traces.map { loadIteration(fileSystem, it, operations) } }
+    return aggregateIterations(dir.toString(), reports)
 }
 
 /** One line per benchmark of [iterations], naming it and how many iterations of it the run holds. */
@@ -53,18 +59,18 @@ internal fun describeBenchmarks(iterations: List<IterationTrace>, indent: String
     }
 }
 
-private fun loadIteration(iteration: IterationTrace, operations: List<String>): StatsReport {
-    val format = validateTrace(iteration.file)
+private fun loadIteration(fileSystem: FileSystem, iteration: IterationTrace, operations: List<String>): StatsReport {
+    val format = validateTrace(fileSystem, iteration.file)
     if (format != TraceFormat.PERFETTO) {
-        System.err.println("${iteration.file.absolutePath} is ${format.label}")
+        System.err.println("${absolute(iteration.file)} is ${format.label}")
         exitProcess(EXIT_BAD_TRACE)
     }
     val trace = try {
-        parseTrace(iteration.file)
+        parseTrace(fileSystem, iteration.file)
     } catch (exc: IOException) {
         System.err.println(exc.message)
         exitProcess(EXIT_BAD_TRACE)
     }
-    println("${describeIteration(iteration)}\n${summarise(trace)}")
-    return statsReport(iteration.file, trace, operations)
+    println("${describeIteration(fileSystem, iteration)}\n${summarise(trace)}")
+    return statsReport(fileSystem, iteration.file, trace, operations)
 }

@@ -48,6 +48,21 @@ abstract class StateDataSource<T : Any>(
     private val stateCaptureActive = AtomicBoolean(false)
 
     /**
+     * Held while state capture begins and while a part change takes or starts the part's state span. The first capture can
+     * run on any thread, as an async source's does, so this orders it against a part change: either it begins capture first
+     * and the part change then ends its span and starts the next part's, or the part change goes first and the first capture
+     * starts the one span for the new part.
+     */
+    private val partStateLock = Any()
+
+    /**
+     * Whether a part change has ended the part's state span and not yet started the next part's, guarded by [partStateLock].
+     * The ending part is still the active one meanwhile, so a first capture then leaves the next part's span to the part change
+     * rather than start one for the part that is ending.
+     */
+    private var partEnding = false
+
+    /**
      * Notify that the state has changed at the given time to the given value, with the given number of transitions dropped by the
      * instrumentation since the last time this data source was notified of a state change.
      */
@@ -143,30 +158,39 @@ abstract class StateDataSource<T : Any>(
 
     @CallSuper
     override fun onPreSessionEnd() {
-        partStateToken.getAndSet(null)?.apply {
+        synchronized(partStateLock) {
+            partEnding = true
+            partStateToken.getAndSet(null)
+        }?.apply {
             end(unrecordedTransitions.getAndSet(noUnrecordedTransitions))
         }
     }
 
     @CallSuper
     override fun onPostSessionChange() {
-        createSessionStateSpan(currentState.get())
+        synchronized(partStateLock) {
+            partEnding = false
+            createSessionStateSpan(currentState.get())
+        }
     }
 
     private fun startStateCapture() {
-        if (stateCaptureActive.compareAndSet(false, true)) {
-            createSessionStateSpan(currentState.get())
+        synchronized(partStateLock) {
+            if (stateCaptureActive.compareAndSet(false, true) && !partEnding) {
+                createSessionStateSpan(currentState.get())
+            }
         }
     }
 
     private fun createSessionStateSpan(initialValue: T) {
         if (stateCaptureActive.get() && args.sessionPartId() != null) {
             errorHandler.guardSdkCode(SdkErrorType.SessionStateCreationFail) {
-                partStateToken.set(
-                    args.destination.startSessionPartStateCapture(
-                        state = stateTypeFactory(initialValue),
-                    ),
+                val token = args.destination.startSessionPartStateCapture(
+                    state = stateTypeFactory(initialValue),
                 )
+                // a part change normally finds the previous part's span already taken, but one still open must not be left in
+                // progress for the rest of the process
+                partStateToken.getAndSet(token)?.end()
             }
         }
     }

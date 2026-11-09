@@ -1,18 +1,20 @@
 package io.embrace.android.embracesdk.internal.perfetto.trace
 
+import io.embrace.android.embracesdk.fs.FakeFileSystemRule
 import io.embrace.android.embracesdk.internal.perfetto.proto.FtraceEvent
 import io.embrace.android.embracesdk.internal.perfetto.proto.FtraceEventBundle
 import io.embrace.android.embracesdk.internal.perfetto.proto.PrintFtraceEvent
 import io.embrace.android.embracesdk.internal.perfetto.proto.Trace
 import io.embrace.android.embracesdk.internal.perfetto.proto.TracePacket
+import okio.Path
+import okio.Path.Companion.toPath
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertThrows
 import org.junit.Assert.assertTrue
 import org.junit.Rule
 import org.junit.Test
-import org.junit.rules.TemporaryFolder
-import java.io.File
 import java.io.IOException
+import java.io.OutputStream
 import java.util.zip.GZIPOutputStream
 import java.util.zip.ZipEntry
 import java.util.zip.ZipOutputStream
@@ -20,32 +22,34 @@ import java.util.zip.ZipOutputStream
 internal class TraceParserTest {
 
     @get:Rule
-    val tmp = TemporaryFolder()
+    val fsRule = FakeFileSystemRule()
+
+    private val fs get() = fsRule.fileSystem
 
     @Test
     fun `a gzipped trace decodes to the packets it was written with`() {
         val written = trace(bundle(print(1000, "B|$TID|section"), print(1500, "E|$TID")))
-        assertEquals(written, parseTrace(gzipped("trace.gz", written)))
+        assertEquals(written, parseTrace(fs, gzipped("trace.gz", written)))
     }
 
     @Test
     fun `the containers a trace arrives in all decode to the same trace`() {
         val written = trace(bundle(print(1000, "B|$TID|section"), print(1500, "E|$TID")))
-        assertEquals(written, parseTrace(bundled("bundle.perfetto-trace", "Trace_output.pb", written)))
-        assertEquals(written, parseTrace(gzipped("trace.gz", written)))
-        assertEquals(written, parseTrace(raw("trace.pb", written)))
+        assertEquals(written, parseTrace(fs, bundled("bundle.perfetto-trace", "Trace_output.pb", written)))
+        assertEquals(written, parseTrace(fs, gzipped("trace.gz", written)))
+        assertEquals(written, parseTrace(fs, raw("trace.pb", written)))
     }
 
     @Test
     fun `a bundle is read by the file it holds rather than the name that file was given`() {
         val written = trace(bundle(print(1000, "B|$TID|section")))
-        assertEquals(written, parseTrace(bundled("renamed.perfetto-trace", "other_name.pb", written)))
+        assertEquals(written, parseTrace(fs, bundled("renamed.perfetto-trace", "other_name.pb", written)))
     }
 
     @Test
     fun `a bundle holding nothing is rejected rather than read as an empty trace`() {
-        val empty = tmp.newFile("empty.perfetto-trace").apply { ZipOutputStream(outputStream()).use { } }
-        val exc = assertThrows(IOException::class.java) { parseTrace(empty) }
+        val empty = file("empty.perfetto-trace") { ZipOutputStream(this).use { } }
+        val exc = assertThrows(IOException::class.java) { parseTrace(fs, empty) }
         assertTrue(exc.message, exc.message?.contains("empty.perfetto-trace") == true)
     }
 
@@ -106,14 +110,14 @@ internal class TraceParserTest {
 
     @Test
     fun `a file that is not a readable trace is rejected rather than read as empty`() {
-        val raw = tmp.newFile("raw").apply { writeBytes(byteArrayOf(0x0a, 0x55, 0x32, 0x4e)) }
-        assertThrows(IOException::class.java) { parseTrace(raw) }
+        val raw = file("raw") { write(byteArrayOf(0x0a, 0x55, 0x32, 0x4e)) }
+        assertThrows(IOException::class.java) { parseTrace(fs, raw) }
 
-        val truncated = tmp.newFile("truncated.gz").apply {
+        val truncated = file("truncated.gz") {
             val bytes = trace(bundle(print(1000, "B|$TID|section"))).encode()
-            GZIPOutputStream(outputStream()).use { it.write(bytes, 0, bytes.size - 2) }
+            GZIPOutputStream(this).use { it.write(bytes, 0, bytes.size - 2) }
         }
-        val exc = assertThrows(IOException::class.java) { parseTrace(truncated) }
+        val exc = assertThrows(IOException::class.java) { parseTrace(fs, truncated) }
         assertTrue(exc.message, exc.message?.contains("truncated.gz") == true)
     }
 
@@ -125,18 +129,22 @@ internal class TraceParserTest {
     private fun print(timestamp: Long, payload: String) =
         FtraceEvent(timestamp = timestamp, pid = TID, print = PrintFtraceEvent(buf = payload))
 
-    private fun gzipped(name: String, content: Trace): File = tmp.newFile(name).apply {
-        GZIPOutputStream(outputStream()).use { it.write(content.encode()) }
+    private fun gzipped(name: String, content: Trace): Path = file(name) {
+        GZIPOutputStream(this).use { it.write(content.encode()) }
     }
 
-    private fun raw(name: String, content: Trace): File = tmp.newFile(name).apply { writeBytes(content.encode()) }
+    private fun raw(name: String, content: Trace): Path = file(name) { write(content.encode()) }
 
-    private fun bundled(name: String, entry: String, content: Trace): File = tmp.newFile(name).apply {
-        ZipOutputStream(outputStream()).use { zip ->
+    private fun bundled(name: String, entry: String, content: Trace): Path = file(name) {
+        ZipOutputStream(this).use { zip ->
             zip.putNextEntry(ZipEntry(entry))
             zip.write(content.encode())
             zip.closeEntry()
         }
+    }
+
+    private fun file(name: String, write: OutputStream.() -> Unit): Path = "/$name".toPath().also { path ->
+        fs.write(path) { outputStream().write() }
     }
 
     private companion object {

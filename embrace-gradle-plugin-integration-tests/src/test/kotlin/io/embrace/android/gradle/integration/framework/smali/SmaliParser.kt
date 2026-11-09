@@ -1,8 +1,9 @@
 package io.embrace.android.gradle.integration.framework.smali
 
-import java.io.File
+import okio.FileSystem
+import okio.Path
 
-class SmaliParser {
+class SmaliParser(private val fileSystem: FileSystem) {
 
     private companion object {
         private const val METHOD_START = ".method"
@@ -29,13 +30,14 @@ class SmaliParser {
      * is fairly naive and makes various assumptions about smali, but this is sufficient for
      * testing purposes right now given that our bytecode instrumentation is fairly simple.
      */
-    fun parse(file: File, expectedMethods: List<SmaliMethod>): SmaliFile {
+    fun parse(file: Path, expectedMethods: List<SmaliMethod>): SmaliFile {
         val methods = mutableListOf<SmaliMethod>()
         var methodSig: String? = null
         var returnValue: String? = null
         var invokeStatic: String? = null
 
-        file.inputStream().bufferedReader().lines().forEach { line ->
+        val lines = fileSystem.read(file) { generateSequence(::readUtf8Line).toList() }
+        lines.forEach { line ->
             val input = line.trim()
             if (isMethodStart(input)) {
                 if (methodSig != null || returnValue != null) {
@@ -60,7 +62,7 @@ class SmaliParser {
                 }
             }
         }
-        return SmaliFile(file.nameWithoutExtension, methods)
+        return SmaliFile(file.name.substringBeforeLast("."), methods)
     }
 
     private fun isMethodStart(input: String): Boolean {

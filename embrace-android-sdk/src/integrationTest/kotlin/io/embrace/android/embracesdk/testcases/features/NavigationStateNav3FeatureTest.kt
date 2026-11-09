@@ -1,6 +1,7 @@
 package io.embrace.android.embracesdk.testcases.features
 
 import android.app.Activity
+import android.os.Looper
 import androidx.compose.runtime.snapshots.Snapshot.Companion.sendApplyNotifications
 import io.embrace.android.embracesdk.assertions.assertNavigationStateSpan
 import io.embrace.android.embracesdk.assertions.getNavigationStateSpan
@@ -10,6 +11,7 @@ import io.embrace.android.embracesdk.fakes.Nav3ObservedActivity
 import io.embrace.android.embracesdk.fakes.Nav3UnobservedActivity
 import io.embrace.android.embracesdk.fakes.TypedBackStackNav3Activity
 import io.embrace.android.embracesdk.fakes.WrappedContextNav3ComposeActivity
+import io.embrace.android.embracesdk.internal.arch.navigation.NavigationSignal
 import io.embrace.android.embracesdk.internal.config.remote.RemoteConfig
 import io.embrace.android.embracesdk.testframework.OtelSdkMode
 import io.embrace.android.embracesdk.testframework.SdkIntegrationTestRule
@@ -17,12 +19,16 @@ import io.embrace.android.embracesdk.testframework.actions.AppExecutionTimestamp
 import io.embrace.android.embracesdk.testframework.actions.EmbraceActionInterface
 import io.embrace.android.embracesdk.testframework.actions.EmbraceActionInterface.Companion.POST_ACTIVITY_ACTION_DWELL
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertTrue
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.ParameterizedRobolectricTestRunner
 import org.robolectric.Robolectric
+import org.robolectric.Shadows.shadowOf
 import org.robolectric.android.controller.ActivityController
+import java.util.concurrent.CopyOnWriteArrayList
+import kotlin.concurrent.thread
 
 @RunWith(ParameterizedRobolectricTestRunner::class)
 internal class NavigationStateNav3FeatureTest(
@@ -191,6 +197,42 @@ internal class NavigationStateNav3FeatureTest(
                         ),
                     )
                 }
+            },
+        )
+    }
+
+    @Test
+    fun `a back stack change applied off the main thread is reported on the main thread`() {
+        val activityController = Robolectric.buildActivity(Nav3ObservedActivity::class.java)
+        val screenChangeThreads = CopyOnWriteArrayList<Thread>()
+        testRule.runTest(
+            persistedRemoteConfig = enabledRemoteConfig,
+            testCaseAction = {
+                eventBus.addHandler(NavigationSignal.KEY) { signal ->
+                    if (signal is NavigationSignal.ScreenChanged) {
+                        screenChangeThreads.add(Thread.currentThread())
+                    }
+                }
+                simulateOpeningActivities(
+                    addStartupActivity = false,
+                    startInBackground = true,
+                    activitiesAndActions = listOf(
+                        activityController to {
+                            activityController.visible()
+                            sendApplyNotifications()
+                            screenChangeThreads.clear()
+
+                            thread {
+                                activityController.get().getBackStack().add("about")
+                                sendApplyNotifications()
+                            }.join()
+                            assertTrue(screenChangeThreads.isEmpty())
+
+                            shadowOf(Looper.getMainLooper()).idle()
+                            assertEquals(listOf(Looper.getMainLooper().thread), screenChangeThreads)
+                        },
+                    ),
+                )
             },
         )
     }

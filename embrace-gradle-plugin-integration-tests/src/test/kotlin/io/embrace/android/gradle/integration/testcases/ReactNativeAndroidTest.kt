@@ -1,6 +1,7 @@
 package io.embrace.android.gradle.integration.testcases
 
 import io.embrace.android.gradle.config.TestMatrix
+import io.embrace.android.gradle.integration.framework.AssertionInterface
 import io.embrace.android.gradle.integration.framework.PluginIntegrationTestRule
 import io.embrace.android.gradle.integration.framework.smali.SmaliConfigReader
 import io.embrace.android.gradle.integration.framework.smali.SmaliMethod
@@ -74,15 +75,13 @@ class ReactNativeAndroidTest {
         }
     }
 
-    private fun verifyAsmInjection(buildDir: File, expectedBundleId: String?) {
-        // Read and parse the smali file containing the injected symbols
-        val smaliFile = SmaliConfigReader().readSmaliFiles(
+    private fun AssertionInterface.verifyAsmInjection(buildDir: File, expectedBundleId: String?) {
+        val smaliFile = SmaliConfigReader(fileSystem).readSmaliFiles(
             buildDir,
             listOf("/io/embrace/android/embracesdk/internal/config/instrumented/ProjectConfigImpl"),
         ).first()
 
-        // Get the return value of the getBase64SharedObjectFilesMap method
-        val method = SmaliParser().parse(
+        val method = SmaliParser(fileSystem).parse(
             smaliFile,
             listOf(SmaliMethod("getReactNativeBundleId()Ljava/lang/String;")),
         ).methods.first()

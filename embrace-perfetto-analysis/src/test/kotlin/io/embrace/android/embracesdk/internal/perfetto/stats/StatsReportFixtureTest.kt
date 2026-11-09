@@ -5,14 +5,16 @@ import io.embrace.android.embracesdk.internal.perfetto.report.renderJson
 import io.embrace.android.embracesdk.internal.perfetto.report.renderMarkdown
 import io.embrace.android.embracesdk.internal.perfetto.statsReport
 import io.embrace.android.embracesdk.internal.perfetto.trace.parseTrace
+import okio.FileSystem
+import okio.Path
+import okio.Path.Companion.toPath
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Test
-import java.io.File
 
 internal class StatsReportFixtureTest {
 
-    private val trace = parseTrace(fixture())
+    private val trace = parseTrace(FileSystem.RESOURCES, fixture())
 
     @Test
     fun `the report describes the capture it measured, whichever sections were asked for`() {
@@ -55,7 +57,7 @@ internal class StatsReportFixtureTest {
 
     @Test
     fun `asking for every section reports each one once, in name order`() {
-        val report = statsReport(options(), trace)
+        val report = statsReport(FileSystem.RESOURCES, options(), trace)
         val names = report.stats.operations.map(OperationStats::name)
         assertEquals(names.distinct(), names)
         assertEquals(names.sorted(), names)
@@ -113,10 +115,10 @@ internal class StatsReportFixtureTest {
             .map(::cells)
     }
 
-    private fun report(operations: List<String>) = statsReport(options(operations = operations), trace)
+    private fun report(operations: List<String>) = statsReport(FileSystem.RESOURCES, options(operations = operations), trace)
 
     private fun options(operations: List<String> = emptyList()) =
-        CliOptions(inputs = listOf(fixture()), operations = operations, output = File("report.md"))
+        CliOptions(inputs = listOf(fixture()), operations = operations, output = "report.md".toPath())
 
     private fun cells(row: String) = row.removeSurrounding("| ", " |").split(" | ")
 
@@ -125,10 +127,7 @@ internal class StatsReportFixtureTest {
         return lines.subList(lines.indexOf("## Operations") + 4, lines.indexOf("## Counters") - 1)
     }
 
-    private fun fixture(): File {
-        val resource = checkNotNull(javaClass.getResource("/$FIXTURE")) { "missing test resource $FIXTURE" }
-        return File(resource.toURI())
-    }
+    private fun fixture(): Path = "/$FIXTURE".toPath()
 
     private companion object {
         const val FIXTURE = "macrobenchmark-session-multi-file.perfetto.gz"

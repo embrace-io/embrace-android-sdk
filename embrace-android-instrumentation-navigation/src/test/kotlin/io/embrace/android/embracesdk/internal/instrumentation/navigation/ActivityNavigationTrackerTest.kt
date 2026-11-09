@@ -6,6 +6,7 @@ import io.embrace.android.embracesdk.fakes.FakeClock
 import io.embrace.android.embracesdk.fakes.FakeErrorHandler
 import io.embrace.android.embracesdk.fakes.FakeNavigationTrackingService
 import io.embrace.android.embracesdk.internal.arch.navigation.NavigationSignal
+import io.embrace.android.embracesdk.internal.arch.navigation.NavigationSignal.ActivityDestroyed
 import io.embrace.android.embracesdk.internal.arch.navigation.NavigationSignal.ActivityPaused
 import io.embrace.android.embracesdk.internal.arch.navigation.NavigationSignal.ActivityResumed
 import io.embrace.android.embracesdk.internal.arch.navigation.NavigationSignal.ActivityStarted
@@ -61,15 +62,16 @@ internal class ActivityNavigationTrackerTest {
 
     private fun ActivityNavigationTracker.assertPlainActivityNavigation() {
         val times = transitionBetweenActivities()
-        assertEquals(7, times.size)
+        assertEquals(8, times.size)
         assertSignals(
             ActivityStarted(first.getId(), times[0]),
             ActivityResumed(first.getId(), first.localClassName, times[1]),
             ActivityPaused(first.getId(), times[2]),
             ActivityStarted(second.getId(), times[3]),
             ActivityResumed(second.getId(), second.localClassName, times[4]),
-            ActivityPaused(second.getId(), times[5]),
-            Backgrounded(times[6]),
+            ActivityDestroyed(first.getId(), times[5]),
+            ActivityPaused(second.getId(), times[6]),
+            Backgrounded(times[7]),
         )
         // each resumed Activity is offered to the screen source, after its own resume signal
         assertEquals(listOf<Activity>(first, second), navigationTrackingService.trackedActivities)
@@ -97,6 +99,7 @@ internal class ActivityNavigationTrackerTest {
                 { pause(first) },
                 { start(second) },
                 { resume(second) },
+                { destroy(first) },
                 { pause(second) },
                 ::onBackground,
             ),

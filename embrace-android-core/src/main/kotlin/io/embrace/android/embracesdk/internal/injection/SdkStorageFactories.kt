@@ -4,6 +4,7 @@ import android.content.Context
 import io.embrace.android.embracesdk.internal.logging.ErrorHandler
 import io.embrace.android.embracesdk.internal.storage.LegacySdkStorage
 import io.embrace.android.embracesdk.internal.storage.SdkStorage
+import io.embrace.android.embracesdk.internal.storage.createSdkStorage
 import okio.FileSystem
 import okio.Path.Companion.toOkioPath
 
@@ -18,3 +19,10 @@ fun createLegacySdkStorage(context: Context, errorHandler: ErrorHandler): SdkSto
         cacheDir = { context.cacheDir.toOkioPath() },
         errorHandler = errorHandler,
     )
+
+@Suppress("EmbraceContextDirAccess")
+fun createSdkStorage(
+    context: Context,
+    errorHandler: ErrorHandler,
+    fileSystem: FileSystem = FileSystem.SYSTEM,
+): SdkStorage = createSdkStorage(fileSystem, context.noBackupFilesDir.toOkioPath(), errorHandler)

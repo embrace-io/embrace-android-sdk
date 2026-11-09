@@ -201,6 +201,20 @@ internal class SchedulingServiceImplTest {
     }
 
     @Test
+    fun `a 429 with a zero retry-after backs off like one without the header`() {
+        serverBusy(endpoint = Endpoint.SESSIONS, retryAfterMs = 0L)
+        resetToSingleSessionPartPayload()
+        waitForResurrectionAndDeliveryAttempt()
+        assertEquals(1, executionService.sendAttempts())
+        allSendsSucceed()
+        tickAndWaitForDeliveryAttempts(INITIAL_DELAY_MS - 1)
+        assertEquals(1, executionService.sendAttempts())
+        tickAndWaitForDeliveryAttempts(2)
+        assertEquals(2, executionService.sendAttempts())
+        assertEquals(0, storageService.storedPayloadCount())
+    }
+
+    @Test
     fun `payloads to unblocked endpoint will not affect other endpoints`() {
         serverBusy(endpoint = Endpoint.SESSIONS, retryAfterMs = SHORT_BLOCKED_DURATION)
         resetToSingleSessionPartPayload()
@@ -895,7 +909,7 @@ internal class SchedulingServiceImplTest {
         storageService.addFakePayload(fakeSessionStoredTelemetryMetadata2)
         recreateSchedulingService(
             storage = object : PayloadStorageService by storageService {
-                override fun payloadSizeBytes(metadata: StoredTelemetryMetadata): Long {
+                override fun payloadSizeBytes(metadata: StoredTelemetryMetadata): Long? {
                     if (metadata == fakeSessionStoredTelemetryMetadata) {
                         error("size check failed")
                     }
@@ -911,6 +925,21 @@ internal class SchedulingServiceImplTest {
             SdkErrorType.DeliverySchedulingFail.toString(),
             errorHandler.sdkErrorMessages.single().msg,
         )
+    }
+
+    @Test
+    fun `a payload whose size cannot be read is kept for another attempt`() {
+        storageService.clearStorage()
+        storageService.addFakePayload(fakeSessionStoredTelemetryMetadata)
+        recreateSchedulingService(
+            storage = object : PayloadStorageService by storageService {
+                override fun payloadSizeBytes(metadata: StoredTelemetryMetadata): Long? = null
+            },
+        )
+        waitForResurrectionAndDeliveryAttempt()
+
+        assertEquals(0, executionService.sendAttempts())
+        assertEquals(1, storageService.storedPayloadCount())
     }
 
     @Test
@@ -1034,7 +1063,7 @@ internal class SchedulingServiceImplTest {
     }
 
     private fun storedSizeOf(metadata: StoredTelemetryMetadata): Long =
-        storageService.payloadSizeBytes(metadata)
+        checkNotNull(storageService.payloadSizeBytes(metadata))
 
     private fun useMaxPayloadBytes(maxPayloadBytes: Long) = recreateSchedulingService(maxPayloadBytes = maxPayloadBytes)
 

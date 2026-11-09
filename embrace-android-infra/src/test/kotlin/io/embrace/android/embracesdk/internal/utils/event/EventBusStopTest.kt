@@ -36,6 +36,28 @@ internal class EventBusStopTest {
     }
 
     @Test
+    fun `an emit in flight when the bus stops reaches no handler after the stop`() {
+        val received = mutableListOf<Any>()
+        bus.addHandler(appKey, order = 0) { bus.stop() }
+        bus.addHandler(appKey, order = 1) { received.add(it) }
+
+        bus.emit(appKey, AppEvent())
+
+        assertEquals(emptyList<Any>(), received)
+    }
+
+    @Test
+    fun `a state emit in flight when the bus stops reaches no handler after the stop`() {
+        val received = mutableListOf<Any>()
+        bus.addStateHandler(screenKey, order = 0) { bus.stop() }
+        bus.addStateHandler(screenKey, order = 1) { received.add(it) }
+
+        bus.emitState(screenKey, ScreenState("home"))
+
+        assertEquals(emptyList<Any>(), received)
+    }
+
+    @Test
     fun `stop releases retained values`() {
         bus.emitState(screenKey, ScreenState("home"))
 

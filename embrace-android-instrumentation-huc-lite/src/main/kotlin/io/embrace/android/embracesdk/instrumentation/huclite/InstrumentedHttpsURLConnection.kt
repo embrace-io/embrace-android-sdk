@@ -7,6 +7,7 @@ import io.embrace.android.embracesdk.internal.instrumentation.HucLiteDataSource.
 import io.embrace.android.embracesdk.internal.utils.BuildVersionChecker
 import io.embrace.android.embracesdk.internal.utils.VersionChecker
 import io.embrace.android.embracesdk.internal.utils.concurrent.OneShot
+import java.io.FileNotFoundException
 import java.io.InputStream
 import java.io.OutputStream
 import java.net.URL
@@ -228,6 +229,8 @@ internal class InstrumentedHttpsURLConnection(
 
     override fun getURL(): URL = wrappedConnection.url
 
+    override fun toString(): String = wrappedConnection.toString()
+
     override fun addRequestProperty(key: String?, value: String?) {
         wrappedConnection.addRequestProperty(key, value)
     }
@@ -298,7 +301,7 @@ internal class InstrumentedHttpsURLConnection(
             wrappedMethod()
         } catch (th: Throwable) {
             if (instrument) {
-                requestData?.clientError(th)
+                recordFailure(th)
             }
             throw th
         }
@@ -321,5 +324,27 @@ internal class InstrumentedHttpsURLConnection(
             return
         }
         requestData?.completeRequest(responseCode)
+    }
+
+    /**
+     * Records a request failure whose triggering call threw. If the call threw a [FileNotFoundException], read the cached
+     * response code in the wrapped connection. If it's >= 400, record it as a completed request that failed on the server.
+     * Otherwise, assume the error came from the client and not the request throwing.
+     */
+    private fun recordFailure(failure: Throwable) {
+        val responseCode = if (failure is FileNotFoundException) {
+            try {
+                wrappedConnection.responseCode
+            } catch (_: Throwable) {
+                null
+            }
+        } else {
+            null
+        }
+        if (responseCode != null && responseCode >= HTTP_BAD_REQUEST) {
+            requestData?.completeRequest(responseCode)
+        } else {
+            requestData?.clientError(failure)
+        }
     }
 }

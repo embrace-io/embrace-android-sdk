@@ -34,6 +34,7 @@ dependencies {
 
     testImplementation(project(":embrace-gradle-plugin"))
     testImplementation(libs.junit)
+    testImplementation(libs.okio)
     testImplementation(libs.asm.util)
     testImplementation(libs.gradle.test.kit)
 }

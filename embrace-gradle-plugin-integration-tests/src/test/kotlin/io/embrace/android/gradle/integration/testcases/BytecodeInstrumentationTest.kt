@@ -1,5 +1,6 @@
 package io.embrace.android.gradle.integration.testcases
 
+import io.embrace.android.gradle.integration.framework.AssertionInterface
 import io.embrace.android.gradle.integration.framework.PluginIntegrationTestRule
 import io.embrace.android.gradle.integration.framework.ProjectType
 import io.embrace.android.gradle.integration.framework.smali.SmaliConfigReader
@@ -49,10 +50,10 @@ class BytecodeInstrumentationTest {
         )
     }
 
-    private fun verifyBytecodeInstrumented(projectDir: File, buildType: String, resName: String) {
-        val reader = SmaliConfigReader()
+    private fun AssertionInterface.verifyBytecodeInstrumented(projectDir: File, buildType: String, resName: String) {
+        val reader = SmaliConfigReader(fileSystem)
         val smaliFiles = reader.readSmaliFiles(projectDir, classNames, buildType)
-        val parser = SmaliParser()
+        val parser = SmaliParser(fileSystem)
         val cfg = reader.readExpectedConfig(resName)
 
         cfg.values.forEach { expected ->
@@ -62,12 +63,12 @@ class BytecodeInstrumentationTest {
         }
     }
 
-    private fun readInstrumentedBuildId(projectDir: File): String? {
-        val file = SmaliConfigReader().readSmaliFiles(
+    private fun AssertionInterface.readInstrumentedBuildId(projectDir: File): String? {
+        val file = SmaliConfigReader(fileSystem).readSmaliFiles(
             projectDir,
             listOf("/io/embrace/android/embracesdk/internal/config/instrumented/ProjectConfigImpl"),
         ).single()
-        return SmaliParser().parse(file, listOf(SmaliMethod("getBuildId()Ljava/lang/String;")))
+        return SmaliParser(fileSystem).parse(file, listOf(SmaliMethod("getBuildId()Ljava/lang/String;")))
             .methods
             .single()
             .returnValue

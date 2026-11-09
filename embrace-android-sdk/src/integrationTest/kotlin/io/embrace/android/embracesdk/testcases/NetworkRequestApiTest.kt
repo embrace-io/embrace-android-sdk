@@ -2,6 +2,7 @@ package io.embrace.android.embracesdk.testcases
 
 import io.embrace.android.embracesdk.assertions.assertMatches
 import io.embrace.android.embracesdk.assertions.getLogOfType
+import io.embrace.android.embracesdk.assertions.getLogsOfType
 import io.embrace.android.embracesdk.assertions.getSessionPartId
 import io.embrace.android.embracesdk.assertions.getUserSessionId
 import io.embrace.android.embracesdk.internal.arch.schema.EmbType
@@ -285,6 +286,50 @@ internal class NetworkRequestApiTest(
                     2,
                     spans.size
                 )
+            }
+        )
+    }
+
+    @Test
+    fun `a network capture rule stops at its max count with the superior storage system enabled`() {
+        testRule.runTest(
+            setupAction = {
+                superiorStorageSystemEnabled = true
+            },
+            persistedRemoteConfig = RemoteConfig(
+                networkCaptureRules = setOf(
+                    NetworkCaptureRuleRemoteConfig(
+                        id = "test",
+                        duration = 0,
+                        method = "GET",
+                        urlRegex = "embrace.io",
+                        expiresIn = 10000,
+                        maxCount = 1,
+                        statusCodes = setOf(200),
+                    )
+                )
+            ),
+            testCaseAction = {
+                recordSession {
+                    repeat(2) {
+                        embrace.recordNetworkRequest(
+                            EmbraceNetworkRequest.fromCompletedRequest(
+                                URL,
+                                HttpMethod.GET,
+                                START_TIME + it,
+                                END_TIME,
+                                BYTES_SENT,
+                                BYTES_RECEIVED,
+                                200,
+                                networkCaptureData = NETWORK_CAPTURE_DATA,
+                            )
+                        )
+                    }
+                }
+            },
+            assertAction = {
+                val captured = getLogEnvelopes(1).flatMap { it.getLogsOfType(EmbType.System.NetworkCapturedRequest) }
+                assertEquals(1, captured.size)
             }
         )
     }

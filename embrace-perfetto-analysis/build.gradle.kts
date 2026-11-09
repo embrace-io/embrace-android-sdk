@@ -24,6 +24,9 @@ wire {
 dependencies {
     implementation(libs.kotlinx.serialization.json)
     implementation(libs.wire.runtime)
+    implementation(libs.okio)
+
+    testImplementation(project(":embrace-test-common"))
 }
 
 tasks.register<JavaExec>("analyseTrace") {

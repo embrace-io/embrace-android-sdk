@@ -7,8 +7,10 @@ import io.embrace.android.embracesdk.internal.clock.Clock
 import io.embrace.android.embracesdk.internal.clock.millisToNanos
 import io.embrace.android.embracesdk.internal.clock.nanosToMillis
 import io.embrace.android.embracesdk.internal.vitals.FocalInteractionCallbacks
+import io.embrace.android.embracesdk.internal.vitals.MainThreadProbe
 import io.embrace.android.embracesdk.internal.vitals.SettleTracker
 import io.embrace.android.embracesdk.internal.vitals.VitalsScheduler
+import io.embrace.android.embracesdk.internal.vitals.responsiveness.InteractionResponsivenessReporter
 import io.embrace.android.embracesdk.internal.vitals.screenload.ScreenLoadTracker
 
 /**
@@ -29,18 +31,29 @@ internal class FocalMomentTracker(
     private val heldIdleThresholdMs: Long = DEFAULT_HELD_IDLE_THRESHOLD_MS,
     // Only non-null for a sampled fraction of devices; see VitalsConfig.smoothnessFrameTraceEnabled.
     private val frameTraceRecorder: FrameTraceRecorder? = null,
+    // Only non-null when interaction responsiveness is captured; called on the Vitals thread.
+    private val responsivenessReporter: InteractionResponsivenessReporter? = null,
+    // Only non-null when interaction responsiveness is captured; builds the probe that reports main-thread blocks.
+    probeFactory: ((MainThreadProbe.BlockCallback) -> MainThreadProbe)? = null,
     // Receives every frame, whatever the smoothness state; called on the Vitals thread.
     private val onFrameCounted: (dropped: Boolean, expectedFrames: Int) -> Unit = { _, _ -> },
-) : FocalInteractionCallbacks {
+) : FocalInteractionCallbacks, AutoCloseable {
 
     // Reused hop Runnable instances (main thread -> Vitals thread); allocate them here to make certain they're off the hot path
-    private val interactionRunnable = Runnable { startOrResume() }
+    private val interactionStartRunnable = Runnable { startOrResume(openedByDown = true) }
+    private val interactionMoveRunnable = Runnable { startOrResume(openedByDown = false) }
     private val interactionEndRunnable = Runnable { handleInteractionEnd() }
     private val screenChangeRunnable = Runnable { handleScreenChange() }
+    private val closeRunnable = Runnable { handleClose() }
 
     // The settle baseline (the latest of redraw vsync / move) lives inside [settle]; we feed every activity
     // event to it via notifyActivity rather than holding the per-source timestamps here.
     private val settle = SettleTracker(scheduler, ::currentThresholdMs, ::onSettled)
+
+    // Runs only while a focal moment is capturing; each block is reported on the main thread and hops onto the Vitals thread.
+    private val probe: MainThreadProbe? = probeFactory?.invoke(
+        MainThreadProbe.BlockCallback { endUptimeMs, durationMs -> scheduler.post { handleBlock(endUptimeMs, durationMs) } },
+    )
 
     private var capturing = false
     private var held = false
@@ -48,6 +61,17 @@ internal class FocalMomentTracker(
     private var focalMomentStartEpochMs = 0L
     private var interacting = false
     private var bufferedEndNanos = 0L
+    private var closed = false
+
+    // The latest touch-down, written on the main thread only when responsiveness is captured.
+    @Volatile
+    private var pendingDownEventMs = 0L
+
+    @Volatile
+    private var pendingDownProcessedMs = 0L
+
+    // The earlier of the opening touch-down's event and processing times, or NO_DOWN_EVENT if a move opened the moment.
+    private var downStartMs = NO_DOWN_EVENT
 
     @WorkerThread
     override fun onFrame(vsyncNanos: Long, frameDispatchNanos: Long, jankNanos: Long, expectedFrames: Int) {
@@ -59,6 +83,7 @@ internal class FocalMomentTracker(
                 // Frame is contiguous with the buffered settle: resume capturing so its jank is included.
                 held = false
                 capturing = true
+                startProbe()
                 recordFrame(vsyncNanos, frameDispatchNanos, jankNanos)
                 settle.notifyActivity(vsyncNanos.nanosToMillis())
             } else {
@@ -73,26 +98,31 @@ internal class FocalMomentTracker(
     }
 
     @WorkerThread
-    private fun startOrResume() {
+    private fun startOrResume(openedByDown: Boolean) {
         if (held) {
             // Emit the buffered result, then open a fresh interaction.
             flushHeld()
-            startFocalMoment()
+            startFocalMoment(openedByDown)
         } else if (capturing) {
             interacting = true
             settle.notifyActivity(nowMs())
         } else {
-            startFocalMoment()
+            startFocalMoment(openedByDown)
         }
     }
 
     @MainThread
-    override fun onInteractionStart() =
-        scheduler.post(interactionRunnable)
+    override fun onInteractionStart(eventTime: Long) {
+        if (responsivenessReporter != null) {
+            pendingDownEventMs = eventTime
+            pendingDownProcessedMs = nowMs()
+        }
+        scheduler.post(interactionStartRunnable)
+    }
 
     @MainThread
     override fun onInteractionMove() =
-        scheduler.post(interactionRunnable)
+        scheduler.post(interactionMoveRunnable)
 
     @MainThread
     override fun onInteractionEnd() =
@@ -149,7 +179,7 @@ internal class FocalMomentTracker(
     }
 
     @WorkerThread
-    private fun startFocalMoment() {
+    private fun startFocalMoment(openedByDown: Boolean) {
         val nowMs = nowMs()
         focalMomentStartNanos = nowMs.millisToNanos()
         focalMomentStartEpochMs = clock.now()
@@ -158,7 +188,41 @@ internal class FocalMomentTracker(
         capturing = true
         reporter.onFocalMomentStart()
         frameTraceRecorder?.onFocalMomentStart()
+        if (responsivenessReporter != null) {
+            if (openedByDown) {
+                val eventMs = pendingDownEventMs
+                val processedMs = pendingDownProcessedMs
+                downStartMs = minOf(eventMs, processedMs)
+                responsivenessReporter.onFocalMomentStart((processedMs - eventMs).coerceAtLeast(0L))
+            } else {
+                downStartMs = NO_DOWN_EVENT
+                responsivenessReporter.onFocalMomentStart(null)
+            }
+        }
+        // Started on the Vitals thread, not at the touch-down's processing time, so hop latency is never reported as a block.
+        startProbe()
         settle.notifyActivity(nowMs)
+    }
+
+    @WorkerThread
+    private fun startProbe() {
+        if (!closed) {
+            probe?.start()
+        }
+    }
+
+    @WorkerThread
+    private fun handleBlock(endUptimeMs: Long, durationMs: Long) {
+        if (held) {
+            // The report trailed the settle check that held the moment; the block is activity, so resume.
+            held = false
+            capturing = true
+            startProbe()
+        } else if (!capturing) {
+            return
+        }
+        responsivenessReporter?.onBlock(durationMs)
+        settle.notifyActivity(endUptimeMs)
     }
 
     @WorkerThread
@@ -182,6 +246,10 @@ internal class FocalMomentTracker(
     @WorkerThread
     private fun onSettled(lastActivityMs: Long) {
         if (!capturing) {
+            return
+        }
+        // A blocked main thread renders nothing, so wait for the probe's block report rather than settle mid-block.
+        if (probe?.isOverdue(nowMs()) == true) {
             return
         }
         enterHeld(endNanos = lastActivityMs.millisToNanos())
@@ -208,8 +276,17 @@ internal class FocalMomentTracker(
         capturing = false
         held = false
         settle.cancel()
+        probe?.stop()
         val durationMs = (endNanos - focalMomentStartNanos).nanosToMillis()
         reporter.onFocalMomentEnd(outcome, focalMomentStartEpochMs, durationMs, frameTraceRecorder?.toBase64())
+        if (responsivenessReporter != null) {
+            val startNanos = if (downStartMs == NO_DOWN_EVENT) focalMomentStartNanos else downStartMs.millisToNanos()
+            responsivenessReporter.onFocalMomentEnd(
+                outcome = outcome,
+                startTimeMs = focalMomentStartEpochMs + (startNanos - focalMomentStartNanos).nanosToMillis(),
+                durationMs = (endNanos - startNanos).nanosToMillis(),
+            )
+        }
     }
 
     /**
@@ -221,6 +298,18 @@ internal class FocalMomentTracker(
         capturing = false
         held = true
         settle.cancel()
+        probe?.stop()
+    }
+
+    /**
+     * Stops the main-thread probe on the Vitals thread and keeps it stopped, so no probe message outlives the tracker.
+     */
+    override fun close() = scheduler.post(closeRunnable)
+
+    @WorkerThread
+    private fun handleClose() {
+        closed = true
+        probe?.stop()
     }
 
     private fun nowMs(): Long = SystemClock.uptimeMillis()
@@ -233,5 +322,7 @@ internal class FocalMomentTracker(
          * interaction / focal moment settled.
          */
         const val DEFAULT_HELD_IDLE_THRESHOLD_MS = 500L
+
+        private const val NO_DOWN_EVENT = -1L
     }
 }

@@ -16,6 +16,7 @@ import io.embrace.android.embracesdk.internal.config.remote.UserSessionRemoteCon
 import io.embrace.android.embracesdk.internal.otel.sdk.findAttributeValue
 import io.embrace.android.embracesdk.internal.payload.Envelope
 import io.embrace.android.embracesdk.internal.payload.SessionPartPayload
+import io.embrace.android.embracesdk.internal.store.Ordinal
 import io.embrace.android.embracesdk.internal.worker.Worker
 import io.embrace.android.embracesdk.semconv.EmbSessionAttributes.EMB_SESSION_PART_ID
 import io.embrace.android.embracesdk.semconv.EmbSessionAttributes.EMB_USER_SESSION_ID
@@ -26,6 +27,7 @@ import io.embrace.android.embracesdk.semconv.EmbSessionAttributes.EmbUserSession
 import io.embrace.android.embracesdk.semconv.EmbSessionAttributes.EmbUserSessionTerminationReasonValues.INACTIVITY
 import io.embrace.android.embracesdk.semconv.EmbSessionAttributes.EmbUserSessionTerminationReasonValues.MANUAL
 import io.embrace.android.embracesdk.semconv.EmbSessionAttributes.EmbUserSessionTerminationReasonValues.MAX_DURATION_REACHED
+import io.embrace.android.embracesdk.testframework.InMemorySharedPreferences
 import io.embrace.android.embracesdk.testframework.OtelSdkMode
 import io.embrace.android.embracesdk.testframework.SdkIntegrationTestRule
 import io.embrace.android.embracesdk.testframework.SdkIntegrationTestRule.Companion.DEFAULT_SDK_START_TIME_MS
@@ -40,6 +42,7 @@ import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNotEquals
 import org.junit.Assert.assertNotNull
+import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Rule
 import org.junit.Test
@@ -163,6 +166,48 @@ internal class UserSessionLifecycleTest(
 
                 assertNotEquals(persistedId, fgSession.getUserSessionId())
                 assertFalse(fgSession.isBackgroundOnlyPart())
+            }
+        )
+    }
+
+    @Test
+    fun `user session numbers increment with the superior storage system enabled and stay out of prefs`() {
+        testRule.runTest(
+            setupAction = {
+                superiorStorageSystemEnabled = true
+            },
+            persistedRemoteConfig = RemoteConfig(
+                userSession = UserSessionRemoteConfig(inactivityTimeoutSeconds = 30)
+            ),
+            testCaseAction = {
+                recordSession()
+                clock.tick(31_000L)
+                recordSession()
+            },
+            assertAction = {
+                assertUserSessionNumbers(
+                    envelopes = getSessionEnvelopes(2),
+                    userSessionNumbers = listOf(1, 2),
+                    sessionPartNumbers = listOf(1, 2)
+                )
+                assertNull(testRule.setup.getStore().getInt(Ordinal.SESSION.key))
+            }
+        )
+    }
+
+    @Test
+    fun `a full SDK start with the superior storage system enabled opens no prefs`() {
+        testRule.runTest(
+            setupAction = {
+                superiorStorageSystemEnabled = true
+            },
+            testCaseAction = {
+                recordSession()
+                recordSession()
+            },
+            assertAction = {
+                getSessionEnvelopes(2)
+                assertEquals(emptySet<String>(), InMemorySharedPreferences.requestedNames(testRule.setup.services.appContext))
             }
         )
     }

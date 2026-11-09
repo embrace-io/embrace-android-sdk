@@ -4,6 +4,7 @@ import io.embrace.android.embracesdk.fakes.FakeClock
 import io.embrace.android.embracesdk.fakes.FakeErrorHandler
 import io.embrace.android.embracesdk.internal.arch.navigation.CurrentScreen
 import io.embrace.android.embracesdk.internal.arch.navigation.NavigationSignal
+import io.embrace.android.embracesdk.internal.arch.navigation.NavigationSignal.ActivityDestroyed
 import io.embrace.android.embracesdk.internal.arch.navigation.NavigationSignal.ActivityPaused
 import io.embrace.android.embracesdk.internal.arch.navigation.NavigationSignal.ActivityResumed
 import io.embrace.android.embracesdk.internal.arch.navigation.NavigationSignal.ActivityStarted
@@ -61,6 +62,19 @@ internal class NavigationEventBrokerTest {
         loadTimes.add(broker.submitAndTick(Backgrounded(clock.now())))
         broker.submitAndTick(Backgrounded(clock.now()))
         assertStateTransitions(listOf(Screen.Named(HOME), Screen.Backgrounded))
+    }
+
+    @Test
+    fun `an activity resuming after a translucent activity closes is the screen again`() {
+        loadTimes.add(broker.submitAndTick(ActivityStarted(HOME_ID, clock.now())))
+        broker.submitAndTick(ActivityResumed(HOME_ID, HOME, clock.now()))
+        // a translucent activity pauses home without stopping it, so home doesn't start again when it closes
+        broker.submitAndTick(ActivityPaused(HOME_ID, clock.now()))
+        loadTimes.add(broker.submitAndTick(ActivityStarted(SETTINGS_ID, clock.now())))
+        broker.submitAndTick(ActivityResumed(SETTINGS_ID, SETTINGS, clock.now()))
+        broker.submitAndTick(ActivityPaused(SETTINGS_ID, clock.now()))
+        loadTimes.add(broker.submitAndTick(ActivityResumed(HOME_ID, HOME, clock.now())))
+        assertStateTransitions(listOf(Screen.Named(HOME), Screen.Named(SETTINGS), Screen.Named(HOME)))
     }
 
     @Test
@@ -138,7 +152,6 @@ internal class NavigationEventBrokerTest {
         broker.submitAndTick(ScreenSourceAttached(HOME_ID, clock.now()))
         loadTimes.add(broker.submitAndTick(ActivityStarted(HOME_ID, clock.now())))
         broker.submitAndTick(ActivityResumed(HOME_ID, HOME, clock.now()))
-        broker.submitAndTick(ActivityPaused(HOME_ID, clock.now()))
         loadTimes.add(
             broker.submitAndTick(ScreenChanged(HOME_ID, Screen.NavControllerInitializing.toString(), clock.now())),
         )
@@ -192,6 +205,50 @@ internal class NavigationEventBrokerTest {
                 Screen.Named("settings"),
             ),
         )
+    }
+
+    @Test
+    fun `a screen change while the app is in the background is shown when its activity resumes`() {
+        loadTimes.add(broker.simulateActivityStartWithScreenSource(HOME_ID, "home"))
+        broker.submitAndTick(ActivityResumed(HOME_ID, HOME, clock.now()))
+        broker.submitAndTick(ActivityPaused(HOME_ID, clock.now()))
+        loadTimes.add(broker.submitAndTick(Backgrounded(clock.now())))
+
+        // as when an app shows a lock screen as it goes to the background
+        broker.submitAndTick(ScreenChanged(HOME_ID, "lock", clock.now()))
+        loadTimes.add(broker.submitAndTick(ActivityResumed(HOME_ID, HOME, clock.now())))
+        assertStateTransitions(listOf(Screen.Named("home"), Screen.Backgrounded, Screen.Named("lock")))
+    }
+
+    @Test
+    fun `a screen change while another app's activity covers it is shown when the activity resumes`() {
+        loadTimes.add(broker.simulateActivityStartWithScreenSource(HOME_ID, "home"))
+        broker.submitAndTick(ActivityResumed(HOME_ID, HOME, clock.now()))
+        broker.submitAndTick(ActivityPaused(HOME_ID, clock.now()))
+        loadTimes.add(broker.submitAndTick(Backgrounded(clock.now())))
+        loadTimes.add(broker.submitAndTick(ActivityStarted(HOME_ID, clock.now())))
+        broker.submitAndTick(ActivityResumed(HOME_ID, HOME, clock.now()))
+
+        // as when a permission prompt, shown by another app, pauses it and the result navigates before it resumes
+        broker.submitAndTick(ActivityPaused(HOME_ID, clock.now()))
+        broker.submitAndTick(ScreenChanged(HOME_ID, "camera", clock.now()))
+        loadTimes.add(broker.submitAndTick(ActivityResumed(HOME_ID, HOME, clock.now())))
+        assertStateTransitions(
+            listOf(Screen.Named("home"), Screen.Backgrounded, Screen.Named("home"), Screen.Named("camera")),
+        )
+    }
+
+    @Test
+    fun `a destroyed activity's screen is not applied to a later activity with the same id`() {
+        loadTimes.add(broker.simulateActivityStartWithScreenSource(HOME_ID, "home"))
+        broker.submitAndTick(ActivityResumed(HOME_ID, HOME, clock.now()))
+        broker.submitAndTick(ActivityPaused(HOME_ID, clock.now()))
+        broker.submitAndTick(ActivityDestroyed(HOME_ID, clock.now()))
+
+        // ids are identity hash codes, which a later Activity can reuse once the destroyed one is collected
+        loadTimes.add(broker.submitAndTick(ActivityStarted(HOME_ID, clock.now())))
+        broker.submitAndTick(ActivityResumed(HOME_ID, SETTINGS, clock.now()))
+        assertStateTransitions(listOf(Screen.Named("home"), Screen.Named(SETTINGS)))
     }
 
     /**

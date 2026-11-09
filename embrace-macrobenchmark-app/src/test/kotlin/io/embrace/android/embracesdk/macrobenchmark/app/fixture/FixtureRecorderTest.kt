@@ -1,32 +1,33 @@
 package io.embrace.android.embracesdk.macrobenchmark.app.fixture
 
+import io.embrace.android.embracesdk.fs.FakeFileSystemRule
 import io.embrace.android.embracesdk.macrobenchmark.app.storage.FixtureStorage
 import io.embrace.android.embracesdk.macrobenchmark.app.storage.SdkStorage
+import okio.Path.Companion.toPath
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
-import org.junit.rules.TemporaryFolder
-import java.io.File
 
 internal class FixtureRecorderTest {
 
     @get:Rule
-    val tmp = TemporaryFolder()
+    val fsRule = FakeFileSystemRule()
 
-    private lateinit var dataDir: File
+    private val fs get() = fsRule.fileSystem
     private lateinit var sdk: SdkStorage
     private lateinit var recorder: FixtureRecorder
     private var sdkStarted = true
 
     @Before
     fun setUp() {
-        dataDir = tmp.newFolder("data")
-        sdk = SdkStorage(dataDir)
+        val dataDir = "/data".toPath()
+        fs.createDirectories(dataDir)
+        sdk = SdkStorage(fs, dataDir)
         sdkStarted = true
-        recorder = FixtureRecorder(sdk, FixtureStorage(dataDir), { sdkStarted }, writeSettleMs = 0)
+        recorder = FixtureRecorder(sdk, FixtureStorage(fs, dataDir), { sdkStarted }, writeSettleMs = 0)
     }
 
     @Test
@@ -75,7 +76,7 @@ internal class FixtureRecorderTest {
 
         assertEquals(FixtureOutcome.Restored, recorder.restore())
         assertEquals(listOf("1000_a"), sdk.sessionPartDirs())
-        assertFalse(sdk.remoteConfigDir.exists())
+        assertFalse(fs.exists(sdk.remoteConfigDir))
     }
 
     @Test
@@ -104,6 +105,8 @@ internal class FixtureRecorderTest {
     }
 
     private fun writePart(name: String) {
-        File(sdk.sessionsDir, name).apply { mkdirs() }.resolve("metadata.pb").writeText("metadata")
+        val dir = sdk.sessionsDir / name
+        fs.createDirectories(dir)
+        fs.write(dir / "metadata.pb") { writeUtf8("metadata") }
     }
 }

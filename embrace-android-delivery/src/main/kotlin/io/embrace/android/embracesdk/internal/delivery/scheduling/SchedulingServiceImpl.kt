@@ -210,7 +210,10 @@ class SchedulingServiceImpl(
                 return ExecutionResult.NetworkNotReady
             }
 
+            // a size that can't be read points to a storage failure that may pass, so the payload is kept for another
+            // attempt rather than sent unchecked or deleted. Storage has already reported the failure
             val sizeBytes = storageService.payloadSizeBytes(payload)
+                ?: return ExecutionResult.Incomplete(exception = IOException(UNREADABLE_SIZE_MSG), retry = true)
             if (sizeBytes > maxPayloadBytes) {
                 errorHandler.trackSdkError(
                     type = SdkErrorType.PayloadDeliveryFail,
@@ -295,7 +298,9 @@ class SchedulingServiceImpl(
             // If delivery of this payload should be retried, add or replace the entry in the retry map
             // with the new values for how many times it has failed, and when the next retry should happen
             val retryAttempts = payloadsToRetry[payload]?.failedAttempts ?: 0
-            val nextRetryTimeMs = if (this is ExecutionResult.TooManyRequests && retryAfterMs != null) {
+
+            // A non-positive retryAfterMs value is discarded as invalid, and we will treat it like we don't have one
+            val nextRetryTimeMs = if (this is ExecutionResult.TooManyRequests && retryAfterMs != null && retryAfterMs > 0) {
                 val unblockedTimestampMs = clock.now() + retryAfterMs
                 blockedEndpoints[endpoint] = unblockedTimestampMs
                 unblockedTimestampMs + 1L

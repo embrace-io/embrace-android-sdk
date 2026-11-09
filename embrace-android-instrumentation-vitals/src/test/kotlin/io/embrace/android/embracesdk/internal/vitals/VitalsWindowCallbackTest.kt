@@ -44,12 +44,13 @@ internal class VitalsWindowCallbackTest {
     }
 
     @Test
-    fun `ACTION_DOWN starts an interaction and forwards to the delegate`() {
-        val result = dispatch(MotionEvent.ACTION_DOWN)
+    fun `ACTION_DOWN starts an interaction at its event time and forwards to the delegate`() {
+        val result = dispatch(MotionEvent.ACTION_DOWN, eventTime = 1234L)
 
         assertTrue(result)
         assertEquals(1, delegateCalls)
         assertEquals(1, focalCallbacks.interactionStartCount)
+        assertEquals(listOf(1234L), focalCallbacks.interactionStartEventTimes)
         assertEquals(0, focalCallbacks.interactionEndCount)
         assertTrue(args.errorHandler.errorMessages.isEmpty())
     }
@@ -127,7 +128,7 @@ internal class VitalsWindowCallbackTest {
     fun `a callback that throws repeatedly tracks one error and still forwards to the delegate`() {
         val errorHandler = FakeErrorHandler(throwOnSdkError = false)
         val throwing = object : FocalInteractionCallbacks by focalCallbacks {
-            override fun onInteractionStart() = error("boom")
+            override fun onInteractionStart(eventTime: Long) = error("boom")
         }
         callback = VitalsWindowCallback(callback, throwing, OnceUiCallbackErrorTracker(errorHandler))
         repeat(3) { dispatch(MotionEvent.ACTION_DOWN) }
@@ -136,8 +137,8 @@ internal class VitalsWindowCallbackTest {
         assertEquals(listOf(SdkErrorType.UiCallbackFail.toString()), errorHandler.sdkErrorMessages.map { it.msg })
     }
 
-    private fun dispatch(action: Int): Boolean {
-        val event = MotionEvent.obtain(0L, 0L, action, 1f, 1f, 0)
+    private fun dispatch(action: Int, eventTime: Long = 0L): Boolean {
+        val event = MotionEvent.obtain(0L, eventTime, action, 1f, 1f, 0)
         try {
             return callback.dispatchTouchEvent(event)
         } finally {

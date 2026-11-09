@@ -2,6 +2,9 @@ package io.embrace.android.gradle.integration.framework
 
 import io.embrace.android.gradle.config.TestMatrix
 import okhttp3.mockwebserver.MockWebServer
+import okio.FileSystem
+import okio.Path.Companion.toOkioPath
+import okio.source
 import org.gradle.testkit.runner.BuildResult
 import org.gradle.testkit.runner.GradleRunner
 import org.gradle.testkit.runner.TaskOutcome
@@ -17,6 +20,7 @@ private const val CHECK_RELEASE_BUILDS = "android.lint.checkReleaseBuilds"
 
 class PluginIntegrationTestRule : ExternalResource() {
 
+    private val fileSystem: FileSystem = FileSystem.SYSTEM
     private val uniqueDirName: AtomicInteger = AtomicInteger(0)
     private val rootDir: File = File(System.getProperty("user.dir")).parentFile
 
@@ -34,7 +38,7 @@ class PluginIntegrationTestRule : ExternalResource() {
     override fun before() {
         apiServer = FakeApiServer()
         setupInterface = SetupInterface(apiServer)
-        assertionInterface = AssertionInterface(apiServer)
+        assertionInterface = AssertionInterface(apiServer, fileSystem)
         server = MockWebServer().apply {
             dispatcher = apiServer
             start()
@@ -43,8 +47,8 @@ class PluginIntegrationTestRule : ExternalResource() {
     }
 
     override fun after() {
-        tmpDir?.deleteRecursively()
         server.shutdown()
+        tmpDir?.let { dir -> runCatching { fileSystem.deleteRecursively(dir.toOkioPath()) } }
     }
 
     /**
@@ -182,19 +186,15 @@ class PluginIntegrationTestRule : ExternalResource() {
     }
 
     private fun copyFakeFile(projectDir: File, dst: String, resName: String) {
-        File(projectDir, dst).apply {
-            if (exists()) {
-                // don't overwrite an existing file if a test fixture chooses to supply something
-                return
-            }
-            parentFile.mkdirs()
-            outputStream().buffered().use {
-                val classLoader = checkNotNull(this@PluginIntegrationTestRule.javaClass.classLoader)
-                checkNotNull(classLoader.getResourceAsStream(resName)).use { resourceStream ->
-                    resourceStream.buffered().copyTo(it)
-                }
-            }
+        val dstPath = projectDir.toOkioPath() / dst
+        if (fileSystem.exists(dstPath)) {
+            // don't overwrite an existing file if a test fixture chooses to supply something
+            return
         }
+        dstPath.parent?.let(fileSystem::createDirectories)
+        val classLoader = checkNotNull(javaClass.classLoader)
+        val resource = checkNotNull(classLoader.getResourceAsStream(resName)).source()
+        fileSystem.write(dstPath) { resource.use(::writeAll) }
     }
 
     /**
@@ -273,12 +273,8 @@ class PluginIntegrationTestRule : ExternalResource() {
     }
 
     private fun loadSnapshotVersion(): String {
-        val file = File(rootDir, "gradle.properties")
-        file.inputStream().buffered().use {
-            Properties().apply {
-                load(it)
-                return getProperty("version")
-            }
+        return fileSystem.read(rootDir.toOkioPath() / "gradle.properties") {
+            Properties().apply { load(inputStream()) }.getProperty("version")
         }
     }
 

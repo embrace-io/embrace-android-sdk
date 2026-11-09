@@ -8,10 +8,12 @@ import io.embrace.android.embracesdk.internal.perfetto.trace.printEvents
 import io.embrace.android.embracesdk.internal.perfetto.trace.threadNames
 import io.embrace.android.embracesdk.internal.perfetto.trace.traceStartNanos
 import io.embrace.android.embracesdk.internal.perfetto.trace.traceWindowNanos
+import okio.FileSystem
+import okio.Path
+import okio.Path.Companion.toPath
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Test
-import java.io.File
 import java.math.BigDecimal
 import java.math.RoundingMode
 
@@ -21,7 +23,7 @@ import java.math.RoundingMode
  */
 internal class StatsFixtureTest {
 
-    private val trace = parseTrace(fixture())
+    private val trace = parseTrace(FileSystem.RESOURCES, fixture())
     private val events = ftraceEvents(trace)
     private val model = TraceInterpreter().interpret(events, threadNames(trace))
     private val window = traceWindowNanos(events)
@@ -100,10 +102,7 @@ internal class StatsFixtureTest {
 
     private fun round(percent: Double) = BigDecimal(percent).setScale(6, RoundingMode.HALF_UP).toDouble()
 
-    private fun fixture(): File {
-        val resource = checkNotNull(javaClass.getResource("/$FIXTURE")) { "missing test resource $FIXTURE" }
-        return File(resource.toURI())
-    }
+    private fun fixture(): Path = "/$FIXTURE".toPath()
 
     private companion object {
         const val FIXTURE = "macrobenchmark-session-multi-file.perfetto.gz"

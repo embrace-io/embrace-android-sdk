@@ -232,10 +232,22 @@ private class EmbraceSpanImpl(
                 return@guard false
             }
 
-            deps.spanRepository.trackStartedEmbraceSpan(this)
-            newSpan.setName(spanName)
-            if (currentStatus != StatusData.Unset) {
-                newSpan.setStatus(currentStatus)
+            val started = guard(false) {
+                deps.spanRepository.trackStartedEmbraceSpan(this)
+                newSpan.setName(spanName)
+                if (currentStatus != StatusData.Unset) {
+                    newSpan.setStatus(currentStatus)
+                }
+                true
+            }
+            if (!started) {
+                // the start fails after the OTel span was started, so end it, and this span with it, rather than leave the
+                // OTel span recording while this one reports a failed start. If it was tracked, it is then a completed span.
+                spanStartTimeMs = attemptedStartTimeMs
+                spanEndTimeMs = attemptedStartTimeMs
+                guard(Unit) { newSpan.end(attemptedStartTimeMs.millisToNanos()) }
+                releaseRetainedData()
+                return@guard false
             }
 
             spanStartTimeMs = attemptedStartTimeMs
@@ -259,15 +271,17 @@ private class EmbraceSpanImpl(
         } else {
             deps.openTelemetryClock.now().nanosToMillis()
         }
-        val attemptedEndTimeMs = if (endOrNowMs > spanStartTimeMs) {
-            endOrNowMs
-        } else {
-            spanStartTimeMs
-        }
 
         synchronized(startedSpan) {
             if (!isRecording) {
                 return@guard false
+            }
+
+            // read under the lock start() sets the start time under, so a stop racing a start clamps against the real start
+            val attemptedEndTimeMs = if (endOrNowMs > spanStartTimeMs) {
+                endOrNowMs
+            } else {
+                spanStartTimeMs
             }
 
             startedSpan.get()?.let { spanToStop ->
@@ -335,19 +349,20 @@ private class EmbraceSpanImpl(
             system = false,
             max = deps.dataValidator.otelLimitsConfig.getMaxCustomEventCount(),
         ) {
+            // the canonical name where the class has one, else the binary name, as an anonymous class has no canonical name
+            val type = runCatching { exception.javaClass.canonicalName }.getOrNull() ?: exception.javaClass.name
+
             // app-defined Throwables can override getMessage()/getStackTrace() with implementations that throw
             val exceptionAttributes = try {
                 buildMap {
-                    exception.javaClass.canonicalName?.let { type ->
-                        put(ExceptionAttributes.EXCEPTION_TYPE, type)
-                    }
+                    put(ExceptionAttributes.EXCEPTION_TYPE, type)
                     exception.message?.let { message ->
                         put(ExceptionAttributes.EXCEPTION_MESSAGE, message)
                     }
                     put(ExceptionAttributes.EXCEPTION_STACKTRACE, exception.truncatedStacktraceText())
                 }
             } catch (ignored: Throwable) {
-                mapOf(ExceptionAttributes.EXCEPTION_TYPE to exception.javaClass.name)
+                mapOf(ExceptionAttributes.EXCEPTION_TYPE to type)
             }
 
             deps.dataValidator.createTruncatedSpanEvent(

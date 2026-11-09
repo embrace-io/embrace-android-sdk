@@ -35,6 +35,12 @@ internal class FakeApplication : Application() {
         it.onActivityPostPaused(activity)
     }
 
+    fun destroy(activity: Activity) = lifecycleCallbacks.forEach {
+        it.onActivityPreDestroyed(activity)
+        it.onActivityDestroyed(activity)
+        it.onActivityPostDestroyed(activity)
+    }
+
     private fun ActivityLifecycleCallbacks.start(activity: Activity) {
         onActivityPreStarted(activity)
         onActivityStarted(activity)

@@ -8,7 +8,7 @@ import io.embrace.android.embracesdk.internal.store.Ordinal
 
 /**
  * Reads every live value the SDK stored in [prefs] into [LegacyPrefsSnapshot] that contains the same types
- * as existing data stores.
+ * as existing data stores. [all] is the result of [SharedPreferences.getAll], already read by the caller.
  *
  * Returns null if no device ID or install timestamp was stored, as the SDK writes both on first run, so their
  * absence means there is no useful data to migrate.
@@ -16,6 +16,7 @@ import io.embrace.android.embracesdk.internal.store.Ordinal
 @Suppress("SharedPreferencesUsage")
 class LegacyPrefsReader(
     private val prefs: SharedPreferences,
+    private val all: Map<String, *>,
     private val serializer: PlatformSerializer,
     private val errorHandler: ErrorHandler,
     private val appFramework: AppFramework,
@@ -44,9 +45,8 @@ class LegacyPrefsReader(
         )
     }
 
-    private fun readNetworkCaptureRemaining(): Map<String, Int> {
-        val all = runCatching { prefs.all }.getOrNull() ?: return emptyMap()
-        return all.mapNotNull { (key, value) ->
+    private fun readNetworkCaptureRemaining(): Map<String, Int> =
+        all.mapNotNull { (key, value) ->
             val ruleId = key.removePrefix(KEY_NETWORK_CAPTURE_RULE_PREFIX)
             if (ruleId == key || value !is Int) {
                 null
@@ -54,7 +54,6 @@ class LegacyPrefsReader(
                 ruleId to value
             }
         }.toMap()
-    }
 
     private companion object {
 

@@ -11,6 +11,7 @@ import io.embrace.android.embracesdk.internal.logging.guardSdkCode
 import io.embrace.android.embracesdk.internal.payload.AppFramework
 import io.embrace.android.embracesdk.internal.serialization.PlatformSerializer
 import io.embrace.android.embracesdk.internal.storage.SdkStorageLayout
+import io.embrace.android.embracesdk.internal.store.Ordinal
 import io.embrace.android.embracesdk.internal.store.file.FileDeliveredAeiStore
 import io.embrace.android.embracesdk.internal.store.file.FileNetworkCaptureRuleStore
 import io.embrace.android.embracesdk.internal.store.file.FilePersistedSdkStateStore
@@ -43,7 +44,7 @@ fun createSharedPrefsMigrator(
 /**
  * Migrates the SDK's live values from the app's default [SharedPreferences] into the files in [installStateDir], which
  * must exist, and deletes the SDK's keys from the prefs. `ordinals.bin` is written last and marks the migration as
- * complete.
+ * complete. Prefs that can't be read are treated as a fresh install rather than retried.
  */
 class SharedPrefsMigrator(
     private val fileSystem: FileSystem,
@@ -59,16 +60,16 @@ class SharedPrefsMigrator(
     private val ordinalsPath = installStateDir / SdkStorageLayout.ORDINALS_FILE_NAME
 
     /**
-     * Returns true if this call wrote `ordinals.bin`, whether it migrated values or found nothing to migrate. Returns
-     * false if a previous launch already migrated, or if this attempt failed: `ordinals.bin` is then absent and the
-     * next launch retries.
+     * Returns true if this call wrote `ordinals.bin`, or false if a previous launch already did. Only a failure to
+     * write `ordinals.bin` itself returns false with it absent, so the next launch runs again.
      */
     fun migrate(): Boolean = errorHandler.guardSdkCode(SdkErrorType.PrefsMigrationFail, false) {
         !fileSystem.exists(ordinalsPath) && EmbTrace.trace("prefs-migration") {
-            if (prefsFileExists()) {
-                migrateFrom(loadPrefs())
-            } else {
-                MmapOrdinalStore.create(fileSystem, ordinalsPath, emptyMap())
+            val loaded = if (prefsFileExists()) load() else null
+            val ordinals = loaded?.snapshot?.let(::writeStateFiles) ?: emptyMap()
+            MmapOrdinalStore.create(fileSystem, ordinalsPath, ordinals)
+            if (loaded != null) {
+                errorHandler.guardSdkCode(SdkErrorType.PrefsMigrationFail) { removeKeys(loaded.prefs, loaded.all.keys) }
             }
             true
         }
@@ -80,16 +81,31 @@ class SharedPrefsMigrator(
     private fun prefsFileExists(): Boolean =
         fileSystem.exists(prefsFile) || fileSystem.exists("$prefsFile.bak".toPath())
 
-    private fun migrateFrom(prefs: SharedPreferences) {
-        val keys = prefs.all.keys
-        val snapshot = LegacyPrefsReader(prefs, serializer, errorHandler, appFramework).read()
-        if (snapshot == null) {
-            MmapOrdinalStore.create(fileSystem, ordinalsPath, emptyMap())
-        } else {
-            writeFiles(snapshot)
-        }
-        errorHandler.guardSdkCode(SdkErrorType.PrefsMigrationFail) { removeKeys(prefs, keys) }
+    private fun load(): LoadedPrefs? = errorHandler.guardSdkCode(SdkErrorType.PrefsMigrationFail, null) {
+        val prefs = loadPrefs()
+        val all = prefs.all
+        LoadedPrefs(prefs, all, LegacyPrefsReader(prefs, all, serializer, errorHandler, appFramework).read())
     }
+
+    private fun writeStateFiles(snapshot: LegacyPrefsSnapshot): Map<Ordinal, Int> {
+        val written = errorHandler.guardSdkCode(SdkErrorType.PrefsMigrationFail, false) {
+            writeFiles(snapshot)
+            true
+        }
+        if (written) {
+            return snapshot.ordinals
+        }
+        errorHandler.guardSdkCode(SdkErrorType.PrefsMigrationFail) {
+            STATE_FILE_NAMES.forEach { fileSystem.delete(installStateDir / it, mustExist = false) }
+        }
+        return emptyMap()
+    }
+
+    private class LoadedPrefs(
+        val prefs: SharedPreferences,
+        val all: Map<String, *>,
+        val snapshot: LegacyPrefsSnapshot?,
+    )
 
     private fun writeFiles(snapshot: LegacyPrefsSnapshot) {
         val used = networkCaptureUsed(snapshot.networkCaptureRemaining)
@@ -110,7 +126,6 @@ class SharedPrefsMigrator(
         } else {
             FileDeliveredAeiStore.create(fileSystem, aeiPath, snapshot.deliveredAeiIds)
         }
-        MmapOrdinalStore.create(fileSystem, ordinalsPath, snapshot.ordinals)
     }
 
     private fun networkCaptureUsed(remaining: Map<String, Int>): Map<String, Int> {
@@ -131,5 +146,10 @@ class SharedPrefsMigrator(
     private companion object {
         const val SDK_KEY_PREFIX = "io.embrace."
         const val KEY_USER_SESSION = "embrace.user_session"
+        val STATE_FILE_NAMES = listOf(
+            SdkStorageLayout.PERSISTED_SDK_STATE_FILE_NAME,
+            SdkStorageLayout.NETWORK_CAPTURE_FILE_NAME,
+            SdkStorageLayout.AEI_DELIVERED_FILE_NAME,
+        )
     }
 }

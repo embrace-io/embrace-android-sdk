@@ -965,6 +965,70 @@ internal class ErrorHandlerImplTest {
         assertNull(ref.get())
     }
 
+    @Test
+    fun `a repeated error is rejected without reading its causes`() {
+        handler.trackSdkError(type, CountingError(0))
+        val repeat = CountingError(0)
+        handler.trackSdkError(type, repeat)
+        assertEquals(1, repeat.stackTraceReads.get())
+        assertEquals(0, repeat.causeReads.get())
+    }
+
+    @Test
+    fun `an error past the limit is rejected without reading its stack trace`() {
+        repeat(10) { fail() }
+        handler.drain(sink)
+        val exc = CountingError(0)
+        handler.trackSdkError(type, exc)
+        assertEquals(0, exc.stackTraceReads.get())
+        assertEquals(10, errors.size)
+    }
+
+    @Test
+    fun `an error dropped by a full buffer is not read`() {
+        handler = ErrorHandlerImpl(clock::now, noopLogcat, limit = 1)
+        fail()
+        handler.resetLimit()
+        val exc = CountingError(0)
+        handler.trackSdkError(type, exc)
+        assertEquals(0, exc.stackTraceReads.get())
+    }
+
+    @Test
+    fun `an error tracked by the sink whilst a sink failure is held is not read`() {
+        val second = CountingError(1)
+        handler.drain { snapshot ->
+            sink(snapshot)
+            if (snapshot.type == type) {
+                handler.trackSdkError(type, distinctError(0))
+                handler.trackSdkError(type, second)
+            }
+        }
+        fail()
+        assertEquals(0, second.stackTraceReads.get())
+        assertEquals(listOf(type, SdkErrorType.ErrorSinkFail), types)
+    }
+
+    private class CountingError(index: Int) : IllegalStateException() {
+        val stackTraceReads = AtomicInteger()
+        val causeReads = AtomicInteger()
+
+        init {
+            stackTrace = arrayOf(StackTraceElement("Foo", "bar", "Foo.kt", index))
+        }
+
+        override fun getStackTrace(): Array<StackTraceElement> {
+            stackTraceReads.incrementAndGet()
+            return super.getStackTrace()
+        }
+
+        override val cause: Throwable?
+            get() {
+                causeReads.incrementAndGet()
+                return super.cause
+            }
+    }
+
     private fun trackUnreferencedError(): WeakReference<Throwable> {
         val exc = distinctError(0)
         handler.trackSdkError(type, exc)

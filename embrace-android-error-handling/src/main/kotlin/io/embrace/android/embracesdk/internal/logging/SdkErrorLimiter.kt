@@ -13,10 +13,15 @@ internal class SdkErrorLimiter(limit: Int) {
     private val recorded = ConcurrentHashMap<SdkErrorKey, Unit>()
 
     /**
-     * Returns true if [snapshot] should be recorded, which uses one from the limit.
+     * True once the limit is used up.
      */
-    fun tryAcquire(snapshot: SdkErrorSnapshot): Boolean {
-        val key = snapshot.key()
+    val exhausted: Boolean
+        get() = remaining.get() <= 0
+
+    /**
+     * Returns true if an error with [key] should be recorded, which uses one from the limit.
+     */
+    fun tryAcquire(key: SdkErrorKey): Boolean {
         if (recorded.containsKey(key) || !reserve()) {
             return false
         }
@@ -30,13 +35,11 @@ internal class SdkErrorLimiter(limit: Int) {
     /**
      * Gives back the slot taken by [tryAcquire] for an error that wasn't recorded.
      */
-    fun release(snapshot: SdkErrorSnapshot) {
-        if (recorded.remove(snapshot.key()) != null) {
+    fun release(key: SdkErrorKey) {
+        if (recorded.remove(key) != null) {
             remaining.incrementAndGet()
         }
     }
-
-    private fun SdkErrorSnapshot.key() = SdkErrorKey(type, top.className, top.frames.firstOrNull())
 
     private fun reserve(): Boolean {
         while (true) {

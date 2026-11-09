@@ -80,47 +80,75 @@ class ErrorHandlerImpl(
         if (!type.shouldCapture() || handlerState.get() === HandlerState.Closed) {
             return
         }
-        val snapshot = try {
-            ThrowableSnapshotter.snapshot(type, throwable, safeNow())
-        } catch (_: OutOfMemoryError) {
-            return
-        }
         if (inSink.get() == true) {
-            if (sinkFailure.get() == null) {
-                sinkFailure.set(snapshot.copy(type = SdkErrorType.ErrorSinkFail))
-            } else {
-                logSafely(ErrorHandler.Severity.WARNING, "Dropped SDK error tracked whilst one is being recorded", throwable)
-            }
+            holdTrackedSinkFailure(throwable)
             return
         }
-        val reserved = when (bufferRoomFor(snapshot)) {
+        val reserved = when (bufferRoomFor(type)) {
             BufferRoom.NONE -> return
             BufferRoom.RESERVED -> true
             BufferRoom.OPEN -> false
         }
         val limiter = limiter
-        if (!reserved && !limiter.tryAcquire(snapshot)) {
+        if (!reserved && limiter.exhausted) {
+            return
+        }
+        val key = try {
+            ThrowableSnapshotter.keyOf(type, throwable)
+        } catch (_: OutOfMemoryError) {
+            return
+        }
+        if (!reserved && !limiter.tryAcquire(key)) {
             return
         }
         var kept = false
         try {
-            kept = bufferOrRecord(snapshot, reserved)
+            kept = snapshotAndKeep(type, throwable, key, reserved)
         } finally {
             if (!kept && !reserved) {
-                limiter.release(snapshot)
+                limiter.release(key)
             }
+        }
+    }
+
+    /**
+     * Returns false if the error was dropped.
+     */
+    private fun snapshotAndKeep(
+        type: SdkErrorType,
+        throwable: Throwable,
+        key: SdkErrorKey,
+        reserved: Boolean,
+    ): Boolean {
+        val snapshot = try {
+            ThrowableSnapshotter.snapshot(type, throwable, safeNow())
+        } catch (_: OutOfMemoryError) {
+            return false
+        }
+        return bufferOrRecord(snapshot, key, reserved)
+    }
+
+    private fun holdTrackedSinkFailure(throwable: Throwable) {
+        if (sinkFailure.get() != null) {
+            logSafely(ErrorHandler.Severity.WARNING, "Dropped SDK error tracked whilst one is being recorded", throwable)
+            return
+        }
+        try {
+            sinkFailure.set(ThrowableSnapshotter.snapshot(SdkErrorType.ErrorSinkFail, throwable, safeNow()))
+        } catch (_: OutOfMemoryError) {
+            // no-op
         }
     }
 
     /**
      * Checked before taking a limiter slot, so a full buffer doesn't spend the part's limit.
      */
-    private fun bufferRoomFor(snapshot: SdkErrorSnapshot): BufferRoom {
+    private fun bufferRoomFor(type: SdkErrorType): BufferRoom {
         val state = handlerState.get() as? HandlerState.Buffering ?: return BufferRoom.OPEN
         beforeBuffering()
         return when {
             state.size < limit -> BufferRoom.OPEN
-            snapshot.type == SdkErrorType.ErrorSinkFail && state.size == limit -> BufferRoom.RESERVED
+            type == SdkErrorType.ErrorSinkFail && state.size == limit -> BufferRoom.RESERVED
             else -> BufferRoom.NONE
         }
     }
@@ -130,7 +158,7 @@ class ErrorHandlerImpl(
     /**
      * Returns false if [snapshot] was dropped.
      */
-    private fun bufferOrRecord(snapshot: SdkErrorSnapshot, reserved: Boolean): Boolean {
+    private fun bufferOrRecord(snapshot: SdkErrorSnapshot, key: SdkErrorKey, reserved: Boolean): Boolean {
         // The buffer is a Treiber stack on a HandlerState instance that indicates that it is buffering errors. An error
         // is added by swapping in a new Buffered instance that contains the latest error and links back to the last one.
         // The swap retries if another thread changed the HandlerState since it was read, and that retry will proceed
@@ -143,7 +171,7 @@ class ErrorHandlerImpl(
 
                 // Once the handler is recording, record the error directly rather than buffering it
                 is HandlerState.Recording -> {
-                    if (!reserved || limiter.tryAcquire(snapshot)) {
+                    if (!reserved || limiter.tryAcquire(key)) {
                         record(state.recorder, snapshot)
                     }
                     return true
@@ -275,7 +303,7 @@ class ErrorHandlerImpl(
                 return
             }
             runSafely({ "Failed to record SDK error (${SdkErrorType.ErrorSinkFail})" }, logcat) {
-                if (limiter.tryAcquire(failure)) {
+                if (limiter.tryAcquire(failure.key())) {
                     sink(failure)
                 }
             }

@@ -44,6 +44,18 @@ internal object ThrowableSnapshotter {
         return SdkErrorSnapshot(type, timestampMs, chain, suppressed)
     }
 
+    /**
+     * Returns the [SdkErrorKey] that [snapshot] would give [throwable], without reading its causes, suppressed or other frames.
+     */
+    fun keyOf(type: SdkErrorType, throwable: Throwable): SdkErrorKey {
+        val topFrame = try {
+            throwable.stackTrace?.let { if (it.isEmpty()) null else frameOf(it[0]) }
+        } catch (_: Throwable) {
+            unavailable("stackTrace")
+        }
+        return SdkErrorKey(type, classNameOf(throwable), topFrame)
+    }
+
     private fun snapshotOf(throwable: Throwable): ThrowableSnapshot {
         val vmError = throwable is VirtualMachineError
         return ThrowableSnapshot(

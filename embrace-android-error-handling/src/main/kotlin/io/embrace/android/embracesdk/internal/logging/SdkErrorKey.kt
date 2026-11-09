@@ -8,3 +8,5 @@ internal data class SdkErrorKey(
     val exceptionClass: String,
     val topFrame: String?,
 )
+
+internal fun SdkErrorSnapshot.key() = SdkErrorKey(type, top.className, top.frames.firstOrNull())

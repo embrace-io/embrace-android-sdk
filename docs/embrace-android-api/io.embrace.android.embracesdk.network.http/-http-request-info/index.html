@@ -38,7 +38,7 @@
             </a>        <button class="navigation-controls--btn navigation-controls--btn_toc ui-kit_mobile-only" id="toc-toggle" type="button">Toggle table of contents
         </button>
         <div class="navigation-controls--break ui-kit_mobile-only"></div>
-        <div class="library-version" id="library-version">9.4.0
+        <div class="library-version" id="library-version">9.5.0
         </div>
         <div class="navigation-controls">
         <ul class="filter-section filter-section_loading" id="filter-section" aria-label="Target filter">
@@ -93,7 +93,7 @@
   <div class="breadcrumbs"><a href="../../index.html">embrace-android-api</a><span class="delimiter">/</span><a href="../index.html">io.embrace.android.embracesdk.network.http</a><span class="delimiter">/</span><span class="current">HttpRequestInfo</span></div>
   <div class="cover ">
     <h1 class="cover"><span>Http</span><wbr><span>Request</span><wbr><span><span>Info</span></span></h1>
-    <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":embrace-android-api/release"><div class="symbol monospace"><span class="token keyword">interface </span><a href="index.html">HttpRequestInfo</a><span class="source-link-wrapper"><span class="source-link" data-element-type="source-link">(<a href="https://github.com/embrace-io/embrace-android-sdk/blob/main/embrace-android-api/src/main/kotlin/io/embrace/android/embracesdk/network/http/HttpRequestInfo.kt#L6">source</a>)</span></span></div><p class="paragraph">Information captured about an HTTP request by instrumentation.</p><h4 class="tableheader">Inheritors</h4><div class="table"><div class="table-row table-row_content" data-filterable-current=":embrace-android-api/release" data-filterable-set=":embrace-android-api/release"><div class="main-subrow keyValue "><div class=""><span class="inline-flex"><div><a href="../-mutable-http-request-info/index.html">MutableHttpRequestInfo</a></div></span></div><div></div></div></div></div></div></div>
+    <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":embrace-android-api/release"><div class="symbol monospace"><span class="token keyword">interface </span><a href="index.html">HttpRequestInfo</a><span class="source-link-wrapper"><span class="source-link" data-element-type="source-link">(<a href="https://github.com/embrace-io/embrace-android-sdk/blob/main/embrace-android-api/src/main/kotlin/io/embrace/android/embracesdk/network/http/HttpRequestInfo.kt#L7">source</a>)</span></span></div><p class="paragraph">Information captured about an HTTP request by instrumentation. You should not implement the <code class="lang-kotlin">HttpRequestInfo</code> interface directly in your own custom classes, as new functions may be added in the future.</p><h4 class="tableheader">Inheritors</h4><div class="table"><div class="table-row table-row_content" data-filterable-current=":embrace-android-api/release" data-filterable-set=":embrace-android-api/release"><div class="main-subrow keyValue "><div class=""><span class="inline-flex"><div><a href="../-mutable-http-request-info/index.html">MutableHttpRequestInfo</a></div></span></div><div></div></div></div></div></div></div>
   </div>
   <div class="tabbedcontent">
     <div class="tabs-section" tabs-section="tabs-section"><button class="section-tab" data-active="" data-togglable="CONSTRUCTOR,TYPE,PROPERTY,FUNCTION">Members</button></div>
@@ -111,6 +111,21 @@
               <div>
                 <div class="title">
                   <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":embrace-android-api/release"><div class="symbol monospace"><span class="token keyword">abstract </span><span class="token keyword">val </span><a href="http-method.html">httpMethod</a><span class="token operator">: </span><a href="https://kotlinlang.org/api/core/kotlin-stdlib/kotlin/-string/index.html">String</a></div><div class="brief "><p class="paragraph">The request's method (<code class="lang-kotlin">GET</code>, <code class="lang-kotlin">PUT</code>, <code class="lang-kotlin">POST</code>, <code class="lang-kotlin">DELETE</code>, <code class="lang-kotlin">PATCH</code>, etc.).</p></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="1666560113%2FProperties%2F1469655248" anchor-label="nativeRequest" id="1666560113%2FProperties%2F1469655248" data-filterable-set=":embrace-android-api/release"></a>
+          <div class="table-row table-row_content" data-filterable-current=":embrace-android-api/release" data-filterable-set=":embrace-android-api/release">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="native-request.html"><span>native</span><wbr><span><span>Request</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="1666560113%2FProperties%2F1469655248"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":embrace-android-api/release"><div class="symbol monospace"><span class="token keyword">open </span><span class="token keyword">val </span><a href="native-request.html">nativeRequest</a><span class="token operator">: </span><a href="https://kotlinlang.org/api/core/kotlin-stdlib/kotlin/-any/index.html">Any</a><span class="token operator">?</span></div><div class="brief "><p class="paragraph">The HTTP client's own request object, such as an <code class="lang-kotlin">okhttp3.Request</code>, or null if the instrumentation doesn't provide one.</p></div></div></div>
                 </div>
               </div>
             </div>

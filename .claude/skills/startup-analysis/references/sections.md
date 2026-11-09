@@ -3,9 +3,20 @@
 The sections the SDK in this repo emits. Only for traces from a released SDK, or to compare
 versions, read `section-history.md`, which holds every version-specific rule.
 
+## Keeping these docs current
+
+- **When a change on main adds, removes, renames or re-nests an `EmbTrace` section** (or changes
+  whether it records a duration), update the tree below in the same change. If a renamed section
+  does the same work as before, also add it to `OLDER_SECTION_NAMES` in
+  `scripts/analyze_startup.py`, so traces from older SDKs still fill its row.
+- **After each release**, add a snapshot of that release to the top of `section-history.md`: the
+  tree read with `scripts/section_tree.sql` from a startup trace of the released SDK, and what
+  changed from the release before. Then check this file against the same trace, and update the
+  "Last checked" line below.
+
 ## Nesting and execution order
 
-Last checked against a 9.4.0 startup trace.
+Last checked against a 9.4.0 startup trace, read with `scripts/section_tree.sql`.
 
 Indentation = nesting; a parent's duration includes its children. Presentation in reports should
 follow this order. `●` = also exported as a `<name>-duration-ms` attribute on the `sdk-init`

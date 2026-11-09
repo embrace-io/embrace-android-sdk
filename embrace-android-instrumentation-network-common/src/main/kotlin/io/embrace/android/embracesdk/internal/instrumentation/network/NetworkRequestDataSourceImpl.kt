@@ -75,19 +75,13 @@ class NetworkRequestDataSourceImpl(
             },
         ) {
             val networkRequestSchemaType = SchemaType.NetworkRequest(generateSchemaAttributes(request, url, httpMethod))
-            val statusCode = request.statusCode
-            val errorCode = if (statusCode == null || statusCode <= 0 || statusCode >= 400) {
-                ErrorCodeAttribute.Failure
-            } else {
-                null
-            }
             recordCompletedSpan(
                 name = getNetworkSpanName(httpMethod, url),
                 startTimeMs = request.startTime,
                 endTimeMs = request.endTime,
                 type = EmbType.Performance.Network,
                 attributes = networkRequestSchemaType.attributes(),
-                errorCode = errorCode,
+                errorCode = errorCodeFor(request.statusCode),
             )
         }
     }
@@ -163,16 +157,10 @@ class NetworkRequestDataSourceImpl(
                 MutableHttpRequestInfoImpl(activeRequest.httpMethod, endData.url),
             ).url
             with(activeRequest.spanToken) {
-                val statusCode = endData.statusCode
-                val errorCode = if (statusCode == null || statusCode <= 0 || statusCode >= 400) {
-                    ErrorCodeAttribute.Failure
-                } else {
-                    null
-                }
                 requestEndAttributes(endData, modifiedUrl).forEach {
                     setSystemAttribute(it.key, it.value)
                 }
-                stop(endData.sdkClockEndTime, errorCode)
+                stop(endData.sdkClockEndTime, errorCodeFor(endData.statusCode))
             }
         }
     }
@@ -227,6 +215,14 @@ class NetworkRequestDataSourceImpl(
     }
 
     private fun getNetworkSpanName(httpMethod: String, url: String) = "$httpMethod ${getUrlPath(stripUrl(url))}"
+
+    // a request failed if it got no response status, or one that isn't a success or redirect
+    private fun errorCodeFor(statusCode: Int?): ErrorCodeAttribute? =
+        if (statusCode == null || statusCode <= 0 || statusCode >= 400) {
+            ErrorCodeAttribute.Failure
+        } else {
+            null
+        }
 
     /**
      * Tracks an in-flight request span. [httpMethod] is the post-modifier method captured at request

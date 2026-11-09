@@ -144,6 +144,7 @@ internal class RealSdkInstance(
     instrumentationApiDelegate: InstrumentationApiDelegate,
     private val experimentApiDelegate: ExperimentApiDelegate,
     private val tracingApi: TracingApi,
+    private val awaitLegacyTelemetryMigration: () -> Unit = {},
 ) : SdkInstance,
     LogsApi by logsApiDelegate,
     NetworkRequestApi by networkRequestApiDelegate,
@@ -361,6 +362,7 @@ internal class RealSdkInstance(
                 threadBlockageService?.startCapture()
                 lastRunCrashVerifier.readAndCleanMarkerAsync(
                     workerThreadPool.backgroundWorker(Worker.Background.IoRegWorker),
+                    awaitLegacyTelemetryMigration,
                 )
             }
 
@@ -486,6 +488,10 @@ internal class RealSdkInstance(
                     errorHandler.guardSdkCode(SdkErrorType.SdkInitPhaseFail) {
                         schedulingService?.let(networkConnectivityService::addNetworkConnectivityListener)
                     }
+
+                    // telemetry a migration is still moving into place must be on disk before the reader and
+                    // resurrection look for it
+                    awaitLegacyTelemetryMigration()
 
                     // process multi-file session part directories before resurrection can run. The reader resurrects
                     // dead parts itself, so a part this pass doesn't reach is still resurrected by a later pass

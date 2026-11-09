@@ -64,6 +64,20 @@ internal class LastRunCrashVerifierTest {
         assertFalse(lastRunCrashVerifier.didLastRunCrash())
         assertEquals(1, crashFileMarker.getAndCleanCount)
     }
+
+    @Test
+    fun `readAndCleanMarkerAsync reads the marker only after awaitLegacyTelemetryMigration creates it`() {
+        var readsBeforeHook = -1
+        lastRunCrashVerifier.readAndCleanMarkerAsync(worker) {
+            readsBeforeHook = crashFileMarker.getAndCleanCount
+            crashFileMarker.marked = true
+        }
+        assertEquals(-1, readsBeforeHook)
+        executor.runCurrentlyBlocked()
+        assertEquals(0, readsBeforeHook)
+        assertTrue(lastRunCrashVerifier.didLastRunCrash())
+        assertEquals(1, crashFileMarker.getAndCleanCount)
+    }
 }
 
 private class FakeCrashFileMarker : CrashFileMarker {

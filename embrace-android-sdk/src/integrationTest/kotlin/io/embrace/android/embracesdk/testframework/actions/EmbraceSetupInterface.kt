@@ -157,6 +157,11 @@ internal class EmbraceSetupInterface(
      */
     var startFailure: Throwable? = null
 
+    /**
+     * Called by the SDK before it reads the previous launch's crash marker and telemetry.
+     */
+    var awaitLegacyTelemetryMigration: () -> Unit = {}
+
     private val fakeInitServices: TestInitServices = TestInitServices(
         clock = fakeClock,
         errorHandler = FakeErrorHandler(ignoredErrors = ignoredSdkErrors, delegate = ErrorHandlerImpl(fakeClock::now, ::androidLogcat)),
@@ -285,6 +290,7 @@ internal class EmbraceSetupInterface(
         intakeService = { real -> real().also { services.intakeService = it } },
         eventBus = { real -> real().also { services.eventBus = it } },
         ordinalStore = ordinalStore?.let { store -> { store } },
+        awaitLegacyTelemetryMigration = { awaitLegacyTelemetryMigration },
     )
 
     /**

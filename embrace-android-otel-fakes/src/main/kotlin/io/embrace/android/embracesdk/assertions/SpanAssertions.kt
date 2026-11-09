@@ -118,8 +118,11 @@ private fun Span.stateSpanAttributes(): Map<String, String> {
     return checkNotNull(attributes).toMap()
 }
 
-fun List<Attribute>?.assertSdkInitSectionDurationsRecorded() {
-    expectedSdkInitSections.forEach { section ->
+/**
+ * The SDK only reads prefs during init when [superiorStorageSystemEnabled] is false.
+ */
+fun List<Attribute>?.assertSdkInitSectionDurationsRecorded(superiorStorageSystemEnabled: Boolean) {
+    expectedSdkInitSections.filterNot { superiorStorageSystemEnabled && it == PREFS_FIRST_READ_SECTION }.forEach { section ->
         assertNotNull(
             "duration for init section `$section` not found",
             this?.findAttributeValue("$section-duration-ms")
@@ -130,11 +133,13 @@ fun List<Attribute>?.assertSdkInitSectionDurationsRecorded() {
 /**
  * Sections known to run within the SDK init flow during integration tests.
  */
+private const val PREFS_FIRST_READ_SECTION = "prefs-first-read"
+
 private val expectedSdkInitSections = listOf(
     "modules-init",
     "persisted-config-init",
     "config-service-init",
-    "prefs-first-read",
+    PREFS_FIRST_READ_SECTION,
     "current-session-part-span-initialize-service",
     "process-state-tracker-init",
     "payload-storage-service-init",

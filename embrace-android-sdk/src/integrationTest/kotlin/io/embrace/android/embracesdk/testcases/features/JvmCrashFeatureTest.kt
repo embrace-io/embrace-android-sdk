@@ -1,8 +1,5 @@
 package io.embrace.android.embracesdk.testcases.features
 
-import android.content.Context
-import androidx.test.core.app.ApplicationProvider
-import io.embrace.android.embracesdk.fakes.testSdkStorage
 import io.embrace.android.embracesdk.PropertyScope
 import io.embrace.android.embracesdk.assertions.assertMatches
 import io.embrace.android.embracesdk.assertions.assertOtelLogReceived
@@ -11,7 +8,6 @@ import io.embrace.android.embracesdk.assertions.getStartTime
 import io.embrace.android.embracesdk.assertions.getUserSessionId
 import io.embrace.android.embracesdk.assertions.waitUntilConditionMet
 import io.embrace.android.embracesdk.concurrency.BlockingScheduledExecutorService
-import io.embrace.android.embracesdk.fakes.FakeErrorHandler
 import io.embrace.android.embracesdk.fakes.FakePayloadStorageService
 import io.embrace.android.embracesdk.fakes.TestPlatformSerializer
 import io.embrace.android.embracesdk.fakes.config.FakeInstrumentedConfig
@@ -438,8 +434,7 @@ internal class JvmCrashFeatureTest(
      * part has ended.
      */
     private fun readSessionSpanOnDisk(sessionPartId: String): SpanProto? {
-        val ctx = ApplicationProvider.getApplicationContext<Context>()
-        val sessionsDir = testSdkStorage(ctx).dir(SdkDir.TELEMETRY_PENDING_SESSION_PARTS).toFile()
+        val sessionsDir = testRule.setup.sdkStorage().dir(SdkDir.TELEMETRY_PENDING_SESSION_PARTS).toFile()
         val partDir = (sessionsDir.list() ?: emptyArray())
             .mapNotNull(SessionPartDirectory::fromDirName)
             .singleOrNull { it.sessionPartId == sessionPartId }

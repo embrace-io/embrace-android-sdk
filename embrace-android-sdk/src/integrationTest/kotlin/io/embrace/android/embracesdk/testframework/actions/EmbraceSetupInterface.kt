@@ -59,6 +59,13 @@ import io.embrace.android.embracesdk.internal.session.persistence.SessionPartDir
 import io.embrace.android.embracesdk.internal.session.persistence.SessionPartWriteTarget
 import io.embrace.android.embracesdk.internal.store.KeyValueStore
 import io.embrace.android.embracesdk.internal.store.OrdinalStore
+import io.embrace.android.embracesdk.internal.payload.AppFramework
+import io.embrace.android.embracesdk.internal.prefs.PrefsPersistedSdkStateStore
+import io.embrace.android.embracesdk.internal.session.UserSessionMetadata
+import io.embrace.android.embracesdk.internal.storage.SdkStorage
+import io.embrace.android.embracesdk.internal.storage.SdkStorageLayout
+import io.embrace.android.embracesdk.internal.store.PersistedSdkStateEditor
+import io.embrace.android.embracesdk.internal.store.file.FilePersistedSdkStateStore
 import io.embrace.android.embracesdk.internal.utils.UuidSource
 import io.embrace.android.embracesdk.internal.utils.VersionChecker
 import io.embrace.android.embracesdk.internal.vitals.vitalsVersionCheckerTestOverride
@@ -219,7 +226,33 @@ internal class EmbraceSetupInterface(
                     ).also { services.configService = it }
                 },
                 superiorStorageSystemEnabled = superiorStorageSystemEnabled,
-            )
+            ).also { services.persistedSdkStateStore = it.persistedSdkStateStore }
+        }
+    }
+
+    /**
+     * The storage layer the SDK uses
+     */
+    fun sdkStorage(): SdkStorage = testSdkStorage(fakeContext, superiorStorageSystemEnabled)
+
+    /**
+     * Edits the persisted SDK state before the SDK starts, simulating a previous process.
+     */
+    fun seedPersistedSdkState(action: PersistedSdkStateEditor.() -> Unit) {
+        if (superiorStorageSystemEnabled) {
+            val storage = sdkStorage()
+            val executor = BlockingScheduledExecutorService(fakeClock, blockingMode = true)
+            FilePersistedSdkStateStore(
+                fileSystem = storage.fileSystem,
+                path = storage.dir(SdkDir.INSTALL_STATE) / SdkStorageLayout.PERSISTED_SDK_STATE_FILE_NAME,
+                worker = BackgroundWorker(executor),
+                errorHandler = fakeInitServices.errorHandler,
+                clock = fakeClock,
+                uuidSource = uuidSource,
+            ).update(action)
+            executor.runCurrentlyBlocked()
+        } else {
+            PrefsPersistedSdkStateStore(keyValueStore, fakeClock, uuidSource, AppFramework.NATIVE).update(action)
         }
     }
 
@@ -292,7 +325,7 @@ internal class EmbraceSetupInterface(
             userSessionId = userSessionId,
             sessionPartId = sessionPartId,
         )
-        val sessionsDir = testSdkStorage(fakeContext).lazyFile(SdkDir.TELEMETRY_PENDING_SESSION_PARTS)
+        val sessionsDir = sdkStorage().lazyFile(SdkDir.TELEMETRY_PENDING_SESSION_PARTS)
         check(File(sessionsDir.value, directory.dirName).mkdirs()) {
             "Could not create session part directory ${directory.dirName}"
         }
@@ -342,8 +375,8 @@ internal class EmbraceSetupInterface(
         serializer: PlatformSerializer,
         crashData: StoredNativeCrashData,
     ) {
-        crashData.getCrashFile().createNewFile()
-        val key = crashData.getCrashFile().absolutePath
+        crashData.getCrashFile(sdkStorage()).createNewFile()
+        val key = crashData.getCrashFile(sdkStorage()).absolutePath
         val json = serializer.toJson(crashData.nativeCrash, NativeCrashData.serializer())
         fakeJniDelegate.addCrashRaw(key, json)
     }
@@ -352,18 +385,13 @@ internal class EmbraceSetupInterface(
      * Setup permanent session properties without using the SDK interfaces
      */
     fun setupPermanentUserSessionProperties(properties: Map<String, String>) {
-        getStore().editAndCommit {
-            putStringMap(
-                "io.embrace.session.properties", properties
-            )
-        }
+        seedPersistedSdkState { sessionProperties = properties }
     }
 
     /**
      * Persist a fake user session before the SDK starts, simulating a store
      * from a previous process.
      */
-    @OptIn(ExperimentalSemconv::class)
     fun persistUserSession(
         userSessionId: String,
         startMs: Long,
@@ -374,21 +402,16 @@ internal class EmbraceSetupInterface(
         inactivityTimeoutSeconds: Int = 1800,
         isBackgroundOnly: Boolean = false,
     ) {
-        getStore().editAndCommit {
-            putStringMap(
-                "embrace.user_session",
-                buildMap {
-                    put(EmbSessionAttributes.EMB_USER_SESSION_ID, userSessionId)
-                    put(EmbSessionAttributes.EMB_USER_SESSION_START_TS, startMs.toString())
-                    put(EmbSessionAttributes.EMB_USER_SESSION_NUMBER, sessionNumber.toString())
-                    put(EmbSessionAttributes.EMB_USER_SESSION_MAX_DURATION_SECONDS, maxDurationSeconds.toString())
-                    put(EmbSessionAttributes.EMB_USER_SESSION_INACTIVITY_TIMEOUT_SECONDS, inactivityTimeoutSeconds.toString())
-                    put(EmbSessionAttributes.EMB_USER_SESSION_PART_INDEX, partIndex.toString())
-                    put("emb.user_session_last_activity_ts", lastActivityMs.toString())
-                    if (isBackgroundOnly) {
-                        put(EmbSessionAttributes.EMB_IS_BACKGROUND_ONLY_PART, "1")
-                    }
-                }
+        seedPersistedSdkState {
+            userSession = UserSessionMetadata.Classified(
+                startTimeMs = startMs,
+                userSessionId = userSessionId,
+                userSessionNumber = sessionNumber.toLong(),
+                maxDurationSecs = maxDurationSeconds.toLong(),
+                inactivityTimeoutSecs = inactivityTimeoutSeconds.toLong(),
+                partIndex = partIndex,
+                lastActivityMs = lastActivityMs,
+                isBackgroundOnly = isBackgroundOnly,
             )
         }
     }

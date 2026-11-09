@@ -1,7 +1,6 @@
 package io.embrace.android.embracesdk.testcases.features
 
 import io.embrace.android.embracesdk.internal.storage.SdkStorage
-import io.embrace.android.embracesdk.fakes.testSdkStorage
 import io.embrace.android.embracesdk.assertions.getLastLog
 import io.embrace.android.embracesdk.assertions.getSessionPartId
 import io.embrace.android.embracesdk.assertions.getUserSessionId
@@ -43,7 +42,6 @@ import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.ParameterizedRobolectricTestRunner
-import java.io.File
 
 @RunWith(ParameterizedRobolectricTestRunner::class)
 internal class ResurrectionFeatureTest(
@@ -114,7 +112,7 @@ internal class ResurrectionFeatureTest(
                 symbols = symbols,
             ),
             testCaseAction = {
-                storage = testSdkStorage(testRule.services.appContext)
+                storage = testRule.setup.sdkStorage()
                 recordSession(isBackgroundActivityEnabled = true, endInBackground = false)
                 shutdownSdkWithIncompleteSession()
             },
@@ -160,7 +158,7 @@ internal class ResurrectionFeatureTest(
                 symbols = symbols,
             ),
             testCaseAction = {
-                storage = testSdkStorage(testRule.services.appContext)
+                storage = testRule.setup.sdkStorage()
                 recordSession(isBackgroundActivityEnabled = true, endInBackground = false)
                 shutdownSdkWithIncompleteSession()
             },

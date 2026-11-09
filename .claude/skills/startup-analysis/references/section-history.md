@@ -11,7 +11,7 @@ Each release has an entry, newest first, saying how to read its traces.
 1. **Find its entry**: the newest entry at or before that version. Its "Reading its traces" notes
    say where the window comes from, which sections it records, and what to watch for.
 2. **Read the canonical rows against that entry.** analyze_startup.py's canonical rows are the
-   current SDK's. A row the release doesn't record reads "not instrumented in this SDK version".
+   current SDK's. A row the release doesn't record reads "not in these traces".
    The release's own sections that are no longer canonical show under the other sections
    (`--all-sections` lists every one).
 3. **When comparing two versions**, compare a section only if both record it with the same scope.

@@ -47,9 +47,10 @@ integration-test concern, not this skill's.
 ## What you get (all from the traces)
 
 - Duration of EVERY `emb-*` section (first occurrence, matching TraceSectionMetric
-  `Mode.First`), as min/median/max over N iterations — the 13 canonical sections in execution
-  order with %-of-window, plus every finer-grained section the SDK emits (`emb-sdk-start`,
-  `emb-install-native-crash-signal-handlers`, `emb-record-startup`, …).
+  `Mode.First`), as min/median/max over N iterations — the canonical sections (those the SDK
+  exports as `<name>-duration-ms` attributes) in execution order with %-of-window, plus every
+  finer-grained section the SDK emits (`emb-install-native-crash-signal-handlers`,
+  `emb-record-startup`, …).
 - SDK-init window per iteration, from the `emb-sdk-start` slice — it wraps the whole
   `Embrace.start()` call and runs <1 ms wider than the exported `emb-embrace-init` /private
   `emb-sdk-init` span. The output names the window's source.
@@ -133,9 +134,9 @@ separately. `<Variant>` below is `Benchmark` or `BenchmarkOtelRegular`, and `<va
    — `getprop` takes ONE property per call; the model also appears in the results directory
    name), the SDK version under test, iteration count, and date.
 4. **Interpret**: present the canonical sections in execution order with nesting; children
-   overlap parents, so percentages do not sum to 100; the class-load sections
-   (`embrace-impl-init`, `bootstrapper-init`) run BEFORE the window opens, so their % is context
-   relative to the window, not a share of it. Check the scheduling table before comparing
+   overlap parents, so percentages do not sum to 100; the class-load section
+   `embrace-impl-init` runs BEFORE the window opens, so its % is context relative to the window,
+   not a share of it. Check the scheduling table before comparing
    passes — iterations flagged CONTENDED, or whole passes with elevated Running time, are
    environment noise, not regressions (signatures in references/sections.md). For a released
    SDK, or a comparison between versions, see "Traces from a released SDK" below.
@@ -150,8 +151,9 @@ separately. `<Variant>` below is `Benchmark` or `BenchmarkOtelRegular`, and `<va
 
 ## Missing sections
 
-analyze_startup.py prints "not instrumented in this SDK version" for a canonical section with no
-slice. Report those explicitly; never present the found set as complete.
+analyze_startup.py prints "not in these traces" for a canonical section with no slice, whether
+the SDK under test doesn't record it or the feature is off (`huc-init` without
+HttpURLConnection capture). Report those explicitly; never present the found set as complete.
 
 ## Traces from a released SDK
 
@@ -162,11 +164,11 @@ every version-specific rule, and nothing in it applies to the current SDK.
 ## Interpretation gotchas
 
 - **Section counts differ by environment**: sections behind supplier fallbacks
-  (`config-service-init`) and the class-load sections (`embrace-impl-init`, `bootstrapper-init`)
-  appear on-device but not in the Robolectric integration harness — the authoritative
+  (`config-service-init`) and the class-load section (`embrace-impl-init`) appear on-device but
+  not in the Robolectric integration harness — the authoritative
   integration-test list lives in `SpanAssertions.expectedSdkInitSections` (embrace-android-otel-fakes).
-- **Pre-start Embrace references skew the window**: the class-load init (`embrace-impl-init`,
-  `bootstrapper-init`) fires on the app's FIRST reference to the `Embrace` class — any API call
+- **Pre-start Embrace references skew the window**: the class-load init (`embrace-impl-init`)
+  fires on the app's FIRST reference to the `Embrace` class — any API call
   or property access triggers it, not any one method in particular. Pre-start API calls can
   additionally force SDK lazies (e.g. an exporter registration constructing the OTel config)
   before the window opens, hoisting that work out of the window. ExampleApp touches the API

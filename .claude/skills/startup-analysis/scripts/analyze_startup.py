@@ -44,24 +44,28 @@ import sys
 
 CONTENTION_THRESHOLD = 0.15
 
-# Canonical init sections in execution order (see references/sections.md); value = nesting depth.
+# Canonical init sections in execution order (see references/sections.md); value = nesting depth among them.
+# These are the sections exported as <name>-duration-ms attributes on the sdk-init span, except the two
+# SharedPreferences sections, which nest wherever the store is first touched and are listed with the others.
 CANONICAL_SECTIONS = [
     ("emb-embrace-impl-init", 0),
     ("emb-modules-init", 0),
     ("emb-persisted-config-init", 1),
     ("emb-config-service-init", 1),
     ("emb-startup-classifier-init", 1),
-    ("emb-otel-tracer-init", 1),
     ("emb-process-state-tracker-init", 1),
+    ("emb-otel-tracer-init", 1),
     ("emb-instrumentation-args-init", 1),
     ("emb-payload-storage-service-init", 1),
     ("emb-resource-source-init", 1),
     ("emb-session-orchestrator-init", 1),
     ("emb-current-session-part-span-initialize-service", 1),
-    ("emb-post-init", 0),
+    ("emb-process-state-tracker-register", 0),
     ("emb-setup-services", 0),
+    ("emb-start-first-session", 1),
     ("emb-post-services-setup", 0),
     ("emb-load-instrumentation", 1),
+    ("emb-huc-init", 1),
 ]
 
 
@@ -171,17 +175,17 @@ def report(per_trace: list, all_sections: bool) -> None:
 
     window_median = statistics.median(windows) if windows else None
     print("canonical sections, execution order (first-occurrence slice durations, ms):")
-    header = f"  {'section':<44}{'n':>4}{'min':>9}{'median':>9}{'max':>9}{'% of win':>10}"
+    header = f"  {'section':<60}{'n':>4}{'min':>9}{'median':>9}{'max':>9}{'% of win':>10}"
     print(header)
     section_values = collect_sections(per_trace)
     for name, depth in CANONICAL_SECTIONS:
         vals = section_values.pop(name, [])
         label = "  " * depth + ("↳ " if depth else "") + name
         if not vals:
-            print(f"  {label:<44}{'-- not instrumented in this SDK version --':>41}")
+            print(f"  {label:<60}{'-- not in these traces --':>41}")
             continue
         pct = f"{statistics.median(vals) / window_median * 100:.1f}" if window_median else "n/a"
-        print(f"  {label:<44}{len(vals):>4}{min(vals):>9.2f}{statistics.median(vals):>9.2f}"
+        print(f"  {label:<60}{len(vals):>4}{min(vals):>9.2f}{statistics.median(vals):>9.2f}"
               f"{max(vals):>9.2f}{pct:>10}")
     print()
 
@@ -193,7 +197,7 @@ def report(per_trace: list, all_sections: bool) -> None:
         shown = "all" if all_sections else "top 15 by median"
         print(f"other emb-* sections ({shown}; not part of the canonical breakdown):")
         for name, vals in extras:
-            print(f"  {name:<44}{len(vals):>4}{min(vals):>9.2f}{statistics.median(vals):>9.2f}"
+            print(f"  {name:<60}{len(vals):>4}{min(vals):>9.2f}{statistics.median(vals):>9.2f}"
                   f"{max(vals):>9.2f}")
         print()
 

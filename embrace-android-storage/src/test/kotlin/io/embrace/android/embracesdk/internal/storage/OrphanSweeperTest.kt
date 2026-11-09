@@ -62,10 +62,9 @@ internal class OrphanSweeperTest {
             SdkDir.INSTALL_STATE to "aei_delivered.bin",
             SdkDir.INSTALL_STATE to "crash_marker",
             SdkDir.TELEMETRY_READY to V2_PAYLOAD,
-            SdkDir.TELEMETRY_READY to V1_PAYLOAD,
             SdkDir.TELEMETRY_PENDING_SNAPSHOTS to V2_PAYLOAD,
             SdkDir.TELEMETRY_PENDING_NATIVE_CRASHES to V2_PAYLOAD,
-            SdkDir.TELEMETRY_LOG_ENVELOPES to V1_PAYLOAD,
+            SdkDir.TELEMETRY_LOG_ENVELOPES to V2_PAYLOAD,
             SdkDir.TELEMETRY_PENDING_SESSION_PARTS to "$SESSION_PART_DIR/metadata.pb",
             SdkDir.TELEMETRY_PENDING_SESSION_PARTS to "$SESSION_PART_DIR/completed_spans.pb",
             SdkDir.TELEMETRY_PENDING_SESSION_PARTS to "$SESSION_PART_DIR/span_snapshots.pb",
@@ -88,6 +87,7 @@ internal class OrphanSweeperTest {
             storage.dir(SdkDir.INSTALL_STATE) / "embrace_crash_marker",
             storage.dir(SdkDir.TELEMETRY_READY) / "not_a_payload.json",
             storage.dir(SdkDir.TELEMETRY_READY) / "1_2_3_4_true_x_v3.json",
+            storage.dir(SdkDir.TELEMETRY_READY) / V1_PAYLOAD,
             storage.dir(SdkDir.TELEMETRY_READY) / "$V2_PAYLOAD/nested",
             storage.dir(SdkDir.TELEMETRY_PENDING_SESSION_PARTS) / "v2_1_uuid_none_none/metadata.pb",
             storage.dir(SdkDir.TELEMETRY_PENDING_SESSION_PARTS) / "$SESSION_PART_DIR/unknown.pb",
@@ -106,7 +106,7 @@ internal class OrphanSweeperTest {
     @Test
     fun `stale temp files are deleted and fresh ones kept`() {
         val staleTmp = stale(write(storage.dir(SdkDir.TELEMETRY_READY) / "$V2_PAYLOAD.tmp"))
-        val freshTmp = write(storage.dir(SdkDir.TELEMETRY_READY) / "$V1_PAYLOAD.tmp")
+        val freshTmp = write(storage.dir(SdkDir.TELEMETRY_LOG_ENVELOPES) / "$V2_PAYLOAD.tmp")
         val partDir = storage.dir(SdkDir.TELEMETRY_PENDING_SESSION_PARTS) / SESSION_PART_DIR
         val stalePartTmp = stale(write(partDir / "metadata.pb.tmp"))
         val freshPartTmp = write(partDir / "completed_spans.pb.tmp")

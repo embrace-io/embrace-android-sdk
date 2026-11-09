@@ -226,15 +226,16 @@ internal class SharedPrefsMigratorTest {
     }
 
     @Test
-    fun `prefs that fail to load leave nothing written`() {
+    fun `prefs that fail to load complete as a fresh install`() {
         prefs.seed(*ALL_LIVE_KEYS)
         val unloadable = object : SharedPreferences by prefs {
             override fun getAll(): Map<String, *> = error("load failed")
         }
-        assertFalse(migrate(loaded = unloadable))
+        assertTrue(migrate(loaded = unloadable))
         assertEquals(SdkErrorType.PrefsMigrationFail.toString(), errorHandler.sdkErrorMessages.single().msg)
-        assertTrue(fileSystem.list(installStateDir).isEmpty())
+        assertFreshInstall()
         assertEquals(ALL_LIVE_KEYS.size, prefs.all.size)
+        assertFalse(migrate())
     }
 
     @Test
@@ -286,27 +287,47 @@ internal class SharedPrefsMigratorTest {
     }
 
     @Test
-    fun `failure writing persisted state leaves prefs intact and reruns to the same result`() {
-        assertFailedWriteReruns(SdkStorageLayout.PERSISTED_SDK_STATE_FILE_NAME)
+    fun `failure writing persisted state completes as a fresh install`() {
+        assertFailedWriteIsFreshInstall(SdkStorageLayout.PERSISTED_SDK_STATE_FILE_NAME)
     }
 
     @Test
-    fun `failure writing network capture leaves prefs intact and reruns to the same result`() {
-        assertFailedWriteReruns(SdkStorageLayout.NETWORK_CAPTURE_FILE_NAME)
+    fun `failure writing network capture completes as a fresh install`() {
+        assertFailedWriteIsFreshInstall(SdkStorageLayout.NETWORK_CAPTURE_FILE_NAME)
     }
 
     @Test
-    fun `failure writing delivered aei ids leaves prefs intact and reruns to the same result`() {
-        assertFailedWriteReruns(SdkStorageLayout.AEI_DELIVERED_FILE_NAME)
+    fun `failure writing delivered aei ids completes as a fresh install`() {
+        assertFailedWriteIsFreshInstall(SdkStorageLayout.AEI_DELIVERED_FILE_NAME)
+    }
+
+    private fun assertFailedWriteIsFreshInstall(fileName: String) {
+        prefs.seed(*ALL_LIVE_KEYS)
+        assertTrue(migrate(fs = failingMoveTo(installStateDir / fileName)))
+        assertEquals(SdkErrorType.PrefsMigrationFail.toString(), errorHandler.sdkErrorMessages.single().msg)
+        assertFreshInstall()
+        assertTrue(prefs.all.isEmpty())
+        assertFalse(migrate())
+    }
+
+    private fun assertFreshInstall() {
+        assertEquals(listOf(SdkStorageLayout.ORDINALS_FILE_NAME), fileSystem.list(installStateDir).map { it.name })
+        assertEquals(1, openOrdinals().incrementAndGet(Ordinal.SESSION) { 1 })
+        val state = FilePersistedSdkStateStore(
+            fileSystem = fileSystem,
+            path = installStateDir / SdkStorageLayout.PERSISTED_SDK_STATE_FILE_NAME,
+            worker = worker,
+            errorHandler = errorHandler,
+            clock = { -1L },
+            uuidSource = { "generated" },
+        ).snapshot()
+        assertEquals("generated", state.deviceId)
     }
 
     @Test
     fun `failure writing ordinals leaves prefs intact and reruns to the same result`() {
-        assertFailedWriteReruns(SdkStorageLayout.ORDINALS_FILE_NAME)
-    }
-
-    private fun assertFailedWriteReruns(fileName: String) {
         prefs.seed(*ALL_LIVE_KEYS)
+        val fileName = SdkStorageLayout.ORDINALS_FILE_NAME
         assertFalse(migrate(fs = failingMoveTo(installStateDir / fileName)))
         assertEquals(SdkErrorType.PrefsMigrationFail.toString(), errorHandler.sdkErrorMessages.single().msg)
         assertFalse(fileSystem.exists(ordinalsPath()))

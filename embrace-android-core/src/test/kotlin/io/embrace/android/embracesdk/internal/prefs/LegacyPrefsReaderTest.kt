@@ -150,8 +150,17 @@ internal class LegacyPrefsReaderTest {
         assertTrue(readSnapshot().networkCaptureRemaining.isEmpty())
     }
 
+    @Test
+    fun `network capture counts come from the map passed in`() {
+        prefs.seed(*IDENTITY, "io.embrace.networkcapturerule1" to 5)
+        val all = prefs.all + ("io.embrace.networkcapturerule2" to 6)
+        val snapshot = LegacyPrefsReader(prefs, all, TestPlatformSerializer(), FakeErrorHandler(), AppFramework.NATIVE).read()
+        assertEquals(mapOf("1" to 5, "2" to 6), snapshot?.networkCaptureRemaining)
+    }
+
     private fun read(appFramework: AppFramework = AppFramework.NATIVE): LegacyPrefsSnapshot? = LegacyPrefsReader(
         prefs,
+        prefs.all,
         TestPlatformSerializer(),
         FakeErrorHandler(throwOnSdkError = false),
         appFramework,

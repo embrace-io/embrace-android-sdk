@@ -1,8 +1,5 @@
 package io.embrace.android.embracesdk.testcases.persistence
 
-import android.content.Context
-import androidx.test.core.app.ApplicationProvider
-import io.embrace.android.embracesdk.fakes.testSdkStorage
 import io.embrace.android.embracesdk.assertions.findSessionPartSpan
 import io.embrace.android.embracesdk.assertions.getSessionPartId
 import io.embrace.android.embracesdk.assertions.waitUntilConditionMet
@@ -34,6 +31,7 @@ import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
+import org.junit.Assume.assumeFalse
 import org.junit.Assume.assumeTrue
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -276,6 +274,7 @@ internal class MultiFilePersistenceLifecycleParityTest(
 
     @Test
     fun `a session part whose process died after it ended is delivered unchanged by the next launch`() {
+        assumeFalse(testRule.superiorStorageSystemEnabled)
         // Verify the state of the payloads after process termination
         testRule.runTest(
             persistedRemoteConfig = remoteConfig(),
@@ -595,8 +594,7 @@ internal class MultiFilePersistenceLifecycleParityTest(
     private fun sessionsDir(): File = storageDir(SdkDir.TELEMETRY_PENDING_SESSION_PARTS)
 
     private fun storageDir(location: SdkDir): File {
-        val ctx = ApplicationProvider.getApplicationContext<Context>()
-        return testSdkStorage(ctx).dir(location).toFile()
+        return testRule.setup.sdkStorage().dir(location).toFile()
     }
 
     /**

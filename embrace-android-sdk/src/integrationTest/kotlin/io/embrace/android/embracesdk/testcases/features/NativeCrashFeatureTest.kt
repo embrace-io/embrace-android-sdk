@@ -326,7 +326,7 @@ internal class NativeCrashFeatureTest(
                 setupFakeNativeCrash(serializer, crashData)
 
                 // simulate JNI call failing to load struct
-                fakeJniDelegate.addCrashRaw(crashData.getCrashFile().absolutePath, null)
+                fakeJniDelegate.addCrashRaw(crashData.getCrashFile(sdkStorage()).absolutePath, null)
             },
             testCaseAction = {},
             assertAction = {
@@ -347,7 +347,7 @@ internal class NativeCrashFeatureTest(
                 setupFakeNativeCrash(serializer, crashData)
 
                 // simulate bad JSON
-                fakeJniDelegate.addCrashRaw(crashData.getCrashFile().absolutePath, "{")
+                fakeJniDelegate.addCrashRaw(crashData.getCrashFile(sdkStorage()).absolutePath, "{")
             },
             testCaseAction = {},
             assertAction = {

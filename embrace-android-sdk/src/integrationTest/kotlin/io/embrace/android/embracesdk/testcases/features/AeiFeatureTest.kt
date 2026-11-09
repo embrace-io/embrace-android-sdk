@@ -210,6 +210,7 @@ internal class AeiFeatureTest(
 
         testRule.runTest(
             setupAction = {
+                superiorStorageSystemEnabled = false
                 setupFakeAeiData(input.map(TestAeiData::toAeiObject))
                 assertTrue(retrieveAeiHistory().isEmpty())
                 alterAeiHistory(setOf(firstObj.generateAeiId()))

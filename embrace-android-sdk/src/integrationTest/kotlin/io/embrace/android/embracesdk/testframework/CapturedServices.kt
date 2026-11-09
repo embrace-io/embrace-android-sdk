@@ -15,6 +15,7 @@ import io.embrace.android.embracesdk.internal.otel.sdk.OtelSdkWrapper
 import io.embrace.android.embracesdk.internal.otel.spans.SpanRepository
 import io.embrace.android.embracesdk.internal.session.id.SessionIdsProvider
 import io.embrace.android.embracesdk.internal.session.orchestrator.SessionOrchestrator
+import io.embrace.android.embracesdk.internal.store.PersistedSdkStateStore
 import io.embrace.android.embracesdk.internal.utils.event.EventBus
 
 /**
@@ -38,6 +39,7 @@ internal class CapturedServices(
     lateinit var payloadStorageService: PayloadStorageService
     lateinit var intakeService: IntakeService
     lateinit var eventBus: EventBus
+    lateinit var persistedSdkStateStore: Lazy<PersistedSdkStateStore>
     var threadBlockageService: ThreadBlockageService? = null
 
     /**

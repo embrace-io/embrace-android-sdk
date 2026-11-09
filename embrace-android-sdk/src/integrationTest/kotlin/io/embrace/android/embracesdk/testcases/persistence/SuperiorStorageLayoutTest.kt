@@ -34,12 +34,11 @@ internal class SuperiorStorageLayoutTest(
 
     @Rule
     @JvmField
-    val testRule: SdkIntegrationTestRule = SdkIntegrationTestRule(otelSdkMode) {
+    val testRule: SdkIntegrationTestRule = SdkIntegrationTestRule(otelSdkMode, superiorStorageSystemEnabled = true) {
         EmbraceSetupInterface(
             workersToFake = listOf(Worker.Background.SessionPersistenceWorker),
         ).apply {
             getFakedWorkerExecutor(Worker.Background.SessionPersistenceWorker).blockingMode = false
-            superiorStorageSystemEnabled = true
         }
     }
 

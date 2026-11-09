@@ -3,7 +3,6 @@ package io.embrace.android.embracesdk.testcases.session
 import io.embrace.android.embracesdk.concurrency.BlockingScheduledExecutorService
 import io.embrace.android.embracesdk.internal.config.remote.RemoteConfig
 import io.embrace.android.embracesdk.internal.config.remote.UserSessionRemoteConfig
-import io.embrace.android.embracesdk.internal.store.KeyValueStore
 import io.embrace.android.embracesdk.internal.worker.Worker
 import io.embrace.android.embracesdk.testframework.OtelSdkMode
 import io.embrace.android.embracesdk.testframework.SdkIntegrationTestRule
@@ -31,7 +30,6 @@ internal class UserSessionLastActivityUpdateTest(
 
     @Test
     fun `foreground task updates user session last activity time`() {
-        lateinit var store: KeyValueStore
         lateinit var worker: BlockingScheduledExecutorService
         val inactivityTimeoutSeconds = 60
         testRule.runTest(
@@ -39,22 +37,21 @@ internal class UserSessionLastActivityUpdateTest(
                 userSession = UserSessionRemoteConfig(inactivityTimeoutSeconds = inactivityTimeoutSeconds)
             ),
             setupAction = {
-                store = getStore()
                 worker = getFakedWorkerExecutor(Worker.Background.NonIoRegWorker)
             },
             testCaseAction = {
                 recordSession {
-                    val initialLastActivityMs = store.currentUserSessionLastActivityTimestamp()
+                    val initialLastActivityMs = currentUserSessionLastActivityTimestamp()
                     clock.tick(30_000)
                     worker.runCurrentlyBlocked()
-                    assertTrue(store.currentUserSessionLastActivityTimestamp() > initialLastActivityMs)
+                    assertTrue(currentUserSessionLastActivityTimestamp() > initialLastActivityMs)
                 }
             },
         )
     }
 
-    private fun KeyValueStore.currentUserSessionLastActivityTimestamp(): Long =
-        checkNotNull(getStringMap("embrace.user_session")?.get("emb.user_session_last_activity_ts")).toLong()
+    private fun currentUserSessionLastActivityTimestamp(): Long =
+        checkNotNull(testRule.services.persistedSdkStateStore.value.snapshot().userSession).lastActivityMs
 
     internal companion object {
         @JvmStatic

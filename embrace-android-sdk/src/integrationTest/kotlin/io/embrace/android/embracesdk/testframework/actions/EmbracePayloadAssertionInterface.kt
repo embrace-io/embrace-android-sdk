@@ -1,9 +1,7 @@
 package io.embrace.android.embracesdk.testframework.actions
 
+import io.embrace.android.embracesdk.internal.storage.SdkStorage
 import io.embrace.android.embracesdk.internal.storage.SdkDir
-import io.embrace.android.embracesdk.fakes.testSdkStorage
-import android.content.Context
-import androidx.test.core.app.ApplicationProvider
 import io.embrace.android.embracesdk.ResourceReader
 import io.embrace.android.embracesdk.assertions.assertMatches
 import io.embrace.android.embracesdk.assertions.findSessionPartSpan
@@ -30,6 +28,7 @@ import io.embrace.android.embracesdk.internal.session.getSessionPartSpan
 import io.embrace.android.embracesdk.semconv.EmbAndroidAttributes
 import io.embrace.android.embracesdk.semconv.EmbSessionAttributes
 import io.embrace.android.embracesdk.testframework.assertions.JsonComparator.compare
+import io.embrace.android.embracesdk.testframework.assertions.JsonComparator.removeAttributes
 import io.embrace.android.embracesdk.testframework.assertions.JsonComparator.sortAttributesByKey
 import io.embrace.android.embracesdk.testframework.assertions.Placeholder
 import io.embrace.android.embracesdk.testframework.server.FakeApiServer
@@ -55,6 +54,7 @@ internal class EmbracePayloadAssertionInterface(
     internal val serializer: PlatformSerializer,
     private val deliveryTracer: DeliveryTracer,
     private val apiServer: FakeApiServer?,
+    private val sdkStorage: () -> SdkStorage,
     private val sdkStateSupplier: () -> SdkState,
 ) {
 
@@ -211,8 +211,7 @@ internal class EmbracePayloadAssertionInterface(
      * Asserts that config was persisted on disk and returns the persisted information.
      */
     internal fun readPersistedConfigResponse(): ConfigHttpResponse {
-        val ctx = ApplicationProvider.getApplicationContext<Context>()
-        val storageDir = testSdkStorage(ctx).path(SdkDir.REMOTE_CONFIG).toFile()
+        val storageDir = sdkStorage().path(SdkDir.REMOTE_CONFIG).toFile()
         if (!storageDir.exists()) {
             throw IllegalStateException("Config storage directory does not exist.")
         }
@@ -293,7 +292,7 @@ internal class EmbracePayloadAssertionInterface(
     fun assertNativeCrashDoesNotExist(crashData: StoredNativeCrashData) {
         waitUntilConditionMet(
             dataProvider = {
-                val exists = crashData.getCrashFile().exists()
+                val exists = crashData.getCrashFile(sdkStorage()).exists()
                 exists
             },
             condition = { !it },
@@ -336,6 +335,7 @@ internal class EmbracePayloadAssertionInterface(
         payload: T,
         goldenFileName: String,
         placeholders: Map<Placeholder, String> = emptyMap(),
+        ignoredAttributes: Set<String> = emptySet(),
     ) {
         try {
             val observedJson = serializer.toJson(payload, kotlinx.serialization.serializer<T>())
@@ -345,8 +345,8 @@ internal class EmbracePayloadAssertionInterface(
                 json.replace(placeholder.token, value)
             }
             val result = compare(
-                sortAttributesByKey(JSONObject(expectedJson)),
-                sortAttributesByKey(JSONObject(observedJson)),
+                sortAttributesByKey(removeAttributes(JSONObject(expectedJson), ignoredAttributes)),
+                sortAttributesByKey(removeAttributes(JSONObject(observedJson), ignoredAttributes)),
             )
             if (result.isNotEmpty()) {
                 val msg by lazy {

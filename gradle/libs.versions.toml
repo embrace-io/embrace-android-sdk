@@ -54,6 +54,8 @@ smali = "3.0.10"
 bundletool = "1.18.3"
 vanniktechMavenPublish = "0.37.0"
 androidxBenchmark = "1.5.0"
+# Perfetto's native trace_processor_shell, which :embrace-analysis-cli downloads on first use
+perfettoTraceProcessor = "59.1"
 jvmTargetCompatibility = "11"
 kotlinCoreLibrariesVersion = "2.0.21"
 minCompileSdk = "34"

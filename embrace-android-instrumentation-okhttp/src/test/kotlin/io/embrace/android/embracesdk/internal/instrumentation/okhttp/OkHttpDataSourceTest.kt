@@ -605,9 +605,12 @@ internal class OkHttpDataSourceTest {
         val response = checkNotNull(shortCircuitClient.newCall(postRequestBuilder.build()).execute())
         assertEquals(200, response.code)
 
-        // the request's tracking references were released, but its span was never stopped
+        // the request never reached the network, so its span is dropped without being stopped or exported
         assertEquals(1, networkRequestDataSource.discardedIds.size)
-        assertTrue(args.destination.createdSpans.single().isRecording())
+        with(args.destination.createdSpans.single()) {
+            assertTrue(discarded)
+            assertNull(endTimeMs)
+        }
     }
 
     @Test

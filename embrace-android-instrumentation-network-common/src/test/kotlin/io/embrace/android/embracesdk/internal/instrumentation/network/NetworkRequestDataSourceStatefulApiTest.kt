@@ -239,15 +239,16 @@ internal class NetworkRequestDataSourceStatefulApiTest {
     }
 
     @Test
-    fun `discardRequest releases tracking without stopping the span`() {
+    fun `discardRequest drops the span without stopping it`() {
         val id = checkNotNull(startRequest(url = "https://www.example.com/api"))
         harness.dataSource.discardRequest(id)
 
         val span = harness.getNetworkSpans().single()
-        assertTrue(span.isRecording())
+        assertTrue(span.discarded)
+        assertNull(span.endTimeMs)
 
         endRequest(callId = id, url = "https://www.example.com/api")
-        assertTrue(span.isRecording())
+        assertNull(span.endTimeMs)
     }
 
     @Test

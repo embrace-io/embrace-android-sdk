@@ -59,14 +59,14 @@ internal class ConfigLoadServices(
     val uuidSource: UuidSource = UuidSourceImpl(),
     workerThreadPoolSupplier: WorkerThreadPoolSupplier? = null,
     configServiceSupplier: ConfigServiceSupplier? = null,
-    private val superiorStorageSystemEnabled: Boolean = SUPERIOR_STORAGE_SYSTEM_ENABLED,
+    val superiorStorageSystemEnabled: Boolean = SUPERIOR_STORAGE_SYSTEM_ENABLED,
     private val fileSystem: FileSystem = FileSystem.SYSTEM,
 ) : Closeable {
 
-    val sdkStorage: SdkStorage = createLegacySdkStorage(context, preStartServices.errorHandler)
-
-    private val superiorStorageSystem: Lazy<SdkStorage> = lazy {
+    val sdkStorage: SdkStorage = if (superiorStorageSystemEnabled) {
         createSdkStorage(context, preStartServices.errorHandler, fileSystem)
+    } else {
+        createLegacySdkStorage(context, preStartServices.errorHandler)
     }
 
     val keyValueStore: Lazy<KeyValueStore> = lazy {
@@ -75,10 +75,9 @@ internal class ConfigLoadServices(
 
     val persistedSdkStateStore: Lazy<PersistedSdkStateStore> = lazy {
         if (superiorStorageSystemEnabled) {
-            val storage = superiorStorageSystem.value
             FilePersistedSdkStateStore(
-                fileSystem = storage.fileSystem,
-                path = storage.dir(SdkDir.INSTALL_STATE) / SdkStorageLayout.PERSISTED_SDK_STATE_FILE_NAME,
+                fileSystem = sdkStorage.fileSystem,
+                path = sdkStorage.dir(SdkDir.INSTALL_STATE) / SdkStorageLayout.PERSISTED_SDK_STATE_FILE_NAME,
                 worker = workerThreadPool.backgroundWorker(Worker.Background.IoRegWorker),
                 errorHandler = preStartServices.errorHandler,
                 clock = preStartServices.clock,
@@ -114,10 +113,9 @@ internal class ConfigLoadServices(
 
     val deliveredAeiStore: Lazy<DeliveredAeiStore> = lazy {
         if (superiorStorageSystemEnabled) {
-            val storage = superiorStorageSystem.value
             FileDeliveredAeiStore(
-                fileSystem = storage.fileSystem,
-                path = storage.dir(SdkDir.INSTALL_STATE) / SdkStorageLayout.AEI_DELIVERED_FILE_NAME,
+                fileSystem = sdkStorage.fileSystem,
+                path = sdkStorage.dir(SdkDir.INSTALL_STATE) / SdkStorageLayout.AEI_DELIVERED_FILE_NAME,
                 worker = workerThreadPool.backgroundWorker(Worker.Background.NonIoRegWorker),
                 errorHandler = preStartServices.errorHandler,
             )
@@ -128,10 +126,9 @@ internal class ConfigLoadServices(
 
     val networkCaptureRuleStore: Lazy<NetworkCaptureRuleStore> = lazy {
         if (superiorStorageSystemEnabled) {
-            val storage = superiorStorageSystem.value
             FileNetworkCaptureRuleStore(
-                fileSystem = storage.fileSystem,
-                path = storage.dir(SdkDir.INSTALL_STATE) / SdkStorageLayout.NETWORK_CAPTURE_FILE_NAME,
+                fileSystem = sdkStorage.fileSystem,
+                path = sdkStorage.dir(SdkDir.INSTALL_STATE) / SdkStorageLayout.NETWORK_CAPTURE_FILE_NAME,
                 worker = workerThreadPool.backgroundWorker(Worker.Background.IoRegWorker),
                 errorHandler = preStartServices.errorHandler,
                 liveRuleIds = { configService.networkBehavior.getNetworkCaptureRules().mapTo(HashSet()) { it.id } },
@@ -197,11 +194,10 @@ internal class ConfigLoadServices(
     }
 
     private fun createFileOrdinalStore(errorHandler: ErrorHandler): OrdinalStore {
-        val storage = superiorStorageSystem.value
-        val path = storage.dir(SdkDir.INSTALL_STATE) / SdkStorageLayout.ORDINALS_FILE_NAME
+        val path = sdkStorage.dir(SdkDir.INSTALL_STATE) / SdkStorageLayout.ORDINALS_FILE_NAME
         errorHandler.guardSdkCode(SdkErrorType.OrdinalStoreOpenFail, Unit) {
-            if (!storage.fileSystem.exists(path)) {
-                MmapOrdinalStore.create(storage.fileSystem, path, emptyMap())
+            if (!sdkStorage.fileSystem.exists(path)) {
+                MmapOrdinalStore.create(sdkStorage.fileSystem, path, emptyMap())
             }
         }
         val ordinals = MmapOrdinalStore.open(path.toFile(), errorHandler) ?: return UnavailableOrdinalStore
@@ -223,4 +219,4 @@ internal class ConfigLoadServices(
     }
 }
 
-private const val SUPERIOR_STORAGE_SYSTEM_ENABLED = false
+internal const val SUPERIOR_STORAGE_SYSTEM_ENABLED = false

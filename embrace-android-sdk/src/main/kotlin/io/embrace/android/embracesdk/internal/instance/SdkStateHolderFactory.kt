@@ -6,8 +6,10 @@ import io.embrace.android.embracesdk.internal.api.delegate.PreStartOTelApi
 import io.embrace.android.embracesdk.internal.injection.ConfigLoadServices
 import io.embrace.android.embracesdk.internal.injection.ConfigLoadServicesSupplier
 import io.embrace.android.embracesdk.internal.injection.PreStartServices
+import io.embrace.android.embracesdk.internal.injection.SUPERIOR_STORAGE_SYSTEM_ENABLED
 import io.embrace.android.embracesdk.internal.injection.SdkOverrides
 import io.embrace.android.embracesdk.internal.injection.createLegacySdkStorage
+import io.embrace.android.embracesdk.internal.injection.createSdkStorage
 import io.embrace.android.embracesdk.internal.instrumentation.startup.SdkInitResourceUsageTracker
 import io.embrace.android.embracesdk.internal.logging.ErrorHandler
 import io.embrace.android.embracesdk.internal.utils.AndroidSectionRecorder
@@ -25,6 +27,7 @@ internal fun createSdkStateHolder(
     configLoadServicesSupplier: ConfigLoadServicesSupplier? = null,
     sdkInitResourceUsageTrackerSupplier: Provider<SdkInitResourceUsageTracker>? = null,
     overrides: SdkOverrides? = null,
+    superiorStorageSystemEnabled: Boolean = SUPERIOR_STORAGE_SYSTEM_ENABLED,
 ): SdkStateHolder {
     val errorHandler = preStartServices.errorHandler
     val clock = preStartServices.clock
@@ -51,7 +54,9 @@ internal fun createSdkStateHolder(
             preStart = buffer,
             failed = { NoopSdkInstance(clock::now, errorHandler, NoopSdkInstance.SDK_START_FAILED) },
             disabled = { NoopSdkInstance(clock::now, errorHandler, NoopSdkInstance.SDK_DISABLED) },
-            persistedTelemetryDeletion = { context -> persistedTelemetryDeletion(context, errorHandler) },
+            persistedTelemetryDeletion = { context ->
+                persistedTelemetryDeletion(context, errorHandler, superiorStorageSystemEnabled)
+            },
             telemetryService = preStartServices.telemetryService,
             errorHandler = errorHandler,
         )
@@ -131,8 +136,18 @@ private fun createSdkInstance(
  * Returns a function that deletes, on a new thread, the telemetry the SDK persisted, or null if the directories
  * can't be found through [context].
  */
-private fun persistedTelemetryDeletion(context: Context, errorHandler: ErrorHandler): (() -> Unit)? {
-    val storage = runCatching { createLegacySdkStorage(context, errorHandler) }.getOrNull() ?: return null
+private fun persistedTelemetryDeletion(
+    context: Context,
+    errorHandler: ErrorHandler,
+    superiorStorageSystemEnabled: Boolean,
+): (() -> Unit)? {
+    val storage = runCatching {
+        if (superiorStorageSystemEnabled) {
+            createSdkStorage(context, errorHandler)
+        } else {
+            createLegacySdkStorage(context, errorHandler)
+        }
+    }.getOrNull() ?: return null
     return {
         Executors.newSingleThreadExecutor().apply {
             execute {

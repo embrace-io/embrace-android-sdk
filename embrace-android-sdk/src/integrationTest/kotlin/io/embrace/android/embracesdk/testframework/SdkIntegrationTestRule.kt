@@ -234,7 +234,7 @@ internal class SdkIntegrationTestRule(
      */
     private fun persistConfig(persistedRemoteConfig: RemoteConfig) {
         val ctx = ApplicationProvider.getApplicationContext<Context>()
-        val storageDir = testSdkStorage(ctx).dir(SdkDir.REMOTE_CONFIG).toFile()
+        val storageDir = testSdkStorage(ctx, setup.superiorStorageSystemEnabled).dir(SdkDir.REMOTE_CONFIG).toFile()
         File(storageDir, PersistedConfig.ETAG_FILE_NAME).writeText("persisted_etag")
         val responseFile = File(storageDir, PersistedConfig.CONFIG_RESPONSE_FILE_NAME)
 
@@ -281,6 +281,7 @@ internal class SdkIntegrationTestRule(
             configLoadServicesSupplier = configLoadServicesSupplier,
             sdkInitResourceUsageTrackerSupplier = setup::fakeSdkInitResourceUsageTracker,
             overrides = setup.createSdkOverrides(deliveryTracer),
+            superiorStorageSystemEnabled = setup.superiorStorageSystemEnabled,
         )
     }
 

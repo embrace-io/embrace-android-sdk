@@ -23,8 +23,8 @@ import io.embrace.android.embracesdk.benchmark.scenario.ScenarioSpec
 import io.embrace.android.embracesdk.benchmark.scenario.hostTaskFrom
 import io.embrace.android.embracesdk.macrobenchmark.app.fixture.FixtureOutcome
 import io.embrace.android.embracesdk.macrobenchmark.app.fixture.FixtureRecorder
+import io.embrace.android.embracesdk.macrobenchmark.app.storage.AppDataStorage
 import io.embrace.android.embracesdk.macrobenchmark.app.storage.FixtureStorage
-import io.embrace.android.embracesdk.macrobenchmark.app.storage.SdkStorage
 import okio.FileSystem
 import okio.Path
 import okio.Path.Companion.toPath
@@ -72,7 +72,7 @@ internal class ScenarioHost(
         if (globalSetting(RESTORE_FIXTURE_SETTING) != null) {
             return
         }
-        val storage = sdkStorage()
+        val storage = appDataStorage()
         partsAtStart = storage.sessionPartDirs()
         seedRemoteConfig(storage)
         startSdk()
@@ -170,7 +170,7 @@ internal class ScenarioHost(
         if (parts.isEmpty()) {
             return STATUS_ERROR + "no session parts were on disk when the SDK started"
         }
-        val storage = sdkStorage()
+        val storage = appDataStorage()
         val deadlineMs = SystemClock.uptimeMillis() + RESURRECTION_TIMEOUT_MS
         while (parts.any(storage::hasSessionPart) || storage.cachedPayloadCount() > 0) {
             if (SystemClock.uptimeMillis() > deadlineMs) {
@@ -186,7 +186,7 @@ internal class ScenarioHost(
 
     private fun fixtureRecorder(): FixtureRecorder {
         return FixtureRecorder(
-            sdk = sdkStorage(),
+            sdk = appDataStorage(),
             fixture = FixtureStorage(fileSystem, dataDir()),
             sdkStarted = { Embrace.isStarted },
         )
@@ -194,7 +194,7 @@ internal class ScenarioHost(
 
     private fun dataDir(): Path = app.applicationInfo.dataDir.toPath()
 
-    private fun sdkStorage() = SdkStorage(fileSystem, dataDir())
+    private fun appDataStorage() = AppDataStorage(fileSystem, dataDir())
 
     private fun status(outcome: FixtureOutcome): String = when (outcome) {
         FixtureOutcome.Recorded, FixtureOutcome.Restored -> STATUS_OK
@@ -216,7 +216,7 @@ internal class ScenarioHost(
      *
      * This is required as the APK is non-debuggable in typical conditions.
      */
-    private fun seedRemoteConfig(storage: SdkStorage) {
+    private fun seedRemoteConfig(storage: AppDataStorage) {
         val fields = listOfNotNull(
             globalSetting(MULTI_FILE_PERSISTENCE_SETTING)?.let { "\"pct_multi_file_persistence_enabled\":$it" },
             globalSetting(OTEL_KOTLIN_SDK_SETTING)?.let { "\"otel_kotlin_sdk\":{\"pct_enabled\":$it}" },

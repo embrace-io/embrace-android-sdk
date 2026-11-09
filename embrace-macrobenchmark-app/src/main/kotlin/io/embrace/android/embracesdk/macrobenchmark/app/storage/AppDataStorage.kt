@@ -11,7 +11,7 @@ import okio.Path
  * what the SDK starts from and to observe what it did, by names defined in respective modules, so every such
  * location is represented and managed by this.
  */
-internal class SdkStorage(
+internal class AppDataStorage(
     private val fileSystem: FileSystem,
     private val dataDir: Path,
 ) {

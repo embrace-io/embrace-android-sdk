@@ -4,7 +4,9 @@ import io.embrace.android.embracesdk.fakes.FakeErrorHandler
 import io.embrace.android.embracesdk.fs.FakeFileSystemRule
 import io.embrace.android.embracesdk.internal.logging.SdkErrorType
 import io.embrace.android.embracesdk.internal.storage.LegacyStorageMigrator
+import io.embrace.android.embracesdk.internal.storage.OrphanSweeper
 import io.embrace.android.embracesdk.internal.storage.SdkStorageLayout
+import io.embrace.android.embracesdk.internal.storage.createSdkStorage
 import okio.FileSystem
 import okio.ForwardingFileSystem
 import okio.Path
@@ -26,6 +28,7 @@ internal class LegacyTelemetryMigrationTest {
     private val data = "/data".toPath()
     private val legacyPayload = data / "files" / "embrace_payloads" / "payload"
     private val migratedPayload = data / "no_backup" / SdkStorageLayout.ROOT_DIR_NAME / "telemetry" / "ready" / "payload"
+    private val orphan = data / "no_backup" / SdkStorageLayout.ROOT_DIR_NAME / "orphan"
     private val errorHandler = FakeErrorHandler(throwOnSdkError = false)
     private val worker = MigrationWorker(errorHandler)
 
@@ -160,6 +163,80 @@ internal class LegacyTelemetryMigrationTest {
     }
 
     @Test
+    fun `start doesn't sweep orphans`() {
+        val fs = fsRule.fileSystem
+        fs.writeText(orphan)
+
+        LegacyTelemetryMigration(worker, migrator(fs), errorHandler, sweeper(fs)).start()
+        drainWorker()
+
+        assertTrue(fs.exists(orphan))
+    }
+
+    @Test
+    fun `sweepOrphans sweeps once the migration has finished`() {
+        val fs = fsRule.fileSystem
+        fs.writeText(legacyPayload)
+        fs.writeText(orphan)
+        val migration = LegacyTelemetryMigration(worker, migrator(fs), errorHandler, sweeper(fs))
+
+        migration.start()
+        migration.sweepOrphans()
+        drainWorker()
+
+        assertTrue(fs.exists(migratedPayload))
+        assertFalse(fs.exists(orphan))
+    }
+
+    @Test
+    fun `sweepOrphans sweeps without a migrator`() {
+        val fs = fsRule.fileSystem
+        fs.writeText(orphan)
+
+        LegacyTelemetryMigration(worker, null, errorHandler, sweeper(fs)).sweepOrphans()
+        drainWorker()
+
+        assertFalse(fs.exists(orphan))
+    }
+
+    @Test
+    fun `await doesn't wait for the sweep`() {
+        val sweeping = CountDownLatch(1)
+        val release = CountDownLatch(1)
+        val fs = object : ForwardingFileSystem(fsRule.fileSystem) {
+            override fun deleteRecursively(fileOrDirectory: Path, mustExist: Boolean) {
+                sweeping.countDown()
+                release.await(TIMEOUT_SECS, TimeUnit.SECONDS)
+                super.deleteRecursively(fileOrDirectory, mustExist)
+            }
+        }
+        fs.writeText(orphan)
+        val migration = LegacyTelemetryMigration(worker, migrator(fs), errorHandler, sweeper(fs))
+
+        migration.start()
+        migration.sweepOrphans()
+        assertTrue(sweeping.await(TIMEOUT_SECS, TimeUnit.SECONDS))
+        migration.await()
+        release.countDown()
+        drainWorker()
+
+        assertFalse(fs.exists(orphan))
+    }
+
+    @Test
+    fun `sweepOrphans after cancel doesn't sweep`() {
+        val fs = fsRule.fileSystem
+        fs.writeText(orphan)
+        val migration = LegacyTelemetryMigration(worker, migrator(fs), errorHandler, sweeper(fs))
+
+        migration.cancel()
+        migration.sweepOrphans()
+        drainWorker()
+
+        assertTrue(fs.exists(orphan))
+    }
+
+    @Test
     fun `isComplete is false until the migration finishes`() {
         val release = blockWorker()
         val migration = LegacyTelemetryMigration(worker, migrator(fsRule.fileSystem), errorHandler)
@@ -172,6 +249,13 @@ internal class LegacyTelemetryMigrationTest {
         assertTrue(migration.isComplete)
         assertTrue(LegacyTelemetryMigration(worker, null, errorHandler).isComplete)
     }
+
+    private fun sweeper(fs: FileSystem) = OrphanSweeper(
+        storage = createSdkStorage(fs, data / "no_backup", errorHandler),
+        layoutVersion = SdkStorageLayout.LAYOUT_VERSION,
+        processStartMs = 0,
+        errorHandler = errorHandler,
+    )
 
     private fun migrator(fs: FileSystem) =
         LegacyStorageMigrator(fs, { data / "files" }, { data / "cache" }, { data / "no_backup" }, errorHandler)

@@ -14,6 +14,7 @@ import io.embrace.android.embracesdk.internal.payload.AppFramework
 import io.embrace.android.embracesdk.internal.prefs.createSharedPrefsMigrator
 import io.embrace.android.embracesdk.internal.serialization.EmbraceSerializer
 import io.embrace.android.embracesdk.internal.serialization.PlatformSerializer
+import io.embrace.android.embracesdk.internal.storage.OrphanSweeper
 import io.embrace.android.embracesdk.internal.storage.SdkDir
 import io.embrace.android.embracesdk.internal.storage.SdkStorage
 import io.embrace.android.embracesdk.internal.storage.SdkStorageLayout
@@ -56,14 +57,26 @@ internal class ConfigLoadServices(
     private val configMigrationTimeoutMs: Long = CONFIG_MIGRATION_TIMEOUT_MS,
 ) : Closeable {
 
+    // only sweep orphaned files from previous processes
+    private val sweepCutoffMs: Long = System.currentTimeMillis().let { it - it % MS_PER_SECOND }
+
     val sdkStorage: SdkStorage = createSdkStorage(context, preStartServices.errorHandler, fileSystem)
 
     private val migrationWorker = MigrationWorker(preStartServices.errorHandler)
 
     private val legacyStorageMigrator = createLegacyStorageMigrator(context, preStartServices.errorHandler, fileSystem)
 
-    val legacyTelemetryMigration: LegacyTelemetryMigration =
-        LegacyTelemetryMigration(migrationWorker, legacyStorageMigrator, preStartServices.errorHandler)
+    val legacyTelemetryMigration: LegacyTelemetryMigration = LegacyTelemetryMigration(
+        worker = migrationWorker,
+        migrator = legacyStorageMigrator,
+        errorHandler = preStartServices.errorHandler,
+        orphanSweeper = OrphanSweeper(
+            storage = sdkStorage,
+            layoutVersion = SdkStorageLayout.LAYOUT_VERSION,
+            processStartMs = sweepCutoffMs,
+            errorHandler = preStartServices.errorHandler,
+        ),
+    )
 
     private val appFramework: AppFramework =
         AppFramework.fromString(instrumentedConfig.project.getAppFramework()) ?: AppFramework.NATIVE
@@ -207,5 +220,7 @@ internal class ConfigLoadServices(
 }
 
 private const val CONFIG_MIGRATION_TIMEOUT_MS = 3_000L
+
+private const val MS_PER_SECOND = 1_000L
 
 private const val PREFS_MIGRATION_NAME = "prefs"

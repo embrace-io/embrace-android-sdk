@@ -403,7 +403,7 @@ internal fun createRealSdkInstance(
     }
 
     val lastRunCrashVerifier = init("last-run-crash-verifier") {
-        LastRunCrashVerifier(crashMarker)
+        LastRunCrashVerifier(crashMarker) { configLoadServices.legacyTelemetryMigration.isComplete }
     }
 
     val versionChecker = overrides?.versionChecker.resolve { BuildVersionChecker }
@@ -879,7 +879,10 @@ internal fun createRealSdkInstance(
                 experimentTrackingService = experimentTrackingService,
             ),
             tracingApi = tracingApi,
-            awaitLegacyTelemetryMigration = overrides?.awaitLegacyTelemetryMigration.resolve { {} },
+            legacyTelemetryMigration = configLoadServices.legacyTelemetryMigration,
+            awaitLegacyTelemetryMigration = overrides?.awaitLegacyTelemetryMigration.resolve {
+                configLoadServices.legacyTelemetryMigration::await
+            },
         )
     }
 }

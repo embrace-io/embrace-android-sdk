@@ -10,6 +10,7 @@ import java.util.concurrent.TimeUnit
  */
 class LastRunCrashVerifier(
     private val crashFileMarker: CrashFileMarker,
+    private val isLegacyTelemetryMigrated: () -> Boolean = { true },
 ) {
 
     @Volatile
@@ -19,7 +20,8 @@ class LastRunCrashVerifier(
     private var didLastRunCrash: Boolean? = null
 
     /**
-     * Returns true if the app crashed in the last run, false otherwise.
+     * Returns true if the app crashed in the last run, false otherwise. While a 9.x crash marker may still be moving into
+     * place, the marker isn't read here and false is returned without caching it, so the async read still runs.
      */
     fun didLastRunCrash(): Boolean {
         return didLastRunCrash ?: didLastRunCrashFuture?.let { future ->
@@ -28,8 +30,10 @@ class LastRunCrashVerifier(
             } catch (e: Throwable) {
                 null
             }
-        } ?: readAndCleanMarker()
+        } ?: readAndCleanMarkerIfMigrated()
     }
+
+    private fun readAndCleanMarkerIfMigrated(): Boolean = isLegacyTelemetryMigrated() && readAndCleanMarker()
 
     /**
      * Reads and clean the last run crash marker in a background thread.

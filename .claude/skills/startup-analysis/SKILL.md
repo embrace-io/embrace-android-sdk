@@ -22,8 +22,6 @@ Primary analysis:
 - `scripts/init_window_sched.sql` — standalone deep-dive on ONE trace: thread-state + per-CPU
   residency over the modules-init window. To find who stole the CPUs, query `sched` joined to
   `thread`/`process` excluding the window's utid.
-- `scripts/serve_trace.py` — CORS-enabled static server for opening traces in ui.perfetto.dev
-  (`python3 serve_trace.py <dir> [port]`).
 - `scripts/section_tree.sql` — the sdk-init section tree of ONE trace (each section's depth,
   parent and thread), for keeping the section docs below current.
 
@@ -142,13 +140,9 @@ separately. `<Variant>` below is `Benchmark` or `BenchmarkOtelRegular`, and `<va
    passes — iterations flagged CONTENDED, or whole passes with elevated Running time, are
    environment noise, not regressions (signatures in references/sections.md). For a released
    SDK, or a comparison between versions, see "Traces from a released SDK" below.
-5. **Inspect a trace visually (optional)**: serve the traces dir on `127.0.0.1:9001` with
-   `serve_trace.py` (plain `python3 -m http.server` lacks the CORS header) and open
-   `https://ui.perfetto.dev/#!/?url=http://127.0.0.1:9001/<file>` — the first fetch can take
-   ~30 s (private-network preflight). Once loaded, the address bar rewrites to a durable
-   `local_cache_key` URL that resolves from that machine's Chrome afterwards; use that form in
-   reports. Pick the iteration whose window is the median (or a flagged-vs-clean pair when
-   illustrating variance).
+5. **Inspect a trace visually (optional)**: open `https://ui.perfetto.dev` and drop the
+   `.perfetto-trace` file onto the page (or use "Open trace file"). Pick the iteration whose
+   window is the median (or a flagged-vs-clean pair when illustrating variance).
 6. **Restore** the catalog's `embrace` version to the value you replaced.
 
 ## Missing sections

@@ -75,6 +75,29 @@ internal class MigrationWorkerTest {
     }
 
     @Test
+    fun `timed await returns the default and tracks the timeout`() {
+        val release = CountDownLatch(1)
+        val handle = worker.submit("config", false, SdkErrorType.StorageMigrationFail) {
+            release.await(TIMEOUT_SECS, TimeUnit.SECONDS)
+        }
+
+        assertFalse(handle.await(BLOCKED_MS, SdkErrorType.StorageMigrationFail))
+        assertFalse(handle.isComplete)
+        assertEquals(SdkErrorType.StorageMigrationFail.toString(), errorHandler.sdkErrorMessages.single().msg)
+
+        release.countDown()
+        assertTrue(handle.await())
+        assertTrue(handle.isComplete)
+    }
+
+    @Test
+    fun `timed await returns the result when the job completes in time`() {
+        val handle = worker.submit("config", false, SdkErrorType.StorageMigrationFail) { true }
+        assertTrue(handle.await(TIMEOUT_MS, SdkErrorType.StorageMigrationFail))
+        assertTrue(errorHandler.sdkErrorMessages.isEmpty())
+    }
+
+    @Test
     fun `only the first completion takes effect`() {
         val handle = MigrationHandle("telemetry", 0, errorHandler)
         handle.complete(1)
@@ -115,6 +138,25 @@ internal class MigrationWorkerTest {
         assertFalse(created.get())
         lazyWorker.submit("config", Unit, SdkErrorType.StorageMigrationFail) {}.await()
         assertTrue(created.get())
+    }
+
+    @Test
+    fun `idle thread exits and a later job starts a new one`() {
+        val threads = Collections.synchronizedList(mutableListOf<Thread>())
+        val idleWorker = MigrationWorker(
+            errorHandler,
+            ThreadFactory { runnable ->
+                Thread(runnable).apply { isDaemon = true }.also(threads::add)
+            },
+            keepAliveMs = 10,
+        )
+        idleWorker.submit("config", Unit, SdkErrorType.StorageMigrationFail) {}.await()
+        val first = threads.single()
+        first.join(TIMEOUT_MS)
+        assertFalse(first.isAlive)
+
+        assertTrue(idleWorker.submit("telemetry", false, SdkErrorType.StorageMigrationFail) { true }.await())
+        assertEquals(2, threads.size)
     }
 
     @Test

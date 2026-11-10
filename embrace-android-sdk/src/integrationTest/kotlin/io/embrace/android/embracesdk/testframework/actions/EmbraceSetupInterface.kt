@@ -159,9 +159,10 @@ internal class EmbraceSetupInterface(
     var startFailure: Throwable? = null
 
     /**
-     * Called by the SDK before it reads the previous launch's crash marker and telemetry.
+     * When set, called by the SDK in place of the legacy telemetry migration before it reads the previous launch's crash
+     * marker and telemetry.
      */
-    var awaitLegacyTelemetryMigration: () -> Unit = {}
+    var awaitLegacyTelemetryMigration: (() -> Unit)? = null
 
     private val fakeInitServices: TestInitServices = TestInitServices(
         clock = fakeClock,
@@ -290,7 +291,7 @@ internal class EmbraceSetupInterface(
         intakeService = { real -> real().also { services.intakeService = it } },
         eventBus = { real -> real().also { services.eventBus = it } },
         ordinalStore = ordinalStore?.let { store -> { store } },
-        awaitLegacyTelemetryMigration = { awaitLegacyTelemetryMigration },
+        awaitLegacyTelemetryMigration = awaitLegacyTelemetryMigration?.let { hook -> { hook } },
     )
 
     /**

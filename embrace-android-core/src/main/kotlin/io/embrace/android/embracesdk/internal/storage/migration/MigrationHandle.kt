@@ -5,12 +5,14 @@ import io.embrace.android.embracesdk.internal.logging.SdkErrorType
 import io.embrace.android.embracesdk.internal.logging.guardSdkCode
 import io.embrace.android.embracesdk.internal.utils.EmbTrace
 import java.util.concurrent.CountDownLatch
+import java.util.concurrent.TimeUnit
+import java.util.concurrent.TimeoutException
 import java.util.concurrent.atomic.AtomicBoolean
 
 /**
  * The result of a migration job named [name], or [default] if the job fails or never runs.
  */
-internal class MigrationHandle<T>(
+class MigrationHandle<T>(
     val name: String,
     private val default: T,
     private val errorHandler: ErrorHandler,
@@ -28,6 +30,28 @@ internal class MigrationHandle<T>(
         }
         result
     }
+
+    /**
+     * Blocks until the job completes, [complete] is called or [timeoutMs] passes, then returns the result. A timeout is
+     * tracked as [errorType] and returns [default]. Never throws.
+     */
+    fun await(timeoutMs: Long, errorType: SdkErrorType): T = errorHandler.guardSdkCode(SdkErrorType.Ignored, default) {
+        val completedInTime = EmbTrace.trace("migration-await-$name", recordDuration = true) {
+            latch.await(timeoutMs, TimeUnit.MILLISECONDS)
+        }
+        if (completedInTime) {
+            result
+        } else {
+            errorHandler.trackSdkError(errorType, TimeoutException("migration '$name' not done after $timeoutMs ms"))
+            default
+        }
+    }
+
+    /**
+     * True once the job has completed or [complete] has been called.
+     */
+    val isComplete: Boolean
+        get() = latch.count == 0L
 
     /**
      * Completes with [value] and releases waiters. Only the first call has an effect.

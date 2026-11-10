@@ -24,6 +24,8 @@ import io.embrace.android.embracesdk.internal.serialization.PlatformSerializer
 import io.embrace.android.embracesdk.internal.storage.SdkDir
 import io.embrace.android.embracesdk.internal.storage.SdkStorage
 import io.embrace.android.embracesdk.internal.storage.SdkStorageLayout
+import io.embrace.android.embracesdk.internal.storage.migration.LegacyTelemetryMigration
+import io.embrace.android.embracesdk.internal.storage.migration.MigrationWorker
 import io.embrace.android.embracesdk.internal.store.KeyValueStore
 import io.embrace.android.embracesdk.internal.store.OrdinalStore
 import io.embrace.android.embracesdk.internal.store.OrdinalStoreImpl
@@ -68,6 +70,17 @@ internal class ConfigLoadServices(
     } else {
         createLegacySdkStorage(context, preStartServices.errorHandler)
     }
+
+    private val migrationWorker = MigrationWorker(preStartServices.errorHandler)
+
+    private val legacyStorageMigrator = if (superiorStorageSystemEnabled) {
+        createLegacyStorageMigrator(context, preStartServices.errorHandler, fileSystem)
+    } else {
+        null
+    }
+
+    val legacyTelemetryMigration: LegacyTelemetryMigration =
+        LegacyTelemetryMigration(migrationWorker, legacyStorageMigrator, preStartServices.errorHandler)
 
     val keyValueStore: Lazy<KeyValueStore> = lazy {
         createKeyValueStore(context, jsonSerializer, preStartServices.errorHandler)
@@ -142,6 +155,10 @@ internal class ConfigLoadServices(
         sectionName = "persisted-config-init",
         recordDuration = true,
     ) {
+        legacyStorageMigrator?.let { migrator ->
+            migrationWorker.submit("config", Unit, SdkErrorType.StorageMigrationFail, migrator::migrateConfig)
+                .await(CONFIG_MIGRATION_TIMEOUT_MS, SdkErrorType.StorageMigrationFail)
+        }
         PersistedConfig(
             serializer = jsonSerializer,
             storageDir = sdkStorage.path(SdkDir.REMOTE_CONFIG).toFile(),
@@ -220,3 +237,5 @@ internal class ConfigLoadServices(
 }
 
 internal const val SUPERIOR_STORAGE_SYSTEM_ENABLED = false
+
+private const val CONFIG_MIGRATION_TIMEOUT_MS = 1_000L

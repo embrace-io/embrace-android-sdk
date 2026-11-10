@@ -9,6 +9,7 @@ import io.embrace.android.embracesdk.internal.injection.PreStartServices
 import io.embrace.android.embracesdk.internal.injection.SUPERIOR_STORAGE_SYSTEM_ENABLED
 import io.embrace.android.embracesdk.internal.injection.SdkOverrides
 import io.embrace.android.embracesdk.internal.injection.createLegacySdkStorage
+import io.embrace.android.embracesdk.internal.injection.createLegacyStorageMigrator
 import io.embrace.android.embracesdk.internal.injection.createSdkStorage
 import io.embrace.android.embracesdk.internal.instrumentation.startup.SdkInitResourceUsageTracker
 import io.embrace.android.embracesdk.internal.logging.ErrorHandler
@@ -148,11 +149,21 @@ private fun persistedTelemetryDeletion(
             createLegacySdkStorage(context, errorHandler)
         }
     }.getOrNull() ?: return null
+    val migrator = if (superiorStorageSystemEnabled) {
+        runCatching { createLegacyStorageMigrator(context, errorHandler) }.getOrNull()
+    } else {
+        null
+    }
     return {
         Executors.newSingleThreadExecutor().apply {
             execute {
                 runCatching {
                     storage.deleteTelemetry()
+                }.onFailure { exception ->
+                    Log.e("[Embrace]", "An error occurred while trying to disable Embrace SDK.", exception)
+                }
+                runCatching {
+                    migrator?.deleteLegacyTelemetry()
                 }.onFailure { exception ->
                     Log.e("[Embrace]", "An error occurred while trying to disable Embrace SDK.", exception)
                 }

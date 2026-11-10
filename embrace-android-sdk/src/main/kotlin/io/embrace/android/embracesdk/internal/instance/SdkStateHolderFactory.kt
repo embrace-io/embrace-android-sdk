@@ -6,9 +6,7 @@ import io.embrace.android.embracesdk.internal.api.delegate.PreStartOTelApi
 import io.embrace.android.embracesdk.internal.injection.ConfigLoadServices
 import io.embrace.android.embracesdk.internal.injection.ConfigLoadServicesSupplier
 import io.embrace.android.embracesdk.internal.injection.PreStartServices
-import io.embrace.android.embracesdk.internal.injection.SUPERIOR_STORAGE_SYSTEM_ENABLED
 import io.embrace.android.embracesdk.internal.injection.SdkOverrides
-import io.embrace.android.embracesdk.internal.injection.createLegacySdkStorage
 import io.embrace.android.embracesdk.internal.injection.createLegacyStorageMigrator
 import io.embrace.android.embracesdk.internal.injection.createSdkStorage
 import io.embrace.android.embracesdk.internal.instrumentation.startup.SdkInitResourceUsageTracker
@@ -28,7 +26,6 @@ internal fun createSdkStateHolder(
     configLoadServicesSupplier: ConfigLoadServicesSupplier? = null,
     sdkInitResourceUsageTrackerSupplier: Provider<SdkInitResourceUsageTracker>? = null,
     overrides: SdkOverrides? = null,
-    superiorStorageSystemEnabled: Boolean = SUPERIOR_STORAGE_SYSTEM_ENABLED,
 ): SdkStateHolder {
     val errorHandler = preStartServices.errorHandler
     val clock = preStartServices.clock
@@ -56,7 +53,7 @@ internal fun createSdkStateHolder(
             failed = { NoopSdkInstance(clock::now, errorHandler, NoopSdkInstance.SDK_START_FAILED) },
             disabled = { NoopSdkInstance(clock::now, errorHandler, NoopSdkInstance.SDK_DISABLED) },
             persistedTelemetryDeletion = { context ->
-                persistedTelemetryDeletion(context, errorHandler, superiorStorageSystemEnabled)
+                persistedTelemetryDeletion(context, errorHandler)
             },
             telemetryService = preStartServices.telemetryService,
             errorHandler = errorHandler,
@@ -140,20 +137,9 @@ private fun createSdkInstance(
 private fun persistedTelemetryDeletion(
     context: Context,
     errorHandler: ErrorHandler,
-    superiorStorageSystemEnabled: Boolean,
 ): (() -> Unit)? {
-    val storage = runCatching {
-        if (superiorStorageSystemEnabled) {
-            createSdkStorage(context, errorHandler)
-        } else {
-            createLegacySdkStorage(context, errorHandler)
-        }
-    }.getOrNull() ?: return null
-    val migrator = if (superiorStorageSystemEnabled) {
-        runCatching { createLegacyStorageMigrator(context, errorHandler) }.getOrNull()
-    } else {
-        null
-    }
+    val storage = runCatching { createSdkStorage(context, errorHandler) }.getOrNull() ?: return null
+    val migrator = runCatching { createLegacyStorageMigrator(context, errorHandler) }.getOrNull()
     return {
         Executors.newSingleThreadExecutor().apply {
             execute {

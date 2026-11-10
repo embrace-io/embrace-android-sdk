@@ -41,26 +41,18 @@ internal class ConfigLoadServicesTest {
     val fsRule = FakeFileSystemRule()
 
     @Test
-    fun `background work only begins once started`() {
+    fun `config requests only begin once started`() {
         val configService = FakeConfigService()
-        val workerThreadPool = FakeWorkerThreadPool(testWorkers = listOf(Worker.Background.IoRegWorker))
-        val configLoadServices = ConfigLoadServices(
-            context = FilesDirApplication(tempDir.newFolder()),
-            preStartServices = PreStartServices(errorHandler = FakeErrorHandler(throwOnSdkError = false)),
-            workerThreadPoolSupplier = { workerThreadPool },
-            configServiceSupplier = { _, _, _, _, _, _ -> configService },
-        )
-        val ioWorker = workerThreadPool.executorFor(Worker.Background.IoRegWorker)
-        assertEquals(0, ioWorker.submitCount)
+        val configLoadServices =
+            createServices(FilesDirApplication(tempDir.newFolder()), configService, FakeWorkerThreadPool())
         assertEquals(0, configService.scheduleConfigRequestsCount)
 
         configLoadServices.start()
-        assertEquals(1, ioWorker.submitCount)
         assertEquals(1, configService.scheduleConfigRequestsCount)
     }
 
     @Test
-    fun `the superior storage system reads the persisted SDK state from install state`() {
+    fun `reads the persisted SDK state from install state`() {
         val fs = fsRule.fileSystem
         val context = FilesDirApplication(tempDir.newFolder())
         val stateFile = context.noBackupFilesDir.toOkioPath() / SdkStorageLayout.ROOT_DIR_NAME / "install_state" /
@@ -73,21 +65,20 @@ internal class ConfigLoadServicesTest {
             preStartServices = PreStartServices(errorHandler = FakeErrorHandler(throwOnSdkError = false)),
             workerThreadPoolSupplier = { FakeWorkerThreadPool(testWorkers = listOf(Worker.Background.IoRegWorker)) },
             configServiceSupplier = { _, _, _, _, _, _ -> FakeConfigService() },
-            superiorStorageSystemEnabled = true,
             fileSystem = fs,
         )
         assertEquals("device-id", configLoadServices.persistedSdkStateStore.value.snapshot().deviceId)
     }
 
     @Test
-    fun `the superior storage system moves the 9x config into place during construction`() {
+    fun `moves the 9x config into place during construction`() {
         val fs = fsRule.fileSystem
         val context = FilesDirApplication(tempDir.newFolder())
         val legacy = context.filesDir.toOkioPath() / "embrace_remote_config" / PersistedConfig.CONFIG_RESPONSE_FILE_NAME
         fs.createDirectories(checkNotNull(legacy.parent))
         fs.write(legacy) { writeUtf8("{}") }
 
-        createSuperiorStorageServices(context, FakeConfigService(), FakeWorkerThreadPool()).awaitPrefsMigration()
+        createServices(context, FakeConfigService(), FakeWorkerThreadPool()).awaitPrefsMigration()
 
         val migrated = context.noBackupFilesDir.toOkioPath() / SdkStorageLayout.ROOT_DIR_NAME / "remote_config" /
             PersistedConfig.CONFIG_RESPONSE_FILE_NAME
@@ -96,14 +87,13 @@ internal class ConfigLoadServicesTest {
     }
 
     @Test
-    fun `the superior storage system keeps ordinals in install state`() {
+    fun `keeps ordinals in install state`() {
         val context = FilesDirApplication(tempDir.newFolder())
         val configLoadServices = ConfigLoadServices(
             context = context,
             preStartServices = PreStartServices(errorHandler = FakeErrorHandler()),
             workerThreadPoolSupplier = { FakeWorkerThreadPool(testWorkers = listOf(Worker.Background.IoRegWorker)) },
             configServiceSupplier = { _, _, _, _, _, _ -> FakeConfigService() },
-            superiorStorageSystemEnabled = true,
             fileSystem = FileSystem.SYSTEM,
         )
         val store = configLoadServices.ordinalStore.value
@@ -115,34 +105,18 @@ internal class ConfigLoadServicesTest {
     }
 
     @Test
-    fun `the superior storage system skips the prefs prewarm`() {
-        val workerThreadPool = FakeWorkerThreadPool(testWorkers = listOf(Worker.Background.IoRegWorker))
-        val configLoadServices = ConfigLoadServices(
-            context = FilesDirApplication(tempDir.newFolder()),
-            preStartServices = PreStartServices(errorHandler = FakeErrorHandler()),
-            workerThreadPoolSupplier = { workerThreadPool },
-            configServiceSupplier = { _, _, _, _, _, _ -> FakeConfigService() },
-            superiorStorageSystemEnabled = true,
-            fileSystem = fsRule.fileSystem,
-        )
-        configLoadServices.start()
-        configLoadServices.awaitPrefsMigration()
-        assertEquals(0, workerThreadPool.executorFor(Worker.Background.IoRegWorker).submitCount)
-    }
-
-    @Test
-    fun `the superior storage system keeps delivered AEI and network capture counts in install state`() {
+    fun `keeps delivered AEI and network capture counts in install state`() {
         val context = FilesDirApplication(tempDir.newFolder())
         val rule = NetworkCaptureRuleRemoteConfig(id = "rule", duration = null, method = "GET", urlRegex = "embrace.io")
         val configService = FakeConfigService(networkBehavior = FakeNetworkBehavior(rules = setOf(rule)))
         val workers = listOf(Worker.Background.NonIoRegWorker, Worker.Background.PersistenceWorker)
         val workerThreadPool = FakeWorkerThreadPool(testWorkers = workers)
-        val first = createSuperiorStorageServices(context, configService, workerThreadPool)
+        val first = createServices(context, configService, workerThreadPool)
         first.deliveredAeiStore.value.add("aei")
         first.networkCaptureRuleStore.value.decrement(rule.id, 5)
         workers.forEach { workerThreadPool.executorFor(it).runCurrentlyBlocked() }
 
-        val second = createSuperiorStorageServices(context, configService, FakeWorkerThreadPool(testWorkers = workers))
+        val second = createServices(context, configService, FakeWorkerThreadPool(testWorkers = workers))
         assertEquals(setOf("aei"), second.deliveredAeiStore.value.ids())
         assertEquals(4, second.networkCaptureRuleStore.value.remaining(rule.id, 5))
     }
@@ -164,7 +138,6 @@ internal class ConfigLoadServicesTest {
             preStartServices = PreStartServices(errorHandler = errorHandler),
             workerThreadPoolSupplier = { FakeWorkerThreadPool(testWorkers = listOf(Worker.Background.IoRegWorker)) },
             configServiceSupplier = { _, _, _, _, _, _ -> FakeConfigService() },
-            superiorStorageSystemEnabled = true,
             fileSystem = fs,
             configMigrationTimeoutMs = 1,
         )
@@ -183,7 +156,7 @@ internal class ConfigLoadServicesTest {
         persistedSdkStateStore.value
     }
 
-    private fun createSuperiorStorageServices(
+    private fun createServices(
         context: FilesDirApplication,
         configService: FakeConfigService,
         workerThreadPool: FakeWorkerThreadPool,
@@ -192,7 +165,6 @@ internal class ConfigLoadServicesTest {
         preStartServices = PreStartServices(errorHandler = FakeErrorHandler()),
         workerThreadPoolSupplier = { workerThreadPool },
         configServiceSupplier = { _, _, _, _, _, _ -> configService },
-        superiorStorageSystemEnabled = true,
         fileSystem = fsRule.fileSystem,
     )
 }

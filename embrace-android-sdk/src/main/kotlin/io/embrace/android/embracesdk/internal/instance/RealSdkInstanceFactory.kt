@@ -796,11 +796,7 @@ internal fun createRealSdkInstance(
             eventBus = eventBus,
             appContext = appContext,
             sdkStorage = sdkStorage,
-            persistedSdkStateFile = if (configLoadServices.superiorStorageSystemEnabled) {
-                sdkStorage.path(SdkDir.INSTALL_STATE) / SdkStorageLayout.PERSISTED_SDK_STATE_FILE_NAME
-            } else {
-                null
-            },
+            persistedSdkStateFile = sdkStorage.path(SdkDir.INSTALL_STATE) / SdkStorageLayout.PERSISTED_SDK_STATE_FILE_NAME,
             spanRepository = spanRepository,
             logSink = logSink,
             otelSdkConfig = otelSdkConfig,

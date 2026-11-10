@@ -126,7 +126,7 @@ internal class SdkStateHolderFactoryTest {
     @Test
     fun `disabling after a failed start whose storage can't be found still disables the sdk`() {
         val noStorage = object : ContextWrapper(context) {
-            override fun getFilesDir(): File = error("no files dir")
+            override fun getNoBackupFilesDir(): File = error("no no-backup files dir")
         }
         val holder = createStateHolder(
             configServiceSupplier = { _, _, _, _, _, _ -> FakeConfigService() },
@@ -145,11 +145,10 @@ internal class SdkStateHolderFactoryTest {
             override fun getCacheDir(): File = error("no cache dir")
             override fun getNoBackupFilesDir(): File = context.noBackupFilesDir
         }
-        val sdkFile = createSdkFile(superiorStorageSystemEnabled = true)
+        val sdkFile = createSdkFile()
         val holder = createStateHolder(
             configServiceSupplier = { _, _, _, _, _, _ -> FakeConfigService() },
             overrides = SdkOverrides(appContext = { error("failed to init") }),
-            superiorStorageSystemEnabled = true,
         )
         holder.start(noLegacyDirs)
         assertEquals(SdkState.FAILED, holder.state)
@@ -167,7 +166,6 @@ internal class SdkStateHolderFactoryTest {
         val holder = createStateHolder(
             configServiceSupplier = { _, _, _, _, _, _ -> FakeConfigService() },
             overrides = SdkOverrides(appContext = { error("failed to init") }),
-            superiorStorageSystemEnabled = true,
         )
         holder.start(context)
         assertEquals(SdkState.FAILED, holder.state)
@@ -176,8 +174,8 @@ internal class SdkStateHolderFactoryTest {
         awaitDeleted(legacyPayload)
     }
 
-    private fun createSdkFile(superiorStorageSystemEnabled: Boolean = false): File {
-        val dir = testSdkStorage(context, superiorStorageSystemEnabled).dir(SdkDir.TELEMETRY_READY).toFile()
+    private fun createSdkFile(): File {
+        val dir = testSdkStorage(context).dir(SdkDir.TELEMETRY_READY).toFile()
         return File(dir, "payload").apply {
             parentFile?.mkdirs()
             writeText("data")
@@ -195,7 +193,6 @@ internal class SdkStateHolderFactoryTest {
     private fun createStateHolder(
         configServiceSupplier: ConfigServiceSupplier,
         overrides: SdkOverrides? = null,
-        superiorStorageSystemEnabled: Boolean = false,
     ): SdkStateHolder = createSdkStateHolder(
         preStartServices = preStartServices,
         configLoadServicesSupplier = { ctx, preStartServices ->
@@ -204,11 +201,9 @@ internal class SdkStateHolderFactoryTest {
                 preStartServices = preStartServices,
                 workerThreadPoolSupplier = { workerThreadPool },
                 configServiceSupplier = configServiceSupplier,
-                superiorStorageSystemEnabled = superiorStorageSystemEnabled,
             )
         },
         overrides = overrides,
-        superiorStorageSystemEnabled = superiorStorageSystemEnabled,
     )
 
     private fun disabledConfigService(): ConfigService = FakeConfigService(

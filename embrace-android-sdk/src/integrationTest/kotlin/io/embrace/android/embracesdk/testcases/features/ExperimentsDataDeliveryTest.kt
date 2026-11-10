@@ -62,7 +62,6 @@ internal class ExperimentsDataDeliveryTest(
                 validatePayloadAgainstGoldenFile(
                     getSingleSessionEnvelope(),
                     "experiment_session_span.json",
-                    ignoredAttributes = if (testRule.superiorStorageSystemEnabled) STATE_STORE_INIT_ATTRIBUTES else emptySet(),
                 )
             },
         )
@@ -167,14 +166,6 @@ internal class ExperimentsDataDeliveryTest(
         @JvmStatic
         @ParameterizedRobolectricTestRunner.Parameters(name = "{0}")
         fun modes(): List<Array<Any>> = OtelSdkMode.parameters()
-
-        private val STATE_STORE_INIT_ATTRIBUTES = setOf(
-            "key-value-store-init-duration-ms",
-            "prefs-first-read-duration-ms",
-            "prefs-file-bytes",
-            "persisted-sdk-state-load-duration-ms",
-            "persisted-sdk-state-bytes",
-        )
 
         private const val LOG_BATCH_FLUSH_MS = 2000L
     }

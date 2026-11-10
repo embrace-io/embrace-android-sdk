@@ -137,7 +137,7 @@ internal class UseAfterDisableTest(
      * caller waiting for an empty result tries again.
      */
     private fun persistedFiles(): List<File> = TELEMETRY_DIRS.flatMap { location ->
-        val dir = testSdkStorage(context, testRule.superiorStorageSystemEnabled).dir(location).toFile()
+        val dir = testSdkStorage(context).dir(location).toFile()
         runCatching { dir.walkTopDown().filter(File::isFile).toList() }.getOrElse { listOf(dir) }
     }
 

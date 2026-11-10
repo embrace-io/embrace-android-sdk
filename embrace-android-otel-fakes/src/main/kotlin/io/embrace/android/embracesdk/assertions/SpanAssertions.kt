@@ -119,25 +119,15 @@ private fun Span.stateSpanAttributes(): Map<String, String> {
     return checkNotNull(attributes).toMap()
 }
 
-/**
- * The SDK reads its persisted state from prefs during init when [superiorStorageSystemEnabled] is false, and from
- * its own file otherwise.
- */
-fun List<Attribute>?.assertSdkInitSectionDurationsRecorded(superiorStorageSystemEnabled: Boolean) {
-    val stateReadSection = if (superiorStorageSystemEnabled) "persisted-sdk-state-load" else "prefs-first-read"
-    (expectedSdkInitSections + stateReadSection).forEach { section ->
+fun List<Attribute>?.assertSdkInitSectionDurationsRecorded() {
+    expectedSdkInitSections.forEach { section ->
         assertNotNull(
             "duration for init section `$section` not found",
             this?.findAttributeValue("$section-duration-ms")
         )
     }
-    val (presentSize, absentSize) = if (superiorStorageSystemEnabled) {
-        "persisted-sdk-state-bytes" to "prefs-file-bytes"
-    } else {
-        "prefs-file-bytes" to "persisted-sdk-state-bytes"
-    }
-    assertNotNull("`$presentSize` not found", this?.findAttributeValue(presentSize))
-    assertNull("`$absentSize` was recorded", this?.findAttributeValue(absentSize))
+    assertNotNull("`persisted-sdk-state-bytes` not found", this?.findAttributeValue("persisted-sdk-state-bytes"))
+    assertNull("`prefs-file-bytes` was recorded", this?.findAttributeValue("prefs-file-bytes"))
 }
 
 /**

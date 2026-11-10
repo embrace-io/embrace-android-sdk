@@ -116,7 +116,7 @@ internal class AppStartupTraceTest(
                     assertEquals("yes", coldAppStartupRootSpan().attributes.toEmbracePayload().findAttributeValue("custom-attribute"))
                     with(embraceInitSpan().attributes.toEmbracePayload()) {
                         assertEquals("1", findAttributeValue(EmbAppAttributes.EMB_APP_VERSION_STARTUP_COUNTER))
-                        assertSdkInitSectionDurationsRecorded(testRule.superiorStorageSystemEnabled)
+                        assertSdkInitSectionDurationsRecorded()
                     }
                     with(initGapSpan()) {
                         assertEquals(sdkStartTimeMs, startEpochNanos.nanosToMillis())

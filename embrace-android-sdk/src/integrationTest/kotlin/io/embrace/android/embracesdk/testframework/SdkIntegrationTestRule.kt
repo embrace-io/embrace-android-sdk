@@ -90,11 +90,6 @@ internal class SdkIntegrationTestRule(
      * The opentelemetry-kotlin implementation to run against.
      */
     val otelSdkMode: OtelSdkMode,
-
-    /**
-     * Whether the SDK keeps its state and telemetry under `noBackupFilesDir/xcor/`.
-     */
-    val superiorStorageSystemEnabled: Boolean = SUPERIOR_STORAGE_SYSTEM_ENABLED_BY_DEFAULT,
     private val embraceSetupInterfaceSupplier: Provider<EmbraceSetupInterface> = { EmbraceSetupInterface() },
 ) : ExternalResource() {
 
@@ -153,7 +148,6 @@ internal class SdkIntegrationTestRule(
         val persistedConfig = otelSdkMode.applyTo(persistedRemoteConfig)
         val serverConfig = otelSdkMode.applyTo(serverResponseConfig)
         setup = embraceSetupInterfaceSupplier()
-        setup.superiorStorageSystemEnabled = superiorStorageSystemEnabled
         val deliveryTracer = DeliveryTracer()
         val apiServer = FakeApiServer(serverConfig, deliveryTracer, serverResponseConfigJson, serverResponseConfigEtag)
         server = MockWebServer().apply {
@@ -289,7 +283,6 @@ internal class SdkIntegrationTestRule(
             configLoadServicesSupplier = configLoadServicesSupplier,
             sdkInitResourceUsageTrackerSupplier = setup::fakeSdkInitResourceUsageTracker,
             overrides = setup.createSdkOverrides(deliveryTracer),
-            superiorStorageSystemEnabled = setup.superiorStorageSystemEnabled,
         )
     }
 
@@ -297,6 +290,5 @@ internal class SdkIntegrationTestRule(
         const val DEFAULT_SDK_START_TIME_MS = 169220160000L
         const val DEFAULT_EXPIRED_USER_SESSION_ID = "ef7ddb7cc8dd40a1be7b5cce5dc49d95"
         const val DEFAULT_DEAD_SESSION_PART_ID = "dde17b0916354843bf2fbead12b028a9"
-        const val SUPERIOR_STORAGE_SYSTEM_ENABLED_BY_DEFAULT: Boolean = false
     }
 }

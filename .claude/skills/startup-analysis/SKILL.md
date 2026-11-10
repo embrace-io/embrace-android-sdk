@@ -19,6 +19,10 @@ Primary analysis:
   window stats, TTID stats, and the per-iteration contention/slow-execution table.
 - `scripts/startup_metrics.sql` — the per-trace query analyze_startup.py executes (sections,
   window, TTID, main-thread thread-state; commented).
+- `tools/startup trace-processor` (repo root) — prints the path of Perfetto's native
+  `trace_processor_shell` at the version `gradle/libs.versions.toml` pins
+  (`perfettoTraceProcessor`), downloading it into `~/.cache/embrace-startup-tools` on first use.
+  The analysis and the standalone queries below run with it.
 - `scripts/init_window_sched.sql` — standalone deep-dive on ONE trace: thread-state + per-CPU
   residency over the modules-init window. To find who stole the CPUs, query `sched` joined to
   `thread`/`process` excluding the window's utid.
@@ -112,15 +116,14 @@ separately. `<Variant>` below is `Benchmark` or `BenchmarkOtelRegular`, and `<va
    `examples/ExampleApp/app/benchmark/build/outputs/connected_android_test_additional_output/<variant>/connected/<device>/`
    as `StartupBenchmarks_coldStartup_iterNNN_<timestamp>.perfetto-trace`. Each rerun WIPES this
    directory — copy any traces you need to keep (e.g. per-pass comparisons) before rerunning.
-3. **Analyze**: fetch the trace_processor launcher once per machine (it is a python3 script that
-   self-downloads the native binary on first use):
+3. **Analyze**: get the pinned `trace_processor_shell` with
    ```
-   curl -sL -o <scratchpad>/trace_processor https://get.perfetto.dev/trace_processor
+   tools/startup trace-processor
    ```
-   then run
+   which prints its path, then run
    ```
    python3 .claude/skills/startup-analysis/scripts/analyze_startup.py \
-     --trace-processor <scratchpad>/trace_processor "<traces dir>"
+     --trace-processor <that path> "<traces dir>"
    ```
    (`--all-sections` to list every emb-* section instead of the top 15 extras.) Besides
    printing, the summary is written to a uniquely named file —

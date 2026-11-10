@@ -1,7 +1,7 @@
 -- Scheduling analysis of the main thread over the emb-modules-init window, for diagnosing
--- slow-pass variance (contention vs thermal). Run with perfetto trace_processor
--- (https://get.perfetto.dev/trace_processor is a python3 launcher script):
---   python3 trace_processor -q init_window_sched.sql <iteration>.perfetto-trace
+-- slow-pass variance (contention vs thermal). Run with the trace_processor_shell whose path
+-- `tools/startup trace-processor` prints (the release the version catalog pins):
+--   <trace_processor_shell> -q init_window_sched.sql <iteration>.perfetto-trace
 -- Interpretation: high R/R+ thread_state time + residency spread over many CPUs means the
 -- iteration lost time to scheduler contention (check competing threads with a sched query
 -- excluding the window utid), not SDK code. trace_processor allows one result-returning

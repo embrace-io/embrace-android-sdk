@@ -99,13 +99,29 @@ internal class LegacyStorageMigratorTest {
     }
 
     @Test
-    fun `the legacy crash marker is deleted rather than migrated`() {
+    fun `the legacy crash marker is moved and the rest of the install state deleted`() {
         val fs = fsRule.fileSystem
-        fs.writeText(filesDir / "embrace" / "embrace_crash_marker", "marker")
+        fs.writeText(filesDir / "embrace" / "embrace_crash_marker", "legacy")
+        fs.writeText(filesDir / "embrace" / "other", "x")
 
         migrateAll(migrator(fs))
 
-        assertFalse(fs.exists(layout(fs).path(SdkDir.INSTALL_STATE)))
+        val installState = layout(fs).path(SdkDir.INSTALL_STATE)
+        assertEquals(mapOf(SdkStorageLayout.CRASH_MARKER_FILE_NAME to "legacy"), contents(fs, installState))
+        assertFalse(fs.exists(filesDir / "embrace"))
+        assertTrue(errorHandler.sdkErrorMessages.isEmpty())
+    }
+
+    @Test
+    fun `a crash marker the SDK already wrote is kept`() {
+        val fs = fsRule.fileSystem
+        val marker = layout(fs).path(SdkDir.INSTALL_STATE) / SdkStorageLayout.CRASH_MARKER_FILE_NAME
+        fs.writeText(marker, "live")
+        fs.writeText(filesDir / "embrace" / "embrace_crash_marker", "legacy")
+
+        migrator(fs).migrateTelemetry()
+
+        assertEquals("live", fs.read(marker) { readUtf8() })
         assertFalse(fs.exists(filesDir / "embrace"))
         assertTrue(errorHandler.sdkErrorMessages.isEmpty())
     }
@@ -205,7 +221,8 @@ internal class LegacyStorageMigratorTest {
     fun `migrateTelemetry still migrates if the cache dir can't be resolved`() {
         val fs = fsRule.fileSystem
         fs.writeText(filesDir / "embrace_payloads" / "payload", "x")
-        val migrator = LegacyStorageMigrator(fs, filesDir, { error("no cache dir") }, noBackupFilesDir, errorHandler)
+        val migrator =
+            LegacyStorageMigrator(fs, { filesDir }, { error("no cache dir") }, { noBackupFilesDir }, errorHandler)
 
         migrator.migrateTelemetry()
 
@@ -261,7 +278,8 @@ internal class LegacyStorageMigratorTest {
         val fs = FileSystem.SYSTEM
         val disk = tmpFolder.root.toOkioPath()
         val files = seedLegacyLayout(fs, disk / "files")
-        val migrator = LegacyStorageMigrator(fs, disk / "files", { disk / "cache" }, disk / "no_backup", errorHandler)
+        val migrator =
+            LegacyStorageMigrator(fs, { disk / "files" }, { disk / "cache" }, { disk / "no_backup" }, errorHandler)
 
         migrateAll(migrator)
 
@@ -269,7 +287,31 @@ internal class LegacyStorageMigratorTest {
         assertTrue(errorHandler.sdkErrorMessages.isEmpty())
     }
 
-    private fun migrator(fs: FileSystem) = LegacyStorageMigrator(fs, filesDir, { cacheDir }, noBackupFilesDir, errorHandler)
+    @Test
+    fun `deleteLegacyTelemetry doesn't throw if the files dir can't be resolved`() {
+        val fs = fsRule.fileSystem
+        fs.writeText(cacheDir / "embrace_payloads" / "payload", "x")
+        val migrator =
+            LegacyStorageMigrator(fs, { error("no files dir") }, { cacheDir }, { noBackupFilesDir }, errorHandler)
+
+        migrator.deleteLegacyTelemetry()
+
+        assertFalse(fs.exists(cacheDir / "embrace_payloads"))
+    }
+
+    @Test
+    fun `creating the migrator doesn't resolve its dirs`() {
+        LegacyStorageMigrator(
+            fsRule.fileSystem,
+            { error("files dir") },
+            { error("cache dir") },
+            { error("no backup dir") },
+            errorHandler,
+        )
+    }
+
+    private fun migrator(fs: FileSystem) =
+        LegacyStorageMigrator(fs, { filesDir }, { cacheDir }, { noBackupFilesDir }, errorHandler)
 
     private fun layout(fs: FileSystem) = SdkStorageImpl(fs, root, errorHandler)
 

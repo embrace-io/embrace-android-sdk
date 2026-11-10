@@ -28,7 +28,8 @@ Notes:
   why that matters when judging regressions).
 
 Older SDKs (references/section-history.md): a trace without emb-sdk-start gets a window
-composed from the first modules-init start to the first post-services-setup end.
+composed from the first modules-init start to the first post-services-setup end, and
+OLDER_SECTION_NAMES fills the canonical rows of renamed sections.
 """
 
 import argparse
@@ -181,6 +182,10 @@ def report(per_trace: list, all_sections: bool) -> None:
     for name, depth in CANONICAL_SECTIONS:
         vals = section_values.pop(name, [])
         label = "  " * depth + ("↳ " if depth else "") + name
+        old_name = OLDER_SECTION_NAMES.get(name)
+        if not vals and old_name in section_values:
+            vals = section_values.pop(old_name)
+            label += f" (as {old_name.removeprefix('emb-')})"
         if not vals:
             print(f"  {label:<60}{'-- not in these traces --':>41}")
             continue
@@ -249,6 +254,15 @@ def short(filename: str) -> str:
     if m:
         return m.group(0).removesuffix(".perfetto-trace")
     return filename
+
+
+# Older SDKs: the names canonical sections had before a rename that left their work unchanged, as current name -> older
+# name, so a trace from an older SDK fills the row of the section it became. Sections that were split, merged or re-scoped
+# have no entry and are not comparable across the change. references/section-history.md has the full mapping.
+OLDER_SECTION_NAMES = {
+    "emb-persisted-config-init": "emb-persisted-config-load",
+    "emb-setup-services": "emb-post-init",
+}
 
 
 if __name__ == "__main__":

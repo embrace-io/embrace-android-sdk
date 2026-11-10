@@ -24,14 +24,16 @@ Primary analysis:
   `thread`/`process` excluding the window's utid.
 - `scripts/serve_trace.py` — CORS-enabled static server for opening traces in ui.perfetto.dev
   (`python3 serve_trace.py <dir> [port]`).
+- `scripts/section_tree.sql` — the sdk-init section tree of ONE trace (each section's depth,
+  parent and thread), for keeping the section docs below current.
 
 References:
 - `references/sections.md` — the current SDK's section nesting/execution order, which
-  environments each section appears in, and the two slow-pass signatures (contention vs slow
-  execution) for judging noisy passes.
-- `references/section-history.md` — every version-specific rule: how to read a release's traces,
-  and how to compare versions. Read it only for traces from a released SDK or a cross-version
-  comparison.
+  environments each section appears in, the two slow-pass signatures (contention vs slow
+  execution) for judging noisy passes, and when to update the section docs.
+- `references/section-history.md` — every version-specific rule: the sections at each release,
+  how to read that release's traces, and how to compare versions. Read it only for traces from a
+  released SDK or a cross-version comparison.
 - `references/report-template.html` — the report page to adapt (a filled example; see the
   comment at the top for what to replace vs keep). Write each analysis's report to
   `claude-output/startup-analysis-<YYYY-MM-DD-HHMMSS>.html` using the SAME timestamp as that

@@ -204,24 +204,10 @@ object SdkInitAttributeKeys {
     const val LOW_MEMORY: String = "low-memory"
 
     /**
-     * Size in bytes of the HOST APP's default `SharedPreferences` file, which the SDK's key-value
-     * store is backed by, used to explain the `prefs-first-read` duration. The bigger the file,
-     * the longer it takes to load and parse its data, as Android needs to load the whole thing
-     * before reading even one value from it.
+     * Size in bytes of the SDK's persisted state file, which is read in full on the init thread. Used to explain the
+     * `persisted-sdk-state-load` duration. It is obtained from the file's metadata without opening it.
      *
-     * This should be obtained by reading looking at the file without opening it and incurring
-     * the costs that this measurement is trying to quantify.
-     *
-     * A first launch has no such file yet, which is recorded as the zero bytes it will load
-     * rather than as no data - the two are the same thing to the duration this explains.
-     */
-    const val PREFS_FILE_BYTES: String = "prefs-file-bytes"
-
-    /**
-     * Size in bytes of the SDK's persisted state file, which replaces [PREFS_FILE_BYTES] when the SDK keeps its
-     * state in its own files. Used to explain the `persisted-sdk-state-load` duration.
-     *
-     * A first launch has no such file yet, which is recorded as zero bytes.
+     * A first launch has no such file yet, which is recorded as the zero bytes it will load rather than as no data.
      */
     const val PERSISTED_SDK_STATE_BYTES: String = "persisted-sdk-state-bytes"
 

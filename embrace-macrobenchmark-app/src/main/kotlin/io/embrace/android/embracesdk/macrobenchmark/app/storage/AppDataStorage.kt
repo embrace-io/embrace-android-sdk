@@ -1,8 +1,8 @@
 package io.embrace.android.embracesdk.macrobenchmark.app.storage
 
 import io.embrace.android.embracesdk.internal.config.PersistedConfig
-import io.embrace.android.embracesdk.internal.storage.LegacyStorageMigrator
 import io.embrace.android.embracesdk.internal.storage.SdkDir
+import io.embrace.android.embracesdk.internal.storage.SdkStorageLayout
 import okio.FileSystem
 import okio.Path
 
@@ -16,7 +16,7 @@ internal class AppDataStorage(
     private val dataDir: Path,
 ) {
 
-    private val filesDir = dataDir / FILES_DIR
+    private val sdkRoot = dataDir / NO_BACKUP_DIR / SdkStorageLayout.ROOT_DIR_NAME
 
     /**
      * Where multi-file mode keeps session parts: [SdkDir.TELEMETRY_PENDING_SESSION_PARTS].
@@ -34,7 +34,7 @@ internal class AppDataStorage(
      */
     val remoteConfigDir: Path = sdkDir(SdkDir.REMOTE_CONFIG)
 
-    private fun sdkDir(dir: SdkDir): Path = filesDir / LegacyStorageMigrator.LEGACY_DIR_NAMES.getValue(dir)
+    private fun sdkDir(dir: SdkDir): Path = SdkStorageLayout.path(sdkRoot, dir)
 
     /**
      * The directory names of the session parts in [sessionsDir].
@@ -73,11 +73,11 @@ internal class AppDataStorage(
     private fun list(dir: Path): List<Path> = fileSystem.listOrNull(dir).orEmpty()
 
     private companion object {
-        const val FILES_DIR = "files"
+        const val NO_BACKUP_DIR = "no_backup"
 
         // the directories under an app's data directory that a clear() will remove
         // TODO: keep SDK-written files other than the session parts data as part of the restorable fixtures
         //       to more closely simulate the state of the SDK files in an install which has a dead session to resurrect.
-        val SDK_WRITABLE_DIRS = listOf(FILES_DIR, "cache", "shared_prefs", "databases", "no_backup")
+        val SDK_WRITABLE_DIRS = listOf("files", "cache", "shared_prefs", "databases", NO_BACKUP_DIR)
     }
 }

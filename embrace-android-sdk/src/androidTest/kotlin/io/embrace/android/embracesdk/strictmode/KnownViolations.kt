@@ -22,12 +22,6 @@ internal data class KnownViolation(
 @RequiresApi(Build.VERSION_CODES.P)
 internal val KNOWN_VIOLATIONS: List<KnownViolation> = listOf(
     KnownViolation(
-        signature = "internal.injection.SdkStorageFactoriesKt.createLegacySdkStorage",
-        violation = DiskReadViolation::class,
-        reason = "ConfigLoadServices creates the SDK's storage eagerly, which reads context.filesDir, and " +
-            "ContextImpl.getFilesDir stats the directory on every call",
-    ),
-    KnownViolation(
         signature = "internal.injection.SdkStorageFactoriesKt.createSdkStorage",
         violation = DiskReadViolation::class,
         reason = "ConfigLoadServices creates the SDK's storage eagerly, which reads context.noBackupFilesDir, and " +
@@ -52,13 +46,6 @@ internal val KNOWN_VIOLATIONS: List<KnownViolation> = listOf(
         signature = "internal.config.store.RemoteConfigStoreImpl.loadFromJson",
         violation = DiskReadViolation::class,
         reason = "Fallback path for the read above",
-    ),
-    KnownViolation(
-        signature = "internal.prefs.SharedPrefsStore.getString",
-        violation = DiskReadViolation::class,
-        reason = "A binary cache miss makes PrefsPersistedSdkStateStore read the device ID out of SharedPreferences. " +
-            "Only fires when it beats ConfigLoadServices.prewarmSharedPreferences and has to block in " +
-            "awaitLoadedLocked",
     ),
     KnownViolation(
         signature = "internal.instance.RealSdkInstance.loadInstrumentationProviders",

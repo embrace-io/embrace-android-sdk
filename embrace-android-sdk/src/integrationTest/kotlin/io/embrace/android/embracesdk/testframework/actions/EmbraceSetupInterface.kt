@@ -2,6 +2,7 @@ package io.embrace.android.embracesdk.testframework.actions
 
 import android.app.ActivityManager
 import android.content.Context
+import android.content.SharedPreferences
 import android.os.Looper
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.testing.TestLifecycleOwner
@@ -49,7 +50,6 @@ import io.embrace.android.embracesdk.internal.payload.EnvelopeResource
 import io.embrace.android.embracesdk.internal.payload.NativeCrashData
 import io.embrace.android.embracesdk.internal.payload.SessionPartPayload
 import io.embrace.android.embracesdk.internal.payload.Span
-import io.embrace.android.embracesdk.internal.prefs.createKeyValueStore
 import io.embrace.android.embracesdk.internal.serialization.PlatformSerializer
 import io.embrace.android.embracesdk.internal.session.lifecycle.AndroidxProcessLifecycleTracker
 import io.embrace.android.embracesdk.internal.session.orchestrator.SessionOrchestrator
@@ -57,11 +57,8 @@ import io.embrace.android.embracesdk.internal.session.persistence.CompletedSpans
 import io.embrace.android.embracesdk.internal.session.persistence.SessionMetadataWriter
 import io.embrace.android.embracesdk.internal.session.persistence.SessionPartDirectory
 import io.embrace.android.embracesdk.internal.session.persistence.SessionPartWriteTarget
-import io.embrace.android.embracesdk.internal.store.KeyValueStore
 import io.embrace.android.embracesdk.internal.store.OrdinalStore
 import io.embrace.android.embracesdk.fakes.fakeBackgroundWorker
-import io.embrace.android.embracesdk.internal.payload.AppFramework
-import io.embrace.android.embracesdk.internal.prefs.PrefsPersistedSdkStateStore
 import io.embrace.android.embracesdk.internal.session.UserSessionMetadata
 import io.embrace.android.embracesdk.internal.storage.SdkStorage
 import io.embrace.android.embracesdk.internal.storage.SdkStorageLayout
@@ -78,6 +75,7 @@ import io.embrace.android.embracesdk.semconv.EmbSessionAttributes
 import io.embrace.android.embracesdk.semconv.ExperimentalSemconv
 import io.embrace.android.embracesdk.testframework.CapturedServices
 import io.embrace.android.embracesdk.testframework.InMemoryPrefsContext
+import io.embrace.android.embracesdk.testframework.InMemorySharedPreferences
 import io.embrace.android.embracesdk.testframework.SdkIntegrationTestRule
 import org.robolectric.Shadows
 import org.robolectric.shadows.ShadowLooper
@@ -194,19 +192,6 @@ internal class EmbraceSetupInterface(
         appContext = fakeContext,
     )
 
-    /**
-     * The SDK's store, backed by the same `SharedPreferences` the module graph will use. Owned here
-     * rather than read off the module graph because tests write to it in `setupAction`, before the module
-     * graph exists.
-     */
-    private val keyValueStore: KeyValueStore by lazy {
-        createKeyValueStore(
-            InMemoryPrefsContext(fakeContext),
-            fakeInitServices.jsonSerializer,
-            fakeInitServices.errorHandler,
-        )
-    }
-
     init {
         setupPlatformShadows()
     }
@@ -252,13 +237,6 @@ internal class EmbraceSetupInterface(
             clock = fakeClock,
             uuidSource = uuidSource,
         ).update(action)
-    }
-
-    /**
-     * Edits the state a 9.x SDK kept in prefs before the SDK starts, simulating an upgrade from 9.x.
-     */
-    fun seedLegacyPrefsState(action: PersistedSdkStateEditor.() -> Unit) {
-        PrefsPersistedSdkStateStore(keyValueStore, fakeClock, uuidSource, AppFramework.NATIVE).update(action)
     }
 
     fun createSdkOverrides(deliveryTracer: DeliveryTracer): SdkOverrides = SdkOverrides(
@@ -504,7 +482,11 @@ internal class EmbraceSetupInterface(
      */
     fun awaitWorkerTermination(timeoutMs: Long = 10_000L): Boolean = workerThreadPool.awaitTermination(timeoutMs)
 
-    fun getStore(): KeyValueStore = keyValueStore
+    /**
+     * The app's default prefs, where a 9.x SDK kept its state.
+     */
+    fun defaultPrefs(): SharedPreferences =
+        InMemorySharedPreferences.get(fakeContext, "${fakeContext.packageName}_preferences")
 
     /**
      * Waits for instrumentation that opts into [InstrumentationProvider.asyncInit] to finish registering,

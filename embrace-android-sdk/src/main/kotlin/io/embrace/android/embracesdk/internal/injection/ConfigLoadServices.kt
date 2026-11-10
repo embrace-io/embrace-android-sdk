@@ -22,7 +22,6 @@ import io.embrace.android.embracesdk.internal.storage.migration.MigrationHandle
 import io.embrace.android.embracesdk.internal.storage.migration.MigrationWorker
 import io.embrace.android.embracesdk.internal.store.OrdinalStore
 import io.embrace.android.embracesdk.internal.store.PersistedSdkStateStore
-import io.embrace.android.embracesdk.internal.store.StoreWriteBatcher
 import io.embrace.android.embracesdk.internal.store.file.FileDeliveredAeiStore
 import io.embrace.android.embracesdk.internal.store.file.FileNetworkCaptureRuleStore
 import io.embrace.android.embracesdk.internal.store.file.FilePersistedSdkStateStore
@@ -97,8 +96,6 @@ internal class ConfigLoadServices(
             createFileOrdinalStore(preStartServices.errorHandler)
         }
     }
-
-    val writeBatcher: Lazy<StoreWriteBatcher> = lazy { StoreWriteBatcher { it() } }
 
     val deliveredAeiStore: Lazy<DeliveredAeiStore> = lazy {
         installState.value

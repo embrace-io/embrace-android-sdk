@@ -47,15 +47,14 @@ internal class PrefsMigrationTest(
             setupAction = {
                 prefs().edit()
                     .putString(DEVICE_ID_KEY, LEGACY_DEVICE_ID)
+                    .putLong(INSTALL_TIMESTAMP_KEY, LEGACY_INSTALL_TIMESTAMP_MS)
                     .putInt(Ordinal.SESSION.key, 41)
                     .putInt(Ordinal.APP_VERSION_STARTUP.key, 1)
                     .putString(checkNotNull(Ordinal.APP_VERSION_STARTUP.scopeKey), UNKNOWN_APP_VERSION)
                     .putInt("$NETWORK_CAPTURE_RULE_PREFIX${rule.id}", 3)
+                    .putString(USER_ID_KEY, USER_ID)
+                    .putString(SESSION_PROPERTIES_KEY, """{"$PROPERTY_KEY":"$PROPERTY_VALUE"}""")
                     .commit()
-                seedLegacyPrefsState {
-                    userId = USER_ID
-                    sessionProperties = mapOf(PROPERTY_KEY to PROPERTY_VALUE)
-                }
                 standInPrefsFile()
             },
             testCaseAction = {
@@ -107,6 +106,10 @@ internal class PrefsMigrationTest(
 
     internal companion object {
         const val DEVICE_ID_KEY = "io.embrace.deviceid"
+        const val INSTALL_TIMESTAMP_KEY = "io.embrace.installtimestamp"
+        const val LEGACY_INSTALL_TIMESTAMP_MS = 1_600_000_000_000L
+        const val USER_ID_KEY = "io.embrace.userid"
+        const val SESSION_PROPERTIES_KEY = "io.embrace.session.properties"
         const val LEGACY_DEVICE_ID = "9x-device-id"
         const val UNKNOWN_APP_VERSION = "UNKNOWN"
         const val USER_ID = "user-1"

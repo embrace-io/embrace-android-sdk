@@ -84,7 +84,7 @@ class SharedPrefsMigrator(
     private fun load(): LoadedPrefs? = errorHandler.guardSdkCode(SdkErrorType.PrefsMigrationFail, null) {
         val prefs = loadPrefs()
         val all = prefs.all
-        LoadedPrefs(prefs, all, LegacyPrefsReader(prefs, all, serializer, errorHandler, appFramework).read())
+        LoadedPrefs(prefs, all, LegacyPrefsReader(all, serializer, errorHandler, appFramework).read())
     }
 
     private fun writeStateFiles(snapshot: LegacyPrefsSnapshot): Map<Ordinal, Int> {

@@ -26,9 +26,9 @@ class BehaviorThresholdCheck(
 
     /**
      * The device ID is fixed for the lifetime of the process, so its normalized value is too.
-     * Resolving it can hit the [io.embrace.android.embracesdk.internal.store.KeyValueStore], so this
-     * is deliberately lazy - a threshold that short-circuits in [isBehaviorEnabled] never pays that
-     * cost, and everything else pays it at most once.
+     * Resolving it can read the persisted SDK state from disk, so this is deliberately lazy - a
+     * threshold that short-circuits in [isBehaviorEnabled] never pays that cost, and everything else
+     * pays it at most once.
      */
     private val normalizedId: Float by lazy {
         val deviceId = deviceIdProvider()

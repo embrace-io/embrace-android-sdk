@@ -31,7 +31,6 @@ import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
-import org.junit.Assume.assumeFalse
 import org.junit.Assume.assumeTrue
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -274,7 +273,6 @@ internal class MultiFilePersistenceLifecycleParityTest(
 
     @Test
     fun `a session part whose process died after it ended is delivered unchanged by the next launch`() {
-        assumeFalse(testRule.superiorStorageSystemEnabled)
         // Verify the state of the payloads after process termination
         testRule.runTest(
             persistedRemoteConfig = remoteConfig(),
@@ -636,7 +634,7 @@ internal class MultiFilePersistenceLifecycleParityTest(
         const val LAST = "last"
 
         val persistenceWorkers = listOf(
-            Worker.Background.SessionPersistenceWorker,
+            Worker.Background.PersistenceWorker,
             Worker.Background.PeriodicCacheWorker,
         )
 

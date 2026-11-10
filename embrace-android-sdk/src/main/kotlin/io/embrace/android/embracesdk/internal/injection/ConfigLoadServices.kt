@@ -78,7 +78,7 @@ internal class ConfigLoadServices(
             FilePersistedSdkStateStore(
                 fileSystem = sdkStorage.fileSystem,
                 path = sdkStorage.dir(SdkDir.INSTALL_STATE) / SdkStorageLayout.PERSISTED_SDK_STATE_FILE_NAME,
-                worker = workerThreadPool.backgroundWorker(Worker.Background.IoRegWorker),
+                worker = workerThreadPool.backgroundWorker(Worker.Background.PersistenceWorker),
                 errorHandler = preStartServices.errorHandler,
                 clock = preStartServices.clock,
                 uuidSource = uuidSource,
@@ -129,7 +129,7 @@ internal class ConfigLoadServices(
             FileNetworkCaptureRuleStore(
                 fileSystem = sdkStorage.fileSystem,
                 path = sdkStorage.dir(SdkDir.INSTALL_STATE) / SdkStorageLayout.NETWORK_CAPTURE_FILE_NAME,
-                worker = workerThreadPool.backgroundWorker(Worker.Background.IoRegWorker),
+                worker = workerThreadPool.backgroundWorker(Worker.Background.PersistenceWorker),
                 errorHandler = preStartServices.errorHandler,
                 liveRuleIds = { configService.networkBehavior.getNetworkCaptureRules().mapTo(HashSet()) { it.id } },
             )

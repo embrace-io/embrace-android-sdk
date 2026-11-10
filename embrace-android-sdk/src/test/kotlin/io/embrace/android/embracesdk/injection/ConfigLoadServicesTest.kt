@@ -109,7 +109,7 @@ internal class ConfigLoadServicesTest {
         val context = FilesDirApplication(tempDir.newFolder())
         val rule = NetworkCaptureRuleRemoteConfig(id = "rule", duration = null, method = "GET", urlRegex = "embrace.io")
         val configService = FakeConfigService(networkBehavior = FakeNetworkBehavior(rules = setOf(rule)))
-        val workers = listOf(Worker.Background.IoRegWorker, Worker.Background.NonIoRegWorker)
+        val workers = listOf(Worker.Background.NonIoRegWorker, Worker.Background.PersistenceWorker)
         val workerThreadPool = FakeWorkerThreadPool(testWorkers = workers)
         val first = createSuperiorStorageServices(context, configService, workerThreadPool)
         first.deliveredAeiStore.value.add("aei")

@@ -35,10 +35,10 @@ internal class LegacyTelemetryAwaitTest(
     @JvmField
     val testRule: SdkIntegrationTestRule = SdkIntegrationTestRule(otelSdkMode) {
         EmbraceSetupInterface(
-            workersToFake = listOf(Worker.Background.SessionPersistenceWorker),
+            workersToFake = listOf(Worker.Background.PersistenceWorker),
             fakeStorageLayer = true,
         ).apply {
-            getFakedWorkerExecutor(Worker.Background.SessionPersistenceWorker).blockingMode = false
+            getFakedWorkerExecutor(Worker.Background.PersistenceWorker).blockingMode = false
         }
     }
 

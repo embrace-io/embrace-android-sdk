@@ -79,6 +79,7 @@ import io.embrace.android.embracesdk.internal.worker.Worker
 import io.embrace.android.embracesdk.spans.TracingApi
 import io.opentelemetry.kotlin.OpenTelemetry
 import okhttp3.OkHttpClient
+import okio.Path
 import java.io.File
 import java.util.ServiceLoader
 import java.util.concurrent.Executors
@@ -104,6 +105,7 @@ internal class RealSdkInstance(
     private val eventBus: EventBus,
     private val appContext: Context,
     private val sdkStorage: SdkStorage,
+    private val persistedSdkStateFile: Path?,
     private val spanRepository: SpanRepository,
     private val logSink: LogSink,
     private val otelSdkConfig: Lazy<OtelSdkConfig>,
@@ -561,6 +563,11 @@ internal class RealSdkInstance(
                                     instrumentationArgs.systemService(Context.ACTIVITY_SERVICE)
                                 },
                                 prefsFileSizeProvider = { existingPrefsFile(appContext)?.length() },
+                                persistedSdkStateFileSizeProvider = persistedSdkStateFile?.let { path ->
+                                    {
+                                        sdkStorage.fileSystem.metadataOrNull(path)?.size
+                                    }
+                                },
                             ) {
                                 appContext.applicationInfo?.sourceDir?.let { sourceDir ->
                                     ArtOptimizationState.create(

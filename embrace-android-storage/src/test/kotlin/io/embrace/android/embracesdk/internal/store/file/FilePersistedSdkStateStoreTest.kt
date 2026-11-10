@@ -42,6 +42,15 @@ internal class FilePersistedSdkStateStoreTest {
     }
 
     @Test
+    fun `missing file is persisted by a worker that runs inline`() {
+        executor.blockingMode = false
+        val state = createStore().snapshot()
+        assertEquals(1, writes)
+        assertEquals(emptyList<FakeErrorHandler.LogMessage>(), errorHandler.sdkErrorMessages)
+        assertEquals(state, createStore(uuid = "other").snapshot())
+    }
+
+    @Test
     fun `updates are coalesced into one write and read back`() {
         val store = createStore()
         store.update { userId = "a" }

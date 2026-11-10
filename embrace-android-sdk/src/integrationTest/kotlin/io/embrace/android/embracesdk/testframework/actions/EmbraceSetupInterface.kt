@@ -59,6 +59,7 @@ import io.embrace.android.embracesdk.internal.session.persistence.SessionPartDir
 import io.embrace.android.embracesdk.internal.session.persistence.SessionPartWriteTarget
 import io.embrace.android.embracesdk.internal.store.KeyValueStore
 import io.embrace.android.embracesdk.internal.store.OrdinalStore
+import io.embrace.android.embracesdk.fakes.fakeBackgroundWorker
 import io.embrace.android.embracesdk.internal.payload.AppFramework
 import io.embrace.android.embracesdk.internal.prefs.PrefsPersistedSdkStateStore
 import io.embrace.android.embracesdk.internal.session.UserSessionMetadata
@@ -244,21 +245,20 @@ internal class EmbraceSetupInterface(
      * Edits the persisted SDK state before the SDK starts, simulating a previous process.
      */
     fun seedPersistedSdkState(action: PersistedSdkStateEditor.() -> Unit) {
-        if (superiorStorageSystemEnabled) {
+        val store = if (superiorStorageSystemEnabled) {
             val storage = sdkStorage()
-            val executor = BlockingScheduledExecutorService(fakeClock, blockingMode = true)
             FilePersistedSdkStateStore(
                 fileSystem = storage.fileSystem,
                 path = storage.dir(SdkDir.INSTALL_STATE) / SdkStorageLayout.PERSISTED_SDK_STATE_FILE_NAME,
-                worker = BackgroundWorker(executor),
+                worker = fakeBackgroundWorker(),
                 errorHandler = fakeInitServices.errorHandler,
                 clock = fakeClock,
                 uuidSource = uuidSource,
-            ).update(action)
-            executor.runCurrentlyBlocked()
+            )
         } else {
-            PrefsPersistedSdkStateStore(keyValueStore, fakeClock, uuidSource, AppFramework.NATIVE).update(action)
+            PrefsPersistedSdkStateStore(keyValueStore, fakeClock, uuidSource, AppFramework.NATIVE)
         }
+        store.update(action)
     }
 
     fun createSdkOverrides(deliveryTracer: DeliveryTracer): SdkOverrides = SdkOverrides(

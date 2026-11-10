@@ -2,6 +2,7 @@ package io.embrace.android.embracesdk.testframework
 
 import android.content.Context
 import io.embrace.android.embracesdk.internal.arch.InstrumentationRegistry
+import io.embrace.android.embracesdk.internal.arch.store.NetworkCaptureRuleStore
 import io.embrace.android.embracesdk.internal.capture.connectivity.NetworkConnectivityService
 import io.embrace.android.embracesdk.internal.capture.experiment.ExperimentTrackingService
 import io.embrace.android.embracesdk.internal.config.ConfigService
@@ -40,6 +41,7 @@ internal class CapturedServices(
     lateinit var intakeService: IntakeService
     lateinit var eventBus: EventBus
     lateinit var persistedSdkStateStore: Lazy<PersistedSdkStateStore>
+    lateinit var networkCaptureRuleStore: Lazy<NetworkCaptureRuleStore>
     var threadBlockageService: ThreadBlockageService? = null
 
     /**

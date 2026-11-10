@@ -233,7 +233,10 @@ internal class EmbraceSetupInterface(
                     ).also { services.configService = it }
                 },
                 superiorStorageSystemEnabled = superiorStorageSystemEnabled,
-            ).also { services.persistedSdkStateStore = it.persistedSdkStateStore }
+            ).also {
+                services.persistedSdkStateStore = it.persistedSdkStateStore
+                services.networkCaptureRuleStore = it.networkCaptureRuleStore
+            }
         }
     }
 

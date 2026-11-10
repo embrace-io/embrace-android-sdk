@@ -19,12 +19,14 @@ import io.embrace.android.embracesdk.internal.prefs.PrefsNetworkCaptureRuleStore
 import io.embrace.android.embracesdk.internal.prefs.PrefsPersistedSdkStateStore
 import io.embrace.android.embracesdk.internal.prefs.PrefsStoreWriteBatcher
 import io.embrace.android.embracesdk.internal.prefs.createKeyValueStore
+import io.embrace.android.embracesdk.internal.prefs.createSharedPrefsMigrator
 import io.embrace.android.embracesdk.internal.serialization.EmbraceSerializer
 import io.embrace.android.embracesdk.internal.serialization.PlatformSerializer
 import io.embrace.android.embracesdk.internal.storage.SdkDir
 import io.embrace.android.embracesdk.internal.storage.SdkStorage
 import io.embrace.android.embracesdk.internal.storage.SdkStorageLayout
 import io.embrace.android.embracesdk.internal.storage.migration.LegacyTelemetryMigration
+import io.embrace.android.embracesdk.internal.storage.migration.MigrationHandle
 import io.embrace.android.embracesdk.internal.storage.migration.MigrationWorker
 import io.embrace.android.embracesdk.internal.store.KeyValueStore
 import io.embrace.android.embracesdk.internal.store.OrdinalStore
@@ -63,6 +65,7 @@ internal class ConfigLoadServices(
     configServiceSupplier: ConfigServiceSupplier? = null,
     val superiorStorageSystemEnabled: Boolean = SUPERIOR_STORAGE_SYSTEM_ENABLED,
     private val fileSystem: FileSystem = FileSystem.SYSTEM,
+    private val configMigrationTimeoutMs: Long = CONFIG_MIGRATION_TIMEOUT_MS,
 ) : Closeable {
 
     val sdkStorage: SdkStorage = if (superiorStorageSystemEnabled) {
@@ -82,12 +85,27 @@ internal class ConfigLoadServices(
     val legacyTelemetryMigration: LegacyTelemetryMigration =
         LegacyTelemetryMigration(migrationWorker, legacyStorageMigrator, preStartServices.errorHandler)
 
+    private val appFramework: AppFramework =
+        AppFramework.fromString(instrumentedConfig.project.getAppFramework()) ?: AppFramework.NATIVE
+
+    /**
+     * Submitted once [persistedConfig] exists, as the migration needs its network capture rules. It's queued behind the
+     * config move, so if that move times out it completes as a fresh install instead of waiting behind it.
+     */
+    private val prefsMigration = MigrationHandle(PREFS_MIGRATION_NAME, false, preStartServices.errorHandler)
+
+    /**
+     * Every file-backed install-state store touches this before opening its file, so it sees the migrated prefs.
+     */
+    private val installState: Lazy<Unit> = lazy { prefsMigration.await() }
+
     val keyValueStore: Lazy<KeyValueStore> = lazy {
         createKeyValueStore(context, jsonSerializer, preStartServices.errorHandler)
     }
 
     val persistedSdkStateStore: Lazy<PersistedSdkStateStore> = lazy {
         if (superiorStorageSystemEnabled) {
+            installState.value
             FilePersistedSdkStateStore(
                 fileSystem = sdkStorage.fileSystem,
                 path = sdkStorage.dir(SdkDir.INSTALL_STATE) / SdkStorageLayout.PERSISTED_SDK_STATE_FILE_NAME,
@@ -101,7 +119,7 @@ internal class ConfigLoadServices(
                 keyValueStore.value,
                 preStartServices.clock,
                 uuidSource,
-                AppFramework.fromString(instrumentedConfig.project.getAppFramework()) ?: AppFramework.NATIVE,
+                appFramework,
             )
         }
     }
@@ -126,6 +144,7 @@ internal class ConfigLoadServices(
 
     val deliveredAeiStore: Lazy<DeliveredAeiStore> = lazy {
         if (superiorStorageSystemEnabled) {
+            installState.value
             FileDeliveredAeiStore(
                 fileSystem = sdkStorage.fileSystem,
                 path = sdkStorage.dir(SdkDir.INSTALL_STATE) / SdkStorageLayout.AEI_DELIVERED_FILE_NAME,
@@ -139,6 +158,7 @@ internal class ConfigLoadServices(
 
     val networkCaptureRuleStore: Lazy<NetworkCaptureRuleStore> = lazy {
         if (superiorStorageSystemEnabled) {
+            installState.value
             FileNetworkCaptureRuleStore(
                 fileSystem = sdkStorage.fileSystem,
                 path = sdkStorage.dir(SdkDir.INSTALL_STATE) / SdkStorageLayout.NETWORK_CAPTURE_FILE_NAME,
@@ -155,10 +175,11 @@ internal class ConfigLoadServices(
         sectionName = "persisted-config-init",
         recordDuration = true,
     ) {
-        legacyStorageMigrator?.let { migrator ->
+        val configMoved = legacyStorageMigrator?.let { migrator ->
             migrationWorker.submit("config", Unit, SdkErrorType.StorageMigrationFail, migrator::migrateConfig)
-                .await(CONFIG_MIGRATION_TIMEOUT_MS, SdkErrorType.StorageMigrationFail)
-        }
+                .also { it.await(configMigrationTimeoutMs, SdkErrorType.StorageMigrationFail) }
+                .isComplete
+        } ?: true
         PersistedConfig(
             serializer = jsonSerializer,
             storageDir = sdkStorage.path(SdkDir.REMOTE_CONFIG).toFile(),
@@ -166,7 +187,13 @@ internal class ConfigLoadServices(
             stateStore = persistedSdkStateStore,
             clock = preStartServices.clock,
             errorHandler = preStartServices.errorHandler,
-        )
+        ).also { config ->
+            when {
+                !superiorStorageSystemEnabled -> Unit
+                configMoved -> submitPrefsMigration(config, preStartServices.errorHandler)
+                else -> prefsMigration.complete()
+            }
+        }
     }
 
     val workerThreadPool: WorkerThreadPool = EmbTrace.trace("worker-thread-pool-init") {
@@ -210,7 +237,22 @@ internal class ConfigLoadServices(
         }
     }
 
+    private fun submitPrefsMigration(config: PersistedConfig, errorHandler: ErrorHandler) {
+        migrationWorker.submit(prefsMigration, SdkErrorType.PrefsMigrationFail) {
+            createSharedPrefsMigrator(
+                context = context,
+                fileSystem = sdkStorage.fileSystem,
+                installStateDir = sdkStorage.dir(SdkDir.INSTALL_STATE),
+                serializer = jsonSerializer,
+                errorHandler = errorHandler,
+                appFramework = appFramework,
+                liveNetworkCaptureRules = config::networkCaptureRuleMaxCounts,
+            ).migrate()
+        }
+    }
+
     private fun createFileOrdinalStore(errorHandler: ErrorHandler): OrdinalStore {
+        installState.value
         val path = sdkStorage.dir(SdkDir.INSTALL_STATE) / SdkStorageLayout.ORDINALS_FILE_NAME
         errorHandler.guardSdkCode(SdkErrorType.OrdinalStoreOpenFail, Unit) {
             if (!sdkStorage.fileSystem.exists(path)) {
@@ -238,4 +280,6 @@ internal class ConfigLoadServices(
 
 internal const val SUPERIOR_STORAGE_SYSTEM_ENABLED = false
 
-private const val CONFIG_MIGRATION_TIMEOUT_MS = 1_000L
+private const val CONFIG_MIGRATION_TIMEOUT_MS = 3_000L
+
+private const val PREFS_MIGRATION_NAME = "prefs"

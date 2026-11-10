@@ -8,7 +8,8 @@ versions, read `section-history.md`, which holds every version-specific rule.
 - **When a change on main adds, removes, renames or re-nests an `EmbTrace` section** (or changes
   whether it records a duration), update the tree below in the same change. If a renamed section
   does the same work as before, also add it to `OLDER_SECTION_NAMES` in
-  `scripts/analyze_startup.py`, so traces from older SDKs still fill its row.
+  `embrace-analysis-cli/src/main/kotlin/io/embrace/analysis/startup/StartupReport.kt`, so traces
+  from older SDKs still fill its row.
 - **After each release**, add a snapshot of that release to the top of `section-history.md`: the
   tree read with `scripts/section_tree.sql` from a startup trace of the released SDK, and what
   changed from the release before. Then check this file against the same trace, and update the
@@ -55,7 +56,7 @@ floating: ● key-value-store-init and ● prefs-first-read nest wherever the st
 The recorded sections directly under `sdk-start` (`modules-init`,
 `process-state-tracker-register`, `setup-services` and `post-services-setup`) tile the exported
 span, up to a small sliver of call overhead. `sdk-start` wraps that interval plus well under 1 ms
-of `Embrace.start()` overhead, and is what analyze_startup.py reports as the window. The
+of `Embrace.start()` overhead, and is what `tools/startup analyze` reports as the window. The
 class-load section runs before the window opens. Much SDK work runs on worker threads during and
 right after the window (native crash handler install, payload resurrection, the startup trace's
 recording); those slices show under "other emb-* sections" and are not part of the window.
@@ -74,7 +75,7 @@ is not thermal throttling. The inflation is not uniform: pure-CPU sections such 
 `otel-tracer-init` barely move, while short block-and-resume sections can roughly double. Judge
 regressions on fast-pass numbers.
 
-Slow iterations/passes come in TWO trace signatures (analyze_startup.py's scheduling table
+Slow iterations/passes come in TWO trace signatures (`tools/startup analyze`'s scheduling table
 separates them; judge regressions only on iterations showing neither):
 1. **Contention** — high main-thread wait (R/R+) inside the window plus migration across many
    CPUs. Observed pass 4 slow iteration: 14.8 ms wait / 7 CPUs vs 0.2 ms / 2 CPUs when fast;

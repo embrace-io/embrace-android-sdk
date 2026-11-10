@@ -11,18 +11,19 @@ scheduling readout per iteration. The analysis is derived ENTIRELY from the per-
 `.perfetto-trace` files via perfetto's trace_processor — no logcat, grep, jq, or benchmark-JSON
 parsing. All paths below are relative to the SDK repo root.
 
-## Bundled files (relative to this skill's base directory)
+## Bundled files
 
 Primary analysis:
-- `scripts/analyze_startup.py` — THE analysis entry point (python3 stdlib only): runs
-  trace_processor over every iteration trace in a directory and prints section stats,
-  window stats, TTID stats, and the per-iteration contention/slow-execution table.
-- `scripts/startup_metrics.sql` — the per-trace query analyze_startup.py executes (sections,
-  window, TTID, main-thread thread-state; commented).
-- `tools/startup trace-processor` (repo root) — prints the path of Perfetto's native
-  `trace_processor_shell` at the version `gradle/libs.versions.toml` pins
-  (`perfettoTraceProcessor`), downloading it into `~/.cache/embrace-startup-tools` on first use.
-  The analysis and the standalone queries below run with it.
+- `tools/startup analyze` (repo root) — THE analysis entry point, the `:embrace-analysis-cli`
+  module: loads every iteration trace in a directory into trace_processor (through AndroidX's
+  trace processor library) and prints section stats, window stats, TTID stats, and the
+  per-iteration contention/slow-execution table. The views it reads each trace through are
+  `startup_views.sql` in that module's resources (sections, window, main-thread thread-state;
+  commented).
+- `tools/startup trace-processor` — prints the path of the pinned `trace_processor_shell`
+  (downloading it on first use), for running the standalone queries below.
+
+Relative to this skill's base directory:
 - `scripts/init_window_sched.sql` — standalone deep-dive on ONE trace: thread-state + per-CPU
   residency over the modules-init window. To find who stole the CPUs, query `sched` joined to
   `thread`/`process` excluding the window's utid.
@@ -116,15 +117,13 @@ separately. `<Variant>` below is `Benchmark` or `BenchmarkOtelRegular`, and `<va
    `examples/ExampleApp/app/benchmark/build/outputs/connected_android_test_additional_output/<variant>/connected/<device>/`
    as `StartupBenchmarks_coldStartup_iterNNN_<timestamp>.perfetto-trace`. Each rerun WIPES this
    directory — copy any traces you need to keep (e.g. per-pass comparisons) before rerunning.
-3. **Analyze**: get the pinned `trace_processor_shell` with
+3. **Analyze**: run
    ```
-   tools/startup trace-processor
+   tools/startup analyze "<traces dir>"
    ```
-   which prints its path, then run
-   ```
-   python3 .claude/skills/startup-analysis/scripts/analyze_startup.py \
-     --trace-processor <that path> "<traces dir>"
-   ```
+   It reads the traces with Perfetto's native `trace_processor_shell` at the version
+   `gradle/libs.versions.toml` pins (`perfettoTraceProcessor`), which the first run downloads
+   into `~/.cache/embrace-startup-tools` (`--trace-processor <path>` uses another binary).
    (`--all-sections` to list every emb-* section instead of the top 15 extras.) Besides
    printing, the summary is written to a uniquely named file —
    `claude-output/startup-analysis-<YYYY-MM-DD-HHMMSS>.txt` (analysis start time;
@@ -150,7 +149,7 @@ separately. `<Variant>` below is `Benchmark` or `BenchmarkOtelRegular`, and `<va
 
 ## Missing sections
 
-analyze_startup.py prints "not in these traces" for a canonical section with no slice, whether
+`tools/startup analyze` prints "not in these traces" for a canonical section with no slice, whether
 the SDK under test doesn't record it or the feature is off (`huc-init` without
 HttpURLConnection capture). Report those explicitly; never present the found set as complete.
 

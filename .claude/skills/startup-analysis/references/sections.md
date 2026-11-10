@@ -3,41 +3,57 @@
 The sections the SDK in this repo emits. Only for traces from a released SDK, or to compare
 versions, read `section-history.md`, which holds every version-specific rule.
 
-## Nesting and execution order (as of 9.2.0-SNAPSHOT, 2026-08)
+## Nesting and execution order
+
+Last checked against a 9.4.0 startup trace.
 
 Indentation = nesting; a parent's duration includes its children. Presentation in reports should
-follow this order.
+follow this order. `●` = also exported as a `<name>-duration-ms` attribute on the `sdk-init`
+span; `○` = trace-only slice. Only the trace-only slices that hold a recorded section, or that
+take a large share of the window, are shown; `--all-sections` lists every one.
 
 ```
-embrace-impl-init            class-load: EmbraceImpl construction (before the span window)
-sdk-start                    wraps the whole Embrace.start() call — the SDK-init window proxy
-├─ modules-init              createRealSdkInstance() — opens the SDK-init span window
-│  ├─ persisted-config-init  cached-config read; most variable section
-│  ├─ config-service-init    ConfigService construction (recorded in the harness too)
-│  ├─ startup-classifier-init
-│  ├─ otel-tracer-init             first touch of the OTel SDK assembly (the real OTel cost), reached via
-│  │                               telemetry-destination-init → span-service-init
-│  ├─ process-state-tracker-init
-│  ├─ instrumentation-args-init
-│  ├─ payload-storage-service-init
-│  ├─ resource-source-init
-│  ├─ session-orchestrator-init
-│  └─ current-session-part-span-initialize-service
-├─ setup-services            RealSdkInstance.setupServices()
-└─ post-services-setup       tail of EmbraceImpl.start()
-   └─ load-instrumentation
+● embrace-impl-init               class load of Embrace (SdkStateHolder assembly); runs BEFORE the window
+○ sdk-start                       wraps SdkStateHolder.start(), the whole Embrace.start() call: the window
+├─ ● modules-init                 builds the SDK instance; the span's start time is taken here
+│  ├─ ○ config-load-services-init
+│  │  ├─ ● persisted-config-init  cached-config read; the most variable section
+│  │  └─ ● config-service-init
+│  ├─ ● startup-classifier-init
+│  ├─ ● process-state-tracker-init
+│  ├─ ○ telemetry-destination-init
+│  │  └─ ○ span-service-init
+│  │     └─ ● otel-tracer-init    the OTel SDK assembly: the real OTel cost
+│  ├─ ● instrumentation-args-init
+│  ├─ ● payload-storage-service-init
+│  ├─ ● resource-source-init
+│  ├─ ● session-orchestrator-init loads (does not write) the previous user session
+│  └─ ○ sdk-services-start
+│     └─ ● current-session-part-span-initialize-service
+├─ ● process-state-tracker-register
+├─ ● setup-services               wires the services together and opens the first session part
+│  └─ ● start-first-session       the initial session-part transition
+├─ ● post-services-setup
+│  ├─ ○ service-registration
+│  ├─ ● load-instrumentation
+│  └─ ● huc-init                  only when HttpURLConnection capture is enabled (off in ExampleApp)
+└─ ○ startup-tracking             after the durations are recorded, so never an attribute
+floating: ● key-value-store-init and ● prefs-first-read nest wherever the store is first touched
 ```
 
-The exported `emb-embrace-init` span is tiled by `modules-init + setup-services +
-post-services-setup` (± ~1 ms of unattributed sliver); `sdk-start` wraps that interval plus
-<1 ms of Embrace.start() overhead, and is what analyze_startup.py reports as the window. The
-class-load sections run before the window opens.
+The recorded sections directly under `sdk-start` (`modules-init`,
+`process-state-tracker-register`, `setup-services` and `post-services-setup`) tile the exported
+span, up to a small sliver of call overhead. `sdk-start` wraps that interval plus well under 1 ms
+of `Embrace.start()` overhead, and is what analyze_startup.py reports as the window. The
+class-load section runs before the window opens. Much SDK work runs on worker threads during and
+right after the window (native crash handler install, payload resurrection, the startup trace's
+recording); those slices show under "other emb-* sections" and are not part of the window.
 
 ## Where each section appears
 
 | Environment | Sections present |
 |---|---|
-| Real device via `Embrace` entry point (this skill) | all of the above |
+| Real device via `Embrace` entry point (this skill) | all of the above; `huc-init` only with HttpURLConnection capture on |
 | Robolectric integration harness | all EXCEPT `embrace-impl-init` (harness bypasses the entry point). Authoritative list: `SpanAssertions.expectedSdkInitSections` in embrace-android-otel-fakes |
 
 ## Slow passes

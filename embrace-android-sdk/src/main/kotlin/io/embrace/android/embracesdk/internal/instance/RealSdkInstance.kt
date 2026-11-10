@@ -65,6 +65,7 @@ import io.embrace.android.embracesdk.internal.logs.LogOrchestrator
 import io.embrace.android.embracesdk.internal.logs.attachments.AttachmentService
 import io.embrace.android.embracesdk.internal.otel.config.OtelSdkConfig
 import io.embrace.android.embracesdk.internal.otel.logs.LogSink
+import io.embrace.android.embracesdk.internal.otel.sdk.ProcessOtelSdkErrorHandler
 import io.embrace.android.embracesdk.internal.otel.spans.SpanRepository
 import io.embrace.android.embracesdk.internal.prefs.defaultPrefsFile
 import io.embrace.android.embracesdk.internal.resurrection.PayloadResurrectionService
@@ -225,6 +226,7 @@ internal class RealSdkInstance(
     private fun tearDown(deletePersistedTelemetry: Boolean) {
         enabled = false
         runCatching { errorHandler.close() }
+        runCatching { ProcessOtelSdkErrorHandler.detach(errorHandler) }
         runCatching { otelSdkConfig.value.disableDataExport() }
         // the sources of events that data sources and their providers listen to are stopped before the data sources are
         // disabled, so that none of their handlers or listeners runs once disabling starts, whoever registered it

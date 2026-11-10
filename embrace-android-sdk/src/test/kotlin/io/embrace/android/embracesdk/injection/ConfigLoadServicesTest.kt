@@ -6,6 +6,7 @@ import io.embrace.android.embracesdk.fakes.FilesDirApplication
 import io.embrace.android.embracesdk.fakes.behavior.FakeNetworkBehavior
 import io.embrace.android.embracesdk.fakes.injection.FakeWorkerThreadPool
 import io.embrace.android.embracesdk.fs.FakeFileSystemRule
+import io.embrace.android.embracesdk.internal.config.PersistedConfig
 import io.embrace.android.embracesdk.internal.config.remote.NetworkCaptureRuleRemoteConfig
 import io.embrace.android.embracesdk.internal.injection.ConfigLoadServices
 import io.embrace.android.embracesdk.internal.injection.PreStartServices
@@ -17,6 +18,7 @@ import io.embrace.android.embracesdk.internal.worker.Worker
 import okio.FileSystem
 import okio.Path.Companion.toOkioPath
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Rule
 import org.junit.Test
@@ -68,6 +70,22 @@ internal class ConfigLoadServicesTest {
             fileSystem = fs,
         )
         assertEquals("device-id", configLoadServices.persistedSdkStateStore.value.snapshot().deviceId)
+    }
+
+    @Test
+    fun `the superior storage system moves the 9x config into place during construction`() {
+        val fs = fsRule.fileSystem
+        val context = FilesDirApplication(tempDir.newFolder())
+        val legacy = context.filesDir.toOkioPath() / "embrace_remote_config" / PersistedConfig.CONFIG_RESPONSE_FILE_NAME
+        fs.createDirectories(checkNotNull(legacy.parent))
+        fs.write(legacy) { writeUtf8("{}") }
+
+        createSuperiorStorageServices(context, FakeConfigService(), FakeWorkerThreadPool())
+
+        val migrated = context.noBackupFilesDir.toOkioPath() / SdkStorageLayout.ROOT_DIR_NAME / "remote_config" /
+            PersistedConfig.CONFIG_RESPONSE_FILE_NAME
+        assertTrue(fs.exists(migrated))
+        assertFalse(fs.exists(legacy))
     }
 
     @Test

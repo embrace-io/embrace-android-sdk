@@ -73,6 +73,7 @@ import io.embrace.android.embracesdk.internal.session.id.SessionPartTracker
 import io.embrace.android.embracesdk.internal.session.orchestrator.PayloadStore
 import io.embrace.android.embracesdk.internal.session.orchestrator.SessionOrchestrator
 import io.embrace.android.embracesdk.internal.storage.SdkStorage
+import io.embrace.android.embracesdk.internal.storage.migration.LegacyTelemetryMigration
 import io.embrace.android.embracesdk.internal.utils.EmbTrace
 import io.embrace.android.embracesdk.internal.utils.event.EventBus
 import io.embrace.android.embracesdk.internal.worker.Worker
@@ -146,7 +147,8 @@ internal class RealSdkInstance(
     instrumentationApiDelegate: InstrumentationApiDelegate,
     private val experimentApiDelegate: ExperimentApiDelegate,
     private val tracingApi: TracingApi,
-    private val awaitLegacyTelemetryMigration: () -> Unit = {},
+    private val legacyTelemetryMigration: LegacyTelemetryMigration,
+    private val awaitLegacyTelemetryMigration: () -> Unit,
 ) : SdkInstance,
     LogsApi by logsApiDelegate,
     NetworkRequestApi by networkRequestApiDelegate,
@@ -214,6 +216,23 @@ internal class RealSdkInstance(
         } catch (exc: Throwable) {
             Log.w("Embrace", "Failed to initialize Embrace SDK", exc)
             errorHandler.trackSdkError(SdkErrorType.SdkInitPhaseFail, exc)
+        } finally {
+            startLegacyTelemetryMigration()
+        }
+    }
+
+    private fun startLegacyTelemetryMigration() {
+        val started = errorHandler.guardSdkCode(SdkErrorType.StorageMigrationFail, false) {
+            if (enabled) {
+                legacyTelemetryMigration.start()
+            } else {
+                legacyTelemetryMigration.cancel()
+            }
+            true
+        }
+        // the workers waiting on the migration must be released even if it couldn't be started
+        if (!started) {
+            legacyTelemetryMigration.cancel()
         }
     }
 
@@ -247,6 +266,7 @@ internal class RealSdkInstance(
         }
         runCatching { schedulingService?.shutdown() }
         runCatching { cancelHttpRequests() }
+        runCatching { legacyTelemetryMigration.cancel() }
         runCatching { workerThreadPool.close() }
 
         if (!deletePersistedTelemetry) {
@@ -257,6 +277,7 @@ internal class RealSdkInstance(
             runCatching {
                 // deleted at once so that nothing is left to send if the process ends during the wait, then again once the
                 // workers have finished, as work still running can write again
+                legacyTelemetryMigration.deleteLegacyTelemetry(afterDeletion = sdkStorage::deleteTelemetry)
                 sdkStorage.deleteTelemetry()
                 if (!workerThreadPool.awaitTermination(WORKER_TERMINATION_TIMEOUT_MS)) {
                     Log.w("[Embrace]", "Timed out waiting for Embrace workers to finish before deleting data.")
@@ -494,6 +515,10 @@ internal class RealSdkInstance(
                     // telemetry a migration is still moving into place must be on disk before the reader and
                     // resurrection look for it
                     awaitLegacyTelemetryMigration()
+                    // closing releases the wait while a migration may still be moving files into what is read below
+                    if (!enabled) {
+                        return@submit
+                    }
 
                     // process multi-file session part directories before resurrection can run. The reader resurrects
                     // dead parts itself, so a part this pass doesn't reach is still resurrected by a later pass

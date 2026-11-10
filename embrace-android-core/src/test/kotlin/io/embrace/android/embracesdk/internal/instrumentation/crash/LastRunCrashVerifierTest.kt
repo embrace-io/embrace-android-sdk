@@ -66,6 +66,33 @@ internal class LastRunCrashVerifierTest {
     }
 
     @Test
+    fun `didLastRunCrash doesn't read or cache the marker until the legacy telemetry is migrated`() {
+        var migrated = false
+        val verifier = LastRunCrashVerifier(crashFileMarker) { migrated }
+        crashFileMarker.marked = true
+
+        assertFalse(verifier.didLastRunCrash())
+        assertEquals(0, crashFileMarker.getAndCleanCount)
+
+        migrated = true
+        assertTrue(verifier.didLastRunCrash())
+        assertEquals(1, crashFileMarker.getAndCleanCount)
+    }
+
+    @Test
+    fun `an early didLastRunCrash doesn't stop the async read`() {
+        val verifier = LastRunCrashVerifier(crashFileMarker) { false }
+        crashFileMarker.marked = true
+
+        assertFalse(verifier.didLastRunCrash())
+        verifier.readAndCleanMarkerAsync(worker)
+        executor.runCurrentlyBlocked()
+
+        assertTrue(verifier.didLastRunCrash())
+        assertEquals(1, crashFileMarker.getAndCleanCount)
+    }
+
+    @Test
     fun `readAndCleanMarkerAsync reads the marker only after awaitLegacyTelemetryMigration creates it`() {
         var readsBeforeHook = -1
         lastRunCrashVerifier.readAndCleanMarkerAsync(worker) {

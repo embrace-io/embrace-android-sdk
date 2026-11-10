@@ -138,9 +138,50 @@ internal class SdkStateHolderFactoryTest {
         assertEquals(SdkState.DISABLED, holder.state)
     }
 
-    private fun createSdkFile(): File = File(testSdkStorage(context).dir(SdkDir.TELEMETRY_READY).toFile(), "payload").apply {
-        parentFile?.mkdirs()
-        writeText("data")
+    @Test
+    fun `disabling after a failed start deletes the sdk files when the 9x dirs can't be resolved`() {
+        val noLegacyDirs = object : ContextWrapper(context) {
+            override fun getFilesDir(): File = error("no files dir")
+            override fun getCacheDir(): File = error("no cache dir")
+            override fun getNoBackupFilesDir(): File = context.noBackupFilesDir
+        }
+        val sdkFile = createSdkFile(superiorStorageSystemEnabled = true)
+        val holder = createStateHolder(
+            configServiceSupplier = { _, _, _, _, _, _ -> FakeConfigService() },
+            overrides = SdkOverrides(appContext = { error("failed to init") }),
+            superiorStorageSystemEnabled = true,
+        )
+        holder.start(noLegacyDirs)
+        assertEquals(SdkState.FAILED, holder.state)
+
+        holder.close()
+        awaitDeleted(sdkFile)
+    }
+
+    @Test
+    fun `disabling after a failed start deletes the 9x telemetry`() {
+        val legacyPayload = File(context.filesDir, "embrace_payloads/payload").apply {
+            checkNotNull(parentFile).mkdirs()
+            writeText("data")
+        }
+        val holder = createStateHolder(
+            configServiceSupplier = { _, _, _, _, _, _ -> FakeConfigService() },
+            overrides = SdkOverrides(appContext = { error("failed to init") }),
+            superiorStorageSystemEnabled = true,
+        )
+        holder.start(context)
+        assertEquals(SdkState.FAILED, holder.state)
+
+        holder.close()
+        awaitDeleted(legacyPayload)
+    }
+
+    private fun createSdkFile(superiorStorageSystemEnabled: Boolean = false): File {
+        val dir = testSdkStorage(context, superiorStorageSystemEnabled).dir(SdkDir.TELEMETRY_READY).toFile()
+        return File(dir, "payload").apply {
+            parentFile?.mkdirs()
+            writeText("data")
+        }
     }
 
     private fun awaitDeleted(file: File) {
@@ -154,6 +195,7 @@ internal class SdkStateHolderFactoryTest {
     private fun createStateHolder(
         configServiceSupplier: ConfigServiceSupplier,
         overrides: SdkOverrides? = null,
+        superiorStorageSystemEnabled: Boolean = false,
     ): SdkStateHolder = createSdkStateHolder(
         preStartServices = preStartServices,
         configLoadServicesSupplier = { ctx, preStartServices ->
@@ -162,9 +204,11 @@ internal class SdkStateHolderFactoryTest {
                 preStartServices = preStartServices,
                 workerThreadPoolSupplier = { workerThreadPool },
                 configServiceSupplier = configServiceSupplier,
+                superiorStorageSystemEnabled = superiorStorageSystemEnabled,
             )
         },
         overrides = overrides,
+        superiorStorageSystemEnabled = superiorStorageSystemEnabled,
     )
 
     private fun disabledConfigService(): ConfigService = FakeConfigService(

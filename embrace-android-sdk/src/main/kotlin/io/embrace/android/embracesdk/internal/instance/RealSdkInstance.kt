@@ -227,7 +227,9 @@ internal class RealSdkInstance(
             if (enabled) {
                 legacyTelemetryMigration.start()
                 if (sweepOrphans) {
-                    legacyTelemetryMigration.sweepOrphans()
+                    legacyTelemetryMigration.sweepOrphans(
+                        workerThreadPool.backgroundWorker(Worker.Background.NonIoRegWorker),
+                    )
                 }
             } else {
                 legacyTelemetryMigration.cancel()

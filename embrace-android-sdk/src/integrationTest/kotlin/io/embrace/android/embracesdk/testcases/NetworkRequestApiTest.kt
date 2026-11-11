@@ -291,11 +291,8 @@ internal class NetworkRequestApiTest(
     }
 
     @Test
-    fun `a network capture rule stops at its max count with the superior storage system enabled`() {
+    fun `a network capture rule stops at its max count`() {
         testRule.runTest(
-            setupAction = {
-                superiorStorageSystemEnabled = true
-            },
             persistedRemoteConfig = RemoteConfig(
                 networkCaptureRules = setOf(
                     NetworkCaptureRuleRemoteConfig(

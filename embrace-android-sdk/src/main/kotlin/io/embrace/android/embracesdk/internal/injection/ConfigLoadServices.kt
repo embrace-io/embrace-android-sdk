@@ -1,9 +1,6 @@
-@file:Suppress("DEPRECATION")
-
 package io.embrace.android.embracesdk.internal.injection
 
 import android.content.Context
-import android.preference.PreferenceManager
 import io.embrace.android.embracesdk.internal.arch.store.DeliveredAeiStore
 import io.embrace.android.embracesdk.internal.arch.store.NetworkCaptureRuleStore
 import io.embrace.android.embracesdk.internal.config.ConfigService
@@ -14,11 +11,6 @@ import io.embrace.android.embracesdk.internal.logging.ErrorHandler
 import io.embrace.android.embracesdk.internal.logging.SdkErrorType
 import io.embrace.android.embracesdk.internal.logging.guardSdkCode
 import io.embrace.android.embracesdk.internal.payload.AppFramework
-import io.embrace.android.embracesdk.internal.prefs.PrefsDeliveredAeiStore
-import io.embrace.android.embracesdk.internal.prefs.PrefsNetworkCaptureRuleStore
-import io.embrace.android.embracesdk.internal.prefs.PrefsPersistedSdkStateStore
-import io.embrace.android.embracesdk.internal.prefs.PrefsStoreWriteBatcher
-import io.embrace.android.embracesdk.internal.prefs.createKeyValueStore
 import io.embrace.android.embracesdk.internal.prefs.createSharedPrefsMigrator
 import io.embrace.android.embracesdk.internal.serialization.EmbraceSerializer
 import io.embrace.android.embracesdk.internal.serialization.PlatformSerializer
@@ -28,9 +20,7 @@ import io.embrace.android.embracesdk.internal.storage.SdkStorageLayout
 import io.embrace.android.embracesdk.internal.storage.migration.LegacyTelemetryMigration
 import io.embrace.android.embracesdk.internal.storage.migration.MigrationHandle
 import io.embrace.android.embracesdk.internal.storage.migration.MigrationWorker
-import io.embrace.android.embracesdk.internal.store.KeyValueStore
 import io.embrace.android.embracesdk.internal.store.OrdinalStore
-import io.embrace.android.embracesdk.internal.store.OrdinalStoreImpl
 import io.embrace.android.embracesdk.internal.store.PersistedSdkStateStore
 import io.embrace.android.embracesdk.internal.store.StoreWriteBatcher
 import io.embrace.android.embracesdk.internal.store.file.FileDeliveredAeiStore
@@ -63,24 +53,15 @@ internal class ConfigLoadServices(
     val uuidSource: UuidSource = UuidSourceImpl(),
     workerThreadPoolSupplier: WorkerThreadPoolSupplier? = null,
     configServiceSupplier: ConfigServiceSupplier? = null,
-    val superiorStorageSystemEnabled: Boolean = SUPERIOR_STORAGE_SYSTEM_ENABLED,
     private val fileSystem: FileSystem = FileSystem.SYSTEM,
     private val configMigrationTimeoutMs: Long = CONFIG_MIGRATION_TIMEOUT_MS,
 ) : Closeable {
 
-    val sdkStorage: SdkStorage = if (superiorStorageSystemEnabled) {
-        createSdkStorage(context, preStartServices.errorHandler, fileSystem)
-    } else {
-        createLegacySdkStorage(context, preStartServices.errorHandler)
-    }
+    val sdkStorage: SdkStorage = createSdkStorage(context, preStartServices.errorHandler, fileSystem)
 
     private val migrationWorker = MigrationWorker(preStartServices.errorHandler)
 
-    private val legacyStorageMigrator = if (superiorStorageSystemEnabled) {
-        createLegacyStorageMigrator(context, preStartServices.errorHandler, fileSystem)
-    } else {
-        null
-    }
+    private val legacyStorageMigrator = createLegacyStorageMigrator(context, preStartServices.errorHandler, fileSystem)
 
     val legacyTelemetryMigration: LegacyTelemetryMigration =
         LegacyTelemetryMigration(migrationWorker, legacyStorageMigrator, preStartServices.errorHandler)
@@ -99,87 +80,55 @@ internal class ConfigLoadServices(
      */
     private val installState: Lazy<Unit> = lazy { prefsMigration.await() }
 
-    val keyValueStore: Lazy<KeyValueStore> = lazy {
-        createKeyValueStore(context, jsonSerializer, preStartServices.errorHandler)
-    }
-
     val persistedSdkStateStore: Lazy<PersistedSdkStateStore> = lazy {
-        if (superiorStorageSystemEnabled) {
-            installState.value
-            FilePersistedSdkStateStore(
-                fileSystem = sdkStorage.fileSystem,
-                path = sdkStorage.dir(SdkDir.INSTALL_STATE) / SdkStorageLayout.PERSISTED_SDK_STATE_FILE_NAME,
-                worker = workerThreadPool.backgroundWorker(Worker.Background.PersistenceWorker),
-                errorHandler = preStartServices.errorHandler,
-                clock = preStartServices.clock,
-                uuidSource = uuidSource,
-            )
-        } else {
-            PrefsPersistedSdkStateStore(
-                keyValueStore.value,
-                preStartServices.clock,
-                uuidSource,
-                appFramework,
-            )
-        }
+        installState.value
+        FilePersistedSdkStateStore(
+            fileSystem = sdkStorage.fileSystem,
+            path = sdkStorage.dir(SdkDir.INSTALL_STATE) / SdkStorageLayout.PERSISTED_SDK_STATE_FILE_NAME,
+            worker = workerThreadPool.backgroundWorker(Worker.Background.PersistenceWorker),
+            errorHandler = preStartServices.errorHandler,
+            clock = preStartServices.clock,
+            uuidSource = uuidSource,
+        )
     }
 
     val ordinalStore: Lazy<OrdinalStore> = lazy {
         EmbTrace.trace("ordinal-store-init") {
-            if (superiorStorageSystemEnabled) {
-                createFileOrdinalStore(preStartServices.errorHandler)
-            } else {
-                OrdinalStoreImpl(keyValueStore.value, preStartServices.errorHandler)
-            }
+            createFileOrdinalStore(preStartServices.errorHandler)
         }
     }
 
-    val writeBatcher: Lazy<StoreWriteBatcher> = lazy {
-        if (superiorStorageSystemEnabled) {
-            StoreWriteBatcher { it() }
-        } else {
-            PrefsStoreWriteBatcher(keyValueStore.value)
-        }
-    }
+    val writeBatcher: Lazy<StoreWriteBatcher> = lazy { StoreWriteBatcher { it() } }
 
     val deliveredAeiStore: Lazy<DeliveredAeiStore> = lazy {
-        if (superiorStorageSystemEnabled) {
-            installState.value
-            FileDeliveredAeiStore(
-                fileSystem = sdkStorage.fileSystem,
-                path = sdkStorage.dir(SdkDir.INSTALL_STATE) / SdkStorageLayout.AEI_DELIVERED_FILE_NAME,
-                worker = workerThreadPool.backgroundWorker(Worker.Background.NonIoRegWorker),
-                errorHandler = preStartServices.errorHandler,
-            )
-        } else {
-            PrefsDeliveredAeiStore(keyValueStore.value)
-        }
+        installState.value
+        FileDeliveredAeiStore(
+            fileSystem = sdkStorage.fileSystem,
+            path = sdkStorage.dir(SdkDir.INSTALL_STATE) / SdkStorageLayout.AEI_DELIVERED_FILE_NAME,
+            worker = workerThreadPool.backgroundWorker(Worker.Background.NonIoRegWorker),
+            errorHandler = preStartServices.errorHandler,
+        )
     }
 
     val networkCaptureRuleStore: Lazy<NetworkCaptureRuleStore> = lazy {
-        if (superiorStorageSystemEnabled) {
-            installState.value
-            FileNetworkCaptureRuleStore(
-                fileSystem = sdkStorage.fileSystem,
-                path = sdkStorage.dir(SdkDir.INSTALL_STATE) / SdkStorageLayout.NETWORK_CAPTURE_FILE_NAME,
-                worker = workerThreadPool.backgroundWorker(Worker.Background.PersistenceWorker),
-                errorHandler = preStartServices.errorHandler,
-                liveRuleIds = { configService.networkBehavior.getNetworkCaptureRules().mapTo(HashSet()) { it.id } },
-            )
-        } else {
-            PrefsNetworkCaptureRuleStore(keyValueStore.value)
-        }
+        installState.value
+        FileNetworkCaptureRuleStore(
+            fileSystem = sdkStorage.fileSystem,
+            path = sdkStorage.dir(SdkDir.INSTALL_STATE) / SdkStorageLayout.NETWORK_CAPTURE_FILE_NAME,
+            worker = workerThreadPool.backgroundWorker(Worker.Background.PersistenceWorker),
+            errorHandler = preStartServices.errorHandler,
+            liveRuleIds = { configService.networkBehavior.getNetworkCaptureRules().mapTo(HashSet()) { it.id } },
+        )
     }
 
     val persistedConfig: PersistedConfig = EmbTrace.trace(
         sectionName = "persisted-config-init",
         recordDuration = true,
     ) {
-        val configMoved = legacyStorageMigrator?.let { migrator ->
-            migrationWorker.submit("config", Unit, SdkErrorType.StorageMigrationFail, migrator::migrateConfig)
-                .also { it.await(configMigrationTimeoutMs, SdkErrorType.StorageMigrationFail) }
-                .isComplete
-        } ?: true
+        val configMoved = migrationWorker
+            .submit("config", Unit, SdkErrorType.StorageMigrationFail, legacyStorageMigrator::migrateConfig)
+            .also { it.await(configMigrationTimeoutMs, SdkErrorType.StorageMigrationFail) }
+            .isComplete
         PersistedConfig(
             serializer = jsonSerializer,
             storageDir = sdkStorage.path(SdkDir.REMOTE_CONFIG).toFile(),
@@ -188,10 +137,10 @@ internal class ConfigLoadServices(
             clock = preStartServices.clock,
             errorHandler = preStartServices.errorHandler,
         ).also { config ->
-            when {
-                !superiorStorageSystemEnabled -> Unit
-                configMoved -> submitPrefsMigration(config, preStartServices.errorHandler)
-                else -> prefsMigration.complete()
+            if (configMoved) {
+                submitPrefsMigration(config, preStartServices.errorHandler)
+            } else {
+                prefsMigration.complete()
             }
         }
     }
@@ -222,10 +171,6 @@ internal class ConfigLoadServices(
      * Begins the background work needed during SDK init. Call this as early as possible after construction.
      */
     fun start() {
-        if (!superiorStorageSystemEnabled) {
-            prewarmSharedPreferences()
-        }
-
         // kick off config HTTP request early so the SDK can't get in a permanently disabled state.
         configService.scheduleConfigRequests()
     }
@@ -262,23 +207,7 @@ internal class ConfigLoadServices(
         val ordinals = MmapOrdinalStore.open(path.toFile(), errorHandler) ?: return UnavailableOrdinalStore
         return ScopedOrdinalStore(ordinals, persistedSdkStateStore.value, errorHandler)
     }
-
-    /**
-     * Touches the default `SharedPreferences` on a background worker as early as possible to speculatively
-     * attempt to reduce the amount of time Android blocks with `awaitLoadedLocked` later on in SDK init.
-     */
-    @Suppress("SharedPreferencesUsage")
-    private fun prewarmSharedPreferences() {
-        workerThreadPool.backgroundWorker(Worker.Background.IoRegWorker).submit {
-            try {
-                PreferenceManager.getDefaultSharedPreferences(context)
-            } catch (ignored: Throwable) {
-            }
-        }
-    }
 }
-
-internal const val SUPERIOR_STORAGE_SYSTEM_ENABLED = false
 
 private const val CONFIG_MIGRATION_TIMEOUT_MS = 3_000L
 

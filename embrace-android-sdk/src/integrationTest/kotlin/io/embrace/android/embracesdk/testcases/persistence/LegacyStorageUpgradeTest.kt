@@ -16,6 +16,7 @@ import io.embrace.android.embracesdk.internal.payload.LogPayload
 import io.embrace.android.embracesdk.internal.session.persistence.SessionPartDirectory
 import io.embrace.android.embracesdk.internal.storage.LegacyStorageMigrator
 import io.embrace.android.embracesdk.internal.storage.SdkDir
+import io.embrace.android.embracesdk.internal.storage.SdkStorageLayout
 import io.embrace.android.embracesdk.internal.worker.Worker
 import io.embrace.android.embracesdk.testframework.OtelSdkMode
 import io.embrace.android.embracesdk.testframework.SdkIntegrationTestRule
@@ -43,7 +44,7 @@ internal class LegacyStorageUpgradeTest(
 
     @Rule
     @JvmField
-    val testRule: SdkIntegrationTestRule = SdkIntegrationTestRule(otelSdkMode, superiorStorageSystemEnabled = true) {
+    val testRule: SdkIntegrationTestRule = SdkIntegrationTestRule(otelSdkMode) {
         EmbraceSetupInterface(
             workersToFake = listOf(Worker.Background.PersistenceWorker),
         ).apply {
@@ -55,14 +56,12 @@ internal class LegacyStorageUpgradeTest(
     fun `a 9x install keeps its config and telemetry`() {
         testRule.runTest(
             persistedRemoteConfig = legacyConfig,
-            setupAction = {
-                superiorStorageSystemEnabled = false
-            },
             testCaseAction = {
                 recordSession(endInBackground = false)
                 shutdownSdkWithIncompleteSession()
             },
         )
+        moveToLegacyLayout(SdkDir.REMOTE_CONFIG, SdkDir.TELEMETRY_PENDING_SESSION_PARTS)
         val deadPart = deadSessionPart()
 
         testRule.runTest(
@@ -127,12 +126,23 @@ internal class LegacyStorageUpgradeTest(
         testRule.services.workerThreadPool.close()
     }
 
+    /**
+     * Turns the previous launch's install into a 9.x one, by moving [dirs] to their 9.x locations and deleting the rest.
+     */
+    private fun moveToLegacyLayout(vararg dirs: SdkDir) {
+        val storage = testSdkStorage(ctx)
+        dirs.forEach { dir ->
+            check(storage.path(dir).toFile().renameTo(legacyDir(dir))) { "failed to move $dir" }
+        }
+        File(ctx.noBackupFilesDir, SdkStorageLayout.ROOT_DIR_NAME).deleteRecursively()
+    }
+
     private fun deadSessionPart(): SessionPartDirectory {
-        val legacyParts = testSdkStorage(ctx, superiorStorageSystemEnabled = false)
-            .dir(SdkDir.TELEMETRY_PENDING_SESSION_PARTS).toFile()
-        val parts = checkNotNull(legacyParts.listFiles())
+        val parts = checkNotNull(legacyDir(SdkDir.TELEMETRY_PENDING_SESSION_PARTS).listFiles())
         return checkNotNull(SessionPartDirectory.fromDirName(parts.single().name))
     }
+
+    private fun legacyDir(dir: SdkDir): File = File(ctx.filesDir, LegacyStorageMigrator.LEGACY_DIR_NAMES.getValue(dir))
 
     private fun writeLegacyFile(path: String, bytes: ByteArray) {
         File(ctx.filesDir, path).apply {

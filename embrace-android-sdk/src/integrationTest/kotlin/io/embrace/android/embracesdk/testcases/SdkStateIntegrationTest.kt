@@ -105,7 +105,7 @@ internal class SdkStateIntegrationTest(
     @Before
     fun setUp() {
         embraceDirs = TELEMETRY_DIRS.associateWith {
-            testSdkStorage(context, testRule.superiorStorageSystemEnabled).dir(it).toFile()
+            testSdkStorage(context).dir(it).toFile()
         }
     }
 

@@ -30,8 +30,8 @@ internal val KNOWN_VIOLATIONS: List<KnownViolation> = listOf(
     KnownViolation(
         signature = "internal.injection.SdkStorageFactoriesKt.createSdkStorage",
         violation = DiskReadViolation::class,
-        reason = "With the superior storage system enabled, ConfigLoadServices creates the SDK's storage eagerly, " +
-            "which reads context.noBackupFilesDir, and ContextImpl.getNoBackupFilesDir stats the directory on every call",
+        reason = "ConfigLoadServices creates the SDK's storage eagerly, which reads context.noBackupFilesDir, and " +
+            "ContextImpl.getNoBackupFilesDir stats the directory on every call",
     ),
     KnownViolation(
         signature = "internal.instrumentation.startup.SdkInitResourceUsageTrackerKt.readProcFile",

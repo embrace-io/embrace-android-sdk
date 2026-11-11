@@ -172,11 +172,8 @@ internal class UserSessionLifecycleTest(
     }
 
     @Test
-    fun `user session numbers increment with the superior storage system enabled and stay out of prefs`() {
+    fun `user session numbers increment and stay out of prefs`() {
         testRule.runTest(
-            setupAction = {
-                superiorStorageSystemEnabled = true
-            },
             persistedRemoteConfig = RemoteConfig(
                 userSession = UserSessionRemoteConfig(inactivityTimeoutSeconds = 30)
             ),
@@ -222,11 +219,8 @@ internal class UserSessionLifecycleTest(
     }
 
     @Test
-    fun `a full SDK start with the superior storage system enabled opens no prefs`() {
+    fun `a full SDK start opens no prefs`() {
         testRule.runTest(
-            setupAction = {
-                superiorStorageSystemEnabled = true
-            },
             testCaseAction = {
                 recordSession()
                 recordSession()

@@ -1,7 +1,6 @@
 package io.embrace.android.embracesdk.fakes
 
 import android.content.Context
-import io.embrace.android.embracesdk.internal.injection.createLegacySdkStorage
 import io.embrace.android.embracesdk.internal.injection.createSdkStorage
 import io.embrace.android.embracesdk.internal.storage.SdkDir
 import io.embrace.android.embracesdk.internal.storage.SdkStorage
@@ -21,11 +20,6 @@ val TELEMETRY_DIRS: List<SdkDir> = listOf(
     SdkDir.TELEMETRY_PENDING_SESSION_PARTS,
 )
 
-fun testSdkStorage(context: Context, superiorStorageSystemEnabled: Boolean = false): SdkStorage =
-    if (superiorStorageSystemEnabled) {
-        createSdkStorage(context, FakeErrorHandler())
-    } else {
-        createLegacySdkStorage(context, FakeErrorHandler())
-    }
+fun testSdkStorage(context: Context): SdkStorage = createSdkStorage(context, FakeErrorHandler())
 
 fun testSdkStorage(root: File): SdkStorage = SdkStorageImpl(FileSystem.SYSTEM, root.toOkioPath(), FakeErrorHandler())

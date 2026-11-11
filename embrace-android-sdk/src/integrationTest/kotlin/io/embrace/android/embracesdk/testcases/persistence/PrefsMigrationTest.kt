@@ -1,9 +1,7 @@
 package io.embrace.android.embracesdk.testcases.persistence
 
 import android.content.Context
-import io.embrace.android.embracesdk.PropertyScope
 import io.embrace.android.embracesdk.assertions.findSessionPartSpan
-import io.embrace.android.embracesdk.assertions.returnIfConditionMet
 import io.embrace.android.embracesdk.internal.config.remote.NetworkCaptureRuleRemoteConfig
 import io.embrace.android.embracesdk.internal.config.remote.RemoteConfig
 import io.embrace.android.embracesdk.internal.otel.sdk.findAttributeValue
@@ -20,8 +18,6 @@ import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.ParameterizedRobolectricTestRunner
-import java.io.File
-import java.util.concurrent.TimeUnit
 
 /**
  * An install upgrading from 9.x keeps the state it kept in prefs, which the first launch moves into `xcor/install_state/`.
@@ -42,39 +38,25 @@ internal class PrefsMigrationTest(
 
     @Rule
     @JvmField
-    val testRule: SdkIntegrationTestRule = SdkIntegrationTestRule(otelSdkMode, superiorStorageSystemEnabled = true)
+    val testRule: SdkIntegrationTestRule = SdkIntegrationTestRule(otelSdkMode)
 
     @Test
     fun `a 9x install keeps its prefs state`() {
-        lateinit var deviceId: String
         testRule.runTest(
             persistedRemoteConfig = remoteConfig,
             setupAction = {
-                superiorStorageSystemEnabled = false
-            },
-            testCaseAction = {
-                embrace.setUserIdentifier(USER_ID)
-                embrace.addUserSessionProperty(PROPERTY_KEY, PROPERTY_VALUE, PropertyScope.PERMANENT)
-                recordSession()
-                deviceId = testRule.services.configService.deviceId
-            },
-            assertAction = {
-                // otherwise the 9.x session is migrated and delivered by the next launch too
-                getSingleSessionEnvelope()
-                awaitNoLegacyPayloads()
-            },
-        )
-
-        testRule.runTest(
-            persistRemoteConfig = false,
-            serverResponseConfig = remoteConfig,
-            setupAction = {
                 prefs().edit()
+                    .putString(DEVICE_ID_KEY, LEGACY_DEVICE_ID)
                     .putInt(Ordinal.SESSION.key, 41)
+                    .putInt(Ordinal.APP_VERSION_STARTUP.key, 1)
+                    .putString(checkNotNull(Ordinal.APP_VERSION_STARTUP.scopeKey), UNKNOWN_APP_VERSION)
                     .putInt("$NETWORK_CAPTURE_RULE_PREFIX${rule.id}", 3)
                     .commit()
+                seedLegacyPrefsState {
+                    userId = USER_ID
+                    sessionProperties = mapOf(PROPERTY_KEY to PROPERTY_VALUE)
+                }
                 standInPrefsFile()
-                getClock().tick(TimeUnit.HOURS.toMillis(1))
             },
             testCaseAction = {
                 recordSession()
@@ -85,7 +67,7 @@ internal class PrefsMigrationTest(
                 assertEquals("2", attrs.findAttributeValue(EmbAppAttributes.EMB_APP_VERSION_STARTUP_COUNTER))
 
                 val state = testRule.services.persistedSdkStateStore.value.snapshot()
-                assertEquals(deviceId, state.deviceId)
+                assertEquals(LEGACY_DEVICE_ID, state.deviceId)
                 assertEquals(USER_ID, state.userId)
                 assertEquals(PROPERTY_VALUE, state.sessionProperties[PROPERTY_KEY])
                 assertEquals(3, testRule.services.networkCaptureRuleStore.value.remaining(rule.id, rule.maxCount))
@@ -109,15 +91,6 @@ internal class PrefsMigrationTest(
         )
     }
 
-    private fun awaitNoLegacyPayloads() {
-        val payloads = File(appContext().filesDir, "embrace_payloads")
-        returnIfConditionMet(
-            desiredValueSupplier = { true },
-            dataProvider = { payloads.list().isNullOrEmpty() },
-            condition = { it },
-        )
-    }
-
     private fun appContext(): Context = testRule.setup.services.appContext
 
     private fun prefs(): InMemorySharedPreferences =
@@ -133,6 +106,9 @@ internal class PrefsMigrationTest(
     private fun isSdkKey(key: String) = key.startsWith("io.embrace.") || key == "embrace.user_session"
 
     internal companion object {
+        const val DEVICE_ID_KEY = "io.embrace.deviceid"
+        const val LEGACY_DEVICE_ID = "9x-device-id"
+        const val UNKNOWN_APP_VERSION = "UNKNOWN"
         const val USER_ID = "user-1"
         const val PROPERTY_KEY = "perm"
         const val PROPERTY_VALUE = "value"

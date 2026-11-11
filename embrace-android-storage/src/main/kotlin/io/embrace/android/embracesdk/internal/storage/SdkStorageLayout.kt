@@ -24,8 +24,7 @@ object SdkStorageLayout {
     const val LAYOUT_VERSION_FILE_NAME: String = "layout_version"
 
     /*
-     * The files allowed in [SdkDir.INSTALL_STATE]. The .bin files' stores aren't wired in yet: until they are,
-     * nothing writes them.
+     * The files allowed in [SdkDir.INSTALL_STATE].
      */
 
     const val ORDINALS_FILE_NAME: String = "ordinals.bin"

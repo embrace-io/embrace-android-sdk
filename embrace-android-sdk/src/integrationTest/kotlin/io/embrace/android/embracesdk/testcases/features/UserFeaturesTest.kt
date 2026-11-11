@@ -57,11 +57,8 @@ internal class UserFeaturesTest(
 
     @Suppress("DEPRECATION")
     @Test
-    fun `user info set with the superior storage system enabled stays out of prefs`() {
+    fun `user info stays out of prefs`() {
         testRule.runTest(
-            setupAction = {
-                superiorStorageSystemEnabled = true
-            },
             testCaseAction = {
                 recordSession {
                     embrace.setUserIdentifier("newId")

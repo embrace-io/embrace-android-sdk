@@ -205,7 +205,7 @@ internal class TracingApiTest(
                     sdkInitSpan.attributes?.findAttributeValue(EmbAppAttributes.EMB_APP_VERSION_STARTUP_COUNTER)
                 )
 
-                sdkInitSpan.attributes.assertSdkInitSectionDurationsRecorded(testRule.superiorStorageSystemEnabled)
+                sdkInitSpan.attributes.assertSdkInitSectionDurationsRecorded()
 
                 assertEmbraceSpanData(
                     span = traceRootSpan,

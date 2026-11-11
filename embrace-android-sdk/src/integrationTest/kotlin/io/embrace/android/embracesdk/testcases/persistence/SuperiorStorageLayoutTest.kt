@@ -29,12 +29,12 @@ internal class SuperiorStorageLayoutTest(
 ) {
 
     private val ctx: Context by lazy { ApplicationProvider.getApplicationContext() }
-    private val storage: SdkStorage by lazy { testSdkStorage(ctx, superiorStorageSystemEnabled = true) }
+    private val storage: SdkStorage by lazy { testSdkStorage(ctx) }
     private val remoteConfig = RemoteConfig(pctMultiFilePersistenceEnabled = 100f)
 
     @Rule
     @JvmField
-    val testRule: SdkIntegrationTestRule = SdkIntegrationTestRule(otelSdkMode, superiorStorageSystemEnabled = true) {
+    val testRule: SdkIntegrationTestRule = SdkIntegrationTestRule(otelSdkMode) {
         EmbraceSetupInterface(
             workersToFake = listOf(Worker.Background.PersistenceWorker),
         ).apply {

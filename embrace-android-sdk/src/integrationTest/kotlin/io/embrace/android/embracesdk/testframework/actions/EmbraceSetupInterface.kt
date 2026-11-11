@@ -144,11 +144,6 @@ internal class EmbraceSetupInterface(
     var constructionFailure: Throwable? = null
 
     /**
-     * When set, the SDK keeps its state in the files under `noBackupFilesDir/xcor/` rather than in prefs.
-     */
-    var superiorStorageSystemEnabled: Boolean = false
-
-    /**
      * When set, the SDK uses this ordinal store instead of the real one.
      */
     var ordinalStore: OrdinalStore? = null
@@ -232,7 +227,6 @@ internal class EmbraceSetupInterface(
                         createConfigService(preStartServices, instrumentedConfig, serializer, okHttpClient, workerThreadPool, persistedConfig)
                     ).also { services.configService = it }
                 },
-                superiorStorageSystemEnabled = superiorStorageSystemEnabled,
             ).also {
                 services.persistedSdkStateStore = it.persistedSdkStateStore
                 services.networkCaptureRuleStore = it.networkCaptureRuleStore
@@ -243,26 +237,28 @@ internal class EmbraceSetupInterface(
     /**
      * The storage layer the SDK uses
      */
-    fun sdkStorage(): SdkStorage = testSdkStorage(fakeContext, superiorStorageSystemEnabled)
+    fun sdkStorage(): SdkStorage = testSdkStorage(fakeContext)
 
     /**
      * Edits the persisted SDK state before the SDK starts, simulating a previous process.
      */
     fun seedPersistedSdkState(action: PersistedSdkStateEditor.() -> Unit) {
-        val store = if (superiorStorageSystemEnabled) {
-            val storage = sdkStorage()
-            FilePersistedSdkStateStore(
-                fileSystem = storage.fileSystem,
-                path = storage.dir(SdkDir.INSTALL_STATE) / SdkStorageLayout.PERSISTED_SDK_STATE_FILE_NAME,
-                worker = fakeBackgroundWorker(),
-                errorHandler = fakeInitServices.errorHandler,
-                clock = fakeClock,
-                uuidSource = uuidSource,
-            )
-        } else {
-            PrefsPersistedSdkStateStore(keyValueStore, fakeClock, uuidSource, AppFramework.NATIVE)
-        }
-        store.update(action)
+        val storage = sdkStorage()
+        FilePersistedSdkStateStore(
+            fileSystem = storage.fileSystem,
+            path = storage.dir(SdkDir.INSTALL_STATE) / SdkStorageLayout.PERSISTED_SDK_STATE_FILE_NAME,
+            worker = fakeBackgroundWorker(),
+            errorHandler = fakeInitServices.errorHandler,
+            clock = fakeClock,
+            uuidSource = uuidSource,
+        ).update(action)
+    }
+
+    /**
+     * Edits the state a 9.x SDK kept in prefs before the SDK starts, simulating an upgrade from 9.x.
+     */
+    fun seedLegacyPrefsState(action: PersistedSdkStateEditor.() -> Unit) {
+        PrefsPersistedSdkStateStore(keyValueStore, fakeClock, uuidSource, AppFramework.NATIVE).update(action)
     }
 
     fun createSdkOverrides(deliveryTracer: DeliveryTracer): SdkOverrides = SdkOverrides(
@@ -294,7 +290,7 @@ internal class EmbraceSetupInterface(
         intakeService = { real -> real().also { services.intakeService = it } },
         eventBus = { real -> real().also { services.eventBus = it } },
         ordinalStore = ordinalStore?.let { store -> { store } },
-        awaitLegacyTelemetryMigration = awaitLegacyTelemetryMigration?.let { hook -> { hook } },
+        awaitLegacyTelemetryMigration = (awaitLegacyTelemetryMigration ?: inlineIoWorkerMigrationAwait())?.let { hook -> { hook } },
     )
 
     /**
@@ -492,6 +488,16 @@ internal class EmbraceSetupInterface(
 
     fun getFakedWorkerExecutor(worker: Worker.Background): BlockingScheduledExecutorService =
         (workerThreadPool as FakeWorkerThreadPool).executorFor(worker)
+
+    /**
+     * An inline faked IO worker runs the crash-marker read and resurrection on the init thread, before init queues the
+     * telemetry migration they wait for, so they skip that wait rather than block forever.
+     */
+    private fun inlineIoWorkerMigrationAwait(): (() -> Unit)? {
+        val inline = Worker.Background.IoRegWorker in workersToFake &&
+            !getFakedWorkerExecutor(Worker.Background.IoRegWorker).blockingMode
+        return if (inline) ({}) else null
+    }
 
     /**
      * Waits for work already running on real workers to finish once the SDK has shut them down.

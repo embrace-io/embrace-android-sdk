@@ -106,7 +106,7 @@ internal class RealSdkInstance(
     private val eventBus: EventBus,
     private val appContext: Context,
     private val sdkStorage: SdkStorage,
-    private val persistedSdkStateFile: Path?,
+    private val persistedSdkStateFile: Path,
     private val spanRepository: SpanRepository,
     private val logSink: LogSink,
     private val otelSdkConfig: Lazy<OtelSdkConfig>,
@@ -588,10 +588,8 @@ internal class RealSdkInstance(
                                     instrumentationArgs.systemService(Context.ACTIVITY_SERVICE)
                                 },
                                 prefsFileSizeProvider = { existingPrefsFile(appContext)?.length() },
-                                persistedSdkStateFileSizeProvider = persistedSdkStateFile?.let { path ->
-                                    {
-                                        sdkStorage.fileSystem.metadataOrNull(path)?.size
-                                    }
+                                persistedSdkStateFileSizeProvider = {
+                                    sdkStorage.fileSystem.metadataOrNull(persistedSdkStateFile)?.size
                                 },
                             ) {
                                 appContext.applicationInfo?.sourceDir?.let { sourceDir ->

@@ -12,10 +12,14 @@ import io.embrace.android.embracesdk.internal.injection.ConfigLoadServices
 import io.embrace.android.embracesdk.internal.injection.PreStartServices
 import io.embrace.android.embracesdk.internal.storage.SdkStorageLayout
 import io.embrace.android.embracesdk.internal.store.Ordinal
+import io.embrace.android.embracesdk.internal.store.OrdinalStore
 import io.embrace.android.embracesdk.internal.store.PersistedSdkState
 import io.embrace.android.embracesdk.internal.store.file.FilePersistedSdkStateStore
 import io.embrace.android.embracesdk.internal.worker.Worker
+import okio.FileMetadata
 import okio.FileSystem
+import okio.ForwardingFileSystem
+import okio.Path
 import okio.Path.Companion.toOkioPath
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
@@ -24,6 +28,9 @@ import org.junit.Rule
 import org.junit.Test
 import org.junit.rules.TemporaryFolder
 import java.io.File
+import java.util.concurrent.CountDownLatch
+import java.util.concurrent.Executors
+import java.util.concurrent.TimeUnit
 
 internal class ConfigLoadServicesTest {
 
@@ -80,7 +87,7 @@ internal class ConfigLoadServicesTest {
         fs.createDirectories(checkNotNull(legacy.parent))
         fs.write(legacy) { writeUtf8("{}") }
 
-        createSuperiorStorageServices(context, FakeConfigService(), FakeWorkerThreadPool())
+        createSuperiorStorageServices(context, FakeConfigService(), FakeWorkerThreadPool()).awaitPrefsMigration()
 
         val migrated = context.noBackupFilesDir.toOkioPath() / SdkStorageLayout.ROOT_DIR_NAME / "remote_config" /
             PersistedConfig.CONFIG_RESPONSE_FILE_NAME
@@ -119,6 +126,7 @@ internal class ConfigLoadServicesTest {
             fileSystem = fsRule.fileSystem,
         )
         configLoadServices.start()
+        configLoadServices.awaitPrefsMigration()
         assertEquals(0, workerThreadPool.executorFor(Worker.Background.IoRegWorker).submitCount)
     }
 
@@ -137,6 +145,42 @@ internal class ConfigLoadServicesTest {
         val second = createSuperiorStorageServices(context, configService, FakeWorkerThreadPool(testWorkers = workers))
         assertEquals(setOf("aei"), second.deliveredAeiStore.value.ids())
         assertEquals(4, second.networkCaptureRuleStore.value.remaining(rule.id, 5))
+    }
+
+    @Test
+    fun `the stores don't wait behind a config move that timed out`() {
+        val configMoveReleased = CountDownLatch(1)
+        val fs = object : ForwardingFileSystem(FileSystem.SYSTEM) {
+            override fun metadataOrNull(path: Path): FileMetadata? {
+                if (path.name == "embrace_remote_config") {
+                    configMoveReleased.await()
+                }
+                return super.metadataOrNull(path)
+            }
+        }
+        val errorHandler = FakeErrorHandler(throwOnSdkError = false)
+        val configLoadServices = ConfigLoadServices(
+            context = FilesDirApplication(tempDir.newFolder()),
+            preStartServices = PreStartServices(errorHandler = errorHandler),
+            workerThreadPoolSupplier = { FakeWorkerThreadPool(testWorkers = listOf(Worker.Background.IoRegWorker)) },
+            configServiceSupplier = { _, _, _, _, _, _ -> FakeConfigService() },
+            superiorStorageSystemEnabled = true,
+            fileSystem = fs,
+            configMigrationTimeoutMs = 1,
+        )
+        try {
+            val ordinals = Executors.newSingleThreadExecutor().submit<OrdinalStore> {
+                configLoadServices.ordinalStore.value
+            }
+            assertEquals(1, ordinals.get(5, TimeUnit.SECONDS).incrementAndGet(Ordinal.SESSION))
+            assertEquals("StorageMigrationFail", errorHandler.sdkErrorMessages.single().msg)
+        } finally {
+            configMoveReleased.countDown()
+        }
+    }
+
+    private fun ConfigLoadServices.awaitPrefsMigration() {
+        persistedSdkStateStore.value
     }
 
     private fun createSuperiorStorageServices(

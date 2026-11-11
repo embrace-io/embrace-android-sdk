@@ -7,6 +7,7 @@ import io.embrace.android.embracesdk.fakes.TestPlatformSerializer
 import io.embrace.android.embracesdk.fakes.config.FakeEnabledFeatureConfig
 import io.embrace.android.embracesdk.fakes.config.FakeInstrumentedConfig
 import io.embrace.android.embracesdk.fakes.config.FakeProjectConfig
+import io.embrace.android.embracesdk.internal.config.remote.NetworkCaptureRuleRemoteConfig
 import io.embrace.android.embracesdk.internal.config.remote.OtelKotlinSdkConfig
 import io.embrace.android.embracesdk.internal.config.remote.RemoteConfig
 import io.embrace.android.embracesdk.internal.config.source.ConfigHttpResponse
@@ -151,6 +152,28 @@ internal class PersistedConfigTest {
         )
 
         assertEquals("cached-device-id", persistedConfig.deviceId)
+        assertFalse(resolved)
+    }
+
+    @Test
+    fun `network capture rules are read without touching the state store`() {
+        var resolved = false
+        val store = lazy {
+            resolved = true
+            FakePersistedSdkStateStore()
+        }
+        val rule = NetworkCaptureRuleRemoteConfig(
+            id = "rule",
+            duration = null,
+            method = "GET",
+            urlRegex = "x",
+            maxCount = 5,
+        )
+        val persistedConfig = createPersistedConfig(
+            persisted = RemoteConfig(networkCaptureRules = setOf(rule)),
+            store = store,
+        )
+        assertEquals(mapOf("rule" to 5), persistedConfig.networkCaptureRuleMaxCounts())
         assertFalse(resolved)
     }
 

@@ -89,16 +89,27 @@ class SharedPrefsMigrator(
 
     private fun writeStateFiles(snapshot: LegacyPrefsSnapshot): Map<Ordinal, Int> {
         val written = errorHandler.guardSdkCode(SdkErrorType.PrefsMigrationFail, false) {
-            writeFiles(snapshot)
+            FilePersistedSdkStateStore.create(
+                fileSystem,
+                installStateDir / SdkStorageLayout.PERSISTED_SDK_STATE_FILE_NAME,
+                snapshot.persistedSdkState.copy(appVersionStartupScope = snapshot.appVersionStartupScope),
+            )
             true
         }
-        if (written) {
-            return snapshot.ordinals
+        if (!written) {
+            errorHandler.guardSdkCode(SdkErrorType.PrefsMigrationFail) {
+                STATE_FILE_NAMES.forEach { fileSystem.delete(installStateDir / it, mustExist = false) }
+            }
+            return emptyMap()
         }
-        errorHandler.guardSdkCode(SdkErrorType.PrefsMigrationFail) {
-            STATE_FILE_NAMES.forEach { fileSystem.delete(installStateDir / it, mustExist = false) }
+        val used = networkCaptureUsed(snapshot.networkCaptureRemaining)
+        writeDisposableFile(SdkStorageLayout.NETWORK_CAPTURE_FILE_NAME, used.isEmpty()) {
+            FileNetworkCaptureRuleStore.create(fileSystem, it, used)
         }
-        return emptyMap()
+        writeDisposableFile(SdkStorageLayout.AEI_DELIVERED_FILE_NAME, snapshot.deliveredAeiIds.isEmpty()) {
+            FileDeliveredAeiStore.create(fileSystem, it, snapshot.deliveredAeiIds)
+        }
+        return snapshot.ordinals
     }
 
     private class LoadedPrefs(
@@ -107,24 +118,18 @@ class SharedPrefsMigrator(
         val snapshot: LegacyPrefsSnapshot?,
     )
 
-    private fun writeFiles(snapshot: LegacyPrefsSnapshot) {
-        val used = networkCaptureUsed(snapshot.networkCaptureRemaining)
-        FilePersistedSdkStateStore.create(
-            fileSystem,
-            installStateDir / SdkStorageLayout.PERSISTED_SDK_STATE_FILE_NAME,
-            snapshot.persistedSdkState.copy(appVersionStartupScope = snapshot.appVersionStartupScope),
-        )
-        val networkCapturePath = installStateDir / SdkStorageLayout.NETWORK_CAPTURE_FILE_NAME
-        if (used.isEmpty()) {
-            fileSystem.delete(networkCapturePath, mustExist = false)
-        } else {
-            FileNetworkCaptureRuleStore.create(fileSystem, networkCapturePath, used)
+    /**
+     * Losing these files only resets AEI dedupe or capture counts, so carry on with the migration
+     * if they do fail
+     */
+    private fun writeDisposableFile(name: String, empty: Boolean, write: (Path) -> Unit) {
+        val path = installStateDir / name
+        val written = errorHandler.guardSdkCode(SdkErrorType.PrefsMigrationFail, false) {
+            if (empty) fileSystem.delete(path, mustExist = false) else write(path)
+            true
         }
-        val aeiPath = installStateDir / SdkStorageLayout.AEI_DELIVERED_FILE_NAME
-        if (snapshot.deliveredAeiIds.isEmpty()) {
-            fileSystem.delete(aeiPath, mustExist = false)
-        } else {
-            FileDeliveredAeiStore.create(fileSystem, aeiPath, snapshot.deliveredAeiIds)
+        if (!written) {
+            errorHandler.guardSdkCode(SdkErrorType.PrefsMigrationFail) { fileSystem.delete(path, mustExist = false) }
         }
     }
 

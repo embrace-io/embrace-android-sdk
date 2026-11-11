@@ -106,15 +106,17 @@ internal class OrphanSweeperTest {
     @Test
     fun `stale temp files are deleted and fresh ones kept`() {
         val staleTmp = stale(write(storage.dir(SdkDir.TELEMETRY_READY) / "$V2_PAYLOAD.tmp"))
+        val staleSnapshotTmp = stale(write(storage.dir(SdkDir.TELEMETRY_PENDING_SNAPSHOTS) / "$V2_PAYLOAD.tmp"))
         val freshTmp = write(storage.dir(SdkDir.TELEMETRY_LOG_ENVELOPES) / "$V2_PAYLOAD.tmp")
         val partDir = storage.dir(SdkDir.TELEMETRY_PENDING_SESSION_PARTS) / SESSION_PART_DIR
         val stalePartTmp = stale(write(partDir / "metadata.pb.tmp"))
         val freshPartTmp = write(partDir / "completed_spans.pb.tmp")
         val freshStateTmp = write(storage.dir(SdkDir.INSTALL_STATE) / "ordinals.bin.tmp")
 
-        assertEquals(2, sweep())
+        assertEquals(3, sweep())
 
         assertFalse(fileSystem.exists(staleTmp))
+        assertFalse(fileSystem.exists(staleSnapshotTmp))
         assertFalse(fileSystem.exists(stalePartTmp))
         assertTrue(fileSystem.exists(freshTmp))
         assertTrue(fileSystem.exists(freshPartTmp))

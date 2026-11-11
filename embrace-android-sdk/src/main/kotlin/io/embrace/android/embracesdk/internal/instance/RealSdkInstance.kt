@@ -67,6 +67,7 @@ import io.embrace.android.embracesdk.internal.otel.config.OtelSdkConfig
 import io.embrace.android.embracesdk.internal.otel.logs.LogSink
 import io.embrace.android.embracesdk.internal.otel.spans.SpanRepository
 import io.embrace.android.embracesdk.internal.resurrection.PayloadResurrectionService
+import io.embrace.android.embracesdk.internal.resurrection.ResurrectionOutcome
 import io.embrace.android.embracesdk.internal.resurrection.SessionPartReader
 import io.embrace.android.embracesdk.internal.session.id.SessionPartTracker
 import io.embrace.android.embracesdk.internal.session.orchestrator.PayloadStore
@@ -507,6 +508,7 @@ internal class RealSdkInstance(
                 if (!enabled) {
                     return@submit
                 }
+                var resurrectionOutcome = ResurrectionOutcome.COMPLETE
                 errorHandler.guardSdkCode(SdkErrorType.PayloadResurrectionFail) {
                     // Get real network status as soon as we can on the worker.
                     // This allows the delivery triggered by resurrection to get the most accurate network status as possible
@@ -534,7 +536,7 @@ internal class RealSdkInstance(
                         schedulingService?.let { scheduler ->
                             resurrectionService.addResurrectionCompleteListener(scheduler::onResurrectionComplete)
                         }
-                        resurrectionService.resurrectOldPayloads(
+                        resurrectionOutcome = resurrectionService.resurrectOldPayloads(
                             nativeCrashServiceProvider = {
                                 instrumentationRegistry.findByType(NativeCrashDataSource::class)
                             },
@@ -556,9 +558,13 @@ internal class RealSdkInstance(
                     }
                 }
 
-                // always unblock the scheduler, even if resurrection didn't run or failed partway, as otherwise
-                // non-crash payloads would never be delivered in this process
-                schedulingService?.onResurrectionComplete()
+                // Unblock the scheduler even if resurrection didn't run or failed partway, as otherwise non-crash payloads would never
+                // be delivered in this process. The exception is a pass the intake interrupted because the SDK is shutting down (a
+                // crash, disable() or close()): the payloads it left on disk go out on the next launch, and nothing newer may
+                // overtake them.
+                if (resurrectionOutcome == ResurrectionOutcome.COMPLETE) {
+                    schedulingService?.onResurrectionComplete()
+                }
             }
         }
     }

@@ -17,6 +17,7 @@ import io.embrace.android.embracesdk.internal.utils.NetworkUtils.getValidTraceId
 import io.embrace.android.embracesdk.internal.utils.NetworkUtils.stripUrl
 import io.embrace.android.embracesdk.internal.utils.concurrent.OneShot
 import io.embrace.android.embracesdk.internal.utils.putIfNotNull
+import io.embrace.android.embracesdk.network.NetworkSpanParent
 import io.embrace.android.embracesdk.semconv.EmbNetworkRequestAttributes
 import io.opentelemetry.kotlin.semconv.ErrorAttributes
 import io.opentelemetry.kotlin.semconv.ExceptionAttributes
@@ -42,6 +43,7 @@ class NetworkRequestDataSourceImpl(
     private val activeRequests: MutableMap<String, ActiveRequest> = ConcurrentHashMap()
     private val domainCountLimiter: DomainCountLimiter = args.configService.networkBehavior.domainCountLimiter
     private val httpRequestInfoModifierChain = args.httpRequestInfoModifierChain
+    private val networkSpanParents = args.networkSpanParents
     private val reportMalformedTraceparent = OneShot()
 
     override fun onDataCaptureDisabled() {
@@ -75,24 +77,18 @@ class NetworkRequestDataSourceImpl(
             },
         ) {
             val networkRequestSchemaType = SchemaType.NetworkRequest(generateSchemaAttributes(request, url, httpMethod))
-            val statusCode = request.statusCode
-            val errorCode = if (statusCode == null || statusCode <= 0 || statusCode >= 400) {
-                ErrorCodeAttribute.Failure
-            } else {
-                null
-            }
             recordCompletedSpan(
                 name = getNetworkSpanName(httpMethod, url),
                 startTimeMs = request.startTime,
                 endTimeMs = request.endTime,
                 type = EmbType.Performance.Network,
                 attributes = networkRequestSchemaType.attributes(),
-                errorCode = errorCode,
+                errorCode = errorCodeFor(request.statusCode),
             )
         }
     }
 
-    override fun startRequest(startData: RequestStartData): String? {
+    override fun startRequest(startData: RequestStartData): RequestStart? {
         // Apply any registered modifiers so the reported url/method reflect the consumer's changes.
         // The underlying HTTP request is not affected.
         val info = httpRequestInfoModifierChain.apply(MutableHttpRequestInfoImpl(startData.httpMethod, startData.url))
@@ -122,36 +118,72 @@ class NetworkRequestDataSourceImpl(
                 telemetryService.trackAppliedLimit("network_request", AppliedLimitType.DROP)
             },
         ) {
+            // The app's provider decides first, then a valid traceparent header, then the network span parent if one is set
+            val decision = networkSpanParents.appDecision(
+                MutableHttpRequestInfoImpl(startData.httpMethod, startData.url, startData.nativeRequest),
+            )
+            val headerParent = validTraceparent.takeIf { decision === NetworkSpanParent.USE_DEFAULT }
+            val chosenParent = chosenParent(decision, headerParent)
             val spanToken = destination.startSpanCapture(
                 schemaType = SchemaType.NetworkRequest(requestStartAttributes(url, httpMethod)),
                 startTimeMs = startData.sdkClockStartTime,
                 name = getNetworkSpanName(httpMethod, url),
-                parentSpanId = validTraceparent?.spanId,
-                parentTraceId = validTraceparent?.traceId,
+                parentSpanId = headerParent?.spanId ?: chosenParent?.spanId,
+                parentTraceId = headerParent?.traceId ?: chosenParent?.traceId,
                 timeoutMs = startData.timeoutMs,
             )
 
             spanToken.asW3cTraceparent()?.let(TraceParent::parse)?.let { spanTraceparent ->
                 // Only name this span in the inbound trace when the span actually joined it, keeping the inbound sampling flags
-                val joinedTraceparent = validTraceparent?.takeIf(spanTraceparent::isSameTrace)
+                val joinedTraceparent = headerParent?.takeIf(spanTraceparent::isSameTrace)
                 val traceparent = joinedTraceparent?.let(spanTraceparent::withFlagsOf) ?: spanTraceparent
 
-                // The traceparent sent with the request: a malformed header is left as is and never forwarded
-                val sentTraceparent =
-                    if (inboundTraceparent == null || joinedTraceparent != null) {
-                        traceparent
-                    } else {
-                        validTraceparent
-                    }
+                val outboundTraceparent = outboundTraceparent(
+                    traceparent = traceparent,
+                    joinedTraceparent = joinedTraceparent,
+                    headerParent = headerParent,
+                    inboundTraceparent = inboundTraceparent,
+                    parentChosen = chosenParent != null,
+                )
 
-                if (sentTraceparent != null && configService.networkSpanForwardingBehavior.shouldForwardForDomain(domain)) {
-                    spanToken.setSystemAttribute(EmbNetworkRequestAttributes.EMB_W3C_TRACEPARENT, sentTraceparent.value)
+                // Forward the traceparent the request is sent with: the outbound one, or the inbound header left as is
+                val forwardedTraceparent = outboundTraceparent ?: headerParent
+                if (forwardedTraceparent != null &&
+                    configService.networkSpanForwardingBehavior.shouldForwardForDomain(startData.host)
+                ) {
+                    spanToken.setSystemAttribute(EmbNetworkRequestAttributes.EMB_W3C_TRACEPARENT, forwardedTraceparent.value)
                     spanToken.setSystemAttribute(EmbNetworkRequestAttributes.EMB_FORWARD_TELEMETRY, "true")
                 }
                 activeRequests[traceparent.value] = ActiveRequest(spanToken, httpMethod)
-                traceparent.value
+                RequestStart(traceparent.value, outboundTraceparent?.value)
             }
         }
+    }
+
+    /**
+     * Returns the parent chosen without the traceparent header: the app provider's [decision], or else the network span parent when no
+     * [headerParent] names one.
+     */
+    private fun chosenParent(decision: NetworkSpanParent, headerParent: TraceParent?): NetworkSpanParent? = when {
+        decision !== NetworkSpanParent.USE_DEFAULT -> decision
+        headerParent == null -> networkSpanParents.currentParent()
+        else -> null
+    }
+
+    /**
+     * Returns the traceparent to send with a request: a header that parented the span is replaced only if the span joined its trace, and
+     * any other header only if the span's parent was chosen without it.
+     */
+    private fun outboundTraceparent(
+        traceparent: TraceParent,
+        joinedTraceparent: TraceParent?,
+        headerParent: TraceParent?,
+        inboundTraceparent: String?,
+        parentChosen: Boolean,
+    ): TraceParent? = when {
+        headerParent != null -> traceparent.takeIf { joinedTraceparent != null }
+        parentChosen || inboundTraceparent == null -> traceparent
+        else -> null
     }
 
     override fun endRequest(endData: RequestEndData) {
@@ -163,22 +195,23 @@ class NetworkRequestDataSourceImpl(
                 MutableHttpRequestInfoImpl(activeRequest.httpMethod, endData.url),
             ).url
             with(activeRequest.spanToken) {
-                val statusCode = endData.statusCode
-                val errorCode = if (statusCode == null || statusCode <= 0 || statusCode >= 400) {
-                    ErrorCodeAttribute.Failure
-                } else {
-                    null
-                }
                 requestEndAttributes(endData, modifiedUrl).forEach {
                     setSystemAttribute(it.key, it.value)
                 }
-                stop(endData.sdkClockEndTime, errorCode)
+                stop(endData.sdkClockEndTime, errorCodeFor(endData.statusCode))
             }
         }
     }
 
+    override fun endIncompleteRequest(id: String, sdkClockEndTime: Long, statusCode: Int?) {
+        activeRequests.remove(id)?.spanToken?.run {
+            statusCode?.let { setSystemAttribute(HttpAttributes.HTTP_RESPONSE_STATUS_CODE, it.toStatusCodeString()) }
+            stop(sdkClockEndTime, errorCodeFor(statusCode))
+        }
+    }
+
     override fun discardRequest(id: String) {
-        activeRequests.remove(id)
+        activeRequests.remove(id)?.spanToken?.discard()
     }
 
     /**
@@ -227,6 +260,14 @@ class NetworkRequestDataSourceImpl(
     }
 
     private fun getNetworkSpanName(httpMethod: String, url: String) = "$httpMethod ${getUrlPath(stripUrl(url))}"
+
+    // a request failed if it got no response status, or one that isn't a success or redirect
+    private fun errorCodeFor(statusCode: Int?): ErrorCodeAttribute? =
+        if (statusCode == null || statusCode <= 0 || statusCode >= 400) {
+            ErrorCodeAttribute.Failure
+        } else {
+            null
+        }
 
     /**
      * Tracks an in-flight request span. [httpMethod] is the post-modifier method captured at request

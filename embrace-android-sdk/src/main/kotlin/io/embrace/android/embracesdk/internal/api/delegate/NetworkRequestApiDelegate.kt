@@ -7,14 +7,20 @@ import io.embrace.android.embracesdk.internal.instrumentation.network.HttpNetwor
 import io.embrace.android.embracesdk.internal.instrumentation.network.NetworkCaptureDataSource
 import io.embrace.android.embracesdk.internal.instrumentation.network.NetworkRequestDataSource
 import io.embrace.android.embracesdk.internal.network.http.HttpRequestInfoModifierChain
+import io.embrace.android.embracesdk.internal.network.parent.NetworkSpanParentService
 import io.embrace.android.embracesdk.internal.session.orchestrator.SessionOrchestrator
 import io.embrace.android.embracesdk.network.EmbraceNetworkRequest
+import io.embrace.android.embracesdk.network.NetworkSpanParentProvider
+import io.embrace.android.embracesdk.network.NetworkSpanParentToken
 import io.embrace.android.embracesdk.network.http.HttpRequestInfoModifier
+import io.embrace.android.embracesdk.spans.EmbraceSpan
+import io.opentelemetry.kotlin.tracing.SpanContext
 
 internal class NetworkRequestApiDelegate(
     private val registry: InstrumentationRegistry,
     private val httpRequestInfoModifierChain: HttpRequestInfoModifierChain,
     private val sessionOrchestrator: SessionOrchestrator,
+    private val networkSpanParentService: Lazy<NetworkSpanParentService>,
 ) : NetworkRequestApi {
 
     override fun recordNetworkRequest(networkRequest: EmbraceNetworkRequest) {
@@ -27,6 +33,26 @@ internal class NetworkRequestApiDelegate(
 
     override fun removeHttpRequestInfoModifier(modifier: HttpRequestInfoModifier) {
         httpRequestInfoModifierChain.remove(modifier)
+    }
+
+    override fun setNetworkSpanParent(span: EmbraceSpan): NetworkSpanParentToken =
+        networkSpanParentService.value.set(span)
+
+    override fun setNetworkSpanParent(spanContext: SpanContext): NetworkSpanParentToken =
+        networkSpanParentService.value.set(spanContext)
+
+    // a token from a set can only exist once the service does
+    override fun clearNetworkSpanParent(token: NetworkSpanParentToken): Boolean =
+        networkSpanParentService.isInitialized() && networkSpanParentService.value.clear(token)
+
+    override fun clearNetworkSpanParent() {
+        if (networkSpanParentService.isInitialized()) {
+            networkSpanParentService.value.clear()
+        }
+    }
+
+    override fun setNetworkSpanParentProvider(provider: NetworkSpanParentProvider) {
+        networkSpanParentService.value.setAppProvider(provider)
     }
 
     @Deprecated("This is no longer supported")

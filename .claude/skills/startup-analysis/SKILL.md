@@ -11,24 +11,32 @@ scheduling readout per iteration. The analysis is derived ENTIRELY from the per-
 `.perfetto-trace` files via perfetto's trace_processor — no logcat, grep, jq, or benchmark-JSON
 parsing. All paths below are relative to the SDK repo root.
 
-## Bundled files (relative to this skill's base directory)
+## Bundled files
 
 Primary analysis:
-- `scripts/analyze_startup.py` — THE analysis entry point (python3 stdlib only): runs
-  trace_processor over every iteration trace in a directory and prints section stats,
-  window stats, TTID stats, and the per-iteration contention/slow-execution table.
-- `scripts/startup_metrics.sql` — the per-trace query analyze_startup.py executes (sections,
-  window, TTID, main-thread thread-state; commented).
+- `tools/startup analyze` (repo root) — THE analysis entry point, the `:embrace-analysis-cli`
+  module: loads every iteration trace in a directory into trace_processor (through AndroidX's
+  trace processor library) and prints section stats, window stats, TTID stats, and the
+  per-iteration contention/slow-execution table. The views it reads each trace through are
+  `startup_views.sql` in that module's resources (sections, window, main-thread thread-state;
+  commented).
+- `tools/startup trace-processor` — prints the path of the pinned `trace_processor_shell`
+  (downloading it on first use), for running the standalone queries below.
+
+Relative to this skill's base directory:
 - `scripts/init_window_sched.sql` — standalone deep-dive on ONE trace: thread-state + per-CPU
   residency over the modules-init window. To find who stole the CPUs, query `sched` joined to
   `thread`/`process` excluding the window's utid.
-- `scripts/serve_trace.py` — CORS-enabled static server for opening traces in ui.perfetto.dev
-  (`python3 serve_trace.py <dir> [port]`).
+- `scripts/section_tree.sql` — the sdk-init section tree of ONE trace (each section's depth,
+  parent and thread), for keeping the section docs below current.
 
 References:
-- `references/sections.md` — section nesting/execution order, which environments each section
-  appears in, reference numbers, and the two slow-pass signatures (contention vs slow
-  execution) for judging noisy passes.
+- `references/sections.md` — the current SDK's section nesting/execution order, which
+  environments each section appears in, the two slow-pass signatures (contention vs slow
+  execution) for judging noisy passes, and when to update the section docs.
+- `references/section-history.md` — every version-specific rule: the sections at each release,
+  how to read that release's traces, and how to compare versions. Read it only for traces from a
+  released SDK or a cross-version comparison.
 - `references/report-template.html` — the report page to adapt (a filled example; see the
   comment at the top for what to replace vs keep). Write each analysis's report to
   `claude-output/startup-analysis-<YYYY-MM-DD-HHMMSS>.html` using the SAME timestamp as that
@@ -44,19 +52,16 @@ integration-test concern, not this skill's.
 ## What you get (all from the traces)
 
 - Duration of EVERY `emb-*` section (first occurrence, matching TraceSectionMetric
-  `Mode.First`), as min/median/max over N iterations — the 13 canonical sections in execution
-  order with %-of-window, plus every finer-grained section the SDK emits (`emb-sdk-start`,
-  `emb-install-native-crash-signal-handlers`, `emb-record-startup`, …), which the old
-  JSON-metric path never captured.
+  `Mode.First`), as min/median/max over N iterations — the canonical sections (those the SDK
+  exports as `<name>-duration-ms` attributes) in execution order with %-of-window, plus every
+  finer-grained section the SDK emits (`emb-install-native-crash-signal-handlers`,
+  `emb-record-startup`, …).
 - SDK-init window per iteration, from the `emb-sdk-start` slice — it wraps the whole
   `Embrace.start()` call and runs <1 ms wider than the exported `emb-embrace-init` /private
-  `emb-sdk-init` span. On SDKs without `emb-sdk-start` (before 9.2.0) the window falls back to
-  first `emb-modules-init` start → first `emb-post-services-setup` end, which equals the
-  exported span interval by construction. The output states which source was used; never
-  compare windows across sources.
+  `emb-sdk-init` span. The output names the window's source.
 - TTID per iteration from trace_processor's `android.startup` stdlib module. Its anchor differs
-  from macrobenchmark's `timeToInitialDisplayMs` by a few ms (consistently, e.g. +6–7 ms on the
-  Galaxy A14) — fine for comparisons as long as both sides come from the same source.
+  from macrobenchmark's `timeToInitialDisplayMs` by a few ms, consistently — fine for
+  comparisons as long as both sides come from the same source.
 - Per-iteration main-thread scheduling inside the window: Running time, runnable-wait (R/R+)
   time, distinct CPUs — flags CONTENDED iterations and distinguishes the two slow signatures
   (see references/sections.md).
@@ -78,16 +83,17 @@ always set it explicitly for the run, note the value you replaced, and restore i
 
 **Default — locally built SDK (the working tree):**
 1. `./gradlew publishToMavenLocal -q` from the repo root.
-2. Read `version=` from `gradle.properties` at the repo root (e.g. `9.2.0-SNAPSHOT`) and set
+2. Read `version=` from `gradle.properties` at the repo root (a `-SNAPSHOT` version) and set
    `embrace = "<that version>"` in the ExampleApp catalog. Both ExampleApp repo blocks already
    include `mavenLocal()`, and the `io.embrace.gradle` plugin resolves from there at the same
    version.
 
 **Option — publicly released SDK (e.g. comparing against a shipped version):**
-1. Set `embrace = "<released version>"` (e.g. `9.0.0`) in the ExampleApp catalog; artifacts and
-   the gradle plugin resolve from mavenCentral. No publish step.
+1. Set `embrace = "<released version>"` in the ExampleApp catalog; artifacts and the gradle
+   plugin resolve from mavenCentral. No publish step.
 2. Compile-check first (`:app:assembleBenchmark`) — the ExampleApp uses current public API, so
    very old versions may not compile; that bounds how far back this option reaches.
+3. Read that release's traces as "Traces from a released SDK" below says.
 
 ## Choosing the opentelemetry-kotlin implementation
 
@@ -111,16 +117,13 @@ separately. `<Variant>` below is `Benchmark` or `BenchmarkOtelRegular`, and `<va
    `examples/ExampleApp/app/benchmark/build/outputs/connected_android_test_additional_output/<variant>/connected/<device>/`
    as `StartupBenchmarks_coldStartup_iterNNN_<timestamp>.perfetto-trace`. Each rerun WIPES this
    directory — copy any traces you need to keep (e.g. per-pass comparisons) before rerunning.
-3. **Analyze**: fetch the trace_processor launcher once per machine (it is a python3 script that
-   self-downloads the native binary on first use):
+3. **Analyze**: run
    ```
-   curl -sL -o <scratchpad>/trace_processor https://get.perfetto.dev/trace_processor
+   tools/startup analyze "<traces dir>"
    ```
-   then run
-   ```
-   python3 .claude/skills/startup-analysis/scripts/analyze_startup.py \
-     --trace-processor <scratchpad>/trace_processor "<traces dir>"
-   ```
+   It reads the traces with Perfetto's native `trace_processor_shell` at the version
+   `gradle/libs.versions.toml` pins (`perfettoTraceProcessor`), which the first run downloads
+   into `~/.cache/embrace-startup-tools` (`--trace-processor <path>` uses another binary).
    (`--all-sections` to list every emb-* section instead of the top 15 extras.) Besides
    printing, the summary is written to a uniquely named file —
    `claude-output/startup-analysis-<YYYY-MM-DD-HHMMSS>.txt` (analysis start time;
@@ -133,48 +136,37 @@ separately. `<Variant>` below is `Benchmark` or `BenchmarkOtelRegular`, and `<va
    — `getprop` takes ONE property per call; the model also appears in the results directory
    name), the SDK version under test, iteration count, and date.
 4. **Interpret**: present the canonical sections in execution order with nesting; children
-   overlap parents, so percentages do not sum to 100; the class-load sections
-   (`embrace-impl-init`, `bootstrapper-init`) run BEFORE the window opens, so their % is context
-   relative to the window, not a share of it. Check the scheduling table before comparing
+   overlap parents, so percentages do not sum to 100; the class-load section
+   `embrace-impl-init` runs BEFORE the window opens, so its % is context relative to the window,
+   not a share of it. Check the scheduling table before comparing
    passes — iterations flagged CONTENDED, or whole passes with elevated Running time, are
-   environment noise, not regressions (signatures in references/sections.md).
-5. **Inspect a trace visually (optional)**: serve the traces dir on `127.0.0.1:9001` with
-   `serve_trace.py` (plain `python3 -m http.server` lacks the CORS header) and open
-   `https://ui.perfetto.dev/#!/?url=http://127.0.0.1:9001/<file>` — the first fetch can take
-   ~30 s (private-network preflight). Once loaded, the address bar rewrites to a durable
-   `local_cache_key` URL that resolves from that machine's Chrome afterwards; use that form in
-   reports. Pick the iteration whose window is the median (or a flagged-vs-clean pair when
-   illustrating variance).
+   environment noise, not regressions (signatures in references/sections.md). For a released
+   SDK, or a comparison between versions, see "Traces from a released SDK" below.
+5. **Inspect a trace visually (optional)**: open `https://ui.perfetto.dev` and drop the
+   `.perfetto-trace` file onto the page (or use "Open trace file"). Pick the iteration whose
+   window is the median (or a flagged-vs-clean pair when illustrating variance).
 6. **Restore** the catalog's `embrace` version to the value you replaced.
 
-## Handling missing data (older SDK versions)
+## Missing sections
 
-- **Missing sections**: analyze_startup.py prints "not instrumented in this SDK version" for
-  canonical sections with no slice — report those explicitly; never present the found set as
-  complete. (At public 9.0.0, present: `embrace-impl-init`, `bootstrapper-init`, `modules-init`,
-  `config-service-init`, `span-service-init`, `otel-tracer-init`, `post-services-setup`.)
-- **Window**: `emb-sdk-start` exists from 9.2.0; older SDKs automatically fall back to the
-  composed window (`emb-modules-init` + `emb-post-services-setup`, both present since 9.0.0) —
-  the output names the source, and windows from different sources must not be compared
-  directly. TTID from the `android.startup` module works regardless of SDK version.
-- **Section semantics drift between versions.** A section that exists in both versions may cover
-  different work (e.g. 9.0.0's `post-services-setup` includes what later versions subdivide into
-  `load-instrumentation` and `post-init`-adjacent work, and its `config-service-init` covers a
-  different construction path). When comparing versions, compare only sections present in both,
-  call out semantic drift, and lean on the window duration and TTID as the apples-to-apples
-  numbers.
-- Confirm which sections a public version *should* emit with
-  `git grep -n "EmbTrace.trace" <version-tag> -- "*.kt"` — and beware pathspec globs: `*` does
-  not cross directory separators, so use the bare `"*.kt"` form over module-scoped globs.
+`tools/startup analyze` prints "not in these traces" for a canonical section with no slice, whether
+the SDK under test doesn't record it or the feature is off (`huc-init` without
+HttpURLConnection capture). Report those explicitly; never present the found set as complete.
+
+## Traces from a released SDK
+
+Everything above is for the SDK in this repo. Only when the traces come from a released SDK, or
+two versions are being compared, read `references/section-history.md` and follow it: it holds
+every version-specific rule, and nothing in it applies to the current SDK.
 
 ## Interpretation gotchas
 
 - **Section counts differ by environment**: sections behind supplier fallbacks
-  (`config-service-init`) and the class-load sections (`embrace-impl-init`, `bootstrapper-init`)
-  appear on-device but not in the Robolectric integration harness — the authoritative
+  (`config-service-init`) and the class-load section (`embrace-impl-init`) appear on-device but
+  not in the Robolectric integration harness — the authoritative
   integration-test list lives in `SpanAssertions.expectedSdkInitSections` (embrace-android-otel-fakes).
-- **Pre-start Embrace references skew the window**: the class-load init (`embrace-impl-init`,
-  `bootstrapper-init`) fires on the app's FIRST reference to the `Embrace` class — any API call
+- **Pre-start Embrace references skew the window**: the class-load init (`embrace-impl-init`)
+  fires on the app's FIRST reference to the `Embrace` class — any API call
   or property access triggers it, not any one method in particular. Pre-start API calls can
   additionally force SDK lazies (e.g. an exporter registration constructing the OTel config)
   before the window opens, hoisting that work out of the window. ExampleApp touches the API

@@ -17,6 +17,7 @@ val koverEnabled = providers.environmentVariable("CI").isPresent
 val koverIgnoreList = listOf(
     "embrace-lint",
     "embrace-perfetto-analysis",
+    "embrace-analysis-cli",
     "embrace-microbenchmark",
     "embrace-macrobenchmark",
     "embrace-macrobenchmark-app",

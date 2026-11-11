@@ -221,6 +221,11 @@ class TelemetryDestinationImpl(
             sessionUpdateAction.invoke()
         }
 
+        override fun discard() {
+            span.discard()
+            sessionUpdateAction.invoke()
+        }
+
         override fun isRecording() = span.isRecording
 
         override fun isValid() = span.spanContext?.isValid == true

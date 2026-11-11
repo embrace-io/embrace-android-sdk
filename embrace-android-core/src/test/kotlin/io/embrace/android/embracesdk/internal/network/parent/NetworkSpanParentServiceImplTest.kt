@@ -1,0 +1,418 @@
+package io.embrace.android.embracesdk.internal.network.parent
+
+import io.embrace.android.embracesdk.fakes.FakeEmbraceSdkSpan
+import io.embrace.android.embracesdk.fakes.FakeErrorHandler
+import io.embrace.android.embracesdk.fakes.FakeInternalTelemetryService
+import io.embrace.android.embracesdk.fakes.FakeSpanContext
+import io.embrace.android.embracesdk.fakes.FakeSpanService
+import io.embrace.android.embracesdk.internal.network.http.MutableHttpRequestInfoImpl
+import io.embrace.android.embracesdk.internal.telemetry.AppliedLimitType
+import io.embrace.android.embracesdk.network.NetworkSpanParent
+import io.embrace.android.embracesdk.network.NetworkSpanStartInfo
+import io.embrace.android.embracesdk.semconv.EmbNetworkSpanParentAttributes
+import io.opentelemetry.kotlin.tracing.SpanContext
+import io.opentelemetry.kotlin.tracing.createSpanContext
+import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
+import org.junit.Assert.assertNotNull
+import org.junit.Assert.assertNotSame
+import org.junit.Assert.assertNull
+import org.junit.Assert.assertSame
+import org.junit.Assert.assertTrue
+import org.junit.Before
+import org.junit.Test
+import kotlin.concurrent.thread
+
+internal class NetworkSpanParentServiceImplTest {
+
+    private lateinit var spanService: FakeSpanService
+    private lateinit var errorHandler: FakeErrorHandler
+    private lateinit var telemetryService: FakeInternalTelemetryService
+    private lateinit var service: NetworkSpanParentServiceImpl
+    private var userSessionId = "session-1"
+    private val request = MutableHttpRequestInfoImpl("GET", "https://example.com")
+
+    @Before
+    fun setUp() {
+        spanService = FakeSpanService()
+        errorHandler = FakeErrorHandler()
+        telemetryService = FakeInternalTelemetryService()
+        service = NetworkSpanParentServiceImpl(spanService, errorHandler, telemetryService, Long.MAX_VALUE) { userSessionId }
+    }
+
+    @Test
+    fun `setting replaces the parent and only the most recent token clears it`() {
+        val first = untrackedContext()
+        val second = untrackedContext()
+        val firstToken = service.set(first)
+        assertEquals(first.spanId, currentParentSpanId())
+
+        val secondToken = service.set(second)
+        assertNotSame(firstToken, secondToken)
+        assertEquals(second.spanId, currentParentSpanId())
+
+        assertFalse(service.clear(firstToken))
+        assertEquals(second.spanId, currentParentSpanId())
+        assertTrue(service.clear(secondToken))
+        assertNull(currentParentSpanId())
+        assertFalse(service.clear(secondToken))
+    }
+
+    @Test
+    fun `clearing unconditionally clears the parent and invalidates its token`() {
+        val token = service.set(untrackedContext())
+        service.clear()
+        assertNull(currentParentSpanId())
+        assertFalse(service.clear(token))
+    }
+
+    @Test
+    fun `a tracked parent is cleared when its span stops but not when another span does`() {
+        val span = trackedSpan()
+        service.set(span.spanContext)
+
+        service.onSpanStopped(checkNotNull(trackedSpan().spanId))
+        assertEquals(span.spanContext?.spanId, currentParentSpanId())
+        service.onSpanStopped(checkNotNull(span.spanId))
+        assertNull(currentParentSpanId())
+    }
+
+    @Test
+    fun `an untracked parent is not cleared by a span stopping`() {
+        val context = untrackedContext()
+        service.set(context)
+        service.onSpanStopped(context.spanId)
+        assertEquals(context.spanId, currentParentSpanId())
+    }
+
+    @Test
+    fun `the parent is cleared when the user session it was set in ends`() {
+        service.set(untrackedContext())
+        service.onUserSessionEnded("session-2")
+        assertNotNull(currentParentSpanId())
+        service.onUserSessionEnded("session-1")
+        assertNull(currentParentSpanId())
+    }
+
+    @Test
+    fun `a parent set with no active user session is cleared when the next one ends`() {
+        userSessionId = ""
+        service.set(untrackedContext())
+        service.onUserSessionEnded("session-2")
+        assertNull(currentParentSpanId())
+    }
+
+    @Test
+    fun `rejected parents keep the previous parent and warn once`() {
+        val context = untrackedContext()
+        service.set(context)
+        val ended = trackedSpan().apply { stop() }
+
+        assertSame(NoopNetworkSpanParentToken, service.set(FakeSpanContext()))
+        assertSame(NoopNetworkSpanParentToken, service.set(null))
+        assertSame(NoopNetworkSpanParentToken, service.set(ended.spanContext))
+        assertSame(NoopNetworkSpanParentToken, service.set(FakeEmbraceSdkSpan.started().apply { stop() }))
+        assertEquals(context.spanId, currentParentSpanId())
+        assertEquals(1, errorHandler.warningMessages.size)
+    }
+
+    @Test
+    fun `replacing an active parent warns with the name of a tracked span and the span ID of an untracked one`() {
+        val checkout = trackedSpan("checkout")
+        val untracked = untrackedContext()
+        service.set(checkout.spanContext)
+        service.set(untracked)
+
+        assertEquals(
+            "Network span parent 'checkout' replaced by '${untracked.spanId}' while still active",
+            errorHandler.warningMessages.single().msg,
+        )
+    }
+
+    @Test
+    fun `replacing a cleared parent is not a conflict`() {
+        service.clear(service.set(untrackedContext()))
+        service.set(untrackedContext())
+        service.clear()
+        service.set(untrackedContext())
+
+        assertTrue(errorHandler.warningMessages.isEmpty())
+        assertTrue(telemetryService.appliedLimits.isEmpty())
+    }
+
+    @Test
+    fun `setting the active parent again is not a conflict and keeps its token`() {
+        val checkout = trackedSpan("checkout")
+        val context = checkNotNull(checkout.spanContext)
+        val token = service.set(context)
+        assertSame(token, service.set(context))
+        assertSame(token, service.set(createSpanContext(context.traceId, context.spanId) { isSampled = true }))
+
+        assertTrue(errorHandler.warningMessages.isEmpty())
+        assertTrue(checkout.events.isEmpty())
+        assertTrue(service.clear(token))
+        assertFalse(service.clear(token))
+    }
+
+    @Test
+    fun `a replaced tracked span gets one event naming the replacing span for its first conflict only`() {
+        val checkout = trackedSpan("checkout")
+        val search = trackedSpan("search")
+        service.set(checkout.spanContext)
+        service.set(search.spanContext)
+        service.set(checkout.spanContext)
+        service.set(trackedSpan("results").spanContext)
+
+        with(checkout.events.single()) {
+            assertEquals("emb-network-span-parent-replaced", name)
+            assertEquals(
+                mapOf(
+                    EmbNetworkSpanParentAttributes.EMB_REPLACED_BY_SPAN_ID to checkNotNull(search.spanContext).spanId,
+                    EmbNetworkSpanParentAttributes.EMB_REPLACED_BY_NAME to "search",
+                ),
+                attributes,
+            )
+        }
+        assertEquals("checkout", search.events.single().attributes[EmbNetworkSpanParentAttributes.EMB_REPLACED_BY_NAME])
+        assertEquals(3, errorHandler.warningMessages.size)
+    }
+
+    @Test
+    fun `the event for an untracked replacing span has its span ID but no name`() {
+        val checkout = trackedSpan("checkout")
+        val untracked = untrackedContext()
+        service.set(checkout.spanContext)
+        service.set(untracked)
+
+        assertEquals(
+            mapOf(EmbNetworkSpanParentAttributes.EMB_REPLACED_BY_SPAN_ID to untracked.spanId),
+            checkout.events.single().attributes,
+        )
+    }
+
+    @Test
+    fun `an ended replaced span gets no event`() {
+        val checkout = trackedSpan("checkout")
+        service.set(checkout.spanContext)
+        checkout.stop()
+        service.set(untrackedContext())
+
+        assertTrue(checkout.events.isEmpty())
+        assertEquals(1, errorHandler.warningMessages.size)
+    }
+
+    @Test
+    fun `a repeated conflict is counted rather than reported until the user session ends`() {
+        val first = untrackedContext()
+        val second = untrackedContext()
+        service.set(first)
+        service.set(second)
+        service.set(first)
+        service.set(second)
+
+        assertEquals(2, errorHandler.warningMessages.size)
+        assertEquals(listOf("network_span_parent_conflict" to AppliedLimitType.DROP), telemetryService.appliedLimits)
+
+        service.onUserSessionEnded(userSessionId)
+        service.set(first)
+        service.set(second)
+        assertEquals(3, errorHandler.warningMessages.size)
+    }
+
+    @Test
+    fun `at most 10 conflicts are reported per user session`() {
+        repeat(12) { service.set(untrackedContext()) }
+
+        assertEquals(10, errorHandler.warningMessages.size)
+        assertEquals(listOf("network_span_parent_conflict" to AppliedLimitType.DROP), telemetryService.appliedLimits)
+
+        service.onUserSessionEnded(userSessionId)
+        service.set(untrackedContext())
+        service.set(untrackedContext())
+        assertEquals(11, errorHandler.warningMessages.size)
+    }
+
+    @Test
+    fun `a network span parent set on another thread is visible`() {
+        val context = untrackedContext()
+        thread { service.set(context) }.join()
+        assertEquals(context.spanId, currentParentSpanId())
+    }
+
+    @Test
+    fun `the app's provider is given the request and the network span parent as it was when the request started`() {
+        val received = mutableListOf<NetworkSpanStartInfo>()
+        service.setAppProvider { info ->
+            received.add(info)
+            NetworkSpanParent.USE_DEFAULT
+        }
+        service.appDecision(request)
+        val tracked = trackedSpan()
+        val trackedContext = checkNotNull(tracked.spanContext)
+        service.set(trackedContext)
+        service.appDecision(request)
+        val untracked = untrackedContext()
+        service.set(untracked)
+        service.appDecision(request)
+
+        val (none, ofTracked, ofUntracked) = received
+        assertSame(request, none.request)
+        assertNull(none.currentParent)
+        assertNull(none.currentParentSpan)
+        assertNull(none.currentParentSpanContext)
+        assertEquals(trackedContext.spanId, ofTracked.currentParent?.spanId)
+        assertSame(tracked, ofTracked.currentParentSpan)
+        assertSame(trackedContext, ofTracked.currentParentSpanContext)
+        assertEquals(untracked.spanId, ofUntracked.currentParent?.spanId)
+        assertNull(ofUntracked.currentParentSpan)
+        assertSame(untracked, ofUntracked.currentParentSpanContext)
+    }
+
+    @Test
+    fun `the decision of the most recently registered app provider applies`() {
+        assertSame(NetworkSpanParent.USE_DEFAULT, service.appDecision(request))
+        val chosen = NetworkSpanParent.parent(untrackedContext())
+        service.setAppProvider { chosen }
+        assertSame(chosen, service.appDecision(request))
+        val context = untrackedContext()
+        val byIds = NetworkSpanParent.parent(context.traceId, context.spanId)
+        service.setAppProvider { byIds }
+        assertSame(byIds, service.appDecision(request))
+        service.set(untrackedContext())
+        service.setAppProvider { info -> checkNotNull(info.currentParent) }
+        assertSame(service.currentParent(), service.appDecision(request))
+        service.setAppProvider { NetworkSpanParent.NO_PARENT }
+        assertSame(NetworkSpanParent.NO_PARENT, service.appDecision(request))
+    }
+
+    @Test
+    fun `an app provider that throws is treated as the default and reported once`() {
+        errorHandler.throwOnSdkError = false
+        val failure = IllegalStateException("provider failed")
+        service.setAppProvider { throw failure }
+
+        assertSame(NetworkSpanParent.USE_DEFAULT, service.appDecision(request))
+        assertSame(NetworkSpanParent.USE_DEFAULT, service.appDecision(request))
+
+        val warning = errorHandler.warningMessages.single()
+        assertEquals("Network span parent provider threw an exception", warning.msg)
+        assertSame(failure, warning.throwable)
+        val sdkError = errorHandler.sdkErrorMessages.single()
+        assertEquals("NetworkSpanParentProviderFail", sdkError.msg)
+        assertSame(failure, sdkError.throwable)
+    }
+
+    @Test
+    fun `an app provider that returns null is treated as the default`() {
+        service.setAppProvider { javaNull() }
+        assertSame(NetworkSpanParent.USE_DEFAULT, service.appDecision(request))
+    }
+
+    @Test
+    fun `invalid IDs from the app provider are treated as the default and warned about once`() {
+        val context = untrackedContext()
+        val invalid = listOf(
+            NetworkSpanParent.parent(FakeSpanContext()),
+            object : NetworkSpanParent {
+                override val traceId = "4BF92F3577B34DA6A3CE929D0E0E4736"
+                override val spanId = "00f067aa0ba902b7"
+            },
+            NetworkSpanParent.parent(FakeEmbraceSdkSpan(name = "not-started")),
+            NetworkSpanParent.parent(context.spanId, context.traceId),
+        )
+        invalid.forEach { decision ->
+            service.setAppProvider { decision }
+            assertSame(NetworkSpanParent.USE_DEFAULT, service.appDecision(request))
+        }
+        assertEquals(1, errorHandler.warningMessages.size)
+    }
+
+    @Test
+    fun `an app's own NetworkSpanParent is copied, and one whose IDs can't be read is treated as the default`() {
+        errorHandler.throwOnSdkError = false
+        val context = untrackedContext()
+        val appParent = object : NetworkSpanParent {
+            override val traceId = context.traceId
+            override val spanId = context.spanId
+        }
+        service.setAppProvider { appParent }
+        val decision = service.appDecision(request)
+        assertNotSame(appParent, decision)
+        assertEquals(context.traceId, decision.traceId)
+        assertEquals(context.spanId, decision.spanId)
+
+        service.setAppProvider {
+            object : NetworkSpanParent {
+                override val traceId: String get() = error("traceId failed")
+                override val spanId: String? = null
+            }
+        }
+        assertSame(NetworkSpanParent.USE_DEFAULT, service.appDecision(request))
+    }
+
+    @Test
+    fun `a request the app provider makes on the same thread is not decided by it`() {
+        var calls = 0
+        var nested: NetworkSpanParent? = null
+        service.setAppProvider {
+            calls++
+            nested = service.appDecision(request)
+            NetworkSpanParent.NO_PARENT
+        }
+
+        assertSame(NetworkSpanParent.NO_PARENT, service.appDecision(request))
+        assertSame(NetworkSpanParent.USE_DEFAULT, nested)
+        assertEquals(1, calls)
+    }
+
+    @Test
+    fun `the app provider runs while the service holds no lock`() {
+        val context = untrackedContext()
+        service.setAppProvider {
+            thread { service.set(context) }.join(1000)
+            NetworkSpanParent.USE_DEFAULT
+        }
+
+        service.appDecision(request)
+        assertEquals(context.spanId, currentParentSpanId())
+    }
+
+    @Test
+    fun `slow app provider calls are counted, and the first is logged with the request's host and path`() {
+        service = NetworkSpanParentServiceImpl(spanService, errorHandler, telemetryService, 0) { userSessionId }
+        service.setAppProvider {
+            Thread.sleep(1)
+            NetworkSpanParent.USE_DEFAULT
+        }
+        val request = MutableHttpRequestInfoImpl("GET", "https://example.com/cart?token=secret")
+        repeat(2) { service.appDecision(request) }
+
+        assertTrue(errorHandler.warningMessages.single().msg.endsWith(" ms for https://example.com/cart"))
+        assertEquals(
+            listOf("network_span_parent_provider", "network_span_parent_provider"),
+            telemetryService.slowCallbacks.map { it.first },
+        )
+    }
+
+    @Test
+    fun `app provider calls within the threshold are not reported`() {
+        service.setAppProvider { NetworkSpanParent.USE_DEFAULT }
+        service.appDecision(request)
+
+        assertTrue(errorHandler.warningMessages.isEmpty())
+        assertTrue(telemetryService.slowCallbacks.isEmpty())
+    }
+
+    // a NetworkSpanParentProvider implemented in Java can return null despite the Kotlin signature
+    @Suppress("UNCHECKED_CAST")
+    private fun <T> javaNull(): T = null as T
+
+    private fun currentParentSpanId(): String? = service.currentParent()?.spanId
+
+    private fun untrackedContext(): SpanContext = checkNotNull(FakeEmbraceSdkSpan.started().spanContext)
+
+    private fun trackedSpan(): FakeEmbraceSdkSpan = FakeEmbraceSdkSpan.started().also(spanService::addKnownSpan)
+
+    private fun trackedSpan(name: String): FakeEmbraceSdkSpan =
+        FakeEmbraceSdkSpan(name = name).apply { start() }.also(spanService::addKnownSpan)
+}

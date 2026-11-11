@@ -10,15 +10,18 @@ import io.embrace.android.embracesdk.fakes.TestUuidSource
 import io.embrace.android.embracesdk.fakes.behavior.FakeNetworkBehavior
 import io.embrace.android.embracesdk.fakes.behavior.FakeNetworkSpanForwardingBehavior
 import io.embrace.android.embracesdk.fakes.behavior.FakeTraceparentInjectionBehavior
+import io.embrace.android.embracesdk.internal.arch.schema.ErrorCodeAttribute
 import io.embrace.android.embracesdk.internal.arch.schema.SchemaType
 import io.embrace.android.embracesdk.internal.config.remote.NetworkCaptureRuleRemoteConfig
 import io.embrace.android.embracesdk.internal.instrumentation.network.NetworkCaptureDataSourceImpl
 import io.embrace.android.embracesdk.internal.instrumentation.network.NetworkRequestDataSource
 import io.embrace.android.embracesdk.internal.instrumentation.network.NetworkRequestDataSourceImpl
 import io.embrace.android.embracesdk.internal.instrumentation.network.RequestEndData
+import io.embrace.android.embracesdk.internal.instrumentation.network.RequestStart
 import io.embrace.android.embracesdk.internal.instrumentation.network.RequestStartData
 import io.embrace.android.embracesdk.internal.utils.NetworkUtils.getValidTraceId
 import io.embrace.android.embracesdk.internal.utils.UuidSource
+import io.embrace.android.embracesdk.network.NetworkSpanParent
 import io.embrace.android.embracesdk.okhttp3.EmbraceCustomPathException
 import io.embrace.android.embracesdk.semconv.EmbNetworkCapturedRequestAttributes
 import io.embrace.android.embracesdk.semconv.EmbNetworkRequestAttributes
@@ -42,6 +45,7 @@ import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertNull
+import org.junit.Assert.assertSame
 import org.junit.Assert.assertThrows
 import org.junit.Assert.assertTrue
 import org.junit.Before
@@ -513,6 +517,59 @@ internal class OkHttpDataSourceTest {
     }
 
     @Test
+    fun `existing traceparent is replaced with the network span's when the app provider chooses a parent in another trace`() {
+        isNetworkSpanForwardingEnabled = true
+        args.networkSpanParentDecision = {
+            object : NetworkSpanParent {
+                override val traceId = "4bf92f3577b34da6a3ce929d0e0e4736"
+                override val spanId = "00f067aa0ba902b7"
+            }
+        }
+        postRequestBuilder.header(TRACEPARENT_HEADER, INBOUND_TRACEPARENT_UNSAMPLED)
+        postRequestBuilder.header(TRACESTATE_HEADER, INBOUND_TRACESTATE)
+        server.enqueue(createBaseMockResponse())
+        runPostRequest()
+        val sent = server.takeRequest()
+        assertNetworkRequestReceived { span ->
+            assertEquals(span.asW3cTraceparent(), sent.getHeader(TRACEPARENT_HEADER))
+            assertEquals(INBOUND_TRACESTATE, sent.getHeader(TRACESTATE_HEADER))
+            assertEquals(span.asW3cTraceparent(), span.attributes[EmbNetworkRequestAttributes.EMB_W3C_TRACEPARENT])
+        }
+    }
+
+    @Test
+    fun `the app provider is given the okhttp request as its native request`() {
+        val received = mutableListOf<Any?>()
+        args.networkSpanParentDecision = {
+            received.add(it.nativeRequest)
+            NetworkSpanParent.USE_DEFAULT
+        }
+        server.enqueue(createBaseMockResponse())
+        val request = getRequestBuilder.build()
+        okHttpClient.newCall(request).execute()
+        assertSame(request, received.single())
+    }
+
+    @Test
+    fun `malformed traceparent is replaced with the network span's when the network span parent parents the span`() {
+        isNetworkSpanForwardingEnabled = true
+        args.networkSpanParent = object : NetworkSpanParent {
+            override val traceId = "4bf92f3577b34da6a3ce929d0e0e4736"
+            override val spanId = "00f067aa0ba902b7"
+        }
+        postRequestBuilder.header(TRACEPARENT_HEADER, "00-not-a-traceparent")
+        postRequestBuilder.header(TRACESTATE_HEADER, INBOUND_TRACESTATE)
+        server.enqueue(createBaseMockResponse())
+        runPostRequest()
+        val sent = server.takeRequest()
+        assertNetworkRequestReceived { span ->
+            assertEquals(span.asW3cTraceparent(), sent.getHeader(TRACEPARENT_HEADER))
+            assertEquals(INBOUND_TRACESTATE, sent.getHeader(TRACESTATE_HEADER))
+            assertEquals(span.asW3cTraceparent(), span.attributes[EmbNetworkRequestAttributes.EMB_W3C_TRACEPARENT])
+        }
+    }
+
+    @Test
     fun `traceparent changed after the span started is not replaced`() {
         isNetworkSpanForwardingEnabled = true
         fakeSpanIdSource = INBOUND_TRACE_ID
@@ -604,9 +661,12 @@ internal class OkHttpDataSourceTest {
         val response = checkNotNull(shortCircuitClient.newCall(postRequestBuilder.build()).execute())
         assertEquals(200, response.code)
 
-        // the request's tracking references were released, but its span was never stopped
+        // the request never reached the network, so its span is dropped without being stopped or exported
         assertEquals(1, networkRequestDataSource.discardedIds.size)
-        assertTrue(args.destination.createdSpans.single().isRecording())
+        with(args.destination.createdSpans.single()) {
+            assertTrue(discarded)
+            assertNull(endTimeMs)
+        }
     }
 
     @Test
@@ -618,9 +678,28 @@ internal class OkHttpDataSourceTest {
         val response = runPostRequest()
         assertEquals(200, response.code)
 
-        // the failure was contained and the request's tracking reference released
+        // the failure was contained, and the request, which was made, is still reported with its status code
         assertEquals(1, args.errorHandler.sdkErrorMessages.size)
-        assertEquals(1, networkRequestDataSource.discardedIds.size)
+        assertTrue(networkRequestDataSource.discardedIds.isEmpty())
+        assertEquals(1, networkRequestDataSource.incompleteIds.size)
+        with(args.destination.createdSpans.single()) {
+            assertNotNull(endTimeMs)
+            assertNull(errorCode)
+            assertEquals("200", attributes[HttpAttributes.HTTP_RESPONSE_STATUS_CODE])
+        }
+    }
+
+    @Test
+    fun `a failure reporting a request whose end could not be recorded does not fail the app's request`() {
+        args.errorHandler.throwOnSdkError = false
+        networkRequestDataSource.endRequestFailure = RuntimeException("instrumentation failure")
+        networkRequestDataSource.endIncompleteRequestFailure = RuntimeException("fallback failure")
+        server.enqueue(createBaseMockResponse().setBody(RESPONSE_BODY))
+
+        val response = runPostRequest()
+        assertEquals(200, response.code)
+        // only the original failure is reported
+        assertEquals(listOf("instrumentation failure"), args.errorHandler.sdkErrorMessages.map { it.throwable?.message })
     }
 
     @Test
@@ -643,7 +722,14 @@ internal class OkHttpDataSourceTest {
 
         assertThrows(SocketException::class.java) { runPostRequest() }
         assertEquals(1, args.errorHandler.sdkErrorMessages.size)
-        assertEquals(1, networkRequestDataSource.discardedIds.size)
+
+        // the request failed, so it is still reported as a failed request rather than dropped
+        assertTrue(networkRequestDataSource.discardedIds.isEmpty())
+        assertEquals(1, networkRequestDataSource.incompleteIds.size)
+        with(args.destination.createdSpans.single()) {
+            assertNotNull(endTimeMs)
+            assertEquals(ErrorCodeAttribute.Failure, errorCode)
+        }
     }
 
     @Test
@@ -878,7 +964,7 @@ internal class OkHttpDataSourceTest {
 }
 
 /**
- * Delegates to a real [NetworkRequestDataSource] while recording discarded requests and optionally
+ * Delegates to a real [NetworkRequestDataSource] while recording discarded and incompletely ended requests, and optionally
  * simulating a failure when a request ends.
  */
 private class RecordingNetworkRequestDataSource(
@@ -886,12 +972,14 @@ private class RecordingNetworkRequestDataSource(
 ) : NetworkRequestDataSource by delegate {
 
     val discardedIds: MutableList<String> = mutableListOf()
+    val incompleteIds: MutableList<String> = mutableListOf()
     val startedRequests: MutableList<RequestStartData> = mutableListOf()
     var startRequestFailure: Throwable? = null
     var endRequestFailure: Throwable? = null
+    var endIncompleteRequestFailure: Throwable? = null
     var discardRequestFailure: Throwable? = null
 
-    override fun startRequest(startData: RequestStartData): String? {
+    override fun startRequest(startData: RequestStartData): RequestStart? {
         startRequestFailure?.let { throw it }
         startedRequests.add(startData)
         return delegate.startRequest(startData)
@@ -900,6 +988,12 @@ private class RecordingNetworkRequestDataSource(
     override fun endRequest(endData: RequestEndData) {
         endRequestFailure?.let { throw it }
         delegate.endRequest(endData)
+    }
+
+    override fun endIncompleteRequest(id: String, sdkClockEndTime: Long, statusCode: Int?) {
+        endIncompleteRequestFailure?.let { throw it }
+        incompleteIds.add(id)
+        delegate.endIncompleteRequest(id, sdkClockEndTime, statusCode)
     }
 
     override fun discardRequest(id: String) {

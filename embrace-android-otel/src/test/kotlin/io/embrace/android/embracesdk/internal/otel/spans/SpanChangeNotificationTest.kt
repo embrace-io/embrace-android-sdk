@@ -50,6 +50,7 @@ internal class SpanChangeNotificationTest(
         "start" to { start() },
         "stop" to { stop() },
         "stopWithErrorCode" to { stopWithErrorCode(ErrorCodeAttribute.Failure) },
+        "discard" to { discard() },
         "addEvent" to { addEvent("an-event") },
         "recordException" to { recordException(RuntimeException("boom")) },
         "addSystemEvent" to { addSystemEvent("a-system-event", null, null) },

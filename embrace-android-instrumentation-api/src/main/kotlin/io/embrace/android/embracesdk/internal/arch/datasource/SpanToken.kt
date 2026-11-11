@@ -13,6 +13,11 @@ interface SpanToken {
     fun stop(endTimeMs: Long? = null, errorCode: ErrorCodeAttribute? = null)
 
     /**
+     * Drops the span without ending it, so it is never exported
+     */
+    fun discard()
+
+    /**
      * Returns true if the span is currently recording
      */
     fun isRecording(): Boolean

@@ -15,6 +15,11 @@ import java.util.concurrent.atomic.AtomicBoolean
 import kotlin.concurrent.thread
 
 /**
+ * Marks an object that was reopened after closing and is no longer tracked.
+ */
+private typealias Untracked = Unit
+
+/**
  * Detects objects that outlive the end of their own lifecycle, and tracks how many GC cycles they go on to survive.
  *
  * Each tracked object is paired with a [Sentinel] allocated when its lifecycle begins and released when that lifecycle ends.
@@ -70,10 +75,11 @@ internal class LeakDetector(
     }
 
     /**
-     * Sentinels for lifecycles that have begun but not yet ended. Keys are held weakly so that an object collected before its
-     * lifecycle ends drops out along with its sentinel.
+     * The current stage of each tracked object: its [Sentinel] while open, the [TrackedReference] or [ConfirmedSuspect]
+     * watching it once closed, or [Untracked] once reopened. Keys are held weakly so that a collected object
+     * drops out along with its stage, and so no value may reach its own key.
      */
-    private val sentinels = WeakHashMap<Any, Sentinel>()
+    private val lifecycles = WeakHashMap<Any, Any>()
 
     /**
      * References waiting for their sentinel to be reclaimed. Held strongly because a [Reference] that becomes unreachable is
@@ -138,7 +144,8 @@ internal class LeakDetector(
      * [owner] identifies the instrumentation whose lifecycle this is. More than one instrumentation can see the same object,
      * such as a WebView inside a Fragment inside an Activity, and the first to open it owns it: only that owner's
      * [trackClosed] ends its tracked lifecycle. Calling this again for an object that is already open has no effect,
-     * whichever owner calls it.
+     * whichever owner calls it. Calling it for an object that has been closed cancels whatever is still watching it and stops
+     * tracking it for good, since an object put back into use is retained deliberately rather than leaked.
      */
     fun trackOpened(referent: Any, owner: TrackingSource) {
         openSentinel(referent, owner)
@@ -150,16 +157,11 @@ internal class LeakDetector(
      * reference to [referent], following the same rules as a `WeakHashMap` value.
      *
      * Returns the reference now being watched. Returns null if no sentinel is held for [referent] by [owner] - because
-     * [trackOpened] was not called for it, because its lifecycle has already ended, or because a different owner opened
-     * it - in which case nothing changes.
+     * [trackOpened] was not called for it, because its lifecycle has already ended, because it was reopened and is no
+     * longer tracked, or because a different owner opened it - in which case nothing changes.
      */
-    fun trackClosed(referent: Any, owner: TrackingSource, token: Any? = null): TrackedReference? {
-        val sentinel = releaseSentinel(referent, owner) ?: return null
-
-        val ref = TrackedReference(sentinel, queue, WeakReference(referent), clock.now(), token)
-        watch(ref)
-        return ref
-    }
+    fun trackClosed(referent: Any, owner: TrackingSource, token: Any? = null): TrackedReference? =
+        closeSentinel(referent, owner, token)
 
     /**
      * Pair the object tracked by [ref] with a new [Sentinel] if it is still reachable, or confirm it as a probable leak if it
@@ -170,11 +172,11 @@ internal class LeakDetector(
      * already settled by the time this is called.
      *
      * Returns the reference now watching the new sentinel. Returns null if the tracked object was confirmed as a suspect, was
-     * collected, or if [ref] was no longer being watched.
+     * collected, was opened again, or if [ref] was no longer being watched.
      */
     fun onSentinelReclaimed(ref: TrackedReference): TrackedReference? {
         if (!stopWatching(ref)) {
-            // already handled, or dropped by stop()
+            // already handled, cancelled by trackOpened, or dropped by stop()
             return null
         }
 
@@ -191,12 +193,12 @@ internal class LeakDetector(
                 currentGcCycleCount(),
             )
 
-            addSuspect(suspect)
+            advance(referent, ref, suspect)
             return null
         }
 
         val confirmation = TrackedReference(
-            // never added to sentinels, so its owner is never compared against
+            // never held in lifecycles, so its owner is never compared against
             Sentinel(TrackingSource.DETECTOR),
             queue,
             ref.target,
@@ -204,8 +206,7 @@ internal class LeakDetector(
             ref.token,
             suspected = true,
         )
-        watch(confirmation)
-        return confirmation
+        return if (advance(referent, ref, confirmation)) confirmation else null
     }
 
     /**
@@ -214,9 +215,7 @@ internal class LeakDetector(
      * tests can drive collection without relying on a real one.
      */
     fun onSuspectCollected(suspect: ConfirmedSuspect) {
-        synchronized(trackedSuspects) {
-            trackedSuspects.remove(suspect)
-        }
+        removeSuspect(suspect)
     }
 
     /**
@@ -252,27 +251,55 @@ internal class LeakDetector(
         }
 
     /*
-     * All access to sentinels, watched and trackedSuspects goes through the functions below. All three are shared: tracking
-     * happens on the thread that begins or ends a lifecycle, and reclamation is delivered on the detector thread.
+     * All access to lifecycles, watched and trackedSuspects goes through the functions below. All three are shared: tracking
+     * happens on the thread that begins or ends a lifecycle, and reclamation is delivered on the detector thread. The
+     * lifecycles lock is only ever taken before the other two, never while holding either of them.
      */
 
     private fun openSentinel(referent: Any, owner: TrackingSource) {
-        synchronized(sentinels) {
-            if (!sentinels.containsKey(referent)) {
-                sentinels[referent] = Sentinel(owner)
+        synchronized(lifecycles) {
+            when (val stage = lifecycles[referent]) {
+                null -> {
+                    lifecycles[referent] = Sentinel(owner)
+                    return
+                }
+                // already open, or already no longer tracked
+                is Sentinel, is Untracked -> return
+                // opened again after closing: whatever is watching it is dropped, and it is never tracked again
+                is TrackedReference -> stopWatching(stage)
+                is ConfirmedSuspect -> removeSuspect(stage)
             }
+            lifecycles[referent] = Untracked
         }
     }
 
-    private fun releaseSentinel(referent: Any, owner: TrackingSource): Sentinel? = synchronized(sentinels) {
-        // removed up front so that the common case - the owner closing - costs one lookup; a close from any other owner
-        // is rare, and puts the same sentinel straight back
-        val sentinel = sentinels.remove(referent) ?: return null
+    private fun closeSentinel(referent: Any, owner: TrackingSource, token: Any?): TrackedReference? = synchronized(lifecycles) {
+        val sentinel = lifecycles[referent] as? Sentinel ?: return null
         if (sentinel.owner != owner) {
-            sentinels[referent] = sentinel
             return null
         }
-        sentinel
+
+        // replacing the sentinel leaves it reachable only through the reference now watching it
+        val ref = TrackedReference(sentinel, queue, WeakReference(referent), clock.now(), token)
+        lifecycles[referent] = ref
+        watch(ref)
+        ref
+    }
+
+    /**
+     * Moves [referent] on from [from] to [to], returning false without doing so if [referent] was opened again since.
+     */
+    private fun advance(referent: Any, from: TrackedReference, to: Reference<*>): Boolean = synchronized(lifecycles) {
+        if (lifecycles[referent] !== from) {
+            return false
+        }
+
+        lifecycles[referent] = to
+        when (to) {
+            is TrackedReference -> watch(to)
+            is ConfirmedSuspect -> addSuspect(to)
+        }
+        true
     }
 
     private fun watch(ref: TrackedReference) {
@@ -292,9 +319,15 @@ internal class LeakDetector(
         }
     }
 
+    private fun removeSuspect(suspect: ConfirmedSuspect) {
+        synchronized(trackedSuspects) {
+            trackedSuspects.remove(suspect)
+        }
+    }
+
     private fun clearTracking() {
-        synchronized(sentinels) {
-            sentinels.clear()
+        synchronized(lifecycles) {
+            lifecycles.clear()
         }
 
         synchronized(watched) {

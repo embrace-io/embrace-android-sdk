@@ -7,6 +7,7 @@ import io.embrace.android.embracesdk.internal.logging.guardSdkCodeEach
 import io.embrace.android.embracesdk.internal.utils.SystemTrace
 import okio.FileSystem
 import okio.Path
+import java.util.concurrent.atomic.AtomicBoolean
 
 /**
  * Moves the 9.x directories in [filesDir] to their [SdkStorageLayout] paths under [noBackupFilesDir], one directory at
@@ -26,17 +27,23 @@ class LegacyStorageMigrator(
         SdkStorageImpl(fileSystem, noBackupFilesDir() / SdkStorageLayout.ROOT_DIR_NAME, errorHandler)
     }
 
+    private val configAbandoned = AtomicBoolean(false)
+
     /**
      * Moves the remote config. Call before the config is read.
      */
     fun migrateConfig() {
         errorHandler.guardSdkCode(SdkErrorType.StorageMigrationFail) {
-            if (fileSystem.exists(legacyDir(SdkDir.REMOTE_CONFIG))) {
+            if (fileSystem.exists(legacyDir(SdkDir.REMOTE_CONFIG)) && !configAbandoned.get()) {
                 SystemTrace.trace("storage-config-migration") {
                     migrate(SdkDir.REMOTE_CONFIG)
                 }
             }
         }
+    }
+
+    fun abandonConfig() {
+        configAbandoned.set(true)
     }
 
     /**
@@ -45,9 +52,14 @@ class LegacyStorageMigrator(
      */
     fun migrateTelemetry() {
         SystemTrace.trace("storage-telemetry-migration") {
-            MIGRATED_DIRS.forEach(::migrate)
+            val abandoned = configAbandoned.get()
+            MIGRATED_DIRS.filterNot { abandoned && it == SdkDir.REMOTE_CONFIG }.forEach(::migrate)
             migrateCrashMarker()
-            delete(listOf(legacyDir(SdkDir.INSTALL_STATE)) + legacyCacheEntries(LEGACY_CACHE_DIR_ENTRIES))
+            val deleted = listOfNotNull(
+                legacyDir(SdkDir.INSTALL_STATE),
+                legacyDir(SdkDir.REMOTE_CONFIG).takeIf { abandoned },
+            )
+            delete(deleted + legacyCacheEntries(LEGACY_CACHE_DIR_ENTRIES))
         }
     }
 

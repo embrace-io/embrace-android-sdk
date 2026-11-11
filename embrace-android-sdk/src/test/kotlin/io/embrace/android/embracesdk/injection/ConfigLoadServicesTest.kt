@@ -11,6 +11,7 @@ import io.embrace.android.embracesdk.internal.config.remote.NetworkCaptureRuleRe
 import io.embrace.android.embracesdk.internal.injection.ConfigLoadServices
 import io.embrace.android.embracesdk.internal.injection.PreStartServices
 import io.embrace.android.embracesdk.internal.logging.SdkErrorType
+import io.embrace.android.embracesdk.internal.storage.SdkDir
 import io.embrace.android.embracesdk.internal.storage.SdkStorageLayout
 import io.embrace.android.embracesdk.internal.store.Ordinal
 import io.embrace.android.embracesdk.internal.store.OrdinalStore
@@ -177,6 +178,47 @@ internal class ConfigLoadServicesTest {
         } finally {
             configMoveReleased.countDown()
         }
+    }
+
+    @Test
+    fun `a config move that timed out doesn't mix legacy config into the fresh response`() {
+        val configMoveReleased = CountDownLatch(1)
+        val fs = object : ForwardingFileSystem(FileSystem.SYSTEM) {
+            override fun metadataOrNull(path: Path): FileMetadata? {
+                if (path.name == "embrace_remote_config") {
+                    configMoveReleased.await()
+                }
+                return super.metadataOrNull(path)
+            }
+        }
+        val context = FilesDirApplication(tempDir.newFolder())
+        val legacy = context.filesDir.toOkioPath() / "embrace_remote_config"
+        File(legacy.toString()).mkdirs()
+        File(legacy.toString(), PersistedConfig.ETAG_FILE_NAME).writeText("legacy")
+        File(legacy.toString(), PersistedConfig.CACHED_CONFIG_FILE_NAME).writeText("legacy")
+        val configLoadServices = ConfigLoadServices(
+            context = context,
+            preStartServices = PreStartServices(errorHandler = FakeErrorHandler(throwOnSdkError = false)),
+            workerThreadPoolSupplier = { FakeWorkerThreadPool(testWorkers = listOf(Worker.Background.IoRegWorker)) },
+            configServiceSupplier = { _, _, _, _, _, _ -> FakeConfigService() },
+            fileSystem = fs,
+            configMigrationTimeoutMs = 1,
+        )
+        val config = configLoadServices.sdkStorage.dir(SdkDir.REMOTE_CONFIG)
+        fs.write(config / PersistedConfig.ETAG_FILE_NAME) { writeUtf8("fresh") }
+        fs.write(config / PersistedConfig.CONFIG_RESPONSE_FILE_NAME) { writeUtf8("fresh") }
+        configMoveReleased.countDown()
+
+        configLoadServices.legacyTelemetryMigration.start()
+        configLoadServices.legacyTelemetryMigration.await()
+
+        val contents = fs.list(config).associate { it.name to fs.read(it) { readUtf8() } }
+        val expected = mapOf(
+            PersistedConfig.ETAG_FILE_NAME to "fresh",
+            PersistedConfig.CONFIG_RESPONSE_FILE_NAME to "fresh",
+        )
+        assertEquals(expected, contents)
+        assertFalse(File(legacy.toString()).exists())
     }
 
     private fun ConfigLoadServices.awaitPrefsMigration() {

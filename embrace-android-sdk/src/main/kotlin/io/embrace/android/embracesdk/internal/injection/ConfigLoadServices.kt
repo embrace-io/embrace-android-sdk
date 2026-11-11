@@ -139,6 +139,9 @@ internal class ConfigLoadServices(
             .submit("config", Unit, SdkErrorType.StorageMigrationFail, legacyStorageMigrator::migrateConfig)
             .also { it.await(configMigrationTimeoutMs, SdkErrorType.StorageMigrationFail) }
             .isComplete
+        if (!configMoved) {
+            legacyStorageMigrator.abandonConfig()
+        }
         PersistedConfig(
             serializer = jsonSerializer,
             storageDir = sdkStorage.path(SdkDir.REMOTE_CONFIG).toFile(),

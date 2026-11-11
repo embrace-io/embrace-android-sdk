@@ -20,7 +20,7 @@ import io.embrace.android.embracesdk.internal.config.resolved.ExperimentConfig
 import io.embrace.android.embracesdk.internal.instrumentation.network.DefaultTraceparentGenerator
 import io.embrace.android.embracesdk.internal.logging.ErrorHandler
 import io.embrace.android.embracesdk.internal.logging.ErrorHandlerImpl
-import io.embrace.android.embracesdk.internal.logging.SdkErrorSnapshot
+import io.embrace.android.embracesdk.internal.logging.SdkErrorSink
 import io.embrace.android.embracesdk.internal.logging.SdkErrorType
 import io.embrace.android.embracesdk.internal.logging.androidLogcat
 import io.embrace.android.embracesdk.internal.logging.guardSdkCode
@@ -109,8 +109,7 @@ internal class BufferingSdkInstance(
         }
         errorHandler.drain(
             destination?.let {
-                {
-                        snapshot: SdkErrorSnapshot ->
+                SdkErrorSink { snapshot ->
                     it.addLog(
                         schemaType = SdkError(snapshot),
                         severity = LogSeverity.ERROR,

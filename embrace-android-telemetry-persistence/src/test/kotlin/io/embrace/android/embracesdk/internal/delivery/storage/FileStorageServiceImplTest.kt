@@ -11,7 +11,6 @@ import io.embrace.android.embracesdk.internal.delivery.SupportedEnvelopeType
 import io.embrace.android.embracesdk.internal.logging.SdkErrorType
 import io.embrace.android.embracesdk.internal.worker.PriorityWorker
 import org.junit.Assert.assertEquals
-import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Before
@@ -322,13 +321,13 @@ class FileStorageServiceImplTest {
     }
 
     @Test
-    fun `unparseable files are swept when building the index`() {
+    fun `unparseable files are skipped and kept when building the index`() {
         // simulate a payload written by a format this version can't parse
         val bogus = File(outputDir, "not-a-valid-name").apply { writeText("x") }
         // simulate a pre-9.0 payload with a v1 filename
         val v1Payload = File(outputDir, "p3_1700000000000_uuid_pid_true_session_v1.json").apply { writeText("x") }
-        // simulate a leftover temp file from a process killed mid-write
-        val orphanTmp = File(outputDir, "leftover.tmp").apply { writeText("x") }
+        // simulate another process's in-flight temp file
+        val inFlightTmp = File(outputDir, "${fakeSessionStoredTelemetryMetadata.filename}.tmp").apply { writeText("x") }
 
         val freshService = FileStorageServiceImpl(
             lazy { outputDir },
@@ -340,9 +339,9 @@ class FileStorageServiceImplTest {
 
         // trigger the lazy index init
         assertEquals(0, freshService.getStoredPayloads().size)
-        assertFalse(bogus.exists())
-        assertFalse(v1Payload.exists())
-        assertFalse(orphanTmp.exists())
+        assertTrue(bogus.exists())
+        assertTrue(v1Payload.exists())
+        assertTrue(inFlightTmp.exists())
     }
 
     @Test

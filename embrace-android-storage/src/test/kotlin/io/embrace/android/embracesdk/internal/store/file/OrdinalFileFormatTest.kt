@@ -2,7 +2,6 @@ package io.embrace.android.embracesdk.internal.store.file
 
 import io.embrace.android.embracesdk.fs.fakeFileSystem
 import io.embrace.android.embracesdk.internal.store.Ordinal
-import okio.IOException
 import okio.Path.Companion.toPath
 import okio.fakefilesystem.FakeFileSystem
 import org.junit.After
@@ -91,7 +90,7 @@ class OrdinalFileFormatTest {
 
     private fun assertPrepareThrows(bytes: ByteArray) {
         fs.write(path) { write(bytes) }
-        assertThrows(IOException::class.java) { prepare() }
+        assertThrows(CorruptOrdinalFileException::class.java) { prepare() }
         assertArrayEquals(bytes, fs.read(path) { readByteArray() })
     }
 

@@ -32,7 +32,7 @@ internal object OrdinalFileFormat {
 
     /**
      * Validates the header and pads missing or partial slots with [UNSET] so [MAPPED_BYTES] can be mapped. Never
-     * truncates.
+     * truncates. Throws [CorruptOrdinalFileException] if the header is unusable.
      */
     @Throws(IOException::class)
     fun prepare(handle: FileHandle) {
@@ -51,7 +51,7 @@ internal object OrdinalFileFormat {
             }
         }
         if (problem != null) {
-            throw IOException(problem)
+            throw CorruptOrdinalFileException(problem)
         }
         val knownSlots = ((size - HEADER_BYTES) / Int.SIZE_BYTES).toInt()
         if (knownSlots < SLOT_COUNT) {

@@ -10,6 +10,7 @@ import io.embrace.android.embracesdk.internal.config.PersistedConfig
 import io.embrace.android.embracesdk.internal.config.remote.NetworkCaptureRuleRemoteConfig
 import io.embrace.android.embracesdk.internal.injection.ConfigLoadServices
 import io.embrace.android.embracesdk.internal.injection.PreStartServices
+import io.embrace.android.embracesdk.internal.logging.SdkErrorType
 import io.embrace.android.embracesdk.internal.storage.SdkStorageLayout
 import io.embrace.android.embracesdk.internal.store.Ordinal
 import io.embrace.android.embracesdk.internal.store.OrdinalStore
@@ -102,6 +103,32 @@ internal class ConfigLoadServicesTest {
 
         val installState = File(context.noBackupFilesDir, "${SdkStorageLayout.ROOT_DIR_NAME}/install_state")
         assertTrue(File(installState, SdkStorageLayout.ORDINALS_FILE_NAME).exists())
+    }
+
+    @Test
+    fun `recovers ordinals from a corrupt ordinals file`() {
+        val context = FilesDirApplication(tempDir.newFolder())
+        val ordinals = File(
+            context.noBackupFilesDir,
+            "${SdkStorageLayout.ROOT_DIR_NAME}/install_state/${SdkStorageLayout.ORDINALS_FILE_NAME}",
+        )
+        checkNotNull(ordinals.parentFile).mkdirs()
+        ordinals.writeBytes(ByteArray(32) { 0x7f })
+        val errorHandler = FakeErrorHandler(throwOnSdkError = false)
+        val configLoadServices = ConfigLoadServices(
+            context = context,
+            preStartServices = PreStartServices(errorHandler = errorHandler),
+            workerThreadPoolSupplier = { FakeWorkerThreadPool(testWorkers = listOf(Worker.Background.IoRegWorker)) },
+            configServiceSupplier = { _, _, _, _, _, _ -> FakeConfigService() },
+            fileSystem = FileSystem.SYSTEM,
+        )
+        val store = configLoadServices.ordinalStore.value
+        assertEquals(1, store.incrementAndGet(Ordinal.SESSION))
+        assertEquals(2, store.incrementAndGet(Ordinal.SESSION))
+        assertEquals(
+            listOf(SdkErrorType.OrdinalStoreOpenFail.toString()),
+            errorHandler.sdkErrorMessages.map { it.msg },
+        )
     }
 
     @Test

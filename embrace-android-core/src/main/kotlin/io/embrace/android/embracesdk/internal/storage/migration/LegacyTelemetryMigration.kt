@@ -21,10 +21,12 @@ class LegacyTelemetryMigration(
     errorHandler: ErrorHandler,
     private val orphanSweeper: OrphanSweeper? = null,
     private val sweepDelayMs: Long = SWEEP_DELAY_MS,
+    private val awaitTimeoutMs: Long = AWAIT_TIMEOUT_MS,
 ) {
     private val handle = MigrationHandle(NAME, Unit, errorHandler)
     private val cancelled = AtomicBoolean(false)
     private val moveSubmitted = AtomicBoolean(false)
+    private val timedOut = AtomicBoolean(false)
 
     init {
         if (migrator == null) {
@@ -96,11 +98,15 @@ class LegacyTelemetryMigration(
     }
 
     /**
-     * Blocks until the migration finishes or is cancelled.
+     * Blocks until the migration finishes or is cancelled, or for at most [awaitTimeoutMs]. Once one call has timed
+     * out, later calls return at once.
      */
     fun await() {
-        if (migrator != null && !handle.isComplete) {
-            handle.await()
+        if (migrator != null && !handle.isComplete && !timedOut.get()) {
+            handle.await(awaitTimeoutMs, SdkErrorType.StorageMigrationFail)
+            if (!handle.isComplete) {
+                timedOut.set(true)
+            }
         }
     }
 
@@ -140,6 +146,7 @@ class LegacyTelemetryMigration(
         const val SWEEP_DELAY_MS: Long = 10_000L
         private const val NAME = "telemetry-move"
         private const val MOVE_TIMEOUT_MS = 3_000L
+        private const val AWAIT_TIMEOUT_MS = 30_000L
         private const val DELETE_INSTALL_STATE_NAME = "delete-legacy-install-state"
         private const val DELETE_NAME = "delete-legacy-telemetry"
         private const val SWEEP_NAME = "orphan-sweep"

@@ -1,7 +1,7 @@
 package io.embrace.android.embracesdk.macrobenchmark.app.storage
 
 import io.embrace.android.embracesdk.internal.config.PersistedConfig
-import io.embrace.android.embracesdk.internal.storage.LegacySdkStorage
+import io.embrace.android.embracesdk.internal.storage.LegacyStorageMigrator
 import io.embrace.android.embracesdk.internal.storage.SdkDir
 import okio.FileSystem
 import okio.Path
@@ -34,7 +34,7 @@ internal class AppDataStorage(
      */
     val remoteConfigDir: Path = sdkDir(SdkDir.REMOTE_CONFIG)
 
-    private fun sdkDir(dir: SdkDir): Path = filesDir / LegacySdkStorage.LEGACY_DIR_NAMES.getValue(dir)
+    private fun sdkDir(dir: SdkDir): Path = filesDir / LegacyStorageMigrator.LEGACY_DIR_NAMES.getValue(dir)
 
     /**
      * The directory names of the session parts in [sessionsDir].

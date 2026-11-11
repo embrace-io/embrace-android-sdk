@@ -5,7 +5,7 @@ import io.embrace.android.embracesdk.internal.payload.SessionPartPayload
 import io.embrace.android.embracesdk.testframework.OtelSdkMode
 import io.embrace.android.embracesdk.testframework.SdkIntegrationTestRule
 import org.junit.Assert.assertEquals
-import org.junit.Assert.assertNull
+import org.junit.Assert.assertFalse
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -71,7 +71,7 @@ internal class UserFeaturesTest(
                 val sessions = getSessionEnvelopes(2)
                 sessions[0].assertUserInfo("newId", "newUserName", "new@domain.com")
                 sessions[1].assertUserInfo("newId", "newUserName", "new@domain.com")
-                assertNull(testRule.setup.getStore().getString("io.embrace.userid"))
+                assertFalse(testRule.setup.defaultPrefs().contains("io.embrace.userid"))
             }
         )
     }

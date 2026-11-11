@@ -43,7 +43,6 @@ import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNotEquals
 import org.junit.Assert.assertNotNull
-import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Rule
 import org.junit.Test
@@ -188,7 +187,7 @@ internal class UserSessionLifecycleTest(
                     userSessionNumbers = listOf(1, 2),
                     sessionPartNumbers = listOf(1, 2)
                 )
-                assertNull(testRule.setup.getStore().getInt(Ordinal.SESSION.key))
+                assertFalse(testRule.setup.defaultPrefs().contains(Ordinal.SESSION.key))
             }
         )
     }
@@ -213,7 +212,7 @@ internal class UserSessionLifecycleTest(
                     userSessionNumbers = listOf(1, 2),
                     sessionPartNumbers = listOf(1, 2)
                 )
-                assertNull(testRule.setup.getStore().getInt(Ordinal.USER_SESSION.key))
+                assertFalse(testRule.setup.defaultPrefs().contains(Ordinal.USER_SESSION.key))
             }
         )
     }

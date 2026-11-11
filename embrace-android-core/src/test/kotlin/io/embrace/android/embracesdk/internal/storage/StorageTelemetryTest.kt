@@ -38,22 +38,6 @@ internal class StorageTelemetryTest {
     }
 
     @Test
-    fun `counts each legacy dir once and ignores the rest of the files dir`() {
-        val filesDir = dataDir / "files"
-        val storage = LegacySdkStorage(fsRule.fileSystem, filesDir, { dataDir / "cache" }, errorHandler)
-        write(storage.dir(SdkDir.REMOTE_CONFIG) / "config", 3)
-        write(storage.dir(SdkDir.INSTALL_STATE) / "embrace_crash_marker", 5)
-        write(storage.dir(SdkDir.TELEMETRY_PENDING_SNAPSHOTS) / "snapshot", 7)
-        write(storage.dir(SdkDir.TELEMETRY_PENDING_SESSION_PARTS) / "part" / "span", 11)
-        write(filesDir / "app_file", 1000)
-        write(dataDir / "cache" / "app_cache", 10000)
-
-        logTelemetry(storage)
-
-        assertEquals(26L, storageUsed())
-    }
-
-    @Test
     fun `reports zero when no dir exists`() {
         val storage = SdkStorageImpl(fsRule.fileSystem, dataDir / "missing", errorHandler)
         logTelemetry(storage)

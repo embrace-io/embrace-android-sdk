@@ -109,7 +109,6 @@ internal class UserSessionOrchestrationFactoriesTest {
             appVersionStartupCounterProvider = { null },
             logLimitingService = FakeLogLimitingService(),
             ordinalStore = FakeOrdinalStore(),
-            writeBatcher = { it() },
             stateStore = FakePersistedSdkStateStore(),
             backgroundWorker = workerThreadPool.backgroundWorker(Worker.Background.NonIoRegWorker),
             sessionPersistenceWorker = workerThreadPool.backgroundWorker(Worker.Background.PersistenceWorker),

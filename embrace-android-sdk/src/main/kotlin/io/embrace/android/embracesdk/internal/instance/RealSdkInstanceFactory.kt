@@ -93,7 +93,6 @@ import io.embrace.android.embracesdk.internal.storage.SdkDir
 import io.embrace.android.embracesdk.internal.storage.SdkStorageLayout
 import io.embrace.android.embracesdk.internal.storage.StatFsAvailabilityChecker
 import io.embrace.android.embracesdk.internal.storage.StorageTelemetry
-import io.embrace.android.embracesdk.internal.storage.lazyFile
 import io.embrace.android.embracesdk.internal.store.Ordinal
 import io.embrace.android.embracesdk.internal.store.OrdinalStore
 import io.embrace.android.embracesdk.internal.store.PersistedSdkStateStore
@@ -352,7 +351,7 @@ internal fun createRealSdkInstance(
         StorageTelemetry(
             sdkStorage,
             telemetryService,
-            StatFsAvailabilityChecker(sdkStorage.lazyFile(SdkDir.REMOTE_CONFIG)),
+            StatFsAvailabilityChecker(lazy { sdkStorage.root.toFile() }),
         )
     }
 
@@ -752,7 +751,6 @@ internal fun createRealSdkInstance(
                 appVersionStartupCounterProvider = startupService::getAppVersionStartupCounter,
                 logLimitingService = logLimitingService,
                 ordinalStore = ordinalStore,
-                writeBatcher = configLoadServices.writeBatcher.value,
                 stateStore = persistedSdkStateStore,
                 backgroundWorker = workerThreadPool.backgroundWorker(Worker.Background.NonIoRegWorker),
                 sessionPersistenceWorker = workerThreadPool.backgroundWorker(Worker.Background.PersistenceWorker),

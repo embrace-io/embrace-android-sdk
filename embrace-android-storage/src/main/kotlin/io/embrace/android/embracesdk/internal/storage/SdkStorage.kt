@@ -18,6 +18,11 @@ interface SdkStorage {
     val fileSystem: FileSystem
 
     /**
+     * The directory that holds every [SdkDir].
+     */
+    val root: Path
+
+    /**
      * Returns the directory for [dir].
      */
     fun dir(dir: SdkDir): Path

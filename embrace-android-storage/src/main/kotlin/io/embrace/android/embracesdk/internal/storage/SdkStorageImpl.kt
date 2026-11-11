@@ -12,7 +12,7 @@ import okio.Path
  */
 class SdkStorageImpl(
     override val fileSystem: FileSystem,
-    val root: Path,
+    override val root: Path,
     private val errorHandler: ErrorHandler,
 ) : SdkStorage {
 

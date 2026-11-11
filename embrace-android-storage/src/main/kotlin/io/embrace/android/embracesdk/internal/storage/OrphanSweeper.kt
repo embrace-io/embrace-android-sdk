@@ -14,7 +14,7 @@ import okio.Path
  * higher than [layoutVersion], or can't be parsed, a newer SDK may have written this layout and the sweep is skipped.
  */
 class OrphanSweeper(
-    private val storage: SdkStorageImpl,
+    private val storage: SdkStorage,
     private val layoutVersion: Int,
     private val processStartMs: Long,
     private val errorHandler: ErrorHandler,

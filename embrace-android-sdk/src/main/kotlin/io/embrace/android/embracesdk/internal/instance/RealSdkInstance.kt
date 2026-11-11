@@ -205,26 +205,31 @@ internal class RealSdkInstance(
     }
 
     override fun onEnabled() {
+        var initialized = false
         try {
             EmbTrace.trace(sectionName = "post-services-setup", recordDuration = true) {
                 registerListeners()
                 loadInstrumentation()
                 postLoadInstrumentation()
                 triggerPayloadSend()
+                initialized = true
             }
             markSdkInitComplete(EmbTrace.durationTracker::flush)
         } catch (exc: Throwable) {
             Log.w("Embrace", "Failed to initialize Embrace SDK", exc)
             errorHandler.trackSdkError(SdkErrorType.SdkInitPhaseFail, exc)
         } finally {
-            startLegacyTelemetryMigration()
+            startLegacyTelemetryMigration(sweepOrphans = initialized)
         }
     }
 
-    private fun startLegacyTelemetryMigration() {
+    private fun startLegacyTelemetryMigration(sweepOrphans: Boolean) {
         val started = errorHandler.guardSdkCode(SdkErrorType.StorageMigrationFail, false) {
             if (enabled) {
                 legacyTelemetryMigration.start()
+                if (sweepOrphans) {
+                    legacyTelemetryMigration.sweepOrphans()
+                }
             } else {
                 legacyTelemetryMigration.cancel()
             }

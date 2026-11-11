@@ -3,16 +3,19 @@ package io.embrace.android.embracesdk.internal.storage.migration
 import io.embrace.android.embracesdk.internal.logging.ErrorHandler
 import io.embrace.android.embracesdk.internal.logging.SdkErrorType
 import io.embrace.android.embracesdk.internal.storage.LegacyStorageMigrator
+import io.embrace.android.embracesdk.internal.storage.OrphanSweeper
 import java.util.concurrent.atomic.AtomicBoolean
 
 /**
- * Moves the 9.x telemetry into the layout on [worker] once [start] is called. Anything that reads the previous
- * launch's telemetry calls [await] first. Without a [migrator] there is nothing to move and [await] returns at once.
+ * Moves the 9.x telemetry into the layout on [worker] once [start] is called, and runs [orphanSweeper] once
+ * [sweepOrphans] is called. Anything that reads the previous launch's telemetry calls [await] first. Without a
+ * [migrator] there is nothing to move and [await] returns at once.
  */
 class LegacyTelemetryMigration(
     private val worker: MigrationWorker,
     private val migrator: LegacyStorageMigrator?,
     errorHandler: ErrorHandler,
+    private val orphanSweeper: OrphanSweeper? = null,
 ) {
     private val handle = MigrationHandle(NAME, Unit, errorHandler)
     private val cancelled = AtomicBoolean(false)
@@ -31,6 +34,15 @@ class LegacyTelemetryMigration(
         worker.submit(handle, SdkErrorType.StorageMigrationFail) {
             if (!cancelled.get()) {
                 migrator.migrateTelemetry()
+            }
+        }
+    }
+
+    fun sweepOrphans() {
+        val sweeper = orphanSweeper ?: return
+        worker.submit(SWEEP_NAME, Unit, SdkErrorType.OrphanSweepFail) {
+            if (!cancelled.get()) {
+                sweeper.sweep()
             }
         }
     }
@@ -79,5 +91,6 @@ class LegacyTelemetryMigration(
     private companion object {
         const val NAME = "telemetry"
         const val DELETE_NAME = "delete-legacy-telemetry"
+        const val SWEEP_NAME = "orphan-sweep"
     }
 }

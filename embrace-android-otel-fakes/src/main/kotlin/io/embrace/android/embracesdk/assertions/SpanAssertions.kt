@@ -14,7 +14,6 @@ import io.embrace.android.embracesdk.semconv.EmbSpanAttributes
 import io.embrace.android.embracesdk.semconv.EmbStateTransitionAttributes.EMB_STATE_INITIAL_VALUE
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotNull
-import org.junit.Assert.assertNull
 
 /**
  * Finds the first Span Event matching the given [EmbType]
@@ -127,7 +126,6 @@ fun List<Attribute>?.assertSdkInitSectionDurationsRecorded() {
         )
     }
     assertNotNull("`persisted-sdk-state-bytes` not found", this?.findAttributeValue("persisted-sdk-state-bytes"))
-    assertNull("`prefs-file-bytes` was recorded", this?.findAttributeValue("prefs-file-bytes"))
 }
 
 /**

@@ -12,7 +12,6 @@ import io.embrace.android.embracesdk.internal.instrumentation.startup.SdkInitAtt
 import io.embrace.android.embracesdk.internal.instrumentation.startup.SdkInitAttributeKeys.MEM_AVAILABLE_PCT
 import io.embrace.android.embracesdk.internal.instrumentation.startup.SdkInitAttributeKeys.NUMERIC_ERROR
 import io.embrace.android.embracesdk.internal.instrumentation.startup.SdkInitAttributeKeys.PERSISTED_SDK_STATE_BYTES
-import io.embrace.android.embracesdk.internal.instrumentation.startup.SdkInitAttributeKeys.PREFS_FILE_BYTES
 import io.embrace.android.embracesdk.internal.instrumentation.startup.SdkInitAttributeKeys.SECONDS_SINCE_BOOT
 import io.embrace.android.embracesdk.internal.instrumentation.startup.SdkInitAttributeKeys.SECONDS_SINCE_INSTALL
 import io.embrace.android.embracesdk.internal.instrumentation.startup.SdkInitAttributeKeys.SECONDS_SINCE_UPDATE
@@ -47,8 +46,7 @@ fun sdkInitEnvironmentAttributes(
     activityManagerProvider: () -> ActivityManager?,
     versionChecker: VersionChecker = BuildVersionChecker,
     uptimeMs: () -> Long = { SystemClock.uptimeMillis() },
-    prefsFileSizeProvider: () -> Long? = { null },
-    persistedSdkStateFileSizeProvider: (() -> Long?)? = null,
+    persistedSdkStateFileSizeProvider: () -> Long? = { null },
     artOptimizationProvider: () -> ArtOptimizationState? = { null },
 ): Map<String, String> = buildMap {
     safePutAttributes(errorHandler, "thermal") {
@@ -63,10 +61,8 @@ fun sdkInitEnvironmentAttributes(
     safePutAttributes(errorHandler, SECONDS_SINCE_BOOT) {
         putSecondsSinceBoot(uptimeMs, errorHandler)
     }
-    val stateFileSize = persistedSdkStateFileSizeProvider?.let { PERSISTED_SDK_STATE_BYTES to it }
-        ?: (PREFS_FILE_BYTES to prefsFileSizeProvider)
-    safePutAttributes(errorHandler, stateFileSize.first) {
-        putFileSize(stateFileSize.first, stateFileSize.second, errorHandler)
+    safePutAttributes(errorHandler, PERSISTED_SDK_STATE_BYTES) {
+        putFileSize(PERSISTED_SDK_STATE_BYTES, persistedSdkStateFileSizeProvider, errorHandler)
     }
     safePutAttributes(errorHandler, "art-optimization") {
         putArtOptimizationAttributes(artOptimizationProvider, errorHandler)

@@ -66,7 +66,6 @@ import io.embrace.android.embracesdk.internal.logs.attachments.AttachmentService
 import io.embrace.android.embracesdk.internal.otel.config.OtelSdkConfig
 import io.embrace.android.embracesdk.internal.otel.logs.LogSink
 import io.embrace.android.embracesdk.internal.otel.spans.SpanRepository
-import io.embrace.android.embracesdk.internal.prefs.defaultPrefsFile
 import io.embrace.android.embracesdk.internal.resurrection.PayloadResurrectionService
 import io.embrace.android.embracesdk.internal.resurrection.SessionPartReader
 import io.embrace.android.embracesdk.internal.session.id.SessionPartTracker
@@ -81,7 +80,6 @@ import io.embrace.android.embracesdk.spans.TracingApi
 import io.opentelemetry.kotlin.OpenTelemetry
 import okhttp3.OkHttpClient
 import okio.Path
-import java.io.File
 import java.util.ServiceLoader
 import java.util.concurrent.Executors
 import java.util.concurrent.TimeUnit
@@ -592,7 +590,6 @@ internal class RealSdkInstance(
                                 activityManagerProvider = {
                                     instrumentationArgs.systemService(Context.ACTIVITY_SERVICE)
                                 },
-                                prefsFileSizeProvider = { existingPrefsFile(appContext)?.length() },
                                 persistedSdkStateFileSizeProvider = {
                                     sdkStorage.fileSystem.metadataOrNull(persistedSdkStateFile)?.size
                                 },
@@ -619,15 +616,6 @@ internal class RealSdkInstance(
             errorHandler.log(startMsg, severity = ErrorHandler.Severity.INFO)
         }
     }
-
-    /**
-     * Attempt to identify the size of the host app's default `SharedPreferences` file without actually opening it.
-     * This file currently hosts the SDK's key-value store, and the bigger it is, the more impact it will have on
-     * SDK init time if the SDK is the thing that opens it first.
-     *
-     * Returns null if the file is absent, so a missing file is not reported.
-     */
-    private fun existingPrefsFile(context: Context): File? = defaultPrefsFile(context).takeIf(File::exists)
 }
 
 private const val SPAN_TIMEOUT_SWEEP_INTERVAL_MS = 30_000L

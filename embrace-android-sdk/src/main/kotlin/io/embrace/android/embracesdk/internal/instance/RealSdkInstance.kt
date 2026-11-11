@@ -71,6 +71,7 @@ import io.embrace.android.embracesdk.internal.resurrection.PayloadResurrectionSe
 import io.embrace.android.embracesdk.internal.resurrection.ResurrectionOutcome
 import io.embrace.android.embracesdk.internal.resurrection.SessionPartReader
 import io.embrace.android.embracesdk.internal.session.id.SessionPartTracker
+import io.embrace.android.embracesdk.internal.session.lifecycle.ActivityLifecycleRelay
 import io.embrace.android.embracesdk.internal.session.orchestrator.PayloadStore
 import io.embrace.android.embracesdk.internal.session.orchestrator.SessionOrchestrator
 import io.embrace.android.embracesdk.internal.storage.SdkStorage
@@ -103,6 +104,7 @@ internal class RealSdkInstance(
     private val workerThreadPool: WorkerThreadPool,
     private val okHttpClient: Lazy<OkHttpClient>,
     private val eventBus: EventBus,
+    private val activityLifecycleRelay: ActivityLifecycleRelay,
     private val appContext: Context,
     private val sdkStorage: SdkStorage,
     private val spanRepository: SpanRepository,
@@ -186,6 +188,7 @@ internal class RealSdkInstance(
 
     override fun enable(context: Context) {
         try {
+            activityLifecycleRelay.register()
             EmbTrace.trace(sectionName = "process-state-tracker-register", recordDuration = true) {
                 processStateTracker.register()
             }
@@ -229,6 +232,7 @@ internal class RealSdkInstance(
         // the sources of events that data sources and their providers listen to are stopped before the data sources are
         // disabled, so that none of their handlers or listeners runs once disabling starts, whoever registered it
         runCatching { eventBus.stop() }
+        runCatching { activityLifecycleRelay.close() }
         runCatching { processStateTracker.close() }
         runCatching { networkConnectivityService.close() }
         runCatching { instrumentationRegistry.close() }

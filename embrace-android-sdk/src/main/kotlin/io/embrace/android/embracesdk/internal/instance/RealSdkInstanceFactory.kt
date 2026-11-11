@@ -89,6 +89,7 @@ import io.embrace.android.embracesdk.internal.otel.spans.SpanService
 import io.embrace.android.embracesdk.internal.otel.spans.SpanServiceImpl
 import io.embrace.android.embracesdk.internal.session.id.SessionIdsProvider
 import io.embrace.android.embracesdk.internal.session.id.SessionPartTracker
+import io.embrace.android.embracesdk.internal.session.lifecycle.ActivityLifecycleRelay
 import io.embrace.android.embracesdk.internal.session.lifecycle.createLifecycleTracker
 import io.embrace.android.embracesdk.internal.session.orchestrator.SessionOrchestrator
 import io.embrace.android.embracesdk.internal.spans.TracingApiDelegate
@@ -293,6 +294,8 @@ internal fun createRealSdkInstance(
     val eventBus: EventBus by lazy {
         EmbTrace.trace("event-bus-init") { overrides?.eventBus.resolve { EventBus(errorHandler) } }
     }
+
+    val activityLifecycleRelay = ActivityLifecycleRelay(appContext as Application, eventBus, errorHandler)
 
     val appVersionStartupCounter: Int by lazy {
         EmbTrace.trace("app-version-startup-counter-init") {
@@ -835,6 +838,7 @@ internal fun createRealSdkInstance(
             workerThreadPool = workerThreadPool,
             okHttpClient = okHttpClient,
             eventBus = eventBus,
+            activityLifecycleRelay = activityLifecycleRelay,
             appContext = appContext,
             sdkStorage = sdkStorage,
             spanRepository = spanRepository,

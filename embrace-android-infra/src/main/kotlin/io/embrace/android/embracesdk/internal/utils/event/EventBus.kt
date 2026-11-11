@@ -12,7 +12,7 @@ import java.util.concurrent.atomic.AtomicReferenceArray
 /**
  * The number of keys an [EventBus] holds before its first growth, covering every key the SDK declares so that growth is only a safety net.
  */
-internal const val INITIAL_CAPACITY = 16
+internal const val INITIAL_CAPACITY = 32
 
 /**
  * A keyed event bus where an event emitted against an [EventKey] reaches only the handlers registered against that key, on the

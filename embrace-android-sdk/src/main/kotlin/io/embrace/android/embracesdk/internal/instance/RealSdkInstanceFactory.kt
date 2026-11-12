@@ -863,6 +863,7 @@ internal fun createRealSdkInstance(
             threadBlockageService = threadBlockageService,
             lastRunCrashVerifier = lastRunCrashVerifier,
             crashMarker = crashMarker,
+            persistedSdkStateFlush = { configLoadServices.flushPersistedSdkState() },
             startupTracker = startupTracker,
             startupService = startupService,
             appStartupDataCollector = appStartupDataCollector,

@@ -31,6 +31,7 @@ class FilePersistedSdkStateStore(
 ) : PersistedSdkStateStore {
 
     private val lock = Any()
+    private val writeLock = Any()
     private val writePending = AtomicBoolean(false)
 
     @Volatile
@@ -63,10 +64,16 @@ class FilePersistedSdkStateStore(
         }
     }
 
-    private fun write() {
-        writePending.lazySet(false)
-        errorHandler.guardSdkCode(SdkErrorType.PersistedSdkStateWriteFail) {
-            writeFile(fileSystem, path, synchronized(lock) { snapshot().toProto(base) })
+    override fun flush() {
+        write()
+    }
+
+    private fun write() = synchronized(writeLock) {
+        // a flush may have written this update already
+        if (writePending.getAndSet(false)) {
+            errorHandler.guardSdkCode(SdkErrorType.PersistedSdkStateWriteFail) {
+                writeFile(fileSystem, path, synchronized(lock) { snapshot().toProto(base) })
+            }
         }
     }
 

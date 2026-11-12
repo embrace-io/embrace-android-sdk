@@ -289,6 +289,7 @@ internal class LegacyTelemetryMigrationTest {
         storage = createSdkStorage(fs, data / "no_backup", errorHandler),
         layoutVersion = SdkStorageLayout.LAYOUT_VERSION,
         processStartMs = 0,
+        wallClock = { 0L },
         errorHandler = errorHandler,
     )
 

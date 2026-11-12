@@ -27,10 +27,15 @@ class LegacyTelemetryMigration(
     }
 
     /**
-     * Queues the migration. Does nothing once [cancel] has been called.
+     * Queues the migration, or completes at once if there is no 9.x telemetry to move. Does nothing once [cancel] has
+     * been called.
      */
     fun start() {
         val migrator = migrator ?: return
+        if (!migrator.hasLegacyTelemetry()) {
+            handle.complete()
+            return
+        }
         worker.submit(handle, SdkErrorType.StorageMigrationFail) {
             if (!cancelled.get()) {
                 migrator.migrateTelemetry()

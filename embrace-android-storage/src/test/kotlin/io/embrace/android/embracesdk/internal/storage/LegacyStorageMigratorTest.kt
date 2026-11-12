@@ -196,6 +196,23 @@ internal class LegacyStorageMigratorTest {
     }
 
     @Test
+    fun `the 9x install state is kept until every dir has moved`() {
+        val blocked = filesDir / "embrace_native"
+        val fs = BlockingFileSystem(fsRule.fileSystem, blocked)
+        val files = seedLegacyLayout(fs, filesDir)
+        val migrator = migrator(fs)
+
+        migrateAll(migrator)
+        assertTrue(fs.exists(filesDir / "embrace"))
+        assertTrue(migrator.hasLegacyTelemetry())
+
+        fs.blocked = null
+        migrator.migrateTelemetry()
+        assertMigrated(fs, root, files - SdkDir.INSTALL_STATE)
+        assertFalse(migrator.hasLegacyTelemetry())
+    }
+
+    @Test
     fun `migrateTelemetry deletes the 9x cache dir entries and keeps the app's files`() {
         val fs = fsRule.fileSystem
         val leftovers = listOf(
@@ -257,6 +274,34 @@ internal class LegacyStorageMigratorTest {
 
         assertMigrated(fs, root, files - SdkDir.INSTALL_STATE)
         assertTrue(errorHandler.sdkErrorMessages.isEmpty())
+    }
+
+    @Test
+    fun `hasLegacyTelemetry is true until the 9x install state is deleted`() {
+        val fs = fsRule.fileSystem
+        val migrator = migrator(fs)
+        assertFalse(migrator.hasLegacyTelemetry())
+        fs.writeText(filesDir / "embrace_payloads" / "payload", "x")
+        assertFalse(migrator.hasLegacyTelemetry())
+
+        seedLegacyLayout(fs, filesDir)
+        assertTrue(migrator.hasLegacyTelemetry())
+
+        migrateAll(migrator)
+        assertFalse(migrator.hasLegacyTelemetry())
+    }
+
+    @Test
+    fun `hasLegacyTelemetry is true if the files dir can't be resolved`() {
+        val migrator = LegacyStorageMigrator(
+            fsRule.fileSystem,
+            { error("no files dir") },
+            { cacheDir },
+            { noBackupFilesDir },
+            errorHandler,
+        )
+
+        assertTrue(migrator.hasLegacyTelemetry())
     }
 
     @Test

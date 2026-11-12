@@ -27,6 +27,7 @@ internal class LegacyTelemetryMigrationTest {
 
     private val data = "/data".toPath()
     private val legacyPayload = data / "files" / "embrace_payloads" / "payload"
+    private val legacyCrashMarker = data / "files" / "embrace" / "embrace_crash_marker"
     private val migratedPayload = data / "no_backup" / SdkStorageLayout.ROOT_DIR_NAME / "telemetry" / "ready" / "payload"
     private val orphan = data / "no_backup" / SdkStorageLayout.ROOT_DIR_NAME / "orphan"
     private val errorHandler = FakeErrorHandler(throwOnSdkError = false)
@@ -40,7 +41,7 @@ internal class LegacyTelemetryMigrationTest {
     @Test
     fun `start moves the legacy telemetry and releases await`() {
         val fs = fsRule.fileSystem
-        fs.writeText(legacyPayload)
+        fs.seedLegacyTelemetry()
         val migration = LegacyTelemetryMigration(worker, migrator(fs), errorHandler)
 
         migration.start()
@@ -51,9 +52,25 @@ internal class LegacyTelemetryMigrationTest {
     }
 
     @Test
-    fun `cancel releases await and stops a migration that hasn't begun`() {
+    fun `start without the 9x install state completes at once and moves nothing`() {
         val fs = fsRule.fileSystem
         fs.writeText(legacyPayload)
+        val release = blockWorker()
+        val migration = LegacyTelemetryMigration(worker, migrator(fs), errorHandler)
+
+        migration.start()
+        assertTrue(migration.isComplete)
+        release.countDown()
+        drainWorker()
+
+        assertTrue(fs.exists(legacyPayload))
+        assertFalse(fs.exists(migratedPayload))
+    }
+
+    @Test
+    fun `cancel releases await and stops a migration that hasn't begun`() {
+        val fs = fsRule.fileSystem
+        fs.seedLegacyTelemetry()
         val release = blockWorker()
         val migration = LegacyTelemetryMigration(worker, migrator(fs), errorHandler)
 
@@ -70,7 +87,7 @@ internal class LegacyTelemetryMigrationTest {
     @Test
     fun `deleteLegacyTelemetry deletes without moving`() {
         val fs = fsRule.fileSystem
-        fs.writeText(legacyPayload)
+        fs.seedLegacyTelemetry()
         val migration = LegacyTelemetryMigration(worker, migrator(fs), errorHandler)
 
         migration.deleteLegacyTelemetry {}
@@ -84,7 +101,7 @@ internal class LegacyTelemetryMigrationTest {
     @Test
     fun `deleteLegacyTelemetry returns without waiting for queued work`() {
         val fs = fsRule.fileSystem
-        fs.writeText(legacyPayload)
+        fs.seedLegacyTelemetry()
         val release = blockWorker()
         val migration = LegacyTelemetryMigration(worker, migrator(fs), errorHandler)
         val afterDeletion = CountDownLatch(1)
@@ -109,7 +126,7 @@ internal class LegacyTelemetryMigrationTest {
                 release.await(TIMEOUT_SECS, TimeUnit.SECONDS)
             }
         }
-        fs.writeText(legacyPayload)
+        fs.seedLegacyTelemetry()
         val migration = LegacyTelemetryMigration(worker, migrator(fs), errorHandler)
         val movedBeforeAfterDeletion = AtomicBoolean(false)
         val afterDeletion = CountDownLatch(1)
@@ -150,7 +167,7 @@ internal class LegacyTelemetryMigrationTest {
     @Test
     fun `start after cancel doesn't migrate`() {
         val fs = fsRule.fileSystem
-        fs.writeText(legacyPayload)
+        fs.seedLegacyTelemetry()
         val migration = LegacyTelemetryMigration(worker, migrator(fs), errorHandler)
 
         migration.cancel()
@@ -176,7 +193,7 @@ internal class LegacyTelemetryMigrationTest {
     @Test
     fun `sweepOrphans sweeps once the migration has finished`() {
         val fs = fsRule.fileSystem
-        fs.writeText(legacyPayload)
+        fs.seedLegacyTelemetry()
         fs.writeText(orphan)
         val migration = LegacyTelemetryMigration(worker, migrator(fs), errorHandler, sweeper(fs))
 
@@ -238,6 +255,7 @@ internal class LegacyTelemetryMigrationTest {
 
     @Test
     fun `isComplete is false until the migration finishes`() {
+        fsRule.fileSystem.seedLegacyTelemetry()
         val release = blockWorker()
         val migration = LegacyTelemetryMigration(worker, migrator(fsRule.fileSystem), errorHandler)
 
@@ -268,6 +286,11 @@ internal class LegacyTelemetryMigrationTest {
 
     private fun drainWorker() {
         worker.submit("drain", Unit, SdkErrorType.Ignored) {}.await()
+    }
+
+    private fun FileSystem.seedLegacyTelemetry() {
+        writeText(legacyPayload)
+        writeText(legacyCrashMarker)
     }
 
     private fun FileSystem.writeText(path: Path) {

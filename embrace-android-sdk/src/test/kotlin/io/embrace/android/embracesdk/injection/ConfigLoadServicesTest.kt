@@ -150,7 +150,7 @@ internal class ConfigLoadServicesTest {
     }
 
     @Test
-    fun `the stores don't wait behind a config move that timed out`() {
+    fun `the stores start fresh without waiting behind a config move that timed out`() {
         val configMoveReleased = CountDownLatch(1)
         val fs = object : ForwardingFileSystem(FileSystem.SYSTEM) {
             override fun metadataOrNull(path: Path): FileMetadata? {
@@ -192,6 +192,7 @@ internal class ConfigLoadServicesTest {
             }
         }
         val context = FilesDirApplication(tempDir.newFolder())
+        File(context.filesDir, "embrace").mkdirs()
         val legacy = context.filesDir.toOkioPath() / "embrace_remote_config"
         File(legacy.toString()).mkdirs()
         File(legacy.toString(), PersistedConfig.ETAG_FILE_NAME).writeText("legacy")
@@ -219,6 +220,26 @@ internal class ConfigLoadServicesTest {
         )
         assertEquals(expected, contents)
         assertFalse(File(legacy.toString()).exists())
+    }
+
+    @Test
+    fun `flushing the persisted SDK state writes a pending update without the worker`() {
+        val context = FilesDirApplication(tempDir.newFolder())
+        val workers = listOf(Worker.Background.PersistenceWorker)
+        val first = createServices(context, FakeConfigService(), FakeWorkerThreadPool(testWorkers = workers))
+        first.persistedSdkStateStore.value.update { userId = "flushed" }
+        first.flushPersistedSdkState()
+
+        val second = createServices(context, FakeConfigService(), FakeWorkerThreadPool(testWorkers = workers))
+        assertEquals("flushed", second.persistedSdkStateStore.value.snapshot().userId)
+    }
+
+    @Test
+    fun `flushing the persisted SDK state doesn't open the store`() {
+        val configLoadServices =
+            createServices(FilesDirApplication(tempDir.newFolder()), FakeConfigService(), FakeWorkerThreadPool())
+        configLoadServices.flushPersistedSdkState()
+        assertFalse(configLoadServices.persistedSdkStateStore.isInitialized())
     }
 
     private fun ConfigLoadServices.awaitPrefsMigration() {

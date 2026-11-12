@@ -26,6 +26,7 @@ import io.embrace.android.embracesdk.internal.api.delegate.SdkStateApiDelegate
 import io.embrace.android.embracesdk.internal.api.delegate.UserApiDelegate
 import io.embrace.android.embracesdk.internal.api.delegate.UserSessionApiDelegate
 import io.embrace.android.embracesdk.internal.api.delegate.ViewTrackingApiDelegate
+import io.embrace.android.embracesdk.internal.arch.CrashTeardownHandler
 import io.embrace.android.embracesdk.internal.arch.InstrumentationArgs
 import io.embrace.android.embracesdk.internal.arch.InstrumentationProvider
 import io.embrace.android.embracesdk.internal.arch.InstrumentationRegistry
@@ -129,6 +130,7 @@ internal class RealSdkInstance(
     private val threadBlockageService: ThreadBlockageService?,
     private val lastRunCrashVerifier: LastRunCrashVerifier,
     private val crashMarker: CrashFileMarker,
+    private val persistedSdkStateFlush: CrashTeardownHandler,
     private val startupTracker: StartupTracker,
     private val startupService: StartupService,
     private val appStartupDataCollector: AppStartupDataCollector,
@@ -227,7 +229,9 @@ internal class RealSdkInstance(
             if (enabled) {
                 legacyTelemetryMigration.start()
                 if (sweepOrphans) {
-                    legacyTelemetryMigration.sweepOrphans()
+                    legacyTelemetryMigration.sweepOrphans(
+                        workerThreadPool.backgroundWorker(Worker.Background.NonIoRegWorker),
+                    )
                 }
             } else {
                 legacyTelemetryMigration.cancel()
@@ -473,6 +477,7 @@ internal class RealSdkInstance(
                 addCrashTeardownHandler(sessionOrchestrator)
                 addCrashTeardownHandler(crashMarker)
                 payloadStore?.let(::addCrashTeardownHandler)
+                addCrashTeardownHandler(persistedSdkStateFlush)
             }
         }
     }

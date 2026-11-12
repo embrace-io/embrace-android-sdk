@@ -7,7 +7,6 @@ import io.embrace.android.embracesdk.internal.logging.guardSdkCodeEach
 import io.embrace.android.embracesdk.internal.utils.SystemTrace
 import okio.FileSystem
 import okio.Path
-import java.util.concurrent.atomic.AtomicBoolean
 
 /**
  * Moves the 9.x directories in [filesDir] to their [SdkStorageLayout] paths under [noBackupFilesDir], one directory at
@@ -27,14 +26,15 @@ class LegacyStorageMigrator(
         SdkStorageImpl(fileSystem, noBackupFilesDir() / SdkStorageLayout.ROOT_DIR_NAME, errorHandler)
     }
 
-    private val configAbandoned = AtomicBoolean(false)
+    @Volatile
+    private var configAbandoned: Boolean = false
 
     /**
      * Moves the remote config. Call before the config is read.
      */
     fun migrateConfig() {
         errorHandler.guardSdkCode(SdkErrorType.StorageMigrationFail) {
-            if (fileSystem.exists(legacyDir(SdkDir.REMOTE_CONFIG)) && !configAbandoned.get()) {
+            if (fileSystem.exists(legacyDir(SdkDir.REMOTE_CONFIG)) && !configAbandoned) {
                 SystemTrace.trace("storage-config-migration") {
                     migrate(SdkDir.REMOTE_CONFIG)
                 }
@@ -43,23 +43,34 @@ class LegacyStorageMigrator(
     }
 
     fun abandonConfig() {
-        configAbandoned.set(true)
+        configAbandoned = true
     }
 
     /**
-     * Moves the telemetry, the crash marker and any remote config [migrateConfig] left behind, deletes the rest of the
-     * 9.x install state, then deletes the 9.x cache dir entries.
+     * Whether [migrateTelemetry] has anything to do. Checks for the existence of the 9.x dir.
+     */
+    fun hasLegacyTelemetry(): Boolean = errorHandler.guardSdkCode(SdkErrorType.Ignored, true) {
+        // resolves to filesDir/embrace, which every 9.x version uses for its install state
+        fileSystem.exists(legacyDir(SdkDir.INSTALL_STATE))
+    }
+
+    /**
+     * Moves the telemetry, the crash marker and any remote config [migrateConfig] left behind, then deletes the 9.x
+     * cache dir entries.
      */
     fun migrateTelemetry() {
         SystemTrace.trace("storage-telemetry-migration") {
-            val abandoned = configAbandoned.get()
-            MIGRATED_DIRS.filterNot { abandoned && it == SdkDir.REMOTE_CONFIG }.forEach(::migrate)
-            migrateCrashMarker()
-            val deleted = listOfNotNull(
-                legacyDir(SdkDir.INSTALL_STATE),
-                legacyDir(SdkDir.REMOTE_CONFIG).takeIf { abandoned },
+            val abandoned = configAbandoned
+            val moved = MIGRATED_DIRS
+                .filterNot { abandoned && it == SdkDir.REMOTE_CONFIG }
+                .map(::migrate) + migrateCrashMarker()
+            delete(
+                listOfNotNull(legacyDir(SdkDir.REMOTE_CONFIG).takeIf { abandoned }) +
+                    legacyCacheEntries(LEGACY_CACHE_DIR_ENTRIES),
             )
-            delete(deleted + legacyCacheEntries(LEGACY_CACHE_DIR_ENTRIES))
+            if (moved.all { it }) {
+                delete(listOf(legacyDir(SdkDir.INSTALL_STATE)))
+            }
         }
     }
 
@@ -76,16 +87,14 @@ class LegacyStorageMigrator(
     /**
      * Moves the 9.x crash marker unless the SDK already wrote one, which is then the more recent crash.
      */
-    private fun migrateCrashMarker() {
-        errorHandler.guardSdkCode(SdkErrorType.StorageMigrationFail) {
-            merge(
-                legacyDir(SdkDir.INSTALL_STATE) / LEGACY_CRASH_MARKER_FILE_NAME,
-                layout.path(SdkDir.INSTALL_STATE) / SdkStorageLayout.CRASH_MARKER_FILE_NAME,
-            )
-        }
+    private fun migrateCrashMarker(): Boolean = errorHandler.guardSdkCode(SdkErrorType.StorageMigrationFail, false) {
+        merge(
+            legacyDir(SdkDir.INSTALL_STATE) / LEGACY_CRASH_MARKER_FILE_NAME,
+            layout.path(SdkDir.INSTALL_STATE) / SdkStorageLayout.CRASH_MARKER_FILE_NAME,
+        )
     }
 
-    private fun migrate(dir: SdkDir) {
+    private fun migrate(dir: SdkDir): Boolean {
         val source = legacyDir(dir)
         val merged = errorHandler.guardSdkCode(SdkErrorType.StorageMigrationFail, false) {
             merge(source, layout.path(dir))
@@ -93,6 +102,7 @@ class LegacyStorageMigrator(
         if (merged) {
             delete(listOf(source))
         }
+        return merged
     }
 
     /**

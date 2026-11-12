@@ -322,12 +322,13 @@ internal class RealSdkInstanceFactoryTest {
         instance.registerCrashTeardownHandlers(dataSource)
 
         val handlers = dataSource.handlers
-        assertEquals(5, handlers.size)
+        assertEquals(6, handlers.size)
         assertSame(checkNotNull(threadBlockageService), handlers[0])
         assertTrue(handlers[1] is LogOrchestrator)
         assertSame(sessionOrchestrator, handlers[2])
         assertTrue(handlers[3] is CrashFileMarker)
         assertTrue(handlers[4] is PayloadStore)
+        assertNotNull(handlers[5])
     }
 
     @Test

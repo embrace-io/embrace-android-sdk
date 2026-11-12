@@ -157,7 +157,8 @@ internal class ConfigLoadServices(
         sectionName = "persisted-config-init",
         recordDuration = true,
     ) {
-        val configMoved = migrationWorker
+        val hasLegacyConfig = EmbTrace.trace("migration-config-probe") { legacyStorageMigrator.hasLegacyConfig() }
+        val configMoved = !hasLegacyConfig || migrationWorker
             .submit("config", Unit, SdkErrorType.StorageMigrationFail, legacyStorageMigrator::migrateConfig)
             .also { it.await(configMigrationTimeoutMs, SdkErrorType.StorageMigrationFail) }
             .isComplete

@@ -31,6 +31,7 @@ import org.junit.Rule
 import org.junit.Test
 import org.junit.rules.TemporaryFolder
 import java.io.File
+import java.util.concurrent.CopyOnWriteArrayList
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.Executors
 import java.util.concurrent.TimeUnit
@@ -168,16 +169,18 @@ internal class ConfigLoadServicesTest {
     fun `the stores start fresh without waiting behind a config move that timed out`() {
         val configMoveReleased = CountDownLatch(1)
         val fs = object : ForwardingFileSystem(FileSystem.SYSTEM) {
-            override fun metadataOrNull(path: Path): FileMetadata? {
-                if (path.name == "embrace_remote_config") {
+            override fun atomicMove(source: Path, target: Path) {
+                if (source.name == "embrace_remote_config") {
                     configMoveReleased.await()
                 }
-                return super.metadataOrNull(path)
+                super.atomicMove(source, target)
             }
         }
+        val context = FilesDirApplication(tempDir.newFolder())
+        File(context.filesDir, "embrace_remote_config").mkdirs()
         val errorHandler = FakeErrorHandler(throwOnSdkError = false)
         val configLoadServices = ConfigLoadServices(
-            context = FilesDirApplication(tempDir.newFolder()),
+            context = context,
             preStartServices = PreStartServices(errorHandler = errorHandler),
             workerThreadPoolSupplier = { FakeWorkerThreadPool(testWorkers = listOf(Worker.Background.IoRegWorker)) },
             configServiceSupplier = { _, _, _, _, _, _ -> FakeConfigService() },
@@ -198,9 +201,10 @@ internal class ConfigLoadServicesTest {
     @Test
     fun `a config move that timed out doesn't mix legacy config into the fresh response`() {
         val configMoveReleased = CountDownLatch(1)
+        val initThread = Thread.currentThread()
         val fs = object : ForwardingFileSystem(FileSystem.SYSTEM) {
             override fun metadataOrNull(path: Path): FileMetadata? {
-                if (path.name == "embrace_remote_config") {
+                if (path.name == "embrace_remote_config" && Thread.currentThread() != initThread) {
                     configMoveReleased.await()
                 }
                 return super.metadataOrNull(path)
@@ -254,15 +258,17 @@ internal class ConfigLoadServicesTest {
         // holds the config move so the state prefetch queued behind it can't open the store
         val configMoveReleased = CountDownLatch(1)
         val fs = object : ForwardingFileSystem(FileSystem.SYSTEM) {
-            override fun metadataOrNull(path: Path): FileMetadata? {
-                if (path.name == "embrace_remote_config") {
+            override fun atomicMove(source: Path, target: Path) {
+                if (source.name == "embrace_remote_config") {
                     configMoveReleased.await()
                 }
-                return super.metadataOrNull(path)
+                super.atomicMove(source, target)
             }
         }
+        val context = FilesDirApplication(tempDir.newFolder())
+        File(context.filesDir, "embrace_remote_config").mkdirs()
         val configLoadServices = ConfigLoadServices(
-            context = FilesDirApplication(tempDir.newFolder()),
+            context = context,
             preStartServices = PreStartServices(errorHandler = FakeErrorHandler(throwOnSdkError = false)),
             workerThreadPoolSupplier = { FakeWorkerThreadPool() },
             configServiceSupplier = { _, _, _, _, _, _ -> FakeConfigService() },
@@ -275,6 +281,31 @@ internal class ConfigLoadServicesTest {
         } finally {
             configMoveReleased.countDown()
         }
+    }
+
+    @Test
+    fun `without 9x config only the init thread checks for it`() {
+        val threads = CopyOnWriteArrayList<String>()
+        val fs = object : ForwardingFileSystem(fsRule.fileSystem) {
+            override fun metadataOrNull(path: Path): FileMetadata? {
+                if (path.name == "embrace_remote_config") {
+                    threads.add(Thread.currentThread().name)
+                }
+                return super.metadataOrNull(path)
+            }
+        }
+        val errorHandler = FakeErrorHandler()
+        val configLoadServices = ConfigLoadServices(
+            context = FilesDirApplication(tempDir.newFolder()),
+            preStartServices = PreStartServices(errorHandler = errorHandler),
+            workerThreadPoolSupplier = { FakeWorkerThreadPool(testWorkers = listOf(Worker.Background.IoRegWorker)) },
+            configServiceSupplier = { _, _, _, _, _, _ -> FakeConfigService() },
+            fileSystem = fs,
+        )
+        configLoadServices.awaitStatePrefetch()
+
+        assertEquals(listOf(Thread.currentThread().name), threads)
+        assertTrue(errorHandler.sdkErrorMessages.isEmpty())
     }
 
     /**

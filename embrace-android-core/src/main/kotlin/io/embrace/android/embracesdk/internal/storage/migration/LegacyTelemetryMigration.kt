@@ -9,10 +9,10 @@ import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicBoolean
 
 /**
- * Moves the 9.x telemetry into the layout on [worker] once [start] is called, and runs [orphanSweeper]
- * [sweepDelayMs] after [sweepOrphans] is called, so it doesn't compete with the app's startup. Anything that reads
- * the previous launch's telemetry calls [await] first. Without a [migrator] there is nothing to move and [await]
- * returns at once.
+ * Moves the 9.x telemetry into the layout on [worker] once [move] is called, deletes the rest of the 9.x install state
+ * once [start] is called, and runs [orphanSweeper] [sweepDelayMs] after [sweepOrphans] is called, so it doesn't compete
+ * with the app's startup. Anything that reads the previous launch's telemetry calls [await] first. Without a [migrator]
+ * there is nothing to move and [await] returns at once.
  */
 class LegacyTelemetryMigration(
     private val worker: MigrationWorker,
@@ -23,6 +23,7 @@ class LegacyTelemetryMigration(
 ) {
     private val handle = MigrationHandle(NAME, Unit, errorHandler)
     private val cancelled = AtomicBoolean(false)
+    private val moveSubmitted = AtomicBoolean(false)
 
     init {
         if (migrator == null) {
@@ -31,18 +32,40 @@ class LegacyTelemetryMigration(
     }
 
     /**
-     * Queues the migration, or completes at once if there is no 9.x telemetry to move. Does nothing once [cancel] has
-     * been called.
+     * Moves the telemetry on [worker] and blocks until it finishes or [timeoutMs] passes, or completes at once if there
+     * is no 9.x telemetry to move.
      */
-    fun start() {
+    fun move(timeoutMs: Long = MOVE_TIMEOUT_MS) {
         val migrator = migrator ?: return
+        if (cancelled.get()) {
+            return
+        }
         if (!migrator.hasLegacyTelemetry()) {
             handle.complete()
             return
         }
+        if (!moveSubmitted.compareAndSet(false, true)) {
+            return
+        }
         worker.submit(handle, SdkErrorType.StorageMigrationFail) {
             if (!cancelled.get()) {
-                migrator.migrateTelemetry()
+                migrator.moveTelemetry()
+            }
+        }
+        handle.await(timeoutMs, SdkErrorType.StorageMigrationFail)
+    }
+
+    /**
+     * Queues the deletion of the rest of the 9.x install state behind the [move].
+     */
+    fun start() {
+        val migrator = migrator ?: return
+        if (!moveSubmitted.get()) {
+            return
+        }
+        worker.submit(DELETE_INSTALL_STATE_NAME, Unit, SdkErrorType.StorageMigrationFail) {
+            if (!cancelled.get()) {
+                migrator.deleteLegacyInstallState()
             }
         }
     }
@@ -66,7 +89,7 @@ class LegacyTelemetryMigration(
      * Blocks until the migration finishes or is cancelled.
      */
     fun await() {
-        if (migrator != null) {
+        if (migrator != null && !handle.isComplete) {
             handle.await()
         }
     }
@@ -105,7 +128,9 @@ class LegacyTelemetryMigration(
 
     companion object {
         const val SWEEP_DELAY_MS: Long = 10_000L
-        private const val NAME = "telemetry"
+        private const val NAME = "telemetry-move"
+        private const val MOVE_TIMEOUT_MS = 3_000L
+        private const val DELETE_INSTALL_STATE_NAME = "delete-legacy-install-state"
         private const val DELETE_NAME = "delete-legacy-telemetry"
         private const val SWEEP_NAME = "orphan-sweep"
     }

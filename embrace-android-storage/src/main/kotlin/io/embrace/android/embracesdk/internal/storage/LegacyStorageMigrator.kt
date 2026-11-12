@@ -29,6 +29,9 @@ class LegacyStorageMigrator(
     @Volatile
     private var configAbandoned: Boolean = false
 
+    @Volatile
+    private var allMoved: Boolean = false
+
     /**
      * Whether a 9.x remote config dir exists for [migrateConfig] to move.
      */
@@ -54,7 +57,7 @@ class LegacyStorageMigrator(
     }
 
     /**
-     * Whether [migrateTelemetry] has anything to do. Checks for the existence of the 9.x dir.
+     * Whether [moveTelemetry] has anything to do. Checks for the existence of the 9.x dir.
      */
     fun hasLegacyTelemetry(): Boolean = errorHandler.guardSdkCode(SdkErrorType.Ignored, true) {
         // resolves to filesDir/embrace, which every 9.x version uses for its install state
@@ -62,20 +65,30 @@ class LegacyStorageMigrator(
     }
 
     /**
-     * Moves the telemetry, the crash marker and any remote config [migrateConfig] left behind, then deletes the 9.x
-     * cache dir entries.
+     * Moves the telemetry, the crash marker and any remote config [migrateConfig] left behind. On a first upgrade
+     * launch nothing is at its target yet, so each directory is moved by a single rename.
      */
-    fun migrateTelemetry() {
-        SystemTrace.trace("storage-telemetry-migration") {
+    fun moveTelemetry() {
+        SystemTrace.trace("storage-telemetry-move") {
             val abandoned = configAbandoned
             val moved = MIGRATED_DIRS
                 .filterNot { abandoned && it == SdkDir.REMOTE_CONFIG }
                 .map(::migrate) + migrateCrashMarker()
+            allMoved = moved.all { it }
+        }
+    }
+
+    /**
+     * Deletes any abandoned remote config and the 9.x cache dir entries, then the rest of the 9.x install state if
+     * [moveTelemetry] moved everything.
+     */
+    fun deleteLegacyInstallState() {
+        SystemTrace.trace("storage-legacy-install-state-delete") {
             delete(
-                listOfNotNull(legacyDir(SdkDir.REMOTE_CONFIG).takeIf { abandoned }) +
+                listOfNotNull(legacyDir(SdkDir.REMOTE_CONFIG).takeIf { configAbandoned }) +
                     legacyCacheEntries(LEGACY_CACHE_DIR_ENTRIES),
             )
-            if (moved.all { it }) {
+            if (allMoved) {
                 delete(listOf(legacyDir(SdkDir.INSTALL_STATE)))
             }
         }

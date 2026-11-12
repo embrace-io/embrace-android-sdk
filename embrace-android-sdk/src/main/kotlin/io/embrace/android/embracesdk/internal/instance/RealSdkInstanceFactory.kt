@@ -139,6 +139,9 @@ internal fun createRealSdkInstance(
     val uuidSource = configLoadServices.uuidSource
     val sdkStorage = configLoadServices.sdkStorage
 
+    // 9.x telemetry is moved before any service is constructed
+    configLoadServices.legacyTelemetryMigration.move()
+
     // forward references that break dependency cycles
     lateinit var sessionIdsProvider: SessionIdsProvider
     lateinit var userService: Lazy<UserService>

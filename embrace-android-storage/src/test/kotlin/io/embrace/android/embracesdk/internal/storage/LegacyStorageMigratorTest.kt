@@ -92,7 +92,7 @@ internal class LegacyStorageMigratorTest {
     }
 
     @Test
-    fun `config that fails to move is kept and moved by migrateTelemetry`() {
+    fun `config that fails to move is kept and moved by moveTelemetry`() {
         val blocked = filesDir / "embrace_remote_config"
         val fs = BlockingFileSystem(fsRule.fileSystem, blocked)
         fs.writeText(blocked / "most_recent_response", "legacy")
@@ -103,7 +103,7 @@ internal class LegacyStorageMigratorTest {
         assertTrue(fs.exists(blocked / "most_recent_response"))
 
         fs.blocked = null
-        migrator.migrateTelemetry()
+        migrator.moveTelemetry()
         val config = layout(fs).path(SdkDir.REMOTE_CONFIG)
         assertEquals(mapOf("most_recent_response" to "legacy"), contents(fs, config))
         assertFalse(fs.exists(blocked))
@@ -270,7 +270,7 @@ internal class LegacyStorageMigratorTest {
     }
 
     @Test
-    fun `migrateTelemetry deletes the 9x cache dir entries and keeps the app's files`() {
+    fun `deleteLegacyInstallState deletes the 9x cache dir entries and keeps the app's files`() {
         val fs = fsRule.fileSystem
         val leftovers = listOf(
             cacheDir / "embrace_payloads" / "payload",
@@ -292,7 +292,7 @@ internal class LegacyStorageMigratorTest {
     }
 
     @Test
-    fun `migrateTelemetry still migrates if the cache dir can't be resolved`() {
+    fun `telemetry still migrates if the cache dir can't be resolved`() {
         val fs = fsRule.fileSystem
         fs.writeText(filesDir / "embrace_payloads" / "payload", "x")
         val migrator =
@@ -302,6 +302,29 @@ internal class LegacyStorageMigratorTest {
 
         assertEquals("x", fs.read(layout(fs).path(SdkDir.TELEMETRY_READY) / "payload") { readUtf8() })
         assertFalse(fs.exists(filesDir / "embrace_payloads"))
+        assertTrue(errorHandler.sdkErrorMessages.isEmpty())
+    }
+
+    @Test
+    fun `moveTelemetry leaves the rest of the install state and the cache dir entries`() {
+        val fs = fsRule.fileSystem
+        fs.writeText(filesDir / "embrace" / "embrace_crash_marker", "legacy")
+        fs.writeText(filesDir / "embrace" / "other", "x")
+        fs.writeText(filesDir / "embrace_payloads" / "payload", "x")
+        val cached = (cacheDir / "embrace_payloads" / "payload").also { fs.writeText(it, "x") }
+        val migrator = migrator(fs)
+
+        migrator.moveTelemetry()
+
+        assertTrue(fs.exists(layout(fs).path(SdkDir.TELEMETRY_READY) / "payload"))
+        assertTrue(fs.exists(layout(fs).path(SdkDir.INSTALL_STATE) / SdkStorageLayout.CRASH_MARKER_FILE_NAME))
+        assertTrue(fs.exists(filesDir / "embrace" / "other"))
+        assertTrue(fs.exists(cached))
+
+        migrator.deleteLegacyInstallState()
+
+        assertFalse(fs.exists(filesDir / "embrace"))
+        assertFalse(fs.exists(cached))
         assertTrue(errorHandler.sdkErrorMessages.isEmpty())
     }
 
@@ -420,6 +443,11 @@ internal class LegacyStorageMigratorTest {
     private fun migrateAll(migrator: LegacyStorageMigrator) {
         migrator.migrateConfig()
         migrator.migrateTelemetry()
+    }
+
+    private fun LegacyStorageMigrator.migrateTelemetry() {
+        moveTelemetry()
+        deleteLegacyInstallState()
     }
 
     /**

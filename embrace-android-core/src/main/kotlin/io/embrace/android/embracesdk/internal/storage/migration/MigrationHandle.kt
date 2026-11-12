@@ -16,6 +16,7 @@ class MigrationHandle<T>(
     val name: String,
     private val default: T,
     private val errorHandler: ErrorHandler,
+    private val recordDuration: Boolean = true,
 ) {
     private val latch = CountDownLatch(1)
     private val completed = AtomicBoolean(false)
@@ -25,7 +26,7 @@ class MigrationHandle<T>(
      * Blocks until the job completes or [complete] is called, then returns the result. Never throws.
      */
     fun await(): T = errorHandler.guardSdkCode(SdkErrorType.Ignored, default) {
-        EmbTrace.trace("migration-await-$name", recordDuration = true) {
+        EmbTrace.trace("migration-await-$name", recordDuration) {
             latch.await()
         }
         result
@@ -36,7 +37,7 @@ class MigrationHandle<T>(
      * tracked as [errorType] and returns [default]. Never throws.
      */
     fun await(timeoutMs: Long, errorType: SdkErrorType): T = errorHandler.guardSdkCode(SdkErrorType.Ignored, default) {
-        val completedInTime = EmbTrace.trace("migration-await-$name", recordDuration = true) {
+        val completedInTime = EmbTrace.trace("migration-await-$name", recordDuration) {
             latch.await(timeoutMs, TimeUnit.MILLISECONDS)
         }
         if (completedInTime) {
@@ -66,7 +67,7 @@ class MigrationHandle<T>(
     internal fun run(errorType: SdkErrorType, block: () -> T) {
         complete(
             errorHandler.guardSdkCode(errorType, default) {
-                EmbTrace.trace("migration-$name", recordDuration = true, block)
+                EmbTrace.trace("migration-$name", recordDuration, block)
             },
         )
     }

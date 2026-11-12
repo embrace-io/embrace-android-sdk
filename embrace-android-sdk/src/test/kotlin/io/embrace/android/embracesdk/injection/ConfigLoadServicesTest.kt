@@ -22,6 +22,7 @@ import okio.FileSystem
 import okio.ForwardingFileSystem
 import okio.Path
 import okio.Path.Companion.toOkioPath
+import okio.Source
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
@@ -32,6 +33,7 @@ import java.io.File
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.Executors
 import java.util.concurrent.TimeUnit
+import java.util.concurrent.atomic.AtomicReference
 
 internal class ConfigLoadServicesTest {
 
@@ -45,7 +47,7 @@ internal class ConfigLoadServicesTest {
     fun `config requests only begin once started`() {
         val configService = FakeConfigService()
         val configLoadServices =
-            createServices(FilesDirApplication(tempDir.newFolder()), configService, FakeWorkerThreadPool())
+            createServices(FilesDirApplication(tempDir.newFolder()), configService)
         assertEquals(0, configService.scheduleConfigRequestsCount)
 
         configLoadServices.start()
@@ -53,13 +55,23 @@ internal class ConfigLoadServicesTest {
     }
 
     @Test
-    fun `reads the persisted SDK state from install state`() {
-        val fs = fsRule.fileSystem
+    fun `reads the persisted SDK state from install state off the init thread`() {
         val context = FilesDirApplication(tempDir.newFolder())
         val stateFile = context.noBackupFilesDir.toOkioPath() / SdkStorageLayout.ROOT_DIR_NAME / "install_state" /
             SdkStorageLayout.PERSISTED_SDK_STATE_FILE_NAME
-        fs.createDirectories(checkNotNull(stateFile.parent))
-        FilePersistedSdkStateStore.create(fs, stateFile, PersistedSdkState("device-id", 1L))
+        fsRule.fileSystem.createDirectories(checkNotNull(stateFile.parent))
+        FilePersistedSdkStateStore.create(fsRule.fileSystem, stateFile, PersistedSdkState("device-id", 1L))
+        val loaded = CountDownLatch(1)
+        val loadThread = AtomicReference<String>()
+        val fs = object : ForwardingFileSystem(fsRule.fileSystem) {
+            override fun source(file: Path): Source {
+                if (file == stateFile) {
+                    loadThread.set(Thread.currentThread().name)
+                    loaded.countDown()
+                }
+                return super.source(file)
+            }
+        }
 
         val configLoadServices = ConfigLoadServices(
             context = context,
@@ -68,6 +80,9 @@ internal class ConfigLoadServicesTest {
             configServiceSupplier = { _, _, _, _, _, _ -> FakeConfigService() },
             fileSystem = fs,
         )
+
+        assertTrue(loaded.await(5, TimeUnit.SECONDS))
+        assertEquals("emb-migration", loadThread.get())
         assertEquals("device-id", configLoadServices.persistedSdkStateStore.value.snapshot().deviceId)
     }
 
@@ -79,7 +94,7 @@ internal class ConfigLoadServicesTest {
         fs.createDirectories(checkNotNull(legacy.parent))
         fs.write(legacy) { writeUtf8("{}") }
 
-        createServices(context, FakeConfigService(), FakeWorkerThreadPool()).awaitPrefsMigration()
+        createServices(context, FakeConfigService())
 
         val migrated = context.noBackupFilesDir.toOkioPath() / SdkStorageLayout.ROOT_DIR_NAME / "remote_config" /
             PersistedConfig.CONFIG_RESPONSE_FILE_NAME
@@ -193,25 +208,49 @@ internal class ConfigLoadServicesTest {
 
     @Test
     fun `flushing the persisted SDK state doesn't open the store`() {
-        val configLoadServices =
-            createServices(FilesDirApplication(tempDir.newFolder()), FakeConfigService(), FakeWorkerThreadPool())
-        configLoadServices.flushPersistedSdkState()
-        assertFalse(configLoadServices.persistedSdkStateStore.isInitialized())
+        // holds the config move so the state prefetch queued behind it can't open the store
+        val configMoveReleased = CountDownLatch(1)
+        val fs = object : ForwardingFileSystem(FileSystem.SYSTEM) {
+            override fun metadataOrNull(path: Path): FileMetadata? {
+                if (path.name == "embrace_remote_config") {
+                    configMoveReleased.await()
+                }
+                return super.metadataOrNull(path)
+            }
+        }
+        val configLoadServices = ConfigLoadServices(
+            context = FilesDirApplication(tempDir.newFolder()),
+            preStartServices = PreStartServices(errorHandler = FakeErrorHandler(throwOnSdkError = false)),
+            workerThreadPoolSupplier = { FakeWorkerThreadPool() },
+            configServiceSupplier = { _, _, _, _, _, _ -> FakeConfigService() },
+            fileSystem = fs,
+            configMigrationTimeoutMs = 1,
+        )
+        try {
+            configLoadServices.flushPersistedSdkState()
+            assertFalse(configLoadServices.persistedSdkStateStore.isInitialized())
+        } finally {
+            configMoveReleased.countDown()
+        }
     }
 
-    private fun ConfigLoadServices.awaitPrefsMigration() {
-        persistedSdkStateStore.value
+    /**
+     * Blocks until the prefs migration and any in-progress state prefetch are done, so no file is left open.
+     */
+    private fun ConfigLoadServices.awaitStatePrefetch() {
+        persistedSdkStateStore.value.snapshot()
     }
 
     private fun createServices(
         context: FilesDirApplication,
         configService: FakeConfigService,
-        workerThreadPool: FakeWorkerThreadPool,
+        workerThreadPool: FakeWorkerThreadPool =
+            FakeWorkerThreadPool(testWorkers = listOf(Worker.Background.PersistenceWorker)),
     ) = ConfigLoadServices(
         context = context,
         preStartServices = PreStartServices(errorHandler = FakeErrorHandler()),
         workerThreadPoolSupplier = { workerThreadPool },
         configServiceSupplier = { _, _, _, _, _, _ -> configService },
         fileSystem = fsRule.fileSystem,
-    )
+    ).also { it.awaitStatePrefetch() }
 }

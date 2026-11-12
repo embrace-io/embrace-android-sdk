@@ -174,6 +174,7 @@ internal class ConfigLoadServices(
             } else {
                 prefsMigration.complete()
             }
+            submitStatePrefetch(preStartServices.errorHandler)
         }
     }
 
@@ -231,6 +232,17 @@ internal class ConfigLoadServices(
         }
     }
 
+    /**
+     * Prefetches the persisted SDK state off the init thread which then either finds it already
+     * loaded or waits for the in-progress load.
+     */
+    private fun submitStatePrefetch(errorHandler: ErrorHandler) {
+        val handle = MigrationHandle(STATE_PREFETCH_NAME, Unit, errorHandler, recordDuration = false)
+        migrationWorker.submit(handle, SdkErrorType.PersistedSdkStateLoadFail) {
+            persistedSdkStateStore.value.snapshot()
+        }
+    }
+
     private fun createFileOrdinalStore(errorHandler: ErrorHandler): OrdinalStore {
         installState.value
         val path = sdkStorage.dir(SdkDir.INSTALL_STATE) / SdkStorageLayout.ORDINALS_FILE_NAME
@@ -251,3 +263,5 @@ private const val PREFS_MIGRATION_TIMEOUT_MS = 3_000L
 private const val MS_PER_SECOND = 1_000L
 
 private const val PREFS_MIGRATION_NAME = "prefs"
+
+private const val STATE_PREFETCH_NAME = "sdk-state-prefetch"

@@ -1,9 +1,8 @@
 package io.embrace.android.embracesdk.internal.instrumentation.navigation
 
 import android.app.Activity
-import android.app.Application
 import android.os.Build
-import android.os.Bundle
+import io.embrace.android.embracesdk.internal.arch.lifecycle.ActivityLifecycle
 import io.embrace.android.embracesdk.internal.arch.navigation.NavigationSignal
 import io.embrace.android.embracesdk.internal.arch.navigation.NavigationSignal.ActivityDestroyed
 import io.embrace.android.embracesdk.internal.arch.navigation.NavigationSignal.ActivityPaused
@@ -20,9 +19,11 @@ import io.embrace.android.embracesdk.internal.logging.guardSdkCode
 import io.embrace.android.embracesdk.internal.utils.BuildVersionChecker
 import io.embrace.android.embracesdk.internal.utils.VersionChecker
 import io.embrace.android.embracesdk.internal.utils.event.EventBus
+import io.embrace.android.embracesdk.internal.utils.event.EventHandler
+import io.embrace.android.embracesdk.internal.utils.event.EventKey
 
 /**
- * Tracks Activities coming into and out of view through [Application.ActivityLifecycleCallbacks], but listens to [ProcessStateListener]
+ * Tracks Activities coming into and out of view through the [ActivityLifecycle] events, but listens to [ProcessStateListener]
  * when it comes to tracking app backgrounding in order to synchronize with the rest of the SDK's app backgrounding logic.
  *
  * The time that this component's listeners fire is the canonical time for the signal, whenever it is processed downstream.
@@ -33,67 +34,26 @@ internal class ActivityNavigationTracker(
     private val navigationTrackingService: NavigationTrackingService,
     private val errorHandler: ErrorHandler,
     versionChecker: VersionChecker = BuildVersionChecker,
-) : Application.ActivityLifecycleCallbacks, ProcessStateListener {
+) : ProcessStateListener, AutoCloseable {
 
-    private val usePrePostCallbacks = versionChecker.isAtLeast(Build.VERSION_CODES.Q)
+    private val startedKey: EventKey<Activity>
+    private val resumedKey: EventKey<Activity>
+    private val pausedKey: EventKey<Activity>
 
-    override fun onActivityPreStarted(activity: Activity) {
-        if (usePrePostCallbacks) {
-            handleActivityStarted(activity)
-        }
+    init {
+        val usePrePostCallbacks = versionChecker.isAtLeast(Build.VERSION_CODES.Q)
+        startedKey = if (usePrePostCallbacks) ActivityLifecycle.PRE_STARTED else ActivityLifecycle.STARTED
+        resumedKey = if (usePrePostCallbacks) ActivityLifecycle.PRE_RESUMED else ActivityLifecycle.RESUMED
+        pausedKey = if (usePrePostCallbacks) ActivityLifecycle.POST_PAUSED else ActivityLifecycle.PAUSED
     }
 
-    override fun onActivityStarted(activity: Activity) {
-        if (!usePrePostCallbacks) {
-            handleActivityStarted(activity)
-        }
-    }
-
-    override fun onActivityPreResumed(activity: Activity) {
-        if (usePrePostCallbacks) {
-            handleActivityResumed(activity)
-        }
-    }
-
-    override fun onActivityResumed(activity: Activity) {
-        if (!usePrePostCallbacks) {
-            handleActivityResumed(activity)
-        }
-    }
-
-    override fun onActivityPaused(activity: Activity) {
-        if (!usePrePostCallbacks) {
-            handleActivityPaused(activity)
-        }
-    }
-
-    override fun onActivityPostPaused(activity: Activity) {
-        if (usePrePostCallbacks) {
-            handleActivityPaused(activity)
-        }
-    }
-
-    override fun onBackground() {
-        eventBus.emit(NavigationSignal.KEY, Backgrounded(clock.now()))
-    }
-
-    override fun onActivityCreated(activity: Activity, savedInstanceState: Bundle?) {}
-    override fun onActivityStopped(activity: Activity) {}
-    override fun onActivitySaveInstanceState(activity: Activity, outState: Bundle) {}
-    override fun onActivityDestroyed(activity: Activity) {
-        errorHandler.guardSdkCode(SdkErrorType.UiCallbackFail) {
-            eventBus.emit(NavigationSignal.KEY, ActivityDestroyed(activity.getId(), clock.now()))
-        }
-    }
-    override fun onForeground() {}
-
-    private fun handleActivityStarted(activity: Activity) {
+    private val onStarted = EventHandler<Activity> { activity ->
         errorHandler.guardSdkCode(SdkErrorType.UiCallbackFail) {
             eventBus.emit(NavigationSignal.KEY, ActivityStarted(activity.getId(), clock.now()))
         }
     }
 
-    private fun handleActivityResumed(activity: Activity) {
+    private val onResumed = EventHandler<Activity> { activity ->
         errorHandler.guardSdkCode(SdkErrorType.UiCallbackFail) {
             eventBus.emit(NavigationSignal.KEY, ActivityResumed(activity.getId(), activity.localClassName, clock.now()))
 
@@ -102,9 +62,38 @@ internal class ActivityNavigationTracker(
         }
     }
 
-    private fun handleActivityPaused(activity: Activity) {
+    private val onPaused = EventHandler<Activity> { activity ->
         errorHandler.guardSdkCode(SdkErrorType.UiCallbackFail) {
             eventBus.emit(NavigationSignal.KEY, ActivityPaused(activity.getId(), clock.now()))
         }
     }
+
+    private val onDestroyed = EventHandler<Activity> { activity ->
+        errorHandler.guardSdkCode(SdkErrorType.UiCallbackFail) {
+            eventBus.emit(NavigationSignal.KEY, ActivityDestroyed(activity.getId(), clock.now()))
+        }
+    }
+
+    /**
+     * Starts tracking Activities, from the pre and post events on Q and above and from the main events below it.
+     */
+    fun subscribe() {
+        eventBus.addHandler(startedKey, onStarted)
+        eventBus.addHandler(resumedKey, onResumed)
+        eventBus.addHandler(pausedKey, onPaused)
+        eventBus.addHandler(ActivityLifecycle.DESTROYED, onDestroyed)
+    }
+
+    override fun close() {
+        eventBus.removeHandler(startedKey, onStarted)
+        eventBus.removeHandler(resumedKey, onResumed)
+        eventBus.removeHandler(pausedKey, onPaused)
+        eventBus.removeHandler(ActivityLifecycle.DESTROYED, onDestroyed)
+    }
+
+    override fun onBackground() {
+        eventBus.emit(NavigationSignal.KEY, Backgrounded(clock.now()))
+    }
+
+    override fun onForeground() {}
 }

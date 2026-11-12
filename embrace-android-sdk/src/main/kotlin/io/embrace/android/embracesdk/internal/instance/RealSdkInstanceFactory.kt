@@ -89,6 +89,7 @@ import io.embrace.android.embracesdk.internal.otel.spans.SpanService
 import io.embrace.android.embracesdk.internal.otel.spans.SpanServiceImpl
 import io.embrace.android.embracesdk.internal.session.id.SessionIdsProvider
 import io.embrace.android.embracesdk.internal.session.id.SessionPartTracker
+import io.embrace.android.embracesdk.internal.session.lifecycle.ActivityLifecycleRelay
 import io.embrace.android.embracesdk.internal.session.lifecycle.createLifecycleTracker
 import io.embrace.android.embracesdk.internal.session.orchestrator.SessionOrchestrator
 import io.embrace.android.embracesdk.internal.spans.TracingApiDelegate
@@ -294,6 +295,8 @@ internal fun createRealSdkInstance(
         EmbTrace.trace("event-bus-init") { overrides?.eventBus.resolve { EventBus(errorHandler) } }
     }
 
+    val activityLifecycleRelay = ActivityLifecycleRelay(appContext as Application, eventBus, errorHandler)
+
     val appVersionStartupCounter: Int by lazy {
         EmbTrace.trace("app-version-startup-counter-init") {
             ordinalStore.incrementAndGet(
@@ -307,7 +310,7 @@ internal fun createRealSdkInstance(
         createProcessStateTracker(
             errorHandler = errorHandler,
             lifecycleTracker = overrides?.lifecycleTracker.resolve {
-                createLifecycleTracker(configService, appContext as Application, context, errorHandler)
+                createLifecycleTracker(configService, eventBus, context, errorHandler)
             },
         )
     }
@@ -479,6 +482,7 @@ internal fun createRealSdkInstance(
             configService = configService,
             appStartupDataCollector = appStartupDataCollector,
             uiLoadDataListener = uiLoadDataListener,
+            eventBus = eventBus,
             versionChecker = versionChecker,
         )
     }
@@ -835,6 +839,7 @@ internal fun createRealSdkInstance(
             workerThreadPool = workerThreadPool,
             okHttpClient = okHttpClient,
             eventBus = eventBus,
+            activityLifecycleRelay = activityLifecycleRelay,
             appContext = appContext,
             sdkStorage = sdkStorage,
             spanRepository = spanRepository,

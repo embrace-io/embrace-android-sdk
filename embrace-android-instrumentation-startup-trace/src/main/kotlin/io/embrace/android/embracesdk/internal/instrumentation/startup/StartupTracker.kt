@@ -2,14 +2,17 @@ package io.embrace.android.embracesdk.internal.instrumentation.startup
 
 import android.app.Activity
 import android.app.Application
-import android.os.Bundle
 import io.embrace.android.embracesdk.annotation.IgnoreForStartup
+import io.embrace.android.embracesdk.internal.arch.lifecycle.ActivityCreated
+import io.embrace.android.embracesdk.internal.arch.lifecycle.ActivityLifecycle
 import io.embrace.android.embracesdk.internal.instrumentation.startup.activity.traceInstanceId
 import io.embrace.android.embracesdk.internal.instrumentation.startup.ui.DrawEventEmitter
 import io.embrace.android.embracesdk.internal.logging.ErrorHandler
 import io.embrace.android.embracesdk.internal.logging.SdkErrorType
 import io.embrace.android.embracesdk.internal.logging.guardSdkCode
 import io.embrace.android.embracesdk.internal.utils.concurrent.OneShot
+import io.embrace.android.embracesdk.internal.utils.event.EventBus
+import io.embrace.android.embracesdk.internal.utils.event.EventHandler
 
 /**
  * Component that captures various timestamps throughout the startup process and uses that information to log spans that approximates to
@@ -34,8 +37,9 @@ class StartupTracker(
     private val appStartupDataCollector: AppStartupDataCollector,
     private val activityLoadEventEmitter: Application.ActivityLifecycleCallbacks?,
     private val drawEventEmitter: DrawEventEmitter?,
+    private val eventBus: EventBus,
     private val errorHandler: ErrorHandler,
-) : Application.ActivityLifecycleCallbacks, AutoCloseable {
+) : AutoCloseable {
 
     private val lock = Any()
 
@@ -46,7 +50,7 @@ class StartupTracker(
     private val onFirstActivity = OneShot()
     private var startupActivityId: Int? = null
 
-    override fun onActivityPreCreated(activity: Activity, savedInstanceState: Bundle?) {
+    private val onPreCreated = EventHandler<Activity> { activity ->
         errorHandler.guardSdkCode(SdkErrorType.UiCallbackFail) {
             firstActivityInit(activity)
             if (activity.useAsStartupActivity()) {
@@ -55,8 +59,9 @@ class StartupTracker(
         }
     }
 
-    override fun onActivityCreated(activity: Activity, savedInstanceState: Bundle?) {
+    private val onCreated = EventHandler<ActivityCreated> { event ->
         errorHandler.guardSdkCode(SdkErrorType.UiCallbackFail) {
+            val activity = event.activity
             firstActivityInit(activity)
             if (activity.useAsStartupActivity()) {
                 appStartupDataCollector.startupActivityInitStart()
@@ -71,7 +76,7 @@ class StartupTracker(
         }
     }
 
-    override fun onActivityPostCreated(activity: Activity, savedInstanceState: Bundle?) {
+    private val onPostCreated = EventHandler<Activity> { activity ->
         errorHandler.guardSdkCode(SdkErrorType.UiCallbackFail) {
             if (activity.useAsStartupActivity()) {
                 appStartupDataCollector.startupActivityPostCreated()
@@ -79,7 +84,7 @@ class StartupTracker(
         }
     }
 
-    override fun onActivityStarted(activity: Activity) {
+    private val onStarted = EventHandler<Activity> { activity ->
         errorHandler.guardSdkCode(SdkErrorType.UiCallbackFail) {
             if (activity.isStartupActivity()) {
                 appStartupDataCollector.startupActivityInitEnd()
@@ -87,7 +92,7 @@ class StartupTracker(
         }
     }
 
-    override fun onActivityResumed(activity: Activity) {
+    private val onResumed = EventHandler<Activity> { activity ->
         errorHandler.guardSdkCode(SdkErrorType.UiCallbackFail) {
             if (activity.observeForStartup()) {
                 appStartupDataCollector.startupActivityResumed(
@@ -96,14 +101,6 @@ class StartupTracker(
             }
         }
     }
-
-    override fun onActivityPaused(activity: Activity) {}
-
-    override fun onActivityStopped(activity: Activity) {}
-
-    override fun onActivitySaveInstanceState(activity: Activity, outState: Bundle) {}
-
-    override fun onActivityDestroyed(activity: Activity) {}
 
     private fun firstActivityInit(activity: Activity) {
         onFirstActivity {
@@ -115,7 +112,7 @@ class StartupTracker(
     private fun startupComplete(application: Application) {
         synchronized(lock) {
             completeStartup {
-                application.unregisterActivityLifecycleCallbacks(this)
+                removeHandlers()
                 if (activityLoadEventEmitter != null) {
                     application.registerActivityLifecycleCallbacks(activityLoadEventEmitter)
                 }
@@ -124,11 +121,23 @@ class StartupTracker(
     }
 
     /**
-     * Starts observing activities in [application].
+     * Starts observing activities, keeping [application] to register the activity load event emitter with once startup completes.
      */
     fun register(application: Application) {
         this.application = application
-        application.registerActivityLifecycleCallbacks(this)
+        eventBus.addHandler(ActivityLifecycle.PRE_CREATED, onPreCreated)
+        eventBus.addHandler(ActivityLifecycle.CREATED, onCreated)
+        eventBus.addHandler(ActivityLifecycle.POST_CREATED, onPostCreated)
+        eventBus.addHandler(ActivityLifecycle.STARTED, onStarted)
+        eventBus.addHandler(ActivityLifecycle.RESUMED, onResumed)
+    }
+
+    private fun removeHandlers() {
+        eventBus.removeHandler(ActivityLifecycle.PRE_CREATED, onPreCreated)
+        eventBus.removeHandler(ActivityLifecycle.CREATED, onCreated)
+        eventBus.removeHandler(ActivityLifecycle.POST_CREATED, onPostCreated)
+        eventBus.removeHandler(ActivityLifecycle.STARTED, onStarted)
+        eventBus.removeHandler(ActivityLifecycle.RESUMED, onResumed)
     }
 
     /**
@@ -141,7 +150,7 @@ class StartupTracker(
             errorHandler.guardSdkCode(SdkErrorType.ResourceCloseFail) { drawEventEmitter?.close() }
             errorHandler.guardSdkCode(SdkErrorType.ResourceCloseFail) { (activityLoadEventEmitter as? AutoCloseable)?.close() }
             val application = application ?: return
-            errorHandler.guardSdkCode(SdkErrorType.ResourceCloseFail) { application.unregisterActivityLifecycleCallbacks(this) }
+            removeHandlers()
             if (activityLoadEventEmitter != null) {
                 errorHandler.guardSdkCode(SdkErrorType.ResourceCloseFail) {
                     application.unregisterActivityLifecycleCallbacks(activityLoadEventEmitter)

@@ -3,6 +3,7 @@ package io.embrace.android.embracesdk.internal.instrumentation.startup.startup
 import android.app.Activity
 import android.app.Application
 import android.os.Build
+import android.os.Bundle
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import io.embrace.android.embracesdk.fakes.FakeActivity
 import io.embrace.android.embracesdk.fakes.FakeActivityLifecycleListener
@@ -11,12 +12,15 @@ import io.embrace.android.embracesdk.fakes.FakeClock
 import io.embrace.android.embracesdk.fakes.FakeDrawEventEmitter
 import io.embrace.android.embracesdk.fakes.FakeErrorHandler
 import io.embrace.android.embracesdk.fakes.FakeSplashScreenActivity
+import io.embrace.android.embracesdk.internal.arch.lifecycle.ActivityCreated
+import io.embrace.android.embracesdk.internal.arch.lifecycle.ActivityLifecycle
 import io.embrace.android.embracesdk.internal.instrumentation.startup.StartupTracker
 import io.embrace.android.embracesdk.internal.instrumentation.startup.asDispatchedOn
 import io.embrace.android.embracesdk.internal.instrumentation.startup.ui.hasRenderEvent
 import io.embrace.android.embracesdk.internal.logging.ErrorHandler
 import io.embrace.android.embracesdk.internal.utils.BuildVersionChecker
 import io.embrace.android.embracesdk.internal.utils.VersionChecker
+import io.embrace.android.embracesdk.internal.utils.event.EventBus
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotEquals
 import org.junit.Assert.assertNotNull
@@ -37,6 +41,8 @@ internal class StartupTrackerTest {
     private lateinit var errorHandler: ErrorHandler
     private lateinit var activityLifecycleListener: FakeActivityLifecycleListener
     private lateinit var drawEventEmitter: FakeDrawEventEmitter
+    private lateinit var eventBus: EventBus
+    private lateinit var relay: Application.ActivityLifecycleCallbacks
     private lateinit var startupTracker: StartupTracker
     private lateinit var defaultActivityController: ActivityController<Activity>
     private var versionChecker: VersionChecker = BuildVersionChecker
@@ -49,10 +55,14 @@ internal class StartupTrackerTest {
         dataCollector = FakeAppStartupDataCollector(clock = clock)
         activityLifecycleListener = FakeActivityLifecycleListener()
         drawEventEmitter = FakeDrawEventEmitter()
+        eventBus = EventBus(errorHandler)
+        relay = BusRelay(eventBus)
+        application.registerActivityLifecycleCallbacks(relay)
         startupTracker = StartupTracker(
             appStartupDataCollector = dataCollector,
             activityLoadEventEmitter = activityLifecycleListener,
             drawEventEmitter = drawEventEmitter,
+            eventBus = eventBus,
             errorHandler = errorHandler,
         )
         startupTracker.register(application)
@@ -247,8 +257,9 @@ internal class StartupTrackerTest {
 
     private fun simulateApi(sdkInt: Int) {
         versionChecker = VersionChecker { min -> sdkInt >= min }
-        application.unregisterActivityLifecycleCallbacks(startupTracker)
-        application.registerActivityLifecycleCallbacks(startupTracker.asDispatchedOn(sdkInt))
+        application.unregisterActivityLifecycleCallbacks(relay)
+        relay = BusRelay(eventBus).asDispatchedOn(sdkInt)
+        application.registerActivityLifecycleCallbacks(relay)
     }
 
     private fun launchActivity(controller: ActivityController<*> = defaultActivityController): ActivityTiming {
@@ -303,4 +314,30 @@ internal class StartupTrackerTest {
         val resumeTime: Long,
         val renderTime: Long? = null,
     )
+
+    /**
+     * Relays the callbacks [StartupTracker] handles onto [eventBus], as the SDK's relay does.
+     */
+    private class BusRelay(private val eventBus: EventBus) : Application.ActivityLifecycleCallbacks {
+        override fun onActivityPreCreated(activity: Activity, savedInstanceState: Bundle?) =
+            eventBus.emit(ActivityLifecycle.PRE_CREATED, activity)
+
+        override fun onActivityCreated(activity: Activity, savedInstanceState: Bundle?) =
+            eventBus.emit(ActivityLifecycle.CREATED, ActivityCreated(activity, savedInstanceState))
+
+        override fun onActivityPostCreated(activity: Activity, savedInstanceState: Bundle?) =
+            eventBus.emit(ActivityLifecycle.POST_CREATED, activity)
+
+        override fun onActivityStarted(activity: Activity) = eventBus.emit(ActivityLifecycle.STARTED, activity)
+
+        override fun onActivityResumed(activity: Activity) = eventBus.emit(ActivityLifecycle.RESUMED, activity)
+
+        override fun onActivityPaused(activity: Activity) {}
+
+        override fun onActivityStopped(activity: Activity) {}
+
+        override fun onActivitySaveInstanceState(activity: Activity, outState: Bundle) {}
+
+        override fun onActivityDestroyed(activity: Activity) {}
+    }
 }

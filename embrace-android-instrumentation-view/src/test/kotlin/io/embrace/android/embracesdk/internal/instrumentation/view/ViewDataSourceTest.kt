@@ -4,6 +4,7 @@ import android.app.Activity
 import io.embrace.android.embracesdk.fakes.FakeInstrumentationArgs
 import io.embrace.android.embracesdk.fakes.FakeSpanToken
 import io.embrace.android.embracesdk.internal.arch.attrs.asPair
+import io.embrace.android.embracesdk.internal.arch.lifecycle.ActivityLifecycle
 import io.embrace.android.embracesdk.internal.arch.schema.EmbType
 import io.embrace.android.embracesdk.semconv.EmbCommonAttributes
 import io.embrace.android.embracesdk.semconv.EmbViewAttributes
@@ -20,15 +21,14 @@ import java.util.concurrent.atomic.AtomicInteger
 internal class ViewDataSourceTest {
 
     private lateinit var dataSource: ViewDataSource
-    private lateinit var application: FakeApplication
     private lateinit var args: FakeInstrumentationArgs
     private lateinit var activity: Activity
 
     @Before
     fun setUp() {
-        application = FakeApplication()
-        args = FakeInstrumentationArgs(application = application)
+        args = FakeInstrumentationArgs()
         dataSource = ViewDataSource(args)
+        dataSource.onDataCaptureEnabled()
         activity = Activity()
     }
 
@@ -162,7 +162,7 @@ internal class ViewDataSourceTest {
         dataSource.startView("a")
         dataSource.startView("b")
 
-        dataSource.onActivityStopped(activity)
+        stopActivity()
 
         val spans = args.destination.createdSpans
         assertEquals(2, spans.size)
@@ -175,7 +175,7 @@ internal class ViewDataSourceTest {
         repeat(100) { dataSource.startView("view_$it") }
         assertEquals(100, dataSource.trackedViewCount)
 
-        dataSource.onActivityStopped(activity)
+        stopActivity()
 
         assertEquals(0, dataSource.trackedViewCount)
     }
@@ -183,7 +183,7 @@ internal class ViewDataSourceTest {
     @Test
     fun `changeView after onActivityStopped does not resurrect a stale view`() {
         dataSource.startView("stale")
-        dataSource.onActivityStopped(activity)
+        stopActivity()
 
         dataSource.changeView("fresh")
 
@@ -237,14 +237,14 @@ internal class ViewDataSourceTest {
 
     @Test
     fun `activity start creates a view span without manual instrumentation indicator`() {
-        dataSource.onActivityStarted(activity)
+        startActivity()
         val span = args.destination.createdSpans.single()
         verifyAutoCapturedViewSpan(span, true)
     }
 
     @Test
     fun `manual start view replacing an auto-captured view results in proper manual attribution`() {
-        dataSource.onActivityStarted(activity)
+        startActivity()
         dataSource.startView(activity.javaClass.name, true)
 
         val spans = args.destination.createdSpans.filter { it.type == EmbType.Ux.View }
@@ -259,7 +259,7 @@ internal class ViewDataSourceTest {
     @Test
     fun `auto captured view replacing a manually started view results in proper manual attribution`() {
         dataSource.startView(activity.javaClass.name, true)
-        dataSource.onActivityStarted(activity)
+        startActivity()
 
         val spans = args.destination.createdSpans.filter { it.type == EmbType.Ux.View }
         assertEquals(2, spans.size)
@@ -272,7 +272,7 @@ internal class ViewDataSourceTest {
 
     @Test
     fun `manual ending of an auto started view is not marked as manual`() {
-        dataSource.onActivityStarted(activity)
+        startActivity()
         dataSource.endView(activity.javaClass.name)
 
         val span = args.destination.createdSpans.single { it.type == EmbType.Ux.View }
@@ -282,26 +282,28 @@ internal class ViewDataSourceTest {
     @Test
     fun `auto ending of a manually started view is marked as manual`() {
         dataSource.startView(activity.javaClass.name, true)
-        dataSource.onActivityStopped(activity)
+        stopActivity()
 
         val span = args.destination.createdSpans.single { it.type == EmbType.Ux.View }
         verifyManualViewSpan(span, false)
     }
 
     @Test
-    fun `activity lifecycle callbacks are registered when data capture is enabled`() {
-        dataSource.onDataCaptureEnabled()
-        application.lifecycleCallbacks.forEach { it.onActivityStarted(activity) }
-        assertEquals(EmbType.Ux.View, args.destination.createdSpans.single().type)
+    fun `activity events are not handled after data capture is disabled`() {
+        dataSource.startView("my_fragment")
+        dataSource.onDataCaptureDisabled()
+
+        startActivity()
+        stopActivity()
+
+        val span = args.destination.createdSpans.single()
+        assertEquals("my_fragment", span.attributes[EmbViewAttributes.VIEW_NAME])
+        assertTrue(span.isRecording())
     }
 
-    @Test
-    fun `activity lifecycle callbacks are unregistered when data capture is disabled`() {
-        dataSource.onDataCaptureEnabled()
-        dataSource.onDataCaptureDisabled()
-        application.lifecycleCallbacks.forEach { it.onActivityStarted(activity) }
-        assertTrue(args.destination.createdSpans.isEmpty())
-    }
+    private fun startActivity() = args.eventBus.emit(ActivityLifecycle.STARTED, activity)
+
+    private fun stopActivity() = args.eventBus.emit(ActivityLifecycle.STOPPED, activity)
 
     private fun verifyManualViewSpan(span: FakeSpanToken, isRecording: Boolean) {
         assertEquals(EmbType.Ux.View, span.type)

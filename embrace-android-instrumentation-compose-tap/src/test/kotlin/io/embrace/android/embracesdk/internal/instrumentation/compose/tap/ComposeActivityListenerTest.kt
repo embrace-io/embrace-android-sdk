@@ -6,6 +6,7 @@ import android.view.Window
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import io.embrace.android.embracesdk.fakes.FakeInstrumentationArgs
+import io.embrace.android.embracesdk.internal.arch.lifecycle.ActivityLifecycle
 import org.junit.Assert.assertSame
 import org.junit.Assert.assertTrue
 import org.junit.Before
@@ -23,14 +24,15 @@ internal class ComposeActivityListenerTest {
     fun setUp() {
         val application: Application = ApplicationProvider.getApplicationContext()
         args = FakeInstrumentationArgs(application)
-        listener = ComposeActivityListener(args.errorHandler, ComposeTapDataSource(args))
+        listener = ComposeActivityListener(args.errorHandler, ComposeTapDataSource(args), args.eventBus)
+        listener.subscribe()
     }
 
     @Test
     fun `onActivityResumed wraps the window callback in EmbraceWindowCallback`() {
         val activity = buildActivity(Activity::class.java).setup().get()
 
-        listener.onActivityResumed(activity)
+        resume(activity)
 
         assertTrue(activity.window.callback is EmbraceWindowCallback)
         assertTrue(args.errorHandler.errorMessages.isEmpty())
@@ -40,9 +42,9 @@ internal class ComposeActivityListenerTest {
     fun `onActivityResumed does not re-wrap an existing EmbraceWindowCallback`() {
         val activity = buildActivity(Activity::class.java).setup().get()
 
-        listener.onActivityResumed(activity)
+        resume(activity)
         val firstCallback = activity.window.callback
-        listener.onActivityResumed(activity)
+        resume(activity)
         val secondCallback = activity.window.callback
 
         assertSame(firstCallback, secondCallback)
@@ -54,13 +56,13 @@ internal class ComposeActivityListenerTest {
         val activity = buildActivity(Activity::class.java).setup().get()
 
         // First resume installs our wrapper.
-        listener.onActivityResumed(activity)
+        resume(activity)
         // Another SDK (or vitals) then wraps our callback, so ours is no longer outermost.
         val foreign: Window.Callback = object : Window.Callback by activity.window.callback {}
         activity.window.callback = foreign
 
         // A later resume must not add a second EmbraceWindowCallback layer.
-        listener.onActivityResumed(activity)
+        resume(activity)
 
         assertSame(foreign, activity.window.callback)
         assertTrue(args.errorHandler.errorMessages.isEmpty())
@@ -71,7 +73,9 @@ internal class ComposeActivityListenerTest {
         val activity = buildActivity(Activity::class.java).setup().get()
         val original = activity.window.callback
         listener.close()
-        listener.onActivityResumed(activity)
+        resume(activity)
         assertSame(original, activity.window.callback)
     }
+
+    private fun resume(activity: Activity) = args.eventBus.emit(ActivityLifecycle.RESUMED, activity)
 }

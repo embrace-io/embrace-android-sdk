@@ -14,6 +14,7 @@ import io.embrace.android.embracesdk.internal.logging.ErrorHandler
 import io.embrace.android.embracesdk.internal.utils.BuildVersionChecker
 import io.embrace.android.embracesdk.internal.utils.EmbTrace
 import io.embrace.android.embracesdk.internal.utils.VersionChecker
+import io.embrace.android.embracesdk.internal.utils.event.EventBus
 import io.embrace.android.embracesdk.internal.worker.BackgroundWorker
 
 fun createStartupService(
@@ -82,6 +83,7 @@ fun createStartupTracker(
     configService: ConfigService,
     appStartupDataCollector: AppStartupDataCollector,
     uiLoadDataListener: UiLoadDataListener?,
+    eventBus: EventBus,
     versionChecker: VersionChecker = BuildVersionChecker,
 ): StartupTracker {
     val activityLoadEventEmitter = EmbTrace.trace("activity-load-event-emitter-init") {
@@ -100,6 +102,7 @@ fun createStartupTracker(
         appStartupDataCollector = appStartupDataCollector,
         activityLoadEventEmitter = activityLoadEventEmitter,
         drawEventEmitter = createDrawEventEmitter(versionChecker, errorHandler),
+        eventBus = eventBus,
         errorHandler = errorHandler,
     )
 }

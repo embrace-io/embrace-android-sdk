@@ -30,7 +30,9 @@ internal class LegacyTelemetryMigrationTest {
 
     private val data = "/data".toPath()
     private val legacyPayload = data / "files" / "embrace_payloads" / "payload"
-    private val legacyCrashMarker = data / "files" / "embrace" / "embrace_crash_marker"
+    private val legacyInstallState = data / "files" / "embrace"
+    private val legacyCrashMarker = legacyInstallState / "embrace_crash_marker"
+    private val migratedInstallState = data / "no_backup" / SdkStorageLayout.ROOT_DIR_NAME / "install_state"
     private val migratedPayload = data / "no_backup" / SdkStorageLayout.ROOT_DIR_NAME / "telemetry" / "ready" / "payload"
     private val orphan = data / "no_backup" / SdkStorageLayout.ROOT_DIR_NAME / "orphan"
     private val errorHandler = FakeErrorHandler(throwOnSdkError = false)
@@ -44,26 +46,76 @@ internal class LegacyTelemetryMigrationTest {
     }
 
     @Test
-    fun `start moves the legacy telemetry and releases await`() {
+    fun `move moves the legacy telemetry before it returns`() {
         val fs = fsRule.fileSystem
         fs.seedLegacyTelemetry()
         val migration = LegacyTelemetryMigration(worker, migrator(fs), errorHandler)
 
-        migration.start()
-        migration.await()
+        migration.move()
 
+        assertTrue(migration.isComplete)
         assertTrue(fs.exists(migratedPayload))
         assertFalse(fs.exists(legacyPayload))
+        assertTrue(errorHandler.sdkErrorMessages.isEmpty())
     }
 
     @Test
-    fun `start without the 9x install state completes at once and moves nothing`() {
+    fun `move leaves the rest of the install state for start to delete`() {
+        val fs = fsRule.fileSystem
+        fs.writeText(legacyInstallState / "embrace_crash_marker")
+        fs.writeText(legacyInstallState / "other")
+        val migration = LegacyTelemetryMigration(worker, migrator(fs), errorHandler)
+
+        migration.move()
+
+        assertTrue(fs.exists(migratedInstallState / SdkStorageLayout.CRASH_MARKER_FILE_NAME))
+        assertTrue(fs.exists(legacyInstallState / "other"))
+
+        migration.start()
+        drainWorker()
+
+        assertFalse(fs.exists(legacyInstallState))
+    }
+
+    @Test
+    fun `a move past its timeout returns and completes once it finishes`() {
+        val fs = fsRule.fileSystem
+        fs.seedLegacyTelemetry()
+        val release = blockWorker()
+        val migration = LegacyTelemetryMigration(worker, migrator(fs), errorHandler)
+
+        migration.move(timeoutMs = 10)
+
+        assertFalse(migration.isComplete)
+        assertTrue(fs.exists(legacyPayload))
+        assertEquals(listOf("StorageMigrationFail"), errorHandler.sdkErrorMessages.map { it.msg })
+        release.countDown()
+        migration.await()
+
+        assertTrue(migration.isComplete)
+        assertTrue(fs.exists(migratedPayload))
+    }
+
+    @Test
+    fun `start without a move deletes nothing`() {
+        val fs = fsRule.fileSystem
+        fs.writeText(legacyInstallState / "other")
+        val migration = LegacyTelemetryMigration(worker, migrator(fs), errorHandler)
+
+        migration.start()
+        drainWorker()
+
+        assertTrue(fs.exists(legacyInstallState / "other"))
+    }
+
+    @Test
+    fun `move without the 9x install state completes at once and moves nothing`() {
         val fs = fsRule.fileSystem
         fs.writeText(legacyPayload)
         val release = blockWorker()
         val migration = LegacyTelemetryMigration(worker, migrator(fs), errorHandler)
 
-        migration.start()
+        migration.move()
         assertTrue(migration.isComplete)
         release.countDown()
         drainWorker()
@@ -79,7 +131,7 @@ internal class LegacyTelemetryMigrationTest {
         val release = blockWorker()
         val migration = LegacyTelemetryMigration(worker, migrator(fs), errorHandler)
 
-        migration.start()
+        migration.move(timeoutMs = 0)
         migration.cancel()
         migration.await()
         release.countDown()
@@ -136,7 +188,7 @@ internal class LegacyTelemetryMigrationTest {
         val movedBeforeAfterDeletion = AtomicBoolean(false)
         val afterDeletion = CountDownLatch(1)
 
-        migration.start()
+        migration.move(timeoutMs = 0)
         assertTrue(moving.await(TIMEOUT_SECS, TimeUnit.SECONDS))
         migration.deleteLegacyTelemetry {
             movedBeforeAfterDeletion.set(fs.exists(migratedPayload))
@@ -170,13 +222,13 @@ internal class LegacyTelemetryMigrationTest {
     }
 
     @Test
-    fun `start after cancel doesn't migrate`() {
+    fun `move after cancel doesn't migrate`() {
         val fs = fsRule.fileSystem
         fs.seedLegacyTelemetry()
         val migration = LegacyTelemetryMigration(worker, migrator(fs), errorHandler)
 
         migration.cancel()
-        migration.start()
+        migration.move()
         drainWorker()
 
         assertTrue(migration.isComplete)
@@ -189,7 +241,10 @@ internal class LegacyTelemetryMigrationTest {
         val fs = fsRule.fileSystem
         fs.writeText(orphan)
 
-        LegacyTelemetryMigration(worker, migrator(fs), errorHandler, sweeper(fs)).start()
+        LegacyTelemetryMigration(worker, migrator(fs), errorHandler, sweeper(fs)).apply {
+            move()
+            start()
+        }
         drainWorker()
 
         assertTrue(fs.exists(orphan))
@@ -202,7 +257,7 @@ internal class LegacyTelemetryMigrationTest {
         fs.writeText(orphan)
         val migration = LegacyTelemetryMigration(worker, migrator(fs), errorHandler, sweeper(fs))
 
-        migration.start()
+        migration.move()
         migration.sweepOrphans(scheduler)
         runSweep()
 
@@ -243,15 +298,17 @@ internal class LegacyTelemetryMigrationTest {
         val release = CountDownLatch(1)
         val fs = object : ForwardingFileSystem(fsRule.fileSystem) {
             override fun deleteRecursively(fileOrDirectory: Path, mustExist: Boolean) {
-                sweeping.countDown()
-                release.await(TIMEOUT_SECS, TimeUnit.SECONDS)
+                if (fileOrDirectory == orphan) {
+                    sweeping.countDown()
+                    release.await(TIMEOUT_SECS, TimeUnit.SECONDS)
+                }
                 super.deleteRecursively(fileOrDirectory, mustExist)
             }
         }
         fs.writeText(orphan)
         val migration = LegacyTelemetryMigration(worker, migrator(fs), errorHandler, sweeper(fs))
 
-        migration.start()
+        migration.move()
         migration.sweepOrphans(scheduler)
         schedulerExecutor.moveForwardAndRunBlocked(LegacyTelemetryMigration.SWEEP_DELAY_MS)
         assertTrue(sweeping.await(TIMEOUT_SECS, TimeUnit.SECONDS))
@@ -294,7 +351,7 @@ internal class LegacyTelemetryMigrationTest {
         val release = blockWorker()
         val migration = LegacyTelemetryMigration(worker, migrator(fsRule.fileSystem), errorHandler)
 
-        migration.start()
+        migration.move(timeoutMs = 0)
         assertFalse(migration.isComplete)
         release.countDown()
         migration.await()

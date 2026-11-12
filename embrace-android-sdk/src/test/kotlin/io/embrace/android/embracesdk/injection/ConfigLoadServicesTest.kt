@@ -229,8 +229,8 @@ internal class ConfigLoadServicesTest {
         fs.write(config / PersistedConfig.CONFIG_RESPONSE_FILE_NAME) { writeUtf8("fresh") }
         configMoveReleased.countDown()
 
+        configLoadServices.legacyTelemetryMigration.move()
         configLoadServices.legacyTelemetryMigration.start()
-        configLoadServices.legacyTelemetryMigration.await()
 
         val contents = fs.list(config).associate { it.name to fs.read(it) { readUtf8() } }
         val expected = mapOf(
@@ -238,6 +238,10 @@ internal class ConfigLoadServicesTest {
             PersistedConfig.CONFIG_RESPONSE_FILE_NAME to "fresh",
         )
         assertEquals(expected, contents)
+        val deadline = System.currentTimeMillis() + 5_000
+        while (File(legacy.toString()).exists() && System.currentTimeMillis() < deadline) {
+            Thread.sleep(10)
+        }
         assertFalse(File(legacy.toString()).exists())
     }
 

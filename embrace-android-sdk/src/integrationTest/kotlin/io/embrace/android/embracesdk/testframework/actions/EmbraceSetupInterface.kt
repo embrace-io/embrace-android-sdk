@@ -269,7 +269,7 @@ internal class EmbraceSetupInterface(
         intakeService = { real -> real().also { services.intakeService = it } },
         eventBus = { real -> real().also { services.eventBus = it } },
         ordinalStore = ordinalStore?.let { store -> { store } },
-        awaitLegacyTelemetryMigration = (awaitLegacyTelemetryMigration ?: inlineIoWorkerMigrationAwait())?.let { hook -> { hook } },
+        awaitLegacyTelemetryMigration = awaitLegacyTelemetryMigration?.let { hook -> { hook } },
     )
 
     /**
@@ -467,16 +467,6 @@ internal class EmbraceSetupInterface(
 
     fun getFakedWorkerExecutor(worker: Worker.Background): BlockingScheduledExecutorService =
         (workerThreadPool as FakeWorkerThreadPool).executorFor(worker)
-
-    /**
-     * An inline faked IO worker runs the crash-marker read and resurrection on the init thread, before init queues the
-     * telemetry migration they wait for, so they skip that wait rather than block forever.
-     */
-    private fun inlineIoWorkerMigrationAwait(): (() -> Unit)? {
-        val inline = Worker.Background.IoRegWorker in workersToFake &&
-            !getFakedWorkerExecutor(Worker.Background.IoRegWorker).blockingMode
-        return if (inline) ({}) else null
-    }
 
     /**
      * Waits for work already running on real workers to finish once the SDK has shut them down.

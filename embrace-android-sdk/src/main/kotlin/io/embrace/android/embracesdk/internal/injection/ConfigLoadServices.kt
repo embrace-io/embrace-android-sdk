@@ -50,7 +50,7 @@ internal class ConfigLoadServices(
     private val context: Context,
     preStartServices: PreStartServices,
     val instrumentedConfig: InstrumentedConfig = InstrumentedConfigImpl,
-    val jsonSerializer: PlatformSerializer = EmbraceSerializer(),
+    val jsonSerializer: PlatformSerializer = EmbTrace.trace("serializer-init") { EmbraceSerializer() },
     val okHttpClient: Lazy<OkHttpClient> = lazyOkHttpClient(),
     val uuidSource: UuidSource = UuidSourceImpl(),
     workerThreadPoolSupplier: WorkerThreadPoolSupplier? = null,
@@ -64,36 +64,47 @@ internal class ConfigLoadServices(
     // only sweep orphaned files from previous processes
     private val sweepCutoffMs: Long = System.currentTimeMillis().let { it - it % MS_PER_SECOND }
 
-    val sdkStorage: SdkStorage = createSdkStorage(context, preStartServices.errorHandler, fileSystem)
+    val sdkStorage: SdkStorage = EmbTrace.trace("sdk-storage-init") {
+        createSdkStorage(context, preStartServices.errorHandler, fileSystem)
+    }
 
-    private val migrationWorker = MigrationWorker(preStartServices.errorHandler)
+    private val migrationWorker = EmbTrace.trace("migration-worker-init") {
+        MigrationWorker(preStartServices.errorHandler)
+    }
 
-    private val legacyStorageMigrator = createLegacyStorageMigrator(context, preStartServices.errorHandler, fileSystem)
+    private val legacyStorageMigrator = EmbTrace.trace("legacy-storage-migrator-init") {
+        createLegacyStorageMigrator(context, preStartServices.errorHandler, fileSystem)
+    }
 
-    val legacyTelemetryMigration: LegacyTelemetryMigration = LegacyTelemetryMigration(
-        worker = migrationWorker,
-        migrator = legacyStorageMigrator,
-        errorHandler = preStartServices.errorHandler,
-        orphanSweeper = OrphanSweeper(
-            storage = sdkStorage,
-            layoutVersion = SdkStorageLayout.LAYOUT_VERSION,
-            processStartMs = sweepCutoffMs,
-            wallClock = System::currentTimeMillis,
+    val legacyTelemetryMigration: LegacyTelemetryMigration = EmbTrace.trace("legacy-telemetry-migration-init") {
+        LegacyTelemetryMigration(
+            worker = migrationWorker,
+            migrator = legacyStorageMigrator,
             errorHandler = preStartServices.errorHandler,
-        ),
-        sweepDelayMs = orphanSweepDelayMs,
-    )
+            orphanSweeper = OrphanSweeper(
+                storage = sdkStorage,
+                layoutVersion = SdkStorageLayout.LAYOUT_VERSION,
+                processStartMs = sweepCutoffMs,
+                wallClock = System::currentTimeMillis,
+                errorHandler = preStartServices.errorHandler,
+            ),
+            sweepDelayMs = orphanSweepDelayMs,
+        )
+    }
 
-    private val appFramework: AppFramework =
+    private val appFramework: AppFramework = EmbTrace.trace("app-framework-init") {
         AppFramework.fromString(instrumentedConfig.project.getAppFramework()) ?: AppFramework.NATIVE
+    }
 
     /**
      * Submitted once [persistedConfig] exists, as the migration needs its network capture rules. It's queued behind the
      * config move, so if that move times out it completes as a fresh install instead of waiting behind it.
      */
-    private val prefsMigration = MigrationHandle(PREFS_MIGRATION_NAME, false, preStartServices.errorHandler)
+    private val prefsMigration = EmbTrace.trace("prefs-migration-handle-init") {
+        MigrationHandle(PREFS_MIGRATION_NAME, false, preStartServices.errorHandler)
+    }
 
-    private val prefsMigrationGate = PrefsMigrationGate()
+    private val prefsMigrationGate = EmbTrace.trace("prefs-migration-gate-init") { PrefsMigrationGate() }
 
     /**
      * Every file-backed install-state store touches this before opening its file, so it sees the migrated prefs. A

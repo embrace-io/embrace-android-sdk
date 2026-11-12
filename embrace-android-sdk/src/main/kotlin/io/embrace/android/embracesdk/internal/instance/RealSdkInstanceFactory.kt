@@ -310,7 +310,7 @@ internal fun createRealSdkInstance(
         createProcessStateTracker(
             errorHandler = errorHandler,
             lifecycleTracker = overrides?.lifecycleTracker.resolve {
-                createLifecycleTracker(configService, appContext as Application, context, errorHandler)
+                createLifecycleTracker(configService, eventBus, context, errorHandler)
             },
         )
     }
@@ -482,6 +482,7 @@ internal fun createRealSdkInstance(
             configService = configService,
             appStartupDataCollector = appStartupDataCollector,
             uiLoadDataListener = uiLoadDataListener,
+            eventBus = eventBus,
             versionChecker = versionChecker,
         )
     }

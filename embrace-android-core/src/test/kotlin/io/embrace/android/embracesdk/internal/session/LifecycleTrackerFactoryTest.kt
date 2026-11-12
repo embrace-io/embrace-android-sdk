@@ -8,6 +8,7 @@ import io.embrace.android.embracesdk.internal.config.resolved.EmbraceConfig
 import io.embrace.android.embracesdk.internal.session.lifecycle.ActivityProcessLifecycleTracker
 import io.embrace.android.embracesdk.internal.session.lifecycle.AndroidxProcessLifecycleTracker
 import io.embrace.android.embracesdk.internal.session.lifecycle.createLifecycleTracker
+import io.embrace.android.embracesdk.internal.utils.event.EventBus
 import org.junit.Assert.assertTrue
 import org.junit.Test
 
@@ -39,7 +40,7 @@ internal class LifecycleTrackerFactoryTest {
                 },
             ),
         ),
-        application = application,
+        eventBus = EventBus(FakeErrorHandler()),
         startupContext = application,
         errorHandler = FakeErrorHandler(),
     )

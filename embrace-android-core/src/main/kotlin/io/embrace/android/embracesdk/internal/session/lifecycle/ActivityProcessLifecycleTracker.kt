@@ -17,19 +17,17 @@ package io.embrace.android.embracesdk.internal.session.lifecycle
 
 import android.app.Activity
 import android.app.ActivityManager
-import android.app.Application
 import android.content.Context
 import android.content.ContextWrapper
-import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
 import android.os.Process
+import io.embrace.android.embracesdk.internal.arch.lifecycle.ActivityLifecycle
 import io.embrace.android.embracesdk.internal.arch.state.ProcessState
 import io.embrace.android.embracesdk.internal.arch.state.ProcessStateListener
 import io.embrace.android.embracesdk.internal.injection.getSystemServiceSafe
-import io.embrace.android.embracesdk.internal.logging.ErrorHandler
-import io.embrace.android.embracesdk.internal.logging.SdkErrorType
-import io.embrace.android.embracesdk.internal.logging.guardSdkCode
+import io.embrace.android.embracesdk.internal.utils.event.EventBus
+import io.embrace.android.embracesdk.internal.utils.event.EventHandler
 import java.lang.ref.WeakReference
 
 /**
@@ -45,16 +43,15 @@ import java.lang.ref.WeakReference
  * 2. The implementation is simplified as several concepts/classes are not relevant to our SDK
  */
 class ActivityProcessLifecycleTracker(
-    private val application: Application,
+    private val eventBus: EventBus,
     startupContext: Context?,
-    private val errorHandler: ErrorHandler,
     handler: Handler = Handler(Looper.getMainLooper()),
     private val postDelayed: (Runnable, Long) -> Unit = handler::postDelayed,
     private val removeCallbacks: (Runnable) -> Unit = handler::removeCallbacks,
     private val runningAppProcesses: (Context) -> List<ActivityManager.RunningAppProcessInfo>? = {
         it.getSystemServiceSafe<ActivityManager>(Context.ACTIVITY_SERVICE)?.runningAppProcesses
     },
-) : LifecycleTracker, Application.ActivityLifecycleCallbacks {
+) : LifecycleTracker {
 
     private val lock = Any()
 
@@ -108,32 +105,7 @@ class ActivityProcessLifecycleTracker(
         else -> ProcessState.BACKGROUND
     }
 
-    override fun register(listener: ProcessStateListener) {
-        this.listener = listener
-        errorHandler.guardSdkCode(SdkErrorType.RegistrationFail) {
-            application.registerActivityLifecycleCallbacks(this)
-        }
-
-        // androidx replays the current state to a newly added observer, so report the transition
-        // that was missed by registering late.
-        if (foreground) {
-            listener.onForeground()
-        }
-    }
-
-    override fun close() {
-        listener = null
-        runCatching {
-            application.unregisterActivityLifecycleCallbacks(this)
-        }
-        runCatching { removeCallbacks(backgroundRunnable) }
-        synchronized(lock) {
-            startedActivities.clear()
-            unobservedStartedActivity = null
-        }
-    }
-
-    override fun onActivityStarted(activity: Activity) {
+    private val onStarted = EventHandler<Activity> { activity ->
         removeCallbacks(backgroundRunnable)
 
         val transitioned = synchronized(lock) {
@@ -151,7 +123,7 @@ class ActivityProcessLifecycleTracker(
         }
     }
 
-    override fun onActivityStopped(activity: Activity) {
+    private val onStopped = EventHandler<Activity> { activity ->
         val debounce = synchronized(lock) {
             if (!startedActivities.remove(System.identityHashCode(activity))) {
                 unobservedStartedActivity = null
@@ -163,15 +135,7 @@ class ActivityProcessLifecycleTracker(
         }
     }
 
-    override fun onActivityCreated(activity: Activity, savedInstanceState: Bundle?) {}
-
-    override fun onActivityResumed(activity: Activity) {}
-
-    override fun onActivityPaused(activity: Activity) {}
-
-    override fun onActivitySaveInstanceState(activity: Activity, outState: Bundle) {}
-
-    override fun onActivityDestroyed(activity: Activity) {
+    private val onDestroyed = EventHandler<Activity> { activity ->
         val debounce = synchronized(lock) {
             val released = unobservedStartedActivity?.get() === activity
             if (released) {
@@ -181,6 +145,31 @@ class ActivityProcessLifecycleTracker(
         }
         if (debounce) {
             postDelayed(backgroundRunnable, BACKGROUND_DEBOUNCE_MS)
+        }
+    }
+
+    override fun register(listener: ProcessStateListener) {
+        this.listener = listener
+        eventBus.addHandler(ActivityLifecycle.STARTED, PROCESS_STATE_ORDER, onStarted)
+        eventBus.addHandler(ActivityLifecycle.STOPPED, PROCESS_STATE_ORDER, onStopped)
+        eventBus.addHandler(ActivityLifecycle.DESTROYED, PROCESS_STATE_ORDER, onDestroyed)
+
+        // androidx replays the current state to a newly added observer, so report the transition
+        // that was missed by registering late.
+        if (foreground) {
+            listener.onForeground()
+        }
+    }
+
+    override fun close() {
+        listener = null
+        eventBus.removeHandler(ActivityLifecycle.STARTED, onStarted)
+        eventBus.removeHandler(ActivityLifecycle.STOPPED, onStopped)
+        eventBus.removeHandler(ActivityLifecycle.DESTROYED, onDestroyed)
+        runCatching { removeCallbacks(backgroundRunnable) }
+        synchronized(lock) {
+            startedActivities.clear()
+            unobservedStartedActivity = null
         }
     }
 
@@ -224,6 +213,11 @@ class ActivityProcessLifecycleTracker(
          * Matches the TIMEOUT_MS value used by androidx's ProcessLifecycleOwner.
          */
         const val BACKGROUND_DEBOUNCE_MS = 700L
+
+        /**
+         * Orders these handlers before every default-order one, so that foreground is reported before any other handler runs.
+         */
+        private const val PROCESS_STATE_ORDER = EventBus.DEFAULT_ORDER - 1
 
         /**
          * Stub used when the process is in the foreground but the activity cannot be found.

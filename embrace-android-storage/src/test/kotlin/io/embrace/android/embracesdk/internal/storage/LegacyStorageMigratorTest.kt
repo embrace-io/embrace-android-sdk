@@ -87,6 +87,40 @@ internal class LegacyStorageMigratorTest {
     }
 
     @Test
+    fun `an abandoned config isn't moved`() {
+        val fs = fsRule.fileSystem
+        fs.writeText(filesDir / "embrace_remote_config" / "etag", "legacy")
+        val migrator = migrator(fs)
+
+        migrator.abandonConfig()
+        migrator.migrateConfig()
+
+        assertFalse(fs.exists(layout(fs).path(SdkDir.REMOTE_CONFIG)))
+        assertTrue(fs.exists(filesDir / "embrace_remote_config" / "etag"))
+        assertTrue(errorHandler.sdkErrorMessages.isEmpty())
+    }
+
+    @Test
+    fun `migrateTelemetry deletes an abandoned config instead of merging it`() {
+        val fs = fsRule.fileSystem
+        val config = layout(fs).path(SdkDir.REMOTE_CONFIG)
+        fs.writeText(config / "etag", "fresh")
+        fs.writeText(config / "most_recent_response", "fresh")
+        fs.writeText(filesDir / "embrace_remote_config" / "etag", "legacy")
+        fs.writeText(filesDir / "embrace_remote_config" / "cached_config", "legacy")
+        fs.writeText(filesDir / "embrace_payloads" / "p", "legacy")
+        val migrator = migrator(fs)
+
+        migrator.abandonConfig()
+        migrator.migrateTelemetry()
+
+        assertEquals(mapOf("etag" to "fresh", "most_recent_response" to "fresh"), contents(fs, config))
+        assertFalse(fs.exists(filesDir / "embrace_remote_config"))
+        assertEquals(mapOf("p" to "legacy"), contents(fs, layout(fs).path(SdkDir.TELEMETRY_READY)))
+        assertTrue(errorHandler.sdkErrorMessages.isEmpty())
+    }
+
+    @Test
     fun `every telemetry dir lands at its layout path intact`() {
         val fs = fsRule.fileSystem
         val files = seedLegacyLayout(fs, filesDir)

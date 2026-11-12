@@ -26,17 +26,24 @@ class LegacyStorageMigrator(
         SdkStorageImpl(fileSystem, noBackupFilesDir() / SdkStorageLayout.ROOT_DIR_NAME, errorHandler)
     }
 
+    @Volatile
+    private var configAbandoned: Boolean = false
+
     /**
      * Moves the remote config. Call before the config is read.
      */
     fun migrateConfig() {
         errorHandler.guardSdkCode(SdkErrorType.StorageMigrationFail) {
-            if (fileSystem.exists(legacyDir(SdkDir.REMOTE_CONFIG))) {
+            if (fileSystem.exists(legacyDir(SdkDir.REMOTE_CONFIG)) && !configAbandoned) {
                 SystemTrace.trace("storage-config-migration") {
                     migrate(SdkDir.REMOTE_CONFIG)
                 }
             }
         }
+    }
+
+    fun abandonConfig() {
+        configAbandoned = true
     }
 
     /**
@@ -53,8 +60,14 @@ class LegacyStorageMigrator(
      */
     fun migrateTelemetry() {
         SystemTrace.trace("storage-telemetry-migration") {
-            val moved = MIGRATED_DIRS.map(::migrate) + migrateCrashMarker()
-            delete(legacyCacheEntries(LEGACY_CACHE_DIR_ENTRIES))
+            val abandoned = configAbandoned
+            val moved = MIGRATED_DIRS
+                .filterNot { abandoned && it == SdkDir.REMOTE_CONFIG }
+                .map(::migrate) + migrateCrashMarker()
+            delete(
+                listOfNotNull(legacyDir(SdkDir.REMOTE_CONFIG).takeIf { abandoned }) +
+                    legacyCacheEntries(LEGACY_CACHE_DIR_ENTRIES),
+            )
             if (moved.all { it }) {
                 delete(listOf(legacyDir(SdkDir.INSTALL_STATE)))
             }

@@ -4,18 +4,22 @@ import io.embrace.android.embracesdk.internal.logging.ErrorHandler
 import io.embrace.android.embracesdk.internal.logging.SdkErrorType
 import io.embrace.android.embracesdk.internal.storage.LegacyStorageMigrator
 import io.embrace.android.embracesdk.internal.storage.OrphanSweeper
+import io.embrace.android.embracesdk.internal.worker.BackgroundWorker
+import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicBoolean
 
 /**
- * Moves the 9.x telemetry into the layout on [worker] once [start] is called, and runs [orphanSweeper] once
- * [sweepOrphans] is called. Anything that reads the previous launch's telemetry calls [await] first. Without a
- * [migrator] there is nothing to move and [await] returns at once.
+ * Moves the 9.x telemetry into the layout on [worker] once [start] is called, and runs [orphanSweeper]
+ * [sweepDelayMs] after [sweepOrphans] is called, so it doesn't compete with the app's startup. Anything that reads
+ * the previous launch's telemetry calls [await] first. Without a [migrator] there is nothing to move and [await]
+ * returns at once.
  */
 class LegacyTelemetryMigration(
     private val worker: MigrationWorker,
     private val migrator: LegacyStorageMigrator?,
     errorHandler: ErrorHandler,
     private val orphanSweeper: OrphanSweeper? = null,
+    private val sweepDelayMs: Long = SWEEP_DELAY_MS,
 ) {
     private val handle = MigrationHandle(NAME, Unit, errorHandler)
     private val cancelled = AtomicBoolean(false)
@@ -38,13 +42,19 @@ class LegacyTelemetryMigration(
         }
     }
 
-    fun sweepOrphans() {
+    fun sweepOrphans(scheduler: BackgroundWorker) {
         val sweeper = orphanSweeper ?: return
-        worker.submit(SWEEP_NAME, Unit, SdkErrorType.OrphanSweepFail) {
-            if (!cancelled.get()) {
-                sweeper.sweep()
-            }
-        }
+        scheduler.schedule<Unit>(
+            {
+                worker.submit(SWEEP_NAME, Unit, SdkErrorType.OrphanSweepFail) {
+                    if (!cancelled.get()) {
+                        sweeper.sweep()
+                    }
+                }
+            },
+            sweepDelayMs,
+            TimeUnit.MILLISECONDS,
+        )
     }
 
     /**
@@ -88,9 +98,10 @@ class LegacyTelemetryMigration(
         }
     }
 
-    private companion object {
-        const val NAME = "telemetry"
-        const val DELETE_NAME = "delete-legacy-telemetry"
-        const val SWEEP_NAME = "orphan-sweep"
+    companion object {
+        const val SWEEP_DELAY_MS: Long = 10_000L
+        private const val NAME = "telemetry"
+        private const val DELETE_NAME = "delete-legacy-telemetry"
+        private const val SWEEP_NAME = "orphan-sweep"
     }
 }

@@ -15,4 +15,9 @@ interface PersistedSdkStateStore {
      * state, so values that aren't updated still retain their current value.
      */
     fun update(action: PersistedSdkStateEditor.() -> Unit): PersistedSdkState
+
+    /**
+     * Persists any update that hasn't been written yet, blocking the calling thread until it is.
+     */
+    fun flush()
 }

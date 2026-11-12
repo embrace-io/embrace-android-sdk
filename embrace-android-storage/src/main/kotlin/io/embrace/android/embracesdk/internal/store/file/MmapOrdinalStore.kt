@@ -12,6 +12,7 @@ import okio.FileHandle
 import okio.FileSystem
 import okio.IOException
 import okio.Path
+import okio.Path.Companion.toOkioPath
 import java.io.File
 import java.io.RandomAccessFile
 import java.nio.MappedByteBuffer
@@ -55,13 +56,24 @@ class MmapOrdinalStore internal constructor(
         /**
          * Maps [file], padding it to the current slot count. Returns null if it's missing, or tracks
          * [SdkErrorType.OrdinalStoreOpenFail] and returns null if it's unusable.
+         *
+         * A corrupt header is tracked and the file is recreated empty, so ordinals restart at their seed instead of
+         * being unavailable for the life of the install. The file still exists afterwards, so the prefs migration
+         * isn't re-run.
          */
         fun open(file: File, errorHandler: ErrorHandler): MmapOrdinalStore? {
             if (!file.exists()) {
                 return null
             }
             return errorHandler.guardSdkCode(SdkErrorType.OrdinalStoreOpenFail, null) {
-                MmapOrdinalStore(map(file), errorHandler)
+                val buffer = try {
+                    map(file)
+                } catch (exc: CorruptOrdinalFileException) {
+                    errorHandler.trackSdkError(SdkErrorType.OrdinalStoreOpenFail, exc)
+                    create(FileSystem.SYSTEM, file.toOkioPath(), emptyMap())
+                    map(file)
+                }
+                MmapOrdinalStore(buffer, errorHandler)
             }
         }
 

@@ -58,6 +58,7 @@ internal class ConfigLoadServices(
     private val fileSystem: FileSystem = FileSystem.SYSTEM,
     private val configMigrationTimeoutMs: Long = CONFIG_MIGRATION_TIMEOUT_MS,
     private val prefsMigrationTimeoutMs: Long = PREFS_MIGRATION_TIMEOUT_MS,
+    orphanSweepDelayMs: Long = LegacyTelemetryMigration.SWEEP_DELAY_MS,
 ) : Closeable {
 
     // only sweep orphaned files from previous processes
@@ -77,8 +78,10 @@ internal class ConfigLoadServices(
             storage = sdkStorage,
             layoutVersion = SdkStorageLayout.LAYOUT_VERSION,
             processStartMs = sweepCutoffMs,
+            wallClock = System::currentTimeMillis,
             errorHandler = preStartServices.errorHandler,
         ),
+        sweepDelayMs = orphanSweepDelayMs,
     )
 
     private val appFramework: AppFramework =
@@ -146,6 +149,10 @@ internal class ConfigLoadServices(
         )
     }
 
+    val workerThreadPool: WorkerThreadPool = EmbTrace.trace("worker-thread-pool-init") {
+        workerThreadPoolSupplier?.invoke() ?: WorkerThreadPoolImpl(preStartServices.errorHandler)
+    }
+
     val persistedConfig: PersistedConfig = EmbTrace.trace(
         sectionName = "persisted-config-init",
         recordDuration = true,
@@ -168,10 +175,6 @@ internal class ConfigLoadServices(
                 prefsMigration.complete()
             }
         }
-    }
-
-    val workerThreadPool: WorkerThreadPool = EmbTrace.trace("worker-thread-pool-init") {
-        workerThreadPoolSupplier?.invoke() ?: WorkerThreadPoolImpl(preStartServices.errorHandler)
     }
 
     val configService: ConfigService = EmbTrace.trace(sectionName = "config-service-init", recordDuration = true) {
@@ -198,6 +201,12 @@ internal class ConfigLoadServices(
     fun start() {
         // kick off config HTTP request early so the SDK can't get in a permanently disabled state.
         configService.scheduleConfigRequests()
+    }
+
+    fun flushPersistedSdkState() {
+        if (persistedSdkStateStore.isInitialized()) {
+            persistedSdkStateStore.value.flush()
+        }
     }
 
     override fun close() {

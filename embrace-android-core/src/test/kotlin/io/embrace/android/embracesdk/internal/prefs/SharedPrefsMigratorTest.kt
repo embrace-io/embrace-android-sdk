@@ -292,13 +292,27 @@ internal class SharedPrefsMigratorTest {
     }
 
     @Test
-    fun `failure writing network capture completes as a fresh install`() {
-        assertFailedWriteIsFreshInstall(SdkStorageLayout.NETWORK_CAPTURE_FILE_NAME)
+    fun `failure writing network capture drops only that file`() {
+        assertFailedWriteDropsOnly(SdkStorageLayout.NETWORK_CAPTURE_FILE_NAME)
+        assertEquals(setOf("100_1", "200_2"), deliveredAeiStore().ids())
     }
 
     @Test
-    fun `failure writing delivered aei ids completes as a fresh install`() {
-        assertFailedWriteIsFreshInstall(SdkStorageLayout.AEI_DELIVERED_FILE_NAME)
+    fun `failure writing delivered aei ids drops only that file`() {
+        assertFailedWriteDropsOnly(SdkStorageLayout.AEI_DELIVERED_FILE_NAME)
+        assertEquals(5, networkCaptureStore().remaining("1", 10))
+    }
+
+    private fun assertFailedWriteDropsOnly(fileName: String) {
+        prefs.seed(*ALL_LIVE_KEYS)
+        assertTrue(migrate(fs = failingMoveTo(installStateDir / fileName)))
+        assertEquals(SdkErrorType.PrefsMigrationFail.toString(), errorHandler.sdkErrorMessages.single().msg)
+        assertFalse(fileSystem.exists(installStateDir / fileName))
+        assertEquals("device-id", persistedState().deviceId)
+        assertEquals("user-id", persistedState().userId)
+        assertEquals(42, openOrdinals().incrementAndGet(Ordinal.SESSION) { 1 })
+        assertTrue(prefs.all.isEmpty())
+        assertFalse(migrate())
     }
 
     private fun assertFailedWriteIsFreshInstall(fileName: String) {

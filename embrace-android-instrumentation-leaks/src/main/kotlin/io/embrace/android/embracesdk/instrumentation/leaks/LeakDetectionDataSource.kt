@@ -1,6 +1,5 @@
 package io.embrace.android.embracesdk.instrumentation.leaks
 
-import android.app.Application
 import io.embrace.android.embracesdk.internal.arch.InstrumentationArgs
 import io.embrace.android.embracesdk.internal.arch.SessionPartEndListener
 import io.embrace.android.embracesdk.internal.arch.datasource.DataSourceImpl
@@ -14,8 +13,6 @@ class LeakDetectionDataSource(args: InstrumentationArgs) :
         "leak-detection",
     ),
     SessionPartEndListener {
-
-    private val application: Application = args.application
 
     /**
      * Visible so that tests can drive tracking and reclamation directly, rather than depending on real Activity
@@ -36,17 +33,18 @@ class LeakDetectionDataSource(args: InstrumentationArgs) :
         leakDetector,
         args::activeSessionIds,
         fragmentSupport,
+        args.eventBus,
         args.errorHandler,
         webViewLeakDetectionEnabled,
     )
 
     override fun onDataCaptureEnabled() {
-        application.registerActivityLifecycleCallbacks(callbacks)
+        callbacks.subscribe()
         leakDetector.start()
     }
 
     override fun onDataCaptureDisabled() {
-        application.unregisterActivityLifecycleCallbacks(callbacks)
+        callbacks.close()
         fragmentSupport.close()
         leakDetector.stop()
     }

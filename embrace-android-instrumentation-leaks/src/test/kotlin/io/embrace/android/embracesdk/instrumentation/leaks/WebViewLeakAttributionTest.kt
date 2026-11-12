@@ -9,7 +9,6 @@ import android.webkit.WebView
 import android.widget.FrameLayout
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.FragmentActivity
-import io.embrace.android.embracesdk.fakes.FakeInstrumentationArgs
 import io.embrace.android.embracesdk.internal.config.resolved.AutoDataCaptureConfig
 import io.embrace.android.embracesdk.internal.config.resolved.EmbraceConfig
 import org.junit.After
@@ -19,7 +18,6 @@ import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.Robolectric.buildActivity
 import org.robolectric.RobolectricTestRunner
-import org.robolectric.RuntimeEnvironment
 import org.robolectric.android.controller.ActivityController
 
 /**
@@ -34,7 +32,7 @@ internal class WebViewLeakAttributionTest {
 
     @Before
     fun setUp() {
-        val args = FakeInstrumentationArgs(RuntimeEnvironment.getApplication())
+        val args = relayedInstrumentationArgs()
         args.configService.config = EmbraceConfig(autoDataCapture = {
             AutoDataCaptureConfig(fragmentLeakDetectionEnabled = { true }, webViewLeakDetectionEnabled = { true })
         })

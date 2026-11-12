@@ -55,7 +55,7 @@ fun startFreshInstallState(fileSystem: FileSystem, installStateDir: Path) {
     }
 }
 
-private val STATE_FILE_NAMES = listOf(
+private val STATE_FILE_NAMES = arrayOf(
     SdkStorageLayout.PERSISTED_SDK_STATE_FILE_NAME,
     SdkStorageLayout.NETWORK_CAPTURE_FILE_NAME,
     SdkStorageLayout.AEI_DELIVERED_FILE_NAME,

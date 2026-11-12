@@ -54,16 +54,11 @@ internal class ConfigLoadServicesPrefsMigrationTest {
     }
 
     @Test
-    fun `a config move that times out starts fresh and the next launch doesn't migrate the prefs`() {
+    fun `the prefs migrate when a 9x config is present`() {
         File(context.filesDir, "embrace_remote_config").mkdirs()
-        val first = createServices(stallMoveOf = "embrace_remote_config", configMigrationTimeoutMs = 1)
-        assertEquals(1, first.ordinalStore.value.incrementAndGet(Ordinal.SESSION))
-        assertNotEquals(LEGACY_DEVICE_ID, first.persistedSdkStateStore.value.snapshot().deviceId)
-        stallReleased.countDown()
-
-        val second = createServices()
-        assertEquals(2, second.ordinalStore.value.incrementAndGet(Ordinal.SESSION))
-        assertNotEquals(LEGACY_DEVICE_ID, second.persistedSdkStateStore.value.snapshot().deviceId)
+        val services = createServices()
+        assertEquals(42, services.ordinalStore.value.incrementAndGet(Ordinal.SESSION))
+        assertEquals(LEGACY_DEVICE_ID, services.persistedSdkStateStore.value.snapshot().deviceId)
     }
 
     @Test
@@ -89,28 +84,18 @@ internal class ConfigLoadServicesPrefsMigrationTest {
     }
 
     private fun createServices(
-        stallMoveOf: String? = null,
         stallReadOf: String? = null,
-        configMigrationTimeoutMs: Long = 3_000L,
         prefsMigrationTimeoutMs: Long = 3_000L,
     ) = ConfigLoadServices(
         context = context,
         preStartServices = PreStartServices(errorHandler = errorHandler),
         configServiceSupplier = { _, _, _, _, _, _ -> FakeConfigService() },
-        fileSystem = stallingFileSystem(stallMoveOf, stallReadOf),
-        configMigrationTimeoutMs = configMigrationTimeoutMs,
+        fileSystem = stallingFileSystem(stallReadOf),
         prefsMigrationTimeoutMs = prefsMigrationTimeoutMs,
     )
 
-    private fun stallingFileSystem(moveOf: String?, readOf: String?): FileSystem =
+    private fun stallingFileSystem(readOf: String?): FileSystem =
         object : ForwardingFileSystem(FileSystem.SYSTEM) {
-            override fun atomicMove(source: Path, target: Path) {
-                if (source.name == moveOf) {
-                    stallReleased.await()
-                }
-                super.atomicMove(source, target)
-            }
-
             override fun metadataOrNull(path: Path): FileMetadata? {
                 if (path.name == readOf) {
                     stallReleased.await()

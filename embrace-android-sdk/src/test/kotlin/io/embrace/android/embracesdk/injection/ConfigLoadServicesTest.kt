@@ -5,6 +5,7 @@ import io.embrace.android.embracesdk.fakes.FakeConfigService
 import io.embrace.android.embracesdk.fakes.FakeErrorHandler
 import io.embrace.android.embracesdk.fakes.FilesDirApplication
 import io.embrace.android.embracesdk.fakes.behavior.FakeNetworkBehavior
+import io.embrace.android.embracesdk.fakes.config.FakeInstrumentedConfig
 import io.embrace.android.embracesdk.fakes.injection.FakeWorkerThreadPool
 import io.embrace.android.embracesdk.fs.FakeFileSystemRule
 import io.embrace.android.embracesdk.internal.config.PersistedConfig
@@ -15,7 +16,6 @@ import io.embrace.android.embracesdk.internal.logging.SdkErrorType
 import io.embrace.android.embracesdk.internal.storage.SdkDir
 import io.embrace.android.embracesdk.internal.storage.SdkStorageLayout
 import io.embrace.android.embracesdk.internal.store.Ordinal
-import io.embrace.android.embracesdk.internal.store.OrdinalStore
 import io.embrace.android.embracesdk.internal.store.PersistedSdkState
 import io.embrace.android.embracesdk.internal.store.file.FilePersistedSdkStateStore
 import io.embrace.android.embracesdk.internal.worker.Worker
@@ -34,8 +34,6 @@ import org.junit.rules.TemporaryFolder
 import java.io.File
 import java.util.concurrent.CopyOnWriteArrayList
 import java.util.concurrent.CountDownLatch
-import java.util.concurrent.Executors
-import java.util.concurrent.TimeUnit
 
 internal class ConfigLoadServicesTest {
 
@@ -105,19 +103,22 @@ internal class ConfigLoadServicesTest {
     }
 
     @Test
-    fun `moves the 9x config into place during construction`() {
-        val fs = fsRule.fileSystem
+    fun `serves the 9x config in place until the telemetry move moves it`() {
         val context = FilesDirApplication(tempDir.newFolder())
-        val legacy = context.filesDir.toOkioPath() / "embrace_remote_config" / PersistedConfig.CONFIG_RESPONSE_FILE_NAME
-        fs.createDirectories(checkNotNull(legacy.parent))
-        fs.write(legacy) { writeUtf8("{}") }
+        File(context.filesDir, "embrace").mkdirs()
+        val legacy = File(context.filesDir, "embrace_remote_config").apply { mkdirs() }
+        File(legacy, PersistedConfig.CONFIG_RESPONSE_FILE_NAME).writeText(
+            """{"network_capture":[{"id":"rule","duration":null,"method":"GET","url":"embrace.io","max_count":3}]}""",
+        )
 
-        createServices(context, FakeConfigService())
+        val first = createSystemServices(context)
+        assertEquals(mapOf("rule" to 3), first.persistedConfig.networkCaptureRuleMaxCounts())
+        assertFalse(first.sdkStorage.fileSystem.exists(first.sdkStorage.path(SdkDir.REMOTE_CONFIG)))
 
-        val migrated = context.noBackupFilesDir.toOkioPath() / SdkStorageLayout.ROOT_DIR_NAME / "remote_config" /
-            PersistedConfig.CONFIG_RESPONSE_FILE_NAME
-        assertTrue(fs.exists(migrated))
-        assertFalse(fs.exists(legacy))
+        first.legacyTelemetryMigration.move()
+        assertFalse(legacy.exists())
+        val second = createSystemServices(context)
+        assertEquals(mapOf("rule" to 3), second.persistedConfig.networkCaptureRuleMaxCounts())
     }
 
     @Test
@@ -182,83 +183,41 @@ internal class ConfigLoadServicesTest {
     }
 
     @Test
-    fun `the stores start fresh without waiting behind a config move that timed out`() {
-        val configMoveReleased = CountDownLatch(1)
-        val fs = object : ForwardingFileSystem(FileSystem.SYSTEM) {
-            override fun atomicMove(source: Path, target: Path) {
-                if (source.name == "embrace_remote_config") {
-                    configMoveReleased.await()
-                }
-                super.atomicMove(source, target)
-            }
-        }
+    fun `an empty config dir left by a failed write doesn't hide the 9x config`() {
         val context = FilesDirApplication(tempDir.newFolder())
-        File(context.filesDir, "embrace_remote_config").mkdirs()
-        val errorHandler = FakeErrorHandler(throwOnSdkError = false)
-        val configLoadServices = ConfigLoadServices(
-            context = context,
-            preStartServices = PreStartServices(errorHandler = errorHandler),
-            workerThreadPoolSupplier = { FakeWorkerThreadPool(testWorkers = listOf(Worker.Background.IoRegWorker)) },
-            configServiceSupplier = { _, _, _, _, _, _ -> FakeConfigService() },
-            fileSystem = fs,
-            configMigrationTimeoutMs = 1,
+        File(context.filesDir, "embrace").mkdirs()
+        val legacy = File(context.filesDir, "embrace_remote_config").apply { mkdirs() }
+        File(legacy, PersistedConfig.CONFIG_RESPONSE_FILE_NAME).writeText(
+            """{"network_capture":[{"id":"rule","duration":null,"method":"GET","url":"embrace.io","max_count":3}]}""",
         )
-        try {
-            val ordinals = Executors.newSingleThreadExecutor().submit<OrdinalStore> {
-                configLoadServices.ordinalStore.value
-            }
-            assertEquals(1, ordinals.get(5, TimeUnit.SECONDS).incrementAndGet(Ordinal.SESSION))
-            assertEquals("StorageMigrationFail", errorHandler.sdkErrorMessages.single().msg)
-        } finally {
-            configMoveReleased.countDown()
-        }
+        File(context.noBackupFilesDir, "${SdkStorageLayout.ROOT_DIR_NAME}/remote_config").mkdirs()
+
+        val first = createSystemServices(context)
+        assertEquals(mapOf("rule" to 3), first.persistedConfig.networkCaptureRuleMaxCounts())
+
+        first.legacyTelemetryMigration.move()
+        assertFalse(legacy.exists())
+        val second = createSystemServices(context)
+        assertEquals(mapOf("rule" to 3), second.persistedConfig.networkCaptureRuleMaxCounts())
     }
 
     @Test
-    fun `a config move that timed out doesn't mix legacy config into the fresh response`() {
-        val configMoveReleased = CountDownLatch(1)
-        val initThread = Thread.currentThread()
-        val fs = object : ForwardingFileSystem(FileSystem.SYSTEM) {
-            override fun metadataOrNull(path: Path): FileMetadata? {
-                if (path.name == "embrace_remote_config" && Thread.currentThread() != initThread) {
-                    configMoveReleased.await()
-                }
-                return super.metadataOrNull(path)
-            }
-        }
+    fun `a response written before the telemetry move supersedes the 9x config`() {
         val context = FilesDirApplication(tempDir.newFolder())
         File(context.filesDir, "embrace").mkdirs()
-        val legacy = context.filesDir.toOkioPath() / "embrace_remote_config"
-        File(legacy.toString()).mkdirs()
-        File(legacy.toString(), PersistedConfig.ETAG_FILE_NAME).writeText("legacy")
-        File(legacy.toString(), PersistedConfig.CACHED_CONFIG_FILE_NAME).writeText("legacy")
-        val configLoadServices = ConfigLoadServices(
-            context = context,
-            preStartServices = PreStartServices(errorHandler = FakeErrorHandler(throwOnSdkError = false)),
-            workerThreadPoolSupplier = { FakeWorkerThreadPool(testWorkers = listOf(Worker.Background.IoRegWorker)) },
-            configServiceSupplier = { _, _, _, _, _, _ -> FakeConfigService() },
-            fileSystem = fs,
-            configMigrationTimeoutMs = 1,
-        )
+        val legacy = File(context.filesDir, "embrace_remote_config").apply { mkdirs() }
+        File(legacy, PersistedConfig.ETAG_FILE_NAME).writeText("legacy")
+        File(legacy, PersistedConfig.CACHED_CONFIG_FILE_NAME).writeText("legacy")
+        val configLoadServices = createSystemServices(context)
+        val fs = configLoadServices.sdkStorage.fileSystem
         val config = configLoadServices.sdkStorage.dir(SdkDir.REMOTE_CONFIG)
-        fs.write(config / PersistedConfig.ETAG_FILE_NAME) { writeUtf8("fresh") }
         fs.write(config / PersistedConfig.CONFIG_RESPONSE_FILE_NAME) { writeUtf8("fresh") }
-        configMoveReleased.countDown()
 
         configLoadServices.legacyTelemetryMigration.move()
-        configLoadServices.legacyTelemetryMigration.start()
 
         val contents = fs.list(config).associate { it.name to fs.read(it) { readUtf8() } }
-        val expected = mapOf(
-            PersistedConfig.ETAG_FILE_NAME to "fresh",
-            PersistedConfig.CONFIG_RESPONSE_FILE_NAME to "fresh",
-        )
-        assertEquals(expected, contents)
-        val deadline = System.currentTimeMillis() + 5_000
-        while (File(legacy.toString()).exists() && System.currentTimeMillis() < deadline) {
-            Thread.sleep(10)
-        }
-        assertFalse(File(legacy.toString()).exists())
+        assertEquals(mapOf(PersistedConfig.CONFIG_RESPONSE_FILE_NAME to "fresh"), contents)
+        assertFalse(legacy.exists())
     }
 
     @Test
@@ -275,31 +234,28 @@ internal class ConfigLoadServicesTest {
 
     @Test
     fun `flushing the persisted SDK state doesn't open the store`() {
-        // holds the config move so the state prefetch queued behind it can't open the store
-        val configMoveReleased = CountDownLatch(1)
+        // holds the prefs migration so the state prefetch queued behind it can't open the store
+        val migrationReleased = CountDownLatch(1)
         val fs = object : ForwardingFileSystem(FileSystem.SYSTEM) {
-            override fun atomicMove(source: Path, target: Path) {
-                if (source.name == "embrace_remote_config") {
-                    configMoveReleased.await()
+            override fun metadataOrNull(path: Path): FileMetadata? {
+                if (Thread.currentThread().name == "emb-migration") {
+                    migrationReleased.await()
                 }
-                super.atomicMove(source, target)
+                return super.metadataOrNull(path)
             }
         }
-        val context = FilesDirApplication(tempDir.newFolder())
-        File(context.filesDir, "embrace_remote_config").mkdirs()
         val configLoadServices = ConfigLoadServices(
-            context = context,
+            context = FilesDirApplication(tempDir.newFolder()),
             preStartServices = PreStartServices(errorHandler = FakeErrorHandler(throwOnSdkError = false)),
             workerThreadPoolSupplier = { FakeWorkerThreadPool() },
             configServiceSupplier = { _, _, _, _, _, _ -> FakeConfigService() },
             fileSystem = fs,
-            configMigrationTimeoutMs = 1,
         )
         try {
             configLoadServices.flushPersistedSdkState()
             assertFalse(configLoadServices.persistedSdkStateStore.isInitialized())
         } finally {
-            configMoveReleased.countDown()
+            migrationReleased.countDown()
         }
     }
 
@@ -334,6 +290,15 @@ internal class ConfigLoadServicesTest {
     private fun ConfigLoadServices.awaitStatePrefetch() {
         persistedSdkStateStore.value.snapshot()
     }
+
+    private fun createSystemServices(context: FilesDirApplication) = ConfigLoadServices(
+        context = context,
+        preStartServices = PreStartServices(errorHandler = FakeErrorHandler()),
+        instrumentedConfig = FakeInstrumentedConfig(),
+        workerThreadPoolSupplier = { FakeWorkerThreadPool(testWorkers = listOf(Worker.Background.PersistenceWorker)) },
+        configServiceSupplier = { _, _, _, _, _, _ -> FakeConfigService() },
+        fileSystem = FileSystem.SYSTEM,
+    ).also { it.awaitStatePrefetch() }
 
     private fun createServices(
         context: FilesDirApplication,

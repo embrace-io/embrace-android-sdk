@@ -15,6 +15,7 @@ import java.io.IOException
 internal class RemoteConfigStoreImpl(
     private val serializer: PlatformSerializer,
     private val storageDir: File,
+    private val readDir: File = storageDir,
     private val deliveredAtProvider: () -> Long = { 0L },
     private val deviceIdProvider: () -> String,
     private val errorHandler: ErrorHandler,
@@ -29,9 +30,12 @@ internal class RemoteConfigStoreImpl(
 
     override fun loadResponse(): StoredConfigResponse? = loadFromCache() ?: loadFromJson()
 
+    private fun fileForRead(name: String): File = File(readDir, name)
+
     private fun loadFromCache(): StoredConfigResponse? {
+        val file = fileForRead(PersistedConfig.CACHED_CONFIG_FILE_NAME)
         return try {
-            val cached = cachedConfigFile.inputStream().buffered().use {
+            val cached = file.inputStream().buffered().use {
                 EmbraceBinary.decodeFromStream(CachedConfiguration.serializer(), it)
             }
             StoredConfigResponse(
@@ -42,7 +46,7 @@ internal class RemoteConfigStoreImpl(
             )
         } catch (_: IllegalArgumentException) {
             // delete the cache file if it appears to be corrupted
-            deleteQuietly(cachedConfigFile)
+            deleteIfInStorageDir(file)
             null
         } catch (_: IOException) {
             // assume error may be recoverable (e.g. transient IO)
@@ -54,8 +58,9 @@ internal class RemoteConfigStoreImpl(
     }
 
     private fun loadFromJson(): StoredConfigResponse? {
+        val file = fileForRead(PersistedConfig.CONFIG_RESPONSE_FILE_NAME)
         return try {
-            val cfg = configFile.inputStream().buffered().use {
+            val cfg = file.inputStream().buffered().use {
                 serializer.fromJson(it, RemoteConfig.serializer())
             }
             // omit etag so the next request is unconditional, so the binary cache is regenerated
@@ -67,7 +72,7 @@ internal class RemoteConfigStoreImpl(
         } catch (exc: IllegalArgumentException) {
             errorHandler.trackSdkError(SdkErrorType.RemoteConfigStoreFail, exc)
             // delete the cache file if it appears to be corrupted
-            deleteQuietly(configFile)
+            deleteIfInStorageDir(file)
             null
         } catch (_: IOException) {
             // assume error may be recoverable (e.g. transient IO)
@@ -133,6 +138,12 @@ internal class RemoteConfigStoreImpl(
     private fun trackUnlessIo(exc: Throwable) {
         if (exc !is IOException) {
             errorHandler.trackSdkError(SdkErrorType.RemoteConfigStoreFail, exc)
+        }
+    }
+
+    private fun deleteIfInStorageDir(file: File) {
+        if (file.parentFile == storageDir) {
+            deleteQuietly(file)
         }
     }
 

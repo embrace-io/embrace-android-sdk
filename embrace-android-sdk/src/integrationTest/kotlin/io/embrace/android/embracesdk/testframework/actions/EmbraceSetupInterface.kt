@@ -207,6 +207,7 @@ internal class EmbraceSetupInterface(
                 okHttpClient = fakeInitServices.okHttpClient,
                 uuidSource = fakeInitServices.uuidSource,
                 workerThreadPoolSupplier = { workerThreadPool },
+                orphanSweepDelayMs = 0,
                 configServiceSupplier = { preStartServices, instrumentedConfig, serializer, okHttpClient, workerThreadPool, persistedConfig ->
                     DecoratedConfigService(
                         createConfigService(preStartServices, instrumentedConfig, serializer, okHttpClient, workerThreadPool, persistedConfig)

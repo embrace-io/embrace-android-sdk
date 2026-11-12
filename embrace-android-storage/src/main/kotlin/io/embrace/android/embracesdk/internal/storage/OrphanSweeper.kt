@@ -1,5 +1,6 @@
 package io.embrace.android.embracesdk.internal.storage
 
+import io.embrace.android.embracesdk.internal.clock.Clock
 import io.embrace.android.embracesdk.internal.logging.ErrorHandler
 import io.embrace.android.embracesdk.internal.logging.SdkErrorType
 import io.embrace.android.embracesdk.internal.logging.guardSdkCode
@@ -8,7 +9,9 @@ import okio.Path
 /**
  * Deletes everything under [storage]'s root that [SdkStorageLayout] doesn't declare: unknown files and directories at
  * any level, and entries a leaf [SdkDir]'s [SdkDir.allowedEntries] rejects. In a directory with
- * [SdkDir.sweepRequiresStale], an entry is only deleted once its own mtime is before [processStartMs].
+ * [SdkDir.sweepRequiresStale], an entry is only deleted once its own mtime is before [processStartMs] and at least
+ * [MIN_STALE_AGE_MS] before [wallClock]'s time. The age check stops a backwards clock step from making this process's
+ * in-flight files look stale, so [wallClock] must follow the system clock as mtimes do.
  *
  * The root's [SdkStorageLayout.LAYOUT_VERSION_FILE_NAME] records the highest [layoutVersion] that has run. If it is
  * higher than [layoutVersion], or can't be parsed, a newer SDK may have written this layout and the sweep is skipped.
@@ -17,6 +20,7 @@ class OrphanSweeper(
     private val storage: SdkStorage,
     private val layoutVersion: Int,
     private val processStartMs: Long,
+    private val wallClock: Clock,
     private val errorHandler: ErrorHandler,
 ) {
 
@@ -96,5 +100,11 @@ class OrphanSweeper(
     }
 
     private fun isStale(entry: Path): Boolean =
-        fileSystem.metadataOrNull(entry)?.lastModifiedAtMillis?.let { it < processStartMs } == true
+        fileSystem.metadataOrNull(entry)?.lastModifiedAtMillis?.let {
+            it < processStartMs && it <= wallClock.now() - MIN_STALE_AGE_MS
+        } == true
+
+    companion object {
+        const val MIN_STALE_AGE_MS: Long = 10 * 60 * 1_000L
+    }
 }

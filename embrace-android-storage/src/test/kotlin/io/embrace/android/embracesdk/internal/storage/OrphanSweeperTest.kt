@@ -26,6 +26,7 @@ internal class OrphanSweeperTest {
     private val mtimes = mutableMapOf<Path, Long?>()
     private val undeletable = mutableSetOf<Path>()
     private val unwritablePrefixes = mutableSetOf<String>()
+    private var wallClockMs = PROCESS_START_MS + OrphanSweeper.MIN_STALE_AGE_MS
     private val errorHandler = FakeErrorHandler(throwOnSdkError = false)
     private lateinit var fileSystem: FileSystem
     private lateinit var storage: SdkStorageImpl
@@ -209,6 +210,19 @@ internal class OrphanSweeperTest {
     }
 
     @Test
+    fun `entries younger than the minimum age are kept after the clock steps back`() {
+        val inFlight = stale(write(storage.dir(SdkDir.TELEMETRY_READY) / "$V2_PAYLOAD.tmp"))
+        val old = write(storage.dir(SdkDir.TELEMETRY_LOG_ENVELOPES) / "$V2_PAYLOAD.tmp")
+        wallClockMs = STALE_MS + 1
+        mtimes[old] = wallClockMs - OrphanSweeper.MIN_STALE_AGE_MS
+
+        assertEquals(1, sweep())
+
+        assertTrue(fileSystem.exists(inFlight))
+        assertFalse(fileSystem.exists(old))
+    }
+
+    @Test
     fun `a missing root is not created`() {
         assertEquals(0, sweep())
         assertFalse(fileSystem.exists(root))
@@ -228,7 +242,7 @@ internal class OrphanSweeperTest {
     }
 
     private fun sweep(layoutVersion: Int = SdkStorageLayout.LAYOUT_VERSION): Int =
-        OrphanSweeper(storage, layoutVersion, PROCESS_START_MS, errorHandler).sweep()
+        OrphanSweeper(storage, layoutVersion, PROCESS_START_MS, { wallClockMs }, errorHandler).sweep()
 
     private fun write(path: Path, contents: String = "data"): Path {
         path.parent?.let(fileSystem::createDirectories)

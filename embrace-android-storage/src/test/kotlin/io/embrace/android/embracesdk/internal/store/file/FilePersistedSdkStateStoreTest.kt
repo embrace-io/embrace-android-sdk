@@ -91,6 +91,27 @@ internal class FilePersistedSdkStateStoreTest {
     }
 
     @Test
+    fun `flush writes a pending update on the calling thread`() {
+        val store = createStore()
+        store.update { userId = "flushed" }
+        store.flush()
+        assertEquals(1, writes)
+        assertEquals("flushed", createStore(uuid = "other").snapshot().userId)
+
+        executor.runCurrentlyBlocked()
+        assertEquals(1, writes)
+    }
+
+    @Test
+    fun `flush without a pending update doesn't write`() {
+        val store = createStore()
+        store.snapshot()
+        executor.runCurrentlyBlocked()
+        store.flush()
+        assertEquals(1, writes)
+    }
+
+    @Test
     fun `created file is read back by a store`() {
         val state = PersistedSdkState(
             deviceId = "created-id",

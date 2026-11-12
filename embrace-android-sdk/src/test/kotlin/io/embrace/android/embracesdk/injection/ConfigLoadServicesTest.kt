@@ -164,7 +164,7 @@ internal class ConfigLoadServicesTest {
     }
 
     @Test
-    fun `the stores don't wait behind a config move that timed out`() {
+    fun `the stores start fresh without waiting behind a config move that timed out`() {
         val configMoveReleased = CountDownLatch(1)
         val fs = object : ForwardingFileSystem(FileSystem.SYSTEM) {
             override fun metadataOrNull(path: Path): FileMetadata? {
@@ -189,6 +189,46 @@ internal class ConfigLoadServicesTest {
             }
             assertEquals(1, ordinals.get(5, TimeUnit.SECONDS).incrementAndGet(Ordinal.SESSION))
             assertEquals("StorageMigrationFail", errorHandler.sdkErrorMessages.single().msg)
+        } finally {
+            configMoveReleased.countDown()
+        }
+    }
+
+    @Test
+    fun `flushing the persisted SDK state writes a pending update without the worker`() {
+        val context = FilesDirApplication(tempDir.newFolder())
+        val workers = listOf(Worker.Background.PersistenceWorker)
+        val first = createServices(context, FakeConfigService(), FakeWorkerThreadPool(testWorkers = workers))
+        first.persistedSdkStateStore.value.update { userId = "flushed" }
+        first.flushPersistedSdkState()
+
+        val second = createServices(context, FakeConfigService(), FakeWorkerThreadPool(testWorkers = workers))
+        assertEquals("flushed", second.persistedSdkStateStore.value.snapshot().userId)
+    }
+
+    @Test
+    fun `flushing the persisted SDK state doesn't open the store`() {
+        // holds the config move so the state prefetch queued behind it can't open the store
+        val configMoveReleased = CountDownLatch(1)
+        val fs = object : ForwardingFileSystem(FileSystem.SYSTEM) {
+            override fun metadataOrNull(path: Path): FileMetadata? {
+                if (path.name == "embrace_remote_config") {
+                    configMoveReleased.await()
+                }
+                return super.metadataOrNull(path)
+            }
+        }
+        val configLoadServices = ConfigLoadServices(
+            context = FilesDirApplication(tempDir.newFolder()),
+            preStartServices = PreStartServices(errorHandler = FakeErrorHandler(throwOnSdkError = false)),
+            workerThreadPoolSupplier = { FakeWorkerThreadPool() },
+            configServiceSupplier = { _, _, _, _, _, _ -> FakeConfigService() },
+            fileSystem = fs,
+            configMigrationTimeoutMs = 1,
+        )
+        try {
+            configLoadServices.flushPersistedSdkState()
+            assertFalse(configLoadServices.persistedSdkStateStore.isInitialized())
         } finally {
             configMoveReleased.countDown()
         }

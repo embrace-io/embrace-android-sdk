@@ -29,6 +29,7 @@ fun createSharedPrefsMigrator(
     serializer: PlatformSerializer,
     errorHandler: ErrorHandler,
     appFramework: AppFramework,
+    gate: PrefsMigrationGate,
     liveNetworkCaptureRules: () -> Map<String, Int>,
 ): SharedPrefsMigrator = SharedPrefsMigrator(
     fileSystem = fileSystem,
@@ -38,13 +39,33 @@ fun createSharedPrefsMigrator(
     serializer = serializer,
     errorHandler = errorHandler,
     appFramework = appFramework,
+    gate = gate,
     liveNetworkCaptureRules = liveNetworkCaptureRules,
+)
+
+/**
+ * Unless `ordinals.bin` exists, deletes the state files in [installStateDir] and writes empty ordinals, so the install
+ * starts fresh and no later launch migrates the prefs.
+ */
+fun startFreshInstallState(fileSystem: FileSystem, installStateDir: Path) {
+    val ordinalsPath = installStateDir / SdkStorageLayout.ORDINALS_FILE_NAME
+    if (!fileSystem.exists(ordinalsPath)) {
+        STATE_FILE_NAMES.forEach { fileSystem.delete(installStateDir / it, mustExist = false) }
+        MmapOrdinalStore.create(fileSystem, ordinalsPath, emptyMap())
+    }
+}
+
+private val STATE_FILE_NAMES = arrayOf(
+    SdkStorageLayout.PERSISTED_SDK_STATE_FILE_NAME,
+    SdkStorageLayout.NETWORK_CAPTURE_FILE_NAME,
+    SdkStorageLayout.AEI_DELIVERED_FILE_NAME,
 )
 
 /**
  * Migrates the SDK's live values from the app's default [SharedPreferences] into the files in [installStateDir], which
  * must exist, and deletes the SDK's keys from the prefs. `ordinals.bin` is written last and marks the migration as
- * complete. Prefs that can't be read are treated as a fresh install rather than retried.
+ * complete. The migration is attempted once: any failure starts the install fresh, with no legacy data, and is never
+ * retried. Writes go through [gate], so nothing is written once the stores have given up on the migration.
  */
 class SharedPrefsMigrator(
     private val fileSystem: FileSystem,
@@ -54,24 +75,35 @@ class SharedPrefsMigrator(
     private val serializer: PlatformSerializer,
     private val errorHandler: ErrorHandler,
     private val appFramework: AppFramework,
+    private val gate: PrefsMigrationGate,
     private val liveNetworkCaptureRules: () -> Map<String, Int>,
 ) {
 
     private val ordinalsPath = installStateDir / SdkStorageLayout.ORDINALS_FILE_NAME
 
     /**
-     * Returns true if this call wrote `ordinals.bin`, or false if a previous launch already did. Only a failure to
-     * write `ordinals.bin` itself returns false with it absent, so the next launch runs again.
+     * Returns true if this call ran the migration, or false if a previous launch already did or the stores gave up on
+     * it. Loaded prefs keys are removed whatever the outcome.
      */
     fun migrate(): Boolean = errorHandler.guardSdkCode(SdkErrorType.PrefsMigrationFail, false) {
         !fileSystem.exists(ordinalsPath) && EmbTrace.trace("prefs-migration") {
             val loaded = if (prefsFileExists()) load() else null
-            val ordinals = loaded?.snapshot?.let(::writeStateFiles) ?: emptyMap()
-            MmapOrdinalStore.create(fileSystem, ordinalsPath, ordinals)
+            val committed = gate.commit { writeInstallState(loaded?.snapshot) }
             if (loaded != null) {
                 errorHandler.guardSdkCode(SdkErrorType.PrefsMigrationFail) { removeKeys(loaded.prefs, loaded.all.keys) }
             }
+            committed
+        }
+    }
+
+    private fun writeInstallState(snapshot: LegacyPrefsSnapshot?) {
+        val ordinals = snapshot?.let(::writeStateFiles) ?: emptyMap()
+        val written = errorHandler.guardSdkCode(SdkErrorType.PrefsMigrationFail, false) {
+            MmapOrdinalStore.create(fileSystem, ordinalsPath, ordinals)
             true
+        }
+        if (!written) {
+            errorHandler.guardSdkCode(SdkErrorType.PrefsMigrationFail) { startFreshInstallState(fileSystem, installStateDir) }
         }
     }
 
@@ -151,10 +183,5 @@ class SharedPrefsMigrator(
     private companion object {
         const val SDK_KEY_PREFIX = "io.embrace."
         const val KEY_USER_SESSION = "embrace.user_session"
-        val STATE_FILE_NAMES = listOf(
-            SdkStorageLayout.PERSISTED_SDK_STATE_FILE_NAME,
-            SdkStorageLayout.NETWORK_CAPTURE_FILE_NAME,
-            SdkStorageLayout.AEI_DELIVERED_FILE_NAME,
-        )
     }
 }

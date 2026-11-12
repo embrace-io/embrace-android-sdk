@@ -55,6 +55,7 @@ internal class ConfigLoadServices(
     configServiceSupplier: ConfigServiceSupplier? = null,
     private val fileSystem: FileSystem = FileSystem.SYSTEM,
     private val configMigrationTimeoutMs: Long = CONFIG_MIGRATION_TIMEOUT_MS,
+    orphanSweepDelayMs: Long = LegacyTelemetryMigration.SWEEP_DELAY_MS,
 ) : Closeable {
 
     // only sweep orphaned files from previous processes
@@ -76,6 +77,7 @@ internal class ConfigLoadServices(
             processStartMs = sweepCutoffMs,
             errorHandler = preStartServices.errorHandler,
         ),
+        sweepDelayMs = orphanSweepDelayMs,
     )
 
     private val appFramework: AppFramework =

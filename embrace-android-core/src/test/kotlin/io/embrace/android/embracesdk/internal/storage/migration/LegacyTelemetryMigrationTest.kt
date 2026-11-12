@@ -1,5 +1,7 @@
 package io.embrace.android.embracesdk.internal.storage.migration
 
+import io.embrace.android.embracesdk.concurrency.BlockingScheduledExecutorService
+import io.embrace.android.embracesdk.fakes.FakeClock
 import io.embrace.android.embracesdk.fakes.FakeErrorHandler
 import io.embrace.android.embracesdk.fs.FakeFileSystemRule
 import io.embrace.android.embracesdk.internal.logging.SdkErrorType
@@ -7,6 +9,7 @@ import io.embrace.android.embracesdk.internal.storage.LegacyStorageMigrator
 import io.embrace.android.embracesdk.internal.storage.OrphanSweeper
 import io.embrace.android.embracesdk.internal.storage.SdkStorageLayout
 import io.embrace.android.embracesdk.internal.storage.createSdkStorage
+import io.embrace.android.embracesdk.internal.worker.BackgroundWorker
 import okio.FileSystem
 import okio.ForwardingFileSystem
 import okio.Path
@@ -31,6 +34,8 @@ internal class LegacyTelemetryMigrationTest {
     private val orphan = data / "no_backup" / SdkStorageLayout.ROOT_DIR_NAME / "orphan"
     private val errorHandler = FakeErrorHandler(throwOnSdkError = false)
     private val worker = MigrationWorker(errorHandler)
+    private val schedulerExecutor = BlockingScheduledExecutorService(FakeClock())
+    private val scheduler = BackgroundWorker(schedulerExecutor)
 
     @Test
     fun `await returns at once without a migrator`() {
@@ -181,10 +186,26 @@ internal class LegacyTelemetryMigrationTest {
         val migration = LegacyTelemetryMigration(worker, migrator(fs), errorHandler, sweeper(fs))
 
         migration.start()
-        migration.sweepOrphans()
-        drainWorker()
+        migration.sweepOrphans(scheduler)
+        runSweep()
 
         assertTrue(fs.exists(migratedPayload))
+        assertFalse(fs.exists(orphan))
+    }
+
+    @Test
+    fun `sweepOrphans waits for the delay`() {
+        val fs = fsRule.fileSystem
+        fs.writeText(orphan)
+        val migration = LegacyTelemetryMigration(worker, null, errorHandler, sweeper(fs))
+
+        migration.sweepOrphans(scheduler)
+        schedulerExecutor.moveForwardAndRunBlocked(LegacyTelemetryMigration.SWEEP_DELAY_MS - 1)
+        drainWorker()
+        assertTrue(fs.exists(orphan))
+
+        schedulerExecutor.moveForwardAndRunBlocked(1)
+        drainWorker()
         assertFalse(fs.exists(orphan))
     }
 
@@ -193,8 +214,8 @@ internal class LegacyTelemetryMigrationTest {
         val fs = fsRule.fileSystem
         fs.writeText(orphan)
 
-        LegacyTelemetryMigration(worker, null, errorHandler, sweeper(fs)).sweepOrphans()
-        drainWorker()
+        LegacyTelemetryMigration(worker, null, errorHandler, sweeper(fs)).sweepOrphans(scheduler)
+        runSweep()
 
         assertFalse(fs.exists(orphan))
     }
@@ -214,7 +235,8 @@ internal class LegacyTelemetryMigrationTest {
         val migration = LegacyTelemetryMigration(worker, migrator(fs), errorHandler, sweeper(fs))
 
         migration.start()
-        migration.sweepOrphans()
+        migration.sweepOrphans(scheduler)
+        schedulerExecutor.moveForwardAndRunBlocked(LegacyTelemetryMigration.SWEEP_DELAY_MS)
         assertTrue(sweeping.await(TIMEOUT_SECS, TimeUnit.SECONDS))
         migration.await()
         release.countDown()
@@ -230,8 +252,21 @@ internal class LegacyTelemetryMigrationTest {
         val migration = LegacyTelemetryMigration(worker, migrator(fs), errorHandler, sweeper(fs))
 
         migration.cancel()
-        migration.sweepOrphans()
-        drainWorker()
+        migration.sweepOrphans(scheduler)
+        runSweep()
+
+        assertTrue(fs.exists(orphan))
+    }
+
+    @Test
+    fun `cancel during the delay stops the sweep`() {
+        val fs = fsRule.fileSystem
+        fs.writeText(orphan)
+        val migration = LegacyTelemetryMigration(worker, migrator(fs), errorHandler, sweeper(fs))
+
+        migration.sweepOrphans(scheduler)
+        migration.cancel()
+        runSweep()
 
         assertTrue(fs.exists(orphan))
     }
@@ -264,6 +299,11 @@ internal class LegacyTelemetryMigrationTest {
         worker.submit("block", Unit, SdkErrorType.Ignored) {
             release.await(TIMEOUT_SECS, TimeUnit.SECONDS)
         }
+    }
+
+    private fun runSweep() {
+        schedulerExecutor.moveForwardAndRunBlocked(LegacyTelemetryMigration.SWEEP_DELAY_MS)
+        drainWorker()
     }
 
     private fun drainWorker() {

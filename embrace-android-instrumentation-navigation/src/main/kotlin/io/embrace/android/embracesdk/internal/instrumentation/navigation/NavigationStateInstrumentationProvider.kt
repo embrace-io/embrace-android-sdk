@@ -30,7 +30,7 @@ class NavigationStateInstrumentationProvider :
      */
     private fun startPublishing(args: InstrumentationArgs, activityTracker: ActivityNavigationTracker) {
         args.eventBus.addHandler(NavigationSignal.KEY, NavigationEventBroker(args.eventBus))
-        args.application.registerActivityLifecycleCallbacks(activityTracker)
+        activityTracker.subscribe()
         args.processStateTracker.addListener(activityTracker)
     }
 }

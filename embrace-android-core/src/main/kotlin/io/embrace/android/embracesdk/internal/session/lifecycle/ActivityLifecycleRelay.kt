@@ -29,7 +29,7 @@ class ActivityLifecycleRelay(
     }
 
     override fun close() {
-        runCatching {
+        errorHandler.guardSdkCode(SdkErrorType.DeregistrationFail) {
             application.unregisterActivityLifecycleCallbacks(this)
         }
     }

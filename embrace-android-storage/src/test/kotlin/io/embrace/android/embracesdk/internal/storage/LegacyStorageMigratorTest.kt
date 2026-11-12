@@ -54,6 +54,29 @@ internal class LegacyStorageMigratorTest {
     }
 
     @Test
+    fun `hasLegacyConfig is true only while 9x config is waiting to move`() {
+        val fs = fsRule.fileSystem
+        val migrator = migrator(fs)
+        assertFalse(migrator.hasLegacyConfig())
+
+        fs.writeText(filesDir / "embrace_remote_config" / "most_recent_response", "legacy")
+        assertTrue(migrator.hasLegacyConfig())
+
+        migrator.migrateConfig()
+        assertFalse(migrator.hasLegacyConfig())
+        assertTrue(errorHandler.sdkErrorMessages.isEmpty())
+    }
+
+    @Test
+    fun `hasLegacyConfig is true if the files dir can't be resolved`() {
+        val fs = fsRule.fileSystem
+        val migrator =
+            LegacyStorageMigrator(fs, { error("no files dir") }, { cacheDir }, { noBackupFilesDir }, errorHandler)
+
+        assertTrue(migrator.hasLegacyConfig())
+    }
+
+    @Test
     fun `migrateConfig keeps config already in the root`() {
         val fs = fsRule.fileSystem
         val config = layout(fs).path(SdkDir.REMOTE_CONFIG)

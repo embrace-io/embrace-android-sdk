@@ -30,6 +30,13 @@ class LegacyStorageMigrator(
     private var configAbandoned: Boolean = false
 
     /**
+     * Whether a 9.x remote config dir exists for [migrateConfig] to move.
+     */
+    fun hasLegacyConfig(): Boolean = errorHandler.guardSdkCode(SdkErrorType.Ignored, true) {
+        fileSystem.exists(legacyDir(SdkDir.REMOTE_CONFIG))
+    }
+
+    /**
      * Moves the remote config. Call before the config is read.
      */
     fun migrateConfig() {

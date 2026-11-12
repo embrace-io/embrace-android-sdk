@@ -55,7 +55,8 @@ internal class ConfigLoadServicesPrefsMigrationTest {
 
     @Test
     fun `a config move that times out starts fresh and the next launch doesn't migrate the prefs`() {
-        val first = createServices(stallOn = "embrace_remote_config", configMigrationTimeoutMs = 1)
+        File(context.filesDir, "embrace_remote_config").mkdirs()
+        val first = createServices(stallMoveOf = "embrace_remote_config", configMigrationTimeoutMs = 1)
         assertEquals(1, first.ordinalStore.value.incrementAndGet(Ordinal.SESSION))
         assertNotEquals(LEGACY_DEVICE_ID, first.persistedSdkStateStore.value.snapshot().deviceId)
         stallReleased.countDown()
@@ -67,7 +68,7 @@ internal class ConfigLoadServicesPrefsMigrationTest {
 
     @Test
     fun `a prefs migration that misses the deadline starts fresh and a late migrator writes nothing`() {
-        val services = createServices(stallOn = defaultPrefsFile(context).name, prefsMigrationTimeoutMs = 1)
+        val services = createServices(stallReadOf = defaultPrefsFile(context).name, prefsMigrationTimeoutMs = 1)
         assertNotEquals(LEGACY_DEVICE_ID, services.persistedSdkStateStore.value.snapshot().deviceId)
         assertEquals("PrefsMigrationFail", errorHandler.sdkErrorMessages.single().msg)
         assertTrue(File(installStateDir(), SdkStorageLayout.ORDINALS_FILE_NAME).exists())
@@ -84,26 +85,35 @@ internal class ConfigLoadServicesPrefsMigrationTest {
     }
 
     private fun createServices(
-        stallOn: String? = null,
+        stallMoveOf: String? = null,
+        stallReadOf: String? = null,
         configMigrationTimeoutMs: Long = 3_000L,
         prefsMigrationTimeoutMs: Long = 3_000L,
     ) = ConfigLoadServices(
         context = context,
         preStartServices = PreStartServices(errorHandler = errorHandler),
         configServiceSupplier = { _, _, _, _, _, _ -> FakeConfigService() },
-        fileSystem = stallingFileSystem(stallOn),
+        fileSystem = stallingFileSystem(stallMoveOf, stallReadOf),
         configMigrationTimeoutMs = configMigrationTimeoutMs,
         prefsMigrationTimeoutMs = prefsMigrationTimeoutMs,
     )
 
-    private fun stallingFileSystem(name: String?): FileSystem = object : ForwardingFileSystem(FileSystem.SYSTEM) {
-        override fun metadataOrNull(path: Path): FileMetadata? {
-            if (path.name == name) {
-                stallReleased.await()
+    private fun stallingFileSystem(moveOf: String?, readOf: String?): FileSystem =
+        object : ForwardingFileSystem(FileSystem.SYSTEM) {
+            override fun atomicMove(source: Path, target: Path) {
+                if (source.name == moveOf) {
+                    stallReleased.await()
+                }
+                super.atomicMove(source, target)
             }
-            return super.metadataOrNull(path)
+
+            override fun metadataOrNull(path: Path): FileMetadata? {
+                if (path.name == readOf) {
+                    stallReleased.await()
+                }
+                return super.metadataOrNull(path)
+            }
         }
-    }
 
     private fun installStateDir() = File(context.noBackupFilesDir, "${SdkStorageLayout.ROOT_DIR_NAME}/install_state")
 

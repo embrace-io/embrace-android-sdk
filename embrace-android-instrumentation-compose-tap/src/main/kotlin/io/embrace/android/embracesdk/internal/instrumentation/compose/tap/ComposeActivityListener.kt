@@ -1,20 +1,22 @@
 package io.embrace.android.embracesdk.internal.instrumentation.compose.tap
 
 import android.app.Activity
-import android.app.Application.ActivityLifecycleCallbacks
-import android.os.Bundle
 import android.view.GestureDetector
 import android.view.Window
+import io.embrace.android.embracesdk.internal.arch.lifecycle.ActivityLifecycle
 import io.embrace.android.embracesdk.internal.logging.ErrorHandler
 import io.embrace.android.embracesdk.internal.logging.SdkErrorType
 import io.embrace.android.embracesdk.internal.logging.guardSdkCode
+import io.embrace.android.embracesdk.internal.utils.event.EventBus
+import io.embrace.android.embracesdk.internal.utils.event.EventHandler
 import java.lang.ref.WeakReference
 import java.util.WeakHashMap
 
 internal class ComposeActivityListener(
     private val errorHandler: ErrorHandler,
     private val dataSource: ComposeTapDataSource,
-) : ActivityLifecycleCallbacks, AutoCloseable {
+    private val eventBus: EventBus,
+) : AutoCloseable {
 
     /**
      * Windows that already have an [EmbraceWindowCallback] installed so that we don't attempt to double-install our `Callback` delegate.
@@ -25,7 +27,7 @@ internal class ComposeActivityListener(
 
     private var closed = false
 
-    override fun onActivityResumed(activity: Activity) {
+    private val onResumed = EventHandler<Activity> { activity ->
         errorHandler.guardSdkCode(SdkErrorType.UiCallbackFail) {
             // Set EmbraceWindowCallback to install Embrace Gesture Listener to capture onClick events
             val window: Window = activity.window
@@ -46,29 +48,19 @@ internal class ComposeActivityListener(
         }
     }
 
+    /**
+     * Starts installing an [EmbraceWindowCallback] on the window of each resumed Activity.
+     */
+    fun subscribe() {
+        eventBus.addHandler(ActivityLifecycle.RESUMED, onResumed)
+    }
+
     override fun close() {
+        eventBus.removeHandler(ActivityLifecycle.RESUMED, onResumed)
         synchronized(windowCallbacks) {
             closed = true
             windowCallbacks.values.forEach { it.get()?.close() }
             windowCallbacks.clear()
         }
-    }
-
-    override fun onActivityCreated(activity: Activity, bundle: Bundle?) {
-    }
-
-    override fun onActivityDestroyed(activity: Activity) {
-    }
-
-    override fun onActivityPaused(activity: Activity) {
-    }
-
-    override fun onActivitySaveInstanceState(activity: Activity, bundle: Bundle) {
-    }
-
-    override fun onActivityStarted(activity: Activity) {
-    }
-
-    override fun onActivityStopped(activity: Activity) {
     }
 }

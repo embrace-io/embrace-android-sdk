@@ -4,7 +4,9 @@ package io.embrace.android.embracesdk.testcases
 
 import io.embrace.android.embracesdk.fakes.TELEMETRY_DIRS
 import android.app.Activity
+import android.app.Application
 import android.content.Context
+import android.os.Build
 import androidx.lifecycle.testing.TestLifecycleOwner
 import androidx.test.core.app.ApplicationProvider
 import io.embrace.android.embracesdk.fakes.testSdkStorage
@@ -20,6 +22,8 @@ import io.embrace.android.embracesdk.fakes.FakeLogRecordExporter
 import io.embrace.android.embracesdk.fakes.FakeLogRecordProcessor
 import io.embrace.android.embracesdk.fakes.FakeSpanExporter
 import io.embrace.android.embracesdk.fakes.FakeSpanProcessor
+import io.embrace.android.embracesdk.fakes.config.FakeEnabledFeatureConfig
+import io.embrace.android.embracesdk.fakes.config.FakeInstrumentedConfig
 import io.embrace.android.embracesdk.internal.EmbraceInternalApi
 import io.embrace.android.embracesdk.internal.NoopInternalInterfaceApi
 import io.embrace.android.embracesdk.internal.api.SdkApi
@@ -37,6 +41,7 @@ import io.embrace.android.embracesdk.network.http.HttpMethod
 import io.embrace.android.embracesdk.network.http.HttpRequestInfoModifier
 import io.embrace.android.embracesdk.testframework.OtelSdkMode
 import io.embrace.android.embracesdk.testframework.SdkIntegrationTestRule
+import io.embrace.android.embracesdk.testframework.actions.EmbraceSetupInterface
 import io.opentelemetry.kotlin.logging.data.LogRecordData
 import io.opentelemetry.kotlin.tracing.data.SpanData
 import org.junit.Assert.assertEquals
@@ -53,6 +58,7 @@ import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.ParameterizedRobolectricTestRunner
 import org.robolectric.Robolectric
+import org.robolectric.util.ReflectionHelpers
 import java.io.File
 import java.util.concurrent.TimeoutException
 
@@ -95,9 +101,16 @@ internal class SdkStateIntegrationTest(
         }
     }
 
+    /**
+     * The API level the next [SdkIntegrationTestRule.runTest] simulates, or null for Robolectric's own.
+     */
+    private var simulatedSdkInt: Int? = null
+
     @Rule
     @JvmField
-    val testRule: SdkIntegrationTestRule = SdkIntegrationTestRule(otelSdkMode = otelSdkMode)
+    val testRule: SdkIntegrationTestRule = SdkIntegrationTestRule(otelSdkMode = otelSdkMode) {
+        EmbraceSetupInterface(simulatedSdkInt = simulatedSdkInt)
+    }
 
     private val context: Context = ApplicationProvider.getApplicationContext()
     private lateinit var embraceDirs: Map<SdkDir, File>
@@ -435,6 +448,34 @@ internal class SdkStateIntegrationTest(
     }
 
     @Test
+    fun `ENABLED to DISABLED - the activity lifecycle relay is the only Embrace callback on the application`() {
+        // P completes startup on resume rather than on a first draw, and is new enough for vitals
+        simulatedSdkInt = Build.VERSION_CODES.P
+        testRule.runTest(
+            instrumentedConfig = FakeInstrumentedConfig(
+                enabledFeatures = FakeEnabledFeatureConfig(uiLoadTracingEnabled = true),
+            ),
+            persistedRemoteConfig = RemoteConfig(
+                pctNavigationStateCaptureEnabled = 100.0f,
+                pctSmoothnessEnabled = 100.0f,
+                pctActivityLeakDetectionEnabled = 100.0f,
+            ),
+            testCaseAction = {
+                assertEquals(listOf("ActivityLifecycleRelay"), embraceActivityLifecycleCallbacks())
+
+                simulateOpeningActivities()
+                assertEquals(
+                    listOf("ActivityLifecycleRelay", "LegacyActivityLoadEventEmitter"),
+                    embraceActivityLifecycleCallbacks(),
+                )
+
+                embrace.disable()
+                assertEquals(emptyList<String>(), embraceActivityLifecycleCallbacks())
+            },
+        )
+    }
+
+    @Test
     fun `DISABLED - API calls are safe, buffered calls are dropped`() {
         lateinit var errorHandler: FakeErrorHandler
         lateinit var calls: ApiCalls
@@ -621,6 +662,18 @@ internal class SdkStateIntegrationTest(
             },
         )
     }
+
+    /**
+     * The simple names of the Embrace callbacks registered on the application, in registration order.
+     */
+    private fun embraceActivityLifecycleCallbacks(): List<String> =
+        ReflectionHelpers.getField<List<Application.ActivityLifecycleCallbacks>>(
+            ApplicationProvider.getApplicationContext<Application>(),
+            "mActivityLifecycleCallbacks",
+        )
+            .map { it.javaClass }
+            .filter { it.name.startsWith("io.embrace.") }
+            .map { it.simpleName }
 
     private fun assertInternalApiIsNoop() {
         val api = EmbraceInternalApi.internalInterfaceApi

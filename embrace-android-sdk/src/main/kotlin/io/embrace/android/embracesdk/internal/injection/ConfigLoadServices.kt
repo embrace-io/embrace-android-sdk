@@ -11,7 +11,9 @@ import io.embrace.android.embracesdk.internal.logging.ErrorHandler
 import io.embrace.android.embracesdk.internal.logging.SdkErrorType
 import io.embrace.android.embracesdk.internal.logging.guardSdkCode
 import io.embrace.android.embracesdk.internal.payload.AppFramework
+import io.embrace.android.embracesdk.internal.prefs.PrefsMigrationGate
 import io.embrace.android.embracesdk.internal.prefs.createSharedPrefsMigrator
+import io.embrace.android.embracesdk.internal.prefs.startFreshInstallState
 import io.embrace.android.embracesdk.internal.serialization.EmbraceSerializer
 import io.embrace.android.embracesdk.internal.serialization.PlatformSerializer
 import io.embrace.android.embracesdk.internal.storage.OrphanSweeper
@@ -55,6 +57,7 @@ internal class ConfigLoadServices(
     configServiceSupplier: ConfigServiceSupplier? = null,
     private val fileSystem: FileSystem = FileSystem.SYSTEM,
     private val configMigrationTimeoutMs: Long = CONFIG_MIGRATION_TIMEOUT_MS,
+    private val prefsMigrationTimeoutMs: Long = PREFS_MIGRATION_TIMEOUT_MS,
     orphanSweepDelayMs: Long = LegacyTelemetryMigration.SWEEP_DELAY_MS,
 ) : Closeable {
 
@@ -90,10 +93,22 @@ internal class ConfigLoadServices(
      */
     private val prefsMigration = MigrationHandle(PREFS_MIGRATION_NAME, false, preStartServices.errorHandler)
 
+    private val prefsMigrationGate = PrefsMigrationGate()
+
     /**
-     * Every file-backed install-state store touches this before opening its file, so it sees the migrated prefs.
+     * Every file-backed install-state store touches this before opening its file, so it sees the migrated prefs. A
+     * migration that misses the deadline is abandoned and the install starts fresh.
      */
-    private val installState: Lazy<Unit> = lazy { prefsMigration.await() }
+    private val installState: Lazy<Unit> = lazy {
+        prefsMigration.await(prefsMigrationTimeoutMs, SdkErrorType.PrefsMigrationFail)
+        if (!prefsMigration.isComplete) {
+            preStartServices.errorHandler.guardSdkCode(SdkErrorType.PrefsMigrationFail) {
+                prefsMigrationGate.abandon {
+                    startFreshInstallState(sdkStorage.fileSystem, sdkStorage.dir(SdkDir.INSTALL_STATE))
+                }
+            }
+        }
+    }
 
     val persistedSdkStateStore: Lazy<PersistedSdkStateStore> = lazy {
         installState.value
@@ -210,6 +225,7 @@ internal class ConfigLoadServices(
                 serializer = jsonSerializer,
                 errorHandler = errorHandler,
                 appFramework = appFramework,
+                gate = prefsMigrationGate,
                 liveNetworkCaptureRules = config::networkCaptureRuleMaxCounts,
             ).migrate()
         }
@@ -229,6 +245,8 @@ internal class ConfigLoadServices(
 }
 
 private const val CONFIG_MIGRATION_TIMEOUT_MS = 3_000L
+
+private const val PREFS_MIGRATION_TIMEOUT_MS = 3_000L
 
 private const val MS_PER_SECOND = 1_000L
 

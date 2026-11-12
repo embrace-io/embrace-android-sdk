@@ -339,27 +339,33 @@ internal class SharedPrefsMigratorTest {
     }
 
     @Test
-    fun `failure writing ordinals leaves prefs intact and reruns to the same result`() {
+    fun `failure writing ordinals completes as a fresh install`() {
         prefs.seed(*ALL_LIVE_KEYS)
-        val fileName = SdkStorageLayout.ORDINALS_FILE_NAME
-        assertFalse(migrate(fs = failingMoveTo(installStateDir / fileName)))
+        assertTrue(migrate(fs = failingMoveTo(ordinalsPath(), failures = 1)))
         assertEquals(SdkErrorType.PrefsMigrationFail.toString(), errorHandler.sdkErrorMessages.single().msg)
-        assertFalse(fileSystem.exists(ordinalsPath()))
-        assertEquals(ALL_LIVE_KEYS.size, prefs.all.size)
-
-        assertTrue(migrate())
-        assertMigrated()
+        assertFreshInstall()
+        assertTrue(prefs.all.isEmpty())
+        assertFalse(migrate())
     }
 
     @Test
-    fun `a rerun deletes a network capture file left by a failed attempt`() {
+    fun `failure writing ordinals twice leaves no legacy data for a rerun`() {
         prefs.seed(*ALL_LIVE_KEYS)
-        assertFalse(migrate(fs = failingMoveTo(ordinalsPath())))
-        assertTrue(fileSystem.exists(installStateDir / SdkStorageLayout.NETWORK_CAPTURE_FILE_NAME))
+        assertTrue(migrate(fs = failingMoveTo(ordinalsPath())))
+        assertEquals(emptyList<Path>(), fileSystem.list(installStateDir))
+        assertTrue(prefs.all.isEmpty())
 
-        liveRules = emptyMap()
         assertTrue(migrate())
-        assertFalse(fileSystem.exists(installStateDir / SdkStorageLayout.NETWORK_CAPTURE_FILE_NAME))
+        assertFreshInstall()
+    }
+
+    @Test
+    fun `an abandoned migration writes nothing and still removes the keys`() {
+        prefs.seed(*ALL_LIVE_KEYS)
+        val gate = PrefsMigrationGate().apply { abandon {} }
+        assertFalse(migrate(gate = gate))
+        assertEquals(emptyList<Path>(), fileSystem.list(installStateDir))
+        assertTrue(prefs.all.isEmpty())
     }
 
     @Test
@@ -374,9 +380,12 @@ internal class SharedPrefsMigratorTest {
         assertFalse(migrate())
     }
 
-    private fun failingMoveTo(path: Path): FileSystem = object : ForwardingFileSystem(fileSystem) {
+    private fun failingMoveTo(path: Path, failures: Int = Int.MAX_VALUE): FileSystem = object : ForwardingFileSystem(fileSystem) {
+        private var remaining = failures
+
         override fun atomicMove(source: Path, target: Path) {
-            if (target == path) {
+            if (target == path && remaining > 0) {
+                remaining--
                 throw IOException("disk full")
             }
             super.atomicMove(source, target)
@@ -388,6 +397,7 @@ internal class SharedPrefsMigratorTest {
         fs: FileSystem = fileSystem,
         createPrefsFile: Boolean = true,
         loaded: SharedPreferences = prefs,
+        gate: PrefsMigrationGate = PrefsMigrationGate(),
     ): Boolean {
         if (createPrefsFile) {
             fileSystem.createDirectories(checkNotNull(prefsFile.parent))
@@ -404,6 +414,7 @@ internal class SharedPrefsMigratorTest {
             serializer = TestPlatformSerializer(),
             errorHandler = errorHandler,
             appFramework = appFramework,
+            gate = gate,
             liveNetworkCaptureRules = liveRulesProvider,
         ).migrate()
     }

@@ -149,7 +149,7 @@ internal class ConfigLoadServicesTest {
     }
 
     @Test
-    fun `the stores don't wait behind a config move that timed out`() {
+    fun `the stores start fresh without waiting behind a config move that timed out`() {
         val configMoveReleased = CountDownLatch(1)
         val fs = object : ForwardingFileSystem(FileSystem.SYSTEM) {
             override fun metadataOrNull(path: Path): FileMetadata? {

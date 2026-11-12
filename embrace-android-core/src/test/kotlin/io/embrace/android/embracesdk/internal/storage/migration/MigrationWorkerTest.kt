@@ -185,11 +185,16 @@ internal class MigrationWorkerTest {
     }
 
     @Test
-    fun `job and await are traced`() {
+    fun `job and await are traced, with a duration unless disabled`() {
         worker.submit("config", Unit, SdkErrorType.StorageMigrationFail) {}.await()
         val durations = EmbTrace.durationTracker.flush()
         assertTrue("migration-config" in durations)
         assertTrue("migration-await-config" in durations)
+
+        val untimed = MigrationHandle("prefetch", Unit, errorHandler, recordDuration = false)
+        worker.submit(untimed, SdkErrorType.StorageMigrationFail) {}
+        untimed.await()
+        assertTrue(EmbTrace.durationTracker.flush().isEmpty())
     }
 
     private companion object {

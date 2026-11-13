@@ -36,8 +36,7 @@ jobs:
           echo "version=$WEAVER_VERSION" >> "$GITHUB_OUTPUT"
 
       - name: Install Weaver
-        # Pinned to the SHA of the embrace-semconv v0.2.0 release.
-        uses: embrace-io/embrace-semconv/.github/actions/setup-weaver@faf9330453bc74b46ab0278ce56664be86cb8640
+        uses: open-telemetry/weaver/.github/actions/setup-weaver@38befce4bc68fe320d20f189465c93835ac20c12 # v0.26.1
         with:
           version: ${{ steps.weaver.outputs.version }}
 
@@ -69,8 +68,7 @@ jobs:
           echo "version=$WEAVER_VERSION" >> "$GITHUB_OUTPUT"
 
       - name: Install Weaver
-        # Pinned to the SHA of the embrace-semconv v0.2.0 release.
-        uses: embrace-io/embrace-semconv/.github/actions/setup-weaver@faf9330453bc74b46ab0278ce56664be86cb8640
+        uses: open-telemetry/weaver/.github/actions/setup-weaver@38befce4bc68fe320d20f189465c93835ac20c12 # v0.26.1
         with:
           version: ${{ steps.weaver.outputs.version }}
 

@@ -24,17 +24,21 @@ class MigrationBudget(
      * The first timeout is tracked as the error type of the job stalling the worker, or [errorType] if none is running.
      */
     fun <T> await(handle: MigrationHandle<T>, errorType: SdkErrorType): T = synchronized(lock) {
+        val onTimeout = {
+            if (!timedOut) {
+                timedOut = true
+                errorHandler.trackSdkError(
+                    worker.runningErrorType ?: errorType,
+                    TimeoutException("migration '${handle.name}' not done within the budget"),
+                )
+            }
+        }
+        if (remainingMs <= 0) {
+            return handle.await(0, onTimeout)
+        }
         val start = System.nanoTime()
         try {
-            handle.await(remainingMs.coerceAtLeast(0)) {
-                if (!timedOut) {
-                    timedOut = true
-                    errorHandler.trackSdkError(
-                        worker.runningErrorType ?: errorType,
-                        TimeoutException("migration '${handle.name}' not done within the budget"),
-                    )
-                }
-            }
+            handle.await(remainingMs, onTimeout)
         } finally {
             remainingMs -= TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - start)
         }

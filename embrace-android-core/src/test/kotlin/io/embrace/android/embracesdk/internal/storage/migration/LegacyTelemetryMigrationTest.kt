@@ -367,6 +367,25 @@ internal class LegacyTelemetryMigrationTest {
         assertTrue(LegacyTelemetryMigration(worker, null, errorHandler).isComplete)
     }
 
+    @Test
+    fun `await gives up on a move that never completes and later calls return at once`() {
+        fsRule.fileSystem.seedLegacyTelemetry()
+        val release = blockWorker()
+        val migration = LegacyTelemetryMigration(worker, migrator(fsRule.fileSystem), errorHandler, awaitTimeoutMs = 10)
+        migration.move(budget(0))
+
+        migration.await()
+        migration.await()
+
+        assertFalse(migration.isComplete)
+        // one timeout for the move and one for the first await: the second await doesn't wait
+        assertEquals(listOf("StorageMigrationFail", "StorageMigrationFail"), errorHandler.sdkErrorMessages.map { it.msg })
+        release.countDown()
+        drainWorker()
+        assertTrue(migration.isComplete)
+        assertTrue(fsRule.fileSystem.exists(migratedPayload))
+    }
+
     private fun sweeper(fs: FileSystem) = OrphanSweeper(
         storage = createSdkStorage(fs, data / "no_backup", errorHandler),
         layoutVersion = SdkStorageLayout.LAYOUT_VERSION,

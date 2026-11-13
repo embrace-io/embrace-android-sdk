@@ -1,5 +1,6 @@
 package io.embrace.android.embracesdk.injection
 
+import io.embrace.android.embracesdk.assertions.waitUntilConditionMet
 import io.embrace.android.embracesdk.fakes.FakeConfigService
 import io.embrace.android.embracesdk.fakes.FakeErrorHandler
 import io.embrace.android.embracesdk.fakes.FilesDirApplication
@@ -35,7 +36,6 @@ import java.util.concurrent.CopyOnWriteArrayList
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.Executors
 import java.util.concurrent.TimeUnit
-import java.util.concurrent.atomic.AtomicReference
 
 internal class ConfigLoadServicesTest {
 
@@ -57,35 +57,51 @@ internal class ConfigLoadServicesTest {
     }
 
     @Test
-    fun `reads the persisted SDK state from install state off the init thread`() {
+    fun `reads the persisted SDK state off the init thread, skipping the 9x dirs once migrated`() {
         val context = FilesDirApplication(tempDir.newFolder())
         val stateFile = context.noBackupFilesDir.toOkioPath() / SdkStorageLayout.ROOT_DIR_NAME / "install_state" /
             SdkStorageLayout.PERSISTED_SDK_STATE_FILE_NAME
         fsRule.fileSystem.createDirectories(checkNotNull(stateFile.parent))
         FilePersistedSdkStateStore.create(fsRule.fileSystem, stateFile, PersistedSdkState("device-id", 1L))
-        val loaded = CountDownLatch(1)
-        val loadThread = AtomicReference<String>()
+        val loadThreads = CopyOnWriteArrayList<String>()
+        val filesDirProbes = CopyOnWriteArrayList<Path>()
         val fs = object : ForwardingFileSystem(fsRule.fileSystem) {
+            override fun metadataOrNull(path: Path): FileMetadata? {
+                if (path.toString().startsWith("${context.filesDir}/")) {
+                    filesDirProbes.add(path)
+                }
+                return super.metadataOrNull(path)
+            }
+
             override fun source(file: Path): Source {
                 if (file == stateFile) {
-                    loadThread.set(Thread.currentThread().name)
-                    loaded.countDown()
+                    loadThreads.add(Thread.currentThread().name)
                 }
                 return super.source(file)
             }
         }
+        val launch = {
+            ConfigLoadServices(
+                context = context,
+                preStartServices = PreStartServices(errorHandler = FakeErrorHandler(throwOnSdkError = false)),
+                workerThreadPoolSupplier = { FakeWorkerThreadPool(testWorkers = listOf(Worker.Background.IoRegWorker)) },
+                configServiceSupplier = { _, _, _, _, _, _ -> FakeConfigService() },
+                fileSystem = fs,
+            ).also { it.legacyTelemetryMigration.move() }
+        }
 
-        val configLoadServices = ConfigLoadServices(
-            context = context,
-            preStartServices = PreStartServices(errorHandler = FakeErrorHandler(throwOnSdkError = false)),
-            workerThreadPoolSupplier = { FakeWorkerThreadPool(testWorkers = listOf(Worker.Background.IoRegWorker)) },
-            configServiceSupplier = { _, _, _, _, _, _ -> FakeConfigService() },
-            fileSystem = fs,
-        )
+        launch()
+        waitUntilConditionMet(waitTimeMs = 5_000, dataProvider = { loadThreads.toList() }, condition = { it.isNotEmpty() })
+        assertEquals(listOf("emb-prefs-migration"), loadThreads)
+        assertTrue(filesDirProbes.isNotEmpty())
+        filesDirProbes.clear()
 
-        assertTrue(loaded.await(5, TimeUnit.SECONDS))
-        assertEquals("emb-prefs-migration", loadThread.get())
-        assertEquals("device-id", configLoadServices.persistedSdkStateStore.value.snapshot().deviceId)
+        val migrated = launch()
+        waitUntilConditionMet(waitTimeMs = 5_000, dataProvider = { loadThreads.size }, condition = { it == 2 })
+        assertEquals("emb-persistence", loadThreads.last())
+        assertEquals("device-id", migrated.persistedSdkStateStore.value.snapshot().deviceId)
+        assertTrue(migrated.legacyTelemetryMigration.isComplete)
+        assertEquals(emptyList<Path>(), filesDirProbes)
     }
 
     @Test

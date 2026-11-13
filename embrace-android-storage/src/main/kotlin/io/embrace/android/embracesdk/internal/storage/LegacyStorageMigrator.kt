@@ -29,9 +29,6 @@ class LegacyStorageMigrator(
     @Volatile
     private var configAbandoned: Boolean = false
 
-    @Volatile
-    private var allMoved: Boolean = false
-
     /**
      * Whether a 9.x remote config dir exists for [migrateConfig] to move.
      */
@@ -71,26 +68,20 @@ class LegacyStorageMigrator(
     fun moveTelemetry() {
         SystemTrace.trace("storage-telemetry-move") {
             val abandoned = configAbandoned
-            val moved = MIGRATED_DIRS
+            MIGRATED_DIRS
                 .filterNot { abandoned && it == SdkDir.REMOTE_CONFIG }
-                .map(::migrate) + migrateCrashMarker()
-            allMoved = moved.all { it }
+                .forEach(::migrate)
+            migrateCrashMarker()
         }
     }
 
     /**
-     * Deletes any abandoned remote config and the 9.x cache dir entries, then the rest of the 9.x install state if
-     * [moveTelemetry] moved everything.
+     * Deletes everything 9.x left behind, including anything [moveTelemetry] failed to move, which is lost rather than
+     * retried. Safe to call on every launch.
      */
     fun deleteLegacyInstallState() {
         SystemTrace.trace("storage-legacy-install-state-delete") {
-            delete(
-                listOfNotNull(legacyDir(SdkDir.REMOTE_CONFIG).takeIf { configAbandoned }) +
-                    legacyCacheEntries(LEGACY_CACHE_DIR_ENTRIES),
-            )
-            if (allMoved) {
-                delete(listOf(legacyDir(SdkDir.INSTALL_STATE)))
-            }
+            delete(legacyDirs(LEGACY_DIR_NAMES.keys) + legacyCacheEntries(LEGACY_CACHE_DIR_ENTRIES))
         }
     }
 
@@ -98,23 +89,20 @@ class LegacyStorageMigrator(
      * Deletes the 9.x telemetry without moving it.
      */
     fun deleteLegacyTelemetry() {
-        val legacyDirs = errorHandler.guardSdkCode(SdkErrorType.Ignored, emptyList()) {
-            LEGACY_TELEMETRY_DIRS.map(::legacyDir)
-        }
-        delete(legacyDirs + legacyCacheEntries(emptyList()))
+        delete(legacyDirs(LEGACY_TELEMETRY_DIRS) + legacyCacheEntries(emptyList()))
     }
 
     /**
      * Moves the 9.x crash marker unless the SDK already wrote one, which is then the more recent crash.
      */
-    private fun migrateCrashMarker(): Boolean = errorHandler.guardSdkCode(SdkErrorType.StorageMigrationFail, false) {
+    private fun migrateCrashMarker() = errorHandler.guardSdkCode(SdkErrorType.StorageMigrationFail) {
         merge(
             legacyDir(SdkDir.INSTALL_STATE) / LEGACY_CRASH_MARKER_FILE_NAME,
             layout.path(SdkDir.INSTALL_STATE) / SdkStorageLayout.CRASH_MARKER_FILE_NAME,
         )
     }
 
-    private fun migrate(dir: SdkDir): Boolean {
+    private fun migrate(dir: SdkDir) {
         val source = legacyDir(dir)
         val merged = errorHandler.guardSdkCode(SdkErrorType.StorageMigrationFail, false) {
             merge(source, layout.path(dir))
@@ -122,7 +110,6 @@ class LegacyStorageMigrator(
         if (merged) {
             delete(listOf(source))
         }
-        return merged
     }
 
     /**
@@ -150,6 +137,9 @@ class LegacyStorageMigrator(
     }
 
     private fun legacyDir(dir: SdkDir): Path = filesDir / LEGACY_DIR_NAMES.getValue(dir)
+
+    private fun legacyDirs(dirs: Collection<SdkDir>): List<Path> =
+        errorHandler.guardSdkCode(SdkErrorType.Ignored, emptyList()) { dirs.map(::legacyDir) }
 
     private fun legacyCacheEntries(extra: List<String>): List<Path> {
         val cacheRoot = errorHandler.guardSdkCode(SdkErrorType.Ignored, null) { cacheDir() } ?: return emptyList()

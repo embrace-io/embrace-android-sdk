@@ -222,18 +222,20 @@ internal class LegacyTelemetryMigrationTest {
     }
 
     @Test
-    fun `move after cancel doesn't migrate`() {
+    fun `move after cancel or skipMove doesn't migrate`() {
         val fs = fsRule.fileSystem
         fs.seedLegacyTelemetry()
-        val migration = LegacyTelemetryMigration(worker, migrator(fs), errorHandler)
+        listOf(LegacyTelemetryMigration::cancel, LegacyTelemetryMigration::skipMove).forEach { stop ->
+            val migration = LegacyTelemetryMigration(worker, migrator(fs), errorHandler)
 
-        migration.cancel()
-        migration.move()
-        drainWorker()
+            stop(migration)
+            migration.move()
+            drainWorker()
 
-        assertTrue(migration.isComplete)
-        assertTrue(fs.exists(legacyPayload))
-        assertFalse(fs.exists(migratedPayload))
+            assertTrue(migration.isComplete)
+            assertTrue(fs.exists(legacyPayload))
+            assertFalse(fs.exists(migratedPayload))
+        }
     }
 
     @Test
@@ -266,19 +268,24 @@ internal class LegacyTelemetryMigrationTest {
     }
 
     @Test
-    fun `sweepOrphans waits for the delay`() {
+    fun `sweepOrphans deletes orphans and 9x leftovers after the delay`() {
         val fs = fsRule.fileSystem
         fs.writeText(orphan)
-        val migration = LegacyTelemetryMigration(worker, null, errorHandler, sweeper(fs))
+        fs.seedLegacyTelemetry()
+        val migration = LegacyTelemetryMigration(worker, migrator(fs), errorHandler, sweeper(fs))
 
         migration.sweepOrphans(scheduler)
         schedulerExecutor.moveForwardAndRunBlocked(LegacyTelemetryMigration.SWEEP_DELAY_MS - 1)
         drainWorker()
         assertTrue(fs.exists(orphan))
+        assertTrue(fs.exists(legacyPayload))
 
         schedulerExecutor.moveForwardAndRunBlocked(1)
         drainWorker()
         assertFalse(fs.exists(orphan))
+        assertFalse(fs.exists(legacyPayload))
+        assertFalse(fs.exists(legacyInstallState))
+        assertFalse(fs.exists(migratedPayload))
     }
 
     @Test

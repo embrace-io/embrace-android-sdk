@@ -6,6 +6,7 @@ import io.embrace.android.embracesdk.internal.storage.LegacyStorageMigrator
 import io.embrace.android.embracesdk.internal.storage.OrphanSweeper
 import io.embrace.android.embracesdk.internal.worker.BackgroundWorker
 import java.util.concurrent.TimeUnit
+import java.util.concurrent.TimeoutException
 import java.util.concurrent.atomic.AtomicBoolean
 
 /**
@@ -18,13 +19,15 @@ import java.util.concurrent.atomic.AtomicBoolean
 class LegacyTelemetryMigration(
     private val worker: MigrationWorker,
     private val migrator: LegacyStorageMigrator?,
-    errorHandler: ErrorHandler,
+    private val errorHandler: ErrorHandler,
     private val orphanSweeper: OrphanSweeper? = null,
     private val sweepDelayMs: Long = SWEEP_DELAY_MS,
+    private val awaitTimeoutMs: Long = AWAIT_TIMEOUT_MS,
 ) {
     private val handle = MigrationHandle(NAME, Unit, errorHandler)
     private val cancelled = AtomicBoolean(false)
     private val moveSubmitted = AtomicBoolean(false)
+    private val awaitTimedOut = AtomicBoolean(false)
 
     init {
         if (migrator == null) {
@@ -96,11 +99,18 @@ class LegacyTelemetryMigration(
     }
 
     /**
-     * Blocks until the migration finishes or is cancelled.
+     * Blocks until the migration finishes or is cancelled, or for at most [awaitTimeoutMs]. After a timeout the caller
+     * proceeds with a stale view of the previous launch's telemetry, and later calls return at once.
      */
     fun await() {
-        if (migrator != null && !handle.isComplete) {
-            handle.await()
+        if (migrator != null && !handle.isComplete && !awaitTimedOut.get()) {
+            handle.await(awaitTimeoutMs) {
+                awaitTimedOut.set(true)
+                errorHandler.trackSdkError(
+                    SdkErrorType.StorageMigrationFail,
+                    TimeoutException("migration '$NAME' not done after $awaitTimeoutMs ms"),
+                )
+            }
         }
     }
 
@@ -139,6 +149,7 @@ class LegacyTelemetryMigration(
     companion object {
         const val SWEEP_DELAY_MS: Long = 10_000L
         private const val NAME = "telemetry-move"
+        private const val AWAIT_TIMEOUT_MS = 10_000L
         private const val DELETE_INSTALL_STATE_NAME = "delete-legacy-install-state"
         private const val DELETE_NAME = "delete-legacy-telemetry"
         private const val SWEEP_NAME = "orphan-sweep"

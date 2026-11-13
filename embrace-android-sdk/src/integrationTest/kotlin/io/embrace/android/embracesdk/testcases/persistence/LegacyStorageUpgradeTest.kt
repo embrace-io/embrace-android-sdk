@@ -14,7 +14,9 @@ import io.embrace.android.embracesdk.fixtures.fakeCachedSessionStoredTelemetryMe
 import io.embrace.android.embracesdk.fixtures.fakeLogStoredTelemetryMetadata
 import io.embrace.android.embracesdk.fixtures.fakeSessionStoredTelemetryMetadata
 import io.embrace.android.embracesdk.internal.arch.state.ProcessState
+import io.embrace.android.embracesdk.internal.config.PersistedConfig
 import io.embrace.android.embracesdk.internal.config.remote.RemoteConfig
+import io.embrace.android.embracesdk.internal.logging.SdkErrorType
 import io.embrace.android.embracesdk.internal.payload.Envelope
 import io.embrace.android.embracesdk.internal.payload.Log
 import io.embrace.android.embracesdk.internal.payload.LogPayload
@@ -32,9 +34,14 @@ import org.junit.Assert.assertTrue
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
+import okio.FileSystem
+import okio.ForwardingFileSystem
+import okio.Path
 import org.robolectric.ParameterizedRobolectricTestRunner
 import java.io.ByteArrayOutputStream
 import java.io.File
+import java.util.concurrent.CountDownLatch
+import java.util.concurrent.TimeUnit
 import java.util.zip.GZIPOutputStream
 
 /**
@@ -162,6 +169,42 @@ internal class LegacyStorageUpgradeTest(
         )
     }
 
+    @Test
+    fun `a stalled 9x config move holds start for at most the migration budget`() {
+        val configMoveReleased = CountDownLatch(1)
+        var startNanos = 0L
+        testRule.runTest(
+            persistRemoteConfig = false,
+            setupAction = {
+                writeLegacyFile("embrace_remote_config/${PersistedConfig.ETAG_FILE_NAME}", "legacy".toByteArray())
+                writeLegacyFile("embrace/embrace_crash_marker", "1".toByteArray())
+                fileSystem = object : ForwardingFileSystem(FileSystem.SYSTEM) {
+                    override fun atomicMove(source: Path, target: Path) {
+                        if (source.name == "embrace_remote_config") {
+                            configMoveReleased.await()
+                        }
+                        super.atomicMove(source, target)
+                    }
+                }
+                migrationBudgetMs = BUDGET_MS
+                getFakeErrorHandler().throwOnSdkError = false
+            },
+            preSdkStartAction = {
+                startNanos = System.nanoTime()
+            },
+            testCaseAction = {
+                val elapsedMs = TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - startNanos)
+                try {
+                    assertTrue("start took $elapsedMs ms", elapsedMs in BUDGET_MS until 2 * BUDGET_MS)
+                    val errors = testRule.setup.getFakeErrorHandler().sdkErrorMessages.map { it.msg }
+                    assertEquals(listOf(SdkErrorType.StorageMigrationFail.toString()), errors)
+                } finally {
+                    configMoveReleased.countDown()
+                }
+            },
+        )
+    }
+
     private fun awaitDeleted(file: File) {
         returnIfConditionMet(
             desiredValueSupplier = { true },
@@ -225,6 +268,7 @@ internal class LegacyStorageUpgradeTest(
 
     internal companion object {
         const val LEGACY_LOG_BODY = "logged by 9.x"
+        const val BUDGET_MS = 1_500L
 
         @JvmStatic
         @ParameterizedRobolectricTestRunner.Parameters(name = "{0}")

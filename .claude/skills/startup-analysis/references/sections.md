@@ -17,7 +17,7 @@ versions, read `section-history.md`, which holds every version-specific rule.
 
 ## Nesting and execution order
 
-Last checked against a 9.4.0 startup trace, read with `scripts/section_tree.sql`.
+Last checked against a 9.5.0 startup trace, read with `scripts/section_tree.sql`.
 
 Indentation = nesting; a parent's duration includes its children. Presentation in reports should
 follow this order. `●` = also exported as a `<name>-duration-ms` attribute on the `sdk-init`

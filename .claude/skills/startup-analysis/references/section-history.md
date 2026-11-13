@@ -35,7 +35,9 @@ trace-only slices that hold a recorded section, or that take a large share of th
 shown. `huc-init` is recorded only with HttpURLConnection capture on, which ExampleApp leaves off,
 so it is in none of these traces.
 
-## 9.4.0
+## 9.5.0 and 9.4.0
+
+The two releases have the same tree and record the same sections.
 
 ```
 ● embrace-impl-init               class load of Embrace (SdkStateHolder assembly); runs BEFORE the window
@@ -63,15 +65,21 @@ so it is in none of these traces.
 │  ├─ ● load-instrumentation
 │  └─ ● huc-init
 └─ ○ startup-tracking
-floating: ● key-value-store-init (under ordinal-store-init in the trace) and ● prefs-first-read (under user-service-init)
+floating: ● key-value-store-init (under ordinal-store-init in the trace) and ● prefs-first-read (under user-service-init in 9.4.0, directly under session-orchestrator-init in 9.5.0)
 ```
 
-Reading its traces:
+Reading their traces:
 - Window: the `emb-sdk-start` slice.
 - Recorded sections: the `●` rows above.
 
-Changes from 9.3.1: 9.4 inlined the SDK's module classes, so most module-level sections became
-sections for the services they built. Only the rows marked same or renamed compare one to one.
+Changes in 9.5.0: none to the recorded sections or the tree, so every section compares one to one
+with 9.4.0. Two trace-only slices are new and absent from ExampleApp traces: `prefs-migration`,
+the SharedPreferences migration, which 9.5.0 does not run, and `network-span-parent-service-init`,
+which runs only once the app sets a network span parent.
+
+Changes in 9.4.0 from 9.3.1: 9.4 inlined the SDK's module classes, so most module-level sections
+became sections for the services they built. Only the rows marked same or renamed compare one to
+one.
 
 | 9.3.1 | 9.4.0 | |
 |---|---|---|

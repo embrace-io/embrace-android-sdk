@@ -82,6 +82,7 @@ import io.embrace.android.embracesdk.internal.otel.impl.EmbClock
 import io.embrace.android.embracesdk.internal.otel.logs.LogSinkImpl
 import io.embrace.android.embracesdk.internal.otel.sdk.DataValidator
 import io.embrace.android.embracesdk.internal.otel.sdk.OtelSdkWrapper
+import io.embrace.android.embracesdk.internal.otel.sdk.ProcessOtelSdkErrorHandler
 import io.embrace.android.embracesdk.internal.otel.spans.EmbraceSpanFactory
 import io.embrace.android.embracesdk.internal.otel.spans.EmbraceSpanFactoryImpl
 import io.embrace.android.embracesdk.internal.otel.spans.SpanRepository
@@ -138,6 +139,8 @@ internal fun createRealSdkInstance(
     val okHttpClient = configLoadServices.okHttpClient
     val uuidSource = configLoadServices.uuidSource
     val sdkStorage = configLoadServices.sdkStorage
+
+    ProcessOtelSdkErrorHandler.attach(errorHandler)
 
     // forward references that break dependency cycles
     lateinit var sessionIdsProvider: SessionIdsProvider

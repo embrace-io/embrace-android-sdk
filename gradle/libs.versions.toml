@@ -7,7 +7,7 @@ dokka = "2.3.0"
 kotlinGradlePlugin = "2.4.21"
 koverGradlePlugin = "0.9.11"
 lint = "32.3.1"
-openTelemetryCore = "1.67.0"
+openTelemetryCore = "1.68.0"
 # Pinned to 2.8.x: 2.9.0+ requires AGP 8.1.1 (above our minAgpVersion) and 2.11.0+ requires kotlin-stdlib 2.1.20,
 # which breaks our minimum supported Kotlin (2.0.21). See .github/dependabot.yml.
 lifecycle = "2.8.7"

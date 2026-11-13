@@ -26,31 +26,11 @@ class LegacyStorageMigrator(
         SdkStorageImpl(fileSystem, noBackupFilesDir() / SdkStorageLayout.ROOT_DIR_NAME, errorHandler)
     }
 
-    @Volatile
-    private var configAbandoned: Boolean = false
-
     /**
-     * Whether a 9.x remote config dir exists for [migrateConfig] to move.
+     * The 9.x remote config dir, or null if there is none. The config is read from here until [moveTelemetry] moves it.
      */
-    fun hasLegacyConfig(): Boolean = errorHandler.guardSdkCode(SdkErrorType.Ignored, true) {
-        fileSystem.exists(legacyDir(SdkDir.REMOTE_CONFIG))
-    }
-
-    /**
-     * Moves the remote config. Call before the config is read.
-     */
-    fun migrateConfig() {
-        errorHandler.guardSdkCode(SdkErrorType.StorageMigrationFail) {
-            if (fileSystem.exists(legacyDir(SdkDir.REMOTE_CONFIG)) && !configAbandoned) {
-                SystemTrace.trace("storage-config-migration") {
-                    migrate(SdkDir.REMOTE_CONFIG)
-                }
-            }
-        }
-    }
-
-    fun abandonConfig() {
-        configAbandoned = true
+    fun legacyConfigDir(): Path? = errorHandler.guardSdkCode(SdkErrorType.Ignored, null) {
+        legacyDir(SdkDir.REMOTE_CONFIG).takeIf(fileSystem::exists)
     }
 
     /**
@@ -62,15 +42,12 @@ class LegacyStorageMigrator(
     }
 
     /**
-     * Moves the telemetry, the crash marker and any remote config [migrateConfig] left behind. On a first upgrade
-     * launch nothing is at its target yet, so each directory is moved by a single rename.
+     * Moves the telemetry, the remote config and the crash marker. On a first upgrade launch nothing is at its target
+     * yet, so each directory is moved by a single rename.
      */
     fun moveTelemetry() {
         SystemTrace.trace("storage-telemetry-move") {
-            val abandoned = configAbandoned
-            MIGRATED_DIRS
-                .filterNot { abandoned && it == SdkDir.REMOTE_CONFIG }
-                .forEach(::migrate)
+            MIGRATED_DIRS.forEach(::migrate)
             migrateCrashMarker()
         }
     }
@@ -102,10 +79,17 @@ class LegacyStorageMigrator(
         )
     }
 
+    /**
+     * A config response already at its target was written by this SDK, so it supersedes the 9.x config, which is
+     * deleted rather than merged into it. A target without a response, such
+     * as the empty dir a failed write leaves, is merged into as usual.
+     */
     private fun migrate(dir: SdkDir) {
         val source = legacyDir(dir)
         val merged = errorHandler.guardSdkCode(SdkErrorType.StorageMigrationFail, false) {
-            merge(source, layout.path(dir))
+            val target = layout.path(dir)
+            dir == SdkDir.REMOTE_CONFIG && fileSystem.exists(target / CONFIG_RESPONSE_FILE_NAME) ||
+                merge(source, target)
         }
         if (merged) {
             delete(listOf(source))
@@ -168,6 +152,7 @@ class LegacyStorageMigrator(
         private val LEGACY_TELEMETRY_DIRS = LEGACY_DIR_NAMES.keys.filter { it.isTelemetry }
         private val MIGRATED_DIRS = LEGACY_DIR_NAMES.keys - SdkDir.INSTALL_STATE
         private const val LEGACY_CRASH_MARKER_FILE_NAME = "embrace_crash_marker"
+        private const val CONFIG_RESPONSE_FILE_NAME = "most_recent_response"
         private val LEGACY_CACHE_DIR_ENTRIES = listOf("emb_config_cache", LEGACY_CRASH_MARKER_FILE_NAME)
     }
 }

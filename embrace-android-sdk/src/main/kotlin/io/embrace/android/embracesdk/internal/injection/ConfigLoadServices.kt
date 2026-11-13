@@ -56,7 +56,6 @@ internal class ConfigLoadServices(
     workerThreadPoolSupplier: WorkerThreadPoolSupplier? = null,
     configServiceSupplier: ConfigServiceSupplier? = null,
     private val fileSystem: FileSystem = FileSystem.SYSTEM,
-    private val configMigrationTimeoutMs: Long = CONFIG_MIGRATION_TIMEOUT_MS,
     private val prefsMigrationTimeoutMs: Long = PREFS_MIGRATION_TIMEOUT_MS,
     orphanSweepDelayMs: Long = LegacyTelemetryMigration.SWEEP_DELAY_MS,
 ) : Closeable {
@@ -107,8 +106,7 @@ internal class ConfigLoadServices(
     }
 
     /**
-     * Submitted once [persistedConfig] exists, as the migration needs its network capture rules. It's only submitted
-     * once the config move has finished, so if that move times out it completes as a fresh install instead.
+     * Submitted once [persistedConfig] exists, as the migration needs its network capture rules.
      */
     private val prefsMigration = EmbTrace.trace("prefs-migration-handle-init") {
         MigrationHandle(PREFS_MIGRATION_NAME, false, preStartServices.errorHandler)
@@ -186,24 +184,28 @@ internal class ConfigLoadServices(
         if (migrated) {
             legacyTelemetryMigration.skipMove()
         }
-        val hasLegacyConfig =
-            !migrated && EmbTrace.trace("migration-config-probe") { legacyStorageMigrator.hasLegacyConfig() }
-        val configMoved = !hasLegacyConfig || migrationWorker
-            .submit("config", Unit, SdkErrorType.StorageMigrationFail, legacyStorageMigrator::migrateConfig)
-            .also { it.await(configMigrationTimeoutMs, SdkErrorType.StorageMigrationFail) }
-            .isComplete
-        if (!configMoved) {
-            legacyStorageMigrator.abandonConfig()
+        val storageDir = sdkStorage.path(SdkDir.REMOTE_CONFIG)
+        // until the telemetry move moves it, a 9.x config is read where 9.x left it
+        val readDir = if (migrated) {
+            storageDir
+        } else {
+            EmbTrace.trace("migration-config-probe") {
+                val hasConfig = preStartServices.errorHandler.guardSdkCode(SdkErrorType.Ignored, true) {
+                    sdkStorage.fileSystem.exists(storageDir / PersistedConfig.CONFIG_RESPONSE_FILE_NAME)
+                }
+                storageDir.takeIf { hasConfig } ?: legacyStorageMigrator.legacyConfigDir() ?: storageDir
+            }
         }
         PersistedConfig(
             serializer = jsonSerializer,
-            storageDir = sdkStorage.path(SdkDir.REMOTE_CONFIG).toFile(),
+            storageDir = storageDir.toFile(),
+            readDir = readDir.toFile(),
             instrumentedConfig = instrumentedConfig,
             stateStore = persistedSdkStateStore,
             clock = preStartServices.clock,
             errorHandler = preStartServices.errorHandler,
         ).also { config ->
-            if (configMoved && !migrated) {
+            if (!migrated) {
                 submitPrefsMigration(config, preStartServices.errorHandler)
             } else {
                 prefsMigration.complete()
@@ -299,8 +301,6 @@ internal class ConfigLoadServices(
         return ScopedOrdinalStore(ordinals, persistedSdkStateStore.value, errorHandler)
     }
 }
-
-private const val CONFIG_MIGRATION_TIMEOUT_MS = 3_000L
 
 private const val PREFS_MIGRATION_TIMEOUT_MS = 3_000L
 

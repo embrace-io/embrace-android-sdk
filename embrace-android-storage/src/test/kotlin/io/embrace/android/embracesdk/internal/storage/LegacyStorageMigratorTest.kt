@@ -220,7 +220,7 @@ internal class LegacyStorageMigratorTest {
     }
 
     @Test
-    fun `an entry that fails to move is kept and moved by the next run`() {
+    fun `an entry that fails to move is deleted rather than retried`() {
         val legacy = filesDir / "embrace_payloads"
         val fs = BlockingFileSystem(fsRule.fileSystem, legacy / "b")
         val ready = layout(fs).path(SdkDir.TELEMETRY_READY)
@@ -230,43 +230,23 @@ internal class LegacyStorageMigratorTest {
         migrator(fs).migrateTelemetry()
 
         assertEquals(setOf("a", "c", "live"), fs.list(ready).map { it.name }.toSet())
-        assertEquals(listOf(legacy / "b"), fs.list(legacy))
-        assertEquals(listOf("StorageMigrationFail"), errorHandler.sdkErrorMessages.map { it.msg })
-
-        fs.blocked = null
-        migrator(fs).migrateTelemetry()
-        assertEquals(setOf("a", "b", "c", "live"), fs.list(ready).map { it.name }.toSet())
         assertFalse(fs.exists(legacy))
-    }
-
-    @Test
-    fun `a dir that fails to move doesn't stop the others`() {
-        val blocked = filesDir / "embrace_native"
-        val fs = BlockingFileSystem(fsRule.fileSystem, blocked)
-        val files = seedLegacyLayout(fs, filesDir)
-
-        migrateAll(migrator(fs))
-
-        assertMigrated(fs, root, files - SdkDir.INSTALL_STATE - SdkDir.TELEMETRY_PENDING_NATIVE_CRASHES)
-        assertTrue(fs.exists(blocked))
         assertEquals(listOf("StorageMigrationFail"), errorHandler.sdkErrorMessages.map { it.msg })
     }
 
     @Test
-    fun `the 9x install state is kept until every dir has moved`() {
+    fun `a dir that fails to move doesn't stop the others and is deleted with the install state`() {
         val blocked = filesDir / "embrace_native"
         val fs = BlockingFileSystem(fsRule.fileSystem, blocked)
         val files = seedLegacyLayout(fs, filesDir)
         val migrator = migrator(fs)
 
         migrateAll(migrator)
-        assertTrue(fs.exists(filesDir / "embrace"))
-        assertTrue(migrator.hasLegacyTelemetry())
 
-        fs.blocked = null
-        migrator.migrateTelemetry()
-        assertMigrated(fs, root, files - SdkDir.INSTALL_STATE)
+        assertMigrated(fs, root, files - SdkDir.INSTALL_STATE - SdkDir.TELEMETRY_PENDING_NATIVE_CRASHES)
+        assertFalse(fs.exists(blocked))
         assertFalse(migrator.hasLegacyTelemetry())
+        assertEquals(listOf("StorageMigrationFail"), errorHandler.sdkErrorMessages.map { it.msg })
     }
 
     @Test
@@ -413,15 +393,18 @@ internal class LegacyStorageMigratorTest {
     }
 
     @Test
-    fun `deleteLegacyTelemetry doesn't throw if the files dir can't be resolved`() {
+    fun `deletes don't throw if the files dir can't be resolved`() {
         val fs = fsRule.fileSystem
         fs.writeText(cacheDir / "embrace_payloads" / "payload", "x")
         val migrator =
             LegacyStorageMigrator(fs, { error("no files dir") }, { cacheDir }, { noBackupFilesDir }, errorHandler)
 
         migrator.deleteLegacyTelemetry()
-
         assertFalse(fs.exists(cacheDir / "embrace_payloads"))
+
+        fs.writeText(cacheDir / "emb_config_cache" / "etag", "x")
+        migrator.deleteLegacyInstallState()
+        assertFalse(fs.exists(cacheDir / "emb_config_cache"))
     }
 
     @Test

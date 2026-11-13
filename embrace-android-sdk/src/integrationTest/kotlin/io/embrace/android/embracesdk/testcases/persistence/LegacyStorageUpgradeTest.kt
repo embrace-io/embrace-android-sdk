@@ -138,13 +138,17 @@ internal class LegacyStorageUpgradeTest(
     fun `disable deletes 9x telemetry the migration hasn't moved`() {
         val legacyPayload = File(ctx.filesDir, "embrace_payloads/unmigrated")
         val legacyCachePayload = File(ctx.cacheDir, "embrace_payloads/unmigrated")
+        val orphan = File(testSdkStorage(ctx).root.toFile(), "orphan")
         testRule.runTest(
             setupAction = {
                 writeLegacyFile("embrace/leftover", "x".toByteArray())
+                checkNotNull(orphan.parentFile).mkdirs()
+                orphan.writeText("x")
             },
             testCaseAction = {
-                // the 9.x install state is deleted last, so the migration has finished once it's gone
-                awaitDeleted(File(ctx.filesDir, "embrace"))
+                // the orphan sweep deletes the 9.x install state again before the orphan, so nothing else deletes 9.x
+                // state once the orphan is gone
+                awaitDeleted(orphan)
                 listOf(legacyPayload, legacyCachePayload).forEach {
                     checkNotNull(it.parentFile).mkdirs()
                     it.writeText("x")

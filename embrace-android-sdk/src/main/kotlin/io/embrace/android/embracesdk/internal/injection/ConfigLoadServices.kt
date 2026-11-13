@@ -178,7 +178,16 @@ internal class ConfigLoadServices(
         sectionName = "persisted-config-init",
         recordDuration = true,
     ) {
-        val hasLegacyConfig = EmbTrace.trace("migration-config-probe") { legacyStorageMigrator.hasLegacyConfig() }
+        val migrated = EmbTrace.trace("migration-marker-probe") {
+            preStartServices.errorHandler.guardSdkCode(SdkErrorType.Ignored, false) {
+                sdkStorage.fileSystem.exists(sdkStorage.dir(SdkDir.INSTALL_STATE) / SdkStorageLayout.ORDINALS_FILE_NAME)
+            }
+        }
+        if (migrated) {
+            legacyTelemetryMigration.skipMove()
+        }
+        val hasLegacyConfig =
+            !migrated && EmbTrace.trace("migration-config-probe") { legacyStorageMigrator.hasLegacyConfig() }
         val configMoved = !hasLegacyConfig || migrationWorker
             .submit("config", Unit, SdkErrorType.StorageMigrationFail, legacyStorageMigrator::migrateConfig)
             .also { it.await(configMigrationTimeoutMs, SdkErrorType.StorageMigrationFail) }
@@ -194,12 +203,12 @@ internal class ConfigLoadServices(
             clock = preStartServices.clock,
             errorHandler = preStartServices.errorHandler,
         ).also { config ->
-            if (configMoved) {
+            if (configMoved && !migrated) {
                 submitPrefsMigration(config, preStartServices.errorHandler)
             } else {
                 prefsMigration.complete()
             }
-            submitStatePrefetch(preStartServices.errorHandler)
+            submitStatePrefetch(preStartServices.errorHandler, migrated)
         }
     }
 
@@ -261,7 +270,17 @@ internal class ConfigLoadServices(
      * Prefetches the persisted SDK state off the init thread which then either finds it already
      * loaded or waits for the in-progress load.
      */
-    private fun submitStatePrefetch(errorHandler: ErrorHandler) {
+    private fun submitStatePrefetch(errorHandler: ErrorHandler, migrated: Boolean) {
+        if (migrated) {
+            errorHandler.guardSdkCode(SdkErrorType.PersistedSdkStateLoadFail) {
+                workerThreadPool.backgroundWorker(Worker.Background.PersistenceWorker).submit {
+                    errorHandler.guardSdkCode(SdkErrorType.PersistedSdkStateLoadFail) {
+                        persistedSdkStateStore.value.snapshot()
+                    }
+                }
+            }
+            return
+        }
         val handle = MigrationHandle(STATE_PREFETCH_NAME, Unit, errorHandler, recordDuration = false)
         prefsMigrationWorker.submit(handle, SdkErrorType.PersistedSdkStateLoadFail) {
             persistedSdkStateStore.value.snapshot()

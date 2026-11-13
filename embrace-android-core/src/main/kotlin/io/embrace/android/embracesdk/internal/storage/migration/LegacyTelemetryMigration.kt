@@ -9,10 +9,11 @@ import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicBoolean
 
 /**
- * Moves the 9.x telemetry into the layout on [worker] once [move] is called, deletes the rest of the 9.x install state
- * once [start] is called, and runs [orphanSweeper] [sweepDelayMs] after [sweepOrphans] is called, so it doesn't compete
- * with the app's startup. Anything that reads the previous launch's telemetry calls [await] first. Without a [migrator]
- * there is nothing to move and [await] returns at once.
+ * Moves the 9.x telemetry into the layout on [worker] once [move] is called, and deletes the rest of the 9.x install
+ * state behind that move once [start] is called. [sweepDelayMs] after [sweepOrphans] is called, it deletes any 9.x
+ * state still left and runs [orphanSweeper], so neither competes with the app's startup. Anything that reads the
+ * previous launch's telemetry calls [await] first. Without a [migrator], or after [skipMove], there is nothing to move
+ * and [await] returns at once.
  */
 class LegacyTelemetryMigration(
     private val worker: MigrationWorker,
@@ -37,7 +38,7 @@ class LegacyTelemetryMigration(
      */
     fun move(timeoutMs: Long = MOVE_TIMEOUT_MS) {
         val migrator = migrator ?: return
-        if (cancelled.get()) {
+        if (cancelled.get() || handle.isComplete) {
             return
         }
         if (!migrator.hasLegacyTelemetry()) {
@@ -56,6 +57,11 @@ class LegacyTelemetryMigration(
     }
 
     /**
+     * Completes the migration without checking for 9.x telemetry
+     */
+    fun skipMove() = handle.complete()
+
+    /**
      * Queues the deletion of the rest of the 9.x install state behind the [move].
      */
     fun start() {
@@ -70,12 +76,16 @@ class LegacyTelemetryMigration(
         }
     }
 
+    /**
+     * Also deletes any 9.x state a previous launch left behind, e.g. if it ended before its [move].
+     */
     fun sweepOrphans(scheduler: BackgroundWorker) {
         val sweeper = orphanSweeper ?: return
         scheduler.schedule<Unit>(
             {
                 worker.submit(SWEEP_NAME, Unit, SdkErrorType.OrphanSweepFail) {
                     if (!cancelled.get()) {
+                        migrator?.deleteLegacyInstallState()
                         sweeper.sweep()
                     }
                 }

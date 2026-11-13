@@ -90,7 +90,9 @@ class SharedPrefsMigrator(
             val loaded = if (prefsFileExists()) load() else null
             val committed = gate.commit { writeInstallState(loaded?.snapshot) }
             if (loaded != null) {
-                errorHandler.guardSdkCode(SdkErrorType.PrefsMigrationFail) { removeKeys(loaded.prefs, loaded.all.keys) }
+                EmbTrace.trace("prefs-remove-keys") {
+                    errorHandler.guardSdkCode(SdkErrorType.PrefsMigrationFail) { removeKeys(loaded.prefs, loaded.all.keys) }
+                }
             }
             committed
         }
@@ -98,9 +100,11 @@ class SharedPrefsMigrator(
 
     private fun writeInstallState(snapshot: LegacyPrefsSnapshot?) {
         val ordinals = snapshot?.let(::writeStateFiles) ?: emptyMap()
-        val written = errorHandler.guardSdkCode(SdkErrorType.PrefsMigrationFail, false) {
-            MmapOrdinalStore.create(fileSystem, ordinalsPath, ordinals)
-            true
+        val written = EmbTrace.trace("prefs-write-ordinals") {
+            errorHandler.guardSdkCode(SdkErrorType.PrefsMigrationFail, false) {
+                MmapOrdinalStore.create(fileSystem, ordinalsPath, ordinals)
+                true
+            }
         }
         if (!written) {
             errorHandler.guardSdkCode(SdkErrorType.PrefsMigrationFail) { startFreshInstallState(fileSystem, installStateDir) }
@@ -114,19 +118,22 @@ class SharedPrefsMigrator(
         fileSystem.exists(prefsFile) || fileSystem.exists("$prefsFile.bak".toPath())
 
     private fun load(): LoadedPrefs? = errorHandler.guardSdkCode(SdkErrorType.PrefsMigrationFail, null) {
-        val prefs = loadPrefs()
-        val all = prefs.all
-        LoadedPrefs(prefs, all, LegacyPrefsReader(all, serializer, errorHandler, appFramework).read())
+        val prefs = EmbTrace.trace("prefs-load") { loadPrefs() }
+        val all = EmbTrace.trace("prefs-load-all") { prefs.all }
+        val snapshot = EmbTrace.trace("prefs-decode") { LegacyPrefsReader(all, serializer, errorHandler, appFramework).read() }
+        LoadedPrefs(prefs, all, snapshot)
     }
 
     private fun writeStateFiles(snapshot: LegacyPrefsSnapshot): Map<Ordinal, Int> {
-        val written = errorHandler.guardSdkCode(SdkErrorType.PrefsMigrationFail, false) {
-            FilePersistedSdkStateStore.create(
-                fileSystem,
-                installStateDir / SdkStorageLayout.PERSISTED_SDK_STATE_FILE_NAME,
-                snapshot.persistedSdkState.copy(appVersionStartupScope = snapshot.appVersionStartupScope),
-            )
-            true
+        val written = EmbTrace.trace("prefs-write-state") {
+            errorHandler.guardSdkCode(SdkErrorType.PrefsMigrationFail, false) {
+                FilePersistedSdkStateStore.create(
+                    fileSystem,
+                    installStateDir / SdkStorageLayout.PERSISTED_SDK_STATE_FILE_NAME,
+                    snapshot.persistedSdkState.copy(appVersionStartupScope = snapshot.appVersionStartupScope),
+                )
+                true
+            }
         }
         if (!written) {
             errorHandler.guardSdkCode(SdkErrorType.PrefsMigrationFail) {
@@ -134,12 +141,16 @@ class SharedPrefsMigrator(
             }
             return emptyMap()
         }
-        val used = networkCaptureUsed(snapshot.networkCaptureRemaining)
-        writeDisposableFile(SdkStorageLayout.NETWORK_CAPTURE_FILE_NAME, used.isEmpty()) {
-            FileNetworkCaptureRuleStore.create(fileSystem, it, used)
+        EmbTrace.trace("prefs-write-network-capture") {
+            val used = networkCaptureUsed(snapshot.networkCaptureRemaining)
+            writeDisposableFile(SdkStorageLayout.NETWORK_CAPTURE_FILE_NAME, used.isEmpty()) {
+                FileNetworkCaptureRuleStore.create(fileSystem, it, used)
+            }
         }
-        writeDisposableFile(SdkStorageLayout.AEI_DELIVERED_FILE_NAME, snapshot.deliveredAeiIds.isEmpty()) {
-            FileDeliveredAeiStore.create(fileSystem, it, snapshot.deliveredAeiIds)
+        EmbTrace.trace("prefs-write-aei") {
+            writeDisposableFile(SdkStorageLayout.AEI_DELIVERED_FILE_NAME, snapshot.deliveredAeiIds.isEmpty()) {
+                FileDeliveredAeiStore.create(fileSystem, it, snapshot.deliveredAeiIds)
+            }
         }
         return snapshot.ordinals
     }

@@ -84,7 +84,7 @@ internal class ConfigLoadServicesTest {
         )
 
         assertTrue(loaded.await(5, TimeUnit.SECONDS))
-        assertEquals("emb-migration", loadThread.get())
+        assertEquals("emb-prefs-migration", loadThread.get())
         assertEquals("device-id", configLoadServices.persistedSdkStateStore.value.snapshot().deviceId)
     }
 

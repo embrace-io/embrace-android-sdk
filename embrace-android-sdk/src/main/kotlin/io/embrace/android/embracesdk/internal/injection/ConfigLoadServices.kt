@@ -72,6 +72,16 @@ internal class ConfigLoadServices(
         MigrationWorker(preStartServices.errorHandler)
     }
 
+    /**
+     * The prefs migration and the state prefetch run on their own thread, so the telemetry move isn't queued behind
+     * them: its result is needed before the prefs migration's.
+     */
+    private val prefsMigrationWorker = EmbTrace.trace("prefs-migration-worker-init") {
+        MigrationWorker(preStartServices.errorHandler, { runnable ->
+            Thread(runnable, PREFS_MIGRATION_THREAD_NAME).apply { isDaemon = true }
+        })
+    }
+
     private val legacyStorageMigrator = EmbTrace.trace("legacy-storage-migrator-init") {
         createLegacyStorageMigrator(context, preStartServices.errorHandler, fileSystem)
     }
@@ -97,8 +107,8 @@ internal class ConfigLoadServices(
     }
 
     /**
-     * Submitted once [persistedConfig] exists, as the migration needs its network capture rules. It's queued behind the
-     * config move, so if that move times out it completes as a fresh install instead of waiting behind it.
+     * Submitted once [persistedConfig] exists, as the migration needs its network capture rules. It's only submitted
+     * once the config move has finished, so if that move times out it completes as a fresh install instead.
      */
     private val prefsMigration = EmbTrace.trace("prefs-migration-handle-init") {
         MigrationHandle(PREFS_MIGRATION_NAME, false, preStartServices.errorHandler)
@@ -233,7 +243,7 @@ internal class ConfigLoadServices(
     }
 
     private fun submitPrefsMigration(config: PersistedConfig, errorHandler: ErrorHandler) {
-        migrationWorker.submit(prefsMigration, SdkErrorType.PrefsMigrationFail) {
+        prefsMigrationWorker.submit(prefsMigration, SdkErrorType.PrefsMigrationFail) {
             createSharedPrefsMigrator(
                 context = context,
                 fileSystem = sdkStorage.fileSystem,
@@ -253,7 +263,7 @@ internal class ConfigLoadServices(
      */
     private fun submitStatePrefetch(errorHandler: ErrorHandler) {
         val handle = MigrationHandle(STATE_PREFETCH_NAME, Unit, errorHandler, recordDuration = false)
-        migrationWorker.submit(handle, SdkErrorType.PersistedSdkStateLoadFail) {
+        prefsMigrationWorker.submit(handle, SdkErrorType.PersistedSdkStateLoadFail) {
             persistedSdkStateStore.value.snapshot()
         }
     }
@@ -280,3 +290,5 @@ private const val MS_PER_SECOND = 1_000L
 private const val PREFS_MIGRATION_NAME = "prefs"
 
 private const val STATE_PREFETCH_NAME = "sdk-state-prefetch"
+
+private const val PREFS_MIGRATION_THREAD_NAME = "emb-prefs-migration"

@@ -61,13 +61,13 @@ internal class DeadSessionPartParityTest(
     val testRule: SdkIntegrationTestRule = SdkIntegrationTestRule(otelSdkMode) {
         EmbraceSetupInterface(
             workersToFake = listOf(
-                Worker.Background.SessionPersistenceWorker,
+                Worker.Background.PersistenceWorker,
                 Worker.Background.PeriodicCacheWorker,
                 Worker.Background.NonIoRegWorker,
                 Worker.Background.IoRegWorker,
             ),
         ).apply {
-            getFakedWorkerExecutor(Worker.Background.SessionPersistenceWorker).blockingMode = false
+            getFakedWorkerExecutor(Worker.Background.PersistenceWorker).blockingMode = false
             getFakedWorkerExecutor(Worker.Background.NonIoRegWorker).blockingMode = false
             getFakedWorkerExecutor(Worker.Background.IoRegWorker).blockingMode = false
         }
@@ -337,7 +337,7 @@ internal class DeadSessionPartParityTest(
         private const val WRITE_INTERVAL_MS = DEFAULT_PERIODIC_CACHE_INTERVAL_MS
 
         private val persistenceWorkers = listOf(
-            Worker.Background.SessionPersistenceWorker,
+            Worker.Background.PersistenceWorker,
             Worker.Background.PeriodicCacheWorker,
         )
 

@@ -27,6 +27,7 @@ import java.io.File
 class PersistedConfig(
     serializer: PlatformSerializer,
     storageDir: File,
+    readDir: File = storageDir,
     instrumentedConfig: InstrumentedConfig,
     stateStore: Lazy<PersistedSdkStateStore>,
     clock: Clock,
@@ -44,6 +45,7 @@ class PersistedConfig(
         else -> RemoteConfigStoreImpl(
             serializer = serializer,
             storageDir = storageDir,
+            readDir = readDir,
             deviceIdProvider = { deviceId },
             deliveredAtProvider = { clock.now() },
             errorHandler = errorHandler,
@@ -74,6 +76,12 @@ class PersistedConfig(
     }
 
     val otelBehavior: OtelBehavior = OtelBehaviorImpl(thresholdCheck, instrumentedConfig, remoteConfig)
+
+    /**
+     * The max count of each network capture rule the persisted config serves, keyed by rule ID.
+     */
+    fun networkCaptureRuleMaxCounts(): Map<String, Int> =
+        remoteConfig?.networkCaptureRules?.associate { it.id to it.maxCount } ?: emptyMap()
 
     companion object {
 

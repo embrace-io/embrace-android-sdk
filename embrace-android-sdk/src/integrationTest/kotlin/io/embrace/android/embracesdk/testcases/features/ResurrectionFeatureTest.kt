@@ -1,7 +1,6 @@
 package io.embrace.android.embracesdk.testcases.features
 
 import io.embrace.android.embracesdk.internal.storage.SdkStorage
-import io.embrace.android.embracesdk.fakes.testSdkStorage
 import io.embrace.android.embracesdk.assertions.getLastLog
 import io.embrace.android.embracesdk.assertions.getSessionPartId
 import io.embrace.android.embracesdk.assertions.getUserSessionId
@@ -43,7 +42,6 @@ import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.ParameterizedRobolectricTestRunner
-import java.io.File
 
 @RunWith(ParameterizedRobolectricTestRunner::class)
 internal class ResurrectionFeatureTest(
@@ -59,10 +57,10 @@ internal class ResurrectionFeatureTest(
     @JvmField
     val testRule: SdkIntegrationTestRule = SdkIntegrationTestRule(otelSdkMode) {
         EmbraceSetupInterface(
-            workersToFake = listOf(Worker.Background.SessionPersistenceWorker),
+            workersToFake = listOf(Worker.Background.PersistenceWorker),
             fakeStorageLayer = true,
         ).apply {
-            getFakedWorkerExecutor(Worker.Background.SessionPersistenceWorker).blockingMode = false
+            getFakedWorkerExecutor(Worker.Background.PersistenceWorker).blockingMode = false
             getFakeErrorHandler().throwOnSdkError = false
         }.also {
             cacheStorageService = checkNotNull(it.fakeCacheStorageService)
@@ -114,7 +112,7 @@ internal class ResurrectionFeatureTest(
                 symbols = symbols,
             ),
             testCaseAction = {
-                storage = testSdkStorage(testRule.services.appContext)
+                storage = testRule.setup.sdkStorage()
                 recordSession(isBackgroundActivityEnabled = true, endInBackground = false)
                 shutdownSdkWithIncompleteSession()
             },
@@ -160,7 +158,7 @@ internal class ResurrectionFeatureTest(
                 symbols = symbols,
             ),
             testCaseAction = {
-                storage = testSdkStorage(testRule.services.appContext)
+                storage = testRule.setup.sdkStorage()
                 recordSession(isBackgroundActivityEnabled = true, endInBackground = false)
                 shutdownSdkWithIncompleteSession()
             },
@@ -206,7 +204,7 @@ internal class ResurrectionFeatureTest(
 
     private fun shutdownSdkWithIncompleteSession() {
         // the fake runs writes still waiting on the snapshot debounce when it shuts down, without a real-time wait
-        testRule.setup.getFakedWorkerExecutor(Worker.Background.SessionPersistenceWorker).shutdown()
+        testRule.setup.getFakedWorkerExecutor(Worker.Background.PersistenceWorker).shutdown()
         testRule.services.networkConnectivityService.close()
         testRule.services.otelSdkConfig.close()
         testRule.services.workerThreadPool.close()

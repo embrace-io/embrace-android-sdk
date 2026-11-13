@@ -2,7 +2,6 @@
 package io.embrace.android.embracesdk.testframework
 
 import io.embrace.android.embracesdk.internal.storage.SdkDir
-import io.embrace.android.embracesdk.fakes.testSdkStorage
 import android.content.Context
 import androidx.test.core.app.ApplicationProvider
 import io.embrace.android.embracesdk.fakes.FakeClock
@@ -136,6 +135,7 @@ internal class SdkIntegrationTestRule(
         serverResponseConfig: RemoteConfig = persistedRemoteConfig,
         serverResponseConfigJson: String? = null,
         serverResponseConfigEtag: String = "server_etag_value",
+        persistRemoteConfig: Boolean = true,
         expectSdkToStart: Boolean = startSdk,
         expectedSdkState: SdkState = if (expectSdkToStart) SdkState.ENABLED else SdkState.DISABLED,
         setupAction: EmbraceSetupInterface.() -> Unit = {},
@@ -174,6 +174,7 @@ internal class SdkIntegrationTestRule(
             setup.initServices.jsonSerializer,
             deliveryTracer,
             apiServer,
+            setup::sdkStorage,
         ) { sdkStateHolder.state }
         spanExporter = FilteredSpanExporter()
         logExporter = FilteredLogExporter()
@@ -188,7 +189,9 @@ internal class SdkIntegrationTestRule(
             sdkStateHolder.api.addLogRecordExporter(logExporter.toOtelKotlinLogRecordExporter())
 
             // persist config here before the SDK starts up: the SDK reads it during start()
-            persistConfig(persistedConfig)
+            if (persistRemoteConfig) {
+                persistConfig(persistedConfig)
+            }
 
             if (startSdk) {
                 sdkStateHolder.api.start(ApplicationProvider.getApplicationContext())
@@ -233,8 +236,7 @@ internal class SdkIntegrationTestRule(
      * Writes a config response to the expected location on disk so the SDK can read it.
      */
     private fun persistConfig(persistedRemoteConfig: RemoteConfig) {
-        val ctx = ApplicationProvider.getApplicationContext<Context>()
-        val storageDir = testSdkStorage(ctx).dir(SdkDir.REMOTE_CONFIG).toFile()
+        val storageDir = setup.sdkStorage().dir(SdkDir.REMOTE_CONFIG).toFile()
         File(storageDir, PersistedConfig.ETAG_FILE_NAME).writeText("persisted_etag")
         val responseFile = File(storageDir, PersistedConfig.CONFIG_RESPONSE_FILE_NAME)
 

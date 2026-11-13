@@ -1,9 +1,6 @@
 package io.embrace.android.embracesdk.testcases.features
 
 import io.embrace.android.embracesdk.internal.storage.SdkDir
-import io.embrace.android.embracesdk.fakes.testSdkStorage
-import android.content.Context
-import androidx.test.core.app.ApplicationProvider
 import io.embrace.android.embracesdk.assertions.waitUntilConditionMet
 import io.embrace.android.embracesdk.internal.config.PersistedConfig
 import io.embrace.android.embracesdk.internal.config.cache.CachedConfiguration
@@ -140,8 +137,7 @@ internal class RemoteConfigTest(
     }
 
     private fun configStorageDir(): File {
-        val ctx = ApplicationProvider.getApplicationContext<Context>()
-        return testSdkStorage(ctx).path(SdkDir.REMOTE_CONFIG).toFile()
+        return testRule.setup.sdkStorage().path(SdkDir.REMOTE_CONFIG).toFile()
     }
 
     private fun writeStaleBinaryConfigCache() {

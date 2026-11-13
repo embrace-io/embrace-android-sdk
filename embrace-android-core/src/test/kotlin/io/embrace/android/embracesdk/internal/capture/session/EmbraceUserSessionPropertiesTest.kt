@@ -1,14 +1,10 @@
 package io.embrace.android.embracesdk.internal.capture.session
 
-import io.embrace.android.embracesdk.fakes.FakeClock
 import io.embrace.android.embracesdk.fakes.FakeConfigService
 import io.embrace.android.embracesdk.fakes.FakeInternalTelemetryService
-import io.embrace.android.embracesdk.fakes.FakeKeyValueStore
+import io.embrace.android.embracesdk.fakes.FakePersistedSdkStateStore
 import io.embrace.android.embracesdk.fakes.FakeTelemetryDestination
-import io.embrace.android.embracesdk.fakes.TestUuidSource
 import io.embrace.android.embracesdk.fakes.behavior.FakeUserSessionBehavior
-import io.embrace.android.embracesdk.internal.payload.AppFramework
-import io.embrace.android.embracesdk.internal.prefs.PrefsPersistedSdkStateStore
 import io.embrace.android.embracesdk.internal.telemetry.AppliedLimitType
 import org.junit.Assert
 import org.junit.Assert.assertEquals
@@ -30,7 +26,7 @@ internal class EmbraceUserSessionPropertiesTest {
         private const val VALUE_VALID = "def"
     }
 
-    private lateinit var store: FakeKeyValueStore
+    private lateinit var store: FakePersistedSdkStateStore
     private lateinit var props: EmbraceUserSessionProperties
     private lateinit var configService: FakeConfigService
     private lateinit var destination: FakeTelemetryDestination
@@ -38,7 +34,7 @@ internal class EmbraceUserSessionPropertiesTest {
 
     @Before
     fun setUp() {
-        store = FakeKeyValueStore()
+        store = FakePersistedSdkStateStore()
 
         configService = FakeConfigService(
             sessionBehavior = FakeUserSessionBehavior(MAX_SESSION_PROPERTIES_DEFAULT),
@@ -53,7 +49,7 @@ internal class EmbraceUserSessionPropertiesTest {
         )
     }
 
-    private fun stateStore() = PrefsPersistedSdkStateStore(store, FakeClock(), TestUuidSource(), AppFramework.NATIVE)
+    private fun stateStore() = store
 
     @Test
     fun `Add user session property with no error when maxSessionProperties is absent`() {

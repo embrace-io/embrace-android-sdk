@@ -15,6 +15,7 @@ import io.embrace.android.embracesdk.internal.otel.spans.SpanRepository
 import io.embrace.android.embracesdk.internal.session.id.SessionIdsProvider
 import io.embrace.android.embracesdk.internal.session.lifecycle.LifecycleTracker
 import io.embrace.android.embracesdk.internal.session.orchestrator.SessionOrchestrator
+import io.embrace.android.embracesdk.internal.store.OrdinalStore
 import io.embrace.android.embracesdk.internal.utils.VersionChecker
 import io.embrace.android.embracesdk.internal.utils.event.EventBus
 import io.embrace.android.embracesdk.internal.worker.BackgroundWorker
@@ -45,4 +46,6 @@ internal class SdkOverrides(
     val sessionIdsProvider: Override<SessionIdsProvider>? = null,
     val spanRepository: Override<SpanRepository>? = null,
     val eventBus: Override<EventBus>? = null,
+    val ordinalStore: Override<OrdinalStore>? = null,
+    val awaitLegacyTelemetryMigration: Override<() -> Unit>? = null,
 )

@@ -12,7 +12,7 @@ import okio.Path
  */
 class SdkStorageImpl(
     override val fileSystem: FileSystem,
-    val root: Path,
+    override val root: Path,
     private val errorHandler: ErrorHandler,
 ) : SdkStorage {
 
@@ -26,7 +26,7 @@ class SdkStorageImpl(
 
     override fun dir(dir: SdkDir): Path = dirs[dir.ordinal].value
 
-    override fun path(dir: SdkDir): Path = (dir.parent?.let(::path) ?: root) / dir.dirName
+    override fun path(dir: SdkDir): Path = SdkStorageLayout.path(root, dir)
 
     override fun deleteTelemetry() {
         errorHandler.guardSdkCodeEach(SdkErrorType.Ignored, SdkDir.entries.filter { it.isTelemetry }.reversed()) {

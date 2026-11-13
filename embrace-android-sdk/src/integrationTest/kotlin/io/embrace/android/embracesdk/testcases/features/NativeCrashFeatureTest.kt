@@ -86,6 +86,8 @@ internal class NativeCrashFeatureTest(
         envelopeType = SupportedEnvelopeType.SESSION,
         complete = false,
         payloadType = PayloadType.SESSION,
+        userSessionId = "a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1a1",
+        sessionPartId = "EB96C6A8AF09449A8547C7703CE6BDAE",
     )
     private val sessionMetadata2 = StoredTelemetryMetadata(
         timestamp = BASE_TIME_MS + 10_000L,
@@ -94,6 +96,8 @@ internal class NativeCrashFeatureTest(
         envelopeType = SupportedEnvelopeType.SESSION,
         complete = false,
         payloadType = PayloadType.SESSION,
+        userSessionId = "b2b2b2b2b2b2b2b2b2b2b2b2b2b2b2b2",
+        sessionPartId = "A0A0C6A8AF09449A8547C7703CE6BDAE",
     )
     private val crashMetadata = StoredTelemetryMetadata(
         timestamp = sessionMetadata.timestamp + 1_000L,
@@ -322,7 +326,7 @@ internal class NativeCrashFeatureTest(
                 setupFakeNativeCrash(serializer, crashData)
 
                 // simulate JNI call failing to load struct
-                fakeJniDelegate.addCrashRaw(crashData.getCrashFile().absolutePath, null)
+                fakeJniDelegate.addCrashRaw(crashData.getCrashFile(sdkStorage()).absolutePath, null)
             },
             testCaseAction = {},
             assertAction = {
@@ -343,7 +347,7 @@ internal class NativeCrashFeatureTest(
                 setupFakeNativeCrash(serializer, crashData)
 
                 // simulate bad JSON
-                fakeJniDelegate.addCrashRaw(crashData.getCrashFile().absolutePath, "{")
+                fakeJniDelegate.addCrashRaw(crashData.getCrashFile(sdkStorage()).absolutePath, "{")
             },
             testCaseAction = {},
             assertAction = {

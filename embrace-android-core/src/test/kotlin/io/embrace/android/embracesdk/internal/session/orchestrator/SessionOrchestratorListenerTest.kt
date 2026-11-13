@@ -43,7 +43,6 @@ import io.embrace.android.embracesdk.internal.session.id.SessionPartTracker
 import io.embrace.android.embracesdk.internal.session.id.SessionPartTrackerImpl
 import io.embrace.android.embracesdk.internal.session.message.PayloadFactoryImpl
 import io.embrace.android.embracesdk.internal.store.PersistedSdkStateStore
-import io.embrace.android.embracesdk.internal.store.StoreWriteBatcher
 import io.embrace.android.embracesdk.internal.worker.BackgroundWorker
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
@@ -472,7 +471,6 @@ internal class SessionOrchestratorListenerTest {
                 experimentRecordsProvider = { null },
             ),
             ordinalStoreOverride ?: FakeOrdinalStore(),
-            StoreWriteBatcher { it() },
             stateStoreOverride ?: FakePersistedSdkStateStore(),
             errorHandler,
             fakeBackgroundWorker(),

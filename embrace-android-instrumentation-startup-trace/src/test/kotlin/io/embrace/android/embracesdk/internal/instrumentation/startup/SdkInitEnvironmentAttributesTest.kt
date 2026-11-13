@@ -13,7 +13,7 @@ import io.embrace.android.embracesdk.internal.instrumentation.startup.SdkInitAtt
 import io.embrace.android.embracesdk.internal.instrumentation.startup.SdkInitAttributeKeys.LOW_MEMORY
 import io.embrace.android.embracesdk.internal.instrumentation.startup.SdkInitAttributeKeys.MEM_AVAILABLE_PCT
 import io.embrace.android.embracesdk.internal.instrumentation.startup.SdkInitAttributeKeys.NUMERIC_ERROR
-import io.embrace.android.embracesdk.internal.instrumentation.startup.SdkInitAttributeKeys.PREFS_FILE_BYTES
+import io.embrace.android.embracesdk.internal.instrumentation.startup.SdkInitAttributeKeys.PERSISTED_SDK_STATE_BYTES
 import io.embrace.android.embracesdk.internal.instrumentation.startup.SdkInitAttributeKeys.SECONDS_SINCE_BOOT
 import io.embrace.android.embracesdk.internal.instrumentation.startup.SdkInitAttributeKeys.SECONDS_SINCE_INSTALL
 import io.embrace.android.embracesdk.internal.instrumentation.startup.SdkInitAttributeKeys.SECONDS_SINCE_UPDATE
@@ -44,7 +44,7 @@ internal class SdkInitEnvironmentAttributesTest {
     private lateinit var powerManager: PowerManager
     private lateinit var shadowPowerManager: EmbraceShadowPowerManager
     private var uptimeMs: Long = 45_000L
-    private var prefsFileBytes: Long? = 63_070L
+    private var persistedSdkStateBytes: Long? = 512L
     private var artOptimizationState: ArtOptimizationState? =
         ArtOptimizationState(artCompilerFilter = "speed-profile", hasAppImage = true)
 
@@ -73,7 +73,7 @@ internal class SdkInitEnvironmentAttributesTest {
             activityManagerProvider = { error("no activity manager") },
             packageInfo = null,
             uptimeProvider = { error("no clock") },
-            prefsFileSizeProvider = { error("no prefs") },
+            persistedSdkStateFileSizeProvider = { error("no state file") },
             artOptimizationProvider = { error("no odex") },
         )
         assertEquals(
@@ -84,7 +84,7 @@ internal class SdkInitEnvironmentAttributesTest {
                 SECONDS_SINCE_UPDATE to NUMERIC_ERROR,
                 MEM_AVAILABLE_PCT to NUMERIC_ERROR,
                 SECONDS_SINCE_BOOT to NUMERIC_ERROR,
-                PREFS_FILE_BYTES to NUMERIC_ERROR,
+                PERSISTED_SDK_STATE_BYTES to NUMERIC_ERROR,
                 ART_COMPILER_FILTER to STRING_ERROR,
             ),
             attributes,
@@ -97,7 +97,7 @@ internal class SdkInitEnvironmentAttributesTest {
             SECONDS_SINCE_INSTALL,
             MEM_AVAILABLE_PCT,
             SECONDS_SINCE_BOOT,
-            PREFS_FILE_BYTES,
+            PERSISTED_SDK_STATE_BYTES,
             ART_COMPILER_FILTER,
         )
     }
@@ -306,22 +306,22 @@ internal class SdkInitEnvironmentAttributesTest {
     }
 
     @Test
-    fun `no prefs file yet is the zero bytes it will load, not missing data`() {
+    fun `no persisted state file yet is the zero bytes it will load, not missing data`() {
         listOf(null, 0L, -1L).forEach { bytes ->
-            prefsFileBytes = bytes
+            persistedSdkStateBytes = bytes
             val attributes = buildEnvironmentAttributes()
-            attributes.assertAttribute(PREFS_FILE_BYTES, "0")
-            attributes.assertDefaultsExcept(PREFS_FILE_BYTES)
+            attributes.assertAttribute(PERSISTED_SDK_STATE_BYTES, "0")
+            attributes.assertDefaultsExcept(PERSISTED_SDK_STATE_BYTES)
             assertNoSdkErrors()
         }
     }
 
     @Test
-    fun `a failing prefs size read costs only that attribute, never the whole map`() {
-        val attributes = buildEnvironmentAttributes(prefsFileSizeProvider = { error("stat failed") })
-        attributes.assertNumberError(PREFS_FILE_BYTES)
-        attributes.assertDefaultsExcept(PREFS_FILE_BYTES)
-        assertCaptureFailureReported(PREFS_FILE_BYTES)
+    fun `a failing persisted state size read costs only that attribute, never the whole map`() {
+        val attributes = buildEnvironmentAttributes(persistedSdkStateFileSizeProvider = { error("stat failed") })
+        attributes.assertNumberError(PERSISTED_SDK_STATE_BYTES)
+        attributes.assertDefaultsExcept(PERSISTED_SDK_STATE_BYTES)
+        assertCaptureFailureReported(PERSISTED_SDK_STATE_BYTES)
     }
 
     @Test
@@ -374,7 +374,7 @@ internal class SdkInitEnvironmentAttributesTest {
         versionChecker: VersionChecker = VersionChecker { true },
         packageInfo: PackageInfo? = context.packageManager.getPackageInfo(context.packageName, 0),
         uptimeProvider: () -> Long = { uptimeMs },
-        prefsFileSizeProvider: () -> Long? = { prefsFileBytes },
+        persistedSdkStateFileSizeProvider: () -> Long? = { persistedSdkStateBytes },
         artOptimizationProvider: () -> ArtOptimizationState? = { artOptimizationState },
     ): Map<String, String> = sdkInitEnvironmentAttributes(
         nowMs = NOW_MS,
@@ -384,7 +384,7 @@ internal class SdkInitEnvironmentAttributesTest {
         activityManagerProvider = activityManagerProvider,
         versionChecker = versionChecker,
         uptimeMs = uptimeProvider,
-        prefsFileSizeProvider = prefsFileSizeProvider,
+        persistedSdkStateFileSizeProvider = persistedSdkStateFileSizeProvider,
         artOptimizationProvider = artOptimizationProvider,
     )
 
@@ -463,7 +463,7 @@ internal class SdkInitEnvironmentAttributesTest {
             MEM_AVAILABLE_PCT to "25",
             LOW_MEMORY to "true",
             SECONDS_SINCE_BOOT to "45",
-            PREFS_FILE_BYTES to "63070",
+            PERSISTED_SDK_STATE_BYTES to "512",
             ART_COMPILER_FILTER to "speed-profile",
             APP_IMAGE_AT_INIT to "true",
         )

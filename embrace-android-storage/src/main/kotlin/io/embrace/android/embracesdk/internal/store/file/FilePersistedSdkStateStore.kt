@@ -31,6 +31,7 @@ class FilePersistedSdkStateStore(
 ) : PersistedSdkStateStore {
 
     private val lock = Any()
+    private val writeLock = Any()
     private val writePending = AtomicBoolean(false)
 
     @Volatile
@@ -38,7 +39,13 @@ class FilePersistedSdkStateStore(
     private var base = PersistedSdkStateProto()
 
     override fun snapshot(): PersistedSdkState = current ?: synchronized(lock) {
-        current ?: load().also { current = it }
+        current ?: load().also {
+            current = it
+            // scheduled once the state is set, as a worker that runs inline would otherwise load it again
+            if (base.device_id == null || base.install_timestamp_ms == null) {
+                scheduleWrite()
+            }
+        }
     }
 
     override fun update(action: PersistedSdkStateEditor.() -> Unit): PersistedSdkState =
@@ -48,12 +55,7 @@ class FilePersistedSdkStateStore(
         base = errorHandler.guardSdkCode(SdkErrorType.PersistedSdkStateLoadFail, null) {
             if (fileSystem.exists(path)) fileSystem.read(path) { PersistedSdkStateCodec.decode(this) } else null
         } ?: PersistedSdkStateProto()
-        val deviceId = base.device_id
-        val installTimestampMs = base.install_timestamp_ms
-        if (deviceId == null || installTimestampMs == null) {
-            scheduleWrite()
-        }
-        base.toPersistedSdkState(deviceId ?: uuidSource.createUuid(), installTimestampMs ?: clock.now())
+        base.toPersistedSdkState(base.device_id ?: uuidSource.createUuid(), base.install_timestamp_ms ?: clock.now())
     }
 
     private fun scheduleWrite() {
@@ -62,10 +64,16 @@ class FilePersistedSdkStateStore(
         }
     }
 
-    private fun write() {
-        writePending.lazySet(false)
-        errorHandler.guardSdkCode(SdkErrorType.PersistedSdkStateWriteFail) {
-            writeFile(fileSystem, path, synchronized(lock) { snapshot().toProto(base) })
+    override fun flush() {
+        write()
+    }
+
+    private fun write() = synchronized(writeLock) {
+        // a flush may have written this update already
+        if (writePending.getAndSet(false)) {
+            errorHandler.guardSdkCode(SdkErrorType.PersistedSdkStateWriteFail) {
+                writeFile(fileSystem, path, synchronized(lock) { snapshot().toProto(base) })
+            }
         }
     }
 

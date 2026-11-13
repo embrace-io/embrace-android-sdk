@@ -5,7 +5,7 @@ import io.embrace.android.embracesdk.internal.payload.SessionPartPayload
 import io.embrace.android.embracesdk.testframework.OtelSdkMode
 import io.embrace.android.embracesdk.testframework.SdkIntegrationTestRule
 import org.junit.Assert.assertEquals
-import org.junit.Assert.assertNull
+import org.junit.Assert.assertFalse
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -25,10 +25,10 @@ internal class UserFeaturesTest(
     fun `user info setting and clearing`() {
         testRule.runTest(
             setupAction = {
-                getStore().editAndCommit {
-                    putString("io.embrace.userid", "customId")
-                    putString("io.embrace.username", "customUserName")
-                    putString("io.embrace.useremail", "custom@domain.com")
+                seedPersistedSdkState {
+                    userId = "customId"
+                    userName = "customUserName"
+                    userEmail = "custom@domain.com"
                 }
             },
             testCaseAction = {
@@ -57,11 +57,8 @@ internal class UserFeaturesTest(
 
     @Suppress("DEPRECATION")
     @Test
-    fun `user info set with the superior storage system enabled stays out of prefs`() {
+    fun `user info stays out of prefs`() {
         testRule.runTest(
-            setupAction = {
-                superiorStorageSystemEnabled = true
-            },
             testCaseAction = {
                 recordSession {
                     embrace.setUserIdentifier("newId")
@@ -74,7 +71,7 @@ internal class UserFeaturesTest(
                 val sessions = getSessionEnvelopes(2)
                 sessions[0].assertUserInfo("newId", "newUserName", "new@domain.com")
                 sessions[1].assertUserInfo("newId", "newUserName", "new@domain.com")
-                assertNull(testRule.setup.getStore().getString("io.embrace.userid"))
+                assertFalse(testRule.setup.defaultPrefs().contains("io.embrace.userid"))
             }
         )
     }

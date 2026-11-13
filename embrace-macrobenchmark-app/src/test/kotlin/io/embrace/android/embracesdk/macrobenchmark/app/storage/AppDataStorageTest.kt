@@ -10,19 +10,19 @@ import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
 
-internal class SdkStorageTest {
+internal class AppDataStorageTest {
 
     @get:Rule
     val fsRule = FakeFileSystemRule()
 
     private val fs get() = fsRule.fileSystem
     private val dataDir: Path = "/data".toPath()
-    private lateinit var sdk: SdkStorage
+    private lateinit var sdk: AppDataStorage
 
     @Before
     fun setUp() {
         fs.createDirectories(dataDir)
-        sdk = SdkStorage(fs, dataDir)
+        sdk = AppDataStorage(fs, dataDir)
     }
 
     @Test

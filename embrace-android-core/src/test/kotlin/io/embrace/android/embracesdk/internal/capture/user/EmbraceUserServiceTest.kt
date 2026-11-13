@@ -2,12 +2,10 @@ package io.embrace.android.embracesdk.internal.capture.user
 
 import io.embrace.android.embracesdk.fakes.FakeClock
 import io.embrace.android.embracesdk.fakes.FakeErrorHandler
-import io.embrace.android.embracesdk.fakes.FakeKeyValueStore
-import io.embrace.android.embracesdk.fakes.TestUuidSource
+import io.embrace.android.embracesdk.fakes.FakePersistedSdkStateStore
 import io.embrace.android.embracesdk.internal.logging.ErrorHandler
-import io.embrace.android.embracesdk.internal.payload.AppFramework
 import io.embrace.android.embracesdk.internal.payload.UserInfo
-import io.embrace.android.embracesdk.internal.prefs.PrefsPersistedSdkStateStore
+import io.embrace.android.embracesdk.internal.store.PersistedSdkState
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNotNull
@@ -32,7 +30,7 @@ internal class EmbraceUserServiceTest {
     )
 
     private lateinit var service: EmbraceUserService
-    private lateinit var store: FakeKeyValueStore
+    private lateinit var store: FakePersistedSdkStateStore
     private lateinit var errorHandler: ErrorHandler
     private lateinit var clock: FakeClock
 
@@ -40,7 +38,7 @@ internal class EmbraceUserServiceTest {
     fun setUp() {
         errorHandler = FakeErrorHandler()
         clock = FakeClock()
-        store = FakeKeyValueStore()
+        store = FakePersistedSdkStateStore(PersistedSdkState(deviceId = "device-id", installTimestampMs = clock.now()))
 
         setUserInfo(
             id = "f0a923498c",
@@ -50,7 +48,7 @@ internal class EmbraceUserServiceTest {
         )
 
         // load user info
-        service = EmbraceUserService(PrefsPersistedSdkStateStore(store, clock, TestUuidSource(), AppFramework.NATIVE), clock, errorHandler)
+        service = EmbraceUserService(store, clock, errorHandler)
     }
 
     @Test
@@ -119,9 +117,9 @@ internal class EmbraceUserServiceTest {
     fun testClearAllUserInfo() {
         with(service) {
             getUserInfo().verifyExpectedUserInfo()
-            val commitCount = store.commitCount
+            val updateCount = store.updateCount
             service.clearAllUserInfo()
-            assertEquals(commitCount + 1, store.commitCount)
+            assertEquals(updateCount + 1, store.updateCount)
             assertNull(getUserInfo().email)
             assertNull(getUserInfo().userId)
             assertNull(getUserInfo().username)
@@ -169,18 +167,12 @@ internal class EmbraceUserServiceTest {
         payer: Boolean = false,
         suppliedPersonas: Set<String> = userPersonas,
     ) {
-        store.editAndCommit {
-            putString("io.embrace.userid", id)
-            putString("io.embrace.useremail", email)
-            putString("io.embrace.username", name)
-
-            val personas = if (payer) {
-                suppliedPersonas.plus("payer")
-            } else {
-                suppliedPersonas
-            }
-            putStringSet("io.embrace.userpersonas", personas)
+        val personas = if (payer) {
+            suppliedPersonas.plus("payer")
+        } else {
+            suppliedPersonas
         }
+        store.state = store.state.copy(userId = id, userEmail = email, userName = name, userPersonas = personas)
     }
 
     private fun UserInfo.verifyExpectedUserInfo() {

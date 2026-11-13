@@ -11,7 +11,6 @@ import io.embrace.android.embracesdk.fakes.FakeEnvelopeMetadataSource
 import io.embrace.android.embracesdk.fakes.FakeEnvelopeResourceSource
 import io.embrace.android.embracesdk.fakes.FakeErrorHandler
 import io.embrace.android.embracesdk.fakes.FakeInternalTelemetryService
-import io.embrace.android.embracesdk.fakes.FakeKeyValueStore
 import io.embrace.android.embracesdk.fakes.FakeLogEnvelopeSource
 import io.embrace.android.embracesdk.fakes.FakeLogLimitingService
 import io.embrace.android.embracesdk.fakes.FakeMetadataService
@@ -40,9 +39,6 @@ import io.embrace.android.embracesdk.internal.delivery.caching.PayloadCachingSer
 import io.embrace.android.embracesdk.internal.delivery.caching.PayloadCachingServiceImpl
 import io.embrace.android.embracesdk.internal.logging.SdkErrorType
 import io.embrace.android.embracesdk.internal.otel.spans.EmbraceSdkSpan
-import io.embrace.android.embracesdk.internal.payload.AppFramework
-import io.embrace.android.embracesdk.internal.prefs.PrefsPersistedSdkStateStore
-import io.embrace.android.embracesdk.internal.prefs.PrefsStoreWriteBatcher
 import io.embrace.android.embracesdk.internal.session.LifeEventType
 import io.embrace.android.embracesdk.internal.session.UserSessionMetadata
 import io.embrace.android.embracesdk.internal.session.UserSessionRestoreDecision
@@ -57,11 +53,9 @@ import io.embrace.android.embracesdk.internal.session.persistence.SessionPartDir
 import io.embrace.android.embracesdk.internal.session.persistence.SpanCollection
 import io.embrace.android.embracesdk.internal.session.persistence.SpanProto
 import io.embrace.android.embracesdk.internal.store.OrdinalStore
-import io.embrace.android.embracesdk.internal.store.OrdinalStoreImpl
 import io.embrace.android.embracesdk.internal.store.PersistedSdkState
 import io.embrace.android.embracesdk.internal.store.PersistedSdkStateEditor
 import io.embrace.android.embracesdk.internal.store.PersistedSdkStateStore
-import io.embrace.android.embracesdk.internal.store.StoreWriteBatcher
 import io.embrace.android.embracesdk.internal.worker.BackgroundWorker
 import io.embrace.android.embracesdk.semconv.EmbSessionAttributes
 import io.embrace.android.embracesdk.semconv.EmbSessionAttributes.EmbUserSessionTerminationReasonValues
@@ -146,34 +140,6 @@ internal class SessionOrchestratorTest {
         assertEquals(1, fakeDataSource.enableDataCaptureCount)
         // starting in fg produces user session
         assertNotNull(orchestrator.currentUserSession())
-    }
-
-    @Test
-    fun `each transition performs a single commit to the key-value store`() {
-        val kvStore = FakeKeyValueStore()
-        val stateStore = PrefsPersistedSdkStateStore(kvStore, clock, TestUuidSource(), AppFramework.NATIVE)
-        stateStore.snapshot()
-        val initialCommits = kvStore.commitCount
-
-        createOrchestrator(
-            startingProcessState = ProcessState.FOREGROUND,
-            ordinalStoreOverride = OrdinalStoreImpl(kvStore, FakeErrorHandler()),
-            stateStoreOverride = stateStore,
-            writeBatcherOverride = PrefsStoreWriteBatcher(kvStore),
-        )
-
-        // the user session ordinal, the session part ordinal, and both saves of the user session
-        // metadata all land in one commit
-        assertEquals(initialCommits + 1, kvStore.commitCount)
-        assertNotNull(orchestrator.currentUserSession())
-
-        clock.tick(10_000)
-        orchestrator.onBackground()
-        assertEquals(initialCommits + 2, kvStore.commitCount)
-
-        clock.tick(10_000)
-        orchestrator.onForeground()
-        assertEquals(initialCommits + 3, kvStore.commitCount)
     }
 
     @Test
@@ -1144,7 +1110,6 @@ internal class SessionOrchestratorTest {
             FakeConfigService(config = backgroundActivityConfig(true)),
         ordinalStoreOverride: OrdinalStore? = null,
         stateStoreOverride: PersistedSdkStateStore? = null,
-        writeBatcherOverride: StoreWriteBatcher? = null,
     ) {
         store = FakePayloadStore()
         appStateTracker = FakeProcessStateTracker(startingProcessState)
@@ -1225,7 +1190,6 @@ internal class SessionOrchestratorTest {
                 experimentRecordsProvider = { null },
             ),
             ordinalStoreOverride ?: FakeOrdinalStore(),
-            writeBatcherOverride ?: StoreWriteBatcher { it() },
             stateStoreOverride ?: FakePersistedSdkStateStore(),
             errorHandler,
             BackgroundWorker(inactivityWorkerExecutor),

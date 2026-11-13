@@ -1,5 +1,7 @@
 package io.embrace.android.embracesdk.internal.storage
 
+import okio.Path
+
 /**
  * Declares where the SDK's storage root lives and which [SdkDir]s sit in each directory.
  */
@@ -9,11 +11,6 @@ object SdkStorageLayout {
      * The name of the storage root within the app's no-backup files directory
      */
     const val ROOT_DIR_NAME: String = "xcor"
-
-    /**
-     * The name of the directory the legacy storage migration stages files in before renaming it to [ROOT_DIR_NAME]
-     */
-    const val MIGRATION_DIR_NAME: String = "xcor.migration"
 
     /**
      * The version of this layout. Raise it whenever the layout starts allowing a directory or entry it didn't before,
@@ -27,8 +24,7 @@ object SdkStorageLayout {
     const val LAYOUT_VERSION_FILE_NAME: String = "layout_version"
 
     /*
-     * The files allowed in [SdkDir.INSTALL_STATE]. Their stores aren't wired in yet: until they are, nothing writes
-     * the .bin files, and the crash marker is still written as embrace_crash_marker.
+     * The files allowed in [SdkDir.INSTALL_STATE].
      */
 
     const val ORDINALS_FILE_NAME: String = "ordinals.bin"
@@ -41,4 +37,9 @@ object SdkStorageLayout {
      * Returns the directories declared directly in [dir], or directly in the root if [dir] is null.
      */
     fun children(dir: SdkDir?): List<SdkDir> = SdkDir.entries.filter { it.parent == dir }
+
+    /**
+     * Returns where [dir] sits under the storage [root].
+     */
+    fun path(root: Path, dir: SdkDir): Path = (dir.parent?.let { path(root, it) } ?: root) / dir.dirName
 }

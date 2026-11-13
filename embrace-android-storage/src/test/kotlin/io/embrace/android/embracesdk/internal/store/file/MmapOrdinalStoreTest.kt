@@ -180,18 +180,26 @@ class MmapOrdinalStoreTest {
     }
 
     @Test
-    fun `bad magic returns null`() {
-        assertOpenFails(ordinalFile(1, 2, 3, 4, 5, 6, magic = 0x12345678))
+    fun `bad magic recreates the file`() {
+        assertOpenRecovers(ordinalFile(1, 2, 3, 4, 5, 6, magic = 0x12345678))
     }
 
     @Test
-    fun `truncated header returns null`() {
-        assertOpenFails(ordinalFile().copyOf(4))
+    fun `truncated header recreates the file`() {
+        assertOpenRecovers(ordinalFile().copyOf(4))
     }
 
     @Test
-    fun `older version returns null`() {
-        assertOpenFails(ordinalFile(version = 0))
+    fun `older version recreates the file`() {
+        assertOpenRecovers(ordinalFile(version = 0))
+    }
+
+    @Test
+    fun `unreadable file returns null and is left in place`() {
+        assertTrue(file.mkdir())
+        assertNull(MmapOrdinalStore.open(file, errorHandler))
+        assertEquals(listOf(SdkErrorType.OrdinalStoreOpenFail.toString()), errorHandler.sdkErrorMessages.map { it.msg })
+        assertTrue(file.isDirectory)
     }
 
     @Test
@@ -210,11 +218,18 @@ class MmapOrdinalStoreTest {
 
     private fun reopen(): MmapOrdinalStore = checkNotNull(MmapOrdinalStore.open(file, errorHandler))
 
-    private fun assertOpenFails(bytes: ByteArray) {
+    private fun assertOpenRecovers(bytes: ByteArray) {
         file.writeBytes(bytes)
-        assertNull(MmapOrdinalStore.open(file, errorHandler))
+        val store = reopen()
         assertEquals(listOf(SdkErrorType.OrdinalStoreOpenFail.toString()), errorHandler.sdkErrorMessages.map { it.msg })
-        assertArrayEquals(bytes, file.readBytes())
+        assertTrue(errorHandler.sdkErrorMessages.single().throwable is CorruptOrdinalFileException)
+        Ordinal.entries.filter { it != Ordinal.USER_SESSION }.forEach {
+            assertEquals(1, store.incrementAndGet(it))
+        }
+        assertArrayEquals(ordinalFile(1, 1, 1, 1, 1, 1), file.readBytes())
+        assertEquals(listOf(file.name), tempFolder.root.list()?.toList())
+        assertEquals(2, reopen().incrementAndGet(Ordinal.CRASH))
+        assertEquals(1, errorHandler.sdkErrorMessages.size)
     }
 
     private companion object {

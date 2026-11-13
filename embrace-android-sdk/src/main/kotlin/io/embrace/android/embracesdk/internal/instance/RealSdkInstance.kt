@@ -26,6 +26,7 @@ import io.embrace.android.embracesdk.internal.api.delegate.SdkStateApiDelegate
 import io.embrace.android.embracesdk.internal.api.delegate.UserApiDelegate
 import io.embrace.android.embracesdk.internal.api.delegate.UserSessionApiDelegate
 import io.embrace.android.embracesdk.internal.api.delegate.ViewTrackingApiDelegate
+import io.embrace.android.embracesdk.internal.arch.CrashTeardownHandler
 import io.embrace.android.embracesdk.internal.arch.InstrumentationArgs
 import io.embrace.android.embracesdk.internal.arch.InstrumentationProvider
 import io.embrace.android.embracesdk.internal.arch.InstrumentationRegistry
@@ -66,7 +67,6 @@ import io.embrace.android.embracesdk.internal.logs.attachments.AttachmentService
 import io.embrace.android.embracesdk.internal.otel.config.OtelSdkConfig
 import io.embrace.android.embracesdk.internal.otel.logs.LogSink
 import io.embrace.android.embracesdk.internal.otel.spans.SpanRepository
-import io.embrace.android.embracesdk.internal.prefs.defaultPrefsFile
 import io.embrace.android.embracesdk.internal.resurrection.PayloadResurrectionService
 import io.embrace.android.embracesdk.internal.resurrection.ResurrectionOutcome
 import io.embrace.android.embracesdk.internal.resurrection.SessionPartReader
@@ -75,13 +75,14 @@ import io.embrace.android.embracesdk.internal.session.lifecycle.ActivityLifecycl
 import io.embrace.android.embracesdk.internal.session.orchestrator.PayloadStore
 import io.embrace.android.embracesdk.internal.session.orchestrator.SessionOrchestrator
 import io.embrace.android.embracesdk.internal.storage.SdkStorage
+import io.embrace.android.embracesdk.internal.storage.migration.LegacyTelemetryMigration
 import io.embrace.android.embracesdk.internal.utils.EmbTrace
 import io.embrace.android.embracesdk.internal.utils.event.EventBus
 import io.embrace.android.embracesdk.internal.worker.Worker
 import io.embrace.android.embracesdk.spans.TracingApi
 import io.opentelemetry.kotlin.OpenTelemetry
 import okhttp3.OkHttpClient
-import java.io.File
+import okio.Path
 import java.util.ServiceLoader
 import java.util.concurrent.Executors
 import java.util.concurrent.TimeUnit
@@ -107,6 +108,7 @@ internal class RealSdkInstance(
     private val activityLifecycleRelay: ActivityLifecycleRelay,
     private val appContext: Context,
     private val sdkStorage: SdkStorage,
+    private val persistedSdkStateFile: Path,
     private val spanRepository: SpanRepository,
     private val logSink: LogSink,
     private val otelSdkConfig: Lazy<OtelSdkConfig>,
@@ -130,6 +132,7 @@ internal class RealSdkInstance(
     private val threadBlockageService: ThreadBlockageService?,
     private val lastRunCrashVerifier: LastRunCrashVerifier,
     private val crashMarker: CrashFileMarker,
+    private val persistedSdkStateFlush: CrashTeardownHandler,
     private val startupTracker: StartupTracker,
     private val startupService: StartupService,
     private val appStartupDataCollector: AppStartupDataCollector,
@@ -147,6 +150,8 @@ internal class RealSdkInstance(
     instrumentationApiDelegate: InstrumentationApiDelegate,
     private val experimentApiDelegate: ExperimentApiDelegate,
     private val tracingApi: TracingApi,
+    private val legacyTelemetryMigration: LegacyTelemetryMigration,
+    private val awaitLegacyTelemetryMigration: () -> Unit,
 ) : SdkInstance,
     LogsApi by logsApiDelegate,
     NetworkRequestApi by networkRequestApiDelegate,
@@ -204,17 +209,41 @@ internal class RealSdkInstance(
     }
 
     override fun onEnabled() {
+        var initialized = false
         try {
             EmbTrace.trace(sectionName = "post-services-setup", recordDuration = true) {
                 registerListeners()
                 loadInstrumentation()
                 postLoadInstrumentation()
                 triggerPayloadSend()
+                initialized = true
             }
             markSdkInitComplete(EmbTrace.durationTracker::flush)
         } catch (exc: Throwable) {
             Log.w("Embrace", "Failed to initialize Embrace SDK", exc)
             errorHandler.trackSdkError(SdkErrorType.SdkInitPhaseFail, exc)
+        } finally {
+            startLegacyTelemetryMigration(sweepOrphans = initialized)
+        }
+    }
+
+    private fun startLegacyTelemetryMigration(sweepOrphans: Boolean) {
+        val started = errorHandler.guardSdkCode(SdkErrorType.StorageMigrationFail, false) {
+            if (enabled) {
+                legacyTelemetryMigration.start()
+                if (sweepOrphans) {
+                    legacyTelemetryMigration.sweepOrphans(
+                        workerThreadPool.backgroundWorker(Worker.Background.NonIoRegWorker),
+                    )
+                }
+            } else {
+                legacyTelemetryMigration.cancel()
+            }
+            true
+        }
+        // the workers waiting on the migration must be released even if it couldn't be started
+        if (!started) {
+            legacyTelemetryMigration.cancel()
         }
     }
 
@@ -249,6 +278,7 @@ internal class RealSdkInstance(
         }
         runCatching { schedulingService?.shutdown() }
         runCatching { cancelHttpRequests() }
+        runCatching { legacyTelemetryMigration.cancel() }
         runCatching { workerThreadPool.close() }
 
         if (!deletePersistedTelemetry) {
@@ -259,6 +289,7 @@ internal class RealSdkInstance(
             runCatching {
                 // deleted at once so that nothing is left to send if the process ends during the wait, then again once the
                 // workers have finished, as work still running can write again
+                legacyTelemetryMigration.deleteLegacyTelemetry(afterDeletion = sdkStorage::deleteTelemetry)
                 sdkStorage.deleteTelemetry()
                 if (!workerThreadPool.awaitTermination(WORKER_TERMINATION_TIMEOUT_MS)) {
                     Log.w("[Embrace]", "Timed out waiting for Embrace workers to finish before deleting data.")
@@ -366,6 +397,7 @@ internal class RealSdkInstance(
                 threadBlockageService?.startCapture()
                 lastRunCrashVerifier.readAndCleanMarkerAsync(
                     workerThreadPool.backgroundWorker(Worker.Background.IoRegWorker),
+                    awaitLegacyTelemetryMigration,
                 )
             }
 
@@ -449,6 +481,7 @@ internal class RealSdkInstance(
                 addCrashTeardownHandler(sessionOrchestrator)
                 addCrashTeardownHandler(crashMarker)
                 payloadStore?.let(::addCrashTeardownHandler)
+                addCrashTeardownHandler(persistedSdkStateFlush)
             }
         }
     }
@@ -491,6 +524,14 @@ internal class RealSdkInstance(
                     // so that it won't waste time trying to send when the device is known to be offline.
                     errorHandler.guardSdkCode(SdkErrorType.SdkInitPhaseFail) {
                         schedulingService?.let(networkConnectivityService::addNetworkConnectivityListener)
+                    }
+
+                    // telemetry a migration is still moving into place must be on disk before the reader and
+                    // resurrection look for it
+                    awaitLegacyTelemetryMigration()
+                    // closing releases the wait while a migration may still be moving files into what is read below
+                    if (!enabled) {
+                        return@submit
                     }
 
                     // process multi-file session part directories before resurrection can run. The reader resurrects
@@ -564,7 +605,9 @@ internal class RealSdkInstance(
                                 activityManagerProvider = {
                                     instrumentationArgs.systemService(Context.ACTIVITY_SERVICE)
                                 },
-                                prefsFileSizeProvider = { existingPrefsFile(appContext)?.length() },
+                                persistedSdkStateFileSizeProvider = {
+                                    sdkStorage.fileSystem.metadataOrNull(persistedSdkStateFile)?.size
+                                },
                             ) {
                                 appContext.applicationInfo?.sourceDir?.let { sourceDir ->
                                     ArtOptimizationState.create(
@@ -588,15 +631,6 @@ internal class RealSdkInstance(
             errorHandler.log(startMsg, severity = ErrorHandler.Severity.INFO)
         }
     }
-
-    /**
-     * Attempt to identify the size of the host app's default `SharedPreferences` file without actually opening it.
-     * This file currently hosts the SDK's key-value store, and the bigger it is, the more impact it will have on
-     * SDK init time if the SDK is the thing that opens it first.
-     *
-     * Returns null if the file is absent, so a missing file is not reported.
-     */
-    private fun existingPrefsFile(context: Context): File? = defaultPrefsFile(context).takeIf(File::exists)
 }
 
 private const val SPAN_TIMEOUT_SWEEP_INTERVAL_MS = 30_000L

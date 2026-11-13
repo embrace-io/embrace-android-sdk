@@ -21,6 +21,7 @@ import io.embrace.android.embracesdk.internal.storage.SdkDir
 import io.embrace.android.embracesdk.internal.storage.SdkStorage
 import io.embrace.android.embracesdk.internal.storage.SdkStorageLayout
 import io.embrace.android.embracesdk.internal.storage.migration.LegacyTelemetryMigration
+import io.embrace.android.embracesdk.internal.storage.migration.MigrationBudget
 import io.embrace.android.embracesdk.internal.storage.migration.MigrationHandle
 import io.embrace.android.embracesdk.internal.storage.migration.MigrationWorker
 import io.embrace.android.embracesdk.internal.store.OrdinalStore
@@ -56,7 +57,7 @@ internal class ConfigLoadServices(
     workerThreadPoolSupplier: WorkerThreadPoolSupplier? = null,
     configServiceSupplier: ConfigServiceSupplier? = null,
     private val fileSystem: FileSystem = FileSystem.SYSTEM,
-    private val prefsMigrationTimeoutMs: Long = PREFS_MIGRATION_TIMEOUT_MS,
+    migrationBudgetMs: Long = MigrationBudget.BUDGET_MS,
     orphanSweepDelayMs: Long = LegacyTelemetryMigration.SWEEP_DELAY_MS,
 ) : Closeable {
 
@@ -69,6 +70,10 @@ internal class ConfigLoadServices(
 
     private val migrationWorker = EmbTrace.trace("migration-worker-init") {
         MigrationWorker(preStartServices.errorHandler)
+    }
+
+    val migrationBudget: MigrationBudget = EmbTrace.trace("migration-budget-init") {
+        MigrationBudget(migrationWorker, preStartServices.errorHandler, migrationBudgetMs)
     }
 
     /**
@@ -116,10 +121,10 @@ internal class ConfigLoadServices(
 
     /**
      * Every file-backed install-state store touches this before opening its file, so it sees the migrated prefs. A
-     * migration that misses the deadline is abandoned and the install starts fresh.
+     * migration that isn't done within the [migrationBudget] is abandoned and the install starts fresh.
      */
     private val installState: Lazy<Unit> = lazy {
-        prefsMigration.await(prefsMigrationTimeoutMs, SdkErrorType.PrefsMigrationFail)
+        migrationBudget.await(prefsMigration, SdkErrorType.PrefsMigrationFail)
         if (!prefsMigration.isComplete) {
             preStartServices.errorHandler.guardSdkCode(SdkErrorType.PrefsMigrationFail) {
                 prefsMigrationGate.abandon {
@@ -301,8 +306,6 @@ internal class ConfigLoadServices(
         return ScopedOrdinalStore(ordinals, persistedSdkStateStore.value, errorHandler)
     }
 }
-
-private const val PREFS_MIGRATION_TIMEOUT_MS = 3_000L
 
 private const val MS_PER_SECOND = 1_000L
 

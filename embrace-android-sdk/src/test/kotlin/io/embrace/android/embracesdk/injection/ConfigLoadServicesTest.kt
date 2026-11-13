@@ -85,7 +85,7 @@ internal class ConfigLoadServicesTest {
                 workerThreadPoolSupplier = { FakeWorkerThreadPool(testWorkers = listOf(Worker.Background.IoRegWorker)) },
                 configServiceSupplier = { _, _, _, _, _, _ -> FakeConfigService() },
                 fileSystem = fs,
-            ).also { it.legacyTelemetryMigration.move() }
+            ).also { it.legacyTelemetryMigration.move(it.migrationBudget) }
         }
 
         launch()
@@ -115,7 +115,7 @@ internal class ConfigLoadServicesTest {
         assertEquals(mapOf("rule" to 3), first.persistedConfig.networkCaptureRuleMaxCounts())
         assertFalse(first.sdkStorage.fileSystem.exists(first.sdkStorage.path(SdkDir.REMOTE_CONFIG)))
 
-        first.legacyTelemetryMigration.move()
+        first.legacyTelemetryMigration.move(first.migrationBudget)
         assertFalse(legacy.exists())
         val second = createSystemServices(context)
         assertEquals(mapOf("rule" to 3), second.persistedConfig.networkCaptureRuleMaxCounts())
@@ -195,7 +195,7 @@ internal class ConfigLoadServicesTest {
         val first = createSystemServices(context)
         assertEquals(mapOf("rule" to 3), first.persistedConfig.networkCaptureRuleMaxCounts())
 
-        first.legacyTelemetryMigration.move()
+        first.legacyTelemetryMigration.move(first.migrationBudget)
         assertFalse(legacy.exists())
         val second = createSystemServices(context)
         assertEquals(mapOf("rule" to 3), second.persistedConfig.networkCaptureRuleMaxCounts())
@@ -213,7 +213,7 @@ internal class ConfigLoadServicesTest {
         val config = configLoadServices.sdkStorage.dir(SdkDir.REMOTE_CONFIG)
         fs.write(config / PersistedConfig.CONFIG_RESPONSE_FILE_NAME) { writeUtf8("fresh") }
 
-        configLoadServices.legacyTelemetryMigration.move()
+        configLoadServices.legacyTelemetryMigration.move(configLoadServices.migrationBudget)
 
         val contents = fs.list(config).associate { it.name to fs.read(it) { readUtf8() } }
         assertEquals(mapOf(PersistedConfig.CONFIG_RESPONSE_FILE_NAME to "fresh"), contents)

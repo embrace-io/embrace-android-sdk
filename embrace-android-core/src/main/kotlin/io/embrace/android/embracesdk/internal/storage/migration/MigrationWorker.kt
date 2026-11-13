@@ -29,6 +29,13 @@ class MigrationWorker(
     ).apply { allowCoreThreadTimeOut(true) }
 
     /**
+     * The error type of the job running on the worker thread, or null between jobs.
+     */
+    @Volatile
+    internal var runningErrorType: SdkErrorType? = null
+        private set
+
+    /**
      * Submits [block] as the job named [name]. A failure is tracked as [errorType] and completes the handle with [default].
      */
     fun <T> submit(name: String, default: T, errorType: SdkErrorType, block: () -> T): MigrationHandle<T> =
@@ -39,7 +46,11 @@ class MigrationWorker(
      */
     fun <T> submit(handle: MigrationHandle<T>, errorType: SdkErrorType, block: () -> T) {
         val queued = errorHandler.guardSdkCode(errorType, false) {
-            executor.execute { handle.run(errorType, block) }
+            executor.execute {
+                runningErrorType = errorType
+                handle.run(errorType, block)
+                runningErrorType = null
+            }
             true
         }
         if (!queued) {

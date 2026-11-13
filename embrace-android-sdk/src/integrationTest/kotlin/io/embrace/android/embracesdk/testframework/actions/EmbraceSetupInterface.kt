@@ -30,6 +30,7 @@ import io.embrace.android.embracesdk.internal.delivery.debug.DeliveryTracer
 import io.embrace.android.embracesdk.internal.delivery.storage.PayloadStorageServiceImpl
 import io.embrace.android.embracesdk.internal.storage.SdkDir
 import io.embrace.android.embracesdk.internal.storage.lazyFile
+import io.embrace.android.embracesdk.internal.storage.migration.MigrationBudget
 import io.embrace.android.embracesdk.internal.injection.ConfigLoadServices
 import io.embrace.android.embracesdk.internal.injection.ConfigLoadServicesSupplier
 import io.embrace.android.embracesdk.internal.injection.PreStartServices
@@ -77,6 +78,7 @@ import io.embrace.android.embracesdk.testframework.CapturedServices
 import io.embrace.android.embracesdk.testframework.InMemoryPrefsContext
 import io.embrace.android.embracesdk.testframework.InMemorySharedPreferences
 import io.embrace.android.embracesdk.testframework.SdkIntegrationTestRule
+import okio.FileSystem
 import org.robolectric.Shadows
 import org.robolectric.shadows.ShadowLooper
 import java.io.File
@@ -157,6 +159,16 @@ internal class EmbraceSetupInterface(
      */
     var awaitLegacyTelemetryMigration: (() -> Unit)? = null
 
+    /**
+     * The file system the SDK's storage and 9.x migration use.
+     */
+    var fileSystem: FileSystem = FileSystem.SYSTEM
+
+    /**
+     * The most SDK init waits in total on the 9.x migration.
+     */
+    var migrationBudgetMs: Long = MigrationBudget.BUDGET_MS
+
     private val fakeInitServices: TestInitServices = TestInitServices(
         clock = fakeClock,
         errorHandler = FakeErrorHandler(ignoredErrors = ignoredSdkErrors, delegate = ErrorHandlerImpl(fakeClock::now, ::androidLogcat)),
@@ -207,6 +219,8 @@ internal class EmbraceSetupInterface(
                 okHttpClient = fakeInitServices.okHttpClient,
                 uuidSource = fakeInitServices.uuidSource,
                 workerThreadPoolSupplier = { workerThreadPool },
+                fileSystem = fileSystem,
+                migrationBudgetMs = migrationBudgetMs,
                 orphanSweepDelayMs = 0,
                 configServiceSupplier = { preStartServices, instrumentedConfig, serializer, okHttpClient, workerThreadPool, persistedConfig ->
                     DecoratedConfigService(

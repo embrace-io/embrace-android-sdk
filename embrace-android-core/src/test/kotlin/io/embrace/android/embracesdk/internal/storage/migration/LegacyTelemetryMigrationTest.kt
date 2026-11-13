@@ -51,7 +51,7 @@ internal class LegacyTelemetryMigrationTest {
         fs.seedLegacyTelemetry()
         val migration = LegacyTelemetryMigration(worker, migrator(fs), errorHandler)
 
-        migration.move()
+        migration.move(budget())
 
         assertTrue(migration.isComplete)
         assertTrue(fs.exists(migratedPayload))
@@ -66,7 +66,7 @@ internal class LegacyTelemetryMigrationTest {
         fs.writeText(legacyInstallState / "other")
         val migration = LegacyTelemetryMigration(worker, migrator(fs), errorHandler)
 
-        migration.move()
+        migration.move(budget())
 
         assertTrue(fs.exists(migratedInstallState / SdkStorageLayout.CRASH_MARKER_FILE_NAME))
         assertTrue(fs.exists(legacyInstallState / "other"))
@@ -84,7 +84,7 @@ internal class LegacyTelemetryMigrationTest {
         val release = blockWorker()
         val migration = LegacyTelemetryMigration(worker, migrator(fs), errorHandler)
 
-        migration.move(timeoutMs = 10)
+        migration.move(budget(10))
 
         assertFalse(migration.isComplete)
         assertTrue(fs.exists(legacyPayload))
@@ -115,7 +115,7 @@ internal class LegacyTelemetryMigrationTest {
         val release = blockWorker()
         val migration = LegacyTelemetryMigration(worker, migrator(fs), errorHandler)
 
-        migration.move()
+        migration.move(budget())
         assertTrue(migration.isComplete)
         release.countDown()
         drainWorker()
@@ -131,7 +131,7 @@ internal class LegacyTelemetryMigrationTest {
         val release = blockWorker()
         val migration = LegacyTelemetryMigration(worker, migrator(fs), errorHandler)
 
-        migration.move(timeoutMs = 0)
+        migration.move(budget(0))
         migration.cancel()
         migration.await()
         release.countDown()
@@ -188,7 +188,7 @@ internal class LegacyTelemetryMigrationTest {
         val movedBeforeAfterDeletion = AtomicBoolean(false)
         val afterDeletion = CountDownLatch(1)
 
-        migration.move(timeoutMs = 0)
+        migration.move(budget(0))
         assertTrue(moving.await(TIMEOUT_SECS, TimeUnit.SECONDS))
         migration.deleteLegacyTelemetry {
             movedBeforeAfterDeletion.set(fs.exists(migratedPayload))
@@ -229,7 +229,7 @@ internal class LegacyTelemetryMigrationTest {
             val migration = LegacyTelemetryMigration(worker, migrator(fs), errorHandler)
 
             stop(migration)
-            migration.move()
+            migration.move(budget())
             drainWorker()
 
             assertTrue(migration.isComplete)
@@ -244,7 +244,7 @@ internal class LegacyTelemetryMigrationTest {
         fs.writeText(orphan)
 
         LegacyTelemetryMigration(worker, migrator(fs), errorHandler, sweeper(fs)).apply {
-            move()
+            move(budget())
             start()
         }
         drainWorker()
@@ -259,7 +259,7 @@ internal class LegacyTelemetryMigrationTest {
         fs.writeText(orphan)
         val migration = LegacyTelemetryMigration(worker, migrator(fs), errorHandler, sweeper(fs))
 
-        migration.move()
+        migration.move(budget())
         migration.sweepOrphans(scheduler)
         runSweep()
 
@@ -315,7 +315,7 @@ internal class LegacyTelemetryMigrationTest {
         fs.writeText(orphan)
         val migration = LegacyTelemetryMigration(worker, migrator(fs), errorHandler, sweeper(fs))
 
-        migration.move()
+        migration.move(budget())
         migration.sweepOrphans(scheduler)
         schedulerExecutor.moveForwardAndRunBlocked(LegacyTelemetryMigration.SWEEP_DELAY_MS)
         assertTrue(sweeping.await(TIMEOUT_SECS, TimeUnit.SECONDS))
@@ -358,7 +358,7 @@ internal class LegacyTelemetryMigrationTest {
         val release = blockWorker()
         val migration = LegacyTelemetryMigration(worker, migrator(fsRule.fileSystem), errorHandler)
 
-        migration.move(timeoutMs = 0)
+        migration.move(budget(0))
         assertFalse(migration.isComplete)
         release.countDown()
         migration.await()
@@ -379,7 +379,7 @@ internal class LegacyTelemetryMigrationTest {
         LegacyStorageMigrator(fs, { data / "files" }, { data / "cache" }, { data / "no_backup" }, errorHandler)
 
     private fun blockWorker(): CountDownLatch = CountDownLatch(1).also { release ->
-        worker.submit("block", Unit, SdkErrorType.Ignored) {
+        worker.submit("block", Unit, SdkErrorType.StorageMigrationFail) {
             release.await(TIMEOUT_SECS, TimeUnit.SECONDS)
         }
     }
@@ -388,6 +388,8 @@ internal class LegacyTelemetryMigrationTest {
         schedulerExecutor.moveForwardAndRunBlocked(LegacyTelemetryMigration.SWEEP_DELAY_MS)
         drainWorker()
     }
+
+    private fun budget(ms: Long = TIMEOUT_SECS * 1_000) = MigrationBudget(worker, errorHandler, ms)
 
     private fun drainWorker() {
         worker.submit("drain", Unit, SdkErrorType.Ignored) {}.await()

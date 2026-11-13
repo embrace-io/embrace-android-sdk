@@ -15,6 +15,7 @@ import java.util.concurrent.ThreadFactory
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicReference
+import kotlin.system.measureTimeMillis
 
 internal class MigrationWorkerTest {
 
@@ -75,26 +76,27 @@ internal class MigrationWorkerTest {
     }
 
     @Test
-    fun `timed await returns the default and tracks the timeout`() {
+    fun `budgeted waits behind a stalled job share one deadline and track one timeout as the stalled job`() {
         val release = CountDownLatch(1)
-        val handle = worker.submit("config", false, SdkErrorType.StorageMigrationFail) {
+        val stalled = worker.submit("prefs", false, SdkErrorType.PrefsMigrationFail) {
             release.await(TIMEOUT_SECS, TimeUnit.SECONDS)
         }
+        val queued = listOf("config", "telemetry-move", "prefetch").map {
+            worker.submit(it, true, SdkErrorType.StorageMigrationFail) { false }
+        }
+        val budget = MigrationBudget(worker, errorHandler, BUDGET_MS)
 
-        assertFalse(handle.await(BLOCKED_MS, SdkErrorType.StorageMigrationFail))
-        assertFalse(handle.isComplete)
-        assertEquals(SdkErrorType.StorageMigrationFail.toString(), errorHandler.sdkErrorMessages.single().msg)
+        val elapsedMs = measureTimeMillis {
+            queued.forEach { assertTrue(budget.await(it, SdkErrorType.StorageMigrationFail)) }
+        }
 
+        assertTrue("waited $elapsedMs ms", elapsedMs in BUDGET_MS until 2 * BUDGET_MS)
+        assertEquals(SdkErrorType.PrefsMigrationFail.toString(), errorHandler.sdkErrorMessages.single().msg)
         release.countDown()
-        assertTrue(handle.await())
-        assertTrue(handle.isComplete)
-    }
-
-    @Test
-    fun `timed await returns the result when the job completes in time`() {
-        val handle = worker.submit("config", false, SdkErrorType.StorageMigrationFail) { true }
-        assertTrue(handle.await(TIMEOUT_MS, SdkErrorType.StorageMigrationFail))
-        assertTrue(errorHandler.sdkErrorMessages.isEmpty())
+        assertTrue(stalled.await())
+        queued.last().await()
+        assertFalse(budget.await(queued.last(), SdkErrorType.StorageMigrationFail))
+        assertEquals(1, errorHandler.sdkErrorMessages.size)
     }
 
     @Test
@@ -201,5 +203,6 @@ internal class MigrationWorkerTest {
         const val TIMEOUT_SECS = 5L
         const val TIMEOUT_MS = 5_000L
         const val BLOCKED_MS = 100L
+        const val BUDGET_MS = 300L
     }
 }

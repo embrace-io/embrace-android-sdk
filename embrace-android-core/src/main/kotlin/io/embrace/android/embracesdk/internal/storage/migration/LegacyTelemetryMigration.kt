@@ -33,10 +33,10 @@ class LegacyTelemetryMigration(
     }
 
     /**
-     * Moves the telemetry on [worker] and blocks until it finishes or [timeoutMs] passes, or completes at once if there
-     * is no 9.x telemetry to move.
+     * Moves the telemetry on [worker] and blocks until it finishes or [budget] runs out, or completes at once if there is
+     * no 9.x telemetry to move.
      */
-    fun move(timeoutMs: Long = MOVE_TIMEOUT_MS) {
+    fun move(budget: MigrationBudget) {
         val migrator = migrator ?: return
         if (cancelled.get() || handle.isComplete) {
             return
@@ -53,7 +53,7 @@ class LegacyTelemetryMigration(
                 migrator.moveTelemetry()
             }
         }
-        handle.await(timeoutMs, SdkErrorType.StorageMigrationFail)
+        budget.await(handle, SdkErrorType.StorageMigrationFail)
     }
 
     /**
@@ -139,7 +139,6 @@ class LegacyTelemetryMigration(
     companion object {
         const val SWEEP_DELAY_MS: Long = 10_000L
         private const val NAME = "telemetry-move"
-        private const val MOVE_TIMEOUT_MS = 3_000L
         private const val DELETE_INSTALL_STATE_NAME = "delete-legacy-install-state"
         private const val DELETE_NAME = "delete-legacy-telemetry"
         private const val SWEEP_NAME = "orphan-sweep"

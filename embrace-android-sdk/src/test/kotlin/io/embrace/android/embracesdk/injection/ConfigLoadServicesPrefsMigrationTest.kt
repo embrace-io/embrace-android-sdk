@@ -64,8 +64,8 @@ internal class ConfigLoadServicesPrefsMigrationTest {
     @Test
     fun `a stalled prefs migration doesn't delay the telemetry move, starts fresh and a late migrator writes nothing`() {
         File(context.filesDir, "embrace").mkdirs()
-        val services = createServices(stallReadOf = defaultPrefsFile(context).name, prefsMigrationTimeoutMs = 1)
-        services.legacyTelemetryMigration.move(timeoutMs = 1_000)
+        val services = createServices(stallReadOf = defaultPrefsFile(context).name, migrationBudgetMs = 1_000)
+        services.legacyTelemetryMigration.move(services.migrationBudget)
         assertTrue(services.legacyTelemetryMigration.isComplete)
 
         assertNotEquals(LEGACY_DEVICE_ID, services.persistedSdkStateStore.value.snapshot().deviceId)
@@ -85,13 +85,13 @@ internal class ConfigLoadServicesPrefsMigrationTest {
 
     private fun createServices(
         stallReadOf: String? = null,
-        prefsMigrationTimeoutMs: Long = 3_000L,
+        migrationBudgetMs: Long = 3_000L,
     ) = ConfigLoadServices(
         context = context,
         preStartServices = PreStartServices(errorHandler = errorHandler),
         configServiceSupplier = { _, _, _, _, _, _ -> FakeConfigService() },
         fileSystem = stallingFileSystem(stallReadOf),
-        prefsMigrationTimeoutMs = prefsMigrationTimeoutMs,
+        migrationBudgetMs = migrationBudgetMs,
     )
 
     private fun stallingFileSystem(readOf: String?): FileSystem =

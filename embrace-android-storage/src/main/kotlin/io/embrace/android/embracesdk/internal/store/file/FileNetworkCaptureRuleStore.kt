@@ -83,11 +83,11 @@ class FileNetworkCaptureRuleStore(
     companion object {
 
         fun create(fileSystem: FileSystem, path: Path, used: Map<String, Int>) {
-            writeFile(fileSystem, path, NetworkCaptureProto(used = used))
+            writeFile(fileSystem, path, NetworkCaptureProto(used = used), sync = false)
         }
 
-        private fun writeFile(fileSystem: FileSystem, path: Path, proto: NetworkCaptureProto) {
-            fileSystem.writeAtomically(path) { NetworkCaptureCodec.encode(proto, it) }
+        private fun writeFile(fileSystem: FileSystem, path: Path, proto: NetworkCaptureProto, sync: Boolean = true) {
+            fileSystem.writeAtomically(path, sync = sync) { NetworkCaptureCodec.encode(proto, it) }
         }
     }
 }

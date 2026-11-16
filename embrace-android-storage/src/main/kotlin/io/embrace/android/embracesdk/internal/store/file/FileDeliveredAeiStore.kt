@@ -74,11 +74,11 @@ class FileDeliveredAeiStore(
     companion object {
 
         fun create(fileSystem: FileSystem, path: Path, ids: Set<String>) {
-            writeFile(fileSystem, path, DeliveredAeiProto(ids = ids.toList()))
+            writeFile(fileSystem, path, DeliveredAeiProto(ids = ids.toList()), sync = false)
         }
 
-        private fun writeFile(fileSystem: FileSystem, path: Path, proto: DeliveredAeiProto) {
-            fileSystem.writeAtomically(path) { DeliveredAeiCodec.encode(proto, it) }
+        private fun writeFile(fileSystem: FileSystem, path: Path, proto: DeliveredAeiProto, sync: Boolean = true) {
+            fileSystem.writeAtomically(path, sync = sync) { DeliveredAeiCodec.encode(proto, it) }
         }
     }
 }

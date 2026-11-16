@@ -10,6 +10,7 @@ import io.embrace.android.embracesdk.internal.logging.SdkErrorType
 import io.embrace.android.embracesdk.internal.logging.guardSdkCode
 import io.embrace.android.embracesdk.internal.payload.AppFramework
 import io.embrace.android.embracesdk.internal.serialization.PlatformSerializer
+import io.embrace.android.embracesdk.internal.storage.ATOMIC_WRITE_TMP_SUFFIX
 import io.embrace.android.embracesdk.internal.storage.SdkStorageLayout
 import io.embrace.android.embracesdk.internal.store.Ordinal
 import io.embrace.android.embracesdk.internal.store.file.FileDeliveredAeiStore
@@ -31,6 +32,7 @@ fun createSharedPrefsMigrator(
     appFramework: AppFramework,
     gate: PrefsMigrationGate,
     liveNetworkCaptureRules: () -> Map<String, Int>,
+    onDecoded: () -> Unit,
 ): SharedPrefsMigrator = SharedPrefsMigrator(
     fileSystem = fileSystem,
     installStateDir = installStateDir,
@@ -41,6 +43,7 @@ fun createSharedPrefsMigrator(
     appFramework = appFramework,
     gate = gate,
     liveNetworkCaptureRules = liveNetworkCaptureRules,
+    onDecoded = onDecoded,
 )
 
 /**
@@ -66,8 +69,11 @@ private val STATE_FILE_NAMES = arrayOf(
  * must exist, and deletes the SDK's keys from the prefs. `ordinals.bin` is written last and marks the migration as
  * complete. The migration is attempted once and never retried. Failing to write the SDK state or ordinals leaves the
  * install state fresh on disk, with no legacy data, and failing to write the network capture or AEI file drops just
- * that file. [gate] is told what was decoded before anything is written, so the stores can start from it, and nothing
- * is written once the stores have given up on the migration.
+ * that file. [gate] is told what was decoded before any state file is written, so the stores can start from it, and
+ * nothing but the staged ordinals is written once the stores have given up on the migration.
+ *
+ * The ordinals are first written unsynced to a staged file, which [gate] hands to the ordinal store already mapped, and
+ * [onDecoded] then runs.
  */
 class SharedPrefsMigrator(
     private val fileSystem: FileSystem,
@@ -79,9 +85,11 @@ class SharedPrefsMigrator(
     private val appFramework: AppFramework,
     private val gate: PrefsMigrationGate,
     private val liveNetworkCaptureRules: () -> Map<String, Int>,
+    private val onDecoded: () -> Unit = {},
 ) {
 
     private val ordinalsPath = installStateDir / SdkStorageLayout.ORDINALS_FILE_NAME
+    private val stagedOrdinalsPath = installStateDir / STAGED_ORDINALS_FILE_NAME
 
     /**
      * Returns true if this call ran the migration, or false if a previous launch already did or the stores gave up on
@@ -89,11 +97,21 @@ class SharedPrefsMigrator(
      */
     fun migrate(): Boolean = errorHandler.guardSdkCode(SdkErrorType.PrefsMigrationFail, false) {
         !fileSystem.exists(ordinalsPath) && EmbTrace.trace("prefs-migration") {
-            val loaded = if (prefsFileExists()) load() else null
+            val hasPrefs = prefsFileExists()
+            val loaded = if (hasPrefs) load() else null
             val snapshot = loaded?.snapshot
-            val migrated = snapshot?.let(::toInstallState)
+            val staged = stageOrdinals(snapshot?.ordinals.orEmpty())
+            val migrated = snapshot?.takeIf { staged != null }?.let(::toInstallState)
             val committed = errorHandler.guardSdkCode(SdkErrorType.PrefsMigrationFail, false) {
-                gate.commit(migrated) { writeInstallState(migrated, snapshot?.ordinals.orEmpty()) }
+                gate.commit(migrated, staged) {
+                    if (staged != null) {
+                        onDecoded()
+                    }
+                    writeInstallState(migrated, staged != null, hasPrefs)
+                }
+            }
+            errorHandler.guardSdkCode(SdkErrorType.PrefsMigrationFail) {
+                fileSystem.delete(stagedOrdinalsPath, mustExist = false)
             }
             if (loaded != null) {
                 EmbTrace.trace("prefs-remove-keys") {
@@ -110,22 +128,38 @@ class SharedPrefsMigrator(
         deliveredAeiIds = snapshot.deliveredAeiIds,
     )
 
+    private fun stageOrdinals(ordinals: Map<Ordinal, Int>): MmapOrdinalStore? =
+        EmbTrace.trace("prefs-stage-ordinals") {
+            errorHandler.guardSdkCode(SdkErrorType.PrefsMigrationFail, null) {
+                MmapOrdinalStore.stage(fileSystem, stagedOrdinalsPath, ordinals, errorHandler)
+            }
+        }
+
     /**
-     * Returns true if [migrated]'s SDK state and the ordinals were written, or false if the install was started fresh
-     * instead.
+     * Returns true if the ordinals and, unless [migrated] is null, its SDK state were written, or false if the install
+     * was started fresh instead. The staged ordinals hold [migrated]'s, so they're only committed if it was written or
+     * is null. If there are prefs but no [migrated], the state files a launch that died part way through may have left
+     * are deleted first.
      */
-    private fun writeInstallState(migrated: MigratedInstallState?, ordinals: Map<Ordinal, Int>): Boolean {
+    private fun writeInstallState(migrated: MigratedInstallState?, staged: Boolean, hasPrefs: Boolean): Boolean {
         val stateWritten = migrated != null && writeStateFiles(migrated)
         val written = EmbTrace.trace("prefs-write-ordinals") {
             errorHandler.guardSdkCode(SdkErrorType.PrefsMigrationFail, false) {
-                MmapOrdinalStore.create(fileSystem, ordinalsPath, if (stateWritten) ordinals else emptyMap())
+                if (migrated == null && hasPrefs) {
+                    STATE_FILE_NAMES.forEach { fileSystem.delete(installStateDir / it, mustExist = false) }
+                }
+                if (staged && (stateWritten || migrated == null)) {
+                    MmapOrdinalStore.commitStaged(fileSystem, stagedOrdinalsPath, ordinalsPath)
+                } else {
+                    MmapOrdinalStore.create(fileSystem, ordinalsPath, emptyMap())
+                }
                 true
             }
         }
         if (!written) {
             errorHandler.guardSdkCode(SdkErrorType.PrefsMigrationFail) { startFreshInstallState(fileSystem, installStateDir) }
         }
-        return stateWritten && written
+        return written && (stateWritten || migrated == null)
     }
 
     /**
@@ -212,5 +246,6 @@ class SharedPrefsMigrator(
     private companion object {
         const val SDK_KEY_PREFIX = "io.embrace."
         const val KEY_USER_SESSION = "embrace.user_session"
+        const val STAGED_ORDINALS_FILE_NAME = "${SdkStorageLayout.ORDINALS_FILE_NAME}.staged$ATOMIC_WRITE_TMP_SUFFIX"
     }
 }

@@ -94,6 +94,31 @@ class MmapOrdinalStore internal constructor(
             }
         }
 
+        /**
+         * Writes [staged] with [initial] values, replacing any file already there, and maps it. Nothing is fsynced
+         * until [commitStaged].
+         */
+        @Throws(IOException::class)
+        fun stage(
+            fileSystem: FileSystem,
+            staged: Path,
+            initial: Map<Ordinal, Int>,
+            errorHandler: ErrorHandler,
+        ): MmapOrdinalStore {
+            fileSystem.delete(staged, mustExist = false)
+            fileSystem.write(staged) { OrdinalFileFormat.write(this, initial) }
+            return MmapOrdinalStore(map(staged.toFile()), errorHandler)
+        }
+
+        /**
+         * Fsyncs [staged] and renames it to [path]. A mapping of [staged] then maps [path], as it is the same file.
+         */
+        @Throws(IOException::class)
+        fun commitStaged(fileSystem: FileSystem, staged: Path, path: Path) {
+            fileSystem.openReadWrite(staged, mustCreate = false, mustExist = true).use { it.flush() }
+            fileSystem.atomicMove(staged, path)
+        }
+
         private fun map(file: File): MappedByteBuffer {
             val raf = RandomAccessFile(file, "rw")
             return RandomAccessFileHandle(raf).use { handle ->

@@ -20,6 +20,9 @@ import java.util.concurrent.atomic.AtomicBoolean
  * A [PersistedSdkStateStore] backed by the file at [path], whose parent directory must exist. The file is read on
  * first access. Updates made before the next background write are written together. A missing or unreadable file
  * reads as empty state with a new device ID and install timestamp.
+ *
+ * If [initial] is given, the store starts from it instead of reading the file, which holds it or will by the time
+ * [writes] opens. Background writes wait for [writes] to open, and [flush] writes nothing until it does.
  */
 class FilePersistedSdkStateStore(
     private val fileSystem: FileSystem,
@@ -28,6 +31,8 @@ class FilePersistedSdkStateStore(
     private val errorHandler: ErrorHandler,
     private val clock: Clock,
     private val uuidSource: UuidSource,
+    initial: PersistedSdkState? = null,
+    private val writes: WriteBarrier = WriteBarrier(open = true),
 ) : PersistedSdkStateStore {
 
     private val lock = Any()
@@ -35,8 +40,8 @@ class FilePersistedSdkStateStore(
     private val writePending = AtomicBoolean(false)
 
     @Volatile
-    private var current: PersistedSdkState? = null
-    private var base = PersistedSdkStateProto()
+    private var current: PersistedSdkState? = initial
+    private var base = initial?.toProto(PersistedSdkStateProto()) ?: PersistedSdkStateProto()
 
     override fun snapshot(): PersistedSdkState = current ?: synchronized(lock) {
         current ?: load().also {
@@ -60,12 +65,14 @@ class FilePersistedSdkStateStore(
 
     private fun scheduleWrite() {
         if (writePending.compareAndSet(false, true)) {
-            worker.submit(::write)
+            writes.runWhenOpen { worker.submit(::write) }
         }
     }
 
     override fun flush() {
-        write()
+        if (writes.isOpen) {
+            write()
+        }
     }
 
     private fun write() = synchronized(writeLock) {

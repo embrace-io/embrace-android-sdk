@@ -33,6 +33,9 @@ import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
 import org.junit.rules.TemporaryFolder
+import java.util.concurrent.CountDownLatch
+import java.util.concurrent.TimeUnit
+import kotlin.concurrent.thread
 
 internal class SharedPrefsMigratorTest {
 
@@ -41,7 +44,8 @@ internal class SharedPrefsMigratorTest {
 
     private val fileSystem = FileSystem.SYSTEM
     private val errorHandler = FakeErrorHandler(throwOnSdkError = false)
-    private val worker = BackgroundWorker(BlockingScheduledExecutorService(blockingMode = true))
+    private val executor = BlockingScheduledExecutorService(blockingMode = true)
+    private val worker = BackgroundWorker(executor)
     private var liveRules = mapOf("1" to 10, "rule-b" to 3, "unused" to 4)
     private var liveRulesProvider: () -> Map<String, Int> = { liveRules }
 
@@ -362,10 +366,90 @@ internal class SharedPrefsMigratorTest {
     @Test
     fun `an abandoned migration writes nothing and still removes the keys`() {
         prefs.seed(*ALL_LIVE_KEYS)
-        val gate = PrefsMigrationGate().apply { abandon {} }
+        val gate = PrefsMigrationGate().apply { settle() }
         assertFalse(migrate(gate = gate))
         assertEquals(emptyList<Path>(), fileSystem.list(installStateDir))
         assertTrue(prefs.all.isEmpty())
+    }
+
+    @Test
+    fun `the gate starts the stores from the written state`() {
+        prefs.seed(*ALL_LIVE_KEYS)
+        val gate = PrefsMigrationGate()
+        assertTrue(migrate(gate = gate))
+        assertEquals(PrefsMigrationPhase.COMMITTED, gate.settle())
+        assertEquals(
+            MigratedInstallState(persistedState(), mapOf("1" to 5, "rule-b" to 3), setOf("100_1", "200_2")),
+            gate.migrated,
+        )
+    }
+
+    @Test
+    fun `stores adopt the decoded state at once and their updates land after the commit`() {
+        prefs.seed(*ALL_LIVE_KEYS)
+        val gate = PrefsMigrationGate()
+        val release = blockedCommit(gate)
+        try {
+            assertEquals(PrefsMigrationPhase.ADOPTED, gate.settle())
+            stateStore(gate).update { userId = "updated" }
+            executor.runCurrentlyBlocked()
+        } finally {
+            release()
+        }
+        executor.runCurrentlyBlocked()
+        assertEquals("updated", persistedState().userId)
+        assertEquals("device-id", persistedState().deviceId)
+    }
+
+    @Test
+    fun `a failed commit after the stores adopted the decoded state drops their writes`() {
+        prefs.seed(*ALL_LIVE_KEYS)
+        val gate = PrefsMigrationGate()
+        val release = blockedCommit(gate, fail = true)
+        try {
+            gate.settle()
+            stateStore(gate).update { userId = "updated" }
+        } finally {
+            release()
+        }
+        executor.runCurrentlyBlocked()
+        assertFreshInstall()
+    }
+
+    private fun stateStore(gate: PrefsMigrationGate) = FilePersistedSdkStateStore(
+        fileSystem = fileSystem,
+        path = installStateDir / SdkStorageLayout.PERSISTED_SDK_STATE_FILE_NAME,
+        worker = worker,
+        errorHandler = errorHandler,
+        clock = { -1L },
+        uuidSource = { "generated" },
+        initial = checkNotNull(gate.migrated).persistedSdkState,
+        writes = gate.writes,
+    )
+
+    private fun blockedCommit(gate: PrefsMigrationGate, fail: Boolean = false): () -> Unit {
+        val blocked = CountDownLatch(1)
+        val released = CountDownLatch(1)
+        val stateFile = installStateDir / SdkStorageLayout.PERSISTED_SDK_STATE_FILE_NAME
+        val fs = object : ForwardingFileSystem(fileSystem) {
+            override fun atomicMove(source: Path, target: Path) {
+                if (target == stateFile && blocked.count > 0) {
+                    blocked.countDown()
+                    released.await()
+                    if (fail) {
+                        throw IOException("disk full")
+                    }
+                }
+                super.atomicMove(source, target)
+            }
+        }
+        val thread = thread { migrate(fs = fs, gate = gate) }
+        assertTrue(blocked.await(5, TimeUnit.SECONDS))
+        return {
+            released.countDown()
+            thread.join(5_000)
+            assertFalse(thread.isAlive)
+        }
     }
 
     @Test

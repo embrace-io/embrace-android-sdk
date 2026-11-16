@@ -129,7 +129,25 @@ internal class FileDeliveredAeiStoreTest {
         assertEquals(setOf("a", "b"), createStore().ids())
     }
 
-    private fun createStore() = FileDeliveredAeiStore(
+    @Test
+    fun `a seeded store holds its writes until the barrier opens`() {
+        FileDeliveredAeiStore.create(fsRule.fileSystem, path, setOf("on-disk"))
+        val barrier = WriteBarrier()
+        val store = createStore(initialIds = setOf("seeded"), barrier = barrier)
+        assertEquals(setOf("seeded"), store.ids())
+        store.add("new")
+        executor.runCurrentlyBlocked()
+        assertEquals(0, writes)
+
+        barrier.open()
+        executor.runCurrentlyBlocked()
+        assertEquals(setOf("seeded", "new"), createStore().ids())
+    }
+
+    private fun createStore(
+        initialIds: Set<String>? = null,
+        barrier: WriteBarrier = WriteBarrier(open = true),
+    ) = FileDeliveredAeiStore(
         fileSystem = object : ForwardingFileSystem(fsRule.fileSystem) {
             override fun atomicMove(source: Path, target: Path) {
                 if (failWrites) throw IOException("rename failed")
@@ -140,5 +158,7 @@ internal class FileDeliveredAeiStoreTest {
         path = path,
         worker = BackgroundWorker(executor),
         errorHandler = errorHandler,
+        initialIds = initialIds,
+        writes = barrier,
     )
 }

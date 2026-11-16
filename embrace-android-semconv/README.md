@@ -138,7 +138,7 @@ segment is the version.
 | registry                                                    | role                                                                    |
 |-------------------------------------------------------------|-------------------------------------------------------------------------|
 | `open-telemetry/semantic-conventions@v1.44.0`               | core OTel attributes, available to `ref`                                |
-| `embrace-io/embrace-semconv@v0.2.0`                         | cross-platform `emb.*` definitions shared across Embrace SDKs, to `ref` |
+| `embrace-io/embrace-semconv@v0.3.0`                         | cross-platform `emb.*` definitions shared across Embrace SDKs, to `ref` |
 
 Dependencies bring their definitions into the pool so local `emb.*` groups can `ref` them. They do
 **not** generate classes in this module (filtered out by `startswith("emb.")`).

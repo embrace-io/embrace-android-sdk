@@ -1,0 +1,54 @@
+{
+  "$schema": "https://docs.renovatebot.com/renovate-schema.json",
+  "description": "Renovate bumps only the semantic-convention pins Dependabot can't: weaver (WEAVER_VERSION together with its setup-weaver action) and the embrace-semconv registry in manifest.yaml. Dependabot (.github/dependabot.yml) keeps everything else.",
+  "extends": ["config:recommended"],
+  "schedule": ["before 8am on Monday"],
+  "minimumReleaseAge": "7 days",
+  "enabledManagers": ["custom.regex", "github-actions"],
+  "customManagers": [
+    {
+      "customType": "regex",
+      "description": "WEAVER_VERSION in versions.env",
+      "managerFilePatterns": ["/^embrace-android-semconv/versions\\.env$/"],
+      "matchStrings": ["WEAVER_VERSION=(?<currentValue>v\\d+\\.\\d+\\.\\d+)"],
+      "depNameTemplate": "open-telemetry/weaver",
+      "datasourceTemplate": "github-releases"
+    },
+    {
+      "customType": "regex",
+      "description": "embrace-semconv registry_path in manifest.yaml, e.g. embrace-semconv@v0.3.0",
+      "managerFilePatterns": ["/^embrace-android-semconv/src/main/semconv/manifest\\.yaml$/"],
+      "matchStrings": ["https://github\\.com/embrace-io/embrace-semconv@(?<currentValue>v\\d+\\.\\d+\\.\\d+)\\[model\\]"],
+      "depNameTemplate": "embrace-io/embrace-semconv",
+      "datasourceTemplate": "github-releases"
+    },
+    {
+      "customType": "regex",
+      "description": "embrace-semconv schema_url in manifest.yaml, e.g. schemas/embrace/0.3.0; its release tags carry a leading v",
+      "managerFilePatterns": ["/^embrace-android-semconv/src/main/semconv/manifest\\.yaml$/"],
+      "matchStrings": ["https://embrace\\.io/schemas/embrace/(?<currentValue>\\d+\\.\\d+\\.\\d+)"],
+      "depNameTemplate": "embrace-io/embrace-semconv",
+      "datasourceTemplate": "github-releases",
+      "extractVersionTemplate": "^v(?<version>.+)$"
+    }
+  ],
+  "packageRules": [
+    {
+      "description": "Dependabot bumps every other GitHub Action",
+      "matchManagers": ["github-actions"],
+      "matchPackageNames": ["!open-telemetry/weaver"],
+      "enabled": false
+    },
+    {
+      "description": "The CLI version and the action that installs it move in one PR",
+      "matchPackageNames": ["open-telemetry/weaver"],
+      "groupName": "weaver"
+    },
+    {
+      "description": "Both version fields of the registry dependency move in one PR",
+      "matchManagers": ["custom.regex"],
+      "matchPackageNames": ["embrace-io/embrace-semconv"],
+      "groupName": "embrace-semconv registry"
+    }
+  ]
+}

@@ -13,7 +13,7 @@ updates:
           - "actions/*"
     ignore:
       # The setup-weaver action is pinned to the weaver release in embrace-android-semconv/versions.env,
-      # which Dependabot can't bump. Both move together by hand; see the comment in that file.
+      # which Dependabot can't bump. Renovate (.github/renovate.json) bumps the two together.
       - dependency-name: "open-telemetry/weaver/.github/actions/setup-weaver"
   - package-ecosystem: "gradle"
     directory: "/"

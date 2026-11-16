@@ -27,6 +27,10 @@ version, rerun the generate task and commit the regenerated source code together
 The `Semconv drift` CI workflow fails any PR whose committed generated code doesn't match what the
 model and templates should produce.
 
+[Renovate](../.github/renovate.json) opens the PRs that bump weaver and the `embrace-semconv`
+registry dependency. It can't regenerate the code, so when such a PR fails the drift check, check out
+its branch, run the generate task and push the regenerated sources to it.
+
 ## Layout
 
 ```
@@ -145,7 +149,8 @@ Dependencies bring their definitions into the pool so local `emb.*` groups can `
 
 Each dependency is identified by its `schema_url`. When two registries depend on different versions of
 the same registry (e.g. core OTel), Weaver picks the highest one and issues a warning. Try to keep
-these in sync as much as possible to avoid issues down the road.
+these in sync as much as possible to avoid issues down the road. That is why Renovate bumps only the
+`embrace-semconv` dependency: move core OTel by hand to the version `embrace-semconv` itself depends on.
 
 ## Working with it
 

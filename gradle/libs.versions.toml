@@ -1,6 +1,5 @@
 [versions]
 
-binaryCompatibilityValidator = "0.18.2"
 agp = "9.5.1"
 junit = "4.13.2"
 dokka = "2.3.0"
@@ -64,7 +63,6 @@ compileSdk = "37"
 minSdk = "21"
 
 [libraries]
-binary-compatibility-validator = { module = "org.jetbrains.kotlinx:binary-compatibility-validator", version.ref = "binaryCompatibilityValidator" }
 detekt-gradle-plugin = { module = "io.gitlab.arturbosch.detekt:detekt-gradle-plugin", version.ref = "detekt" }
 dokka-gradle-plugin = { module = "org.jetbrains.dokka:org.jetbrains.dokka.gradle.plugin", version.ref = "dokka" }
 vanniktech-maven-publish = { module = "com.vanniktech.maven.publish:com.vanniktech.maven.publish.gradle.plugin", version.ref = "vanniktechMavenPublish" }

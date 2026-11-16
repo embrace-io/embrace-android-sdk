@@ -26,7 +26,7 @@ tests, and the `embrace-android-sdk` integration tests) plus one Gradle plugin i
 ### Other Commands
 
 ```bash
-./gradlew apiDump                                     # update public API dumps
+./gradlew updateKotlinAbi                             # update public ABI dumps
 CI=true ./gradlew koverXmlReport -Pembrace.coverage   # coverage (Kover only applies with CI set)
 cd examples/ExampleApp && ./gradlew bundleRelease     # build the example app
 

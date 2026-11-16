@@ -15,7 +15,6 @@ dependencies {
     implementation(libs.agp)
     implementation(libs.detekt.gradle.plugin)
     implementation(libs.dokka.gradle.plugin)
-    implementation(libs.binary.compatibility.validator)
     implementation(libs.vanniktech.maven.publish)
     implementation(libs.kover)
     implementation(libs.kotlinpoet)

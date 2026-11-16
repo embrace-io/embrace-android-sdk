@@ -39,6 +39,7 @@ internal class LegacyTelemetryMigrationTest {
     private val worker = MigrationWorker(errorHandler)
     private val schedulerExecutor = BlockingScheduledExecutorService(FakeClock())
     private val scheduler = BackgroundWorker(schedulerExecutor)
+    private val built = mutableListOf<String>()
 
     @Test
     fun `await returns at once without a migrator`() {
@@ -222,20 +223,21 @@ internal class LegacyTelemetryMigrationTest {
     }
 
     @Test
-    fun `move after cancel or skipMove doesn't migrate`() {
+    fun `move after cancel or once already moved doesn't migrate, and builds nothing once already moved`() {
         val fs = fsRule.fileSystem
         fs.seedLegacyTelemetry()
-        listOf(LegacyTelemetryMigration::cancel, LegacyTelemetryMigration::skipMove).forEach { stop ->
-            val migration = LegacyTelemetryMigration(worker, migrator(fs), errorHandler)
-
-            stop(migration)
+        val cancelled = LegacyTelemetryMigration(worker, migrator(fs), errorHandler).apply { cancel() }
+        listOf(cancelled, alreadyMoved(fs)).forEach { migration ->
             migration.move(budget())
+            migration.start()
+            migration.await()
             drainWorker()
 
             assertTrue(migration.isComplete)
             assertTrue(fs.exists(legacyPayload))
             assertFalse(fs.exists(migratedPayload))
         }
+        assertEquals(emptyList<String>(), built)
     }
 
     @Test
@@ -268,24 +270,27 @@ internal class LegacyTelemetryMigrationTest {
     }
 
     @Test
-    fun `sweepOrphans deletes orphans and 9x leftovers after the delay`() {
+    fun `sweepOrphans deletes orphans and 9x leftovers after the delay, also once already moved`() {
         val fs = fsRule.fileSystem
-        fs.writeText(orphan)
-        fs.seedLegacyTelemetry()
-        val migration = LegacyTelemetryMigration(worker, migrator(fs), errorHandler, sweeper(fs))
+        listOf(LegacyTelemetryMigration(worker, migrator(fs), errorHandler, sweeper(fs)), alreadyMoved(fs)).forEach {
+            fs.writeText(orphan)
+            fs.seedLegacyTelemetry()
 
-        migration.sweepOrphans(scheduler)
-        schedulerExecutor.moveForwardAndRunBlocked(LegacyTelemetryMigration.SWEEP_DELAY_MS - 1)
-        drainWorker()
-        assertTrue(fs.exists(orphan))
-        assertTrue(fs.exists(legacyPayload))
+            it.sweepOrphans(scheduler)
+            schedulerExecutor.moveForwardAndRunBlocked(LegacyTelemetryMigration.SWEEP_DELAY_MS - 1)
+            drainWorker()
+            assertTrue(fs.exists(orphan))
+            assertTrue(fs.exists(legacyPayload))
+            assertEquals(emptyList<String>(), built)
 
-        schedulerExecutor.moveForwardAndRunBlocked(1)
-        drainWorker()
-        assertFalse(fs.exists(orphan))
-        assertFalse(fs.exists(legacyPayload))
-        assertFalse(fs.exists(legacyInstallState))
-        assertFalse(fs.exists(migratedPayload))
+            schedulerExecutor.moveForwardAndRunBlocked(1)
+            drainWorker()
+            assertFalse(fs.exists(orphan))
+            assertFalse(fs.exists(legacyPayload))
+            assertFalse(fs.exists(legacyInstallState))
+            assertFalse(fs.exists(migratedPayload))
+        }
+        assertEquals(listOf("worker", "migrator", "sweeper"), built)
     }
 
     @Test
@@ -385,6 +390,24 @@ internal class LegacyTelemetryMigrationTest {
         assertTrue(migration.isComplete)
         assertTrue(fsRule.fileSystem.exists(migratedPayload))
     }
+
+    private fun alreadyMoved(fs: FileSystem) = LegacyTelemetryMigration(
+        worker = lazy {
+            built.add("worker")
+            worker
+        },
+        migrator = lazy {
+            built.add("migrator")
+            migrator(fs)
+        },
+        errorHandler = errorHandler,
+        orphanSweeper = lazy {
+            built.add("sweeper")
+            sweeper(fs)
+        },
+        sweepDelayMs = LegacyTelemetryMigration.SWEEP_DELAY_MS,
+        alreadyMoved = true,
+    )
 
     private fun sweeper(fs: FileSystem) = OrphanSweeper(
         storage = createSdkStorage(fs, data / "no_backup", errorHandler),

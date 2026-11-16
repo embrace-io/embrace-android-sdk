@@ -85,7 +85,7 @@ internal class ConfigLoadServicesTest {
                 workerThreadPoolSupplier = { FakeWorkerThreadPool(testWorkers = listOf(Worker.Background.IoRegWorker)) },
                 configServiceSupplier = { _, _, _, _, _, _ -> FakeConfigService() },
                 fileSystem = fs,
-            ).also { it.legacyTelemetryMigration.move(it.migrationBudget) }
+            ).also { it.moveLegacyTelemetry() }
         }
 
         launch()
@@ -115,28 +115,31 @@ internal class ConfigLoadServicesTest {
         assertEquals(mapOf("rule" to 3), first.persistedConfig.networkCaptureRuleMaxCounts())
         assertFalse(first.sdkStorage.fileSystem.exists(first.sdkStorage.path(SdkDir.REMOTE_CONFIG)))
 
-        first.legacyTelemetryMigration.move(first.migrationBudget)
+        first.moveLegacyTelemetry()
         assertFalse(legacy.exists())
         val second = createSystemServices(context)
         assertEquals(mapOf("rule" to 3), second.persistedConfig.networkCaptureRuleMaxCounts())
     }
 
     @Test
-    fun `keeps ordinals in install state`() {
+    fun `keeps ordinals in install state across a migrated launch`() {
         val context = FilesDirApplication(tempDir.newFolder())
-        val configLoadServices = ConfigLoadServices(
-            context = context,
-            preStartServices = PreStartServices(errorHandler = FakeErrorHandler()),
-            workerThreadPoolSupplier = { FakeWorkerThreadPool(testWorkers = listOf(Worker.Background.IoRegWorker)) },
-            configServiceSupplier = { _, _, _, _, _, _ -> FakeConfigService() },
-            fileSystem = FileSystem.SYSTEM,
-        )
-        val store = configLoadServices.ordinalStore.value
+        val launch = {
+            ConfigLoadServices(
+                context = context,
+                preStartServices = PreStartServices(errorHandler = FakeErrorHandler()),
+                workerThreadPoolSupplier = { FakeWorkerThreadPool(testWorkers = listOf(Worker.Background.IoRegWorker)) },
+                configServiceSupplier = { _, _, _, _, _, _ -> FakeConfigService() },
+                fileSystem = FileSystem.SYSTEM,
+            )
+        }
+        val store = launch().ordinalStore.value
         assertEquals(1, store.incrementAndGet(Ordinal.SESSION))
         assertEquals(2, store.incrementAndGet(Ordinal.SESSION))
 
         val installState = File(context.noBackupFilesDir, "${SdkStorageLayout.ROOT_DIR_NAME}/install_state")
         assertTrue(File(installState, SdkStorageLayout.ORDINALS_FILE_NAME).exists())
+        assertEquals(3, launch().ordinalStore.value.incrementAndGet(Ordinal.SESSION))
     }
 
     @Test
@@ -177,9 +180,17 @@ internal class ConfigLoadServicesTest {
         first.networkCaptureRuleStore.value.decrement(rule.id, 5)
         workers.forEach { workerThreadPool.executorFor(it).runCurrentlyBlocked() }
 
-        val second = createServices(context, configService, FakeWorkerThreadPool(testWorkers = workers))
+        val secondWorkers = FakeWorkerThreadPool(testWorkers = workers)
+        val second = createServices(context, configService, secondWorkers)
         assertEquals(setOf("aei"), second.deliveredAeiStore.value.ids())
         assertEquals(4, second.networkCaptureRuleStore.value.remaining(rule.id, 5))
+        second.deliveredAeiStore.value.add("aei2")
+        second.networkCaptureRuleStore.value.decrement(rule.id, 5)
+        workers.forEach { secondWorkers.executorFor(it).runCurrentlyBlocked() }
+
+        val third = createServices(context, configService, FakeWorkerThreadPool(testWorkers = workers))
+        assertEquals(setOf("aei", "aei2"), third.deliveredAeiStore.value.ids())
+        assertEquals(3, third.networkCaptureRuleStore.value.remaining(rule.id, 5))
     }
 
     @Test
@@ -195,7 +206,7 @@ internal class ConfigLoadServicesTest {
         val first = createSystemServices(context)
         assertEquals(mapOf("rule" to 3), first.persistedConfig.networkCaptureRuleMaxCounts())
 
-        first.legacyTelemetryMigration.move(first.migrationBudget)
+        first.moveLegacyTelemetry()
         assertFalse(legacy.exists())
         val second = createSystemServices(context)
         assertEquals(mapOf("rule" to 3), second.persistedConfig.networkCaptureRuleMaxCounts())
@@ -213,7 +224,7 @@ internal class ConfigLoadServicesTest {
         val config = configLoadServices.sdkStorage.dir(SdkDir.REMOTE_CONFIG)
         fs.write(config / PersistedConfig.CONFIG_RESPONSE_FILE_NAME) { writeUtf8("fresh") }
 
-        configLoadServices.legacyTelemetryMigration.move(configLoadServices.migrationBudget)
+        configLoadServices.moveLegacyTelemetry()
 
         val contents = fs.list(config).associate { it.name to fs.read(it) { readUtf8() } }
         assertEquals(mapOf(PersistedConfig.CONFIG_RESPONSE_FILE_NAME to "fresh"), contents)
@@ -240,7 +251,7 @@ internal class ConfigLoadServicesTest {
         val migrationReleased = CountDownLatch(1)
         val fs = object : ForwardingFileSystem(FileSystem.SYSTEM) {
             override fun metadataOrNull(path: Path): FileMetadata? {
-                if (Thread.currentThread().name == "emb-migration") {
+                if (Thread.currentThread().name == "emb-prefs-migration") {
                     migrationReleased.await()
                 }
                 return super.metadataOrNull(path)

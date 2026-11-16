@@ -10,8 +10,8 @@ import io.embrace.android.embracesdk.internal.store.file.WriteBarrier
 
 /**
  * Orders the prefs migration's writes against the install-state stores, which may give up waiting for it. The migrator
- * writes the install state only inside [commit], and [writes] holds the stores' own writes until then. [settle] and
- * [skip] never wait on the migrator's writes.
+ * writes the install state only inside [commit], and [writes] holds the stores' own writes until then. [settle] never
+ * waits on the migrator's writes.
  */
 class PrefsMigrationGate {
 
@@ -35,7 +35,7 @@ class PrefsMigrationGate {
         private set
 
     /**
-     * Runs [write] unless the stores have already settled or the migration was skipped, and returns whether it ran.
+     * Runs [write] unless the stores have already settled, and returns whether it ran.
      * [write] writes [decoded], which is null if there was nothing to migrate or the ordinals couldn't be staged,
      * commits [staged] if it can, and returns false if it started the install fresh instead.
      */
@@ -59,14 +59,6 @@ class PrefsMigrationGate {
             finish(written)
         }
         return true
-    }
-
-    /**
-     * Marks the migration as done by a previous launch.
-     */
-    fun skip() {
-        synchronized(lock) { phase = COMMITTED }
-        writes.open()
     }
 
     /**

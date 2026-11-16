@@ -32,6 +32,7 @@ import io.embrace.android.embracesdk.internal.store.file.FileNetworkCaptureRuleS
 import io.embrace.android.embracesdk.internal.store.file.FilePersistedSdkStateStore
 import io.embrace.android.embracesdk.internal.store.file.MmapOrdinalStore
 import io.embrace.android.embracesdk.internal.store.file.ScopedOrdinalStore
+import io.embrace.android.embracesdk.internal.store.file.WriteBarrier
 import io.embrace.android.embracesdk.internal.utils.EmbTrace
 import io.embrace.android.embracesdk.internal.utils.UuidSource
 import io.embrace.android.embracesdk.internal.utils.UuidSourceImpl
@@ -69,46 +70,69 @@ internal class ConfigLoadServices(
         createSdkStorage(context, preStartServices.errorHandler, fileSystem)
     }
 
-    private val migrationWorker = EmbTrace.trace("migration-worker-init") {
-        MigrationWorker(preStartServices.errorHandler)
+    /**
+     * Whether a previous launch migrated, in which case the move and prefs migration below are never built. Probed by
+     * [persistedConfig].
+     */
+    private val migrated: Boolean by lazy {
+        EmbTrace.trace("migration-marker-probe") {
+            preStartServices.errorHandler.guardSdkCode(SdkErrorType.Ignored, false) {
+                sdkStorage.fileSystem.exists(sdkStorage.dir(SdkDir.INSTALL_STATE) / SdkStorageLayout.ORDINALS_FILE_NAME)
+            }
+        }
     }
 
-    val migrationBudget: MigrationBudget = EmbTrace.trace("migration-budget-init") {
-        MigrationBudget(migrationWorker, preStartServices.errorHandler, migrationBudgetMs)
+    private val migrationWorker = lazy {
+        EmbTrace.trace("migration-worker-init") { MigrationWorker(preStartServices.errorHandler) }
+    }
+
+    private val migrationBudget by lazy {
+        EmbTrace.trace("migration-budget-init") {
+            MigrationBudget(migrationWorker.value, preStartServices.errorHandler, migrationBudgetMs)
+        }
     }
 
     /**
      * The prefs migration and the state prefetch run on their own thread, so the telemetry move isn't queued behind
      * them: its result is needed before the prefs migration's.
      */
-    private val prefsMigrationWorker = EmbTrace.trace("prefs-migration-worker-init") {
-        MigrationWorker(preStartServices.errorHandler, { runnable ->
-            Thread(runnable, PREFS_MIGRATION_THREAD_NAME).apply { isDaemon = true }
-        })
+    private val prefsMigrationWorker by lazy {
+        EmbTrace.trace("prefs-migration-worker-init") {
+            MigrationWorker(preStartServices.errorHandler, { runnable ->
+                Thread(runnable, PREFS_MIGRATION_THREAD_NAME).apply { isDaemon = true }
+            })
+        }
     }
 
-    private val legacyStorageMigrator = EmbTrace.trace("legacy-storage-migrator-init") {
-        createLegacyStorageMigrator(context, preStartServices.errorHandler, fileSystem)
+    private val legacyStorageMigrator = lazy {
+        EmbTrace.trace("legacy-storage-migrator-init") {
+            createLegacyStorageMigrator(context, preStartServices.errorHandler, fileSystem)
+        }
     }
 
-    val legacyTelemetryMigration: LegacyTelemetryMigration = EmbTrace.trace("legacy-telemetry-migration-init") {
+    val legacyTelemetryMigration: LegacyTelemetryMigration by lazy {
         LegacyTelemetryMigration(
             worker = migrationWorker,
             migrator = legacyStorageMigrator,
             errorHandler = preStartServices.errorHandler,
-            orphanSweeper = OrphanSweeper(
-                storage = sdkStorage,
-                layoutVersion = SdkStorageLayout.LAYOUT_VERSION,
-                processStartMs = sweepCutoffMs,
-                wallClock = System::currentTimeMillis,
-                errorHandler = preStartServices.errorHandler,
-            ),
+            orphanSweeper = lazy {
+                OrphanSweeper(
+                    storage = sdkStorage,
+                    layoutVersion = SdkStorageLayout.LAYOUT_VERSION,
+                    processStartMs = sweepCutoffMs,
+                    wallClock = System::currentTimeMillis,
+                    errorHandler = preStartServices.errorHandler,
+                )
+            },
             sweepDelayMs = orphanSweepDelayMs,
+            alreadyMoved = migrated,
         )
     }
 
-    private val appFramework: AppFramework = EmbTrace.trace("app-framework-init") {
-        AppFramework.fromString(instrumentedConfig.project.getAppFramework()) ?: AppFramework.NATIVE
+    private val appFramework by lazy {
+        EmbTrace.trace("app-framework-init") {
+            AppFramework.fromString(instrumentedConfig.project.getAppFramework()) ?: AppFramework.NATIVE
+        }
     }
 
     /**
@@ -116,21 +140,29 @@ internal class ConfigLoadServices(
      * ordinals are staged and the stores can start from what it decoded, before it writes the files, or when it
      * finishes if staging failed.
      */
-    private val prefsMigration = EmbTrace.trace("prefs-migration-handle-init") {
-        MigrationHandle(PREFS_MIGRATION_NAME, false, preStartServices.errorHandler)
+    private val prefsMigration by lazy {
+        EmbTrace.trace("prefs-migration-handle-init") {
+            MigrationHandle(PREFS_MIGRATION_NAME, false, preStartServices.errorHandler)
+        }
     }
 
-    private val prefsMigrationGate = EmbTrace.trace("prefs-migration-gate-init") { PrefsMigrationGate() }
+    /**
+     * Null once migrated: the stores then read their files.
+     */
+    private val prefsMigrationGate: PrefsMigrationGate? by lazy {
+        if (migrated) null else EmbTrace.trace("prefs-migration-gate-init") { PrefsMigrationGate() }
+    }
 
     /**
      * Every file-backed install-state store touches this before it starts, so it sees the migrated prefs. Waits up to
      * the [migrationBudget] for the migration to decode the prefs and stage the ordinals. One still decoding is then
      * abandoned and the install starts fresh. Otherwise the stores start from the state it decoded, if it wrote or is
-     * still writing it.
+     * still writing it. Once migrated it is [PrefsMigrationPhase.COMMITTED] at once.
      */
     private val installState: Lazy<PrefsMigrationPhase> = lazy {
+        val gate = prefsMigrationGate ?: return@lazy PrefsMigrationPhase.COMMITTED
         migrationBudget.await(prefsMigration, SdkErrorType.PrefsMigrationFail)
-        prefsMigrationGate.settle().also { phase ->
+        gate.settle().also { phase ->
             if (phase == PrefsMigrationPhase.ABANDONED) {
                 preStartServices.errorHandler.guardSdkCode(SdkErrorType.PrefsMigrationFail) {
                     startFreshInstallState(sdkStorage.fileSystem, sdkStorage.dir(SdkDir.INSTALL_STATE))
@@ -148,8 +180,8 @@ internal class ConfigLoadServices(
             errorHandler = preStartServices.errorHandler,
             clock = preStartServices.clock,
             uuidSource = uuidSource,
-            initial = prefsMigrationGate.migrated?.persistedSdkState,
-            writes = prefsMigrationGate.writes,
+            initial = prefsMigrationGate?.migrated?.persistedSdkState,
+            writes = prefsMigrationGate?.writes ?: WriteBarrier(open = true),
         )
     }
 
@@ -166,8 +198,8 @@ internal class ConfigLoadServices(
             path = sdkStorage.dir(SdkDir.INSTALL_STATE) / SdkStorageLayout.AEI_DELIVERED_FILE_NAME,
             worker = workerThreadPool.backgroundWorker(Worker.Background.NonIoRegWorker),
             errorHandler = preStartServices.errorHandler,
-            initialIds = prefsMigrationGate.migrated?.deliveredAeiIds,
-            writes = prefsMigrationGate.writes,
+            initialIds = prefsMigrationGate?.migrated?.deliveredAeiIds,
+            writes = prefsMigrationGate?.writes ?: WriteBarrier(open = true),
         )
     }
 
@@ -179,8 +211,8 @@ internal class ConfigLoadServices(
             worker = workerThreadPool.backgroundWorker(Worker.Background.PersistenceWorker),
             errorHandler = preStartServices.errorHandler,
             liveRuleIds = { configService.networkBehavior.getNetworkCaptureRules().mapTo(HashSet()) { it.id } },
-            initialUsed = prefsMigrationGate.migrated?.networkCaptureUsed,
-            writes = prefsMigrationGate.writes,
+            initialUsed = prefsMigrationGate?.migrated?.networkCaptureUsed,
+            writes = prefsMigrationGate?.writes ?: WriteBarrier(open = true),
         )
     }
 
@@ -192,14 +224,6 @@ internal class ConfigLoadServices(
         sectionName = "persisted-config-init",
         recordDuration = true,
     ) {
-        val migrated = EmbTrace.trace("migration-marker-probe") {
-            preStartServices.errorHandler.guardSdkCode(SdkErrorType.Ignored, false) {
-                sdkStorage.fileSystem.exists(sdkStorage.dir(SdkDir.INSTALL_STATE) / SdkStorageLayout.ORDINALS_FILE_NAME)
-            }
-        }
-        if (migrated) {
-            legacyTelemetryMigration.skipMove()
-        }
         val storageDir = sdkStorage.path(SdkDir.REMOTE_CONFIG)
         // until the telemetry move moves it, a 9.x config is read where 9.x left it
         val readDir = if (migrated) {
@@ -209,7 +233,7 @@ internal class ConfigLoadServices(
                 val hasConfig = preStartServices.errorHandler.guardSdkCode(SdkErrorType.Ignored, true) {
                     sdkStorage.fileSystem.exists(storageDir / PersistedConfig.CONFIG_RESPONSE_FILE_NAME)
                 }
-                storageDir.takeIf { hasConfig } ?: legacyStorageMigrator.legacyConfigDir() ?: storageDir
+                storageDir.takeIf { hasConfig } ?: legacyStorageMigrator.value.legacyConfigDir() ?: storageDir
             }
         }
         PersistedConfig(
@@ -221,13 +245,8 @@ internal class ConfigLoadServices(
             clock = preStartServices.clock,
             errorHandler = preStartServices.errorHandler,
         ).also { config ->
-            if (!migrated) {
-                submitPrefsMigration(config, preStartServices.errorHandler)
-            } else {
-                prefsMigrationGate.skip()
-                prefsMigration.complete()
-            }
-            submitStatePrefetch(preStartServices.errorHandler, migrated)
+            prefsMigrationGate?.let { submitPrefsMigration(config, it, preStartServices.errorHandler) }
+            submitStatePrefetch(preStartServices.errorHandler)
         }
     }
 
@@ -263,6 +282,15 @@ internal class ConfigLoadServices(
         }
     }
 
+    /**
+     * Moves the 9.x telemetry, blocking for up to the migration budget, unless a previous launch migrated.
+     */
+    fun moveLegacyTelemetry() {
+        if (!migrated) {
+            legacyTelemetryMigration.move(migrationBudget)
+        }
+    }
+
     override fun close() {
         workerThreadPool.backgroundWorker(Worker.Background.HttpRequestWorker).submit {
             okHttpClient.evictConnections()
@@ -270,7 +298,7 @@ internal class ConfigLoadServices(
         }
     }
 
-    private fun submitPrefsMigration(config: PersistedConfig, errorHandler: ErrorHandler) {
+    private fun submitPrefsMigration(config: PersistedConfig, gate: PrefsMigrationGate, errorHandler: ErrorHandler) {
         prefsMigrationWorker.submit(prefsMigration, SdkErrorType.PrefsMigrationFail) {
             createSharedPrefsMigrator(
                 context = context,
@@ -279,7 +307,7 @@ internal class ConfigLoadServices(
                 serializer = jsonSerializer,
                 errorHandler = errorHandler,
                 appFramework = appFramework,
-                gate = prefsMigrationGate,
+                gate = gate,
                 liveNetworkCaptureRules = config::networkCaptureRuleMaxCounts,
                 onDecoded = { prefsMigration.complete(true) },
             ).migrate()
@@ -290,7 +318,7 @@ internal class ConfigLoadServices(
      * Prefetches the persisted SDK state off the init thread which then either finds it already
      * loaded or waits for the in-progress load.
      */
-    private fun submitStatePrefetch(errorHandler: ErrorHandler, migrated: Boolean) {
+    private fun submitStatePrefetch(errorHandler: ErrorHandler) {
         if (migrated) {
             errorHandler.guardSdkCode(SdkErrorType.PersistedSdkStateLoadFail) {
                 workerThreadPool.backgroundWorker(Worker.Background.PersistenceWorker).submit {
@@ -309,7 +337,7 @@ internal class ConfigLoadServices(
 
     private fun createFileOrdinalStore(errorHandler: ErrorHandler): OrdinalStore {
         val phase = installState.value
-        prefsMigrationGate.ordinals?.let {
+        prefsMigrationGate?.ordinals?.let {
             return ScopedOrdinalStore(it, persistedSdkStateStore.value, errorHandler)
         }
         if (phase == PrefsMigrationPhase.ADOPTED) {

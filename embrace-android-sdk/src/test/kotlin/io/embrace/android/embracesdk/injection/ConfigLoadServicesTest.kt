@@ -224,12 +224,14 @@ internal class ConfigLoadServicesTest {
     fun `flushing the persisted SDK state writes a pending update without the worker`() {
         val context = FilesDirApplication(tempDir.newFolder())
         val workers = listOf(Worker.Background.PersistenceWorker)
-        val first = createServices(context, FakeConfigService(), FakeWorkerThreadPool(testWorkers = workers))
-        first.persistedSdkStateStore.value.update { userId = "flushed" }
-        first.flushPersistedSdkState()
+        val launch = { createServices(context, FakeConfigService(), FakeWorkerThreadPool(testWorkers = workers)) }
+        launch()
+        launch().run {
+            persistedSdkStateStore.value.update { userId = "flushed" }
+            flushPersistedSdkState()
+        }
 
-        val second = createServices(context, FakeConfigService(), FakeWorkerThreadPool(testWorkers = workers))
-        assertEquals("flushed", second.persistedSdkStateStore.value.snapshot().userId)
+        assertEquals("flushed", launch().persistedSdkStateStore.value.snapshot().userId)
     }
 
     @Test

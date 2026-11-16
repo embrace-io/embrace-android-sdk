@@ -64,8 +64,10 @@ private val STATE_FILE_NAMES = arrayOf(
 /**
  * Migrates the SDK's live values from the app's default [SharedPreferences] into the files in [installStateDir], which
  * must exist, and deletes the SDK's keys from the prefs. `ordinals.bin` is written last and marks the migration as
- * complete. The migration is attempted once: any failure starts the install fresh, with no legacy data, and is never
- * retried. Writes go through [gate], so nothing is written once the stores have given up on the migration.
+ * complete. The migration is attempted once and never retried. Failing to write the SDK state or ordinals leaves the
+ * install state fresh on disk, with no legacy data, and failing to write the network capture or AEI file drops just
+ * that file. [gate] is told what was decoded before anything is written, so the stores can start from it, and nothing
+ * is written once the stores have given up on the migration.
  */
 class SharedPrefsMigrator(
     private val fileSystem: FileSystem,
@@ -88,7 +90,11 @@ class SharedPrefsMigrator(
     fun migrate(): Boolean = errorHandler.guardSdkCode(SdkErrorType.PrefsMigrationFail, false) {
         !fileSystem.exists(ordinalsPath) && EmbTrace.trace("prefs-migration") {
             val loaded = if (prefsFileExists()) load() else null
-            val committed = gate.commit { writeInstallState(loaded?.snapshot) }
+            val snapshot = loaded?.snapshot
+            val migrated = snapshot?.let(::toInstallState)
+            val committed = errorHandler.guardSdkCode(SdkErrorType.PrefsMigrationFail, false) {
+                gate.commit(migrated) { writeInstallState(migrated, snapshot?.ordinals.orEmpty()) }
+            }
             if (loaded != null) {
                 EmbTrace.trace("prefs-remove-keys") {
                     errorHandler.guardSdkCode(SdkErrorType.PrefsMigrationFail) { removeKeys(loaded.prefs, loaded.all.keys) }
@@ -98,17 +104,28 @@ class SharedPrefsMigrator(
         }
     }
 
-    private fun writeInstallState(snapshot: LegacyPrefsSnapshot?) {
-        val ordinals = snapshot?.let(::writeStateFiles) ?: emptyMap()
+    private fun toInstallState(snapshot: LegacyPrefsSnapshot): MigratedInstallState = MigratedInstallState(
+        persistedSdkState = snapshot.persistedSdkState.copy(appVersionStartupScope = snapshot.appVersionStartupScope),
+        networkCaptureUsed = networkCaptureUsed(snapshot.networkCaptureRemaining),
+        deliveredAeiIds = snapshot.deliveredAeiIds,
+    )
+
+    /**
+     * Returns true if [migrated]'s SDK state and the ordinals were written, or false if the install was started fresh
+     * instead.
+     */
+    private fun writeInstallState(migrated: MigratedInstallState?, ordinals: Map<Ordinal, Int>): Boolean {
+        val stateWritten = migrated != null && writeStateFiles(migrated)
         val written = EmbTrace.trace("prefs-write-ordinals") {
             errorHandler.guardSdkCode(SdkErrorType.PrefsMigrationFail, false) {
-                MmapOrdinalStore.create(fileSystem, ordinalsPath, ordinals)
+                MmapOrdinalStore.create(fileSystem, ordinalsPath, if (stateWritten) ordinals else emptyMap())
                 true
             }
         }
         if (!written) {
             errorHandler.guardSdkCode(SdkErrorType.PrefsMigrationFail) { startFreshInstallState(fileSystem, installStateDir) }
         }
+        return stateWritten && written
     }
 
     /**
@@ -124,13 +141,13 @@ class SharedPrefsMigrator(
         LoadedPrefs(prefs, all, snapshot)
     }
 
-    private fun writeStateFiles(snapshot: LegacyPrefsSnapshot): Map<Ordinal, Int> {
+    private fun writeStateFiles(migrated: MigratedInstallState): Boolean {
         val written = EmbTrace.trace("prefs-write-state") {
             errorHandler.guardSdkCode(SdkErrorType.PrefsMigrationFail, false) {
                 FilePersistedSdkStateStore.create(
                     fileSystem,
                     installStateDir / SdkStorageLayout.PERSISTED_SDK_STATE_FILE_NAME,
-                    snapshot.persistedSdkState.copy(appVersionStartupScope = snapshot.appVersionStartupScope),
+                    migrated.persistedSdkState,
                 )
                 true
             }
@@ -139,20 +156,21 @@ class SharedPrefsMigrator(
             errorHandler.guardSdkCode(SdkErrorType.PrefsMigrationFail) {
                 STATE_FILE_NAMES.forEach { fileSystem.delete(installStateDir / it, mustExist = false) }
             }
-            return emptyMap()
+            return false
         }
         EmbTrace.trace("prefs-write-network-capture") {
-            val used = networkCaptureUsed(snapshot.networkCaptureRemaining)
+            val used = migrated.networkCaptureUsed
             writeDisposableFile(SdkStorageLayout.NETWORK_CAPTURE_FILE_NAME, used.isEmpty()) {
                 FileNetworkCaptureRuleStore.create(fileSystem, it, used)
             }
         }
         EmbTrace.trace("prefs-write-aei") {
-            writeDisposableFile(SdkStorageLayout.AEI_DELIVERED_FILE_NAME, snapshot.deliveredAeiIds.isEmpty()) {
-                FileDeliveredAeiStore.create(fileSystem, it, snapshot.deliveredAeiIds)
+            val ids = migrated.deliveredAeiIds
+            writeDisposableFile(SdkStorageLayout.AEI_DELIVERED_FILE_NAME, ids.isEmpty()) {
+                FileDeliveredAeiStore.create(fileSystem, it, ids)
             }
         }
-        return snapshot.ordinals
+        return true
     }
 
     private class LoadedPrefs(

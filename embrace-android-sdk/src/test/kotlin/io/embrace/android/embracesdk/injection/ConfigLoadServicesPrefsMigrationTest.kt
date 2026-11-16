@@ -27,12 +27,14 @@ import org.junit.runner.RunWith
 import org.robolectric.RuntimeEnvironment
 import java.io.File
 import java.util.concurrent.CountDownLatch
+import java.util.concurrent.TimeUnit
 
 @RunWith(AndroidJUnit4::class)
 internal class ConfigLoadServicesPrefsMigrationTest {
 
     private val context: Context = RuntimeEnvironment.getApplication()
     private val errorHandler = FakeErrorHandler(throwOnSdkError = false)
+    private val stallReached = CountDownLatch(1)
     private val stallReleased = CountDownLatch(1)
 
     @Before
@@ -83,24 +85,45 @@ internal class ConfigLoadServicesPrefsMigrationTest {
         assertTrue(!stateFile.exists() || !stateFile.readBytes().decodeToString().contains(LEGACY_DEVICE_ID))
     }
 
+    @Test
+    fun `stores adopt the decoded prefs while the migration is still writing them`() {
+        val services = createServices(
+            stallMoveTo = SdkStorageLayout.PERSISTED_SDK_STATE_FILE_NAME,
+            migrationBudgetMs = 1,
+        )
+        assertTrue(stallReached.await(5, TimeUnit.SECONDS))
+        assertEquals(LEGACY_DEVICE_ID, services.persistedSdkStateStore.value.snapshot().deviceId)
+        stallReleased.countDown()
+        assertEquals(42, services.ordinalStore.value.incrementAndGet(Ordinal.SESSION))
+    }
+
     private fun createServices(
         stallReadOf: String? = null,
+        stallMoveTo: String? = null,
         migrationBudgetMs: Long = 3_000L,
     ) = ConfigLoadServices(
         context = context,
         preStartServices = PreStartServices(errorHandler = errorHandler),
         configServiceSupplier = { _, _, _, _, _, _ -> FakeConfigService() },
-        fileSystem = stallingFileSystem(stallReadOf),
+        fileSystem = stallingFileSystem(stallReadOf, stallMoveTo),
         migrationBudgetMs = migrationBudgetMs,
     )
 
-    private fun stallingFileSystem(readOf: String?): FileSystem =
+    private fun stallingFileSystem(readOf: String?, moveTo: String?): FileSystem =
         object : ForwardingFileSystem(FileSystem.SYSTEM) {
             override fun metadataOrNull(path: Path): FileMetadata? {
                 if (path.name == readOf) {
                     stallReleased.await()
                 }
                 return super.metadataOrNull(path)
+            }
+
+            override fun atomicMove(source: Path, target: Path) {
+                if (target.name == moveTo) {
+                    stallReached.countDown()
+                    stallReleased.await()
+                }
+                super.atomicMove(source, target)
             }
         }
 

@@ -12,6 +12,7 @@ import io.embrace.android.embracesdk.internal.logging.SdkErrorType
 import io.embrace.android.embracesdk.internal.logging.guardSdkCode
 import io.embrace.android.embracesdk.internal.payload.AppFramework
 import io.embrace.android.embracesdk.internal.prefs.PrefsMigrationGate
+import io.embrace.android.embracesdk.internal.prefs.PrefsMigrationPhase
 import io.embrace.android.embracesdk.internal.prefs.createSharedPrefsMigrator
 import io.embrace.android.embracesdk.internal.prefs.startFreshInstallState
 import io.embrace.android.embracesdk.internal.serialization.EmbraceSerializer
@@ -120,14 +121,15 @@ internal class ConfigLoadServices(
     private val prefsMigrationGate = EmbTrace.trace("prefs-migration-gate-init") { PrefsMigrationGate() }
 
     /**
-     * Every file-backed install-state store touches this before opening its file, so it sees the migrated prefs. A
-     * migration that isn't done within the [migrationBudget] is abandoned and the install starts fresh.
+     * Every file-backed install-state store touches this before it starts, so it sees the migrated prefs. Waits up to
+     * the [migrationBudget] for the migration. One still decoding is then abandoned and the install starts fresh.
+     * Otherwise the stores start from the state it decoded, if it wrote or is still writing it.
      */
-    private val installState: Lazy<Unit> = lazy {
+    private val installState: Lazy<PrefsMigrationPhase> = lazy {
         migrationBudget.await(prefsMigration, SdkErrorType.PrefsMigrationFail)
-        if (!prefsMigration.isComplete) {
-            preStartServices.errorHandler.guardSdkCode(SdkErrorType.PrefsMigrationFail) {
-                prefsMigrationGate.abandon {
+        prefsMigrationGate.settle().also { phase ->
+            if (phase == PrefsMigrationPhase.ABANDONED) {
+                preStartServices.errorHandler.guardSdkCode(SdkErrorType.PrefsMigrationFail) {
                     startFreshInstallState(sdkStorage.fileSystem, sdkStorage.dir(SdkDir.INSTALL_STATE))
                 }
             }
@@ -143,6 +145,8 @@ internal class ConfigLoadServices(
             errorHandler = preStartServices.errorHandler,
             clock = preStartServices.clock,
             uuidSource = uuidSource,
+            initial = prefsMigrationGate.migrated?.persistedSdkState,
+            writes = prefsMigrationGate.writes,
         )
     }
 
@@ -159,6 +163,8 @@ internal class ConfigLoadServices(
             path = sdkStorage.dir(SdkDir.INSTALL_STATE) / SdkStorageLayout.AEI_DELIVERED_FILE_NAME,
             worker = workerThreadPool.backgroundWorker(Worker.Background.NonIoRegWorker),
             errorHandler = preStartServices.errorHandler,
+            initialIds = prefsMigrationGate.migrated?.deliveredAeiIds,
+            writes = prefsMigrationGate.writes,
         )
     }
 
@@ -170,6 +176,8 @@ internal class ConfigLoadServices(
             worker = workerThreadPool.backgroundWorker(Worker.Background.PersistenceWorker),
             errorHandler = preStartServices.errorHandler,
             liveRuleIds = { configService.networkBehavior.getNetworkCaptureRules().mapTo(HashSet()) { it.id } },
+            initialUsed = prefsMigrationGate.migrated?.networkCaptureUsed,
+            writes = prefsMigrationGate.writes,
         )
     }
 
@@ -213,6 +221,7 @@ internal class ConfigLoadServices(
             if (!migrated) {
                 submitPrefsMigration(config, preStartServices.errorHandler)
             } else {
+                prefsMigrationGate.skip()
                 prefsMigration.complete()
             }
             submitStatePrefetch(preStartServices.errorHandler, migrated)
@@ -295,7 +304,9 @@ internal class ConfigLoadServices(
     }
 
     private fun createFileOrdinalStore(errorHandler: ErrorHandler): OrdinalStore {
-        installState.value
+        if (installState.value == PrefsMigrationPhase.ADOPTED) {
+            prefsMigration.await()
+        }
         val path = sdkStorage.dir(SdkDir.INSTALL_STATE) / SdkStorageLayout.ORDINALS_FILE_NAME
         errorHandler.guardSdkCode(SdkErrorType.OrdinalStoreOpenFail, Unit) {
             if (!sdkStorage.fileSystem.exists(path)) {

@@ -144,7 +144,7 @@ internal fun createRealSdkInstance(
     ProcessOtelSdkErrorHandler.attach(errorHandler)
 
     // 9.x telemetry is moved before any service is constructed
-    configLoadServices.legacyTelemetryMigration.move(configLoadServices.migrationBudget)
+    configLoadServices.moveLegacyTelemetry()
 
     // forward references that break dependency cycles
     lateinit var sessionIdsProvider: SessionIdsProvider

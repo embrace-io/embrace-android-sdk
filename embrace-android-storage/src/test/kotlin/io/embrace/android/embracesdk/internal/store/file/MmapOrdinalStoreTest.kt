@@ -211,6 +211,19 @@ class MmapOrdinalStoreTest {
         assertTrue(errorHandler.sdkErrorMessages.isEmpty())
     }
 
+    @Test
+    fun `a staged store keeps its increments once committed`() {
+        val staged = File(tempFolder.root, "ordinals.bin.staged.tmp")
+        staged.writeBytes(ordinalFile(magic = 0x12345678))
+        val initial = mapOf(Ordinal.SESSION to 5)
+        val store = MmapOrdinalStore.stage(FileSystem.SYSTEM, staged.toOkioPath(), initial, errorHandler)
+        assertEquals(6, store.incrementAndGet(Ordinal.SESSION))
+        MmapOrdinalStore.commitStaged(FileSystem.SYSTEM, staged.toOkioPath(), file.toOkioPath())
+        assertEquals(7, store.incrementAndGet(Ordinal.SESSION))
+        assertEquals(listOf(file.name), tempFolder.root.list()?.toList())
+        assertEquals(8, reopen().incrementAndGet(Ordinal.SESSION))
+    }
+
     private fun createAndOpen(initial: Map<Ordinal, Int>): MmapOrdinalStore {
         MmapOrdinalStore.create(FileSystem.SYSTEM, file.toOkioPath(), initial)
         return reopen()

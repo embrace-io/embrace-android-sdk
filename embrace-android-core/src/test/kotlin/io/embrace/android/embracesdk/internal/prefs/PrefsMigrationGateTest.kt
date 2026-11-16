@@ -15,13 +15,14 @@ internal class PrefsMigrationGateTest {
     fun `settling while decoding abandons the migration`() {
         assertEquals(PrefsMigrationPhase.ABANDONED, gate.settle())
         assertTrue(gate.writes.isOpen)
-        assertFalse(gate.commit(MigratedInstallState(PersistedSdkState("device-id", 1L), emptyMap(), emptySet())) { true })
+        val decoded = MigratedInstallState(PersistedSdkState("device-id", 1L), emptyMap(), emptySet())
+        assertFalse(gate.commit(decoded, null) { true })
         assertNull(gate.migrated)
     }
 
     @Test
     fun `an adopted fresh install opens writes even though nothing was migrated`() {
-        gate.commit(null) {
+        gate.commit(null, null) {
             gate.settle()
             false
         }

@@ -13,6 +13,7 @@ import io.embrace.android.embracesdk.internal.injection.PreStartServices
 import io.embrace.android.embracesdk.internal.prefs.defaultPrefsFile
 import io.embrace.android.embracesdk.internal.storage.SdkStorageLayout
 import io.embrace.android.embracesdk.internal.store.Ordinal
+import io.embrace.android.embracesdk.internal.store.file.MmapOrdinalStore
 import okio.FileMetadata
 import okio.FileSystem
 import okio.ForwardingFileSystem
@@ -87,14 +88,16 @@ internal class ConfigLoadServicesPrefsMigrationTest {
 
     @Test
     fun `stores adopt the decoded prefs while the migration is still writing them`() {
-        val services = createServices(
-            stallMoveTo = SdkStorageLayout.PERSISTED_SDK_STATE_FILE_NAME,
-            migrationBudgetMs = 1,
-        )
+        val services = createServices(stallMoveTo = SdkStorageLayout.PERSISTED_SDK_STATE_FILE_NAME)
         assertTrue(stallReached.await(5, TimeUnit.SECONDS))
         assertEquals(LEGACY_DEVICE_ID, services.persistedSdkStateStore.value.snapshot().deviceId)
-        stallReleased.countDown()
         assertEquals(42, services.ordinalStore.value.incrementAndGet(Ordinal.SESSION))
+        stallReleased.countDown()
+
+        val ordinals = File(installStateDir(), SdkStorageLayout.ORDINALS_FILE_NAME)
+        waitUntilConditionMet(waitTimeMs = 5_000, dataProvider = { ordinals.exists() }, condition = { it })
+        assertEquals(43, checkNotNull(MmapOrdinalStore.open(ordinals, errorHandler)).incrementAndGet(Ordinal.SESSION))
+        assertTrue(errorHandler.sdkErrorMessages.isEmpty())
     }
 
     private fun createServices(

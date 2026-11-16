@@ -112,7 +112,9 @@ internal class ConfigLoadServices(
     }
 
     /**
-     * Submitted once [persistedConfig] exists, as the migration needs its network capture rules.
+     * Submitted once [persistedConfig] exists, as the migration needs its network capture rules. Completes once the
+     * ordinals are staged and the stores can start from what it decoded, before it writes the files, or when it
+     * finishes if staging failed.
      */
     private val prefsMigration = EmbTrace.trace("prefs-migration-handle-init") {
         MigrationHandle(PREFS_MIGRATION_NAME, false, preStartServices.errorHandler)
@@ -122,8 +124,9 @@ internal class ConfigLoadServices(
 
     /**
      * Every file-backed install-state store touches this before it starts, so it sees the migrated prefs. Waits up to
-     * the [migrationBudget] for the migration. One still decoding is then abandoned and the install starts fresh.
-     * Otherwise the stores start from the state it decoded, if it wrote or is still writing it.
+     * the [migrationBudget] for the migration to decode the prefs and stage the ordinals. One still decoding is then
+     * abandoned and the install starts fresh. Otherwise the stores start from the state it decoded, if it wrote or is
+     * still writing it.
      */
     private val installState: Lazy<PrefsMigrationPhase> = lazy {
         migrationBudget.await(prefsMigration, SdkErrorType.PrefsMigrationFail)
@@ -278,6 +281,7 @@ internal class ConfigLoadServices(
                 appFramework = appFramework,
                 gate = prefsMigrationGate,
                 liveNetworkCaptureRules = config::networkCaptureRuleMaxCounts,
+                onDecoded = { prefsMigration.complete(true) },
             ).migrate()
         }
     }
@@ -304,7 +308,11 @@ internal class ConfigLoadServices(
     }
 
     private fun createFileOrdinalStore(errorHandler: ErrorHandler): OrdinalStore {
-        if (installState.value == PrefsMigrationPhase.ADOPTED) {
+        val phase = installState.value
+        prefsMigrationGate.ordinals?.let {
+            return ScopedOrdinalStore(it, persistedSdkStateStore.value, errorHandler)
+        }
+        if (phase == PrefsMigrationPhase.ADOPTED) {
             prefsMigration.await()
         }
         val path = sdkStorage.dir(SdkDir.INSTALL_STATE) / SdkStorageLayout.ORDINALS_FILE_NAME

@@ -71,6 +71,11 @@ internal class SharedPrefsMigratorTest {
     }
 
     private fun assertMigrated() {
+        assertMigratedFiles()
+        assertTrue(prefs.all.isEmpty())
+    }
+
+    private fun assertMigratedFiles() {
         assertEquals(
             PersistedSdkState(
                 deviceId = "device-id",
@@ -109,7 +114,32 @@ internal class SharedPrefsMigratorTest {
             ),
             fileSystem.list(installStateDir).map { it.name }.toSet(),
         )
-        assertTrue(prefs.all.isEmpty())
+    }
+
+    @Test
+    fun `a launch that dies during the commit leaves the next launch migrated`() {
+        val crashes = listOf(
+            SdkStorageLayout.PERSISTED_SDK_STATE_FILE_NAME,
+            SdkStorageLayout.NETWORK_CAPTURE_FILE_NAME,
+            SdkStorageLayout.AEI_DELIVERED_FILE_NAME,
+            SdkStorageLayout.ORDINALS_FILE_NAME,
+        ).map { it to false } + (SdkStorageLayout.ORDINALS_FILE_NAME to true)
+        crashes.forEach { (fileName, afterMove) ->
+            fileSystem.deleteRecursively(installStateDir)
+            fileSystem.createDirectories(installStateDir)
+            prefs = FakeSharedPreferences().apply { seed(*ALL_LIVE_KEYS) }
+            val dying = DyingFileSystem(fileSystem, installStateDir / fileName, afterMove)
+            val launch = thread { migrate(fs = dying) }
+            try {
+                assertTrue(dying.died.await(5, TimeUnit.SECONDS))
+                fileSystem.list(installStateDir).filter { DEAD_TMP.matches(it.name) }.forEach(fileSystem::delete)
+                assertEquals(!afterMove, migrate())
+                assertMigratedFiles()
+            } finally {
+                dying.release()
+                launch.join(5_000)
+            }
+        }
     }
 
     @Test
@@ -321,8 +351,11 @@ internal class SharedPrefsMigratorTest {
 
     private fun assertFailedWriteIsFreshInstall(fileName: String) {
         prefs.seed(*ALL_LIVE_KEYS)
-        assertTrue(migrate(fs = failingMoveTo(installStateDir / fileName)))
+        val gate = PrefsMigrationGate()
+        assertTrue(migrate(fs = failingMoveTo(installStateDir / fileName), gate = gate))
         assertEquals(SdkErrorType.PrefsMigrationFail.toString(), errorHandler.sdkErrorMessages.single().msg)
+        assertEquals(PrefsMigrationPhase.COMMITTED, gate.settle())
+        assertNull(gate.ordinals)
         assertFreshInstall()
         assertTrue(prefs.all.isEmpty())
         assertFalse(migrate())
@@ -392,6 +425,7 @@ internal class SharedPrefsMigratorTest {
         try {
             assertEquals(PrefsMigrationPhase.ADOPTED, gate.settle())
             stateStore(gate).update { userId = "updated" }
+            assertEquals(42, checkNotNull(gate.ordinals).incrementAndGet(Ordinal.SESSION) { 1 })
             executor.runCurrentlyBlocked()
         } finally {
             release()
@@ -399,6 +433,7 @@ internal class SharedPrefsMigratorTest {
         executor.runCurrentlyBlocked()
         assertEquals("updated", persistedState().userId)
         assertEquals("device-id", persistedState().deviceId)
+        assertEquals(43, openOrdinals().incrementAndGet(Ordinal.SESSION) { 1 })
     }
 
     @Test
@@ -453,6 +488,30 @@ internal class SharedPrefsMigratorTest {
     }
 
     @Test
+    fun `failing to stage the ordinals starts fresh without handing off`() {
+        prefs.seed(*ALL_LIVE_KEYS)
+        fileSystem.write(installStateDir / SdkStorageLayout.PERSISTED_SDK_STATE_FILE_NAME) { writeUtf8("dead launch") }
+        val staged = installStateDir / "${SdkStorageLayout.ORDINALS_FILE_NAME}.staged.tmp"
+        val unstageable = object : ForwardingFileSystem(fileSystem) {
+            override fun sink(file: Path, mustCreate: Boolean) =
+                if (file == staged) throw IOException("disk full") else super.sink(file, mustCreate)
+        }
+        var decoded = false
+        assertTrue(migrate(fs = unstageable, onDecoded = { decoded = true }))
+        assertFalse(decoded)
+        assertEquals(SdkErrorType.PrefsMigrationFail.toString(), errorHandler.sdkErrorMessages.single().msg)
+        assertFreshInstall()
+        assertTrue(prefs.all.isEmpty())
+    }
+
+    @Test
+    fun `a failed commit of staged ordinals the stores adopted keeps their writes held`() {
+        val gate = PrefsMigrationGate()
+        migrate(fs = failingMoveTo(ordinalsPath()), createPrefsFile = false, gate = gate, onDecoded = { gate.settle() })
+        assertFalse(gate.writes.isOpen)
+    }
+
+    @Test
     fun `failing to remove keys still completes the migration`() {
         prefs.seed(*ALL_LIVE_KEYS)
         val uneditable = object : SharedPreferences by prefs {
@@ -482,6 +541,7 @@ internal class SharedPrefsMigratorTest {
         createPrefsFile: Boolean = true,
         loaded: SharedPreferences = prefs,
         gate: PrefsMigrationGate = PrefsMigrationGate(),
+        onDecoded: () -> Unit = {},
     ): Boolean {
         if (createPrefsFile) {
             fileSystem.createDirectories(checkNotNull(prefsFile.parent))
@@ -500,6 +560,7 @@ internal class SharedPrefsMigratorTest {
             appFramework = appFramework,
             gate = gate,
             liveNetworkCaptureRules = liveRulesProvider,
+            onDecoded = onDecoded,
         ).migrate()
     }
 
@@ -530,4 +591,8 @@ internal class SharedPrefsMigratorTest {
         worker = worker,
         errorHandler = errorHandler,
     )
+
+    private companion object {
+        val DEAD_TMP = Regex(".*\\.[0-9a-f]+\\.tmp")
+    }
 }

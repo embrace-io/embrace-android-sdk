@@ -1,7 +1,7 @@
 package io.embrace.android.embracesdk.fakes
 
 import io.embrace.android.embracesdk.internal.logging.ErrorHandler
-import io.embrace.android.embracesdk.internal.logging.ErrorRecorder
+import io.embrace.android.embracesdk.internal.logging.SdkErrorSink
 import io.embrace.android.embracesdk.internal.logging.SdkErrorType
 import io.embrace.android.embracesdk.internal.logging.UserCodeException
 
@@ -53,11 +53,15 @@ class FakeErrorHandler(
         delegate?.trackSdkError(type, throwable)
     }
 
-    override fun drain(sink: ErrorRecorder?) {
+    override fun drain(sink: SdkErrorSink?) {
         if (sink == null) {
             closed = true
         }
         delegate?.drain(sink)
+    }
+
+    override fun flush() {
+        delegate?.flush()
     }
 
     override fun resetLimit() {

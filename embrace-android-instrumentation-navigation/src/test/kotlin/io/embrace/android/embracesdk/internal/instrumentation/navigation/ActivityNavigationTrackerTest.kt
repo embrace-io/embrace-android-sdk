@@ -5,6 +5,7 @@ import android.os.Build
 import io.embrace.android.embracesdk.fakes.FakeClock
 import io.embrace.android.embracesdk.fakes.FakeErrorHandler
 import io.embrace.android.embracesdk.fakes.FakeNavigationTrackingService
+import io.embrace.android.embracesdk.internal.arch.lifecycle.ActivityLifecycle
 import io.embrace.android.embracesdk.internal.arch.navigation.NavigationSignal
 import io.embrace.android.embracesdk.internal.arch.navigation.NavigationSignal.ActivityDestroyed
 import io.embrace.android.embracesdk.internal.arch.navigation.NavigationSignal.ActivityPaused
@@ -24,7 +25,6 @@ internal class ActivityNavigationTrackerTest {
     private lateinit var eventBus: EventBus
     private lateinit var signals: MutableList<NavigationSignal>
     private lateinit var navigationTrackingService: FakeNavigationTrackingService
-    private lateinit var application: FakeApplication
     private lateinit var first: Activity
     private lateinit var second: Activity
 
@@ -35,7 +35,6 @@ internal class ActivityNavigationTrackerTest {
         eventBus = EventBus(FakeErrorHandler())
         eventBus.addHandler(NavigationSignal.KEY) { signals.add(it) }
         navigationTrackingService = FakeNavigationTrackingService()
-        application = FakeApplication()
         first = DopeActivity()
         second = CoolActivity()
     }
@@ -58,6 +57,34 @@ internal class ActivityNavigationTrackerTest {
     @Test
     fun `concurrent activities produce the right signals in Q`() {
         createTracker(Build.VERSION_CODES.Q).assertConcurrentPlainActivityNavigation()
+    }
+
+    @Test
+    fun `main events produce no signals in Q`() {
+        createTracker(Build.VERSION_CODES.Q)
+        eventBus.emit(ActivityLifecycle.STARTED, first)
+        eventBus.emit(ActivityLifecycle.RESUMED, first)
+        eventBus.emit(ActivityLifecycle.PAUSED, first)
+        assertSignals()
+    }
+
+    @Test
+    fun `pre and post events produce no signals in P`() {
+        createTracker(Build.VERSION_CODES.P)
+        eventBus.emit(ActivityLifecycle.PRE_STARTED, first)
+        eventBus.emit(ActivityLifecycle.PRE_RESUMED, first)
+        eventBus.emit(ActivityLifecycle.POST_PAUSED, first)
+        assertSignals()
+    }
+
+    @Test
+    fun `closing stops the signals`() {
+        createTracker(Build.VERSION_CODES.Q).close()
+        eventBus.startActivity(first)
+        eventBus.resumeActivity(first)
+        eventBus.pauseActivity(first)
+        eventBus.destroyActivity(first)
+        assertSignals()
     }
 
     private fun ActivityNavigationTracker.assertPlainActivityNavigation() {
@@ -91,30 +118,30 @@ internal class ActivityNavigationTrackerTest {
         )
     }
 
-    private fun ActivityNavigationTracker.transitionBetweenActivities(): List<Long> = with(application) {
+    private fun ActivityNavigationTracker.transitionBetweenActivities(): List<Long> = with(eventBus) {
         invokeCallbacks(
             listOf(
-                { start(first) },
-                { resume(first) },
-                { pause(first) },
-                { start(second) },
-                { resume(second) },
-                { destroy(first) },
-                { pause(second) },
+                { startActivity(first) },
+                { resumeActivity(first) },
+                { pauseActivity(first) },
+                { startActivity(second) },
+                { resumeActivity(second) },
+                { destroyActivity(first) },
+                { pauseActivity(second) },
                 ::onBackground,
             ),
         )
     }
 
-    private fun ActivityNavigationTracker.openConcurrentActivities(): List<Long> = with(application) {
+    private fun ActivityNavigationTracker.openConcurrentActivities(): List<Long> = with(eventBus) {
         invokeCallbacks(
             listOf(
-                { start(first) },
-                { resume(first) },
-                { start(second) },
-                { resume(second) },
-                { pause(first) },
-                { pause(second) },
+                { startActivity(first) },
+                { resumeActivity(first) },
+                { startActivity(second) },
+                { resumeActivity(second) },
+                { pauseActivity(first) },
+                { pauseActivity(second) },
                 ::onBackground,
             ),
         )
@@ -137,7 +164,7 @@ internal class ActivityNavigationTrackerTest {
             FakeErrorHandler(),
             VersionChecker { min -> sdkInt >= min },
         ).apply {
-            application.registerActivityLifecycleCallbacks(this)
+            subscribe()
         }
     }
 

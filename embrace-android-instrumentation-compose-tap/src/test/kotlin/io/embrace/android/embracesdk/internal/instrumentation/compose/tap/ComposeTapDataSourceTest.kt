@@ -2,11 +2,14 @@ package io.embrace.android.embracesdk.internal.instrumentation.compose.tap
 
 import android.app.Activity
 import android.app.Application
+import android.os.Bundle
 import android.view.MotionEvent
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import io.embrace.android.embracesdk.fakes.FakeInstrumentationArgs
+import io.embrace.android.embracesdk.internal.arch.lifecycle.ActivityLifecycle
 import io.embrace.android.embracesdk.internal.arch.ui.TapSignal
+import io.embrace.android.embracesdk.internal.utils.event.EventBus
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
@@ -26,6 +29,7 @@ internal class ComposeTapDataSourceTest {
     fun setUp() {
         val application: Application = ApplicationProvider.getApplicationContext()
         args = FakeInstrumentationArgs(application)
+        application.registerActivityLifecycleCallbacks(BusRelay(args.eventBus))
         args.eventBus.addHandler(TapSignal.KEY) { taps.add(it) }
         source = ComposeTapDataSource(args)
     }
@@ -56,7 +60,7 @@ internal class ComposeTapDataSourceTest {
     }
 
     @Test
-    fun `activity lifecycle callbacks are unregistered when data capture is disabled`() {
+    fun `activity events are not handled after data capture is disabled`() {
         source.onDataCaptureEnabled()
         source.onDataCaptureDisabled()
         val activity = buildActivity(Activity::class.java).setup().get()
@@ -91,5 +95,24 @@ internal class ComposeTapDataSourceTest {
         source.onDataCaptureEnabled()
         val activity = buildActivity(Activity::class.java).setup().get()
         assertTrue(activity.window.callback is EmbraceWindowCallback)
+    }
+
+    /**
+     * Relays the resumed callback [ComposeActivityListener] handles onto [eventBus], as the SDK's relay does.
+     */
+    private class BusRelay(private val eventBus: EventBus) : Application.ActivityLifecycleCallbacks {
+        override fun onActivityResumed(activity: Activity) = eventBus.emit(ActivityLifecycle.RESUMED, activity)
+
+        override fun onActivityCreated(activity: Activity, savedInstanceState: Bundle?) {}
+
+        override fun onActivityStarted(activity: Activity) {}
+
+        override fun onActivityPaused(activity: Activity) {}
+
+        override fun onActivityStopped(activity: Activity) {}
+
+        override fun onActivitySaveInstanceState(activity: Activity, outState: Bundle) {}
+
+        override fun onActivityDestroyed(activity: Activity) {}
     }
 }

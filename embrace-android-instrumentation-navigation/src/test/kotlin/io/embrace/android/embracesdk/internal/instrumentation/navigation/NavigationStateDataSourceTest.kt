@@ -15,13 +15,10 @@ import org.junit.Test
 internal class NavigationStateDataSourceTest {
     private lateinit var dataSource: NavigationStateDataSource
     private lateinit var args: FakeInstrumentationArgs
-    private lateinit var application: FakeApplication
 
     @Before
     fun setUp() {
-        application = FakeApplication()
         args = FakeInstrumentationArgs(
-            application = application,
             sessionPartIdSupplier = { "session-part-id" },
         )
         dataSource = NavigationStateDataSource(args).apply { onDataCaptureEnabled() }
@@ -173,19 +170,19 @@ internal class NavigationStateDataSourceTest {
     }
 
     @Test
-    fun `activity lifecycle callbacks are registered after the broker and unregistered when data capture is disabled`() {
-        // the broker is registered before the activity callbacks that feed it, so a callback fired as they are registered
-        // is resolved
-        application.resumedActivity = DopeActivity()
+    fun `activity events resolve the current screen until data capture is disabled`() {
         val source = NavigationStateInstrumentationProvider().factoryProvider(args)().apply { onDataCaptureEnabled() }
+        val resumed = DopeActivity()
+        args.eventBus.startActivity(resumed)
+        args.eventBus.resumeActivity(resumed)
         assertEquals(Screen.Named("DopeActivity"), args.eventBus.currentState(CurrentScreen.KEY)?.screen)
 
         val signals = mutableListOf<NavigationSignal>()
         args.eventBus.addHandler(NavigationSignal.KEY) { signals.add(it) }
         source.onDataCaptureDisabled()
         val activity = Activity()
-        application.start(activity)
-        application.resume(activity)
+        args.eventBus.startActivity(activity)
+        args.eventBus.resumeActivity(activity)
         assertTrue(signals.isEmpty())
     }
 

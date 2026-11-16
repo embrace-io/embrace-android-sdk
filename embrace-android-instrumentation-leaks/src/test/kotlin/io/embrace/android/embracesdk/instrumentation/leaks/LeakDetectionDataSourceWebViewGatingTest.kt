@@ -2,7 +2,6 @@ package io.embrace.android.embracesdk.instrumentation.leaks
 
 import android.webkit.WebView
 import android.widget.FrameLayout
-import io.embrace.android.embracesdk.fakes.FakeInstrumentationArgs
 import io.embrace.android.embracesdk.internal.config.resolved.AutoDataCaptureConfig
 import io.embrace.android.embracesdk.internal.config.resolved.EmbraceConfig
 import io.embrace.android.embracesdk.internal.session.id.SessionIdsSnapshot
@@ -13,7 +12,6 @@ import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.Robolectric
 import org.robolectric.RobolectricTestRunner
-import org.robolectric.RuntimeEnvironment
 
 /**
  * Covers whether [LeakDetectionDataSource] wires up WebView leak detection depending on
@@ -34,7 +32,7 @@ internal class LeakDetectionDataSourceWebViewGatingTest {
 
     @Test
     fun `webview leak detection is not wired when disabled (the default)`() {
-        dataSource = LeakDetectionDataSource(FakeInstrumentationArgs(RuntimeEnvironment.getApplication()))
+        dataSource = LeakDetectionDataSource(relayedInstrumentationArgs())
         dataSource.onDataCaptureEnabled()
 
         val webView = resumeActivityWithWebView()
@@ -47,7 +45,7 @@ internal class LeakDetectionDataSourceWebViewGatingTest {
 
     @Test
     fun `webview leak detection is wired when enabled`() {
-        val args = FakeInstrumentationArgs(RuntimeEnvironment.getApplication())
+        val args = relayedInstrumentationArgs()
         args.configService.config = EmbraceConfig(autoDataCapture = {
             AutoDataCaptureConfig(webViewLeakDetectionEnabled = { true })
         })
@@ -63,8 +61,8 @@ internal class LeakDetectionDataSourceWebViewGatingTest {
     }
 
     @Test
-    fun `activity lifecycle callbacks are unregistered when data capture is disabled`() {
-        val args = FakeInstrumentationArgs(RuntimeEnvironment.getApplication())
+    fun `activity events are not handled after data capture is disabled`() {
+        val args = relayedInstrumentationArgs()
         args.configService.config = EmbraceConfig(autoDataCapture = {
             AutoDataCaptureConfig(webViewLeakDetectionEnabled = { true })
         })
@@ -80,8 +78,8 @@ internal class LeakDetectionDataSourceWebViewGatingTest {
     }
 
     /**
-     * Builds and resumes an `Activity` with a [WebView] as its content, dispatching through the real
-     * [android.app.Application.ActivityLifecycleCallbacks] registered by [LeakDetectionDataSource.onDataCaptureEnabled].
+     * Builds and resumes an `Activity` with a [WebView] as its content, dispatching through the real `Application`, whose
+     * callbacks [relayedInstrumentationArgs] relays to the handlers added by [LeakDetectionDataSource.onDataCaptureEnabled].
      */
     private fun resumeActivityWithWebView(): WebView {
         val controller = Robolectric.buildActivity(android.app.Activity::class.java).create()

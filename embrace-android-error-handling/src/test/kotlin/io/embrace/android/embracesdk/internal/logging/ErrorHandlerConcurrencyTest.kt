@@ -85,7 +85,7 @@ internal class ErrorHandlerConcurrencyTest {
         val resets = AtomicInteger(0)
         val tracked = AtomicInteger(0)
         val closeReturned = AtomicBoolean(false)
-        val sink: ErrorRecorder = {
+        val sink = SdkErrorSink {
             Thread.yield()
             recorded.incrementAndGet()
             if (closeReturned.get()) {

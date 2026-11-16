@@ -2,16 +2,16 @@ package io.embrace.android.embracesdk.internal.session
 
 import android.app.Activity
 import android.app.ActivityManager.RunningAppProcessInfo
-import android.app.Application
 import android.content.Context
 import android.content.ContextWrapper
 import android.os.Process
 import io.embrace.android.embracesdk.fakes.FakeApplication
 import io.embrace.android.embracesdk.fakes.FakeErrorHandler
 import io.embrace.android.embracesdk.fakes.FakeProcessStateListener
+import io.embrace.android.embracesdk.internal.arch.lifecycle.ActivityLifecycle
 import io.embrace.android.embracesdk.internal.arch.state.ProcessState
-import io.embrace.android.embracesdk.internal.logging.SdkErrorType
 import io.embrace.android.embracesdk.internal.session.lifecycle.ActivityProcessLifecycleTracker
+import io.embrace.android.embracesdk.internal.utils.event.EventBus
 import org.junit.Assert.assertEquals
 import org.junit.Before
 import org.junit.Test
@@ -27,12 +27,12 @@ internal class ActivityProcessLifecycleTrackerTest {
     private lateinit var listener: FakeProcessStateListener
     private var processes: List<RunningAppProcessInfo>? = null
     private lateinit var pendingTasks: MutableList<Pair<Runnable, Long>>
-    private lateinit var errorHandler: FakeErrorHandler
+    private lateinit var eventBus: EventBus
 
     @Before
     fun before() {
         application = FakeApplication()
-        errorHandler = FakeErrorHandler(throwOnSdkError = false)
+        eventBus = EventBus(FakeErrorHandler())
         pendingTasks = mutableListOf()
         listener = FakeProcessStateListener()
         setProcessImportance(RunningAppProcessInfo.IMPORTANCE_CACHED)
@@ -356,7 +356,7 @@ internal class ActivityProcessLifecycleTrackerTest {
 
         // more stops than starts should never happen, but must not drive the count negative
         controller.stop()
-        tracker.onActivityStopped(controller.get())
+        controller.stop()
         elapseDebounce()
         assertEquals(1, listener.backgroundCount.get())
 
@@ -391,25 +391,21 @@ internal class ActivityProcessLifecycleTrackerTest {
     }
 
     @Test
-    fun `a failed registration is tracked`() {
-        val failure = IllegalStateException("register failed")
-        val throwingApplication = object : Application() {
-            override fun registerActivityLifecycleCallbacks(callback: ActivityLifecycleCallbacks) = throw failure
-        }
-        ActivityProcessLifecycleTracker(throwingApplication, throwingApplication, errorHandler).register(listener)
+    fun `foreground is reported before a default-order started handler registered earlier runs`() {
+        val foregroundCounts = mutableListOf<Int>()
+        eventBus.addHandler(ActivityLifecycle.STARTED) { foregroundCounts.add(listener.foregroundCount.get()) }
+        createTracker()
 
-        val error = errorHandler.sdkErrorMessages.single()
-        assertEquals(SdkErrorType.RegistrationFail.toString(), error.msg)
-        assertEquals(failure, error.throwable)
+        buildActivity().start()
+        assertEquals(listOf(1), foregroundCounts)
     }
 
     private fun createTracker(
         startupContext: Context? = application,
         registerTracker: Boolean = true,
     ): ActivityProcessLifecycleTracker = ActivityProcessLifecycleTracker(
-        application,
+        eventBus,
         startupContext,
-        errorHandler,
         postDelayed = { runnable, delayMs -> pendingTasks.add(runnable to delayMs) },
         removeCallbacks = { runnable -> pendingTasks.removeAll { it.first === runnable } },
         runningAppProcesses = { processes },
@@ -441,11 +437,11 @@ internal class ActivityProcessLifecycleTrackerTest {
     private inner class TestActivityController(private val activity: TestActivity) {
         fun get(): TestActivity = activity
 
-        fun start() = apply { application.lifecycleCallbacks.toList().forEach { it.onActivityStarted(activity) } }
+        fun start() = apply { eventBus.emit(ActivityLifecycle.STARTED, activity) }
 
-        fun stop() = apply { application.lifecycleCallbacks.toList().forEach { it.onActivityStopped(activity) } }
+        fun stop() = apply { eventBus.emit(ActivityLifecycle.STOPPED, activity) }
 
-        fun destroy() = apply { application.lifecycleCallbacks.toList().forEach { it.onActivityDestroyed(activity) } }
+        fun destroy() = apply { eventBus.emit(ActivityLifecycle.DESTROYED, activity) }
     }
 
     private class TestActivity : Activity() {

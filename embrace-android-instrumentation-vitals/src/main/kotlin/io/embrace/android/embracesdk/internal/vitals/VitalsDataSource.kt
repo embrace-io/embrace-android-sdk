@@ -158,19 +158,17 @@ internal class VitalsDataSource(
             navSource = ActivityNavigationSource(callbacks = tracker),
             frameMetricsHandler = handler,
             frameMetricsStrategy = frameMetricsStrategy,
+            eventBus = args.eventBus,
             errorHandler = args.errorHandler,
         )
         activityListener = listener
-        args.application.registerActivityLifecycleCallbacks(listener)
+        listener.subscribe()
         args.processStateTracker.addListener(processStateListener)
         args.navigationTrackingService.addScreenAttributesSource(screenAttributesSource)
     }
 
     override fun onDataCaptureDisabled() {
-        activityListener?.let { listener ->
-            args.application.unregisterActivityLifecycleCallbacks(listener)
-            listener.close()
-        }
+        activityListener?.close()
         activityListener = null
         if (Build.VERSION.SDK_INT < Build.VERSION_CODES.S) {
             args.systemService<DisplayManager>(Context.DISPLAY_SERVICE)?.unregisterDisplayListener(displayListener)

@@ -1,30 +1,34 @@
 package io.embrace.android.embracesdk.instrumentation.leaks
 
 import android.app.Activity
-import android.app.Application
 import android.os.Build
-import android.os.Bundle
+import io.embrace.android.embracesdk.internal.arch.lifecycle.ActivityCreated
+import io.embrace.android.embracesdk.internal.arch.lifecycle.ActivityLifecycle
 import io.embrace.android.embracesdk.internal.logging.ErrorHandler
 import io.embrace.android.embracesdk.internal.logging.SdkErrorType
 import io.embrace.android.embracesdk.internal.logging.guardSdkCode
 import io.embrace.android.embracesdk.internal.session.id.SessionIdsSnapshot
+import io.embrace.android.embracesdk.internal.utils.event.EventBus
+import io.embrace.android.embracesdk.internal.utils.event.EventHandler
 
 internal class ActivityLeakDetectionLifecycleCallbacks(
     private val leakDetector: LeakDetector,
     private val activeSessionIdsProvider: () -> SessionIdsSnapshot,
     private val fragmentSupport: FragmentSupport,
+    private val eventBus: EventBus,
     private val errorHandler: ErrorHandler,
     private val webViewLeakDetectionEnabled: Boolean = false,
-) : Application.ActivityLifecycleCallbacks {
+) : AutoCloseable {
 
-    override fun onActivityPreCreated(activity: Activity, savedInstanceState: Bundle?) {
+    private val onPreCreated = EventHandler<Activity> { activity ->
         errorHandler.guardSdkCode(SdkErrorType.UiCallbackFail) {
             leakDetector.trackOpened(activity, TrackingSource.ACTIVITY)
         }
     }
 
-    override fun onActivityCreated(activity: Activity, savedInstanceState: Bundle?) {
+    private val onCreated = EventHandler<ActivityCreated> { event ->
         errorHandler.guardSdkCode(SdkErrorType.UiCallbackFail) {
+            val activity = event.activity
             if (Build.VERSION.SDK_INT < Build.VERSION_CODES.Q) {
                 leakDetector.trackOpened(activity, TrackingSource.ACTIVITY)
             }
@@ -32,7 +36,7 @@ internal class ActivityLeakDetectionLifecycleCallbacks(
         }
     }
 
-    override fun onActivityDestroyed(activity: Activity) {
+    private val onDestroyed = EventHandler<Activity> { activity ->
         errorHandler.guardSdkCode(SdkErrorType.UiCallbackFail) {
             val sessionIds = activeSessionIdsProvider()
             leakDetector.trackClosed(activity, TrackingSource.ACTIVITY, LeakContext(OBJECT_TYPE, sessionIds, activity.javaClass))
@@ -50,9 +54,7 @@ internal class ActivityLeakDetectionLifecycleCallbacks(
         }
     }
 
-    override fun onActivityPaused(activity: Activity) = Unit
-
-    override fun onActivityResumed(activity: Activity) {
+    private val onResumed = EventHandler<Activity> { activity ->
         errorHandler.guardSdkCode(SdkErrorType.UiCallbackFail) {
             if (webViewLeakDetectionEnabled) {
                 WebViewLeakScanner.scan(activity.window?.decorView, errorHandler) { webView ->
@@ -62,9 +64,22 @@ internal class ActivityLeakDetectionLifecycleCallbacks(
         }
     }
 
-    override fun onActivitySaveInstanceState(activity: Activity, outState: Bundle) = Unit
-    override fun onActivityStarted(activity: Activity) = Unit
-    override fun onActivityStopped(activity: Activity) = Unit
+    /**
+     * Starts tracking Activities, and the WebViews in them when enabled.
+     */
+    fun subscribe() {
+        eventBus.addHandler(ActivityLifecycle.PRE_CREATED, onPreCreated)
+        eventBus.addHandler(ActivityLifecycle.CREATED, onCreated)
+        eventBus.addHandler(ActivityLifecycle.RESUMED, onResumed)
+        eventBus.addHandler(ActivityLifecycle.DESTROYED, onDestroyed)
+    }
+
+    override fun close() {
+        eventBus.removeHandler(ActivityLifecycle.PRE_CREATED, onPreCreated)
+        eventBus.removeHandler(ActivityLifecycle.CREATED, onCreated)
+        eventBus.removeHandler(ActivityLifecycle.RESUMED, onResumed)
+        eventBus.removeHandler(ActivityLifecycle.DESTROYED, onDestroyed)
+    }
 
     private companion object {
 

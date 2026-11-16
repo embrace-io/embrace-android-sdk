@@ -4,7 +4,11 @@ import android.app.Activity
 import android.webkit.WebView
 import android.widget.FrameLayout
 import io.embrace.android.embracesdk.fakes.FakeErrorHandler
+import io.embrace.android.embracesdk.internal.arch.lifecycle.ActivityCreated
+import io.embrace.android.embracesdk.internal.arch.lifecycle.ActivityLifecycle
 import io.embrace.android.embracesdk.internal.session.id.SessionIdsSnapshot
+import io.embrace.android.embracesdk.internal.utils.event.EventBus
+import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertNull
 import org.junit.Test
@@ -16,14 +20,15 @@ import org.robolectric.RobolectricTestRunner
 internal class ActivityLeakDetectionLifecycleCallbacksTest {
 
     private val errorHandler = FakeErrorHandler()
+    private val eventBus = EventBus(errorHandler)
     private val leakDetector = LeakDetector(clock = { 0L }, errorHandler = errorHandler)
 
     @Test
     fun `resuming an activity with a webview in its decor view tracks it as opened, when enabled`() {
-        val callbacks = callbacks(webViewLeakDetectionEnabled = true)
+        callbacks(webViewLeakDetectionEnabled = true)
         val activity = activityWithWebView()
 
-        callbacks.onActivityResumed(activity)
+        resume(activity)
 
         assertNotNull(
             "onActivityResumed should have opened a sentinel for the webview found in the decor view",
@@ -33,10 +38,10 @@ internal class ActivityLeakDetectionLifecycleCallbacksTest {
 
     @Test
     fun `resuming an activity with a webview does nothing when webview leak detection is disabled`() {
-        val callbacks = callbacks(webViewLeakDetectionEnabled = false)
+        callbacks(webViewLeakDetectionEnabled = false)
         val activity = activityWithWebView()
 
-        callbacks.onActivityResumed(activity)
+        resume(activity)
 
         assertNull(
             "no sentinel should have been opened when webview leak detection is disabled (the default)",
@@ -46,11 +51,11 @@ internal class ActivityLeakDetectionLifecycleCallbacksTest {
 
     @Test
     fun `destroying an activity with a webview closes it, when enabled`() {
-        val callbacks = callbacks(webViewLeakDetectionEnabled = true)
+        callbacks(webViewLeakDetectionEnabled = true)
         val activity = activityWithWebView()
 
-        callbacks.onActivityResumed(activity)
-        callbacks.onActivityDestroyed(activity)
+        resume(activity)
+        eventBus.emit(ActivityLifecycle.DESTROYED, activity)
 
         assertNull(
             "onActivityDestroyed should already have released the sentinel opened on resume",
@@ -58,13 +63,50 @@ internal class ActivityLeakDetectionLifecycleCallbacksTest {
         )
     }
 
-    private fun callbacks(webViewLeakDetectionEnabled: Boolean) = ActivityLeakDetectionLifecycleCallbacks(
+    @Test
+    fun `creating an activity attaches fragment tracking to it`() {
+        val attached = mutableListOf<Activity>()
+        val fragmentSupport = object : FragmentSupport {
+            override fun onActivityCreated(activity: Activity) {
+                attached.add(activity)
+            }
+
+            override fun close() = Unit
+        }
+        callbacks(webViewLeakDetectionEnabled = false, fragmentSupport = fragmentSupport)
+        val activity = buildActivity(Activity::class.java).get()
+
+        eventBus.emit(ActivityLifecycle.CREATED, ActivityCreated(activity, null))
+
+        assertEquals(listOf(activity), attached)
+    }
+
+    @Test
+    fun `activity events are not handled after close`() {
+        callbacks(webViewLeakDetectionEnabled = true).close()
+        val activity = activityWithWebView()
+
+        resume(activity)
+
+        assertNull(
+            "no sentinel should have been opened once the callbacks are closed",
+            leakDetector.trackClosed(activity.webView, OWNER, WEBVIEW_CONTEXT),
+        )
+    }
+
+    private fun callbacks(
+        webViewLeakDetectionEnabled: Boolean,
+        fragmentSupport: FragmentSupport = NoOpFragmentSupport,
+    ) = ActivityLeakDetectionLifecycleCallbacks(
         leakDetector,
         { SESSION_IDS },
-        NoOpFragmentSupport,
+        fragmentSupport,
+        eventBus,
         errorHandler,
         webViewLeakDetectionEnabled,
-    )
+    ).apply { subscribe() }
+
+    private fun resume(activity: Activity) = eventBus.emit(ActivityLifecycle.RESUMED, activity)
 
     private fun activityWithWebView(): ActivityWithWebView {
         val activity = buildActivity(ActivityWithWebView::class.java).create().get()

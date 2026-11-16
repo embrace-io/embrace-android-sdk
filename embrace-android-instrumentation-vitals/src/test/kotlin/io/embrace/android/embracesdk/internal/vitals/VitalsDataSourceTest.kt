@@ -2,6 +2,7 @@ package io.embrace.android.embracesdk.internal.vitals
 
 import android.app.Activity
 import android.app.Application
+import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
 import android.os.SystemClock
@@ -12,12 +13,15 @@ import io.embrace.android.embracesdk.fakes.FakeInstrumentationArgs
 import io.embrace.android.embracesdk.fakes.FakeInternalTelemetryService
 import io.embrace.android.embracesdk.fakes.FakeProcessStateTracker
 import io.embrace.android.embracesdk.fakes.FakeSpanToken
+import io.embrace.android.embracesdk.internal.arch.lifecycle.ActivityCreated
+import io.embrace.android.embracesdk.internal.arch.lifecycle.ActivityLifecycle
 import io.embrace.android.embracesdk.internal.arch.schema.EmbType
 import io.embrace.android.embracesdk.internal.arch.state.ProcessState
 import io.embrace.android.embracesdk.internal.config.resolved.AutoDataCaptureConfig
 import io.embrace.android.embracesdk.internal.config.resolved.EmbraceConfig
 import io.embrace.android.embracesdk.internal.config.resolved.VitalsConfig
 import io.embrace.android.embracesdk.internal.telemetry.AppliedLimitType
+import io.embrace.android.embracesdk.internal.utils.event.EventBus
 import io.embrace.android.embracesdk.semconv.EmbFrameCountsAttributes
 import io.embrace.android.embracesdk.semconv.EmbInteractionResponsivenessAttributes
 import org.junit.Assert.assertEquals
@@ -43,6 +47,7 @@ internal class VitalsDataSourceTest {
     ): Pair<VitalsDataSource, FakeInstrumentationArgs> {
         val application: Application = ApplicationProvider.getApplicationContext()
         val args = FakeInstrumentationArgs(application, telemetryService = telemetryService)
+        application.registerActivityLifecycleCallbacks(BusRelay(args.eventBus))
         args.configService.config = EmbraceConfig(
             autoDataCapture = { AutoDataCaptureConfig(interactionResponsivenessCaptureEnabled = { responsivenessEnabled }) },
             vitals = { VitalsConfig(spanLimit = { spanLimit }) },
@@ -191,7 +196,7 @@ internal class VitalsDataSourceTest {
     }
 
     @Test
-    fun `activity lifecycle callbacks are unregistered when data capture is disabled`() {
+    fun `activity events are not handled after data capture is disabled`() {
         val (dataSource, _) = createDataSource(spanLimit = 1)
         dataSource.onDataCaptureEnabled()
         dataSource.onDataCaptureDisabled()
@@ -323,6 +328,26 @@ internal class VitalsDataSourceTest {
         EmbFrameCountsAttributes.SMOOTHNESS_DROPPED_FRAMES to dropped.toString(),
         EmbFrameCountsAttributes.SMOOTHNESS_EXPECTED_FRAMES to expected.toString(),
     )
+
+    /**
+     * Relays the callbacks [VitalsActivityListener] handles onto [eventBus], as the SDK's relay does.
+     */
+    private class BusRelay(private val eventBus: EventBus) : Application.ActivityLifecycleCallbacks {
+        override fun onActivityCreated(activity: Activity, savedInstanceState: Bundle?) =
+            eventBus.emit(ActivityLifecycle.CREATED, ActivityCreated(activity, savedInstanceState))
+
+        override fun onActivityResumed(activity: Activity) = eventBus.emit(ActivityLifecycle.RESUMED, activity)
+
+        override fun onActivityPaused(activity: Activity) = eventBus.emit(ActivityLifecycle.PAUSED, activity)
+
+        override fun onActivityStarted(activity: Activity) {}
+
+        override fun onActivityStopped(activity: Activity) {}
+
+        override fun onActivitySaveInstanceState(activity: Activity, outState: Bundle) {}
+
+        override fun onActivityDestroyed(activity: Activity) {}
+    }
 
     private companion object {
         const val TIMEOUT_MS = 5_000L

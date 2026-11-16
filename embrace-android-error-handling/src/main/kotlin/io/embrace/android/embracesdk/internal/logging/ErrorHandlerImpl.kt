@@ -172,7 +172,7 @@ class ErrorHandlerImpl(
                 // Once the handler is recording, record the error directly rather than buffering it
                 is HandlerState.Recording -> {
                     if (!reserved || limiter.tryAcquire(key)) {
-                        record(state.recorder, snapshot)
+                        record(snapshot)
                     }
                     return true
                 }
@@ -192,7 +192,7 @@ class ErrorHandlerImpl(
         }
     }
 
-    override fun drain(sink: ErrorRecorder?) {
+    override fun drain(sink: SdkErrorSink?) {
         if (sink == null) {
             close()
             return
@@ -210,7 +210,7 @@ class ErrorHandlerImpl(
     /**
      * If this fails before taking the buffer, the buffer is kept for a later drain.
      */
-    private fun drainOnce(sink: ErrorRecorder) {
+    private fun drainOnce(sink: SdkErrorSink) {
         beforeStep("drain")
         val recording = HandlerState.Recording(sink)
         while (true) {
@@ -224,8 +224,23 @@ class ErrorHandlerImpl(
             // been closed. The swap fails if another thread changed the state since it was read, and the loop retries
             // against the new state. Once it succeeds, the errors it took are recorded and the drain returns.
             if (handlerState.compareAndSet(current, recording)) {
-                (current as? HandlerState.Buffered)?.let { recordBufferedErrors(it, sink) }
+                when (current) {
+                    is HandlerState.Buffered -> recordBufferedErrors(current)
+                    is HandlerState.Recording -> if (current.recorder !== sink) {
+                        awaitRecordsInFlight("Replaced SDK error sink with SDK errors still being recorded")
+                        closeSink(current.recorder)
+                    }
+                    else -> Unit
+                }
                 return
+            }
+        }
+    }
+
+    override fun flush() {
+        entryPoint("Failed to flush SDK errors") {
+            if (handlerState.get() is HandlerState.Recording) {
+                useSink("flush", { "Failed to flush SDK errors" }) { it.flush() }
             }
         }
     }
@@ -238,19 +253,21 @@ class ErrorHandlerImpl(
 
     override fun close() {
         entryPoint("Failed to close error handler") {
-            if (handlerState.getAndSet(HandlerState.Closed) !== HandlerState.Closed) {
-                awaitRecordsInFlight()
+            val previous = handlerState.getAndSet(HandlerState.Closed)
+            if (previous !== HandlerState.Closed) {
+                awaitRecordsInFlight("Closed error handler with SDK errors still being recorded")
+                (previous as? HandlerState.Recording)?.let { closeSink(it.recorder) }
             }
         }
     }
 
-    private fun awaitRecordsInFlight() {
+    private fun awaitRecordsInFlight(timeoutMsg: String) {
         val own = if (inSink.get() == true) 1 else 0
         val deadline = System.nanoTime() + TimeUnit.MILLISECONDS.toNanos(closeTimeoutMs)
         while (recordsInFlight.get() > own) {
             val remainingNs = deadline - System.nanoTime()
             if (remainingNs <= 0 || Thread.currentThread().isInterrupted) {
-                logSafely(ErrorHandler.Severity.WARNING, "Closed error handler with SDK errors still being recorded", null)
+                logSafely(ErrorHandler.Severity.WARNING, timeoutMsg, null)
                 return
             }
             LockSupport.parkNanos(minOf(remainingNs, CLOSE_POLL_NS))
@@ -258,37 +275,63 @@ class ErrorHandlerImpl(
     }
 
     /**
-     * Records the errors buffered up to [newest], oldest first, with the [sink] the drain was invoked with.
+     * A throw is tracked as [SdkErrorType.ErrorSinkFail], which is dropped if the handler is closed.
      */
-    private fun recordBufferedErrors(newest: HandlerState.Buffered, sink: ErrorRecorder) {
-        (newest.previous as? HandlerState.Buffered)?.let { recordBufferedErrors(it, sink) }
-        record(sink, newest.snapshot)
+    private fun closeSink(sink: SdkErrorSink) {
+        try {
+            sink.close()
+        } catch (exc: Throwable) {
+            logSafely(ErrorHandler.Severity.WARNING, "Failed to close SDK error sink", exc)
+            try {
+                capture(SdkErrorType.ErrorSinkFail, exc)
+            } catch (_: Throwable) {
+                // no-op
+            }
+        }
     }
 
     /**
-     * Records [snapshot] with [sink]. A throw from the sink is logged and doesn't stop later errors being recorded. The first
-     * error raised while the sink runs, thrown or tracked, is then recorded as [SdkErrorType.ErrorSinkFail], subject to the
-     * limit. Anything raised while recording an [SdkErrorType.ErrorSinkFail], whether that follow-up or a [snapshot] already
-     * of that type, is dropped; a throw is still logged. Nothing is recorded once the handler is closed.
+     * Records the errors buffered up to [newest], oldest first.
      */
-    private fun record(sink: ErrorRecorder, snapshot: SdkErrorSnapshot) {
+    private fun recordBufferedErrors(newest: HandlerState.Buffered) {
+        (newest.previous as? HandlerState.Buffered)?.let { recordBufferedErrors(it) }
+        record(newest.snapshot)
+    }
+
+    private fun record(snapshot: SdkErrorSnapshot) {
+        val msg = { "Failed to record SDK error (${snapshot.type})" }
+        val reporting = snapshot.takeIf { it.type == SdkErrorType.ErrorSinkFail }
+        useSink("record", msg, reporting) { it.record(snapshot) }
+    }
+
+    /**
+     * Runs [action] with the current sink. A throw from it is logged and doesn't stop later errors being recorded. The first
+     * error raised while it runs, thrown or tracked, is then recorded as [SdkErrorType.ErrorSinkFail], subject to the limit.
+     * If [reporting] is set, [action] is recording that [SdkErrorType.ErrorSinkFail] and anything raised is dropped; a throw
+     * is still logged. Nothing runs once the handler is closed.
+     */
+    private fun useSink(
+        step: String,
+        msg: () -> String,
+        reporting: SdkErrorSnapshot? = null,
+        action: (SdkErrorSink) -> Unit,
+    ) {
         recordsInFlight.incrementAndGet()
         try {
-            beforeStep("record")
+            beforeStep(step)
             inSink.set(true)
-            if (handlerState.get() === HandlerState.Closed) {
-                return
-            }
-            if (snapshot.type == SdkErrorType.ErrorSinkFail) {
-                holdSinkFailure(snapshot)
-                runSafely({ "Failed to record SDK error (${snapshot.type})" }, logcat) {
-                    sink(snapshot)
+            // Read after counting this call, so a close or replacing drain either waits for it or is seen here.
+            val sink = currentSink() ?: return
+            if (reporting != null) {
+                holdSinkFailure(reporting)
+                runSafely(msg, logcat) {
+                    action(sink)
                 }
                 return
             }
-            runSafely({ "Failed to record SDK error (${snapshot.type})" }, logcat) {
+            runSafely(msg, logcat) {
                 try {
-                    sink(snapshot)
+                    action(sink)
                 } catch (exc: Throwable) {
                     try {
                         holdSinkFailure(ThrowableSnapshotter.snapshot(SdkErrorType.ErrorSinkFail, exc, safeNow()))
@@ -299,12 +342,10 @@ class ErrorHandlerImpl(
                 }
             }
             val failure = sinkFailure.get() ?: return
-            if (handlerState.get() === HandlerState.Closed) {
-                return
-            }
+            val target = currentSink() ?: return
             runSafely({ "Failed to record SDK error (${SdkErrorType.ErrorSinkFail})" }, logcat) {
                 if (limiter.tryAcquire(failure.key())) {
-                    sink(failure)
+                    target.record(failure)
                 }
             }
         } finally {
@@ -313,6 +354,8 @@ class ErrorHandlerImpl(
             recordsInFlight.decrementAndGet()
         }
     }
+
+    private fun currentSink(): SdkErrorSink? = (handlerState.get() as? HandlerState.Recording)?.recorder
 
     private fun holdSinkFailure(snapshot: SdkErrorSnapshot) {
         if (sinkFailure.get() == null) {
@@ -352,7 +395,7 @@ class ErrorHandlerImpl(
          * The handler is ready to record errors directly with [recorder], the one the drain was invoked with, without going
          * through the buffer.
          */
-        class Recording(val recorder: ErrorRecorder) : HandlerState()
+        class Recording(val recorder: SdkErrorSink) : HandlerState()
 
         /**
          * The handler is closed and any new errors will be discarded.

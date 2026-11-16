@@ -9,6 +9,7 @@ import io.embrace.android.embracesdk.internal.config.ConfigService
 import io.embrace.android.embracesdk.internal.config.resolved.AutoDataCaptureConfig
 import io.embrace.android.embracesdk.internal.config.resolved.EmbraceConfig
 import io.embrace.android.embracesdk.internal.instrumentation.startup.activity.UiLoadDataListener
+import io.embrace.android.embracesdk.internal.utils.event.EventBus
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertNull
@@ -66,5 +67,6 @@ internal class DataCaptureServiceFactoriesTest {
             startupClassifier = StartupClassifierImpl(),
         ),
         uiLoadDataListener = uiLoadDataListener,
+        eventBus = EventBus(errorHandler),
     )
 }

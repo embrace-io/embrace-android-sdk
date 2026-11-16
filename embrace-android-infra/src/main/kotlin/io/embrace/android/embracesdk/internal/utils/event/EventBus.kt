@@ -3,7 +3,6 @@ package io.embrace.android.embracesdk.internal.utils.event
 import io.embrace.android.embracesdk.internal.logging.ErrorHandler
 import io.embrace.android.embracesdk.internal.logging.SdkErrorType
 import io.embrace.android.embracesdk.internal.logging.guardSdkCode
-import io.embrace.android.embracesdk.internal.utils.event.EventBus.Companion.DEFAULT_ORDER
 import java.util.BitSet
 import java.util.Collections
 import java.util.IdentityHashMap
@@ -12,7 +11,7 @@ import java.util.concurrent.atomic.AtomicReferenceArray
 /**
  * The number of keys an [EventBus] holds before its first growth, covering every key the SDK declares so that growth is only a safety net.
  */
-internal const val INITIAL_CAPACITY = 16
+internal const val INITIAL_CAPACITY = 32
 
 /**
  * A keyed event bus where an event emitted against an [EventKey] reaches only the handlers registered against that key, on the
@@ -154,8 +153,10 @@ class EventBus(private val errorHandler: ErrorHandler) {
      * Emits [event] to every handler registered against [key], on the calling thread, retaining nothing.
      */
     fun <E : Any> emit(key: EventKey<E>, event: E) {
-        val registered = registrationsFor(key.id) ?: return
-        deliverTo(registered.handlers, event)
+        errorHandler.guardSdkCode(SdkErrorType.EventBusEmitFail) {
+            val registered = registrationsFor(key.id) ?: return
+            deliverTo(registered.handlers, event)
+        }
     }
 
     /**
@@ -165,21 +166,23 @@ class EventBus(private val errorHandler: ErrorHandler) {
      * Emitting against a [key] supersedes whatever it held, so alternative values of one state share a key.
      */
     fun <E : Any> emitState(key: StateKey<E>, value: E) {
-        // retained before delivery, so a handler registering concurrently sees the value twice rather than not at all
-        val current = retainedStateValues
-        if (key.id < current.length()) {
-            current.set(key.id, value)
+        errorHandler.guardSdkCode(SdkErrorType.EventBusEmitFail) {
+            // retained before delivery, so a handler registering concurrently sees the value twice rather than not at all
+            val current = retainedStateValues
+            if (key.id < current.length()) {
+                current.set(key.id, value)
 
-            // a copy in progress, or completed since current was read, may not have carried the value across
-            if (currentlyGrowingRetainedStates || retainedStateValues !== current) {
+                // a copy in progress, or completed since current was read, may not have carried the value across
+                if (currentlyGrowingRetainedStates || retainedStateValues !== current) {
+                    retainStateUnderLock(key.id, value)
+                }
+            } else if (!stopped) {
                 retainStateUnderLock(key.id, value)
             }
-        } else if (!stopped) {
-            retainStateUnderLock(key.id, value)
-        }
 
-        val registered = registrationsFor(key.id) ?: return
-        deliverTo(registered.handlers, value)
+            val registered = registrationsFor(key.id) ?: return
+            deliverTo(registered.handlers, value)
+        }
     }
 
     /**

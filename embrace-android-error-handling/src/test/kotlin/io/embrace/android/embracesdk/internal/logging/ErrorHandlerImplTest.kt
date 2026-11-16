@@ -26,7 +26,7 @@ internal class ErrorHandlerImplTest {
     private lateinit var errors: MutableList<Pair<ThrowableSnapshot, Long>>
     private lateinit var types: MutableList<SdkErrorType>
     private val noopLogcat: (ErrorHandler.Severity, String, Throwable?) -> Unit = { _, _, _ -> }
-    private val sink: ErrorRecorder = { snapshot ->
+    private val sink = SdkErrorSink { snapshot ->
         types.add(snapshot.type)
         errors.add(snapshot.top to snapshot.timestampMs)
     }
@@ -547,7 +547,7 @@ internal class ErrorHandlerImplTest {
     fun `a sink that tracks errors from another thread is bounded by the limit`() {
         var raised = 0
         handler.drain {
-            sink(it)
+            sink.record(it)
             val exc = distinctError(10_000 + raised++)
             thread { handler.trackSdkError(type, exc) }.join()
         }
@@ -620,7 +620,7 @@ internal class ErrorHandlerImplTest {
         val sinkFailure = StackOverflowError()
         var throwNext = true
         handler.drain {
-            sink(it)
+            sink.record(it)
             if (throwNext) {
                 throwNext = false
                 throw sinkFailure
@@ -686,7 +686,7 @@ internal class ErrorHandlerImplTest {
         })
         fail()
         handler.drain {
-            sink(it)
+            sink.record(it)
             if (it.type == SdkErrorType.ErrorSinkFail) {
                 fail()
             }
@@ -738,7 +738,7 @@ internal class ErrorHandlerImplTest {
     @Test
     fun `a sink failure raised while closing from inside the sink is not recorded`() {
         handler.drain {
-            sink(it)
+            sink.record(it)
             fail()
             handler.close()
         }
@@ -749,7 +749,7 @@ internal class ErrorHandlerImplTest {
     @Test
     fun `a sink that closes and then throws does not record a sink failure`() {
         handler.drain {
-            sink(it)
+            sink.record(it)
             handler.close()
             error("sink failed")
         }
@@ -916,7 +916,7 @@ internal class ErrorHandlerImplTest {
         handler = ErrorHandlerImpl(clock::now, noopLogcat, closeTimeoutMs = 60_000)
         repeat(3) { fail(distinctError(it)) }
         handler.drain {
-            sink(it)
+            sink.record(it)
             handler.close()
         }
         assertEquals(1, errors.size)
@@ -998,7 +998,7 @@ internal class ErrorHandlerImplTest {
     fun `an error tracked by the sink whilst a sink failure is held is not read`() {
         val second = CountingError(1)
         handler.drain { snapshot ->
-            sink(snapshot)
+            sink.record(snapshot)
             if (snapshot.type == type) {
                 handler.trackSdkError(type, distinctError(0))
                 handler.trackSdkError(type, second)
@@ -1027,6 +1027,124 @@ internal class ErrorHandlerImplTest {
                 causeReads.incrementAndGet()
                 return super.cause
             }
+    }
+
+    @Test
+    fun `flush reaches the sink only while recording`() {
+        val sink = TestSink()
+        handler.flush()
+        handler.drain(sink)
+        handler.flush()
+        handler.close()
+        handler.flush()
+        assertEquals(1, sink.flushes.get())
+    }
+
+    @Test
+    fun `a throwing flush gives one ErrorSinkFail and does not throw`() {
+        val failure = IllegalStateException("flush failed")
+        val sink = TestSink(onFlush = { throw failure })
+        handler.drain(sink)
+        handler.flush()
+        handler.flush()
+        assertEquals(listOf(SdkErrorType.ErrorSinkFail), sink.records.map { it.type })
+        assertEquals(failure.top(), sink.records.single().top)
+    }
+
+    @Test
+    fun `an error tracked during flush is recorded as ErrorSinkFail`() {
+        val sink = TestSink(onFlush = { fail() })
+        handler.drain(sink)
+        handler.flush()
+        assertEquals(listOf(SdkErrorType.ErrorSinkFail), sink.records.map { it.type })
+    }
+
+    @Test
+    fun `close closes the sink once`() {
+        val sink = TestSink()
+        handler.drain(sink)
+        handler.close()
+        handler.close()
+        handler.drain(null)
+        assertEquals(1, sink.closes.get())
+    }
+
+    @Test
+    fun `drain without a sink closes the current sink`() {
+        val sink = TestSink()
+        handler.drain(sink)
+        handler.drain(null)
+        assertEquals(1, sink.closes.get())
+    }
+
+    @Test
+    fun `close while buffering closes nothing`() {
+        val sink = TestSink()
+        handler.close()
+        handler.drain(sink)
+        assertEquals(0, sink.closes.get())
+    }
+
+    @Test
+    fun `a throwing close does not throw`() {
+        handler.drain(TestSink(onClose = { error("close failed") }))
+        handler.close()
+    }
+
+    @Test
+    fun `re-draining closes the replaced sink and records later errors on the new one`() {
+        val first = TestSink()
+        val second = TestSink()
+        handler.drain(first)
+        handler.drain(second)
+        fail()
+        assertEquals(1, first.closes.get())
+        assertEquals(0, second.closes.get())
+        assertTrue(first.records.isEmpty())
+        assertEquals(listOf(type), second.records.map { it.type })
+    }
+
+    @Test
+    fun `re-draining with the same sink does not close it`() {
+        val sink = TestSink()
+        handler.drain(sink)
+        handler.drain(sink)
+        assertEquals(0, sink.closes.get())
+    }
+
+    @Test
+    fun `a replaced sink that throws on close gives one ErrorSinkFail on the new sink`() {
+        val failure = IllegalStateException("close failed")
+        val second = TestSink()
+        handler.drain(TestSink(onClose = { throw failure }))
+        handler.drain(second)
+        assertEquals(listOf(SdkErrorType.ErrorSinkFail), second.records.map { it.type })
+        assertEquals(failure.top(), second.records.single().top)
+    }
+
+    private class TestSink(
+        private val onRecord: (SdkErrorSnapshot) -> Unit = {},
+        private val onFlush: () -> Unit = {},
+        private val onClose: () -> Unit = {},
+    ) : SdkErrorSink {
+        val records = ConcurrentLinkedQueue<SdkErrorSnapshot>()
+        val flushes = AtomicInteger(0)
+        val closes = AtomicInteger(0)
+
+        override fun record(snapshot: SdkErrorSnapshot) {
+            records.add(snapshot)
+            onRecord(snapshot)
+        }
+
+        override fun flush() {
+            flushes.incrementAndGet()
+            onFlush()
+        }
+
+        override fun close() {
+            closes.incrementAndGet()
+            onClose()
+        }
     }
 
     private fun trackUnreferencedError(): WeakReference<Throwable> {

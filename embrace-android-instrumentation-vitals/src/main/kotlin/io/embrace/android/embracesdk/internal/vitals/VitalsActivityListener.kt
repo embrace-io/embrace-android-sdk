@@ -1,15 +1,17 @@
 package io.embrace.android.embracesdk.internal.vitals
 
 import android.app.Activity
-import android.app.Application.ActivityLifecycleCallbacks
 import android.os.Build
-import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
 import android.os.SystemClock
 import android.view.Window
 import androidx.annotation.RequiresApi
+import io.embrace.android.embracesdk.internal.arch.lifecycle.ActivityCreated
+import io.embrace.android.embracesdk.internal.arch.lifecycle.ActivityLifecycle
 import io.embrace.android.embracesdk.internal.logging.ErrorHandler
+import io.embrace.android.embracesdk.internal.utils.event.EventBus
+import io.embrace.android.embracesdk.internal.utils.event.EventHandler
 import java.lang.ref.WeakReference
 import java.util.WeakHashMap
 
@@ -24,8 +26,9 @@ internal class VitalsActivityListener(
     private val navSource: ActivityNavigationSource,
     private val frameMetricsHandler: Handler,
     private val frameMetricsStrategy: FrameMetricsStrategy,
+    private val eventBus: EventBus,
     errorHandler: ErrorHandler,
-) : ActivityLifecycleCallbacks, AutoCloseable {
+) : AutoCloseable {
 
     private val activityErrors = OnceUiCallbackErrorTracker(errorHandler)
     private val frameErrors = OnceUiCallbackErrorTracker(errorHandler)
@@ -43,22 +46,23 @@ internal class VitalsActivityListener(
      */
     private val interactionCallbacks = WeakHashMap<Window, WeakReference<VitalsWindowCallback>>()
 
-    override fun onActivityCreated(activity: Activity, bundle: Bundle?) {
+    private val onCreated = EventHandler<ActivityCreated> { event ->
         // captured first so the navigation-start timestamp reflects this event, not the delay until it's processed
         val eventTime = SystemClock.uptimeMillis()
         try {
-            // a non-null bundle means the Activity is being recreated (config change / restore), not navigated to
-            navSource.onActivityCreated(activity.localClassName, recreated = bundle != null, eventTime = eventTime)
+            // a non-null saved state means the Activity is being recreated (config change / restore), not navigated to
+            val recreated = event.savedInstanceState != null
+            navSource.onActivityCreated(event.activity.localClassName, recreated = recreated, eventTime = eventTime)
         } catch (exc: Throwable) {
             activityErrors.track(exc)
         }
     }
 
-    override fun onActivityResumed(activity: Activity) {
+    private val onResumed = EventHandler<Activity> { activity ->
         // captured first so the navigation-end timestamp reflects this event, not the delay until it's processed
         val eventTime = SystemClock.uptimeMillis()
         try {
-            val window = activity.window ?: return
+            val window = activity.window ?: return@EventHandler
             installInteractionCallback(window)
             installFrameMetricsListener(window)
             focalCallbacks.onScreenStart()
@@ -69,7 +73,7 @@ internal class VitalsActivityListener(
         }
     }
 
-    override fun onActivityPaused(activity: Activity) {
+    private val onPaused = EventHandler<Activity> { activity ->
         try {
             // Close any in-flight focal moment.
             focalCallbacks.onScreenStop()
@@ -77,6 +81,15 @@ internal class VitalsActivityListener(
         } catch (exc: Throwable) {
             activityErrors.track(exc)
         }
+    }
+
+    /**
+     * Starts handling the created, resumed and paused events of every Activity.
+     */
+    fun subscribe() {
+        eventBus.addHandler(ActivityLifecycle.CREATED, onCreated)
+        eventBus.addHandler(ActivityLifecycle.RESUMED, onResumed)
+        eventBus.addHandler(ActivityLifecycle.PAUSED, onPaused)
     }
 
     private fun installInteractionCallback(window: Window) {
@@ -114,10 +127,13 @@ internal class VitalsActivityListener(
     }
 
     /**
-     * Removes the frame-metrics listeners from every window that still has one, and closes every installed
-     * [VitalsWindowCallback] so it only calls through to the original callback.
+     * Stops handling Activity events, removes the frame-metrics listeners from every window that still has one, and closes
+     * every installed [VitalsWindowCallback] so it only calls through to the original callback.
      */
     override fun close() {
+        eventBus.removeHandler(ActivityLifecycle.CREATED, onCreated)
+        eventBus.removeHandler(ActivityLifecycle.RESUMED, onResumed)
+        eventBus.removeHandler(ActivityLifecycle.PAUSED, onPaused)
         val installed = synchronized(frameListeners) {
             closed = true
             frameListeners.toMap().also { frameListeners.clear() }
@@ -138,9 +154,4 @@ internal class VitalsActivityListener(
             interactionCallbacks.clear()
         }
     }
-
-    override fun onActivityStarted(activity: Activity) {}
-    override fun onActivityStopped(activity: Activity) {}
-    override fun onActivitySaveInstanceState(activity: Activity, bundle: Bundle) {}
-    override fun onActivityDestroyed(activity: Activity) {}
 }

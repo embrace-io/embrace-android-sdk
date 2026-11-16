@@ -2,7 +2,6 @@ package io.embrace.android.embracesdk.instrumentation.leaks
 
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.FragmentActivity
-import io.embrace.android.embracesdk.fakes.FakeInstrumentationArgs
 import io.embrace.android.embracesdk.internal.config.resolved.AutoDataCaptureConfig
 import io.embrace.android.embracesdk.internal.config.resolved.EmbraceConfig
 import io.embrace.android.embracesdk.internal.session.id.SessionIdsSnapshot
@@ -13,7 +12,6 @@ import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.Robolectric.buildActivity
 import org.robolectric.RobolectricTestRunner
-import org.robolectric.RuntimeEnvironment
 
 /**
  * Covers whether [LeakDetectionDataSource] wires up fragment leak detection depending on
@@ -33,7 +31,7 @@ internal class LeakDetectionDataSourceFragmentGatingTest {
 
     @Test
     fun `fragment leak detection is not wired when disabled (the default)`() {
-        dataSource = LeakDetectionDataSource(FakeInstrumentationArgs(RuntimeEnvironment.getApplication()))
+        dataSource = LeakDetectionDataSource(relayedInstrumentationArgs())
         dataSource.onDataCaptureEnabled()
 
         val activity = buildActivity(FragmentActivity::class.java).setup().get()
@@ -48,7 +46,7 @@ internal class LeakDetectionDataSourceFragmentGatingTest {
 
     @Test
     fun `fragment leak detection is wired when enabled`() {
-        val args = FakeInstrumentationArgs(RuntimeEnvironment.getApplication())
+        val args = relayedInstrumentationArgs()
         args.configService.config = EmbraceConfig(autoDataCapture = {
             AutoDataCaptureConfig(fragmentLeakDetectionEnabled = { true })
         })
@@ -67,7 +65,7 @@ internal class LeakDetectionDataSourceFragmentGatingTest {
 
     @Test
     fun `fragment callbacks are unregistered when data capture is disabled`() {
-        val args = FakeInstrumentationArgs(RuntimeEnvironment.getApplication())
+        val args = relayedInstrumentationArgs()
         args.configService.config = EmbraceConfig(autoDataCapture = {
             AutoDataCaptureConfig(fragmentLeakDetectionEnabled = { true })
         })

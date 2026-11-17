@@ -51,6 +51,9 @@ integration-test concern, not this skill's.
 
 ## What you get (all from the traces)
 
+- Each trace's health, before anything read from it: `ok`, `lossy`, `no-window` or `unusable` (left out of every
+  figure), trace_processor's import errors, and whether its scheduling covers the window. The CLI's README
+  (`embrace-analysis-cli/README.md`, `analyze`) says what each means.
 - Duration of EVERY `emb-*` section (first occurrence, matching TraceSectionMetric
   `Mode.First`), as min/median/max over N iterations — the canonical sections (those the SDK
   exports as `<name>-duration-ms` attributes) in execution order with %-of-window, plus every
@@ -166,7 +169,8 @@ sets the iteration count (default 20).
    `adb shell "getprop ro.product.manufacturer; getprop ro.product.model; getprop ro.build.version.release"`
    — `getprop` takes ONE property per call; the model also appears in the results directory
    name), the SDK version under test, iteration count, and date.
-4. **Interpret**: present the canonical sections in execution order with nesting; children
+4. **Interpret**: read the trace-health block first, and say in the report how many traces were anything but `ok`
+   and what that rules out (its guidance lines). Then present the canonical sections in execution order with nesting; children
    overlap parents, so percentages do not sum to 100; the class-load section
    `embrace-impl-init` runs BEFORE the window opens, so its % is context relative to the window,
    not a share of it. Check the scheduling table before comparing

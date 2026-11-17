@@ -1,10 +1,15 @@
 {
+  "app_id": "abcde",
   "sdk_config": {
     "networking": {
       "traceparent_only_allow_domains": ["httpbin.org"]
     },
     "otel": {
       "enable_otel_kotlin_sdk": true
+    },
+    "base_urls": {
+      "config": "http://127.0.0.1:48711",
+      "data": "http://127.0.0.1:48711"
     }
   }
 }

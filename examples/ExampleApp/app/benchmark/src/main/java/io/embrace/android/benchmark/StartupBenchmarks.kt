@@ -4,6 +4,7 @@ import androidx.benchmark.macro.StartupMode
 import androidx.benchmark.macro.StartupTimingMetric
 import androidx.benchmark.macro.junit4.MacrobenchmarkRule
 import androidx.test.ext.junit.runners.AndroidJUnit4
+import io.embrace.android.embracesdk.benchmark.endpoint.LocalEmbraceEndpointRule
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -13,9 +14,15 @@ import org.junit.runner.RunWith
  * analysis of SDK init (EmbTrace section durations, SDK-init window, scheduling) is done
  * entirely from those traces by the startup-analysis skill's `tools/startup analyze` — the metric
  * list here is only the minimum measureRepeated requires, not the source of the numbers.
+ *
+ * The app runs with an app ID against Embrace's endpoints served on the device ([LocalEmbraceEndpointRule]),
+ * so the SDK fetches and caches its config and delivers its payloads as in a customer's app.
  */
 @RunWith(AndroidJUnit4::class)
 internal class StartupBenchmarks {
+    @get:Rule
+    val endpointRule = LocalEmbraceEndpointRule()
+
     @get:Rule
     val benchmarkRule = MacrobenchmarkRule()
 

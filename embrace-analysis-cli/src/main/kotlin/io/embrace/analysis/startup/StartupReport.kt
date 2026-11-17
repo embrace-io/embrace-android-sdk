@@ -122,10 +122,10 @@ class StartupReport(
         line("canonical sections, execution order (first-occurrence slice durations, ms):")
         row(SECTION_HEADER, "section", "n", "min", "median", "max", "% of win")
         CANONICAL_SECTIONS.forEach { section ->
-            var label = section.label
+            var label = canonicalLabel(section)
             var values = sectionValues.remove(section.name).orEmpty()
             if (values.isEmpty()) {
-                // older SDKs: see the end of the companion
+                // older SDKs: see OLDER_SECTION_NAMES
                 sectionValues.removeUnderOlderName(section.name)?.let { (oldName, oldValues) ->
                     values = oldValues
                     label += " (as ${oldName.removePrefix(SECTION_PREFIX)})"
@@ -248,13 +248,13 @@ class StartupReport(
         append(text).append('\n')
     }
 
-    /** A canonical section and its nesting depth among them, which indents its [label]. */
-    private class CanonicalSection(val name: String, depth: Int) {
-        val label: String = "  ".repeat(depth) + if (depth > 0) {
-            "↳ $name"
-        } else {
-            name
-        }
+    /** A canonical section's name indented by its nesting depth, a nested one marked `↳`. */
+    private fun canonicalLabel(
+        section: CanonicalSection,
+    ): String = "  ".repeat(section.depth) + if (section.depth > 0) {
+        "↳ ${section.name}"
+    } else {
+        section.name
     }
 
     companion object {
@@ -264,32 +264,6 @@ class StartupReport(
 
         /** How many of the other sections are listed without [allSections]. */
         const val TOP_EXTRAS = 15
-
-        /**
-         * The canonical init sections in execution order (see references/sections.md), with their nesting depth among
-         * them. These are the sections exported as `<name>-duration-ms` attributes on the sdk-init span, except the
-         * two SharedPreferences sections, which nest wherever the store is first touched and are listed with the others.
-         */
-        private val CANONICAL_SECTIONS = listOf(
-            CanonicalSection("emb-embrace-impl-init", 0),
-            CanonicalSection("emb-modules-init", 0),
-            CanonicalSection("emb-persisted-config-init", 1),
-            CanonicalSection("emb-config-service-init", 1),
-            CanonicalSection("emb-startup-classifier-init", 1),
-            CanonicalSection("emb-process-state-tracker-init", 1),
-            CanonicalSection("emb-otel-tracer-init", 1),
-            CanonicalSection("emb-instrumentation-args-init", 1),
-            CanonicalSection("emb-payload-storage-service-init", 1),
-            CanonicalSection("emb-resource-source-init", 1),
-            CanonicalSection("emb-session-orchestrator-init", 1),
-            CanonicalSection("emb-current-session-part-span-initialize-service", 1),
-            CanonicalSection("emb-process-state-tracker-register", 0),
-            CanonicalSection("emb-setup-services", 0),
-            CanonicalSection("emb-start-first-session", 1),
-            CanonicalSection("emb-post-services-setup", 0),
-            CanonicalSection("emb-load-instrumentation", 1),
-            CanonicalSection("emb-huc-init", 1),
-        )
 
         // The report's rows: a 60-wide section label then count, min, median, max and share of the window; a 52-wide
         // iteration name then its window, running, wait, wait share and CPUs, or its window and why there are no
@@ -307,22 +281,10 @@ class StartupReport(
         private const val SECTION_PREFIX = "emb-"
         private const val PERCENT = 100
 
-        /*
-         * Older SDKs (.claude/skills/startup-analysis/references/section-history.md): a canonical section renamed since
-         * an older SDK fills its row from its old name, labelled with it.
-         */
-
         /**
-         * The names canonical sections had before a rename that left their work unchanged, as current name -> older
-         * name. Sections that were split, merged or re-scoped have no entry and are not comparable across the change;
-         * references/section-history.md has the full mapping.
+         * The values of the section [name] was called before a rename ([OLDER_SECTION_NAMES]), removed from this map
+         * with that name: an older SDK's section fills the current one's row, labelled with its old name.
          */
-        private val OLDER_SECTION_NAMES = mapOf(
-            "emb-persisted-config-init" to "emb-persisted-config-load",
-            "emb-setup-services" to "emb-post-init",
-        )
-
-        /** The values of the section [name] was called before a rename, removed from this map with that name. */
         private fun MutableMap<String, List<Double>>.removeUnderOlderName(name: String): Pair<String, List<Double>>? {
             val oldName = OLDER_SECTION_NAMES[name] ?: return null
             return remove(oldName)?.let { oldName to it }

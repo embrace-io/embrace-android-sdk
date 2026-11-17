@@ -33,13 +33,20 @@ tools/startup analyze [--trace-processor <path>] [--all-sections] [--output-dir 
 Reads every `*.perfetto-trace` directly in `<traces-dir>` (a macrobenchmark run's output directory), in iteration
 order by the `iterNNN` in their names, and reports across the iterations:
 
+- each trace's health, before any figure read from it: `ok`, `lossy` (trace_processor counted a data loss, but the
+  SDK-init window survived), `no-window` (no loss, and no window either: a build or instrumentation problem) or
+  `unusable` (the loss took the window, so the trace is left out of every figure). Where a capture's buffer stats don't
+  count the data a wrap overwrote before it was read, any wrap counts as loss. trace_processor's import errors are
+  listed too, as what it couldn't read; they leave durations standing;
 - the SDK-init window, the `emb-sdk-start` slice that wraps `Embrace.start()`, per iteration and as a distribution;
 - TTID, from trace_processor's `android.startup` module;
 - each canonical section's count, min, median, max and share of the median window. The canonical sections are the
   ones the SDK exports as `<name>-duration-ms` attributes on its sdk-init span, in execution order;
 - the 15 other `emb-*` sections with the largest medians, or every one with `--all-sections`;
 - each iteration's main-thread running time, runnable wait and CPUs inside the window, flagged `CONTENDED` when the
-  wait is over 15% of the window.
+  wait is over 15% of the window. An iteration whose scheduling data starts inside the window (a kernel ring buffer
+  wrapped, from `ftrace_latest_data_start_ns`) is flagged `PARTIAL` and not judged, and a capture with no scheduling
+  data, such as the macrobenchmark's `app-only`, says so instead of reading as zeros.
 
 The report is printed and written to `claude-output/startup-analysis-<YYYY-MM-DD-HHMMSS>.txt`, named for the time the
 analysis started, or to `--output-dir`. What the sections mean and how to judge a noisy pass is in the skill's

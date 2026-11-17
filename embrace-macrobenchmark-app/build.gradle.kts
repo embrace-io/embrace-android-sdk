@@ -78,6 +78,9 @@ android {
         }
     }
 
+    // Allow app's unit tests to run for this build type
+    testBuildType = "benchmark"
+
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_11
         targetCompatibility = JavaVersion.VERSION_11

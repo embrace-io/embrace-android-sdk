@@ -341,7 +341,10 @@ internal class ConfigLoadServices(
             return ScopedOrdinalStore(it, persistedSdkStateStore.value, errorHandler)
         }
         if (phase == PrefsMigrationPhase.ADOPTED) {
-            prefsMigration.await()
+            migrationBudget.await(prefsMigration, SdkErrorType.PrefsMigrationFail)
+            if (!prefsMigration.isComplete) {
+                return UnavailableOrdinalStore
+            }
         }
         val path = sdkStorage.dir(SdkDir.INSTALL_STATE) / SdkStorageLayout.ORDINALS_FILE_NAME
         errorHandler.guardSdkCode(SdkErrorType.OrdinalStoreOpenFail, Unit) {

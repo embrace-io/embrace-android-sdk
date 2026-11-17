@@ -207,14 +207,7 @@ internal class LegacyTelemetryMigrationTest {
 
     @Test
     fun `afterDeletion runs when the legacy dirs can't be resolved`() {
-        val migrator = LegacyStorageMigrator(
-            fsRule.fileSystem,
-            { error("files dir") },
-            { error("cache dir") },
-            { data / "no_backup" },
-            errorHandler,
-        )
-        val migration = LegacyTelemetryMigration(worker, migrator, errorHandler)
+        val migration = LegacyTelemetryMigration(worker, unresolvableMigrator(), errorHandler)
         val afterDeletion = CountDownLatch(1)
 
         migration.deleteLegacyTelemetry(afterDeletion::countDown)
@@ -270,7 +263,7 @@ internal class LegacyTelemetryMigrationTest {
     }
 
     @Test
-    fun `sweepOrphans deletes orphans and 9x leftovers after the delay, also once already moved`() {
+    fun `sweepOrphans moves 9x leftovers and deletes the rest after the delay, also once already moved`() {
         val fs = fsRule.fileSystem
         listOf(LegacyTelemetryMigration(worker, migrator(fs), errorHandler, sweeper(fs)), alreadyMoved(fs)).forEach {
             fs.writeText(orphan)
@@ -288,9 +281,24 @@ internal class LegacyTelemetryMigrationTest {
             assertFalse(fs.exists(orphan))
             assertFalse(fs.exists(legacyPayload))
             assertFalse(fs.exists(legacyInstallState))
-            assertFalse(fs.exists(migratedPayload))
+            assertTrue(fs.exists(migratedPayload))
+            assertFalse(fs.exists(migratedInstallState / SdkStorageLayout.CRASH_MARKER_FILE_NAME))
+            fs.deleteRecursively(data / "no_backup")
         }
         assertEquals(listOf("worker", "migrator", "sweeper"), built)
+        assertTrue(errorHandler.sdkErrorMessages.isEmpty())
+    }
+
+    @Test
+    fun `sweepOrphans still sweeps when the legacy dirs can't be resolved`() {
+        val fs = fsRule.fileSystem
+        fs.writeText(orphan)
+
+        LegacyTelemetryMigration(worker, unresolvableMigrator(), errorHandler, sweeper(fs)).sweepOrphans(scheduler)
+        runSweep()
+
+        assertFalse(fs.exists(orphan))
+        assertEquals(listOf("StorageMigrationFail"), errorHandler.sdkErrorMessages.map { it.msg })
     }
 
     @Test
@@ -419,6 +427,14 @@ internal class LegacyTelemetryMigrationTest {
 
     private fun migrator(fs: FileSystem) =
         LegacyStorageMigrator(fs, { data / "files" }, { data / "cache" }, { data / "no_backup" }, errorHandler)
+
+    private fun unresolvableMigrator() = LegacyStorageMigrator(
+        fsRule.fileSystem,
+        { error("files dir") },
+        { error("cache dir") },
+        { data / "no_backup" },
+        errorHandler,
+    )
 
     private fun blockWorker(): CountDownLatch = CountDownLatch(1).also { release ->
         worker.submit("block", Unit, SdkErrorType.StorageMigrationFail) {

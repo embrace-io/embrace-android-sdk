@@ -4,7 +4,7 @@ import android.content.Context
 import androidx.test.core.app.ApplicationProvider
 import io.embrace.android.embracesdk.LastRunEndState
 import io.embrace.android.embracesdk.assertions.getSessionPartId
-import io.embrace.android.embracesdk.assertions.returnIfConditionMet
+import io.embrace.android.embracesdk.assertions.waitUntilConditionMet
 import io.embrace.android.embracesdk.fakes.TestPlatformSerializer
 import io.embrace.android.embracesdk.fakes.fakeIncompleteSessionEnvelope
 import io.embrace.android.embracesdk.fakes.testSdkStorage
@@ -14,6 +14,7 @@ import io.embrace.android.embracesdk.fixtures.fakeCachedSessionStoredTelemetryMe
 import io.embrace.android.embracesdk.fixtures.fakeLogStoredTelemetryMetadata
 import io.embrace.android.embracesdk.fixtures.fakeSessionStoredTelemetryMetadata
 import io.embrace.android.embracesdk.internal.arch.state.ProcessState
+import io.embrace.android.embracesdk.internal.capture.connectivity.ConnectivityStatus
 import io.embrace.android.embracesdk.internal.config.PersistedConfig
 import io.embrace.android.embracesdk.internal.config.remote.RemoteConfig
 import io.embrace.android.embracesdk.internal.logging.SdkErrorType
@@ -42,6 +43,7 @@ import java.io.ByteArrayOutputStream
 import java.io.File
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.TimeUnit
+import java.util.concurrent.atomic.AtomicBoolean
 import java.util.zip.GZIPOutputStream
 
 /**
@@ -54,6 +56,7 @@ internal class LegacyStorageUpgradeTest(
 
     private val ctx: Context by lazy { ApplicationProvider.getApplicationContext() }
     private val legacyConfig = RemoteConfig(pctMultiFilePersistenceEnabled = 100f, maxUserSessionProperties = 7)
+    private val legacyLogFile by lazy { File(ctx.filesDir, "embrace_payloads/${fakeLogStoredTelemetryMetadata.filename}") }
 
     @Rule
     @JvmField
@@ -126,19 +129,81 @@ internal class LegacyStorageUpgradeTest(
     }
 
     @Test
-    fun `an SDK disabled by config doesn't move 9x telemetry`() {
-        val legacyPayload = File(ctx.filesDir, "embrace_payloads/${fakeLogStoredTelemetryMetadata.filename}")
+    fun `an SDK disabled by config leaves 9x telemetry for a later launch to deliver`() {
         testRule.runTest(
             persistedRemoteConfig = RemoteConfig(threshold = 0),
+            serverResponseConfig = RemoteConfig(),
             expectSdkToStart = false,
-            setupAction = {
-                writeLegacyFile("embrace_payloads/${fakeLogStoredTelemetryMetadata.filename}", legacyLogPayload())
-            },
+            setupAction = { seedLeftoverTelemetry() },
+            testCaseAction = { awaitMigrationMarker() },
+        )
+        assertLeftoverTelemetryDelivered()
+    }
+
+    @Test
+    fun `an upgrade launch that ends during its move leaves 9x telemetry for a later launch to deliver`() {
+        val released = CountDownLatch(1)
+        val ended = AtomicBoolean(false)
+        try {
+            testRule.runTest(
+                setupAction = {
+                    seedLeftoverTelemetry()
+                    fileSystem = object : ForwardingFileSystem(FileSystem.SYSTEM) {
+                        override fun atomicMove(source: Path, target: Path) {
+                            if (isLegacy(source)) {
+                                released.await()
+                            }
+                            check(!ended.get() || !isLegacy(source)) { "launch ended" }
+                            super.atomicMove(source, target)
+                        }
+
+                        override fun deleteRecursively(fileOrDirectory: Path, mustExist: Boolean) {
+                            check(!ended.get() || !isLegacy(fileOrDirectory)) { "launch ended" }
+                            super.deleteRecursively(fileOrDirectory, mustExist)
+                        }
+
+                        private fun isLegacy(path: Path) = path.toFile().startsWith(ctx.filesDir)
+                    }
+                    migrationBudgetMs = BUDGET_MS
+                    awaitLegacyTelemetryMigration = {}
+                    getFakeErrorHandler().throwOnSdkError = false
+                },
+                testCaseAction = { awaitMigrationMarker() },
+            )
+            assertLeftoverTelemetryDelivered()
+        } finally {
+            ended.set(true)
+            released.countDown()
+        }
+    }
+
+    private fun assertLeftoverTelemetryDelivered() {
+        assertTrue(legacyLogFile.exists())
+        testRule.runTest(
+            setupAction = { fakeNetworkConnectivityService.connectivityStatus = ConnectivityStatus.None },
             testCaseAction = {
-                assertTrue(legacyPayload.exists())
-                assertFalse(File(testSdkStorage(ctx).path(SdkDir.TELEMETRY_READY).toFile(), legacyPayload.name).exists())
+                awaitDeleted(File(ctx.filesDir, "embrace"))
+                val moved = testSdkStorage(ctx).path(SdkDir.TELEMETRY_READY) / legacyLogFile.name
+                assertTrue(moved.toFile().exists())
             },
         )
+        testRule.runTest(
+            testCaseAction = { assertEquals(LastRunEndState.CLEAN_EXIT, embrace.lastRunEndState) },
+            assertAction = {
+                val log = getLogEnvelopes(1).single().data.logs?.single()
+                assertEquals(LEGACY_LOG_BODY, log?.body)
+            },
+        )
+    }
+
+    private fun seedLeftoverTelemetry() {
+        writeLegacyFile("embrace/embrace_crash_marker", "1".toByteArray())
+        writeLegacyFile("embrace_payloads/${legacyLogFile.name}", legacyLogPayload())
+    }
+
+    private fun awaitMigrationMarker() {
+        val marker = testSdkStorage(ctx).path(SdkDir.INSTALL_STATE) / SdkStorageLayout.ORDINALS_FILE_NAME
+        waitUntilConditionMet(dataProvider = { marker.toFile().exists() }, condition = { it })
     }
 
     @Test
@@ -206,11 +271,7 @@ internal class LegacyStorageUpgradeTest(
     }
 
     private fun awaitDeleted(file: File) {
-        returnIfConditionMet(
-            desiredValueSupplier = { true },
-            dataProvider = { !file.exists() },
-            condition = { it },
-        )
+        waitUntilConditionMet(dataProvider = { !file.exists() }, condition = { it })
     }
 
     private fun shutdownSdkWithIncompleteSession() {

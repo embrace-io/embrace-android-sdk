@@ -45,10 +45,12 @@ class LegacyStorageMigrator(
      * Moves the telemetry, the remote config and the crash marker. On a first upgrade launch nothing is at its target
      * yet, so each directory is moved by a single rename.
      */
-    fun moveTelemetry() {
+    fun moveTelemetry(moveCrashMarker: Boolean = true) {
         SystemTrace.trace("storage-telemetry-move") {
             MIGRATED_DIRS.forEach(::migrate)
-            migrateCrashMarker()
+            if (moveCrashMarker) {
+                migrateCrashMarker()
+            }
         }
     }
 

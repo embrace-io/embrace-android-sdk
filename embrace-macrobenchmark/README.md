@@ -53,20 +53,12 @@ time), and the app's peak Java heap and resident memory. The memory figures need
 profile, so the benchmark refuses to run under any other, and they only compare between modes and fixtures
 on one device: how a device reports them differs across Android versions. It
 runs 10 iterations a fixture, a pass; a
-comparison should take its repetition from several passes (see the campaign below) rather than from
-more iterations in one. Pass `-e resurrection.iterations N` to `am instrument`, or
-`--gradle-arg -Pandroid.testInstrumentationRunnerArguments.resurrection.iterations=N`, to change it:
+comparison should take its repetition from several passes rather than from more iterations in one.
+Pass `-e resurrection.iterations N` to `am instrument`, or `--gradle-arg -Pandroid.testInstrumentationRunnerArguments.resurrection.iterations=N`, to change it:
 
 ```bash
 scripts/macrobenchmark.sh --out perf/macrobenchmark/resurrection --capture memory \
     --test io.embrace.android.embracesdk.macrobenchmark.ResurrectionBenchmark
-```
-
-Several passes on one device, with a cool-down between them and the traces of each pass kept apart:
-
-```bash
-tools/startup fleet-campaign --serial SERIAL --out OUT --passes 4 --harness macrobenchmark \
-    --method ResurrectionBenchmark --capture memory
 ```
 
 The two halves are usable separately: `scripts/run-macrobenchmark.sh --help` and
@@ -121,8 +113,7 @@ that lots of other data is omitted, which is what the second capture profile is 
 ### Capture profiles
 
 `--capture` picks the perfetto config a run captures with (`embrace.capture` as an instrumentation
-argument when running Gradle directly; `tools/startup fleet-campaign --harness macrobenchmark
---capture <profile>` when a campaign of several passes drives this harness). The profile is part of
+argument when running Gradle directly). The profile is part of
 what makes two runs comparable, and the trace records the config it was captured with, so the
 analysis reads which one it has rather than being told.
 

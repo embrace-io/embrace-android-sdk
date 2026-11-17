@@ -35,6 +35,20 @@ kotlin {
     }
 }
 
+// The embrace-config.json of every app benchmarked against this endpoint, by its path in the repo, which a test
+// checks gives the app a placeholder app ID and points its config and data endpoints here.
+val benchmarkedConfigs = listOf(
+    "examples/ExampleApp/app/src/benchmark/embrace-config.json",
+    "examples/ExampleApp/app/src/benchmarkOtelRegular/embrace-config.json",
+).map { projectDir.parentFile.resolve(it) }
+
+tasks.withType<Test>().configureEach {
+    systemProperty("benchmarkEndpoint.benchmarkedConfigs", benchmarkedConfigs.joinToString(File.pathSeparator))
+    inputs.files(benchmarkedConfigs)
+        .withPathSensitivity(PathSensitivity.RELATIVE)
+        .withPropertyName("benchmarkedConfigs")
+}
+
 dependencies {
     // LocalEmbraceEndpointRule is a JUnit rule the benchmarks declare
     api(libs.junit)

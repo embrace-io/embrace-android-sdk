@@ -4,6 +4,7 @@ import org.junit.Assert.assertEquals
 import org.junit.Assert.assertThrows
 import org.junit.Assert.assertTrue
 import org.junit.Test
+import java.io.File
 import java.io.IOException
 import java.net.ServerSocket
 import java.net.Socket
@@ -54,6 +55,19 @@ class LocalEmbraceEndpointTest {
         }
     }
 
+    @Test
+    fun `every benchmarked app has a placeholder app ID and its endpoints pointed here`() {
+        val configs = checkNotNull(System.getProperty(BENCHMARKED_CONFIGS_PROPERTY)).split(File.pathSeparator).map(::File)
+        assertTrue("no benchmarked app configs", configs.isNotEmpty())
+        configs.forEach { file ->
+            val config = file.readText()
+            val urls = BASE_URL.findAll(config).associate { it.groupValues[1] to it.groupValues[2] }
+            assertEquals(file.path, mapOf("config" to LOCAL_ENDPOINT_BASE_URL, "data" to LOCAL_ENDPOINT_BASE_URL), urls)
+            assertEquals(file.path, "abcde", APP_ID.find(config)?.groupValues?.get(1))
+        }
+        assertEquals("http://127.0.0.1:$LOCAL_ENDPOINT_PORT", LOCAL_ENDPOINT_BASE_URL)
+    }
+
     /** Sends [raw] on a new connection to [endpoint] and returns everything it replied before closing. */
     private fun exchange(endpoint: LocalEmbraceEndpoint, raw: ByteArray): ByteArray {
         Socket(LOCAL_ENDPOINT_HOST, endpoint.port).use { socket ->
@@ -74,4 +88,11 @@ class LocalEmbraceEndpointTest {
     }
 
     private fun freePort(): Int = ServerSocket(0).use { it.localPort }
+
+    private companion object {
+        // set by this module's build file, which lists the files
+        const val BENCHMARKED_CONFIGS_PROPERTY = "benchmarkEndpoint.benchmarkedConfigs"
+        val BASE_URL = Regex("\"(config|data)\"\\s*:\\s*\"([^\"]+)\"")
+        val APP_ID = Regex("\"app_id\"\\s*:\\s*\"([^\"]+)\"")
+    }
 }

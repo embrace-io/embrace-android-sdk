@@ -71,6 +71,7 @@ androidx-media3-ui = { module = "androidx.media3:media3-ui", version.ref = "medi
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }
+android-library = { id = "com.android.library", version.ref = "agp" }
 kotlin-compose = { id = "org.jetbrains.kotlin.plugin.compose", version.ref = "kotlin" }
 embrace = { id = "io.embrace.gradle", version.ref = "embrace" }
 android-test = { id = "com.android.test", version.ref = "agp" }

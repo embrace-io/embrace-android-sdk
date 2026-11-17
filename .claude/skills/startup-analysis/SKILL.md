@@ -75,6 +75,18 @@ integration-test concern, not this skill's.
   perfetto trace. Its metric list is the minimum `measureRepeated` requires
   (`StartupTimingMetric` only) and is NOT the source of any reported number — it never needs to
   track SDK sections.
+- No Embrace credentials are needed, and none are used. The `benchmark` and
+  `benchmarkOtelRegular` build types' `embrace-config.json` give the app a placeholder `app_id`,
+  because the SDK takes a different startup path without one, and point its config and data
+  endpoints at `LocalEmbraceEndpoint` (`embrace-benchmark-endpoint`), which the
+  benchmark serves on the device. That `app_id` wins over `EMBRACE_APP_ID`. The SDK fetches and
+  caches its remote config, then delivers, as in a customer's app, and nothing leaves the device.
+  The endpoint serves an empty remote config (`{}`): the SDK's defaults plus the app's local config.
+  When the test ends it logs what it answered to logcat
+  (`adb logcat -d -s System.out:I`, the `local Embrace endpoint answered:` line): one config 200
+  on the first launch after install, 304 on the launches after it, and a `POST` 200 for each
+  delivery. Config and delivery counts there show the SDK started with the app ID and used the
+  local endpoints.
 
 ## Choosing the SDK under test
 
@@ -109,10 +121,13 @@ separately. `<Variant>` below is `Benchmark` or `BenchmarkOtelRegular`, and `<va
    ```
    examples/ExampleApp/gradlew -p examples/ExampleApp :app:benchmark:connected<Variant>AndroidTest \
      -Pandroid.testInstrumentationRunnerArguments.class=io.embrace.android.benchmark.StartupBenchmarks \
-     -Pandroid.testInstrumentationRunnerArguments.androidx.benchmark.dryRunMode.enable=false
+     -Pandroid.testInstrumentationRunnerArguments.androidx.benchmark.dryRunMode.enable=false \
+     -Pembrace.disableMappingFileUpload=true
    ```
    The dry-run override is mandatory — the module defaults it to true, and dry runs produce NO
-   traces (there would be nothing to analyze).
+   traces (there would be nothing to analyze). The upload flag stops the Embrace plugin uploading
+   the mapping file and native symbols for the placeholder app when `EMBRACE_API_TOKEN` is set in
+   the environment.
 2. **Collect**: the per-iteration traces land in
    `examples/ExampleApp/app/benchmark/build/outputs/connected_android_test_additional_output/<variant>/connected/<device>/`
    as `StartupBenchmarks_coldStartup_iterNNN_<timestamp>.perfetto-trace`. Each rerun WIPES this

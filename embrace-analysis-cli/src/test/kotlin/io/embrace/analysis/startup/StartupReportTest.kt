@@ -97,9 +97,85 @@ internal class StartupReportTest {
         )
         assertTrue(lines(text).contains("  ${"iter000_x".padEnd(52)}    10.0     9.0     2.0  20.0%     2  CONTENDED"))
         assertTrue(lines(text).contains("  ${"iter001_x".padEnd(52)}    10.0     9.0     1.5  15.0%     2"))
-        // a trace without a window has no scheduling row
+        // a trace without a window has no scheduling row, and isn't judged
         assertFalse(lines(text).any { it.contains("iter002_x") })
-        assertTrue(lines(text).contains("  1/3 iterations contended (wait > 15% of window)."))
+        assertTrue(
+            lines(text).contains(
+                "  1/2 iterations contended (wait > 15% of window); " +
+                    "1 not judged (unusable, no window, or scheduling that doesn't cover the window).",
+            ),
+        )
+    }
+
+    @Test
+    fun `every trace's health is counted, and each that isn't ok is listed with what it lost and the guidance once`() {
+        val lossy = health(
+            verdict = TraceHealth.Verdict.LOSSY,
+            losses = listOf(TraceHealth.StatCounter("traced_buf_data_loss_overwrite", 1, 12)),
+        )
+        val text = report(metrics(), metrics(health = lossy), metrics(health = lossy))
+        assertTrue(lines(text).contains("trace health: 1/3 ok, 2 lossy"))
+        assertTrue(lines(text).contains("  ${"iter001_x".padEnd(52)}${"lossy".padEnd(11)}traced_buf_data_loss_overwrite[1]=12"))
+        assertEquals(1, lines(text).count { it == "  lossy (2): ${TraceHealth.Verdict.LOSSY.guidance}" })
+    }
+
+    @Test
+    fun `a wrap counted as loss is named as such, and traces whose stats predate their data are counted`() {
+        val text = report(
+            metrics(health = health(verdict = TraceHealth.Verdict.LOSSY, lossCountersReported = false, bufferWraps = 3)),
+            metrics(health = health(lossCountersReported = false)),
+            metrics(health = health(statsAfterData = false)),
+        )
+        assertTrue(lines(text).any { it.endsWith("traced_buf_chunks_overwritten=3 (loss not reported)") })
+        // a trace whose stats don't count overwritten data, but that never wrapped, lost nothing and isn't listed
+        assertTrue(lines(text).contains("trace health: 2/3 ok, 1 lossy"))
+        assertTrue(text.contains("  1/3 traces have buffer stats recorded before any data was written, which can't show a loss"))
+    }
+
+    @Test
+    fun `import errors are listed with how many traces had each, and leave the verdict alone`() {
+        val error = TraceHealth.StatCounter("power_rail_empty_packet", null, 1)
+        val withError = metrics(health = health(importErrors = listOf(error)))
+        val text = report(withError, withError)
+        assertTrue(lines(text).contains("trace health: 2/2 ok"))
+        assertTrue(
+            lines(text).contains("  import errors (what trace_processor couldn't read; durations stand): power_rail_empty_packet in 2"),
+        )
+    }
+
+    @Test
+    fun `an unusable trace is left out of every figure after its health`() {
+        val text = report(
+            metrics(sections = mapOf("emb-modules-init" to 8.0), windowMs = 10.0),
+            metrics(sections = mapOf("emb-modules-init" to 99.0), windowMs = null, health = health(verdict = TraceHealth.Verdict.UNUSABLE)),
+        )
+        assertTrue(lines(text).contains("trace health: 1/2 ok, 1 unusable"))
+        assertTrue(lines(text).contains("  ${"emb-modules-init".padEnd(60)}   1     8.00     8.00     8.00      80.0"))
+        assertTrue(lines(text).contains("  n=1  min=300.0  median=300.0  mean=300.0  max=300.0"))
+    }
+
+    @Test
+    fun `traces with no scheduling data say so instead of reading as zero`() {
+        val none = health(scheduling = TraceHealth.SchedulingCoverage.NONE)
+        val all = report(metrics(health = none), metrics(health = none))
+        assertTrue(lines(all).contains("  none: these traces hold no scheduling data, as the capture records none."))
+        assertFalse(all.contains("iterations contended"))
+
+        val some = report(metrics(), metrics(health = none))
+        assertTrue(lines(some).contains("  ${"iter001_x".padEnd(52)}    10.0  no scheduling data"))
+        assertTrue(lines(some).any { it.startsWith("  0/1 iterations contended") })
+    }
+
+    @Test
+    fun `scheduling that starts inside the window is flagged and not judged, and an unknown start is judged but noted`() {
+        val text = report(
+            metrics(waitMs = 5.0, health = health(scheduling = TraceHealth.SchedulingCoverage.PARTIAL)),
+            metrics(health = health(scheduling = TraceHealth.SchedulingCoverage.UNKNOWN)),
+        )
+        val partial = lines(text).single { it.startsWith("  iter000_x") }
+        assertTrue(partial, partial.endsWith("  PARTIAL: scheduling starts inside the window"))
+        assertTrue(lines(text).any { it.startsWith("  0/1 iterations contended") && it.contains("1 not judged") })
+        assertTrue(lines(text).any { it.startsWith("  1 judged as though their scheduling covered the window") })
     }
 
     private fun report(vararg metrics: StartupMetrics): String =

@@ -169,9 +169,10 @@ class AnalyzeCommand(
         val USAGE = """
             |usage: startup-tools analyze [--trace-processor <trace_processor_shell>] [--all-sections] [--output-dir <dir>] <traces-dir>
             |
-            |Aggregates SDK startup metrics from the macrobenchmark .perfetto-trace files in <traces-dir>: each canonical
-            |section's duration and share of the SDK-init window (the emb-sdk-start slice), TTID, the other emb-* sections, and
-            |each iteration's main-thread scheduling inside the window. The report is printed and written to
+            |Aggregates SDK startup metrics from the macrobenchmark .perfetto-trace files in <traces-dir>: each trace's health
+            |(data loss, and whether the SDK-init window survived), each canonical section's duration and share of the
+            |SDK-init window (the emb-sdk-start slice), TTID, the other emb-* sections, and each iteration's main-thread
+            |scheduling inside the window. The report is printed and written to
             |claude-output/startup-analysis-<YYYY-MM-DD-HHMMSS>.txt (the analysis start time) in this repository.
             |
             |  --trace-processor <path>  a trace_processor_shell binary to use instead of the release the version catalog

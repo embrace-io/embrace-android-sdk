@@ -6,6 +6,7 @@ import androidx.benchmark.macro.StartupMode
 import androidx.benchmark.macro.TraceSectionMetric
 import androidx.benchmark.macro.junit4.MacrobenchmarkRule
 import androidx.test.ext.junit.runners.AndroidJUnit4
+import io.embrace.android.embracesdk.benchmark.endpoint.LocalEmbraceEndpointRule
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -13,6 +14,9 @@ import org.junit.runner.RunWith
 @OptIn(ExperimentalMetricApi::class)
 @RunWith(AndroidJUnit4::class)
 internal class TracingApiBenchmarks {
+    @get:Rule
+    val endpointRule = LocalEmbraceEndpointRule()
+
     @get:Rule
     val benchmarkRule = MacrobenchmarkRule()
 

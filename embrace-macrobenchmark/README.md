@@ -152,6 +152,18 @@ will not, such as the perfetto UI:
 unzip -p <bundle>.perfetto-trace Trace_output.pb > trace.perfetto
 ```
 
+## Embrace's endpoints
+
+The app's `embrace-config.json` (`src/main`, and `src/baselineProfile` for the baseline profile build) points the
+SDK's config and data endpoints at `LocalEmbraceEndpoint` (`embrace-benchmark-endpoint`), which every benchmark and
+`BaselineProfileGenerator` serve on the device for the length of each test, so nothing leaves the device. It answers
+the config fetch with an empty remote config (`{}`) and every delivery with 200. When a test ends, it logs what it
+answered to logcat (`adb logcat -d -s System.out:I`, the `local Embrace endpoint answered:` line).
+
+The remote config a launch runs with is still the one the app writes from global settings (below): the SDK reads it
+at startup, and the next launch's write replaces whatever the fetch saved. That written config has no ETag, so every
+launch fetches the config again, where a customer's app would revalidate its cached copy.
+
 ## Selecting the persistence mode and OTel implementation
 
 Without rebuilding the APK, via global settings the app reads before starting the SDK:

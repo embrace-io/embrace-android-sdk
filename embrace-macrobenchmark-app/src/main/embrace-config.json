@@ -1,3 +1,9 @@
 {
-  "app_id": "abcde"
+  "app_id": "abcde",
+  "sdk_config": {
+    "base_urls": {
+      "config": "http://127.0.0.1:48711",
+      "data": "http://127.0.0.1:48711"
+    }
+  }
 }

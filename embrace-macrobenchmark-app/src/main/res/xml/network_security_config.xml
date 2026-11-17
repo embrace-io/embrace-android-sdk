@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- the SDK's config and data endpoints are the benchmark's local endpoint, served over plain HTTP on loopback;
+     everything else keeps the platform default, which refuses cleartext -->
+<network-security-config>
+    <domain-config cleartextTrafficPermitted="true">
+        <domain includeSubdomains="false">127.0.0.1</domain>
+    </domain-config>
+</network-security-config>

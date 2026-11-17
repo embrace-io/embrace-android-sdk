@@ -11,6 +11,7 @@ import androidx.benchmark.perfetto.PerfettoConfig
 import androidx.test.uiautomator.By
 import androidx.test.uiautomator.Until
 import io.embrace.android.embracesdk.benchmark.capture.CaptureProfile
+import io.embrace.android.embracesdk.benchmark.endpoint.LocalEmbraceEndpointRule
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -24,6 +25,9 @@ internal class OtelInitBenchmark(otelSdkMode: OtelSdkMode) {
 
     @get:Rule
     val otelSdkModeRule = OtelSdkModeRule(otelSdkMode)
+
+    @get:Rule
+    val endpointRule = LocalEmbraceEndpointRule()
 
     @OptIn(ExperimentalBenchmarkConfigApi::class, ExperimentalPerfettoCaptureApi::class, ExperimentalMetricApi::class)
     @Test

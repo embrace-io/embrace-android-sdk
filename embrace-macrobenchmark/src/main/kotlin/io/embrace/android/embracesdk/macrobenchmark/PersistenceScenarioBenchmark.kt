@@ -11,6 +11,7 @@ import androidx.benchmark.perfetto.PerfettoConfig
 import androidx.test.platform.app.InstrumentationRegistry
 import io.embrace.android.embracesdk.benchmark.capture.CAPTURE_PROFILE_ARGUMENT
 import io.embrace.android.embracesdk.benchmark.capture.captureProfileWithKey
+import io.embrace.android.embracesdk.benchmark.endpoint.LocalEmbraceEndpointRule
 import io.embrace.android.embracesdk.benchmark.scenario.HostTask
 import io.embrace.android.embracesdk.benchmark.scenario.PersistenceScenarios
 import io.embrace.android.embracesdk.benchmark.scenario.ScenarioSpec
@@ -34,6 +35,9 @@ internal class PersistenceScenarioBenchmark(
 
     @get:Rule
     val otelSdkModeRule = OtelSdkModeRule(otelSdkMode)
+
+    @get:Rule
+    val endpointRule = LocalEmbraceEndpointRule()
 
     private val captureProfile =
         captureProfileWithKey(InstrumentationRegistry.getArguments().getString(CAPTURE_PROFILE_ARGUMENT))

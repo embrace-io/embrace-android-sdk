@@ -7,6 +7,7 @@ import androidx.test.platform.app.InstrumentationRegistry
 import androidx.test.uiautomator.By
 import androidx.test.uiautomator.UiDevice
 import androidx.test.uiautomator.Until
+import io.embrace.android.embracesdk.benchmark.endpoint.LocalEmbraceEndpointRule
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -42,6 +43,9 @@ internal class BaselineProfileGenerator {
 
     @get:Rule
     val baselineProfileRule = BaselineProfileRule()
+
+    @get:Rule
+    val endpointRule = LocalEmbraceEndpointRule()
 
     private val device = UiDevice.getInstance(InstrumentationRegistry.getInstrumentation())
 

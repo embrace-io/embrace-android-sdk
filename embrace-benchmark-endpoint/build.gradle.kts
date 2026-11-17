@@ -43,6 +43,8 @@ kotlin {
 val benchmarkedConfigs = listOf(
     "examples/ExampleApp/app/src/benchmark/embrace-config.json",
     "examples/ExampleApp/app/src/benchmarkOtelRegular/embrace-config.json",
+    "embrace-macrobenchmark-app/src/main/embrace-config.json",
+    "embrace-macrobenchmark-app/src/baselineProfile/embrace-config.json",
 ).map { projectDir.parentFile.resolve(it) }
 
 tasks.withType<Test>().configureEach {

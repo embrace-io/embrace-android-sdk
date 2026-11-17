@@ -8,8 +8,9 @@ import io.embrace.android.embracesdk.macrobenchmark.app.storage.SdkStorage
  * the SDK's storage, [sdk], and the fixture's, [fixture]. It runs wherever it is called from: what launched
  * the app, and how the outcome is reported, are the caller's.
  *
- * Only what the SDK writes to [SdkStorage.sessionsDir] is supported: that is all a fixture records and restores,
- * and anything else an app instance writes is lost.
+ * Only the session parts an app instance leaves in progress are supported, in either persistence mode: what the
+ * SDK writes to [SdkStorage.sessionsDir] in multi-file mode and to [SdkStorage.cacheDir] in single-file mode.
+ * That is all a fixture records and restores, and anything else an app instance writes is lost.
  *
  * [sdkStarted] says whether the SDK under test is running in this process.
  */
@@ -33,7 +34,7 @@ internal class FixtureRecorder(
         // the SDK writes a part's changes a while after they happen, so an app instance killed sooner would
         // leave them out
         Thread.sleep(writeSettleMs)
-        fixture.saveSessionParts(sdk.sessionsDir)
+        sdkDirs().forEach(fixture::save)
         return FixtureOutcome.Recorded
     }
 
@@ -47,7 +48,7 @@ internal class FixtureRecorder(
             return FixtureOutcome.SdkRunning
         }
         sdk.clear()
-        val restored = fixture.restoreSessionParts(sdk.sessionsDir)
+        val restored = sdkDirs().sumOf(fixture::restore)
         return if (restored > 0) {
             FixtureOutcome.Restored
         } else {
@@ -55,8 +56,10 @@ internal class FixtureRecorder(
         }
     }
 
+    private fun sdkDirs() = listOf(sdk.sessionsDir, sdk.cacheDir)
+
     private companion object {
-        // SessionPartWriterImpl's write delays are 2s
+        // SessionPartWriterImpl's write delays and PeriodicSessionPartCacher's interval are 2s
         const val WRITE_SETTLE_MS = 3_000L
     }
 }

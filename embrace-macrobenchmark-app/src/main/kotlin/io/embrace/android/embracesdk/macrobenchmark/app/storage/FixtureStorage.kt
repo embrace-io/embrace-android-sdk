@@ -4,10 +4,10 @@ import okio.FileSystem
 import okio.Path
 
 /**
- * The fixture a benchmark records: the session parts its app instances left, kept in a directory of its own
- * in the app's data directory, [dataDir], beside the SDK's storage rather than in it. Clearing the SDK's
+ * The fixture a benchmark records: what its app instances left in the SDK's directories, kept in a directory of
+ * its own in the app's data directory, [dataDir], beside the SDK's storage rather than in it. Clearing the SDK's
  * storage leaves it untouched, so it lasts from the fixture's recording through every iteration that starts
- * from it.
+ * from it. Each SDK directory is kept apart, under its own name.
  */
 internal class FixtureStorage(
     private val fileSystem: FileSystem,
@@ -17,20 +17,22 @@ internal class FixtureStorage(
     private val fixtureDir = dataDir / FIXTURE_DIR
 
     /**
-     * Copies every session part in [sessionsDir] into the fixture.
+     * Copies everything in [sdkDir] into the fixture.
      */
-    fun saveSessionParts(sessionsDir: Path) {
-        list(sessionsDir).forEach { part -> copyRecursively(part, fixtureDir / part.name) }
+    fun save(sdkDir: Path) {
+        list(sdkDir).forEach { entry -> copyRecursively(entry, keptDir(sdkDir) / entry.name) }
     }
 
     /**
-     * Copies the fixture's session parts into [sessionsDir], and returns how many parts it copied.
+     * Copies what the fixture keeps for [sdkDir] back into it, and returns how many entries it copied.
      */
-    fun restoreSessionParts(sessionsDir: Path): Int {
-        val parts = list(fixtureDir)
-        parts.forEach { part -> copyRecursively(part, sessionsDir / part.name) }
-        return parts.size
+    fun restore(sdkDir: Path): Int {
+        val entries = list(keptDir(sdkDir))
+        entries.forEach { entry -> copyRecursively(entry, sdkDir / entry.name) }
+        return entries.size
     }
+
+    private fun keptDir(sdkDir: Path): Path = fixtureDir / sdkDir.name
 
     private fun list(dir: Path): List<Path> = fileSystem.listOrNull(dir).orEmpty()
 

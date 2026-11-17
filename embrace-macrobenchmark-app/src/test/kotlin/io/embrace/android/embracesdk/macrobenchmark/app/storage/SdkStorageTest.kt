@@ -62,13 +62,11 @@ internal class SdkStorageTest {
     }
 
     @Test
-    fun `session parts and cached payloads are observed`() {
-        writePart("1000_a")
-        write(sdk.cacheDir / "payload")
-
-        assertTrue(sdk.hasSessionPart("1000_a"))
-        assertFalse(sdk.hasSessionPart("2000_b"))
-        assertEquals(1, sdk.cachedPayloadCount())
+    fun `the cached payloads are listed by file name in order, and none when there is no cache`() {
+        assertEquals(emptyList<String>(), sdk.cachedPayloads())
+        write(sdk.cacheDir / "2000_b.json")
+        write(sdk.cacheDir / "1000_a.json")
+        assertEquals(listOf("1000_a.json", "2000_b.json"), sdk.cachedPayloads())
     }
 
     private fun writePart(name: String) = write(sdk.sessionsDir / name / "metadata.pb")

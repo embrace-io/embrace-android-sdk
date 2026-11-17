@@ -47,6 +47,18 @@ internal class FixtureRecorderTest {
     }
 
     @Test
+    fun `a session part single-file mode left in its cache is recorded and restored`() {
+        assertEquals(FixtureOutcome.Recorded, recorder.record { writeCachedPayload("1000_a.json") })
+        sdkStarted = false
+        // what the previous iteration's launch cached
+        writeCachedPayload("3000_c.json")
+
+        assertEquals(FixtureOutcome.Restored, recorder.restore())
+        assertEquals(listOf("1000_a.json"), sdk.cachedPayloads())
+        assertEquals(emptyList<String>(), sdk.sessionPartDirs())
+    }
+
+    @Test
     fun `each recorded app instance adds its parts to the fixture`() {
         recorder.record { writePart("1000_a") }
         // a recording launch starts from cleared storage, which leaves the fixture alone
@@ -108,5 +120,10 @@ internal class FixtureRecorderTest {
         val dir = sdk.sessionsDir / name
         fs.createDirectories(dir)
         fs.write(dir / "metadata.pb") { writeUtf8("metadata") }
+    }
+
+    private fun writeCachedPayload(name: String) {
+        fs.createDirectories(sdk.cacheDir)
+        fs.write(sdk.cacheDir / name) { writeUtf8("payload") }
     }
 }

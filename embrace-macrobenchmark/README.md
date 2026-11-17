@@ -5,10 +5,10 @@ starting the next one on each. Each iteration fills the session with telemetry (
 calls `Embrace.endUserSession()` (`session-end`), then waits ~2s for the SDK's queued persistence
 writes so they land in the trace.
 
-Every benchmark except `ResurrectionBenchmark` runs once per opentelemetry-kotlin implementation
-(`compat` and `regular`), which appear as a suffix on the test name, e.g. `sessionEnd[compat]`.
-`ResurrectionBenchmark` runs in `compat` mode only, and its test names carry the fixture instead,
-e.g. `resurrect[large_part]`.
+Every benchmark runs once per opentelemetry-kotlin implementation (`compat` and `regular`), which appear
+as a suffix on the test name, e.g. `sessionEnd[compat]`. `ResurrectionBenchmark` also runs once per
+persistence mode, and its test names carry the fixture and both modes, e.g.
+`resurrect[large_part-multi-file-compat]`.
 
 `SessionBenchmark` wipes app data per iteration because the SDK restores a persisted user session in a
 new process and declines a manual end for an iteration that inherits one. The app depends on
@@ -38,7 +38,7 @@ scripts/macrobenchmark.sh --out perf/macrobenchmark/otel-init \
 ```
 
 `ResurrectionBenchmark` measures what resurrecting the session part a dead app instance left on disk costs
-the next launch, in multi-file persistence mode. What that costs grows with how much the part holds, so each
+the next launch, in each persistence mode. What that costs grows with how much the part holds, so each
 of `ResurrectionScenarios` leaves one dead part of a different size: `small_part`, `medium_part`, `large_part`, and
 `capped_part`, which fills the SDK's default limits per session part (500 spans created through its API, 2000
 network requests and 100 each of breadcrumbs and session properties). Each part records requests through
@@ -47,9 +47,11 @@ and leaves spans running when its app instance dies. The benchmark records the f
 that runs the scenario and is killed once the SDK has written it. Before every iteration, a launch that does
 not start the SDK restores the recorded part; the measured launch then cold-starts the SDK and waits until
 the part has been resurrected. It reports `emb-sdk-start` (the SDK's start on the main
-thread), `emb-mf-read-session-parts` and `emb-resurrect-payloads` (the background worker's reading and
-resurrecting, whose sum is its wall clock time), and the app's peak Java heap and resident memory. The
-memory figures need the `memory` capture profile, so the benchmark refuses to run under any other. It
+thread), `emb-mf-read-session-parts` and `emb-resurrect-payloads` (the background worker resurrecting the
+part from multi-file mode's files or from single-file mode's cached payload; their sum is its wall clock
+time), and the app's peak Java heap and resident memory. The memory figures need the `memory` capture
+profile, so the benchmark refuses to run under any other, and they only compare between modes and fixtures
+on one device: how a device reports them differs across Android versions. It
 runs 10 iterations a fixture, a pass; a
 comparison should take its repetition from several passes (see the campaign below) rather than from
 more iterations in one. Pass `-e resurrection.iterations N` to `am instrument`, or
@@ -177,4 +179,5 @@ The app turns those into a remote config on disk, which the SDK reads at startup
 binary config cache that would otherwise take priority. Every benchmark and `BaselineProfileGenerator`
 set and clear `embrace_pct_otel_kotlin_sdk` themselves, so setting it by hand has no effect on them.
 `ResurrectionBenchmark` likewise sets and clears `embrace_pct_multi_file_persistence` itself (and the
-`embrace_benchmark_restore_fixture` setting that drives its fixture).
+`embrace_benchmark_restore_fixture` setting that drives its fixture). The other benchmarks run in whichever
+persistence mode the setting selects.

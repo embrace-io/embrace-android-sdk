@@ -81,8 +81,8 @@ integration-test concern, not this skill's.
   endpoints at `LocalEmbraceEndpoint` (`embrace-benchmark-endpoint`), which the
   benchmark serves on the device. That `app_id` wins over `EMBRACE_APP_ID`. The SDK fetches and
   caches its remote config, then delivers, as in a customer's app, and nothing leaves the device.
-  The endpoint serves an empty remote config (`{}`): the SDK's defaults plus the app's local config.
-  When the test ends it logs what it answered to logcat
+  The endpoint serves an empty remote config (`{}`), the SDK's defaults plus the app's local config, to every arm but
+  `coldStartupExpiredUserSession` (below). When the test ends it logs what it answered to logcat
   (`adb logcat -d -s System.out:I`, the `local Embrace endpoint answered:` line): one config 200
   on the first launch after install, 304 on the launches after it, and a `POST` 200 for each
   delivery. Config and delivery counts there show the SDK started with the app ID and used the
@@ -115,12 +115,28 @@ pure-Kotlin `regular` implementation. Measure both unless the user asks for one,
 separately. `<Variant>` below is `Benchmark` or `BenchmarkOtelRegular`, and `<variant>` is
 `benchmark` or `benchmarkOtelRegular`.
 
+## Choosing the arm
+
+Each `StartupBenchmarks` method is an arm that differs from `coldStartup` in one thing. `<arm>` below is one of them;
+run one at a time, as each takes its own run's worth of time and its traces are analyzed on their own.
+
+| arm | differs from `coldStartup` in | use it for |
+|---|---|---|
+| `coldStartup` | (the default: macrobenchmark's default compilation; each launch restores the previous launch's user session) | most measurements |
+| `coldStartupNoAot` | no ahead-of-time compilation | what the baseline profiles save |
+| `coldStartupFullAot` | the whole app compiled ahead of time (`speed`), which builds no app image, so its classes load at runtime | against `coldStartupNoAot`, what compiled code alone saves; against `coldStartup`, what the baseline profile's app image saves. Slower than `coldStartup`, and not a state customers' installs reach |
+| `coldStartupNewUserSession` | the app's data cleared before every launch: a first launch after install, no cached config | the first-launch path |
+| `coldStartupExpiredUserSession` | each launch's previous user session has expired, everything else kept: the shape most customers' cold starts have | `emb-start-first-session` ending the expired session and creating one; about 35 s an iteration, after two set-up launches that tap the app's End Session example |
+
+Arms aren't comparable with each other except through the one thing they change. `-Pandroid.testInstrumentationRunnerArguments.embrace.iterations=<n>`
+sets the iteration count (default 20).
+
 ## Procedure
 
 1. Set the SDK version (above), then run:
    ```
    examples/ExampleApp/gradlew -p examples/ExampleApp :app:benchmark:connected<Variant>AndroidTest \
-     -Pandroid.testInstrumentationRunnerArguments.class=io.embrace.android.benchmark.StartupBenchmarks \
+     -Pandroid.testInstrumentationRunnerArguments.class=io.embrace.android.benchmark.StartupBenchmarks#<arm> \
      -Pandroid.testInstrumentationRunnerArguments.androidx.benchmark.dryRunMode.enable=false \
      -Pembrace.disableMappingFileUpload=true
    ```
@@ -130,7 +146,7 @@ separately. `<Variant>` below is `Benchmark` or `BenchmarkOtelRegular`, and `<va
    the environment.
 2. **Collect**: the per-iteration traces land in
    `examples/ExampleApp/app/benchmark/build/outputs/connected_android_test_additional_output/<variant>/connected/<device>/`
-   as `StartupBenchmarks_coldStartup_iterNNN_<timestamp>.perfetto-trace`. Each rerun WIPES this
+   as `StartupBenchmarks_<arm>_iterNNN_<timestamp>.perfetto-trace`. Each rerun WIPES this
    directory — copy any traces you need to keep (e.g. per-pass comparisons) before rerunning.
 3. **Analyze**: run
    ```

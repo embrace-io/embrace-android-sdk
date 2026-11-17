@@ -104,63 +104,31 @@ class AnalyzeCommand(
     ) {
         companion object {
 
+            private val parser =
+                ArgumentParser(flags = setOf(ALL_SECTIONS), valued = setOf(TRACE_PROCESSOR, OUTPUT_DIR))
+
             /**
-             * The options in [args], or null when they ask for the help text. Options take their value as the next
-             * argument or after `=`. Throws [UsageException] for an unknown option, a missing value, or anything but
-             * exactly one traces directory.
+             * The options in [args], or null when they ask for the help text. Throws [UsageException] for an unknown
+             * option, a missing value, an option given twice, or anything but exactly one traces directory.
              */
             fun parse(args: List<String>): Options? {
-                var traceProcessor: String? = null
-                var outputDir: String? = null
-                var allSections = false
-                val positional = mutableListOf<String>()
-                val remaining = args.iterator()
-                while (remaining.hasNext()) {
-                    val arg = remaining.next()
-                    val option = arg.substringBefore('=')
-                    val inlineValue = arg.substringAfter('=', missingDelimiterValue = "").takeIf { '=' in arg }
-                    when (option) {
-                        "-h", "--help" -> return null
-                        "--all-sections" -> allSections = true
-                        "--trace-processor", "--output-dir" -> {
-                            val value = inlineValue ?: remaining.nextOrNull() ?: usageError("$option needs a value")
-                            if (option == "--trace-processor") {
-                                traceProcessor = value
-                            } else {
-                                outputDir = value
-                            }
-                        }
-                        else -> {
-                            if (arg.startsWith("-")) {
-                                usageError("unknown option $arg")
-                            }
-                            positional.add(arg)
-                        }
-                    }
-                }
-                if (positional.size != 1) {
-                    usageError("expected one traces directory, got ${positional.size}")
+                val parsed = parser.parse(args) ?: return null
+                if (parsed.positional.size != 1) {
+                    throw UsageException("expected one traces directory, got ${parsed.positional.size}")
                 }
                 return Options(
-                    tracesDir = Paths.get(positional.single()),
-                    traceProcessor = traceProcessor?.let { Paths.get(it) },
-                    allSections = allSections,
-                    outputDir = outputDir?.let { Paths.get(it) },
+                    tracesDir = Paths.get(parsed.positional.single()),
+                    traceProcessor = parsed.values[TRACE_PROCESSOR]?.single()?.let { Paths.get(it) },
+                    allSections = ALL_SECTIONS in parsed.flags,
+                    outputDir = parsed.values[OUTPUT_DIR]?.single()?.let { Paths.get(it) },
                 )
             }
 
-            private fun Iterator<String>.nextOrNull(): String? = if (hasNext()) {
-                next()
-            } else {
-                null
-            }
-
-            private fun usageError(message: String): Nothing = throw UsageException(message)
+            private const val ALL_SECTIONS = "--all-sections"
+            private const val TRACE_PROCESSOR = "--trace-processor"
+            private const val OUTPUT_DIR = "--output-dir"
         }
     }
-
-    /** Arguments `analyze` can't run with; the message says why. */
-    private class UsageException(message: String) : IllegalArgumentException(message)
 
     private companion object {
         val HEADER_TIME: DateTimeFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")

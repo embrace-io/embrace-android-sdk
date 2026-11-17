@@ -1,5 +1,6 @@
 package io.embrace.analysis.cli
 
+import io.embrace.analysis.benchmark.CaptureProfile
 import io.embrace.analysis.benchmark.IterationTrace
 import io.embrace.analysis.startup.StartupMetrics
 import io.embrace.analysis.startup.StartupMetricsSource
@@ -181,6 +182,7 @@ internal class AnalyzeCommandTest {
                     statsAfterData = true,
                     scheduling = TraceHealth.SchedulingCoverage.FULL,
                 ),
+                capture = CaptureProfile.ANDROIDX_DEFAULT,
             )
         }
 

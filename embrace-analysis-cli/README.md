@@ -33,6 +33,9 @@ tools/startup analyze [--trace-processor <path>] [--all-sections] [--output-dir 
 Reads every `*.perfetto-trace` directly in `<traces-dir>` (a macrobenchmark run's output directory), in iteration
 order by the `iterNNN` in their names, and reports across the iterations:
 
+- the capture profile the traces were recorded with, from the config each one records: the macrobenchmark's
+  `app-only`, `with-context` or `memory`, androidx.benchmark's `androidx-default` (the ExampleApp's), or `unknown`.
+  Traces captured differently are called out, since they aren't comparable;
 - each trace's health, before any figure read from it: `ok`, `lossy` (trace_processor counted a data loss, but the
   SDK-init window survived), `no-window` (no loss, and no window either: a build or instrumentation problem) or
   `unusable` (the loss took the window, so the trace is left out of every figure). Where a capture's buffer stats don't

@@ -1,5 +1,6 @@
 package io.embrace.analysis.startup
 
+import io.embrace.analysis.benchmark.CaptureProfile
 import io.embrace.analysis.benchmark.IterationTrace
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
@@ -108,6 +109,16 @@ internal class StartupReportTest {
     }
 
     @Test
+    fun `the capture every trace shares is named, and traces captured differently are called out with their counts`() {
+        assertTrue(lines(report(metrics(), metrics())).contains("capture: app-only"))
+        assertTrue(
+            lines(report(metrics(capture = CaptureProfile.WITH_CONTEXT), metrics(), metrics())).contains(
+                "capture: MIXED: app-only (2), with-context (1) — do not compare iterations across captures",
+            ),
+        )
+    }
+
+    @Test
     fun `every trace's health is counted, and each that isn't ok is listed with what it lost and the guidance once`() {
         val lossy = health(
             verdict = TraceHealth.Verdict.LOSSY,
@@ -158,7 +169,7 @@ internal class StartupReportTest {
     fun `traces with no scheduling data say so instead of reading as zero`() {
         val none = health(scheduling = TraceHealth.SchedulingCoverage.NONE)
         val all = report(metrics(health = none), metrics(health = none))
-        assertTrue(lines(all).contains("  none: these traces hold no scheduling data, as the capture records none."))
+        assertTrue(lines(all).contains("  none: these traces hold no scheduling data, as their capture records none."))
         assertFalse(all.contains("iterations contended"))
 
         val some = report(metrics(), metrics(health = none))
@@ -198,6 +209,7 @@ internal class StartupReportTest {
         source: StartupWindow.Source = StartupWindow.Source.SDK_START,
         waitMs: Double = 0.5,
         health: TraceHealth = health(),
+        capture: CaptureProfile = CaptureProfile.APP_ONLY,
     ) = StartupMetrics(
         sections = sections,
         window = windowMs?.let {
@@ -209,6 +221,7 @@ internal class StartupReportTest {
         },
         ttidMs = 300.0,
         health = health,
+        capture = capture,
     )
 
     private fun health(

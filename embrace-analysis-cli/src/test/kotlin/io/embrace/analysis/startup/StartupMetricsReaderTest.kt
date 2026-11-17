@@ -2,6 +2,7 @@ package io.embrace.analysis.startup
 
 import androidx.benchmark.traceprocessor.Row
 import androidx.benchmark.traceprocessor.rowOf
+import io.embrace.analysis.benchmark.CaptureProfile
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNull
@@ -23,9 +24,11 @@ internal class StartupMetricsReaderTest {
             ttid = rowOf("dur" to 247_247_030L),
             counters = emptySequence(),
             capture = capture(),
+            config = rowOf("str_value" to "data_sources {\n  config {\n    ftrace_config {\n      atrace_apps: \"a\"\n    }\n  }\n}\n"),
         )
 
         assertEquals(listOf("emb-modules-init", "emb-config-service-init"), metrics.sections.keys.toList())
+        assertEquals(CaptureProfile.APP_ONLY, metrics.capture)
         assertEquals(7.261963, metrics.sections.getValue("emb-modules-init"), 0.0)
         assertEquals(
             StartupWindow(
@@ -64,9 +67,12 @@ internal class StartupMetricsReaderTest {
             ttid = null,
             counters = emptySequence(),
             capture = capture(windowStart = null),
+            config = null,
         )
         assertNull(metrics.window)
         assertNull(metrics.ttidMs)
+        // and without a recorded config, its capture is unknown rather than guessed
+        assertEquals(CaptureProfile.UNKNOWN, metrics.capture)
         assertEquals(mapOf("emb-modules-init" to 1.0), metrics.sections)
     }
 
@@ -143,6 +149,7 @@ internal class StartupMetricsReaderTest {
         ttid = null,
         counters = counters,
         capture = capture,
+        config = null,
     )
 
     private fun coverage(capture: Row) = read(capture = capture).health.scheduling

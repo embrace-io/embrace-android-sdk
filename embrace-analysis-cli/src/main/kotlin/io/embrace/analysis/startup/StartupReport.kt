@@ -22,6 +22,7 @@ class StartupReport(
     /** The report text, every line ending in a newline. */
     fun render(): String = buildString {
         line("traces analyzed: ${iterations.size}")
+        line("capture: ${captureDescription()}")
         line()
         healthBlock()
         windowBlock()
@@ -31,6 +32,18 @@ class StartupReport(
         sectionValues.remove(StartupWindow.Source.SDK_START.key) // reported as the window, not a section
         otherSectionsBlock(sectionValues)
         schedulingBlock()
+    }
+
+    /** The capture profile every trace shares, or each one there is with its count. */
+    private fun captureDescription(): String {
+        val counts = iterations.groupingBy { it.metrics.capture }.eachCount()
+        val only = counts.keys.singleOrNull()
+        return if (only != null) {
+            only.key
+        } else {
+            "MIXED: " + counts.entries.sortedBy { it.key.key }.joinToString(", ") { (profile, n) -> "${profile.key} ($n)" } +
+                " — do not compare iterations across captures"
+        }
     }
 
     private fun StringBuilder.healthBlock() {
@@ -159,7 +172,7 @@ class StartupReport(
         line("main-thread scheduling inside the window (contention / slow-execution check):")
         val withWindow = usable.filter { it.metrics.window != null }
         if (withWindow.isNotEmpty() && withWindow.all { it.metrics.health.scheduling == TraceHealth.SchedulingCoverage.NONE }) {
-            line("  none: these traces hold no scheduling data, as the capture records none.")
+            line("  none: these traces hold no scheduling data, as their capture records none.")
             return
         }
         row(SCHEDULING_HEADER, "iteration", "window", "run", "wait", "wait%", "cpus")

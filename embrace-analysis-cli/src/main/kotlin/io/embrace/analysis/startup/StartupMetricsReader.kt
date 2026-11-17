@@ -2,9 +2,12 @@ package io.embrace.analysis.startup
 
 import androidx.benchmark.traceprocessor.Row
 import androidx.benchmark.traceprocessor.TraceProcessor
+import io.embrace.analysis.benchmark.CaptureProfileClassifier
 
 /** Reads [StartupMetrics] from loaded traces, through the views of `startup_views.sql`. */
 class StartupMetricsReader {
+
+    private val captureClassifier = CaptureProfileClassifier()
 
     private val views: String =
         checkNotNull(StartupMetricsReader::class.java.getResource(VIEWS_RESOURCE)) { "missing $VIEWS_RESOURCE" }.readText()
@@ -18,6 +21,7 @@ class StartupMetricsReader {
             ttid = session.query(TTID).singleOrNull(),
             counters = session.query(COUNTERS),
             capture = session.query(CAPTURE).single(),
+            config = session.query(CONFIG).singleOrNull(),
         )
     }
 
@@ -26,8 +30,9 @@ class StartupMetricsReader {
      * (`dur`, `src`, and the init thread's `wait`, `running` and `cpus`) and [ttid] (`dur`) rows, each null when the
      * trace has none; [counters], the non-zero `stats` counters (`name`, `idx`, `severity`, `value`); and [capture], the
      * one row on what the capture covers (`sched_rows`, `sched_start`, `window_start`, `loss_reported`,
-     * `buffer_wraps`, `stats_after_data`). Times are in ns. Throws [IllegalArgumentException] for a window source or counter severity the
-     * views don't produce.
+     * `buffer_wraps`, `stats_after_data`); and [config], the trace's recorded config (`str_value`, the TraceConfig as
+     * text), null when it records none. Times are in ns. Throws [IllegalArgumentException] for a window source or
+     * counter severity the views don't produce.
      */
     internal fun fromRows(
         sections: Sequence<Row>,
@@ -35,6 +40,7 @@ class StartupMetricsReader {
         ttid: Row?,
         counters: Sequence<Row>,
         capture: Row,
+        config: Row?,
     ): StartupMetrics {
         val startupWindow = window?.let(::startupWindow)
         return StartupMetrics(
@@ -42,6 +48,7 @@ class StartupMetricsReader {
             window = startupWindow,
             ttidMs = ttid?.long("dur")?.toMillis(),
             health = traceHealth(counters.toList(), capture, hasWindow = startupWindow != null),
+            capture = captureClassifier.classify(config?.nullableString("str_value")),
         )
     }
 
@@ -121,6 +128,7 @@ class StartupMetricsReader {
         const val COUNTERS = "SELECT name, idx, severity, value FROM emb_trace_counters ORDER BY severity, name, idx"
         const val CAPTURE =
             "SELECT sched_rows, sched_start, window_start, loss_reported, buffer_wraps, stats_after_data FROM emb_trace_capture"
+        const val CONFIG = "SELECT str_value FROM metadata WHERE name = 'trace_config_pbtxt'"
         const val DATA_LOSS = "data_loss"
         const val ERROR = "error"
         const val NANOS_PER_MILLI = 1e6

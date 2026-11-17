@@ -38,3 +38,13 @@ val traceProcessorVersion = tasks.register("traceProcessorVersion") {
 sourceSets.main {
     resources.srcDir(traceProcessorVersion)
 }
+
+// The macrobenchmark's capture configs, which CaptureProfileClassifierTest classifies to hold its profiles to theirs.
+val captureConfigs = rootProject.layout.projectDirectory.dir("embrace-benchmark-common/src/main/resources")
+
+tasks.withType<Test>().configureEach {
+    systemProperty("analysis.captureConfigsDir", captureConfigs.asFile.absolutePath)
+    inputs.files(captureConfigs.asFileTree.matching { include("perfetto-config-*.pbtx") })
+        .withPathSensitivity(PathSensitivity.RELATIVE)
+        .withPropertyName("captureConfigs")
+}

@@ -51,6 +51,8 @@ integration-test concern, not this skill's.
 
 ## What you get (all from the traces)
 
+- The capture profile the traces were recorded with (`androidx-default` for this skill's benchmark), called out
+  when traces were captured differently.
 - Each trace's health, before anything read from it: `ok`, `lossy`, `no-window` or `unusable` (left out of every
   figure), trace_processor's import errors, and whether its scheduling covers the window. The CLI's README
   (`embrace-analysis-cli/README.md`, `analyze`) says what each means.

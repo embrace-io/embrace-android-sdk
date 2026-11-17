@@ -1,12 +1,14 @@
 package io.embrace.android.embracesdk.internal.store.file
 
 import io.embrace.android.embracesdk.fakes.FakeErrorHandler
-import io.embrace.android.embracesdk.fs.fakeFileSystem
 import io.embrace.android.embracesdk.internal.logging.SdkErrorType
 import io.embrace.android.embracesdk.internal.store.Ordinal
+import okio.FileHandle
 import okio.FileSystem
+import okio.ForwardingFileSystem
+import okio.IOException
+import okio.Path
 import okio.Path.Companion.toOkioPath
-import okio.Path.Companion.toPath
 import org.junit.Assert.assertArrayEquals
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
@@ -35,24 +37,23 @@ class MmapOrdinalStoreTest {
     }
 
     @Test
-    fun `create writes through the injected file system`() {
-        val fs = fakeFileSystem()
-        val path = "/ordinals.bin".toPath()
-        MmapOrdinalStore.create(fs, path, mapOf(Ordinal.SESSION to 5))
-        assertArrayEquals(ordinalFile(-1, -1, -1, 5, -1, -1), fs.read(path) { readByteArray() })
-        assertEquals(listOf(path), fs.list("/".toPath()))
-        fs.checkNoOpenFiles()
+    fun `create makes the file through the injected file system`() {
+        val unwritable = object : ForwardingFileSystem(FileSystem.SYSTEM) {
+            override fun openReadWrite(file: Path, mustCreate: Boolean, mustExist: Boolean): FileHandle =
+                throw IOException("disk full")
+        }
+        assertThrows(IOException::class.java) {
+            MmapOrdinalStore.create(unwritable, file.toOkioPath(), emptyMap())
+        }
+        assertFalse(file.exists())
     }
 
     @Test
     fun `create rejects user session`() {
-        val fs = fakeFileSystem()
-        val path = "/ordinals.bin".toPath()
         assertThrows(IllegalArgumentException::class.java) {
-            MmapOrdinalStore.create(fs, path, mapOf(Ordinal.USER_SESSION to 5))
+            MmapOrdinalStore.create(FileSystem.SYSTEM, file.toOkioPath(), mapOf(Ordinal.USER_SESSION to 5))
         }
-        assertEquals(emptyList<Any>(), fs.list("/".toPath()))
-        fs.checkNoOpenFiles()
+        assertFalse(file.exists())
     }
 
     @Test
@@ -64,6 +65,19 @@ class MmapOrdinalStoreTest {
         assertEquals(1, store.incrementAndGet(Ordinal.NATIVE_CRASH))
         assertEquals(4, store.incrementAndGet(Ordinal.APP_VERSION_STARTUP, "1.0"))
         assertEquals(LENGTH, file.length())
+    }
+
+    @Test
+    fun `create replaces the known slots and leaves newer ones alone`() {
+        file.writeBytes(ordinalFile(5, 5, 5, 5, 5, 5, 77, 88))
+        MmapOrdinalStore.create(FileSystem.SYSTEM, file.toOkioPath(), mapOf(Ordinal.CRASH to 4))
+        assertArrayEquals(ordinalFile(4, -1, -1, -1, -1, -1, 77, 88), file.readBytes())
+
+        assertTrue(file.delete())
+        file.writeBytes(ordinalFile(1, 2, 3, 4, 5, 6, magic = 0x12345678))
+        assertEquals(5, createAndOpen(mapOf(Ordinal.CRASH to 4)).incrementAndGet(Ordinal.CRASH))
+        assertEquals(LENGTH, file.length())
+        assertTrue(errorHandler.sdkErrorMessages.isEmpty())
     }
 
     @Test
@@ -129,47 +143,46 @@ class MmapOrdinalStoreTest {
     }
 
     @Test
-    fun `short file is extended with unset slots`() {
-        file.writeBytes(ordinalFile(9, 8))
-        val store = reopen()
-        assertEquals(LENGTH, file.length())
-        assertEquals(10, store.incrementAndGet(Ordinal.CRASH))
-        assertEquals(9, store.incrementAndGet(Ordinal.NATIVE_CRASH))
-        assertEquals(1, store.incrementAndGet(Ordinal.SESSION_PART))
-    }
-
-    @Test
-    fun `partial trailing slot is overwritten as unset`() {
-        file.writeBytes(ordinalFile(9) + byteArrayOf(0, 0))
-        val store = reopen()
-        assertEquals(LENGTH, file.length())
-        assertEquals(10, store.incrementAndGet(Ordinal.CRASH))
-        assertEquals(1, store.incrementAndGet(Ordinal.NATIVE_CRASH))
-    }
-
-    @Test
-    fun `header-only file opens with unset slots`() {
-        file.writeBytes(ordinalFile())
-        val store = reopen()
-        Ordinal.entries.filter { it != Ordinal.USER_SESSION }.forEach {
-            assertEquals(1, store.incrementAndGet(it))
+    fun `a new file or one without the magic opens with every ordinal unset`() {
+        listOf(
+            ByteArray(0),
+            ByteArray(LENGTH.toInt()),
+            ordinalFile(1, 2, 3, 4, 5, 6, magic = 0),
+        ).forEach { bytes ->
+            assertTrue(!file.exists() || file.delete())
+            file.writeBytes(bytes)
+            val store = reopen()
+            Ordinal.entries.filter { it != Ordinal.USER_SESSION }.forEach {
+                assertEquals(1, store.incrementAndGet(it))
+            }
+            assertArrayEquals(ordinalFile(1, 1, 1, 1, 1, 1), file.readBytes())
         }
-        assertArrayEquals(ordinalFile(1, 1, 1, 1, 1, 1), file.readBytes())
         assertTrue(errorHandler.sdkErrorMessages.isEmpty())
     }
 
     @Test
-    fun `downgrade to an sdk with fewer ordinals keeps the newer slots`() {
-        // Written by a hypothetical version 2 that appended two ordinals after this version's six.
-        file.writeBytes(ordinalFile(1, 2, 3, 4, 5, 6, 77, 88, version = 2))
+    fun `a file with fewer slots is grown with unset slots, keeping its values`() {
+        file.writeBytes(ordinalFile(9, 8))
+        val store = reopen()
+        assertEquals(10, store.incrementAndGet(Ordinal.CRASH))
+        assertEquals(9, store.incrementAndGet(Ordinal.NATIVE_CRASH))
+        assertEquals(1, store.incrementAndGet(Ordinal.SESSION_PART))
+        assertArrayEquals(ordinalFile(10, 9, -1, -1, 1, -1), file.readBytes())
+        assertTrue(errorHandler.sdkErrorMessages.isEmpty())
+    }
+
+    @Test
+    fun `downgrade to an sdk with fewer ordinals leaves the newer slots alone`() {
+        // Written by a hypothetical newer version that appended two ordinals after this version's six.
+        file.writeBytes(ordinalFile(1, 2, 3, 4, 5, 6, 77, 88))
 
         val store = reopen()
         Ordinal.entries.filter { it != Ordinal.USER_SESSION }.forEach { store.incrementAndGet(it) }
         assertEquals(6, reopen().incrementAndGet(Ordinal.SESSION))
         assertTrue(errorHandler.sdkErrorMessages.isEmpty())
 
-        // What the newer version reads back on re-upgrade: its version and extra slots untouched.
-        assertArrayEquals(ordinalFile(2, 3, 4, 6, 6, 7, 77, 88, version = 2), file.readBytes())
+        // What the newer version reads back on re-upgrade: its extra slots untouched.
+        assertArrayEquals(ordinalFile(2, 3, 4, 6, 6, 7, 77, 88), file.readBytes())
     }
 
     @Test
@@ -180,18 +193,11 @@ class MmapOrdinalStoreTest {
     }
 
     @Test
-    fun `bad magic recreates the file`() {
-        assertOpenRecovers(ordinalFile(1, 2, 3, 4, 5, 6, magic = 0x12345678))
-    }
-
-    @Test
-    fun `truncated header recreates the file`() {
-        assertOpenRecovers(ordinalFile().copyOf(4))
-    }
-
-    @Test
-    fun `older version recreates the file`() {
-        assertOpenRecovers(ordinalFile(version = 0))
+    fun `a bad magic is tracked and the slots reset in place`() {
+        listOf(
+            ordinalFile(1, 2, 3, 4, 5, 6, magic = 0x12345678),
+            ByteArray(32) { 0x7f },
+        ).forEach(::assertOpenRecovers)
     }
 
     @Test
@@ -200,15 +206,6 @@ class MmapOrdinalStoreTest {
         assertNull(MmapOrdinalStore.open(file, errorHandler))
         assertEquals(listOf(SdkErrorType.OrdinalStoreOpenFail.toString()), errorHandler.sdkErrorMessages.map { it.msg })
         assertTrue(file.isDirectory)
-    }
-
-    @Test
-    fun `create replaces an existing file`() {
-        file.writeBytes(ordinalFile(magic = 0x12345678))
-        val store = createAndOpen(mapOf(Ordinal.CRASH to 4))
-        assertEquals(5, store.incrementAndGet(Ordinal.CRASH))
-        assertEquals(LENGTH, file.length())
-        assertTrue(errorHandler.sdkErrorMessages.isEmpty())
     }
 
     @Test
@@ -232,6 +229,8 @@ class MmapOrdinalStoreTest {
     private fun reopen(): MmapOrdinalStore = checkNotNull(MmapOrdinalStore.open(file, errorHandler))
 
     private fun assertOpenRecovers(bytes: ByteArray) {
+        errorHandler = FakeErrorHandler(throwOnSdkError = false)
+        assertTrue(!file.exists() || file.delete())
         file.writeBytes(bytes)
         val store = reopen()
         assertEquals(listOf(SdkErrorType.OrdinalStoreOpenFail.toString()), errorHandler.sdkErrorMessages.map { it.msg })
@@ -239,14 +238,13 @@ class MmapOrdinalStoreTest {
         Ordinal.entries.filter { it != Ordinal.USER_SESSION }.forEach {
             assertEquals(1, store.incrementAndGet(it))
         }
-        assertArrayEquals(ordinalFile(1, 1, 1, 1, 1, 1), file.readBytes())
         assertEquals(listOf(file.name), tempFolder.root.list()?.toList())
         assertEquals(2, reopen().incrementAndGet(Ordinal.CRASH))
         assertEquals(1, errorHandler.sdkErrorMessages.size)
     }
 
     private companion object {
-        const val LENGTH = 8L + 6 * 4
+        const val LENGTH = 4L + 6 * 4
         const val THREADS = 8
         const val INCREMENTS = 1_000
     }

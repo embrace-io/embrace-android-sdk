@@ -1,1 +1,4 @@
-<manifest />
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+    <!-- the local Embrace endpoint listens on a loopback socket, which a process without it cannot open -->
+    <uses-permission android:name="android.permission.INTERNET" />
+</manifest>

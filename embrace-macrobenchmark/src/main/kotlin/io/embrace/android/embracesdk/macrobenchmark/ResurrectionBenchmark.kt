@@ -15,6 +15,7 @@ import androidx.test.uiautomator.UiDevice
 import io.embrace.android.embracesdk.benchmark.capture.CAPTURE_PROFILE_ARGUMENT
 import io.embrace.android.embracesdk.benchmark.capture.CaptureProfile
 import io.embrace.android.embracesdk.benchmark.capture.captureProfileWithKey
+import io.embrace.android.embracesdk.benchmark.endpoint.LocalEmbraceEndpointRule
 import io.embrace.android.embracesdk.benchmark.scenario.HostTask
 import io.embrace.android.embracesdk.benchmark.scenario.ResurrectionScenarios
 import io.embrace.android.embracesdk.benchmark.scenario.ScenarioProtocol.RESTORE_FIXTURE_SETTING
@@ -59,6 +60,9 @@ internal class ResurrectionBenchmark(
 
     @get:Rule
     val otelSdkModeRule = OtelSdkModeRule(otelSdkMode)
+
+    @get:Rule
+    val endpointRule = LocalEmbraceEndpointRule()
 
     private val arguments = InstrumentationRegistry.getArguments()
     private val captureProfile = captureProfileWithKey(arguments.getString(CAPTURE_PROFILE_ARGUMENT))

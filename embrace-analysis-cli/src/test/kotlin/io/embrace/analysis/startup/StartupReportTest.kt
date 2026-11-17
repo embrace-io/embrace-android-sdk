@@ -121,6 +121,7 @@ internal class StartupReportTest {
         windowMs: Double? = 10.0,
         source: StartupWindow.Source = StartupWindow.Source.SDK_START,
         waitMs: Double = 0.5,
+        health: TraceHealth = health(),
     ) = StartupMetrics(
         sections = sections,
         window = windowMs?.let {
@@ -131,5 +132,24 @@ internal class StartupReportTest {
             )
         },
         ttidMs = 300.0,
+        health = health,
+    )
+
+    private fun health(
+        verdict: TraceHealth.Verdict = TraceHealth.Verdict.OK,
+        losses: List<TraceHealth.StatCounter> = emptyList(),
+        importErrors: List<TraceHealth.StatCounter> = emptyList(),
+        lossCountersReported: Boolean = true,
+        bufferWraps: Long = 0,
+        statsAfterData: Boolean = true,
+        scheduling: TraceHealth.SchedulingCoverage = TraceHealth.SchedulingCoverage.FULL,
+    ) = TraceHealth(
+        verdict = verdict,
+        losses = losses,
+        importErrors = importErrors,
+        lossCountersReported = lossCountersReported,
+        bufferWraps = bufferWraps,
+        statsAfterData = statsAfterData,
+        scheduling = scheduling,
     )
 }

@@ -10,14 +10,17 @@ import kotlin.random.Random
 const val ATOMIC_WRITE_TMP_SUFFIX: String = ".tmp"
 
 /**
- * Replaces [target]'s contents via a temp file, fsync and rename. The parent directory must exist.
- * Writes go through [okio.FileHandle] because [FileSystem.sink] never fsyncs.
+ * Replaces [target]'s contents via a temp file and rename, fsyncing the temp file first if [sync]. The parent
+ * directory must exist.
+ * Writes go through [okio.FileHandle] because [FileSystem.sink] never fsyncs. Without [sync], the rename is still
+ * atomic for a process death, but a power loss can leave [target] empty or missing.
  * Each write creates a uniquely named temp file, so it never reuses one a dead process left behind.
  */
 @Throws(IOException::class)
 fun FileSystem.writeAtomically(
     target: Path,
     random: Random = Random.Default,
+    sync: Boolean = true,
     block: (BufferedSink) -> Unit,
 ) {
     val parent = target.parent ?: throw IOException("No parent directory: $target")
@@ -25,7 +28,9 @@ fun FileSystem.writeAtomically(
     try {
         openReadWrite(tmp, mustCreate = true, mustExist = false).use { handle ->
             handle.sink().buffer().use(block)
-            handle.flush()
+            if (sync) {
+                handle.flush()
+            }
         }
         atomicMove(tmp, target)
     } catch (exc: Throwable) {

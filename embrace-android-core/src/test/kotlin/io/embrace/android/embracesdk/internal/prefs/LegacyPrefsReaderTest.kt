@@ -1,5 +1,6 @@
 package io.embrace.android.embracesdk.internal.prefs
 
+import io.embrace.android.embracesdk.ResourceReader
 import io.embrace.android.embracesdk.fakes.FakeErrorHandler
 import io.embrace.android.embracesdk.fakes.FakeSharedPreferences
 import io.embrace.android.embracesdk.fakes.TestPlatformSerializer
@@ -9,6 +10,8 @@ import io.embrace.android.embracesdk.internal.prefs.LegacyPrefsFixtures.IDENTITY
 import io.embrace.android.embracesdk.internal.prefs.LegacyPrefsFixtures.USER_SESSION
 import io.embrace.android.embracesdk.internal.store.Ordinal
 import io.embrace.android.embracesdk.internal.store.PersistedSdkState
+import kotlinx.serialization.builtins.MapSerializer
+import kotlinx.serialization.builtins.serializer
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
@@ -18,6 +21,8 @@ import org.junit.Test
 internal class LegacyPrefsReaderTest {
 
     private lateinit var prefs: FakeSharedPreferences
+    private val serializer = TestPlatformSerializer()
+    private val stringMapSerializer = MapSerializer(String.serializer(), String.serializer())
 
     @Before
     fun setUp() {
@@ -150,9 +155,51 @@ internal class LegacyPrefsReaderTest {
         assertTrue(readSnapshot().networkCaptureRemaining.isEmpty())
     }
 
+    @Test
+    fun `the -1 sentinel reads as absent`() {
+        prefs.seed(*IDENTITY, "io.embrace.sessionnumber" to -1)
+        assertTrue(readSnapshot().ordinals.isEmpty())
+    }
+
+    @Test
+    fun `a background-only user session keeps its marker`() {
+        seedUserSession(userSessionAttrs() + ("emb.is_background_only_part" to "1"))
+        assertEquals(USER_SESSION.copy(isBackgroundOnly = true), readSnapshot().persistedSdkState.userSession)
+    }
+
+    @Test
+    fun `a user session with an unrecognised background marker is read as not background-only`() {
+        seedUserSession(userSessionAttrs() + ("emb.is_background_only_part" to "true"))
+        assertEquals(USER_SESSION, readSnapshot().persistedSdkState.userSession)
+    }
+
+    @Test
+    fun `a user session missing a required attribute is read as absent`() {
+        userSessionAttrs().keys.forEach { key ->
+            prefs = FakeSharedPreferences()
+            seedUserSession(userSessionAttrs() - key)
+            assertNull(key, readSnapshot().persistedSdkState.userSession)
+        }
+    }
+
+    @Test
+    fun `a user session with an unparseable attribute is read as absent`() {
+        seedUserSession(userSessionAttrs() + ("emb.user_session_part_index" to "not-a-number"))
+        assertNull(readSnapshot().persistedSdkState.userSession)
+    }
+
+    private fun userSessionAttrs(): Map<String, String> = serializer.fromJson(
+        ResourceReader.readResourceAsText("legacy_prefs_user_session.json"),
+        stringMapSerializer,
+    )
+
+    private fun seedUserSession(attrs: Map<String, String>) {
+        prefs.seed(*IDENTITY, "embrace.user_session" to serializer.toJson(attrs, stringMapSerializer))
+    }
+
     private fun read(appFramework: AppFramework = AppFramework.NATIVE): LegacyPrefsSnapshot? = LegacyPrefsReader(
-        prefs,
-        TestPlatformSerializer(),
+        prefs.all,
+        serializer,
         FakeErrorHandler(throwOnSdkError = false),
         appFramework,
     ).read()

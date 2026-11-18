@@ -1,8 +1,8 @@
 package io.embrace.android.embracesdk.macrobenchmark.app.fixture
 
 import io.embrace.android.embracesdk.fs.FakeFileSystemRule
+import io.embrace.android.embracesdk.macrobenchmark.app.storage.AppDataStorage
 import io.embrace.android.embracesdk.macrobenchmark.app.storage.FixtureStorage
-import io.embrace.android.embracesdk.macrobenchmark.app.storage.SdkStorage
 import okio.Path.Companion.toPath
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
@@ -17,7 +17,7 @@ internal class FixtureRecorderTest {
     val fsRule = FakeFileSystemRule()
 
     private val fs get() = fsRule.fileSystem
-    private lateinit var sdk: SdkStorage
+    private lateinit var sdk: AppDataStorage
     private lateinit var recorder: FixtureRecorder
     private var sdkStarted = true
 
@@ -25,7 +25,7 @@ internal class FixtureRecorderTest {
     fun setUp() {
         val dataDir = "/data".toPath()
         fs.createDirectories(dataDir)
-        sdk = SdkStorage(fs, dataDir)
+        sdk = AppDataStorage(fs, dataDir)
         sdkStarted = true
         recorder = FixtureRecorder(sdk, FixtureStorage(fs, dataDir), { sdkStarted }, writeSettleMs = 0)
     }

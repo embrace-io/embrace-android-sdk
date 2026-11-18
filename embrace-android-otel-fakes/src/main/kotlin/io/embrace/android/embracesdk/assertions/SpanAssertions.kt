@@ -125,6 +125,7 @@ fun List<Attribute>?.assertSdkInitSectionDurationsRecorded() {
             this?.findAttributeValue("$section-duration-ms")
         )
     }
+    assertNotNull("`persisted-sdk-state-bytes` not found", this?.findAttributeValue("persisted-sdk-state-bytes"))
 }
 
 /**
@@ -134,7 +135,6 @@ private val expectedSdkInitSections = listOf(
     "modules-init",
     "persisted-config-init",
     "config-service-init",
-    "prefs-first-read",
     "current-session-part-span-initialize-service",
     "process-state-tracker-init",
     "payload-storage-service-init",

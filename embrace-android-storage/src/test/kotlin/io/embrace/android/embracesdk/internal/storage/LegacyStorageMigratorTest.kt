@@ -2,15 +2,13 @@ package io.embrace.android.embracesdk.internal.storage
 
 import io.embrace.android.embracesdk.fakes.FakeErrorHandler
 import io.embrace.android.embracesdk.fs.FakeFileSystemRule
-import okio.FileMetadata
 import okio.FileSystem
-import okio.ForwardingFileSystem
-import okio.IOException
 import okio.Path
 import okio.Path.Companion.toOkioPath
 import okio.Path.Companion.toPath
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
+import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Rule
 import org.junit.Test
@@ -29,301 +27,196 @@ internal class LegacyStorageMigratorTest {
     private val cacheDir = data / "cache"
     private val noBackupFilesDir = data / "no_backup"
     private val root = noBackupFilesDir / SdkStorageLayout.ROOT_DIR_NAME
-    private val staging = noBackupFilesDir / SdkStorageLayout.MIGRATION_DIR_NAME
     private val errorHandler = FakeErrorHandler(throwOnSdkError = false)
 
     @Test
-    fun `every legacy dir lands at its layout path intact`() {
-        val fs = fsRule.fileSystem
-        val files = seedLegacyLayout(fs, filesDir)
-
-        val migrator = migrator(fs)
-        assertTrue(migrator.migrate())
-
-        assertMigrated(fs, root, files)
-        assertFalse(fs.exists(staging))
-        assertTrue(errorHandler.sdkErrorMessages.isEmpty())
-
-        migrator.deleteLeftovers()
-        assertMigrated(fs, root, files)
-    }
-
-    @Test
-    fun `the crash marker arrives without its prefix`() {
-        val fs = fsRule.fileSystem
-        fs.writeText(filesDir / "embrace" / "embrace_crash_marker", "marker")
-
-        assertTrue(migrator(fs).migrate())
-
-        val installState = SdkStorageImpl(fs, root, errorHandler).path(SdkDir.INSTALL_STATE)
-        assertEquals(listOf(installState / "crash_marker"), fs.list(installState))
-        assertEquals("marker", fs.read(installState / "crash_marker") { readUtf8() })
-        assertTrue(errorHandler.sdkErrorMessages.isEmpty())
-    }
-
-    @Test
-    fun `install state prefixes are stripped without overwriting`() {
-        val fs = fsRule.fileSystem
-        val legacy = filesDir / "embrace"
-        mapOf("emb_a" to "a", "embrace_b" to "prefixed", "b" to "plain", "c" to "c").forEach { (name, text) ->
-            fs.writeText(legacy / name, text)
-        }
-
-        assertTrue(migrator(fs).migrate())
-
-        val installState = SdkStorageImpl(fs, root, errorHandler).path(SdkDir.INSTALL_STATE)
-        val contents = fs.list(installState).associate { it.name to fs.read(it) { readUtf8() } }
-        assertEquals(mapOf("a" to "a", "b" to "plain", "embrace_b" to "prefixed", "c" to "c"), contents)
-        assertTrue(errorHandler.sdkErrorMessages.isEmpty())
-    }
-
-    @Test
-    fun `telemetry names keep their prefix`() {
-        val fs = fsRule.fileSystem
-        fs.writeText(filesDir / "embrace_payloads" / "embrace_x", "x")
-
-        assertTrue(migrator(fs).migrate())
-
-        val ready = SdkStorageImpl(fs, root, errorHandler).path(SdkDir.TELEMETRY_READY)
-        assertEquals(listOf(ready / "embrace_x"), fs.list(ready))
-    }
-
-    @Test
-    fun `a legacy dir written after staging merges in on resume`() {
-        val fs = fsRule.fileSystem
-        val staged = SdkStorageImpl(fs, staging, errorHandler).path(SdkDir.TELEMETRY_READY)
-        fs.writeText(staged / "old", "staged")
-        fs.writeText(staged / "both", "staged")
-        fs.writeText(filesDir / "embrace_payloads" / "new", "legacy")
-        fs.writeText(filesDir / "embrace_payloads" / "both", "legacy")
-        val migrator = migrator(fs)
-
-        assertTrue(migrator.migrate())
-        migrator.deleteLeftovers()
-
-        val ready = SdkStorageImpl(fs, root, errorHandler).path(SdkDir.TELEMETRY_READY)
-        val contents = fs.list(ready).associate { it.name to fs.read(it) { readUtf8() } }
-        assertEquals(mapOf("both" to "staged", "new" to "legacy", "old" to "staged"), contents)
-        assertFalse(fs.exists(filesDir / "embrace_payloads"))
-        assertTrue(errorHandler.sdkErrorMessages.isEmpty())
-    }
-
-    @Test
-    fun `install state that fails to move is dropped so identity resets`() {
-        val blocked = filesDir / "embrace"
-        val fs = object : ForwardingFileSystem(fsRule.fileSystem) {
-            override fun atomicMove(source: Path, target: Path) {
-                if (source == blocked) throw IOException("rename failed")
-                super.atomicMove(source, target)
-            }
-        }
-        val files = seedLegacyLayout(fs, filesDir)
-        val migrator = migrator(fs)
-
-        assertTrue(migrator.migrate())
-        migrator.deleteLeftovers()
-
-        assertEquals(listOf("StorageMigrationFail"), errorHandler.sdkErrorMessages.map { it.msg })
-        assertMigrated(fs, root, files.filterKeys { it != SdkDir.INSTALL_STATE })
-        assertFalse(fs.exists(SdkStorageImpl(fs, root, errorHandler).path(SdkDir.INSTALL_STATE)))
-        assertFalse(fs.exists(blocked))
-    }
-
-    @Test
-    fun `a failure checking the root is tracked`() {
-        val fs = object : ForwardingFileSystem(fsRule.fileSystem) {
-            override fun metadataOrNull(path: Path): FileMetadata? {
-                if (path == root) throw SecurityException("denied")
-                return super.metadataOrNull(path)
-            }
-        }
-        seedLegacyLayout(fs, filesDir)
-
-        assertFalse(migrator(fs).migrate())
-        assertEquals(listOf("StorageMigrationFail"), errorHandler.sdkErrorMessages.map { it.msg })
-        assertFalse(fs.exists(staging))
-    }
-
-    @Test
-    fun `a prefix that fails to strip is tracked and the rest committed`() {
-        val fs = object : ForwardingFileSystem(fsRule.fileSystem) {
-            override fun atomicMove(source: Path, target: Path) {
-                if (source.name == "embrace_a") throw IOException("rename failed")
-                super.atomicMove(source, target)
-            }
-        }
-        fs.writeText(filesDir / "embrace" / "embrace_a", "a")
-        fs.writeText(filesDir / "embrace" / "embrace_b", "b")
-
-        assertTrue(migrator(fs).migrate())
-
-        val installState = SdkStorageImpl(fs, root, errorHandler).path(SdkDir.INSTALL_STATE)
-        assertEquals(setOf("embrace_a", "b"), fs.list(installState).map { it.name }.toSet())
-        assertEquals(listOf("StorageMigrationFail"), errorHandler.sdkErrorMessages.map { it.msg })
-    }
-
-    @Test
-    fun `a merge carries on past a child that fails to move`() {
-        val blocked = filesDir / "embrace_payloads" / "b"
-        val fs = object : ForwardingFileSystem(fsRule.fileSystem) {
-            override fun atomicMove(source: Path, target: Path) {
-                if (source == blocked) throw IOException("rename failed")
-                super.atomicMove(source, target)
-            }
-        }
-        val ready = SdkStorageImpl(fs, staging, errorHandler).path(SdkDir.TELEMETRY_READY)
-        fs.writeText(ready / "staged", "staged")
-        listOf("a", "b", "c").forEach { fs.writeText(filesDir / "embrace_payloads" / it, it) }
-
-        assertTrue(migrator(fs).migrate())
-
-        val committed = SdkStorageImpl(fs, root, errorHandler).path(SdkDir.TELEMETRY_READY)
-        assertEquals(setOf("a", "c", "staged"), fs.list(committed).map { it.name }.toSet())
-        assertEquals(listOf("StorageMigrationFail"), errorHandler.sdkErrorMessages.map { it.msg })
-    }
-
-    @Test
-    fun `a merge recurses into dirs present on both sides`() {
-        val fs = fsRule.fileSystem
-        val parts = SdkStorageImpl(fs, staging, errorHandler).path(SdkDir.TELEMETRY_PENDING_SESSION_PARTS)
-        fs.writeText(parts / "p1" / "x", "staged")
-        fs.writeText(parts / "p1" / "y", "staged")
-        val legacy = filesDir / "embrace_sessions_split"
-        fs.writeText(legacy / "p1" / "y", "legacy")
-        fs.writeText(legacy / "p1" / "z", "legacy")
-        fs.writeText(legacy / "p2" / "w", "legacy")
-
-        assertTrue(migrator(fs).migrate())
-
-        val committed = SdkStorageImpl(fs, root, errorHandler).path(SdkDir.TELEMETRY_PENDING_SESSION_PARTS)
-        val contents = fs.listRecursively(committed).filter { fs.metadata(it).isRegularFile }
-            .associate { it.relativeTo(committed).toString() to fs.read(it) { readUtf8() } }
-        assertEquals(mapOf("p1/x" to "staged", "p1/y" to "staged", "p1/z" to "legacy", "p2/w" to "legacy"), contents)
-        assertTrue(errorHandler.sdkErrorMessages.isEmpty())
-    }
-
-    @Test
-    fun `install state that can't be listed aborts the commit`() {
-        val fs = object : ForwardingFileSystem(fsRule.fileSystem) {
-            var failList = true
-            override fun list(dir: Path): List<Path> {
-                if (failList && dir.name == SdkDir.INSTALL_STATE.dirName) throw IOException("unreadable")
-                return super.list(dir)
-            }
-        }
-        fs.writeText(filesDir / "embrace" / "embrace_crash_marker", "marker")
-
-        assertFalse(migrator(fs).migrate())
-        assertEquals(listOf("StorageMigrationFail"), errorHandler.sdkErrorMessages.map { it.msg })
-        assertFalse(fs.exists(root))
-
-        fs.failList = false
-        assertTrue(migrator(fs).migrate())
-        val installState = SdkStorageImpl(fs, root, errorHandler).path(SdkDir.INSTALL_STATE)
-        assertEquals(listOf(installState / "crash_marker"), fs.list(installState))
-    }
-
-    @Test
-    fun `a half staged run resumes`() {
-        val fs = fsRule.fileSystem
-        val files = seedLegacyLayout(fs, filesDir)
-        val layout = SdkStorageImpl(fs, staging, errorHandler)
-        listOf(SdkDir.INSTALL_STATE, SdkDir.TELEMETRY_PENDING_SESSION_PARTS).forEach { dir ->
-            val target = layout.path(dir)
-            fs.createDirectories(checkNotNull(target.parent))
-            fs.atomicMove(filesDir / LegacySdkStorage.LEGACY_DIR_NAMES.getValue(dir), target)
-        }
-
-        assertTrue(migrator(fs).migrate())
-
-        assertMigrated(fs, root, files)
-        assertFalse(fs.exists(staging))
-        assertTrue(errorHandler.sdkErrorMessages.isEmpty())
-    }
-
-    @Test
-    fun `a second run does nothing`() {
-        val fs = fsRule.fileSystem
-        val files = seedLegacyLayout(fs, filesDir)
-        assertTrue(migrator(fs).migrate())
-        val payload = (filesDir / "embrace_payloads" / "late").also { fs.writeText(it, "late") }
-
-        assertFalse(migrator(fs).migrate())
-
-        assertMigrated(fs, root, files, legacyDir = null)
-        assertTrue(fs.exists(payload))
-        assertTrue(errorHandler.sdkErrorMessages.isEmpty())
-    }
-
-    @Test
-    fun `a fresh install does nothing`() {
+    fun `migration on a fresh install does nothing`() {
         val fs = fsRule.fileSystem
 
-        assertFalse(migrator(fs).migrate())
+        migrator(fs).migrateTelemetry()
 
         assertFalse(fs.exists(root))
-        assertFalse(fs.exists(staging))
         assertFalse(fs.exists(filesDir))
         assertTrue(errorHandler.sdkErrorMessages.isEmpty())
     }
 
     @Test
-    fun `a fully staged run with no legacy dirs left still commits`() {
+    fun `legacyConfigDir is set only until moveTelemetry moves the config`() {
         val fs = fsRule.fileSystem
-        val ready = SdkStorageImpl(fs, staging, errorHandler).path(SdkDir.TELEMETRY_READY)
-        fs.writeText(ready / "payload", "staged")
+        val migrator = migrator(fs)
+        assertNull(migrator.legacyConfigDir())
 
-        assertTrue(migrator(fs).migrate())
+        fs.writeText(filesDir / "embrace_remote_config" / "most_recent_response", "legacy")
+        assertEquals(filesDir / "embrace_remote_config", migrator.legacyConfigDir())
 
-        val committed = SdkStorageImpl(fs, root, errorHandler).path(SdkDir.TELEMETRY_READY)
-        assertEquals("staged", fs.read(committed / "payload") { readUtf8() })
-        assertFalse(fs.exists(staging))
+        migrator.moveTelemetry()
+        assertNull(migrator.legacyConfigDir())
         assertTrue(errorHandler.sdkErrorMessages.isEmpty())
     }
 
     @Test
-    fun `a dir that fails to move is dropped and the rest committed`() {
+    fun `legacyConfigDir is null if the files dir can't be resolved`() {
+        val fs = fsRule.fileSystem
+        val migrator =
+            LegacyStorageMigrator(fs, { error("no files dir") }, { cacheDir }, { noBackupFilesDir }, errorHandler)
+
+        assertNull(migrator.legacyConfigDir())
+    }
+
+    @Test
+    fun `config that fails to move is deleted rather than retried`() {
+        val blocked = filesDir / "embrace_remote_config"
+        val fs = BlockingFileSystem(fsRule.fileSystem, blocked)
+        fs.writeText(blocked / "most_recent_response", "legacy")
+        val migrator = migrator(fs)
+
+        migrator.migrateTelemetry()
+
+        assertFalse(fs.exists(layout(fs).path(SdkDir.REMOTE_CONFIG)))
+        assertFalse(fs.exists(blocked))
+        assertNull(migrator.legacyConfigDir())
+        assertEquals(listOf("StorageMigrationFail"), errorHandler.sdkErrorMessages.map { it.msg })
+    }
+
+    @Test
+    fun `a config the SDK already wrote supersedes the 9x config instead of merging with it`() {
+        val fs = fsRule.fileSystem
+        val config = layout(fs).path(SdkDir.REMOTE_CONFIG)
+        fs.writeText(config / "most_recent_response", "fresh")
+        fs.writeText(filesDir / "embrace_remote_config" / "etag", "legacy")
+        fs.writeText(filesDir / "embrace_remote_config" / "cached_config", "legacy")
+        fs.writeText(filesDir / "embrace_payloads" / "p", "legacy")
+
+        migrator(fs).migrateTelemetry()
+
+        assertEquals(mapOf("most_recent_response" to "fresh"), contents(fs, config))
+        assertFalse(fs.exists(filesDir / "embrace_remote_config"))
+        assertEquals(mapOf("p" to "legacy"), contents(fs, layout(fs).path(SdkDir.TELEMETRY_READY)))
+        assertTrue(errorHandler.sdkErrorMessages.isEmpty())
+    }
+
+    @Test
+    fun `an empty config dir left by a failed write doesn't supersede the 9x config`() {
+        val fs = fsRule.fileSystem
+        val config = layout(fs).path(SdkDir.REMOTE_CONFIG)
+        fs.createDirectories(config)
+        fs.writeText(filesDir / "embrace_remote_config" / "most_recent_response", "legacy")
+
+        migrator(fs).migrateTelemetry()
+
+        assertEquals(mapOf("most_recent_response" to "legacy"), contents(fs, config))
+        assertFalse(fs.exists(filesDir / "embrace_remote_config"))
+        assertTrue(errorHandler.sdkErrorMessages.isEmpty())
+    }
+
+    @Test
+    fun `every telemetry dir lands at its layout path intact`() {
+        val fs = fsRule.fileSystem
+        val files = seedLegacyLayout(fs, filesDir)
+
+        migrator(fs).migrateTelemetry()
+
+        assertMigrated(fs, root, files - SdkDir.INSTALL_STATE)
+        assertFalse(fs.exists(filesDir / "embrace"))
+        assertTrue(errorHandler.sdkErrorMessages.isEmpty())
+    }
+
+    @Test
+    fun `the legacy crash marker is moved and the rest of the install state deleted`() {
+        val fs = fsRule.fileSystem
+        fs.writeText(filesDir / "embrace" / "embrace_crash_marker", "legacy")
+        fs.writeText(filesDir / "embrace" / "other", "x")
+
+        migrator(fs).migrateTelemetry()
+
+        val installState = layout(fs).path(SdkDir.INSTALL_STATE)
+        assertEquals(mapOf(SdkStorageLayout.CRASH_MARKER_FILE_NAME to "legacy"), contents(fs, installState))
+        assertFalse(fs.exists(filesDir / "embrace"))
+        assertTrue(errorHandler.sdkErrorMessages.isEmpty())
+    }
+
+    @Test
+    fun `a crash marker the SDK already wrote is kept`() {
+        val fs = fsRule.fileSystem
+        val marker = layout(fs).path(SdkDir.INSTALL_STATE) / SdkStorageLayout.CRASH_MARKER_FILE_NAME
+        fs.writeText(marker, "live")
+        fs.writeText(filesDir / "embrace" / "embrace_crash_marker", "legacy")
+
+        migrator(fs).migrateTelemetry()
+
+        assertEquals("live", fs.read(marker) { readUtf8() })
+        assertFalse(fs.exists(filesDir / "embrace"))
+        assertTrue(errorHandler.sdkErrorMessages.isEmpty())
+    }
+
+    @Test
+    fun `telemetry merges into dirs the SDK already wrote without overwriting`() {
+        val fs = fsRule.fileSystem
+        val ready = layout(fs).path(SdkDir.TELEMETRY_READY)
+        fs.writeText(ready / "new", "live")
+        fs.writeText(ready / "both", "live")
+        fs.writeText(filesDir / "embrace_payloads" / "old", "legacy")
+        fs.writeText(filesDir / "embrace_payloads" / "both", "legacy")
+
+        migrator(fs).migrateTelemetry()
+
+        assertEquals(mapOf("both" to "live", "new" to "live", "old" to "legacy"), contents(fs, ready))
+        assertFalse(fs.exists(filesDir / "embrace_payloads"))
+        assertTrue(errorHandler.sdkErrorMessages.isEmpty())
+    }
+
+    @Test
+    fun `a merge recurses into dirs present on both sides`() {
+        val fs = fsRule.fileSystem
+        val parts = layout(fs).path(SdkDir.TELEMETRY_PENDING_SESSION_PARTS)
+        fs.writeText(parts / "p1" / "x", "live")
+        fs.writeText(parts / "p1" / "y", "live")
+        val legacy = filesDir / "embrace_sessions_split"
+        fs.writeText(legacy / "p1" / "y", "legacy")
+        fs.writeText(legacy / "p1" / "z", "legacy")
+        fs.writeText(legacy / "p2" / "w", "legacy")
+
+        migrator(fs).migrateTelemetry()
+
+        val merged = fs.listRecursively(parts).filter { fs.metadata(it).isRegularFile }
+            .associate { it.relativeTo(parts).toString() to fs.read(it) { readUtf8() } }
+        assertEquals(mapOf("p1/x" to "live", "p1/y" to "live", "p1/z" to "legacy", "p2/w" to "legacy"), merged)
+        assertFalse(fs.exists(legacy))
+        assertTrue(errorHandler.sdkErrorMessages.isEmpty())
+    }
+
+    @Test
+    fun `an entry that fails to move is deleted rather than retried`() {
+        val legacy = filesDir / "embrace_payloads"
+        val fs = BlockingFileSystem(fsRule.fileSystem, legacy / "b")
+        val ready = layout(fs).path(SdkDir.TELEMETRY_READY)
+        fs.writeText(ready / "live", "live")
+        listOf("a", "b", "c").forEach { fs.writeText(legacy / it, it) }
+
+        migrator(fs).migrateTelemetry()
+
+        assertEquals(setOf("a", "c", "live"), fs.list(ready).map { it.name }.toSet())
+        assertFalse(fs.exists(legacy))
+        assertEquals(listOf("StorageMigrationFail"), errorHandler.sdkErrorMessages.map { it.msg })
+    }
+
+    @Test
+    fun `a dir that fails to move doesn't stop the others and is deleted with the install state`() {
         val blocked = filesDir / "embrace_native"
-        val fs = object : ForwardingFileSystem(fsRule.fileSystem) {
-            override fun atomicMove(source: Path, target: Path) {
-                if (source == blocked) throw IOException("rename failed")
-                super.atomicMove(source, target)
-            }
-        }
+        val fs = BlockingFileSystem(fsRule.fileSystem, blocked)
         val files = seedLegacyLayout(fs, filesDir)
         val migrator = migrator(fs)
 
-        assertTrue(migrator.migrate())
-        assertEquals(listOf("StorageMigrationFail"), errorHandler.sdkErrorMessages.map { it.msg })
-        assertMigrated(fs, root, files.filterKeys { it != SdkDir.TELEMETRY_PENDING_NATIVE_CRASHES })
-        assertFalse(fs.exists(SdkStorageImpl(fs, root, errorHandler).path(SdkDir.TELEMETRY_PENDING_NATIVE_CRASHES)))
+        migrator.migrateTelemetry()
 
-        migrator.deleteLeftovers()
+        assertMigrated(fs, root, files - SdkDir.INSTALL_STATE - SdkDir.TELEMETRY_PENDING_NATIVE_CRASHES)
         assertFalse(fs.exists(blocked))
-    }
-
-    @Test
-    fun `a failed commit leaves staging to resume from`() {
-        val fs = object : ForwardingFileSystem(fsRule.fileSystem) {
-            var failCommit = true
-            override fun atomicMove(source: Path, target: Path) {
-                if (source == staging && failCommit) throw IOException("rename failed")
-                super.atomicMove(source, target)
-            }
-        }
-        val files = seedLegacyLayout(fs, filesDir)
-
-        assertFalse(migrator(fs).migrate())
+        assertFalse(migrator.hasLegacyTelemetry())
         assertEquals(listOf("StorageMigrationFail"), errorHandler.sdkErrorMessages.map { it.msg })
-        assertFalse(fs.exists(root))
-
-        fs.failCommit = false
-        assertTrue(migrator(fs).migrate())
-        assertMigrated(fs, root, files)
     }
 
     @Test
-    fun `deleteLeftovers removes 9x cache dir entries and keeps the app's files`() {
+    fun `deleteLegacyInstallState deletes the 9x cache dir entries and keeps the app's files`() {
         val fs = fsRule.fileSystem
         val leftovers = listOf(
             cacheDir / "embrace_payloads" / "payload",
@@ -335,26 +228,120 @@ internal class LegacyStorageMigratorTest {
             cacheDir / "embrace_app_owned",
             filesDir / "app-file",
         ).onEach { fs.writeText(it, "x") }
-        val migrator = migrator(fs)
-        migrator.migrate()
 
-        migrator.deleteLeftovers()
+        migrator(fs).migrateTelemetry()
 
         leftovers.forEach { assertFalse(fs.exists(it)) }
         appFiles.forEach { assertTrue(fs.exists(it)) }
         assertEquals(setOf("embrace_app_owned"), fs.list(cacheDir).map { it.name }.toSet())
+        assertTrue(errorHandler.sdkErrorMessages.isEmpty())
     }
 
     @Test
-    fun `deleteLeftovers still cleans the files dir if the cache dir can't be resolved`() {
+    fun `telemetry still migrates if the cache dir can't be resolved`() {
         val fs = fsRule.fileSystem
-        val leftover = (filesDir / "embrace_payloads" / "payload").also { fs.writeText(it, "x") }
-        val migrator = LegacyStorageMigrator(fs, filesDir, { error("no cache dir") }, noBackupFilesDir, errorHandler)
+        fs.writeText(filesDir / "embrace_payloads" / "payload", "x")
+        val migrator =
+            LegacyStorageMigrator(fs, { filesDir }, { error("no cache dir") }, { noBackupFilesDir }, errorHandler)
 
-        migrator.deleteLeftovers()
+        migrator.migrateTelemetry()
 
-        assertFalse(fs.exists(leftover))
+        assertEquals("x", fs.read(layout(fs).path(SdkDir.TELEMETRY_READY) / "payload") { readUtf8() })
+        assertFalse(fs.exists(filesDir / "embrace_payloads"))
         assertTrue(errorHandler.sdkErrorMessages.isEmpty())
+    }
+
+    @Test
+    fun `moveTelemetry leaves the rest of the install state and the cache dir entries`() {
+        val fs = fsRule.fileSystem
+        fs.writeText(filesDir / "embrace" / "embrace_crash_marker", "legacy")
+        fs.writeText(filesDir / "embrace" / "other", "x")
+        fs.writeText(filesDir / "embrace_payloads" / "payload", "x")
+        val cached = (cacheDir / "embrace_payloads" / "payload").also { fs.writeText(it, "x") }
+        val migrator = migrator(fs)
+
+        migrator.moveTelemetry()
+
+        assertTrue(fs.exists(layout(fs).path(SdkDir.TELEMETRY_READY) / "payload"))
+        assertTrue(fs.exists(layout(fs).path(SdkDir.INSTALL_STATE) / SdkStorageLayout.CRASH_MARKER_FILE_NAME))
+        assertTrue(fs.exists(filesDir / "embrace" / "other"))
+        assertTrue(fs.exists(cached))
+
+        migrator.deleteLegacyInstallState()
+
+        assertFalse(fs.exists(filesDir / "embrace"))
+        assertFalse(fs.exists(cached))
+        assertTrue(errorHandler.sdkErrorMessages.isEmpty())
+    }
+
+    @Test
+    fun `deleteLegacyTelemetry deletes 9x telemetry without moving it`() {
+        val fs = fsRule.fileSystem
+        seedLegacyLayout(fs, filesDir)
+        val cached = (cacheDir / "embrace_payloads" / "payload").also { fs.writeText(it, "x") }
+
+        migrator(fs).deleteLegacyTelemetry()
+
+        LegacyStorageMigrator.LEGACY_DIR_NAMES.forEach { (dir, name) ->
+            assertEquals(name, !dir.isTelemetry, fs.exists(filesDir / name))
+        }
+        assertFalse(fs.exists(cached))
+        assertFalse(fs.exists(root))
+        assertTrue(errorHandler.sdkErrorMessages.isEmpty())
+    }
+
+    @Test
+    fun `a second run does nothing`() {
+        val fs = fsRule.fileSystem
+        val files = seedLegacyLayout(fs, filesDir)
+        migrator(fs).migrateTelemetry()
+
+        migrator(fs).migrateTelemetry()
+
+        assertMigrated(fs, root, files - SdkDir.INSTALL_STATE)
+        assertTrue(errorHandler.sdkErrorMessages.isEmpty())
+    }
+
+    @Test
+    fun `hasLegacyTelemetry is true until the 9x install state is deleted`() {
+        val fs = fsRule.fileSystem
+        val migrator = migrator(fs)
+        assertFalse(migrator.hasLegacyTelemetry())
+        fs.writeText(filesDir / "embrace_payloads" / "payload", "x")
+        assertFalse(migrator.hasLegacyTelemetry())
+
+        seedLegacyLayout(fs, filesDir)
+        assertTrue(migrator.hasLegacyTelemetry())
+
+        migrator.migrateTelemetry()
+        assertFalse(migrator.hasLegacyTelemetry())
+    }
+
+    @Test
+    fun `hasLegacyTelemetry is true if the files dir can't be resolved`() {
+        val migrator = LegacyStorageMigrator(
+            fsRule.fileSystem,
+            { error("no files dir") },
+            { cacheDir },
+            { noBackupFilesDir },
+            errorHandler,
+        )
+
+        assertTrue(migrator.hasLegacyTelemetry())
+    }
+
+    @Test
+    fun `every dir with a 9x location maps to its 9x name`() {
+        val expected = mapOf(
+            SdkDir.REMOTE_CONFIG to "embrace_remote_config",
+            SdkDir.INSTALL_STATE to "embrace",
+            SdkDir.TELEMETRY_READY to "embrace_payloads",
+            SdkDir.TELEMETRY_PENDING_SNAPSHOTS to "embrace_cache",
+            SdkDir.TELEMETRY_PENDING_SESSION_PARTS to "embrace_sessions_split",
+            SdkDir.TELEMETRY_PENDING_NATIVE_CRASHES to "embrace_native",
+            SdkDir.TELEMETRY_LOG_ENVELOPES to "embrace_envelopes",
+        )
+        assertEquals(expected, LegacyStorageMigrator.LEGACY_DIR_NAMES)
     }
 
     @Test
@@ -362,22 +349,56 @@ internal class LegacyStorageMigratorTest {
         val fs = FileSystem.SYSTEM
         val disk = tmpFolder.root.toOkioPath()
         val files = seedLegacyLayout(fs, disk / "files")
-        val migrator = LegacyStorageMigrator(fs, disk / "files", { disk / "cache" }, disk / "no_backup", errorHandler)
+        val migrator =
+            LegacyStorageMigrator(fs, { disk / "files" }, { disk / "cache" }, { disk / "no_backup" }, errorHandler)
 
-        assertTrue(migrator.migrate())
+        migrator.migrateTelemetry()
 
-        assertMigrated(fs, disk / "no_backup" / SdkStorageLayout.ROOT_DIR_NAME, files, disk / "files")
-        assertFalse(fs.exists(disk / "no_backup" / SdkStorageLayout.MIGRATION_DIR_NAME))
+        assertMigrated(fs, disk / "no_backup" / SdkStorageLayout.ROOT_DIR_NAME, files - SdkDir.INSTALL_STATE, disk / "files")
         assertTrue(errorHandler.sdkErrorMessages.isEmpty())
     }
 
-    private fun migrator(fs: FileSystem) = LegacyStorageMigrator(fs, filesDir, { cacheDir }, noBackupFilesDir, errorHandler)
+    @Test
+    fun `deletes don't throw if the files dir can't be resolved`() {
+        val fs = fsRule.fileSystem
+        fs.writeText(cacheDir / "embrace_payloads" / "payload", "x")
+        val migrator =
+            LegacyStorageMigrator(fs, { error("no files dir") }, { cacheDir }, { noBackupFilesDir }, errorHandler)
+
+        migrator.deleteLegacyTelemetry()
+        assertFalse(fs.exists(cacheDir / "embrace_payloads"))
+
+        fs.writeText(cacheDir / "emb_config_cache" / "etag", "x")
+        migrator.deleteLegacyInstallState()
+        assertFalse(fs.exists(cacheDir / "emb_config_cache"))
+    }
+
+    @Test
+    fun `creating the migrator doesn't resolve its dirs`() {
+        LegacyStorageMigrator(
+            fsRule.fileSystem,
+            { error("files dir") },
+            { error("cache dir") },
+            { error("no backup dir") },
+            errorHandler,
+        )
+    }
+
+    private fun migrator(fs: FileSystem) =
+        LegacyStorageMigrator(fs, { filesDir }, { cacheDir }, { noBackupFilesDir }, errorHandler)
+
+    private fun layout(fs: FileSystem) = SdkStorageImpl(fs, root, errorHandler)
+
+    private fun LegacyStorageMigrator.migrateTelemetry() {
+        moveTelemetry()
+        deleteLegacyInstallState()
+    }
 
     /**
      * Writes a file into every legacy dir and returns the relative path of each file, keyed by its dir.
      */
     private fun seedLegacyLayout(fs: FileSystem, filesDir: Path): Map<SdkDir, String> =
-        LegacySdkStorage.LEGACY_DIR_NAMES.mapValues { (dir, name) ->
+        LegacyStorageMigrator.LEGACY_DIR_NAMES.mapValues { (dir, name) ->
             val file = when (dir) {
                 SdkDir.INSTALL_STATE -> "embrace_crash_marker"
                 SdkDir.TELEMETRY_PENDING_SESSION_PARTS -> "part-id/span"
@@ -387,15 +408,17 @@ internal class LegacyStorageMigratorTest {
             file
         }
 
-    private fun assertMigrated(fs: FileSystem, root: Path, files: Map<SdkDir, String>, legacyDir: Path? = filesDir) {
+    private fun assertMigrated(fs: FileSystem, root: Path, files: Map<SdkDir, String>, legacyDir: Path = filesDir) {
         val layout = SdkStorageImpl(fs, root, errorHandler)
         files.forEach { (dir, file) ->
-            val name = LegacySdkStorage.LEGACY_DIR_NAMES.getValue(dir)
-            val migrated = layout.path(dir) / file.removePrefix("embrace_")
-            assertEquals(name, fs.read(migrated) { readUtf8() })
-            legacyDir?.let { assertFalse(fs.exists(it / name)) }
+            val name = LegacyStorageMigrator.LEGACY_DIR_NAMES.getValue(dir)
+            assertEquals(name, fs.read(layout.path(dir) / file) { readUtf8() })
+            assertFalse(fs.exists(legacyDir / name))
         }
     }
+
+    private fun contents(fs: FileSystem, dir: Path): Map<String, String> =
+        fs.list(dir).associate { it.name to fs.read(it) { readUtf8() } }
 
     private fun FileSystem.writeText(path: Path, text: String) {
         createDirectories(checkNotNull(path.parent))

@@ -30,6 +30,7 @@ import io.embrace.android.embracesdk.internal.api.SdkApi
 import io.embrace.android.embracesdk.internal.clock.millisToNanos
 import io.embrace.android.embracesdk.internal.config.remote.RemoteConfig
 import io.embrace.android.embracesdk.internal.storage.SdkDir
+import io.embrace.android.embracesdk.internal.storage.SdkStorageLayout
 import io.embrace.android.embracesdk.internal.instance.SdkState
 import io.embrace.android.embracesdk.internal.logging.SdkErrorType
 import io.embrace.android.embracesdk.internal.otel.sdk.findAttributeValue
@@ -94,7 +95,15 @@ internal class SdkStateIntegrationTest(
         private const val STORAGE_KEPT_WAIT_MS = 500
         private val STARTUP_SWEPT_DIRS = setOf(SdkDir.TELEMETRY_PENDING_SESSION_PARTS)
         private val sdkDisabledConfig = RemoteConfig(threshold = 0)
+        private const val OLD_MTIME_MS = 1_000_000_000_000L
+        private const val FUTURE_MTIME_OFFSET_MS = 3_600_000L
         private fun File.sentinelFile(): File = File(File(this, TEST_SUBDIR_NAME), TEST_FILE_NAME)
+
+        private fun File.writeOld() {
+            parentFile?.mkdirs()
+            writeText(DUMMY_CONTENT)
+            setLastModified(OLD_MTIME_MS)
+        }
 
         private fun assertNoSdkErrors(errorHandler: FakeErrorHandler) {
             assertEquals(emptyList<String>(), errorHandler.sdkErrorMessages.map { it.msg })
@@ -208,6 +217,47 @@ internal class SdkStateIntegrationTest(
     }
 
     @Test
+    fun `NOT_STARTED to ENABLED - orphans are swept and declared entries are kept`() {
+        val storage = testSdkStorage(context)
+        val root = storage.root.toFile()
+        val installState = storage.dir(SdkDir.INSTALL_STATE).toFile()
+        val orphans = listOf(
+            File(root, "orphan"),
+            File(storage.dir(SdkDir.TELEMETRY).toFile(), "orphan_dir"),
+            File(installState, "orphan"),
+        )
+        val freshOrphan = File(installState, "fresh_orphan")
+        val declared = listOf(
+            File(installState, SdkStorageLayout.NETWORK_CAPTURE_FILE_NAME),
+            File(installState, SdkStorageLayout.AEI_DELIVERED_FILE_NAME),
+        )
+        testRule.runTest(
+            setupAction = {
+                (orphans + declared).forEach { it.writeOld() }
+                File(installState, SdkStorageLayout.CRASH_MARKER_FILE_NAME).writeOld()
+                // written later than the SDK starts
+                freshOrphan.writeText(DUMMY_CONTENT)
+                freshOrphan.setLastModified(System.currentTimeMillis() + FUTURE_MTIME_OFFSET_MS)
+            },
+            testCaseAction = {
+                assertEquals(LastRunEndState.CRASH, embrace.lastRunEndState)
+                recordSession {
+                    embrace.logInfo(LOG_1)
+                }
+            },
+            assertAction = {
+                waitUntilConditionMet(dataProvider = { orphans.none(File::exists) }, condition = { it })
+                getSingleSessionEnvelope()
+                getSingleLogEnvelope()
+                assertTrue(freshOrphan.exists())
+                declared.forEach { assertEquals(DUMMY_CONTENT, it.readText()) }
+                assertTrue(File(installState, SdkStorageLayout.ORDINALS_FILE_NAME).exists())
+                assertTrue(File(root, SdkStorageLayout.LAYOUT_VERSION_FILE_NAME).exists())
+            },
+        )
+    }
+
+    @Test
     fun `NOT_STARTED to DISABLED - start is rejected when remote config disables the SDK`() {
         lateinit var errorHandler: FakeErrorHandler
         testRule.runTest(
@@ -281,12 +331,14 @@ internal class SdkStateIntegrationTest(
     @Test
     fun `NOT_STARTED to FAILED - a start that throws partway is torn down without deleting data`() {
         lateinit var lifecycleOwner: TestLifecycleOwner
+        val orphan = File(testSdkStorage(context).root.toFile(), "orphan")
         testRule.runTest(
             expectSdkToStart = false,
             expectedSdkState = SdkState.FAILED,
             setupAction = {
                 getFakeErrorHandler().throwOnSdkError = false
                 createSentinelFiles()
+                orphan.writeOld()
                 startFailure = IllegalStateException("start failure")
                 lifecycleOwner = fakeLifecycleOwner
             },
@@ -301,6 +353,7 @@ internal class SdkStateIntegrationTest(
             },
             assertAction = {
                 assertStorageKept()
+                assertTrue(orphan.exists())
                 assertEquals(0, getLogEnvelopes(0).size)
                 assertEquals(0, getSessionEnvelopes(0).size)
             },

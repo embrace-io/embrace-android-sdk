@@ -102,7 +102,7 @@ internal class SessionPartDirectoryStoreTest {
     }
 
     @Test
-    fun `unparseable entries are deleted when the store is first used`() {
+    fun `unparseable entries are kept when the store is first used`() {
         File(sessionsDir, "junk.txt").writeText("not a session part")
         File(sessionsDir, "metadata.pb.tmp").writeText("orphaned temp file")
         File(sessionsDir, "not-a-session-part").apply {
@@ -111,7 +111,10 @@ internal class SessionPartDirectoryStoreTest {
         }
         create(partDirectory)
 
-        assertEquals(listOf(partDirectory.dirName), dirNames())
+        assertEquals(
+            setOf(partDirectory.dirName, "junk.txt", "metadata.pb.tmp", "not-a-session-part"),
+            dirNames().toSet(),
+        )
         assertNoSdkErrors()
     }
 

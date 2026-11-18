@@ -1,10 +1,7 @@
 package io.embrace.android.embracesdk.testframework.actions
 
-import android.content.Context
-import androidx.test.core.app.ApplicationProvider
-import io.embrace.android.embracesdk.fakes.testSdkStorage
+import io.embrace.android.embracesdk.internal.storage.SdkStorage
 import io.embrace.android.embracesdk.ResourceReader
-import io.embrace.android.embracesdk.fakes.FakeErrorHandler
 import io.embrace.android.embracesdk.fakes.fakeEmptyLogEnvelope
 import io.embrace.android.embracesdk.fakes.fakeEnvelopeMetadata
 import io.embrace.android.embracesdk.fakes.fakeEnvelopeResource
@@ -31,9 +28,8 @@ internal data class StoredNativeCrashData(
     val lastHeartbeatMs: Long? = if (sessionMetadata != null) sessionMetadata.timestamp + 1000L else null,
 ) {
 
-    fun getCrashFile(): File {
-        val ctx = ApplicationProvider.getApplicationContext<Context>()
-        val outputDir = testSdkStorage(ctx).dir(SdkDir.TELEMETRY_PENDING_NATIVE_CRASHES).toFile().apply {
+    fun getCrashFile(storage: SdkStorage): File {
+        val outputDir = storage.dir(SdkDir.TELEMETRY_PENDING_NATIVE_CRASHES).toFile().apply {
             mkdirs()
         }
         return File(outputDir, crashMetadata.filename)

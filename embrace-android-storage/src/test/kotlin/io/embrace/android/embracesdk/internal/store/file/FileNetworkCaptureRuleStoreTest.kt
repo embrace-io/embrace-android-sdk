@@ -178,7 +178,25 @@ internal class FileNetworkCaptureRuleStoreTest {
         assertEquals(0, store.remaining("b", 5))
     }
 
-    private fun createStore() = FileNetworkCaptureRuleStore(
+    @Test
+    fun `a seeded store holds its writes until the barrier opens`() {
+        FileNetworkCaptureRuleStore.create(fsRule.fileSystem, path, mapOf("a" to 4))
+        val barrier = WriteBarrier()
+        val store = createStore(initialUsed = mapOf("a" to 1), barrier = barrier)
+        assertEquals(4, store.remaining("a", 5))
+        store.decrement("b", 5)
+        executor.runCurrentlyBlocked()
+        assertEquals(0, writes)
+
+        barrier.open()
+        executor.runCurrentlyBlocked()
+        assertEquals(mapOf("a" to 1, "b" to 1), readFile().used)
+    }
+
+    private fun createStore(
+        initialUsed: Map<String, Int>? = null,
+        barrier: WriteBarrier = WriteBarrier(open = true),
+    ) = FileNetworkCaptureRuleStore(
         fileSystem = object : ForwardingFileSystem(fsRule.fileSystem) {
             override fun atomicMove(source: Path, target: Path) {
                 if (failWrites) throw IOException("rename failed")
@@ -190,5 +208,7 @@ internal class FileNetworkCaptureRuleStoreTest {
         worker = BackgroundWorker(executor),
         errorHandler = errorHandler,
         liveRuleIds = { liveRuleIds },
+        initialUsed = initialUsed,
+        writes = barrier,
     )
 }

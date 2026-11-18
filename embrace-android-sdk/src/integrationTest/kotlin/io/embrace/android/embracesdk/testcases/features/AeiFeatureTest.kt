@@ -207,40 +207,11 @@ internal class AeiFeatureTest(
         val firstObj = anr.copy(timestamp = 17000000000L)
         val secondObj = anr.copy(timestamp = 18000000000L)
         val input = listOf(firstObj, secondObj)
-
-        testRule.runTest(
-            setupAction = {
-                setupFakeAeiData(input.map(TestAeiData::toAeiObject))
-                assertTrue(retrieveAeiHistory().isEmpty())
-                alterAeiHistory(setOf(firstObj.generateAeiId()))
-            },
-            testCaseAction = {
-                recordSession()
-            },
-            assertAction = {
-                val log = getSingleLogEnvelope().getLastLog()
-                log.assertContainsAeiData(secondObj)
-
-                val history = retrieveAeiHistory()
-                assertEquals(
-                    input.map { it.generateAeiId() },
-                    history.toList()
-                )
-            }
-        )
-    }
-
-    @Test
-    fun `delivered aei objects are not reattempted with the superior storage system enabled`() {
-        val firstObj = anr.copy(timestamp = 17000000000L)
-        val secondObj = anr.copy(timestamp = 18000000000L)
-        val input = listOf(firstObj, secondObj)
         val aeiFile = ApplicationProvider.getApplicationContext<Context>().noBackupFilesDir.toOkioPath() /
             SdkStorageLayout.ROOT_DIR_NAME / "install_state" / SdkStorageLayout.AEI_DELIVERED_FILE_NAME
 
         testRule.runTest(
             setupAction = {
-                superiorStorageSystemEnabled = true
                 setupFakeAeiData(input.map(TestAeiData::toAeiObject))
                 FileSystem.SYSTEM.createDirectories(checkNotNull(aeiFile.parent))
                 FileDeliveredAeiStore.create(FileSystem.SYSTEM, aeiFile, setOf(firstObj.generateAeiId()))
@@ -355,14 +326,6 @@ internal class AeiFeatureTest(
     private fun retrieveAeiHistory(): Set<String> {
         return PreferenceManager.getDefaultSharedPreferences(InMemoryPrefsContext(ApplicationProvider.getApplicationContext()))
             .getStringSet("io.embrace.aeiHashCode", null) ?: emptySet()
-    }
-
-    @Suppress("DEPRECATION")
-    private fun alterAeiHistory(history: Set<String>) {
-        PreferenceManager.getDefaultSharedPreferences(InMemoryPrefsContext(ApplicationProvider.getApplicationContext()))
-            .edit()
-            .putStringSet("io.embrace.aeiHashCode", history)
-            .commit()
     }
 
     private fun TestAeiData.generateAeiId() = "${timestamp}_${pid}"

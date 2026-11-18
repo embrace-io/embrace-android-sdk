@@ -16,22 +16,26 @@ import java.util.concurrent.atomic.AtomicBoolean
  *
  * Changes are written on [worker], and every change made before that write runs is written together. Passing the
  * worker that processes AEI records therefore gives one write per pass.
+ *
+ * If [initialIds] is given, the store starts from it instead of reading the file. Writes wait for [writes] to open.
  */
 class FileDeliveredAeiStore(
     private val fileSystem: FileSystem,
     private val path: Path,
     private val worker: BackgroundWorker,
     private val errorHandler: ErrorHandler,
+    initialIds: Set<String>? = null,
+    private val writes: WriteBarrier = WriteBarrier(open = true),
 ) : DeliveredAeiStore {
 
     private val lock = Any()
     private val writePending = AtomicBoolean(false)
-    private var current: Set<String>? = null
+    private var current: Set<String>? = initialIds
 
     /**
      * The message last read, kept so fields written by a newer SDK survive a rewrite. Guarded by [lock].
      */
-    private var base = DeliveredAeiProto()
+    private var base = DeliveredAeiProto(ids = initialIds.orEmpty().toList())
 
     override fun ids(): Set<String> = synchronized(lock) { loaded() }
 
@@ -47,7 +51,7 @@ class FileDeliveredAeiStore(
             next != prev
         }
         if (changed && writePending.compareAndSet(false, true)) {
-            worker.submit(::write)
+            writes.runWhenOpen { worker.submit(::write) }
         }
     }
 
@@ -70,11 +74,11 @@ class FileDeliveredAeiStore(
     companion object {
 
         fun create(fileSystem: FileSystem, path: Path, ids: Set<String>) {
-            writeFile(fileSystem, path, DeliveredAeiProto(ids = ids.toList()))
+            writeFile(fileSystem, path, DeliveredAeiProto(ids = ids.toList()), sync = false)
         }
 
-        private fun writeFile(fileSystem: FileSystem, path: Path, proto: DeliveredAeiProto) {
-            fileSystem.writeAtomically(path) { DeliveredAeiCodec.encode(proto, it) }
+        private fun writeFile(fileSystem: FileSystem, path: Path, proto: DeliveredAeiProto, sync: Boolean = true) {
+            fileSystem.writeAtomically(path, sync = sync) { DeliveredAeiCodec.encode(proto, it) }
         }
     }
 }

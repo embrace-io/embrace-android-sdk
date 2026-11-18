@@ -34,12 +34,12 @@ internal class MultiFilePersistenceResurrectionOrderTest(
     val testRule: SdkIntegrationTestRule = SdkIntegrationTestRule(otelSdkMode) {
         EmbraceSetupInterface(
             workersToFake = listOf(
-                Worker.Background.SessionPersistenceWorker,
+                Worker.Background.PersistenceWorker,
                 Worker.Background.IoRegWorker,
             ),
             fakeStorageLayer = true,
         ).apply {
-            getFakedWorkerExecutor(Worker.Background.SessionPersistenceWorker).blockingMode = false
+            getFakedWorkerExecutor(Worker.Background.PersistenceWorker).blockingMode = false
             getFakedWorkerExecutor(Worker.Background.IoRegWorker).blockingMode = false
         }.also {
             cacheStorageService = checkNotNull(it.fakeCacheStorageService)

@@ -126,7 +126,7 @@ internal class SdkStateHolderFactoryTest {
     @Test
     fun `disabling after a failed start whose storage can't be found still disables the sdk`() {
         val noStorage = object : ContextWrapper(context) {
-            override fun getFilesDir(): File = error("no files dir")
+            override fun getNoBackupFilesDir(): File = error("no no-backup files dir")
         }
         val holder = createStateHolder(
             configServiceSupplier = { _, _, _, _, _, _ -> FakeConfigService() },
@@ -138,9 +138,48 @@ internal class SdkStateHolderFactoryTest {
         assertEquals(SdkState.DISABLED, holder.state)
     }
 
-    private fun createSdkFile(): File = File(testSdkStorage(context).dir(SdkDir.TELEMETRY_READY).toFile(), "payload").apply {
-        parentFile?.mkdirs()
-        writeText("data")
+    @Test
+    fun `disabling after a failed start deletes the sdk files when the 9x dirs can't be resolved`() {
+        val noLegacyDirs = object : ContextWrapper(context) {
+            override fun getFilesDir(): File = error("no files dir")
+            override fun getCacheDir(): File = error("no cache dir")
+            override fun getNoBackupFilesDir(): File = context.noBackupFilesDir
+        }
+        val sdkFile = createSdkFile()
+        val holder = createStateHolder(
+            configServiceSupplier = { _, _, _, _, _, _ -> FakeConfigService() },
+            overrides = SdkOverrides(appContext = { error("failed to init") }),
+        )
+        holder.start(noLegacyDirs)
+        assertEquals(SdkState.FAILED, holder.state)
+
+        holder.close()
+        awaitDeleted(sdkFile)
+    }
+
+    @Test
+    fun `disabling after a failed start deletes the 9x telemetry`() {
+        val legacyPayload = File(context.filesDir, "embrace_payloads/payload").apply {
+            checkNotNull(parentFile).mkdirs()
+            writeText("data")
+        }
+        val holder = createStateHolder(
+            configServiceSupplier = { _, _, _, _, _, _ -> FakeConfigService() },
+            overrides = SdkOverrides(appContext = { error("failed to init") }),
+        )
+        holder.start(context)
+        assertEquals(SdkState.FAILED, holder.state)
+
+        holder.close()
+        awaitDeleted(legacyPayload)
+    }
+
+    private fun createSdkFile(): File {
+        val dir = testSdkStorage(context).dir(SdkDir.TELEMETRY_READY).toFile()
+        return File(dir, "payload").apply {
+            parentFile?.mkdirs()
+            writeText("data")
+        }
     }
 
     private fun awaitDeleted(file: File) {

@@ -42,6 +42,7 @@ dependencies {
     implementation(libs.lifecycle.process)
     implementation(platform(libs.okhttp.bom))
     implementation(libs.okhttp)
+    implementation(libs.okio)
 
     implementation(libs.opentelemetry.kotlin.api)
     implementation(libs.opentelemetry.kotlin.sdk.api)

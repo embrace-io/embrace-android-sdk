@@ -20,6 +20,8 @@ import java.util.concurrent.atomic.AtomicBoolean
  * Changes are written on [worker], and every change made before that write runs is written together. Each write
  * drops rules that aren't in [liveRuleIds], which should return the IDs of the current remote config's unexpired
  * rules.
+ *
+ * If [initialUsed] is given, the store starts from it instead of reading the file. Writes wait for [writes] to open.
  */
 class FileNetworkCaptureRuleStore(
     private val fileSystem: FileSystem,
@@ -27,12 +29,14 @@ class FileNetworkCaptureRuleStore(
     private val worker: BackgroundWorker,
     private val errorHandler: ErrorHandler,
     private val liveRuleIds: () -> Set<String>,
+    initialUsed: Map<String, Int>? = null,
+    private val writes: WriteBarrier = WriteBarrier(open = true),
 ) : NetworkCaptureRuleStore {
 
     private val lock = Any()
     private val writePending = AtomicBoolean(false)
-    private var current: Map<String, Int>? = null
-    private var base = NetworkCaptureProto()
+    private var current: Map<String, Int>? = initialUsed
+    private var base = NetworkCaptureProto(used = initialUsed.orEmpty())
 
     override fun remaining(ruleId: String, default: Int): Int = synchronized(lock) {
         maxOf(default - (loaded()[ruleId] ?: 0), 0)
@@ -50,7 +54,7 @@ class FileNetworkCaptureRuleStore(
             }
         }
         if (changed && writePending.compareAndSet(false, true)) {
-            worker.submit(::write)
+            writes.runWhenOpen { worker.submit(::write) }
         }
     }
 
@@ -79,11 +83,11 @@ class FileNetworkCaptureRuleStore(
     companion object {
 
         fun create(fileSystem: FileSystem, path: Path, used: Map<String, Int>) {
-            writeFile(fileSystem, path, NetworkCaptureProto(used = used))
+            writeFile(fileSystem, path, NetworkCaptureProto(used = used), sync = false)
         }
 
-        private fun writeFile(fileSystem: FileSystem, path: Path, proto: NetworkCaptureProto) {
-            fileSystem.writeAtomically(path) { NetworkCaptureCodec.encode(proto, it) }
+        private fun writeFile(fileSystem: FileSystem, path: Path, proto: NetworkCaptureProto, sync: Boolean = true) {
+            fileSystem.writeAtomically(path, sync = sync) { NetworkCaptureCodec.encode(proto, it) }
         }
     }
 }

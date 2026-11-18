@@ -94,9 +94,10 @@ import io.embrace.android.embracesdk.internal.session.lifecycle.ActivityLifecycl
 import io.embrace.android.embracesdk.internal.session.lifecycle.createLifecycleTracker
 import io.embrace.android.embracesdk.internal.session.orchestrator.SessionOrchestrator
 import io.embrace.android.embracesdk.internal.spans.TracingApiDelegate
-import io.embrace.android.embracesdk.internal.storage.EmbraceStorageService
 import io.embrace.android.embracesdk.internal.storage.SdkDir
+import io.embrace.android.embracesdk.internal.storage.SdkStorageLayout
 import io.embrace.android.embracesdk.internal.storage.StatFsAvailabilityChecker
+import io.embrace.android.embracesdk.internal.storage.StorageTelemetry
 import io.embrace.android.embracesdk.internal.store.Ordinal
 import io.embrace.android.embracesdk.internal.store.OrdinalStore
 import io.embrace.android.embracesdk.internal.store.PersistedSdkStateStore
@@ -141,6 +142,9 @@ internal fun createRealSdkInstance(
     val sdkStorage = configLoadServices.sdkStorage
 
     ProcessOtelSdkErrorHandler.attach(errorHandler)
+
+    // 9.x telemetry is moved before any service is constructed
+    configLoadServices.moveLegacyTelemetry()
 
     // forward references that break dependency cycles
     lateinit var sessionIdsProvider: SessionIdsProvider
@@ -292,7 +296,9 @@ internal fun createRealSdkInstance(
     }
 
     val persistedSdkStateStore: PersistedSdkStateStore by configLoadServices.persistedSdkStateStore
-    val ordinalStore: OrdinalStore by configLoadServices.ordinalStore
+    val ordinalStore: OrdinalStore by lazy {
+        overrides?.ordinalStore.resolve { configLoadServices.ordinalStore.value }
+    }
 
     val eventBus: EventBus by lazy {
         EmbTrace.trace("event-bus-init") { overrides?.eventBus.resolve { EventBus(errorHandler) } }
@@ -373,11 +379,11 @@ internal fun createRealSdkInstance(
         }
     }
 
-    val storageService = init("storage-service") {
-        EmbraceStorageService(
-            appContext,
+    val storageTelemetry = init("storage-telemetry") {
+        StorageTelemetry(
+            sdkStorage,
             telemetryService,
-            StatFsAvailabilityChecker(appContext),
+            StatFsAvailabilityChecker(lazy { sdkStorage.root.toFile() }),
         )
     }
 
@@ -443,7 +449,7 @@ internal fun createRealSdkInstance(
     }
 
     val lastRunCrashVerifier = init("last-run-crash-verifier") {
-        LastRunCrashVerifier(crashMarker)
+        LastRunCrashVerifier(crashMarker) { configLoadServices.legacyTelemetryMigration.isComplete }
     }
 
     val versionChecker = overrides?.versionChecker.resolve { BuildVersionChecker }
@@ -748,7 +754,7 @@ internal fun createRealSdkInstance(
                 clock = clock,
                 errorHandler = errorHandler,
                 configService = configService,
-                sessionPersistenceWorker = workerThreadPool.backgroundWorker(Worker.Background.SessionPersistenceWorker),
+                sessionPersistenceWorker = workerThreadPool.backgroundWorker(Worker.Background.PersistenceWorker),
                 intakeService = intakeService,
                 cachedLogEnvelopeStore = cachedLogEnvelopeStore,
                 nativeCrashServiceProvider = {
@@ -793,10 +799,9 @@ internal fun createRealSdkInstance(
                 appVersionStartupCounterProvider = startupService::getAppVersionStartupCounter,
                 logLimitingService = logLimitingService,
                 ordinalStore = ordinalStore,
-                writeBatcher = configLoadServices.writeBatcher.value,
                 stateStore = persistedSdkStateStore,
                 backgroundWorker = workerThreadPool.backgroundWorker(Worker.Background.NonIoRegWorker),
-                sessionPersistenceWorker = workerThreadPool.backgroundWorker(Worker.Background.SessionPersistenceWorker),
+                sessionPersistenceWorker = workerThreadPool.backgroundWorker(Worker.Background.PersistenceWorker),
                 sessionReadWorker = workerThreadPool.backgroundWorker(Worker.Background.IoRegWorker),
                 sessionPartReader = sessionPartReader,
             )
@@ -818,7 +823,7 @@ internal fun createRealSdkInstance(
         EmbTrace.trace("storage-telemetry-schedule") {
             workerThreadPool
                 .backgroundWorker(Worker.Background.IoRegWorker)
-                .schedule<Unit>({ storageService.logStorageTelemetry() }, 1, TimeUnit.MINUTES)
+                .schedule<Unit>({ storageTelemetry.log() }, 1, TimeUnit.MINUTES)
         }
         EmbTrace.trace("otel-signal-context-mark-ready") {
             otelSignalContext.markReady()
@@ -845,6 +850,7 @@ internal fun createRealSdkInstance(
             activityLifecycleRelay = activityLifecycleRelay,
             appContext = appContext,
             sdkStorage = sdkStorage,
+            persistedSdkStateFile = sdkStorage.path(SdkDir.INSTALL_STATE) / SdkStorageLayout.PERSISTED_SDK_STATE_FILE_NAME,
             spanRepository = spanRepository,
             logSink = logSink,
             otelSdkConfig = otelSdkConfig,
@@ -868,6 +874,7 @@ internal fun createRealSdkInstance(
             threadBlockageService = threadBlockageService,
             lastRunCrashVerifier = lastRunCrashVerifier,
             crashMarker = crashMarker,
+            persistedSdkStateFlush = { configLoadServices.flushPersistedSdkState() },
             startupTracker = startupTracker,
             startupService = startupService,
             appStartupDataCollector = appStartupDataCollector,
@@ -924,6 +931,10 @@ internal fun createRealSdkInstance(
                 experimentTrackingService = experimentTrackingService,
             ),
             tracingApi = tracingApi,
+            legacyTelemetryMigration = configLoadServices.legacyTelemetryMigration,
+            awaitLegacyTelemetryMigration = overrides?.awaitLegacyTelemetryMigration.resolve {
+                configLoadServices.legacyTelemetryMigration::await
+            },
         )
     }
 }

@@ -42,6 +42,15 @@ internal class FilePersistedSdkStateStoreTest {
     }
 
     @Test
+    fun `missing file is persisted by a worker that runs inline`() {
+        executor.blockingMode = false
+        val state = createStore().snapshot()
+        assertEquals(1, writes)
+        assertEquals(emptyList<FakeErrorHandler.LogMessage>(), errorHandler.sdkErrorMessages)
+        assertEquals(state, createStore(uuid = "other").snapshot())
+    }
+
+    @Test
     fun `updates are coalesced into one write and read back`() {
         val store = createStore()
         store.update { userId = "a" }
@@ -82,6 +91,27 @@ internal class FilePersistedSdkStateStoreTest {
     }
 
     @Test
+    fun `flush writes a pending update on the calling thread`() {
+        val store = createStore()
+        store.update { userId = "flushed" }
+        store.flush()
+        assertEquals(1, writes)
+        assertEquals("flushed", createStore(uuid = "other").snapshot().userId)
+
+        executor.runCurrentlyBlocked()
+        assertEquals(1, writes)
+    }
+
+    @Test
+    fun `flush without a pending update doesn't write`() {
+        val store = createStore()
+        store.snapshot()
+        executor.runCurrentlyBlocked()
+        store.flush()
+        assertEquals(1, writes)
+    }
+
+    @Test
     fun `created file is read back by a store`() {
         val state = PersistedSdkState(
             deviceId = "created-id",
@@ -107,7 +137,28 @@ internal class FilePersistedSdkStateStoreTest {
         assertEquals(0, writes)
     }
 
-    private fun createStore(uuid: String = "device-id") = FilePersistedSdkStateStore(
+    @Test
+    fun `a seeded store holds its writes until the barrier opens`() {
+        FilePersistedSdkStateStore.create(fsRule.fileSystem, path, PersistedSdkState("on-disk", 1L))
+        val barrier = WriteBarrier()
+        val store = createStore(initial = PersistedSdkState("seeded", 2L), barrier = barrier)
+        assertEquals("seeded", store.snapshot().deviceId)
+        store.update { userId = "held" }
+        store.flush()
+        executor.runCurrentlyBlocked()
+        assertEquals(0, writes)
+
+        barrier.open()
+        executor.runCurrentlyBlocked()
+        assertEquals(1, writes)
+        assertEquals("held", createStore().snapshot().userId)
+    }
+
+    private fun createStore(
+        uuid: String = "device-id",
+        initial: PersistedSdkState? = null,
+        barrier: WriteBarrier = WriteBarrier(open = true),
+    ) = FilePersistedSdkStateStore(
         fileSystem = object : ForwardingFileSystem(fsRule.fileSystem) {
             override fun atomicMove(source: Path, target: Path) {
                 if (failWrites) throw IOException("rename failed")
@@ -120,5 +171,7 @@ internal class FilePersistedSdkStateStoreTest {
         errorHandler = errorHandler,
         clock = FakeClock(currentTime = 5000L),
         uuidSource = { uuid },
+        initial = initial,
+        writes = barrier,
     )
 }

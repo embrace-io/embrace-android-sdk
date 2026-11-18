@@ -22,6 +22,7 @@ wire {
 
 dependencies {
     api(libs.wire.runtime)
+    implementation(libs.okio)
 
     implementation(project(":embrace-android-payload"))
     implementation(project(":embrace-android-infra"))

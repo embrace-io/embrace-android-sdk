@@ -39,9 +39,10 @@ sealed class Worker(val threadName: String) {
         object PeriodicCacheWorker : Background("periodic-cache")
 
         /**
-         * Used for writing session telemetry to the session-part directory.
+         * Used for small disk writes that must not queue behind long-running I/O: e.g. session telemetry in the
+         * session-part directory, and the install-state files.
          */
-        object SessionPersistenceWorker : Background("session-persistence")
+        object PersistenceWorker : Background("persistence")
 
         /**
          * Monitor thread that checks the main thread for thread blockages

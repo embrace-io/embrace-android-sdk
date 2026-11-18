@@ -11,6 +11,7 @@ android {
 dependencies {
     compileOnly(platform(libs.okhttp.bom))
     compileOnly(libs.okhttp)
+    implementation(libs.okio)
     implementation(project(":embrace-android-instrumentation-api"))
     implementation(project(":embrace-android-instrumentation-network-common"))
 

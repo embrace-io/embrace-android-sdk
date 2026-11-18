@@ -236,19 +236,19 @@ internal class PayloadResurrectionServiceImpl(
      * Cached session payloads can be redundant either when another cached payload has the same session
      * ID, or when the session ID is matched by a complete payload in [payloadStorageService].
      *
-     * Non-SESSION payloads and SESSION payloads with no encoded session IDs (legacy v1 filenames)
-     * bypass the dedupe checks.
+     * Non-SESSION payloads bypass the dedupe checks.
      */
     private fun dedupeSessionPayloads(
         candidates: List<StoredTelemetryMetadata>,
     ): Pair<List<StoredTelemetryMetadata>, List<StoredTelemetryMetadata>> {
         val alreadyDeliverable: Set<SessionKey> = payloadStorageService.getPayloadsByPriority()
-            .mapNotNullTo(mutableSetOf()) { it.sessionKey() }
+            .filter { it.isSessionEnvelope() }
+            .mapTo(mutableSetOf()) { it.sessionKey() }
 
         // For each session key in the cache, find the latest timestamp — that's the winner.
         val latestTimestampPerKey = mutableMapOf<SessionKey, Long>()
-        candidates.forEach { meta ->
-            val key = meta.sessionKey() ?: return@forEach
+        candidates.filter { it.isSessionEnvelope() }.forEach { meta ->
+            val key = meta.sessionKey()
             val current = latestTimestampPerKey[key]
             if (current == null || meta.timestamp > current) {
                 latestTimestampPerKey[key] = meta.timestamp
@@ -262,7 +262,7 @@ internal class PayloadResurrectionServiceImpl(
         candidates.forEach { meta ->
             val key = meta.sessionKey()
             when {
-                key == null -> deliverables += meta
+                !meta.isSessionEnvelope() -> deliverables += meta
                 key in alreadyDeliverable -> redundant += meta
                 key !in emittedKeys && meta.timestamp == latestTimestampPerKey[key] -> {
                     deliverables += meta
@@ -275,15 +275,9 @@ internal class PayloadResurrectionServiceImpl(
         return deliverables to redundant
     }
 
-    private fun StoredTelemetryMetadata.sessionKey(): SessionKey? {
-        return if (envelopeType == SupportedEnvelopeType.SESSION &&
-            (userSessionId.isNotEmpty() || sessionPartId.isNotEmpty())
-        ) {
-            SessionKey(userSessionId, sessionPartId)
-        } else {
-            null
-        }
-    }
+    private fun StoredTelemetryMetadata.isSessionEnvelope() = envelopeType == SupportedEnvelopeType.SESSION
+
+    private fun StoredTelemetryMetadata.sessionKey() = SessionKey(userSessionId, sessionPartId)
 
     private data class SessionKey(val userSessionId: String, val sessionPartId: String)
 

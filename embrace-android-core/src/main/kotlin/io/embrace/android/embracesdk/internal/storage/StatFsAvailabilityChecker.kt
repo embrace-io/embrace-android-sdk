@@ -1,14 +1,17 @@
 package io.embrace.android.embracesdk.internal.storage
 
-import android.content.Context
 import android.os.StatFs
+import java.io.File
 
+/**
+ * Reports the bytes available on the volume that holds [dir].
+ */
 class StatFsAvailabilityChecker(
-    context: Context,
+    dir: Lazy<File>,
 ) : StorageAvailabilityChecker {
-    @Suppress("EmbraceContextDirAccess")
+
     private val statFs: StatFs by lazy {
-        StatFs(context.filesDir.path)
+        StatFs(dir.value.path)
     }
 
     override fun getAvailableBytes(): Long {

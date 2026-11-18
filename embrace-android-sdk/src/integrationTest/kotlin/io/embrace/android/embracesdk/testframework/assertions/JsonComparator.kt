@@ -15,6 +15,37 @@ internal const val IGNORE_VALUE = "__EMBRACE_TEST_IGNORE__"
 internal object JsonComparator {
 
     /**
+     * Removes every attribute whose key is in [keys] from each `attributes` array, in place.
+     */
+    fun removeAttributes(json: JSONObject, keys: Set<String>): JSONObject {
+        json.keys().forEach { key ->
+            when (val value = json.get(key)) {
+                is JSONObject -> removeAttributes(value, keys)
+                is JSONArray -> {
+                    removeAttributes(value, keys)
+                    if (key == "attributes") {
+                        for (i in value.length() - 1 downTo 0) {
+                            if ((value.get(i) as? JSONObject)?.optString("key") in keys) {
+                                value.remove(i)
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        return json
+    }
+
+    private fun removeAttributes(array: JSONArray, keys: Set<String>) {
+        for (i in 0 until array.length()) {
+            when (val element = array.get(i)) {
+                is JSONObject -> removeAttributes(element, keys)
+                is JSONArray -> removeAttributes(element, keys)
+            }
+        }
+    }
+
+    /**
      * Sorts every `attributes` array of key/value objects by key, in place, as OpenTelemetry
      * attribute order is implementation-defined.
      */

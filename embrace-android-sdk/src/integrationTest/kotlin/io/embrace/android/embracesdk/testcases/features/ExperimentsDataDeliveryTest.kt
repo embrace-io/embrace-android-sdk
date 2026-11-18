@@ -59,7 +59,10 @@ internal class ExperimentsDataDeliveryTest(
                 }
             },
             assertAction = {
-                validatePayloadAgainstGoldenFile(getSingleSessionEnvelope(), "experiment_session_span.json")
+                validatePayloadAgainstGoldenFile(
+                    getSingleSessionEnvelope(),
+                    "experiment_session_span.json",
+                )
             },
         )
     }

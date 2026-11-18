@@ -102,21 +102,10 @@ class StoredTelemetryMetadataTest {
     }
 
     @Test
-    fun `from valid v1 filename decodes with empty session ids`() {
-        typeNameMap.entries.forEach { (type, priority) ->
-            listOf(true, false).forEach { payloadComplete ->
-                val input = "${priority}_${TIMESTAMP}_${UUID}_${PROCESS_ID}_${payloadComplete}_native_v1.json"
-                with(StoredTelemetryMetadata.fromFilename(input).getOrThrow()) {
-                    assertEquals(TIMESTAMP, timestamp)
-                    assertEquals(UUID, uuid)
-                    assertEquals(PROCESS_ID, processIdentifier)
-                    assertEquals(type, envelopeType)
-                    assertEquals(payloadComplete, complete)
-                    assertEquals(PayloadType.NATIVE_CRASH, payloadType)
-                    assertEquals("", userSessionId)
-                    assertEquals("", sessionPartId)
-                }
-            }
+    fun `pre-9_0 v1 filename fails to parse`() {
+        typeNameMap.values.forEach { priority ->
+            val input = "${priority}_${TIMESTAMP}_${UUID}_${PROCESS_ID}_true_session_v1.json"
+            assertTrue("v1 filename should fail: $input", StoredTelemetryMetadata.fromFilename(input).isFailure)
         }
     }
 

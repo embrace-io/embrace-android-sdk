@@ -2,6 +2,7 @@ package io.embrace.android.embracesdk.testframework.actions
 
 import android.app.ActivityManager
 import android.content.Context
+import android.content.SharedPreferences
 import android.os.Looper
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.testing.TestLifecycleOwner
@@ -29,6 +30,7 @@ import io.embrace.android.embracesdk.internal.delivery.debug.DeliveryTracer
 import io.embrace.android.embracesdk.internal.delivery.storage.PayloadStorageServiceImpl
 import io.embrace.android.embracesdk.internal.storage.SdkDir
 import io.embrace.android.embracesdk.internal.storage.lazyFile
+import io.embrace.android.embracesdk.internal.storage.migration.MigrationBudget
 import io.embrace.android.embracesdk.internal.injection.ConfigLoadServices
 import io.embrace.android.embracesdk.internal.injection.ConfigLoadServicesSupplier
 import io.embrace.android.embracesdk.internal.injection.PreStartServices
@@ -49,7 +51,6 @@ import io.embrace.android.embracesdk.internal.payload.EnvelopeResource
 import io.embrace.android.embracesdk.internal.payload.NativeCrashData
 import io.embrace.android.embracesdk.internal.payload.SessionPartPayload
 import io.embrace.android.embracesdk.internal.payload.Span
-import io.embrace.android.embracesdk.internal.prefs.createKeyValueStore
 import io.embrace.android.embracesdk.internal.serialization.PlatformSerializer
 import io.embrace.android.embracesdk.internal.session.lifecycle.AndroidxProcessLifecycleTracker
 import io.embrace.android.embracesdk.internal.session.orchestrator.SessionOrchestrator
@@ -57,7 +58,13 @@ import io.embrace.android.embracesdk.internal.session.persistence.CompletedSpans
 import io.embrace.android.embracesdk.internal.session.persistence.SessionMetadataWriter
 import io.embrace.android.embracesdk.internal.session.persistence.SessionPartDirectory
 import io.embrace.android.embracesdk.internal.session.persistence.SessionPartWriteTarget
-import io.embrace.android.embracesdk.internal.store.KeyValueStore
+import io.embrace.android.embracesdk.internal.store.OrdinalStore
+import io.embrace.android.embracesdk.fakes.fakeBackgroundWorker
+import io.embrace.android.embracesdk.internal.session.UserSessionMetadata
+import io.embrace.android.embracesdk.internal.storage.SdkStorage
+import io.embrace.android.embracesdk.internal.storage.SdkStorageLayout
+import io.embrace.android.embracesdk.internal.store.PersistedSdkStateEditor
+import io.embrace.android.embracesdk.internal.store.file.FilePersistedSdkStateStore
 import io.embrace.android.embracesdk.internal.utils.UuidSource
 import io.embrace.android.embracesdk.internal.utils.VersionChecker
 import io.embrace.android.embracesdk.internal.vitals.vitalsVersionCheckerTestOverride
@@ -69,7 +76,9 @@ import io.embrace.android.embracesdk.semconv.EmbSessionAttributes
 import io.embrace.android.embracesdk.semconv.ExperimentalSemconv
 import io.embrace.android.embracesdk.testframework.CapturedServices
 import io.embrace.android.embracesdk.testframework.InMemoryPrefsContext
+import io.embrace.android.embracesdk.testframework.InMemorySharedPreferences
 import io.embrace.android.embracesdk.testframework.SdkIntegrationTestRule
+import okio.FileSystem
 import org.robolectric.Shadows
 import org.robolectric.shadows.ShadowLooper
 import java.io.File
@@ -135,14 +144,30 @@ internal class EmbraceSetupInterface(
     var constructionFailure: Throwable? = null
 
     /**
-     * When set, the SDK keeps its state in the files under `noBackupFilesDir/xcor/` rather than in prefs.
+     * When set, the SDK uses this ordinal store instead of the real one.
      */
-    var superiorStorageSystemEnabled: Boolean = false
+    var ordinalStore: OrdinalStore? = null
 
     /**
      * When set, the SDK's start throws this partway through, as the session orchestrator starts.
      */
     var startFailure: Throwable? = null
+
+    /**
+     * When set, called by the SDK in place of the legacy telemetry migration before it reads the previous launch's crash
+     * marker and telemetry.
+     */
+    var awaitLegacyTelemetryMigration: (() -> Unit)? = null
+
+    /**
+     * The file system the SDK's storage and 9.x migration use.
+     */
+    var fileSystem: FileSystem = FileSystem.SYSTEM
+
+    /**
+     * The most SDK init waits in total on the 9.x migration.
+     */
+    var migrationBudgetMs: Long = MigrationBudget.BUDGET_MS
 
     private val fakeInitServices: TestInitServices = TestInitServices(
         clock = fakeClock,
@@ -179,19 +204,6 @@ internal class EmbraceSetupInterface(
         appContext = fakeContext,
     )
 
-    /**
-     * The SDK's store, backed by the same `SharedPreferences` the module graph will use. Owned here
-     * rather than read off the module graph because tests write to it in `setupAction`, before the module
-     * graph exists.
-     */
-    private val keyValueStore: KeyValueStore by lazy {
-        createKeyValueStore(
-            InMemoryPrefsContext(fakeContext),
-            fakeInitServices.jsonSerializer,
-            fakeInitServices.errorHandler,
-        )
-    }
-
     init {
         setupPlatformShadows()
     }
@@ -207,14 +219,39 @@ internal class EmbraceSetupInterface(
                 okHttpClient = fakeInitServices.okHttpClient,
                 uuidSource = fakeInitServices.uuidSource,
                 workerThreadPoolSupplier = { workerThreadPool },
+                fileSystem = fileSystem,
+                migrationBudgetMs = migrationBudgetMs,
+                orphanSweepDelayMs = 0,
                 configServiceSupplier = { preStartServices, instrumentedConfig, serializer, okHttpClient, workerThreadPool, persistedConfig ->
                     DecoratedConfigService(
                         createConfigService(preStartServices, instrumentedConfig, serializer, okHttpClient, workerThreadPool, persistedConfig)
                     ).also { services.configService = it }
                 },
-                superiorStorageSystemEnabled = superiorStorageSystemEnabled,
-            )
+            ).also {
+                services.persistedSdkStateStore = it.persistedSdkStateStore
+                services.networkCaptureRuleStore = it.networkCaptureRuleStore
+            }
         }
+    }
+
+    /**
+     * The storage layer the SDK uses
+     */
+    fun sdkStorage(): SdkStorage = testSdkStorage(fakeContext)
+
+    /**
+     * Edits the persisted SDK state before the SDK starts, simulating a previous process.
+     */
+    fun seedPersistedSdkState(action: PersistedSdkStateEditor.() -> Unit) {
+        val storage = sdkStorage()
+        FilePersistedSdkStateStore(
+            fileSystem = storage.fileSystem,
+            path = storage.dir(SdkDir.INSTALL_STATE) / SdkStorageLayout.PERSISTED_SDK_STATE_FILE_NAME,
+            worker = fakeBackgroundWorker(),
+            errorHandler = fakeInitServices.errorHandler,
+            clock = fakeClock,
+            uuidSource = uuidSource,
+        ).update(action)
     }
 
     fun createSdkOverrides(deliveryTracer: DeliveryTracer): SdkOverrides = SdkOverrides(
@@ -245,6 +282,8 @@ internal class EmbraceSetupInterface(
         experimentTrackingService = { real -> real().also { services.experimentTrackingService = it } },
         intakeService = { real -> real().also { services.intakeService = it } },
         eventBus = { real -> real().also { services.eventBus = it } },
+        ordinalStore = ordinalStore?.let { store -> { store } },
+        awaitLegacyTelemetryMigration = awaitLegacyTelemetryMigration?.let { hook -> { hook } },
     )
 
     /**
@@ -285,7 +324,7 @@ internal class EmbraceSetupInterface(
             userSessionId = userSessionId,
             sessionPartId = sessionPartId,
         )
-        val sessionsDir = testSdkStorage(fakeContext).lazyFile(SdkDir.TELEMETRY_PENDING_SESSION_PARTS)
+        val sessionsDir = sdkStorage().lazyFile(SdkDir.TELEMETRY_PENDING_SESSION_PARTS)
         check(File(sessionsDir.value, directory.dirName).mkdirs()) {
             "Could not create session part directory ${directory.dirName}"
         }
@@ -335,8 +374,8 @@ internal class EmbraceSetupInterface(
         serializer: PlatformSerializer,
         crashData: StoredNativeCrashData,
     ) {
-        crashData.getCrashFile().createNewFile()
-        val key = crashData.getCrashFile().absolutePath
+        crashData.getCrashFile(sdkStorage()).createNewFile()
+        val key = crashData.getCrashFile(sdkStorage()).absolutePath
         val json = serializer.toJson(crashData.nativeCrash, NativeCrashData.serializer())
         fakeJniDelegate.addCrashRaw(key, json)
     }
@@ -345,18 +384,13 @@ internal class EmbraceSetupInterface(
      * Setup permanent session properties without using the SDK interfaces
      */
     fun setupPermanentUserSessionProperties(properties: Map<String, String>) {
-        getStore().editAndCommit {
-            putStringMap(
-                "io.embrace.session.properties", properties
-            )
-        }
+        seedPersistedSdkState { sessionProperties = properties }
     }
 
     /**
      * Persist a fake user session before the SDK starts, simulating a store
      * from a previous process.
      */
-    @OptIn(ExperimentalSemconv::class)
     fun persistUserSession(
         userSessionId: String,
         startMs: Long,
@@ -367,21 +401,16 @@ internal class EmbraceSetupInterface(
         inactivityTimeoutSeconds: Int = 1800,
         isBackgroundOnly: Boolean = false,
     ) {
-        getStore().editAndCommit {
-            putStringMap(
-                "embrace.user_session",
-                buildMap {
-                    put(EmbSessionAttributes.EMB_USER_SESSION_ID, userSessionId)
-                    put(EmbSessionAttributes.EMB_USER_SESSION_START_TS, startMs.toString())
-                    put(EmbSessionAttributes.EMB_USER_SESSION_NUMBER, sessionNumber.toString())
-                    put(EmbSessionAttributes.EMB_USER_SESSION_MAX_DURATION_SECONDS, maxDurationSeconds.toString())
-                    put(EmbSessionAttributes.EMB_USER_SESSION_INACTIVITY_TIMEOUT_SECONDS, inactivityTimeoutSeconds.toString())
-                    put(EmbSessionAttributes.EMB_USER_SESSION_PART_INDEX, partIndex.toString())
-                    put("emb.user_session_last_activity_ts", lastActivityMs.toString())
-                    if (isBackgroundOnly) {
-                        put(EmbSessionAttributes.EMB_IS_BACKGROUND_ONLY_PART, "1")
-                    }
-                }
+        seedPersistedSdkState {
+            userSession = UserSessionMetadata.Classified(
+                startTimeMs = startMs,
+                userSessionId = userSessionId,
+                userSessionNumber = sessionNumber.toLong(),
+                maxDurationSecs = maxDurationSeconds.toLong(),
+                inactivityTimeoutSecs = inactivityTimeoutSeconds.toLong(),
+                partIndex = partIndex,
+                lastActivityMs = lastActivityMs,
+                isBackgroundOnly = isBackgroundOnly,
             )
         }
     }
@@ -458,7 +487,11 @@ internal class EmbraceSetupInterface(
      */
     fun awaitWorkerTermination(timeoutMs: Long = 10_000L): Boolean = workerThreadPool.awaitTermination(timeoutMs)
 
-    fun getStore(): KeyValueStore = keyValueStore
+    /**
+     * The app's default prefs, where a 9.x SDK kept its state.
+     */
+    fun defaultPrefs(): SharedPreferences =
+        InMemorySharedPreferences.get(fakeContext, "${fakeContext.packageName}_preferences")
 
     /**
      * Waits for instrumentation that opts into [InstrumentationProvider.asyncInit] to finish registering,

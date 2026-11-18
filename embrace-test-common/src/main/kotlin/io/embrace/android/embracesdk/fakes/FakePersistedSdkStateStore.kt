@@ -19,4 +19,7 @@ class FakePersistedSdkStateStore(
         state = state.edit(action)
         return state
     }
+
+    override fun flush() {
+    }
 }

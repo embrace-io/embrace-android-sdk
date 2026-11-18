@@ -10,7 +10,7 @@ interface StoredEntryLayout<T> {
 
     /**
      * Parses the name of a file or directory found in the storage root. This returns null if the
-     * name was not written by this layout, in which case the data is discarded.
+     * name was not written by this layout, in which case the index skips it.
      */
     fun fromName(name: String): T?
 

@@ -267,13 +267,35 @@ internal class RemoteConfigStoreImplTest {
         assertNull(loaded.deviceId)
     }
 
+    @Test
+    fun `a separate read dir is read but never written or deleted from`() {
+        val config = RemoteConfig(50)
+        store.saveResponse(ConfigHttpResponse(config, "etag"))
+        val storageDir = Files.createTempDirectory("storage").toFile()
+        store = createStore(storageDir = storageDir, readDir = dir)
+        assertEquals(config, checkNotNull(store.loadResponse()).cfg)
+
+        cachedConfigFile().writeText("corrupt")
+        configFile().writeText("!!! not json !!!")
+        assertNull(store.loadResponse())
+        assertTrue(cachedConfigFile().exists())
+        assertTrue(configFile().exists())
+
+        val fresh = RemoteConfig(75)
+        store.saveResponse(ConfigHttpResponse(fresh, "fresh"))
+        assertEquals("!!! not json !!!", configFile().readText())
+        assertEquals(fresh, checkNotNull(createStore(storageDir = storageDir).loadResponse()).cfg)
+    }
+
     private fun createStore(
         serializer: PlatformSerializer = TestPlatformSerializer(),
         storageDir: File = dir,
+        readDir: File = storageDir,
         deviceIdProvider: () -> String = { deviceId },
     ) = RemoteConfigStoreImpl(
         serializer = serializer,
         storageDir = storageDir,
+        readDir = readDir,
         deviceIdProvider = deviceIdProvider,
         errorHandler = errorHandler,
     )

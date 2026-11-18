@@ -6,8 +6,6 @@ package io.embrace.android.embracesdk.internal.storage
  * them against the real writers. Allowing a new name changes the layout: raise `SdkStorageLayout.LAYOUT_VERSION`.
  */
 
-private const val PAYLOAD_V1_TOKEN = "v1.json"
-private const val PAYLOAD_V1_TOKEN_COUNT = 7
 private const val PAYLOAD_V2_TOKEN = "v2.json"
 private const val PAYLOAD_V2_TOKEN_COUNT = 9
 private const val SESSION_PART_DIR_TOKEN_COUNT = 5
@@ -26,15 +24,11 @@ private val INSTALL_STATE_FILE_NAMES = setOf(
 )
 
 /**
- * A payload file named by `StoredTelemetryMetadata`, in either its v1 or v2 form.
+ * A payload file named by `StoredTelemetryMetadata` in its v2 form.
  */
 internal fun isPayloadEntry(path: List<String>): Boolean {
     val tokens = path.singleOrNull()?.split("_") ?: return false
-    return when (tokens.last()) {
-        PAYLOAD_V1_TOKEN -> tokens.size == PAYLOAD_V1_TOKEN_COUNT
-        PAYLOAD_V2_TOKEN -> tokens.size == PAYLOAD_V2_TOKEN_COUNT
-        else -> false
-    }
+    return tokens.last() == PAYLOAD_V2_TOKEN && tokens.size == PAYLOAD_V2_TOKEN_COUNT
 }
 
 /**

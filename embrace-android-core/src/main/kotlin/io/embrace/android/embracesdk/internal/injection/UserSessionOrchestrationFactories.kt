@@ -43,7 +43,6 @@ import io.embrace.android.embracesdk.internal.storage.SdkStorage
 import io.embrace.android.embracesdk.internal.storage.lazyFile
 import io.embrace.android.embracesdk.internal.store.OrdinalStore
 import io.embrace.android.embracesdk.internal.store.PersistedSdkStateStore
-import io.embrace.android.embracesdk.internal.store.StoreWriteBatcher
 import io.embrace.android.embracesdk.internal.telemetry.InternalTelemetryService
 import io.embrace.android.embracesdk.internal.utils.EmbTrace
 import io.embrace.android.embracesdk.internal.utils.UuidSource
@@ -117,7 +116,6 @@ fun createSessionOrchestrator(
     appVersionStartupCounterProvider: () -> Int?,
     logLimitingService: LogLimitingService,
     ordinalStore: OrdinalStore,
-    writeBatcher: StoreWriteBatcher,
     stateStore: PersistedSdkStateStore,
     backgroundWorker: BackgroundWorker,
     sessionPersistenceWorker: BackgroundWorker,
@@ -189,7 +187,6 @@ fun createSessionOrchestrator(
         telemetryDestination,
         sessionPartSpanAttrPopulator,
         ordinalStore,
-        writeBatcher,
         stateStore,
         errorHandler,
         backgroundWorker,

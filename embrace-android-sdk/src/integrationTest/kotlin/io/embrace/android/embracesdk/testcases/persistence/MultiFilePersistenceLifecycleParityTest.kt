@@ -1,8 +1,5 @@
 package io.embrace.android.embracesdk.testcases.persistence
 
-import android.content.Context
-import androidx.test.core.app.ApplicationProvider
-import io.embrace.android.embracesdk.fakes.testSdkStorage
 import io.embrace.android.embracesdk.assertions.findSessionPartSpan
 import io.embrace.android.embracesdk.assertions.getSessionPartId
 import io.embrace.android.embracesdk.assertions.waitUntilConditionMet
@@ -595,8 +592,7 @@ internal class MultiFilePersistenceLifecycleParityTest(
     private fun sessionsDir(): File = storageDir(SdkDir.TELEMETRY_PENDING_SESSION_PARTS)
 
     private fun storageDir(location: SdkDir): File {
-        val ctx = ApplicationProvider.getApplicationContext<Context>()
-        return testSdkStorage(ctx).dir(location).toFile()
+        return testRule.setup.sdkStorage().dir(location).toFile()
     }
 
     /**
@@ -638,7 +634,7 @@ internal class MultiFilePersistenceLifecycleParityTest(
         const val LAST = "last"
 
         val persistenceWorkers = listOf(
-            Worker.Background.SessionPersistenceWorker,
+            Worker.Background.PersistenceWorker,
             Worker.Background.PeriodicCacheWorker,
         )
 

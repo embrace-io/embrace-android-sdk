@@ -17,7 +17,9 @@ import io.embrace.android.embracesdk.internal.store.file.MmapOrdinalStore
 import okio.FileMetadata
 import okio.FileSystem
 import okio.ForwardingFileSystem
+import okio.IOException
 import okio.Path
+import okio.Sink
 import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotEquals
@@ -100,20 +102,44 @@ internal class ConfigLoadServicesPrefsMigrationTest {
         assertTrue(errorHandler.sdkErrorMessages.isEmpty())
     }
 
+    @Test
+    fun `the ordinal store is unavailable instead of waiting on an adopted migration whose staging failed`() {
+        val services = createServices(
+            stallMoveTo = SdkStorageLayout.ORDINALS_FILE_NAME,
+            failSinkTo = "${SdkStorageLayout.ORDINALS_FILE_NAME}.staged",
+            migrationBudgetMs = 500,
+        )
+        assertTrue(stallReached.await(5, TimeUnit.SECONDS))
+        assertEquals(-1, services.ordinalStore.value.incrementAndGet(Ordinal.SESSION))
+        stallReleased.countDown()
+
+        val ordinals = File(installStateDir(), SdkStorageLayout.ORDINALS_FILE_NAME)
+        waitUntilConditionMet(waitTimeMs = 5_000, dataProvider = { ordinals.exists() }, condition = { it })
+        assertEquals(1, checkNotNull(MmapOrdinalStore.open(ordinals, errorHandler)).incrementAndGet(Ordinal.SESSION))
+    }
+
     private fun createServices(
         stallReadOf: String? = null,
         stallMoveTo: String? = null,
+        failSinkTo: String? = null,
         migrationBudgetMs: Long = 3_000L,
     ) = ConfigLoadServices(
         context = context,
         preStartServices = PreStartServices(errorHandler = errorHandler),
         configServiceSupplier = { _, _, _, _, _, _ -> FakeConfigService() },
-        fileSystem = stallingFileSystem(stallReadOf, stallMoveTo),
+        fileSystem = stallingFileSystem(stallReadOf, stallMoveTo, failSinkTo),
         migrationBudgetMs = migrationBudgetMs,
     )
 
-    private fun stallingFileSystem(readOf: String?, moveTo: String?): FileSystem =
+    private fun stallingFileSystem(readOf: String?, moveTo: String?, failSinkTo: String?): FileSystem =
         object : ForwardingFileSystem(FileSystem.SYSTEM) {
+            override fun sink(file: Path, mustCreate: Boolean): Sink {
+                if (failSinkTo != null && file.name.startsWith(failSinkTo)) {
+                    throw IOException("staging failed")
+                }
+                return super.sink(file, mustCreate)
+            }
+
             override fun metadataOrNull(path: Path): FileMetadata? {
                 if (path.name == readOf) {
                     stallReleased.await()

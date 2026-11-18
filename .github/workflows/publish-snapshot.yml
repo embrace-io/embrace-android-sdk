@@ -28,6 +28,15 @@ jobs:
         with:
           persist-credentials: false
 
+      - name: Validate snapshot_name
+        env:
+          SNAPSHOT_NAME: ${{ inputs.snapshot_name }}
+        run: |
+          if [[ -n "$SNAPSHOT_NAME" && ! "$SNAPSHOT_NAME" =~ ^[A-Za-z0-9._-]+$ ]]; then
+            echo "::error::snapshot_name may only contain letters, digits, '.', '_' and '-', got '$SNAPSHOT_NAME'"
+            exit 1
+          fi
+
       - name: Set snapshot_name in gradle.properties if set
         env:
           SNAPSHOT_NAME: ${{ inputs.snapshot_name }}

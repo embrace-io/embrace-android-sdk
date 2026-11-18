@@ -137,8 +137,10 @@ internal class ConfigLoadServicesTest {
         assertEquals(1, store.incrementAndGet(Ordinal.SESSION))
         assertEquals(2, store.incrementAndGet(Ordinal.SESSION))
 
+        // the migration commits the ordinals on its own thread after the store has started from them
         val installState = File(context.noBackupFilesDir, "${SdkStorageLayout.ROOT_DIR_NAME}/install_state")
-        assertTrue(File(installState, SdkStorageLayout.ORDINALS_FILE_NAME).exists())
+        val ordinals = File(installState, SdkStorageLayout.ORDINALS_FILE_NAME)
+        waitUntilConditionMet(waitTimeMs = 5_000, dataProvider = { ordinals.exists() }, condition = { it })
         assertEquals(3, launch().ordinalStore.value.incrementAndGet(Ordinal.SESSION))
     }
 

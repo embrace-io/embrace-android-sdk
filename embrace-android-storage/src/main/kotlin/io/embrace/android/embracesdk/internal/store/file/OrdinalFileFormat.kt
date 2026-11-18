@@ -1,70 +1,34 @@
 package io.embrace.android.embracesdk.internal.store.file
 
 import io.embrace.android.embracesdk.internal.store.Ordinal
-import okio.BufferedSink
-import okio.FileHandle
-import okio.IOException
-import okio.buffer
 
 /**
- * Big-endian `ordinals.bin`: `ORDS` magic, version, then one int per slot, [UNSET] if unset.
- * Newer versions may only append slots.
+ * Big-endian `ordinals.bin`, only ever written through a mapping: a 4-byte `ORDS` magic, then one int per slot.
+ *
+ * A slot holds its value plus one, so zero bytes read as [UNSET] and growing the file adds unset slots. Slot indices
+ * are the format, so newer versions may only append slots, and a version leaves alone any slots beyond those it knows.
  */
 internal object OrdinalFileFormat {
-    private const val MAGIC = 0x4F524453 // "ORDS"
-    private const val VERSION = 1
-    private const val HEADER_BYTES = 8
-    const val UNSET = -1
+    const val MAGIC = 0x4F524453 // "ORDS"
+    const val UNSET: Int = -1
 
-    private val SLOT_COUNT = Ordinal.entries.maxOf(::slotIndex) + 1
-    val MAPPED_BYTES = HEADER_BYTES + SLOT_COUNT * Int.SIZE_BYTES
+    const val MAGIC_OFFSET: Int = 0
+    const val HEADER_BYTES: Int = 4
 
-    fun slotOffset(ordinal: Ordinal): Int = HEADER_BYTES + slotIndex(ordinal) * Int.SIZE_BYTES
+    val SLOT_COUNT: Int = Ordinal.entries.maxOf(::slotIndex) + 1
 
-    fun write(sink: BufferedSink, initial: Map<Ordinal, Int>) {
-        require(Ordinal.USER_SESSION !in initial) { "USER_SESSION shares SESSION's slot" }
-        val slots = IntArray(SLOT_COUNT) { UNSET }
-        initial.forEach { (ordinal, value) -> slots[slotIndex(ordinal)] = value }
-        sink.writeInt(MAGIC)
-        sink.writeInt(VERSION)
-        slots.forEach(sink::writeInt)
-    }
+    fun fileBytes(slots: Int): Long = HEADER_BYTES + slots.toLong() * Int.SIZE_BYTES
 
-    /**
-     * Validates the header and pads missing or partial slots with [UNSET] so [MAPPED_BYTES] can be mapped. Never
-     * truncates. Throws [CorruptOrdinalFileException] if the header is unusable.
-     */
-    @Throws(IOException::class)
-    fun prepare(handle: FileHandle) {
-        val size = handle.size()
-        val problem = if (size < HEADER_BYTES) {
-            "Truncated header: $size bytes"
-        } else {
-            handle.source().buffer().use { header ->
-                val magic = header.readInt()
-                val version = header.readInt()
-                when {
-                    magic != MAGIC -> "Bad magic: $magic"
-                    version < VERSION -> "Unsupported version: $version"
-                    else -> null
-                }
-            }
-        }
-        if (problem != null) {
-            throw CorruptOrdinalFileException(problem)
-        }
-        val knownSlots = ((size - HEADER_BYTES) / Int.SIZE_BYTES).toInt()
-        if (knownSlots < SLOT_COUNT) {
-            handle.sink((HEADER_BYTES + knownSlots * Int.SIZE_BYTES).toLong()).buffer().use { sink ->
-                repeat(SLOT_COUNT - knownSlots) { sink.writeInt(UNSET) }
-            }
-        }
-    }
+    fun slotOffset(slot: Int): Int = HEADER_BYTES + slot * Int.SIZE_BYTES
+
+    fun encode(value: Int): Int = value + 1
+
+    fun decode(raw: Int): Int = raw - 1
 
     /**
      * Slot indices are the file format. Never reorder or reuse; prefer appending new ones.
      */
-    private fun slotIndex(ordinal: Ordinal): Int = when (ordinal) {
+    fun slotIndex(ordinal: Ordinal): Int = when (ordinal) {
         Ordinal.CRASH -> 0
         Ordinal.NATIVE_CRASH -> 1
         Ordinal.AEI_CRASH -> 2

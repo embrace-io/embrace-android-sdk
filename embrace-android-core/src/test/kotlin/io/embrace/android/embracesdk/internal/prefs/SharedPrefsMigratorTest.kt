@@ -19,6 +19,7 @@ import io.embrace.android.embracesdk.internal.store.file.FilePersistedSdkStateSt
 import io.embrace.android.embracesdk.internal.store.file.MmapOrdinalStore
 import io.embrace.android.embracesdk.internal.worker.BackgroundWorker
 import okio.ByteString.Companion.encodeUtf8
+import okio.FileHandle
 import okio.FileSystem
 import okio.ForwardingFileSystem
 import okio.IOException
@@ -339,7 +340,7 @@ internal class SharedPrefsMigratorTest {
 
     private fun assertFailedWriteDropsOnly(fileName: String) {
         prefs.seed(*ALL_LIVE_KEYS)
-        assertTrue(migrate(fs = failingMoveTo(installStateDir / fileName)))
+        assertTrue(migrate(fs = failingWritesTo(installStateDir / fileName)))
         assertEquals(SdkErrorType.PrefsMigrationFail.toString(), errorHandler.sdkErrorMessages.single().msg)
         assertFalse(fileSystem.exists(installStateDir / fileName))
         assertEquals("device-id", persistedState().deviceId)
@@ -352,7 +353,7 @@ internal class SharedPrefsMigratorTest {
     private fun assertFailedWriteIsFreshInstall(fileName: String) {
         prefs.seed(*ALL_LIVE_KEYS)
         val gate = PrefsMigrationGate()
-        assertTrue(migrate(fs = failingMoveTo(installStateDir / fileName), gate = gate))
+        assertTrue(migrate(fs = failingWritesTo(installStateDir / fileName), gate = gate))
         assertEquals(SdkErrorType.PrefsMigrationFail.toString(), errorHandler.sdkErrorMessages.single().msg)
         assertEquals(PrefsMigrationPhase.COMMITTED, gate.settle())
         assertNull(gate.ordinals)
@@ -378,7 +379,7 @@ internal class SharedPrefsMigratorTest {
     @Test
     fun `failure writing ordinals completes as a fresh install`() {
         prefs.seed(*ALL_LIVE_KEYS)
-        assertTrue(migrate(fs = failingMoveTo(ordinalsPath(), failures = 1)))
+        assertTrue(migrate(fs = failingWritesTo(ordinalsPath(), failures = 1)))
         assertEquals(SdkErrorType.PrefsMigrationFail.toString(), errorHandler.sdkErrorMessages.single().msg)
         assertFreshInstall()
         assertTrue(prefs.all.isEmpty())
@@ -388,7 +389,7 @@ internal class SharedPrefsMigratorTest {
     @Test
     fun `failure writing ordinals twice leaves no legacy data for a rerun`() {
         prefs.seed(*ALL_LIVE_KEYS)
-        assertTrue(migrate(fs = failingMoveTo(ordinalsPath())))
+        assertTrue(migrate(fs = failingWritesTo(ordinalsPath())))
         assertEquals(emptyList<Path>(), fileSystem.list(installStateDir))
         assertTrue(prefs.all.isEmpty())
 
@@ -493,8 +494,8 @@ internal class SharedPrefsMigratorTest {
         fileSystem.write(installStateDir / SdkStorageLayout.PERSISTED_SDK_STATE_FILE_NAME) { writeUtf8("dead launch") }
         val staged = installStateDir / "${SdkStorageLayout.ORDINALS_FILE_NAME}.staged.tmp"
         val unstageable = object : ForwardingFileSystem(fileSystem) {
-            override fun sink(file: Path, mustCreate: Boolean) =
-                if (file == staged) throw IOException("disk full") else super.sink(file, mustCreate)
+            override fun openReadWrite(file: Path, mustCreate: Boolean, mustExist: Boolean): FileHandle =
+                if (file == staged) throw IOException("disk full") else super.openReadWrite(file, mustCreate, mustExist)
         }
         var decoded = false
         assertTrue(migrate(fs = unstageable, onDecoded = { decoded = true }))
@@ -507,7 +508,7 @@ internal class SharedPrefsMigratorTest {
     @Test
     fun `a failed commit of staged ordinals the stores adopted keeps their writes held`() {
         val gate = PrefsMigrationGate()
-        migrate(fs = failingMoveTo(ordinalsPath()), createPrefsFile = false, gate = gate, onDecoded = { gate.settle() })
+        migrate(fs = failingWritesTo(ordinalsPath()), createPrefsFile = false, gate = gate, onDecoded = { gate.settle() })
         assertFalse(gate.writes.isOpen)
     }
 
@@ -523,15 +524,31 @@ internal class SharedPrefsMigratorTest {
         assertFalse(migrate())
     }
 
-    private fun failingMoveTo(path: Path, failures: Int = Int.MAX_VALUE): FileSystem = object : ForwardingFileSystem(fileSystem) {
+    /**
+     * Fails moves onto [path], which commit the state files and staged ordinals, and opening [path] itself, which
+     * creates ordinals in place.
+     */
+    private fun failingWritesTo(
+        path: Path,
+        failures: Int = Int.MAX_VALUE,
+    ): FileSystem = object : ForwardingFileSystem(fileSystem) {
         private var remaining = failures
 
         override fun atomicMove(source: Path, target: Path) {
+            fail(target)
+            super.atomicMove(source, target)
+        }
+
+        override fun openReadWrite(file: Path, mustCreate: Boolean, mustExist: Boolean): FileHandle {
+            fail(file)
+            return super.openReadWrite(file, mustCreate, mustExist)
+        }
+
+        private fun fail(target: Path) {
             if (target == path && remaining > 0) {
                 remaining--
                 throw IOException("disk full")
             }
-            super.atomicMove(source, target)
         }
     }
 

@@ -75,8 +75,27 @@ bool emb_add_b64_value_to_json(JSON_Object *root_object, const JSON_Value *crash
 bool emb_build_crash_json_tree(emb_crash *crash, JSON_Object *root_object,
                                JSON_Object *crash_object);
 
+#define EMB_TERMINATE_STR_FIELD(field) ((field)[sizeof(field) - 1] = '\0')
+
+static void emb_terminate_crash_strings(emb_crash *crash) {
+    EMB_TERMINATE_STR_FIELD(crash->session_id);
+    EMB_TERMINATE_STR_FIELD(crash->user_session_id);
+    EMB_TERMINATE_STR_FIELD(crash->report_id);
+    EMB_TERMINATE_STR_FIELD(crash->capture.name);
+    EMB_TERMINATE_STR_FIELD(crash->capture.message);
+
+    for (int i = 0; i < kEMBMaxSFrames; ++i) {
+        emb_sframe *frame = &crash->capture.stacktrace[i];
+        EMB_TERMINATE_STR_FIELD(frame->filename);
+        EMB_TERMINATE_STR_FIELD(frame->method);
+        EMB_TERMINATE_STR_FIELD(frame->build_id);
+        EMB_TERMINATE_STR_FIELD(frame->function_name);
+        EMB_TERMINATE_STR_FIELD(frame->full_name);
+    }
+}
+
 bool emb_write_crash_to_file(emb_env *env) {
-    int fd = open(env->report_path, O_WRONLY | O_CREAT, 0644);
+    int fd = open(env->report_path, O_WRONLY | O_CREAT | O_TRUNC | O_CLOEXEC, 0644);
     if (fd == -1) {
         return false;
     }
@@ -87,7 +106,7 @@ bool emb_write_crash_to_file(emb_env *env) {
 }
 
 emb_crash *emb_read_crash_from_file(const char *path) {
-    int fd = open(path, O_RDONLY);
+    int fd = open(path, O_RDONLY | O_NOFOLLOW | O_CLOEXEC);
     if (fd == -1) {
         EMB_LOGERROR("failed to open native crash file at %s", path);
         return NULL;
@@ -114,6 +133,7 @@ emb_crash *emb_read_crash_from_file(const char *path) {
         free(crash);
         return NULL;
     }
+    emb_terminate_crash_strings(crash);
     return crash;
 }
 

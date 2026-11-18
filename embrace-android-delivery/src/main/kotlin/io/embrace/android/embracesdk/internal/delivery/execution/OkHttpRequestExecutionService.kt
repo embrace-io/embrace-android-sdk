@@ -5,6 +5,7 @@ import io.embrace.android.embracesdk.internal.comms.api.Endpoint
 import io.embrace.android.embracesdk.internal.delivery.SupportedEnvelopeType
 import io.embrace.android.embracesdk.internal.delivery.debug.DeliveryTracer
 import io.embrace.android.embracesdk.internal.delivery.execution.ExecutionResult.Companion.getResult
+import io.embrace.android.embracesdk.internal.delivery.execution.ExecutionResult.TooManyRequests.Companion.MAX_RETRY_AFTER_MS
 import io.embrace.android.embracesdk.internal.delivery.storage.loadAttachment
 import io.embrace.android.embracesdk.internal.logging.ErrorHandler
 import io.embrace.android.embracesdk.internal.logging.SdkErrorType
@@ -81,11 +82,10 @@ class OkHttpRequestExecutionService(
 
     private fun Response.retryAfterMs(): Long? {
         val value = header(RETRY_AFTER) ?: return null
-        value.trim().toLongOrNull()?.let {
-            return TimeUnit.SECONDS.toMillis(it).coerceAtLeast(0)
-        }
-        val retryAt = headers.getDate(RETRY_AFTER) ?: return null
-        return (retryAt.time - receivedResponseAtMillis).coerceAtLeast(0)
+        val retryAfterMs = value.trim().toLongOrNull()?.let(TimeUnit.SECONDS::toMillis)
+            ?: headers.getDate(RETRY_AFTER)?.let { it.time - receivedResponseAtMillis }
+            ?: return null
+        return retryAfterMs.coerceIn(0, MAX_RETRY_AFTER_MS)
     }
 
     private fun prepareRequest(

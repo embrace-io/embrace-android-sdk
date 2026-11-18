@@ -203,6 +203,39 @@ class OkHttpRequestExecutionServiceTest {
     }
 
     @Test
+    fun `retry-after header is capped at the maximum delay`() {
+        server.enqueue(
+            MockResponse()
+                .setResponseCode(429)
+                .setHeaders(mapOf("Retry-After" to Long.MAX_VALUE.toString()).toHeaders()),
+        )
+        val result = requestExecutionService.attemptHttpRequest(
+            payloadStream = { testPostBody.byteInputStream() },
+            envelopeType = SupportedEnvelopeType.SESSION,
+            payloadType = PayloadType.SESSION.value,
+        )
+        check(result is ExecutionResult.TooManyRequests)
+        assertEquals(TimeUnit.HOURS.toMillis(24), result.retryAfterMs)
+    }
+
+    @Test
+    fun `retry-after header in HTTP-date form is capped at the maximum delay`() {
+        val retryAt = Date(System.currentTimeMillis() + TimeUnit.DAYS.toMillis(365))
+        server.enqueue(
+            MockResponse()
+                .setResponseCode(429)
+                .setHeaders(Headers.Builder().add("Retry-After", retryAt).build()),
+        )
+        val result = requestExecutionService.attemptHttpRequest(
+            payloadStream = { testPostBody.byteInputStream() },
+            envelopeType = SupportedEnvelopeType.SESSION,
+            payloadType = PayloadType.SESSION.value,
+        )
+        check(result is ExecutionResult.TooManyRequests)
+        assertEquals(TimeUnit.HOURS.toMillis(24), result.retryAfterMs)
+    }
+
+    @Test
     fun `return incomplete with no SDK error logged if the execution throws IOException`() {
         // given a server that drops the connection
         server.enqueue(MockResponse().setSocketPolicy(SocketPolicy.DISCONNECT_AT_START))

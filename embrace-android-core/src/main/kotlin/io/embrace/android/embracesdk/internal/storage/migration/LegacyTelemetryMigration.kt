@@ -2,6 +2,7 @@ package io.embrace.android.embracesdk.internal.storage.migration
 
 import io.embrace.android.embracesdk.internal.logging.ErrorHandler
 import io.embrace.android.embracesdk.internal.logging.SdkErrorType
+import io.embrace.android.embracesdk.internal.logging.guardSdkCode
 import io.embrace.android.embracesdk.internal.storage.LegacyStorageMigrator
 import io.embrace.android.embracesdk.internal.storage.OrphanSweeper
 import io.embrace.android.embracesdk.internal.worker.BackgroundWorker
@@ -102,7 +103,14 @@ class LegacyTelemetryMigration(
             {
                 worker.value.submit(SWEEP_NAME, Unit, SdkErrorType.OrphanSweepFail) {
                     if (!cancelled.get()) {
-                        migrator?.value?.deleteLegacyInstallState()
+                        migrator?.value?.let {
+                            if (it.hasLegacyTelemetry()) {
+                                errorHandler.guardSdkCode(SdkErrorType.StorageMigrationFail) {
+                                    it.moveTelemetry(moveCrashMarker = false)
+                                }
+                            }
+                            it.deleteLegacyInstallState()
+                        }
                         sweeper.value.sweep()
                     }
                 }

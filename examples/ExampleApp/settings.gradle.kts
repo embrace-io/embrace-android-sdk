@@ -8,7 +8,12 @@ pluginManagement {
             }
         }
         mavenCentral()
-        mavenLocal()
+        mavenLocal {
+            content {
+                includeGroup("io.embrace")
+                includeGroup("io.embrace.gradle")
+            }
+        }
         gradlePluginPortal()
     }
 }
@@ -17,7 +22,11 @@ dependencyResolutionManagement {
     repositories {
         google()
         mavenCentral()
-        mavenLocal()
+        mavenLocal {
+            content {
+                includeGroup("io.embrace")
+            }
+        }
     }
 }
 

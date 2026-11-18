@@ -57,6 +57,16 @@ class CombinedRemoteConfigSourceTest {
     }
 
     @Test
+    fun `a failed fetch leaves the stored config unchanged`() {
+        remoteConfigSource.cfg = null
+        val source = createSource(response = null)
+        source.scheduleConfigRequests()
+        executorService.runCurrentlyBlocked()
+        assertEquals(1, remoteConfigSource.callCount)
+        assertEquals(0, remoteConfigStore.saveCount)
+    }
+
+    @Test
     fun `a throwing request does not stop the recurring schedule`() {
         val worker = BackgroundWorker(ScheduledThreadPoolExecutor(1))
         val latch = CountDownLatch(3)

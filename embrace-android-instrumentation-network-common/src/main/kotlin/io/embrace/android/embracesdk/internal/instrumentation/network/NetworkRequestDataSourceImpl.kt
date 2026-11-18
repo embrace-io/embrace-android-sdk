@@ -15,6 +15,7 @@ import io.embrace.android.embracesdk.internal.utils.NetworkUtils.getDomain
 import io.embrace.android.embracesdk.internal.utils.NetworkUtils.getUrlPath
 import io.embrace.android.embracesdk.internal.utils.NetworkUtils.getValidTraceId
 import io.embrace.android.embracesdk.internal.utils.NetworkUtils.stripUrl
+import io.embrace.android.embracesdk.internal.utils.NetworkUtils.stripUrlsInText
 import io.embrace.android.embracesdk.internal.utils.concurrent.OneShot
 import io.embrace.android.embracesdk.internal.utils.putIfNotNull
 import io.embrace.android.embracesdk.network.NetworkSpanParent
@@ -234,7 +235,7 @@ class NetworkRequestDataSourceImpl(
         putIfNotNull(HttpAttributes.HTTP_REQUEST_BODY_SIZE, request.bytesSent?.toString())
         putIfNotNull(HttpAttributes.HTTP_RESPONSE_BODY_SIZE, request.bytesReceived?.toString())
         putIfNotNull(ErrorAttributes.ERROR_TYPE, request.errorType)
-        putIfNotNull(ExceptionAttributes.EXCEPTION_MESSAGE, request.errorMessage)
+        putIfNotNull(ExceptionAttributes.EXCEPTION_MESSAGE, request.errorMessage?.let(::stripUrlsInText))
         request.w3cTraceparent?.let { traceparent ->
             put(EmbNetworkRequestAttributes.EMB_W3C_TRACEPARENT, traceparent)
             put(EmbNetworkRequestAttributes.EMB_FORWARD_TELEMETRY, "true")
@@ -253,7 +254,7 @@ class NetworkRequestDataSourceImpl(
         putIfNotNull(HttpAttributes.HTTP_REQUEST_BODY_SIZE, endData.bytesSent?.toString())
         putIfNotNull(HttpAttributes.HTTP_RESPONSE_BODY_SIZE, endData.bytesReceived?.toString())
         putIfNotNull(ErrorAttributes.ERROR_TYPE, endData.errorType)
-        putIfNotNull(ExceptionAttributes.EXCEPTION_MESSAGE, endData.errorMessage)
+        putIfNotNull(ExceptionAttributes.EXCEPTION_MESSAGE, endData.errorMessage?.let(::stripUrlsInText))
         putIfNotNull(UserAgentAttributes.USER_AGENT_NAME, endData.userAgentName)
         putIfNotNull(UserAgentAttributes.USER_AGENT_VERSION, endData.userAgentVersion)
         putIfNotNull(EmbNetworkRequestAttributes.EMB_TRACE_ID, getValidTraceId(endData.traceId))

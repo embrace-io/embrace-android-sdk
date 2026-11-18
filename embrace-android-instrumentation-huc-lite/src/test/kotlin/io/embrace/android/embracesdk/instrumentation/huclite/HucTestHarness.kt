@@ -61,7 +61,7 @@ internal class HucTestHarness(versionChecker: VersionChecker = BuildVersionCheck
     fun assertSingleClientError(
         expectedStartTime: Long = FAKE_TIME_MS,
         expectedEndTime: Long = FAKE_TIME_MS,
-        expectedUrl: String = testUrl.toString(),
+        expectedUrl: String = STRIPPED_TEST_URL,
         expectedMethod: String = "GET",
         expectedErrorType: String? = FakeIOException::class.java.canonicalName,
         expectedErrorMessage: String = "Nope",
@@ -80,7 +80,7 @@ internal class HucTestHarness(versionChecker: VersionChecker = BuildVersionCheck
         expectedStartTime: Long = FAKE_TIME_MS,
         expectedEndTime: Long = FAKE_TIME_MS + 1L,
         expectedResponseCode: Int = 200,
-        expectedUrl: String = testUrl.toString(),
+        expectedUrl: String = STRIPPED_TEST_URL,
         expectedMethod: String = "GET",
     ) {
         fakeTelemetryDestination.createdSpans.single().assertSuccessfulRequest(
@@ -149,5 +149,6 @@ internal const val FAKE_TIME_MS = DEFAULT_FAKE_CURRENT_TIME
 internal const val FAKE_FIELD_NAME = "fakeField"
 internal const val FAKE_VALUE = "fakeValue"
 internal val testUrl = URL("https://fakeurl.pizza/test/xyz?doStuff=true")
+internal const val STRIPPED_TEST_URL = "https://fakeurl.pizza/test/xyz"
 
 internal class FakeIOException : IOException("Nope")

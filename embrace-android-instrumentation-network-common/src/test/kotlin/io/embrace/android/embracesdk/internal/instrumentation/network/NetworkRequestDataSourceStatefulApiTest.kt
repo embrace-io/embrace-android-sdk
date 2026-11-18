@@ -169,6 +169,21 @@ internal class NetworkRequestDataSourceStatefulApiTest {
     }
 
     @Test
+    fun `URLs in the error message are stripped`() {
+        runRequest(
+            url = "https://www.example.com/api",
+            statusCode = null,
+            errorType = "java.io.FileNotFoundException",
+            errorMessage = "https://u:p@www.example.com/api?token=abc#frag",
+        )
+
+        assertEquals(
+            "https://www.example.com/api",
+            harness.getNetworkSpans().single().attributes[ExceptionAttributes.EXCEPTION_MESSAGE],
+        )
+    }
+
+    @Test
     fun `URL sent with request end will be used`() {
         val url = "https://www.example1.com/blah/"
         val endUrl = "https://www.example1.com"

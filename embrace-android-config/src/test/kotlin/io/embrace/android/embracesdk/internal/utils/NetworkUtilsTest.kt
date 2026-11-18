@@ -3,6 +3,7 @@ package io.embrace.android.embracesdk.internal.utils
 import io.embrace.android.embracesdk.internal.utils.NetworkUtils.getDomain
 import io.embrace.android.embracesdk.internal.utils.NetworkUtils.isIpAddress
 import io.embrace.android.embracesdk.internal.utils.NetworkUtils.stripUrl
+import io.embrace.android.embracesdk.internal.utils.NetworkUtils.stripUrlsInText
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNull
@@ -85,6 +86,16 @@ internal class NetworkUtilsTest {
         // no path
         arrayOf("http://google.com?color=blue", "http://google.com"),
         arrayOf("http://google.com#bar", "http://google.com"),
+
+        // userinfo is removed
+        arrayOf("https://u:p@host.com/path?token=abc#frag", "https://host.com/path"),
+        arrayOf("https://user@host.com:8443/path", "https://host.com:8443/path"),
+        arrayOf("https://u:p@host.com", "https://host.com"),
+        arrayOf("https://u%40x:p@ss@host.com/path", "https://host.com/path"),
+
+        // an '@' outside the authority is not userinfo
+        arrayOf("https://host.com/users/@me", "https://host.com/users/@me"),
+        arrayOf("https://host.com/path?email=a@b.com", "https://host.com/path"),
     )
 
     @Test
@@ -150,6 +161,19 @@ internal class NetworkUtilsTest {
             traceIdMoreEqualAllowedLength,
             NetworkUtils.getValidTraceId(traceIdMoreThanAllowedLength),
         )
+    }
+
+    @Test
+    fun stripUrlsInText() {
+        assertEquals("", stripUrlsInText(""))
+        val noUrl = "Unable to resolve host \"example.com\""
+        assertEquals(noUrl, stripUrlsInText(noUrl))
+        assertEquals("https://example.com/path", stripUrlsInText("https://u:p@example.com/path?token=abc#frag"))
+        assertEquals(
+            "failed on https://a.com/x and http://b.com/y then retried",
+            stripUrlsInText("failed on https://a.com/x?k=1 and http://u@b.com/y?k=2 then retried"),
+        )
+        assertEquals("url 'https://a.com/x' failed", stripUrlsInText("url 'https://a.com/x?k=1' failed"))
     }
 
     @Test

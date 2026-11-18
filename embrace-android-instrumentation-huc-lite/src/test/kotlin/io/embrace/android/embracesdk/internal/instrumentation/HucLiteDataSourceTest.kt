@@ -24,6 +24,7 @@ import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
+import java.io.IOException
 import java.lang.reflect.Field
 import java.net.URL
 import java.net.URLStreamHandlerFactory
@@ -152,6 +153,66 @@ class HucLiteDataSourceTest {
     }
 
     @Test
+    fun `userinfo, query and fragment are stripped from a completed request`() {
+        wrappedConnection.urlProvider = { URL(SECRET_URL) }
+        hucLiteDataSource.createRequestData(
+            wrappedConnection = wrappedConnection,
+            clock = fakeClock,
+        )?.apply {
+            startRequest()
+            completeRequest(200)
+        }
+        assertEquals("https://fakeurl.pizza/path", fakeTelemetryDestination.createdSpans.single().attributes["url.full"])
+    }
+
+    @Test
+    fun `userinfo, query and fragment are stripped from a request that errors`() {
+        wrappedConnection.urlProvider = { URL(SECRET_URL) }
+        hucLiteDataSource.createRequestData(
+            wrappedConnection = wrappedConnection,
+            clock = fakeClock,
+        )?.apply {
+            startRequest()
+            clientError(IOException("Nope"))
+        }
+        assertEquals("https://fakeurl.pizza/path", fakeTelemetryDestination.createdSpans.single().attributes["url.full"])
+    }
+
+    @Test
+    fun `path override is kept and the query is stripped`() {
+        wrappedConnection.urlProvider = { URL(SECRET_URL) }
+        wrappedConnection.requestPropertyValues["x-emb-path"] = "/override/path"
+        hucLiteDataSource.createRequestData(
+            wrappedConnection = wrappedConnection,
+            clock = fakeClock,
+        )?.apply {
+            startRequest()
+            completeRequest(200)
+        }
+        assertEquals(
+            "https://fakeurl.pizza/override/path",
+            fakeTelemetryDestination.createdSpans.single().attributes["url.full"],
+        )
+    }
+
+    @Test
+    fun `a modifier cannot reintroduce a query string`() {
+        val ds = createHucLiteDataSource(
+            configureModifiers = { chain ->
+                chain.add { it.url = "https://redacted.burger/api?token=abc" }
+            },
+        )
+        ds.createRequestData(
+            wrappedConnection = wrappedConnection,
+            clock = fakeClock,
+        )?.apply {
+            startRequest()
+            completeRequest(200)
+        }
+        assertEquals("https://redacted.burger/api", fakeTelemetryDestination.createdSpans.single().attributes["url.full"])
+    }
+
+    @Test
     fun `record only if URL is enabled`() {
         val ds = createHucLiteDataSource(
             networkBehavior = FakeNetworkBehavior(
@@ -231,6 +292,8 @@ class HucLiteDataSourceTest {
     }
 
     companion object {
+        private const val SECRET_URL = "https://u:p@fakeurl.pizza/path?token=abc#frag"
+
         var factoryField: URLStreamHandlerFactory? = null
     }
 }

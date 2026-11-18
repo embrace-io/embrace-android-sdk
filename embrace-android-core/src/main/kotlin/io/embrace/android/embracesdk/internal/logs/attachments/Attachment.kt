@@ -1,5 +1,6 @@
 package io.embrace.android.embracesdk.internal.logs.attachments
 
+import io.embrace.android.embracesdk.internal.delivery.storage.MAX_ATTACHMENT_BYTES
 import io.embrace.android.embracesdk.internal.logs.attachments.AttachmentErrorCode.ATTACHMENT_TOO_LARGE
 import io.embrace.android.embracesdk.internal.logs.attachments.AttachmentErrorCode.OVER_MAX_ATTACHMENTS
 import io.embrace.android.embracesdk.internal.logs.attachments.AttachmentErrorCode.UNKNOWN
@@ -11,10 +12,6 @@ import java.util.UUID
  * Holds attributes that describe an attachment to a log record.
  */
 sealed class Attachment(val id: String) {
-
-    internal companion object {
-        private const val LIMIT_MB = 1 * 1024 * 1024
-    }
 
     abstract val attributes: Map<String, String>
     abstract val errorCode: AttachmentErrorCode?
@@ -41,7 +38,7 @@ sealed class Attachment(val id: String) {
 
         override val errorCode: AttachmentErrorCode? = when {
             !counter() -> OVER_MAX_ATTACHMENTS
-            size > LIMIT_MB -> ATTACHMENT_TOO_LARGE
+            size > MAX_ATTACHMENT_BYTES -> ATTACHMENT_TOO_LARGE
             else -> null
         }
 

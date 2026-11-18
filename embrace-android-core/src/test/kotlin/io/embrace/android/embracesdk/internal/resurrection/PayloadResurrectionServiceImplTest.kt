@@ -579,6 +579,46 @@ class PayloadResurrectionServiceImplTest {
     }
 
     @Test
+    fun `a session payload that decompresses past the cap is deleted and the next payload is resurrected`() {
+        cacheStorageService.store(sessionMetadata) { stream ->
+            stream.write(ByteArray(MAX_DECOMPRESSED_PAYLOAD_BYTES.toInt()) { ' '.code.toByte() })
+            serializer.toJson(deadSessionEnvelope, Envelope.sessionEnvelopeSerializer, stream)
+        }
+        assertTrue(cachedSizeOf(sessionMetadata) < MAX_CACHED_PAYLOAD_BYTES)
+        val nextMetadata = fakeSessionStoredTelemetryMetadata2.copy(complete = false)
+        cacheStorageService.addPayload(
+            metadata = nextMetadata,
+            data = fakeIncompleteSessionEnvelope(userSessionId = "session-b", startMs = nextMetadata.timestamp),
+        )
+
+        resurrectInBackground()
+
+        assertEquals(
+            listOf(FAKE_USER_SESSION_ID_2 to FAKE_SESSION_PART_ID_2),
+            payloadStorageService.storedPayloadMetadata().map { it.userSessionId to it.sessionPartId },
+        )
+        assertEquals(0, cacheStorageService.storedPayloadCount())
+        val error = errorHandler.sdkErrorMessages.single()
+        assertEquals(SdkErrorType.PayloadResurrectionPayloadFail.toString(), error.msg)
+        assertEquals(OVERSIZED_DECOMPRESSED_PAYLOAD_MSG, error.throwable?.message)
+    }
+
+    @Test
+    fun `a session payload exactly at the decompressed cap is resurrected`() {
+        cacheStorageService.addPayload(metadata = sessionMetadata, data = deadSessionEnvelope)
+        val decompressedSize = GZIPInputStream(cacheStorageService.loadPayloadAsStream(sessionMetadata)).use {
+            it.readBytes().size.toLong()
+        }
+        val service =
+            serviceWithMaxPayloadBytes(MAX_CACHED_PAYLOAD_BYTES, maxDecompressedPayloadBytes = decompressedSize)
+        service.resurrectOldPayloads(nativeCrashServiceProvider = { nativeCrashService })
+
+        assertEquals(1, payloadStorageService.storedPayloadCount())
+        assertEquals(0, cacheStorageService.storedPayloadCount())
+        assertTrue(errorHandler.sdkErrorMessages.isEmpty())
+    }
+
+    @Test
     fun `a cached crash envelope larger than the maximum file size does not abort resurrection`() {
         val deadSessionCrashData = createNativeCrashData(
             nativeCrashId = "native-crash-1",
@@ -978,7 +1018,10 @@ class PayloadResurrectionServiceImplTest {
     private fun cachedSizeOf(metadata: StoredTelemetryMetadata): Long =
         checkNotNull(cacheStorageService.payloadSizeBytes(metadata))
 
-    private fun serviceWithMaxPayloadBytes(maxPayloadBytes: Long): PayloadResurrectionServiceImpl {
+    private fun serviceWithMaxPayloadBytes(
+        maxPayloadBytes: Long,
+        maxDecompressedPayloadBytes: Long = MAX_DECOMPRESSED_PAYLOAD_BYTES,
+    ): PayloadResurrectionServiceImpl {
         return PayloadResurrectionServiceImpl(
             intakeService = IntakeServiceImpl(
                 schedulingService,
@@ -994,6 +1037,7 @@ class PayloadResurrectionServiceImplTest {
             errorHandler = errorHandler,
             serializer = serializer,
             maxPayloadBytes = maxPayloadBytes,
+            maxDecompressedPayloadBytes = maxDecompressedPayloadBytes,
         )
     }
 

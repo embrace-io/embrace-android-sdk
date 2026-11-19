@@ -7,6 +7,7 @@ import io.embrace.android.embracesdk.fakes.TestPlatformSerializer
 import io.embrace.android.embracesdk.fakes.fakeEnvelopeMetadata
 import io.embrace.android.embracesdk.fakes.fakeEnvelopeResource
 import io.embrace.android.embracesdk.internal.delivery.storage.CachedLogEnvelopeStore.Companion.createNativeCrashEnvelopeMetadata
+import io.embrace.android.embracesdk.internal.logging.SdkErrorType
 import io.embrace.android.embracesdk.internal.serialization.PlatformSerializer
 import io.embrace.android.embracesdk.internal.worker.PriorityWorker
 import org.junit.Assert.assertEquals
@@ -65,6 +66,26 @@ class CachedLogEnvelopeStoreImplTest {
         store.clear()
         executor.queueCompletionTask()
         assertNull(store.get(fakeNativeCrashEnvelope))
+    }
+
+    @Test
+    fun `an envelope larger than the maximum size is not loaded`() {
+        errorHandler.throwOnSdkError = false
+        val cappedStore = CachedLogEnvelopeStoreImpl(
+            outputDir = lazy { outputDir },
+            worker = PriorityWorker(executor),
+            errorHandler = errorHandler,
+            serializer = serializer,
+            clock = FakeClock(),
+            maxEnvelopeBytes = 10,
+        )
+        cappedStore.create(
+            storedTelemetryMetadata = fakeNativeCrashEnvelope,
+            resource = fakeEnvelopeResource,
+            metadata = fakeEnvelopeMetadata,
+        )
+        assertNull(cappedStore.get(fakeNativeCrashEnvelope))
+        assertEquals(SdkErrorType.PayloadStorageFail.toString(), errorHandler.sdkErrorMessages.single().msg)
     }
 
     companion object {

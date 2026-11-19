@@ -21,6 +21,7 @@ import io.embrace.android.embracesdk.internal.payload.NativeCrashData
 import io.embrace.android.embracesdk.internal.payload.SessionPartPayload
 import io.embrace.android.embracesdk.internal.serialization.PlatformSerializer
 import io.embrace.android.embracesdk.internal.session.UserSessionRestoreDecision
+import io.embrace.android.embracesdk.internal.utils.BoundedInputStream
 import io.embrace.android.embracesdk.internal.utils.EmbTrace
 import io.embrace.android.embracesdk.internal.utils.Provider
 import io.embrace.android.embracesdk.semconv.EmbSessionAttributes
@@ -40,6 +41,7 @@ internal class PayloadResurrectionServiceImpl(
     private val errorHandler: ErrorHandler,
     private val serializer: PlatformSerializer,
     private val maxPayloadBytes: Long = MAX_CACHED_PAYLOAD_BYTES,
+    private val maxDecompressedPayloadBytes: Long = MAX_DECOMPRESSED_PAYLOAD_BYTES,
 ) : PayloadResurrectionService {
 
     private val resurrector = SessionPartResurrector(cachedLogEnvelopeStore)
@@ -345,9 +347,10 @@ internal class PayloadResurrectionServiceImpl(
 
     /**
      * Opens the cached payload for reading, or returns null if it is not on disk. Throws [IOException] if
-     * the file is larger than [maxPayloadBytes] or does not hold a valid gzip header, so that callers track
-     * the corrupt payload as [SdkErrorType.PayloadResurrectionPayloadFail]. A size that can't be read isn't
-     * taken as oversized: if storage is failing, reading the payload fails too.
+     * the file is larger than [maxPayloadBytes] or does not hold a valid gzip header, and the returned stream
+     * throws it once more than [maxDecompressedPayloadBytes] are read, so that callers track the corrupt
+     * payload as [SdkErrorType.PayloadResurrectionPayloadFail]. A size that can't be read isn't taken as
+     * oversized: if storage is failing, reading the payload fails too.
      */
     private fun StoredTelemetryMetadata.loadDecompressedPayload(): InputStream? {
         val sizeBytes = cacheStorageService.payloadSizeBytes(this)
@@ -356,7 +359,7 @@ internal class PayloadResurrectionServiceImpl(
         }
         return cacheStorageService.loadPayloadAsStream(this)?.let {
             try {
-                GZIPInputStream(it)
+                BoundedInputStream(GZIPInputStream(it), maxDecompressedPayloadBytes, OVERSIZED_DECOMPRESSED_PAYLOAD_MSG)
             } catch (exc: IOException) {
                 it.close()
                 throw exc

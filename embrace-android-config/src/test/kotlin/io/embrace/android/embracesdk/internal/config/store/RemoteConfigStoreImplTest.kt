@@ -108,6 +108,16 @@ internal class RemoteConfigStoreImplTest {
     }
 
     @Test
+    fun `an invalid stored etag is dropped on load`() {
+        val config = RemoteConfig(50)
+        store.saveResponse(ConfigHttpResponse(config, "café"))
+
+        val loaded = checkNotNull(store.loadResponse())
+        assertEquals(config, loaded.cfg)
+        assertNull(loaded.etag)
+    }
+
+    @Test
     fun `json fallback has no etag`() {
         val config = RemoteConfig(50)
         store.saveResponse(ConfigHttpResponse(config, "etag"))

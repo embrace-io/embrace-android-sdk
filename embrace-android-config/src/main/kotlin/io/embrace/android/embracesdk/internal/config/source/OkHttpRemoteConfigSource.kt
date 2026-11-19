@@ -64,7 +64,13 @@ class OkHttpRemoteConfigSource internal constructor(
     private var etag: String? = null
 
     private fun fetchConfigImpl(): ConfigHttpResponse? {
-        val request = prepareRequest()
+        val request = try {
+            prepareRequest()
+        } catch (_: IllegalArgumentException) {
+            // a header OkHttp rejects must not wedge every later fetch: retry without the ETag
+            etag = null
+            prepareRequest()
+        }
         val call = okhttpClient.value.newCall(request)
         val response = call.execute()
         return processResponse(response)
@@ -83,8 +89,9 @@ class OkHttpRemoteConfigSource internal constructor(
     }
 
     private fun processResponse(response: Response): ConfigHttpResponse? = response.use {
-        response.header("etag")?.let { etagHeader ->
-            this.etag = etagHeader
+        val etagHeader = response.header("etag")
+        if (etagHeader != null && (response.isSuccessful || response.code == HTTP_NOT_MODIFIED)) {
+            this.etag = etagHeader.takeIf(::isValidEtag)
         }
         if (!response.isSuccessful) {
             return null
@@ -118,5 +125,9 @@ class OkHttpRemoteConfigSource internal constructor(
             headers["If-None-Match"] = it
         }
         return headers
+    }
+
+    private companion object {
+        const val HTTP_NOT_MODIFIED = 304
     }
 }

@@ -177,6 +177,52 @@ class OkHttpRemoteConfigSourceTest {
     }
 
     @Test
+    fun `an etag that cannot be sent as a request header is not replayed`() {
+        listOf("café", "a\u0001b", "a".repeat(257)).forEach { etag ->
+            executeRequest(
+                MockResponse().setResponseCode(200)
+                    .setBody(configResponseBuffer.copy())
+                    .addHeaderLenient("etag", etag),
+            )
+            val (cfg, request) = executeRequest(
+                MockResponse().setResponseCode(200).setBody(configResponseBuffer.copy()),
+            )
+            assertConfigRequestReceived(request)
+            assertNull(request?.getHeader("If-None-Match"))
+            assertConfigResponseDeserialized(cfg)
+        }
+        assertTrue(errorHandler.sdkErrorMessages.isEmpty())
+    }
+
+    @Test
+    fun `an etag on an error response does not replace the stored etag`() {
+        executeRequest(
+            MockResponse().setResponseCode(200)
+                .setBody(configResponseBuffer)
+                .setHeader("etag", "attempt_1"),
+        )
+        executeRequest(
+            MockResponse().setResponseCode(500)
+                .setHeader("etag", "attempt_2"),
+        )
+        val (_, request) = executeRequest(MockResponse().setResponseCode(304))
+        assertConfigRequestReceived(request)
+        assertEquals("attempt_1", request?.getHeader("If-None-Match"))
+    }
+
+    @Test
+    fun `an initial etag that cannot be sent is dropped and the fetch retried`() {
+        source.setInitialEtag("café")
+        val (cfg, request) = executeRequest(
+            MockResponse().setResponseCode(200).setBody(configResponseBuffer),
+        )
+        assertConfigRequestReceived(request)
+        assertNull(request?.getHeader("If-None-Match"))
+        assertConfigResponseDeserialized(cfg)
+        assertTrue(errorHandler.sdkErrorMessages.isEmpty())
+    }
+
+    @Test
     fun `test connection reused after non-2xx response`() {
         val etagValue = "attempt_1"
         val (_, firstRequest) = executeRequest(

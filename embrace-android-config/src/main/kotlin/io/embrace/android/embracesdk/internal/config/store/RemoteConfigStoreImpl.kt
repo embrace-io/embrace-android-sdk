@@ -4,6 +4,7 @@ import io.embrace.android.embracesdk.internal.config.PersistedConfig
 import io.embrace.android.embracesdk.internal.config.cache.CachedConfiguration
 import io.embrace.android.embracesdk.internal.config.remote.RemoteConfig
 import io.embrace.android.embracesdk.internal.config.source.ConfigHttpResponse
+import io.embrace.android.embracesdk.internal.config.source.isValidEtag
 import io.embrace.android.embracesdk.internal.logging.ErrorHandler
 import io.embrace.android.embracesdk.internal.logging.SdkErrorType
 import io.embrace.android.embracesdk.internal.serialization.EmbraceBinary
@@ -36,7 +37,7 @@ internal class RemoteConfigStoreImpl(
             }
             StoredConfigResponse(
                 cfg = cached.remoteConfig,
-                etag = cached.etag,
+                etag = cached.etag?.takeIf(::isValidEtag),
                 deviceId = cached.deviceId,
                 deliveredAt = cached.deliveredAt,
             )

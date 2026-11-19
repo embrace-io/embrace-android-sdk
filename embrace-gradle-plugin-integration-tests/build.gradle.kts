@@ -16,14 +16,13 @@ dependencies {
     implementation(libs.kotlinx.serialization.json.gradle.plugin)
 
     implementation(libs.junit)
-    implementation(platform(libs.okhttp.bom))
-    implementation(libs.mockwebserver)
     implementation(libs.zstd.jni)
     implementation(libs.bundletool)
     implementation(libs.smali.baksmali)
 
     testImplementation(libs.okio)
     testImplementation(project(":embrace-test-common"))
+    testImplementation(project(":embrace-test-api-server"))
 }
 
 val integrationRepo = fileTree(isolated.rootProject.projectDirectory.dir(INTEGRATION_TEST_REPO_PATH)) {

@@ -49,6 +49,7 @@ include(
     ":embrace-perfetto-analysis",
     ":embrace-test-common",
     ":embrace-test-fakes",
+    ":embrace-test-api-server",
     ":embrace-benchmark-common",
     ":embrace-gradle-plugin",
     ":embrace-bytecode-instrumentation-tests",

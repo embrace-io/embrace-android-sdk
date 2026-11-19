@@ -3,11 +3,12 @@ package io.embrace.android.gradle.integration.framework
 import io.embrace.android.gradle.plugin.ndk.NdkUploadHandshakeResponse
 import io.embrace.android.gradle.plugin.network.EmbraceEndpoint
 import io.embrace.android.gradle.plugin.util.serialization.JsonSerializer
+import io.embrace.android.testapiserver.FakeApiServer
 import kotlinx.serialization.SerializationStrategy
 import okhttp3.mockwebserver.MockResponse
 
 class SetupInterface(
-    private val apiServer: FakeApiServer,
+    private val apiServer: FakeApiServer<EmbraceEndpoint>,
 ) {
 
     private val serializer = JsonSerializer()

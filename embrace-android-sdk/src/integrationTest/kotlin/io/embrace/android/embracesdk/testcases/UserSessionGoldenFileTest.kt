@@ -102,7 +102,7 @@ internal class UserSessionGoldenFileTest(
      * Asserts that sessions and JVM crashes can be associated via user session IDs.
      *
      * Crash teardown shuts down the delivery scheduler, so the session and crash payloads are
-     * persisted but not delivered to the API. We read them directly from storage instead.
+     * persisted but not delivered to the fake server backend. We read them directly from storage instead.
      */
     @Test
     fun `JVM crash association`() {

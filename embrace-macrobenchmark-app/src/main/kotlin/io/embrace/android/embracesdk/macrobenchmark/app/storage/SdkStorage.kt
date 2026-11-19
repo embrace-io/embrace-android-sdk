@@ -24,8 +24,9 @@ internal class SdkStorage(
     val sessionsDir: Path = sdkDir(SdkDir.TELEMETRY_PENDING_SESSION_PARTS)
 
     /**
-     * The cache of incomplete payloads, which the SDK may pass resurrected parts through on their way to
-     * being stored: [SdkDir.TELEMETRY_PENDING_SNAPSHOTS].
+     * The cache of incomplete payloads: where single-file mode caches the payload of a session part in progress,
+     * and which the SDK may pass resurrected parts through on their way to being stored:
+     * [SdkDir.TELEMETRY_PENDING_SNAPSHOTS].
      */
     val cacheDir: Path = sdkDir(SdkDir.TELEMETRY_PENDING_SNAPSHOTS)
 
@@ -42,14 +43,9 @@ internal class SdkStorage(
     fun sessionPartDirs(): List<String> = list(sessionsDir).map(Path::name).sorted()
 
     /**
-     * How many payloads are in [cacheDir].
+     * The file names of the payloads in [cacheDir].
      */
-    fun cachedPayloadCount(): Int = list(cacheDir).size
-
-    /**
-     * Whether the session part named [name] is in [sessionsDir].
-     */
-    fun hasSessionPart(name: String): Boolean = fileSystem.exists(sessionsDir / name)
+    fun cachedPayloads(): List<String> = list(cacheDir).map(Path::name).sorted()
 
     /**
      * Writes [json] as the remote config response the SDK reads at startup (RemoteConfigStoreImpl), and

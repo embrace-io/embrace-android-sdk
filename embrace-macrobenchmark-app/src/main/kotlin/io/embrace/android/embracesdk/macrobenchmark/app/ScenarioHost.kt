@@ -57,6 +57,10 @@ internal class ScenarioHost(
     @Volatile
     private var partsAtStart: List<String> = emptyList()
 
+    // the file names of the payloads in single-file mode's cache when the SDK started
+    @Volatile
+    private var cachedAtStart: List<String> = emptyList()
+
     private val foregrounded = AtomicReference<CountDownLatch?>(null)
     private var thread: Thread? = null
 
@@ -74,6 +78,7 @@ internal class ScenarioHost(
         }
         val storage = sdkStorage()
         partsAtStart = storage.sessionPartDirs()
+        cachedAtStart = storage.cachedPayloads()
         seedRemoteConfig(storage)
         startSdk()
     }
@@ -160,22 +165,23 @@ internal class ScenarioHost(
     }
 
     /**
-     * Waits until every session part that was on disk when the SDK started has left multi-file mode's
-     * directory, and the cache of incomplete payloads that the SDK may pass parts through on their way to being
-     * resurrected is empty again. It fails when the SDK started with no parts, so that a launch with nothing to
-     * resurrect fails rather than measuring nothing.
+     * Waits until every session part that was on disk when the SDK started is gone, in either persistence mode:
+     * the SDK deletes a dead part from multi-file mode's directory, or its payload from single-file mode's cache,
+     * once it has stored the resurrected part. Only what was there at the start counts, since in single-file
+     * mode the SDK caches the new session's own payload beside them. It fails when the SDK started with no parts,
+     * so that a launch with nothing to resurrect fails rather than measuring nothing.
      */
     private fun awaitResurrection(): String {
-        val parts = partsAtStart
-        if (parts.isEmpty()) {
+        val storage = sdkStorage()
+        val dead = partsAtStart.map { storage.sessionsDir / it } + cachedAtStart.map { storage.cacheDir / it }
+        if (dead.isEmpty()) {
             return STATUS_ERROR + "no session parts were on disk when the SDK started"
         }
-        val storage = sdkStorage()
         val deadlineMs = SystemClock.uptimeMillis() + RESURRECTION_TIMEOUT_MS
-        while (parts.any(storage::hasSessionPart) || storage.cachedPayloadCount() > 0) {
+        while (dead.any(fileSystem::exists)) {
             if (SystemClock.uptimeMillis() > deadlineMs) {
-                return STATUS_ERROR + "${parts.count(storage::hasSessionPart)} dead parts and " +
-                    "${storage.cachedPayloadCount()} cached payloads left after ${RESURRECTION_TIMEOUT_MS}ms"
+                return STATUS_ERROR + "${dead.count(fileSystem::exists)} of ${dead.size} dead session parts left after " +
+                    "${RESURRECTION_TIMEOUT_MS}ms"
             }
             SystemClock.sleep(RESURRECTION_POLL_MS)
         }

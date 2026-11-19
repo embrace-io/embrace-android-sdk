@@ -17,7 +17,6 @@ import io.embrace.android.embracesdk.benchmark.capture.CaptureProfile
 import io.embrace.android.embracesdk.benchmark.capture.captureProfileWithKey
 import io.embrace.android.embracesdk.benchmark.scenario.HostTask
 import io.embrace.android.embracesdk.benchmark.scenario.ResurrectionScenarios
-import io.embrace.android.embracesdk.benchmark.scenario.ScenarioProtocol.MULTI_FILE_PERSISTENCE_SETTING
 import io.embrace.android.embracesdk.benchmark.scenario.ScenarioProtocol.RESTORE_FIXTURE_SETTING
 import io.embrace.android.embracesdk.benchmark.scenario.ScenarioSpec
 import org.junit.After
@@ -28,30 +27,38 @@ import org.junit.runner.RunWith
 import org.junit.runners.Parameterized
 
 /**
- * Measures what resurrecting the session part that a dead app instance left on disk costs the next launch, in
- * multi-file persistence mode, for each of [ResurrectionScenarios]: parts of increasing size.
+ * Measures what resurrecting the session part that a dead app instance left on disk costs the next launch, for
+ * each of [ResurrectionScenarios], parts of increasing size, in each [PersistenceMode] and [OtelSdkMode].
  *
  * In the first iteration's setup, the benchmark records the scenario's fixture once: a launch that runs the scenario
  * with the SDK started and is killed once the SDK has written it. It waits until then because macrobenchmark resets
  * the app's compilation before the first iteration, which on older Android versions reinstalls the app and so
  * deletes its data, fixture included. Before each iteration, a launch that does not start the SDK restores the
  * recorded part and is killed. The measured launch cold-starts the SDK and waits until the part has
- * been resurrected and stored. The SDK reads and
- * resurrects dead parts on a background worker, in the `emb-mf-read-session-parts` and
- * `emb-resurrect-payloads` sections, so the worker's wall clock time is their sum. `emb-sdk-start` is the
- * SDK's start on the main thread, and the memory metrics are the app's peaks over the whole launch.
+ * been resurrected and stored. The SDK resurrects dead parts on a background worker: in multi-file mode it reads
+ * and resurrects a part's files in `emb-mf-read-session-parts`, and in single-file mode it resurrects the part's
+ * cached payload in `emb-resurrect-payloads`, so the worker's wall clock time is their sum. `emb-sdk-start` is the
+ * SDK's start on the main thread, and the memory metrics are the app's peaks over the whole launch, which only
+ * compare between modes and scenarios on one device.
  *
  * The memory metrics need the [CaptureProfile.MEMORY] trace config, so the benchmark refuses any other
  * profile rather than report no memory.
  */
 @RunWith(Parameterized::class)
-internal class ResurrectionBenchmark(scenarioId: String) {
+internal class ResurrectionBenchmark(
+    scenarioId: String,
+    persistenceMode: PersistenceMode,
+    otelSdkMode: OtelSdkMode,
+) {
 
     @get:Rule
     val benchmarkRule = MacrobenchmarkRule()
 
     @get:Rule
-    val otelSdkModeRule = OtelSdkModeRule(OtelSdkMode.COMPAT)
+    val persistenceModeRule = PersistenceModeRule(persistenceMode)
+
+    @get:Rule
+    val otelSdkModeRule = OtelSdkModeRule(otelSdkMode)
 
     private val arguments = InstrumentationRegistry.getArguments()
     private val captureProfile = captureProfileWithKey(arguments.getString(CAPTURE_PROFILE_ARGUMENT))
@@ -61,17 +68,15 @@ internal class ResurrectionBenchmark(scenarioId: String) {
     private var fixtureRecorded = false
 
     @Before
-    fun enableMultiFilePersistence() {
+    fun requireMemoryProfile() {
         check(captureProfile == CaptureProfile.MEMORY) {
             "ResurrectionBenchmark's memory metrics need the ${CaptureProfile.MEMORY.key} capture profile, " +
                 "not ${captureProfile.key}: pass --capture ${CaptureProfile.MEMORY.key}"
         }
-        device.executeShellCommand("settings put global $MULTI_FILE_PERSISTENCE_SETTING 100")
     }
 
     @After
-    fun restoreDefaults() {
-        device.executeShellCommand("settings delete global $MULTI_FILE_PERSISTENCE_SETTING")
+    fun stopRestoring() {
         device.executeShellCommand("settings delete global $RESTORE_FIXTURE_SETTING")
     }
 
@@ -126,8 +131,12 @@ internal class ResurrectionBenchmark(scenarioId: String) {
     companion object {
 
         @JvmStatic
-        @Parameterized.Parameters(name = "{0}")
-        fun parameters(): List<String> = ResurrectionScenarios.all.map(ScenarioSpec::id)
+        @Parameterized.Parameters(name = "{0}-{1}-{2}")
+        fun parameters(): List<Array<Any>> = ResurrectionScenarios.all.map(ScenarioSpec::id).flatMap { id ->
+            PersistenceMode.entries.flatMap { persistence ->
+                OtelSdkMode.entries.map { otel -> arrayOf(id, persistence, otel) }
+            }
+        }
 
         // a pass's iterations: a comparison takes its repetition from several passes, which also vary the
         // device state between them

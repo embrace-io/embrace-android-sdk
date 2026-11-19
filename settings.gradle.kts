@@ -66,7 +66,6 @@ pluginManagement {
         google()
         mavenCentral()
         gradlePluginPortal()
-        mavenLocal()
     }
 }
 
@@ -75,6 +74,10 @@ dependencyResolutionManagement {
         google()
         mavenCentral()
         gradlePluginPortal()
-        mavenLocal()
+        mavenLocal {
+            content {
+                includeGroup("io.opentelemetry.kotlin")
+            }
+        }
     }
 }

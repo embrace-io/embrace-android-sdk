@@ -5,6 +5,7 @@ import io.embrace.android.embracesdk.internal.config.remote.RemoteConfig
 import io.embrace.android.embracesdk.internal.logging.ErrorHandler
 import io.embrace.android.embracesdk.internal.logging.SdkErrorType
 import io.embrace.android.embracesdk.internal.serialization.PlatformSerializer
+import io.embrace.android.embracesdk.internal.utils.BoundedInputStream
 import okhttp3.OkHttpClient
 import okhttp3.Request
 import okhttp3.Response
@@ -98,8 +99,11 @@ class OkHttpRemoteConfigSource internal constructor(
         }
         val cfg = try {
             response.body?.source()?.use { src ->
-                val gzipSource = GzipSource(src)
-                gzipSource.buffer().inputStream().use { stream ->
+                BoundedInputStream(
+                    GzipSource(src).buffer().inputStream(),
+                    MAX_CONFIG_SIZE_BYTES,
+                    "Remote config exceeded $MAX_CONFIG_SIZE_BYTES bytes",
+                ).use { stream ->
                     serializer.fromJson(stream, RemoteConfig.serializer())
                 }
             }
@@ -129,5 +133,6 @@ class OkHttpRemoteConfigSource internal constructor(
 
     private companion object {
         const val HTTP_NOT_MODIFIED = 304
+        const val MAX_CONFIG_SIZE_BYTES = 3L * 1024L * 1024L
     }
 }

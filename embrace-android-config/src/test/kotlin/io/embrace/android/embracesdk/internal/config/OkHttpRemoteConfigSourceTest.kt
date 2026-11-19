@@ -154,6 +154,41 @@ class OkHttpRemoteConfigSourceTest {
     }
 
     @Test
+    fun `a config over the size limit is a failed fetch`() {
+        val body = Buffer()
+        GzipSink(body).buffer().use {
+            it.writeUtf8("""{"threshold":1""")
+            it.writeUtf8(" ".repeat(4 * 1024 * 1024))
+            it.writeUtf8("""}""")
+        }
+        assertTrue(body.size < 100 * 1024)
+
+        val (cfg, request) = executeRequest(
+            MockResponse().setResponseCode(200).setBody(body),
+        )
+        assertConfigRequestReceived(request)
+        assertConfigResponseNotDeserialized(cfg)
+        assertTrue(errorHandler.sdkErrorMessages.isEmpty())
+    }
+
+    @Test
+    fun `a config just under the size limit parses`() {
+        val body = Buffer()
+        GzipSink(body).buffer().use {
+            val prefix = """{"threshold":1"""
+            it.writeUtf8(prefix)
+            it.writeUtf8(" ".repeat(3 * 1024 * 1024 - prefix.length - 1))
+            it.writeUtf8("""}""")
+        }
+
+        val (cfg, request) = executeRequest(
+            MockResponse().setResponseCode(200).setBody(body),
+        )
+        assertConfigRequestReceived(request)
+        assertEquals(1, cfg?.threshold)
+    }
+
+    @Test
     fun `test etag header respected`() {
         val etagValue = "attempt_1"
         val (cfg, request) = executeRequest(

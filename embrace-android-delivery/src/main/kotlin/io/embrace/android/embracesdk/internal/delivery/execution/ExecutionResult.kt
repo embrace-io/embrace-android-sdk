@@ -15,9 +15,17 @@ sealed class ExecutionResult(
 
     /**
      * A completed HTTP request that returned a 429 (Too Many Requests) status code. [retryAfterMs] is the delay
-     * requested by the server's Retry-After header, if one was sent.
+     * requested by the server's Retry-After header, if one was sent, capped at [MAX_RETRY_AFTER_MS].
      */
-    data class TooManyRequests(val endpoint: Endpoint, val retryAfterMs: Long?) : ExecutionResult(true)
+    data class TooManyRequests(val endpoint: Endpoint, val retryAfterMs: Long?) : ExecutionResult(true) {
+        companion object {
+            /**
+             * The longest a Retry-After header can block an endpoint, so a hostile or misconfigured
+             * server can't stop delivery for the rest of the process.
+             */
+            const val MAX_RETRY_AFTER_MS: Long = 24 * 60 * 60 * 1000L
+        }
+    }
 
     /**
      * A completed HTTP request that with a status code that indicates it did not succeed (4xx and 5xx).

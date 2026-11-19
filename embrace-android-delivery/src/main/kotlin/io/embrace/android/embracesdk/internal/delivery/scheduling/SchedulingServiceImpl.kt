@@ -7,6 +7,7 @@ import io.embrace.android.embracesdk.internal.delivery.StoredTelemetryMetadata
 import io.embrace.android.embracesdk.internal.delivery.SupportedEnvelopeType
 import io.embrace.android.embracesdk.internal.delivery.debug.DeliveryTracer
 import io.embrace.android.embracesdk.internal.delivery.execution.ExecutionResult
+import io.embrace.android.embracesdk.internal.delivery.execution.ExecutionResult.TooManyRequests.Companion.MAX_RETRY_AFTER_MS
 import io.embrace.android.embracesdk.internal.delivery.execution.RequestExecutionService
 import io.embrace.android.embracesdk.internal.delivery.storage.PayloadStorageService
 import io.embrace.android.embracesdk.internal.delivery.storedTelemetryComparator
@@ -299,9 +300,10 @@ class SchedulingServiceImpl(
             // with the new values for how many times it has failed, and when the next retry should happen
             val retryAttempts = payloadsToRetry[payload]?.failedAttempts ?: 0
 
-            // A non-positive retryAfterMs value is discarded as invalid, and we will treat it like we don't have one
+            // A non-positive retryAfterMs value is discarded as invalid, and we will treat it like we don't have one.
+            // The cap is re-applied here so that no execution service can make the addition overflow.
             val nextRetryTimeMs = if (this is ExecutionResult.TooManyRequests && retryAfterMs != null && retryAfterMs > 0) {
-                val unblockedTimestampMs = clock.now() + retryAfterMs
+                val unblockedTimestampMs = clock.now() + retryAfterMs.coerceAtMost(MAX_RETRY_AFTER_MS)
                 blockedEndpoints[endpoint] = unblockedTimestampMs
                 unblockedTimestampMs + 1L
             } else {

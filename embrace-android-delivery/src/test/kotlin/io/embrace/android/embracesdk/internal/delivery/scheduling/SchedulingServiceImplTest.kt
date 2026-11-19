@@ -20,6 +20,7 @@ import io.embrace.android.embracesdk.internal.delivery.SupportedEnvelopeType
 import io.embrace.android.embracesdk.internal.delivery.execution.ExecutionResult
 import io.embrace.android.embracesdk.internal.delivery.execution.ExecutionResult.Failure
 import io.embrace.android.embracesdk.internal.delivery.execution.ExecutionResult.Incomplete
+import io.embrace.android.embracesdk.internal.delivery.execution.ExecutionResult.TooManyRequests.Companion.MAX_RETRY_AFTER_MS
 import io.embrace.android.embracesdk.internal.delivery.scheduling.SchedulingServiceImpl.Companion.INITIAL_DELAY_MS
 import io.embrace.android.embracesdk.internal.delivery.scheduling.SchedulingServiceImpl.Companion.MAX_DELAY_MS
 import io.embrace.android.embracesdk.internal.delivery.scheduling.SchedulingServiceImpl.Companion.calculateNextRetryTime
@@ -208,6 +209,20 @@ internal class SchedulingServiceImplTest {
         assertEquals(1, executionService.sendAttempts())
         allSendsSucceed()
         tickAndWaitForDeliveryAttempts(INITIAL_DELAY_MS - 1)
+        assertEquals(1, executionService.sendAttempts())
+        tickAndWaitForDeliveryAttempts(2)
+        assertEquals(2, executionService.sendAttempts())
+        assertEquals(0, storageService.storedPayloadCount())
+    }
+
+    @Test
+    fun `a 429 with the maximum retry-after blocks the endpoint for the capped duration`() {
+        serverBusy(endpoint = Endpoint.SESSIONS, retryAfterMs = Long.MAX_VALUE)
+        resetToSingleSessionPartPayload()
+        waitForResurrectionAndDeliveryAttempt()
+        assertEquals(1, executionService.sendAttempts())
+        allSendsSucceed()
+        tickAndWaitForDeliveryAttempts(MAX_RETRY_AFTER_MS - 1)
         assertEquals(1, executionService.sendAttempts())
         tickAndWaitForDeliveryAttempts(2)
         assertEquals(2, executionService.sendAttempts())

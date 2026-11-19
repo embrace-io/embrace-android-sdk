@@ -212,7 +212,7 @@ internal class InstrumentedHttpsURLConnectionTest {
         }
         assertSingleClientError(
             expectedErrorType = FileNotFoundException::class.java.canonicalName,
-            expectedErrorMessage = testUrl.toString(),
+            expectedErrorMessage = STRIPPED_TEST_URL,
         )
     }
 
@@ -226,7 +226,7 @@ internal class InstrumentedHttpsURLConnectionTest {
         }
         assertSingleClientError(
             expectedErrorType = FileNotFoundException::class.java.canonicalName,
-            expectedErrorMessage = testUrl.toString(),
+            expectedErrorMessage = STRIPPED_TEST_URL,
         )
     }
 
@@ -239,7 +239,7 @@ internal class InstrumentedHttpsURLConnectionTest {
         assertSingleSuccessfulRequest(
             expectedStartTime = startTime,
             expectedEndTime = getCurrentTimeMs(),
-            expectedUrl = "https://fakeurl.pizza/override/path?doStuff=true",
+            expectedUrl = "https://fakeurl.pizza/override/path",
         )
     }
 

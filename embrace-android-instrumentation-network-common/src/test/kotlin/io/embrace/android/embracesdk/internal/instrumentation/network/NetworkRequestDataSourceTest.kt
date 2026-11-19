@@ -5,6 +5,7 @@ import io.embrace.android.embracesdk.internal.arch.schema.ErrorCodeAttribute
 import io.embrace.android.embracesdk.internal.telemetry.AppliedLimitType
 import io.embrace.android.embracesdk.internal.utils.NetworkUtils
 import io.embrace.android.embracesdk.internal.utils.NetworkUtils.stripUrl
+import io.opentelemetry.kotlin.semconv.ExceptionAttributes
 import io.opentelemetry.kotlin.semconv.HttpAttributes
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
@@ -140,6 +141,25 @@ internal class NetworkRequestDataSourceTest {
                 attributes["url.full"],
             )
         }
+    }
+
+    @Test
+    fun `URLs in the error message are stripped`() {
+        harness.dataSource.recordNetworkRequest(
+            HttpNetworkRequest(
+                url = "https://www.example.com/api",
+                httpMethod = "GET",
+                startTime = 100L,
+                endTime = 200L,
+                errorType = "java.io.IOException",
+                errorMessage = "unexpected end of stream on https://u:p@www.example.com/api?token=abc",
+            ),
+        )
+
+        assertEquals(
+            "unexpected end of stream on https://www.example.com/api",
+            harness.getNetworkSpans().single().attributes[ExceptionAttributes.EXCEPTION_MESSAGE],
+        )
     }
 
     @Test

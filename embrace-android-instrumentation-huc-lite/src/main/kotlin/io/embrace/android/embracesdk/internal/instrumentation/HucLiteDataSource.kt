@@ -221,7 +221,7 @@ class HucLiteDataSource(
             httpMethod: String,
             responseCode: Int,
         ): Map<String, String> = buildMap {
-            put(UrlAttributes.URL_FULL, url)
+            put(UrlAttributes.URL_FULL, NetworkUtils.stripUrl(url))
             put(HttpAttributes.HTTP_REQUEST_METHOD, httpMethod)
             put(HttpAttributes.HTTP_RESPONSE_STATUS_CODE, responseCode.toStatusCodeString())
             put(UserAgentAttributes.USER_AGENT_NAME, HUC_USER_AGENT_NAME)
@@ -234,10 +234,10 @@ class HucLiteDataSource(
             errorType: String,
             errorMessage: String,
         ): Map<String, String> = buildMap {
-            put(UrlAttributes.URL_FULL, url)
+            put(UrlAttributes.URL_FULL, NetworkUtils.stripUrl(url))
             put(HttpAttributes.HTTP_REQUEST_METHOD, httpMethod)
             put(ErrorAttributes.ERROR_TYPE, errorType)
-            put(ExceptionAttributes.EXCEPTION_MESSAGE, errorMessage)
+            put(ExceptionAttributes.EXCEPTION_MESSAGE, NetworkUtils.stripUrlsInText(errorMessage))
             put(UserAgentAttributes.USER_AGENT_NAME, HUC_USER_AGENT_NAME)
             put(UserAgentAttributes.USER_AGENT_VERSION, Build.VERSION.SDK_INT.toString())
         }

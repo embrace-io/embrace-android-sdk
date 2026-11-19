@@ -18,6 +18,7 @@ object NetworkUtils {
 
     private val IpAddrPattern = Pattern.compile("$IPV4_PATTERN|$IPV6_PATTERN")
     private val DomainPattern = Pattern.compile("localhost|$DNS_PATTERN|$IPV4_PATTERN|$IPV6_PATTERN")
+    private val UrlInTextPattern = Regex("[A-Za-z][A-Za-z0-9+.-]*://[^\\s\"'<>]+")
 
     fun getValidTraceId(traceId: String?): String? {
         if (traceId == null) {
@@ -67,14 +68,36 @@ object NetworkUtils {
         if (domain == null) false else IpAddrPattern.matcher(domain).find()
 
     /**
-     * Strips off the query string and hash fragment from a URL.
+     * Strips off the userinfo, query string and hash fragment from a URL.
      *
      * @param url the URL to parse
-     * @return the URL with the hash fragment and query string parameters removed
+     * @return the URL with any `user:password@` userinfo, hash fragment and query string parameters removed
      */
     fun stripUrl(url: String): String {
         val terminalPos = url.indexOfFirst { it == '?' || it == '#' }
-        return if (terminalPos < 0) url else url.substring(0, terminalPos)
+        val withoutQuery = if (terminalPos < 0) url else url.substring(0, terminalPos)
+        return stripUserInfo(withoutQuery)
+    }
+
+    /**
+     * Applies [stripUrl] to every absolute URL found in free text, such as an exception message.
+     * HttpURLConnection's `FileNotFoundException`, for example, uses the full request URL as its message.
+     *
+     * @param text the text to sanitize
+     * @return the text with the userinfo, query string and hash fragment removed from each URL
+     */
+    fun stripUrlsInText(text: String): String = UrlInTextPattern.replace(text) { stripUrl(it.value) }
+
+    private fun stripUserInfo(url: String): String {
+        val schemeSeparator = url.indexOf("://")
+        val authorityStart = if (schemeSeparator < 0) 0 else schemeSeparator + 3
+        val pathStart = url.indexOf('/', authorityStart).let { if (it < 0) url.length else it }
+        val userInfoEnd = url.lastIndexOf('@', pathStart - 1)
+        return if (userInfoEnd < authorityStart) {
+            url
+        } else {
+            url.substring(0, authorityStart) + url.substring(userInfoEnd + 1)
+        }
     }
 
     fun getUrlPath(url: String?): String? = try {

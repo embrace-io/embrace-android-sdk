@@ -13,6 +13,7 @@ import io.embrace.android.gradle.plugin.network.EmbraceEndpoint
 import io.embrace.android.gradle.plugin.tasks.buildinfo.BuildInfoExport
 import io.embrace.android.gradle.plugin.util.INVALID_BUILD_ID
 import io.embrace.android.gradle.plugin.util.serialization.JsonSerializer
+import io.embrace.android.testapiserver.FakeApiServer
 import kotlinx.serialization.serializer
 import okhttp3.mockwebserver.RecordedRequest
 import okio.Buffer
@@ -26,7 +27,7 @@ import org.junit.Assert.assertTrue
 import java.io.File
 
 class AssertionInterface(
-    private val apiServer: FakeApiServer,
+    private val apiServer: FakeApiServer<EmbraceEndpoint>,
     val fileSystem: FileSystem,
 ) {
 
@@ -39,12 +40,12 @@ class AssertionInterface(
         internal set
 
     /**
-     * Fetches a request sent to the mock server with the given endpoint.
+     * Fetches the one request sent to the given endpoint of the fake server backend.
      */
     fun fetchRequest(endpoint: EmbraceEndpoint): RecordedRequest = fetchRequests(endpoint).single()
 
     /**
-     * Fetches all requests sent to the mock server with the given endpoint.
+     * Fetches all requests sent to the given endpoint of the fake server backend.
      */
     fun fetchRequests(endpoint: EmbraceEndpoint) = apiServer.fetchRequests(endpoint)
 

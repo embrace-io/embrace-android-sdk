@@ -14,9 +14,10 @@ import org.junit.runner.RunWith
 import org.robolectric.ParameterizedRobolectricTestRunner
 
 /**
- * Sanity checks that each API surface exports spans and logs on both the Java and Kotlin SDK implementations.
+ * Sanity checks that each API surface the SDK offers apps exports spans and logs on both the Java and Kotlin SDK
+ * implementations.
  *
- * A span and log are created using the Embrace, opentelemetry-java, and opentelemetry-kotlin APIs. Each test
+ * A span and log are created using the Embrace SDK's own, opentelemetry-java, and opentelemetry-kotlin APIs. Each test
  * runs once per [OtelSdkMode], which controls whether the 'compat' or 'regular' mode of opentelemetry-kotlin is used.
  *
  * Assertions verify the exported OTLP is the same, barring minor differences.
@@ -75,7 +76,7 @@ internal class OtelApiInteropTest(
     }
 
     /**
-     * The Embrace API has no concept of a current span, so the log is emitted while the span is open.
+     * The Embrace SDK's own API has no concept of a current span, so the log is emitted while the span is open.
      */
     private fun EmbraceActionInterface.recordEmbraceApiTelemetry() {
         val span = checkNotNull(embrace.startSpan(SPAN))

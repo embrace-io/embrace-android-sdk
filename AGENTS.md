@@ -3,7 +3,7 @@
 Conventions and rules for AI coding agents and human contributors. Distilled from `CONTRIBUTING.md`, `buildSrc/`,
 `config/detekt/`, `.editorconfig`, module READMEs and build scripts; update this file when those change.
 
-> **Last update**: October 22 2026.
+> **Last update**: November 18 2026.
 
 ## Project Overview
 
@@ -35,6 +35,26 @@ scripts/analyse-trace.sh <trace.perfetto.gz>          # analyse one perfetto tra
 scripts/analyse-trace-iterations.sh perf/macrobenchmark/<device>                      # one report per run
 scripts/compare-trace-iterations.sh perf/macrobenchmark/<base> perf/macrobenchmark/<candidate>
 ```
+
+### Environment
+
+- `verify` needs the Android SDK (`ANDROID_HOME` or `local.properties`), JDK 21 for Gradle, and JDK 17 and 21 for the
+  Gradle plugin integration tests. Locally, point `LOCAL_JAVA_17_PATH` and `LOCAL_JAVA_21_PATH` at them; CI's x64
+  runners set `JAVA_HOME_17_X64` / `JAVA_HOME_21_X64`, which take precedence. Without either, `sanityTest` fails with
+  "No JDK path supplied".
+- Semantic-convention generation (`:embrace-android-semconv:generateEmbraceSemanticConventions`) needs the `weaver` CLI
+  on `PATH` at the version `embrace-android-semconv/versions.env` pins (`WEAVER_VERSION`), from
+  [weaver's releases](https://github.com/open-telemetry/weaver/releases); CI installs the same pin.
+
+### Device Tests Without a Device
+
+Instrumented tests (`src/androidTest`) need a device or a KVM-backed emulator. Without one, run them in CI:
+`.github/workflows/android-emulator-tests.yml` runs `connectedCheck` on an API 29 emulator for the root project and
+`examples/ExampleApp`. It runs on pull requests into `main`; for any other branch, including one stacked on another
+pull request, dispatch it (`gh workflow run android-emulator-tests.yml --ref <branch>`). Only the root project's job
+uploads an artifact, `android-emulator-.-test-results`, with the connected-test reports, `emulator_logcat.log` and the
+SDK's `test_failure` dumps; for an `examples/ExampleApp` failure, read the job's log. The workflow skips the
+benchmark modules, so they run only on a device.
 
 ## Build & Architecture
 

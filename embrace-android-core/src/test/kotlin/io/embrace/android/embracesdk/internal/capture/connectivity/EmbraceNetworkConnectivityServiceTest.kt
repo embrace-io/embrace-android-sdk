@@ -3,6 +3,7 @@
 package io.embrace.android.embracesdk.internal.capture.connectivity
 
 import android.content.BroadcastReceiver
+import android.content.Context
 import android.content.ContextWrapper
 import android.content.Intent
 import android.content.IntentFilter
@@ -15,6 +16,7 @@ import io.embrace.android.embracesdk.internal.logging.ErrorHandler
 import io.embrace.android.embracesdk.internal.worker.BackgroundWorker
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
+import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
@@ -50,6 +52,18 @@ internal class EmbraceNetworkConnectivityServiceTest {
         assertEquals(listOf(service), context.registered)
         service.close()
         assertEquals(listOf(service), context.unregistered)
+    }
+
+    @Test
+    fun `receiver is registered as not exported from API 33`() {
+        createService(versionAtLeast = true).register()
+        assertEquals(Context.RECEIVER_NOT_EXPORTED, context.flags.single())
+    }
+
+    @Test
+    fun `receiver is registered without flags below API 33`() {
+        createService(versionAtLeast = false).register()
+        assertNull(context.flags.single())
     }
 
     @Test
@@ -152,8 +166,15 @@ internal class EmbraceNetworkConnectivityServiceTest {
         assertFalse(read)
     }
 
-    private fun createService(connectivityAvailable: Boolean = true) =
-        EmbraceNetworkConnectivityService(context, worker, errorHandler, { connectivityAvailable }, { networkInfo() })
+    private fun createService(connectivityAvailable: Boolean = true, versionAtLeast: Boolean = false) =
+        EmbraceNetworkConnectivityService(
+            context,
+            worker,
+            errorHandler,
+            { connectivityAvailable },
+            { networkInfo() },
+            { versionAtLeast },
+        )
 
     private fun fakeNetworkInfo(connected: Boolean, type: Int): NetworkInfo = object : NetworkInfo(type, 0, null, null) {
         override fun isConnected(): Boolean = connected
@@ -163,9 +184,17 @@ internal class EmbraceNetworkConnectivityServiceTest {
     private class ReceiverRecordingContext : ContextWrapper(null) {
         val registered = mutableListOf<BroadcastReceiver?>()
         val unregistered = mutableListOf<BroadcastReceiver?>()
+        val flags = mutableListOf<Int?>()
 
         override fun registerReceiver(receiver: BroadcastReceiver?, filter: IntentFilter?): Intent? {
             registered.add(receiver)
+            flags.add(null)
+            return null
+        }
+
+        override fun registerReceiver(receiver: BroadcastReceiver?, filter: IntentFilter?, flags: Int): Intent? {
+            registered.add(receiver)
+            this.flags.add(flags)
             return null
         }
 

@@ -11,6 +11,9 @@ import android.net.NetworkInfo
 import io.embrace.android.embracesdk.internal.logging.ErrorHandler
 import io.embrace.android.embracesdk.internal.logging.SdkErrorType
 import io.embrace.android.embracesdk.internal.logging.guardSdkCode
+import io.embrace.android.embracesdk.internal.utils.BuildVersionChecker
+import io.embrace.android.embracesdk.internal.utils.VersionChecker
+import io.embrace.android.embracesdk.internal.utils.registerNotExportedReceiver
 import io.embrace.android.embracesdk.internal.worker.BackgroundWorker
 import java.util.concurrent.CopyOnWriteArrayList
 
@@ -24,6 +27,7 @@ internal class EmbraceNetworkConnectivityService(
     private val errorHandler: ErrorHandler,
     private val connectivityAvailable: () -> Boolean,
     private val activeNetworkInfo: () -> NetworkInfo?,
+    private val versionChecker: VersionChecker = BuildVersionChecker,
 ) : BroadcastReceiver(), NetworkConnectivityService {
 
     private val intentFilter = IntentFilter(ConnectivityManager.CONNECTIVITY_ACTION)
@@ -70,7 +74,7 @@ internal class EmbraceNetworkConnectivityService(
                 synchronized(lock) {
                     if (!closed && !registered) {
                         errorHandler.guardSdkCode(SdkErrorType.ConnectivityUpdateFailure) {
-                            context.registerReceiver(this, intentFilter)
+                            context.registerNotExportedReceiver(this, intentFilter, versionChecker)
                             registered = true
                         }
                     }

@@ -8,14 +8,18 @@ import android.os.PowerManager
 import io.embrace.android.embracesdk.internal.logging.ErrorHandler
 import io.embrace.android.embracesdk.internal.logging.SdkErrorType
 import io.embrace.android.embracesdk.internal.logging.guardSdkCode
+import io.embrace.android.embracesdk.internal.utils.BuildVersionChecker
 import io.embrace.android.embracesdk.internal.utils.EmbTrace
 import io.embrace.android.embracesdk.internal.utils.Provider
+import io.embrace.android.embracesdk.internal.utils.VersionChecker
+import io.embrace.android.embracesdk.internal.utils.registerNotExportedReceiver
 import io.embrace.android.embracesdk.internal.worker.BackgroundWorker
 
 internal class PowerSaveModeReceiver(
     private val errorHandler: ErrorHandler,
     private val powerSaveModeSourceProvider: Provider<PowerSaveModeSource?>,
     private val callback: (powerSaveMode: Boolean) -> Unit,
+    private val versionChecker: VersionChecker = BuildVersionChecker,
 ) : BroadcastReceiver() {
 
     // avoid synthetic accessors
@@ -39,7 +43,7 @@ internal class PowerSaveModeReceiver(
                         val filter = IntentFilter(PowerManager.ACTION_POWER_SAVE_MODE_CHANGED)
                         synchronized(lock) {
                             if (!closed) {
-                                context.registerReceiver(this, filter)
+                                context.registerNotExportedReceiver(this, filter, versionChecker)
                                 registered = true
                             }
                         }

@@ -3,7 +3,7 @@
 Conventions and rules for AI coding agents and human contributors. Distilled from `CONTRIBUTING.md`, `buildSrc/`,
 `config/detekt/`, `.editorconfig`, module READMEs and build scripts; update this file when those change.
 
-> **Last update**: November 18 2026.
+> **Last update**: November 19 2026.
 
 ## Project Overview
 
@@ -46,15 +46,24 @@ scripts/compare-trace-iterations.sh perf/macrobenchmark/<base> perf/macrobenchma
   on `PATH` at the version `embrace-android-semconv/versions.env` pins (`WEAVER_VERSION`), from
   [weaver's releases](https://github.com/open-telemetry/weaver/releases); CI installs the same pin.
 
-### Device Tests Without a Device
+### Instrumented Tests
 
-Instrumented tests (`src/androidTest`) need a device or a KVM-backed emulator. Without one, run them in CI:
-`.github/workflows/android-emulator-tests.yml` runs `connectedCheck` on an API 29 emulator for the root project and
-`examples/ExampleApp`. It runs on pull requests into `main`; for any other branch, including one stacked on another
-pull request, dispatch it (`gh workflow run android-emulator-tests.yml --ref <branch>`). Only the root project's job
-uploads an artifact, `android-emulator-.-test-results`, with the connected-test reports, `emulator_logcat.log` and the
-SDK's `test_failure` dumps; for an `examples/ExampleApp` failure, read the job's log. The workflow skips the
-benchmark modules, so they run only on a device.
+Instrumented tests (`src/androidTest`) run on a device or an emulator. An x86_64 emulator without KVM, running in
+software, passes them too, several times slower; its timings mean nothing, so the benchmark modules still need a real
+device. Locally, run what CI runs, with `-Pembrace.abiFilters` set to the emulator's ABI:
+
+```bash
+./gradlew connectedCheck -x :embrace-microbenchmark:connectedCheck -x :embrace-macrobenchmark:connectedCheck \
+  -x :embrace-macrobenchmark-app:connectedCheck -Pembrace.abiFilters=x86_64
+cd examples/ExampleApp && ./gradlew connectedCheck -x :app:benchmark:connectedBenchmarkAndroidTest \
+  -x :app:benchmark:connectedBenchmarkOtelRegularAndroidTest   # and again with -PtestBuildType=otelRegular
+```
+
+In CI, `.github/workflows/android-emulator-tests.yml` runs these on an API 29 emulator. It runs on pull requests into
+`main`; for any other branch, including one stacked on another pull request, dispatch it
+(`gh workflow run android-emulator-tests.yml --ref <branch>`). Only the root project's job uploads an artifact,
+`android-emulator-.-test-results`, with the connected-test reports, `emulator_logcat.log` and the SDK's `test_failure`
+dumps; for an `examples/ExampleApp` failure, read the job's log.
 
 ## Build & Architecture
 

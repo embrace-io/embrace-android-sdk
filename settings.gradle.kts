@@ -51,6 +51,7 @@ include(
     ":embrace-test-fakes",
     ":embrace-test-api-server",
     ":embrace-benchmark-common",
+    ":embrace-benchmark-endpoint",
     ":embrace-gradle-plugin",
     ":embrace-bytecode-instrumentation-tests",
     ":embrace-gradle-plugin-integration-tests",

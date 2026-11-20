@@ -39,6 +39,12 @@ android {
             )
             signingConfig = signingConfigs.getByName("debug")
         }
+        // The benchmark build types' embrace-config.json give the app a placeholder app_id, since the SDK takes a
+        // different startup path without one, and point its config and data endpoints at the endpoint the benchmark
+        // serves on the device (LocalEmbraceEndpoint, in the repo's embrace-benchmark-endpoint), so a benchmark launch
+        // sends nothing off the device. The app_id in those files wins over EMBRACE_APP_ID. Build them with
+        // -Pembrace.disableMappingFileUpload=true when EMBRACE_API_TOKEN is set, or the plugin uploads the mapping
+        // file and native symbols for the placeholder app.
         create("benchmark") {
             initWith(buildTypes.getByName("release"))
             signingConfig = signingConfigs.getByName("debug")

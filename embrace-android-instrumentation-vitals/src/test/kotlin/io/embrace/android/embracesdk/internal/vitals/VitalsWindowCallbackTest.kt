@@ -40,7 +40,7 @@ internal class VitalsWindowCallbackTest {
                 delegateFocusChanges++
             }
         }
-        callback = VitalsWindowCallback(delegate, focalCallbacks, OnceUiCallbackErrorTracker(args.errorHandler))
+        callback = VitalsWindowCallback(delegate, focalCallbacks, OnceUiCallbackErrorTracker(args.errorHandler), args.versionChecker)
     }
 
     @Test
@@ -130,7 +130,7 @@ internal class VitalsWindowCallbackTest {
         val throwing = object : FocalInteractionCallbacks by focalCallbacks {
             override fun onInteractionStart(eventTime: Long) = error("boom")
         }
-        callback = VitalsWindowCallback(callback, throwing, OnceUiCallbackErrorTracker(errorHandler))
+        callback = VitalsWindowCallback(callback, throwing, OnceUiCallbackErrorTracker(errorHandler), args.versionChecker)
         repeat(3) { dispatch(MotionEvent.ACTION_DOWN) }
 
         assertEquals(3, delegateCalls)

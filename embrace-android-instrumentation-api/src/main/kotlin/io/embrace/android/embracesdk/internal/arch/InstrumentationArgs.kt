@@ -3,6 +3,7 @@ package io.embrace.android.embracesdk.internal.arch
 import android.app.Application
 import android.content.Context
 import android.content.pm.PackageInfo
+import io.embrace.android.embracesdk.internal.SystemInfo
 import io.embrace.android.embracesdk.internal.arch.datasource.TelemetryDestination
 import io.embrace.android.embracesdk.internal.arch.navigation.NavigationTrackingService
 import io.embrace.android.embracesdk.internal.arch.state.ProcessStateTracker
@@ -19,6 +20,7 @@ import io.embrace.android.embracesdk.internal.storage.SdkStorage
 import io.embrace.android.embracesdk.internal.store.OrdinalStore
 import io.embrace.android.embracesdk.internal.telemetry.InternalTelemetryService
 import io.embrace.android.embracesdk.internal.utils.UuidSource
+import io.embrace.android.embracesdk.internal.utils.VersionChecker
 import io.embrace.android.embracesdk.internal.utils.event.EventBus
 import io.embrace.android.embracesdk.internal.worker.BackgroundWorker
 import io.embrace.android.embracesdk.internal.worker.PriorityWorker
@@ -54,6 +56,17 @@ interface InstrumentationArgs {
      * A clock that can be used for time measurements in telemetry.
      */
     val clock: Clock
+
+    /**
+     * Decides whether the device's API level is at least a given level. Use this rather than reading
+     * the platform API level directly.
+     */
+    val versionChecker: VersionChecker
+
+    /**
+     * Information about the device and OS.
+     */
+    val systemInfo: SystemInfo
 
     /**
      * Holds the [io.embrace.android.embracesdk.network.http.HttpRequestInfoModifier]s registered by

@@ -7,6 +7,7 @@ import io.embrace.android.embracesdk.internal.arch.lifecycle.ActivityLifecycle
 import io.embrace.android.embracesdk.internal.logging.ErrorHandler
 import io.embrace.android.embracesdk.internal.logging.SdkErrorType
 import io.embrace.android.embracesdk.internal.logging.guardSdkCode
+import io.embrace.android.embracesdk.internal.utils.VersionChecker
 import io.embrace.android.embracesdk.internal.utils.event.EventBus
 import io.embrace.android.embracesdk.internal.utils.event.EventHandler
 import java.lang.ref.WeakReference
@@ -16,6 +17,7 @@ internal class ComposeActivityListener(
     private val errorHandler: ErrorHandler,
     private val dataSource: ComposeTapDataSource,
     private val eventBus: EventBus,
+    private val versionChecker: VersionChecker,
 ) : AutoCloseable {
 
     /**
@@ -41,6 +43,7 @@ internal class ComposeActivityListener(
                     window.callback,
                     gestureDetectorCompat,
                     errorHandler,
+                    versionChecker,
                 )
                 windowCallbacks[window] = WeakReference(callback)
                 window.callback = callback

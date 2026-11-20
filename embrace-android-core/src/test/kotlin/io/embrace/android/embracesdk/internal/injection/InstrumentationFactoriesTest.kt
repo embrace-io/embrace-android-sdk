@@ -10,6 +10,7 @@ import io.embrace.android.embracesdk.fakes.FakeSessionIdsProvider
 import io.embrace.android.embracesdk.fakes.FakeSessionPartTracker
 import io.embrace.android.embracesdk.fakes.FakeTelemetryDestination
 import io.embrace.android.embracesdk.fakes.FakeUserSessionPropertiesService
+import io.embrace.android.embracesdk.fakes.FakeVersionChecker
 import io.embrace.android.embracesdk.fakes.OtelSdkMode
 import io.embrace.android.embracesdk.fakes.fakeApplication
 import io.embrace.android.embracesdk.fakes.fakeContext
@@ -43,6 +44,8 @@ internal class InstrumentationFactoriesTest {
             destination = destination,
             errorHandler = initServices.errorHandler,
             clock = initServices.clock,
+            versionChecker = FakeVersionChecker(true),
+            systemInfo = initServices.systemInfo,
             context = context,
             application = application,
             deliveredAeiStoreProvider = { deliveredAeiStore },

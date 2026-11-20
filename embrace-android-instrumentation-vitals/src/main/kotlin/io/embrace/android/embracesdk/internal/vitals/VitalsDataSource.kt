@@ -20,8 +20,6 @@ import io.embrace.android.embracesdk.internal.arch.state.ProcessState
 import io.embrace.android.embracesdk.internal.arch.state.ProcessStateListener
 import io.embrace.android.embracesdk.internal.logging.SdkErrorType
 import io.embrace.android.embracesdk.internal.logging.guardSdkCode
-import io.embrace.android.embracesdk.internal.utils.BuildVersionChecker
-import io.embrace.android.embracesdk.internal.utils.VersionChecker
 import io.embrace.android.embracesdk.internal.vitals.responsiveness.InteractionResponsivenessReporter
 import io.embrace.android.embracesdk.internal.vitals.responsiveness.InteractionResponsivenessResult
 import io.embrace.android.embracesdk.internal.vitals.screenload.ScreenLoadResult
@@ -40,7 +38,6 @@ import io.embrace.android.embracesdk.semconv.EmbFrameCountsAttributes
 @RequiresApi(Build.VERSION_CODES.N)
 internal class VitalsDataSource(
     private val args: InstrumentationArgs,
-    private val versionChecker: VersionChecker = BuildVersionChecker,
 ) : DataSourceImpl(
     args = args,
     // Vitals emits a span per gesture and per navigation, so it needs a ceiling: an unlimited source would
@@ -50,6 +47,8 @@ internal class VitalsDataSource(
 ),
     SessionPartEndListener,
     SessionPartChangeListener {
+
+    private val versionChecker = args.versionChecker
 
     @Volatile
     private var foregroundSessionPart = false
@@ -160,6 +159,7 @@ internal class VitalsDataSource(
             frameMetricsStrategy = frameMetricsStrategy,
             eventBus = args.eventBus,
             errorHandler = args.errorHandler,
+            versionChecker = versionChecker,
         )
         activityListener = listener
         listener.subscribe()
@@ -170,7 +170,7 @@ internal class VitalsDataSource(
     override fun onDataCaptureDisabled() {
         activityListener?.close()
         activityListener = null
-        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.S) {
+        if (!versionChecker.isAtLeast(Build.VERSION_CODES.S)) {
             args.systemService<DisplayManager>(Context.DISPLAY_SERVICE)?.unregisterDisplayListener(displayListener)
         }
         // posted ahead of the scheduler stopping, so it runs after any touch already queued for the Vitals thread

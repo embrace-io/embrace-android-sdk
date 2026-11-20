@@ -5,6 +5,7 @@ import android.view.KeyboardShortcutGroup
 import android.view.Menu
 import android.view.MotionEvent
 import android.view.Window
+import io.embrace.android.embracesdk.internal.utils.VersionChecker
 
 /**
  * Wraps a [Window.Callback] to report the signals captured from touch dispatch and window focus.
@@ -14,6 +15,7 @@ internal class VitalsWindowCallback(
     private val delegate: Window.Callback,
     focalCallbacks: FocalInteractionCallbacks,
     errors: OnceUiCallbackErrorTracker,
+    private val versionChecker: VersionChecker,
 ) : Window.Callback by delegate, AutoCloseable {
 
     // nulled on close so that a window outliving the SDK does not retain it
@@ -65,7 +67,7 @@ internal class VitalsWindowCallback(
     }
 
     override fun onPointerCaptureChanged(hasCapture: Boolean) {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+        if (versionChecker.isAtLeast(Build.VERSION_CODES.O)) {
             delegate.onPointerCaptureChanged(hasCapture)
         }
     }
@@ -75,7 +77,7 @@ internal class VitalsWindowCallback(
         menu: Menu?,
         deviceId: Int,
     ) {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
+        if (versionChecker.isAtLeast(Build.VERSION_CODES.N)) {
             delegate.onProvideKeyboardShortcuts(data, menu, deviceId)
         }
     }

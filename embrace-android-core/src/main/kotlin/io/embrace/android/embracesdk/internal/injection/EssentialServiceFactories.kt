@@ -33,6 +33,7 @@ import io.embrace.android.embracesdk.internal.session.orchestrator.SessionOrches
 import io.embrace.android.embracesdk.internal.store.PersistedSdkStateStore
 import io.embrace.android.embracesdk.internal.telemetry.InternalTelemetryService
 import io.embrace.android.embracesdk.internal.utils.EmbTrace
+import io.embrace.android.embracesdk.internal.utils.VersionChecker
 import io.embrace.android.embracesdk.internal.worker.BackgroundWorker
 
 fun createProcessStateTracker(
@@ -49,13 +50,14 @@ fun createNetworkConnectivityService(
     configService: ConfigService,
     worker: BackgroundWorker,
     errorHandler: ErrorHandler,
+    versionChecker: VersionChecker,
 ): NetworkConnectivityService {
     val connectivityManager: Lazy<ConnectivityManager?> = lazy {
         EmbTrace.trace("connectivity-manager-init") {
             context.getSystemServiceSafe<ConnectivityManager>(Context.CONNECTIVITY_SERVICE)
         }
     }
-    return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N &&
+    return if (versionChecker.isAtLeast(Build.VERSION_CODES.N) &&
         configService.config.autoDataCapture.networkCallbackConnectivityServiceEnabled
     ) {
         NetworkCallbackConnectivityService(worker, errorHandler, connectivityManager)
@@ -73,13 +75,14 @@ fun createNetworkConnectivityService(
 fun createSessionPartTracker(
     context: Context,
     errorHandler: ErrorHandler,
+    versionChecker: VersionChecker,
 ): SessionPartTracker {
     val activityManager: Lazy<ActivityManager?> = lazy {
         EmbTrace.trace("activity-manager-init") {
             context.getSystemServiceSafe<ActivityManager>(Context.ACTIVITY_SERVICE)
         }
     }
-    return SessionPartTrackerImpl(activityManager, errorHandler)
+    return SessionPartTrackerImpl(activityManager, errorHandler, versionChecker)
 }
 
 fun createSessionIdsProvider(

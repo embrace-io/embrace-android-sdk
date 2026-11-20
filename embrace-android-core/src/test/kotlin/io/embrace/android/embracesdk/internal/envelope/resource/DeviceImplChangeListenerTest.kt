@@ -2,6 +2,7 @@ package io.embrace.android.embracesdk.internal.envelope.resource
 
 import io.embrace.android.embracesdk.concurrency.BlockingScheduledExecutorService
 import io.embrace.android.embracesdk.fakes.FakeErrorHandler
+import io.embrace.android.embracesdk.fakes.FakeVersionChecker
 import io.embrace.android.embracesdk.internal.SystemInfo
 import io.embrace.android.embracesdk.internal.worker.BackgroundWorker
 import org.junit.Assert.assertEquals
@@ -62,6 +63,7 @@ internal class DeviceImplChangeListenerTest {
         backgroundWorker = BackgroundWorker(executor),
         systemInfo = SystemInfo(),
         errorHandler = errorHandler,
+        versionChecker = FakeVersionChecker(false),
         isEmulator = { false },
     ).apply { startAsyncRetrieval() }
 }

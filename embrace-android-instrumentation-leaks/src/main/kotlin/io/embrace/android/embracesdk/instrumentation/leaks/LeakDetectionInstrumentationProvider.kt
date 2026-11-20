@@ -8,7 +8,7 @@ import io.embrace.android.embracesdk.internal.arch.datasource.DataSourceFactory
 
 class LeakDetectionInstrumentationProvider : InstrumentationProvider {
     override fun register(args: InstrumentationArgs): DataSourceFactory<DataSource>? {
-        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.M) {
+        if (!args.versionChecker.isAtLeast(Build.VERSION_CODES.M)) {
             return null
         }
         return {

@@ -10,11 +10,13 @@ import io.embrace.android.embracesdk.internal.logging.SdkErrorType
 import io.embrace.android.embracesdk.internal.logging.guardSdkCode
 import io.embrace.android.embracesdk.internal.logging.guardSdkCodeEach
 import io.embrace.android.embracesdk.internal.session.SessionPartToken
+import io.embrace.android.embracesdk.internal.utils.VersionChecker
 import java.util.concurrent.CopyOnWriteArraySet
 
 internal class SessionPartTrackerImpl(
     private val activityManager: Lazy<ActivityManager?>,
     private val errorHandler: ErrorHandler,
+    private val versionChecker: VersionChecker,
 ) : SessionPartTracker {
 
     private val sessionChangeListeners = CopyOnWriteArraySet<SessionPartChangeListener>()
@@ -54,7 +56,7 @@ internal class SessionPartTrackerImpl(
     }
 
     override fun setProcessStateSummary(sessionPartId: String, userSessionId: String) {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+        if (versionChecker.isAtLeast(Build.VERSION_CODES.R)) {
             errorHandler.guardSdkCode(SdkErrorType.ProcessStateSummaryFail) {
                 activityManager.value?.setProcessStateSummary("${sessionPartId}_$userSessionId".toByteArray())
             }

@@ -133,6 +133,7 @@ internal fun createRealSdkInstance(
     val clock = preStartServices.clock
     val errorHandler = preStartServices.errorHandler
     val systemInfo = preStartServices.systemInfo
+    val versionChecker = overrides?.versionChecker.resolve { BuildVersionChecker }
     val telemetryService = preStartServices.telemetryService
     val jsonSerializer = configLoadServices.jsonSerializer
     val instrumentedConfig = configLoadServices.instrumentedConfig
@@ -329,12 +330,13 @@ internal fun createRealSdkInstance(
                 configService = configService,
                 worker = workerThreadPool.backgroundWorker(Worker.Background.NonIoRegWorker),
                 errorHandler = errorHandler,
+                versionChecker = versionChecker,
             )
         }
     }
 
     sessionPartTracker = init("session-part-tracker") {
-        createSessionPartTracker(appContext, errorHandler)
+        createSessionPartTracker(appContext, errorHandler, versionChecker)
     }
 
     sessionIdsProvider = init("session-ids-provider") {
@@ -395,6 +397,8 @@ internal fun createRealSdkInstance(
             destination = telemetryDestination,
             errorHandler = errorHandler,
             clock = clock,
+            versionChecker = versionChecker,
+            systemInfo = systemInfo,
             context = appContext,
             application = appContext as Application,
             deliveredAeiStoreProvider = { configLoadServices.deliveredAeiStore.value },
@@ -445,8 +449,6 @@ internal fun createRealSdkInstance(
     val lastRunCrashVerifier = init("last-run-crash-verifier") {
         LastRunCrashVerifier(crashMarker)
     }
-
-    val versionChecker = overrides?.versionChecker.resolve { BuildVersionChecker }
 
     val startupService = init("startup-service") {
         createStartupService(
@@ -651,6 +653,7 @@ internal fun createRealSdkInstance(
             configService = configService,
             worker = workerThreadPool.backgroundWorker(Worker.Background.NonIoRegWorker),
             systemInfo = systemInfo,
+            versionChecker = versionChecker,
             errorHandler = errorHandler,
             hostedSdkVersionInfo = hostedSdkVersionInfo,
             rnBundleIdTracker = rnBundleIdTracker,

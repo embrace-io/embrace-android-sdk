@@ -1,7 +1,6 @@
 package io.embrace.android.embracesdk.internal.instrumentation
 
 import android.annotation.SuppressLint
-import android.os.Build
 import io.embrace.android.embracesdk.instrumentation.huclite.DelegatingInstrumentedURLStreamHandlerFactory
 import io.embrace.android.embracesdk.instrumentation.huclite.HucLitePathOverrideRequest
 import io.embrace.android.embracesdk.instrumentation.huclite.InstrumentedUrlStreamHandlerFactory
@@ -89,6 +88,7 @@ class HucLiteDataSource(
                     telemetryDestination = telemetryDestination,
                     errorHandler = ::trackCaptureError,
                     httpRequestInfoModifierChain = args.httpRequestInfoModifierChain,
+                    apiLevel = args.systemInfo.androidOsApiLevel,
                 )
             }.onFailure {
                 trackCaptureError(it)
@@ -145,6 +145,7 @@ class HucLiteDataSource(
         val telemetryDestination: TelemetryDestination,
         val errorHandler: (t: Throwable) -> Unit,
         private val httpRequestInfoModifierChain: HttpRequestInfoModifierChain,
+        private val apiLevel: String,
     ) {
         private val creationTimeMs = clock.now()
         private val telemetryUrlProvider = {
@@ -225,7 +226,7 @@ class HucLiteDataSource(
             put(HttpAttributes.HTTP_REQUEST_METHOD, httpMethod)
             put(HttpAttributes.HTTP_RESPONSE_STATUS_CODE, responseCode.toStatusCodeString())
             put(UserAgentAttributes.USER_AGENT_NAME, HUC_USER_AGENT_NAME)
-            put(UserAgentAttributes.USER_AGENT_VERSION, Build.VERSION.SDK_INT.toString())
+            put(UserAgentAttributes.USER_AGENT_VERSION, apiLevel)
         }
 
         private fun incompleteRequestAttributes(
@@ -239,7 +240,7 @@ class HucLiteDataSource(
             put(ErrorAttributes.ERROR_TYPE, errorType)
             put(ExceptionAttributes.EXCEPTION_MESSAGE, NetworkUtils.stripUrlsInText(errorMessage))
             put(UserAgentAttributes.USER_AGENT_NAME, HUC_USER_AGENT_NAME)
-            put(UserAgentAttributes.USER_AGENT_VERSION, Build.VERSION.SDK_INT.toString())
+            put(UserAgentAttributes.USER_AGENT_VERSION, apiLevel)
         }
 
         private fun getValidStartTime(): Long =

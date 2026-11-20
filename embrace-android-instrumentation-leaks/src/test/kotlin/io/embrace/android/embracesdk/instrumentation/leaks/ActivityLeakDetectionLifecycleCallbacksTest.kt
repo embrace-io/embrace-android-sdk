@@ -7,6 +7,7 @@ import io.embrace.android.embracesdk.fakes.FakeErrorHandler
 import io.embrace.android.embracesdk.internal.arch.lifecycle.ActivityCreated
 import io.embrace.android.embracesdk.internal.arch.lifecycle.ActivityLifecycle
 import io.embrace.android.embracesdk.internal.session.id.SessionIdsSnapshot
+import io.embrace.android.embracesdk.internal.utils.BuildVersionChecker
 import io.embrace.android.embracesdk.internal.utils.event.EventBus
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotNull
@@ -21,7 +22,11 @@ internal class ActivityLeakDetectionLifecycleCallbacksTest {
 
     private val errorHandler = FakeErrorHandler()
     private val eventBus = EventBus(errorHandler)
-    private val leakDetector = LeakDetector(clock = { 0L }, errorHandler = errorHandler)
+    private val leakDetector = LeakDetector(
+        clock = { 0L },
+        errorHandler = errorHandler,
+        versionChecker = BuildVersionChecker,
+    )
 
     @Test
     fun `resuming an activity with a webview in its decor view tracks it as opened, when enabled`() {
@@ -103,6 +108,7 @@ internal class ActivityLeakDetectionLifecycleCallbacksTest {
         fragmentSupport,
         eventBus,
         errorHandler,
+        BuildVersionChecker,
         webViewLeakDetectionEnabled,
     ).apply { subscribe() }
 

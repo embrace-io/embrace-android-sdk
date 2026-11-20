@@ -60,7 +60,6 @@ import io.embrace.android.embracesdk.internal.session.persistence.SessionPartWri
 import io.embrace.android.embracesdk.internal.store.KeyValueStore
 import io.embrace.android.embracesdk.internal.utils.UuidSource
 import io.embrace.android.embracesdk.internal.utils.VersionChecker
-import io.embrace.android.embracesdk.internal.vitals.vitalsVersionCheckerTestOverride
 import io.embrace.android.embracesdk.internal.worker.BackgroundWorker
 import io.embrace.android.embracesdk.internal.worker.Worker
 import io.embrace.android.embracesdk.internal.worker.Worker.Background.NonIoRegWorker
@@ -85,9 +84,9 @@ import kotlin.time.Duration.Companion.seconds
  * Defaults to a [TestUuidSource] that randomizes the UUIDs it generates. A custom [UuidSource] can be
  * used instead for, say, tests that require predictable UUID sequences to be generated.
  *
- * [simulatedSdkInt] makes the startup trace, UI load and vitals instrumentation take the branches
- * they would on that API level, so a test can cover an older platform on Robolectric's default SDK
- * rather than paying for an extra sandbox.
+ * [simulatedSdkInt] makes every SDK and instrumentation API-level check take the branches it would
+ * on that API level, so a test can cover an older platform on Robolectric's default SDK rather than
+ * paying for an extra sandbox.
  */
 internal class EmbraceSetupInterface(
     private val workersToFake: List<Worker.Background> = emptyList(),
@@ -103,8 +102,6 @@ internal class EmbraceSetupInterface(
 
     private val simulatedVersionChecker: VersionChecker? = simulatedSdkInt?.let { sdkInt ->
         VersionChecker { min -> sdkInt >= min }
-    }.also {
-        vitalsVersionCheckerTestOverride = it
     }
 
     val fakeNetworkConnectivityService = FakeNetworkConnectivityService()

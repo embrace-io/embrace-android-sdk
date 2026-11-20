@@ -3,6 +3,7 @@ package io.embrace.android.embracesdk.fakes
 import android.app.Application
 import android.content.Context
 import android.content.pm.PackageInfo
+import io.embrace.android.embracesdk.internal.SystemInfo
 import io.embrace.android.embracesdk.internal.arch.InstrumentationArgs
 import io.embrace.android.embracesdk.internal.arch.SessionPartChangeListener
 import io.embrace.android.embracesdk.internal.arch.SessionPartEndListener
@@ -15,7 +16,9 @@ import io.embrace.android.embracesdk.internal.storage.SdkStorage
 import io.embrace.android.embracesdk.internal.storage.SdkStorageImpl
 import io.embrace.android.embracesdk.internal.store.OrdinalStore
 import io.embrace.android.embracesdk.internal.telemetry.InternalTelemetryService
+import io.embrace.android.embracesdk.internal.utils.BuildVersionChecker
 import io.embrace.android.embracesdk.internal.utils.UuidSource
+import io.embrace.android.embracesdk.internal.utils.VersionChecker
 import io.embrace.android.embracesdk.internal.utils.event.EventBus
 import io.embrace.android.embracesdk.internal.worker.BackgroundWorker
 import io.embrace.android.embracesdk.internal.worker.PriorityWorker
@@ -33,6 +36,8 @@ class FakeInstrumentationArgs(
     override val destination: FakeTelemetryDestination = FakeTelemetryDestination(),
     override val errorHandler: FakeErrorHandler = FakeErrorHandler(),
     override val clock: FakeClock = FakeClock(),
+    override val versionChecker: VersionChecker = BuildVersionChecker,
+    override val systemInfo: SystemInfo = SystemInfo(),
     override val deliveredAeiStore: FakeDeliveredAeiStore = FakeDeliveredAeiStore(),
     override val networkCaptureRuleStore: FakeNetworkCaptureRuleStore = FakeNetworkCaptureRuleStore(),
     override val serializer: PlatformSerializer = TestPlatformSerializer(),

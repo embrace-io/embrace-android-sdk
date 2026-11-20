@@ -10,6 +10,7 @@ import io.embrace.android.embracesdk.fakes.FakeOtelPayloadMapper
 import io.embrace.android.embracesdk.fakes.FakePayloadStorageService
 import io.embrace.android.embracesdk.fakes.FakePersistedSdkStateStore
 import io.embrace.android.embracesdk.fakes.FakeProcessStateTracker
+import io.embrace.android.embracesdk.fakes.FakeVersionChecker
 import io.embrace.android.embracesdk.fakes.OtelSdkMode
 import io.embrace.android.embracesdk.fakes.fakeApplication
 import io.embrace.android.embracesdk.fakes.fakeContext
@@ -43,6 +44,7 @@ internal class PayloadSourceFactoriesTest {
             configService = configService,
             worker = worker,
             systemInfo = initServices.systemInfo,
+            versionChecker = FakeVersionChecker(false),
             errorHandler = initServices.errorHandler,
             hostedSdkVersionInfo = createHostedSdkVersionInfo(AppFramework.NATIVE, stateStore, initServices.errorHandler),
             rnBundleIdTracker = lazy {

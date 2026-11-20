@@ -2,6 +2,7 @@ package io.embrace.android.embracesdk.internal.session.id
 
 import android.app.ActivityManager
 import io.embrace.android.embracesdk.fakes.FakeErrorHandler
+import io.embrace.android.embracesdk.fakes.FakeVersionChecker
 import io.embrace.android.embracesdk.fakes.fakeSessionPartToken
 import io.embrace.android.embracesdk.internal.arch.state.ProcessState
 import io.embrace.android.embracesdk.internal.session.LifeEventType
@@ -16,7 +17,7 @@ internal class SessionPartTrackerImplTest {
 
     @Before
     fun setUp() {
-        tracker = SessionPartTrackerImpl(lazyOf<ActivityManager?>(null), FakeErrorHandler())
+        tracker = SessionPartTrackerImpl(lazyOf<ActivityManager?>(null), FakeErrorHandler(), FakeVersionChecker(true))
     }
 
     @Test

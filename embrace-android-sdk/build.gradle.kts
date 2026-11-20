@@ -73,6 +73,7 @@ dependencies {
     testImplementation(project(":embrace-android-otel-fakes"))
     testImplementation(project(":embrace-android-instrumentation-huc"))
     testImplementation(project(":embrace-android-instrumentation-androidx-navigation"))
+    testImplementation(project(":embrace-test-api-server"))
     testImplementation(platform(libs.okhttp.bom))
     testImplementation(libs.mockwebserver)
     testImplementation(platform(libs.opentelemetry.bom))

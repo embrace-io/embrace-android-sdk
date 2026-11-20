@@ -28,7 +28,10 @@ import io.embrace.android.embracesdk.testframework.actions.EmbracePreSdkStartInt
 import io.embrace.android.embracesdk.testframework.actions.EmbraceSetupInterface
 import io.embrace.android.embracesdk.testframework.export.FilteredLogExporter
 import io.embrace.android.embracesdk.testframework.export.FilteredSpanExporter
-import io.embrace.android.embracesdk.testframework.server.FakeApiServer
+import io.embrace.android.embracesdk.testframework.server.SdkDeliveryDecoder
+import io.embrace.android.testapiserver.FakeApiServer
+import io.embrace.android.testapiserver.RemoteConfigEndpoint
+import io.embrace.android.testapiserver.SdkBackendApi
 import io.opentelemetry.kotlin.logging.export.toOtelKotlinLogRecordExporter
 import io.opentelemetry.kotlin.tracing.export.toOtelKotlinSpanExporter
 import kotlinx.coroutines.runBlocking
@@ -55,8 +58,9 @@ import java.io.File
  * the test case. The lifecycle tracker and network connectivity service are replaced via [SdkOverrides], and
  * everything else is otherwise real
  *
- * 3) Delivery: payloads are sent to a local [MockWebServer] and recorded by a [DeliveryTracer], so that
- * payloads normally sent to the server can be inspected to verify the correctness of the data produced.
+ * 3) Delivery: payloads are sent to a fake of Embrace's server backend on a local [MockWebServer] and recorded by a
+ * [DeliveryTracer], so that payloads normally sent to the backend can be inspected to verify the correctness of the
+ * data produced.
  * The delivery services are otherwise real unless replaced via [SdkOverrides].
  *
  * The services instantiated by default reference each other, e.g. the same context is used
@@ -69,10 +73,10 @@ import java.io.File
  * "one instance" guarantee of using the modules created by default (besides the fakes).
  *
  * Each test gets its own [SdkStateHolder], and test code calls the SDK through [SdkStateHolder.api]. The public
- * [Embrace] object delegates to that same API, so tests exercise the production lifecycle and dispatch logic,
+ * [Embrace] object delegates to that same SDK API, so tests exercise the production lifecycle and dispatch logic,
  * without the pain of dealing with a singleton in parallelized unit tests.
  *
- * It is also possible to access internal modules & dependencies that are not exposed via the public API.
+ * It is also possible to access internal modules & dependencies that are not exposed via the SDK's public API.
  * For example, it is possible to access [services] to inspect the delivery services the SDK used.
  *
  * In general, it is recommended to use functions declared in PayloadRetrievalExtensions.kt that retrieve
@@ -149,10 +153,14 @@ internal class SdkIntegrationTestRule(
         val serverConfig = otelSdkMode.applyTo(serverResponseConfig)
         setup = embraceSetupInterfaceSupplier()
         val deliveryTracer = DeliveryTracer()
-        val apiServer = FakeApiServer(serverConfig, deliveryTracer, serverResponseConfigJson, serverResponseConfigEtag)
+        val deliveryDecoder = SdkDeliveryDecoder(deliveryTracer)
+        val remoteConfig = RemoteConfigEndpoint(
+            json = serverResponseConfigJson ?: TestPlatformSerializer().toJson(serverConfig, RemoteConfig.serializer()),
+            etag = serverResponseConfigEtag,
+        )
         server = MockWebServer().apply {
             protocols = listOf(Protocol.HTTP_2, Protocol.HTTP_1_1)
-            dispatcher = apiServer
+            dispatcher = FakeApiServer(SdkBackendApi(remoteConfig, deliveryDecoder::onRequest))
             start()
         }
         baseUrl = server.url("api").toString()
@@ -173,7 +181,7 @@ internal class SdkIntegrationTestRule(
         payloadAssertion = EmbracePayloadAssertionInterface(
             setup.initServices.jsonSerializer,
             deliveryTracer,
-            apiServer,
+            deliveryDecoder,
         ) { sdkStateHolder.state }
         spanExporter = FilteredSpanExporter()
         logExporter = FilteredLogExporter()

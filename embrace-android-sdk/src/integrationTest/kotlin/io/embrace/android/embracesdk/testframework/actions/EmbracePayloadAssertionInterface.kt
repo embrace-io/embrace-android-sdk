@@ -32,8 +32,8 @@ import io.embrace.android.embracesdk.semconv.EmbSessionAttributes
 import io.embrace.android.embracesdk.testframework.assertions.JsonComparator.compare
 import io.embrace.android.embracesdk.testframework.assertions.JsonComparator.sortAttributesByKey
 import io.embrace.android.embracesdk.testframework.assertions.Placeholder
-import io.embrace.android.embracesdk.testframework.server.FakeApiServer
 import io.embrace.android.embracesdk.testframework.server.FormPart
+import io.embrace.android.embracesdk.testframework.server.SdkDeliveryDecoder
 import kotlinx.serialization.builtins.MapSerializer
 import kotlinx.serialization.builtins.serializer
 import org.json.JSONObject
@@ -54,7 +54,7 @@ import java.util.concurrent.TimeoutException
 internal class EmbracePayloadAssertionInterface(
     internal val serializer: PlatformSerializer,
     private val deliveryTracer: DeliveryTracer,
-    private val apiServer: FakeApiServer?,
+    private val deliveryDecoder: SdkDeliveryDecoder?,
     private val sdkStateSupplier: () -> SdkState,
 ) {
 
@@ -91,7 +91,7 @@ internal class EmbracePayloadAssertionInterface(
         expectedSize: Int,
         logsOrderedByTimestamp: Boolean,
     ): List<Envelope<LogPayload>> {
-        val supplier = { checkNotNull(apiServer).getLogEnvelopes() }
+        val supplier = { checkNotNull(deliveryDecoder).getLogEnvelopes() }
         try {
             val envelopes = retrievePayload(expectedSize = expectedSize, supplier = supplier)
             if (logsOrderedByTimestamp) {
@@ -121,7 +121,7 @@ internal class EmbracePayloadAssertionInterface(
     private fun retrieveAttachments(
         expectedSize: Int,
     ): List<List<FormPart>> {
-        val supplier = { checkNotNull(apiServer).getAttachments() }
+        val supplier = { checkNotNull(deliveryDecoder).getAttachments() }
         try {
             return retrievePayload(expectedSize = expectedSize, supplier = supplier)
         } catch (exc: TimeoutException) {
@@ -157,7 +157,7 @@ internal class EmbracePayloadAssertionInterface(
         expectedSize: Int, processState: ProcessState, waitTimeMs: Int, assertOrdering: Boolean,
     ): List<Envelope<SessionPartPayload>> {
         val supplier = {
-            checkNotNull(apiServer).getSessionEnvelopes()
+            checkNotNull(deliveryDecoder).getSessionEnvelopes()
                 .filter { it.findAppState() == processState }
         }
         try {
@@ -165,7 +165,7 @@ internal class EmbracePayloadAssertionInterface(
             if (assertOrdering) assertSessionsDeliveredInOrder(envelopes)
             return envelopes
         } catch (exc: TimeoutException) {
-            val envelopes = checkNotNull(apiServer).getSessionEnvelopes()
+            val envelopes = checkNotNull(deliveryDecoder).getSessionEnvelopes()
             val sessions: List<Map<String, String?>> = envelopes.map {
                 mapOf(
                     "userSessionId" to it.getUserSessionId(),
@@ -190,7 +190,7 @@ internal class EmbracePayloadAssertionInterface(
 
     internal fun assertConfigRequested(expectedRequests: Int) {
         val supplier = {
-            checkNotNull(apiServer).getConfigRequests()
+            checkNotNull(deliveryDecoder).getConfigRequests()
         }
         try {
             retrievePayload(expectedSize = expectedRequests, supplier = supplier)
@@ -205,7 +205,7 @@ internal class EmbracePayloadAssertionInterface(
     /**
      * Returns the If-None-Match header of each config request, or null where it was not sent.
      */
-    internal fun getConfigRequestEtags(): List<String?> = checkNotNull(apiServer).getConfigRequestEtags()
+    internal fun getConfigRequestEtags(): List<String?> = checkNotNull(deliveryDecoder).getConfigRequestEtags()
 
     /**
      * Asserts that config was persisted on disk and returns the persisted information.
@@ -401,6 +401,6 @@ internal class EmbracePayloadAssertionInterface(
     }
 
     internal fun getPayloadTypesHeaders(): List<String> {
-        return checkNotNull(apiServer).getPayloadTypesHeaders()
+        return checkNotNull(deliveryDecoder).getPayloadTypesHeaders()
     }
 }

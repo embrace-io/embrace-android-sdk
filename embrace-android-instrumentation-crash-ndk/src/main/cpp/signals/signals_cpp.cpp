@@ -115,8 +115,8 @@ void emb_termination_handler() {
                     (char *) type_info->name(),
                     sizeof(_emb_env->crash.capture.name));
     }
-    size_t msg_len = sizeof(_emb_env->crash.capture.message);
-    char msg[msg_len];
+    const size_t msg_len = sizeof(_emb_env->crash.capture.message);
+    char msg[msg_len] = {0};
     emb_parse_exception_message(msg, msg_len);
     emb_strncpy(_emb_env->crash.capture.message, (char *) msg,
                 sizeof(_emb_env->crash.capture.message));

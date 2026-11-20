@@ -13,6 +13,7 @@ import androidx.test.uiautomator.By
 import androidx.test.uiautomator.Until
 import io.embrace.android.embracesdk.benchmark.capture.CAPTURE_PROFILE_ARGUMENT
 import io.embrace.android.embracesdk.benchmark.capture.captureProfileWithKey
+import io.embrace.android.embracesdk.benchmark.endpoint.LocalEmbraceEndpointRule
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -29,6 +30,9 @@ internal class SessionBenchmark(otelSdkMode: OtelSdkMode) {
 
     @get:Rule
     val otelSdkModeRule = OtelSdkModeRule(otelSdkMode)
+
+    @get:Rule
+    val endpointRule = LocalEmbraceEndpointRule()
 
     private val captureProfile =
         captureProfileWithKey(InstrumentationRegistry.getArguments().getString(CAPTURE_PROFILE_ARGUMENT))

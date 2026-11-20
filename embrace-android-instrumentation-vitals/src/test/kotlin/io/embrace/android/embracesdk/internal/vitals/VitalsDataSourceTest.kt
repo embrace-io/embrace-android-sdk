@@ -2,10 +2,15 @@ package io.embrace.android.embracesdk.internal.vitals
 
 import android.app.Activity
 import android.app.Application
+import android.content.Context
+import android.hardware.display.DisplayManager
+import android.os.Build
 import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
 import android.os.SystemClock
+import android.view.Display
+import android.view.FrameMetrics
 import android.view.MotionEvent
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
@@ -24,6 +29,12 @@ import io.embrace.android.embracesdk.internal.telemetry.AppliedLimitType
 import io.embrace.android.embracesdk.internal.utils.event.EventBus
 import io.embrace.android.embracesdk.semconv.EmbFrameCountsAttributes
 import io.embrace.android.embracesdk.semconv.EmbInteractionResponsivenessAttributes
+import io.mockk.Runs
+import io.mockk.every
+import io.mockk.just
+import io.mockk.mockk
+import io.mockk.slot
+import io.mockk.verify
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
@@ -32,6 +43,7 @@ import org.junit.runner.RunWith
 import org.robolectric.Robolectric.buildActivity
 import org.robolectric.Shadows.shadowOf
 import org.robolectric.android.controller.ActivityController
+import org.robolectric.shadows.FrameMetricsBuilder
 import org.robolectric.shadows.ShadowSystemClock
 import java.time.Duration
 
@@ -44,9 +56,14 @@ internal class VitalsDataSourceTest {
     private fun createDataSource(
         spanLimit: Int,
         responsivenessEnabled: Boolean = false,
+        displayManager: DisplayManager? = null,
     ): Pair<VitalsDataSource, FakeInstrumentationArgs> {
         val application: Application = ApplicationProvider.getApplicationContext()
-        val args = FakeInstrumentationArgs(application, telemetryService = telemetryService)
+        val args = FakeInstrumentationArgs(
+            application,
+            telemetryService = telemetryService,
+            systemServiceSupplier = { name -> if (name == Context.DISPLAY_SERVICE) displayManager else null },
+        )
         application.registerActivityLifecycleCallbacks(BusRelay(args.eventBus))
         args.configService.config = EmbraceConfig(
             autoDataCapture = { AutoDataCaptureConfig(interactionResponsivenessCaptureEnabled = { responsivenessEnabled }) },
@@ -186,6 +203,33 @@ internal class VitalsDataSourceTest {
     }
 
     @Test
+    fun `at API 31+ frames are budgeted and counted against the display's live refresh rate`() {
+        val display = mockk<Display> { every { refreshRate } returns 60f }
+        val listener = slot<DisplayManager.DisplayListener>()
+        val displayManager = mockk<DisplayManager>(relaxed = true) {
+            every { getDisplay(Display.DEFAULT_DISPLAY) } returns display
+            every { registerDisplayListener(capture(listener), any()) } just Runs
+        }
+        val (dataSource, args) = createDataSource(spanLimit = 10, displayManager = displayManager)
+        val activity = dataSource.startScreen()
+        assertTrue(Build.VERSION.SDK_INT >= Build.VERSION_CODES.S)
+
+        // 30ms is within the 2x budget at 60Hz; at 120Hz it's past it, and spans 4 refresh intervals
+        activity.get().renderFrame(durationMs = 30)
+        dataSource.idleVitalsThread()
+        assertEquals(screenFrameAttributes(dropped = 0, expected = 1), args.collectScreenAttributes())
+
+        every { display.refreshRate } returns 120f
+        listener.captured.onDisplayChanged(Display.DEFAULT_DISPLAY)
+        activity.get().renderFrame(durationMs = 30)
+        dataSource.idleVitalsThread()
+        assertEquals(screenFrameAttributes(dropped = 3, expected = 4), args.collectScreenAttributes())
+
+        dataSource.onDataCaptureDisabled()
+        verify { displayManager.unregisterDisplayListener(listener.captured) }
+    }
+
+    @Test
     fun `window callbacks are installed when data capture is enabled`() {
         val (dataSource, _) = createDataSource(spanLimit = 1)
         dataSource.onDataCaptureEnabled()
@@ -313,6 +357,12 @@ internal class VitalsDataSourceTest {
         val event = MotionEvent.obtain(eventTime, eventTime, action, 0f, 0f, 0)
         window.callback.dispatchTouchEvent(event)
         event.recycle()
+    }
+
+    /** Delivers one frame that took [durationMs] to render to this window's frame-metrics listeners. */
+    private fun Activity.renderFrame(durationMs: Long) {
+        val frame = FrameMetricsBuilder().setMetric(FrameMetrics.DRAW_DURATION, durationMs * 1_000_000L).build()
+        shadowOf(window).reportOnFrameMetricsAvailable(frame)
     }
 
     private fun FakeInstrumentationArgs.responsivenessSpans(): List<FakeSpanToken> =

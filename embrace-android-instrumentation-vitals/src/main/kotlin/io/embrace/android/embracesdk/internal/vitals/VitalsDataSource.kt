@@ -73,7 +73,7 @@ internal class VitalsDataSource(
         sink(EmbFrameCountsAttributes.SMOOTHNESS_EXPECTED_FRAMES, counts.expected.toString())
     }
 
-    // Extracts per-frame jank; below API 31 the budget tracks the display's refresh interval.
+    // Extracts per-frame jank against the display's refresh interval.
     private val frameMetricsStrategy: FrameMetricsStrategy = FrameMetricsStrategy.create(
         refreshIntervalNanos = displayRefreshIntervalNanos(),
         jankHeuristicMultiplier = args.configService.config.vitals.jankHeuristicMultiplier,
@@ -117,11 +117,9 @@ internal class VitalsDataSource(
         this.vitalsScheduler = vitalsScheduler
         val handler = vitalsScheduler.handler
 
-        // Below API 31 the budget comes from [refreshRate]; track refresh-rate changes to keep it live.
-        if (!versionChecker.isAtLeast(Build.VERSION_CODES.S)) {
-            args.systemService<DisplayManager>(Context.DISPLAY_SERVICE)
-                ?.registerDisplayListener(displayListener, handler)
-        }
+        // The budget comes from [refreshRate]; track refresh-rate changes to keep it live.
+        args.systemService<DisplayManager>(Context.DISPLAY_SERVICE)
+            ?.registerDisplayListener(displayListener, handler)
 
         val cfg = args.configService.config.vitals
         val responsivenessEnabled = args.configService.config.autoDataCapture.interactionResponsivenessCaptureEnabled
@@ -170,9 +168,7 @@ internal class VitalsDataSource(
     override fun onDataCaptureDisabled() {
         activityListener?.close()
         activityListener = null
-        if (!versionChecker.isAtLeast(Build.VERSION_CODES.S)) {
-            args.systemService<DisplayManager>(Context.DISPLAY_SERVICE)?.unregisterDisplayListener(displayListener)
-        }
+        args.systemService<DisplayManager>(Context.DISPLAY_SERVICE)?.unregisterDisplayListener(displayListener)
         // posted ahead of the scheduler stopping, so it runs after any touch already queued for the Vitals thread
         focalTracker?.close()
         vitalsScheduler?.stop()

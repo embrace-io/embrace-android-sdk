@@ -7,14 +7,13 @@ import androidx.annotation.RequiresApi
 import androidx.annotation.WorkerThread
 import io.embrace.android.embracesdk.internal.utils.BuildVersionChecker
 import io.embrace.android.embracesdk.internal.utils.VersionChecker
-import io.embrace.android.embracesdk.internal.vitals.FrameMetricsStrategy.Companion.create
 import io.embrace.android.embracesdk.internal.vitals.smoothness.SmoothnessReporter
 
 /**
- * Extracts `(vsyncNanos, frameDispatchNanos, jankNanos)` from a [FrameMetrics]. The concrete strategy is
+ * Extracts `(vsyncNanos, frameDispatchNanos, jankBudgetNanos)` from a [FrameMetrics]. The concrete strategy is
  * selected once by API level via [create]. `vsyncNanos` is in Choreographer's `frameTimeNanos` base — when
  * the frame became visible; `frameDispatchNanos` is when its render work was dispatched, in the same base;
- * `jankNanos` is how far the frame ran past its render budget, or 0 if it met it.
+ * `jankBudgetNanos` is how long the frame may render before it counts as jank.
  */
 @RequiresApi(Build.VERSION_CODES.N)
 internal interface FrameMetricsStrategy {
@@ -22,8 +21,17 @@ internal interface FrameMetricsStrategy {
     @WorkerThread
     fun vsyncNanos(frameMetrics: FrameMetrics): Long
 
+    /**
+     * The frame's intended vsync, which `TOTAL_DURATION` is measured from, in the same base as [vsyncNanos].
+     */
     @WorkerThread
-    fun jankNanos(frameMetrics: FrameMetrics): Long
+    fun frameStartNanos(frameMetrics: FrameMetrics): Long
+
+    /**
+     * How long the frame may render from [frameStartNanos] before it counts as jank, or [Long.MAX_VALUE] if it can't jank.
+     */
+    @WorkerThread
+    fun jankBudgetNanos(frameMetrics: FrameMetrics): Long
 
     /**
      * When the rendering engine first dispatched work to build the frame, in the same base as
@@ -40,21 +48,7 @@ internal interface FrameMetricsStrategy {
     fun frameIntervalNanos(frameMetrics: FrameMetrics): Long
 
     /**
-     * The vsyncs a frame occupied: 1 if it met its budget ([jankNanos] is 0), otherwise its duration in frame intervals, rounded up.
-     * Unbounded here: [FrameCounts.frame] clamps it.
-     */
-    @WorkerThread
-    fun expectedFrames(frameMetrics: FrameMetrics, jankNanos: Long): Int {
-        val intervalNanos = frameIntervalNanos(frameMetrics)
-        if (jankNanos == 0L || intervalNanos <= 0L) {
-            return 1
-        }
-        val total = frameMetrics.getMetric(FrameMetrics.TOTAL_DURATION)
-        return ((total + intervalNanos - 1) / intervalNanos).toInt()
-    }
-
-    /**
-     * Updates the display refresh interval used as the frame budget for devices that don't include the [FrameMetrics.DEADLINE]
+     * Updates the display refresh interval that frames are budgeted and counted against.
      */
     @WorkerThread
     fun onRefreshIntervalChanged(intervalNanos: Long) {
@@ -64,7 +58,7 @@ internal interface FrameMetricsStrategy {
         /**
          * Create a [FrameMetricsStrategy] with a given [refreshIntervalNanos] and [jankHeuristicMultiplier].
          *
-         * @param refreshIntervalNanos nanoseconds between frames at the current refresh rate (for devices < SDK_31)
+         * @param refreshIntervalNanos nanoseconds between frames at the current refresh rate
          * @param jankHeuristicMultiplier the grace multiplier to apply to the refresh rate before a delayed frame is considered dropped
          * @param versionChecker selects the strategy for the device's API level
          */
@@ -74,9 +68,6 @@ internal interface FrameMetricsStrategy {
             jankHeuristicMultiplier: Double = SmoothnessReporter.DEFAULT_JANK_HEURISTIC_MULTIPLIER,
             versionChecker: VersionChecker = BuildVersionChecker,
         ): FrameMetricsStrategy = when {
-            versionChecker.isAtLeast(Build.VERSION_CODES.S) ->
-                Api31FrameMetricsStrategy(jankHeuristicMultiplier)
-
             versionChecker.isAtLeast(Build.VERSION_CODES.O) ->
                 Api26FrameMetricsStrategy(refreshIntervalNanos, jankHeuristicMultiplier)
 
@@ -96,30 +87,7 @@ internal fun FrameMetrics.isFirstDrawFrame(): Boolean =
     getMetric(FrameMetrics.FIRST_DRAW_FRAME) == 1L
 
 /**
- * API 31+: reads `VSYNC_TIMESTAMP` for the vsync time and the per-frame `DEADLINE`, scaled by
- * [jankHeuristicMultiplier], for the budget. The refresh interval is unused — `DEADLINE` is already
- * variable-refresh-rate aware.
- */
-@RequiresApi(Build.VERSION_CODES.S)
-private class Api31FrameMetricsStrategy(private val jankHeuristicMultiplier: Double) : FrameMetricsStrategy {
-    override fun vsyncNanos(frameMetrics: FrameMetrics): Long =
-        frameMetrics.getMetric(FrameMetrics.VSYNC_TIMESTAMP)
-
-    override fun jankNanos(frameMetrics: FrameMetrics): Long {
-        if (frameMetrics.isFirstDrawFrame()) {
-            return 0L
-        }
-        val total = frameMetrics.getMetric(FrameMetrics.TOTAL_DURATION)
-        val budget = (frameMetrics.getMetric(FrameMetrics.DEADLINE) * jankHeuristicMultiplier).toLong()
-        return (total - budget).coerceAtLeast(0L)
-    }
-
-    override fun frameIntervalNanos(frameMetrics: FrameMetrics): Long =
-        frameMetrics.getMetric(FrameMetrics.DEADLINE)
-}
-
-/**
- * API 26-30: reads `VSYNC_TIMESTAMP` for the vsync time and budgets the frame against the current
+ * API 26+: reads `VSYNC_TIMESTAMP` for the vsync time and budgets the frame against the current
  * refresh interval, scaled by [jankHeuristicMultiplier].
  */
 @RequiresApi(Build.VERSION_CODES.O)
@@ -130,12 +98,14 @@ private class Api26FrameMetricsStrategy(
     override fun vsyncNanos(frameMetrics: FrameMetrics): Long =
         frameMetrics.getMetric(FrameMetrics.VSYNC_TIMESTAMP)
 
-    override fun jankNanos(frameMetrics: FrameMetrics): Long {
+    override fun frameStartNanos(frameMetrics: FrameMetrics): Long =
+        frameMetrics.getMetric(FrameMetrics.INTENDED_VSYNC_TIMESTAMP)
+
+    override fun jankBudgetNanos(frameMetrics: FrameMetrics): Long {
         if (frameMetrics.isFirstDrawFrame()) {
-            return 0L
+            return Long.MAX_VALUE
         }
-        val budget = (refreshIntervalNanos * jankHeuristicMultiplier).toLong()
-        return (frameMetrics.getMetric(FrameMetrics.TOTAL_DURATION) - budget).coerceAtLeast(0L)
+        return (refreshIntervalNanos * jankHeuristicMultiplier).toLong()
     }
 
     override fun frameIntervalNanos(frameMetrics: FrameMetrics): Long = refreshIntervalNanos
@@ -149,20 +119,18 @@ private class Api26FrameMetricsStrategy(
  * API 24-25: reports the metrics-delivery time ([SystemClock.uptimeMillis], in nanoseconds) as the
  * vsync time, and budgets the frame against the current refresh interval, scaled by
  * [jankHeuristicMultiplier]. First-draw frames are not distinguished here, as `FIRST_DRAW_FRAME` is
- * unavailable.
+ * unavailable, and the frame's start is approximated by the delivery time less its duration.
  */
 @RequiresApi(Build.VERSION_CODES.N)
 private class LegacyFrameMetricsStrategy(
     private var refreshIntervalNanos: Long,
     private val jankHeuristicMultiplier: Double,
 ) : FrameMetricsStrategy {
-    override fun vsyncNanos(frameMetrics: FrameMetrics): Long =
-        SystemClock.uptimeMillis() * NANOS_PER_MS
+    override fun vsyncNanos(frameMetrics: FrameMetrics): Long = SystemClock.uptimeMillis() * NANOS_PER_MS
 
-    override fun jankNanos(frameMetrics: FrameMetrics): Long {
-        val budget = (refreshIntervalNanos * jankHeuristicMultiplier).toLong()
-        return (frameMetrics.getMetric(FrameMetrics.TOTAL_DURATION) - budget).coerceAtLeast(0L)
-    }
+    override fun frameStartNanos(frameMetrics: FrameMetrics): Long = frameDispatchNanos(frameMetrics)
+
+    override fun jankBudgetNanos(frameMetrics: FrameMetrics): Long = (refreshIntervalNanos * jankHeuristicMultiplier).toLong()
 
     override fun frameIntervalNanos(frameMetrics: FrameMetrics): Long = refreshIntervalNanos
 

@@ -27,8 +27,7 @@ import org.robolectric.shadows.FrameMetricsBuilder
  * Frames rendered on each screen are counted by the vitals instrumentation and recorded on the navigation transition that leaves the
  * screen, and in total on the foreground session part.
  *
- * Vitals takes its API 30 branch, where the jank budget is the 60Hz refresh interval (16.67ms) times the default 2x multiplier:
- * Robolectric's [FrameMetricsBuilder] can't set the API 31+ `DEADLINE`.
+ * The jank budget is the 60Hz refresh interval (16.67ms) times the default 2x multiplier.
  */
 @RunWith(ParameterizedRobolectricTestRunner::class)
 internal class FrameCountsFeatureTest(

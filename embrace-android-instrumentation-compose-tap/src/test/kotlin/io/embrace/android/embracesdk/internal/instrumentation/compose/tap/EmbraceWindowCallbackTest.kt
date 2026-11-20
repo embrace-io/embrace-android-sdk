@@ -54,7 +54,12 @@ internal class EmbraceWindowCallbackTest {
                 return super.onTouchEvent(ev)
             }
         }
-        val callback = EmbraceWindowCallback(recordingDelegate, recordingDetector, args.errorHandler)
+        val callback = EmbraceWindowCallback(
+            recordingDelegate,
+            recordingDetector,
+            args.errorHandler,
+            args.versionChecker,
+        )
         val event = MotionEvent.obtain(0L, 0L, MotionEvent.ACTION_DOWN, 10f, 20f, 0)
 
         try {
@@ -90,7 +95,12 @@ internal class EmbraceWindowCallbackTest {
                 return super.onTouchEvent(ev)
             }
         }
-        val callback = EmbraceWindowCallback(recordingDelegate, recordingDetector, args.errorHandler)
+        val callback = EmbraceWindowCallback(
+            recordingDelegate,
+            recordingDetector,
+            args.errorHandler,
+            args.versionChecker,
+        )
         callback.close()
         val event = MotionEvent.obtain(0L, 0L, MotionEvent.ACTION_DOWN, 10f, 20f, 0)
 

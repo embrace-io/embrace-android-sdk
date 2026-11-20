@@ -8,6 +8,7 @@ import io.embrace.android.embracesdk.internal.logging.ErrorHandler
 import io.embrace.android.embracesdk.internal.logging.SdkErrorType
 import io.embrace.android.embracesdk.internal.logging.guardSdkCode
 import io.embrace.android.embracesdk.internal.session.id.SessionIdsSnapshot
+import io.embrace.android.embracesdk.internal.utils.VersionChecker
 import io.embrace.android.embracesdk.internal.utils.event.EventBus
 import io.embrace.android.embracesdk.internal.utils.event.EventHandler
 
@@ -17,6 +18,7 @@ internal class ActivityLeakDetectionLifecycleCallbacks(
     private val fragmentSupport: FragmentSupport,
     private val eventBus: EventBus,
     private val errorHandler: ErrorHandler,
+    private val versionChecker: VersionChecker,
     private val webViewLeakDetectionEnabled: Boolean = false,
 ) : AutoCloseable {
 
@@ -29,7 +31,7 @@ internal class ActivityLeakDetectionLifecycleCallbacks(
     private val onCreated = EventHandler<ActivityCreated> { event ->
         errorHandler.guardSdkCode(SdkErrorType.UiCallbackFail) {
             val activity = event.activity
-            if (Build.VERSION.SDK_INT < Build.VERSION_CODES.Q) {
+            if (!versionChecker.isAtLeast(Build.VERSION_CODES.Q)) {
                 leakDetector.trackOpened(activity, TrackingSource.ACTIVITY)
             }
             fragmentSupport.onActivityCreated(activity)

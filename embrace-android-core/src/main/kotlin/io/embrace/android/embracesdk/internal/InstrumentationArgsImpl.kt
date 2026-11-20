@@ -27,6 +27,7 @@ import io.embrace.android.embracesdk.internal.storage.SdkStorage
 import io.embrace.android.embracesdk.internal.store.OrdinalStore
 import io.embrace.android.embracesdk.internal.telemetry.InternalTelemetryService
 import io.embrace.android.embracesdk.internal.utils.UuidSource
+import io.embrace.android.embracesdk.internal.utils.VersionChecker
 import io.embrace.android.embracesdk.internal.utils.event.EventBus
 import io.embrace.android.embracesdk.internal.worker.BackgroundWorker
 import io.embrace.android.embracesdk.internal.worker.PriorityWorker
@@ -39,6 +40,8 @@ internal class InstrumentationArgsImpl(
     override val destination: TelemetryDestination,
     override val errorHandler: ErrorHandler,
     override val clock: Clock,
+    override val versionChecker: VersionChecker,
+    override val systemInfo: SystemInfo,
     override val context: Context,
     override val application: Application,
     deliveredAeiStoreProvider: () -> DeliveredAeiStore,

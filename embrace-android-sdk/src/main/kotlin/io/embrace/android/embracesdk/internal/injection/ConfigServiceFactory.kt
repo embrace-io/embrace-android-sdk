@@ -1,6 +1,5 @@
 package io.embrace.android.embracesdk.internal.injection
 
-import android.os.Build
 import io.embrace.android.embracesdk.core.BuildConfig
 import io.embrace.android.embracesdk.internal.config.ConfigServiceImpl
 import io.embrace.android.embracesdk.internal.config.PersistedConfig
@@ -24,7 +23,7 @@ internal fun createConfigService(
         instrumentedConfig = instrumentedConfig,
         deviceIdProvider = { persistedConfig.deviceId },
         sdkVersion = BuildConfig.VERSION_NAME,
-        apiLevel = Build.VERSION.SDK_INT,
+        apiLevel = preStartServices.systemInfo.androidOsApiLevel.toIntOrNull() ?: 0,
         errorHandler = preStartServices.errorHandler,
     ),
 ): ConfigServiceImpl = ConfigServiceImpl(

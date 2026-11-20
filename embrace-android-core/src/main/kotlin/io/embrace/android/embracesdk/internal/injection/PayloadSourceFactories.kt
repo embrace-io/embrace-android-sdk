@@ -37,6 +37,7 @@ import io.embrace.android.embracesdk.internal.serialization.PlatformSerializer
 import io.embrace.android.embracesdk.internal.spans.CurrentSessionPartSpan
 import io.embrace.android.embracesdk.internal.store.PersistedSdkStateStore
 import io.embrace.android.embracesdk.internal.utils.EmbTrace
+import io.embrace.android.embracesdk.internal.utils.VersionChecker
 import io.embrace.android.embracesdk.internal.worker.BackgroundWorker
 
 fun createRnBundleIdTracker(
@@ -64,6 +65,7 @@ fun createEnvelopeResourceSource(
     configService: ConfigService,
     worker: BackgroundWorker,
     systemInfo: SystemInfo,
+    versionChecker: VersionChecker,
     errorHandler: ErrorHandler,
     hostedSdkVersionInfo: SdkVersionInfo,
     rnBundleIdTracker: Lazy<RnBundleIdTracker>,
@@ -82,6 +84,7 @@ fun createEnvelopeResourceSource(
             backgroundWorker = worker,
             systemInfo = systemInfo,
             errorHandler = errorHandler,
+            versionChecker = versionChecker,
         ).apply { startAsyncRetrieval() }
     }
     return EmbTrace.trace("resource-source-impl-init") {

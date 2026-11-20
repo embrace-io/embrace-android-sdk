@@ -14,7 +14,7 @@ class AeiInstrumentationProvider : InstrumentationProvider {
     override val asyncInit: Boolean = true
 
     override fun register(args: InstrumentationArgs): DataSourceFactory<DataSource>? {
-        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.R) {
+        if (!args.versionChecker.isAtLeast(Build.VERSION_CODES.R)) {
             return null
         }
 

@@ -12,6 +12,7 @@ import io.embrace.android.embracesdk.internal.logging.SdkErrorType
 import io.embrace.android.embracesdk.internal.logging.guardSdkCode
 import io.embrace.android.embracesdk.internal.logging.guardSdkCodeEach
 import io.embrace.android.embracesdk.internal.utils.Provider
+import io.embrace.android.embracesdk.internal.utils.VersionChecker
 import io.embrace.android.embracesdk.internal.worker.BackgroundWorker
 import java.io.File
 import java.util.Locale
@@ -22,6 +23,7 @@ class DeviceImpl(
     private val backgroundWorker: BackgroundWorker,
     override val systemInfo: SystemInfo,
     private val errorHandler: ErrorHandler,
+    versionChecker: VersionChecker,
     private val isEmulator: () -> Boolean = { systemInfo.isEmulator() },
 ) : Device {
 
@@ -138,7 +140,7 @@ class DeviceImpl(
         lazy { StatFs(Environment.getDataDirectory().path).totalBytes }
 
     override val socModel: String? =
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+        if (versionChecker.isAtLeast(Build.VERSION_CODES.S)) {
             Build.SOC_MODEL.trim().takeIf { it.isNotEmpty() && !it.equals(Build.UNKNOWN, ignoreCase = true) }
         } else {
             null

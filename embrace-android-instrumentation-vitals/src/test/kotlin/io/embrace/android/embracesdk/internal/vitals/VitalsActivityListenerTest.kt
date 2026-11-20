@@ -51,6 +51,7 @@ internal class VitalsActivityListenerTest {
             frameMetricsStrategy = fakeStrategy,
             eventBus = args.eventBus,
             errorHandler = args.errorHandler,
+            versionChecker = args.versionChecker,
         )
         listener.subscribe()
     }

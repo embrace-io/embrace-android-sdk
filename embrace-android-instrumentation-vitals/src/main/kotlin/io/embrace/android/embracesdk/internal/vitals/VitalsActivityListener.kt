@@ -10,6 +10,7 @@ import androidx.annotation.RequiresApi
 import io.embrace.android.embracesdk.internal.arch.lifecycle.ActivityCreated
 import io.embrace.android.embracesdk.internal.arch.lifecycle.ActivityLifecycle
 import io.embrace.android.embracesdk.internal.logging.ErrorHandler
+import io.embrace.android.embracesdk.internal.utils.VersionChecker
 import io.embrace.android.embracesdk.internal.utils.event.EventBus
 import io.embrace.android.embracesdk.internal.utils.event.EventHandler
 import java.lang.ref.WeakReference
@@ -28,6 +29,7 @@ internal class VitalsActivityListener(
     private val frameMetricsStrategy: FrameMetricsStrategy,
     private val eventBus: EventBus,
     errorHandler: ErrorHandler,
+    private val versionChecker: VersionChecker,
 ) : AutoCloseable {
 
     private val activityErrors = OnceUiCallbackErrorTracker(errorHandler)
@@ -101,6 +103,7 @@ internal class VitalsActivityListener(
                 delegate = window.callback,
                 focalCallbacks = focalCallbacks,
                 errors = windowErrors,
+                versionChecker = versionChecker,
             )
             interactionCallbacks[window] = WeakReference(callback)
             window.callback = callback

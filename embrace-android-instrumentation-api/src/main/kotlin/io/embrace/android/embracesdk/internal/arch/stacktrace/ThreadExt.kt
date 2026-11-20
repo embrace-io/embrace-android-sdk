@@ -3,6 +3,8 @@ package io.embrace.android.embracesdk.internal.arch.stacktrace
 import android.os.Build
 import io.embrace.android.embracesdk.internal.config.behavior.DEFAULT_STACKTRACE_SIZE_LIMIT
 import io.embrace.android.embracesdk.internal.payload.ThreadInfo
+import io.embrace.android.embracesdk.internal.utils.BuildVersionChecker
+import io.embrace.android.embracesdk.internal.utils.VersionChecker
 import kotlin.math.min
 
 fun truncateStacktrace(
@@ -33,10 +35,11 @@ fun truncateStacktrace(
 }
 
 @Suppress("DEPRECATION")
-fun Thread.compatThreadId() = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.BAKLAVA) {
-    threadId()
-} else {
-    id
-}
+fun Thread.compatThreadId(versionChecker: VersionChecker = BuildVersionChecker) =
+    if (versionChecker.isAtLeast(Build.VERSION_CODES.BAKLAVA)) {
+        threadId()
+    } else {
+        id
+    }
 
 private const val MAX_STACKTRACE_SIZE = 500

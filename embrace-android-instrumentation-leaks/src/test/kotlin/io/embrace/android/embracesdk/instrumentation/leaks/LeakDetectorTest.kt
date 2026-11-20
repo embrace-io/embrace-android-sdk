@@ -3,6 +3,7 @@ package io.embrace.android.embracesdk.instrumentation.leaks
 import io.embrace.android.embracesdk.concurrency.runActionsConcurrently
 import io.embrace.android.embracesdk.fakes.FakeErrorHandler
 import io.embrace.android.embracesdk.internal.logging.SdkErrorType
+import io.embrace.android.embracesdk.internal.utils.BuildVersionChecker
 import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotNull
@@ -30,6 +31,7 @@ internal class LeakDetectorTest {
         detector = LeakDetector(
             clock = { now },
             errorHandler = FakeErrorHandler(),
+            versionChecker = BuildVersionChecker,
             gcCycleCountReader = { gcCycleCount.toString() },
         )
     }
@@ -301,6 +303,7 @@ internal class LeakDetectorTest {
         detector = LeakDetector(
             clock = { now },
             errorHandler = errorHandler,
+            versionChecker = BuildVersionChecker,
             gcCycleCountReader = {
                 // only the detector thread fails, so that polling suspects() from this thread can't take the failure
                 if (Thread.currentThread().name == LeakDetector.THREAD_NAME && readFailed.compareAndSet(false, true)) {

@@ -24,7 +24,7 @@ internal class ComposeActivityListenerTest {
     fun setUp() {
         val application: Application = ApplicationProvider.getApplicationContext()
         args = FakeInstrumentationArgs(application)
-        listener = ComposeActivityListener(args.errorHandler, ComposeTapDataSource(args), args.eventBus)
+        listener = ComposeActivityListener(args.errorHandler, ComposeTapDataSource(args), args.eventBus, args.versionChecker)
         listener.subscribe()
     }
 

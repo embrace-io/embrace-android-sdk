@@ -9,6 +9,7 @@ import android.view.Window
 import io.embrace.android.embracesdk.internal.logging.ErrorHandler
 import io.embrace.android.embracesdk.internal.logging.SdkErrorType
 import io.embrace.android.embracesdk.internal.logging.guardSdkCode
+import io.embrace.android.embracesdk.internal.utils.VersionChecker
 
 /**
  * Custom Window callback that triggers onTouch event
@@ -18,6 +19,7 @@ internal class EmbraceWindowCallback(
     private val delegate: Window.Callback,
     gestureDetector: GestureDetector,
     errorHandler: ErrorHandler,
+    private val versionChecker: VersionChecker,
 ) : Window.Callback by delegate, AutoCloseable {
 
     // nulled on close so that windows outliving the SDK do not retain it
@@ -42,7 +44,7 @@ internal class EmbraceWindowCallback(
     }
 
     override fun onPointerCaptureChanged(hasCapture: Boolean) {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+        if (versionChecker.isAtLeast(Build.VERSION_CODES.O)) {
             delegate.onPointerCaptureChanged(hasCapture)
         }
     }
@@ -52,7 +54,7 @@ internal class EmbraceWindowCallback(
         menu: Menu?,
         deviceId: Int,
     ) {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
+        if (versionChecker.isAtLeast(Build.VERSION_CODES.N)) {
             delegate.onProvideKeyboardShortcuts(data, menu, deviceId)
         }
     }

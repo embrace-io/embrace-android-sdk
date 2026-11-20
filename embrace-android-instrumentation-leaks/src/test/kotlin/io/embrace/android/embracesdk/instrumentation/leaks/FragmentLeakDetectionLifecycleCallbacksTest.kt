@@ -13,6 +13,7 @@ import androidx.fragment.app.FragmentActivity
 import io.embrace.android.embracesdk.fakes.FakeErrorHandler
 import io.embrace.android.embracesdk.internal.logging.SdkErrorType
 import io.embrace.android.embracesdk.internal.session.id.SessionIdsSnapshot
+import io.embrace.android.embracesdk.internal.utils.BuildVersionChecker
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertNull
@@ -32,7 +33,7 @@ internal class FragmentLeakDetectionLifecycleCallbacksTest {
 
     @Before
     fun setUp() {
-        leakDetector = LeakDetector(clock = { 0L }, errorHandler = errorHandler)
+        leakDetector = LeakDetector(clock = { 0L }, errorHandler = errorHandler, versionChecker = BuildVersionChecker)
         callbacks = FragmentLeakDetectionLifecycleCallbacks(leakDetector, { SESSION_IDS }, errorHandler)
     }
 
@@ -107,7 +108,12 @@ internal class FragmentLeakDetectionLifecycleCallbacksTest {
 
     @Test
     fun `a leaked fragment view is reported under its fragment's class`() {
-        val detector = LeakDetector(clock = { 0L }, errorHandler = errorHandler, gcCycleCountReader = { "0" })
+        val detector = LeakDetector(
+            clock = { 0L },
+            errorHandler = errorHandler,
+            versionChecker = BuildVersionChecker,
+            gcCycleCountReader = { "0" },
+        )
         val activity = buildActivity(FragmentActivity::class.java).setup().get()
         FragmentLeakDetectionLifecycleCallbacks(detector, { SESSION_IDS }, errorHandler).onActivityCreated(activity)
         val fragment = ViewFragment()

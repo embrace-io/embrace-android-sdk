@@ -3,6 +3,7 @@ package io.embrace.android.embracesdk.internal.injection
 import android.app.Application
 import android.content.Context
 import io.embrace.android.embracesdk.internal.InstrumentationArgsImpl
+import io.embrace.android.embracesdk.internal.SystemInfo
 import io.embrace.android.embracesdk.internal.arch.InstrumentationArgs
 import io.embrace.android.embracesdk.internal.arch.datasource.TelemetryDestination
 import io.embrace.android.embracesdk.internal.arch.navigation.NavigationTrackingService
@@ -21,6 +22,7 @@ import io.embrace.android.embracesdk.internal.storage.SdkStorage
 import io.embrace.android.embracesdk.internal.store.OrdinalStore
 import io.embrace.android.embracesdk.internal.telemetry.InternalTelemetryService
 import io.embrace.android.embracesdk.internal.utils.UuidSource
+import io.embrace.android.embracesdk.internal.utils.VersionChecker
 import io.embrace.android.embracesdk.internal.utils.event.EventBus
 import java.io.File
 
@@ -30,6 +32,8 @@ fun createInstrumentationArgs(
     destination: TelemetryDestination,
     errorHandler: ErrorHandler,
     clock: Clock,
+    versionChecker: VersionChecker,
+    systemInfo: SystemInfo,
     context: Context,
     application: Application,
     deliveredAeiStoreProvider: () -> DeliveredAeiStore,
@@ -55,6 +59,8 @@ fun createInstrumentationArgs(
     destination = destination,
     errorHandler = errorHandler,
     clock = clock,
+    versionChecker = versionChecker,
+    systemInfo = systemInfo,
     context = context,
     application = application,
     deliveredAeiStoreProvider = deliveredAeiStoreProvider,

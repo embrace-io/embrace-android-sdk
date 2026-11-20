@@ -24,7 +24,7 @@ internal class ComposeTapDataSource(
     private var activityListener: ComposeActivityListener? = null
 
     override fun onDataCaptureEnabled() {
-        val listener = ComposeActivityListener(errorHandler, this, args.eventBus)
+        val listener = ComposeActivityListener(errorHandler, this, args.eventBus, args.versionChecker)
         activityListener = listener
         listener.subscribe()
     }

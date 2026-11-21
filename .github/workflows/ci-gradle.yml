@@ -73,14 +73,6 @@ jobs:
         if: ${{ matrix.gradle-task == 'build' && steps.robolectric-cache.outputs.cache-hit != 'true' }}
         run: /bin/sh .github/fetch-robolectric-dependencies.sh
 
-      - name: Setup Node
-        if: ${{ matrix.gradle-task == 'test' }}
-        uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
-        with:
-          node-version: 22
-          cache: npm
-          cache-dependency-path: embrace-gradle-plugin-integration-tests/fixtures/react-native-android/package-lock.json
-
       - name: Restore TestKit caches
         id: testkit-cache
         if: ${{ matrix.gradle-task == 'test' }}
@@ -91,9 +83,9 @@ jobs:
             !~/.gradle/embrace-testkit/caches/modules-2/*.lock
             ~/.gradle/embrace-testkit/caches/build-cache-1
             ~/.gradle/wrapper/dists
-          key: testkit-${{ hashFiles('embrace-gradle-plugin-integration-tests/src/test/kotlin/io/embrace/android/gradle/config/TestMatrix.kt', 'gradle/libs.versions.toml', 'embrace-gradle-plugin-integration-tests/fixtures/react-native-android/package-lock.json') }}-${{ github.run_id }}
+          key: testkit-${{ hashFiles('embrace-gradle-plugin-integration-tests/src/test/kotlin/io/embrace/android/gradle/config/TestMatrix.kt', 'gradle/libs.versions.toml') }}-${{ github.run_id }}
           restore-keys: |
-            testkit-${{ hashFiles('embrace-gradle-plugin-integration-tests/src/test/kotlin/io/embrace/android/gradle/config/TestMatrix.kt', 'gradle/libs.versions.toml', 'embrace-gradle-plugin-integration-tests/fixtures/react-native-android/package-lock.json') }}-
+            testkit-${{ hashFiles('embrace-gradle-plugin-integration-tests/src/test/kotlin/io/embrace/android/gradle/config/TestMatrix.kt', 'gradle/libs.versions.toml') }}-
             testkit-
 
       - name: Mark TestKit cache state

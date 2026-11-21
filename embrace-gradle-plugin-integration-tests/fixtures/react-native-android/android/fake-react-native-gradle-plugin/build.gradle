@@ -1,0 +1,14 @@
+plugins {
+    id 'java-gradle-plugin'
+}
+
+group = 'com.facebook.react'
+
+gradlePlugin {
+    plugins {
+        react {
+            id = 'com.facebook.react'
+            implementationClass = 'com.facebook.react.FakeReactPlugin'
+        }
+    }
+}

@@ -39,9 +39,29 @@ versionCatalogs.named("libs").findVersion("kotlinCoreLibrariesVersion").ifPresen
     }
 }
 
+// The TLS certificates the fake serves HTTPS with (FakeBackendTls), generated for each build rather than committed with
+// their private key. They go into this module's resources, under fake-backend-tls/, for the fake wherever it runs, and
+// out as fakeBackendTlsElements, for the benchmarked apps to trust the root. They're generated again only when this
+// module's code or dependencies change, so the apps and the benchmarks built from one checkout agree on them.
+val fakeBackendTlsDir = layout.buildDirectory.dir("generated/fakeBackendTls")
+val generateFakeBackendTls = tasks.register<JavaExec>("generateFakeBackendTls") {
+    val out = fakeBackendTlsDir
+    classpath(sourceSets.main.map { it.output.classesDirs }, configurations.named("runtimeClasspath"))
+    mainClass.set("io.embrace.android.testapiserver.FakeBackendTlsKt")
+    outputs.dir(out)
+    argumentProviders.add(CommandLineArgumentProvider { listOf(out.get().dir("fake-backend-tls").asFile.absolutePath) })
+}
+sourceSets.main { resources.srcDir(generateFakeBackendTls) }
+
+configurations.consumable("fakeBackendTlsElements") {
+    attributes { attribute(Category.CATEGORY_ATTRIBUTE, objects.named(Category::class.java, "fake-backend-tls")) }
+    outgoing.artifact(fakeBackendTlsDir.map { it.dir("fake-backend-tls") }) { builtBy(generateFakeBackendTls) }
+}
+
 dependencies {
     api(platform(libs.okhttp.bom))
     api(libs.mockwebserver)
+    api(libs.okhttp.tls)
 
     testImplementation(libs.junit)
 }

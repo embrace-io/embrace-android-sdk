@@ -8,12 +8,13 @@ import org.junit.rules.ExternalResource
  * under `System.out`.
  */
 class LocalEmbraceEndpointRule(
-    port: Int = LOCAL_ENDPOINT_PORT,
+    configPort: Int = LOCAL_ENDPOINT_CONFIG_PORT,
+    dataPort: Int = LOCAL_ENDPOINT_DATA_PORT,
     remoteConfig: String = REMOTE_CONFIG_JSON,
 ) : ExternalResource() {
 
     /** The endpoint this rule runs. */
-    val endpoint: LocalEmbraceEndpoint = LocalEmbraceEndpoint(port, remoteConfig)
+    val endpoint: LocalEmbraceEndpoint = LocalEmbraceEndpoint(configPort, dataPort, remoteConfig)
 
     override fun before() {
         endpoint.start()

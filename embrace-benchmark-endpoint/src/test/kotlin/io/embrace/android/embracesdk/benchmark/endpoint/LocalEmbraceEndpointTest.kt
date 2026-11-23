@@ -1,6 +1,8 @@
 package io.embrace.android.embracesdk.benchmark.endpoint
 
+import io.embrace.android.testapiserver.bundledFakeBackendTls
 import okhttp3.OkHttpClient
+import okhttp3.Protocol
 import okhttp3.Request
 import okhttp3.RequestBody.Companion.toRequestBody
 import okhttp3.Response
@@ -10,28 +12,37 @@ import org.junit.Assert.assertThrows
 import org.junit.Assert.assertTrue
 import org.junit.Test
 import java.io.IOException
+import java.net.InetAddress
 import java.net.ServerSocket
 import java.util.zip.GZIPInputStream
 
 internal class LocalEmbraceEndpointTest {
 
-    private val client = OkHttpClient()
+    private val tls = bundledFakeBackendTls()
+
+    private val client = OkHttpClient.Builder()
+        .sslSocketFactory(tls.clientCertificates.sslSocketFactory(), tls.clientCertificates.trustManager)
+        .build()
 
     @Test
-    fun `the SDK's config fetch, its conditional refetch and a delivery are answered on the loopback port, and counted`() {
-        LocalEmbraceEndpoint(port = freePort(), remoteConfig = CONFIG).use { endpoint ->
+    fun `the SDK's config fetch and refetch are answered on the config port, deliveries on the data port, and counted`() {
+        LocalEmbraceEndpoint(configPort = freePort(), dataPort = freePort(), remoteConfig = CONFIG).use { endpoint ->
             endpoint.start()
 
-            call(endpoint, "GET", "/v2/config?appId=abcde").use { first ->
+            call(endpoint.configPort, "GET", "/v2/config?appId=abcde").use { first ->
                 assertEquals(200, first.code)
+                assertEquals(Protocol.HTTP_2, first.protocol)
                 assertEquals(remoteConfigEtag(CONFIG), first.header("ETag"))
                 assertEquals(CONFIG, decompressGzip(checkNotNull(first.body).bytes()))
             }
-            call(endpoint, "GET", "/v2/config?appId=abcde", "If-None-Match" to remoteConfigEtag(CONFIG)).use {
+            call(endpoint.configPort, "GET", "/v2/config?appId=abcde", "If-None-Match" to remoteConfigEtag(CONFIG)).use {
                 assertEquals(304, it.code)
             }
-            call(endpoint, "POST", "/v2/spans").use { assertEquals(200, it.code) }
-            call(endpoint, "GET", "/v2/spans").use { assertEquals(404, it.code) }
+            call(endpoint.dataPort, "POST", "/v2/spans").use {
+                assertEquals(200, it.code)
+                assertEquals(Protocol.HTTP_2, it.protocol)
+            }
+            call(endpoint.dataPort, "GET", "/v2/spans").use { assertEquals(404, it.code) }
 
             endpoint.close()
             assertEquals(
@@ -47,18 +58,30 @@ internal class LocalEmbraceEndpointTest {
     }
 
     @Test
-    fun `an endpoint serves the empty config by default, and starts once, on a port nothing else holds`() {
-        val port = freePort()
-        LocalEmbraceEndpoint(port = port).use { endpoint ->
+    fun `an endpoint serves the empty config by default, and starts once, on ports nothing else holds`() {
+        val configPort = freePort()
+        val dataPort = freePort()
+        LocalEmbraceEndpoint(configPort = configPort, dataPort = dataPort).use { endpoint ->
             endpoint.start()
-            call(endpoint, "GET", "/v2/config").use {
+            call(configPort, "GET", "/v2/config").use {
                 assertEquals("{}", decompressGzip(checkNotNull(it.body).bytes()))
             }
             assertThrows(IllegalStateException::class.java) { endpoint.start() }
-            LocalEmbraceEndpoint(port = port).use { second ->
+            LocalEmbraceEndpoint(configPort = freePort(), dataPort = dataPort).use { second ->
                 assertThrows(IOException::class.java) { second.start() }
             }
         }
+    }
+
+    @Test
+    fun `an endpoint that cannot take its data port lets go of its config port`() {
+        val configPort = freePort()
+        ServerSocket(0, 1, InetAddress.getByName(LOCAL_ENDPOINT_ADDRESS)).use { taken ->
+            LocalEmbraceEndpoint(configPort = configPort, dataPort = taken.localPort).use { endpoint ->
+                assertThrows(IOException::class.java) { endpoint.start() }
+            }
+        }
+        LocalEmbraceEndpoint(configPort = configPort, dataPort = freePort()).use { it.start() }
     }
 
     @Test
@@ -68,10 +91,13 @@ internal class LocalEmbraceEndpointTest {
         assertTrue(remoteConfigEtag("{}"), Regex("\"benchmark-[0-9a-f]{16}\"").matches(remoteConfigEtag("{}")))
     }
 
-    /** Calls [endpoint] at [path], asking for gzip itself as the SDK does, so OkHttp leaves a gzipped body as sent. */
-    private fun call(endpoint: LocalEmbraceEndpoint, method: String, path: String, vararg headers: Pair<String, String>): Response {
+    /**
+     * Calls the endpoint's [port] at [path] by its host name, over HTTPS, asking for gzip itself as the SDK does, so
+     * OkHttp leaves a gzipped body as sent.
+     */
+    private fun call(port: Int, method: String, path: String, vararg headers: Pair<String, String>): Response {
         val builder = Request.Builder()
-            .url("http://$LOCAL_ENDPOINT_HOST:${endpoint.port}$path")
+            .url("https://$LOCAL_ENDPOINT_HOST:$port$path")
             .header("Accept-Encoding", "gzip")
             .method(method, "abcd".toByteArray().toRequestBody().takeIf { method == "POST" })
         headers.forEach { (name, value) -> builder.header(name, value) }

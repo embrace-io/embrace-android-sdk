@@ -5,7 +5,10 @@ import io.embrace.android.testapiserver.FakeBackendTls
 import io.embrace.android.testapiserver.RemoteConfigEndpoint
 import io.embrace.android.testapiserver.SdkBackendApi
 import io.embrace.android.testapiserver.bundledFakeBackendTls
+import okhttp3.OkHttpClient
 import okhttp3.Protocol
+import okhttp3.Request
+import okhttp3.RequestBody.Companion.toRequestBody
 import okhttp3.mockwebserver.MockWebServer
 import java.io.IOException
 import java.net.InetAddress
@@ -41,11 +44,13 @@ class LocalEmbraceEndpoint(
     val tls: FakeBackendTls = bundledFakeBackendTls(),
 ) : AutoCloseable {
 
-    private val api = FakeApiServer(SdkBackendApi(RemoteConfigEndpoint(remoteConfig, remoteConfigEtag(remoteConfig))))
+    private val etag = remoteConfigEtag(remoteConfig)
+
+    private val api = FakeApiServer(SdkBackendApi(RemoteConfigEndpoint(remoteConfig, etag)))
 
     private val servers = mutableListOf<MockWebServer>()
 
-    /** How many requests it answered, keyed by `<method> <path> <status>`. */
+    /** How many requests it answered, keyed by `<method> <path> <status>`; a [warmUp]'s requests aren't among them. */
     val answered: Map<String, Int> get() = api.answered
 
     /**
@@ -63,9 +68,55 @@ class LocalEmbraceEndpoint(
         }
     }
 
+    /**
+     * Sends the endpoint [rounds] of each request the SDK makes (its config fetch, the conditional refetch and a
+     * delivery of each kind) from a client of its own, then forgets them, so that the endpoint's code is loaded and
+     * compiled before a measured launch rather than while that launch's SDK starts. The client opens new connections
+     * every [WARM_UP_ROUNDS_PER_CONNECTION] rounds, so the endpoint's side of the handshake is warmed too. It warms the
+     * endpoint alone: the benchmarked app's own client stays as cold as a customer's.
+     *
+     * Call it after [start]; it fails when a request isn't answered as the SDK's would be.
+     */
+    fun warmUp(rounds: Int = WARM_UP_ROUNDS) {
+        check(servers.isNotEmpty()) { "the local Embrace endpoint is not started" }
+        val client = OkHttpClient.Builder()
+            .sslSocketFactory(tls.clientCertificates.sslSocketFactory(), tls.clientCertificates.trustManager)
+            .build()
+        try {
+            repeat(rounds) { round ->
+                // a handshake's cost is mostly native crypto, which warming doesn't speed up, so only every few rounds
+                if (round % WARM_UP_ROUNDS_PER_CONNECTION == 0) {
+                    client.connectionPool.evictAll()
+                }
+                warmUpCall(client, request(configPort, "/v2/config"), HTTP_OK)
+                warmUpCall(client, request(configPort, "/v2/config").header("If-None-Match", etag), HTTP_NOT_MODIFIED)
+                WARM_UP_DELIVERIES.forEach {
+                    warmUpCall(client, request(dataPort, it).post(WARM_UP_BODY.toRequestBody()), HTTP_OK)
+                }
+            }
+        } finally {
+            client.connectionPool.evictAll()
+            client.dispatcher.executorService.shutdown()
+        }
+        api.reset()
+    }
+
     /** Stops serving; [answered] stays readable. */
     override fun close() {
         servers.forEach { it.shutdown() }
+    }
+
+    private fun request(port: Int, path: String): Request.Builder =
+        Request.Builder().url("https://$LOCAL_ENDPOINT_HOST:$port$path")
+
+    private fun warmUpCall(client: OkHttpClient, request: Request.Builder, expected: Int) {
+        val built = request.build()
+        client.newCall(built).execute().use { response ->
+            check(response.code == expected) {
+                "the local Embrace endpoint answered ${built.method} ${built.url} with ${response.code}, not $expected"
+            }
+            response.body?.bytes()
+        }
     }
 
     private fun listen(port: Int): MockWebServer {
@@ -119,3 +170,17 @@ const val LOCAL_ENDPOINT_DATA_BASE_URL: String = "https://$LOCAL_ENDPOINT_HOST:$
 const val REMOTE_CONFIG_JSON: String = "{}"
 
 private const val ETAG_BYTES = 8
+
+/** Enough rounds for the JIT to compile the endpoint's request handling on a slow device, in a few seconds. */
+private const val WARM_UP_ROUNDS = 100
+
+/** Rounds of a warm-up per new connection on each port, and so per handshake. */
+private const val WARM_UP_ROUNDS_PER_CONNECTION = 10
+
+private val WARM_UP_DELIVERIES = listOf("/v2/spans", "/v2/logs")
+
+private val WARM_UP_BODY = "{}".toByteArray()
+
+private const val HTTP_OK = 200
+
+private const val HTTP_NOT_MODIFIED = 304

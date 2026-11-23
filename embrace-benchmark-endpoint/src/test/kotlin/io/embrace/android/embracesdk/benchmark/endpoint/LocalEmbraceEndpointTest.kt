@@ -85,6 +85,19 @@ internal class LocalEmbraceEndpointTest {
     }
 
     @Test
+    fun `a warm-up is answered as the SDK's requests are, refused before start, and leaves nothing counted`() {
+        LocalEmbraceEndpoint(configPort = freePort(), dataPort = freePort(), remoteConfig = CONFIG).use { endpoint ->
+            assertThrows(IllegalStateException::class.java) { endpoint.warmUp() }
+            endpoint.start()
+            endpoint.warmUp(rounds = 12)
+            assertEquals(emptyMap<String, Int>(), endpoint.answered)
+
+            call(endpoint.dataPort, "POST", "/v2/logs").use { assertEquals(200, it.code) }
+            assertEquals(mapOf("POST /v2/logs 200" to 1), endpoint.answered)
+        }
+    }
+
+    @Test
     fun `a config's ETag is a quoted tag that depends on its content alone`() {
         assertEquals(remoteConfigEtag(CONFIG), remoteConfigEtag(CONFIG))
         assertNotEquals(remoteConfigEtag(CONFIG), remoteConfigEtag("{}"))

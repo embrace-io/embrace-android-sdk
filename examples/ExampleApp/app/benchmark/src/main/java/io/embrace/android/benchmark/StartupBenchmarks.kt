@@ -96,7 +96,7 @@ internal class StartupBenchmarks {
 
     /**
      * Cold starts of the ExampleApp under [compilationMode], each after a press of home and [beforeLaunch], against a
-     * [LocalEmbraceEndpoint] serving [remoteConfig] for the whole method.
+     * [LocalEmbraceEndpoint] serving [remoteConfig] for the whole method, warmed up before the first launch.
      */
     private fun measureColdStartup(
         compilationMode: CompilationMode,
@@ -105,6 +105,7 @@ internal class StartupBenchmarks {
     ) {
         LocalEmbraceEndpoint(remoteConfig = remoteConfig).use { endpoint ->
             endpoint.start()
+            endpoint.warmUp()
             benchmarkRule.measureRepeated(
                 packageName = TARGET_PACKAGE,
                 metrics = listOf(StartupTimingMetric()),

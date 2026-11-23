@@ -163,6 +163,11 @@ endpoint's root, which the build generates, for `localhost` alone (`src/main/res
 answers the config fetch with an empty remote config (`{}`) and every delivery with 200. When a test ends, it logs what
 it answered to logcat (`adb logcat -d -s System.out:I`, the `local Embrace endpoint answered:` line).
 
+These benchmarks measure persistence, delivery, sessions and OTel setup, not the network, so they all use the local
+endpoint: it keeps them offline and makes every delivery succeed. It does its work on the device, but a warm-up
+compiles its code before each test, and in cold-start measurements its CPU didn't shift launch time or SDK start
+measurably.
+
 The remote config a launch runs with is still the one the app writes from global settings (below): the SDK reads it
 at startup, and the next launch's write replaces whatever the fetch saved. That written config has no ETag, so every
 launch fetches the config again, where a customer's app would revalidate its cached copy.

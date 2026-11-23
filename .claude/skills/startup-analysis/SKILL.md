@@ -90,7 +90,10 @@ integration-test concern, not this skill's.
 - The endpoint serves HTTPS on `localhost`, config on port 48711 and data on 48712, with a root the
   build generates and the benchmark build types trust for `localhost` alone, so the app does the
   TLS work it does against Embrace's servers. It is warmed up before the first launch; the app's
-  side never is.
+  side never is. To benchmark against Embrace's servers instead, pass
+  `-Pandroid.testInstrumentationRunnerArguments.embrace.backend=embrace` and build the app with the
+  config `StartupBenchmarks`' KDoc gives (a dedicated app with a pinned remote config, no base
+  URLs). That needs a network, and `coldStartupExpiredUserSession` can't run that way.
 
 ## Choosing the SDK under test
 

@@ -166,7 +166,8 @@ it answered to logcat (`adb logcat -d -s System.out:I`, the `local Embrace endpo
 These benchmarks measure persistence, delivery, sessions and OTel setup, not the network, so they all use the local
 endpoint: it keeps them offline and makes every delivery succeed. It does its work on the device, but a warm-up
 compiles its code before each test, and in cold-start measurements its CPU didn't shift launch time or SDK start
-measurably.
+measurably. Cold-start benchmarks are a different case: there, the network work overlaps what's measured, and the
+ExampleApp's `StartupBenchmarks` can run against Embrace's servers instead (its KDoc says how).
 
 The remote config a launch runs with is still the one the app writes from global settings (below): the SDK reads it
 at startup, and the next launch's write replaces whatever the fetch saved. That written config has no ETag, so every

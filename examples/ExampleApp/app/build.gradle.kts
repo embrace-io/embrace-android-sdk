@@ -86,7 +86,51 @@ kotlin {
     }
 }
 
+// The benchmark build types trust the root of the certificates the benchmarks' fake backend serves HTTPS with, for
+// localhost alone (src/benchmark/res/xml/network_security_config.xml). The repo's embrace-test-api-server generates
+// them for each build and offers them as fakeBackendTlsElements; this puts the root in those build types' resources.
+val benchmarkBuildTypes = setOf("benchmark", "benchmarkOtelRegular")
+val fakeBackendTls = configurations.dependencyScope("fakeBackendTls")
+val fakeBackendTlsFiles = configurations.resolvable("fakeBackendTlsFiles") {
+    extendsFrom(fakeBackendTls.get())
+    attributes { attribute(Category.CATEGORY_ATTRIBUTE, objects.named(Category::class.java, "fake-backend-tls")) }
+}
+val fakeBackendRootRes = tasks.register<FakeBackendRootRes>("fakeBackendRootRes") {
+    tls.from(fakeBackendTlsFiles)
+    res.set(layout.buildDirectory.dir("generated/fakeBackendRootRes"))
+}
+androidComponents {
+    onVariants(selector().all()) { variant ->
+        if (variant.buildType in benchmarkBuildTypes) {
+            variant.sources.res?.addGeneratedSourceDirectory(fakeBackendRootRes, FakeBackendRootRes::res)
+        }
+        // it shares the benchmark build type's network security config
+        if (variant.buildType == "benchmarkOtelRegular") {
+            variant.sources.res?.addStaticSourceDirectory("src/benchmark/res")
+        }
+    }
+}
+
+/** Copies the fake backend's root certificate in as the raw resource `fake_backend_root`. */
+abstract class FakeBackendRootRes : DefaultTask() {
+    @get:InputFiles
+    abstract val tls: ConfigurableFileCollection
+
+    @get:OutputDirectory
+    abstract val res: DirectoryProperty
+
+    @TaskAction
+    fun copy() {
+        val raw = res.get().dir("raw").asFile
+        raw.deleteRecursively()
+        raw.mkdirs()
+        tls.asFileTree.matching { include("fake-backend-root.pem") }.singleFile
+            .copyTo(raw.resolve("fake_backend_root.pem"))
+    }
+}
+
 dependencies {
+    "fakeBackendTls"(project(":embrace-test-api-server"))
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.lifecycle.runtime.ktx)
     implementation(libs.androidx.activity.compose)

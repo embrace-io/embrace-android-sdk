@@ -1,0 +1,18 @@
+<!-- The benchmark build types' config: the app's own (src/main) less its debug-overrides, as these builds aren't
+     debuggable, plus trust in the benchmarks' fake of Embrace's server backend on localhost alone. Its root is
+     generated for each build (fake_backend_root, see this module's build file). -->
+<network-security-config>
+    <base-config cleartextTrafficPermitted="true">
+        <trust-anchors>
+            <certificates src="system" />
+            <certificates src="user" />
+        </trust-anchors>
+    </base-config>
+
+    <domain-config>
+        <domain includeSubdomains="false">localhost</domain>
+        <trust-anchors>
+            <certificates src="@raw/fake_backend_root" />
+        </trust-anchors>
+    </domain-config>
+</network-security-config>

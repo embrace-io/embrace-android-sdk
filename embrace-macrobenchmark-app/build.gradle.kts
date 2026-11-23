@@ -109,7 +109,44 @@ kotlin {
     }
 }
 
+// The app trusts the root of the certificates the benchmarks' fake backend serves HTTPS with, for localhost alone
+// (src/main/res/xml/network_security_config.xml). embrace-test-api-server generates them for each build and offers them
+// as fakeBackendTlsElements; this puts the root in the app's resources.
+val fakeBackendTls = configurations.dependencyScope("fakeBackendTls")
+val fakeBackendTlsFiles = configurations.resolvable("fakeBackendTlsFiles") {
+    extendsFrom(fakeBackendTls.get())
+    attributes { attribute(Category.CATEGORY_ATTRIBUTE, objects.named(Category::class.java, "fake-backend-tls")) }
+}
+val fakeBackendRootRes = tasks.register<FakeBackendRootRes>("fakeBackendRootRes") {
+    tls.from(fakeBackendTlsFiles)
+    res.set(layout.buildDirectory.dir("generated/fakeBackendRootRes"))
+}
+androidComponents {
+    onVariants(selector().all()) { variant ->
+        variant.sources.res?.addGeneratedSourceDirectory(fakeBackendRootRes, FakeBackendRootRes::res)
+    }
+}
+
+/** Copies the fake backend's root certificate in as the raw resource `fake_backend_root`. */
+abstract class FakeBackendRootRes : DefaultTask() {
+    @get:InputFiles
+    abstract val tls: ConfigurableFileCollection
+
+    @get:OutputDirectory
+    abstract val res: DirectoryProperty
+
+    @TaskAction
+    fun copy() {
+        val raw = res.get().dir("raw").asFile
+        raw.deleteRecursively()
+        raw.mkdirs()
+        tls.asFileTree.matching { include("fake-backend-root.pem") }.singleFile
+            .copyTo(raw.resolve("fake_backend_root.pem"))
+    }
+}
+
 dependencies {
+    "fakeBackendTls"(project(":embrace-test-api-server"))
     implementation(project(":embrace-android-sdk"))
     implementation(project(":embrace-android-config"))
     implementation(project(":embrace-android-storage"))

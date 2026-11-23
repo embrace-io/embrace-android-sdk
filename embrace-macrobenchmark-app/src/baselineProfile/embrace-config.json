@@ -3,8 +3,8 @@
   "ndk_enabled": true,
   "sdk_config": {
     "base_urls": {
-      "config": "http://127.0.0.1:48711",
-      "data": "http://127.0.0.1:48711"
+      "config": "https://localhost:48711",
+      "data": "https://localhost:48712"
     }
   }
 }

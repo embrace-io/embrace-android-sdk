@@ -1,12 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- the SDK's config and data endpoints are the benchmark's local endpoint, served over plain HTTP on loopback, or over
-     HTTPS on localhost with a root generated for each build (fake_backend_root, see this module's build file);
-     everything else keeps the platform default, which refuses cleartext -->
+<!-- the SDK's config and data endpoints are the benchmark's local endpoint, served over HTTPS on localhost with a root
+     generated for each build (fake_backend_root, see this module's build file), which only localhost trusts;
+     everything else keeps the platform default -->
 <network-security-config>
-    <domain-config cleartextTrafficPermitted="true">
-        <domain includeSubdomains="false">127.0.0.1</domain>
-    </domain-config>
-
     <domain-config>
         <domain includeSubdomains="false">localhost</domain>
         <trust-anchors>

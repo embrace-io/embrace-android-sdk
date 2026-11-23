@@ -156,9 +156,12 @@ unzip -p <bundle>.perfetto-trace Trace_output.pb > trace.perfetto
 
 The app's `embrace-config.json` (`src/main`, and `src/baselineProfile` for the baseline profile build) points the
 SDK's config and data endpoints at `LocalEmbraceEndpoint` (`embrace-benchmark-endpoint`), which every benchmark and
-`BaselineProfileGenerator` serve on the device for the length of each test, so nothing leaves the device. It answers
-the config fetch with an empty remote config (`{}`) and every delivery with 200. When a test ends, it logs what it
-answered to logcat (`adb logcat -d -s System.out:I`, the `local Embrace endpoint answered:` line).
+`BaselineProfileGenerator` serve on the device for the length of each test, so nothing leaves the device. It serves
+HTTPS on `localhost`, config on port 48711 and data on 48712, so the app does the TLS work it does against Embrace's
+servers: a handshake on each of the two connections and verification of a chain shaped like theirs. The app trusts the
+endpoint's root, which the build generates, for `localhost` alone (`src/main/res/xml/network_security_config.xml`). It
+answers the config fetch with an empty remote config (`{}`) and every delivery with 200. When a test ends, it logs what
+it answered to logcat (`adb logcat -d -s System.out:I`, the `local Embrace endpoint answered:` line).
 
 The remote config a launch runs with is still the one the app writes from global settings (below): the SDK reads it
 at startup, and the next launch's write replaces whatever the fetch saved. That written config has no ETag, so every

@@ -87,6 +87,10 @@ integration-test concern, not this skill's.
   on the first launch after install, 304 on the launches after it, and a `POST` 200 for each
   delivery. Config and delivery counts there show the SDK started with the app ID and used the
   local endpoints.
+- The endpoint serves HTTPS on `localhost`, config on port 48711 and data on 48712, with a root the
+  build generates and the benchmark build types trust for `localhost` alone, so the app does the
+  TLS work it does against Embrace's servers. It is warmed up before the first launch; the app's
+  side never is.
 
 ## Choosing the SDK under test
 

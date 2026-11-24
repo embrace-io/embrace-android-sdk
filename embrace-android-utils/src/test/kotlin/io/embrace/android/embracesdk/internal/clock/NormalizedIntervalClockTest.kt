@@ -6,7 +6,7 @@ import org.junit.Test
 internal class NormalizedIntervalClockTest {
 
     private var elapsedMs = 10_000L
-    private val elapsedProvider = { elapsedMs }
+    private val elapsedProvider = TimeSource { elapsedMs }
 
     @Test
     fun `time is normalized to the wall clock at construction`() {

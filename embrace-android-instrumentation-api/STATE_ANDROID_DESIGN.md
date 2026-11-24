@@ -1248,7 +1248,7 @@ shippable. Each standing was decided from the code and the tests. "Not Android's
 servers or another SDK can meet. Of the 33 Musts, 20 are Met, 9 Partly and 2 Not met, and 2 are not Android's. That
 counts M4 and S5 as Musts, though their importance reads "Must before" a condition.
 
-### U1. Context changes, and the model has to hold the change
+### R1. Context changes, and the model has to hold the change
 
 | Requirement | Importance | Standing | Mechanism, and the test that shows it | What is left |
 |---|---|---|---|---|
@@ -1262,7 +1262,7 @@ counts M4 and S5 as Musts, though their importance reads "Must before" a conditi
 | **M1.** Anything can report a state | Should | Met | `StateUpdate` on the event bus, and `reportPersonasAsState`. The first test of `StateJournalFeatureTest`. | No call from outside the SDK's modules |
 | **M5.** The event bus carries state changes | Should | Met | `StateUpdate.KEY`. The same test. | Nothing |
 
-### U2. Several things change together, and the combination is the context
+### R2. Several things change together, and the combination is the context
 
 | Requirement | Importance | Standing | Mechanism, and the test that shows it | What is left |
 |---|---|---|---|---|
@@ -1271,7 +1271,7 @@ counts M4 and S5 as Musts, though their importance reads "Must before" a conditi
 | **T12.** A log's stamp agrees with the history | Must | Met | The stamp's `emb.state.seq`. The first test of `StateJournalFeatureTest`, and `assertEmbracePayload`. | Past the ceiling or after a kill, a log's number is not in its change log. Read from the code and not tested: the same once the writer has stopped, and for a log emitted between parts or as a part changes. |
 | **E4.** The order of changes around a moment is known | Must | Met | `emb-states` is in the sequence's order, and a log and a span each carry their number. The same tests. | Nothing on Android |
 
-### U3. A record has to be tied to the context in force when it was made
+### R3. A record has to be tied to the context in force when it was made
 
 | Requirement | Importance | Standing | Mechanism, and the test that shows it | What is left |
 |---|---|---|---|---|
@@ -1283,7 +1283,7 @@ counts M4 and S5 as Musts, though their importance reads "Must before" a conditi
 | **O3.** The history of changes can be exported | Must | Met | `emb.state.change` events. `assertExportedEvents` in `StateAssociationFeatureTest`. | None with a span exporter alone. None after a kill. Not a supported API. |
 | **O5.** It goes with OpenTelemetry's grain | Should | Partly | Changes are events as log records. `StateOtlpExportHarnessTest` posts them in the OTLP JSON shape to a server of its own, and reads them back itself. That a Collector accepts them is not tested: it is shown only by a run of `scripts/state-otlp/run.sh`. | The names are Embrace's own. OpenTelemetry's are added by Collector statements in `scripts/state-otlp/collector.yaml`, and not by the SDK. |
 
-### U4. Context outlives every unit it is delivered in
+### R4. Context outlives every unit it is delivered in
 
 | Requirement | Importance | Standing | Mechanism, and the test that shows it | What is left |
 |---|---|---|---|---|
@@ -1294,7 +1294,7 @@ counts M4 and S5 as Musts, though their importance reads "Must before" a conditi
 | **P6.** Changes after a process's last part | Could | Partly | An app's exporters get them as events, as they happen. `assertExportedEvents`, for a change with no part. | To Embrace they are held for a part that never comes |
 | **O6.** It works for an app that only exports OpenTelemetry | Must | Not met | In place toward it: the stamp, the link and the events are made in the OpenTelemetry pipeline and need no Embrace payload. Not tested. | Nothing of it runs in such an app today. It cannot be switched on there, and no test runs one. |
 
-### U5. The process dies without notice
+### R5. The process dies without notice
 
 | Requirement | Importance | Standing | Mechanism, and the test that shows it | What is left |
 |---|---|---|---|---|
@@ -1306,7 +1306,7 @@ counts M4 and S5 as Musts, though their importance reads "Must before" a conditi
 | **E3.** The state at a crash that kills the process is known | Must | Partly | The dead part's `emb-states`, as far as it was appended, marked as cut short | The crash's own log carries no stamp. With no part in progress, nothing is kept. |
 | **O4.** The history arrives in time, and for a part that died | Could | Partly | An event is emitted as its change is recorded. `StateEventEmitterTest`. | What a dead process had not emitted is lost |
 
-### U6. The device is not ours to spend
+### R6. The device is not ours to spend
 
 | Requirement | Importance | Standing | Mechanism, and the test that shows it | What is left |
 |---|---|---|---|---|
@@ -1321,7 +1321,7 @@ counts M4 and S5 as Musts, though their importance reads "Must before" a conditi
 | **C9.** Cost grows gently with the number of states | Should | Partly | A span's link and a part change do not grow | The copy of the values for each change, the stamp on each log, and the verbose rendering do |
 | **M2.** A new state is cheap to run | Should | Met | No span of its own. About 75 bytes of JSON for each idle state after the first. The figure is derived from the technical reference's table of what idle states add to a part, and is not stated there: 815 bytes of JSON with 1 state and 1,495 with 10, which is 680 for nine more. | Nothing |
 
-### U7. Context is of many kinds, owned by different things
+### R7. Context is of many kinds, owned by different things
 
 | Requirement | Importance | Standing | Mechanism, and the test that shows it | What is left |
 |---|---|---|---|---|
@@ -1329,7 +1329,7 @@ counts M4 and S5 as Musts, though their importance reads "Must before" a conditi
 | **M4.** Each state has its own rules | Must before personal data becomes a state | Partly | One cap of 2,000 characters, for every state | No rule of a state's own: no choice of what is stamped, no redaction |
 | **M6.** Names do not collide and are generated | Could | Partly | A state's value has a prefix of its own, `emb.state.value.` | `emb.state` alone still means foreground or background. The names are written by hand. |
 
-### U8. Two readers, several SDKs, and a change that must break none
+### R8. Two readers, several SDKs, and a change that must break none
 
 | Requirement | Importance | Standing | Mechanism, and the test that shows it | What is left |
 |---|---|---|---|---|

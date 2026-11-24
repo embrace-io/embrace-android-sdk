@@ -11,7 +11,7 @@ fun resolveConfig(local: InstrumentedConfig, remote: RemoteConfig?, bucket: Lazy
     aei = { resolveAei(local, remote, bucket) },
     log = { resolveLog(remote) },
     experiment = { resolveExperiment(remote) },
-    vitals = { resolveVitals(remote, bucket) },
+    vitals = { resolveVitals(remote) },
     sdkMode = { resolveSdkMode(remote, bucket) },
     backgroundActivity = { resolveBackgroundActivity(local, remote, bucket) },
     autoDataCapture = { resolveAutoDataCapture(local, remote, bucket) },
@@ -65,7 +65,7 @@ fun resolveExperiment(remote: RemoteConfig?): ExperimentConfig = ExperimentConfi
     maxVariantLength = { remote?.experimentVariantMaxLength },
 )
 
-fun resolveVitals(remote: RemoteConfig?, bucket: Lazy<Float>): VitalsConfig {
+fun resolveVitals(remote: RemoteConfig?): VitalsConfig {
     val cfg = remote?.vitalsRemoteConfig
     return VitalsConfig(
         smoothnessIdleThresholdMs = { cfg?.smoothnessIdleThresholdMs },
@@ -74,7 +74,6 @@ fun resolveVitals(remote: RemoteConfig?, bucket: Lazy<Float>): VitalsConfig {
         screenLoadIdleThresholdMs = { cfg?.screenLoadIdleThresholdMs },
         screenLoadTimeoutMs = { cfg?.screenLoadTimeoutMs },
         screenLoadNavTimeoutMs = { cfg?.screenLoadNavTimeoutMs },
-        smoothnessFrameTraceEnabled = { rolloutEnabled(cfg?.smoothnessFrameTracePctEnabled, bucket) },
         spanLimit = { cfg?.spanLimit },
         interactionResponsivenessBlockThresholdMs = { cfg?.interactionResponsivenessBlockThresholdMs },
     )

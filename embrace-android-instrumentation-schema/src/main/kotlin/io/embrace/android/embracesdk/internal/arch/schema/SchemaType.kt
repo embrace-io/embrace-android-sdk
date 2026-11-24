@@ -276,7 +276,6 @@ sealed class SchemaType(
         idleThresholdMs: Long,
         heldIdleThresholdMs: Long,
         jankHeuristicMultiplier: Double,
-        frameTraceBase64: String? = null,
     ) : SchemaType(
         telemetryType = EmbType.Performance.Smoothness,
         fixedObjectName = "smoothness",
@@ -288,7 +287,6 @@ sealed class SchemaType(
             EmbSmoothnessAttributes.SMOOTHNESS_IDLE_THRESHOLD_MS to idleThresholdMs.toString(),
             EmbSmoothnessAttributes.SMOOTHNESS_HELD_IDLE_THRESHOLD_MS to heldIdleThresholdMs.toString(),
             EmbSmoothnessAttributes.SMOOTHNESS_JANK_HEURISTIC_MULTIPLIER to jankHeuristicMultiplier.toString(),
-            EmbSmoothnessAttributes.SMOOTHNESS_FRAME_TRACE to frameTraceBase64,
         ).toNonNullMap()
     }
 

@@ -27,9 +27,6 @@ data class VitalsRemoteConfig(
     @SerialName("screen_load_nav_timeout_ms")
     val screenLoadNavTimeoutMs: Long? = null,
 
-    @SerialName("smoothness_frame_trace_pct_enabled")
-    val smoothnessFrameTracePctEnabled: Float? = null,
-
     @SerialName("span_limit")
     val spanLimit: Int? = null,
 

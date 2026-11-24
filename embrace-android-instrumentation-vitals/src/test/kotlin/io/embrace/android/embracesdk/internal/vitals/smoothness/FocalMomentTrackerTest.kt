@@ -15,7 +15,6 @@ import io.embrace.android.embracesdk.internal.vitals.screenload.ScreenLoadTracke
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNotEquals
-import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
@@ -300,33 +299,6 @@ internal class FocalMomentTrackerTest {
         tracker.onScreenStop()
 
         assertEquals(1.0, emitted.single().normalizedDroppedFrames, 0.01)
-    }
-
-    @Test
-    fun `no frame trace is attached when the device is not sampled-in`() {
-        tracker.onInteractionStart(nowMs())
-        redraw(vsyncNanos = start + 16.ms)
-        tracker.onScreenStop()
-
-        assertNull(emitted.single().frameTraceBase64)
-    }
-
-    @Test
-    fun `a frame trace is attached when a FrameTraceRecorder is supplied`() {
-        val sampledInEmitted = mutableListOf<SmoothnessResult>()
-        val sampledInTracker = FocalMomentTracker(
-            scheduler = scheduler,
-            reporter = SmoothnessReporter(emit = sampledInEmitted::add),
-            clock = { 0L },
-            screenLoadTracker = ScreenLoadTracker(scheduler = scheduler, clock = { 0L }, emit = {}),
-            frameTraceRecorder = FrameTraceRecorder(),
-        )
-
-        sampledInTracker.onInteractionStart(nowMs())
-        sampledInTracker.onFrame(vsyncNanos = start + 16.ms, frameDispatchNanos = start + 16.ms, jankNanos = 0L, expectedFrames = 1)
-        sampledInTracker.onScreenStop()
-
-        assertNotNull(sampledInEmitted.single().frameTraceBase64)
     }
 
     @Test

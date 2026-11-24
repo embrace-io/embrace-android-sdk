@@ -31,7 +31,7 @@ internal class SmoothnessReporter(
     }
 
     @WorkerThread
-    fun onFocalMomentEnd(outcome: FocalOutcome, startTimeMs: Long, durationMs: Long, frameTraceBase64: String? = null) {
+    fun onFocalMomentEnd(outcome: FocalOutcome, startTimeMs: Long, durationMs: Long) {
         if (frameCount == 0) {
             // No frames rendered: nothing to report.
             return
@@ -46,7 +46,6 @@ internal class SmoothnessReporter(
                 idleThresholdMs = idleThresholdMs,
                 heldIdleThresholdMs = heldIdleThresholdMs,
                 jankHeuristicMultiplier = jankHeuristicMultiplier,
-                frameTraceBase64 = frameTraceBase64,
             ),
         )
     }

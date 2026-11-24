@@ -36,12 +36,6 @@ interface VitalsConfig {
     val screenLoadNavTimeoutMs: Long
 
     /**
-     * Whether this device is sampled-in to record a per-frame duration trace alongside the smoothness result,
-     * as a diagnostic aid while smoothness thresholds are being tuned.
-     */
-    val smoothnessFrameTraceEnabled: Boolean
-
-    /**
      * The maximum number of vitals spans (smoothness, screen-load and interaction responsiveness combined) that may be emitted per session
      * part. Vitals emits a span per user gesture and per navigation, so this caps the share of the session's
      * span budget that the feature can consume.
@@ -75,7 +69,6 @@ inline fun VitalsConfig(
     crossinline screenLoadIdleThresholdMs: () -> Long? = { null },
     crossinline screenLoadTimeoutMs: () -> Long? = { null },
     crossinline screenLoadNavTimeoutMs: () -> Long? = { null },
-    crossinline smoothnessFrameTraceEnabled: () -> Boolean? = { null },
     crossinline spanLimit: () -> Int? = { null },
     crossinline interactionResponsivenessBlockThresholdMs: () -> Long? = { null },
 ): VitalsConfig = object : VitalsConfig {
@@ -90,7 +83,6 @@ inline fun VitalsConfig(
     override val screenLoadTimeoutMs: Long = screenLoadTimeoutMs() ?: VitalsConfig.DEFAULT_SCREEN_LOAD_TIMEOUT_MS
     override val screenLoadNavTimeoutMs: Long =
         screenLoadNavTimeoutMs() ?: VitalsConfig.DEFAULT_SCREEN_LOAD_NAV_TIMEOUT_MS
-    override val smoothnessFrameTraceEnabled: Boolean = smoothnessFrameTraceEnabled() ?: false
     override val spanLimit: Int = spanLimit() ?: VitalsConfig.DEFAULT_SPAN_LIMIT
     override val interactionResponsivenessBlockThresholdMs: Long =
         interactionResponsivenessBlockThresholdMs() ?: VitalsConfig.DEFAULT_INTERACTION_RESPONSIVENESS_BLOCK_THRESHOLD_MS

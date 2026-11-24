@@ -18,7 +18,9 @@ layout.buildDirectory.set(rootProject.layout.buildDirectory.dir("benchmark-endpo
 
 android {
     namespace = "io.embrace.android.embracesdk.benchmark.endpoint"
-    compileSdk = 36
+    // both builds' (this build's catalog isn't the ExampleApp's): in the ExampleApp, MockWebServer brings the app's
+    // OkHttp, whose okhttp-android requires 37
+    compileSdk = 37
 
     defaultConfig {
         minSdk = 24

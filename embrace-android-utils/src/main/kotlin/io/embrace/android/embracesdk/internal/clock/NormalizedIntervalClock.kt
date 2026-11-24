@@ -12,8 +12,8 @@ import kotlin.math.max
  * sent to the API in a way that matches the device time.
  */
 class NormalizedIntervalClock(
-    wallClock: () -> Long = System::currentTimeMillis,
-    private val monotonicClock: () -> Long = SystemClock::elapsedRealtime,
+    wallClock: TimeSource = TimeSource(System::currentTimeMillis),
+    private val monotonicClock: TimeSource = TimeSource(SystemClock::elapsedRealtime),
 
     /**
      * The maximum number of CAS iterations to attempt when attempting to retrieve the current time and detect drift. We scale this
@@ -22,7 +22,7 @@ class NormalizedIntervalClock(
     private val casLimit: Int = max(Runtime.getRuntime().availableProcessors() * 2, 8),
 ) : Clock {
 
-    private val baseline = wallClock() - monotonicClock()
+    private val baseline = wallClock.read() - monotonicClock.read()
 
     /**
      * The lastTime that `now` was called - `Long.MIN_VALUE` as a "not yet tracked" sentinel.
@@ -32,7 +32,7 @@ class NormalizedIntervalClock(
     override fun now(): Long {
         repeat(casLimit) {
             val prev = lastTime.get()
-            val newTime = baseline + monotonicClock()
+            val newTime = baseline + monotonicClock.read()
 
             // never lower the high-water mark: a backwards reading is returned but not stored,
             // otherwise repeated sub-threshold steps would walk the comparison baseline down.
@@ -40,6 +40,6 @@ class NormalizedIntervalClock(
                 return newTime
             }
         }
-        return baseline + monotonicClock()
+        return baseline + monotonicClock.read()
     }
 }

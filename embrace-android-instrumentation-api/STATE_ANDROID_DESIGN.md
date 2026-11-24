@@ -1,3 +1,5 @@
+> AI Influence Level: [AIL 4, AI Created, Human Basic Idea](https://danielmiessler.com/blog/ai-influence-level-ail) · last judged 2026-11-24
+
 # State capture: the Android design
 
 ## What this is, and its status
@@ -1464,7 +1466,3 @@ for mode in OFF ASSOCIATION VERBOSE; do scripts/state-otlp/run.sh $mode; done
 uv run --with opentelemetry-proto python scripts/state-otlp/measure.py \
   build/state-otlp/OFF build/state-otlp/ASSOCIATION build/state-otlp/VERBOSE
 ```
-
----
-
-AI Influence Level: [AIL 4, AI Created, Human Basic Idea](https://danielmiessler.com/blog/ai-influence-level-ail)

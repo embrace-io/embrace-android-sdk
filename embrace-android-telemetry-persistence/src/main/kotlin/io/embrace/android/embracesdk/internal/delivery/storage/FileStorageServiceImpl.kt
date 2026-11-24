@@ -79,7 +79,7 @@ class FileStorageServiceImpl(
                 // a failed rename is the file system failing, like any other write error
                 StorageOutcome.FAILED
             }
-        } catch (ignored: IOException) {
+        } catch (_: IOException) {
             StorageOutcome.FAILED
         } finally {
             // clean up the temp file on any failure

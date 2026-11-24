@@ -359,7 +359,7 @@ internal class PayloadResurrectionServiceImpl(
         return cacheStorageService.loadPayloadAsStream(this)?.let {
             try {
                 BoundedInputStream(GZIPInputStream(it), maxDecompressedPayloadBytes, OVERSIZED_DECOMPRESSED_PAYLOAD_MSG)
-            } catch (exc: EOFException) {
+            } catch (_: EOFException) {
                 it.close()
                 null
             } catch (exc: IOException) {

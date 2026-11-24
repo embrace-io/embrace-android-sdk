@@ -2,6 +2,10 @@
 
 # State capture: the Android design
 
+**TL;DR:** How state capture works in the Android proof of concept, written to be checked beside its code: the
+issues it overcomes, each mechanism with its class and its test, the invariants, the limits, what is not built, what
+is known to be wrong, and where the build stands on every requirement.
+
 ## What this is, and its status
 
 State capture records named conditions of the environment an app runs in: the network, power saving, the current

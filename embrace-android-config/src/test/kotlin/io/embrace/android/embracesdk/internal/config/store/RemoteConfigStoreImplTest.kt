@@ -207,6 +207,16 @@ internal class RemoteConfigStoreImplTest {
     }
 
     @Test
+    fun `empty json config is not tracked`() {
+        store.saveResponse(ConfigHttpResponse(RemoteConfig(50), "etag"))
+        cachedConfigFile().delete()
+        configFile().writeText("")
+
+        assertNull(store.loadResponse())
+        assertTrue(errorHandler.sdkErrorMessages.isEmpty())
+    }
+
+    @Test
     fun `unreadable json config is preserved as the error may be recoverable`() {
         val serializer = TestPlatformSerializer()
         store = createStore(serializer, dir)

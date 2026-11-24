@@ -12,6 +12,7 @@ import io.embrace.android.embracesdk.internal.utils.SystemTrace
 import io.embrace.android.embracesdk.internal.worker.PriorityWorker
 import java.io.File
 import java.io.FileNotFoundException
+import java.io.IOException
 import java.io.InputStream
 import java.util.concurrent.RejectedExecutionException
 
@@ -78,6 +79,8 @@ class FileStorageServiceImpl(
                 // a failed rename is the file system failing, like any other write error
                 StorageOutcome.FAILED
             }
+        } catch (ignored: IOException) {
+            StorageOutcome.FAILED
         } finally {
             // clean up the temp file on any failure
             tmpFile.delete()

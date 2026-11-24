@@ -64,7 +64,6 @@ import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
 import java.io.ByteArrayInputStream
-import java.io.EOFException
 import java.io.InputStream
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.Future
@@ -525,27 +524,36 @@ class PayloadResurrectionServiceImplTest {
     }
 
     @Test
-    fun `session payload skipped and tracked and stream closed when gzip header is bad or truncated`() {
-        val badHeaders = listOf(
-            "hi there".toByteArray() to ZipException::class,
-            // the gzip magic and compression method, then EOF before the rest of the header
-            byteArrayOf(0x1f, 0x8b.toByte(), 0x08) to EOFException::class,
-        )
-        badHeaders.forEachIndexed { index, (bytes, expectedType) ->
-            cacheStorageService.addFakePayload(sessionMetadata)
-            val stream = CloseTrackingInputStream(bytes)
-            val service = serviceWithPayloadStream(stream)
+    fun `session payload skipped and tracked and stream closed when gzip header is bad`() {
+        cacheStorageService.addFakePayload(sessionMetadata)
+        val stream = CloseTrackingInputStream("hi there".toByteArray())
+        val service = serviceWithPayloadStream(stream)
 
-            service.resurrectOldPayloads(nativeCrashServiceProvider = { nativeCrashService })
+        service.resurrectOldPayloads(nativeCrashServiceProvider = { nativeCrashService })
 
-            assertEquals(0, payloadStorageService.storedPayloadCount())
-            assertEquals(0, cacheStorageService.storedPayloadCount())
-            assertEquals(index + 1, cacheStorageService.deleteCount.get())
-            val error = errorHandler.sdkErrorMessages[index]
-            assertEquals(SdkErrorType.PayloadResurrectionPayloadFail.toString(), error.msg)
-            assertTrue(expectedType.isInstance(error.throwable))
-            assertTrue(stream.closed)
-        }
+        assertEquals(0, payloadStorageService.storedPayloadCount())
+        assertEquals(0, cacheStorageService.storedPayloadCount())
+        assertEquals(1, cacheStorageService.deleteCount.get())
+        val error = errorHandler.sdkErrorMessages.single()
+        assertEquals(SdkErrorType.PayloadResurrectionPayloadFail.toString(), error.msg)
+        assertTrue(error.throwable is ZipException)
+        assertTrue(stream.closed)
+    }
+
+    @Test
+    fun `session payload skipped without error and stream closed when gzip header is truncated`() {
+        cacheStorageService.addFakePayload(sessionMetadata)
+        // the gzip magic and compression method, then EOF before the rest of the header
+        val stream = CloseTrackingInputStream(byteArrayOf(0x1f, 0x8b.toByte(), 0x08))
+        val service = serviceWithPayloadStream(stream)
+
+        service.resurrectOldPayloads(nativeCrashServiceProvider = { nativeCrashService })
+
+        assertEquals(0, payloadStorageService.storedPayloadCount())
+        assertEquals(0, cacheStorageService.storedPayloadCount())
+        assertEquals(1, cacheStorageService.deleteCount.get())
+        assertTrue(errorHandler.sdkErrorMessages.isEmpty())
+        assertTrue(stream.closed)
     }
 
     @Test
@@ -641,10 +649,7 @@ class PayloadResurrectionServiceImplTest {
         assertEquals(deadSessionCrashData, nativeCrashService.nativeCrashesSent.single().first)
 
         assertEquals(
-            listOf(
-                SdkErrorType.PayloadResurrectionPayloadFail.toString(),
-                SdkErrorType.NativeCrashResurrectionError.toString(),
-            ),
+            listOf(SdkErrorType.PayloadResurrectionPayloadFail.toString()),
             errorHandler.sdkErrorMessages.map { it.msg },
         )
     }
@@ -673,11 +678,7 @@ class PayloadResurrectionServiceImplTest {
             assertEquals(deadSessionCrashData, first)
         }
 
-        assertEquals(1, errorHandler.sdkErrorMessages.size)
-        assertEquals(
-            SdkErrorType.NativeCrashResurrectionError.toString(),
-            errorHandler.sdkErrorMessages.single().msg,
-        )
+        assertTrue(errorHandler.sdkErrorMessages.isEmpty())
     }
 
     @Test
@@ -940,7 +941,7 @@ class PayloadResurrectionServiceImplTest {
     }
 
     @Test
-    fun `resurrection timeout logged when future throws timeout on get`() {
+    fun `resurrection timeout not logged when future throws timeout on get`() {
         val hangingIntakeService = object : IntakeService {
             override fun shutdown() {}
             override fun take(
@@ -976,11 +977,7 @@ class PayloadResurrectionServiceImplTest {
         // a timed-out intake isn't a refusal: the pass completes
         assertEquals(ResurrectionOutcome.COMPLETE, outcome)
         assertTrue(listenerCalled)
-        assertTrue(
-            errorHandler.sdkErrorMessages.any {
-                it.throwable is TimeoutException
-            },
-        )
+        assertTrue(errorHandler.sdkErrorMessages.none { it.throwable is TimeoutException })
     }
 
     /**

@@ -20,6 +20,8 @@ import io.embrace.android.embracesdk.internal.utils.CountingOutputStream
 import io.embrace.android.embracesdk.internal.utils.SystemTrace
 import io.embrace.android.embracesdk.internal.utils.TraceCounter
 import io.embrace.android.embracesdk.internal.worker.PriorityWorker
+import java.io.IOException
+import java.io.InterruptedIOException
 import java.util.concurrent.Callable
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.Future
@@ -134,7 +136,7 @@ class IntakeServiceImpl(
         onStored: (() -> Unit)?,
     ): IntakeResult {
         var result = IntakeResult.NOT_ATTEMPTED
-        errorHandler.guardSdkCode(SdkErrorType.IntakeFail) {
+        guardIntake {
             val service = when {
                 metadata.complete -> payloadStorageService
                 else -> cacheStorageService
@@ -163,11 +165,11 @@ class IntakeServiceImpl(
                 StorageOutcome.STORED -> IntakeResult.STORED
             }
             if (result != IntakeResult.STORED) {
-                return@guardSdkCode
+                return@guardIntake
             }
 
             // the payload is now on disk, so any other copy the caller holds is safe to discard
-            errorHandler.guardSdkCode(SdkErrorType.IntakeFail) {
+            guardIntake {
                 onStored?.invoke()
             }
 
@@ -204,6 +206,18 @@ class IntakeServiceImpl(
             }
         }
         return result
+    }
+
+    private inline fun guardIntake(action: () -> Unit) {
+        errorHandler.guardSdkCode(SdkErrorType.IntakeFail) {
+            try {
+                action()
+            } catch (exc: IOException) {
+                if (exc is InterruptedIOException) {
+                    Thread.currentThread().interrupt()
+                }
+            }
+        }
     }
 
     private fun immediateFuture(value: IntakeResult): Future<IntakeResult> = FutureTask { value }.apply { run() }

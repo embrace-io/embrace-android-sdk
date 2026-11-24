@@ -13,7 +13,10 @@ import io.embrace.android.embracesdk.internal.delivery.SupportedEnvelopeType.BLO
 import io.embrace.android.embracesdk.internal.delivery.SupportedEnvelopeType.CRASH
 import io.embrace.android.embracesdk.internal.delivery.SupportedEnvelopeType.LOG
 import io.embrace.android.embracesdk.internal.delivery.SupportedEnvelopeType.SESSION
+import io.embrace.android.embracesdk.internal.delivery.storage.PayloadStorageService
 import io.embrace.android.embracesdk.internal.delivery.storage.PayloadStorageServiceImpl
+import io.embrace.android.embracesdk.internal.delivery.storage.SerializationAction
+import io.embrace.android.embracesdk.internal.delivery.storage.StorageOutcome
 import io.embrace.android.embracesdk.internal.delivery.storedTelemetryRunnableComparator
 import io.embrace.android.embracesdk.internal.logging.SdkErrorType
 import io.embrace.android.embracesdk.internal.payload.Envelope
@@ -34,6 +37,7 @@ import org.junit.Before
 import org.junit.Test
 import java.io.ByteArrayOutputStream
 import java.io.IOException
+import java.io.InterruptedIOException
 import java.nio.file.Files
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.Executors
@@ -225,15 +229,64 @@ class IntakeServiceImplTest {
     }
 
     @Test
-    fun `exception in payload storage`() {
+    fun `I O exception in payload storage is not tracked`() {
         payloadStorageService.failStorage = true
-        intakeService.take(logEnvelope, logMetadata)
+        val future = intakeService.take(logEnvelope, logMetadata)
         executorService.runCurrentlyBlocked()
 
         // assert nothing was stored but no exception was thrown
         assertEquals(0, payloadStorageService.storedPayloadCount())
-        val throwable = errorHandler.sdkErrorMessages.single().throwable
-        assertTrue(throwable is IOException)
+        assertEquals(IntakeResult.NOT_ATTEMPTED, future.get())
+        assertTrue(errorHandler.sdkErrorMessages.isEmpty())
+    }
+
+    @Test
+    fun `non I O exception in payload storage is tracked`() {
+        val failure = IllegalStateException("bug")
+        val service = IntakeServiceImpl(
+            schedulingService,
+            object : PayloadStorageService by payloadStorageService {
+                override fun store(metadata: StoredTelemetryMetadata, action: SerializationAction): StorageOutcome =
+                    throw failure
+            },
+            cacheStorageService,
+            errorHandler,
+            serializer,
+            PriorityWorker(executorService),
+        )
+        val future = service.take(logEnvelope, logMetadata)
+        executorService.runCurrentlyBlocked()
+
+        assertEquals(IntakeResult.NOT_ATTEMPTED, future.get())
+        assertSame(failure, errorHandler.sdkErrorMessages.single().throwable)
+    }
+
+    @Test
+    fun `interrupted I O exception is not tracked but restores the interrupt status`() {
+        executorService.blockingMode = false
+        val future = intakeService.take(
+            intake = sessionEnvelope,
+            metadata = sessionMetadata,
+            onStored = { throw InterruptedIOException() },
+        )
+
+        assertEquals(IntakeResult.STORED, future.get())
+        assertTrue(Thread.interrupted())
+        assertTrue(errorHandler.sdkErrorMessages.isEmpty())
+    }
+
+    @Test
+    fun `I O exception in onStored is not tracked`() {
+        executorService.blockingMode = false
+        val future = intakeService.take(
+            intake = sessionEnvelope,
+            metadata = sessionMetadata,
+            onStored = { throw IOException("disk full") },
+        )
+
+        assertEquals(IntakeResult.STORED, future.get())
+        assertEquals(1, schedulingService.payloadIntakeCount)
+        assertTrue(errorHandler.sdkErrorMessages.isEmpty())
     }
 
     @Test
@@ -864,7 +917,7 @@ class IntakeServiceImplTest {
 
         assertEquals(0, payloadStorageService.storedPayloadCount())
         assertEquals(0, storedCount)
-        assertTrue(errorHandler.sdkErrorMessages.single().throwable is IOException)
+        assertTrue(errorHandler.sdkErrorMessages.isEmpty())
     }
 
     @Test

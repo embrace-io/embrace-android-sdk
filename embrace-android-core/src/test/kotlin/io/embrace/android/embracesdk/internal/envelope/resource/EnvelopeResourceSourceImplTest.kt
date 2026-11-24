@@ -126,6 +126,27 @@ internal class EnvelopeResourceSourceImplTest {
     }
 
     @Test
+    fun `an extra that collides with a built-in field is reported`() {
+        val source = createSource(FakeDevice())
+        source.add("hosted_platform_version", "0.72")
+
+        val error = errorHandler.sdkErrorMessages.single()
+        assertEquals(SdkErrorType.EnvelopeResourceKeyConflict.toString(), error.msg)
+        assertEquals(
+            "Envelope resource extra 'hosted_platform_version' collides with a built-in resource field " +
+                "(appFramework=NATIVE)",
+            error.throwable?.message,
+        )
+        assertEquals("0.72", source.getEnvelopeResource().extras["hosted_platform_version"])
+    }
+
+    @Test
+    fun `an extra with a custom key is not reported`() {
+        createSource(FakeDevice()).add("key", "value")
+        assertTrue(errorHandler.sdkErrorMessages.isEmpty())
+    }
+
+    @Test
     fun `every listener is notified even if one throws`() {
         val device = FakeDevice(screenResolution = "")
         val source = createSource(device)

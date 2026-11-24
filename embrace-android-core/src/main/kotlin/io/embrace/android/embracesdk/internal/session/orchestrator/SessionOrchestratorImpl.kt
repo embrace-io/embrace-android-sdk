@@ -113,12 +113,6 @@ internal class SessionOrchestratorImpl(
 
                     // Current timestamp not congruent with stored user session's timestamp, so clear the cache
                     clock.now() < stored.startTimeMs -> {
-                        errorHandler.trackSdkError(
-                            SdkErrorType.ClockBackwardsShift,
-                            IllegalStateException(
-                                "Clock shifted backwards from previous user session.",
-                            ),
-                        )
                         stateStore.update { userSession = null }
                         userSessionRestoreDecision = stored.toTerminatedDecision(EmbUserSessionTerminationReasonValues.CLOCK_MISMATCH)
                         UserSessionState.NoActiveSession
@@ -781,10 +775,6 @@ internal class SessionOrchestratorImpl(
         when {
             // Don't continue session if current time is not congruent with the user session's timestamp
             timestamp < startTimeMs -> {
-                errorHandler.trackSdkError(
-                    SdkErrorType.ClockBackwardsShift,
-                    IllegalStateException("Clock shifted backwards from user session start time."),
-                )
                 false
             }
 

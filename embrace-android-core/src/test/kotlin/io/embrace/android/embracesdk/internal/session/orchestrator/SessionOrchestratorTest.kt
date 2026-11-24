@@ -857,9 +857,7 @@ internal class SessionOrchestratorTest {
         val session = activeUserSession()
         assertNotEquals("future-id", session.userSessionId)
 
-        val errors = errorHandler.sdkErrorMessages
-        assertEquals(1, errors.size)
-        assertEquals(SdkErrorType.ClockBackwardsShift.toString(), errors[0].msg)
+        assertTrue(errorHandler.sdkErrorMessages.isEmpty())
     }
 
     @Test
@@ -881,9 +879,7 @@ internal class SessionOrchestratorTest {
         assertEquals(1, second.partIndex)
         assertEquals(true, second.isBackgroundOnly)
 
-        val errors = errorHandler.sdkErrorMessages
-        assertEquals(1, errors.size)
-        assertEquals(SdkErrorType.ClockBackwardsShift.toString(), errors[0].msg)
+        assertTrue(errorHandler.sdkErrorMessages.isEmpty())
     }
 
     @Test

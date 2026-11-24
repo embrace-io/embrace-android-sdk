@@ -151,6 +151,19 @@ internal class NativeCrashProcessorImplTest {
         assertEquals(setOf(stored.name), outputDir.list()?.toSet())
     }
 
+    @Test
+    fun `an unreadable native crash file is deleted so it is only reported once`() {
+        val unreadable = storeCrash(crashId = "first", uuid = "aa690ad1-6b87-4e08-b72c-7deca14451d8")
+        jniDelegate.addCrashRaw(unreadable.path, null)
+        val readable = storeCrash(crashId = "second", uuid = "bb690ad1-6b87-4e08-b72c-7deca14451d8")
+        args.errorHandler.throwOnSdkError = false
+
+        assertEquals(listOf("second"), processor.getNativeCrashes().map(NativeCrashData::nativeCrashId))
+        assertFalse(unreadable.exists())
+        assertTrue(readable.exists())
+        assertEquals(1, args.errorHandler.sdkErrorMessages.size)
+    }
+
     private fun storeCrash(crashId: String, uuid: String): File {
         val metadata = StoredTelemetryMetadata(
             timestamp = FakeClock.DEFAULT_FAKE_CURRENT_TIME - 1_000L,

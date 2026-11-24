@@ -74,6 +74,9 @@ internal class NativeCrashProcessorImpl(
                         .copy(symbols = symbolMap)
                     nativeCrashes[nativeCrash.nativeCrashId] = LoadedCrash(nativeCrash, metadata)
                 } else {
+                    // A file that can't be read now never will be (e.g. truncated mid-write), so delete it
+                    // rather than failing to load it on every launch.
+                    crashFile.delete()
                     errorHandler.trackSdkError(
                         type = SdkErrorType.NativeCrashLoadFail,
                         throwable = FileNotFoundException("Failed to load crash report at ${crashFile.path}"),

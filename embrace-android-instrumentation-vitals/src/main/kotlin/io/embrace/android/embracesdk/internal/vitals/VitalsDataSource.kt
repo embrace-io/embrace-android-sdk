@@ -25,7 +25,6 @@ import io.embrace.android.embracesdk.internal.vitals.responsiveness.InteractionR
 import io.embrace.android.embracesdk.internal.vitals.screenload.ScreenLoadResult
 import io.embrace.android.embracesdk.internal.vitals.screenload.ScreenLoadTracker
 import io.embrace.android.embracesdk.internal.vitals.smoothness.FocalMomentTracker
-import io.embrace.android.embracesdk.internal.vitals.smoothness.FrameTraceRecorder
 import io.embrace.android.embracesdk.internal.vitals.smoothness.SmoothnessReporter
 import io.embrace.android.embracesdk.internal.vitals.smoothness.SmoothnessResult
 import io.embrace.android.embracesdk.semconv.EmbFrameCountsAttributes
@@ -143,7 +142,6 @@ internal class VitalsDataSource(
             ),
             idleThresholdMs = cfg.smoothnessIdleThresholdMs,
             heldIdleThresholdMs = cfg.smoothnessHeldIdleThresholdMs,
-            frameTraceRecorder = if (cfg.smoothnessFrameTraceEnabled) FrameTraceRecorder() else null,
             responsivenessReporter = if (responsivenessEnabled) createResponsivenessReporter(blockThresholdMs) else null,
             probeFactory = if (responsivenessEnabled) createProbeFactory(blockThresholdMs) else null,
             onFrameCounted = ::countFrames,
@@ -217,7 +215,6 @@ internal class VitalsDataSource(
                     idleThresholdMs = result.idleThresholdMs,
                     heldIdleThresholdMs = result.heldIdleThresholdMs,
                     jankHeuristicMultiplier = result.jankHeuristicMultiplier,
-                    frameTraceBase64 = result.frameTraceBase64,
                 ).attributes(),
             )
         }

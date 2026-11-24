@@ -29,8 +29,6 @@ internal class FocalMomentTracker(
     private val screenLoadTracker: ScreenLoadTracker,
     private val idleThresholdMs: Long = DEFAULT_IDLE_THRESHOLD_MS,
     private val heldIdleThresholdMs: Long = DEFAULT_HELD_IDLE_THRESHOLD_MS,
-    // Only non-null for a sampled fraction of devices; see VitalsConfig.smoothnessFrameTraceEnabled.
-    private val frameTraceRecorder: FrameTraceRecorder? = null,
     // Only non-null when interaction responsiveness is captured; called on the Vitals thread.
     private val responsivenessReporter: InteractionResponsivenessReporter? = null,
     // Only non-null when interaction responsiveness is captured; builds the probe that reports main-thread blocks.
@@ -76,7 +74,7 @@ internal class FocalMomentTracker(
     @WorkerThread
     override fun onFrame(vsyncNanos: Long, frameDispatchNanos: Long, jankNanos: Long, expectedFrames: Int) {
         if (capturing) {
-            recordFrame(vsyncNanos, frameDispatchNanos, jankNanos)
+            recordFrame(frameDispatchNanos, jankNanos)
             settle.notifyActivity(vsyncNanos.nanosToMillis())
         } else if (held) {
             if (vsyncNanos - bufferedEndNanos < idleThresholdMs.millisToNanos()) {
@@ -84,7 +82,7 @@ internal class FocalMomentTracker(
                 held = false
                 capturing = true
                 startProbe()
-                recordFrame(vsyncNanos, frameDispatchNanos, jankNanos)
+                recordFrame(frameDispatchNanos, jankNanos)
                 settle.notifyActivity(vsyncNanos.nanosToMillis())
             } else {
                 // Idle gap before this frame: emit the buffered settle and discard the orphan frame.
@@ -187,7 +185,6 @@ internal class FocalMomentTracker(
         interacting = true
         capturing = true
         reporter.onFocalMomentStart()
-        frameTraceRecorder?.onFocalMomentStart()
         if (responsivenessReporter != null) {
             if (openedByDown) {
                 val eventMs = pendingDownEventMs
@@ -226,7 +223,7 @@ internal class FocalMomentTracker(
     }
 
     @WorkerThread
-    private fun recordFrame(vsyncNanos: Long, frameDispatchNanos: Long, jankNanos: Long) {
+    private fun recordFrame(frameDispatchNanos: Long, jankNanos: Long) {
         // A jank frame is counted in full, so the moment must also cover the render that produced it. We
         // back-date the start to when the engine dispatched the frame's work, if that predates the
         // moment, shifting the reported start epoch by the same amount so the end stays put.
@@ -236,7 +233,6 @@ internal class FocalMomentTracker(
         }
 
         reporter.onFocalMomentFrame(jankNanos)
-        frameTraceRecorder?.onFocalMomentFrame((vsyncNanos - frameDispatchNanos).nanosToMillis())
     }
 
     /**
@@ -278,7 +274,7 @@ internal class FocalMomentTracker(
         settle.cancel()
         probe?.stop()
         val durationMs = (endNanos - focalMomentStartNanos).nanosToMillis()
-        reporter.onFocalMomentEnd(outcome, focalMomentStartEpochMs, durationMs, frameTraceRecorder?.toBase64())
+        reporter.onFocalMomentEnd(outcome, focalMomentStartEpochMs, durationMs)
         if (responsivenessReporter != null) {
             val startNanos = if (downStartMs == NO_DOWN_EVENT) focalMomentStartNanos else downStartMs.millisToNanos()
             responsivenessReporter.onFocalMomentEnd(

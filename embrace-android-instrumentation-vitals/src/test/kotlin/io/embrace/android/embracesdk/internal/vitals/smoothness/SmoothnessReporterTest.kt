@@ -1,7 +1,6 @@
 package io.embrace.android.embracesdk.internal.vitals.smoothness
 
 import org.junit.Assert.assertEquals
-import org.junit.Assert.assertNull
 import org.junit.Test
 
 internal class SmoothnessReporterTest {
@@ -64,19 +63,6 @@ internal class SmoothnessReporterTest {
         reporter.onFocalMomentEnd(FocalOutcome.SETTLED, startTimeMs = 0, durationMs = 100)
 
         assertEquals(1, emitted.size)
-    }
-
-    @Test
-    fun `frameTraceBase64 defaults to null and passes through when supplied`() {
-        reporter.onFocalMomentStart()
-        reporter.onFocalMomentFrame(jankNanos = 0)
-        reporter.onFocalMomentEnd(FocalOutcome.SETTLED, startTimeMs = 0, durationMs = 1)
-        assertNull(emitted.single().frameTraceBase64)
-
-        reporter.onFocalMomentStart()
-        reporter.onFocalMomentFrame(jankNanos = 0)
-        reporter.onFocalMomentEnd(FocalOutcome.SETTLED, startTimeMs = 0, durationMs = 1, frameTraceBase64 = "AQ==")
-        assertEquals("AQ==", emitted.last().frameTraceBase64)
     }
 
     @Test

@@ -3,10 +3,7 @@ package io.embrace.android.embracesdk.internal.config.resolved
 import io.embrace.android.embracesdk.fakes.TestPlatformSerializer
 import io.embrace.android.embracesdk.internal.config.instrumented.InstrumentedConfigImpl
 import io.embrace.android.embracesdk.internal.config.remote.RemoteConfig
-import io.embrace.android.embracesdk.internal.config.remote.VitalsRemoteConfig
 import org.junit.Assert.assertEquals
-import org.junit.Assert.assertFalse
-import org.junit.Assert.assertTrue
 import org.junit.Test
 
 internal class VitalsConfigTest {
@@ -22,7 +19,6 @@ internal class VitalsConfigTest {
             assertEquals(1000L, screenLoadIdleThresholdMs)
             assertEquals(30_000L, screenLoadTimeoutMs)
             assertEquals(500L, screenLoadNavTimeoutMs)
-            assertFalse(smoothnessFrameTraceEnabled)
             assertEquals(250, spanLimit)
             assertEquals(50L, interactionResponsivenessBlockThresholdMs)
         }
@@ -47,24 +43,32 @@ internal class VitalsConfigTest {
             }
         """.trimIndent()
         val remote = TestPlatformSerializer().fromJson(json, RemoteConfig.serializer())
-        with(resolveVitals(remote, unreadBucket)) {
+        with(resolveVitals(remote)) {
             assertEquals(150L, smoothnessIdleThresholdMs)
             assertEquals(600L, smoothnessHeldIdleThresholdMs)
             assertEquals(2.5, jankHeuristicMultiplier, 0.0)
             assertEquals(1500L, screenLoadIdleThresholdMs)
             assertEquals(45_000L, screenLoadTimeoutMs)
             assertEquals(750L, screenLoadNavTimeoutMs)
-            assertTrue(smoothnessFrameTraceEnabled)
             assertEquals(25, spanLimit)
             assertEquals(75L, interactionResponsivenessBlockThresholdMs)
         }
     }
 
     @Test
-    fun `partial frame trace rollout reads bucket`() {
-        val remote = RemoteConfig(vitalsRemoteConfig = VitalsRemoteConfig(smoothnessFrameTracePctEnabled = 50f))
-        assertTrue(resolveVitals(remote, lazy { 49f }).smoothnessFrameTraceEnabled)
-        assertFalse(resolveVitals(remote, lazy { 51f }).smoothnessFrameTraceEnabled)
+    fun `legacy frame trace key in json is ignored`() {
+        // smoothness_frame_trace_pct_enabled was removed, but config served or persisted by older builds may still
+        // contain it, so it must not make the JSON invalid.
+        val json = """
+            {
+              "vitals": {
+                "smoothness_frame_trace_pct_enabled": 50,
+                "span_limit": 25
+              }
+            }
+        """.trimIndent()
+        val remote = TestPlatformSerializer().fromJson(json, RemoteConfig.serializer())
+        assertEquals(25, resolveVitals(remote).spanLimit)
     }
 
     private fun VitalsConfig.snapshot() = listOf(
@@ -74,7 +78,6 @@ internal class VitalsConfigTest {
         screenLoadIdleThresholdMs,
         screenLoadTimeoutMs,
         screenLoadNavTimeoutMs,
-        smoothnessFrameTraceEnabled,
         spanLimit,
         interactionResponsivenessBlockThresholdMs,
     )

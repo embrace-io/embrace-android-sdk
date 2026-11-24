@@ -58,7 +58,6 @@ sealed class SdkErrorType(private val severity: Severity) {
     object UrlStreamHandlerFactoryInstallFail : SdkErrorType(ERROR)
     object SessionStateCreationFail : SdkErrorType(ERROR)
     object ConnectivityUpdateFailure : SdkErrorType(ERROR)
-    object ClockBackwardsShift : SdkErrorType(ERROR)
     object NavControllerTrackingFail : SdkErrorType(ERROR)
     object UserSessionCallbackFail : SdkErrorType(ERROR)
     object UserInfoCallbackFail : SdkErrorType(ERROR)
@@ -79,8 +78,6 @@ sealed class SdkErrorType(private val severity: Severity) {
     object UserSessionTimerFail : SdkErrorType(ERROR)
     object ResourceCloseFail : SdkErrorType(ERROR)
     object WorkerTaskFail : SdkErrorType(ERROR)
-    object ClockDrift : SdkErrorType(ERROR)
-    object ClockCasExhausted : SdkErrorType(ERROR)
     object ErrorSinkFail : SdkErrorType(ERROR)
     object LogStoreFail : SdkErrorType(ERROR)
     object NetworkCaptureEncryptFail : SdkErrorType(ERROR)
@@ -101,6 +98,7 @@ sealed class SdkErrorType(private val severity: Severity) {
     object OrphanSweepFail : SdkErrorType(ERROR)
     object StorageMigrationFail : SdkErrorType(ERROR)
     object PrefsMigrationFail : SdkErrorType(ERROR)
+    object EnvelopeResourceKeyConflict : SdkErrorType(ERROR)
 
     /**
      * A failure that can be ignored.

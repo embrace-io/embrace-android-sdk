@@ -243,6 +243,7 @@ class FileStorageServiceImplTest {
         assertEquals(StorageOutcome.FAILED, outcome)
         assertNoTempFile()
         assertNoStoredPayloads()
+        assertTrue(errorHandler.sdkErrorMessages.isEmpty())
     }
 
     @Test
@@ -254,6 +255,7 @@ class FileStorageServiceImplTest {
         assertEquals(StorageOutcome.FAILED, outcome)
         assertNoTempFile()
         assertNoStoredPayloads()
+        assertTrue(errorHandler.sdkErrorMessages.single().throwable is IllegalStateException)
     }
 
     @Test

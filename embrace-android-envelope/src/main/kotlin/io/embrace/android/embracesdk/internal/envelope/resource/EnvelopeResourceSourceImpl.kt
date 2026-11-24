@@ -8,6 +8,7 @@ import io.embrace.android.embracesdk.internal.logging.SdkErrorType
 import io.embrace.android.embracesdk.internal.logging.guardSdkCode
 import io.embrace.android.embracesdk.internal.logging.guardSdkCodeEach
 import io.embrace.android.embracesdk.internal.payload.EnvelopeResource
+import io.embrace.android.embracesdk.internal.serialization.envelopeResourceFieldKeys
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.CopyOnWriteArrayList
 
@@ -77,6 +78,15 @@ class EnvelopeResourceSourceImpl(
     }
 
     override fun add(key: String, value: String) {
+        if (key in envelopeResourceFieldKeys) {
+            errorHandler.trackSdkError(
+                SdkErrorType.EnvelopeResourceKeyConflict,
+                IllegalArgumentException(
+                    "Envelope resource extra '$key' collides with a built-in resource field " +
+                        "(appFramework=${configService.appFramework})",
+                ),
+            )
+        }
         extras[key] = value
         notifyIfChanged()
     }

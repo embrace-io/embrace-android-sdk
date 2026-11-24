@@ -52,7 +52,7 @@ class HucLiteDataSource(
     private val recordForUrl = args.configService.networkBehavior::isUrlEnabled
     private var initializationAttempted = false
 
-    private val dataSourceRef = AtomicReference<HucLiteDataSource?>(this)
+    private val dataSourceRef = AtomicReference(this)
 
     override fun onDataCaptureEnabled() {
         dataSourceRef.set(this)
@@ -134,7 +134,7 @@ class HucLiteDataSource(
     }
 
     internal fun trackCaptureError(t: Throwable) {
-        errorHandler.trackSdkError(SdkErrorType.DataSourceDataCaptureFail, InstrumentationException(t))
+        errorHandler.trackSdkError(SdkErrorType.DataSourceDataCaptureFail, t)
     }
 
     class RequestData(
@@ -281,10 +281,6 @@ class HucLiteDataSource(
             const val HUC_USER_AGENT_NAME = "HttpURLConnection"
         }
     }
-
-    private class InstrumentationException(
-        cause: Throwable,
-    ) : RuntimeException("Unexpected error during HUC instrumentation", cause)
 }
 
 @SuppressLint("PrivateApi")

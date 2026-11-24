@@ -30,7 +30,7 @@ internal class InstrumentedHttpsURLStreamHandlerTest {
         assertThrows(IOException::class.java) { url.openConnection() }
         val error = harness.fakeErrorHandler.sdkErrorMessages.single()
         assertEquals(SdkErrorType.DataSourceDataCaptureFail.toString(), error.msg)
-        assertTrue(error.throwable?.cause is ClassCastException)
+        assertTrue(error.throwable is ClassCastException)
     }
 
     private fun createUrl(delegate: URLStreamHandler) = URL(

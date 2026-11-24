@@ -56,6 +56,13 @@ internal class RemoteConfigStoreImpl(
 
     private fun loadFromJson(): StoredConfigResponse? {
         return try {
+            // an empty file (e.g. a write interrupted by process death) would fail with an EOF
+            // deserialization error. Treat it as a clean miss rather than tracking it. Missing files
+            // also report a zero length, so don't delete here: that would be a main-thread disk write
+            // on every fresh install, and the next successful fetch overwrites the file anyway.
+            if (configFile.length() == 0L) {
+                return null
+            }
             val cfg = configFile.inputStream().buffered().use {
                 serializer.fromJson(it, RemoteConfig.serializer())
             }

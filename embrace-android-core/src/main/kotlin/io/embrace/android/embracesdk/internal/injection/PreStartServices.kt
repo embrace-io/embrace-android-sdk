@@ -15,7 +15,7 @@ import io.embrace.android.embracesdk.internal.telemetry.InternalTelemetryService
  */
 class PreStartServices(
     val errorHandler: ErrorHandler = ErrorHandlerImpl(NormalizedIntervalClock()::now, ::androidLogcat),
-    val clock: Clock = NormalizedIntervalClock(errorHandler = errorHandler),
+    val clock: Clock = NormalizedIntervalClock(),
     val systemInfo: SystemInfo = SystemInfo(),
     val telemetryService: InternalTelemetryService = InternalTelemetryServiceImpl(systemInfo = systemInfo),
     val externalOtelConfig: ExternalOtelConfig = ExternalOtelConfig(),

@@ -56,7 +56,7 @@ fun sdkInitEnvironmentAttributes(
         putInstallRecencyAttributes(packageInfo, nowMs, errorHandler)
     }
     safePutAttributes(errorHandler, "memory") {
-        putMemoryAttributes(activityManagerProvider, errorHandler)
+        putMemoryAttributes(activityManagerProvider)
     }
     safePutAttributes(errorHandler, SECONDS_SINCE_BOOT) {
         putSecondsSinceBoot(uptimeMs, errorHandler)
@@ -65,7 +65,7 @@ fun sdkInitEnvironmentAttributes(
         putPrefsFileSize(prefsFileSizeProvider, errorHandler)
     }
     safePutAttributes(errorHandler, "art-optimization") {
-        putArtOptimizationAttributes(artOptimizationProvider, errorHandler)
+        putArtOptimizationAttributes(artOptimizationProvider)
     }
 }
 
@@ -173,7 +173,6 @@ private fun MutableMap<String, String>.putInstallRecencyAttributes(
     if (packageInfo == null) {
         put(SECONDS_SINCE_INSTALL, NUMERIC_ERROR)
         put(SECONDS_SINCE_UPDATE, NUMERIC_ERROR)
-        errorHandler.trackAttributeError(SECONDS_SINCE_INSTALL)
     } else {
         putRecency(SECONDS_SINCE_INSTALL, packageInfo.firstInstallTime, nowMs, errorHandler)
         putRecency(SECONDS_SINCE_UPDATE, packageInfo.lastUpdateTime, nowMs, errorHandler)
@@ -195,7 +194,6 @@ private fun MutableMap<String, String>.putRecency(key: String, thenMs: Long, now
 
 private fun MutableMap<String, String>.putMemoryAttributes(
     activityManagerProvider: () -> ActivityManager?,
-    errorHandler: ErrorHandler,
 ) {
     val result = runCatching {
         activityManagerProvider()?.let { activityManager ->
@@ -206,7 +204,6 @@ private fun MutableMap<String, String>.putMemoryAttributes(
     val memoryInfo = result.getOrNull()
     if (memoryInfo == null || memoryInfo.totalMem <= 0) {
         put(MEM_AVAILABLE_PCT, NUMERIC_ERROR)
-        errorHandler.trackAttributeError(key = MEM_AVAILABLE_PCT, cause = result.exceptionOrNull())
     } else {
         val availablePct = (100.0 * memoryInfo.availMem / memoryInfo.totalMem).roundToLong()
         put(MEM_AVAILABLE_PCT, availablePct.coerceIn(0L, MAX_MEM_AVAILABLE_PCT).toString())
@@ -249,7 +246,6 @@ private fun MutableMap<String, String>.putPrefsFileSize(prefsFileSizeProvider: (
 
 private fun MutableMap<String, String>.putArtOptimizationAttributes(
     artOptimizationStateProvider: () -> ArtOptimizationState?,
-    errorHandler: ErrorHandler,
 ) {
     runCatching { artOptimizationStateProvider() }
         .fold(
@@ -263,7 +259,6 @@ private fun MutableMap<String, String>.putArtOptimizationAttributes(
             },
             onFailure = { throwable ->
                 put(ART_COMPILER_FILTER, STRING_ERROR)
-                errorHandler.trackAttributeError(ART_COMPILER_FILTER, throwable)
             },
         )
 }

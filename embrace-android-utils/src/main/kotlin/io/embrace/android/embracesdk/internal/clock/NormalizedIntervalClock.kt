@@ -1,9 +1,6 @@
 package io.embrace.android.embracesdk.internal.clock
 
 import android.os.SystemClock
-import io.embrace.android.embracesdk.internal.logging.ErrorHandler
-import io.embrace.android.embracesdk.internal.logging.SdkErrorType
-import io.embrace.android.embracesdk.internal.utils.concurrent.OneShot
 import java.util.concurrent.atomic.AtomicLong
 import kotlin.math.max
 
@@ -13,13 +10,8 @@ import kotlin.math.max
  *
  * This is useful when it is necessary to perform interval timing but the results must be
  * sent to the API in a way that matches the device time.
- *
- * If [errorHandler] is provided, an SDK error is tracked whenever successive [now] calls detect that time
- * drifted backwards by more than [driftThresholdMs] milliseconds.
  */
 class NormalizedIntervalClock(
-    private val errorHandler: ErrorHandler? = null,
-    private val driftThresholdMs: Long = DEFAULT_DRIFT_THRESHOLD_MS,
     wallClock: () -> Long = System::currentTimeMillis,
     private val monotonicClock: () -> Long = SystemClock::elapsedRealtime,
 
@@ -36,24 +28,11 @@ class NormalizedIntervalClock(
      * The lastTime that `now` was called - `Long.MIN_VALUE` as a "not yet tracked" sentinel.
      */
     private val lastTime = AtomicLong(Long.MIN_VALUE)
-    private val reportDriftOnce = OneShot()
-    private val reportCasExhaustedOnce = OneShot()
 
     override fun now(): Long {
         repeat(casLimit) {
             val prev = lastTime.get()
             val newTime = baseline + monotonicClock()
-
-            if (prev != Long.MIN_VALUE && newTime < prev - driftThresholdMs) {
-                reportDriftOnce {
-                    errorHandler?.trackSdkError(
-                        SdkErrorType.ClockDrift,
-                        IllegalStateException(
-                            "NormalizedIntervalClock drifted back in time by more than threshold. Delivery is likely out-of-order.",
-                        ),
-                    )
-                }
-            }
 
             // never lower the high-water mark: a backwards reading is returned but not stored,
             // otherwise repeated sub-threshold steps would walk the comparison baseline down.
@@ -61,17 +40,6 @@ class NormalizedIntervalClock(
                 return newTime
             }
         }
-
-        reportCasExhaustedOnce {
-            errorHandler?.trackSdkError(
-                SdkErrorType.ClockCasExhausted,
-                IllegalStateException("NormalizedIntervalClock exhausted CAS attempts."),
-            )
-        }
         return baseline + monotonicClock()
-    }
-
-    companion object {
-        const val DEFAULT_DRIFT_THRESHOLD_MS: Long = 60_000L
     }
 }

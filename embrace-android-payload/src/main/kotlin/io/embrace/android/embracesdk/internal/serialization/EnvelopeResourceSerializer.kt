@@ -176,7 +176,7 @@ internal object EnvelopeResourceSerializer : KSerializer<EnvelopeResource> {
     private const val KEY_USES_EMMC_STORAGE = "uses_emmc_storage"
     private const val KEY_DEVICE_SOC_MODEL = "device_soc_model"
 
-    private val KNOWN_KEYS = setOf(
+    internal val KNOWN_KEYS = setOf(
         KEY_APP_VERSION,
         KEY_APP_FRAMEWORK,
         KEY_BUILD_ID,

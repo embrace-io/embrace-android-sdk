@@ -26,11 +26,13 @@ import io.embrace.android.embracesdk.internal.utils.EmbTrace
 import io.embrace.android.embracesdk.internal.utils.Provider
 import io.embrace.android.embracesdk.semconv.EmbSessionAttributes
 import io.embrace.android.embracesdk.semconv.ExperimentalSemconv
+import java.io.EOFException
 import java.io.IOException
 import java.io.InputStream
 import java.util.concurrent.CancellationException
 import java.util.concurrent.CopyOnWriteArrayList
 import java.util.concurrent.TimeUnit
+import java.util.concurrent.TimeoutException
 import java.util.zip.GZIPInputStream
 
 internal class PayloadResurrectionServiceImpl(
@@ -186,11 +188,6 @@ internal class PayloadResurrectionServiceImpl(
                         resource = resource,
                         metadata = metadata,
                     )
-                } else {
-                    errorHandler.trackSdkError(
-                        type = SdkErrorType.NativeCrashResurrectionError,
-                        throwable = IllegalStateException("Cached native crash envelope data not found"),
-                    )
                 }
                 nativeCrashService.sendNativeCrash(
                     nativeCrash = nativeCrash,
@@ -341,6 +338,8 @@ internal class PayloadResurrectionServiceImpl(
                 }
             } catch (_: CancellationException) {
                 PayloadIntake.REFUSED
+            } catch (_: TimeoutException) {
+                PayloadIntake.HANDLED
             }
         }
     }
@@ -360,6 +359,9 @@ internal class PayloadResurrectionServiceImpl(
         return cacheStorageService.loadPayloadAsStream(this)?.let {
             try {
                 BoundedInputStream(GZIPInputStream(it), maxDecompressedPayloadBytes, OVERSIZED_DECOMPRESSED_PAYLOAD_MSG)
+            } catch (_: EOFException) {
+                it.close()
+                null
             } catch (exc: IOException) {
                 it.close()
                 throw exc

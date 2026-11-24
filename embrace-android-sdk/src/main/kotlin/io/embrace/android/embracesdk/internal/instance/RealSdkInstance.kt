@@ -398,7 +398,7 @@ internal class RealSdkInstance(
      */
     private fun initializeHucInstrumentation() {
         val networkBehavior = configService.networkBehavior
-        errorHandler.guardSdkCode(SdkErrorType.InstrumentationRegFail) {
+        errorHandler.guardSdkCode(SdkErrorType.Ignored) {
             if (networkBehavior.isHttpUrlConnectionCaptureEnabled()) {
                 EmbTrace.trace(sectionName = "huc-init", recordDuration = true) {
                     val trackerClass = Class.forName("io.embrace.android.embracesdk.instrumentation.huc.HttpUrlConnectionTracker")

@@ -67,7 +67,7 @@ internal class SdkInitEnvironmentAttributesTest {
     }
 
     @Test
-    fun `a device that answers nothing records an error for every attribute it should have had`() {
+    fun `a device that answers nothing records an error for every failed lookup except package info, memory and ART`() {
         val attributes = buildEnvironmentAttributes(
             powerManagerProvider = { error("no power manager") },
             activityManagerProvider = { error("no activity manager") },
@@ -94,11 +94,8 @@ internal class SdkInitEnvironmentAttributesTest {
         attributes.assertAbsent(APP_IMAGE_AT_INIT)
         assertCaptureFailureReported(
             THERMAL_STATUS,
-            SECONDS_SINCE_INSTALL,
-            MEM_AVAILABLE_PCT,
             SECONDS_SINCE_BOOT,
             PREFS_FILE_BYTES,
-            ART_COMPILER_FILTER,
         )
     }
 
@@ -222,12 +219,12 @@ internal class SdkInitEnvironmentAttributesTest {
     }
 
     @Test
-    fun `no package info at all fails both recency attributes but is reported once`() {
+    fun `no package info at all fails both recency attributes without reporting an error`() {
         val attributes = buildEnvironmentAttributes(packageInfo = null)
         attributes.assertNumberError(SECONDS_SINCE_INSTALL)
         attributes.assertNumberError(SECONDS_SINCE_UPDATE)
         attributes.assertDefaultsExcept(SECONDS_SINCE_INSTALL, SECONDS_SINCE_UPDATE)
-        assertCaptureFailureReported(SECONDS_SINCE_INSTALL)
+        assertNoSdkErrors()
     }
 
     @Test
@@ -243,31 +240,31 @@ internal class SdkInitEnvironmentAttributesTest {
     }
 
     @Test
-    fun `a missing ActivityManager results in an error`() {
+    fun `a missing ActivityManager results in an error value without reporting`() {
         val attributes = buildEnvironmentAttributes(activityManagerProvider = { null })
         attributes.assertNumberError(MEM_AVAILABLE_PCT)
         attributes.assertAbsent(LOW_MEMORY)
         attributes.assertDefaultsExcept(MEM_AVAILABLE_PCT, LOW_MEMORY)
-        assertCaptureFailureReported(MEM_AVAILABLE_PCT)
+        assertNoSdkErrors()
     }
 
     @Test
-    fun `a memory read that throws is an error`() {
+    fun `a memory read that throws is an error value without reporting`() {
         val attributes = buildEnvironmentAttributes(activityManagerProvider = { error("binder died") })
         attributes.assertNumberError(MEM_AVAILABLE_PCT)
         attributes.assertAbsent(LOW_MEMORY)
         attributes.assertDefaultsExcept(MEM_AVAILABLE_PCT, LOW_MEMORY)
-        assertCaptureFailureReported(MEM_AVAILABLE_PCT)
+        assertNoSdkErrors()
     }
 
     @Test
-    fun `a total memory of zero is an error rather than a device with no RAM`() {
+    fun `a total memory of zero is an error value rather than a device with no RAM`() {
         setMemoryInfo(availMem = 0L, totalMem = 0L, lowMemory = false)
         val attributes = buildEnvironmentAttributes()
         attributes.assertNumberError(MEM_AVAILABLE_PCT)
         attributes.assertAbsent(LOW_MEMORY)
         attributes.assertDefaultsExcept(MEM_AVAILABLE_PCT, LOW_MEMORY)
-        assertCaptureFailureReported(MEM_AVAILABLE_PCT)
+        assertNoSdkErrors()
     }
 
     @Test
@@ -358,12 +355,12 @@ internal class SdkInitEnvironmentAttributesTest {
     }
 
     @Test
-    fun `an ART state read that blows up is an error and costs the app image reading`() {
+    fun `an ART state read that blows up is an error value without reporting and costs the app image reading`() {
         val attributes = buildEnvironmentAttributes(artOptimizationProvider = { error("bleep bloop oh noes") })
         attributes.assertStringError(ART_COMPILER_FILTER)
         attributes.assertAbsent(APP_IMAGE_AT_INIT)
         attributes.assertDefaultsExcept(ART_COMPILER_FILTER, APP_IMAGE_AT_INIT)
-        assertCaptureFailureReported(ART_COMPILER_FILTER)
+        assertNoSdkErrors()
     }
 
     private fun buildEnvironmentAttributes(

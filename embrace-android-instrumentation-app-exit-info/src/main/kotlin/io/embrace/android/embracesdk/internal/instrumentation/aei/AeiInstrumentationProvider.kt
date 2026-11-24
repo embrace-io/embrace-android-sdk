@@ -25,7 +25,9 @@ class AeiInstrumentationProvider : InstrumentationProvider {
                     backgroundWorker = args.backgroundWorker(worker = Worker.Background.NonIoRegWorker),
                     // fetched lazily so the system service isn't retrieved on the main thread during SDK startup
                     recordSourceProvider = {
-                        args.systemService<ActivityManager>(Context.ACTIVITY_SERVICE)?.let(::ActivityManagerAeiRecordSource)
+                        args.systemService<ActivityManager>(Context.ACTIVITY_SERVICE)?.let {
+                            ActivityManagerAeiRecordSource(it, args.context.packageName)
+                        }
                     },
                     store = args.deliveredAeiStore,
                     ordinalStore = args.ordinalStore,

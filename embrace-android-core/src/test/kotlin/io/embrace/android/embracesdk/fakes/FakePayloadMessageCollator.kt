@@ -45,8 +45,13 @@ class FakePayloadMessageCollator(
         params: FinalEnvelopeParams,
     ): Envelope<SessionPartPayload> {
         finalEnvelopeCount++
+        val snapshots = if (params.endType == SessionPartSnapshotType.PERIODIC_CACHE) {
+            listOfNotNull(currentSessionPartSpan.sessionPartSpan?.snapshot())
+        } else {
+            null
+        }
         endSessionPartSpan(params)
-        return Envelope(data = SessionPartPayload())
+        return Envelope(data = SessionPartPayload(spanSnapshots = snapshots))
     }
 
     override fun endSessionPart(params: FinalEnvelopeParams) {

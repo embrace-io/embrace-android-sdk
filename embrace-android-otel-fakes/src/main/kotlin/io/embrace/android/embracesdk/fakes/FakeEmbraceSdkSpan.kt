@@ -189,6 +189,7 @@ class FakeEmbraceSdkSpan(
 
     override fun snapshot(): io.embrace.android.embracesdk.internal.payload.Span? {
         snapshotCount++
+        snapshotFailure?.let { throw it }
         return if (spanId == null) {
             null
         } else {
@@ -208,6 +209,7 @@ class FakeEmbraceSdkSpan(
     }
 
     var snapshotCount: Int = 0
+    var snapshotFailure: Throwable? = null
 
     override fun hasEmbraceAttribute(embraceAttribute: EmbraceAttribute): Boolean =
         attributes.hasEmbraceAttribute(embraceAttribute)

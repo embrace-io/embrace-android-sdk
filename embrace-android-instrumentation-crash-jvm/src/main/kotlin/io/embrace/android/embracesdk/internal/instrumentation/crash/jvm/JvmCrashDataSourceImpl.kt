@@ -166,14 +166,12 @@ class JvmCrashDataSourceImpl(
     }
 
     private fun captureAllThreads(): List<ThreadInfo> {
-        val stacktraces = Thread.getAllStackTraces()
-        val threadsList = ArrayList<ThreadInfo>(stacktraces.size)
-        val iterator = stacktraces.entries.iterator()
-        while (iterator.hasNext()) {
-            val entry = iterator.next()
-            threadsList.add(truncateStacktrace(entry.key, entry.value))
-            // release object reference
-            iterator.remove()
+        val threads = enumerateThreads()
+        val threadsList = ArrayList<ThreadInfo>(threads.size)
+        for (thread in threads) {
+            if (thread != null) {
+                threadsList.add(truncateStacktrace(thread, thread.stackTrace))
+            }
         }
         return threadsList
     }
@@ -183,6 +181,17 @@ class JvmCrashDataSourceImpl(
         val mainThread = mainThreadProvider()
         return listOfNotNull(crashingThread, mainThread.takeIf { it != crashingThread })
             .map { truncateStacktrace(it, it.stackTrace) }
+    }
+
+    private fun enumerateThreads(): Array<Thread?> {
+        var root = checkNotNull(Thread.currentThread().threadGroup)
+        while (true) {
+            root = root.parent ?: break
+        }
+        // activeCount() is an estimate, so leave headroom for threads started before enumerate() runs.
+        val threads = arrayOfNulls<Thread>(root.activeCount() + THREAD_ENUMERATION_HEADROOM)
+        val count = root.enumerate(threads, true)
+        return threads.copyOf(count)
     }
 
     /**
@@ -204,3 +213,5 @@ class JvmCrashDataSourceImpl(
 // handing control to another handler which may prematurely kill the process. This covers the longest wait in
 // the teardown, the payload store's shutdown, and keeps a blocked main thread under the 5s ANR timeout.
 private const val LATER_CRASH_TEARDOWN_WAIT_MS = 3000L
+
+private const val THREAD_ENUMERATION_HEADROOM = 16

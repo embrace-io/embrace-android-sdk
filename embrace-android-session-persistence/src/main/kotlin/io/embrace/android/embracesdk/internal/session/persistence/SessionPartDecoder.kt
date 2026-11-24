@@ -58,9 +58,14 @@ class SessionPartDecoder(
                 sharedLibSymbolMapping = metadataProto.shared_lib_symbol_mapping?.symbols,
             ),
         )
-        val lastWrittenMs =
-            maxOf(metadataProto.written_at_ms, completedSpansFile.lastWrittenMs, spanSnapshotsFile.lastWrittenMs)
-        return DecodedSessionPart(envelope, lastWrittenMs.takeIf { it > 0 })
+        val journal = readStateJournalFile(source)
+        val lastWrittenMs = maxOf(
+            metadataProto.written_at_ms,
+            completedSpansFile.lastWrittenMs,
+            spanSnapshotsFile.lastWrittenMs,
+            journal.lastWrittenMs ?: 0L,
+        )
+        return DecodedSessionPart(envelope, lastWrittenMs.takeIf { it > 0 }, journal.records)
     }
 
     /**
@@ -131,6 +136,30 @@ class SessionPartDecoder(
             val payload = SystemTrace.trace("mf-spans-proto-to-payload") { decoded.drainToPayload() }
             budget.spend(limitedSpans, truncated = decoded.spanLimitReached)
             DecodedSpanCollections(payload, decoded.lastWrittenMs ?: 0L)
+        }
+    }
+
+    /**
+     * Decodes the state journal, or an empty journal if the part has none or it cannot be read. A
+     * journal that cannot be read is tracked and costs the part only its state, never the part.
+     */
+    private fun readStateJournalFile(source: SessionPartSource): DecodedStateJournal {
+        val file = SessionPartFile.STATE_JOURNAL
+        return SystemTrace.trace(file.traceSection) {
+            if (!source.exists(file)) {
+                return@trace DecodedStateJournal(emptyList(), null, null)
+            }
+            if (source.sizeBytes(file) > MAX_PART_FILE_BYTES) {
+                trackFailure(IOException(OVERSIZED_PART_FILE_MSG))
+            }
+            errorHandler.guardSdkCode(
+                SdkErrorType.SessionReconstructionFail,
+                DecodedStateJournal(emptyList(), null, null),
+            ) {
+                val decoded = openOrThrow(source, file).use { readStateJournal(it) }
+                decoded.corruption?.let(::trackFailure)
+                decoded
+            }
         }
     }
 

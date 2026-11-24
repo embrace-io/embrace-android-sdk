@@ -90,7 +90,7 @@ class OtelSdkWrapper(
                 }
                 export {
                     val processors = listOf(ErrorReportingSpanProcessor(configuration.spanProcessor, errorHandler)) +
-                        configuration.externalSpanProcessors
+                        configuration.externalSpanProcessors + configuration.trailingSpanProcessors
                     compositeSpanProcessor(*processors.toTypedArray())
                 }
             },

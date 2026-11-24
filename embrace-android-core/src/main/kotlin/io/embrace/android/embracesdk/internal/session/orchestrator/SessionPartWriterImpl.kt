@@ -1,6 +1,7 @@
 package io.embrace.android.embracesdk.internal.session.orchestrator
 
 import io.embrace.android.embracesdk.internal.arch.schema.EmbType
+import io.embrace.android.embracesdk.internal.capture.state.StateRecorder
 import io.embrace.android.embracesdk.internal.clock.Clock
 import io.embrace.android.embracesdk.internal.config.ConfigService
 import io.embrace.android.embracesdk.internal.envelope.metadata.EnvelopeMetadataSource
@@ -22,6 +23,8 @@ import io.embrace.android.embracesdk.internal.session.persistence.SessionPartDir
 import io.embrace.android.embracesdk.internal.session.persistence.SessionPartWriteTarget
 import io.embrace.android.embracesdk.internal.session.persistence.SessionPartWriteTracker
 import io.embrace.android.embracesdk.internal.session.persistence.SpanSnapshotsWriter
+import io.embrace.android.embracesdk.internal.session.persistence.StateJournalWriter
+import io.embrace.android.embracesdk.internal.session.persistence.StateRecord
 import io.embrace.android.embracesdk.internal.spans.CurrentSessionPartSpan
 import io.embrace.android.embracesdk.internal.telemetry.AppliedLimitType
 import io.embrace.android.embracesdk.internal.telemetry.InternalTelemetryService
@@ -51,6 +54,7 @@ class SessionPartWriterImpl(
         SessionPartDirectoryStore(sessionsDir, worker, clock, errorHandler),
     private val writeTracker: SessionPartWriteTracker = SessionPartWriteTracker(),
     private val onWritesComplete: () -> Unit = {},
+    private val stateRecorder: StateRecorder? = null,
 ) : SessionPartWriter {
 
     internal companion object {
@@ -110,6 +114,7 @@ class SessionPartWriterImpl(
                 current?.let { orphan ->
                     current = null
                     reportMissedEnd("Session part started before the previous one ended")
+                    stateRecorder?.endJournal(clock.now())
                     finish(orphan, crashing = false)
                 }
                 // Change what `current` is and queue the metadata write for the new session part, then the spans to be carried over
@@ -118,6 +123,12 @@ class SessionPartWriterImpl(
                 if (carriedOverSpans.isNotEmpty()) {
                     writers.completedSpanWrites.write(WriteStrategy.IMMEDIATE, carriedOverSpans.toList())
                     carriedOverSpans.clear()
+                }
+                // state changes are journaled at once, so that a kill loses only what the worker had not reached
+                stateRecorder?.beginJournal(timestamp) { records ->
+                    if (!writers.abandoned) {
+                        writers.stateJournalWrites.write(WriteStrategy.IMMEDIATE, records)
+                    }
                 }
             }
 
@@ -146,6 +157,8 @@ class SessionPartWriterImpl(
                     return
                 }
                 current = null
+                // under the lock a part starts under, so that this cannot end the journal of the part after this one
+                stateRecorder?.endJournal(clock.now())
                 ref
             }
             finish(writers, crashing)
@@ -234,7 +247,12 @@ class SessionPartWriterImpl(
 
     override fun close() {
         closed = true
-        val writers = synchronized(bufferLock) { current.also { current = null } } ?: return
+        val writers = synchronized(bufferLock) {
+            current.also {
+                current = null
+                stateRecorder?.endJournal(clock.now())
+            }
+        } ?: return
         writers.flushPendingWrites()
         if (!processTerminating) {
             worker.submit { writers.seal() }
@@ -390,6 +408,7 @@ class SessionPartWriterImpl(
 
         val completedSpans = CompletedSpansWriter(target, errorHandler)
         val spanSnapshots = SpanSnapshotsWriter(target, errorHandler)
+        val stateJournal = StateJournalWriter(target, errorHandler)
 
         val metadataWrites = TelemetryWriteScheduler(
             worker = worker,
@@ -415,10 +434,23 @@ class SessionPartWriterImpl(
             onWrite = ::writeSpanSnapshots,
         )
 
+        /**
+         * Writes of the state journal are never delayed: every record is queued onto the [worker] as it arrives, in
+         * the order it arrives, so the journal on disk is always the start of what was recorded.
+         */
+        val stateJournalWrites = TelemetryWriteScheduler(
+            worker = worker,
+            delayMs = 0,
+            queue = OrderedTelemetryQueue<StateRecord>(),
+            guard = guard(SdkErrorType.StateJournalWriteFail) { abandoned },
+            onWrite = { stateJournal.write(it) },
+        )
+
         fun flushPendingWrites() {
             metadataWrites.flush()
             completedSpanWrites.flush()
             spanSnapshotWrites.flush()
+            stateJournalWrites.flush()
         }
 
         fun snapshotsOf(spans: List<EmbraceSdkSpan>): List<Span> =
@@ -450,6 +482,7 @@ class SessionPartWriterImpl(
             sealed = true
             completedSpans.close()
             spanSnapshots.close()
+            stateJournal.close()
         }
     }
 }

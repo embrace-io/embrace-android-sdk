@@ -1,6 +1,7 @@
 package io.embrace.android.embracesdk.internal.otel.spans
 
 import io.embrace.android.embracesdk.internal.otel.export.InlineExporter
+import io.embrace.android.embracesdk.internal.otel.state.SpanStateTracker
 import io.embrace.android.embracesdk.internal.session.id.SessionIdsProvider
 import io.embrace.android.embracesdk.semconv.EmbSessionAttributes
 import io.opentelemetry.kotlin.context.Context
@@ -16,6 +17,7 @@ internal class EmbraceSpanProcessor(
     private val userIdProvider: () -> String? = { null },
     private val processIdentifier: String,
     private val spanExporter: InlineExporter<SpanData>,
+    private val stateTracker: SpanStateTracker? = null,
 ) : SpanProcessor {
 
     override fun onStart(span: ReadWriteSpan, parentContext: Context) {
@@ -28,9 +30,11 @@ internal class EmbraceSpanProcessor(
         userIdProvider()?.let { userId ->
             span.setStringAttribute(UserAttributes.USER_ID, userId)
         }
+        stateTracker?.onStart(span)
     }
 
     override fun onEnding(span: ReadWriteSpan) {
+        stateTracker?.onEnding(span)
     }
 
     override fun onEnd(span: ReadableSpan) {
@@ -39,7 +43,7 @@ internal class EmbraceSpanProcessor(
 
     override fun isStartRequired() = true
     override fun isEndRequired() = true
-    override fun isOnEndingRequired() = false
+    override fun isOnEndingRequired() = stateTracker != null
     override suspend fun forceFlush(): OperationResultCode = spanExporter.forceFlush()
     override suspend fun shutdown(): OperationResultCode = OperationResultCode.Success
 }

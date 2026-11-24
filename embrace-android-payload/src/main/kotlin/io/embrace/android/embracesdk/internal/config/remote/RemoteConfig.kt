@@ -131,6 +131,26 @@ data class RemoteConfig(
     val pctStateCaptureEnabledV2: Float? = null,
 
     /**
+     * Percentage of devices that record every state into one span shared by all of them, rather than a span per state.
+     */
+    @SerialName("pct_shared_state_span_enabled")
+    val pctSharedStateSpanEnabled: Float? = null,
+
+    /**
+     * Percentage of devices that associate telemetry with state by sequence number on a span and by one attribute for
+     * each state on a log. It takes effect only on a device that [pctSharedStateSpanEnabled] also selects.
+     */
+    @SerialName("pct_state_association_enabled")
+    val pctStateAssociationEnabled: Float? = null,
+
+    /**
+     * What an app's own OpenTelemetry exporters and processors are given of state on those devices: `off`,
+     * `association` or `verbose`.
+     */
+    @SerialName("state_export_mode")
+    val stateExportMode: String? = null,
+
+    /**
      * Percentage of devices for which the NetworkCallback-based NetworkConnectivityService implementation is enabled.
      */
     @SerialName("pct_network_callback_connectivity_service_enabled")

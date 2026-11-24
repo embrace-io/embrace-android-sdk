@@ -9,7 +9,9 @@ import io.embrace.android.embracesdk.fakes.FakeErrorHandler
 import io.embrace.android.embracesdk.fakes.FakeInternalTelemetryService
 import io.embrace.android.embracesdk.fakes.FakeSectionRecorder
 import io.embrace.android.embracesdk.fakes.TestUuidSource
+import io.embrace.android.embracesdk.internal.arch.datasource.StateUpdate
 import io.embrace.android.embracesdk.internal.arch.schema.EmbType
+import io.embrace.android.embracesdk.internal.capture.state.StateRecorder
 import io.embrace.android.embracesdk.internal.clock.millisToNanos
 import io.embrace.android.embracesdk.internal.config.resolved.EmbraceConfig
 import io.embrace.android.embracesdk.internal.config.resolved.PersistenceConfig
@@ -23,6 +25,8 @@ import io.embrace.android.embracesdk.internal.session.persistence.SessionMetadat
 import io.embrace.android.embracesdk.internal.session.persistence.SessionPartDirectory
 import io.embrace.android.embracesdk.internal.session.persistence.SpanCollection
 import io.embrace.android.embracesdk.internal.session.persistence.SpanProto
+import io.embrace.android.embracesdk.internal.session.persistence.StateJournal
+import io.embrace.android.embracesdk.internal.session.persistence.StateRecord
 import io.embrace.android.embracesdk.internal.telemetry.AppliedLimitType
 import io.embrace.android.embracesdk.internal.utils.SystemTrace
 import io.embrace.android.embracesdk.internal.worker.BackgroundWorker
@@ -37,9 +41,12 @@ import org.junit.Rule
 import org.junit.Test
 import org.junit.rules.TemporaryFolder
 import java.io.File
+import java.util.concurrent.CountDownLatch
+import java.util.concurrent.Executors
 import java.util.concurrent.ScheduledExecutorService
 import java.util.concurrent.ScheduledFuture
 import java.util.concurrent.TimeUnit
+import kotlin.concurrent.thread
 
 internal class SessionPartWriterImplTest {
 
@@ -50,9 +57,15 @@ internal class SessionPartWriterImplTest {
         private const val METADATA_FILE_NAME = "metadata.pb"
         private const val SPAN_SNAPSHOTS_FILE_NAME = "span_snapshots.pb"
         private const val COMPLETED_SPANS_FILE_NAME = "completed_spans.pb"
+        private const val STATE_JOURNAL_FILE_NAME = "state_journal.pb"
         private const val ENVELOPE_VERSION = "0.1.0"
         private const val ENVELOPE_TYPE = "spans"
         private val SYMBOLS = mapOf("armeabi-v7a" to "my-symbols")
+        private const val RACING_REPORTERS = 4
+        private const val RACING_UPDATES = 2000
+        private const val RACING_HELD_CHANGES = 4
+        private const val RACING_PARTS = 100
+        private const val RACE_TIMEOUT_SECONDS = 30L
     }
 
     @get:Rule
@@ -127,6 +140,102 @@ internal class SessionPartWriterImplTest {
         assertEquals(startedAt, directory.timestamp)
         assertEquals(USER_SESSION_ID, directory.userSessionId)
         assertEquals(SESSION_PART_ID, directory.sessionPartId)
+        assertNoSdkErrors()
+    }
+
+    @Test
+    fun `state changes are journaled with the session part they were made in or the next to start`() {
+        val recorder = StateRecorder(clock)
+        val writer = createWriter(stateRecorder = recorder)
+
+        // no session part is in progress, so this is held for the next one
+        recorder.onEvent(StateUpdate("network", "wifi", clock.now()))
+        writer.onSessionPartStarted(clock.now(), USER_SESSION_ID, SESSION_PART_ID)
+        recorder.onEvent(StateUpdate("network", "wan", clock.tick(100)))
+        drain()
+
+        // journaled while the part is still in progress, in the order the changes were made
+        assertEquals(listOf("checkpoint", "wifi", "part start", "wan"), journalOnDisk(SESSION_PART_ID))
+
+        clock.tick(10000)
+        writer.endPart()
+        writer.onSessionPartEnded(SESSION_PART_ID)
+        recorder.onEvent(StateUpdate("network", "none", clock.tick(100)))
+        writer.onSessionPartStarted(clock.now(), USER_SESSION_ID, OTHER_SESSION_PART_ID)
+        drain()
+
+        assertEquals(listOf("checkpoint", "wifi", "part start", "wan", "part end"), journalOnDisk(SESSION_PART_ID))
+        assertEquals(listOf("checkpoint", "none", "part start"), journalOnDisk(OTHER_SESSION_PART_ID))
+        assertNoSdkErrors()
+    }
+
+    /**
+     * State changes are reported from any thread while session parts change on another, and are written by a worker that
+     * neither waits for. Whatever the interleaving, every change is accounted for once: journaled with the part it was made
+     * in or the next to start, or folded into the values that next journal opens with. Read one after another, the journals
+     * lead from each change to the next with none missing.
+     */
+    @Test
+    fun `state changes racing session part changes are each journaled once and in order`() {
+        val persistence = Executors.newSingleThreadScheduledExecutor()
+        // room in a journal for every change, and for few enough between two that some are folded
+        val changes = RACING_REPORTERS * RACING_UPDATES
+        val recorder = StateRecorder(clock, maxChanges = changes, maxHeldChanges = RACING_HELD_CHANGES)
+        val writer = createWriter(worker = BackgroundWorker(persistence), stateRecorder = recorder)
+        val start = CountDownLatch(1)
+        val reporters = (0 until RACING_REPORTERS).map { reporter ->
+            thread {
+                start.await(RACE_TIMEOUT_SECONDS, TimeUnit.SECONDS)
+                repeat(RACING_UPDATES) { recorder.onEvent(StateUpdate("state-$reporter", "value-$it", clock.now())) }
+            }
+        }
+
+        val partIds = mutableListOf<String>()
+        fun runPart() {
+            val partId = "%032x".format(partIds.size)
+            partIds += partId
+            writer.onSessionPartStarted(clock.now(), USER_SESSION_ID, partId)
+            Thread.sleep(1)
+            writer.endPart()
+            writer.onSessionPartEnded(partId)
+            Thread.sleep(1)
+        }
+        start.countDown()
+        // a bounded number of parts, well short of how many directories are kept on disk
+        while (reporters.any(Thread::isAlive) && partIds.size < RACING_PARTS) {
+            runPart()
+        }
+        reporters.forEach { it.join(TimeUnit.SECONDS.toMillis(RACE_TIMEOUT_SECONDS)) }
+        // one more, for the changes made after the last of those ended
+        runPart()
+        persistence.submit {}.get(RACE_TIMEOUT_SECONDS, TimeUnit.SECONDS)
+        persistence.shutdownNow()
+
+        var lastChange = 0L
+        var journaled = 0
+        var folded = 0
+        partIds.forEach { partId ->
+            val records = journalRecordsOnDisk(partId)
+            val foldedBefore = checkNotNull(records.single { it.part_start != null }.part_start).dropped_changes
+            val changesHeld = records.filter { it.change != null }
+
+            // a journal opens with the values as of the last change before the ones it holds, which is the last change of
+            // the journal before it unless changes were folded in since
+            assertNotNull(records.first().checkpoint)
+            assertEquals(lastChange + foldedBefore, records.first().sequence)
+            lastChange = records.first().sequence
+            changesHeld.forEach { assertEquals(++lastChange, it.sequence) }
+
+            with(records.last()) {
+                assertEquals(lastChange, sequence)
+                assertEquals(0, checkNotNull(part_end).dropped_changes)
+            }
+            journaled += changesHeld.size
+            folded += foldedBefore
+        }
+        assertEquals(changes.toLong(), lastChange)
+        assertEquals(changes, journaled + folded)
+        assertEquals(lastChange, recorder.snapshot().sequence)
         assertNoSdkErrors()
     }
 
@@ -1734,6 +1843,7 @@ internal class SessionPartWriterImplTest {
         sessionsDir: File = this.sessionsDir,
         worker: BackgroundWorker = BackgroundWorker(executor),
         onWritesComplete: () -> Unit = {},
+        stateRecorder: StateRecorder? = null,
     ) = SessionPartWriterImpl(
         lazy { sessionsDir },
         worker,
@@ -1750,6 +1860,7 @@ internal class SessionPartWriterImplTest {
         },
         telemetryService,
         onWritesComplete = onWritesComplete,
+        stateRecorder = stateRecorder,
     )
 
     private fun configService(
@@ -1852,6 +1963,24 @@ internal class SessionPartWriterImplTest {
     private fun completedSpansOnDisk(sessionPartId: String): List<SpanProto> {
         val bytes = partFile(sessionPartId, COMPLETED_SPANS_FILE_NAME)?.readBytes() ?: return emptyList()
         return SpanCollection.ADAPTER.decode(bytes).spans
+    }
+
+    /**
+     * What each record of the state journal on disk for [sessionPartId] is, in order: the value a change was to, or the
+     * kind of any other record.
+     */
+    private fun journalOnDisk(sessionPartId: String): List<String> = journalRecordsOnDisk(sessionPartId).map { record ->
+        when {
+            record.checkpoint != null -> "checkpoint"
+            record.part_start != null -> "part start"
+            record.part_end != null -> "part end"
+            else -> record.change?.value_?.value_ ?: "unknown"
+        }
+    }
+
+    private fun journalRecordsOnDisk(sessionPartId: String): List<StateRecord> {
+        val file = checkNotNull(partFile(sessionPartId, STATE_JOURNAL_FILE_NAME)) { "no state journal on disk" }
+        return StateJournal.ADAPTER.decode(file.readBytes()).records
     }
 
     private fun partFile(sessionPartId: String, fileName: String): File? {

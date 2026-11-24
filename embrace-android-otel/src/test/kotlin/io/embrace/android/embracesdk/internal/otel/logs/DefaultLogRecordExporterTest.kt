@@ -42,6 +42,22 @@ internal class DefaultLogRecordExporterTest {
     }
 
     @Test
+    fun `exportExternally() hands records to the external exporters and never to the sink`() {
+        val logSink: LogSink = LogSinkImpl(FakeErrorHandler())
+        val external = FakeLogRecordExporter()
+        var exportEnabled = true
+        val exporter =
+            DefaultLogRecordExporter(logSink, listOf(external), { exportEnabled }, immediateExportDispatcher())
+
+        exporter.exportExternally(listOf(FakeReadWriteLogRecord(eventName = "an-event")))
+        exportEnabled = false
+        exporter.exportExternally(listOf(FakeReadWriteLogRecord(eventName = "after-export-was-disabled")))
+
+        assertEquals(listOf("an-event"), external.exportedLogs.map { it.eventName })
+        assertTrue(logSink.logsForNextBatch().isEmpty())
+    }
+
+    @Test
     fun `logs reach the sink before exportInline() returns`() {
         val logSink: LogSink = LogSinkImpl(FakeErrorHandler())
         val exporter =

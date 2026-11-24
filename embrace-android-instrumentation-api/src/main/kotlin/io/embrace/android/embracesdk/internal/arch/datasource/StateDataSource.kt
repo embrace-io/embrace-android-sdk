@@ -8,6 +8,8 @@ import io.embrace.android.embracesdk.internal.arch.limits.UpToLimitStrategy
 import io.embrace.android.embracesdk.internal.arch.schema.SchemaType
 import io.embrace.android.embracesdk.internal.logging.SdkErrorType
 import io.embrace.android.embracesdk.internal.logging.guardSdkCode
+import io.embrace.android.embracesdk.semconv.EmbStateTransitionAttributes
+import io.embrace.android.embracesdk.semconv.ExperimentalSemconv
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicReference
 
@@ -18,6 +20,10 @@ import java.util.concurrent.atomic.AtomicReference
  * When state capture begins, a span will be cut for each session part that it overlaps with. By default, state capture begins when the
  * data source is created, but it can be deferred to when [onStateChange] is first called if [captureStateOnCreation] is overridden and
  * set to false.
+ *
+ * When state changes are journaled, no span is cut. Every change of value reported to [onStateChange] is emitted on the event
+ * bus as a [StateUpdate] instead, for whatever records them to order against the updates of every other state, and session
+ * parts are not this data source's concern.
  */
 abstract class StateDataSource<T : Any>(
     private val args: InstrumentationArgs,
@@ -29,7 +35,9 @@ abstract class StateDataSource<T : Any>(
     limitStrategy = UpToLimitStrategy { maxTransitions },
     instrumentationName = "${stateTypeFactory(defaultValue).stateName}_state_data_source",
 ) {
-    val stateAttributeKey: String = "emb.state.${stateTypeFactory(defaultValue).stateName}"
+    private val stateName: String = stateTypeFactory(defaultValue).stateName
+
+    val stateAttributeKey: String = "emb.state.$stateName"
 
     /**
      * Attribute key under which the type of the current state value is stored when the state value is a system value.
@@ -41,6 +49,25 @@ abstract class StateDataSource<T : Any>(
      * is first invoked using the new value as the initial state.
      */
     protected open val captureStateOnCreation: Boolean = true
+
+    /**
+     * Whether state changes are journaled, which needs a session part's telemetry to be persisted as multiple files.
+     */
+    private val journaled: Boolean by lazy {
+        with(args.configService.config) { autoDataCapture.sharedStateSpanEnabled && persistence.multiFileEnabled }
+    }
+
+    /**
+     * Held while a journaled update replaces the state's value and is emitted, so that updates reported from several threads
+     * are emitted in the order they replaced the value, and the last one emitted is the value the state holds.
+     */
+    private val journalLock = Any()
+
+    /**
+     * Transitions that were not emitted since the last update that was, guarded by [journalLock]: those the instrumentation
+     * said it dropped, and updates that did not change the value.
+     */
+    private var unreportedTransitions = 0
 
     private val currentState: AtomicReference<T> = AtomicReference(defaultValue)
     private val partStateToken: AtomicReference<SessionPartStateToken<T>?> = AtomicReference()
@@ -72,6 +99,10 @@ abstract class StateDataSource<T : Any>(
         transitionAttributes: Map<String, String> = emptyMap(),
         droppedTransitions: Int = 0,
     ) {
+        if (journaled) {
+            journalUpdate(newState, transitionTimeMs, transitionAttributes, droppedTransitions)
+            return
+        }
         if (!stateCaptureActive.get()) {
             startStateCapture()
         }
@@ -158,6 +189,9 @@ abstract class StateDataSource<T : Any>(
 
     @CallSuper
     override fun onPreSessionEnd() {
+        if (journaled) {
+            return
+        }
         synchronized(partStateLock) {
             partEnding = true
             partStateToken.getAndSet(null)
@@ -168,6 +202,9 @@ abstract class StateDataSource<T : Any>(
 
     @CallSuper
     override fun onPostSessionChange() {
+        if (journaled) {
+            return
+        }
         synchronized(partStateLock) {
             partEnding = false
             createSessionStateSpan(currentState.get())
@@ -175,10 +212,53 @@ abstract class StateDataSource<T : Any>(
     }
 
     private fun startStateCapture() {
+        if (journaled) {
+            // the value the state starts with is its first update
+            synchronized(journalLock) {
+                if (stateCaptureActive.compareAndSet(false, true)) {
+                    args.eventBus.emit(StateUpdate.KEY, StateUpdate(stateName, currentState.get(), clock.now()))
+                }
+            }
+            return
+        }
         synchronized(partStateLock) {
             if (stateCaptureActive.compareAndSet(false, true) && !partEnding) {
                 createSessionStateSpan(currentState.get())
             }
+        }
+    }
+
+    /**
+     * Emits [newState] as an update if it changes the state's value, or is the first value reported. Where it falls among the
+     * changes of every state is decided by whatever records the updates.
+     */
+    @OptIn(ExperimentalSemconv::class)
+    private fun journalUpdate(
+        newState: T,
+        transitionTimeMs: Long,
+        transitionAttributes: Map<String, String>,
+        droppedTransitions: Int,
+    ) {
+        synchronized(journalLock) {
+            val firstUpdate = stateCaptureActive.compareAndSet(false, true)
+            val oldState = currentState.getAndSet(newState)
+            unreportedTransitions += droppedTransitions
+            if (!firstUpdate && newState == oldState) {
+                unreportedTransitions++
+                return
+            }
+            val attributes = buildMap {
+                // first, so that it is not the attribute cut if the change has more than it can carry
+                if (unreportedTransitions > 0) {
+                    put(EmbStateTransitionAttributes.EMB_STATE_DROPPED_BY_INSTRUMENTATION, unreportedTransitions.toString())
+                }
+                if (!firstUpdate) {
+                    putAll(outgoingValueAttributes(oldState))
+                }
+                putAll(transitionAttributes)
+            }
+            unreportedTransitions = 0
+            args.eventBus.emit(StateUpdate.KEY, StateUpdate(stateName, newState, transitionTimeMs, attributes))
         }
     }
 

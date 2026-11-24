@@ -1,0 +1,263 @@
+package io.embrace.android.embracesdk.internal.capture.state
+
+import io.embrace.android.embracesdk.concurrency.BlockingScheduledExecutorService
+import io.embrace.android.embracesdk.fakes.FakeClock
+import io.embrace.android.embracesdk.fakes.FakeErrorHandler
+import io.embrace.android.embracesdk.fakes.FakeLogRecord
+import io.embrace.android.embracesdk.fakes.FakeOpenTelemetryLogger
+import io.embrace.android.embracesdk.fakes.OtelSdkMode
+import io.embrace.android.embracesdk.fakes.fakeOpenTelemetry
+import io.embrace.android.embracesdk.internal.arch.datasource.StateUpdate
+import io.embrace.android.embracesdk.internal.arch.schema.SystemStateValue
+import io.embrace.android.embracesdk.internal.clock.millisToNanos
+import io.embrace.android.embracesdk.internal.injection.WorkerThreadPoolImpl
+import io.embrace.android.embracesdk.internal.otel.state.StateEventLogger
+import io.embrace.android.embracesdk.internal.worker.BackgroundWorker
+import io.embrace.android.embracesdk.internal.worker.Worker
+import io.opentelemetry.kotlin.attributes.AttributesMutator
+import io.opentelemetry.kotlin.context.Context
+import io.opentelemetry.kotlin.logging.Logger
+import io.opentelemetry.kotlin.logging.SeverityNumber
+import org.junit.Assert.assertEquals
+import org.junit.Assert.assertNull
+import org.junit.Assert.assertTrue
+import org.junit.Before
+import org.junit.Test
+import java.util.concurrent.CountDownLatch
+import java.util.concurrent.TimeUnit
+
+internal class StateEventEmitterTest {
+
+    private lateinit var clock: FakeClock
+    private lateinit var logger: FakeOpenTelemetryLogger
+    private lateinit var executor: BlockingScheduledExecutorService
+    private lateinit var recorder: StateRecorder
+    private lateinit var emitter: StateEventEmitter
+
+    @Before
+    fun setUp() {
+        clock = FakeClock()
+        logger = FakeOpenTelemetryLogger()
+        executor = BlockingScheduledExecutorService(clock, blockingMode = true)
+    }
+
+    @Test
+    fun `each change is emitted off the thread that reported it, in order, with the value of every state after it`() {
+        createRecorder(includeValues = true)
+        val wifiTime = update("network", "wifi")
+        val screenTime = update("screen-automatic", Backgrounded, mapOf("emb.state.dropped_by_instrumentation" to "2"))
+        update("network", "wifi")
+        val offlineTime = update("network", "none")
+
+        // reporting a change only queues it
+        assertTrue(logger.logs.isEmpty())
+        executor.runCurrentlyBlocked()
+
+        assertEquals(listOf(1L, 2L, 3L), logger.logs.map { it.attributes["emb.state.seq"] })
+        with(logger.logs[0]) {
+            assertChangeEvent(wifiTime)
+            assertEquals(
+                changeAttributes(1, "network", "wifi") + mapOf("emb.state.value.network" to "wifi"),
+                attributes,
+            )
+        }
+        with(logger.logs[1]) {
+            assertChangeEvent(screenTime)
+            assertEquals(
+                changeAttributes(2, "screen-automatic", "Backgrounded") + mapOf(
+                    "emb.state.new_value_type" to "system",
+                    "emb.state.dropped_by_instrumentation" to "2",
+                    "emb.state.value.network" to "wifi",
+                    "emb.state.value.screen-automatic" to "Backgrounded",
+                    "emb.state.value_type.screen-automatic" to "system",
+                ),
+                attributes,
+            )
+        }
+        with(logger.logs[2]) {
+            assertChangeEvent(offlineTime)
+            assertEquals("none", attributes["emb.state.value.network"])
+        }
+        // the values on the first event are the ones after that change, and not the ones when it was emitted
+        assertNull(logger.logs[0].attributes["emb.state.value.screen-automatic"])
+    }
+
+    @Test
+    fun `without the values, a change is emitted alone, and the start of a session part carries every value either way`() {
+        createRecorder(includeValues = false)
+        update("network", "wifi")
+        update("screen-automatic", Backgrounded)
+        val partStart = clock.tick(1000)
+        recorder.beginJournal(partStart) { }
+        update("network", "none")
+        executor.runCurrentlyBlocked()
+
+        assertEquals(
+            listOf("emb.state.change", "emb.state.change", "emb.state.snapshot", "emb.state.change"),
+            logger.logs.map(FakeLogRecord::eventName),
+        )
+        assertEquals(changeAttributes(1, "network", "wifi"), logger.logs[0].attributes)
+        assertEquals(
+            changeAttributes(2, "screen-automatic", "Backgrounded") + mapOf("emb.state.new_value_type" to "system"),
+            logger.logs[1].attributes,
+        )
+        with(logger.logs[2]) {
+            assertNull(body)
+            assertEquals(SeverityNumber.INFO, severityNumber)
+            assertEquals(partStart.millisToNanos(), timestamp)
+            assertEquals(
+                mapOf(
+                    "emb.type" to "state",
+                    "emb.state.seq" to 2L,
+                    "emb.entity.type" to "process",
+                    "emb.entity.id" to PROCESS_IDENTIFIER,
+                    "emb.state.value.network" to "wifi",
+                    "emb.state.value.screen-automatic" to "Backgrounded",
+                    "emb.state.value_type.screen-automatic" to "system",
+                ),
+                attributes,
+            )
+        }
+        assertEquals(changeAttributes(3, "network", "none"), logger.logs[3].attributes)
+    }
+
+    @Test
+    fun `no more than the limit wait to be emitted, and the ones left out are counted`() {
+        createRecorder(includeValues = true, maxPendingEvents = 3)
+        repeat(5) { index -> update("network", "value-$index") }
+
+        // nothing has been emitted yet, so the fourth and fifth changes found three waiting
+        assertEquals(3, emitter.pendingEvents())
+        assertEquals(2, emitter.droppedEvents())
+        executor.runCurrentlyBlocked()
+
+        // what receives the events sees the sequence numbers stop short, and room is made again
+        assertEquals(listOf(1L, 2L, 3L), logger.logs.map { it.attributes["emb.state.seq"] })
+        assertEquals(0, emitter.pendingEvents())
+        update("network", "after")
+        executor.runCurrentlyBlocked()
+        assertEquals(6L, logger.logs.last().attributes["emb.state.seq"])
+        assertEquals(2, emitter.droppedEvents())
+    }
+
+    @Test
+    fun `a change the journal has no room for is not emitted`() {
+        createRecorder(includeValues = false, maxChanges = 1)
+        recorder.beginJournal(clock.now()) { }
+        update("network", "wifi")
+        update("network", "none")
+        executor.runCurrentlyBlocked()
+
+        assertEquals(listOf("emb.state.snapshot", "emb.state.change"), logger.logs.map(FakeLogRecord::eventName))
+        assertEquals("wifi", logger.logs.last().attributes["emb.state.new_value"])
+    }
+
+    @Test
+    fun `events reported while one is being emitted follow it in order, and a worker that shuts down emits what it had`() {
+        // the SDK's own workers, which turn a task away by cancelling it and do not throw
+        val workers = WorkerThreadPoolImpl(FakeErrorHandler())
+        val emitting = CountDownLatch(1)
+        val resume = CountDownLatch(1)
+        val waitingLogger = object : Logger by logger {
+            override fun emit(
+                body: Any?,
+                eventName: String?,
+                timestamp: Long?,
+                observedTimestamp: Long?,
+                context: Context?,
+                severityNumber: SeverityNumber?,
+                severityText: String?,
+                exception: Throwable?,
+                attributes: (AttributesMutator.() -> Unit)?,
+            ) {
+                emitting.countDown()
+                resume.await(WAIT_SECONDS, TimeUnit.SECONDS)
+                logger.emit(
+                    body,
+                    eventName,
+                    timestamp,
+                    observedTimestamp,
+                    context,
+                    severityNumber,
+                    severityText,
+                    exception,
+                    attributes,
+                )
+            }
+        }
+        createRecorder(
+            includeValues = false,
+            worker = workers.backgroundWorker(Worker.Background.StateExportWorker),
+            eventLogger = waitingLogger,
+        )
+
+        update("network", "value-0")
+        assertTrue(emitting.await(WAIT_SECONDS, TimeUnit.SECONDS))
+        // the worker is in the middle of emitting the first event while the rest are reported
+        repeat(EVENTS - 1) { update("network", "value-${it + 1}") }
+        assertEquals(EVENTS - 1, emitter.pendingEvents())
+
+        // the workers shut down with the SDK while that pass is under way, and it still emits everything it was left
+        workers.close()
+        resume.countDown()
+        assertTrue(workers.awaitTermination(TimeUnit.SECONDS.toMillis(WAIT_SECONDS)))
+        assertEquals((1..EVENTS).map(Int::toLong), logger.logs.map { it.attributes["emb.state.seq"] })
+        assertEquals(0, emitter.pendingEvents())
+
+        // a change reported once the worker has gone is not emitted, and nothing is kept of it
+        repeat(EVENTS) { update("network", "after-shutdown-$it") }
+        assertEquals(EVENTS, logger.logs.size)
+        assertEquals(0, emitter.pendingEvents())
+    }
+
+    private fun FakeLogRecord.assertChangeEvent(timeMs: Long) {
+        assertEquals("emb.state.change", eventName)
+        assertNull(body)
+        assertEquals(SeverityNumber.INFO, severityNumber)
+        assertEquals("INFO", severityText)
+        assertEquals(timeMs.millisToNanos(), timestamp)
+        assertEquals(timeMs.millisToNanos(), observedTimestamp)
+    }
+
+    private fun changeAttributes(sequence: Long, state: String, value: String): Map<String, Any> = mapOf(
+        "emb.type" to "state",
+        "emb.state.seq" to sequence,
+        "emb.entity.type" to "process",
+        "emb.entity.id" to PROCESS_IDENTIFIER,
+        "emb.state.name" to state,
+        "emb.state.new_value" to value,
+    )
+
+    private fun createRecorder(
+        includeValues: Boolean,
+        maxChanges: Int = StateRecorder.MAX_JOURNAL_CHANGES,
+        worker: BackgroundWorker = BackgroundWorker(executor),
+        eventLogger: Logger = logger,
+        maxPendingEvents: Int = 1_000,
+    ) {
+        emitter = StateEventEmitter(
+            logger = StateEventLogger({ eventLogger }, { fakeOpenTelemetry(OtelSdkMode.REGULAR).context.root() }),
+            worker = worker,
+            processIdentifierProvider = { PROCESS_IDENTIFIER },
+            includeValues = includeValues,
+            maxPendingEvents = maxPendingEvents,
+        )
+        recorder = StateRecorder(clock, maxChanges = maxChanges, listener = emitter)
+    }
+
+    private fun update(state: String, value: Any, attributes: Map<String, String> = emptyMap()): Long {
+        val time = clock.tick()
+        recorder.onEvent(StateUpdate(state, value, time, attributes))
+        return time
+    }
+
+    private object Backgrounded : SystemStateValue {
+        override fun toString(): String = "Backgrounded"
+    }
+
+    private companion object {
+        const val PROCESS_IDENTIFIER = "process-identifier"
+        const val EVENTS = 50
+        const val WAIT_SECONDS = 10L
+    }
+}

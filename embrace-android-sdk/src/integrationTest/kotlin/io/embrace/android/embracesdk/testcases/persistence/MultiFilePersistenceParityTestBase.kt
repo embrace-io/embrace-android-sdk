@@ -33,10 +33,13 @@ import org.robolectric.ParameterizedRobolectricTestRunner
  *
  * Every case runs under both modes, and under each [OtelSdkMode]. Only one of them may deliver a given session part -
  * see [deliveredParts]. The cases are split across subclasses so that Gradle can run them in different forks.
+ *
+ * [extraWorkersToFake] are faked beside the ones every case fakes, and run nothing until a case tells them to.
  */
 internal abstract class MultiFilePersistenceParityTestBase(
     protected val persistenceMode: PersistenceMode,
     otelSdkMode: OtelSdkMode,
+    extraWorkersToFake: List<Worker.Background> = emptyList(),
 ) {
 
     internal enum class PersistenceMode { SINGLE_FILE, MULTI_FILE }
@@ -65,7 +68,7 @@ internal abstract class MultiFilePersistenceParityTestBase(
                 Worker.Background.PeriodicCacheWorker,
                 Worker.Background.NonIoRegWorker,
                 Worker.Background.IoRegWorker,
-            ),
+            ) + extraWorkersToFake,
         ).apply {
             getFakedWorkerExecutor(Worker.Background.SessionPersistenceWorker).blockingMode = false
             getFakedWorkerExecutor(Worker.Background.NonIoRegWorker).blockingMode = false

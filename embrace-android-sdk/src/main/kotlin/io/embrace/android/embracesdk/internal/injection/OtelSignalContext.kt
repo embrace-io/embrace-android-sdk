@@ -5,6 +5,7 @@ import io.embrace.android.embracesdk.internal.arch.attrs.toEmbraceAttributeName
 import io.embrace.android.embracesdk.internal.arch.state.ProcessStateTracker
 import io.embrace.android.embracesdk.internal.capture.experiment.ExperimentTrackingService
 import io.embrace.android.embracesdk.internal.capture.session.UserSessionPropertiesService
+import io.embrace.android.embracesdk.internal.capture.state.StateSnapshot
 import io.embrace.android.embracesdk.internal.capture.user.UserService
 import io.embrace.android.embracesdk.internal.session.id.SessionIdsProvider
 import io.embrace.android.embracesdk.internal.session.id.SessionPartTracker
@@ -19,6 +20,9 @@ import io.opentelemetry.kotlin.semconv.UserAttributes
  *
  * The services that hold this context are constructed after the OTel SDK, so they are supplied as forward
  * references. Signals recorded before [markReady] carry no context.
+ *
+ * @param statesAsAttributes whether the values [stateSnapshotProvider] supplies are stamped as one attribute for each
+ * state, rather than as one string that holds all of them.
  */
 internal class OtelSignalContext(
     private val sessionIdsProvider: Provider<SessionIdsProvider>,
@@ -28,6 +32,8 @@ internal class OtelSignalContext(
     private val experimentTrackingServiceProvider: Provider<ExperimentTrackingService>,
     private val userSessionPropertiesServiceProvider: Provider<UserSessionPropertiesService>,
     private val instrumentationRegistryProvider: Provider<InstrumentationRegistry>,
+    private val stateSnapshotProvider: Provider<StateSnapshot?> = { null },
+    private val statesAsAttributes: Boolean = false,
 ) {
 
     @Volatile
@@ -53,14 +59,15 @@ internal class OtelSignalContext(
     }
 
     /**
-     * A snapshot of the SDK state that is stamped on OTel log records at the time they are emitted.
+     * A snapshot of the SDK state that is stamped on OTel log records at the time they are emitted. Every value is text,
+     * but for the place of the log in the order of state changes where [statesAsAttributes], which is a whole number.
      */
     @OptIn(ExperimentalSemconv::class)
-    fun getEventMetadata(): Map<String, String> {
+    fun getEventMetadata(): Map<String, Any> {
         if (!ready) {
             return emptyMap()
         }
-        return mutableMapOf<String, String>().apply {
+        return mutableMapOf<String, Any>().apply {
             val sessionPart = sessionPartTrackerProvider().getActiveSessionPart()
             val sessionState = sessionPart?.processState ?: processStateTrackerProvider().getAppState()
             val sessionIds = sessionIdsProvider().getActiveSessionIds()
@@ -81,8 +88,20 @@ internal class OtelSignalContext(
                         property.key.toEmbraceAttributeName()
                     },
             )
-            instrumentationRegistryProvider().getCurrentStates().forEach {
-                put(it.key, it.value.toString())
+            val states = stateSnapshotProvider()
+            if (states == null) {
+                instrumentationRegistryProvider().getCurrentStates().forEach {
+                    put(it.key, it.value.toString())
+                }
+            } else if (!states.isEmpty()) {
+                // one snapshot, so the values are all of one moment, and its place in the order of state changes
+                if (statesAsAttributes) {
+                    putAll(states.attributes)
+                    put(StateSnapshot.SEQUENCE_ATTRIBUTE, states.sequence)
+                } else {
+                    put(StateSnapshot.ATTRIBUTE, states.encoded)
+                    put(StateSnapshot.SEQUENCE_ATTRIBUTE, states.sequence.toString())
+                }
             }
         }
     }

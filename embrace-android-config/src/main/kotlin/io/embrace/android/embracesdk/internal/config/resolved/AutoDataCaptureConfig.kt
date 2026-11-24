@@ -72,6 +72,23 @@ interface AutoDataCaptureConfig {
     val stateCaptureEnabled: Boolean
 
     /**
+     * Whether every state is recorded into one span shared by all of them, rather than a span per state.
+     */
+    val sharedStateSpanEnabled: Boolean
+
+    /**
+     * Whether telemetry is associated with state the way v2 of the data model has it: a span carries the sequence number
+     * of the last state change before it started and before it ended, and a log carries one attribute for each state.
+     * It takes effect only where [sharedStateSpanEnabled] does.
+     */
+    val stateAssociationEnabled: Boolean
+
+    /**
+     * What an app's own OpenTelemetry exporters and processors are given of state, where [stateAssociationEnabled].
+     */
+    val stateExportMode: StateExportMode
+
+    /**
      * Whether the NetworkCallback-based connectivity service implementation is enabled.
      */
     val networkCallbackConnectivityServiceEnabled: Boolean
@@ -136,6 +153,9 @@ inline fun AutoDataCaptureConfig(
     crossinline uiLoadTracingTraceAll: () -> Boolean? = { null },
     crossinline endStartupWithAppReadyEnabled: () -> Boolean? = { null },
     crossinline stateCaptureEnabled: () -> Boolean? = { null },
+    crossinline sharedStateSpanEnabled: () -> Boolean? = { null },
+    crossinline stateAssociationEnabled: () -> Boolean? = { null },
+    crossinline stateExportMode: () -> StateExportMode? = { null },
     crossinline networkCallbackConnectivityServiceEnabled: () -> Boolean? = { null },
     crossinline navigationStateCaptureEnabled: () -> Boolean? = { null },
     crossinline smoothnessCaptureEnabled: () -> Boolean? = { null },
@@ -159,6 +179,9 @@ inline fun AutoDataCaptureConfig(
     override val uiLoadTracingTraceAll: Boolean = uiLoadTracingTraceAll() ?: true
     override val endStartupWithAppReadyEnabled: Boolean = endStartupWithAppReadyEnabled() ?: false
     override val stateCaptureEnabled: Boolean = stateCaptureEnabled() ?: true
+    override val sharedStateSpanEnabled: Boolean = sharedStateSpanEnabled() ?: false
+    override val stateAssociationEnabled: Boolean = stateAssociationEnabled() ?: false
+    override val stateExportMode: StateExportMode = stateExportMode() ?: StateExportMode.VERBOSE
     override val networkCallbackConnectivityServiceEnabled: Boolean = networkCallbackConnectivityServiceEnabled() ?: false
     override val navigationStateCaptureEnabled: Boolean = navigationStateCaptureEnabled() ?: true
     override val smoothnessCaptureEnabled: Boolean = smoothnessCaptureEnabled() ?: false

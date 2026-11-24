@@ -59,6 +59,25 @@ internal class DefaultSpanExporterTest {
     }
 
     @Test
+    fun `what the external exporters are handed is decorated, and what is stored is not`() {
+        val spanRepository = SpanRepository(FakeErrorHandler())
+        val external = FakeSpanExporter()
+        val decorated = span("decorated")
+        val exporter = DefaultSpanExporter(
+            spanRepository = spanRepository,
+            externalExporters = listOf(external),
+            exportCheck = { true },
+            externalExportDispatcher = immediateExportDispatcher(),
+            decorate = { decorated },
+        )
+
+        exporter.exportInline(listOf(span("public-span")))
+
+        assertEquals(listOf("public-span"), spanRepository.completedOtelSpans().map { it.name })
+        assertEquals(listOf(decorated), external.exportedSpans)
+    }
+
+    @Test
     fun `spans reach the repository before exportInline() returns`() {
         val spanRepository = SpanRepository(FakeErrorHandler())
         // a real dispatcher, so only a genuinely inline store is visible without draining first

@@ -46,6 +46,7 @@ import io.embrace.android.embracesdk.internal.otel.sdk.DataValidator
 import io.embrace.android.embracesdk.internal.otel.sdk.findAttributeValue
 import io.embrace.android.embracesdk.internal.otel.sdk.id.OtelIds
 import io.embrace.android.embracesdk.internal.otel.sdk.toEmbraceObjectName
+import io.embrace.android.embracesdk.internal.otel.state.SpanStateLink
 import io.embrace.android.embracesdk.internal.payload.Span
 import io.embrace.android.embracesdk.internal.serialization.PlatformSerializer
 import io.embrace.android.embracesdk.internal.telemetry.AppliedLimitType
@@ -97,6 +98,19 @@ internal class EmbraceSpanImplTest(
     private val exportedSpanAttributes: List<Map<String, Any>>
         get() = spanExporter.exportedSpans.map { it.attributes }
     private var stoppedSpanId: String? = null
+    private val discardedSpanIds = mutableListOf<String>()
+    private val givenEndTimes = mutableListOf<Pair<String, Long>>()
+    private val stateLink = object : SpanStateLink {
+        override fun startSequence(spanId: String): Long? = null
+
+        override fun onEndTimeGiven(spanId: String, endTimeMs: Long) {
+            givenEndTimes.add(spanId to endTimeMs)
+        }
+
+        override fun onDiscarded(spanId: String) {
+            discardedSpanIds.add(spanId)
+        }
+    }
 
     @Before
     fun setup() {
@@ -129,6 +143,7 @@ internal class EmbraceSpanImplTest(
             redactionFunction = ::redactionFunction,
             telemetryService = telemetryService,
             errorHandler = errorHandler,
+            stateLink = stateLink,
         )
         embraceSpan = embraceSpanFactory.create(
             otelSpanStartArgs = OtelSpanStartArgs(
@@ -205,6 +220,8 @@ internal class EmbraceSpanImplTest(
             )
             validateStoppedSpan()
         }
+        // a span that ends now is not given a time to end at
+        assertTrue(givenEndTimes.isEmpty())
     }
 
     @Test
@@ -216,6 +233,8 @@ internal class EmbraceSpanImplTest(
 
             assertTrue(discard())
             assertFalse(isRecording)
+            // whatever keeps something for a span until it ends is told that this one never will
+            assertEquals(listOf(spanId), discardedSpanIds)
             assertTrue(spanRepository.getActiveEmbraceSpans().isEmpty())
             assertTrue(spanRepository.getCompletedEmbraceSpans().isEmpty())
             assertEquals(notificationsBefore + 1, notifications.get())
@@ -240,6 +259,8 @@ internal class EmbraceSpanImplTest(
                 expectedStatus = Span.Status.ERROR,
             )
             validateStoppedSpan()
+            // whatever links spans to state is told the time the span was given to end at
+            assertEquals(listOf(checkNotNull(spanId) to expectedEndTimeMs), givenEndTimes)
         }
     }
 

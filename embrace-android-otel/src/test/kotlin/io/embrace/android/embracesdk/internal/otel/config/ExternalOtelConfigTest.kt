@@ -46,6 +46,17 @@ internal class ExternalOtelConfigTest {
         assertEquals(true, config.hasConfiguredOtlpExport())
     }
 
+    @Test
+    fun `log export is configured only by something that receives log records`() {
+        val config = ExternalOtelConfig()
+        config.addSpanExporter(FakeSpanExporter())
+        config.addSpanProcessor(FakeSpanProcessor())
+        assertEquals(true, config.hasConfiguredOtlpExport())
+        assertEquals(false, config.hasConfiguredLogExport())
+        config.addLogExporter(FakeLogRecordExporter())
+        assertEquals(true, config.hasConfiguredLogExport())
+    }
+
     private class Components {
         val spanExporter = FakeSpanExporter()
         val spanProcessor = FakeSpanProcessor()

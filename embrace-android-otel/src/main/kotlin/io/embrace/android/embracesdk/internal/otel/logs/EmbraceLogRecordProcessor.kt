@@ -5,6 +5,7 @@ package io.embrace.android.embracesdk.internal.otel.logs
 import io.embrace.android.embracesdk.internal.arch.schema.EmbType
 import io.embrace.android.embracesdk.internal.arch.schema.PrivateSpan
 import io.embrace.android.embracesdk.internal.otel.export.InlineExporter
+import io.embrace.android.embracesdk.internal.otel.state.isStateEvent
 import io.embrace.android.embracesdk.internal.utils.Provider
 import io.embrace.android.embracesdk.internal.utils.UuidSource
 import io.embrace.android.embracesdk.semconv.EmbCommonAttributes
@@ -17,17 +18,27 @@ import io.opentelemetry.kotlin.logging.model.ReadWriteLogRecord
 import io.opentelemetry.kotlin.semconv.LogAttributes
 
 /**
- * A [LogRecordProcessor] that adds the attributes Embrace requires on every log record, then exports it.
+ * A [LogRecordProcessor] that adds the attributes Embrace requires on every log record, then exports it. An attribute
+ * [metadataProvider] gives as a [Long] is added as a whole number, and any other as text.
+ *
+ * A record that is an event describing state is handed to [stateEventExporter] as it is, if there is one: nothing is
+ * added to it, and it is not exported with the logs.
  */
 internal class EmbraceLogRecordProcessor(
     private val uuidSource: UuidSource,
-    private val metadataProvider: Provider<Map<String, String>>,
+    private val metadataProvider: Provider<Map<String, Any>>,
     private val logRecordExporter: InlineExporter<LogRecordData>,
+    private val stateEventExporter: ((List<LogRecordData>) -> Unit)? = null,
 ) : LogRecordProcessor {
 
     override suspend fun forceFlush(): OperationResultCode = logRecordExporter.forceFlush()
 
     override fun onEmit(log: ReadWriteLogRecord, context: Context) {
+        if (stateEventExporter != null && context.isStateEvent()) {
+            stateEventExporter.invoke(listOf(log))
+            return
+        }
+
         val attributes = log.attributes
 
         if (!attributes.containsKey(LogAttributes.LOG_RECORD_UID)) {
@@ -45,13 +56,17 @@ internal class EmbraceLogRecordProcessor(
                     // the reserved experiments value always wins, but only non-private logs carry it
                     key == EmbCommonAttributes.EMB_EXPERIMENTS -> {
                         if (!attributes.isPrivate()) {
-                            log.setStringAttribute(key, value)
+                            log.setStringAttribute(key, value.toString())
                         }
                     }
                     // never override what the instrumentation has already set. Telemetry that knows which
                     // session it belongs to - such as an app exit reported by a later process - sets the
                     // session attributes itself, and leaves them blank if the session it describes is unknown.
-                    !attributes.containsKey(key) -> log.setStringAttribute(key, value)
+                    // A whole number stays one, and everything else is text.
+                    !attributes.containsKey(key) -> when (value) {
+                        is Long -> log.setLongAttribute(key, value)
+                        else -> log.setStringAttribute(key, value.toString())
+                    }
                 }
             }
         }

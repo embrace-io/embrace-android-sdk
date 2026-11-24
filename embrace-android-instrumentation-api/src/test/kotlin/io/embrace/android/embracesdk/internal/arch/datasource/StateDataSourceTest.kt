@@ -1,14 +1,22 @@
 package io.embrace.android.embracesdk.internal.arch.datasource
 
+import io.embrace.android.embracesdk.fakes.FakeConfigService
 import io.embrace.android.embracesdk.fakes.FakeInstrumentationArgs
 import io.embrace.android.embracesdk.fakes.TestStateDataSource
+import io.embrace.android.embracesdk.internal.config.resolved.AutoDataCaptureConfig
+import io.embrace.android.embracesdk.internal.config.resolved.EmbraceConfig
+import io.embrace.android.embracesdk.internal.config.resolved.PersistenceConfig
+import io.embrace.android.embracesdk.semconv.EmbStateTransitionAttributes
+import io.embrace.android.embracesdk.semconv.ExperimentalSemconv
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotEquals
+import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
 import java.util.Collections
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.TimeUnit
+import java.util.concurrent.atomic.AtomicInteger
 import kotlin.concurrent.thread
 
 internal class StateDataSourceTest {
@@ -115,7 +123,82 @@ internal class StateDataSourceTest {
         assertEquals(0L, tokens.single().endTimeMs)
     }
 
+    @OptIn(ExperimentalSemconv::class)
+    @Test
+    fun `a journaled state emits each change of value and counts the transitions it did not emit`() {
+        val updates = journalUpdates()
+        dataSource.onDataCaptureEnabled()
+        dataSource.onStateChange("a", 1L)
+        dataSource.onStateChange("a", 2L)
+        dataSource.onStateChange("a", 3L, droppedTransitions = 2)
+        dataSource.onStateChange("b", 4L, mapOf("key" to "value"))
+        dataSource.onPreSessionEnd()
+        dataSource.onPostSessionChange()
+        dataSource.onStateChange("c", 5L)
+
+        assertEquals(listOf("test"), updates.map(StateUpdate::state).distinct())
+        assertEquals(listOf<Any>("UNKNOWN", "a", "b", "c"), updates.map(StateUpdate::value))
+        assertEquals(listOf(1L, 4L, 5L), updates.drop(1).map(StateUpdate::timeMs))
+        assertEquals(emptyMap<String, String>(), updates[1].attributes)
+        // two updates that changed nothing, and two transitions the instrumentation said it dropped
+        assertEquals(
+            mapOf("key" to "value", EmbStateTransitionAttributes.EMB_STATE_DROPPED_BY_INSTRUMENTATION to "4"),
+            updates[2].attributes,
+        )
+        assertEquals(emptyMap<String, String>(), updates[3].attributes)
+        assertEquals("c", dataSource.getCurrentStateValue())
+        // a session part changing is nothing to a journaled state
+        assertTrue(args.destination.createdStateTokens.isEmpty())
+    }
+
+    @Test
+    fun `every update a journaled state emits is the value it holds as it is emitted`() {
+        val updates = journalUpdates()
+        // whatever handles an update orders it against the others there and then, so the value has to be current then
+        val staleUpdates = AtomicInteger()
+        args.eventBus.addHandler(StateUpdate.KEY) { update ->
+            if (dataSource.getCurrentStateValue() != update.value) {
+                staleUpdates.incrementAndGet()
+            }
+        }
+        dataSource.onDataCaptureEnabled()
+        val start = CountDownLatch(1)
+        val reporters = (0 until REPORTING_THREADS).map { reporter ->
+            thread {
+                start.await(AWAIT_SECONDS, TimeUnit.SECONDS)
+                repeat(UPDATES_PER_THREAD) { dataSource.onStateChange("$reporter-$it", it.toLong()) }
+            }
+        }
+        start.countDown()
+        reporters.forEach(Thread::join)
+
+        assertEquals(REPORTING_THREADS * UPDATES_PER_THREAD + 1, updates.size)
+        assertEquals(0, staleUpdates.get())
+        assertEquals(dataSource.getCurrentStateValue(), updates.last().value)
+    }
+
+    /**
+     * Makes [dataSource] one whose changes are journaled, and returns the updates it emits, as they are emitted.
+     */
+    private fun journalUpdates(): List<StateUpdate> {
+        args = FakeInstrumentationArgs(
+            configService = FakeConfigService(
+                config = EmbraceConfig(
+                    persistence = { PersistenceConfig(multiFileEnabled = { true }) },
+                    autoDataCapture = { AutoDataCaptureConfig(sharedStateSpanEnabled = { true }) },
+                ),
+            ),
+            sessionPartIdSupplier = { "part-id" },
+        )
+        dataSource = TestStateDataSource(args)
+        val updates = Collections.synchronizedList(mutableListOf<StateUpdate>())
+        args.eventBus.addHandler(StateUpdate.KEY) { updates.add(it) }
+        return updates
+    }
+
     private companion object {
+        const val REPORTING_THREADS = 4
+        const val UPDATES_PER_THREAD = 500
         const val MAX_TRANSITIONS = 100
         const val CAPTURE_THREAD = "first-capture"
         const val PART_CHANGE_THREAD = "part-change"

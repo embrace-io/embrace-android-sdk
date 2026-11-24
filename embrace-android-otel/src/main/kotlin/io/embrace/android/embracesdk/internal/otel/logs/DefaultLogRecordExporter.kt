@@ -25,14 +25,29 @@ internal class DefaultLogRecordExporter(
         }
         val result = logSink.storeLogs(telemetry.map(LogRecordData::toEmbracePayload))
 
-        if (result == StoreDataResult.SUCCESS && externalExporters.isNotEmpty()) {
-            val snapshot = telemetry.map { (it as? ReadableLogRecord)?.toLogRecordData() ?: it }
-            externalExportDispatcher.dispatch(externalExporters) { it.export(snapshot) }
+        if (result == StoreDataResult.SUCCESS) {
+            dispatchToExternalExporters(telemetry)
         }
 
         return when (result) {
             StoreDataResult.SUCCESS -> OperationResultCode.Success
             StoreDataResult.FAILURE -> OperationResultCode.Failure
+        }
+    }
+
+    /**
+     * Hands [telemetry] to the external exporters only: the [LogSink] never sees it.
+     */
+    fun exportExternally(telemetry: List<LogRecordData>) {
+        if (exportCheck()) {
+            dispatchToExternalExporters(telemetry)
+        }
+    }
+
+    private fun dispatchToExternalExporters(telemetry: List<LogRecordData>) {
+        if (externalExporters.isNotEmpty()) {
+            val snapshot = telemetry.map { (it as? ReadableLogRecord)?.toLogRecordData() ?: it }
+            externalExportDispatcher.dispatch(externalExporters) { it.export(snapshot) }
         }
     }
 

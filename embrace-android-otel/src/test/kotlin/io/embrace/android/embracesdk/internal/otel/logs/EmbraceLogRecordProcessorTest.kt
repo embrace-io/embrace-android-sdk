@@ -60,6 +60,19 @@ internal class EmbraceLogRecordProcessorTest {
     }
 
     @Test
+    fun `a whole number in the metadata is stamped as one, and anything else as text`() {
+        val log = FakeReadWriteLogRecord()
+        EmbraceLogRecordProcessor(
+            uuidSource = TestUuidSource(),
+            metadataProvider = { mapOf("number" to 42L, "text" to "42") },
+            logRecordExporter = logRecordExporter,
+        ).onEmit(log)
+
+        assertEquals(42L, log.attributes["number"])
+        assertEquals("42", log.attributes["text"])
+    }
+
+    @Test
     fun `experiment records are not stamped on private logs`() {
         val log = FakeReadWriteLogRecord().apply {
             setStringAttribute(PrivateSpan.key, PrivateSpan.value)

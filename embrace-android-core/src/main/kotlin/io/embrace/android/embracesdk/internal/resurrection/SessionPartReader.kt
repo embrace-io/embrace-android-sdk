@@ -1,5 +1,6 @@
 package io.embrace.android.embracesdk.internal.resurrection
 
+import io.embrace.android.embracesdk.internal.capture.state.withStateSpan
 import io.embrace.android.embracesdk.internal.config.ConfigService
 import io.embrace.android.embracesdk.internal.delivery.PayloadType
 import io.embrace.android.embracesdk.internal.delivery.StoredTelemetryMetadata
@@ -171,7 +172,7 @@ class SessionPartReader(
                 return true
             }
             val deliverable = deliverable(
-                envelope = part.envelope,
+                envelope = part.envelope.withStateSpan(part.stateJournal),
                 directory = directory,
                 isLastPartOfUserSession = isLastPartOfUserSession,
                 performingResurrection = performingResurrection,

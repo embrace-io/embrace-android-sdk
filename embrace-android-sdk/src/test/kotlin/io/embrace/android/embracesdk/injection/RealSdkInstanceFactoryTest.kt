@@ -8,11 +8,14 @@ import android.os.Looper
 import android.os.Process
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import io.embrace.android.embracesdk.assertions.waitUntilConditionMet
+import io.embrace.android.embracesdk.fakes.FakeAttributesMutator
 import io.embrace.android.embracesdk.fakes.FakeClock
 import io.embrace.android.embracesdk.fakes.FakeConfigService
 import io.embrace.android.embracesdk.fakes.FakeErrorHandler
+import io.embrace.android.embracesdk.fakes.FakeLogRecordExporter
 import io.embrace.android.embracesdk.fakes.FakeNetworkConnectivityService
 import io.embrace.android.embracesdk.fakes.FakeReadWriteLogRecord
+import io.embrace.android.embracesdk.fakes.FakeSpanExporter
 import io.embrace.android.embracesdk.fakes.OtelSdkMode
 import io.embrace.android.embracesdk.fakes.TELEMETRY_DIRS
 import io.embrace.android.embracesdk.fakes.TestPlatformSerializer
@@ -35,11 +38,13 @@ import io.embrace.android.embracesdk.internal.config.remote.OtelKotlinSdkConfig
 import io.embrace.android.embracesdk.internal.config.remote.RemoteConfig
 import io.embrace.android.embracesdk.internal.config.resolved.AutoDataCaptureConfig
 import io.embrace.android.embracesdk.internal.config.resolved.EmbraceConfig
+import io.embrace.android.embracesdk.internal.config.resolved.PersistenceConfig
 import io.embrace.android.embracesdk.internal.delivery.intake.IntakeService
 import io.embrace.android.embracesdk.internal.injection.ConfigLoadServices
 import io.embrace.android.embracesdk.internal.injection.PreStartServices
 import io.embrace.android.embracesdk.internal.injection.SdkOverrides
 import io.embrace.android.embracesdk.internal.injection.WorkerThreadPool
+import io.embrace.android.embracesdk.internal.injection.WorkerThreadPoolImpl
 import io.embrace.android.embracesdk.internal.injection.lazyOkHttpClient
 import io.embrace.android.embracesdk.internal.instance.RealSdkInstance
 import io.embrace.android.embracesdk.internal.instance.createRealSdkInstance
@@ -50,6 +55,7 @@ import io.embrace.android.embracesdk.internal.instrumentation.startup.SdkInitRes
 import io.embrace.android.embracesdk.internal.instrumentation.thread.blockage.ThreadBlockageService
 import io.embrace.android.embracesdk.internal.logging.ErrorHandler
 import io.embrace.android.embracesdk.internal.logs.LogOrchestrator
+import io.embrace.android.embracesdk.internal.otel.config.ExternalOtelConfig
 import io.embrace.android.embracesdk.internal.otel.config.OtelSdkConfig
 import io.embrace.android.embracesdk.internal.otel.sdk.OtelSdkWrapper
 import io.embrace.android.embracesdk.internal.session.lifecycle.LifecycleTracker
@@ -141,8 +147,10 @@ internal class RealSdkInstanceFactoryTest {
         workerThreadPool: WorkerThreadPool? = null,
         overrides: SdkOverrides = this.overrides,
         okHttpClient: Lazy<OkHttpClient> = lazyOkHttpClient(),
+        externalOtelConfig: ExternalOtelConfig.() -> Unit = {},
     ): RealSdkInstance {
         val preStartServices = PreStartServices(errorHandler, clock)
+        preStartServices.externalOtelConfig.externalOtelConfig()
         return createRealSdkInstance(
             context = context,
             preStartServices = preStartServices,
@@ -175,6 +183,63 @@ internal class RealSdkInstanceFactoryTest {
         val log = FakeReadWriteLogRecord()
         processor.onEmit(log, NoopOpenTelemetry.context.current())
         assertTrue(log.attributes.containsKey(EmbSessionAttributes.EMB_STATE))
+    }
+
+    @Test
+    fun `an app is given more of state than the link on a span only if it has configured an exporter or a processor`() {
+        val associated = FakeConfigService(
+            config = EmbraceConfig(
+                persistence = { PersistenceConfig(multiFileEnabled = { true }) },
+                autoDataCapture = {
+                    AutoDataCaptureConfig(sharedStateSpanEnabled = { true }, stateAssociationEnabled = { true })
+                },
+            ),
+        )
+        val requestedWorkers = mutableListOf<Worker>()
+        val workers = WorkerThreadPoolImpl(errorHandler)
+        val workerThreadPool = object : WorkerThreadPool by workers {
+            override fun backgroundWorker(worker: Worker.Background): BackgroundWorker {
+                requestedWorkers.add(worker)
+                return workers.backgroundWorker(worker)
+            }
+        }
+
+        // the mode is verbose, and there is nobody to emit an event for, or to keep the values of a span for
+        createInstance(configService = associated, workerThreadPool = workerThreadPool)
+        with(checkNotNull(otelSdkConfig)) {
+            assertNotNull(spanStateLink)
+            assertTrue(spanProcessor.isOnEndingRequired())
+            assertTrue(trailingSpanProcessors.isEmpty())
+            val resource = FakeAttributesMutator().apply(resourceAction).attributes
+            assertFalse(resource.containsKey(EmbSessionAttributes.EMB_PROCESS_IDENTIFIER))
+        }
+        assertFalse(Worker.Background.StateExportWorker in requestedWorkers)
+
+        // a span exporter alone gets what the mode gives a span, and no events, as nothing receives log records
+        createInstance(
+            configService = associated,
+            workerThreadPool = workerThreadPool,
+            externalOtelConfig = { addSpanExporter(FakeSpanExporter()) },
+        )
+        with(checkNotNull(otelSdkConfig)) {
+            assertEquals(1, trailingSpanProcessors.size)
+            val resource = FakeAttributesMutator().apply(resourceAction).attributes
+            assertEquals(processIdentifier, resource[EmbSessionAttributes.EMB_PROCESS_IDENTIFIER])
+        }
+        assertFalse(Worker.Background.StateExportWorker in requestedWorkers)
+
+        createInstance(
+            configService = associated,
+            workerThreadPool = workerThreadPool,
+            externalOtelConfig = { addLogExporter(FakeLogRecordExporter()) },
+        )
+        with(checkNotNull(otelSdkConfig)) {
+            assertNotNull(spanStateLink)
+            assertEquals(1, trailingSpanProcessors.size)
+            val resource = FakeAttributesMutator().apply(resourceAction).attributes
+            assertEquals(processIdentifier, resource[EmbSessionAttributes.EMB_PROCESS_IDENTIFIER])
+        }
+        assertTrue(Worker.Background.StateExportWorker in requestedWorkers)
     }
 
     /**

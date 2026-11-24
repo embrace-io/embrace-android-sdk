@@ -13,9 +13,15 @@ import io.embrace.android.embracesdk.internal.otel.spans.EmbraceSpanProcessor
 import io.embrace.android.embracesdk.internal.otel.spans.PrivateTelemetryFilteringSpanExporter
 import io.embrace.android.embracesdk.internal.otel.spans.PrivateTelemetryFilteringSpanProcessor
 import io.embrace.android.embracesdk.internal.otel.spans.SpanRepository
+import io.embrace.android.embracesdk.internal.otel.state.SpanStateLink
+import io.embrace.android.embracesdk.internal.otel.state.SpanStateReleaseProcessor
+import io.embrace.android.embracesdk.internal.otel.state.SpanStateTracker
+import io.embrace.android.embracesdk.internal.otel.state.StateAssociation
+import io.embrace.android.embracesdk.internal.otel.state.StateDecoratingSpanProcessor
 import io.embrace.android.embracesdk.internal.session.id.SessionIdsProvider
 import io.embrace.android.embracesdk.internal.utils.EmbTrace
 import io.embrace.android.embracesdk.internal.utils.UuidSource
+import io.embrace.android.embracesdk.semconv.EmbSessionAttributes
 import io.opentelemetry.kotlin.attributes.AttributesMutator
 import io.opentelemetry.kotlin.logging.export.LogRecordProcessor
 import io.opentelemetry.kotlin.semconv.AndroidAttributes
@@ -36,11 +42,37 @@ class OtelSdkConfig(
     private val uuidSource: UuidSource,
     private val sessionIdsProvider: () -> SessionIdsProvider? = { null },
     private val userIdProvider: () -> String? = { null },
-    private val eventMetadataProvider: () -> Map<String, String> = { emptyMap() },
+    private val eventMetadataProvider: () -> Map<String, Any> = { emptyMap() },
     private val processIdentifierProvider: () -> String = IdGenerator.Companion::generateLaunchInstanceId,
     private val externalExportDispatcher: ExternalExportDispatcher,
     val externalConfig: ExternalOtelConfig = ExternalOtelConfig(),
+    private val stateAssociation: StateAssociation? = null,
 ) : AutoCloseable {
+
+    /**
+     * Links spans to state changes, where telemetry is associated with state. What it keeps for a span outlives the
+     * span's ending only where the values are put on what is exported of it.
+     */
+    private val spanStateTracker: SpanStateTracker? = stateAssociation?.let {
+        SpanStateTracker(it.stateProvider, it.stateAt, keepUntilReleased = it.valuesOnExportedSpans)
+    }
+
+    /**
+     * What a span the SDK makes tells, and asks of, what links spans to state, where telemetry is associated with state.
+     */
+    val spanStateLink: SpanStateLink? get() = spanStateTracker
+
+    /**
+     * How many spans something is kept for to link them to state.
+     */
+    internal fun trackedStateSpans(): Int = spanStateTracker?.trackedSpans() ?: 0
+
+    /**
+     * The same tracker, where what an app's own exporters and processors are handed of a span carries the values.
+     */
+    private val spanStateDecorator: SpanStateTracker? = spanStateTracker.takeIf {
+        stateAssociation?.valuesOnExportedSpans == true
+    }
 
     val resourceAction: AttributesMutator.() -> Unit
         get() = {
@@ -59,6 +91,12 @@ class OtelSdkConfig(
 
             externalConfig.getResourceAttributes().forEach {
                 setStringAttribute(it.key, it.value)
+            }
+
+            // Says which instance of the process the states in an exported event belong to. This Resource is what an
+            // app's own exporters see. Embrace's envelope has a resource of its own, which this is no part of.
+            if (stateAssociation?.exportsEvents == true) {
+                setStringAttribute(EmbSessionAttributes.EMB_PROCESS_IDENTIFIER, processIdentifier)
             }
         }
 
@@ -97,6 +135,7 @@ class OtelSdkConfig(
             externalExporters = externalConfig.getSpanExporters().map(::PrivateTelemetryFilteringSpanExporter),
             exportCheck = exportCheck,
             externalExportDispatcher = externalExportDispatcher,
+            decorate = spanStateDecorator?.let { decorator -> decorator::withValues },
         )
     }
     val spanProcessor: SpanProcessor by lazy {
@@ -105,6 +144,7 @@ class OtelSdkConfig(
             userIdProvider,
             processIdentifier,
             spanExporter,
+            spanStateTracker,
         )
     }
 
@@ -122,11 +162,22 @@ class OtelSdkConfig(
             uuidSource,
             eventMetadataProvider,
             logRecordExporter,
+            if (stateAssociation?.exportsEvents == true) logRecordExporter::exportExternally else null,
         )
     }
 
     val externalSpanProcessors: List<SpanProcessor> by lazy {
-        externalConfig.getSpanProcessors().map { PrivateTelemetryFilteringSpanProcessor(it, exportCheck) }
+        externalConfig.getSpanProcessors().map { processor ->
+            val decorated = spanStateDecorator?.let { StateDecoratingSpanProcessor(processor, it) } ?: processor
+            PrivateTelemetryFilteringSpanProcessor(decorated, exportCheck)
+        }
+    }
+
+    /**
+     * Processors of the SDK's own that have to see a span after every other processor has.
+     */
+    val trailingSpanProcessors: List<SpanProcessor> by lazy {
+        listOfNotNull(spanStateDecorator?.let(::SpanStateReleaseProcessor))
     }
 
     val externalLogRecordProcessors: List<LogRecordProcessor> by lazy {

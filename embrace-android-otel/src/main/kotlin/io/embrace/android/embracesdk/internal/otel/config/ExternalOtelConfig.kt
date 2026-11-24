@@ -51,6 +51,11 @@ class ExternalOtelConfig {
 
     fun getResourceAttributes(): Map<String, String> = resourceAttributes
 
-    fun hasConfiguredOtlpExport(): Boolean = logExporters.isNotEmpty() || logRecordProcessors.isNotEmpty() ||
+    fun hasConfiguredOtlpExport(): Boolean = hasConfiguredLogExport() ||
         spanExporters.isNotEmpty() || spanProcessors.isNotEmpty()
+
+    /**
+     * Whether the app has supplied anything that receives log records.
+     */
+    fun hasConfiguredLogExport(): Boolean = logExporters.isNotEmpty() || logRecordProcessors.isNotEmpty()
 }

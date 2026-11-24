@@ -1,5 +1,6 @@
 package io.embrace.android.embracesdk.internal.instrumentation.crash.jvm
 
+import android.os.Looper
 import io.embrace.android.embracesdk.internal.arch.CrashTeardownHandler
 import io.embrace.android.embracesdk.internal.arch.InstrumentationArgs
 import io.embrace.android.embracesdk.internal.arch.datasource.DataSourceImpl
@@ -10,6 +11,8 @@ import io.embrace.android.embracesdk.internal.arch.schema.SchemaType
 import io.embrace.android.embracesdk.internal.arch.schema.TelemetryAttributes
 import io.embrace.android.embracesdk.internal.arch.stacktrace.truncateStacktrace
 import io.embrace.android.embracesdk.internal.logging.SdkErrorType
+import io.embrace.android.embracesdk.internal.logging.SdkErrorType.CrashAttributeCaptureFail
+import io.embrace.android.embracesdk.internal.logging.guardSdkCode
 import io.embrace.android.embracesdk.internal.logging.guardSdkCodeEach
 import io.embrace.android.embracesdk.internal.payload.LegacyExceptionInfo
 import io.embrace.android.embracesdk.internal.payload.ThreadInfo
@@ -31,6 +34,7 @@ import java.util.concurrent.TimeUnit
  */
 class JvmCrashDataSourceImpl(
     private val args: InstrumentationArgs,
+    private val mainThreadProvider: () -> Thread? = { Looper.getMainLooper()?.thread },
 ) : JvmCrashDataSource,
     DataSourceImpl(
         args = args,
@@ -96,18 +100,16 @@ class JvmCrashDataSourceImpl(
                     )
                     setAttribute(LogAttributes.LOG_RECORD_UID, crashId)
                     setAttribute(EmbAndroidAttributes.EMB_ANDROID_CRASH_NUMBER, args.ordinalStore.incrementAndGet(Ordinal.CRASH).toString())
-                    setAttribute(
-                        EmbType.System.Crash.embAndroidCrashExceptionCause,
-                        encodeToUTF8String(
-                            getExceptionCause(exception),
-                        ),
-                    )
-                    setAttribute(
-                        EmbAndroidAttributes.EMB_ANDROID_THREADS,
-                        encodeToUTF8String(
-                            getThreadsInfo(),
-                        ),
-                    )
+
+                    errorHandler.guardSdkCode(
+                        CrashAttributeCaptureFail,
+                        null,
+                    ) { encodeToUTF8String(getExceptionCause(exception)) }?.let {
+                        setAttribute(EmbType.System.Crash.embAndroidCrashExceptionCause, it)
+                    }
+                    getThreadsInfo()?.let {
+                        setAttribute(EmbAndroidAttributes.EMB_ANDROID_THREADS, it)
+                    }
                 }
 
                 val schemaType = telemetryModifier?.invoke(attrs) ?: SchemaType.JvmCrash(attrs)
@@ -151,11 +153,36 @@ class JvmCrashDataSourceImpl(
     }
 
     /**
-     * @return a String representation of the current thread list.
+     * @return a String representation of every thread, falling back to only the crashing and main threads if that fails
+     * (e.g. with an OOM), or null if both fail.
      */
-    private fun getThreadsInfo(): String {
-        val threadsList = Thread.getAllStackTraces().map { truncateStacktrace(it.key, it.value) }
-        return serializer.toJson(threadsList, ListSerializer(ThreadInfo.serializer()))
+    private fun getThreadsInfo(): String? {
+        return errorHandler.guardSdkCode(CrashAttributeCaptureFail, null) { serializeThreads(captureAllThreads()) }
+            ?: errorHandler.guardSdkCode(CrashAttributeCaptureFail, null) { serializeThreads(captureCrashingAndMainThreads()) }
+    }
+
+    private fun serializeThreads(threadsList: List<ThreadInfo>): String {
+        return encodeToUTF8String(serializer.toJson(threadsList, ListSerializer(ThreadInfo.serializer())))
+    }
+
+    private fun captureAllThreads(): List<ThreadInfo> {
+        val stacktraces = Thread.getAllStackTraces()
+        val threadsList = ArrayList<ThreadInfo>(stacktraces.size)
+        val iterator = stacktraces.entries.iterator()
+        while (iterator.hasNext()) {
+            val entry = iterator.next()
+            threadsList.add(truncateStacktrace(entry.key, entry.value))
+            // release object reference
+            iterator.remove()
+        }
+        return threadsList
+    }
+
+    private fun captureCrashingAndMainThreads(): List<ThreadInfo> {
+        val crashingThread = Thread.currentThread()
+        val mainThread = mainThreadProvider()
+        return listOfNotNull(crashingThread, mainThread.takeIf { it != crashingThread })
+            .map { truncateStacktrace(it, it.stackTrace) }
     }
 
     /**

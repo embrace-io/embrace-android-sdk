@@ -14,6 +14,7 @@ sealed class SdkErrorType(private val severity: Severity) {
 
     object UncaughtExceptionHandler : SdkErrorType(ERROR)
     object CrashTeardownFail : SdkErrorType(ERROR)
+    object CrashAttributeCaptureFail : SdkErrorType(ERROR)
     object ProcessAeiRecords : SdkErrorType(ERROR)
     object NetworkStatusCaptureFail : SdkErrorType(ERROR)
     object ScreenResCaptureFail : SdkErrorType(ERROR)

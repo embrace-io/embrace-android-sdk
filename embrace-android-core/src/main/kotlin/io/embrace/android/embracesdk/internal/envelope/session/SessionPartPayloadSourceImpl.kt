@@ -108,6 +108,6 @@ internal class SessionPartPayloadSourceImpl(
             // Only snapshot session part spans if we are caching an in-progress session payload
             spanRepository.getActiveEmbraceSpans()
                 .filter { isCacheAttempt || !it.hasEmbraceAttribute(EmbType.Ux.Session) }
-                .mapNotNull { it.snapshot() }
+                .mapNotNull { span -> errorHandler.guardSdkCode(SdkErrorType.SafeDataCaptureFail, null) { span.snapshot() } }
         }
 }

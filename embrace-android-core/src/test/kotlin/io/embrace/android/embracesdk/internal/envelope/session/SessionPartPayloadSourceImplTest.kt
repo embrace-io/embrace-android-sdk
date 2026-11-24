@@ -70,6 +70,16 @@ internal class SessionPartPayloadSourceImplTest {
     }
 
     @Test
+    fun `a span that fails to snapshot does not drop the session part span from a cached payload`() {
+        val failingSpan = FakeEmbraceSdkSpan.started().apply {
+            snapshotFailure = OutOfMemoryError()
+        }
+        spanRepository.trackStartedEmbraceSpan(failingSpan)
+        val payload = impl.getSessionPartPayload(SessionPartSnapshotType.PERIODIC_CACHE, false)
+        assertPayloadPopulated(payload = payload, hasSessionSnapshot = true, hasNonSessionSnapshots = true)
+    }
+
+    @Test
     fun `session lifecycle change`() {
         val payload = impl.getSessionPartPayload(SessionPartSnapshotType.NORMAL_END, true)
         assertPayloadPopulated(payload = payload, hasSessionSnapshot = false, hasNonSessionSnapshots = true)

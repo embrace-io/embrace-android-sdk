@@ -29,6 +29,7 @@ internal class ThreadBlockageServiceImpl(
     private val appStateTracker = args.processStateTracker
     private val telemetryDestination = args.destination
     private var delayedBackgroundCheckTask: ScheduledFuture<*>? = null
+    private val spanCache = ThreadBlockageSpanCache(clock, random)
 
     /**
      * Schedules a delayed check that stops monitoring if the process started in the background and stays there. Must be called once,
@@ -59,6 +60,7 @@ internal class ThreadBlockageServiceImpl(
 
     override fun onPostSessionChange() {
         stacktraceSampler.onPostSessionChange()
+        spanCache.clear()
     }
 
     /**
@@ -81,24 +83,19 @@ internal class ThreadBlockageServiceImpl(
     }
 
     override fun snapshotSpans(): List<Span> = EmbTrace.trace("anr-snapshot") {
-        stacktraceSampler.getThreadBlockageIntervals().map { interval ->
-            mapIntervalToSpan(interval, clock, random)
-        }
+        spanCache.map(stacktraceSampler.getThreadBlockageIntervals())
     }
 
     override fun record() = EmbTrace.trace("anr-record") {
-        stacktraceSampler.getThreadBlockageIntervals().forEach { interval ->
-            val attributes = mapIntervalToSpanAttributes(interval).toEmbracePayload()
-            val events = interval.samples?.map {
-                mapSampleToSpanEvent(it).toArchSpanEvent()
-            } ?: emptyList()
+        val intervals = stacktraceSampler.getThreadBlockageIntervals()
+        intervals.zip(spanCache.map(intervals)).forEach { (interval, span) ->
             telemetryDestination.recordCompletedSpan(
                 name = "thread-blockage",
                 startTimeMs = interval.startTime,
                 endTimeMs = interval.endTime ?: clock.now(),
                 type = EmbType.Performance.ThreadBlockage,
-                attributes = attributes,
-                events = events,
+                attributes = span.attributes?.toEmbracePayload() ?: emptyMap(),
+                events = span.events?.map { it.toArchSpanEvent() } ?: emptyList(),
             )
         }
     }

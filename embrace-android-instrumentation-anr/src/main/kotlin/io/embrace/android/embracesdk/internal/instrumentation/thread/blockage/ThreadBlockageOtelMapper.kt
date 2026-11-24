@@ -13,12 +13,17 @@ import kotlin.random.Random
 
 private const val INVALID_SPAN_ID: String = "0000000000000000"
 
-internal fun mapIntervalToSpan(interval: ThreadBlockageInterval, clock: Clock, random: Random): Span {
+internal fun mapIntervalToSpan(
+    interval: ThreadBlockageInterval,
+    clock: Clock,
+    traceId: String,
+    spanId: String,
+): Span {
     val attrs = mapIntervalToSpanAttributes(interval)
     val events = mapIntervalToSpanEvents(interval)
     return Span(
-        traceId = generateId(16, random),
-        spanId = generateId(8, random),
+        traceId = traceId,
+        spanId = spanId,
         parentSpanId = INVALID_SPAN_ID,
         name = "emb-thread-blockage",
         startTimeNanos = interval.startTime.millisToNanos(),

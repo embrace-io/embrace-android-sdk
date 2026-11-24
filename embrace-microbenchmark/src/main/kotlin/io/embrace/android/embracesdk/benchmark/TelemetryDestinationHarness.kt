@@ -5,6 +5,7 @@ import io.embrace.android.embracesdk.internal.arch.datasource.TelemetryDestinati
 import io.embrace.android.embracesdk.internal.arch.destination.TelemetryDestinationImpl
 import io.embrace.android.embracesdk.internal.clock.Clock
 import io.embrace.android.embracesdk.internal.clock.NormalizedIntervalClock
+import io.embrace.android.embracesdk.internal.config.ConfigService
 import io.embrace.android.embracesdk.internal.config.behavior.BehaviorThresholdCheck
 import io.embrace.android.embracesdk.internal.config.instrumented.InstrumentedConfigImpl
 import io.embrace.android.embracesdk.internal.config.instrumented.schema.InstrumentedConfig
@@ -15,6 +16,8 @@ import io.embrace.android.embracesdk.internal.injection.createCurrentSessionPart
 import io.embrace.android.embracesdk.internal.injection.createOtelSdkConfig
 import io.embrace.android.embracesdk.internal.injection.createRedactionFunction
 import io.embrace.android.embracesdk.internal.logging.androidLogcat
+import io.embrace.android.embracesdk.internal.otel.config.ExternalOtelConfig
+import io.embrace.android.embracesdk.internal.otel.config.OtelSdkConfig
 import io.embrace.android.embracesdk.internal.otel.logs.LogSinkImpl
 import io.embrace.android.embracesdk.internal.otel.sdk.OtelSdkWrapper
 import io.embrace.android.embracesdk.internal.spans.CurrentSessionPartSpan
@@ -27,6 +30,8 @@ import io.embrace.android.embracesdk.internal.otel.spans.EmbraceSpanFactoryImpl
 import io.embrace.android.embracesdk.internal.otel.spans.SpanRepository
 import io.embrace.android.embracesdk.internal.otel.spans.SpanService
 import io.embrace.android.embracesdk.internal.otel.spans.SpanServiceImpl
+import io.embrace.android.embracesdk.internal.otel.state.StateAssociation
+import io.embrace.android.embracesdk.internal.otel.state.StateEventLogger
 import io.embrace.android.embracesdk.internal.telemetry.AppliedLimitType
 import io.embrace.android.embracesdk.internal.telemetry.InternalTelemetryService
 import io.embrace.android.embracesdk.internal.utils.UuidSource
@@ -35,14 +40,22 @@ import io.embrace.android.embracesdk.internal.utils.UuidSourceImpl
 /**
  * [useKotlinSdk] selects the opentelemetry-kotlin implementation that backs the OTel module.
  * [clock] supplies every timestamp the recorded telemetry carries.
+ * [externalOtelConfig] holds the processors and exporters an app would add to the OTel module.
+ * [eventMetadataProvider] supplies the attributes every log record is stamped with.
+ * [stateAssociation] says how telemetry is associated with state, if it is.
  */
 internal class TelemetryDestinationHarness(
     useKotlinSdk: Boolean = false,
-    clock: Clock = NormalizedIntervalClock(),
+    val clock: Clock = NormalizedIntervalClock(),
+    private val externalOtelConfig: ExternalOtelConfig = ExternalOtelConfig(),
+    private val eventMetadataProvider: () -> Map<String, Any> = { emptyMap() },
+    private val stateAssociation: StateAssociation? = null,
 ) {
 
     private val initServices = TestInitServices(clock)
-    private val configService = BenchmarkConfigService(
+    val errorHandler: ErrorHandler = initServices.errorHandler
+    val telemetryService: InternalTelemetryService = initServices.telemetryService
+    val configService: ConfigService = BenchmarkConfigService(
         thresholdCheck = BehaviorThresholdCheck { initServices.uuidSource.createUuid() },
         remoteConfig = RemoteConfig(
             otelKotlinSdkConfig = OtelKotlinSdkConfig(pctEnabled = if (useKotlinSdk) 100f else 0f),
@@ -53,17 +66,22 @@ internal class TelemetryDestinationHarness(
     val logSink: LogSink = LogSinkImpl(initServices.errorHandler)
     val spanRepository: SpanRepository = SpanRepository(initServices.errorHandler)
 
+    private val otelSdkConfig: OtelSdkConfig = createOtelSdkConfig(
+        spanRepository = spanRepository,
+        logSink = logSink,
+        instrumentedConfig = initServices.instrumentedConfig,
+        systemInfo = initServices.systemInfo,
+        uuidSource = initServices.uuidSource,
+        errorHandler = initServices.errorHandler,
+        externalOtelConfig = externalOtelConfig,
+        eventMetadataProvider = eventMetadataProvider,
+        stateAssociation = stateAssociation,
+    )
+
     private val otelSdkWrapper: OtelSdkWrapper by lazy {
         OtelSdkWrapper(
             otelClock = openTelemetryClock,
-            configuration = createOtelSdkConfig(
-                spanRepository = spanRepository,
-                logSink = logSink,
-                instrumentedConfig = initServices.instrumentedConfig,
-                systemInfo = initServices.systemInfo,
-                uuidSource = initServices.uuidSource,
-                errorHandler = initServices.errorHandler,
-            ),
+            configuration = otelSdkConfig,
             spanServiceProvider = { spanService },
             errorHandler = initServices.errorHandler,
             useKotlinSdk = configService.otelBehavior.shouldUseKotlinSdk(),
@@ -96,6 +114,7 @@ internal class TelemetryDestinationHarness(
         redactionFunction = createRedactionFunction(SensitiveKeysBehavior(configService.config.sensitiveKeys)),
         telemetryService = initServices.telemetryService,
         errorHandler = initServices.errorHandler,
+        stateLink = otelSdkConfig.spanStateLink,
     )
 
     val spanService: SpanService by lazy {
@@ -112,6 +131,14 @@ internal class TelemetryDestinationHarness(
     init {
         currentSessionPartSpan.initializeService(0)
     }
+
+    /**
+     * Emits events that describe state through the module's logging pipeline, to whatever [externalOtelConfig] holds.
+     */
+    val stateEventLogger: StateEventLogger = StateEventLogger(
+        loggerProvider = { otelSdkWrapper.sdkLogger },
+        rootContextProvider = { otelSdkWrapper.openTelemetryKotlin.context.root() },
+    )
 
     val destination: TelemetryDestination = TelemetryDestinationImpl(
         clock = initServices.clock,
@@ -132,6 +159,7 @@ internal class TelemetryDestinationHarness(
             dataValidator = validator,
             telemetryService = NoopInternalTelemetryService,
             errorHandler = initServices.errorHandler,
+            stateLink = otelSdkConfig.spanStateLink,
         )
         return SpanServiceImpl(
             spanRepository = spanRepository,

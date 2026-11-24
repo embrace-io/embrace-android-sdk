@@ -47,6 +47,12 @@ tasks.named("check") {
     setDependsOn(dependsOn.filterNot { it is TaskProvider<*> && it.name == "lint" })
 }
 
+// Robolectric reaches the instrumented tests through the fakes. On a device it is never used, but its permission granter
+// is discovered ahead of the real one and fails the storage permission that BenchmarkRule requests on API 29 and below.
+configurations.matching { it.name.contains("AndroidTest") }.configureEach {
+    exclude(group = "org.robolectric")
+}
+
 dependencies {
     implementation(libs.opentelemetry.kotlin.api)
     implementation(libs.opentelemetry.kotlin.compat)
@@ -61,6 +67,7 @@ dependencies {
     implementation(project(":embrace-android-payload"))
     implementation(project(":embrace-android-session-persistence"))
     implementation(project(":embrace-android-instrumentation-api"))
+    implementation(project(":embrace-android-envelope"))
 
     androidTestImplementation(libs.androidx.test.runner)
     androidTestImplementation(libs.androidx.test.junit)

@@ -1,0 +1,72 @@
+# A stock OpenTelemetry Collector (contrib 0.165.0) that receives what the SDK exports over OTLP and writes it to files
+# under $STATE_OTLP_OUT twice: once as it arrived, and once after the transform processor has run the statements in
+# this file. scripts/state-otlp/run.sh starts it, runs the SDK's OTLP harness against it and keeps what it wrote.
+receivers:
+  otlp:
+    protocols:
+      http:
+        endpoint: 127.0.0.1:4318
+
+processors:
+  # Statements Embrace could publish for a customer's Collector. They add OpenTelemetry's own names beside Embrace's
+  # where one exists, and reshape a state event that carries every value into the entity state event OpenTelemetry has
+  # in development. Nothing here joins one record to another: the transform processor sees one record at a time.
+  transform/state:
+    error_mode: propagate
+    trace_statements:
+      - context: span
+        statements:
+          # the network a span started on, under OpenTelemetry's name and with its values
+          - set(attributes["network.connection.type"], "wifi") where IsMatch(attributes["emb.state.value.network"], "^wifi")
+          - set(attributes["network.connection.type"], "cell") where IsMatch(attributes["emb.state.value.network"], "^wan")
+          - set(attributes["network.connection.type"], "unavailable") where attributes["emb.state.value.network"] == "none"
+          - set(attributes["network.connection.type"], "unknown") where IsMatch(attributes["emb.state.value.network"], "^(unknown|unverified)")
+          # the screen, but not a placeholder the SDK generated
+          - set(attributes["app.screen.name"], attributes["emb.state.value.screen-automatic"]) where attributes["emb.state.value.screen-automatic"] != nil and attributes["emb.state.value_type.screen-automatic"] == nil
+    log_statements:
+      - context: log
+        conditions:
+          - event_name != "emb.state.change" and event_name != "emb.state.snapshot"
+        statements:
+          - set(attributes["network.connection.type"], "wifi") where IsMatch(attributes["emb.state.value.network"], "^wifi")
+          - set(attributes["network.connection.type"], "cell") where IsMatch(attributes["emb.state.value.network"], "^wan")
+          - set(attributes["network.connection.type"], "unavailable") where attributes["emb.state.value.network"] == "none"
+          - set(attributes["network.connection.type"], "unknown") where IsMatch(attributes["emb.state.value.network"], "^(unknown|unverified)")
+          - set(attributes["app.screen.name"], attributes["emb.state.value.screen-automatic"]) where attributes["emb.state.value.screen-automatic"] != nil and attributes["emb.state.value_type.screen-automatic"] == nil
+      - context: log
+        conditions:
+          - event_name == "emb.state.change" or event_name == "emb.state.snapshot"
+        statements:
+          # the entity's description: every state's value, under the state's own name
+          - set(cache["description"], attributes)
+          - keep_matching_keys(cache["description"], "^emb\\.state\\.value\\.")
+          - replace_all_patterns(cache["description"], "key", "^emb\\.state\\.value\\.", "")
+          # an event that carries no values, as a change does in the association rendering, is left as it is
+          - delete_matching_keys(attributes, "^emb\\.state\\.value(_type)?\\.") where Len(cache["description"]) > 0
+          - set(attributes["entity.description"], cache["description"]) where Len(cache["description"]) > 0
+          - set(attributes["entity.type"], attributes["emb.entity.type"]) where Len(cache["description"]) > 0
+          - 'set(attributes["entity.id"], {"emb.process_identifier": attributes["emb.entity.id"]}) where Len(cache["description"]) > 0'
+          - delete_key(attributes, "emb.entity.type") where Len(cache["description"]) > 0
+          - delete_key(attributes, "emb.entity.id") where Len(cache["description"]) > 0
+          # the sequence and the change stay beside the entity event, which has no place of its own for them
+          - set(event_name, "entity.state") where Len(cache["description"]) > 0
+
+exporters:
+  file/raw_traces:
+    path: "${env:STATE_OTLP_OUT}/raw-traces.jsonl"
+  file/raw_logs:
+    path: "${env:STATE_OTLP_OUT}/raw-logs.jsonl"
+  file/ottl_traces:
+    path: "${env:STATE_OTLP_OUT}/ottl-traces.jsonl"
+  file/ottl_logs:
+    path: "${env:STATE_OTLP_OUT}/ottl-logs.jsonl"
+
+service:
+  telemetry:
+    metrics: { level: none }
+    logs: { level: info }
+  pipelines:
+    traces/raw: { receivers: [otlp], exporters: [file/raw_traces] }
+    logs/raw: { receivers: [otlp], exporters: [file/raw_logs] }
+    traces/ottl: { receivers: [otlp], processors: [transform/state], exporters: [file/ottl_traces] }
+    logs/ottl: { receivers: [otlp], processors: [transform/state], exporters: [file/ottl_logs] }

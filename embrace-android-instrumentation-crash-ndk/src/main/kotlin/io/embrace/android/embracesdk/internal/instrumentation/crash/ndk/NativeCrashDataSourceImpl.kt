@@ -23,6 +23,11 @@ internal class NativeCrashDataSourceImpl(
     limitStrategy = NoopLimitStrategy,
     instrumentationName = "native_crash_data_source",
 ) {
+    /**
+     * Every crash loaded in a process shares the same symbol map instance
+     */
+    private var serializedSymbols: Pair<Map<String, String>, String>? = null
+
     override fun onDataCaptureDisabled() {
         nativeCrashHandlerInstaller.disable()
     }
@@ -35,16 +40,17 @@ internal class NativeCrashDataSourceImpl(
         metadata: Map<String, String>,
     ) {
         captureTelemetry {
+            val fullCrash = nativeCrashProcessor.loadNativeCrash(nativeCrash) ?: return@captureTelemetry
             val nativeCrashNumber = args.ordinalStore.incrementAndGet(Ordinal.NATIVE_CRASH)
             val crashAttributes = TelemetryAttributes().apply {
                 setAttribute(
                     key = EmbSessionAttributes.EMB_SESSION_PART_ID,
-                    value = nativeCrash.sessionPartId,
+                    value = fullCrash.sessionPartId,
                 )
 
                 setAttribute(
                     key = EmbSessionAttributes.EMB_USER_SESSION_ID,
-                    value = nativeCrash.userSessionId,
+                    value = fullCrash.userSessionId,
                 )
 
                 metadata.forEach { attribute ->
@@ -57,7 +63,7 @@ internal class NativeCrashDataSourceImpl(
                     keepBlankishValues = false,
                 )
 
-                nativeCrash.crash?.let { crashData ->
+                fullCrash.crash?.let { crashData ->
                     setAttribute(
                         key = EmbType.System.NativeCrash.embNativeCrashException,
                         value = crashData,
@@ -65,11 +71,11 @@ internal class NativeCrashDataSourceImpl(
                     )
                 }
 
-                val symbols = nativeCrash.symbols
+                val symbols = fullCrash.symbols
                 if (!symbols.isNullOrEmpty()) {
                     setAttribute(
                         EmbType.System.NativeCrash.embNativeCrashSymbols,
-                        args.serializer.toJson(symbols, MapSerializer(String.serializer(), String.serializer())),
+                        serializeSymbols(symbols),
                         keepBlankishValues = false,
                     )
                 }
@@ -82,8 +88,19 @@ internal class NativeCrashDataSourceImpl(
                 schemaType = SchemaType.NativeCrash(crashAttributes),
                 severity = LogSeverity.ERROR,
                 message = "",
-                timestampMs = nativeCrash.timestamp,
+                timestampMs = fullCrash.timestamp,
             )
+        }
+    }
+
+    private fun serializeSymbols(symbols: Map<String, String>): String {
+        serializedSymbols?.let { (map, json) ->
+            if (map === symbols) {
+                return json
+            }
+        }
+        return args.serializer.toJson(symbols, MapSerializer(String.serializer(), String.serializer())).also {
+            serializedSymbols = symbols to it
         }
     }
 

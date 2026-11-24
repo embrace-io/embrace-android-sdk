@@ -9,9 +9,17 @@ import io.embrace.android.embracesdk.internal.payload.NativeCrashData
 interface NativeCrashProcessor {
 
     /**
-     * Get all the native crash instances that have been persisted without deleting anything
+     * Get a summary of every native crash that has been persisted, without deleting anything. Use
+     * [loadNativeCrash] to read from disk.
      */
     fun getNativeCrashes(): List<NativeCrashData>
+
+    /**
+     * Read the full crash for a summary returned by [getNativeCrashes], or the summary without its report if its
+     * file can't be read. Returns null if the crash has been deleted, as it has already been handled, and
+     * [nativeCrash] as it is if it was never stored.
+     */
+    fun loadNativeCrash(nativeCrash: NativeCrashData): NativeCrashData?
 
     /**
      * Purge all existing native crash data files.

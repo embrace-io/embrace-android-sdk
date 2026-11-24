@@ -32,24 +32,39 @@ internal class NativeCrashProcessorImpl(
     )
 
     /**
-     * The native crashes on disk, lazily-loaded, each with the stored metadata file it was loaded
-     * using, by native crash ID. Loading once is safe because no new crash files will appear
+     * The native crashes on disk, lazily-indexed, each with the stored metadata file it was read
+     * from, by native crash ID. Indexing once is safe because no new crash files will appear
      * during the lifetime of the process given they are only written after a crash, which means the
      * process (and this map) is dead anyway.
      *
      * Not synchronized, as every caller runs on the same worker thread.
      */
-    private val crashes: MutableMap<String, LoadedCrash> by lazy(::loadAllNativeCrashes)
+    private val crashes: MutableMap<String, IndexedCrash> by lazy(::indexNativeCrashes)
+
+    /**
+     * IDs of the indexed crashes that have been deleted, which have already been handled and so must not be sent again.
+     */
+    private val deletedCrashIds = mutableSetOf<String>()
 
     override fun getNativeCrashes(): List<NativeCrashData> {
         if (!sharedObjectLoader.loaded.get()) {
             return emptyList()
         }
-        return crashes.values.map(LoadedCrash::data)
+        return crashes.values.map(IndexedCrash::summary)
+    }
+
+    override fun loadNativeCrash(nativeCrash: NativeCrashData): NativeCrashData? {
+        if (!sharedObjectLoader.loaded.get()) {
+            return nativeCrash
+        }
+        val indexed = crashes[nativeCrash.nativeCrashId]
+            ?: return nativeCrash.takeUnless { it.nativeCrashId in deletedCrashIds }
+        return readCrash(indexed.metadata, phase = "sending")?.copy(symbols = symbolMap) ?: indexed.summary
     }
 
     override fun deleteAllNativeCrashes() {
         if (sharedObjectLoader.loaded.get()) {
+            deletedCrashIds.addAll(crashes.keys)
             crashes.clear()
         }
         fileStorageService.getStoredPayloads().forEach(fileStorageService::delete)
@@ -59,48 +74,60 @@ internal class NativeCrashProcessorImpl(
         if (!sharedObjectLoader.loaded.get()) {
             return
         }
-        crashes.remove(nativeCrash.nativeCrashId)?.let { fileStorageService.delete(it.metadata) }
+        crashes.remove(nativeCrash.nativeCrashId)?.let {
+            deletedCrashIds.add(nativeCrash.nativeCrashId)
+            fileStorageService.delete(it.metadata)
+        }
     }
 
-    private fun loadAllNativeCrashes(): MutableMap<String, LoadedCrash> {
-        val nativeCrashes = LinkedHashMap<String, LoadedCrash>()
+    private fun indexNativeCrashes(): MutableMap<String, IndexedCrash> {
+        val nativeCrashes = LinkedHashMap<String, IndexedCrash>()
         fileStorageService.getStoredPayloads().forEach { metadata ->
-            val crashFile = File(outputDir.value, metadata.filename)
-            try {
-                val crashReport = delegate.getCrashReport(crashFile.path)
-                if (crashReport != null) {
-                    val nativeCrash = serializer
-                        .fromJson(crashReport, NativeCrashData.serializer())
-                        .copy(symbols = symbolMap)
-                    nativeCrashes[nativeCrash.nativeCrashId] = LoadedCrash(nativeCrash, metadata)
-                } else {
-                    // A file that can't be read now never will be (e.g. truncated mid-write), so delete it
-                    // rather than failing to load it on every launch.
-                    crashFile.delete()
-                    errorHandler.trackSdkError(
-                        type = SdkErrorType.NativeCrashLoadFail,
-                        throwable = FileNotFoundException("Failed to load crash report at ${crashFile.path}"),
-                    )
-                }
-            } catch (t: Throwable) {
-                crashFile.delete()
-                errorHandler.trackSdkError(
-                    type = SdkErrorType.NativeCrashLoadFail,
-                    throwable = RuntimeException(
-                        "Failed to read native crash file {crashFilePath=" + crashFile.absolutePath + "}.",
-                        t,
-                    ),
-                )
+            readCrash(metadata, phase = "indexing")?.let { nativeCrash ->
+                val summary = nativeCrash.copy(crash = null, symbols = null)
+                nativeCrashes[summary.nativeCrashId] = IndexedCrash(summary, metadata)
             }
         }
         return nativeCrashes
     }
 
     /**
-     * A native crash and the stored metadata file that defines its identity.
+     * Reads the crash stored in the file for [metadata], or deletes the file and returns null if it can't be read.
+     * [phase] says whether the crash was being indexed or sent, which tells apart a crash that was dropped from
+     * one that was sent without its report.
      */
-    private class LoadedCrash(
-        val data: NativeCrashData,
+    private fun readCrash(metadata: StoredTelemetryMetadata, phase: String): NativeCrashData? {
+        val crashFile = File(outputDir.value, metadata.filename)
+        try {
+            val crashReport = delegate.getCrashReport(crashFile.path)
+            if (crashReport != null) {
+                return serializer.fromJson(crashReport, NativeCrashData.serializer())
+            }
+            // A file that can't be read now never will be (e.g. truncated mid-write), so delete it
+            // rather than failing to load it on every launch.
+            crashFile.delete()
+            errorHandler.trackSdkError(
+                type = SdkErrorType.NativeCrashLoadFail,
+                throwable = FileNotFoundException("Failed to load crash report at ${crashFile.path} while $phase"),
+            )
+        } catch (t: Throwable) {
+            crashFile.delete()
+            errorHandler.trackSdkError(
+                type = SdkErrorType.NativeCrashLoadFail,
+                throwable = RuntimeException(
+                    "Failed to read native crash file while $phase {crashFilePath=" + crashFile.absolutePath + "}.",
+                    t,
+                ),
+            )
+        }
+        return null
+    }
+
+    /**
+     * A summary of a native crash, without its report or symbols, and the stored metadata file that defines its identity.
+     */
+    private class IndexedCrash(
+        val summary: NativeCrashData,
         val metadata: StoredTelemetryMetadata,
     )
 }

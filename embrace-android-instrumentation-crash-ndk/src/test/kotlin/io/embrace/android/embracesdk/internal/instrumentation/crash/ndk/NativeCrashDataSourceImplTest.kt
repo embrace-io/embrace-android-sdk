@@ -3,14 +3,17 @@ package io.embrace.android.embracesdk.internal.instrumentation.crash.ndk
 import io.embrace.android.embracesdk.fakes.FakeInstrumentationArgs
 import io.embrace.android.embracesdk.fakes.FakeNativeCrashHandlerInstaller
 import io.embrace.android.embracesdk.fakes.FakeNativeCrashProcessor
+import io.embrace.android.embracesdk.fakes.TestPlatformSerializer
 import io.embrace.android.embracesdk.internal.arch.attrs.toEmbraceAttributeName
 import io.embrace.android.embracesdk.internal.arch.schema.EmbType
 import io.embrace.android.embracesdk.internal.arch.schema.EmbType.System.NativeCrash.embNativeCrashException
 import io.embrace.android.embracesdk.internal.arch.schema.EmbType.System.NativeCrash.embNativeCrashSymbols
 import io.embrace.android.embracesdk.internal.payload.NativeCrashData
+import io.embrace.android.embracesdk.internal.serialization.PlatformSerializer
 import io.embrace.android.embracesdk.internal.utils.toUTF8String
 import io.embrace.android.embracesdk.semconv.EmbAndroidAttributes
 import io.embrace.android.embracesdk.semconv.EmbSessionAttributes
+import kotlinx.serialization.SerializationStrategy
 import kotlinx.serialization.builtins.MapSerializer
 import kotlinx.serialization.builtins.nullable
 import kotlinx.serialization.builtins.serializer
@@ -50,6 +53,7 @@ internal class NativeCrashDataSourceImplTest {
     @Test
     fun `native crash sent with session properties and metadata`() {
         val sessionPropertyName = "prop".toEmbraceAttributeName()
+        crashProcessor.addNativeCrashData(testNativeCrashData)
         nativeCrashDataSource.sendNativeCrash(
             nativeCrash = testNativeCrashData,
             userSessionProperties = mapOf(sessionPropertyName to "value"),
@@ -84,15 +88,17 @@ internal class NativeCrashDataSourceImplTest {
 
     @Test
     fun `native crash sent without attributes that are null`() {
+        val crash = NativeCrashData(
+            nativeCrashId = "nativeCrashId",
+            sessionPartId = "",
+            userSessionId = "",
+            timestamp = 1700000000000,
+            crash = null,
+            symbols = null,
+        )
+        crashProcessor.addNativeCrashData(crash)
         nativeCrashDataSource.sendNativeCrash(
-            nativeCrash = NativeCrashData(
-                nativeCrashId = "nativeCrashId",
-                sessionPartId = "",
-                userSessionId = "",
-                timestamp = 1700000000000,
-                crash = null,
-                symbols = null,
-            ),
+            nativeCrash = crash,
             userSessionProperties = emptyMap(),
             metadata = emptyMap(),
         )
@@ -110,15 +116,17 @@ internal class NativeCrashDataSourceImplTest {
 
     @Test
     fun `native crash sent without attributes that are blankish`() {
+        val crash = NativeCrashData(
+            nativeCrashId = "nativeCrashId",
+            sessionPartId = "",
+            userSessionId = "",
+            timestamp = 1700000000000,
+            crash = "",
+            symbols = emptyMap(),
+        )
+        crashProcessor.addNativeCrashData(crash)
         nativeCrashDataSource.sendNativeCrash(
-            nativeCrash = NativeCrashData(
-                nativeCrashId = "nativeCrashId",
-                sessionPartId = "",
-                userSessionId = "",
-                timestamp = 1700000000000,
-                crash = "",
-                symbols = emptyMap(),
-            ),
+            nativeCrash = crash,
             userSessionProperties = emptyMap(),
             metadata = emptyMap(),
         )
@@ -133,6 +141,65 @@ internal class NativeCrashDataSourceImplTest {
             assertNull(attributes[embNativeCrashException])
             assertNull(attributes[embNativeCrashSymbols])
         }
+    }
+
+    @Test
+    fun `symbols shared between native crashes are serialized once`() {
+        var symbolSerializations = 0
+        val delegate = TestPlatformSerializer()
+        args = FakeInstrumentationArgs(
+            serializer = object : PlatformSerializer by delegate {
+                override fun <T> toJson(value: T, serializer: SerializationStrategy<T>): String {
+                    if (value === testNativeCrashData.symbols) {
+                        symbolSerializations++
+                    }
+                    return delegate.toJson(value, serializer)
+                }
+            },
+        )
+        nativeCrashDataSource = NativeCrashDataSourceImpl(crashProcessor, installer, args)
+
+        listOf("first", "second").forEach { id ->
+            crashProcessor.addNativeCrashData(testNativeCrashData.copy(nativeCrashId = id))
+            nativeCrashDataSource.sendNativeCrash(
+                nativeCrash = testNativeCrashData.copy(nativeCrashId = id, crash = null, symbols = null),
+                userSessionProperties = emptyMap(),
+                metadata = emptyMap(),
+            )
+        }
+
+        assertEquals(1, symbolSerializations)
+        val symbols = args.destination.logEvents.map { it.schemaType.attributes()[embNativeCrashSymbols] }
+        assertEquals(listOf("{\"key\":\"value\"}", "{\"key\":\"value\"}"), symbols)
+    }
+
+    @Test
+    fun `native crash is sent with the report and symbols loaded by the processor`() {
+        crashProcessor.addNativeCrashData(testNativeCrashData)
+
+        nativeCrashDataSource.sendNativeCrash(
+            nativeCrash = testNativeCrashData.copy(crash = null, symbols = null),
+            userSessionProperties = emptyMap(),
+            metadata = emptyMap(),
+        )
+
+        val attributes = args.destination.logEvents.single().schemaType.attributes()
+        assertEquals(testNativeCrashData.crash, attributes[embNativeCrashException])
+        assertEquals("{\"key\":\"value\"}", attributes[embNativeCrashSymbols])
+    }
+
+    @Test
+    fun `a deleted native crash is not sent again`() {
+        crashProcessor.addNativeCrashData(testNativeCrashData)
+        nativeCrashDataSource.deleteNativeCrash(testNativeCrashData)
+
+        nativeCrashDataSource.sendNativeCrash(
+            nativeCrash = testNativeCrashData.copy(crash = null, symbols = null),
+            userSessionProperties = emptyMap(),
+            metadata = emptyMap(),
+        )
+
+        assertTrue(args.destination.logEvents.isEmpty())
     }
 
     private val testNativeCrashData: NativeCrashData = NativeCrashData(

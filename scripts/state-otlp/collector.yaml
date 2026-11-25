@@ -39,10 +39,10 @@ processors:
         statements:
           # the entity's description: every state's value, under the state's own name
           - set(cache["description"], attributes)
-          - keep_matching_keys(cache["description"], "^emb\\.state\\.value\\.")
-          - replace_all_patterns(cache["description"], "key", "^emb\\.state\\.value\\.", "")
+          - keep_matching_keys(cache["description"], "^emb\\.states\\.value\\.")
+          - replace_all_patterns(cache["description"], "key", "^emb\\.states\\.value\\.", "")
           # an event that carries no values, as a change does in the association rendering, is left as it is
-          - delete_matching_keys(attributes, "^emb\\.state\\.value(_type)?\\.") where Len(cache["description"]) > 0
+          - delete_matching_keys(attributes, "^emb\\.states\\.value(_type)?\\.") where Len(cache["description"]) > 0
           - set(attributes["entity.description"], cache["description"]) where Len(cache["description"]) > 0
           - set(attributes["entity.type"], attributes["emb.entity.type"]) where Len(cache["description"]) > 0
           - 'set(attributes["entity.id"], {"emb.process_identifier": attributes["emb.entity.id"]}) where Len(cache["description"]) > 0'

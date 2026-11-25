@@ -132,8 +132,8 @@ def on_every_record(items):
         elif kind == "log":
             logs.append(log(now, "ordinary-log-message", stamp(values)))
         else:
-            change = {"emb.states.name": STATE_NAMES[index], "emb.states.new_value": values[index]}
-            logs.append(log(now, "state-change", {**change, **stamp(values)}, event_name="emb.states.change"))
+            change = {"emb.state.name": STATE_NAMES[index], "emb.state.new_value": values[index]}
+            logs.append(log(now, "state-change", {**change, **stamp(values)}, event_name="emb.state.change"))
     return requests([(RESOURCE, spans, logs)])
 
 
@@ -146,8 +146,8 @@ def in_the_resource(items, with_change_events):
             if with_change_events:
                 current = [{**RESOURCE, **stamp(values)}, [], []]
                 groups.append(current)
-                change = {"emb.states.name": STATE_NAMES[index], "emb.states.new_value": values[index]}
-                current[2].append(log(now, "state-change", change, event_name="emb.states.change"))
+                change = {"emb.state.name": STATE_NAMES[index], "emb.state.new_value": values[index]}
+                current[2].append(log(now, "state-change", change, event_name="emb.state.change"))
             else:
                 current = None
             continue
@@ -179,15 +179,14 @@ def entity_events(items):
 def sequence_and_small_events(items):
     """A number on every record that places it among the changes, and a small record for each change."""
     spans, logs = [], []
-    previous = {}
     for n, (kind, now, index, values, sequence) in enumerate(items):
         if kind == "span":
-            spans.append(span(now, n, {"emb.states.seq": sequence}))
+            spans.append(span(now, n, {"emb.state.seq": sequence}))
         elif kind == "log":
-            logs.append(log(now, "ordinary-log-message", {"emb.states.seq": sequence}))
+            logs.append(log(now, "ordinary-log-message", {"emb.state.seq": sequence}))
         else:
-            change = {"emb.states.name": STATE_NAMES[index], "emb.states.new_value": values[index], "emb.states.seq": sequence}
-            logs.append(log(now, "state-change", change, event_name="emb.states.change"))
+            change = {"emb.state.name": STATE_NAMES[index], "emb.state.new_value": values[index], "emb.state.seq": sequence}
+            logs.append(log(now, "state-change", change, event_name="emb.state.change"))
     return requests([(RESOURCE, spans, logs)])
 
 

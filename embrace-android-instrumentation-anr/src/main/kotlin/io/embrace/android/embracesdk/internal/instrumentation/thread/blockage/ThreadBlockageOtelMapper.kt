@@ -12,6 +12,7 @@ import io.opentelemetry.kotlin.semconv.JvmAttributes
 import kotlin.random.Random
 
 private const val INVALID_SPAN_ID: String = "0000000000000000"
+private val HEX_DIGITS = "0123456789abcdef".toCharArray()
 
 internal fun mapIntervalToSpan(
     interval: ThreadBlockageInterval,
@@ -87,7 +88,14 @@ internal fun generateId(numBytes: Int, random: Random): String {
     do {
         random.nextBytes(bytes)
     } while (bytes.all { it == 0.toByte() })
-    return bytes.joinToString("") { "%02x".format(it) }
+    val chars = CharArray(numBytes * 2)
+    var index = 0
+    for (b in bytes) {
+        val i = b.toInt() and 0xFF
+        chars[index++] = HEX_DIGITS[i shr 4]
+        chars[index++] = HEX_DIGITS[i and 0x0F]
+    }
+    return chars.concatToString()
 }
 
 internal fun List<Attribute>.toEmbracePayload(): Map<String, String> =

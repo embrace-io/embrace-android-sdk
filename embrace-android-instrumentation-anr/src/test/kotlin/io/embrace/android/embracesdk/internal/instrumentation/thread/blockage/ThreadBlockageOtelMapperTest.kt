@@ -13,6 +13,7 @@ import io.opentelemetry.kotlin.semconv.JvmAttributes
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotEquals
 import org.junit.Assert.assertNotNull
+import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
 import kotlin.random.Random
@@ -180,6 +181,20 @@ internal class ThreadBlockageOtelMapperTest {
         assertEquals(START_TIME_MS, startTimeNanos?.nanosToMillis())
         assertNotEquals(Span.Status.ERROR, status)
         assertEquals("perf.thread_blockage", attributes?.findAttribute("emb.type")?.data)
+    }
+
+    @Test
+    fun `generateId matches format-based hex encoding`() {
+        listOf(0, 1, 42, 12345).forEach { seed ->
+            listOf(16, 8).forEach { numBytes ->
+                val id = generateId(numBytes, Random(seed))
+                val expectedBytes = ByteArray(numBytes).also { Random(seed).nextBytes(it) }
+                val expected = expectedBytes.joinToString("") { "%02x".format(it) }
+                assertEquals(numBytes * 2, id.length)
+                assertTrue(id.all { it in '0'..'9' || it in 'a'..'f' })
+                assertEquals(expected, id)
+            }
+        }
     }
 
     private fun assertSampleMapped(event: SpanEvent, sample: ThreadBlockageSample) {

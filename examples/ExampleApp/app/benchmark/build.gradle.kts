@@ -6,7 +6,8 @@ plugins {
 
 android {
     namespace = "io.embrace.android.benchmark"
-    compileSdk = 36
+    // the app's: the endpoint's MockWebServer brings the app's OkHttp, which requires it
+    compileSdk = 37
 
     defaultConfig {
         minSdk = 24
@@ -47,6 +48,7 @@ dependencies {
     implementation(libs.androidx.espresso.core)
     implementation(libs.androidx.uiautomator)
     implementation(libs.androidx.benchmark.macro.junit4)
+    implementation(project(":embrace-benchmark-endpoint"))
 }
 
 androidComponents {

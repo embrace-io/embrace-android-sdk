@@ -33,3 +33,9 @@ dependencyResolutionManagement {
 rootProject.name = "ExampleApp"
 include(":app")
 include(":app:benchmark")
+
+// Shared with the SDK build's macrobenchmark, so included from the repo root.
+include(":embrace-benchmark-endpoint")
+project(":embrace-benchmark-endpoint").projectDir = file("../../embrace-benchmark-endpoint")
+include(":embrace-test-api-server")
+project(":embrace-test-api-server").projectDir = file("../../embrace-test-api-server")

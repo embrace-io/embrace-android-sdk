@@ -1,0 +1,12 @@
+{
+  "app_id": "abcde",
+  "sdk_config": {
+    "networking": {
+      "traceparent_only_allow_domains": ["httpbin.org"]
+    },
+    "base_urls": {
+      "config": "https://localhost:48711",
+      "data": "https://localhost:48712"
+    }
+  }
+}

@@ -11,6 +11,7 @@ import org.junit.Assert.assertNotEquals
 import org.junit.Assert.assertThrows
 import org.junit.Assert.assertTrue
 import org.junit.Test
+import java.io.File
 import java.io.IOException
 import java.net.InetAddress
 import java.net.ServerSocket
@@ -104,6 +105,24 @@ internal class LocalEmbraceEndpointTest {
         assertTrue(remoteConfigEtag("{}"), Regex("\"benchmark-[0-9a-f]{16}\"").matches(remoteConfigEtag("{}")))
     }
 
+    @Test
+    fun `every benchmarked app has a placeholder app ID and its endpoints pointed here`() {
+        val configs = checkNotNull(System.getProperty(BENCHMARKED_CONFIGS_PROPERTY)).split(File.pathSeparator).map(::File)
+        assertTrue("no benchmarked app configs", configs.isNotEmpty())
+        configs.forEach { file ->
+            val config = file.readText()
+            val urls = BASE_URL.findAll(config).associate { it.groupValues[1] to it.groupValues[2] }
+            assertEquals(
+                file.path,
+                mapOf("config" to LOCAL_ENDPOINT_CONFIG_BASE_URL, "data" to LOCAL_ENDPOINT_DATA_BASE_URL),
+                urls,
+            )
+            assertEquals(file.path, "abcde", APP_ID.find(config)?.groupValues?.get(1))
+        }
+        assertEquals("https://localhost:$LOCAL_ENDPOINT_CONFIG_PORT", LOCAL_ENDPOINT_CONFIG_BASE_URL)
+        assertEquals("https://localhost:$LOCAL_ENDPOINT_DATA_PORT", LOCAL_ENDPOINT_DATA_BASE_URL)
+    }
+
     /**
      * Calls the endpoint's [port] at [path] by its host name, over HTTPS, asking for gzip itself as the SDK does, so
      * OkHttp leaves a gzipped body as sent.
@@ -125,5 +144,10 @@ internal class LocalEmbraceEndpointTest {
 
     private companion object {
         const val CONFIG = "{\"user_session\":{\"inactivity_timeout_seconds\":30}}"
+
+        // set by this module's build file, which lists the files
+        const val BENCHMARKED_CONFIGS_PROPERTY = "benchmarkEndpoint.benchmarkedConfigs"
+        val BASE_URL = Regex("\"(config|data)\"\\s*:\\s*\"([^\"]+)\"")
+        val APP_ID = Regex("\"app_id\"\\s*:\\s*\"([^\"]+)\"")
     }
 }

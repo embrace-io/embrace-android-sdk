@@ -152,6 +152,26 @@ will not, such as the perfetto UI:
 unzip -p <bundle>.perfetto-trace Trace_output.pb > trace.perfetto
 ```
 
+## Embrace's server backend endpoints
+
+The app's `embrace-config.json` (`src/main`, and `src/baselineProfile` for the baseline profile build) points the
+SDK's config and data endpoints at `LocalEmbraceEndpoint` (`embrace-benchmark-endpoint`), which every benchmark and
+`BaselineProfileGenerator` serve on the device for the length of each test, so nothing leaves the device. It serves
+HTTPS on `localhost`, config on port 48711 and data on 48712, so the app does the TLS work it does against Embrace's
+servers: a handshake on each of the two connections and verification of a chain shaped like theirs. The app trusts the
+endpoint's root, which the build generates, for `localhost` alone (`src/main/res/xml/network_security_config.xml`). It
+answers the config fetch with an empty remote config (`{}`) and every delivery with 200. When a test ends, it logs what
+it answered to logcat (`adb logcat -d -s System.out:I`, the `local Embrace endpoint answered:` line).
+
+These benchmarks measure persistence, delivery, sessions and OTel setup, not the network, so they all use the local
+endpoint: it keeps them offline and makes every delivery succeed. It does its work on the device, but a warm-up
+compiles its code before each test, and in cold-start measurements its CPU didn't shift launch time or SDK start
+measurably.
+
+The remote config a launch runs with is still the one the app writes from global settings (below): the SDK reads it
+at startup, and the next launch's write replaces whatever the fetch saved. That written config has no ETag, so every
+launch fetches the config again, where a customer's app would revalidate its cached copy.
+
 ## Selecting the persistence mode and OTel implementation
 
 Without rebuilding the APK, via global settings the app reads before starting the SDK:

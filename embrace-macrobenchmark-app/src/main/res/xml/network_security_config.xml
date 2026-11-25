@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- the SDK's config and data endpoints are the benchmark's local endpoint, served over HTTPS on localhost with a root
+     generated for each build (fake_backend_root, see this module's build file), which only localhost trusts;
+     everything else keeps the platform default -->
+<network-security-config>
+    <domain-config>
+        <domain includeSubdomains="false">localhost</domain>
+        <trust-anchors>
+            <certificates src="@raw/fake_backend_root" />
+        </trust-anchors>
+    </domain-config>
+</network-security-config>

@@ -1,3 +1,9 @@
 {
-  "app_id": "abcde"
+  "app_id": "abcde",
+  "sdk_config": {
+    "base_urls": {
+      "config": "https://localhost:48711",
+      "data": "https://localhost:48712"
+    }
+  }
 }

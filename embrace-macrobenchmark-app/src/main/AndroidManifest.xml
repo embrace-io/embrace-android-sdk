@@ -9,6 +9,7 @@
         android:name=".BenchmarkApplication"
         android:allowBackup="false"
         android:label="Embrace Macrobenchmark"
+        android:networkSecurityConfig="@xml/network_security_config"
         tools:targetApi="29">
 
         <!-- required so macrobenchmark can attach a perfetto trace to a non-debuggable build -->

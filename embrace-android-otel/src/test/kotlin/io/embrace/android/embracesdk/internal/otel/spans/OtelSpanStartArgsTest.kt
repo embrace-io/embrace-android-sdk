@@ -3,6 +3,7 @@ package io.embrace.android.embracesdk.internal.otel.spans
 import io.embrace.android.embracesdk.fakes.FakeClock
 import io.embrace.android.embracesdk.fakes.FakeOtelKotlinClock
 import io.embrace.android.embracesdk.fakes.FakeSpanProcessor
+import io.embrace.android.embracesdk.fakes.FakeTracer
 import io.embrace.android.embracesdk.fakes.OtelSdkMode
 import io.embrace.android.embracesdk.fakes.fakeOpenTelemetry
 import io.embrace.android.embracesdk.fixtures.TOO_LONG_INTERNAL_SPAN_NAME
@@ -19,6 +20,8 @@ import io.opentelemetry.kotlin.tracing.Tracer
 import io.opentelemetry.kotlin.tracing.model.ReadableSpan
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
+import org.junit.Assert.assertNotNull
+import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
@@ -157,6 +160,23 @@ internal class OtelSpanStartArgsTest(
             expectedName = "emb-$TOO_LONG_INTERNAL_SPAN_NAME",
             expectedStartTimeMs = startTime,
         )
+    }
+
+    @Test
+    fun `span creation action only passed for private spans`() {
+        val fakeTracer = FakeTracer()
+        listOf(false, true).forEach { private ->
+            OtelSpanStartArgs(
+                name = "test",
+                type = EmbType.Performance.Default,
+                internal = false,
+                private = private,
+                tracer = fakeTracer,
+                openTelemetry = fakeOpenTelemetry(otelSdkMode),
+            ).startSpan(otelClock.now())
+        }
+        assertNull(fakeTracer.actions[0])
+        assertNotNull(fakeTracer.actions[1])
     }
 
     private fun Span.assertSpan(

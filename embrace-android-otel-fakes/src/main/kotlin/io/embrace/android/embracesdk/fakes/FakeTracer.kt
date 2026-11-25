@@ -8,6 +8,8 @@ import io.opentelemetry.kotlin.tracing.SpanCreationAction
 
 class FakeTracer : Tracer {
 
+    val actions = mutableListOf<(SpanCreationAction.() -> Unit)?>()
+
     override fun enabled(): Boolean = true
 
     override fun startSpan(
@@ -16,5 +18,8 @@ class FakeTracer : Tracer {
         spanKind: SpanKind,
         startTimestamp: Long?,
         action: (SpanCreationAction.() -> Unit)?,
-    ): Span = FakeSpan()
+    ): Span {
+        actions.add(action)
+        return FakeSpan()
+    }
 }

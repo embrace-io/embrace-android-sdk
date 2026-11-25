@@ -31,6 +31,8 @@ internal class EmbraceNetworkConnectivityService(
 ) : BroadcastReceiver(), NetworkConnectivityService {
 
     private val intentFilter = IntentFilter(ConnectivityManager.CONNECTIVITY_ACTION)
+
+    @Volatile
     private var lastConnectivityStatus: ConnectivityStatus = ConnectivityStatus.Unverified
     private val networkConnectivityListeners = CopyOnWriteArrayList<NetworkConnectivityListener>()
     private val lock = Any()
@@ -38,11 +40,13 @@ internal class EmbraceNetworkConnectivityService(
     private var closed = false
 
     override fun onReceive(context: Context, intent: Intent) {
-        errorHandler.guardSdkCode(SdkErrorType.NetworkStatusCaptureFail) {
-            val connectivityStatus = getCurrentConnectivityStatus()
-            if (lastConnectivityStatus != connectivityStatus) {
-                lastConnectivityStatus = connectivityStatus
-                notifyNetworkConnectivityListeners(connectivityStatus)
+        backgroundWorker.submit {
+            errorHandler.guardSdkCode(SdkErrorType.NetworkStatusCaptureFail) {
+                val connectivityStatus = getCurrentConnectivityStatus()
+                if (lastConnectivityStatus != connectivityStatus) {
+                    lastConnectivityStatus = connectivityStatus
+                    notifyNetworkConnectivityListeners(connectivityStatus)
+                }
             }
         }
     }

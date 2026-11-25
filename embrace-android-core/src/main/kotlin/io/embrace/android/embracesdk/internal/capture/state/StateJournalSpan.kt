@@ -45,7 +45,9 @@ import java.security.MessageDigest
  * [StateAttributes.END_SEQUENCE]: the number of the last change the journal lists, where that is greater than the number
  * the span started with, or where the span has none because it started before the first change. A span with no end number
  * is then one no change is known to have happened during. A journal cut short still has a last recorded number, and that
- * is the one used.
+ * is the one used, and the highest number any record of the journal holds counts, a checkpoint's and a part start's among
+ * them. A span with no start number is given one only if another span of the part has a number, which shows the process
+ * linked spans.
  *
  * The span's ids are worked out from the session part's, so a part delivered twice delivers the same span.
  */
@@ -87,11 +89,17 @@ fun Envelope<SessionPartPayload>.withStateSpan(
         if (span === sessionSpan) span.copy(links = span.links.orEmpty() + link) else span
     }
 
-    val lastChange = records.lastOrNull { it.change != null }?.sequence
+    // the highest number any record holds, as a checkpoint and a part start carry the number the changes had reached
+    val lastChange = records.maxOfOrNull { it.sequence }?.takeIf { it > 0 }
+    // a span with no number started before the first change only where the process was linking spans, which another span
+    // of the part having a number shows
+    val spansAreLinked = (data.spans.orEmpty() + data.spanSnapshots.orEmpty()).any { span ->
+        span.attributes?.any { it.key == StateAttributes.SEQUENCE } == true
+    }
     val spans = data.spans.linked()
     val snapshots = data.spanSnapshots.linked().let { linked ->
         if (completesRunningSpans && endNanos == null && lastChange != null) {
-            linked?.map { it.withEndSequence(lastChange) }
+            linked?.map { it.withEndSequence(lastChange, spansAreLinked) }
         } else {
             linked
         }
@@ -109,13 +117,14 @@ fun Envelope<SessionPartPayload>.withStateSpan(
  * This span, which was running when its process died, with the number of the last change the process recorded as its end
  * number, if a change was made after the one it started at, and it has no end number yet.
  */
-private fun Span.withEndSequence(lastChange: Long): Span {
+private fun Span.withEndSequence(lastChange: Long, spansAreLinked: Boolean): Span {
     val present = attributes.orEmpty()
     if (present.any { it.key == StateAttributes.END_SEQUENCE }) {
         return this
     }
     val started = present.firstOrNull { it.key == StateAttributes.SEQUENCE }?.data?.toLongOrNull()
-    return if (started == null || lastChange > started) {
+    val changedWhileRunning = if (started == null) spansAreLinked else lastChange > started
+    return if (changedWhileRunning) {
         copy(attributes = present + Attribute(StateAttributes.END_SEQUENCE, lastChange.toString()))
     } else {
         this

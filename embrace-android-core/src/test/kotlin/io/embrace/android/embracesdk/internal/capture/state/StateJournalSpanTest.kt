@@ -165,6 +165,52 @@ internal class StateJournalSpanTest {
     }
 
     @Test
+    fun `a span carried over a part boundary is given the number the journal's checkpoint and part start hold`() {
+        // nine changes are folded into the checkpoint, and the process is killed before another is made
+        recorder = StateRecorder(clock, maxChanges = 100, maxHeldChanges = 0)
+        repeat(9) { update("network", "value-$it") }
+        recorder.beginJournal(clock.now(), journal::addAll)
+        assertEquals(emptyList<StateRecord>(), journal.filter { it.change != null })
+        val carried = Span(
+            traceId = "c".repeat(32),
+            spanId = "d".repeat(16),
+            name = "carried",
+            attributes = listOf(Attribute("emb.states.seq", "5")),
+        )
+
+        val envelope = envelope(snapshots = listOf(sessionSpan, carried)).withStateSpan(journal, completesRunningSpans = true)
+
+        assertEquals(
+            "9",
+            checkNotNull(envelope.data.spanSnapshots).first { it.name == "carried" }.attributeMap()["emb.states.end_seq"],
+        )
+    }
+
+    @Test
+    fun `a span with no number is given an end number only if another span of the part has one`() {
+        recorder.beginJournal(clock.now(), journal::addAll)
+        repeat(3) { update("network", "value-$it") }
+        val unnumbered =
+            Span(traceId = "c".repeat(32), spanId = "d".repeat(16), name = "unnumbered", attributes = emptyList())
+        val numbered = unnumbered.copy(name = "numbered", attributes = listOf(Attribute("emb.states.seq", "1")))
+
+        // no span has a number, as when association was off in the process that died
+        val noneLinked = envelope(snapshots = listOf(sessionSpan, unnumbered)).withStateSpan(journal, completesRunningSpans = true)
+        assertNull(
+            checkNotNull(noneLinked.data.spanSnapshots).first {
+                it.name == "unnumbered"
+            }.attributeMap()["emb.states.end_seq"],
+        )
+
+        // another span has one, so the process was linking spans and this one started before the first change
+        val someLinked = envelope(snapshots = listOf(sessionSpan, unnumbered, numbered))
+            .withStateSpan(journal, completesRunningSpans = true)
+        val delivered = checkNotNull(someLinked.data.spanSnapshots).associateBy { it.name }
+        assertEquals("3", delivered.getValue("unnumbered").attributeMap()["emb.states.end_seq"])
+        assertEquals("3", delivered.getValue("numbered").attributeMap()["emb.states.end_seq"])
+    }
+
+    @Test
     fun `a running span is given no end number if no change came after its start, or the part has no journal, or it is not asked for`() {
         recorder.beginJournal(clock.now(), journal::addAll)
         repeat(5) { update("network", "value-$it") }

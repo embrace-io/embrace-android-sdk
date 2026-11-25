@@ -486,11 +486,18 @@ internal class StateOtlpExportHarnessTest {
         fun events(name: String): List<JsonObject> = logRecords.filter { it["eventName"]?.jsonPrimitive?.content == name }
 
         /**
-         * Prints the size of the JSON of the first and last change record, the last being one with a previous value.
+         * Prints the size of the JSON of the first and last change record, the last being one with a previous value, where
+         * the environment names an endpoint.
          */
         fun printChangeRecordSize(mode: StateExportMode) {
+            // printed only where the harness is run for its numbers, as the endpoint test is
+            if (System.getenv(ENDPOINT_VARIABLE).isNullOrBlank()) {
+                return
+            }
             val changes = events(CHANGE_EVENT)
-            println("State OTLP harness, $mode: a change record is ${changes.first().toString().length} bytes of JSON at first, and ${changes.last().toString().length} at last")
+            val first = changes.first().toString().length
+            val last = changes.last().toString().length
+            println("State OTLP harness, $mode: a change record is $first bytes of JSON at first, and $last at last")
         }
 
         fun linkedSpans(): List<JsonObject> = spans.filter { it.attribute(SEQUENCE) != null }

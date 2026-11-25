@@ -393,6 +393,9 @@ internal class StateRecorderTest {
             "emb.states.anything-else" to "x",
             "emb.state.anything-else" to "x",
             "emb.state.initial_value" to "v1",
+            // the stems alone, which are v1's foreground or background attribute and the SDK's own
+            "emb.state" to "background",
+            "emb.states" to "x",
         )
         val own = (1..8).associate { "key-$it" to "v$it" }
         update("network", "wifi", reserved + own)

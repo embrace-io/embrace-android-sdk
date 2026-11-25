@@ -283,13 +283,14 @@ class StateRecorder(
     }
 
     /**
-     * Whether a change's own attribute may not use this key: it is under [RESERVED_KEY_PREFIX], which is the SDK's, or under
-     * v1's stem, so that none of a change's attributes can replace or sit beside one the SDK sets. The one exception is the
-     * count of transitions the instrumentation dropped, which the state's data source itself reports and the SDK sets
-     * nowhere.
+     * Whether a change's own attribute may not use this key: it is under [RESERVED_KEY_PREFIX], which is the SDK's, or
+     * under v1's stem, or is one of the two stems alone, so that none of a change's attributes can replace or sit beside
+     * one the SDK sets. The one exception is the count of transitions the instrumentation dropped, which the state's data
+     * source itself reports and the SDK sets nowhere.
      */
     private fun String.isReserved(): Boolean =
-        startsWith(RESERVED_KEY_PREFIX) ||
+        startsWith(RESERVED_KEY_PREFIX) || this == RESERVED_KEY_PREFIX.removeSuffix(".") ||
+            this == V1_KEY_PREFIX.removeSuffix(".") ||
             (startsWith(V1_KEY_PREFIX) && this != EmbStateTransitionAttributes.EMB_STATE_DROPPED_BY_INSTRUMENTATION)
 
     companion object {

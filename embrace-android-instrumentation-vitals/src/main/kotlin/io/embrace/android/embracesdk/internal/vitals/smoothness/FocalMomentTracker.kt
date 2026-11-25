@@ -1,11 +1,14 @@
 package io.embrace.android.embracesdk.internal.vitals.smoothness
 
 import android.os.SystemClock
+import androidx.annotation.AnyThread
 import androidx.annotation.MainThread
 import androidx.annotation.WorkerThread
+import io.embrace.android.embracesdk.internal.arch.vitals.FocalMomentType
 import io.embrace.android.embracesdk.internal.clock.Clock
 import io.embrace.android.embracesdk.internal.clock.millisToNanos
 import io.embrace.android.embracesdk.internal.clock.nanosToMillis
+import io.embrace.android.embracesdk.internal.utils.event.EventHandler
 import io.embrace.android.embracesdk.internal.vitals.FocalInteractionCallbacks
 import io.embrace.android.embracesdk.internal.vitals.MainThreadProbe
 import io.embrace.android.embracesdk.internal.vitals.SettleTracker
@@ -15,8 +18,9 @@ import io.embrace.android.embracesdk.internal.vitals.screenload.ScreenLoadTracke
 
 /**
  * Tracks the smoothness of a focal moment — framerate quality while the user is actively engaged. A
- * focal moment opens on a touch-down and ends when the interaction goes quiet (no redraw, no touch) for
- * the idle threshold; each frame's jank is fed to [reporter], which emits a [SmoothnessResult] on close.
+ * focal moment opens on a touch-down, or on a type emitted on [FocalMomentType.KEY], and ends when it goes
+ * quiet (no redraw, no touch) for the idle threshold, or is interrupted by backgrounding or a second screen
+ * load; each frame's jank is fed to [reporter], which emits a [SmoothnessResult] on close.
  *
  * The whole state machine runs on the Vitals handler thread: [onFrame] is delivered there, the settle
  * timeout elapses there, and the main-thread touch/screen callbacks hop onto it via `scheduler.post`, so
@@ -35,13 +39,15 @@ internal class FocalMomentTracker(
     probeFactory: ((MainThreadProbe.BlockCallback) -> MainThreadProbe)? = null,
     // Receives every frame, whatever the smoothness state; called on the Vitals thread.
     private val onFrameCounted: (dropped: Boolean, expectedFrames: Int) -> Unit = { _, _ -> },
-) : FocalInteractionCallbacks, AutoCloseable {
+) : FocalInteractionCallbacks, EventHandler<FocalMomentType>, AutoCloseable {
 
     // Reused hop Runnable instances (main thread -> Vitals thread); allocate them here to make certain they're off the hot path
     private val interactionStartRunnable = Runnable { startOrResume(openedByDown = true) }
     private val interactionMoveRunnable = Runnable { startOrResume(openedByDown = false) }
     private val interactionEndRunnable = Runnable { handleInteractionEnd() }
-    private val screenChangeRunnable = Runnable { handleScreenChange() }
+    private val interactionTriggerRunnable = Runnable { handleTrigger(FocalMomentType.INTERACTION) }
+    private val screenLoadTriggerRunnable = Runnable { handleTrigger(FocalMomentType.SCREEN_LOAD) }
+    private val backgroundRunnable = Runnable { handleBackground() }
     private val closeRunnable = Runnable { handleClose() }
 
     // The settle baseline (the latest of redraw vsync / move) lives inside [settle]; we feed every activity
@@ -55,6 +61,7 @@ internal class FocalMomentTracker(
 
     private var capturing = false
     private var held = false
+    private var type = FocalMomentType.INTERACTION
     private var focalMomentStartNanos = 0L
     private var focalMomentStartEpochMs = 0L
     private var interacting = false
@@ -100,12 +107,34 @@ internal class FocalMomentTracker(
         if (held) {
             // Emit the buffered result, then open a fresh interaction.
             flushHeld()
-            startFocalMoment(openedByDown)
+            startFocalMoment(FocalMomentType.INTERACTION, openedByDown = openedByDown, interacting = true)
         } else if (capturing) {
             interacting = true
             settle.notifyActivity(nowMs())
         } else {
-            startFocalMoment(openedByDown)
+            startFocalMoment(FocalMomentType.INTERACTION, openedByDown = openedByDown, interacting = true)
+        }
+    }
+
+    /**
+     * A screen load turns an open interaction into a screen load, and interrupts an open screen load to start another. Otherwise a
+     * trigger is activity in the open moment, or starts one if none is open. A trigger is a single event rather than a held finger, so
+     * the moment it starts settles on the idle threshold.
+     */
+    @WorkerThread
+    private fun handleTrigger(trigger: FocalMomentType) {
+        if (capturing && trigger == FocalMomentType.SCREEN_LOAD && type == FocalMomentType.SCREEN_LOAD) {
+            interrupt()
+        }
+
+        if (capturing) {
+            if (trigger == FocalMomentType.SCREEN_LOAD) {
+                type = FocalMomentType.SCREEN_LOAD
+            }
+            settle.notifyActivity(nowMs())
+        } else {
+            flushHeld()
+            startFocalMoment(trigger, openedByDown = false, interacting = false)
         }
     }
 
@@ -126,13 +155,16 @@ internal class FocalMomentTracker(
     override fun onInteractionEnd() =
         scheduler.post(interactionEndRunnable)
 
-    @MainThread
-    override fun onScreenStart() =
-        scheduler.post(screenChangeRunnable)
-
-    @MainThread
-    override fun onScreenStop() =
-        scheduler.post(screenChangeRunnable)
+    /**
+     * A focal moment of type [event] was triggered, see [FocalMomentType.KEY].
+     */
+    @AnyThread
+    override fun onEvent(event: FocalMomentType) = scheduler.post(
+        when (event) {
+            FocalMomentType.INTERACTION -> interactionTriggerRunnable
+            FocalMomentType.SCREEN_LOAD -> screenLoadTriggerRunnable
+        },
+    )
 
     // screen-load signals hop onto the Vitals thread and forward to the screen-load tracker
 
@@ -153,7 +185,7 @@ internal class FocalMomentTracker(
 
     @MainThread
     override fun onAppBackgrounded() =
-        scheduler.post { screenLoadTracker.onInterrupt() }
+        scheduler.post(backgroundRunnable)
 
     @WorkerThread
     private fun handleInteractionEnd() {
@@ -166,8 +198,16 @@ internal class FocalMomentTracker(
     }
 
     @WorkerThread
-    private fun handleScreenChange() {
-        // Flush a buffered settle or interrupt an open focal moment. Startup opens nothing.
+    private fun handleBackground() {
+        screenLoadTracker.onInterrupt()
+        interrupt()
+    }
+
+    /**
+     * Flushes a buffered settle, or interrupts an open focal moment.
+     */
+    @WorkerThread
+    private fun interrupt() {
         if (held) {
             flushHeld()
         } else if (capturing) {
@@ -177,12 +217,13 @@ internal class FocalMomentTracker(
     }
 
     @WorkerThread
-    private fun startFocalMoment(openedByDown: Boolean) {
+    private fun startFocalMoment(type: FocalMomentType, openedByDown: Boolean, interacting: Boolean) {
         val nowMs = nowMs()
         focalMomentStartNanos = nowMs.millisToNanos()
         focalMomentStartEpochMs = clock.now()
+        this.type = type
         held = false
-        interacting = true
+        this.interacting = interacting
         capturing = true
         reporter.onFocalMomentStart()
         if (responsivenessReporter != null) {

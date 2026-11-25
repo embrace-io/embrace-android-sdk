@@ -2,8 +2,6 @@ package io.embrace.android.embracesdk.internal.vitals
 
 /** Test double that counts the signals delivered to a [FocalInteractionCallbacks]. */
 internal class FakeFocalInteractionCallbacks : FocalInteractionCallbacks {
-    var screenStartCount = 0
-    var screenStopCount = 0
     var interactionStartCount = 0
     val interactionStartEventTimes = mutableListOf<Long>()
     var interactionMoveCount = 0
@@ -20,8 +18,6 @@ internal class FakeFocalInteractionCallbacks : FocalInteractionCallbacks {
     override fun onFrame(vsyncNanos: Long, frameDispatchNanos: Long, jankNanos: Long, expectedFrames: Int) {
         frames += jankNanos to expectedFrames
     }
-    override fun onScreenStart() { screenStartCount++ }
-    override fun onScreenStop() { screenStopCount++ }
     override fun onInteractionStart(eventTime: Long) {
         interactionStartCount++
         interactionStartEventTimes += eventTime

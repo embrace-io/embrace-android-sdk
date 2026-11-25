@@ -14,6 +14,7 @@ import androidx.test.ext.junit.runners.AndroidJUnit4
 import io.embrace.android.embracesdk.fakes.FakeInstrumentationArgs
 import io.embrace.android.embracesdk.internal.arch.lifecycle.ActivityCreated
 import io.embrace.android.embracesdk.internal.arch.lifecycle.ActivityLifecycle
+import io.embrace.android.embracesdk.internal.arch.vitals.FocalMomentType
 import io.mockk.every
 import io.mockk.mockk
 import io.mockk.verify
@@ -41,13 +42,17 @@ internal class VitalsActivityListenerTest {
     private val focalCallbacks = FakeFocalInteractionCallbacks()
     private lateinit var listener: VitalsActivityListener
 
+    // every focal moment trigger emitted on the bus
+    private val triggers = mutableListOf<FocalMomentType>()
+
     @Before
     fun setUp() {
         val application: Application = ApplicationProvider.getApplicationContext()
         args = FakeInstrumentationArgs(application)
+        args.eventBus.addHandler(FocalMomentType.KEY) { triggers += it }
         listener = VitalsActivityListener(
             focalCallbacks = focalCallbacks,
-            navSource = ActivityNavigationSource(callbacks = focalCallbacks),
+            navSource = ActivityNavigationSource(callbacks = focalCallbacks, eventBus = args.eventBus),
             frameMetricsHandler = Handler(Looper.getMainLooper()),
             frameMetricsStrategy = fakeStrategy,
             eventBus = args.eventBus,
@@ -58,13 +63,12 @@ internal class VitalsActivityListenerTest {
     }
 
     @Test
-    fun `onActivityResumed wraps the window callback and fires onScreenStart`() {
+    fun `onActivityResumed wraps the window callback`() {
         val activity = buildActivity(Activity::class.java).setup().get()
 
         resume(activity)
 
         assertTrue(activity.window.callback is VitalsWindowCallback)
-        assertEquals(1, focalCallbacks.screenStartCount)
         assertTrue(args.errorHandler.errorMessages.isEmpty())
     }
 
@@ -134,16 +138,6 @@ internal class VitalsActivityListenerTest {
     }
 
     @Test
-    fun `onActivityPaused fires onScreenStop`() {
-        val activity = buildActivity(Activity::class.java).setup().get()
-        resume(activity)
-
-        pause(activity)
-
-        assertEquals(1, focalCallbacks.screenStopCount)
-    }
-
-    @Test
     fun `onActivityResumed reports a navigation end for the destination`() {
         val activity = buildActivity(Activity::class.java).setup().get()
 
@@ -154,28 +148,77 @@ internal class VitalsActivityListenerTest {
     }
 
     @Test
-    fun `onActivityCreated reports a navigation start once past the cold-start activity`() {
+    fun `onActivityCreated reports a navigation start and triggers a screen load once past the cold-start activity`() {
         val activity = buildActivity(Activity::class.java).setup().get()
 
         create(activity, null) // cold start: skipped
         assertTrue(focalCallbacks.navigationStarts.isEmpty())
+        assertTrue("cold start triggers no focal moment", triggers.isEmpty())
 
         val eventTime = SystemClock.uptimeMillis()
         create(activity, null) // a subsequent (forward) navigation
         assertEquals(listOf(activity.localClassName to eventTime), focalCallbacks.navigationStarts)
+        assertEquals(listOf(FocalMomentType.SCREEN_LOAD), triggers)
     }
 
     @Test
-    fun `a recreated activity reports no navigation start`() {
+    fun `a recreated activity reports no navigation start and triggers no focal moment`() {
         val activity = buildActivity(Activity::class.java).setup().get()
 
         create(activity, null) // cold start: skipped
         create(activity, Bundle()) // recreated from saved state: skipped
         assertTrue(focalCallbacks.navigationStarts.isEmpty())
+        assertTrue(triggers.isEmpty())
 
         val eventTime = SystemClock.uptimeMillis()
         create(activity, null) // a forward navigation
         assertEquals(listOf(activity.localClassName to eventTime), focalCallbacks.navigationStarts)
+        assertEquals(listOf(FocalMomentType.SCREEN_LOAD), triggers)
+    }
+
+    @Test
+    fun `resuming an existing activity triggers no focal moment, after a pause or a back navigation`() {
+        val home = buildActivity(Activity::class.java).setup().get()
+        val detail = buildActivity(Activity::class.java).setup().get()
+        create(home, null) // cold start
+        resume(home)
+
+        // a dialog over it, or the app backgrounded and brought back
+        pause(home)
+        resume(home)
+        assertTrue(triggers.isEmpty())
+
+        pause(home)
+        create(detail, null) // forward navigation
+        resume(detail)
+
+        // back navigation resumes the existing activity rather than creating one, and the system back gesture doesn't reach the
+        // window as a touch either, so returning to a screen opens no focal moment at all
+        pause(detail)
+        resume(home)
+        assertEquals("only the forward navigation", listOf(FocalMomentType.SCREEN_LOAD), triggers)
+    }
+
+    @Test
+    fun `the activity a trampoline launches and a warm start each trigger a screen load`() {
+        val splash = buildActivity(Activity::class.java).setup().get()
+        val main = buildActivity(Activity::class.java).setup().get()
+        val relaunched = buildActivity(Activity::class.java).setup().get()
+        create(splash, null) // cold start
+        resume(splash)
+
+        // the splash immediately launches the real first screen: the second creation, so not skipped as the cold start
+        pause(splash)
+        create(main, null)
+        resume(main)
+        assertEquals(listOf(FocalMomentType.SCREEN_LOAD), triggers)
+
+        // backgrounded and its activities destroyed while the process lives on, then relaunched from the launcher: a fresh
+        // activity with no saved state is indistinguishable from a forward navigation
+        pause(main)
+        create(relaunched, null)
+        resume(relaunched)
+        assertEquals(listOf(FocalMomentType.SCREEN_LOAD, FocalMomentType.SCREEN_LOAD), triggers)
     }
 
     @Test
@@ -201,8 +244,8 @@ internal class VitalsActivityListenerTest {
         pause(activity)
 
         assertTrue(focalCallbacks.navigationStarts.isEmpty())
-        assertEquals(0, focalCallbacks.screenStartCount)
-        assertEquals(0, focalCallbacks.screenStopCount)
+        assertTrue(focalCallbacks.navigationEnds.isEmpty())
+        assertTrue(triggers.isEmpty())
     }
 
     private fun create(activity: Activity, savedInstanceState: Bundle?) =

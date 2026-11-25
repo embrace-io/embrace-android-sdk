@@ -67,7 +67,6 @@ internal class VitalsActivityListener(
             val window = activity.window ?: return@EventHandler
             installInteractionCallback(window)
             installFrameMetricsListener(window)
-            focalCallbacks.onScreenStart()
             // a resumed Activity is the navigation end onto its screen
             navSource.onActivityResumed(activity.localClassName, eventTime)
         } catch (exc: Throwable) {
@@ -77,8 +76,6 @@ internal class VitalsActivityListener(
 
     private val onPaused = EventHandler<Activity> { activity ->
         try {
-            // Close any in-flight focal moment.
-            focalCallbacks.onScreenStop()
             activity.window?.let(::removeFrameMetricsListener)
         } catch (exc: Throwable) {
             activityErrors.track(exc)

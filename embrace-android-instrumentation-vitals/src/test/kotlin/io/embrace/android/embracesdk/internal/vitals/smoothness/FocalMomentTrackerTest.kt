@@ -5,6 +5,7 @@ import android.os.Looper
 import android.os.SystemClock
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import io.embrace.android.embracesdk.fakes.FakeErrorHandler
+import io.embrace.android.embracesdk.internal.arch.vitals.FocalMomentType
 import io.embrace.android.embracesdk.internal.vitals.FrameCounts
 import io.embrace.android.embracesdk.internal.vitals.MainThreadProbe
 import io.embrace.android.embracesdk.internal.vitals.counts
@@ -92,8 +93,8 @@ internal class FocalMomentTrackerTest {
         assertTrue("held, not emitted", emitted.isEmpty())
         assertFalse(scheduler.scheduled)
 
-        // detach flushes, dated from start to last activity (16ms in)
-        tracker.onScreenStop()
+        // backgrounding flushes, dated from start to last activity (16ms in)
+        tracker.onAppBackgrounded()
         val result = emitted.single()
         assertEquals(FocalOutcome.SETTLED, result.outcome)
         assertEquals(16L, result.durationMs)
@@ -113,7 +114,7 @@ internal class FocalMomentTrackerTest {
         settleAfter(400)
         assertFalse(scheduler.scheduled)
 
-        tracker.onScreenStop()
+        tracker.onAppBackgrounded()
         assertEquals(FocalOutcome.SETTLED, emitted.single().outcome)
         assertEquals(16L, emitted.single().durationMs)
     }
@@ -168,16 +169,80 @@ internal class FocalMomentTrackerTest {
     }
 
     @Test
-    fun `a new screen interrupts the interaction immediately without opening a new focal moment`() {
+    fun `a screen load turns an open interaction into a screen load, and the next screen load interrupts it and opens another`() {
         tracker.onInteractionStart(nowMs())
         redraw(vsyncNanos = start + 16.ms) // a frame so the interrupt emits
-        advance(40)
-        tracker.onScreenStart()
+        tracker.onEvent(FocalMomentType.SCREEN_LOAD)
+        assertTrue("the interaction carries on as a screen load", emitted.isEmpty())
 
-        val result = emitted.single()
-        assertEquals(FocalOutcome.INTERRUPTED, result.outcome)
-        assertEquals("ends at the last frame, not the interrupt", 16L, result.durationMs)
-        assertFalse("startup opens nothing", scheduler.scheduled)
+        redraw(vsyncNanos = start + 32.ms)
+        advance(40)
+        tracker.onEvent(FocalMomentType.SCREEN_LOAD)
+        val interrupted = emitted.single()
+        assertEquals(FocalOutcome.INTERRUPTED, interrupted.outcome)
+        assertEquals("ends at the last frame, not the interrupt", 32L, interrupted.durationMs)
+        assertEquals("one moment spanning the tap and the screen load", 2, interrupted.frameCount)
+
+        // the second screen load is a moment of its own, so the third interrupts it too
+        redraw(vsyncNanos = start + 48.ms)
+        tracker.onEvent(FocalMomentType.SCREEN_LOAD)
+        assertEquals(listOf(FocalOutcome.INTERRUPTED, FocalOutcome.INTERRUPTED), emitted.map { it.outcome })
+    }
+
+    @Test
+    fun `a trigger opens a moment that settles on the tight threshold, and a later trigger is activity in it`() {
+        tracker.onEvent(FocalMomentType.INTERACTION)
+        redraw(vsyncNanos = start + 16.ms)
+        advance(50)
+        tracker.onEvent(FocalMomentType.INTERACTION)
+
+        // 99ms since the second trigger: no finger is down, so the tight threshold applies rather than the held grace
+        settleAfter(99)
+        assertTrue(scheduler.scheduled)
+        settleAfter(1)
+        assertFalse(scheduler.scheduled)
+
+        tracker.onAppBackgrounded()
+        assertEquals(FocalOutcome.SETTLED, emitted.single().outcome)
+        assertEquals("ends at the second trigger", 50L, emitted.single().durationMs)
+    }
+
+    @Test
+    fun `neither an interaction trigger nor a touch turns a screen load back into an interaction`() {
+        tracker.onEvent(FocalMomentType.SCREEN_LOAD)
+        assertTrue("a moment opened", scheduler.scheduled)
+        redraw(vsyncNanos = start + 16.ms)
+
+        tracker.onEvent(FocalMomentType.INTERACTION)
+        tracker.onInteractionStart(nowMs())
+        tracker.onInteractionEnd()
+        assertTrue("both fold into the screen load", emitted.isEmpty())
+
+        redraw(vsyncNanos = start + 32.ms)
+        tracker.onEvent(FocalMomentType.SCREEN_LOAD)
+        assertEquals("still a screen load, so the next one interrupts it", FocalOutcome.INTERRUPTED, emitted.single().outcome)
+    }
+
+    @Test
+    fun `a screen load after a moment settles flushes it and opens a new screen load`() {
+        tracker.onInteractionStart(nowMs())
+        redraw(vsyncNanos = start + 16.ms)
+        tracker.onInteractionEnd()
+        settleAfter(150)
+        assertFalse("held", scheduler.scheduled)
+        assertTrue("held, not yet emitted", emitted.isEmpty())
+
+        tracker.onEvent(FocalMomentType.SCREEN_LOAD)
+        val settled = emitted.single()
+        assertEquals(FocalOutcome.SETTLED, settled.outcome)
+        assertEquals(16L, settled.durationMs)
+        assertTrue("a new moment opened", scheduler.scheduled)
+
+        // the new moment is a screen load, so the next one interrupts it
+        redraw(vsyncNanos = start + 170.ms)
+        tracker.onEvent(FocalMomentType.SCREEN_LOAD)
+        assertEquals(listOf(FocalOutcome.SETTLED, FocalOutcome.INTERRUPTED), emitted.map { it.outcome })
+        assertEquals("from the screen load to its frame", 20L, emitted.last().durationMs)
     }
 
     @Test
@@ -195,11 +260,11 @@ internal class FocalMomentTrackerTest {
     }
 
     @Test
-    fun `pause interrupts an open interaction immediately`() {
+    fun `backgrounding interrupts an open interaction immediately`() {
         tracker.onInteractionStart(nowMs())
         redraw(vsyncNanos = start + 16.ms) // a frame so the interrupt emits
         advance(30)
-        tracker.onScreenStop()
+        tracker.onAppBackgrounded()
 
         val result = emitted.single()
         assertEquals(FocalOutcome.INTERRUPTED, result.outcome)
@@ -225,7 +290,7 @@ internal class FocalMomentTrackerTest {
 
         // it re-settles, and the flush includes the late frame's jank
         scheduler.runPending()
-        tracker.onScreenStop()
+        tracker.onAppBackgrounded()
 
         val result = emitted.single()
         assertEquals(FocalOutcome.SETTLED, result.outcome)
@@ -250,7 +315,7 @@ internal class FocalMomentTrackerTest {
         settleAfter(200)
         assertFalse("held", scheduler.scheduled)
 
-        tracker.onScreenStop()
+        tracker.onAppBackgrounded()
         val result = emitted.single()
         assertEquals(FocalOutcome.SETTLED, result.outcome)
         // start back-dated 30ms to the dispatch, end at the frame's visible vsync 10ms in: 40ms total
@@ -286,7 +351,7 @@ internal class FocalMomentTrackerTest {
         redraw(vsyncNanos = start, jankNanos = 1000.ms)
         tracker.onInteractionStart(nowMs())
         redraw(vsyncNanos = start + 10.ms, jankNanos = 5.ms)
-        tracker.onScreenStop()
+        tracker.onAppBackgrounded()
 
         // only the in-focal-moment frame (~0.3) contributes; the pre-open 1s frame would have added ~60
         assertTrue("pre-open frame ignored", emitted.single().normalizedDroppedFrames < 1.0)
@@ -296,7 +361,7 @@ internal class FocalMomentTrackerTest {
     fun `jank is forwarded per frame and normalized into the result`() {
         tracker.onInteractionStart(nowMs())
         redraw(vsyncNanos = start + 1.ms, jankNanos = 1000.ms / 60) // one dropped 60fps frame -> 1.0
-        tracker.onScreenStop()
+        tracker.onAppBackgrounded()
 
         assertEquals(1.0, emitted.single().normalizedDroppedFrames, 0.01)
     }
@@ -325,7 +390,7 @@ internal class FocalMomentTrackerTest {
         responsiveTracker.onInteractionEnd()
 
         settleAfter(100) // held at the second tap
-        responsiveTracker.onScreenStop()
+        responsiveTracker.onAppBackgrounded()
 
         val result = responsivenessEmitted.single()
         assertEquals(FocalOutcome.SETTLED, result.outcome)
@@ -339,7 +404,7 @@ internal class FocalMomentTrackerTest {
     @Test
     fun `a touch-down stamped after its processing has no dispatch delay and starts at its processing`() {
         responsiveTracker.onInteractionStart(nowMs() + 50) // e.g. an injected event with a future event time
-        responsiveTracker.onScreenStop()
+        responsiveTracker.onAppBackgrounded()
 
         val result = responsivenessEmitted.single()
         assertEquals(0L, result.dispatchDelayMs)
@@ -351,13 +416,13 @@ internal class FocalMomentTrackerTest {
     fun `a moment opened by a move has no dispatch delay and spans the focal moment`() {
         // a touch-down's moment first, so its pending dispatch timing must not leak into the next one
         responsiveTracker.onInteractionStart(nowMs())
-        responsiveTracker.onScreenStop()
+        responsiveTracker.onAppBackgrounded()
 
         advance(10)
         responsiveTracker.onInteractionMove()
         // a frame whose render was dispatched before the move back-dates the focal moment start
         responsiveTracker.onFrame(vsyncNanos = start + 20.ms, frameDispatchNanos = start - 20.ms, jankNanos = 8.ms, expectedFrames = 1)
-        responsiveTracker.onScreenStop()
+        responsiveTracker.onAppBackgrounded()
 
         val smoothness = emitted.single()
         val result = responsivenessEmitted.last()
@@ -374,10 +439,10 @@ internal class FocalMomentTrackerTest {
         responsiveTracker.onInteractionStart(nowMs())
         responsivenessReporter.onBlock(60L)
         responsivenessReporter.onBlock(120L)
-        responsiveTracker.onScreenStop()
+        responsiveTracker.onAppBackgrounded()
 
         responsiveTracker.onInteractionStart(nowMs())
-        responsiveTracker.onScreenStop()
+        responsiveTracker.onAppBackgrounded()
 
         assertEquals(2, responsivenessEmitted.size)
         val (blocked, unblocked) = responsivenessEmitted
@@ -395,7 +460,7 @@ internal class FocalMomentTrackerTest {
         responsiveTracker.onInteractionStart(nowMs())
         mainHandler.post { blockMainThread(200) } // a 200ms block queued ahead of the probe
         advance(250)
-        responsiveTracker.onScreenStop()
+        responsiveTracker.onAppBackgrounded()
 
         val result = responsivenessEmitted.single()
         assertEquals(1, result.blockCount)
@@ -439,7 +504,7 @@ internal class FocalMomentTrackerTest {
         settleAfter(1)
         assertFalse("100ms after the block: settled", scheduler.scheduled)
 
-        responsiveTracker.onScreenStop()
+        responsiveTracker.onAppBackgrounded()
         val result = responsivenessEmitted.single()
         assertEquals(FocalOutcome.SETTLED, result.outcome)
         assertEquals(1, result.blockCount)
@@ -463,7 +528,7 @@ internal class FocalMomentTrackerTest {
         settleAfter(99)
         assertTrue("99ms after the block: not settled", scheduler.scheduled)
         settleAfter(1)
-        responsiveTracker.onScreenStop() // flushes the held moment
+        responsiveTracker.onAppBackgrounded() // flushes the held moment
 
         val result = responsivenessEmitted.single()
         assertEquals(FocalOutcome.SETTLED, result.outcome)
@@ -476,13 +541,13 @@ internal class FocalMomentTrackerTest {
     @Test
     fun `a block reported after the moment completed is ignored`() {
         responsiveTracker.onInteractionStart(nowMs())
-        responsiveTracker.onScreenStop()
+        responsiveTracker.onAppBackgrounded()
 
         blockCallback.onBlock(nowMs(), 80L)
         assertFalse("a completed moment schedules nothing", scheduler.scheduled)
 
         responsiveTracker.onInteractionStart(nowMs())
-        responsiveTracker.onScreenStop()
+        responsiveTracker.onAppBackgrounded()
         assertEquals(listOf(0, 0), responsivenessEmitted.map { it.blockCount })
     }
 

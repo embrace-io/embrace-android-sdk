@@ -22,6 +22,8 @@ import io.embrace.android.embracesdk.internal.arch.lifecycle.ActivityCreated
 import io.embrace.android.embracesdk.internal.arch.lifecycle.ActivityLifecycle
 import io.embrace.android.embracesdk.internal.arch.schema.EmbType
 import io.embrace.android.embracesdk.internal.arch.state.ProcessState
+import io.embrace.android.embracesdk.internal.arch.state.ProcessStateListener
+import io.embrace.android.embracesdk.internal.arch.vitals.FocalMomentType
 import io.embrace.android.embracesdk.internal.config.resolved.AutoDataCaptureConfig
 import io.embrace.android.embracesdk.internal.config.resolved.EmbraceConfig
 import io.embrace.android.embracesdk.internal.config.resolved.VitalsConfig
@@ -46,11 +48,13 @@ import org.robolectric.android.controller.ActivityController
 import org.robolectric.shadows.FrameMetricsBuilder
 import org.robolectric.shadows.ShadowSystemClock
 import java.time.Duration
+import kotlin.concurrent.thread
 
 @RunWith(AndroidJUnit4::class)
 internal class VitalsDataSourceTest {
 
     private val telemetryService = FakeInternalTelemetryService()
+    private val processStateTracker = FakeProcessStateTracker()
     private val mainLooper = shadowOf(Looper.getMainLooper())
 
     private fun createDataSource(
@@ -62,6 +66,7 @@ internal class VitalsDataSourceTest {
         val args = FakeInstrumentationArgs(
             application,
             telemetryService = telemetryService,
+            processStateTracker = processStateTracker,
             systemServiceSupplier = { name -> if (name == Context.DISPLAY_SERVICE) displayManager else null },
         )
         application.registerActivityLifecycleCallbacks(BusRelay(args.eventBus))
@@ -262,7 +267,7 @@ internal class VitalsDataSourceTest {
         Handler(Looper.getMainLooper()).post { ShadowSystemClock.advanceBy(Duration.ofMillis(200)) } // a 200ms block
         mainLooper.idleFor(Duration.ofMillis(50))
         dataSource.idleVitalsThread()
-        dataSource.stopScreen(activity)
+        dataSource.background()
 
         val span = args.responsivenessSpans().single()
         assertEquals(EmbType.Performance.InteractionResponsiveness, span.type)
@@ -283,11 +288,38 @@ internal class VitalsDataSourceTest {
 
         activity.get().touch(MotionEvent.ACTION_MOVE)
         dataSource.idleVitalsThread()
-        dataSource.stopScreen(activity)
+        dataSource.background()
 
         val attributes = args.responsivenessSpans().single().attributes
         assertFalse(attributes.containsKey(EmbInteractionResponsivenessAttributes.INTERACTION_RESPONSIVENESS_DISPATCH_DELAY_MS))
         assertEquals("0", attributes[EmbInteractionResponsivenessAttributes.INTERACTION_RESPONSIVENESS_BLOCK_COUNT])
+    }
+
+    @Test
+    fun `a forward navigation triggers a screen load on the event bus, and recreating an activity does not`() {
+        val (dataSource, args) = createDataSource(spanLimit = 10)
+        val triggers = mutableListOf<FocalMomentType>()
+        args.eventBus.addHandler(FocalMomentType.KEY) { triggers += it }
+        val home = dataSource.startScreen()
+        assertTrue("cold start triggers nothing", triggers.isEmpty())
+
+        home.recreate() // a config change: recreated from its saved state
+        assertTrue("recreation triggers nothing", triggers.isEmpty())
+
+        buildActivity(Activity::class.java).setup() // a forward navigation
+        assertEquals(listOf(FocalMomentType.SCREEN_LOAD), triggers)
+    }
+
+    @Test
+    fun `a trigger on the event bus opens a focal moment, from any thread`() {
+        val (dataSource, args) = createDataSource(spanLimit = 10, responsivenessEnabled = true)
+        dataSource.startScreen()
+        assertFalse("no moment open yet", focalMomentOpen())
+
+        thread { args.eventBus.emit(FocalMomentType.KEY, FocalMomentType.SCREEN_LOAD) }.join(TIMEOUT_MS)
+        dataSource.idleVitalsThread()
+
+        assertTrue(focalMomentOpen())
     }
 
     @Test
@@ -301,7 +333,7 @@ internal class VitalsDataSourceTest {
         mainLooper.idle()
         assertEquals("the touch scheduled no probe message", nextBeforeTouch, mainLooper.nextScheduledTaskTime)
 
-        dataSource.stopScreen(activity)
+        dataSource.background()
         assertTrue(args.responsivenessSpans().isEmpty())
     }
 
@@ -313,15 +345,15 @@ internal class VitalsDataSourceTest {
 
         activity.get().touch(MotionEvent.ACTION_DOWN)
         dataSource.idleVitalsThread()
-        dataSource.stopScreen(activity)
+        dataSource.background()
 
         assertEquals(1, args.destination.completedSpans().size)
         assertTrue("dropped at the shared limit", args.responsivenessSpans().isEmpty())
     }
 
     @Test
-    fun `disabling data capture leaves no probe message queued`() {
-        val (dataSource, _) = createDataSource(spanLimit = 10, responsivenessEnabled = true)
+    fun `disabling data capture leaves no probe message queued, and a later trigger opens no focal moment`() {
+        val (dataSource, args) = createDataSource(spanLimit = 10, responsivenessEnabled = true)
         val activity = dataSource.startScreen()
         val nextBeforeTouch = mainLooper.nextScheduledTaskTime
         activity.get().touch(MotionEvent.ACTION_DOWN)
@@ -334,6 +366,10 @@ internal class VitalsDataSourceTest {
         mainLooper.idle()
 
         assertEquals("the probe message is gone", nextBeforeTouch, mainLooper.nextScheduledTaskTime)
+
+        args.eventBus.emit(FocalMomentType.KEY, FocalMomentType.SCREEN_LOAD)
+        assertEquals("no probe started", nextBeforeTouch, mainLooper.nextScheduledTaskTime)
+        assertTrue(args.errorHandler.errorMessages.isEmpty())
     }
 
     /** Enables data capture and resumes an activity, so its window reports touches to the focal moment tracker. */
@@ -345,13 +381,19 @@ internal class VitalsDataSourceTest {
         return activity
     }
 
-    /** Pauses [activity], which interrupts any open focal moment, and waits for its results to be emitted. */
-    private fun VitalsDataSource.stopScreen(activity: ActivityController<Activity>) {
-        activity.pause()
+    /** Backgrounds the app, which interrupts any open focal moment, and waits for its results to be emitted. */
+    private fun VitalsDataSource.background() {
+        processStateTracker.listeners.forEach(ProcessStateListener::onBackground)
         idleVitalsThread()
     }
 
     private fun VitalsDataSource.idleVitalsThread() = shadowOf(checkNotNull(vitalsScheduler).handler.looper).idle()
+
+    /**
+     * Whether a focal moment is open, read from the main looper rather than the telemetry: with interaction responsiveness enabled,
+     * only an open moment runs the main-thread probe, whose first message is due as soon as it starts.
+     */
+    private fun focalMomentOpen() = mainLooper.nextScheduledTaskTime == Duration.ofMillis(SystemClock.uptimeMillis())
 
     private fun Activity.touch(action: Int, eventTime: Long = SystemClock.uptimeMillis()) {
         val event = MotionEvent.obtain(eventTime, eventTime, action, 0f, 0f, 0)

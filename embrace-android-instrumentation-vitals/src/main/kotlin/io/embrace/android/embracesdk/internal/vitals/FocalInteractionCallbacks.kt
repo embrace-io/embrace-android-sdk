@@ -15,16 +15,6 @@ internal interface FocalInteractionCallbacks {
     fun onFrame(vsyncNanos: Long, frameDispatchNanos: Long, jankNanos: Long, expectedFrames: Int)
 
     /**
-     * A new screen began (Activity resumed).
-     */
-    fun onScreenStart()
-
-    /**
-     * The current screen was paused (Activity paused) — e.g. the app was backgrounded.
-     */
-    fun onScreenStop()
-
-    /**
      * A user interaction began (touch down) at [eventTime], the [android.os.SystemClock.uptimeMillis] that the event occurred.
      */
     fun onInteractionStart(eventTime: Long)
@@ -64,7 +54,7 @@ internal interface FocalInteractionCallbacks {
     fun onWindowFocused()
 
     /**
-     * The app entered the background — interrupts an in-flight screen load.
+     * The app entered the background — interrupts an in-flight focal moment and screen load.
      */
     fun onAppBackgrounded()
 }

@@ -18,6 +18,7 @@ import io.embrace.android.embracesdk.internal.arch.schema.EmbType
 import io.embrace.android.embracesdk.internal.arch.schema.SchemaType
 import io.embrace.android.embracesdk.internal.arch.state.ProcessState
 import io.embrace.android.embracesdk.internal.arch.state.ProcessStateListener
+import io.embrace.android.embracesdk.internal.arch.vitals.FocalMomentType
 import io.embrace.android.embracesdk.internal.logging.SdkErrorType
 import io.embrace.android.embracesdk.internal.logging.guardSdkCode
 import io.embrace.android.embracesdk.internal.vitals.responsiveness.InteractionResponsivenessReporter
@@ -147,10 +148,11 @@ internal class VitalsDataSource(
             onFrameCounted = ::countFrames,
         )
         focalTracker = tracker
+        args.eventBus.addHandler(FocalMomentType.KEY, tracker)
 
         val listener = VitalsActivityListener(
             focalCallbacks = tracker,
-            navSource = ActivityNavigationSource(callbacks = tracker),
+            navSource = ActivityNavigationSource(callbacks = tracker, eventBus = args.eventBus),
             frameMetricsHandler = handler,
             frameMetricsStrategy = frameMetricsStrategy,
             eventBus = args.eventBus,
@@ -167,6 +169,7 @@ internal class VitalsDataSource(
         activityListener?.close()
         activityListener = null
         args.systemService<DisplayManager>(Context.DISPLAY_SERVICE)?.unregisterDisplayListener(displayListener)
+        focalTracker?.let { args.eventBus.removeHandler(FocalMomentType.KEY, it) }
         // posted ahead of the scheduler stopping, so it runs after any touch already queued for the Vitals thread
         focalTracker?.close()
         vitalsScheduler?.stop()

@@ -154,6 +154,23 @@ internal class EmbraceNetworkConnectivityServiceTest {
     }
 
     @Test
+    fun `broadcast is handled on the worker and identical broadcasts notify once`() {
+        val executor = BlockingScheduledExecutorService(blockingMode = true)
+        val service = createService(worker = BackgroundWorker(executor))
+        val observed = mutableListOf<ConnectivityStatus>()
+        service.addNetworkConnectivityListener { observed.add(it) }
+        observed.clear()
+
+        networkInfo = { fakeNetworkInfo(true, ConnectivityManager.TYPE_WIFI) }
+        service.onReceive(context, Intent())
+        service.onReceive(context, Intent())
+        assertEquals(emptyList<ConnectivityStatus>(), observed)
+
+        executor.runCurrentlyBlocked()
+        assertEquals(listOf(OptimisticWifi), observed)
+    }
+
+    @Test
     fun `connectivity is not read when service is constructed`() {
         var read = false
         EmbraceNetworkConnectivityService(
@@ -166,7 +183,11 @@ internal class EmbraceNetworkConnectivityServiceTest {
         assertFalse(read)
     }
 
-    private fun createService(connectivityAvailable: Boolean = true, versionAtLeast: Boolean = false) =
+    private fun createService(
+        connectivityAvailable: Boolean = true,
+        versionAtLeast: Boolean = false,
+        worker: BackgroundWorker = this.worker,
+    ) =
         EmbraceNetworkConnectivityService(
             context,
             worker,

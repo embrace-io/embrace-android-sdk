@@ -1,6 +1,7 @@
 package io.embrace.android.embracesdk.internal.capture.state
 
 import io.embrace.android.embracesdk.internal.session.persistence.StateRecord
+import io.embrace.android.embracesdk.internal.session.persistence.StateValue
 
 /**
  * Told by a [StateRecorder] of what it records, as it records it.
@@ -11,10 +12,11 @@ import io.embrace.android.embracesdk.internal.session.persistence.StateRecord
 interface StateChangeListener {
 
     /**
-     * A state took a new value. [record] is the change, and [snapshot] the value of every state after it. A change the
-     * recorder counts and does not record, because its journal is full, is not reported.
+     * A state took a new value. [record] is the change, and [snapshot] the value of every state after it. [previous] is the
+     * value the state had before, or null if this is its first. A change the recorder counts and does not record, because
+     * its journal is full, is not reported.
      */
-    fun onChange(record: StateRecord, snapshot: StateSnapshot)
+    fun onChange(record: StateRecord, snapshot: StateSnapshot, previous: StateValue?)
 
     /**
      * A session part started at [timeMs], when the value of every state was [snapshot].

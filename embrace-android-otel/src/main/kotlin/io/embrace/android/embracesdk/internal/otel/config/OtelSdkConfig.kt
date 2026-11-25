@@ -23,6 +23,7 @@ import io.embrace.android.embracesdk.internal.utils.EmbTrace
 import io.embrace.android.embracesdk.internal.utils.UuidSource
 import io.embrace.android.embracesdk.semconv.EmbSessionAttributes
 import io.opentelemetry.kotlin.attributes.AttributesMutator
+import io.opentelemetry.kotlin.logging.export.LogRecordExporter
 import io.opentelemetry.kotlin.logging.export.LogRecordProcessor
 import io.opentelemetry.kotlin.semconv.AndroidAttributes
 import io.opentelemetry.kotlin.semconv.DeviceAttributes
@@ -148,10 +149,14 @@ class OtelSdkConfig(
         )
     }
 
+    private val externalLogExporters: List<LogRecordExporter> by lazy {
+        externalConfig.getLogExporters().map(::PrivateTelemetryFilteringLogRecordExporter)
+    }
+
     private val logRecordExporter: DefaultLogRecordExporter by lazy {
         DefaultLogRecordExporter(
             logSink = logSink,
-            externalExporters = externalConfig.getLogExporters().map(::PrivateTelemetryFilteringLogRecordExporter),
+            externalExporters = externalLogExporters,
             exportCheck = exportCheck,
             externalExportDispatcher = externalExportDispatcher,
         )
@@ -163,6 +168,8 @@ class OtelSdkConfig(
             eventMetadataProvider,
             logRecordExporter,
             if (stateAssociation?.exportsEvents == true) logRecordExporter::exportExternally else null,
+            stateAssociation?.stateProvider,
+            externalLogExporters.isNotEmpty() || externalLogRecordProcessors.isNotEmpty(),
         )
     }
 

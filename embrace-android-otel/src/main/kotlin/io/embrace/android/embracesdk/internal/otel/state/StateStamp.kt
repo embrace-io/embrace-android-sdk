@@ -21,6 +21,16 @@ interface StateStamp {
     val sinceMs: Long
 
     /**
+     * Whether no state has reported a value yet, in which case there is nothing to stamp.
+     */
+    fun isEmpty(): Boolean
+
+    /**
+     * Every state's value as one string, the value of [StateAttributes.STATES]. Built the first time it is read and kept.
+     */
+    val encoded: String
+
+    /**
      * Every state's value as attributes: [StateAttributes.VALUE_PREFIX] followed by a state's name holds its value, and
      * [StateAttributes.VALUE_TYPE_PREFIX] followed by its name holds [StateAttributes.SYSTEM] if the SDK generated that
      * value. Built the first time it is read and kept.

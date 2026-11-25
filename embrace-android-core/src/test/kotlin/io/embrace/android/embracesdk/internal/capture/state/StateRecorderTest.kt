@@ -5,6 +5,7 @@ import io.embrace.android.embracesdk.internal.arch.datasource.StateUpdate
 import io.embrace.android.embracesdk.internal.arch.schema.SystemStateValue
 import io.embrace.android.embracesdk.internal.clock.Clock
 import io.embrace.android.embracesdk.internal.session.persistence.StateRecord
+import io.embrace.android.embracesdk.internal.session.persistence.StateValue
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertNull
@@ -77,10 +78,10 @@ internal class StateRecorderTest {
         val snapshot = recorder.snapshot()
         assertEquals(
             mapOf(
-                "emb.state.value.screen" to "Backgrounded",
-                "emb.state.value_type.screen" to "system",
-                "emb.state.value.network" to "none",
-                "emb.state.value.power" to "low",
+                "emb.states.value.screen" to "Backgrounded",
+                "emb.states.value_type.screen" to "system",
+                "emb.states.value.network" to "none",
+                "emb.states.value.power" to "low",
             ),
             snapshot.attributes,
         )
@@ -88,24 +89,24 @@ internal class StateRecorderTest {
         assertTrue(snapshot.attributes === snapshot.attributes)
         assertEquals(
             mapOf(
-                "emb.state.value.screen" to "Backgrounded",
-                "emb.state.value_type.screen" to "system",
-                "emb.state.value.network" to "wifi",
+                "emb.states.value.screen" to "Backgrounded",
+                "emb.states.value_type.screen" to "system",
+                "emb.states.value.network" to "wifi",
             ),
             earlier.attributes,
         )
 
         // a state that has its first value differs from having none
         assertEquals(
-            mapOf("emb.state.end_value.network" to "none", "emb.state.end_value.power" to "low"),
+            mapOf("emb.states.end_value.network" to "none", "emb.states.end_value.power" to "low"),
             snapshot.endAttributes(earlier),
         )
         assertEquals(
             mapOf(
-                "emb.state.end_value.screen" to "Backgrounded",
-                "emb.state.end_value_type.screen" to "system",
-                "emb.state.end_value.network" to "none",
-                "emb.state.end_value.power" to "low",
+                "emb.states.end_value.screen" to "Backgrounded",
+                "emb.states.end_value_type.screen" to "system",
+                "emb.states.end_value.network" to "none",
+                "emb.states.end_value.power" to "low",
             ),
             snapshot.endAttributes(StateSnapshot.NONE),
         )
@@ -181,7 +182,7 @@ internal class StateRecorderTest {
         val recording = CountDownLatch(1)
         val resume = CountDownLatch(1)
         val listener = object : StateChangeListener {
-            override fun onChange(record: StateRecord, snapshot: StateSnapshot) {
+            override fun onChange(record: StateRecord, snapshot: StateSnapshot, previous: StateValue?) {
                 // called under the recorder's lock, which is held for as long as this waits
                 recording.countDown()
                 resume.await(WAIT_SECONDS, TimeUnit.SECONDS)
@@ -211,7 +212,7 @@ internal class StateRecorderTest {
     fun `a listener is told of each recorded change as it is made, with the values after it, and of each part that starts`() {
         val told = mutableListOf<String>()
         val listener = object : StateChangeListener {
-            override fun onChange(record: StateRecord, snapshot: StateSnapshot) {
+            override fun onChange(record: StateRecord, snapshot: StateSnapshot, previous: StateValue?) {
                 assertEquals(record.sequence, snapshot.sequence)
                 told.add("${record.sequence}:${snapshot.encoded}")
             }
@@ -375,10 +376,33 @@ internal class StateRecorderTest {
 
         val change = checkNotNull(journal.last().change)
         assertEquals(2000, change.value_?.value_?.length)
-        // two fewer than an event can carry, which leaves room for the value and its type
-        assertEquals(8, change.attributes.size)
+        // three fewer than an event can carry, which leaves room for the value, its type and its number
+        assertEquals(7, change.attributes.size)
         assertEquals(setOf(2000), change.attributes.values.map(String::length).toSet())
         assertEquals(2000, recorder.snapshot().values.getValue("route").value_.length)
+    }
+
+    @Test
+    fun `a change's own attribute under either state stem is dropped, and uses up none of the seven a change can carry`() {
+        recorder.beginJournal(clock.now(), journal::addAll)
+        val reserved = mapOf(
+            "emb.states.new_value" to "spoofed",
+            "emb.states.new_value_type" to "system",
+            "emb.states.seq" to "99",
+            "emb.states.value.network" to "wifi",
+            "emb.states.anything-else" to "x",
+            "emb.state.anything-else" to "x",
+            "emb.state.initial_value" to "v1",
+        )
+        val own = (1..8).associate { "key-$it" to "v$it" }
+        update("network", "wifi", reserved + own)
+
+        // the reserved keys are dropped first and the first seven of the rest are kept, in the order they were given
+        assertEquals((1..7).associate { "key-$it" to "v$it" }, checkNotNull(journal.last().change).attributes)
+
+        // the count of transitions an instrumentation dropped is the one key under the prefix that a data source reports
+        update("network", "wan", mapOf("emb.state.dropped_by_instrumentation" to "2", "emb.states.seq" to "99"))
+        assertEquals(mapOf("emb.state.dropped_by_instrumentation" to "2"), checkNotNull(journal.last().change).attributes)
     }
 
     @Test

@@ -21,8 +21,9 @@ import io.opentelemetry.kotlin.semconv.UserAttributes
  * The services that hold this context are constructed after the OTel SDK, so they are supplied as forward
  * references. Signals recorded before [markReady] carry no context.
  *
- * @param statesAsAttributes whether the values [stateSnapshotProvider] supplies are stamped as one attribute for each
- * state, rather than as one string that holds all of them.
+ * @param statesStampedByLogPipeline whether the log pipeline stamps the values [stateSnapshotProvider] supplies itself, by
+ * who reads the log, so that [getEventMetadata] leaves them out. Otherwise they are stamped as one string that holds all
+ * of them, which every reader of the log sees.
  */
 internal class OtelSignalContext(
     private val sessionIdsProvider: Provider<SessionIdsProvider>,
@@ -33,7 +34,7 @@ internal class OtelSignalContext(
     private val userSessionPropertiesServiceProvider: Provider<UserSessionPropertiesService>,
     private val instrumentationRegistryProvider: Provider<InstrumentationRegistry>,
     private val stateSnapshotProvider: Provider<StateSnapshot?> = { null },
-    private val statesAsAttributes: Boolean = false,
+    private val statesStampedByLogPipeline: Boolean = false,
 ) {
 
     @Volatile
@@ -59,8 +60,8 @@ internal class OtelSignalContext(
     }
 
     /**
-     * A snapshot of the SDK state that is stamped on OTel log records at the time they are emitted. Every value is text,
-     * but for the place of the log in the order of state changes where [statesAsAttributes], which is a whole number.
+     * A snapshot of the SDK state that is stamped on OTel log records at the time they are emitted. Every value is text.
+     * The values of the states are left out where [statesStampedByLogPipeline].
      */
     @OptIn(ExperimentalSemconv::class)
     fun getEventMetadata(): Map<String, Any> {
@@ -93,15 +94,10 @@ internal class OtelSignalContext(
                 instrumentationRegistryProvider().getCurrentStates().forEach {
                     put(it.key, it.value.toString())
                 }
-            } else if (!states.isEmpty()) {
+            } else if (!statesStampedByLogPipeline && !states.isEmpty()) {
                 // one snapshot, so the values are all of one moment, and its place in the order of state changes
-                if (statesAsAttributes) {
-                    putAll(states.attributes)
-                    put(StateSnapshot.SEQUENCE_ATTRIBUTE, states.sequence)
-                } else {
-                    put(StateSnapshot.ATTRIBUTE, states.encoded)
-                    put(StateSnapshot.SEQUENCE_ATTRIBUTE, states.sequence.toString())
-                }
+                put(StateSnapshot.ATTRIBUTE, states.encoded)
+                put(StateSnapshot.SEQUENCE_ATTRIBUTE, states.sequence.toString())
             }
         }
     }

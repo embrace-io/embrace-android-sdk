@@ -55,7 +55,7 @@ import java.util.concurrent.ConcurrentLinkedQueue
  *
  * - `EMBRACE_OTLP_ENDPOINT`: where to send, such as `http://localhost:4318`. Spans go to `/v1/traces` under it and log
  *   records, the state events among them, to `/v1/logs`.
- * - `EMBRACE_STATE_EXPORT_MODE`: `VERBOSE`, which is the default, `ASSOCIATION` or `OFF`.
+ * - `EMBRACE_STATE_EXPORT_MODE`: `ASSOCIATION`, which is the default, `VERBOSE` or `OFF`.
  * - `EMBRACE_OTLP_TIME`: `fixed` starts the scenario at the fixed time tests run at, which is in 1975. Otherwise it starts
  *   at the current time, as whatever is behind the endpoint may turn old telemetry away.
  *
@@ -98,7 +98,7 @@ internal class StateOtlpExportHarnessTest {
     fun `a scripted scenario is exported to the OTLP endpoint the environment names`() {
         val endpoint = System.getenv(ENDPOINT_VARIABLE)
         assumeTrue("Set $ENDPOINT_VARIABLE to an OTLP/HTTP endpoint to run this.", !endpoint.isNullOrBlank())
-        val mode = checkNotNull(StateExportMode.fromRemote(System.getenv(MODE_VARIABLE) ?: StateExportMode.VERBOSE.name)) {
+        val mode = checkNotNull(StateExportMode.fromRemote(System.getenv(MODE_VARIABLE) ?: StateExportMode.ASSOCIATION.name)) {
             "$MODE_VARIABLE is not one of ${StateExportMode.entries}"
         }
         exportScenario(checkNotNull(endpoint), mode) { sender, spanExporter, logExporter ->
@@ -115,6 +115,7 @@ internal class StateOtlpExportHarnessTest {
     @Test
     fun `verbose - what is posted has the values on every linked span and on every change event`() {
         val posted = postScenario(StateExportMode.VERBOSE)
+        posted.printChangeRecordSize(StateExportMode.VERBOSE)
         posted.assertSpansAndLogsAreLinked()
         val values = posted.assertEventsReplayToValues()
 
@@ -136,6 +137,7 @@ internal class StateOtlpExportHarnessTest {
     @Test
     fun `association - what is posted has the link alone on a span, and each change alone on its event`() {
         val posted = postScenario(StateExportMode.ASSOCIATION)
+        posted.printChangeRecordSize(StateExportMode.ASSOCIATION)
         posted.assertSpansAndLogsAreLinked()
         posted.assertEventsReplayToValues()
 
@@ -362,8 +364,8 @@ internal class StateOtlpExportHarnessTest {
         values[0] = emptyMap()
         changes.forEach { change ->
             val sequence = checkNotNull(change.long(SEQUENCE))
-            val state = checkNotNull(change.string("emb.state.name"))
-            values[sequence] = values.getValue(sequence - 1) + (state to checkNotNull(change.string("emb.state.new_value")))
+            val state = checkNotNull(change.string("emb.states.name"))
+            values[sequence] = values.getValue(sequence - 1) + (state to checkNotNull(change.string("emb.states.new_value")))
             assertEquals("process", change.string("emb.entity.type"))
             assertEquals(processIdentifier, change.string(ENTITY_ID))
             assertNull(change["body"])
@@ -483,6 +485,14 @@ internal class StateOtlpExportHarnessTest {
     ) {
         fun events(name: String): List<JsonObject> = logRecords.filter { it["eventName"]?.jsonPrimitive?.content == name }
 
+        /**
+         * Prints the size of the JSON of the first and last change record, the last being one with a previous value.
+         */
+        fun printChangeRecordSize(mode: StateExportMode) {
+            val changes = events(CHANGE_EVENT)
+            println("State OTLP harness, $mode: a change record is ${changes.first().toString().length} bytes of JSON at first, and ${changes.last().toString().length} at last")
+        }
+
         fun linkedSpans(): List<JsonObject> = spans.filter { it.attribute(SEQUENCE) != null }
     }
 
@@ -493,12 +503,12 @@ internal class StateOtlpExportHarnessTest {
         const val PAGES = 5
         const val GAP_MS = 25L
 
-        const val SEQUENCE = "emb.state.seq"
-        const val END_SEQUENCE = "emb.state.end_seq"
-        const val VALUE_PREFIX = "emb.state.value."
-        const val END_VALUE_PREFIX = "emb.state.end_value."
-        const val CHANGE_EVENT = "emb.state.change"
-        const val SNAPSHOT_EVENT = "emb.state.snapshot"
+        const val SEQUENCE = "emb.states.seq"
+        const val END_SEQUENCE = "emb.states.end_seq"
+        const val VALUE_PREFIX = "emb.states.value."
+        const val END_VALUE_PREFIX = "emb.states.end_value."
+        const val CHANGE_EVENT = "emb.states.change"
+        const val SNAPSHOT_EVENT = "emb.states.snapshot"
         const val ENTITY_ID = "emb.entity.id"
         const val PROCESS_IDENTIFIER = "emb.process_identifier"
         const val TRACE_ID_LENGTH = 32

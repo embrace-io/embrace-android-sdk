@@ -256,6 +256,12 @@ abstract class StateDataSource<T : Any>(
                     putAll(outgoingValueAttributes(oldState))
                 }
                 putAll(transitionAttributes)
+                // the count is the data source's own: a reporter's value for it is replaced, or removed if there is no count
+                if (unreportedTransitions > 0) {
+                    put(EmbStateTransitionAttributes.EMB_STATE_DROPPED_BY_INSTRUMENTATION, unreportedTransitions.toString())
+                } else {
+                    remove(EmbStateTransitionAttributes.EMB_STATE_DROPPED_BY_INSTRUMENTATION)
+                }
             }
             unreportedTransitions = 0
             args.eventBus.emit(StateUpdate.KEY, StateUpdate(stateName, newState, transitionTimeMs, attributes))

@@ -8,6 +8,7 @@ import io.embrace.android.embracesdk.internal.config.remote.KillSwitchRemoteConf
 import io.embrace.android.embracesdk.internal.config.remote.RemoteConfig
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
+import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
 
@@ -33,7 +34,7 @@ internal class AutoDataCaptureConfigTest {
             assertTrue(stateCaptureEnabled)
             assertFalse(sharedStateSpanEnabled)
             assertFalse(stateAssociationEnabled)
-            assertEquals(StateExportMode.VERBOSE, stateExportMode)
+            assertNull(stateExportMode)
             assertFalse(networkCallbackConnectivityServiceEnabled)
             assertTrue(navigationStateCaptureEnabled)
             assertFalse(smoothnessCaptureEnabled)
@@ -119,7 +120,7 @@ internal class AutoDataCaptureConfigTest {
     }
 
     @Test
-    fun `the state export mode is read from the remote config whatever its case, and is verbose when it names no mode`() {
+    fun `the state export mode is read from the remote config whatever its case, and is null when it names no mode`() {
         val modes = listOf("off", "ASSOCIATION", "Verbose", "unheard-of", null).map { name ->
             resolveAutoDataCapture(InstrumentedConfigImpl, RemoteConfig(stateExportMode = name), unreadBucket).stateExportMode
         }
@@ -128,11 +129,17 @@ internal class AutoDataCaptureConfigTest {
                 StateExportMode.OFF,
                 StateExportMode.ASSOCIATION,
                 StateExportMode.VERBOSE,
-                StateExportMode.VERBOSE,
-                StateExportMode.VERBOSE,
+                null,
+                null,
             ),
             modes,
         )
+    }
+
+    @Test
+    fun `with no mode named the default is association for an app with a log receiver and verbose for one with a span receiver only`() {
+        assertEquals(StateExportMode.ASSOCIATION, StateExportMode.defaultFor(hasLogReceiver = true))
+        assertEquals(StateExportMode.VERBOSE, StateExportMode.defaultFor(hasLogReceiver = false))
     }
 
     private fun resolve(local: FakeEnabledFeatureConfig, remote: RemoteConfig? = null) = resolveAutoDataCapture(

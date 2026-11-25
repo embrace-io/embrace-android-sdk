@@ -39,6 +39,7 @@ import io.embrace.android.embracesdk.internal.config.remote.RemoteConfig
 import io.embrace.android.embracesdk.internal.config.resolved.AutoDataCaptureConfig
 import io.embrace.android.embracesdk.internal.config.resolved.EmbraceConfig
 import io.embrace.android.embracesdk.internal.config.resolved.PersistenceConfig
+import io.embrace.android.embracesdk.internal.config.resolved.StateExportMode
 import io.embrace.android.embracesdk.internal.delivery.intake.IntakeService
 import io.embrace.android.embracesdk.internal.injection.ConfigLoadServices
 import io.embrace.android.embracesdk.internal.injection.PreStartServices
@@ -187,11 +188,35 @@ internal class RealSdkInstanceFactoryTest {
 
     @Test
     fun `an app is given more of state than the link on a span only if it has configured an exporter or a processor`() {
-        val associated = FakeConfigService(
+        val byDefault = FakeConfigService(
             config = EmbraceConfig(
                 persistence = { PersistenceConfig(multiFileEnabled = { true }) },
                 autoDataCapture = {
                     AutoDataCaptureConfig(sharedStateSpanEnabled = { true }, stateAssociationEnabled = { true })
+                },
+            ),
+        )
+        val namedAssociation = FakeConfigService(
+            config = EmbraceConfig(
+                persistence = { PersistenceConfig(multiFileEnabled = { true }) },
+                autoDataCapture = {
+                    AutoDataCaptureConfig(
+                        sharedStateSpanEnabled = { true },
+                        stateAssociationEnabled = { true },
+                        stateExportMode = { StateExportMode.ASSOCIATION },
+                    )
+                },
+            ),
+        )
+        val associated = FakeConfigService(
+            config = EmbraceConfig(
+                persistence = { PersistenceConfig(multiFileEnabled = { true }) },
+                autoDataCapture = {
+                    AutoDataCaptureConfig(
+                        sharedStateSpanEnabled = { true },
+                        stateAssociationEnabled = { true },
+                        stateExportMode = { StateExportMode.VERBOSE },
+                    )
                 },
             ),
         )
@@ -204,7 +229,7 @@ internal class RealSdkInstanceFactoryTest {
             }
         }
 
-        // the mode is verbose, and there is nobody to emit an event for, or to keep the values of a span for
+        // the mode is verbose, which is not the default, and there is nobody to emit an event for, or to keep the values of a span for
         createInstance(configService = associated, workerThreadPool = workerThreadPool)
         with(checkNotNull(otelSdkConfig)) {
             assertNotNull(spanStateLink)
@@ -214,6 +239,41 @@ internal class RealSdkInstanceFactoryTest {
             assertFalse(resource.containsKey(EmbSessionAttributes.EMB_PROCESS_IDENTIFIER))
         }
         assertFalse(Worker.Background.StateExportWorker in requestedWorkers)
+
+        // with no mode named, an app with only a span exporter gets the values on its spans, as nothing would resolve a number
+        createInstance(
+            configService = byDefault,
+            workerThreadPool = workerThreadPool,
+            externalOtelConfig = { addSpanExporter(FakeSpanExporter()) },
+        )
+        with(checkNotNull(otelSdkConfig)) {
+            assertNotNull(spanStateLink)
+            assertEquals(1, trailingSpanProcessors.size)
+        }
+
+        // with no mode named, an app with a log receiver gets association only, and so no values on its spans
+        createInstance(
+            configService = byDefault,
+            workerThreadPool = workerThreadPool,
+            externalOtelConfig = {
+                addSpanExporter(FakeSpanExporter())
+                addLogExporter(FakeLogRecordExporter())
+            },
+        )
+        with(checkNotNull(otelSdkConfig)) {
+            assertTrue(trailingSpanProcessors.isEmpty())
+        }
+        requestedWorkers.clear()
+
+        // a mode that is named wins: association for a span exporter alone
+        createInstance(
+            configService = namedAssociation,
+            workerThreadPool = workerThreadPool,
+            externalOtelConfig = { addSpanExporter(FakeSpanExporter()) },
+        )
+        with(checkNotNull(otelSdkConfig)) {
+            assertTrue(trailingSpanProcessors.isEmpty())
+        }
 
         // a span exporter alone gets what the mode gives a span, and no events, as nothing receives log records
         createInstance(

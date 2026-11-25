@@ -5,6 +5,7 @@ import io.embrace.android.embracesdk.internal.clock.millisToNanos
 import io.embrace.android.embracesdk.internal.otel.state.StateAttributes
 import io.embrace.android.embracesdk.internal.otel.state.StateEventLogger
 import io.embrace.android.embracesdk.internal.session.persistence.StateRecord
+import io.embrace.android.embracesdk.internal.session.persistence.StateValue
 import io.embrace.android.embracesdk.internal.worker.BackgroundWorker
 import io.opentelemetry.kotlin.attributes.AttributesMutator
 import java.util.concurrent.ConcurrentLinkedQueue
@@ -14,7 +15,8 @@ import java.util.concurrent.atomic.AtomicInteger
 
 /**
  * Emits what a [StateRecorder] records as events for an app's own OpenTelemetry log exporters and log record
- * processors: one for each state change as it is made, and one with every state's value when a session part starts.
+ * processors: one for each state change as it is made, which also carries the value the state had before, and one with
+ * every state's value when a session part starts.
  * Whatever receives them can replay the changes, and so resolve the sequence numbers a span carries. None of it is part
  * of Embrace's own payload, which has the changes as a span of the session part.
  *
@@ -51,12 +53,12 @@ class StateEventEmitter(
     @Volatile
     private var workerShutDown = false
 
-    override fun onChange(record: StateRecord, snapshot: StateSnapshot) {
-        queue(PendingEvent(record.time_ms, snapshot, record))
+    override fun onChange(record: StateRecord, snapshot: StateSnapshot, previous: StateValue?) {
+        queue(PendingEvent(record.time_ms, snapshot, record, previous))
     }
 
     override fun onPartStart(timeMs: Long, snapshot: StateSnapshot) {
-        queue(PendingEvent(timeMs, snapshot, null))
+        queue(PendingEvent(timeMs, snapshot, null, null))
     }
 
     /**
@@ -135,6 +137,13 @@ class StateEventEmitter(
             if (value.system) {
                 setStringAttribute(StateAttributes.NEW_VALUE_TYPE, StateAttributes.SYSTEM)
             }
+            // the value the state is leaving, which the change's own attributes describe: absent for a state's first change
+            event.previous?.let { previous ->
+                setStringAttribute(StateAttributes.PREVIOUS_VALUE, previous.value_)
+                if (previous.system) {
+                    setStringAttribute(StateAttributes.PREVIOUS_VALUE_TYPE, StateAttributes.SYSTEM)
+                }
+            }
             if (includeValues) {
                 // from the snapshot this change produced, which is not the current one by the time this runs
                 setValues(event.snapshot)
@@ -161,6 +170,7 @@ class StateEventEmitter(
         val timeMs: Long,
         val snapshot: StateSnapshot,
         val change: StateRecord?,
+        val previous: StateValue?,
     )
 
     private companion object {

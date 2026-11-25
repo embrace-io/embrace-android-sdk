@@ -52,40 +52,6 @@ internal class StateKnownDefectsTest {
     }
 
     @Test
-    fun `a change's own attribute is kept beside the SDK's under an equal key, and stands under a key the SDK does not write`() {
-        val recorder = StateRecorder(clock, listener = emitter())
-        recorder.beginJournal(clock.now(), journal::addAll)
-        recorder.onEvent(
-            StateUpdate(
-                state = "network",
-                value = "none",
-                timeMs = clock.now(),
-                attributes = mapOf(
-                    "emb.state.new_value" to "wifi",
-                    "emb.state.value_type" to "system",
-                    "emb.state.new_value_type" to "system",
-                    "emb.state.value.network" to "wifi",
-                ),
-            ),
-        )
-        recorder.endJournal(clock.now())
-
-        // in the change log both of two equal keys are kept, the reporter's first, and the reporter's mark of a generated
-        // value stands on a value that was observed
-        val delivered = checkNotNull(checkNotNull(stateSpan().events).single().attributes)
-        assertEquals(listOf("wifi", "none"), delivered.filter { it.key == "emb.state.new_value" }.map { it.data })
-        assertEquals(listOf("system"), delivered.filter { it.key == "emb.state.value_type" }.map { it.data })
-
-        // in the event for an app's exporters the SDK's wins under a key it writes, and the reporter's stands under one it
-        // does not write: the mark of a generated value, and a state's value where the event carries no values
-        executor.runCurrentlyBlocked()
-        val exported = logger.logs.single { it.eventName == "emb.state.change" }.attributes
-        assertEquals("none", exported["emb.state.new_value"])
-        assertEquals("system", exported["emb.state.new_value_type"])
-        assertEquals("wifi", exported["emb.state.value.network"])
-    }
-
-    @Test
     fun `the event left out when too many are waiting can be the one that says a session part started`() {
         val emitter = emitter(maxPendingEvents = 1)
         val recorder = StateRecorder(clock, listener = emitter)
@@ -94,7 +60,7 @@ internal class StateKnownDefectsTest {
 
         assertEquals(1, emitter.droppedEvents())
         executor.runCurrentlyBlocked()
-        assertEquals(listOf("emb.state.change"), logger.logs.map { it.eventName })
+        assertEquals(listOf("emb.states.change"), logger.logs.map { it.eventName })
     }
 
     @Test
@@ -121,8 +87,8 @@ internal class StateKnownDefectsTest {
             checkNotNull(stateSpan.events).map { it.timestampNanos },
         )
         val attributes = checkNotNull(stateSpan.attributes).associate { it.key to it.data }
-        assertEquals("1", attributes["emb.state.part_start_seq"])
-        assertNull(attributes["emb.state.journal_truncated"])
+        assertEquals("1", attributes["emb.states.part_start_seq"])
+        assertNull(attributes["emb.states.truncated"])
     }
 
     @Test
@@ -154,8 +120,8 @@ internal class StateKnownDefectsTest {
         recorder.endJournal(clock.now())
 
         val stamp = recorder.snapshot().attributes
-        assertEquals("empty", stamp["emb.state.value."])
-        assertEquals("long", stamp["emb.state.value.$unchecked"])
+        assertEquals("empty", stamp["emb.states.value."])
+        assertEquals("long", stamp["emb.states.value.$unchecked"])
         val eventNames = checkNotNull(stateSpan().events).map { it.name }
         assertEquals(listOf("emb-state-", "emb-state-$unchecked"), eventNames)
         assertTrue(checkNotNull(eventNames.last()).length > 5_000)

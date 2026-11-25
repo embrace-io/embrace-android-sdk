@@ -6,6 +6,7 @@ import io.embrace.android.embracesdk.internal.clock.millisToNanos
 import io.embrace.android.embracesdk.internal.otel.sdk.id.OtelIds
 import io.embrace.android.embracesdk.internal.otel.sdk.toEmbraceObjectName
 import io.embrace.android.embracesdk.internal.otel.spans.hasEmbraceAttribute
+import io.embrace.android.embracesdk.internal.otel.state.StateAttributes
 import io.embrace.android.embracesdk.internal.payload.Attribute
 import io.embrace.android.embracesdk.internal.payload.Envelope
 import io.embrace.android.embracesdk.internal.payload.Link
@@ -13,9 +14,7 @@ import io.embrace.android.embracesdk.internal.payload.SessionPartPayload
 import io.embrace.android.embracesdk.internal.payload.Span
 import io.embrace.android.embracesdk.internal.payload.SpanEvent
 import io.embrace.android.embracesdk.internal.session.persistence.StateRecord
-import io.embrace.android.embracesdk.internal.session.persistence.StateValue
 import io.embrace.android.embracesdk.semconv.EmbSessionAttributes
-import io.embrace.android.embracesdk.semconv.EmbStateTransitionAttributes
 import java.nio.ByteBuffer
 import java.security.MessageDigest
 
@@ -24,26 +23,36 @@ import java.security.MessageDigest
  *
  * The journal is how state is persisted, not how it is delivered. This renders it in the one shape the payload has for it:
  *
- * - every state's value when the journal opened is an attribute, `emb.state.<name>.initial_value`, with
- *   `emb.state.<name>.value_type` beside it for a value the SDK generated
- * - every change is an event named `emb-state-<name>`, in the order of the journal, carrying its new value
- * - `emb.state.initial_seq` says what the initial values are as of. The changes of a journal are consecutive, so the
- *   first event is the change numbered one more than that and each event after it the next, which is why no event
- *   carries its number
- * - `emb.state.part_start_seq` says which changes were made before the session part started: those numbered up to it
+ * - every state's value when the journal opened is an attribute, `emb.states.initial_value.<name>`, with
+ *   `emb.states.initial_value_type.<name>` beside it for a value the SDK generated
+ * - every change is an event named `emb-state-<name>`, in the order of the journal, carrying its new value and its own
+ *   sequence number, `emb.states.seq`
+ * - `emb.states.initial_seq` says what the initial values are as of. The changes of a journal are consecutive, so the
+ *   first event is numbered one more than that and each event after it the next
+ * - `emb.states.part_start_seq` says which changes were made before the session part started: those numbered up to it
  *
  * The span covers the session part: it starts and ends when the session part span does. If neither the journal nor the
  * session part span records the part's end, the process died with the part in progress, and the span is left as a
  * snapshot for resurrection to complete like any other. The session part span is given a link to it.
  *
  * A journal that does not record the end of its part is delivered as far as it goes and marked
- * `emb.state.journal_truncated`: the process died, or the journal could not be written to, and either way the values
+ * `emb.states.truncated`: the process died, or the journal could not be written to, and either way the values
  * after its last event, and how many changes it did not record, are not known from it. The changes of a journal are
  * consecutive, and one read back with a change missing is delivered up to the missing change and marked the same way.
  *
+ * Where [completesRunningSpans], and the part was left by a process that died, which is when neither the session part span
+ * nor the journal records its end, each span the part has as a snapshot, which was running when the process died, is given
+ * [StateAttributes.END_SEQUENCE]: the number of the last change the journal lists, where that is greater than the number
+ * the span started with, or where the span has none because it started before the first change. A span with no end number
+ * is then one no change is known to have happened during. A journal cut short still has a last recorded number, and that
+ * is the one used.
+ *
  * The span's ids are worked out from the session part's, so a part delivered twice delivers the same span.
  */
-fun Envelope<SessionPartPayload>.withStateSpan(journal: List<StateRecord>): Envelope<SessionPartPayload> {
+fun Envelope<SessionPartPayload>.withStateSpan(
+    journal: List<StateRecord>,
+    completesRunningSpans: Boolean = false,
+): Envelope<SessionPartPayload> {
     val opening = journal.firstOrNull()?.takeIf { it.checkpoint != null } ?: return this
     val records = journal.upToFirstMissingChange()
     val partStart = records.firstOrNull { it.part_start != null }
@@ -78,8 +87,15 @@ fun Envelope<SessionPartPayload>.withStateSpan(journal: List<StateRecord>): Enve
         if (span === sessionSpan) span.copy(links = span.links.orEmpty() + link) else span
     }
 
+    val lastChange = records.lastOrNull { it.change != null }?.sequence
     val spans = data.spans.linked()
-    val snapshots = data.spanSnapshots.linked()
+    val snapshots = data.spanSnapshots.linked().let { linked ->
+        if (completesRunningSpans && endNanos == null && lastChange != null) {
+            linked?.map { it.withEndSequence(lastChange) }
+        } else {
+            linked
+        }
+    }
     return copy(
         data = if (endNanos != null) {
             data.copy(spans = spans.orEmpty() + stateSpan, spanSnapshots = snapshots)
@@ -87,6 +103,23 @@ fun Envelope<SessionPartPayload>.withStateSpan(journal: List<StateRecord>): Enve
             data.copy(spans = spans, spanSnapshots = snapshots.orEmpty() + stateSpan)
         },
     )
+}
+
+/**
+ * This span, which was running when its process died, with the number of the last change the process recorded as its end
+ * number, if a change was made after the one it started at, and it has no end number yet.
+ */
+private fun Span.withEndSequence(lastChange: Long): Span {
+    val present = attributes.orEmpty()
+    if (present.any { it.key == StateAttributes.END_SEQUENCE }) {
+        return this
+    }
+    val started = present.firstOrNull { it.key == StateAttributes.SEQUENCE }?.data?.toLongOrNull()
+    return if (started == null || lastChange > started) {
+        copy(attributes = present + Attribute(StateAttributes.END_SEQUENCE, lastChange.toString()))
+    } else {
+        this
+    }
 }
 
 /**
@@ -145,31 +178,31 @@ private fun stateAttributes(
     val opening = records.first()
     val partStart = records.firstOrNull { it.part_start != null }
     opening.checkpoint?.values?.forEach { value ->
-        add(Attribute(value.key(EmbStateTransitionAttributes.EMB_STATE_INITIAL_VALUE), value.value_))
+        add(Attribute("${StateAttributes.INITIAL_VALUE_PREFIX}${value.state}", value.value_))
         if (value.system) {
-            add(Attribute(value.key(EmbStateTransitionAttributes.EMB_STATE_VALUE_TYPE), SYSTEM_VALUE_TYPE))
+            add(Attribute("${StateAttributes.INITIAL_VALUE_TYPE_PREFIX}${value.state}", SYSTEM_VALUE_TYPE))
         }
     }
-    add(Attribute(INITIAL_SEQUENCE, opening.sequence.toString()))
+    add(Attribute(StateAttributes.INITIAL_SEQUENCE, opening.sequence.toString()))
     // a journal that stops before its part start holds only changes made before the part
     val partStartSequence = partStart?.sequence ?: records.last { it.change != null || it === opening }.sequence
-    add(Attribute(PART_START_SEQUENCE, partStartSequence.toString()))
+    add(Attribute(StateAttributes.PART_START_SEQUENCE, partStartSequence.toString()))
     partStart?.part_start?.dropped_changes?.takeIf { it > 0 }?.let { folded ->
-        add(Attribute(FOLDED_CHANGES, folded.toString()))
+        add(Attribute(StateAttributes.FOLDED_CHANGES, folded.toString()))
     }
     partEnd?.part_end?.let { end ->
         if (end.dropped_changes > 0) {
-            add(Attribute(DROPPED_CHANGES, end.dropped_changes.toString()))
+            add(Attribute(StateAttributes.DROPPED_CHANGES, end.dropped_changes.toString()))
         }
         end.values.forEach { value ->
-            add(Attribute(value.key(FINAL_VALUE), value.value_))
+            add(Attribute("${StateAttributes.FINAL_VALUE_PREFIX}${value.state}", value.value_))
             if (value.system) {
-                add(Attribute(value.key(FINAL_VALUE_TYPE), SYSTEM_VALUE_TYPE))
+                add(Attribute("${StateAttributes.FINAL_VALUE_TYPE_PREFIX}${value.state}", SYSTEM_VALUE_TYPE))
             }
         }
     }
     if (truncated) {
-        add(Attribute(JOURNAL_TRUNCATED, true.toString()))
+        add(Attribute(StateAttributes.TRUNCATED, true.toString()))
     }
 }
 
@@ -184,15 +217,14 @@ private fun changeEvent(record: StateRecord): SpanEvent? {
         timestampNanos = record.time_ms.millisToNanos(),
         attributes = buildList {
             change.attributes.forEach { (key, attribute) -> add(Attribute(key, attribute)) }
-            add(Attribute(EmbStateTransitionAttributes.EMB_STATE_NEW_VALUE, value.value_))
+            add(Attribute(StateAttributes.SEQUENCE, record.sequence.toString()))
+            add(Attribute(StateAttributes.NEW_VALUE, value.value_))
             if (value.system) {
-                add(Attribute(EmbStateTransitionAttributes.EMB_STATE_VALUE_TYPE, SYSTEM_VALUE_TYPE))
+                add(Attribute(StateAttributes.NEW_VALUE_TYPE, SYSTEM_VALUE_TYPE))
             }
         },
     )
 }
-
-private fun StateValue.key(attribute: String): String = "$STATE_KEY_PREFIX$state.${attribute.removePrefix(STATE_KEY_PREFIX)}"
 
 /**
  * The name of the span a state journal is delivered as, before the prefix every span the SDK records for itself gets.
@@ -200,15 +232,7 @@ private fun StateValue.key(attribute: String): String = "$STATE_KEY_PREFIX$state
 internal const val SPAN_NAME: String = "states"
 
 private const val EVENT_NAME_PREFIX = "state-"
-private const val STATE_KEY_PREFIX = "emb.state."
-private const val SYSTEM_VALUE_TYPE = EmbStateTransitionAttributes.EmbStateValueTypeValues.SYSTEM
-private const val FINAL_VALUE = "emb.state.final_value"
-private const val INITIAL_SEQUENCE = "emb.state.initial_seq"
-private const val PART_START_SEQUENCE = "emb.state.part_start_seq"
-private const val FINAL_VALUE_TYPE = "emb.state.final_value_type"
-private const val FOLDED_CHANGES = "emb.state.folded_changes"
-private const val DROPPED_CHANGES = "emb.state.dropped_changes"
-private const val JOURNAL_TRUNCATED = "emb.state.journal_truncated"
+private const val SYSTEM_VALUE_TYPE = StateAttributes.SYSTEM
 private const val HEX_RADIX = 16
 private const val HEX_DIGITS_OF_A_LONG = 16
 

@@ -12,6 +12,7 @@ import io.embrace.android.embracesdk.internal.session.persistence.StatePartStart
 import io.embrace.android.embracesdk.internal.session.persistence.StateRecord
 import io.embrace.android.embracesdk.internal.session.persistence.StateValue
 import io.embrace.android.embracesdk.internal.utils.event.EventHandler
+import io.embrace.android.embracesdk.semconv.EmbStateTransitionAttributes
 
 /**
  * Decides the order of state changes, and holds the value of every state.
@@ -170,7 +171,7 @@ class StateRecorder(
             } else {
                 hold(record)
             }
-            listener?.onChange(record, snapshot)
+            listener?.onChange(record, snapshot, previous)
         }
     }
 
@@ -270,13 +271,26 @@ class StateRecorder(
         }
         val limited = LinkedHashMap<String, String>(minOf(size, MAX_ATTRIBUTES))
         for ((key, value) in this) {
-            if (limited.size == MAX_ATTRIBUTES) {
-                break
+            // a reserved key is dropped before the count is applied, so that it uses up none of what a change can carry
+            if (!key.isReserved()) {
+                if (limited.size == MAX_ATTRIBUTES) {
+                    break
+                }
+                limited[key.take(MAX_KEY_LENGTH)] = value.take(MAX_VALUE_LENGTH)
             }
-            limited[key.take(MAX_KEY_LENGTH)] = value.take(MAX_VALUE_LENGTH)
         }
         return limited
     }
+
+    /**
+     * Whether a change's own attribute may not use this key: it is under [RESERVED_KEY_PREFIX], which is the SDK's, or under
+     * v1's stem, so that none of a change's attributes can replace or sit beside one the SDK sets. The one exception is the
+     * count of transitions the instrumentation dropped, which the state's data source itself reports and the SDK sets
+     * nowhere.
+     */
+    private fun String.isReserved(): Boolean =
+        startsWith(RESERVED_KEY_PREFIX) ||
+            (startsWith(V1_KEY_PREFIX) && this != EmbStateTransitionAttributes.EMB_STATE_DROPPED_BY_INSTRUMENTATION)
 
     companion object {
         /**
@@ -297,10 +311,21 @@ class StateRecorder(
         internal const val RECENT_SNAPSHOTS = 64
 
         /**
-         * The attributes an event is given when a change is delivered as one, beyond the change's own: its new value, and
-         * the type of that value.
+         * The attributes an event is given when a change is delivered as one, beyond the change's own: its new value, the
+         * type of that value, and its number.
          */
-        private const val ATTRIBUTES_OF_AN_EVENT = 2
+        private const val ATTRIBUTES_OF_AN_EVENT = 3
+
+        /**
+         * The start of every key the SDK sets on an event, which a change's own attributes may not use.
+         */
+        private const val RESERVED_KEY_PREFIX = "emb.states."
+
+        /**
+         * The stem of v1's keys, which a change's own attributes may not use either, as a reader that knows them could take one
+         * for the SDK's.
+         */
+        private const val V1_KEY_PREFIX = "emb.state."
 
         // the limits a state's value and a change's attributes would have met as a span event the SDK records itself
         private val MAX_VALUE_LENGTH = SpanLimits.Internal.maxAttributeValueLength

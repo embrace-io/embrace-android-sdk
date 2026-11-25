@@ -173,7 +173,9 @@ internal fun createRealSdkInstance(
 
     // State changes are journaled only where a session part's telemetry is persisted as multiple files, which is what
     // gives the journal somewhere to be written, and only where state is captured at all. Telemetry is associated with
-    // state by sequence number and by one attribute for each state only where the changes are journaled.
+    // state by sequence number, and a log is stamped with every state's value, only where the changes are journaled. The log
+    // pipeline stamps a log by who reads it: Embrace's payload gets the packed attribute, and an app's own processors and
+    // exporters get one attribute for each state.
     val statesJournaled = with(configService.config) {
         autoDataCapture.stateCaptureEnabled && autoDataCapture.sharedStateSpanEnabled && persistence.multiFileEnabled
     }
@@ -183,7 +185,9 @@ internal fun createRealSdkInstance(
     // there is nobody to emit an event for, or to keep a span's values for. One added from here on gets what the mode
     // read here gives it: the link on a span and the stamp on a log.
     val stateExportMode = if (statesAssociated && preStartServices.externalOtelConfig.hasConfiguredOtlpExport()) {
+        // a mode the remote config names is honored as it is, and one it does not name is picked by what the app receives
         configService.config.autoDataCapture.stateExportMode
+            ?: StateExportMode.defaultFor(hasLogReceiver = preStartServices.externalOtelConfig.hasConfiguredLogExport())
     } else {
         StateExportMode.OFF
     }
@@ -203,7 +207,7 @@ internal fun createRealSdkInstance(
             userSessionPropertiesServiceProvider = { userSessionPropertiesService },
             instrumentationRegistryProvider = { instrumentationRegistry },
             stateSnapshotProvider = { stateRecorder?.snapshot() },
-            statesAsAttributes = statesAssociated,
+            statesStampedByLogPipeline = statesAssociated,
         )
     }
 

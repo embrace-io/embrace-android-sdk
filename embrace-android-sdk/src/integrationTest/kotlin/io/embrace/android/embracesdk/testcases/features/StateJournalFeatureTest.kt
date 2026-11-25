@@ -68,8 +68,8 @@ internal class StateJournalFeatureTest(
 
                 // the test state and the personas were both captured before this part started
                 val attributes = checkNotNull(stateSpan.attributes)
-                assertEquals("UNKNOWN", attributes.findAttributeValue("emb.state.test.initial_value"))
-                assertNotNull(attributes.findAttributeValue("emb.state.personas.initial_value"))
+                assertEquals("UNKNOWN", attributes.findAttributeValue("emb.states.initial_value.test"))
+                assertNotNull(attributes.findAttributeValue("emb.states.initial_value.personas"))
 
                 // a state the SDK defines and a piece of user metadata, in one order
                 val events = stateSpan.eventsAfterPartStart()
@@ -84,14 +84,14 @@ internal class StateJournalFeatureTest(
                 assertEquals("bar", changes[2].newValue())
                 assertEquals("baz", changes[3].newValue())
 
-                assertNull(attributes.findAttributeValue("emb.state.journal_truncated"))
+                assertNull(attributes.findAttributeValue("emb.states.truncated"))
 
                 // the log was written between two changes, and says so: it carries the sequence of the change before it,
                 // and the value every state had then, which is what the span leads to at that sequence
                 val log = checkNotNull(getSingleLogEnvelope().getLastLog().attributes)
-                val loggedSequence = checkNotNull(log.findAttributeValue("emb.state.seq")).toLong()
+                val loggedSequence = checkNotNull(log.findAttributeValue("emb.states.seq")).toLong()
                 assertEquals(stateSpan.sequenceOf(changes[2]), loggedSequence)
-                assertEquals(stateSpan.valuesAt(loggedSequence), decodeStates(checkNotNull(log.findAttributeValue("emb.states"))))
+                assertEquals(stateSpan.valuesAt(loggedSequence), decodeStates(checkNotNull(log.findAttributeValue("emb.states.packed"))))
             },
         )
     }
@@ -108,7 +108,7 @@ internal class StateJournalFeatureTest(
             },
             assertAction = {
                 val stateSpan = deliveredParts().single().stateSpan()
-                val partStartSequence = checkNotNull(stateSpan.attributes?.findAttributeValue("emb.state.part_start_seq")).toLong()
+                val partStartSequence = checkNotNull(stateSpan.attributes?.findAttributeValue("emb.states.part_start_seq")).toLong()
                 val testChanges = checkNotNull(stateSpan.events).filter { it.name == "emb-state-test" }
                 assertEquals(listOf("UNKNOWN", "in-background", "in-foreground"), testChanges.map { it.newValue() })
                 assertEquals(
@@ -149,7 +149,7 @@ internal class StateJournalFeatureTest(
                 // the crash ended the part, and its journal with it
                 assertNotNull(stateSpan.endTimeNanos)
                 assertEquals(Span.Status.UNSET, stateSpan.status)
-                assertNull(stateSpan.attributes?.findAttributeValue("emb.state.journal_truncated"))
+                assertNull(stateSpan.attributes?.findAttributeValue("emb.states.truncated"))
             },
         )
     }
@@ -194,7 +194,7 @@ internal class StateJournalFeatureTest(
                 // says that the values after its last event are not known from it
                 assertEquals(part.findSessionPartSpan().endTimeNanos, stateSpan.endTimeNanos)
                 assertEquals(Span.Status.ERROR, stateSpan.status)
-                assertEquals("true", stateSpan.attributes?.findAttributeValue("emb.state.journal_truncated"))
+                assertEquals("true", stateSpan.attributes?.findAttributeValue("emb.states.truncated"))
             },
         )
     }
@@ -213,17 +213,19 @@ internal class StateJournalFeatureTest(
     }
 
     private fun Span.eventsAfterPartStart(): List<SpanEvent> {
-        val partStartSequence = checkNotNull(attributes?.findAttributeValue("emb.state.part_start_seq")).toLong()
+        val partStartSequence = checkNotNull(attributes?.findAttributeValue("emb.states.part_start_seq")).toLong()
         return checkNotNull(events).filter { sequenceOf(it) > partStartSequence }
     }
 
     /**
-     * The place of [event] in the order of state changes. The changes a span holds are consecutive, so it is the event's
-     * position after the sequence the span's initial values are as of.
+     * The place of [event] in the order of state changes, which the event carries as `emb.states.seq`. The changes a span
+     * holds are consecutive, so it also equals the event's position after the sequence the span's initial values are as of.
      */
     private fun Span.sequenceOf(event: SpanEvent): Long {
-        val initialSequence = checkNotNull(attributes?.findAttributeValue("emb.state.initial_seq")).toLong()
-        return initialSequence + checkNotNull(events).indexOfFirst { it === event } + 1
+        val initialSequence = checkNotNull(attributes?.findAttributeValue("emb.states.initial_seq")).toLong()
+        val counted = initialSequence + checkNotNull(events).indexOfFirst { it === event } + 1
+        assertEquals(counted, checkNotNull(event.attributes?.findAttributeValue("emb.states.seq")).toLong())
+        return counted
     }
 
     /**
@@ -234,8 +236,8 @@ internal class StateJournalFeatureTest(
         val values = LinkedHashMap<String, String>()
         checkNotNull(attributes).forEach { attribute ->
             val key = checkNotNull(attribute.key)
-            if (key.startsWith(STATE_KEY_PREFIX) && key.endsWith(INITIAL_VALUE_SUFFIX)) {
-                values[key.removePrefix(STATE_KEY_PREFIX).removeSuffix(INITIAL_VALUE_SUFFIX)] = checkNotNull(attribute.data)
+            if (key.startsWith(INITIAL_VALUE_PREFIX)) {
+                values[key.removePrefix(INITIAL_VALUE_PREFIX)] = checkNotNull(attribute.data)
             }
         }
         checkNotNull(events).filter { sequenceOf(it) <= sequence }.forEach { event ->
@@ -252,11 +254,10 @@ internal class StateJournalFeatureTest(
         pair.substring(0, separator) to pair.substring(separator + 1)
     }
 
-    private fun SpanEvent.newValue(): String? = attributes?.findAttributeValue("emb.state.new_value")
+    private fun SpanEvent.newValue(): String? = attributes?.findAttributeValue("emb.states.new_value")
 
     private companion object {
-        const val STATE_KEY_PREFIX = "emb.state."
-        const val INITIAL_VALUE_SUFFIX = ".initial_value"
+        const val INITIAL_VALUE_PREFIX = "emb.states.initial_value."
         const val STATE_EVENT_PREFIX = "emb-state-"
 
         val persistenceWorkers = listOf(

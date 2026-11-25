@@ -47,10 +47,10 @@ internal class StateSpanProcessorsTest {
         state = FakeStateStamp(4, mapOf("network" to "none"))
         span.end()
 
-        assertEquals("wifi", started.single()["emb.state.value.network"])
+        assertEquals("wifi", started.single()["emb.states.value.network"])
         with(ended.single()) {
-            assertEquals("wifi", get("emb.state.value.network"))
-            assertEquals("none", get("emb.state.end_value.network"))
+            assertEquals("wifi", get("emb.states.value.network"))
+            assertEquals("none", get("emb.states.end_value.network"))
             assertEquals(4L, get(StateAttributes.END_SEQUENCE))
             assertEquals("at-start", get("set-by-the-app"))
         }

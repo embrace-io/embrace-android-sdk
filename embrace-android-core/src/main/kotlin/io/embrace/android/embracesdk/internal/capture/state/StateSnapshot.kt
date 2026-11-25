@@ -22,7 +22,7 @@ class StateSnapshot internal constructor(
      * than observed from the app, is written `name~value`. A `;`, `=`, `~` or `\` inside a name or a value is preceded by
      * a `\`. Built the first time it is read and kept.
      */
-    val encoded: String by lazy(LazyThreadSafetyMode.PUBLICATION) {
+    override val encoded: String by lazy(LazyThreadSafetyMode.PUBLICATION) {
         buildString {
             values.values.forEach { value ->
                 if (isNotEmpty()) {
@@ -71,7 +71,7 @@ class StateSnapshot internal constructor(
     /**
      * Whether no state has reported a value yet.
      */
-    fun isEmpty(): Boolean = values.isEmpty()
+    override fun isEmpty(): Boolean = values.isEmpty()
 
     /**
      * This snapshot with [value] in place of whatever its state held, as of [sequence], recorded at [sinceMs].
@@ -95,7 +95,7 @@ class StateSnapshot internal constructor(
         /**
          * The attribute a snapshot is stamped under as [encoded].
          */
-        const val ATTRIBUTE: String = "emb.states"
+        const val ATTRIBUTE: String = StateAttributes.STATES
 
         /**
          * The attribute a snapshot's [sequence] is stamped under.

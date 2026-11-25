@@ -74,8 +74,8 @@ internal class StateJournalSpanTest {
                 "emb.session_part_id" to "part",
                 "emb.user_session_id" to "user-session",
                 // nothing had a value when the process started, which is what this first journal opens with
-                "emb.state.initial_seq" to "0",
-                "emb.state.part_start_seq" to "3",
+                "emb.states.initial_seq" to "0",
+                "emb.states.part_start_seq" to "3",
             ),
             stateSpan.attributeMap(),
         )
@@ -85,16 +85,17 @@ internal class StateJournalSpanTest {
             listOf("emb-state-network", "emb-state-screen", "emb-state-network", "emb-state-screen"),
             events.map { it.name },
         )
-        // an event's place in the order of changes is its position after the journal's opening values
+        // an event carries its own number, which is its position after the journal's opening values
+        assertEquals(listOf("1", "2", "3", "4"), events.map { it.attributeMap()["emb.states.seq"] })
         assertEquals(
-            mapOf("emb.state.new_value" to "Backgrounded", "emb.state.value_type" to "system"),
+            mapOf("emb.states.seq" to "2", "emb.states.new_value" to "Backgrounded", "emb.states.new_value_type" to "system"),
             events[1].attributeMap(),
         )
         // made before the part started, so it is earlier than the span itself
         assertEquals(heldChangeTime.millisToNanos(), events[2].timestampNanos)
         assertTrue(checkNotNull(events[2].timestampNanos) < checkNotNull(stateSpan.startTimeNanos))
         assertEquals(changeTime.millisToNanos(), events[3].timestampNanos)
-        assertEquals(mapOf("key" to "value", "emb.state.new_value" to "Home"), events[3].attributeMap())
+        assertEquals(mapOf("key" to "value", "emb.states.seq" to "4", "emb.states.new_value" to "Home"), events[3].attributeMap())
 
         val link = checkNotNull(spans[1].links).single()
         assertEquals(stateSpan.spanId, link.spanId)
@@ -125,16 +126,81 @@ internal class StateJournalSpanTest {
         assertNull(stateSpan.endTimeNanos)
         assertEquals(partStart.millisToNanos(), stateSpan.startTimeNanos)
         val attributes = stateSpan.attributeMap()
-        assertEquals("wifi", attributes["emb.state.network.initial_value"])
-        assertNull(attributes["emb.state.network.value_type"])
-        assertEquals("Backgrounded", attributes["emb.state.screen.initial_value"])
-        assertEquals("system", attributes["emb.state.screen.value_type"])
-        assertEquals("2", attributes["emb.state.initial_seq"])
-        assertEquals("2", attributes["emb.state.part_start_seq"])
+        assertEquals("wifi", attributes["emb.states.initial_value.network"])
+        assertNull(attributes["emb.states.initial_value_type.network"])
+        assertEquals("Backgrounded", attributes["emb.states.initial_value.screen"])
+        assertEquals("system", attributes["emb.states.initial_value_type.screen"])
+        assertEquals("2", attributes["emb.states.initial_seq"])
+        assertEquals("2", attributes["emb.states.part_start_seq"])
         // nothing says how the part ended, so nothing says the events lead to the values it ended with
-        assertEquals("true", attributes["emb.state.journal_truncated"])
-        assertEquals(listOf("wan"), checkNotNull(stateSpan.events).map { it.attributeMap()["emb.state.new_value"] })
+        assertEquals("true", attributes["emb.states.truncated"])
+        assertEquals(listOf("wan"), checkNotNull(stateSpan.events).map { it.attributeMap()["emb.states.new_value"] })
+        assertEquals(listOf("3"), checkNotNull(stateSpan.events).map { it.attributeMap()["emb.states.seq"] })
         assertEquals(1, snapshots[0].links?.size)
+    }
+
+    @Test
+    fun `a span a dead process left running that started before the last change a journal lists is given that change as its end`() {
+        recorder.beginJournal(clock.now(), journal::addAll)
+        repeat(9) { update("network", "value-$it") }
+        // the process died here: no part end, and the session part span and the others still snapshots
+        val running = Span(
+            traceId = "c".repeat(32),
+            spanId = "d".repeat(16),
+            name = "running",
+            attributes = listOf(Attribute("emb.states.seq", "5")),
+        )
+        val beforeFirstChange = running.copy(name = "early", attributes = emptyList())
+        val completed = otherSpan
+
+        val envelope = envelope(spans = listOf(completed), snapshots = listOf(sessionSpan, running, beforeFirstChange))
+            .withStateSpan(journal, completesRunningSpans = true)
+        val snapshots = checkNotNull(envelope.data.spanSnapshots).associateBy { it.name }
+
+        assertEquals("9", snapshots.getValue("running").attributeMap()["emb.states.end_seq"])
+        // started before the first change, so every change the journal lists happened while it ran
+        assertEquals("9", snapshots.getValue("early").attributeMap()["emb.states.end_seq"])
+        // a span that was complete is not touched
+        assertEquals(completed, checkNotNull(envelope.data.spans).first { it.name == "other" })
+    }
+
+    @Test
+    fun `a running span is given no end number if no change came after its start, or the part has no journal, or it is not asked for`() {
+        recorder.beginJournal(clock.now(), journal::addAll)
+        repeat(5) { update("network", "value-$it") }
+        val running = Span(
+            traceId = "c".repeat(32),
+            spanId = "d".repeat(16),
+            name = "running",
+            attributes = listOf(Attribute("emb.states.seq", "5")),
+        )
+        val dead = envelope(snapshots = listOf(sessionSpan, running))
+
+        // the journal ends at the number the span started at
+        val noLaterChange = dead.withStateSpan(journal, completesRunningSpans = true)
+        assertNull(
+            checkNotNull(noLaterChange.data.spanSnapshots).first {
+                it.name == "running"
+            }.attributeMap()["emb.states.end_seq"],
+        )
+
+        // not asked for: the number is not given even though a change came after
+        repeat(4) { update("network", "later-$it") }
+        val notAsked = dead.withStateSpan(journal)
+        assertNull(
+            checkNotNull(notAsked.data.spanSnapshots).first {
+                it.name == "running"
+            }.attributeMap()["emb.states.end_seq"],
+        )
+
+        // no journal: the envelope is as it was
+        assertSame(dead, dead.withStateSpan(emptyList(), completesRunningSpans = true))
+
+        // a part that ended normally is not a dead one, whatever spans were still open
+        recorder.endJournal(clock.now())
+        val ended = envelope(spans = listOf(sessionSpan), snapshots = listOf(running))
+            .withStateSpan(journal, completesRunningSpans = true)
+        assertNull(checkNotNull(ended.data.spanSnapshots).first { it.name == "running" }.attributeMap()["emb.states.end_seq"])
     }
 
     @Test
@@ -148,8 +214,8 @@ internal class StateJournalSpanTest {
         val stateSpan = checkNotNull(envelope(spans = listOf(sessionSpan)).withStateSpan(journal).data.spans).last()
 
         assertEquals(1, stateSpan.events?.size)
-        assertEquals("1", stateSpan.attributeMap()["emb.state.dropped_changes"])
-        assertEquals("wan", stateSpan.attributeMap()["emb.state.network.final_value"])
+        assertEquals("1", stateSpan.attributeMap()["emb.states.dropped_changes"])
+        assertEquals("wan", stateSpan.attributeMap()["emb.states.final_value.network"])
     }
 
     @Test
@@ -166,16 +232,18 @@ internal class StateJournalSpanTest {
         val attributes = stateSpan.attributeMap()
 
         // the first change is behind the values the span opens with, and the last is past the changes it holds
-        assertEquals("1", attributes["emb.state.folded_changes"])
-        assertEquals("1", attributes["emb.state.initial_seq"])
-        assertEquals("wifi", attributes["emb.state.network.initial_value"])
+        assertEquals("1", attributes["emb.states.folded_changes"])
+        assertEquals("1", attributes["emb.states.initial_seq"])
+        assertEquals("wifi", attributes["emb.states.initial_value.network"])
         assertEquals(listOf("wan", "Backgrounded"), stateSpan.newValues())
-        assertEquals("1", attributes["emb.state.dropped_changes"])
-        assertEquals("none", attributes["emb.state.network.final_value"])
-        assertNull(attributes["emb.state.network.final_value_type"])
-        assertEquals("Backgrounded", attributes["emb.state.screen.final_value"])
-        assertEquals("system", attributes["emb.state.screen.final_value_type"])
-        assertNull(attributes["emb.state.journal_truncated"])
+        // the numbers follow initial_seq, and the dropped change has none
+        assertEquals(listOf("2", "3"), checkNotNull(stateSpan.events).map { it.attributeMap()["emb.states.seq"] })
+        assertEquals("1", attributes["emb.states.dropped_changes"])
+        assertEquals("none", attributes["emb.states.final_value.network"])
+        assertNull(attributes["emb.states.final_value_type.network"])
+        assertEquals("Backgrounded", attributes["emb.states.final_value.screen"])
+        assertEquals("system", attributes["emb.states.final_value_type.screen"])
+        assertNull(attributes["emb.states.truncated"])
     }
 
     @Test
@@ -189,9 +257,9 @@ internal class StateJournalSpanTest {
             .last()
             .attributeMap()
 
-        assertEquals("0", attributes["emb.state.initial_seq"])
-        assertEquals("2", attributes["emb.state.part_start_seq"])
-        assertEquals("true", attributes["emb.state.journal_truncated"])
+        assertEquals("0", attributes["emb.states.initial_seq"])
+        assertEquals("2", attributes["emb.states.part_start_seq"])
+        assertEquals("true", attributes["emb.states.truncated"])
     }
 
     @Test
@@ -210,7 +278,7 @@ internal class StateJournalSpanTest {
 
         assertEquals(SESSION_START_NANOS, first.startTimeNanos)
         assertEquals(SESSION_END_NANOS, first.endTimeNanos)
-        assertNull(first.attributeMap()["emb.state.journal_truncated"])
+        assertNull(first.attributeMap()["emb.states.truncated"])
         assertEquals(first.spanId, second.spanId)
         assertEquals(first.traceId, second.traceId)
         assertNotEquals(first.spanId, other.spanId)
@@ -229,7 +297,7 @@ internal class StateJournalSpanTest {
         assertNull(envelope.data.spanSnapshots)
         val stateSpan = checkNotNull(envelope.data.spans).last()
         assertEquals(SESSION_END_NANOS, stateSpan.endTimeNanos)
-        assertEquals("true", stateSpan.attributeMap()["emb.state.journal_truncated"])
+        assertEquals("true", stateSpan.attributeMap()["emb.states.truncated"])
         assertEquals(listOf("wifi"), stateSpan.newValues())
     }
 
@@ -247,7 +315,7 @@ internal class StateJournalSpanTest {
         // the end of the part is recorded after the missing change, so is not taken from the journal either
         val stateSpan = checkNotNull(envelope.data.spanSnapshots).last()
         assertNull(stateSpan.endTimeNanos)
-        assertEquals("true", stateSpan.attributeMap()["emb.state.journal_truncated"])
+        assertEquals("true", stateSpan.attributeMap()["emb.states.truncated"])
         assertEquals(listOf("wifi"), stateSpan.newValues())
     }
 
@@ -268,7 +336,7 @@ internal class StateJournalSpanTest {
 
     private fun stateSpanOf(spans: List<Span>): Span = checkNotNull(envelope(spans = spans).withStateSpan(journal).data.spans).last()
 
-    private fun Span.newValues(): List<String?> = checkNotNull(events).map { it.attributeMap()["emb.state.new_value"] }
+    private fun Span.newValues(): List<String?> = checkNotNull(events).map { it.attributeMap()["emb.states.new_value"] }
 
     private fun Span.attributeMap(): Map<String?, String?> = checkNotNull(attributes).associate { it.key to it.data }
 

@@ -151,6 +151,23 @@ internal class StateDataSourceTest {
         assertTrue(args.destination.createdStateTokens.isEmpty())
     }
 
+    @OptIn(ExperimentalSemconv::class)
+    @Test
+    fun `a reporter cannot set the count of transitions the instrumentation dropped on a journaled change`() {
+        val updates = journalUpdates()
+        dataSource.onDataCaptureEnabled()
+        val forged = mapOf(EmbStateTransitionAttributes.EMB_STATE_DROPPED_BY_INSTRUMENTATION to "99", "key" to "value")
+        dataSource.onStateChange("a", 1L, forged)
+        dataSource.onStateChange("b", 2L, forged, droppedTransitions = 3)
+
+        // with no count the forged one is removed, and with one it is replaced by the data source's
+        assertEquals(mapOf("key" to "value"), updates[1].attributes)
+        assertEquals(
+            mapOf("key" to "value", EmbStateTransitionAttributes.EMB_STATE_DROPPED_BY_INSTRUMENTATION to "3"),
+            updates[2].attributes,
+        )
+    }
+
     @Test
     fun `every update a journaled state emits is the value it holds as it is emitted`() {
         val updates = journalUpdates()

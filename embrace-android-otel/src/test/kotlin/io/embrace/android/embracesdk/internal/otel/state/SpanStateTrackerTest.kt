@@ -123,23 +123,23 @@ internal class SpanStateTrackerTest {
 
         assertEquals(listOf(StateAttributes.SEQUENCE), exported("ended-before-any-change").stateKeys())
         assertEquals(
-            mapOf("emb.state.value.network" to "wifi", "emb.state.value.power" to "normal"),
+            mapOf("emb.states.value.network" to "wifi", "emb.states.value.power" to "normal"),
             tracker.withValues(exported("ended-before-any-change")).valueAttributes(),
         )
 
         assertEquals(4L, exported("ended-between-changes").attributes[StateAttributes.END_SEQUENCE])
         assertEquals(
             mapOf(
-                "emb.state.value.network" to "wifi",
-                "emb.state.value.power" to "normal",
-                "emb.state.end_value.network" to "none",
+                "emb.states.value.network" to "wifi",
+                "emb.states.value.power" to "normal",
+                "emb.states.end_value.network" to "none",
             ),
             tracker.withValues(exported("ended-between-changes")).valueAttributes(),
         )
 
         // a time equal to the time of a change is after that change
         assertEquals(5L, exported("ended-at-a-change").attributes[StateAttributes.END_SEQUENCE])
-        assertEquals("low", tracker.withValues(exported("ended-at-a-change")).attributes["emb.state.end_value.power"])
+        assertEquals("low", tracker.withValues(exported("ended-at-a-change")).attributes["emb.states.end_value.power"])
 
         // nothing can be known of its end, so it keeps the number it started with and gets none for its end
         assertEquals(listOf(StateAttributes.SEQUENCE), exported("end-not-remembered").stateKeys())
@@ -166,19 +166,19 @@ internal class SpanStateTrackerTest {
         with(tracker.withValues(exported("across-the-first-change")).attributes) {
             assertEquals(3L, get(StateAttributes.SEQUENCE))
             assertEquals(4L, get(StateAttributes.END_SEQUENCE))
-            assertEquals("wifi", get("emb.state.value.network"))
-            assertEquals("none", get("emb.state.end_value.network"))
+            assertEquals("wifi", get("emb.states.value.network"))
+            assertEquals("none", get("emb.states.end_value.network"))
         }
         with(tracker.withValues(exported("inside-one-stamp")).attributes) {
             assertEquals(4L, get(StateAttributes.SEQUENCE))
             assertFalse(containsKey(StateAttributes.END_SEQUENCE))
-            assertEquals("none", get("emb.state.value.network"))
-            assertFalse(containsKey("emb.state.end_value.network"))
+            assertEquals("none", get("emb.states.value.network"))
+            assertFalse(containsKey("emb.states.end_value.network"))
         }
         with(tracker.withValues(exported("into-the-present")).attributes) {
             assertEquals(4L, get(StateAttributes.SEQUENCE))
             assertEquals(5L, get(StateAttributes.END_SEQUENCE))
-            assertEquals("wan", get("emb.state.end_value.network"))
+            assertEquals("wan", get("emb.states.end_value.network"))
         }
         assertEquals(emptyList<String>(), exported("before-what-is-remembered").stateKeys())
         assertSame(exported("before-what-is-remembered"), tracker.withValues(exported("before-what-is-remembered")))
@@ -240,15 +240,15 @@ internal class SpanStateTrackerTest {
             mapOf(
                 StateAttributes.SEQUENCE to 3L,
                 StateAttributes.END_SEQUENCE to 5L,
-                "emb.state.value.network" to "wifi",
-                "emb.state.value.screen" to "Initializing",
-                "emb.state.value_type.screen" to "system",
-                "emb.state.value.power" to "normal",
-                "emb.state.end_value.network" to "none",
-                "emb.state.end_value.screen" to "Backgrounded",
-                "emb.state.end_value_type.screen" to "system",
+                "emb.states.value.network" to "wifi",
+                "emb.states.value.screen" to "Initializing",
+                "emb.states.value_type.screen" to "system",
+                "emb.states.value.power" to "normal",
+                "emb.states.end_value.network" to "none",
+                "emb.states.end_value.screen" to "Backgrounded",
+                "emb.states.end_value_type.screen" to "system",
             ),
-            decorated.attributes.filterKeys { it.startsWith("emb.state.") },
+            decorated.attributes.filterKeys { it.startsWith("emb.states.") },
         )
         assertEquals(ended.name, decorated.name)
         assertEquals(ended.spanContext.spanId, decorated.spanContext.spanId)
@@ -271,7 +271,7 @@ internal class SpanStateTrackerTest {
         tracker.release(exported("ended").spanContext.spanId)
         tracker.onDiscarded(discarded.spanContext.spanId)
         assertEquals(0, tracker.trackedSpans())
-        assertNull(tracker.withValues(exported("ended")).attributes["emb.state.value.network"])
+        assertNull(tracker.withValues(exported("ended")).attributes["emb.states.value.network"])
     }
 
     /**
@@ -311,7 +311,7 @@ internal class SpanStateTrackerTest {
 
     private fun exported(name: String): SpanData = exporter.exportedSpans.single { it.name == name }
 
-    private fun SpanData.stateKeys(): List<String> = attributes.keys.filter { it.startsWith("emb.state.") }.sorted()
+    private fun SpanData.stateKeys(): List<String> = attributes.keys.filter { it.startsWith("emb.states.") }.sorted()
 
     private fun SpanData.valueAttributes(): Map<String, Any> = attributes.filterKeys {
         it.startsWith(StateAttributes.VALUE_PREFIX) || it.startsWith(StateAttributes.END_VALUE_PREFIX)

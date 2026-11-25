@@ -10,6 +10,12 @@ internal class FakeStateStamp(
     override val sinceMs: Long = 0,
 ) : StateStamp {
 
+    override fun isEmpty(): Boolean = values.isEmpty()
+
+    override val encoded: String = values.entries.joinToString(";") { (state, value) ->
+        if (value.startsWith(GENERATED)) "$state~${value.removePrefix(GENERATED)}" else "$state=$value"
+    }
+
     override val attributes: Map<String, String> = attributes(
         values,
         StateAttributes.VALUE_PREFIX,

@@ -145,7 +145,7 @@ data class RemoteConfig(
 
     /**
      * What an app's own OpenTelemetry exporters and processors are given of state on those devices: `off`,
-     * `association` or `verbose`.
+     * `association` or `verbose`. Where this names none, the SDK picks one by what the app has configured.
      */
     @SerialName("state_export_mode")
     val stateExportMode: String? = null,

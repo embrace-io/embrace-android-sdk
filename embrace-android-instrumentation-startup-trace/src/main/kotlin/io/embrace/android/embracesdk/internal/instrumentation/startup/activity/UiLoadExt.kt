@@ -149,6 +149,7 @@ private class LifecycleEventEmitter(
 ) : AutoCloseable {
 
     private val instanceStartTime: MutableMap<Int, Long> = ConcurrentHashMap()
+    private val traceSettings: ConcurrentHashMap<Class<*>, UiLoadTraceSettings> = ConcurrentHashMap()
 
     override fun close() {
         drawEventEmitter?.close()
@@ -156,12 +157,13 @@ private class LifecycleEventEmitter(
 
     fun create(activity: Activity) {
         errorHandler.guardSdkCode(SdkErrorType.UiCallbackFail) {
-            if (activity.traceLoad()) {
+            val settings = traceSettings(activity)
+            if (settings.traceLoad) {
                 uiLoadEventListener.create(
                     instanceId = traceInstanceId(activity),
                     activityName = activity.localClassName,
                     timestampMs = nowMs(),
-                    manualEnd = activity.isManualEnd(),
+                    manualEnd = settings.manualEnd,
                 )
             }
         }
@@ -169,7 +171,7 @@ private class LifecycleEventEmitter(
 
     fun createEnd(activity: Activity) {
         errorHandler.guardSdkCode(SdkErrorType.UiCallbackFail) {
-            if (activity.traceLoad()) {
+            if (traceSettings(activity).traceLoad) {
                 uiLoadEventListener.createEnd(
                     instanceId = traceInstanceId(activity),
                     timestampMs = nowMs(),
@@ -180,7 +182,7 @@ private class LifecycleEventEmitter(
 
     fun start(activity: Activity) {
         errorHandler.guardSdkCode(SdkErrorType.UiCallbackFail) {
-            if (activity.traceLoad()) {
+            if (traceSettings(activity).traceLoad) {
                 val instanceId = traceInstanceId(activity)
                 if (drawEventEmitter != null) {
                     val renderStartCallback = {
@@ -206,13 +208,14 @@ private class LifecycleEventEmitter(
 
     fun startEnd(activity: Activity) {
         errorHandler.guardSdkCode(SdkErrorType.UiCallbackFail) {
-            if (activity.traceLoad()) {
+            val settings = traceSettings(activity)
+            if (settings.traceLoad) {
                 val instanceId = traceInstanceId(activity)
                 uiLoadEventListener.start(
                     instanceId = instanceId,
                     activityName = activity.localClassName,
                     timestampMs = instanceStartTime.remove(instanceId) ?: nowMs(),
-                    manualEnd = activity.isManualEnd(),
+                    manualEnd = settings.manualEnd,
                 )
                 uiLoadEventListener.startEnd(
                     instanceId = instanceId,
@@ -224,7 +227,7 @@ private class LifecycleEventEmitter(
 
     fun resume(activity: Activity) {
         errorHandler.guardSdkCode(SdkErrorType.UiCallbackFail) {
-            if (activity.traceLoad()) {
+            if (traceSettings(activity).traceLoad) {
                 uiLoadEventListener.resume(
                     instanceId = traceInstanceId(activity),
                     timestampMs = nowMs(),
@@ -235,7 +238,7 @@ private class LifecycleEventEmitter(
 
     fun resumeEnd(activity: Activity) {
         errorHandler.guardSdkCode(SdkErrorType.UiCallbackFail) {
-            if (activity.traceLoad()) {
+            if (traceSettings(activity).traceLoad) {
                 val now = nowMs()
                 uiLoadEventListener.resumeEnd(
                     instanceId = traceInstanceId(activity),
@@ -247,7 +250,7 @@ private class LifecycleEventEmitter(
 
     fun pause(activity: Activity) {
         errorHandler.guardSdkCode(SdkErrorType.UiCallbackFail) {
-            if (activity.traceLoad()) {
+            if (traceSettings(activity).traceLoad) {
                 val instanceId = traceInstanceId(activity)
                 instanceStartTime.remove(instanceId)
                 uiLoadEventListener.discard(
@@ -259,13 +262,25 @@ private class LifecycleEventEmitter(
         }
     }
 
-    private fun Activity.traceLoad(): Boolean {
-        return (autoTraceEnabled && !javaClass.isAnnotationPresent(NotTracedActivity::class.java)) ||
-            isManualEnd() ||
-            javaClass.isAnnotationPresent(LoadTracedActivity::class.java)
+    private fun traceSettings(activity: Activity): UiLoadTraceSettings = traceSettings.getOrPut(activity.javaClass) {
+        val clz = activity.javaClass
+        val manualEnd = clz.isAnnotationPresent(CustomLoadTracedActivity::class.java)
+        UiLoadTraceSettings(
+            traceLoad = (autoTraceEnabled && !clz.isAnnotationPresent(NotTracedActivity::class.java)) ||
+                manualEnd ||
+                clz.isAnnotationPresent(LoadTracedActivity::class.java),
+            manualEnd = manualEnd,
+        )
     }
 
-    private fun Activity.isManualEnd(): Boolean = javaClass.isAnnotationPresent(CustomLoadTracedActivity::class.java)
-
     private fun nowMs(): Long = clock.now()
+
+    /**
+     * Whether an Activity class has its UI load traced, and whether that trace is ended manually.
+     * Derived from the class's annotations, so it is the same for every instance of the class.
+     */
+    private class UiLoadTraceSettings(
+        val traceLoad: Boolean,
+        val manualEnd: Boolean,
+    )
 }

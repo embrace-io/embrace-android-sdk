@@ -8,12 +8,13 @@ import io.embrace.android.embracesdk.internal.payload.NativeCrashData
 interface NativeCrashService {
 
     /**
-     * Return the data for all native crashes that have been recorded by the SDK
+     * Return a summary of every native crash that has been recorded by the SDK
      */
     fun getNativeCrashes(): List<NativeCrashData>
 
     /**
-     * Send the given native crash
+     * Send the given native crash, reading its report from disk at send time. A crash that has been deleted
+     * has already been handled and is not sent again; one whose report can't be read is sent without it.
      */
     fun sendNativeCrash(
         nativeCrash: NativeCrashData,

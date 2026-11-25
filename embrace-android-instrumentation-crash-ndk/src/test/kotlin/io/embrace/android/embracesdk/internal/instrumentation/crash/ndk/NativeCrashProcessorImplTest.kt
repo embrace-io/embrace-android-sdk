@@ -13,6 +13,7 @@ import io.embrace.android.embracesdk.internal.payload.NativeCrashData
 import io.embrace.android.embracesdk.internal.worker.PriorityWorker
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
+import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Rule
@@ -163,6 +164,78 @@ internal class NativeCrashProcessorImplTest {
         assertTrue(readable.exists())
         assertEquals(1, args.errorHandler.sdkErrorMessages.size)
     }
+
+    @Test
+    fun `native crashes are listed without their report and symbols`() {
+        storeCrash(crashId = "first", uuid = "aa690ad1-6b87-4e08-b72c-7deca14451d8")
+        val symbolProcessor = processorWith(symbolMap = mapOf("key" to "value"))
+        assertEquals(
+            nativeCrash("first").copy(crash = null, symbols = null),
+            symbolProcessor.getNativeCrashes().single(),
+        )
+    }
+
+    @Test
+    fun `a native crash is read from disk in full only when loaded`() {
+        storeCrash(crashId = "first", uuid = "aa690ad1-6b87-4e08-b72c-7deca14451d8")
+        val second = storeCrash(crashId = "second", uuid = "bb690ad1-6b87-4e08-b72c-7deca14451d8")
+        val symbols = mapOf("key" to "value")
+        val readPaths = mutableListOf<String>()
+        val symbolProcessor = processorWith(symbolMap = symbols, readPaths = readPaths)
+        val summary = symbolProcessor.getNativeCrashes().single { it.nativeCrashId == "second" }
+        readPaths.clear()
+
+        assertEquals(nativeCrash("second").copy(symbols = symbols), symbolProcessor.loadNativeCrash(summary))
+        assertEquals(listOf(second.path), readPaths)
+    }
+
+    @Test
+    fun `a deleted native crash can no longer be loaded`() {
+        storeCrash(crashId = "first", uuid = "aa690ad1-6b87-4e08-b72c-7deca14451d8")
+        storeCrash(crashId = "second", uuid = "bb690ad1-6b87-4e08-b72c-7deca14451d8")
+        val (first, second) = processor.getNativeCrashes()
+        processor.deleteNativeCrash(first)
+        assertNull(processor.loadNativeCrash(first))
+
+        processor.deleteAllNativeCrashes()
+        assertNull(processor.loadNativeCrash(second))
+    }
+
+    @Test
+    fun `a native crash that was never stored loads as it is`() {
+        val unstored = nativeCrash("missing")
+
+        assertEquals(unstored, processor.loadNativeCrash(unstored))
+    }
+
+    @Test
+    fun `a native crash that becomes unreadable after it is listed loads without its report and is deleted`() {
+        val stored = storeCrash(crashId = "first", uuid = "aa690ad1-6b87-4e08-b72c-7deca14451d8")
+        val summary = processor.getNativeCrashes().single()
+        jniDelegate.addCrashRaw(stored.path, null)
+        args.errorHandler.throwOnSdkError = false
+
+        assertEquals(summary, processor.loadNativeCrash(summary))
+        assertFalse(stored.exists())
+        assertEquals(1, args.errorHandler.sdkErrorMessages.size)
+    }
+
+    private fun processorWith(
+        symbolMap: Map<String, String>?,
+        readPaths: MutableList<String> = mutableListOf(),
+    ) = NativeCrashProcessorImpl(
+        args = args,
+        sharedObjectLoader = FakeSharedObjectLoader().apply { loadEmbraceNative() },
+        delegate = object : JniDelegate by jniDelegate {
+            override fun getCrashReport(path: String): String? {
+                readPaths.add(path)
+                return jniDelegate.getCrashReport(path)
+            }
+        },
+        symbolMap = symbolMap,
+        outputDir = lazy { outputDir },
+        worker = PriorityWorker(executor),
+    )
 
     private fun storeCrash(crashId: String, uuid: String): File {
         val metadata = StoredTelemetryMetadata(

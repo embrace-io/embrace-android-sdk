@@ -1,7 +1,11 @@
 package io.embrace.android.gradle.integration.framework
 
 import io.embrace.android.gradle.config.TestMatrix
+import io.embrace.android.gradle.plugin.network.EmbraceEndpoint
+import io.embrace.android.testapiserver.FakeApiServer
+import io.embrace.android.testapiserver.FakeBackendApi
 import okhttp3.mockwebserver.MockWebServer
+import okhttp3.mockwebserver.RecordedRequest
 import okio.FileSystem
 import okio.Path.Companion.toOkioPath
 import okio.source
@@ -30,13 +34,13 @@ class PluginIntegrationTestRule : ExternalResource() {
 
     private var tmpDir: File? = null
     private lateinit var server: MockWebServer
-    private lateinit var apiServer: FakeApiServer
+    private lateinit var apiServer: FakeApiServer<EmbraceEndpoint>
     private lateinit var assertionInterface: AssertionInterface
     private lateinit var setupInterface: SetupInterface
     private lateinit var baseUrl: String
 
     override fun before() {
-        apiServer = FakeApiServer()
+        apiServer = FakeApiServer(PluginBackendApi())
         setupInterface = SetupInterface(apiServer)
         assertionInterface = AssertionInterface(apiServer, fileSystem)
         server = MockWebServer().apply {
@@ -56,7 +60,7 @@ class PluginIntegrationTestRule : ExternalResource() {
      * can be written this way if you need to run something once, then assert that the file system
      * was changed appropriately. If you need to run multiple builds for one test, e.g. in order
      * to test that a task handles caching correctly, then you can simply call this function
-     * multiple times in a single JUnit test case. The fake API server is reset at the start of each
+     * multiple times in a single JUnit test case. The fake server backend is reset at the start of each
      * call, so assertions only observe requests made by the current build.
      */
     @Suppress("LongParameterList")
@@ -296,5 +300,20 @@ class PluginIntegrationTestRule : ExternalResource() {
                 ?: error("Task '$task' not found in result.")
             assertEquals("Unexpected outcome for task '$task'", expectedOutcome, buildTask.outcome)
         }
+    }
+}
+
+/**
+ * The API of Embrace's server backend that the Gradle plugin calls, under the fake server's `/api`. Every endpoint
+ * answers 200 by default; a request that is not a POST to one of its [EmbraceEndpoint]s fails the test.
+ */
+private class PluginBackendApi : FakeBackendApi<EmbraceEndpoint> {
+
+    private val endpoints = EmbraceEndpoint.entries.associateBy(EmbraceEndpoint::url)
+
+    override fun endpointOf(request: RecordedRequest): EmbraceEndpoint {
+        val path = request.path?.substringAfter("/api")
+        require(request.method == "POST")
+        return endpoints[path] ?: error("Unexpected request path: ${request.path}")
     }
 }

@@ -104,6 +104,7 @@ androidx-test-junit = { module = "androidx.test.ext:junit", version.ref = "andro
 androidx-test-runner = { module = "androidx.test:runner", version.ref = "androidxRunner" }
 androidx-test-orchestrator = { module = "androidx.test:orchestrator", version.ref = "androidxOrchestrator" }
 mockwebserver = { module = "com.squareup.okhttp3:mockwebserver"}
+okhttp-tls = { module = "com.squareup.okhttp3:okhttp-tls" }
 detekt-formatting = { module = "io.gitlab.arturbosch.detekt:detekt-formatting", version.ref = "detekt" }
 appcompat = { module = "androidx.appcompat:appcompat", version.ref = "appcompat" }
 androidx-fragment = { module = "androidx.fragment:fragment", version.ref = "fragment" }

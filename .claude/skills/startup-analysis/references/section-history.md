@@ -16,7 +16,7 @@ from the release before. When to add one is in `sections.md`, "Keeping these doc
 2. **Read the canonical rows against that entry.** `tools/startup analyze`'s canonical rows are
    the current SDK's. A row the release doesn't record reads "not in these traces".
    A row whose section was only renamed since is filled from the older name and labelled
-   `(as <old name>)` (`OLDER_SECTION_NAMES` in the tool's `StartupReport.kt`).
+   `(as <old name>)` (`OLDER_SECTION_NAMES` in the tool's `CanonicalSection.kt`).
    The release's own sections that are no longer canonical show under the other sections
    (`--all-sections` lists every one).
 3. **When comparing two versions**, compare a section only if both record it with the same scope.

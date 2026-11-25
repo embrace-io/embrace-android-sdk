@@ -8,7 +8,7 @@ versions, read `section-history.md`, which holds every version-specific rule.
 - **When a change on main adds, removes, renames or re-nests an `EmbTrace` section** (or changes
   whether it records a duration), update the tree below in the same change. If a renamed section
   does the same work as before, also add it to `OLDER_SECTION_NAMES` in
-  `embrace-analysis-cli/src/main/kotlin/io/embrace/analysis/startup/StartupReport.kt`, so traces
+  `embrace-analysis-cli/src/main/kotlin/io/embrace/analysis/startup/CanonicalSection.kt`, so traces
   from older SDKs still fill its row.
 - **After each release**, add a snapshot of that release to the top of `section-history.md`: the
   tree read with `scripts/section_tree.sql` from a startup trace of the released SDK, and what

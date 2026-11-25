@@ -2,6 +2,7 @@ package io.embrace.android.embracesdk.fakes
 
 import io.opentelemetry.kotlin.InstrumentationScopeInfo
 import io.opentelemetry.kotlin.resource.Resource
+import io.opentelemetry.kotlin.tracing.Span
 import io.opentelemetry.kotlin.tracing.SpanContext
 import io.opentelemetry.kotlin.tracing.SpanKind
 import io.opentelemetry.kotlin.tracing.StatusData
@@ -9,7 +10,6 @@ import io.opentelemetry.kotlin.tracing.data.SpanData
 import io.opentelemetry.kotlin.tracing.data.SpanEventData
 import io.opentelemetry.kotlin.tracing.data.SpanLinkData
 import io.opentelemetry.kotlin.tracing.model.ReadWriteSpan
-import io.opentelemetry.kotlin.tracing.Span
 
 class FakeReadWriteSpan(
     private val impl: FakeSpan = FakeSpan(),
@@ -27,7 +27,7 @@ class FakeReadWriteSpan(
     override val resource: Resource
         get() = throw UnsupportedOperationException()
 
-    override val hasEnded: Boolean = true
+    override val isEnded: Boolean = true
     override val endTimestamp: Long? = null
     override fun toSpanData(): SpanData = this
 

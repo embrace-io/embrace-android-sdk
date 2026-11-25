@@ -10,7 +10,7 @@ import io.embrace.android.embracesdk.internal.arch.schema.PrivateSpan
 import io.embrace.android.embracesdk.semconv.EmbCommonAttributes
 import io.embrace.android.embracesdk.semconv.EmbSessionAttributes
 import io.embrace.android.embracesdk.semconv.ExperimentalSemconv
-import io.opentelemetry.kotlin.NoopOpenTelemetry
+import io.opentelemetry.kotlin.context.currentContext
 import io.opentelemetry.kotlin.export.OperationResultCode
 import io.opentelemetry.kotlin.semconv.LogAttributes
 import kotlinx.coroutines.runBlocking
@@ -192,7 +192,7 @@ internal class EmbraceLogRecordProcessorTest {
     }
 
     private fun EmbraceLogRecordProcessor.onEmit(log: FakeReadWriteLogRecord) =
-        onEmit(log, NoopOpenTelemetry.context.current())
+        onEmit(log, currentContext())
 
     private companion object {
         const val SESSION_ATTRIBUTE_NAME = "session-attr"

@@ -13,6 +13,7 @@ import io.embrace.android.embracesdk.internal.arch.schema.PrivateSpan
 import io.embrace.android.embracesdk.internal.clock.millisToNanos
 import io.embrace.android.embracesdk.internal.otel.createSdkOtelInstance
 import io.opentelemetry.kotlin.Clock
+import io.opentelemetry.kotlin.context.rootContext
 import io.opentelemetry.kotlin.getTracer
 import io.opentelemetry.kotlin.tracing.Span
 import io.opentelemetry.kotlin.tracing.SpanKind
@@ -75,7 +76,7 @@ internal class OtelSpanStartArgsTest(
             assertTrue(contains(EmbType.Performance.Default))
         }
         assertEquals("emb-test", args.initialSpanName)
-        val spanContext = args.parentContext.extractSpan().spanContext
+        val spanContext = args.parentContext.span.spanContext
         assertFalse(spanContext.isValid)
 
         args.startSpan(startTime).assertSpan(
@@ -90,7 +91,7 @@ internal class OtelSpanStartArgsTest(
     fun `add parent after initial creation`() {
         val parent = tracer.startSpan("parent")
         val otel = fakeOpenTelemetry(otelSdkMode)
-        val ctx = otel.context.root().storeSpan(parent)
+        val ctx = rootContext().storeSpan(parent)
         val args = OtelSpanStartArgs(
             name = "test",
             type = EmbType.Performance.Default,
@@ -100,7 +101,7 @@ internal class OtelSpanStartArgsTest(
             parentCtx = ctx,
             openTelemetry = otel,
         )
-        val spanContext = args.parentContext.extractSpan().spanContext
+        val spanContext = args.parentContext.span.spanContext
         assertEquals(parent.spanContext.traceId, spanContext.traceId)
 
         val startTime = otelClock.now()

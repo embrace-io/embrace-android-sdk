@@ -24,6 +24,7 @@ import io.embrace.android.embracesdk.testframework.actions.EmbraceActionInterfac
 import io.embrace.android.embracesdk.testframework.actions.EmbraceOtelExportAssertionInterface
 import io.embrace.android.embracesdk.testframework.actions.EmbracePreSdkStartInterface
 import io.opentelemetry.kotlin.OpenTelemetry
+import io.opentelemetry.kotlin.context.rootContext
 import io.opentelemetry.kotlin.getTracer
 import io.opentelemetry.kotlin.logging.Logger
 import io.opentelemetry.kotlin.logging.SeverityNumber
@@ -180,7 +181,7 @@ internal class ExternalLoggerTest(
                     eventName = "my.event",
                     timestamp = logTime,
                     observedTimestamp = observedTime,
-                    context = embOpenTelemetry.context.root().storeSpan(span),
+                    context = rootContext().storeSpan(span),
                     severityNumber = SeverityNumber.INFO,
                     severityText = "",
                 ) {
@@ -319,7 +320,7 @@ internal class ExternalLoggerTest(
         assertEquals(expectedSpanContext.traceId, spanContext.traceId)
         assertEquals(expectedSpanContext.spanId, spanContext.spanId)
         assertEquals(expectedSpanContext.isValid, spanContext.isValid)
-        assertEquals(expectedSeverityNumber.severityNumber, severityNumber?.severityNumber)
+        assertEquals(expectedSeverityNumber.value, severityNumber?.value)
         assertEquals(expectedSeverityText, severityText)
         with(checkNotNull(attributes.mapValues { it.value.toString() })) {
             assertNotNull(filter { it.key == LogAttributes.LOG_RECORD_UID }.size)
@@ -351,7 +352,7 @@ internal class ExternalLoggerTest(
             assertEquals(expectedOTelLog.timestamp, timestampEpochNanos)
             assertEquals(expectedOTelLog.spanContext.spanId, spanContext.spanId)
             assertEquals(expectedOTelLog.spanContext.traceId, spanContext.traceId)
-            assertEquals(expectedOTelLog.severityNumber?.severityNumber, severity.severityNumber)
+            assertEquals(expectedOTelLog.severityNumber?.value, severity.severityNumber)
             assertEquals(expectedOTelLog.severityText, severityText)
             attributes.toStringMap().forEach { attr ->
                 assertEquals(expectedOTelLog.attributes[attr.key].toString(), attr.value)

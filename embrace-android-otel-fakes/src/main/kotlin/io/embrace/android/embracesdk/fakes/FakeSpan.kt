@@ -2,12 +2,12 @@ package io.embrace.android.embracesdk.fakes
 
 import io.opentelemetry.kotlin.attributes.AnyValue
 import io.opentelemetry.kotlin.attributes.AttributesMutator
-import io.opentelemetry.kotlin.tracing.StatusData
-import io.opentelemetry.kotlin.tracing.model.SpanLink
 import io.opentelemetry.kotlin.tracing.Span
 import io.opentelemetry.kotlin.tracing.SpanContext
-import io.opentelemetry.kotlin.tracing.model.SpanEvent
 import io.opentelemetry.kotlin.tracing.SpanKind
+import io.opentelemetry.kotlin.tracing.StatusData
+import io.opentelemetry.kotlin.tracing.model.SpanEvent
+import io.opentelemetry.kotlin.tracing.model.SpanLink
 
 class FakeSpan(
     name: String = "",
@@ -35,7 +35,7 @@ class FakeSpan(
 
     override fun setStatus(status: StatusData) { statusImpl = status }
 
-    override fun addEvent(name: String, timestamp: Long?, attributes: (AttributesMutator.() -> Unit)?) {
+    override fun addEvent(name: String, timestamp: Long, attributes: (AttributesMutator.() -> Unit)?) {
     }
 
     override fun addLink(spanContext: SpanContext, attributes: (AttributesMutator.() -> Unit)?) {

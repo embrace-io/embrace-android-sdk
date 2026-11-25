@@ -35,7 +35,7 @@ fun assertOtelLogReceived(
     logReceived?.let { log ->
         assertEquals(expectedEmbType, log.attributes?.find { it.key == "emb.type" }?.data)
         assertEquals(expectedMessage, log.body)
-        assertEquals(expectedSeverityNumber.severityNumber, log.severityNumber)
+        assertEquals(expectedSeverityNumber.value, log.severityNumber)
         assertEquals(expectedSeverityText ?: expectedSeverityNumber.name, log.severityText)
         assertEquals(expectedTimeMs.millisToNanos(), log.timeUnixNano)
         if (hasSession) {

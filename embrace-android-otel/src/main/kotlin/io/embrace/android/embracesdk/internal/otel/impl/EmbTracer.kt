@@ -34,7 +34,7 @@ class EmbTracer(
         name: String,
         parentContext: Context?,
         spanKind: SpanKind,
-        startTimestamp: Long?,
+        startTimestamp: Long,
         action: (SpanCreationAction.() -> Unit)?,
     ): Span {
         val span = errorHandler.guardSdkCode(SdkErrorType.SpanOperationFail, null) {
@@ -47,7 +47,7 @@ class EmbTracer(
                 parentCtx = parentContext ?: openTelemetry.getDefaultContext(),
                 openTelemetry = openTelemetry,
                 spanKind = spanKind,
-                startTimeMs = startTimestamp?.nanosToMillis(),
+                startTimeMs = startTimestamp.takeIf { it > 0 }?.nanosToMillis(),
             )
             val embraceSpan = spanService.createSpan(spanCreator)
             if (embraceSpan.start()) {

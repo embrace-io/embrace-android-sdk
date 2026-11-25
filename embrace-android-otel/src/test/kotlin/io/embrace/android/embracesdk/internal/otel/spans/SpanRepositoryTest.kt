@@ -308,6 +308,6 @@ internal class SpanRepositoryTest {
     private fun createChildSpan(openTelemetry: OpenTelemetry, parent: FakeEmbraceSdkSpan) =
         FakeEmbraceSdkSpan(
             openTelemetry = openTelemetry,
-            parentContext = parent.createContext(openTelemetry),
+            parentContext = parent.createContext(),
         ).apply { start(10L) }
 }

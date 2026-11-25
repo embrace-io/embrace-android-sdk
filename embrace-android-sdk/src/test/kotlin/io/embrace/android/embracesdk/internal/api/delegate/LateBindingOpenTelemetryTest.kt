@@ -77,7 +77,7 @@ internal class LateBindingOpenTelemetryTest {
             name = "span",
             parentContext = null,
             spanKind = SpanKind.INTERNAL,
-            startTimestamp = null,
+            startTimestamp = 0,
             action = null,
         )
     }
@@ -86,8 +86,8 @@ internal class LateBindingOpenTelemetryTest {
         logger.emit(
             body = "log",
             eventName = null,
-            timestamp = null,
-            observedTimestamp = null,
+            timestamp = 0,
+            observedTimestamp = 0,
             context = null,
             severityNumber = null,
             severityText = null,

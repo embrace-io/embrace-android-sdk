@@ -15,7 +15,7 @@ import io.embrace.android.embracesdk.internal.otel.spans.EmbraceSdkSpan
 import io.embrace.android.embracesdk.internal.otel.spans.OtelSpanStartArgs
 import io.embrace.android.embracesdk.internal.otel.spans.SpanService
 import io.embrace.android.embracesdk.internal.otel.spans.createContext
-import io.opentelemetry.kotlin.NoopOpenTelemetry
+import io.opentelemetry.kotlin.context.rootContext
 import io.opentelemetry.kotlin.tracing.SpanKind
 import io.opentelemetry.kotlin.tracing.StatusData
 import org.junit.Assert.assertEquals
@@ -75,7 +75,7 @@ internal class EmbTracerTest(
 
     @Test
     fun `check span generated with non default parameters`() {
-        val parentCtx = NoopOpenTelemetry.context.root()
+        val parentCtx = rootContext()
         tracer.startSpan(
             "foo",
             parentContext = parentCtx,
@@ -96,7 +96,7 @@ internal class EmbTracerTest(
     @Test
     fun `span with no explicit parent inherits the span attached to the current thread`() {
         val parent = FakeEmbraceSdkSpan(openTelemetry = openTelemetry)
-        val scope = parent.createContext(openTelemetry).attach()
+        val scope = parent.createContext().attach()
         try {
             tracer.startSpan("foo").end()
         } finally {
@@ -108,7 +108,7 @@ internal class EmbTracerTest(
     @Test
     fun `span with no explicit parent has no parent when nothing is attached to the current thread`() {
         val parent = FakeEmbraceSdkSpan(openTelemetry = openTelemetry)
-        val scope = parent.createContext(openTelemetry).attach()
+        val scope = parent.createContext().attach()
         val executor = Executors.newSingleThreadExecutor()
         try {
             executor.submit { tracer.startSpan("foo").end() }.get(1, TimeUnit.SECONDS)

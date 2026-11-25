@@ -12,6 +12,8 @@ import io.opentelemetry.api.common.AttributeKey
 import io.opentelemetry.api.common.Attributes
 import io.opentelemetry.kotlin.ExperimentalApi
 import io.opentelemetry.kotlin.OpenTelemetry
+import io.opentelemetry.kotlin.context.currentContext
+import io.opentelemetry.kotlin.context.rootContext
 import io.opentelemetry.kotlin.logging.Logger
 import io.opentelemetry.kotlin.logging.SeverityNumber
 import io.opentelemetry.kotlin.tracing.StatusData
@@ -124,13 +126,13 @@ object ProfileJourney {
             setBooleanAttribute("flag", true)
         }
 
-        val child = tracer.startSpan("otel-kotlin-child", otel.context.root().storeSpan(parent)) {
+        val child = tracer.startSpan("otel-kotlin-child", rootContext().storeSpan(parent)) {
             addLink(parent.spanContext)
         }
         child.setStatus(StatusData.Error("profile"))
         child.end()
 
-        val scope = otel.context.current().storeSpan(parent).attach()
+        val scope = currentContext().storeSpan(parent).attach()
         tracer.startSpan("otel-kotlin-implicit-child").end()
         logger.emit(body = "otel-kotlin log in span", severityNumber = SeverityNumber.INFO) {
             setStringAttribute("key", "value")

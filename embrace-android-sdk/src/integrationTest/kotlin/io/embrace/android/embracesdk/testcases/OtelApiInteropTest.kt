@@ -7,6 +7,7 @@ import io.embrace.android.embracesdk.testframework.OtelSdkMode
 import io.embrace.android.embracesdk.testframework.SdkIntegrationTestRule
 import io.embrace.android.embracesdk.testframework.actions.EmbraceActionInterface
 import io.opentelemetry.kotlin.aliases.OtelJavaAttributes
+import io.opentelemetry.kotlin.context.currentContext
 import org.junit.Assert.assertEquals
 import org.junit.Rule
 import org.junit.Test
@@ -67,7 +68,7 @@ internal class OtelApiInteropTest(
         span.addEvent(EVENT) {
             setStringAttribute(ATTR_KEY, ATTR_VALUE)
         }
-        val scope = otel.context.current().storeSpan(span).attach()
+        val scope = currentContext().storeSpan(span).attach()
         otel.loggerProvider.getLogger(LOGGER_NAME).emit(body = LOG) {
             setStringAttribute(ATTR_KEY, ATTR_VALUE)
         }

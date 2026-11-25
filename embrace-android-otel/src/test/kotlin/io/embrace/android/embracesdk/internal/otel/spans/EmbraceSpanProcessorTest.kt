@@ -6,7 +6,7 @@ import io.embrace.android.embracesdk.fakes.FakeSessionIdsProvider
 import io.embrace.android.embracesdk.fakes.FakeSpan
 import io.embrace.android.embracesdk.fakes.FakeSpanExporter
 import io.embrace.android.embracesdk.semconv.EmbSessionAttributes
-import io.opentelemetry.kotlin.NoopOpenTelemetry
+import io.opentelemetry.kotlin.context.currentContext
 import io.opentelemetry.kotlin.export.OperationResultCode
 import io.opentelemetry.kotlin.semconv.UserAttributes
 import kotlinx.coroutines.runBlocking
@@ -19,7 +19,7 @@ import org.junit.Test
 class EmbraceSpanProcessorTest {
 
     private val processIdentifier = "pid"
-    private val context = NoopOpenTelemetry.context.current()
+    private val context = currentContext()
 
     private lateinit var spanExporter: FakeSpanExporter
     private lateinit var sessionIdsProvider: FakeSessionIdsProvider

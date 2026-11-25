@@ -4,7 +4,6 @@ import io.opentelemetry.kotlin.OpenTelemetry
 import io.opentelemetry.kotlin.attributes.AttributesMutator
 import io.opentelemetry.kotlin.config.ConfigProvider
 import io.opentelemetry.kotlin.context.Context
-import io.opentelemetry.kotlin.factory.ContextFactory
 import io.opentelemetry.kotlin.logging.Logger
 import io.opentelemetry.kotlin.logging.LoggerProvider
 import io.opentelemetry.kotlin.logging.SeverityNumber
@@ -50,13 +49,7 @@ internal class LateBindingOpenTelemetry(
 
     override val meterProvider: MeterProvider get() = resolve().meterProvider
     override val configProvider: ConfigProvider get() = resolve().configProvider
-    override val context: ContextFactory = LateBindingContextFactory { resolve().context }
     override val propagator: TextMapPropagator = LateBindingTextMapPropagator { resolve().propagator }
-}
-
-private class LateBindingContextFactory(private val resolve: () -> ContextFactory) : ContextFactory {
-    override fun root(): Context = resolve().root()
-    override fun current(): Context = resolve().current()
 }
 
 private class LateBindingTextMapPropagator(private val resolve: () -> TextMapPropagator) : TextMapPropagator {
@@ -75,7 +68,7 @@ private class LateBindingTracer(private val resolve: () -> Tracer) : Tracer {
         name: String,
         parentContext: Context?,
         spanKind: SpanKind,
-        startTimestamp: Long?,
+        startTimestamp: Long,
         action: (SpanCreationAction.() -> Unit)?,
     ): Span = resolve().startSpan(name, parentContext, spanKind, startTimestamp, action)
 }
@@ -91,8 +84,8 @@ private class LateBindingLogger(private val resolve: () -> Logger) : Logger {
     override fun emit(
         body: Any?,
         eventName: String?,
-        timestamp: Long?,
-        observedTimestamp: Long?,
+        timestamp: Long,
+        observedTimestamp: Long,
         context: Context?,
         severityNumber: SeverityNumber?,
         severityText: String?,

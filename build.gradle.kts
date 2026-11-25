@@ -22,6 +22,7 @@ val koverIgnoreList = listOf(
     "embrace-macrobenchmark",
     "embrace-macrobenchmark-app",
     "embrace-benchmark-common",
+    "embrace-benchmark-endpoint",
     "embrace-apk-size",
 )
 

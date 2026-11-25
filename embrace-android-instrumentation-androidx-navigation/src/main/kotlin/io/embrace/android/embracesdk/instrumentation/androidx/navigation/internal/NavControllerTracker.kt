@@ -42,12 +42,16 @@ internal class NavControllerTracker(
      */
     private val trackerRef = AtomicReference(this)
 
+    private val screenSource = NavigationScreenSource(eventBus, clock)
+
     fun onDataCaptureEnabled() {
         trackerRef.set(this)
+        screenSource.subscribe()
     }
 
     fun onDataCaptureDisabled() {
         trackerRef.set(null)
+        screenSource.close()
     }
 
     override fun trackNavigation(activity: Activity, controller: Any?) {
@@ -85,7 +89,10 @@ internal class NavControllerTracker(
 
     private fun onDestinationChanged(activityId: Int, destination: NavDestination) {
         errorHandler.guardSdkCode(SdkErrorType.UiCallbackFail) {
-            eventBus.emit(NavigationSignal.KEY, ScreenChanged(activityId, extractScreenName(destination), clock.now()))
+            val name = extractScreenName(destination)
+            val timestampMs = clock.now()
+            eventBus.emit(NavigationSignal.KEY, ScreenChanged(activityId, name, timestampMs))
+            screenSource.onDestinationChanged(activityId, name, timestampMs)
         }
     }
 

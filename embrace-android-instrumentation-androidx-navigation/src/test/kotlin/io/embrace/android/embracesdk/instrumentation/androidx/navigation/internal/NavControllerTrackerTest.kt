@@ -18,10 +18,13 @@ import androidx.test.ext.junit.runners.AndroidJUnit4
 import io.embrace.android.embracesdk.concurrency.runConcurrently
 import io.embrace.android.embracesdk.fakes.FakeClock
 import io.embrace.android.embracesdk.fakes.FakeErrorHandler
+import io.embrace.android.embracesdk.internal.arch.lifecycle.ActivityLifecycle
 import io.embrace.android.embracesdk.internal.arch.navigation.NavigationSignal
 import io.embrace.android.embracesdk.internal.arch.navigation.NavigationSignal.ScreenChanged
 import io.embrace.android.embracesdk.internal.arch.navigation.NavigationSignal.ScreenSourceAttached
 import io.embrace.android.embracesdk.internal.arch.navigation.getId
+import io.embrace.android.embracesdk.internal.arch.screen.ScreenStart
+import io.embrace.android.embracesdk.internal.arch.screen.ScreenStop
 import io.embrace.android.embracesdk.internal.logging.SdkErrorType
 import io.embrace.android.embracesdk.internal.utils.event.EventBus
 import org.junit.Assert.assertEquals
@@ -164,6 +167,23 @@ internal class NavControllerTrackerTest {
         tracker.trackNavigation(laterActivity)
         assertEquals(1, attached.size)
         assertEquals(listOf("home"), screenChanges.map { it.name })
+    }
+
+    @Test
+    fun `destination changes of a resumed activity stop and start navigation screens`() {
+        val screens = mutableListOf<String>()
+        eventBus.addHandler(ScreenStart.KEY) { screens.add("start ${it.name} ${it.source} ${it.activityId}") }
+        eventBus.addHandler(ScreenStop.KEY) { screens.add("stop ${it.reason} ${it.source} ${it.activityId}") }
+        tracker.onDataCaptureEnabled()
+        eventBus.emit(ActivityLifecycle.RESUMED, activity)
+
+        val controller = createTestNavController("foo", "bar")
+        tracker.trackNavigation(activity, controller)
+        controller.navigate("bar")
+
+        val id = activity.getId()
+        assertEquals(listOf("start foo NAVIGATION $id", "stop NAVIGATED NAVIGATION $id", "start bar NAVIGATION $id"), screens)
+        assertEquals(listOf("foo", "bar"), screenChanges.map { it.name })
     }
 
     @Test

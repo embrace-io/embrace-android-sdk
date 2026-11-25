@@ -227,6 +227,42 @@
         "trace_id": "__EMBRACE_TEST_IGNORE__",
         "span_id": "__EMBRACE_TEST_IGNORE__",
         "parent_span_id": "__EMBRACE_TEST_IGNORE__",
+        "name": "emb-screen",
+        "start_time_unix_nano": 169220160010000000,
+        "end_time_unix_nano": 169220200133000000,
+        "status": "Unset",
+        "events": [
+          {
+            "name": "screen_start",
+            "time_unix_nano": 169220160020000000,
+            "attributes": [
+              { "key": "emb.screen.id", "value": "__EMBRACE_TEST_IGNORE__" },
+              { "key": "emb.screen.name", "value": "android.app.Activity" },
+              { "key": "emb.screen.source", "value": "activity" }
+            ]
+          },
+          {
+            "name": "screen_stop",
+            "time_unix_nano": 169220200032000000,
+            "attributes": [
+              { "key": "emb.screen.id", "value": "__EMBRACE_TEST_IGNORE__" },
+              { "key": "emb.screen.stop_reason", "value": "hidden" }
+            ]
+          }
+        ],
+        "attributes": [
+          { "key": "emb.private", "value": "true" },
+          { "key": "emb.process_identifier", "value": "__EMBRACE_TEST_IGNORE__" },
+          { "key": "emb.session_part_id", "value": "__EMBRACE_TEST_IGNORE__" },
+          { "key": "emb.type", "value": "ux.screen" },
+          { "key": "emb.user_session_id", "value": "__EMBRACE_TEST_IGNORE__" }
+        ],
+        "links": "__EMBRACE_TEST_IGNORE__"
+      },
+      {
+        "trace_id": "__EMBRACE_TEST_IGNORE__",
+        "span_id": "__EMBRACE_TEST_IGNORE__",
+        "parent_span_id": "__EMBRACE_TEST_IGNORE__",
         "name": "emb-session",
         "start_time_unix_nano": 169220160010000000,
         "end_time_unix_nano": 169220200133000000,

@@ -1,0 +1,34 @@
+file_format: definition/2
+
+attribute_groups:
+  - id: emb.screen
+    visibility: public
+    stability: development
+    brief: "Embrace screen start and stop event attributes, recorded on the screen span of a session part"
+    attributes:
+      - ref: emb.screen.id
+      - ref: emb.screen.name
+      - ref: emb.screen.source
+      - ref: emb.screen.stop_reason
+
+attributes:
+  - key: emb.screen.id
+    type: string
+    brief: "Pairs each stop event with the start event before it that has the same id. Opaque, and only consistent within the process."
+    stability: development
+    examples: ["activity-123456", "navigation-123456"]
+  - key: emb.screen.name
+    type: string
+    brief: "The name of the screen started."
+    stability: development
+    examples: ["ui.MainActivity", "settings"]
+  - key: emb.screen.source
+    type: string
+    brief: "The kind of source the screen came from."
+    stability: development
+    examples: ["activity", "navigation"]
+  - key: emb.screen.stop_reason
+    type: string
+    brief: "Why the screen stopped."
+    stability: development
+    examples: ["navigated", "hidden"]

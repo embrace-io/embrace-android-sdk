@@ -4,6 +4,7 @@ import io.embrace.analysis.benchmark.IterationTrace
 import io.embrace.analysis.startup.StartupMetrics
 import io.embrace.analysis.startup.StartupMetricsSource
 import io.embrace.analysis.startup.StartupWindow
+import io.embrace.analysis.startup.TraceHealth
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Before
@@ -171,6 +172,15 @@ internal class AnalyzeCommandTest {
                     initThread = StartupWindow.ThreadScheduling(runningMs = 9.0, waitMs = 0.5, cpus = 2),
                 ),
                 ttidMs = 300.0,
+                health = TraceHealth(
+                    verdict = TraceHealth.Verdict.OK,
+                    losses = emptyList(),
+                    importErrors = emptyList(),
+                    lossCountersReported = true,
+                    bufferWraps = 0,
+                    statsAfterData = true,
+                    scheduling = TraceHealth.SchedulingCoverage.FULL,
+                ),
             )
         }
 

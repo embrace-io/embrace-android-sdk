@@ -1,0 +1,77 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 492" width="960" height="492" role="img" aria-labelledby="embrace-vs-exporter-android-title embrace-vs-exporter-android-desc">
+<title id="embrace-vs-exporter-android-title">What state data goes to Embrace against what goes to an app&#x27;s own exporters</title>
+<desc id="embrace-vs-exporter-android-desc">Both get the stamp on every log and the link on every span. Embrace alone gets the change log, one span with each session part, and an app&#x27;s own exporters alone gets an event for each change, and the values on a span in the verbose rendering.</desc>
+<defs><marker id="embrace-vs-exporter-android-arrow-9aa5b1" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse" markerUnits="userSpaceOnUse"><path d="M0 0 L10 5 L0 10 Z" fill="#9AA5B1"/></marker></defs>
+<rect x="0.5" y="0.5" width="959" height="491" rx="12" fill="#FFFFFF" stroke="#D8DEE4"/>
+<text x="24" y="38" font-family="Inter, 'Helvetica Neue', Helvetica, Arial, sans-serif" font-size="18" fill="#1F2933" font-weight="600">What goes to Embrace, and what goes to an app&#x27;s own exporters</text>
+<rect x="24" y="248" width="104" height="68" rx="8" fill="#FFFFFF" stroke="#2563EB" stroke-width="1.5"/>
+<text x="76" y="276" font-family="Inter, 'Helvetica Neue', Helvetica, Arial, sans-serif" font-size="14" fill="#1F2933" text-anchor="middle">The recorder</text>
+<text x="76" y="295" font-family="Inter, 'Helvetica Neue', Helvetica, Arial, sans-serif" font-size="12" fill="#52606D" text-anchor="middle">one sequence</text>
+<path d="M76 248 L76 164 L147 164" fill="none" stroke="#9AA5B1" stroke-width="1.5" stroke-linejoin="round" marker-end="url(#embrace-vs-exporter-android-arrow-9aa5b1)"/>
+<path d="M76 316 L76 357 L147 357" fill="none" stroke="#9AA5B1" stroke-width="1.5" stroke-linejoin="round" marker-end="url(#embrace-vs-exporter-android-arrow-9aa5b1)"/>
+<text x="24" y="82" font-family="Inter, 'Helvetica Neue', Helvetica, Arial, sans-serif" font-size="12" fill="#52606D">Both switches on</text>
+<text x="164" y="82" font-family="Inter, 'Helvetica Neue', Helvetica, Arial, sans-serif" font-size="12" fill="#52606D">On every log</text>
+<text x="344" y="82" font-family="Inter, 'Helvetica Neue', Helvetica, Arial, sans-serif" font-size="12" fill="#52606D">On every span</text>
+<text x="562" y="82" font-family="Inter, 'Helvetica Neue', Helvetica, Arial, sans-serif" font-size="12" fill="#52606D">With every session part</text>
+<text x="750" y="82" font-family="Inter, 'Helvetica Neue', Helvetica, Arial, sans-serif" font-size="12" fill="#52606D">For every change</text>
+<rect x="150" y="96" width="786" height="136" rx="8" fill="#F5F7FA"/>
+<rect x="150" y="246" width="786" height="222" rx="8" fill="#F5F7FA"/>
+<rect x="150" y="246" width="5" height="222" rx="2" fill="#0E7490"/>
+<rect x="150" y="96" width="5" height="136" rx="2" fill="#2563EB"/>
+<text x="164" y="120" font-family="Inter, 'Helvetica Neue', Helvetica, Arial, sans-serif" font-size="14" fill="#1F2933" font-weight="600">To Embrace</text>
+<text x="268.512" y="120" font-family="Inter, 'Helvetica Neue', Helvetica, Arial, sans-serif" font-size="14" fill="#52606D">in Embrace&#x27;s own payload</text>
+<text x="164" y="270" font-family="Inter, 'Helvetica Neue', Helvetica, Arial, sans-serif" font-size="14" fill="#1F2933" font-weight="600">To the app&#x27;s own exporters and processors</text>
+<text x="517.152" y="270" font-family="Inter, 'Helvetica Neue', Helvetica, Arial, sans-serif" font-size="14" fill="#52606D">in the rendering settled as the SDK starts</text>
+<circle cx="170" cy="148" r="6" fill="#059669"/>
+<text x="184" y="152" font-family="Inter, 'Helvetica Neue', Helvetica, Arial, sans-serif" font-size="14" fill="#1F2933">The stamp</text>
+<text x="164" y="172" font-family="SFMono-Regular, Menlo, Consolas, monospace" font-size="12" fill="#1F2933">emb.state.value.&lt;name&gt;</text>
+<text x="164" y="188" font-family="SFMono-Regular, Menlo, Consolas, monospace" font-size="12" fill="#1F2933">emb.state.seq</text>
+<text x="164" y="204" font-family="Inter, 'Helvetica Neue', Helvetica, Arial, sans-serif" font-size="12" fill="#52606D">every state&#x27;s value</text>
+<rect x="344" y="143" width="22" height="10" rx="3" fill="#7C3AED"/>
+<text x="374" y="152" font-family="Inter, 'Helvetica Neue', Helvetica, Arial, sans-serif" font-size="14" fill="#1F2933">The link</text>
+<text x="344" y="172" font-family="SFMono-Regular, Menlo, Consolas, monospace" font-size="12" fill="#1F2933">emb.state.seq</text>
+<text x="344" y="188" font-family="SFMono-Regular, Menlo, Consolas, monospace" font-size="12" fill="#1F2933">emb.state.end_seq</text>
+<text x="344" y="204" font-family="Inter, 'Helvetica Neue', Helvetica, Arial, sans-serif" font-size="12" fill="#52606D">two numbers, no values</text>
+<rect x="562" y="143" width="22" height="10" rx="3" fill="#2563EB"/>
+<line x1="567" y1="143" x2="567" y2="153" stroke="#FFFFFF" stroke-width="1.5"/>
+<line x1="573" y1="143" x2="573" y2="153" stroke="#FFFFFF" stroke-width="1.5"/>
+<line x1="579" y1="143" x2="579" y2="153" stroke="#FFFFFF" stroke-width="1.5"/>
+<text x="592" y="152" font-family="Inter, 'Helvetica Neue', Helvetica, Arial, sans-serif" font-size="14" fill="#1F2933">The change log</text>
+<text x="562" y="172" font-family="SFMono-Regular, Menlo, Consolas, monospace" font-size="12" fill="#1F2933">emb-states</text>
+<text x="562" y="188" font-family="Inter, 'Helvetica Neue', Helvetica, Arial, sans-serif" font-size="12" fill="#52606D">one span: the opening values,</text>
+<text x="562" y="204" font-family="Inter, 'Helvetica Neue', Helvetica, Arial, sans-serif" font-size="12" fill="#52606D">then every change in order</text>
+<rect x="750" y="136" width="174" height="82" rx="6" fill="#FFFFFF" stroke="#9AA5B1" stroke-width="1" stroke-dasharray="4 4"/>
+<text x="837" y="173" font-family="Inter, 'Helvetica Neue', Helvetica, Arial, sans-serif" font-size="14" fill="#52606D" text-anchor="middle">Not sent</text>
+<text x="837" y="191" font-family="Inter, 'Helvetica Neue', Helvetica, Arial, sans-serif" font-size="12" fill="#52606D" text-anchor="middle">skips Embrace&#x27;s LogSink</text>
+<circle cx="170" cy="298" r="6" fill="#059669"/>
+<text x="184" y="302" font-family="Inter, 'Helvetica Neue', Helvetica, Arial, sans-serif" font-size="14" fill="#1F2933">The stamp</text>
+<text x="164" y="322" font-family="Inter, 'Helvetica Neue', Helvetica, Arial, sans-serif" font-size="12" fill="#52606D">the same, written on the</text>
+<text x="164" y="338" font-family="Inter, 'Helvetica Neue', Helvetica, Arial, sans-serif" font-size="12" fill="#52606D">record itself</text>
+<rect x="344" y="293" width="22" height="10" rx="3" fill="#7C3AED"/>
+<text x="374" y="302" font-family="Inter, 'Helvetica Neue', Helvetica, Arial, sans-serif" font-size="14" fill="#1F2933">The link</text>
+<text x="344" y="322" font-family="Inter, 'Helvetica Neue', Helvetica, Arial, sans-serif" font-size="12" fill="#52606D">the same two numbers</text>
+<rect x="344" y="348" width="206" height="92" rx="6" fill="#FFFFFF" stroke="#0E7490" stroke-width="1" stroke-dasharray="4 3"/>
+<rect x="352" y="339" width="113.527" height="18" rx="9" fill="#0E7490"/>
+<text x="359" y="352" font-family="Inter, 'Helvetica Neue', Helvetica, Arial, sans-serif" font-size="12" fill="#FFFFFF" font-weight="600">VERBOSE adds</text>
+<text x="352" y="376" font-family="SFMono-Regular, Menlo, Consolas, monospace" font-size="12" fill="#1F2933">emb.state.value.&lt;name&gt;</text>
+<text x="352" y="392" font-family="SFMono-Regular, Menlo, Consolas, monospace" font-size="12" fill="#1F2933">emb.state.end_value.&lt;name&gt;</text>
+<text x="352" y="408" font-family="Inter, 'Helvetica Neue', Helvetica, Arial, sans-serif" font-size="12" fill="#52606D">through a wrapper, and never</text>
+<text x="352" y="424" font-family="Inter, 'Helvetica Neue', Helvetica, Arial, sans-serif" font-size="12" fill="#52606D">written on the span</text>
+<rect x="562" y="286" width="176" height="70" rx="6" fill="#FFFFFF" stroke="#9AA5B1" stroke-width="1" stroke-dasharray="4 4"/>
+<text x="650" y="317" font-family="Inter, 'Helvetica Neue', Helvetica, Arial, sans-serif" font-size="14" fill="#52606D" text-anchor="middle">Not sent</text>
+<text x="650" y="335" font-family="Inter, 'Helvetica Neue', Helvetica, Arial, sans-serif" font-size="12" fill="#52606D" text-anchor="middle">no exporter ever sees it</text>
+<rect x="748.729" y="289" width="20.543" height="18" rx="9" fill="#0E7490"/>
+<text x="759" y="302.2" font-family="Inter, 'Helvetica Neue', Helvetica, Arial, sans-serif" font-size="12" fill="#FFFFFF" text-anchor="middle" font-weight="600">n</text>
+<text x="780" y="302" font-family="Inter, 'Helvetica Neue', Helvetica, Arial, sans-serif" font-size="14" fill="#1F2933">State events</text>
+<text x="750" y="322" font-family="SFMono-Regular, Menlo, Consolas, monospace" font-size="12" fill="#1F2933">emb.state.change</text>
+<text x="750" y="338" font-family="Inter, 'Helvetica Neue', Helvetica, Arial, sans-serif" font-size="12" fill="#52606D">each change, with its number</text>
+<text x="750" y="354" font-family="SFMono-Regular, Menlo, Consolas, monospace" font-size="12" fill="#1F2933">emb.state.snapshot</text>
+<text x="750" y="370" font-family="Inter, 'Helvetica Neue', Helvetica, Arial, sans-serif" font-size="12" fill="#52606D">as a session part starts</text>
+<rect x="750" y="396" width="174" height="60" rx="6" fill="#FFFFFF" stroke="#0E7490" stroke-width="1" stroke-dasharray="4 3"/>
+<rect x="758" y="387" width="113.527" height="18" rx="9" fill="#0E7490"/>
+<text x="765" y="400" font-family="Inter, 'Helvetica Neue', Helvetica, Arial, sans-serif" font-size="12" fill="#FFFFFF" font-weight="600">VERBOSE adds</text>
+<text x="758" y="424" font-family="Inter, 'Helvetica Neue', Helvetica, Arial, sans-serif" font-size="12" fill="#52606D">every state&#x27;s value on</text>
+<text x="758" y="440" font-family="Inter, 'Helvetica Neue', Helvetica, Arial, sans-serif" font-size="12" fill="#52606D">each change event</text>
+<text x="164" y="434" font-family="Inter, 'Helvetica Neue', Helvetica, Arial, sans-serif" font-size="12" fill="#52606D" xml:space="preserve"><tspan>With the rendering </tspan><tspan font-family="SFMono-Regular, Menlo, Consolas, monospace">OFF</tspan><tspan>:</tspan></text>
+<text x="164" y="450" font-family="Inter, 'Helvetica Neue', Helvetica, Arial, sans-serif" font-size="12" fill="#52606D">the stamp and the link only</text>
+</svg>

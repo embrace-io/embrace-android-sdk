@@ -1,0 +1,89 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 522" width="960" height="522" role="img" aria-labelledby="span-link-cases-title span-link-cases-desc">
+<title id="span-link-cases-title">Six spans, and which of the two sequence numbers each carries</title>
+<desc id="span-link-cases-desc">A span that reads the sequence as it runs carries a start number, an end number if a state changed while it ran, or only an end number if it started before any state had a value. A span that is given its times is placed among the recorder&#x27;s last 64 snapshots, and gets no number for a time older than those.</desc>
+<rect x="0.5" y="0.5" width="959" height="521" rx="12" fill="#FFFFFF" stroke="#D8DEE4"/>
+<text x="24" y="38" font-family="Inter, 'Helvetica Neue', Helvetica, Arial, sans-serif" font-size="18" fill="#1F2933" font-weight="600">What a span&#x27;s link can look like</text>
+<text x="24" y="70" font-family="Inter, 'Helvetica Neue', Helvetica, Arial, sans-serif" font-size="12" fill="#52606D">Read as the span runs</text>
+<line x1="480" y1="109" x2="480" y2="246" stroke="#9AA5B1" stroke-width="1" stroke-dasharray="2 4"/>
+<line x1="570" y1="109" x2="570" y2="246" stroke="#9AA5B1" stroke-width="1" stroke-dasharray="2 4"/>
+<line x1="700" y1="109" x2="700" y2="246" stroke="#9AA5B1" stroke-width="1" stroke-dasharray="2 4"/>
+<text x="24" y="103" font-family="Inter, 'Helvetica Neue', Helvetica, Arial, sans-serif" font-size="14" fill="#1F2933">The sequence</text>
+<line x1="330" y1="98" x2="480" y2="98" stroke="#2563EB" stroke-width="2" stroke-dasharray="2 5"/>
+<line x1="480" y1="98" x2="936" y2="98" stroke="#2563EB" stroke-width="2"/>
+<text x="330" y="82" font-family="Inter, 'Helvetica Neue', Helvetica, Arial, sans-serif" font-size="12" fill="#52606D">no state has a value yet</text>
+<rect x="469" y="87" width="22" height="22" rx="11" fill="#2563EB"/>
+<text x="480" y="102.2" font-family="Inter, 'Helvetica Neue', Helvetica, Arial, sans-serif" font-size="12" fill="#FFFFFF" text-anchor="middle" font-weight="600">1</text>
+<rect x="559" y="87" width="22" height="22" rx="11" fill="#2563EB"/>
+<text x="570" y="102.2" font-family="Inter, 'Helvetica Neue', Helvetica, Arial, sans-serif" font-size="12" fill="#FFFFFF" text-anchor="middle" font-weight="600">2</text>
+<rect x="689" y="87" width="22" height="22" rx="11" fill="#2563EB"/>
+<text x="700" y="102.2" font-family="Inter, 'Helvetica Neue', Helvetica, Arial, sans-serif" font-size="12" fill="#FFFFFF" text-anchor="middle" font-weight="600">3</text>
+<text x="24" y="139" font-family="Inter, 'Helvetica Neue', Helvetica, Arial, sans-serif" font-size="14" fill="#1F2933" xml:space="preserve"><tspan font-family="SFMono-Regular, Menlo, Consolas, monospace" font-size="13">emb.state.end_seq</tspan><tspan> only</tspan></text>
+<text x="24" y="156" font-family="Inter, 'Helvetica Neue', Helvetica, Arial, sans-serif" font-size="12" fill="#52606D">started before any state had a value</text>
+<rect x="384" y="132" width="228" height="20" rx="4" fill="#7C3AED"/>
+<circle cx="384" cy="142" r="9" fill="#FFFFFF" stroke="#9AA5B1" stroke-width="1.5" stroke-dasharray="3 2.5"/>
+<rect x="601" y="131" width="22" height="22" rx="11" fill="#2563EB"/>
+<text x="612" y="146.2" font-family="Inter, 'Helvetica Neue', Helvetica, Arial, sans-serif" font-size="12" fill="#FFFFFF" text-anchor="middle" font-weight="600">2</text>
+<text x="24" y="183" font-family="Inter, 'Helvetica Neue', Helvetica, Arial, sans-serif" font-size="14" fill="#1F2933" xml:space="preserve"><tspan font-family="SFMono-Regular, Menlo, Consolas, monospace" font-size="13">emb.state.seq</tspan><tspan> only</tspan></text>
+<text x="24" y="200" font-family="Inter, 'Helvetica Neue', Helvetica, Arial, sans-serif" font-size="12" fill="#52606D">no state changed while it ran</text>
+<rect x="596" y="176" width="72" height="20" rx="4" fill="#7C3AED"/>
+<rect x="585" y="175" width="22" height="22" rx="11" fill="#2563EB"/>
+<text x="596" y="190.2" font-family="Inter, 'Helvetica Neue', Helvetica, Arial, sans-serif" font-size="12" fill="#FFFFFF" text-anchor="middle" font-weight="600">2</text>
+<circle cx="668" cy="186" r="9" fill="#FFFFFF" stroke="#9AA5B1" stroke-width="1.5" stroke-dasharray="3 2.5"/>
+<text x="24" y="227" font-family="Inter, 'Helvetica Neue', Helvetica, Arial, sans-serif" font-size="14" fill="#1F2933">Both</text>
+<text x="24" y="244" font-family="Inter, 'Helvetica Neue', Helvetica, Arial, sans-serif" font-size="12" fill="#52606D">a state changed while it ran</text>
+<rect x="604" y="220" width="160" height="20" rx="4" fill="#7C3AED"/>
+<rect x="593" y="219" width="22" height="22" rx="11" fill="#2563EB"/>
+<text x="604" y="234.2" font-family="Inter, 'Helvetica Neue', Helvetica, Arial, sans-serif" font-size="12" fill="#FFFFFF" text-anchor="middle" font-weight="600">2</text>
+<rect x="753" y="219" width="22" height="22" rx="11" fill="#2563EB"/>
+<text x="764" y="234.2" font-family="Inter, 'Helvetica Neue', Helvetica, Arial, sans-serif" font-size="12" fill="#FFFFFF" text-anchor="middle" font-weight="600">3</text>
+<text x="24" y="280" font-family="Inter, 'Helvetica Neue', Helvetica, Arial, sans-serif" font-size="12" fill="#52606D">Given its times, and placed among the last 64 snapshots</text>
+<rect x="540" y="286" width="396" height="178" rx="6" fill="#F5F7FA" stroke="#2563EB" stroke-width="1" stroke-dasharray="4 3"/>
+<text x="926" y="280" font-family="Inter, 'Helvetica Neue', Helvetica, Arial, sans-serif" font-size="12" fill="#2563EB" text-anchor="end">The window: snapshots 103 to 166</text>
+<line x1="370" y1="321" x2="370" y2="458" stroke="#9AA5B1" stroke-width="1" stroke-dasharray="2 4"/>
+<line x1="450" y1="321" x2="450" y2="458" stroke="#9AA5B1" stroke-width="1" stroke-dasharray="2 4"/>
+<line x1="540" y1="321" x2="540" y2="458" stroke="#9AA5B1" stroke-width="1" stroke-dasharray="2 4"/>
+<line x1="630" y1="321" x2="630" y2="458" stroke="#9AA5B1" stroke-width="1" stroke-dasharray="2 4"/>
+<line x1="770" y1="321" x2="770" y2="458" stroke="#9AA5B1" stroke-width="1" stroke-dasharray="2 4"/>
+<line x1="850" y1="321" x2="850" y2="458" stroke="#9AA5B1" stroke-width="1" stroke-dasharray="2 4"/>
+<text x="24" y="315" font-family="Inter, 'Helvetica Neue', Helvetica, Arial, sans-serif" font-size="14" fill="#1F2933">The sequence</text>
+<line x1="330" y1="310" x2="684" y2="310" stroke="#2563EB" stroke-width="2"/>
+<line x1="684" y1="310" x2="716" y2="310" stroke="#2563EB" stroke-width="2" stroke-dasharray="2 5"/>
+<line x1="716" y1="310" x2="936" y2="310" stroke="#2563EB" stroke-width="2"/>
+<rect x="351.473" y="299" width="37.0547" height="22" rx="11" fill="#2563EB"/>
+<text x="370" y="314.2" font-family="Inter, 'Helvetica Neue', Helvetica, Arial, sans-serif" font-size="12" fill="#FFFFFF" text-anchor="middle" font-weight="600">101</text>
+<rect x="431.473" y="299" width="37.0547" height="22" rx="11" fill="#2563EB"/>
+<text x="450" y="314.2" font-family="Inter, 'Helvetica Neue', Helvetica, Arial, sans-serif" font-size="12" fill="#FFFFFF" text-anchor="middle" font-weight="600">102</text>
+<rect x="521.473" y="299" width="37.0547" height="22" rx="11" fill="#2563EB"/>
+<text x="540" y="314.2" font-family="Inter, 'Helvetica Neue', Helvetica, Arial, sans-serif" font-size="12" fill="#FFFFFF" text-anchor="middle" font-weight="600">103</text>
+<rect x="611.473" y="299" width="37.0547" height="22" rx="11" fill="#2563EB"/>
+<text x="630" y="314.2" font-family="Inter, 'Helvetica Neue', Helvetica, Arial, sans-serif" font-size="12" fill="#FFFFFF" text-anchor="middle" font-weight="600">104</text>
+<rect x="751.473" y="299" width="37.0547" height="22" rx="11" fill="#2563EB"/>
+<text x="770" y="314.2" font-family="Inter, 'Helvetica Neue', Helvetica, Arial, sans-serif" font-size="12" fill="#FFFFFF" text-anchor="middle" font-weight="600">165</text>
+<rect x="831.473" y="299" width="37.0547" height="22" rx="11" fill="#2563EB"/>
+<text x="850" y="314.2" font-family="Inter, 'Helvetica Neue', Helvetica, Arial, sans-serif" font-size="12" fill="#FFFFFF" text-anchor="middle" font-weight="600">166</text>
+<text x="926" y="330" font-family="Inter, 'Helvetica Neue', Helvetica, Arial, sans-serif" font-size="12" fill="#52606D" text-anchor="end">now</text>
+<text x="24" y="351" font-family="Inter, 'Helvetica Neue', Helvetica, Arial, sans-serif" font-size="14" fill="#1F2933">Both</text>
+<text x="24" y="368" font-family="Inter, 'Helvetica Neue', Helvetica, Arial, sans-serif" font-size="12" fill="#52606D">given both times, inside the window</text>
+<rect x="572" y="344" width="112" height="20" rx="4" fill="#7C3AED"/>
+<rect x="553.473" y="343" width="37.0547" height="22" rx="11" fill="#2563EB"/>
+<text x="572" y="358.2" font-family="Inter, 'Helvetica Neue', Helvetica, Arial, sans-serif" font-size="12" fill="#FFFFFF" text-anchor="middle" font-weight="600">103</text>
+<rect x="665.473" y="343" width="37.0547" height="22" rx="11" fill="#2563EB"/>
+<text x="684" y="358.2" font-family="Inter, 'Helvetica Neue', Helvetica, Arial, sans-serif" font-size="12" fill="#FFFFFF" text-anchor="middle" font-weight="600">104</text>
+<text x="24" y="395" font-family="Inter, 'Helvetica Neue', Helvetica, Arial, sans-serif" font-size="14" fill="#1F2933">Neither</text>
+<text x="24" y="412" font-family="Inter, 'Helvetica Neue', Helvetica, Arial, sans-serif" font-size="12" fill="#52606D">given a start older than the window</text>
+<rect x="396" y="388" width="96" height="20" rx="4" fill="#7C3AED"/>
+<circle cx="396" cy="398" r="9" fill="#FFFFFF" stroke="#9AA5B1" stroke-width="1.5" stroke-dasharray="3 2.5"/>
+<circle cx="492" cy="398" r="9" fill="#FFFFFF" stroke="#9AA5B1" stroke-width="1.5" stroke-dasharray="3 2.5"/>
+<text x="24" y="439" font-family="Inter, 'Helvetica Neue', Helvetica, Arial, sans-serif" font-size="14" fill="#1F2933" xml:space="preserve"><tspan font-family="SFMono-Regular, Menlo, Consolas, monospace" font-size="13">emb.state.seq</tspan><tspan> only</tspan></text>
+<text x="24" y="456" font-family="Inter, 'Helvetica Neue', Helvetica, Arial, sans-serif" font-size="12" fill="#52606D">stopped with an end older than the window</text>
+<rect x="396" y="432" width="96" height="20" rx="4" fill="#7C3AED"/>
+<rect x="377.473" y="431" width="37.0547" height="22" rx="11" fill="#2563EB"/>
+<text x="396" y="446.2" font-family="Inter, 'Helvetica Neue', Helvetica, Arial, sans-serif" font-size="12" fill="#FFFFFF" text-anchor="middle" font-weight="600">101</text>
+<circle cx="492" cy="442" r="9" fill="#FFFFFF" stroke="#9AA5B1" stroke-width="1.5" stroke-dasharray="3 2.5"/>
+<rect x="24.7285" y="483" width="20.543" height="18" rx="9" fill="#2563EB"/>
+<text x="35" y="496.2" font-family="Inter, 'Helvetica Neue', Helvetica, Arial, sans-serif" font-size="12" fill="#FFFFFF" text-anchor="middle" font-weight="600">n</text>
+<text x="52" y="496" font-family="Inter, 'Helvetica Neue', Helvetica, Arial, sans-serif" font-size="12" fill="#52606D">A number the span carries</text>
+<circle cx="232" cy="492" r="9" fill="#FFFFFF" stroke="#9AA5B1" stroke-width="1.5" stroke-dasharray="3 2.5"/>
+<text x="248" y="496" font-family="Inter, 'Helvetica Neue', Helvetica, Arial, sans-serif" font-size="12" fill="#52606D">No number</text>
+<text x="936" y="496" font-family="Inter, 'Helvetica Neue', Helvetica, Arial, sans-serif" font-size="12" fill="#52606D" text-anchor="end">A time older than the window gets no number.</text>
+</svg>

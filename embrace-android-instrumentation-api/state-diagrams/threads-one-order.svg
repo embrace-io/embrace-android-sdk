@@ -1,0 +1,135 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 590" width="960" height="590" role="img" aria-labelledby="threads-one-order-title threads-one-order-desc">
+<title id="threads-one-order-title">Three threads report a state change at once, and one lock gives the changes one order</title>
+<desc id="threads-one-order-desc">Three threads each report a change of a state within a millisecond. They pass one at a time through the recorder&#x27;s lock, which numbers the changes 41, 42 and 43, and the journal, the events for the app&#x27;s exporters, and every log and span that reads the snapshot without the lock all see that one order.</desc>
+<defs><marker id="threads-one-order-arrow-9aa5b1" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse" markerUnits="userSpaceOnUse"><path d="M0 0 L10 5 L0 10 Z" fill="#9AA5B1"/></marker></defs>
+<rect x="0.5" y="0.5" width="959" height="589" rx="12" fill="#FFFFFF" stroke="#D8DEE4"/>
+<text x="24" y="38" font-family="Inter, 'Helvetica Neue', Helvetica, Arial, sans-serif" font-size="18" fill="#1F2933" font-weight="600">Several threads, one order</text>
+<text x="24" y="66" font-family="Inter, 'Helvetica Neue', Helvetica, Arial, sans-serif" font-size="12" fill="#52606D">Three threads, each reporting a change of one state</text>
+<rect x="24" y="75" width="574" height="38" rx="6" fill="#F5F7FA"/>
+<text x="36" y="99" font-family="Inter, 'Helvetica Neue', Helvetica, Arial, sans-serif" font-size="14" fill="#1F2933" xml:space="preserve"><tspan>Reports </tspan><tspan font-family="SFMono-Regular, Menlo, Consolas, monospace" font-size="13">screen-automatic</tspan></text>
+<rect x="24" y="117" width="574" height="38" rx="6" fill="#F5F7FA"/>
+<text x="36" y="141" font-family="Inter, 'Helvetica Neue', Helvetica, Arial, sans-serif" font-size="14" fill="#1F2933" xml:space="preserve"><tspan>Reports </tspan><tspan font-family="SFMono-Regular, Menlo, Consolas, monospace" font-size="13">power</tspan></text>
+<rect x="24" y="159" width="574" height="38" rx="6" fill="#F5F7FA"/>
+<text x="36" y="183" font-family="Inter, 'Helvetica Neue', Helvetica, Arial, sans-serif" font-size="14" fill="#1F2933" xml:space="preserve"><tspan>Reports </tspan><tspan font-family="SFMono-Regular, Menlo, Consolas, monospace" font-size="13">network</tspan></text>
+<rect x="24.75" y="208" width="910.5" height="56" rx="6" fill="#F5F7FA" stroke="#2563EB" stroke-width="1.5"/>
+<text x="36" y="233" font-family="Inter, 'Helvetica Neue', Helvetica, Arial, sans-serif" font-size="14" fill="#1F2933">The recorder&#x27;s lock</text>
+<text x="36" y="250" font-family="SFMono-Regular, Menlo, Consolas, monospace" font-size="12" fill="#52606D">StateRecorder.onEvent</text>
+<rect x="24" y="279" width="912" height="46" rx="6" fill="#F5F7FA"/>
+<text x="36" y="299" font-family="SFMono-Regular, Menlo, Consolas, monospace" font-size="13" fill="#1F2933">session-persistence</text>
+<text x="36" y="316" font-family="Inter, 'Helvetica Neue', Helvetica, Arial, sans-serif" font-size="12" fill="#52606D">one worker, appends</text>
+<rect x="24" y="331" width="912" height="46" rx="6" fill="#F5F7FA"/>
+<text x="36" y="351" font-family="SFMono-Regular, Menlo, Consolas, monospace" font-size="13" fill="#1F2933">state-export</text>
+<text x="36" y="368" font-family="Inter, 'Helvetica Neue', Helvetica, Arial, sans-serif" font-size="12" fill="#52606D">one worker, emits</text>
+<rect x="24" y="393" width="912" height="46" rx="6" fill="#F5F7FA"/>
+<text x="36" y="413" font-family="Inter, 'Helvetica Neue', Helvetica, Arial, sans-serif" font-size="14" fill="#1F2933">The current snapshot</text>
+<text x="36" y="430" font-family="Inter, 'Helvetica Neue', Helvetica, Arial, sans-serif" font-size="12" fill="#52606D">read with no lock</text>
+<rect x="24" y="449" width="912" height="34" rx="6" fill="#F5F7FA"/>
+<text x="36" y="471" font-family="Inter, 'Helvetica Neue', Helvetica, Arial, sans-serif" font-size="14" fill="#1F2933">A log, on any thread</text>
+<rect x="24" y="493" width="912" height="34" rx="6" fill="#F5F7FA"/>
+<text x="36" y="515" font-family="Inter, 'Helvetica Neue', Helvetica, Arial, sans-serif" font-size="14" fill="#1F2933">A span, on any thread</text>
+<line x1="402" y1="252" x2="402" y2="405" stroke="#2563EB" stroke-width="1" stroke-dasharray="2 4"/>
+<line x1="478" y1="252" x2="478" y2="405" stroke="#2563EB" stroke-width="1" stroke-dasharray="2 4"/>
+<line x1="554" y1="252" x2="554" y2="405" stroke="#2563EB" stroke-width="1" stroke-dasharray="2 4"/>
+<text x="246" y="98" font-family="SFMono-Regular, Menlo, Consolas, monospace" font-size="12" fill="#52606D">10:00:00.119</text>
+<line x1="353" y1="94" x2="554" y2="94" stroke="#9AA5B1" stroke-width="1.5" stroke-dasharray="5 4"/>
+<line x1="554" y1="94" x2="554" y2="219" stroke="#9AA5B1" stroke-width="1.5" marker-end="url(#threads-one-order-arrow-9aa5b1)"/>
+<path d="M346 87 L353 94 L346 101 L339 94 Z" fill="#D97706"/>
+<text x="246" y="140" font-family="SFMono-Regular, Menlo, Consolas, monospace" font-size="12" fill="#52606D">10:00:00.120</text>
+<line x1="361" y1="136" x2="478" y2="136" stroke="#9AA5B1" stroke-width="1.5" stroke-dasharray="5 4"/>
+<line x1="478" y1="136" x2="478" y2="219" stroke="#9AA5B1" stroke-width="1.5" marker-end="url(#threads-one-order-arrow-9aa5b1)"/>
+<path d="M354 129 L361 136 L354 143 L347 136 Z" fill="#D97706"/>
+<text x="246" y="182" font-family="SFMono-Regular, Menlo, Consolas, monospace" font-size="12" fill="#52606D">10:00:00.120</text>
+<path d="M361 178 L402 178 L402 219" fill="none" stroke="#9AA5B1" stroke-width="1.5" stroke-linejoin="round" marker-end="url(#threads-one-order-arrow-9aa5b1)"/>
+<path d="M354 171 L361 178 L354 185 L347 178 Z" fill="#D97706"/>
+<text x="456" y="88" font-family="Inter, 'Helvetica Neue', Helvetica, Arial, sans-serif" font-size="12" fill="#52606D" text-anchor="middle">waits for the lock</text>
+<rect x="372" y="220" width="60" height="32" rx="6" fill="#FFFFFF" stroke="#2563EB" stroke-width="1.5"/>
+<rect x="387.648" y="225" width="28.7031" height="22" rx="11" fill="#2563EB"/>
+<text x="402" y="240.2" font-family="Inter, 'Helvetica Neue', Helvetica, Arial, sans-serif" font-size="12" fill="#FFFFFF" text-anchor="middle" font-weight="600">41</text>
+<rect x="448" y="220" width="60" height="32" rx="6" fill="#FFFFFF" stroke="#2563EB" stroke-width="1.5"/>
+<rect x="463.648" y="225" width="28.7031" height="22" rx="11" fill="#2563EB"/>
+<text x="478" y="240.2" font-family="Inter, 'Helvetica Neue', Helvetica, Arial, sans-serif" font-size="12" fill="#FFFFFF" text-anchor="middle" font-weight="600">42</text>
+<rect x="524" y="220" width="60" height="32" rx="6" fill="#FFFFFF" stroke="#2563EB" stroke-width="1.5"/>
+<rect x="539.648" y="225" width="28.7031" height="22" rx="11" fill="#2563EB"/>
+<text x="554" y="240.2" font-family="Inter, 'Helvetica Neue', Helvetica, Arial, sans-serif" font-size="12" fill="#FFFFFF" text-anchor="middle" font-weight="600">43</text>
+<text x="608" y="232" font-family="Inter, 'Helvetica Neue', Helvetica, Arial, sans-serif" font-size="12" fill="#52606D">Under the lock: the next number, a new snapshot,</text>
+<text x="608" y="248" font-family="Inter, 'Helvetica Neue', Helvetica, Arial, sans-serif" font-size="12" fill="#52606D">two queue inserts. No file I/O, no code of the app&#x27;s.</text>
+<line x1="402" y1="302" x2="564" y2="302" stroke="#9AA5B1" stroke-width="1.5"/>
+<rect x="397" y="297" width="10" height="10" fill="#FFFFFF" stroke="#2563EB" stroke-width="1.5"/>
+<rect x="473" y="297" width="10" height="10" fill="#FFFFFF" stroke="#2563EB" stroke-width="1.5"/>
+<rect x="549" y="297" width="10" height="10" fill="#FFFFFF" stroke="#2563EB" stroke-width="1.5"/>
+<line x1="564" y1="302" x2="606" y2="302" stroke="#9AA5B1" stroke-width="1.5" marker-end="url(#threads-one-order-arrow-9aa5b1)"/>
+<rect x="610" y="287" width="92" height="30" rx="4" fill="#FFFFFF" stroke="#9AA5B1" stroke-width="1"/>
+<rect x="613.648" y="291" width="28.7031" height="22" rx="11" fill="#2563EB"/>
+<text x="628" y="306.2" font-family="Inter, 'Helvetica Neue', Helvetica, Arial, sans-serif" font-size="12" fill="#FFFFFF" text-anchor="middle" font-weight="600">41</text>
+<rect x="641.648" y="291" width="28.7031" height="22" rx="11" fill="#2563EB"/>
+<text x="656" y="306.2" font-family="Inter, 'Helvetica Neue', Helvetica, Arial, sans-serif" font-size="12" fill="#FFFFFF" text-anchor="middle" font-weight="600">42</text>
+<rect x="669.648" y="291" width="28.7031" height="22" rx="11" fill="#2563EB"/>
+<text x="684" y="306.2" font-family="Inter, 'Helvetica Neue', Helvetica, Arial, sans-serif" font-size="12" fill="#FFFFFF" text-anchor="middle" font-weight="600">43</text>
+<text x="714" y="299" font-family="SFMono-Regular, Menlo, Consolas, monospace" font-size="12" fill="#1F2933">state_journal.pb</text>
+<text x="714" y="315" font-family="Inter, 'Helvetica Neue', Helvetica, Arial, sans-serif" font-size="12" fill="#52606D" xml:space="preserve"><tspan>delivered as </tspan><tspan font-family="SFMono-Regular, Menlo, Consolas, monospace">emb-states</tspan></text>
+<line x1="402" y1="354" x2="564" y2="354" stroke="#9AA5B1" stroke-width="1.5"/>
+<rect x="397" y="349" width="10" height="10" fill="#FFFFFF" stroke="#2563EB" stroke-width="1.5"/>
+<rect x="473" y="349" width="10" height="10" fill="#FFFFFF" stroke="#2563EB" stroke-width="1.5"/>
+<rect x="549" y="349" width="10" height="10" fill="#FFFFFF" stroke="#2563EB" stroke-width="1.5"/>
+<line x1="564" y1="354" x2="606" y2="354" stroke="#9AA5B1" stroke-width="1.5" marker-end="url(#threads-one-order-arrow-9aa5b1)"/>
+<rect x="613.648" y="343" width="28.7031" height="22" rx="11" fill="#0E7490"/>
+<text x="628" y="358.2" font-family="Inter, 'Helvetica Neue', Helvetica, Arial, sans-serif" font-size="12" fill="#FFFFFF" text-anchor="middle" font-weight="600">41</text>
+<rect x="641.648" y="343" width="28.7031" height="22" rx="11" fill="#0E7490"/>
+<text x="656" y="358.2" font-family="Inter, 'Helvetica Neue', Helvetica, Arial, sans-serif" font-size="12" fill="#FFFFFF" text-anchor="middle" font-weight="600">42</text>
+<rect x="669.648" y="343" width="28.7031" height="22" rx="11" fill="#0E7490"/>
+<text x="684" y="358.2" font-family="Inter, 'Helvetica Neue', Helvetica, Arial, sans-serif" font-size="12" fill="#FFFFFF" text-anchor="middle" font-weight="600">43</text>
+<text x="714" y="351" font-family="Inter, 'Helvetica Neue', Helvetica, Arial, sans-serif" font-size="12" fill="#1F2933" xml:space="preserve"><tspan font-family="SFMono-Regular, Menlo, Consolas, monospace">emb.state.change</tspan><tspan> events</tspan></text>
+<text x="714" y="367" font-family="Inter, 'Helvetica Neue', Helvetica, Arial, sans-serif" font-size="12" fill="#52606D">to the app&#x27;s log exporters</text>
+<line x1="244" y1="416" x2="924" y2="416" stroke="#2563EB" stroke-width="2"/>
+<rect x="243.648" y="405" width="28.7031" height="22" rx="11" fill="#FFFFFF" stroke="#2563EB" stroke-width="1.5"/>
+<text x="258" y="420.2" font-family="Inter, 'Helvetica Neue', Helvetica, Arial, sans-serif" font-size="12" fill="#2563EB" text-anchor="middle" font-weight="600">40</text>
+<rect x="387.648" y="405" width="28.7031" height="22" rx="11" fill="#2563EB"/>
+<text x="402" y="420.2" font-family="Inter, 'Helvetica Neue', Helvetica, Arial, sans-serif" font-size="12" fill="#FFFFFF" text-anchor="middle" font-weight="600">41</text>
+<rect x="463.648" y="405" width="28.7031" height="22" rx="11" fill="#2563EB"/>
+<text x="478" y="420.2" font-family="Inter, 'Helvetica Neue', Helvetica, Arial, sans-serif" font-size="12" fill="#FFFFFF" text-anchor="middle" font-weight="600">42</text>
+<rect x="539.648" y="405" width="28.7031" height="22" rx="11" fill="#2563EB"/>
+<text x="554" y="420.2" font-family="Inter, 'Helvetica Neue', Helvetica, Arial, sans-serif" font-size="12" fill="#FFFFFF" text-anchor="middle" font-weight="600">43</text>
+<line x1="516" y1="418" x2="516" y2="459" stroke="#9AA5B1" stroke-width="1" stroke-dasharray="2 4"/>
+<circle cx="516" cy="466" r="6" fill="#059669"/>
+<text x="530" y="470" font-family="Inter, 'Helvetica Neue', Helvetica, Arial, sans-serif" font-size="12" fill="#52606D" xml:space="preserve"><tspan font-family="SFMono-Regular, Menlo, Consolas, monospace" fill="#1F2933">emb.state.seq = 42</tspan><tspan> and every state&#x27;s value then</tspan></text>
+<line x1="300" y1="418" x2="300" y2="499" stroke="#9AA5B1" stroke-width="1" stroke-dasharray="2 4"/>
+<line x1="880" y1="418" x2="880" y2="499" stroke="#9AA5B1" stroke-width="1" stroke-dasharray="2 4"/>
+<rect x="300" y="499" width="580" height="22" rx="4" fill="#7C3AED"/>
+<rect x="285.648" y="499" width="28.7031" height="22" rx="11" fill="#2563EB"/>
+<text x="300" y="514.2" font-family="Inter, 'Helvetica Neue', Helvetica, Arial, sans-serif" font-size="12" fill="#FFFFFF" text-anchor="middle" font-weight="600">40</text>
+<rect x="865.648" y="499" width="28.7031" height="22" rx="11" fill="#2563EB"/>
+<text x="880" y="514.2" font-family="Inter, 'Helvetica Neue', Helvetica, Arial, sans-serif" font-size="12" fill="#FFFFFF" text-anchor="middle" font-weight="600">43</text>
+<text x="318" y="514.3" font-family="SFMono-Regular, Menlo, Consolas, monospace" font-size="12" fill="#FFFFFF">emb.state.seq</text>
+<text x="862" y="514.3" font-family="SFMono-Regular, Menlo, Consolas, monospace" font-size="12" fill="#FFFFFF" text-anchor="end">emb.state.end_seq</text>
+<rect x="612" y="75" width="324" height="122" rx="6" fill="#FFFFFF" stroke="#D8DEE4" stroke-width="1"/>
+<text x="624" y="94" font-family="Inter, 'Helvetica Neue', Helvetica, Arial, sans-serif" font-size="12" fill="#52606D">By time: a tie, and one out of order</text>
+<text x="924" y="94" font-family="Inter, 'Helvetica Neue', Helvetica, Arial, sans-serif" font-size="12" fill="#52606D" text-anchor="end">By the lock</text>
+<text x="624" y="125" font-family="SFMono-Regular, Menlo, Consolas, monospace" font-size="12" fill="#52606D">10:00:00.119</text>
+<text x="724" y="125" font-family="SFMono-Regular, Menlo, Consolas, monospace" font-size="12" fill="#1F2933">screen-automatic</text>
+<line x1="846" y1="121" x2="894" y2="171" stroke="#9AA5B1" stroke-width="1.5"/>
+<line x1="845.625" y1="121" x2="846" y2="121" stroke="#9AA5B1" stroke-width="1.5"/>
+<text x="624" y="150" font-family="SFMono-Regular, Menlo, Consolas, monospace" font-size="12" fill="#52606D">10:00:00.120</text>
+<text x="724" y="150" font-family="SFMono-Regular, Menlo, Consolas, monospace" font-size="12" fill="#1F2933">power</text>
+<line x1="846" y1="146" x2="894" y2="146" stroke="#9AA5B1" stroke-width="1.5"/>
+<line x1="766.133" y1="146" x2="846" y2="146" stroke="#9AA5B1" stroke-width="1.5"/>
+<text x="624" y="175" font-family="SFMono-Regular, Menlo, Consolas, monospace" font-size="12" fill="#52606D">10:00:00.120</text>
+<text x="724" y="175" font-family="SFMono-Regular, Menlo, Consolas, monospace" font-size="12" fill="#1F2933">network</text>
+<line x1="846" y1="171" x2="894" y2="121" stroke="#9AA5B1" stroke-width="1.5"/>
+<line x1="780.586" y1="171" x2="846" y2="171" stroke="#9AA5B1" stroke-width="1.5"/>
+<rect x="893.648" y="110" width="28.7031" height="22" rx="11" fill="#2563EB"/>
+<text x="908" y="125.2" font-family="Inter, 'Helvetica Neue', Helvetica, Arial, sans-serif" font-size="12" fill="#FFFFFF" text-anchor="middle" font-weight="600">41</text>
+<rect x="893.648" y="135" width="28.7031" height="22" rx="11" fill="#2563EB"/>
+<text x="908" y="150.2" font-family="Inter, 'Helvetica Neue', Helvetica, Arial, sans-serif" font-size="12" fill="#FFFFFF" text-anchor="middle" font-weight="600">42</text>
+<rect x="893.648" y="160" width="28.7031" height="22" rx="11" fill="#2563EB"/>
+<text x="908" y="175.2" font-family="Inter, 'Helvetica Neue', Helvetica, Arial, sans-serif" font-size="12" fill="#FFFFFF" text-anchor="middle" font-weight="600">43</text>
+<path d="M31 553 L38 560 L31 567 L24 560 Z" fill="#D97706"/>
+<text x="46" y="564" font-family="Inter, 'Helvetica Neue', Helvetica, Arial, sans-serif" font-size="12" fill="#52606D">A change, as its thread reports it</text>
+<rect x="262" y="555" width="10" height="10" fill="#FFFFFF" stroke="#2563EB" stroke-width="1.5"/>
+<text x="280" y="564" font-family="Inter, 'Helvetica Neue', Helvetica, Arial, sans-serif" font-size="12" fill="#52606D">Queued under the lock</text>
+<rect x="435.729" y="551" width="20.543" height="18" rx="9" fill="#2563EB"/>
+<text x="446" y="564.2" font-family="Inter, 'Helvetica Neue', Helvetica, Arial, sans-serif" font-size="12" fill="#FFFFFF" text-anchor="middle" font-weight="600">n</text>
+<text x="462" y="564" font-family="Inter, 'Helvetica Neue', Helvetica, Arial, sans-serif" font-size="12" fill="#52606D">A change&#x27;s number</text>
+<rect x="593.729" y="551" width="20.543" height="18" rx="9" fill="#0E7490"/>
+<text x="604" y="564.2" font-family="Inter, 'Helvetica Neue', Helvetica, Arial, sans-serif" font-size="12" fill="#FFFFFF" text-anchor="middle" font-weight="600">n</text>
+<text x="620" y="564" font-family="Inter, 'Helvetica Neue', Helvetica, Arial, sans-serif" font-size="12" fill="#52606D">An event that carries the number</text>
+</svg>

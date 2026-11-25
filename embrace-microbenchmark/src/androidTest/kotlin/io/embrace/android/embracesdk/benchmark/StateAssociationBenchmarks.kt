@@ -33,7 +33,11 @@ class StateAssociationBenchmarks(
 
     @Before
     fun setup() {
-        fixture = StateAssociationFixture(stateCount = stateCount, mode = association.exportMode)
+        fixture = StateAssociationFixture(
+            stateCount = stateCount,
+            mode = association.exportMode,
+            appLogExporter = association.appLogExporter,
+        )
     }
 
     @After
@@ -60,7 +64,25 @@ class StateAssociationBenchmarks(
     }
 
     /**
-     * Building what one log record is stamped with, one attribute for each state, when no state has changed since the
+     * Emitting one log through the real pipeline, which stamps Embrace's payload with the packed attribute and, where the
+     * app has a log exporter, the record with one attribute for each state. Against [StateAssociationMode.NONE] it is what
+     * each form costs a log; [StateAssociationMode.NO_APP_LOG_EXPORTER] never builds the plain one.
+     */
+    @Test
+    fun recordLog() {
+        var logs = 0
+        benchmarkRule.measureRepeated {
+            fixture.recordLog()
+            runWithMeasurementDisabled {
+                if (++logs % SPAN_BATCH == 0) {
+                    fixture.clearStoredLogs()
+                }
+            }
+        }
+    }
+
+    /**
+     * Building what one log record is stamped with for an app's exporter, one attribute for each state, when no state has changed since the
      * last log. It is the same whatever an app's exporters are given, so it is measured once.
      */
     @Test
@@ -137,8 +159,9 @@ class StateAssociationBenchmarks(
  * How telemetry is associated with state in a benchmark: not at all, or by a link on a span and a stamp on a log, with
  * what an app's own exporters are given beyond that.
  */
-enum class StateAssociationMode(internal val exportMode: StateExportMode?) {
+enum class StateAssociationMode(internal val exportMode: StateExportMode?, internal val appLogExporter: Boolean = true) {
     NONE(null),
+    NO_APP_LOG_EXPORTER(StateExportMode.ASSOCIATION, appLogExporter = false),
     OFF(StateExportMode.OFF),
     ASSOCIATION(StateExportMode.ASSOCIATION),
     VERBOSE(StateExportMode.VERBOSE),

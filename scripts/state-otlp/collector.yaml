@@ -17,25 +17,25 @@ processors:
       - context: span
         statements:
           # the network a span started on, under OpenTelemetry's name and with its values
-          - set(attributes["network.connection.type"], "wifi") where IsMatch(attributes["emb.state.value.network"], "^wifi")
-          - set(attributes["network.connection.type"], "cell") where IsMatch(attributes["emb.state.value.network"], "^wan")
-          - set(attributes["network.connection.type"], "unavailable") where attributes["emb.state.value.network"] == "none"
-          - set(attributes["network.connection.type"], "unknown") where IsMatch(attributes["emb.state.value.network"], "^(unknown|unverified)")
+          - set(attributes["network.connection.type"], "wifi") where IsMatch(attributes["emb.states.value.network"], "^wifi")
+          - set(attributes["network.connection.type"], "cell") where IsMatch(attributes["emb.states.value.network"], "^wan")
+          - set(attributes["network.connection.type"], "unavailable") where attributes["emb.states.value.network"] == "none"
+          - set(attributes["network.connection.type"], "unknown") where IsMatch(attributes["emb.states.value.network"], "^(unknown|unverified)")
           # the screen, but not a placeholder the SDK generated
-          - set(attributes["app.screen.name"], attributes["emb.state.value.screen-automatic"]) where attributes["emb.state.value.screen-automatic"] != nil and attributes["emb.state.value_type.screen-automatic"] == nil
+          - set(attributes["app.screen.name"], attributes["emb.states.value.screen-automatic"]) where attributes["emb.states.value.screen-automatic"] != nil and attributes["emb.states.value_type.screen-automatic"] == nil
     log_statements:
       - context: log
         conditions:
-          - event_name != "emb.state.change" and event_name != "emb.state.snapshot"
+          - event_name != "emb.states.change" and event_name != "emb.states.snapshot"
         statements:
-          - set(attributes["network.connection.type"], "wifi") where IsMatch(attributes["emb.state.value.network"], "^wifi")
-          - set(attributes["network.connection.type"], "cell") where IsMatch(attributes["emb.state.value.network"], "^wan")
-          - set(attributes["network.connection.type"], "unavailable") where attributes["emb.state.value.network"] == "none"
-          - set(attributes["network.connection.type"], "unknown") where IsMatch(attributes["emb.state.value.network"], "^(unknown|unverified)")
-          - set(attributes["app.screen.name"], attributes["emb.state.value.screen-automatic"]) where attributes["emb.state.value.screen-automatic"] != nil and attributes["emb.state.value_type.screen-automatic"] == nil
+          - set(attributes["network.connection.type"], "wifi") where IsMatch(attributes["emb.states.value.network"], "^wifi")
+          - set(attributes["network.connection.type"], "cell") where IsMatch(attributes["emb.states.value.network"], "^wan")
+          - set(attributes["network.connection.type"], "unavailable") where attributes["emb.states.value.network"] == "none"
+          - set(attributes["network.connection.type"], "unknown") where IsMatch(attributes["emb.states.value.network"], "^(unknown|unverified)")
+          - set(attributes["app.screen.name"], attributes["emb.states.value.screen-automatic"]) where attributes["emb.states.value.screen-automatic"] != nil and attributes["emb.states.value_type.screen-automatic"] == nil
       - context: log
         conditions:
-          - event_name == "emb.state.change" or event_name == "emb.state.snapshot"
+          - event_name == "emb.states.change" or event_name == "emb.states.snapshot"
         statements:
           # the entity's description: every state's value, under the state's own name
           - set(cache["description"], attributes)

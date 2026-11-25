@@ -1,6 +1,9 @@
 package io.embrace.android.embracesdk.benchmark
 
+import io.embrace.android.embracesdk.internal.arch.datasource.LogSeverity
 import io.embrace.android.embracesdk.internal.arch.datasource.StateUpdate
+import io.embrace.android.embracesdk.internal.arch.schema.SchemaType
+import io.embrace.android.embracesdk.internal.arch.schema.TelemetryAttributes
 import io.embrace.android.embracesdk.internal.capture.state.StateEventEmitter
 import io.embrace.android.embracesdk.internal.capture.state.StateRecorder
 import io.embrace.android.embracesdk.internal.capture.state.StateSnapshot
@@ -23,8 +26,10 @@ import java.util.concurrent.TimeUnit
 
 /**
  * [stateCount] states that telemetry is associated with: a span by the sequence number of the last state change before
- * it started and before it ended, and a log by one attribute for each state. [mode] is what an app's own exporters are
- * given beyond that, or null where telemetry is not associated with state at all, which is the floor to compare with.
+ * it started and before it ended, and a log by the packed attribute in Embrace's payload and, where an app has a log
+ * exporter ([appLogExporter]), one attribute for each state on what that exporter is handed. [mode] is what an app's own
+ * exporters are given beyond that, or null where telemetry is not associated with state at all, which is the floor to
+ * compare with.
  *
  * It runs the SDK's real recorder, span stack and logging pipeline, with an app's span exporter and log exporter that
  * read what they are handed and keep nothing. It persists nothing, so what a benchmark measures here is the association
@@ -36,6 +41,7 @@ import java.util.concurrent.TimeUnit
 internal class StateAssociationFixture(
     val stateCount: Int,
     private val mode: StateExportMode?,
+    private val appLogExporter: Boolean = true,
     private val clock: Clock = NormalizedIntervalClock(),
 ) : AutoCloseable {
 
@@ -50,7 +56,9 @@ internal class StateAssociationFixture(
         clock = clock,
         externalOtelConfig = ExternalOtelConfig().apply {
             addSpanExporter(ReadingSpanExporter)
-            addLogExporter(ReadingLogRecordExporter)
+            if (appLogExporter) {
+                addLogExporter(ReadingLogRecordExporter)
+            }
         },
         stateAssociation = mode?.let {
             StateAssociation(
@@ -100,8 +108,28 @@ internal class StateAssociationFixture(
     }
 
     /**
-     * What every log record is stamped with to say what value each state had: one attribute for each state and the place
-     * of the log in the order of state changes, as a whole number.
+     * Emits an ordinary log through the real logging pipeline, which stamps it for each reader: the packed attribute added
+     * to Embrace's payload, and the plain attributes on what an app's exporter is handed where it has one.
+     */
+    fun recordLog() {
+        harness.destination.addLog(
+            schemaType = SchemaType.Log(TelemetryAttributes()),
+            severity = LogSeverity.INFO,
+            message = LOG_MESSAGE,
+            timestampMs = clock.now(),
+        )
+    }
+
+    /**
+     * Lets go of the logs stored so far, which Embrace's payload would otherwise hold until they are sent.
+     */
+    fun clearStoredLogs() {
+        harness.logSink.flushBatch()
+    }
+
+    /**
+     * What a log record is stamped with for an app's own processors and exporters: one attribute for each state and the
+     * place of the log in the order of state changes, as a whole number. It is built only where an app has configured one.
      */
     fun stampLog(): Map<String, Any> = buildMap {
         val snapshot = recorder.snapshot()
@@ -112,7 +140,7 @@ internal class StateAssociationFixture(
     }
 
     /**
-     * The same as one string that holds every value, which is what the proof of concept stamped before.
+     * The same as one string that holds every value, which is what Embrace's own payload is stamped with.
      */
     fun stampLogPacked(): Map<String, Any> = buildMap {
         val snapshot = recorder.snapshot()
@@ -205,6 +233,7 @@ internal class StateAssociationFixture(
 
     private companion object {
         const val SPAN_NAME = "benchmark-span"
+        const val LOG_MESSAGE = "benchmark-log"
         const val PROCESS_IDENTIFIER = "benchmark-process"
         const val EVENT_TIMEOUT_SECONDS = 30L
     }

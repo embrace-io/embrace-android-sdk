@@ -1,8 +1,12 @@
 package io.embrace.android.embracesdk.benchmark
 
+import io.embrace.android.embracesdk.internal.arch.datasource.StateUpdate
 import io.embrace.android.embracesdk.internal.capture.state.StateRecorder
 import io.embrace.android.embracesdk.internal.clock.Clock
+import io.embrace.android.embracesdk.internal.payload.Attribute
 import io.embrace.android.embracesdk.internal.payload.Envelope
+import io.embrace.android.embracesdk.internal.payload.Log
+import io.embrace.android.embracesdk.internal.payload.LogPayload
 import io.embrace.android.embracesdk.internal.payload.SessionPartPayload
 import io.embrace.android.embracesdk.internal.payload.Span
 import io.embrace.android.embracesdk.internal.serialization.EmbraceSerializer
@@ -14,6 +18,7 @@ import org.junit.rules.TemporaryFolder
 import java.io.ByteArrayOutputStream
 import java.io.File
 import java.io.OutputStream
+import java.util.UUID
 import java.util.concurrent.atomic.AtomicLong
 import java.util.zip.GZIPOutputStream
 
@@ -110,13 +115,13 @@ internal class StateCapturePayloadSizeTest {
             val (envelope, partDir) = delivered(CEILING_STATE_COUNT, journaled = true, CEILING_TRANSITIONS_PER_STATE + overshoot)
             val stateSpan = envelope.data.spans.orEmpty().single { it.hasAttribute("emb.type", "state") }
             val attributes = stateSpan.attributes.orEmpty().associate { it.key to it.data }
-            val dropped = attributes["emb.state.dropped_changes"]?.toInt() ?: 0
+            val dropped = attributes["emb.states.dropped_changes"]?.toInt() ?: 0
 
             assertEquals(StateRecorder.MAX_JOURNAL_CHANGES, stateSpan.events?.size)
             assertEquals(CEILING_STATE_COUNT * overshoot, dropped)
-            assertEquals(null, attributes["emb.state.journal_truncated"])
+            assertEquals(null, attributes["emb.states.truncated"])
             // the values the part ended with are delivered only when the events no longer lead to them
-            assertEquals(if (overshoot == 0) 0 else CEILING_STATE_COUNT, attributes.keys.count { it?.endsWith(".final_value") == true })
+            assertEquals(if (overshoot == 0) 0 else CEILING_STATE_COUNT, attributes.keys.count { it?.startsWith("emb.states.final_value.") == true })
 
             val measurement = measure(envelope, partDir)
             listOf(
@@ -130,6 +135,113 @@ internal class StateCapturePayloadSizeTest {
         }
         report("ceiling.tsv", CEILING_HEADER, rows)
     }
+
+    /**
+     * What the number each change carries as `emb.states.seq` adds to a session part's change log, by delivering a part and
+     * then taking the number off every event. The difference is the number's own bytes, raw as JSON and compressed.
+     */
+    @Test
+    fun `the number on each change adds a few bytes to every event of the change log`() {
+        val rows = listOf(10, 100, 1_000).map { transitions ->
+            val (envelope, _) = delivered(CEILING_STATE_COUNT, journaled = true, transitions)
+            val without = envelope.withoutChangeNumbers()
+            val events = envelope.data.spans.orEmpty().single { it.hasAttribute("emb.type", "state") }.events.orEmpty().size
+            val withNumbers = Measurement(0, 0, jsonSize(envelope), gzipSize(envelope), 0)
+            val withoutNumbers = Measurement(0, 0, jsonSize(without), gzipSize(without), 0)
+            assertEquals(CEILING_STATE_COUNT * transitions, events)
+            assertTrue(withNumbers.jsonBytes > withoutNumbers.jsonBytes)
+            listOf(
+                events,
+                withoutNumbers.jsonBytes,
+                withNumbers.jsonBytes,
+                (withNumbers.jsonBytes - withoutNumbers.jsonBytes).toDouble() / events,
+                withoutNumbers.gzipBytes,
+                withNumbers.gzipBytes,
+                (withNumbers.gzipBytes - withoutNumbers.gzipBytes).toDouble() / events,
+            ).joinToString("\t")
+        }
+        report("change-number.tsv", NUMBER_HEADER, rows)
+    }
+
+    /**
+     * What the stamp on a log adds to the log, in the form Embrace's payload has (one packed attribute and the number) and
+     * the form an app's exporters get (one attribute for each state and the number), for the states the fixture has. Both
+     * are serialized the way Embrace's payload serializes attributes, so the two are comparable though only the first is
+     * ever sent to Embrace.
+     */
+    @Test
+    fun `the stamp on a log adds bytes in each form`() {
+        val rows = STATE_COUNTS.map { stateCount ->
+            val clock = steppingClock()
+            val recorder = StateRecorder(clock)
+            repeat(stateCount) { index ->
+                recorder.onEvent(
+                    StateUpdate(StateCaptureFixture.STATE_NAMES[index], StateCaptureFixture.STATE_VALUES[0], clock.now()),
+                )
+            }
+            val snapshot = recorder.snapshot()
+            val base = listOf(Attribute("emb.session_part_id", "A".repeat(UUID_LENGTH)), Attribute("log.record.uid", "B".repeat(UUID_LENGTH)))
+            val packed = base + Attribute("emb.states.packed", snapshot.encoded) + Attribute("emb.states.seq", snapshot.sequence.toString())
+            val plain = base + snapshot.attributes.map { Attribute(it.key, it.value) } +
+                Attribute("emb.states.seq", snapshot.sequence.toString())
+            listOf(1, LOGS_IN_A_BATCH).flatMap { logs ->
+                val floor = logSize(base, logs)
+                val packedSize = logSize(packed, logs)
+                val plainSize = logSize(plain, logs)
+                listOf(
+                    packedSize.first - floor.first,
+                    packedSize.second - floor.second,
+                    plainSize.first - floor.first,
+                    plainSize.second - floor.second,
+                )
+            }.let { listOf(stateCount) + it }.joinToString("\t")
+        }
+        report("log-stamp.tsv", LOG_STAMP_HEADER, rows)
+    }
+
+    /**
+     * The bytes a log adds to a batch of [logs] that differ in their id and time, as JSON and compressed, on average.
+     */
+    private fun logSize(attributes: List<Attribute>, logs: Int): Pair<Long, Long> {
+        val envelope = Envelope(
+            version = "0.1.0",
+            type = "logs",
+            data = LogPayload(
+                logs = List(logs) { index ->
+                    Log(
+                        timeUnixNano = FIXTURE_TIME_MS * NANOS_PER_MS + index * CLOCK_STEP_MS,
+                        severityNumber = 9,
+                        body = "a log $index",
+                        attributes = attributes.map { if (it.key == "log.record.uid") Attribute(it.key, UUID.randomUUID().toString()) else it },
+                    )
+                },
+            ),
+        )
+        fun write(stream: OutputStream) = EmbraceSerializer().toJson(envelope, Envelope.logEnvelopeSerializer, stream)
+        return ByteArrayOutputStream().also(::write).size().toLong() / logs to
+            ByteArrayOutputStream().also { write(GZIPOutputStream(it)) }.size().toLong() / logs
+    }
+
+    private fun Envelope<SessionPartPayload>.withoutChangeNumbers(): Envelope<SessionPartPayload> = copy(
+        data = data.copy(
+            spans = data.spans.orEmpty().map { span ->
+                if (span.hasAttribute("emb.type", "state")) {
+                    span.copy(
+                        events = span.events.orEmpty().map { event ->
+                            event.copy(attributes = event.attributes.orEmpty().filter { it.key != "emb.states.seq" })
+                        },
+                    )
+                } else {
+                    span
+                }
+            },
+        ),
+    )
+
+    private fun jsonSize(envelope: Envelope<SessionPartPayload>): Long = ByteArrayOutputStream().also { serialize(envelope, it) }.size().toLong()
+
+    private fun gzipSize(envelope: Envelope<SessionPartPayload>): Long =
+        ByteArrayOutputStream().also { serialize(envelope, GZIPOutputStream(it)) }.size().toLong()
 
     /**
      * The benchmarks hold the worker while they measure the thread that reports a change or changes the session part, which
@@ -296,6 +408,33 @@ internal class StateCapturePayloadSizeTest {
             "json_bytes",
             "gzip_bytes",
             "disk_bytes",
+        ).joinToString("\t")
+
+        const val UUID_LENGTH = 32
+        const val LOGS_IN_A_BATCH = 100
+
+        val NUMBER_HEADER = listOf(
+            "events",
+            "json_bytes_without",
+            "json_bytes_with",
+            "json_bytes_per_event",
+            "gzip_bytes_without",
+            "gzip_bytes_with",
+            "gzip_bytes_per_event",
+        ).joinToString("\t")
+
+        const val NANOS_PER_MS = 1_000_000L
+
+        val LOG_STAMP_HEADER = listOf(
+            "states",
+            "packed_json_bytes_1_log",
+            "packed_gzip_bytes_1_log",
+            "plain_json_bytes_1_log",
+            "plain_gzip_bytes_1_log",
+            "packed_json_bytes_per_log_in_100",
+            "packed_gzip_bytes_per_log_in_100",
+            "plain_json_bytes_per_log_in_100",
+            "plain_gzip_bytes_per_log_in_100",
         ).joinToString("\t")
 
         val SCALING_HEADER = listOf(

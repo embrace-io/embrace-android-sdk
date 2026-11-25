@@ -132,8 +132,8 @@ def on_every_record(items):
         elif kind == "log":
             logs.append(log(now, "ordinary-log-message", stamp(values)))
         else:
-            change = {"emb.state.name": STATE_NAMES[index], "emb.state.new_value": values[index]}
-            logs.append(log(now, "state-change", {**change, **stamp(values)}, event_name="emb.state.change"))
+            change = {"emb.states.name": STATE_NAMES[index], "emb.states.new_value": values[index]}
+            logs.append(log(now, "state-change", {**change, **stamp(values)}, event_name="emb.states.change"))
     return requests([(RESOURCE, spans, logs)])
 
 
@@ -146,8 +146,8 @@ def in_the_resource(items, with_change_events):
             if with_change_events:
                 current = [{**RESOURCE, **stamp(values)}, [], []]
                 groups.append(current)
-                change = {"emb.state.name": STATE_NAMES[index], "emb.state.new_value": values[index]}
-                current[2].append(log(now, "state-change", change, event_name="emb.state.change"))
+                change = {"emb.states.name": STATE_NAMES[index], "emb.states.new_value": values[index]}
+                current[2].append(log(now, "state-change", change, event_name="emb.states.change"))
             else:
                 current = None
             continue
@@ -179,60 +179,73 @@ def entity_events(items):
 def sequence_and_small_events(items):
     """A number on every record that places it among the changes, and a small record for each change."""
     spans, logs = [], []
+    previous = {}
     for n, (kind, now, index, values, sequence) in enumerate(items):
         if kind == "span":
-            spans.append(span(now, n, {"emb.state.seq": sequence}))
+            spans.append(span(now, n, {"emb.states.seq": sequence}))
         elif kind == "log":
-            logs.append(log(now, "ordinary-log-message", {"emb.state.seq": sequence}))
+            logs.append(log(now, "ordinary-log-message", {"emb.states.seq": sequence}))
         else:
-            change = {"emb.state.name": STATE_NAMES[index], "emb.state.new_value": values[index], "emb.state.seq": sequence}
-            logs.append(log(now, "state-change", change, event_name="emb.state.change"))
+            change = {"emb.states.name": STATE_NAMES[index], "emb.states.new_value": values[index], "emb.states.seq": sequence}
+            logs.append(log(now, "state-change", change, event_name="emb.states.change"))
     return requests([(RESOURCE, spans, logs)])
 
 
 def change_log_span(items):
     """v2's change log for a session part: one span with every state's opening value and an event for each change.
-    The events are in the order of the sequence and carry no number of their own, as the proof of concept has them."""
+    The events are in the order of the sequence, and each carries its own number as emb.states.seq."""
     changes = [item for item in items if item[0] == "change"]
     states = len(items[0][3])
-    opening = {f"emb.state.{STATE_NAMES[i]}.initial_value": INITIAL for i in range(states)}
+    opening = {f"emb.states.initial_value.{STATE_NAMES[i]}": INITIAL for i in range(states)}
     events = [
         Span.Event(
             time_unix_nano=now, name=f"emb-state-{STATE_NAMES[index]}",
-            attributes=attributes({"emb.state.new_value": values[index]}),
+            attributes=attributes({"emb.states.seq": sequence, "emb.states.new_value": values[index]}),
         )
-        for _kind, now, index, values, _sequence in changes
+        for _kind, now, index, values, sequence in changes
     ]
     return Span(
         trace_id=(1 << 100).to_bytes(16, "big"), span_id=(1 << 60).to_bytes(8, "big"), name="emb-states",
         start_time_unix_nano=items[0][1], end_time_unix_nano=items[-1][1], kind=Span.SPAN_KIND_INTERNAL,
-        attributes=attributes({**RECORD, "emb.type": "state", "emb.state.initial_seq": 0,
-                               "emb.state.part_start_seq": 0, **opening}),
+        attributes=attributes({**RECORD, "emb.type": "state", "emb.states.initial_seq": 0,
+                               "emb.states.part_start_seq": 0, **opening}),
         events=events,
     )
 
 
 def v2_stamp(values):
     """v2's names for a state's value, which have a prefix of their own."""
-    return {f"emb.state.value.{STATE_NAMES[i]}": value for i, value in enumerate(values)}
+    return {f"emb.states.value.{STATE_NAMES[i]}": value for i, value in enumerate(values)}
 
 
-def v2(items, change_log, events, verbose=False):
-    """v2 as the design has it. A log carries every value and the sequence. A span carries the sequence, and in the verbose
+def v2_packed(values):
+    """v2's stamp in Embrace's own payload: every value in one attribute, name=value joined by semicolons."""
+    return ";".join(f"{STATE_NAMES[i]}={value}" for i, value in enumerate(values))
+
+
+def v2(items, change_log, events, verbose=False, packed=False):
+    """v2 as the design has it. A log carries every value and the sequence, as one packed attribute in Embrace's payload
+    (packed) and as one attribute for each state in what a customer's exporter receives. A span carries the sequence, and in the verbose
     rendering for a customer's exporter every value as well. The changes travel once in the session part's change log,
     which is what Embrace receives, or as a log record for each change, which is what a customer's exporter receives:
     with every value in the verbose rendering, and the change alone in the association rendering."""
     spans, logs = [], []
+    previous = {}
     for n, (kind, now, index, values, sequence) in enumerate(items):
         if kind == "span":
-            spans.append(span(now, n, {"emb.state.seq": sequence, **(v2_stamp(values) if verbose else {})}))
+            spans.append(span(now, n, {"emb.states.seq": sequence, **(v2_stamp(values) if verbose else {})}))
         elif kind == "log":
-            logs.append(log(now, "ordinary-log-message", {**v2_stamp(values), "emb.state.seq": sequence}))
+            stamped = ({"emb.states.packed": v2_packed(values), "emb.states.seq": str(sequence)} if packed
+                       else {**v2_stamp(values), "emb.states.seq": sequence})
+            logs.append(log(now, "ordinary-log-message", stamped))
         elif events:
-            change = {"emb.type": "state", "emb.state.seq": sequence, "emb.entity.type": "process",
-                      "emb.entity.id": "8f1c2b7a43e94c0d", "emb.state.name": STATE_NAMES[index],
-                      "emb.state.new_value": values[index]}
-            logs.append(log(now, "", {**change, **(v2_stamp(values) if verbose else {})}, event_name="emb.state.change"))
+            change = {"emb.type": "state", "emb.states.seq": sequence, "emb.entity.type": "process",
+                      "emb.entity.id": "8f1c2b7a43e94c0d", "emb.states.name": STATE_NAMES[index],
+                      "emb.states.new_value": values[index],
+                      # the value the state had before, absent on a state's first change
+                      **({"emb.states.previous_value": previous[index]} if index in previous else {})}
+            previous[index] = values[index]
+            logs.append(log(now, "", {**change, **(v2_stamp(values) if verbose else {})}, event_name="emb.states.change"))
     if change_log:
         spans.append(change_log_span(items))
     return requests([(RESOURCE, spans, logs)])
@@ -278,8 +291,8 @@ def main():
             ("resource attributes, and an event for each change", size(resource_events), groups_events, 0, 0),
             ("entity state events, nothing on telemetry", size(entity_events(items)), 1, 0, 0),
             ("a sequence on every record, a small event for each change", size(sequence_and_small_events(items)), 1, 0, 0),
-            ("v2 to Embrace: values on logs, a link on spans, the change log as one span",
-             size(v2(items, change_log=True, events=False)), 1, 0, 0),
+            ("v2 to Embrace: the packed values on logs, a link on spans, the change log as one span",
+             size(v2(items, change_log=True, events=False, packed=True)), 1, 0, 0),
             ("v2 to a customer's exporter, verbose: values on logs and spans, an event for each change with every value",
              size(v2(items, change_log=False, events=True, verbose=True)), 1, 0, 0),
             ("v2 to a customer's exporter, association: values on logs, a link on spans, an event with the change alone",
@@ -294,7 +307,7 @@ def main():
     with open(sys.argv[1], "w") as file:
         file.write(text)
     print(text)
-    second = KeyValue(key="emb.state.end_seq", value=AnyValue(int_value=4218)).ByteSize()
+    second = KeyValue(key="emb.states.end_seq", value=AnyValue(int_value=4218)).ByteSize()
     print("a second number on a span, for one a state changed during:", second + 2, "bytes of protobuf")
     one = Resource(attributes=attributes(RESOURCE)).SerializeToString()
     print("a Resource with no state:", len(one), "bytes;", "with ten states:",

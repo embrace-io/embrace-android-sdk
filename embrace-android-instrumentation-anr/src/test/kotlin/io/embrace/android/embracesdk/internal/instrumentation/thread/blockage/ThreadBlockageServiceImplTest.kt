@@ -12,9 +12,11 @@ import io.opentelemetry.kotlin.semconv.ExceptionAttributes
 import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
+import org.junit.Assert.assertNotEquals
 import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertNotSame
 import org.junit.Assert.assertNull
+import org.junit.Assert.assertSame
 import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Rule
@@ -92,6 +94,70 @@ internal class ThreadBlockageServiceImplTest {
 
             val intervals = service.snapshotSpans()
             assertEquals(5, intervals.size)
+        }
+    }
+
+    @Test
+    fun `consecutive snapshots reuse completed spans and keep ids stable`() {
+        with(rule) {
+            repeat(2) {
+                createThreadBlockageInterval()
+            }
+            createThreadBlockageInterval(complete = false)
+
+            val first = service.snapshotSpans()
+            val second = service.snapshotSpans()
+            assertEquals(3, second.size)
+            first.zip(second).forEach { (a, b) ->
+                assertEquals(a.traceId, b.traceId)
+                assertEquals(a.spanId, b.spanId)
+            }
+            first.take(2).zip(second.take(2)).forEach { (a, b) ->
+                val aEvents = checkNotNull(a.events)
+                val bEvents = checkNotNull(b.events)
+                assertEquals(aEvents.size, bEvents.size)
+                aEvents.zip(bEvents).forEach { (x, y) -> assertSame(x, y) }
+            }
+
+            // completing the in-progress blockage keeps its ids
+            clock.tick(1000)
+            stacktraceSampler.onThreadBlockageEvent(UNBLOCKED, clock.now())
+            val completed = service.snapshotSpans()[2]
+            assertEquals(first[2].traceId, completed.traceId)
+            assertEquals(first[2].spanId, completed.spanId)
+            assertEquals(clock.now(), completed.endTimeNanos?.nanosToMillis())
+        }
+    }
+
+    @Test
+    fun `snapshot drops events once an interval's samples are cleared`() {
+        with(rule) {
+            createThreadBlockageInterval(duration = 500)
+            repeat(config.maxIntervalsPerSession - 1) {
+                createThreadBlockageInterval()
+            }
+            val before = service.snapshotSpans().first()
+            assertTrue(checkNotNull(before.events).isNotEmpty())
+
+            createThreadBlockageInterval()
+            val after = service.snapshotSpans().first()
+            assertEquals(before.spanId, after.spanId)
+            assertEquals(0, after.events?.size)
+            assertEquals(
+                ThreadBlockageInterval.CODE_SAMPLES_CLEARED.toString(),
+                after.attributes?.find { it.key == EmbAnrAttributes.INTERVAL_CODE }?.data,
+            )
+        }
+    }
+
+    @Test
+    fun `spans get new ids after a session change`() {
+        with(rule) {
+            createThreadBlockageInterval(complete = false)
+            val first = service.snapshotSpans().single()
+            service.onPostSessionChange()
+            val second = service.snapshotSpans().single()
+            assertNotEquals(first.spanId, second.spanId)
         }
     }
 

@@ -105,7 +105,7 @@ internal class ThreadBlockageOtelMapperTest {
 
     @Test
     fun `map completed interval`() {
-        val span = listOf(completedInterval).map { mapIntervalToSpan(it, clock, random) }.single()
+        val span = mapInterval(completedInterval)
         span.assertCommonOtelCharacteristics()
         assertEquals(END_TIME_MS, span.endTimeNanos?.nanosToMillis())
         assertEquals("0", span.attributes?.findAttribute(EmbAnrAttributes.INTERVAL_CODE)?.data)
@@ -119,7 +119,7 @@ internal class ThreadBlockageOtelMapperTest {
 
     @Test
     fun `map in progress interval`() {
-        val span = listOf(inProgressInterval).map { mapIntervalToSpan(it, clock, random) }.single()
+        val span = mapInterval(inProgressInterval)
         span.assertCommonOtelCharacteristics()
 
         assertEquals(clock.now().millisToNanos(), span.endTimeNanos)
@@ -137,7 +137,7 @@ internal class ThreadBlockageOtelMapperTest {
 
     @Test
     fun `map cleared interval`() {
-        val span = listOf(clearedInterval).map { mapIntervalToSpan(it, clock, random) }.single()
+        val span = mapInterval(clearedInterval)
         span.assertCommonOtelCharacteristics()
         assertEquals("1", span.attributes?.findAttribute(EmbAnrAttributes.INTERVAL_CODE)?.data)
         assertEquals(0, span.events?.size)
@@ -145,7 +145,7 @@ internal class ThreadBlockageOtelMapperTest {
 
     @Test
     fun `map limited sample`() {
-        val span = listOf(intervalWithLimitedSample).map { mapIntervalToSpan(it, clock, random) }.single()
+        val span = mapInterval(intervalWithLimitedSample)
         span.assertCommonOtelCharacteristics()
         assertEquals("0", span.attributes?.findAttribute(EmbAnrAttributes.INTERVAL_CODE)?.data)
 
@@ -163,17 +163,14 @@ internal class ThreadBlockageOtelMapperTest {
 
     @Test
     fun `truncated stack shows the pre-truncated frame count`() {
-        val span = listOf(completedIntervalWithTruncatedSample).map {
-            mapIntervalToSpan(
-                it,
-                clock,
-                random,
-            )
-        }.single()
+        val span = mapInterval(completedIntervalWithTruncatedSample)
         val events = checkNotNull(span.events)
         assertEquals(2, events.size)
         assertSampleMapped(events[1], truncatedSecondSample)
     }
+
+    private fun mapInterval(interval: ThreadBlockageInterval): Span =
+        mapIntervalToSpan(interval, clock, generateId(16, random), generateId(8, random))
 
     private fun Span.assertCommonOtelCharacteristics() {
         assertNotNull(traceId)

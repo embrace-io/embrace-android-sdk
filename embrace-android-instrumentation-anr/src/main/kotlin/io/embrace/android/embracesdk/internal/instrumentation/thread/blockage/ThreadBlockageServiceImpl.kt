@@ -22,14 +22,14 @@ internal class ThreadBlockageServiceImpl(
     private val blockedThreadDetector: BlockedThreadDetector,
     private val watchdogWorker: BackgroundWorker,
     private val stacktraceSampler: ThreadBlockageSampler,
-    private val random: Random = Random.Default,
+    random: Random = Random.Default,
+    private val spanCache: ThreadBlockageSpanCache = ThreadBlockageSpanCache(args.clock, random),
 ) : ThreadBlockageService {
 
     private val clock = args.clock
     private val appStateTracker = args.processStateTracker
     private val telemetryDestination = args.destination
     private var delayedBackgroundCheckTask: ScheduledFuture<*>? = null
-    private val spanCache = ThreadBlockageSpanCache(clock, random)
 
     /**
      * Schedules a delayed check that stops monitoring if the process started in the background and stays there. Must be called once,
@@ -80,6 +80,14 @@ internal class ThreadBlockageServiceImpl(
      */
     override fun onBackground() {
         blockedThreadDetector.stop()
+    }
+
+    /**
+     * Maps the sampler's intervals into the span cache as soon as one completes. This runs on the watchdog
+     * thread, so [record] at session-part end (often on the main thread) only has to map an in-progress interval.
+     */
+    fun onIntervalCompleted() {
+        spanCache.map(stacktraceSampler.getThreadBlockageIntervals())
     }
 
     override fun snapshotSpans(): List<Span> = EmbTrace.trace("anr-snapshot") {

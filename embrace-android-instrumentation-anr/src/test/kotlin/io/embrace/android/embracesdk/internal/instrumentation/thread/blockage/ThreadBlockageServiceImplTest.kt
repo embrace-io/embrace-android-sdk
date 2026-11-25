@@ -2,12 +2,15 @@ package io.embrace.android.embracesdk.internal.instrumentation.thread.blockage
 
 import io.embrace.android.embracesdk.concurrency.SingleThreadTestScheduledExecutor
 import io.embrace.android.embracesdk.fakes.FakeConfigService
+import io.embrace.android.embracesdk.fakes.FakeInstrumentationArgs
+import io.embrace.android.embracesdk.internal.arch.datasource.SpanEvent
 import io.embrace.android.embracesdk.internal.clock.nanosToMillis
 import io.embrace.android.embracesdk.internal.instrumentation.thread.blockage.ThreadBlockageEvent.BLOCKED
 import io.embrace.android.embracesdk.internal.instrumentation.thread.blockage.ThreadBlockageEvent.BLOCKED_INTERVAL
 import io.embrace.android.embracesdk.internal.instrumentation.thread.blockage.ThreadBlockageEvent.UNBLOCKED
 import io.embrace.android.embracesdk.internal.payload.Span
 import io.embrace.android.embracesdk.semconv.EmbAnrAttributes
+import io.mockk.mockk
 import io.opentelemetry.kotlin.semconv.ExceptionAttributes
 import org.junit.After
 import org.junit.Assert.assertEquals
@@ -24,6 +27,7 @@ import org.junit.Test
 import java.lang.Thread.currentThread
 import java.util.concurrent.Future
 import java.util.concurrent.TimeUnit
+import kotlin.random.Random
 
 internal class ThreadBlockageServiceImplTest {
 
@@ -158,6 +162,75 @@ internal class ThreadBlockageServiceImplTest {
             service.onPostSessionChange()
             val second = service.snapshotSpans().single()
             assertNotEquals(first.spanId, second.spanId)
+        }
+    }
+
+    @Test
+    fun `completed intervals are mapped when they complete`() {
+        with(rule) {
+            createThreadBlockageInterval()
+            assertEquals(1, mapCount.get())
+            createThreadBlockageInterval()
+            assertEquals(2, mapCount.get())
+
+            createThreadBlockageInterval(complete = false)
+            assertEquals(2, mapCount.get())
+        }
+    }
+
+    @Test
+    fun `record only maps the in-progress interval once completed intervals are warmed`() {
+        with(rule) {
+            repeat(2) {
+                createThreadBlockageInterval()
+            }
+            createThreadBlockageInterval(complete = false)
+            val before = mapCount.get()
+
+            service.record()
+            assertEquals(before + 1, mapCount.get())
+            assertEquals(3, args.destination.createdSpans.size)
+        }
+    }
+
+    @Test
+    fun `warmed spans and records match unwarmed ones`() {
+        with(rule) {
+            lateinit var warmed: ThreadBlockageServiceImpl
+            val sampler = ThreadBlockageSampler(
+                clock = clock,
+                targetThread = currentThread(),
+                maxIntervalsPerSession = config.maxIntervalsPerSession,
+                maxSamplesPerInterval = config.maxStacktracesPerInterval,
+                stacktraceFrameLimit = config.stacktraceFrameLimit,
+                onIntervalCompleted = { warmed.onIntervalCompleted() },
+            )
+            val warmedArgs = FakeInstrumentationArgs(mockk(), clock = clock)
+            val coldArgs = FakeInstrumentationArgs(mockk(), clock = clock)
+            warmed = ThreadBlockageServiceImpl(warmedArgs, blockedThreadDetector, worker, sampler, Random(SEED))
+            val cold = ThreadBlockageServiceImpl(coldArgs, blockedThreadDetector, worker, sampler, Random(SEED))
+
+            // the first interval loses its samples once the per-session limit is exceeded
+            repeat(config.maxIntervalsPerSession + 1) {
+                sampler.onThreadBlockageEvent(BLOCKED, clock.now())
+                sampler.onThreadBlockageEvent(BLOCKED_INTERVAL, clock.now())
+                clock.tick(1000L + it)
+                sampler.onThreadBlockageEvent(UNBLOCKED, clock.now())
+            }
+            assertEquals(cold.snapshotSpans(), warmed.snapshotSpans())
+
+            warmed.record()
+            cold.record()
+            val warmedSpans = warmedArgs.destination.createdSpans
+            val coldSpans = coldArgs.destination.createdSpans
+            assertEquals(config.maxIntervalsPerSession + 1, warmedSpans.size)
+            warmedSpans.zip(coldSpans).forEach { (a, b) ->
+                assertEquals(b.name, a.name)
+                assertEquals(b.startTimeMs, a.startTimeMs)
+                assertEquals(b.endTimeMs, a.endTimeMs)
+                assertEquals(b.attributes, a.attributes)
+                assertEquals(b.events.map(::eventFields), a.events.map(::eventFields))
+            }
         }
     }
 
@@ -416,6 +489,12 @@ internal class ThreadBlockageServiceImplTest {
                 watchdogMonitorThread.set(previousWatchdogThread)
             }
         }
+    }
+
+    private fun eventFields(event: SpanEvent) = Triple(event.name, event.timestampNanos, event.attributes)
+
+    private companion object {
+        const val SEED = 42
     }
 
     private val Span.lastKnownTime: Long?

@@ -29,7 +29,7 @@ class FakeReadWriteSpan(
 
     override val hasEnded: Boolean = true
     override val endTimestamp: Long? = null
-    override fun toSpanData(): SpanData = throw UnsupportedOperationException()
+    override fun toSpanData(): SpanData = this
 
     override val name: String get() = impl.name
     override val status: StatusData get() = impl.status

@@ -25,7 +25,8 @@ import kotlin.math.abs
 
 /**
  * Guards what a session costs on disk, for each session size in each of the two persistence
- * formats.
+ * formats. Baselines are kept per [OtelSdkMode] because the two implementations order span
+ * attributes differently, which changes how well the single-file payload compresses.
  */
 @RunWith(Parameterized::class)
 internal class SessionPayloadSizeTest(
@@ -66,7 +67,7 @@ internal class SessionPayloadSizeTest(
                     measured.entries.joinToString(
                         prefix = "\n\nIf that is expected, update these baselines to:\n",
                         separator = "\n",
-                    ) { (name, bytes) -> """  "$size $name" to ${bytes}L,""" },
+                    ) { (name, bytes) -> """  "${key(name)}" to ${bytes}L,""" },
             )
         }
     }
@@ -109,7 +110,9 @@ internal class SessionPayloadSizeTest(
         return mapOf(SINGLE_FILE_NAME to bytes, SINGLE_FILE_BLOCKS to blockCost(bytes))
     }
 
-    private fun expected(name: String): Long = EXPECTED.getValue("$size $name")
+    private fun expected(name: String): Long = EXPECTED.getValue(key(name))
+
+    private fun key(name: String): String = "$size $otelSdkMode $name"
 
     private fun size(file: File): Long {
         assertTrue("${file.name} was not written", file.isFile)
@@ -147,26 +150,47 @@ internal class SessionPayloadSizeTest(
         )
 
         private val EXPECTED = mapOf(
-            "SMALL metadata.pb" to 396L,
-            "SMALL span_snapshots.pb" to 798L,
-            "SMALL completed_spans.pb" to 4741L,
-            "SMALL multi-file blocks" to 16384L,
-            "SMALL session.json.gz" to 1566L,
-            "SMALL single-file blocks" to 4096L,
+            "SMALL COMPAT metadata.pb" to 403L,
+            "SMALL COMPAT span_snapshots.pb" to 805L,
+            "SMALL COMPAT completed_spans.pb" to 4748L,
+            "SMALL COMPAT multi-file blocks" to 16384L,
+            "SMALL COMPAT session.json.gz" to 1587L,
+            "SMALL COMPAT single-file blocks" to 4096L,
 
-            "MEDIUM metadata.pb" to 396L,
-            "MEDIUM span_snapshots.pb" to 798L,
-            "MEDIUM completed_spans.pb" to 46051L,
-            "MEDIUM multi-file blocks" to 57344L,
-            "MEDIUM session.json.gz" to 6960L,
-            "MEDIUM single-file blocks" to 8192L,
+            "SMALL REGULAR metadata.pb" to 403L,
+            "SMALL REGULAR span_snapshots.pb" to 805L,
+            "SMALL REGULAR completed_spans.pb" to 4748L,
+            "SMALL REGULAR multi-file blocks" to 16384L,
+            "SMALL REGULAR session.json.gz" to 1554L,
+            "SMALL REGULAR single-file blocks" to 4096L,
 
-            "LARGE metadata.pb" to 396L,
-            "LARGE span_snapshots.pb" to 798L,
-            "LARGE completed_spans.pb" to 466351L,
-            "LARGE multi-file blocks" to 475136L,
-            "LARGE session.json.gz" to 59525L,
-            "LARGE single-file blocks" to 61440L,
+            "MEDIUM COMPAT metadata.pb" to 403L,
+            "MEDIUM COMPAT span_snapshots.pb" to 805L,
+            "MEDIUM COMPAT completed_spans.pb" to 46058L,
+            "MEDIUM COMPAT multi-file blocks" to 57344L,
+            "MEDIUM COMPAT session.json.gz" to 7015L,
+            "MEDIUM COMPAT single-file blocks" to 8192L,
+
+            "MEDIUM REGULAR metadata.pb" to 403L,
+            "MEDIUM REGULAR span_snapshots.pb" to 805L,
+            "MEDIUM REGULAR completed_spans.pb" to 46058L,
+            "MEDIUM REGULAR multi-file blocks" to 57344L,
+            "MEDIUM REGULAR session.json.gz" to 6932L,
+            "MEDIUM REGULAR single-file blocks" to 8192L,
+
+            "LARGE COMPAT metadata.pb" to 403L,
+            "LARGE COMPAT span_snapshots.pb" to 805L,
+            "LARGE COMPAT completed_spans.pb" to 466358L,
+            "LARGE COMPAT multi-file blocks" to 475136L,
+            "LARGE COMPAT session.json.gz" to 59650L,
+            "LARGE COMPAT single-file blocks" to 61440L,
+
+            "LARGE REGULAR metadata.pb" to 403L,
+            "LARGE REGULAR span_snapshots.pb" to 805L,
+            "LARGE REGULAR completed_spans.pb" to 466358L,
+            "LARGE REGULAR multi-file blocks" to 475136L,
+            "LARGE REGULAR session.json.gz" to 59465L,
+            "LARGE REGULAR single-file blocks" to 61440L,
         )
     }
 }

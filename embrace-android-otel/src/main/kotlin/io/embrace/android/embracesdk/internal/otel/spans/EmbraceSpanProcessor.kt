@@ -34,7 +34,8 @@ internal class EmbraceSpanProcessor(
     }
 
     override fun onEnd(span: ReadableSpan) {
-        spanExporter.exportInline(listOf(span))
+        // snapshot once: in compat mode every getter on the live span re-copies it under the span lock
+        spanExporter.exportInline(listOf(span.toSpanData()))
     }
 
     override fun isStartRequired() = true

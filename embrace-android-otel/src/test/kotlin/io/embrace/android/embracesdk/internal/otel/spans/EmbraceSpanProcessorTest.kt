@@ -1,7 +1,9 @@
 package io.embrace.android.embracesdk.internal.otel.spans
 
 import io.embrace.android.embracesdk.fakes.FakeReadWriteSpan
+import io.embrace.android.embracesdk.fakes.FakeReadableSpan
 import io.embrace.android.embracesdk.fakes.FakeSessionIdsProvider
+import io.embrace.android.embracesdk.fakes.FakeSpan
 import io.embrace.android.embracesdk.fakes.FakeSpanExporter
 import io.embrace.android.embracesdk.semconv.EmbSessionAttributes
 import io.opentelemetry.kotlin.NoopOpenTelemetry
@@ -10,6 +12,7 @@ import io.opentelemetry.kotlin.semconv.UserAttributes
 import kotlinx.coroutines.runBlocking
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
+import org.junit.Assert.assertSame
 import org.junit.Before
 import org.junit.Test
 
@@ -84,6 +87,18 @@ class EmbraceSpanProcessorTest {
         // no drain and no waiting: the span has to be with the exporter by the time onEnd returns,
         // otherwise a session payload can ship without its own session span
         assertEquals(span, spanExporter.exportedSpans.single())
+    }
+
+    @Test
+    fun `onEnd() exports a single snapshot and never reads the live span`() {
+        val snapshot = FakeReadWriteSpan(FakeSpan(name = "snapshot"))
+        val liveSpan = FakeReadableSpan(snapshot)
+        val processor = createProcessor()
+
+        processor.onEnd(liveSpan)
+
+        assertEquals(1, liveSpan.toSpanDataCount)
+        assertSame(snapshot, spanExporter.exportedSpans.single())
     }
 
     @Test

@@ -1,6 +1,6 @@
 [versions]
 
-agp = "9.5.2"
+agp = "9.5.3"
 junit = "4.13.2"
 dokka = "2.3.0"
 kotlinGradlePlugin = "2.4.21"

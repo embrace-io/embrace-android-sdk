@@ -334,11 +334,12 @@ What follows from that:
   to 1,000 characters and each value to 2,000. The 7 is `OtelLimitsConfig.getMaxEventAttributeCount`, which is 10,
   less the three an event is given for the value, its type and its number. Nothing says an attribute was left out.
   `StateRecorderTest` `a value or an attribute longer than a span event could carry is cut short`.
-- **A change's own attribute under `emb.states.` or `emb.state.` is dropped,** before the count, so it uses up none
-  of the 7. The one exception is `emb.state.dropped_by_instrumentation`. So no reporter can set a key the SDK writes
-  on a change, in the change log or in an event for an app's exporters. A key outside the stems, such as `emb.type`,
-  is kept in the change log, and an event has the SDK's value for each key the SDK writes. `StateRecorderTest` `a
-  change's own attribute under either state stem is dropped, and uses up none of the seven a change can carry`.
+- **A change's own attribute under `emb.states.` or `emb.state.`, or keyed with either stem alone, is dropped,**
+  before the count, so it uses up none of the 7. The one exception is `emb.state.dropped_by_instrumentation`. So no
+  reporter can set a key the SDK writes on a change, in the change log or in an event for an app's exporters. A key
+  outside the stems, such as `emb.type`, is kept in the change log, and an event has the SDK's value for each key
+  the SDK writes. `StateRecorderTest` `a change's own attribute under either state stem is dropped, and uses up none
+  of the seven a change can carry`.
 - **A state's name is not validated, cut or escaped.**
 
 ### The snapshot
@@ -534,12 +535,15 @@ span and one link. A part with no journal, or whose journal does not open with a
   one, and each after it the next. Events up to `emb.states.part_start_seq` were listed before the part. A truncated
   change log's last event says the last number it recorded. [What it costs](#what-it-costs) has the number's bytes.
 - **A span the dead process left running gets its end number here.** Where the part has no end, neither on the
-  session part span nor in the journal, `withStateSpan(journal, completesRunningSpans)` gives each of the part's span
-  snapshots, the session part span included, `emb.states.end_seq`: the last change the journal lists, if that is above
-  the span's start number or the span has none. `SessionPartReader` asks for it where association is on, whatever the
-  rendering. A cut-short journal's last number can be below what the dead process reached. `StateJournalSpanTest` `a
-  span a dead process left running that started before the last change a journal lists is given that change as its
-  end`.
+  session part span nor in the journal, `withStateSpan(journal, completesRunningSpans)` gives each of the part's
+  span snapshots, the session part span included, `emb.states.end_seq`: the highest number any record of the journal
+  holds, its checkpoint and part start included, if that is above the span's start number. A span with no start
+  number gets it only where another span of the part has one, which shows the dead process was linking spans.
+  `SessionPartReader` asks for it where association is on, whatever the rendering. A cut-short journal's last number
+  can be below what the dead process reached. `StateJournalSpanTest` `a span a dead process left running that
+  started before the last change a journal lists is given that change as its end`, `a span carried over a part
+  boundary is given the number the journal's checkpoint and part start hold` and `a span with no number is given an
+  end number only if another span of the part has one`.
 - **Every state's value at a number** is the initial values with each event up to that number applied. That is how
   a reader resolves a span's link and checks a log's stamp. The integration tests do exactly this in `valuesAt`.
 - **The link.** The session part span is given one link to the state span, with `emb.link_type` as `STATE` and the

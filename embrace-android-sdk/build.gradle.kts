@@ -14,6 +14,12 @@ android {
     testOptions.unitTests.isIncludeAndroidResources = true
 }
 
+kotlin {
+    compilerOptions {
+        optIn.add("io.embrace.android.embracesdk.annotation.InternalApi")
+    }
+}
+
 dependencies {
     api(project(":embrace-android-api"))
     implementation(project(":embrace-android-infra"))

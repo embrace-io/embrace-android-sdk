@@ -1,6 +1,5 @@
 package io.embrace.android.embracesdk.internal.api
 
-import io.embrace.android.embracesdk.annotation.InternalApi
 import io.embrace.android.embracesdk.network.EmbraceNetworkRequest
 import io.embrace.android.embracesdk.network.NetworkSpanParentProvider
 import io.embrace.android.embracesdk.network.NetworkSpanParentToken
@@ -11,7 +10,6 @@ import io.opentelemetry.kotlin.tracing.SpanContext
 /**
  * The public API that is used for capturing network requests manually
  */
-@InternalApi
 public interface NetworkRequestApi {
 
     /**

@@ -1,6 +1,5 @@
 package io.embrace.android.embracesdk.internal.api
 
-import io.embrace.android.embracesdk.annotation.InternalApi
 import io.opentelemetry.kotlin.OpenTelemetry
 import io.opentelemetry.kotlin.logging.export.LogRecordExporter
 import io.opentelemetry.kotlin.logging.export.LogRecordProcessor
@@ -10,7 +9,6 @@ import io.opentelemetry.kotlin.tracing.export.SpanProcessor
 /**
  * Methods that enable integration with the the large OTel ecosystem through standard OTel APIs and concepts.
  */
-@InternalApi
 public interface OTelApi {
 
     /**

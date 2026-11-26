@@ -22,7 +22,7 @@
       "images.REMOVE_THIS_TO_SET": "http://YOUR_LOCAL_IP_HERE:24000"
     },
     "networking": {
-      "capture_request_content_length": "text"
+      "capture_okhttp_response_body_size": "text"
     },
     "session": {
       "async_end": "text",

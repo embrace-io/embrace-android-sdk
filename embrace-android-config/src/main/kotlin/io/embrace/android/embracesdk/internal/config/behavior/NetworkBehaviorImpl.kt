@@ -39,17 +39,11 @@ class NetworkBehaviorImpl(
     private val cfg = local.networkCapture
     private val patternCache = PatternCache()
 
-    override fun isRequestContentLengthCaptureEnabled(): Boolean =
-        local.enabledFeatures.isRequestContentLengthCaptureEnabled()
-
     override fun isOkHttpResponseBodySizeCaptureEnabled(): Boolean =
         local.enabledFeatures.isOkHttpResponseBodySizeCaptureEnabled()
 
-    override fun isHttpUrlConnectionCaptureEnabled(): Boolean =
-        local.enabledFeatures.isHttpUrlConnectionCaptureEnabled()
-
     override fun isHucLiteInstrumentationEnabled(): Boolean =
-        local.enabledFeatures.isHucLiteInstrumentationEnabled() && !local.enabledFeatures.isHttpUrlConnectionCaptureEnabled()
+        local.enabledFeatures.isHucLiteInstrumentationEnabled()
 
     override val domainCountLimiter: DomainCountLimiter by lazy {
         EmbraceDomainCountLimiter(

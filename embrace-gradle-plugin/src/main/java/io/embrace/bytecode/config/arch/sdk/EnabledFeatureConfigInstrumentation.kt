@@ -30,9 +30,7 @@ fun createEnabledFeatureConfigInstrumentation(cfg: VariantConfig) = modelSdkConf
             webViewConfig?.fragmentCapture?.name
         }
         boolMethod("isFcmPiiDataCaptureEnabled") { captureFcmPiiData }
-        boolMethod("isRequestContentLengthCaptureEnabled") { networking?.captureRequestContentLength }
         boolMethod("isOkHttpResponseBodySizeCaptureEnabled") { networking?.captureOkHttpResponseBodySize }
-        boolMethod("isHttpUrlConnectionCaptureEnabled") { networking?.enableNativeMonitoring }
         boolMethod("isHucLiteInstrumentationEnabled") { networking?.enableHucLiteInstrumentation }
         boolMethod("isNetworkSpanForwardingEnabled") { networking?.enableNetworkSpanForwarding }
         boolMethod("isTraceparentInjectionEnabled") { networking?.enableTraceparentInjection }

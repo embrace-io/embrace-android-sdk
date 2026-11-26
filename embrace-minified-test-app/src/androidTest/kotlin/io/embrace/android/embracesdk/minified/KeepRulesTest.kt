@@ -9,7 +9,6 @@ import org.junit.Test
 import org.junit.runner.RunWith
 
 private const val SDK = "io.embrace.android.embracesdk"
-private const val HUC_TRACKER = "$SDK.instrumentation.huc.HttpUrlConnectionTracker"
 
 /**
  * Names the SDK resolves at runtime that cannot be derived from a source file, so
@@ -20,13 +19,6 @@ private val MANUAL_NAMES = listOf(
     Class("$SDK.Embrace"),
     Field("$SDK.Embrace", "INSTANCE"),
     Method("$SDK.Embrace", "start", 1),
-
-    // RealSdkInstance.initializeHucInstrumentation()
-    Field(HUC_TRACKER, "INSTANCE"),
-    Method(HUC_TRACKER, "registerUrlStreamHandlerFactory", 4),
-
-    // RealSdkInstance.resetHucInstrumentation()
-    Method(HUC_TRACKER, "reset", 0),
 
     // OkHttpReflectionFacade
     Class("okhttp3.OkHttpClient"),

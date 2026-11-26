@@ -152,11 +152,6 @@
               "minItems": 1,
               "uniqueItems": true
             },
-            "capture_request_content_length": {
-              "description": "Enable capture of network length which can interfere with certain streaming network requests.",
-              "default": false,
-              "type": "boolean"
-            },
             "capture_okhttp_response_body_size": {
               "description": "Enable capture of an OkHttp response body's size when it has no Content-Length header. This buffers the whole body into memory so is disabled by default to avoid excessive heap usage on large or streaming responses.",
               "default": false,
@@ -170,11 +165,6 @@
               },
               "minItems": 1,
               "uniqueItems": true
-            },
-            "enable_native_monitoring": {
-              "description": "Enable capture of network requests made using the native Java network API.",
-              "default": false,
-              "type": "boolean"
             },
             "enable_network_span_forwarding": {
               "description": "Enables network span forwarding.",

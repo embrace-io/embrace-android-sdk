@@ -42,9 +42,6 @@
           "signature": "isFcmPiiDataCaptureEnabled()Z"
         },
         {
-          "signature": "isHttpUrlConnectionCaptureEnabled()Z"
-        },
-        {
           "signature": "isJvmCrashCaptureEnabled()Z"
         },
         {
@@ -58,9 +55,6 @@
         },
         {
           "signature": "isPowerSaveModeCaptureEnabled()Z"
-        },
-        {
-          "signature": "isRequestContentLengthCaptureEnabled()Z"
         },
         {
           "signature": "isThreadBlockageCaptureEnabled()Z"

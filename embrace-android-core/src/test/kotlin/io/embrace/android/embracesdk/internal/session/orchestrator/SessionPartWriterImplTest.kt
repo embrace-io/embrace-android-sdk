@@ -243,7 +243,7 @@ internal class SessionPartWriterImplTest {
                 // what the journal lists and what it counts as refused add up to the numbers it covers
                 assertEquals(sequence - records.first().sequence, (changesHeld.size + partEnd.dropped_changes).toLong())
                 // every refusal was a state's own limit, and the count for each state says whose
-                assertNull(partEnd.shared_limit)
+                assertNull(partEnd.global_limit)
                 assertEquals(partEnd.dropped_changes, partEnd.dropped_counts.sumOf { it.count })
                 assertTrue(partEnd.dropped_counts.all { it.limit == StateUpdate.DEFAULT_MAX_CHANGES_IN_PART })
                 // and each of those limits was recorded once as it was first reached

@@ -135,7 +135,7 @@ class StateRecorder(
     /**
      * Whether [maxChanges] refused a change of the journal in progress, guarded by [lock].
      */
-    private var sharedLimitApplied = false
+    private var globalLimitApplied = false
 
     /**
      * For each state, what the journal in progress lists of it and does not, guarded by [lock]. It is emptied when a
@@ -238,8 +238,8 @@ class StateRecorder(
             }
             onStateLimitApplied(event.state)
         } else {
-            val firstInThePart = !sharedLimitApplied
-            sharedLimitApplied = true
+            val firstInThePart = !globalLimitApplied
+            globalLimitApplied = true
             if (firstInThePart) {
                 journal(listOf(limitReached(event, maxChanges, state = null)))
             }
@@ -297,7 +297,7 @@ class StateRecorder(
             // every state's count of what is listed starts at nothing here, as the last journal's end emptied the tallies
             recorded = held.size
             dropped = 0
-            sharedLimitApplied = false
+            globalLimitApplied = false
             held.clear()
             folded = 0
             this.journal = journal
@@ -335,7 +335,7 @@ class StateRecorder(
                             val count = sumUpToTheMost(tally.refused, tally.reported)
                             if (count > 0) StateDroppedCount(state = state, count = count, limit = tally.limit) else null
                         },
-                        shared_limit = if (sharedLimitApplied) maxChanges else null,
+                        global_limit = if (globalLimitApplied) maxChanges else null,
                     ),
                 ),
             ),
@@ -345,7 +345,7 @@ class StateRecorder(
         openingTimeMs = timeMs
         recorded = 0
         dropped = 0
-        sharedLimitApplied = false
+        globalLimitApplied = false
         tallies.clear()
     }
 

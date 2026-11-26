@@ -47,7 +47,7 @@ import java.security.MessageDigest
  * `emb.app.state.truncated`: the process died, or the journal could not be written to, and either way the values
  * after its last event, and how many changes it did not record, are not known from it. It still states each limit it
  * has a record of, so a state whose limit it states has no known value above the first gap in the numbers, no state has
- * one there if it states the shared limit, and every other state has every change listed. The changes of a journal are in
+ * one there if it states the global limit, and every other state has every change listed. The changes of a journal are in
  * the order of their numbers, and one read back with a change out of that order is delivered up to that change and
  * marked the same way. A gap in the numbers is not a fault, and the span is not cut at one.
  *
@@ -238,7 +238,7 @@ private fun partEndAttributes(end: StatePartEnd): List<Attribute> = buildList {
             add(Attribute("${StateAttributes.CHANGE_LIMIT_PREFIX}${dropped.state}", limit.toString()))
         }
     }
-    end.shared_limit?.let { limit ->
+    end.global_limit?.let { limit ->
         add(Attribute(StateAttributes.GLOBAL_CHANGE_LIMIT, limit.toString()))
     }
     end.values.forEach { value ->

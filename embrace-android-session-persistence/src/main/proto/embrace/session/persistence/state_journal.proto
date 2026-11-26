@@ -87,7 +87,7 @@ message StatePartEnd {
 
   // The most changes the journal holds for every state together, counting those it opened with.
   // Set only if that limit refused a change during the part.
-  optional int32 shared_limit = 4;
+  optional int32 global_limit = 4;
 }
 
 // How many changes of one state the journal of a session part does not list.

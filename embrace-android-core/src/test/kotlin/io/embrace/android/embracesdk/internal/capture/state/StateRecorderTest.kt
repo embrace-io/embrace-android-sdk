@@ -323,7 +323,7 @@ internal class StateRecorderTest {
             assertEquals(2, dropped_changes)
             assertEquals(listOf("network=none", "power=low"), values.map { "${it.state}=${it.value_}" })
             // the limit that refused them is the journal's, which is stated, and no state reached its own
-            assertEquals(2, shared_limit)
+            assertEquals(2, global_limit)
             assertEquals(listOf("network:1:null", "power:1:null"), counts())
         }
 
@@ -340,7 +340,7 @@ internal class StateRecorderTest {
         assertEquals(emptyList<String>(), nextJournal.limitsReached())
         with(checkNotNull(nextJournal.last().part_end)) {
             assertEquals(0, dropped_changes)
-            assertNull(shared_limit)
+            assertNull(global_limit)
             assertEquals(emptyList<Any>(), dropped_counts)
             assertEquals(emptyList<Any>(), values)
         }
@@ -394,7 +394,7 @@ internal class StateRecorderTest {
                 // the count, the limit and the value the part ended with, for the state that reached its limit and no other
                 assertEquals(listOf("network:2:2"), counts())
                 assertEquals(listOf("network=wifi"), values.map { "${it.state}=${it.value_}" })
-                assertNull(shared_limit)
+                assertNull(global_limit)
             }
         }
         // tracked for the state, and not as the journal's limit is
@@ -500,7 +500,7 @@ internal class StateRecorderTest {
     }
 
     @Test
-    fun `a part in which a state's own limit and the shared limit each refuse a change states both`() {
+    fun `a part in which a state's own limit and the global limit each refuse a change states both`() {
         recorder = StateRecorder(clock, maxChanges = 2, onChangeDropped = { changesDropped++ })
         recorder.beginJournal(clock.now(), journal::addAll)
         update("power", "low", maxChangesInPart = 1)
@@ -517,7 +517,7 @@ internal class StateRecorderTest {
         with(checkNotNull(journal.last().part_end)) {
             assertEquals(2, dropped_changes)
             assertEquals(listOf("power:1:1", "network:1:null"), counts())
-            assertEquals(2, shared_limit)
+            assertEquals(2, global_limit)
             assertEquals(listOf("power=normal", "network=none"), values.map { "${it.state}=${it.value_}" }.sortedDescending())
         }
         assertEquals(1, changesDropped)
@@ -559,7 +559,7 @@ internal class StateRecorderTest {
             assertEquals(1, dropped_changes)
             // only the state that had a change refused: the changes listed lead to the value of the other
             assertEquals(listOf("power=normal"), values.map { "${it.state}=${it.value_}" })
-            assertEquals(4, shared_limit)
+            assertEquals(4, global_limit)
         }
 
         // nothing was folded before the next journal

@@ -278,7 +278,7 @@ internal class StateJournalSpanTest {
     }
 
     @Test
-    fun `a journal that reaches the shared limit states it, counts what each state lost, and states no limit of a state's own`() {
+    fun `a journal that reaches the global limit states it, counts what each state lost, and states no limit of a state's own`() {
         recorder = StateRecorder(clock, maxChanges = 2)
         recorder.beginJournal(clock.now(), journal::addAll)
         update("network", "wifi")

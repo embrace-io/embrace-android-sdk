@@ -47,7 +47,7 @@ internal class StateJournalReaderTest {
                     StateDroppedCount(state = "network", count = 3, limit = 0),
                     StateDroppedCount(state = "power", count = 2),
                 ),
-                shared_limit = 10_000,
+                global_limit = 10_000,
             ),
         )
         // the second change is not there: a limit refused it, and it kept its number
@@ -59,7 +59,7 @@ internal class StateJournalReaderTest {
             // a limit of nothing is a limit, and is told apart from none having been reached
             assertEquals(0, dropped_counts[0].limit)
             assertNull(dropped_counts[1].limit)
-            assertEquals(10_000, shared_limit)
+            assertEquals(10_000, global_limit)
         }
 
         // a part end written before states had limits of their own reads back with no count for a state and no limit
@@ -67,12 +67,12 @@ internal class StateJournalReaderTest {
         with(checkNotNull(decode(stateJournalLog(listOf(first, earlier))).records.last().part_end)) {
             assertEquals(3, dropped_changes)
             assertEquals(emptyList<StateDroppedCount>(), dropped_counts)
-            assertNull(shared_limit)
+            assertNull(global_limit)
         }
     }
 
     @Test
-    fun `a record of a limit that was reached reads back with its state, or with none for the shared limit`() {
+    fun `a record of a limit that was reached reads back with its state, or with none for the global limit`() {
         val networkLimit = StateLimitReached(state = "network", limit = 100)
         val ofAState = StateRecord(sequence = 2, time_ms = 1_002L, limit_reached = networkLimit)
         // a state can be named with nothing, which is not the same as no state being named

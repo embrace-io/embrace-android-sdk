@@ -8,6 +8,7 @@ import io.embrace.android.embracesdk.internal.otel.sdk.toEmbraceObjectName
 import io.opentelemetry.kotlin.OpenTelemetry
 import io.opentelemetry.kotlin.context.Context
 import io.opentelemetry.kotlin.tracing.Span
+import io.opentelemetry.kotlin.tracing.SpanCreationAction
 import io.opentelemetry.kotlin.tracing.SpanKind
 import io.opentelemetry.kotlin.tracing.Tracer
 
@@ -31,6 +32,9 @@ class OtelSpanStartArgs(
 
     val embraceAttributes = mutableListOf<EmbraceAttribute>(type)
 
+    // a null action lets the tracer skip allocating span creation state for non-private spans
+    private val spanCreationAction: (SpanCreationAction.() -> Unit)? = if (private) markPrivate else null
+
     init {
         if (private) {
             embraceAttributes.add(PrivateSpan)
@@ -51,10 +55,13 @@ class OtelSpanStartArgs(
             parentContext = parentContext,
             spanKind = spanKind ?: SpanKind.INTERNAL,
             startTimestamp = startTimeMs.millisToNanos(),
-        ) {
-            if (PrivateSpan in embraceAttributes) {
-                setStringAttribute(PrivateSpan.key, PrivateSpan.value)
-            }
+            action = spanCreationAction,
+        )
+    }
+
+    private companion object {
+        val markPrivate: SpanCreationAction.() -> Unit = {
+            setStringAttribute(PrivateSpan.key, PrivateSpan.value)
         }
     }
 }

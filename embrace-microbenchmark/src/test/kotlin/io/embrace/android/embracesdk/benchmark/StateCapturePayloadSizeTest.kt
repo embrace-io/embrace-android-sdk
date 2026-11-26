@@ -1,5 +1,6 @@
 package io.embrace.android.embracesdk.benchmark
 
+import io.embrace.android.embracesdk.internal.arch.datasource.StateDeclaration
 import io.embrace.android.embracesdk.internal.arch.datasource.StateUpdate
 import io.embrace.android.embracesdk.internal.capture.state.StateRecorder
 import io.embrace.android.embracesdk.internal.clock.Clock
@@ -175,6 +176,7 @@ internal class StateCapturePayloadSizeTest {
             val clock = steppingClock()
             val recorder = StateRecorder(clock)
             repeat(stateCount) { index ->
+                recorder.declare(StateDeclaration(StateCaptureFixture.STATE_NAMES[index]))
                 recorder.onEvent(
                     StateUpdate(StateCaptureFixture.STATE_NAMES[index], StateCaptureFixture.STATE_VALUES[0], clock.now()),
                 )

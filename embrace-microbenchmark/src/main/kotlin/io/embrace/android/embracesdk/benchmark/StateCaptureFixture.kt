@@ -9,7 +9,6 @@ import io.embrace.android.embracesdk.internal.arch.InstrumentationRegistryImpl
 import io.embrace.android.embracesdk.internal.arch.SessionPartChangeListener
 import io.embrace.android.embracesdk.internal.arch.SessionPartEndListener
 import io.embrace.android.embracesdk.internal.arch.datasource.StateDataSource
-import io.embrace.android.embracesdk.internal.arch.datasource.StateUpdate
 import io.embrace.android.embracesdk.internal.arch.datasource.TelemetryDestination
 import io.embrace.android.embracesdk.internal.arch.navigation.NavigationTrackingService
 import io.embrace.android.embracesdk.internal.arch.schema.SchemaType
@@ -72,7 +71,7 @@ internal class StateCaptureFixture(
     }
     private val eventBus = EventBus(harness.errorHandler)
     private val recorder: StateRecorder? = if (journaled) {
-        StateRecorder(clock).also { eventBus.addHandler(StateUpdate.KEY, it) }
+        StateRecorder(clock).also { it.listenTo(eventBus) }
     } else {
         null
     }

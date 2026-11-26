@@ -1,6 +1,7 @@
 package io.embrace.android.embracesdk.benchmark
 
 import io.embrace.android.embracesdk.internal.arch.datasource.LogSeverity
+import io.embrace.android.embracesdk.internal.arch.datasource.StateDeclaration
 import io.embrace.android.embracesdk.internal.arch.datasource.StateUpdate
 import io.embrace.android.embracesdk.internal.arch.schema.SchemaType
 import io.embrace.android.embracesdk.internal.arch.schema.TelemetryAttributes
@@ -87,6 +88,11 @@ internal class StateAssociationFixture(
             },
             keepRecent = mode != null,
         )
+        // each state is declared with as high a limit as the benchmark makes changes, so that what is measured is a change
+        // that is recorded
+        repeat(stateCount) { index ->
+            recorder.declare(StateDeclaration(StateCaptureFixture.STATE_NAMES[index], maxChangesInPart = Int.MAX_VALUE))
+        }
         repeat(stateCount, ::transition)
         recorder.beginJournal(clock.now()) { }
         awaitEvents()
@@ -160,8 +166,6 @@ internal class StateAssociationFixture(
                 state = StateCaptureFixture.STATE_NAMES[stateIndex],
                 value = StateCaptureFixture.STATE_VALUES[count % StateCaptureFixture.STATE_VALUES.size],
                 timeMs = clock.now(),
-                // as many as the benchmark makes, so that what is measured is a change that is recorded
-                maxChangesInPart = Int.MAX_VALUE,
             ),
         )
     }

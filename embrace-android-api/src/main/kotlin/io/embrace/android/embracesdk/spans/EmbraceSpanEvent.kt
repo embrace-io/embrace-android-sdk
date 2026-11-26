@@ -19,7 +19,7 @@ public class EmbraceSpanEvent internal constructor(
     /**
      * The attributes of this event
      */
-    public val attributes: Map<String, String>,
+    public val attributes: Map<String, Any>,
 ) {
 
     /**
@@ -29,7 +29,7 @@ public class EmbraceSpanEvent internal constructor(
         /**
          * @suppress
          */
-        public fun create(name: String, timestampMs: Long, attributes: Map<String, String>?): EmbraceSpanEvent? {
+        public fun create(name: String, timestampMs: Long, attributes: Map<String, Any>?): EmbraceSpanEvent? {
             return EmbraceSpanEvent(
                 name = name,
                 timestampNanos = TimeUnit.MILLISECONDS.toNanos(timestampMs),

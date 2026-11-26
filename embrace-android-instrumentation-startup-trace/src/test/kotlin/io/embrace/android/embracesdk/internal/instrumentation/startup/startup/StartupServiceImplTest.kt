@@ -158,7 +158,7 @@ internal class StartupServiceImplTest {
         assertEquals(1111L, startupService.getSdkInitStartMs())
         assertEquals(3222L, startupService.getSdkInitEndMs())
         assertEquals(2111L, startupService.getSdkStartupDuration())
-        assertEquals(mapOf("modules-init-duration-ms" to "100"), startupService.getSdkInitAttributes())
+        assertEquals(mapOf("modules-init-duration-ms" to 100L), startupService.getSdkInitAttributes())
         assertEquals(3, startupService.getAppVersionStartupCounter())
     }
 }

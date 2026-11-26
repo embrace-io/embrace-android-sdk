@@ -40,7 +40,7 @@ public interface TracingApi {
     public fun <T> recordSpan(
         name: String,
         parent: EmbraceSpan? = null,
-        attributes: Map<String, String> = emptyMap(),
+        attributes: Map<String, Any> = emptyMap(),
         events: List<EmbraceSpanEvent> = emptyList(),
         autoTerminationMode: AutoTerminationMode = AutoTerminationMode.NONE,
         code: () -> T,
@@ -50,7 +50,7 @@ public interface TracingApi {
      * Record a span with the given name, error code, parent, start time, and end time (epoch time in milliseconds). Passing in a parent
      * that is null will result in a new trace with the new span as its root. A non-null [ErrorCode] can be passed in to denote the
      * operation the span represents was ended unsuccessfully under the stated circumstances. You can also pass in a [Map]
-     * with [String] keys and values to be used as the attributes of the recorded span, or a [List] of [EmbraceSpanEvent] to be used
+     * with [String] keys to be used as the attributes of the recorded span, or a [List] of [EmbraceSpanEvent] to be used
      * as the events of the recorded span.
      */
     public fun recordCompletedSpan(
@@ -59,7 +59,7 @@ public interface TracingApi {
         endTimeMs: Long,
         errorCode: ErrorCode? = null,
         parent: EmbraceSpan? = null,
-        attributes: Map<String, String> = emptyMap(),
+        attributes: Map<String, Any> = emptyMap(),
         events: List<EmbraceSpanEvent> = emptyList(),
     ): Boolean
 

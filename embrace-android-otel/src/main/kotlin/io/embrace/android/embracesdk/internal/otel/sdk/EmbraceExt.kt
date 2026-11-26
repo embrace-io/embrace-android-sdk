@@ -56,13 +56,13 @@ fun List<Attribute>.findAttributeValues(keys: Set<String>): Map<String, String> 
 fun Map<String, Any>.hasEmbraceAttribute(embraceAttribute: EmbraceAttribute): Boolean =
     this[embraceAttribute.key] == embraceAttribute.value
 
-fun MutableMap<String, String>.setEmbraceAttribute(embraceAttribute: EmbraceAttribute): Map<String, String> {
+fun MutableMap<String, Any>.setEmbraceAttribute(embraceAttribute: EmbraceAttribute): Map<String, Any> {
     this[embraceAttribute.key] = embraceAttribute.value
     return this
 }
 
-fun MutableMap<String, String>.setEmbraceAttribute(key: String, value: Any): Map<String, String> {
-    this[key] = value.toString()
+fun MutableMap<String, Any>.setEmbraceAttribute(key: String, value: Any): Map<String, Any> {
+    this[key] = value
     return this
 }
 

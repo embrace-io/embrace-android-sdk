@@ -62,12 +62,27 @@ internal class TypedAttributesTest {
     }
 
     @Test
-    fun `byte array and any value are passed through`() {
+    fun `byte arrays and non-scalar any values are passed through while scalar any values are unwrapped`() {
         val bytes = byteArrayOf(1, 2)
-        val anyValue = AnyValue.StringValue("wrapped")
-        mutator.setTypedAttributes(mapOf("bytes" to bytes, "any" to anyValue))
+        val listValue = AnyValue.ListValue(listOf(AnyValue.StringValue("a")))
+        mutator.setTypedAttributes(
+            mapOf(
+                "bytes" to bytes,
+                "list" to listValue,
+                "string" to AnyValue.StringValue("wrapped"),
+                "bool" to AnyValue.BoolValue(true),
+                "long" to AnyValue.LongValue(5L),
+                "double" to AnyValue.DoubleValue(1.5),
+                "any-bytes" to AnyValue.BytesValue(bytes),
+            ),
+        )
         assertArrayEquals(bytes, mutator.attributes["bytes"] as ByteArray)
-        assertEquals(anyValue, mutator.attributes["any"])
+        assertEquals(listValue, mutator.attributes["list"])
+        assertEquals("wrapped", mutator.attributes["string"])
+        assertEquals(true, mutator.attributes["bool"])
+        assertEquals(5L, mutator.attributes["long"])
+        assertEquals(1.5, mutator.attributes["double"])
+        assertArrayEquals(bytes, mutator.attributes["any-bytes"] as ByteArray)
     }
 
     @Test

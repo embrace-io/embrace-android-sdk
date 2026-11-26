@@ -136,7 +136,7 @@ internal class SdkInitResourceUsageTrackerTest {
             ),
         )
         val attributes = buildTrackerAttributes()
-        attributes.assertAttribute(SdkInitAttributeKeys.INIT_RUN_DELAY_PCT, "20")
+        attributes.assertAttribute(SdkInitAttributeKeys.INIT_RUN_DELAY_PCT, 20L)
         assertNoSdkErrors()
     }
 
@@ -174,7 +174,7 @@ internal class SdkInitResourceUsageTrackerTest {
             ),
         )
         val attributes = buildTrackerAttributes()
-        attributes.assertAttribute(SdkInitAttributeKeys.INIT_RUN_DELAY_PCT, "20")
+        attributes.assertAttribute(SdkInitAttributeKeys.INIT_RUN_DELAY_PCT, 20L)
         assertNoSdkErrors()
     }
 
@@ -245,7 +245,7 @@ internal class SdkInitResourceUsageTrackerTest {
         assertCaptureFailureReported(INIT_CPU_SHARES_ATTRS)
     }
 
-    private fun buildTrackerAttributes(): Map<String, String> {
+    private fun buildTrackerAttributes(): Map<String, Any> {
         val tracker = createTracker()
         tracker.captureStart()
         tracker.captureEnd()
@@ -287,21 +287,21 @@ internal class SdkInitResourceUsageTrackerTest {
         runtimeStatReader = { statName -> runtimeStats[statName]?.removeFirstOrNull() },
     )
 
-    private fun Map<String, String>.assertCpuInitPct() = assertAttribute(SdkInitAttributeKeys.INIT_CPU_PCT, "50")
+    private fun Map<String, Any>.assertCpuInitPct() = assertAttribute(SdkInitAttributeKeys.INIT_CPU_PCT, 50L)
 
-    private fun Map<String, String>.assertInitRunDelayPct() = assertAttribute(SdkInitAttributeKeys.INIT_RUN_DELAY_PCT, "12")
+    private fun Map<String, Any>.assertInitRunDelayPct() = assertAttribute(SdkInitAttributeKeys.INIT_RUN_DELAY_PCT, 12L)
 
-    private fun Map<String, String>.assertInitDiskRead() = assertAttribute(SdkInitAttributeKeys.INIT_DISK_READ_KB, "48")
+    private fun Map<String, Any>.assertInitDiskRead() = assertAttribute(SdkInitAttributeKeys.INIT_DISK_READ_KB, 48L)
 
-    private fun Map<String, String>.assertInitGcCount() = assertAttribute(SdkInitAttributeKeys.INIT_GC_COUNT, "2")
+    private fun Map<String, Any>.assertInitGcCount() = assertAttribute(SdkInitAttributeKeys.INIT_GC_COUNT, 2L)
 
-    private fun Map<String, String>.assertNumberError(key: String) = assertAttribute(key, NUMERIC_ERROR)
+    private fun Map<String, Any>.assertNumberError(key: String) = assertAttribute(key, NUMERIC_ERROR)
 
-    private fun Map<String, String>.assertAttribute(key: String, value: String) {
+    private fun Map<String, Any>.assertAttribute(key: String, value: Any) {
         assertEquals(value, this[key])
     }
 
-    private fun Map<String, String>.assertAbsent(key: String) {
+    private fun Map<String, Any>.assertAbsent(key: String) {
         assertFalse(containsKey(key))
     }
 

@@ -14,7 +14,8 @@ fun AttributesMutator.setTypedAttributes(attributes: Map<String, Any>) {
 /**
  * Sets an attribute via the setter that matches its runtime type, so that it reaches OTel exporters typed.
  *
- * An [Int] is widened to a [Long] and a [Float] to a [Double]. Homogeneous lists of those types are set as
+ * An [Int] is widened to a [Long] and a [Float] to a [Double]. A scalar [AnyValue] is set as the primitive it
+ * wraps, so that every OTel implementation exports it identically. Homogeneous lists of those types are set as
  * list attributes. A value of any other type is set as its [toPayloadString].
  */
 fun AttributesMutator.setTypedAttribute(key: String, value: Any) {
@@ -26,9 +27,20 @@ fun AttributesMutator.setTypedAttribute(key: String, value: Any) {
         is Double -> setDoubleAttribute(key, value)
         is Float -> setDoubleAttribute(key, value.toPayloadDouble())
         is ByteArray -> setByteArrayAttribute(key, value)
-        is AnyValue -> setAnyValueAttribute(key, value)
+        is AnyValue -> setAnyValue(key, value)
         is List<*> -> setListAttribute(key, value)
         else -> setStringAttribute(key, value.toPayloadString().orEmpty())
+    }
+}
+
+private fun AttributesMutator.setAnyValue(key: String, value: AnyValue) {
+    when (value) {
+        is AnyValue.StringValue -> setStringAttribute(key, value.value)
+        is AnyValue.BoolValue -> setBooleanAttribute(key, value.value)
+        is AnyValue.LongValue -> setLongAttribute(key, value.value)
+        is AnyValue.DoubleValue -> setDoubleAttribute(key, value.value)
+        is AnyValue.BytesValue -> setByteArrayAttribute(key, value.value)
+        else -> setAnyValueAttribute(key, value)
     }
 }
 

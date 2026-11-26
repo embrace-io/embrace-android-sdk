@@ -2,6 +2,7 @@ package io.embrace.android.embracesdk.testframework.export
 
 import io.embrace.android.embracesdk.semconv.EmbSessionAttributes
 import io.embrace.android.embracesdk.testframework.assertions.IGNORE_VALUE
+import io.opentelemetry.api.common.Value
 import io.opentelemetry.kotlin.aliases.OtelJavaAttributes
 import io.opentelemetry.kotlin.aliases.OtelJavaEventData
 import io.opentelemetry.kotlin.aliases.OtelJavaLogRecordData
@@ -101,8 +102,10 @@ internal class ExportedTelemetryParityValidator {
             .map { it.key.key to it.value }
             .filterNot { (key, _) -> key in DIVERGENT_ATTRIBUTES }
             .associate { (key, value) ->
-                key to when (key) {
-                    in REDACTED_ATTRIBUTES -> IGNORE_VALUE
+                key to when {
+                    key in REDACTED_ATTRIBUTES -> IGNORE_VALUE
+                    // e.g. a byte array, which has no JSON equivalent; asString() renders it as base64
+                    value is Value<*> -> value.asString()
                     else -> value
                 }
             }

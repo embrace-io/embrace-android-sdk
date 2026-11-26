@@ -100,7 +100,7 @@ internal class TracingApiTest(
                         parentSpan.addEvent(
                             name = "parent event with attributes and bad input time",
                             timestampMs = clock.now().millisToNanos(),
-                            attributes = mapOf("key" to "value")
+                            attributes = mapOf("key" to 1.5)
                         )
                         true
                     })
@@ -113,7 +113,7 @@ internal class TracingApiTest(
 
                     val attributes = mapOf(
                         Pair(TOO_LONG_ATTRIBUTE_KEY, "value"),
-                        Pair("test-attr", "false"),
+                        Pair("test-attr", false),
                         Pair("myKey", TOO_LONG_ATTRIBUTE_VALUE)
                     )
 
@@ -123,7 +123,7 @@ internal class TracingApiTest(
                                 name = "failure time",
                                 timestampMs = failedOpEndTimeMs,
                                 attributes = mapOf(
-                                    Pair("retry", "1")
+                                    Pair("retry", 1)
                                 )
                             )
                         )
@@ -152,7 +152,7 @@ internal class TracingApiTest(
                     assertTrue(bonusSpan2.stop())
                     val unendingSpan = checkNotNull(embrace.startSpan("unending-span"))
                     clock.tick(100L)
-                    unendingSpan.addAttribute("unending-key", "unending-value")
+                    unendingSpan.addAttribute("unending-key", 42L)
                     unendingSpan.addEvent("unending-event")
                     results.add(
                         "\nSpans exported before ending startup: ${
@@ -222,7 +222,7 @@ internal class TracingApiTest(
                         SpanEvent(
                             name = "parent event with attributes and bad input time",
                             timestampNanos = (testStartTimeMs + 100).millisToNanos(),
-                            attributes = listOf(Attribute("key", "value"))
+                            attributes = listOf(Attribute("key", "1.5"))
                         ),
                         SpanEvent(
                             name = "delayed event",
@@ -296,7 +296,7 @@ internal class TracingApiTest(
                     expectedEndTimeMs = null,
                     expectedParentId = OtelIds.INVALID_SPAN_ID,
                     expectedStatus = Span.Status.UNSET,
-                    expectedCustomAttributes = mapOf(Pair("unending-key", "unending-value")),
+                    expectedCustomAttributes = mapOf(Pair("unending-key", "42")),
                     expectedEvents = listOf(
                         SpanEvent(
                             name = "unending-event",

@@ -31,13 +31,13 @@ class NavigationStateDataSource(
         activityTracker?.close()
     }
 
-    override fun outgoingValueAttributes(value: Screen): Map<String, String> {
+    override fun outgoingValueAttributes(value: Screen): Map<String, Any> {
         if (value is SystemStateValue) {
             // no app screen was showing: collect only to discard what accrued, so it isn't attributed to the next screen
             args.navigationTrackingService.collectScreenAttributes { _, _ -> }
             return emptyMap()
         }
-        val attributes = mutableMapOf<String, String>()
+        val attributes = mutableMapOf<String, Any>()
         args.navigationTrackingService.collectScreenAttributes(attributes::set)
         return attributes
     }

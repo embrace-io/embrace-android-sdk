@@ -35,7 +35,7 @@ class FakeUiLoadDataListener : UiLoadDataListener {
     override fun discard(instanceId: Int, timestampMs: Long) {
     }
 
-    override fun addAttribute(instanceId: Int, key: String, value: String) {
+    override fun addAttribute(instanceId: Int, key: String, value: Any) {
     }
 
     override fun addChildSpan(
@@ -43,7 +43,7 @@ class FakeUiLoadDataListener : UiLoadDataListener {
         name: String,
         startTimeMs: Long,
         endTimeMs: Long,
-        attributes: Map<String, String>,
+        attributes: Map<String, Any>,
         events: List<SpanEvent>,
         errorCode: ErrorCodeAttribute?,
     ) {

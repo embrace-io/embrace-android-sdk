@@ -20,7 +20,7 @@ interface StartupService {
         endTimeMs: Long,
         endState: ProcessState,
         threadName: String,
-        attributesProvider: (() -> Map<String, String>)? = null,
+        attributesProvider: (() -> Map<String, Any>)? = null,
     )
 
     /**
@@ -63,13 +63,13 @@ interface StartupService {
      * memoized on first use, so the provider runs at most once and every caller sees the same
      * attributes.
      */
-    fun getSdkInitAttributes(): Map<String, String>
+    fun getSdkInitAttributes(): Map<String, Any>
 }
 
 /**
  * Converts SDK init section durations to span attributes, keyed by section name with the `-duration-ms` suffix.
  */
-fun Map<String, Long>.toSdkInitDurationAttributes(): Map<String, String> =
+fun Map<String, Long>.toSdkInitDurationAttributes(): Map<String, Any> =
     entries.associate { (sectionName, durationMs) ->
-        "$sectionName-duration-ms" to durationMs.toString()
+        "$sectionName-duration-ms" to durationMs
     }

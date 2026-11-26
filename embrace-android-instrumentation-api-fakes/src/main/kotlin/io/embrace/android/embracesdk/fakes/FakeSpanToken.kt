@@ -48,12 +48,12 @@ class FakeSpanToken(
 
     override fun isValid(): Boolean = true
 
-    override fun addAttribute(key: String, value: String) {
-        attrs[key] = value
+    override fun addAttribute(key: String, value: Any) {
+        attrs[key] = value.toString()
     }
 
-    override fun setSystemAttribute(key: String, value: String) {
-        attrs[key] = value
+    override fun setSystemAttribute(key: String, value: Any) {
+        attrs[key] = value.toString()
     }
 
     override fun getStartTimeMs(): Long = startTimeMs
@@ -63,7 +63,7 @@ class FakeSpanToken(
     override fun addSystemEvent(
         name: String,
         eventTimeMs: Long,
-        attributes: Map<String, String>,
+        attributes: Map<String, Any>,
     ) {
         events.add(SpanEventImpl(name, eventTimeMs.millisToNanos(), attributes))
     }

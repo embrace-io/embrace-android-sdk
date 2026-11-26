@@ -12,8 +12,8 @@ import io.embrace.android.embracesdk.internal.arch.schema.ErrorCodeAttribute
 import io.embrace.android.embracesdk.internal.arch.schema.PrivateSpan
 import io.embrace.android.embracesdk.internal.arch.schema.SchemaType
 import io.embrace.android.embracesdk.internal.clock.Clock
-import io.embrace.android.embracesdk.internal.otel.payload.toPayloadString
 import io.embrace.android.embracesdk.internal.otel.sdk.setEmbraceAttribute
+import io.embrace.android.embracesdk.internal.otel.sdk.setTypedAttribute
 import io.embrace.android.embracesdk.internal.otel.sdk.toEmbraceObjectName
 import io.embrace.android.embracesdk.internal.otel.spans.EmbraceSdkSpan
 import io.embrace.android.embracesdk.internal.otel.spans.SpanService
@@ -66,7 +66,7 @@ class TelemetryDestinationImpl(
             with(schemaType) {
                 setStringAttribute(telemetryType.key, telemetryType.value)
                 attributes().forEach {
-                    setStringAttribute(it.key, it.value.toPayloadString().orEmpty())
+                    setTypedAttribute(it.key, it.value)
                 }
             }
         }
@@ -230,7 +230,7 @@ class TelemetryDestinationImpl(
 
         override fun isValid() = span.spanContext?.isValid == true
 
-        override fun addAttribute(key: String, value: String) {
+        override fun addAttribute(key: String, value: Any) {
             span.addAttribute(key, value)
         }
 
@@ -238,9 +238,9 @@ class TelemetryDestinationImpl(
 
         override fun asW3cTraceparent(): String? = span.asW3cTraceParent()
 
-        override fun setSystemAttribute(key: String, value: String) = span.setSystemAttribute(key, value)
+        override fun setSystemAttribute(key: String, value: Any) = span.setSystemAttribute(key, value)
 
-        override fun addSystemEvent(name: String, eventTimeMs: Long, attributes: Map<String, String>) {
+        override fun addSystemEvent(name: String, eventTimeMs: Long, attributes: Map<String, Any>) {
             span.addSystemEvent(
                 name = name,
                 timestampMs = eventTimeMs,
@@ -257,7 +257,7 @@ class TelemetryDestinationImpl(
         override fun update(
             newValue: T,
             transitionTimeMs: Long,
-            transitionAttributes: Map<String, String>,
+            transitionAttributes: Map<String, Any>,
             unrecordedTransitions: UnrecordedTransitions,
         ): Boolean {
             if (!spanToken.isRecording()) {
@@ -289,7 +289,7 @@ class TelemetryDestinationImpl(
             )
             spanToken.setSystemAttribute(
                 EmbStateTransitionAttributes.EMB_STATE_TRANSITION_COUNT,
-                transitionCount.incrementAndGet().toString(),
+                transitionCount.incrementAndGet(),
             )
             return true
         }
@@ -298,13 +298,13 @@ class TelemetryDestinationImpl(
             if (unrecordedTransitions.notInSession > 0) {
                 spanToken.setSystemAttribute(
                     EmbStateTransitionAttributes.EMB_STATE_NOT_IN_SESSION,
-                    unrecordedTransitions.notInSession.toString(),
+                    unrecordedTransitions.notInSession,
                 )
             }
             if (unrecordedTransitions.droppedByInstrumentation > 0) {
                 spanToken.setSystemAttribute(
                     EmbStateTransitionAttributes.EMB_STATE_DROPPED_BY_INSTRUMENTATION,
-                    unrecordedTransitions.droppedByInstrumentation.toString(),
+                    unrecordedTransitions.droppedByInstrumentation,
                 )
             }
             spanToken.stop()

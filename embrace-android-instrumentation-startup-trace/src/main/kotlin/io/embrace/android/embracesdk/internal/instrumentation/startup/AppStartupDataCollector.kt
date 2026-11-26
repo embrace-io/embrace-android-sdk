@@ -74,7 +74,7 @@ interface AppStartupDataCollector : ProcessStateListener {
         name: String,
         startTimeMs: Long,
         endTimeMs: Long,
-        attributes: Map<String, String> = emptyMap(),
+        attributes: Map<String, Any> = emptyMap(),
         events: List<SpanEvent> = emptyList(),
         errorCode: ErrorCodeAttribute? = null,
     )
@@ -82,5 +82,5 @@ interface AppStartupDataCollector : ProcessStateListener {
     /**
      * Add custom attribute to the root span of the trace logged for app startup
      */
-    fun addAttribute(key: String, value: String)
+    fun addAttribute(key: String, value: Any)
 }

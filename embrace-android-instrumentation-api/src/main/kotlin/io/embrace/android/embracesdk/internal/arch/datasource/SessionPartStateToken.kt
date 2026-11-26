@@ -18,7 +18,7 @@ interface SessionPartStateToken<T> {
     fun update(
         newValue: T,
         transitionTimeMs: Long,
-        transitionAttributes: Map<String, String> = emptyMap(),
+        transitionAttributes: Map<String, Any> = emptyMap(),
         unrecordedTransitions: UnrecordedTransitions = noUnrecordedTransitions,
     ): Boolean
 

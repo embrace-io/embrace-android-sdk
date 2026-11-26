@@ -18,6 +18,7 @@ import io.embrace.android.embracesdk.internal.otel.payload.toPayloadString
 import io.embrace.android.embracesdk.internal.otel.sdk.DataValidator
 import io.embrace.android.embracesdk.internal.otel.sdk.id.OtelIds
 import io.embrace.android.embracesdk.internal.otel.sdk.setEmbraceAttribute
+import io.embrace.android.embracesdk.internal.otel.sdk.setTypedAttributes
 import io.embrace.android.embracesdk.internal.otel.toEmbracePayload
 import io.embrace.android.embracesdk.internal.payload.Attribute
 import io.embrace.android.embracesdk.internal.payload.Link
@@ -30,7 +31,6 @@ import io.embrace.android.embracesdk.spans.AutoTerminationMode
 import io.embrace.android.embracesdk.spans.EmbraceSpan
 import io.embrace.android.embracesdk.spans.ErrorCode
 import io.opentelemetry.kotlin.Clock
-import io.opentelemetry.kotlin.attributes.AttributesMutator
 import io.opentelemetry.kotlin.context.Context
 import io.opentelemetry.kotlin.semconv.ExceptionAttributes
 import io.opentelemetry.kotlin.tracing.Span
@@ -344,7 +344,7 @@ private class EmbraceSpanImpl(
         }
     }
 
-    override fun addEvent(name: String, timestampMs: Long?, attributes: Map<String, String>): Boolean =
+    override fun addEvent(name: String, timestampMs: Long?, attributes: Map<String, Any>): Boolean =
         addCustomEvent(name, timestampMs, attributes)
 
     override fun addCustomEvent(name: String, timestampMs: Long?, attributes: Map<String, Any>): Boolean = guard(false) {
@@ -361,7 +361,7 @@ private class EmbraceSpanImpl(
         }
     }
 
-    override fun recordException(exception: Throwable, attributes: Map<String, String>): Boolean = guard(false) {
+    override fun recordException(exception: Throwable, attributes: Map<String, Any>): Boolean = guard(false) {
         recordEvent(
             system = false,
             max = deps.dataValidator.otelLimitsConfig.getMaxCustomEventCount(),
@@ -406,7 +406,7 @@ private class EmbraceSpanImpl(
 
     override fun getStartTimeMs(): Long? = spanStartTimeMs.takeIf { it > UNSET_TIME }
 
-    override fun addAttribute(key: String, value: String): Boolean = addCustomAttribute(key, value)
+    override fun addAttribute(key: String, value: Any): Boolean = addCustomAttribute(key, value)
 
     override fun addCustomAttribute(key: String, value: Any): Boolean = guard(false) {
         // Reserved attribute that can't be set by customers.
@@ -473,7 +473,7 @@ private class EmbraceSpanImpl(
             EmbraceLinkData(linkedSpanContext, attrs)
         }
 
-    override fun addLink(linkedSpanContext: SpanContext, attributes: Map<String, String>): Boolean =
+    override fun addLink(linkedSpanContext: SpanContext, attributes: Map<String, Any>): Boolean =
         addCustomLink(linkedSpanContext, attributes)
 
     override fun addCustomLink(linkedSpanContext: SpanContext, attributes: Map<String, Any>): Boolean = guard(false) {
@@ -722,17 +722,9 @@ private class EmbraceSpanImpl(
         return if (redacted == payloadValue) value else redacted
     }
 
-    /**
-     * Writes attributes to the OTel span as their payload string, so OTLP exporters receive
-     * string values rather than the type they are stored as.
-     */
-    private fun AttributesMutator.setPayloadStringAttributes(attributes: Map<String, Any>) {
-        attributes.forEach { (key, value) -> setStringAttribute(key, value.toPayloadString().orEmpty()) }
-    }
-
     private fun populateAttributes(spanToStop: Span) {
-        spanToStop.setPayloadStringAttributes(systemAttributes)
-        spanToStop.setPayloadStringAttributes(customAttributes.redactIfSensitive())
+        spanToStop.setTypedAttributes(systemAttributes)
+        spanToStop.setTypedAttributes(customAttributes.redactIfSensitive())
     }
 
     private fun populateEvents(spanToStop: Span) {
@@ -744,7 +736,7 @@ private class EmbraceSpanImpl(
                     name = event.name,
                     timestamp = event.timestampNanos,
                 ) {
-                    setPayloadStringAttributes(eventAttributes)
+                    setTypedAttributes(eventAttributes)
                 }
             }
         }
@@ -755,7 +747,7 @@ private class EmbraceSpanImpl(
             (system + redactCustomLinks(custom)).forEach {
                 val linkAttributes = deps.dataValidator.truncateAttributes(it.attributes, false)
                 spanToStop.addLink(it.spanContext) {
-                    setPayloadStringAttributes(linkAttributes)
+                    setTypedAttributes(linkAttributes)
                 }
             }
         }

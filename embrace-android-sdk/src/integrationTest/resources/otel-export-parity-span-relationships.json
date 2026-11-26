@@ -119,7 +119,7 @@
       {
         "spanName": "aaa-parent-span",
         "attributes": {
-          "link-flag": "true"
+          "link-flag": true
         }
       },
       {

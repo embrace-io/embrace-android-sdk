@@ -48,7 +48,7 @@ fun sdkInitEnvironmentAttributes(
     uptimeMs: () -> Long = { SystemClock.uptimeMillis() },
     prefsFileSizeProvider: () -> Long? = { null },
     artOptimizationProvider: () -> ArtOptimizationState? = { null },
-): Map<String, String> = buildMap {
+): Map<String, Any> = buildMap {
     safePutAttributes(errorHandler, "thermal") {
         putThermalAttributes(powerManagerProvider, versionChecker, errorHandler)
     }
@@ -85,10 +85,10 @@ internal fun ErrorHandler.trackAttributeError(key: String, cause: Throwable? = n
  * attributes derived from every other source. Each attribute inside the block is expected to handle its own computation
  * failure, but this provides a wrapper so SDK errors can be logged for the failure of the whole block.
  */
-internal inline fun MutableMap<String, String>.safePutAttributes(
+internal inline fun MutableMap<String, Any>.safePutAttributes(
     errorHandler: ErrorHandler,
     attributesTypeName: String,
-    block: MutableMap<String, String>.() -> Unit,
+    block: MutableMap<String, Any>.() -> Unit,
 ) {
     try {
         block()
@@ -97,7 +97,7 @@ internal inline fun MutableMap<String, String>.safePutAttributes(
     }
 }
 
-private fun MutableMap<String, String>.putThermalAttributes(
+private fun MutableMap<String, Any>.putThermalAttributes(
     powerManagerProvider: () -> PowerManager?,
     versionChecker: VersionChecker,
     errorHandler: ErrorHandler,
@@ -131,7 +131,7 @@ private fun MutableMap<String, String>.putThermalAttributes(
 }
 
 @RequiresApi(VERSION_CODES.Q)
-private fun MutableMap<String, String>.putThermalStatus(powerManager: PowerManager, errorHandler: ErrorHandler) {
+private fun MutableMap<String, Any>.putThermalStatus(powerManager: PowerManager, errorHandler: ErrorHandler) {
     runCatching { powerManager.currentThermalStatus }.fold(
         onSuccess = { status ->
             // Do not record the attribute if the PowerManager reports there is no thermal status because is the expected case
@@ -147,12 +147,12 @@ private fun MutableMap<String, String>.putThermalStatus(powerManager: PowerManag
 }
 
 @RequiresApi(VERSION_CODES.R)
-private fun MutableMap<String, String>.putThermalHeadroom(powerManager: PowerManager, errorHandler: ErrorHandler) {
+private fun MutableMap<String, Any>.putThermalHeadroom(powerManager: PowerManager, errorHandler: ErrorHandler) {
     runCatching { powerManager.getThermalHeadroom(0) }.fold(
         onSuccess = { headroom ->
             if (headroom.isFinite()) {
                 val pct = (headroom * 100).roundToLong().coerceIn(0L, MAX_THERMAL_HEADROOM_PCT)
-                put(THERMAL_HEADROOM_PCT, pct.toString())
+                put(THERMAL_HEADROOM_PCT, pct)
             } else {
                 // The platform's way of answering that it has no forecast at this time, but it may later
                 put(THERMAL_HEADROOM_PCT, THERMAL_HEADROOM_PCT_UNAVAILABLE)
@@ -165,7 +165,7 @@ private fun MutableMap<String, String>.putThermalHeadroom(powerManager: PowerMan
     )
 }
 
-private fun MutableMap<String, String>.putInstallRecencyAttributes(
+private fun MutableMap<String, Any>.putInstallRecencyAttributes(
     packageInfo: PackageInfo?,
     nowMs: Long,
     errorHandler: ErrorHandler,
@@ -183,16 +183,16 @@ private fun MutableMap<String, String>.putInstallRecencyAttributes(
  * Records how long ago [thenMs] was, given that the package manager always knows when it installed and last updated an
  * app it is running. If the timestamps provided are not usable, it is an error that should be logged.
  */
-private fun MutableMap<String, String>.putRecency(key: String, thenMs: Long, nowMs: Long, errorHandler: ErrorHandler) {
+private fun MutableMap<String, Any>.putRecency(key: String, thenMs: Long, nowMs: Long, errorHandler: ErrorHandler) {
     if (thenMs in 1..nowMs) {
-        put(key, ((nowMs - thenMs) / 1000L).toString())
+        put(key, (nowMs - thenMs) / 1000L)
     } else {
         put(key, NUMERIC_ERROR)
         errorHandler.trackAttributeError(key)
     }
 }
 
-private fun MutableMap<String, String>.putMemoryAttributes(
+private fun MutableMap<String, Any>.putMemoryAttributes(
     activityManagerProvider: () -> ActivityManager?,
 ) {
     val result = runCatching {
@@ -206,19 +206,19 @@ private fun MutableMap<String, String>.putMemoryAttributes(
         put(MEM_AVAILABLE_PCT, NUMERIC_ERROR)
     } else {
         val availablePct = (100.0 * memoryInfo.availMem / memoryInfo.totalMem).roundToLong()
-        put(MEM_AVAILABLE_PCT, availablePct.coerceIn(0L, MAX_MEM_AVAILABLE_PCT).toString())
+        put(MEM_AVAILABLE_PCT, availablePct.coerceIn(0L, MAX_MEM_AVAILABLE_PCT))
 
         if (memoryInfo.lowMemory) {
-            put(LOW_MEMORY, "true")
+            put(LOW_MEMORY, true)
         }
     }
 }
 
-private fun MutableMap<String, String>.putSecondsSinceBoot(uptimeMs: () -> Long, errorHandler: ErrorHandler) {
+private fun MutableMap<String, Any>.putSecondsSinceBoot(uptimeMs: () -> Long, errorHandler: ErrorHandler) {
     runCatching { uptimeMs() }.fold(
         onSuccess = { millis ->
             if (millis >= 0) {
-                put(SECONDS_SINCE_BOOT, (millis / 1000L).toString())
+                put(SECONDS_SINCE_BOOT, millis / 1000L)
             } else {
                 put(SECONDS_SINCE_BOOT, NUMERIC_ERROR)
                 errorHandler.trackAttributeError(SECONDS_SINCE_BOOT)
@@ -231,11 +231,11 @@ private fun MutableMap<String, String>.putSecondsSinceBoot(uptimeMs: () -> Long,
     )
 }
 
-private fun MutableMap<String, String>.putPrefsFileSize(prefsFileSizeProvider: () -> Long?, errorHandler: ErrorHandler) {
+private fun MutableMap<String, Any>.putPrefsFileSize(prefsFileSizeProvider: () -> Long?, errorHandler: ErrorHandler) {
     runCatching { prefsFileSizeProvider() }.fold(
         onSuccess = { bytes ->
             // If the file cannot be found, treat it as no bytes are loaded
-            put(PREFS_FILE_BYTES, (bytes ?: 0L).coerceAtLeast(0L).toString())
+            put(PREFS_FILE_BYTES, (bytes ?: 0L).coerceAtLeast(0L))
         },
         onFailure = { throwable ->
             put(PREFS_FILE_BYTES, NUMERIC_ERROR)
@@ -244,7 +244,7 @@ private fun MutableMap<String, String>.putPrefsFileSize(prefsFileSizeProvider: (
     )
 }
 
-private fun MutableMap<String, String>.putArtOptimizationAttributes(
+private fun MutableMap<String, Any>.putArtOptimizationAttributes(
     artOptimizationStateProvider: () -> ArtOptimizationState?,
 ) {
     runCatching { artOptimizationStateProvider() }
@@ -254,7 +254,7 @@ private fun MutableMap<String, String>.putArtOptimizationAttributes(
                 // Not being able to determine that is an expected scenario so no error should be logged.
                 if (state != null) {
                     put(ART_COMPILER_FILTER, state.artCompilerFilter)
-                    put(APP_IMAGE_AT_INIT, state.hasAppImage.toString())
+                    put(APP_IMAGE_AT_INIT, state.hasAppImage)
                 }
             },
             onFailure = { throwable ->

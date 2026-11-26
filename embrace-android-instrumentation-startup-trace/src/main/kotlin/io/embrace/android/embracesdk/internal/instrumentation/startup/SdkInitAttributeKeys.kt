@@ -53,7 +53,7 @@ object SdkInitAttributeKeys {
      * Value of a numeric attribute that the instrumentation could not get when it should have
      * worked. It should only be used on a device where you can conceivably get this attribute.
      */
-    const val NUMERIC_ERROR: String = "-1"
+    const val NUMERIC_ERROR: Long = -1L
 
     /**
      * Same as [NUMERIC_ERROR] but for attributes with a string value.
@@ -161,7 +161,7 @@ object SdkInitAttributeKeys {
      * it has none. Distinct from [NUMERIC_ERROR] because nothing went wrong but the platform did
      * not return a value we can use. It's like the OS saying "nah, come back later".
      */
-    const val THERMAL_HEADROOM_PCT_UNAVAILABLE: String = "-2"
+    const val THERMAL_HEADROOM_PCT_UNAVAILABLE: Long = -2L
 
     /**
      * Minimum API level at which [THERMAL_HEADROOM_PCT] can be read, being the version that

@@ -53,7 +53,7 @@ internal class AppStartupTraceEmitter(
     private val processInfo: ProcessInfo,
 ) : AppStartupDataCollector {
     private val additionalTrackedIntervals = ConcurrentLinkedQueue<TrackedInterval>()
-    private val customAttributes: MutableMap<String, String> = ConcurrentHashMap()
+    private val customAttributes: MutableMap<String, Any> = ConcurrentHashMap()
     private val trackRender = hasRenderEvent(versionChecker)
     private val trackFrameCommit = supportFrameCommitCallback(versionChecker)
     private val appStartupRootSpan = AtomicReference<SpanToken?>(null)
@@ -185,7 +185,7 @@ internal class AppStartupTraceEmitter(
         name: String,
         startTimeMs: Long,
         endTimeMs: Long,
-        attributes: Map<String, String>,
+        attributes: Map<String, Any>,
         events: List<SpanEvent>,
         errorCode: ErrorCodeAttribute?,
     ) {
@@ -201,7 +201,7 @@ internal class AppStartupTraceEmitter(
         )
     }
 
-    override fun addAttribute(key: String, value: String) {
+    override fun addAttribute(key: String, value: Any) {
         customAttributes[key] = value
     }
 
@@ -326,7 +326,7 @@ internal class AppStartupTraceEmitter(
         applicationInitEndMs: Long?,
         sdkInitStartMs: Long?,
         sdkInitEndMs: Long?,
-        sdkInitAttributes: Map<String, String>,
+        sdkInitAttributes: Map<String, Any>,
         firstActivityInitMs: Long?,
         activityInitStartMs: Long?,
         activityInitEndMs: Long?,
@@ -357,7 +357,7 @@ internal class AppStartupTraceEmitter(
                 val counter = startupServiceProvider()?.getAppVersionStartupCounter()
                 val attributes = buildMap(sdkInitAttributes.size + 1) {
                     if (counter != null) {
-                        put(EmbAppAttributes.EMB_APP_VERSION_STARTUP_COUNTER, counter.toString())
+                        put(EmbAppAttributes.EMB_APP_VERSION_STARTUP_COUNTER, counter)
                     }
                     putAll(sdkInitAttributes)
                 }
@@ -444,7 +444,7 @@ internal class AppStartupTraceEmitter(
         val name: String,
         val startTimeMs: Long,
         val endTimeMs: Long,
-        val attributes: Map<String, String>,
+        val attributes: Map<String, Any>,
         val events: List<SpanEvent>,
         val errorCode: ErrorCodeAttribute?,
     )

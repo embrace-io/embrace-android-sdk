@@ -69,7 +69,7 @@ abstract class StateDataSource<T : Any>(
     fun onStateChange(
         newState: T,
         transitionTimeMs: Long,
-        transitionAttributes: Map<String, String> = emptyMap(),
+        transitionAttributes: Map<String, Any> = emptyMap(),
         droppedTransitions: Int = 0,
     ) {
         if (!stateCaptureActive.get()) {
@@ -147,7 +147,7 @@ abstract class StateDataSource<T : Any>(
     /**
      * Attributes describing the state [value] being left, added to the transition away from it.
      */
-    protected open fun outgoingValueAttributes(value: T): Map<String, String> = emptyMap()
+    protected open fun outgoingValueAttributes(value: T): Map<String, Any> = emptyMap()
 
     @CallSuper
     override fun onDataCaptureEnabled() {

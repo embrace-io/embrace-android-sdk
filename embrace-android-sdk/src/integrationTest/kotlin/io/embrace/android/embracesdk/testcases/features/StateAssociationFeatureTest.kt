@@ -69,34 +69,34 @@ internal class StateAssociationFeatureTest(
     fun `verbose - an app's exporters get the values on every span and every change event, and Embrace's payload gets none`() {
         runScenario("verbose") {
             listOf(exportedSpan(ACROSS), endedSpan(ACROSS)).forEach { across ->
-                assertEquals("in-background", across.attributes["emb.states.value.test"])
-                assertEquals("foo", across.attributes["emb.states.end_value.test"])
+                assertEquals("in-background", across.attributes["emb.app.state.value.test"])
+                assertEquals("foo", across.attributes["emb.app.state.end_value.test"])
                 // a state that did not change while the span ran has a value at its start, and none at its end
-                assertTrue(across.attributes.containsKey("emb.states.value.personas"))
-                assertFalse(across.attributes.containsKey("emb.states.end_value.personas"))
+                assertTrue(across.attributes.containsKey("emb.app.state.value.personas"))
+                assertFalse(across.attributes.containsKey("emb.app.state.end_value.personas"))
             }
             with(exportedSpan(STEADY)) {
-                assertEquals("foo", attributes["emb.states.value.test"])
-                assertEquals(emptyList<String>(), attributes.keys.filter { it.startsWith("emb.states.end_value") })
+                assertEquals("foo", attributes["emb.app.state.value.test"])
+                assertEquals(emptyList<String>(), attributes.keys.filter { it.startsWith("emb.app.state.end_value") })
             }
             // the values of a span that is given its times are the ones that held at those times
             listOf(exportedSpan(AFTER_THE_FACT), endedSpan(AFTER_THE_FACT)).forEach { afterTheFact ->
-                assertEquals("in-background", afterTheFact.attributes["emb.states.value.test"])
-                assertEquals("foo", afterTheFact.attributes["emb.states.end_value.test"])
+                assertEquals("in-background", afterTheFact.attributes["emb.app.state.value.test"])
+                assertEquals("foo", afterTheFact.attributes["emb.app.state.end_value.test"])
             }
             listOf(exportedSpan(ENDED_EARLIER), endedSpan(ENDED_EARLIER)).forEach { endedEarlier ->
-                assertEquals("in-background", endedEarlier.attributes["emb.states.value.test"])
-                assertEquals(emptyList<String>(), endedEarlier.attributes.keys.filter { it.startsWith("emb.states.end_value") })
+                assertEquals("in-background", endedEarlier.attributes["emb.app.state.value.test"])
+                assertEquals(emptyList<String>(), endedEarlier.attributes.keys.filter { it.startsWith("emb.app.state.end_value") })
             }
 
             // each change event carries the value of every state after that change
             val changes = stateEvents().filter { it.eventName == CHANGE_EVENT }
             changes.forEach { change ->
-                assertEquals(change.attributes["emb.states.new_value"], change.attributes["emb.states.value.${change.stateName()}"])
+                assertEquals(change.attributes["emb.app.state.new_value"], change.attributes["emb.app.state.value.${change.stateName()}"])
             }
             // And those are the values after it, not the ones when the event was built: the events of the session part
             // were all built once it was over, when the state had its last value.
-            assertEquals("foo", changes.single { it.newValue() == "foo" }.attributes["emb.states.value.test"])
+            assertEquals("foo", changes.single { it.newValue() == "foo" }.attributes["emb.app.state.value.test"])
             assertEquals(LAST_VALUE, changes.last { it.stateName() == "test" }.newValue())
         }
     }
@@ -150,10 +150,10 @@ internal class StateAssociationFeatureTest(
                 // with the switch off a log keeps the packed stamp, for Embrace's payload and an app's exporter alike
                 val deliveredLog = getLogEnvelopes(1).flatMap { checkNotNull(it.data.logs) }.single { it.body == LOG_MESSAGE }
                 val exported = logExporter.exportedLogs.single { it.body == LOG_MESSAGE }
-                assertEquals(deliveredLog.attribute("emb.states.packed"), exported.attributes["emb.states.packed"])
+                assertEquals(deliveredLog.attribute("emb.app.state.packed"), exported.attributes["emb.app.state.packed"])
                 assertEquals("foo", states(deliveredLog)["test"]?.first)
-                assertEquals(deliveredLog.attribute("emb.states.seq"), exported.attributes["emb.states.seq"])
-                assertEquals(emptyList<String>(), exported.attributes.keys.filter { it.startsWith("emb.states.value") })
+                assertEquals(deliveredLog.attribute("emb.app.state.seq"), exported.attributes["emb.app.state.seq"])
+                assertEquals(emptyList<String>(), exported.attributes.keys.filter { it.startsWith("emb.app.state.value") })
                 // the change log is still delivered, as the span it was before
                 val stateSpan = part.findSpansOfType(EmbType.State).single()
                 val delivered = (checkNotNull(part.data.spans) + checkNotNull(part.data.spanSnapshots)) - stateSpan
@@ -161,7 +161,7 @@ internal class StateAssociationFeatureTest(
                 delivered.forEach { span -> assertEquals(span.name, emptyList<String>(), span.stateKeys()) }
                 assertTrue(spanExporter.exportedSpans.map { it.name }.containsAll(listOf(ACROSS, AFTER_THE_FACT)))
                 (spanExporter.exportedSpans + endedSpans).forEach { span ->
-                    assertEquals(span.name, emptyList<String>(), span.attributes.keys.filter { it.startsWith("emb.states.") })
+                    assertEquals(span.name, emptyList<String>(), span.attributes.keys.filter { it.startsWith("emb.app.state.") })
                 }
                 assertFalse(testRule.services.otelSdkConfig.spanProcessor.isOnEndingRequired())
             },
@@ -198,18 +198,18 @@ internal class StateAssociationFeatureTest(
 
                 // nothing can be known of the end, so the span keeps the number it started with and has none for its end
                 val endForgotten = spans.single { it.name == END_FORGOTTEN }
-                assertEquals(listOf("emb.states.seq"), endForgotten.stateKeys())
-                assertEquals("UNKNOWN", stateSpan.valuesAt(checkNotNull(endForgotten.stateAttribute("emb.states.seq")).toLong())["test"])
+                assertEquals(listOf("emb.app.state.seq"), endForgotten.stateKeys())
+                assertEquals("UNKNOWN", stateSpan.valuesAt(checkNotNull(endForgotten.stateAttribute("emb.app.state.seq")).toLong())["test"])
 
                 val lastValue = "value-${REMEMBERED_CHANGES + 4}"
                 val afterTheFact = spans.single { it.name == AFTER_THE_FACT }
-                assertEquals(listOf("emb.states.seq"), afterTheFact.stateKeys())
-                assertEquals(lastValue, stateSpan.valuesAt(checkNotNull(afterTheFact.stateAttribute("emb.states.seq")).toLong())["test"])
+                assertEquals(listOf("emb.app.state.seq"), afterTheFact.stateKeys())
+                assertEquals(lastValue, stateSpan.valuesAt(checkNotNull(afterTheFact.stateAttribute("emb.app.state.seq")).toLong())["test"])
 
                 val across = spans.single { it.name == ACROSS }
-                val startSequence = checkNotNull(across.stateAttribute("emb.states.seq")).toLong()
+                val startSequence = checkNotNull(across.stateAttribute("emb.app.state.seq")).toLong()
                 assertEquals("value-${REMEMBERED_CHANGES + 3}", stateSpan.valuesAt(startSequence)["test"])
-                assertEquals((startSequence + 1).toString(), across.stateAttribute("emb.states.end_seq"))
+                assertEquals((startSequence + 1).toString(), across.stateAttribute("emb.app.state.end_seq"))
             },
         )
     }
@@ -254,14 +254,14 @@ internal class StateAssociationFeatureTest(
                 val part = deliveredParts().single()
                 val spans = checkNotNull(part.data.spans) + part.data.spanSnapshots.orEmpty()
                 val leftOpen = spans.single { it.name == LEFT_OPEN }
-                val before = checkNotNull(spans.single { it.name == BEFORE_LEFT_OPEN }.stateAttribute("emb.states.seq"))
-                val after = checkNotNull(spans.single { it.name == AFTER_LEFT_OPEN }.stateAttribute("emb.states.seq"))
+                val before = checkNotNull(spans.single { it.name == BEFORE_LEFT_OPEN }.stateAttribute("emb.app.state.seq"))
+                val after = checkNotNull(spans.single { it.name == AFTER_LEFT_OPEN }.stateAttribute("emb.app.state.seq"))
 
                 // what the next launch read back is the snapshot of the span that was persisted, which has its link, and the
                 // number of the last change the dead part's change log lists as its end, as a change came while it ran
-                assertEquals(listOf("emb.states.seq", "emb.states.end_seq"), leftOpen.stateKeys())
-                assertEquals(before, leftOpen.stateAttribute("emb.states.seq"))
-                assertEquals(after, leftOpen.stateAttribute("emb.states.end_seq"))
+                assertEquals(listOf("emb.app.state.seq", "emb.app.state.end_seq"), leftOpen.stateKeys())
+                assertEquals(before, leftOpen.stateAttribute("emb.app.state.seq"))
+                assertEquals(after, leftOpen.stateAttribute("emb.app.state.end_seq"))
                 assertEquals(before.toLong() + 1, after.toLong())
             },
         )
@@ -321,7 +321,7 @@ internal class StateAssociationFeatureTest(
     }
 
     /**
-     * Embrace's own payload has the link on spans, the packed attribute `emb.states.packed` and the sequence number on a log, and the
+     * Embrace's own payload has the link on spans, the packed attribute `emb.app.state.packed` and the sequence number on a log, and the
      * change log as one span. It has none of what is made for an app's exporters.
      */
     private fun EmbracePayloadAssertionInterface.assertEmbracePayload(part: Envelope<SessionPartPayload>, stateSpan: Span) {
@@ -330,31 +330,31 @@ internal class StateAssociationFeatureTest(
 
         // the two numbers resolve to values through the change log in the same payload
         val across = spans.single { it.name == ACROSS }
-        val startSequence = checkNotNull(across.stateAttribute("emb.states.seq")).toLong()
-        val endSequence = checkNotNull(across.stateAttribute("emb.states.end_seq")).toLong()
+        val startSequence = checkNotNull(across.stateAttribute("emb.app.state.seq")).toLong()
+        val endSequence = checkNotNull(across.stateAttribute("emb.app.state.end_seq")).toLong()
         assertEquals("in-background", stateSpan.valuesAt(startSequence)["test"])
         assertEquals("foo", stateSpan.valuesAt(endSequence)["test"])
         assertEquals(startSequence + 1, endSequence)
 
         val steady = spans.single { it.name == STEADY }
-        assertEquals(endSequence, steady.stateAttribute("emb.states.seq")?.toLong())
-        assertNull(steady.stateAttribute("emb.states.end_seq"))
+        assertEquals(endSequence, steady.stateAttribute("emb.app.state.seq")?.toLong())
+        assertNull(steady.stateAttribute("emb.app.state.end_seq"))
 
         // a span recorded after the fact has the numbers that held at the times it was given, which are from before and
         // after the change, and not the one that held when it was recorded
         with(spans.single { it.name == AFTER_THE_FACT }) {
-            assertEquals(startSequence, stateAttribute("emb.states.seq")?.toLong())
-            assertEquals(endSequence, stateAttribute("emb.states.end_seq")?.toLong())
+            assertEquals(startSequence, stateAttribute("emb.app.state.seq")?.toLong())
+            assertEquals(endSequence, stateAttribute("emb.app.state.end_seq")?.toLong())
         }
         // a span that is told after the change that it ended before it has no number for its end
         with(spans.single { it.name == ENDED_EARLIER }) {
-            assertEquals(startSequence, stateAttribute("emb.states.seq")?.toLong())
-            assertNull(stateAttribute("emb.states.end_seq"))
+            assertEquals(startSequence, stateAttribute("emb.app.state.seq")?.toLong())
+            assertNull(stateAttribute("emb.app.state.end_seq"))
         }
         // a span still in progress has the number it started with, in the snapshot of it the part is delivered with
         val leftOpen = checkNotNull(part.data.spanSnapshots).single { it.name == LEFT_OPEN }
-        assertEquals(listOf("emb.states.seq"), leftOpen.stateKeys())
-        assertEquals(endSequence, leftOpen.stateAttribute("emb.states.seq")?.toLong())
+        assertEquals(listOf("emb.app.state.seq"), leftOpen.stateKeys())
+        assertEquals(endSequence, leftOpen.stateAttribute("emb.app.state.seq")?.toLong())
 
         // and no span has a value
         assertEquals(
@@ -364,27 +364,27 @@ internal class StateAssociationFeatureTest(
 
         val logs = getLogEnvelopes(1).flatMap { checkNotNull(it.data.logs) }
         val log = logs.single { it.body == LOG_MESSAGE }
-        assertEquals(endSequence.toString(), log.attribute("emb.states.seq"))
+        assertEquals(endSequence.toString(), log.attribute("emb.app.state.seq"))
         // Embrace's payload has one packed attribute for the states, and none of the plain ones an app's exporters get
-        assertEquals(stateSpan.valuesAt(endSequence), decodeStates(checkNotNull(log.attribute("emb.states.packed"))))
+        assertEquals(stateSpan.valuesAt(endSequence), decodeStates(checkNotNull(log.attribute("emb.app.state.packed"))))
         assertEquals(
             emptyList<String>(),
-            checkNotNull(log.attributes).mapNotNull { it.key }.filter { it.startsWith("emb.states.value") },
+            checkNotNull(log.attributes).mapNotNull { it.key }.filter { it.startsWith("emb.app.state.value") },
         )
         // the same log, as an app's exporter and processor were handed it, has the same values in the plain form
         listOf(logExporter.exportedLogs, processedLogs).forEach { exportedLogs ->
             val exported = exportedLogs.single { it.body == LOG_MESSAGE }
             val plain = exported.attributes.filterKeys { it.startsWith(VALUE_PREFIX) }
                 .map { it.key.removePrefix(VALUE_PREFIX) to it.value }.toMap()
-            assertEquals(decodeStates(checkNotNull(log.attribute("emb.states.packed"))), plain)
-            assertEquals(log.attribute("emb.states.seq"), exported.attributes["emb.states.seq"].toString())
+            assertEquals(decodeStates(checkNotNull(log.attribute("emb.app.state.packed"))), plain)
+            assertEquals(log.attribute("emb.app.state.seq"), exported.attributes["emb.app.state.seq"].toString())
             assertEquals(
                 states(log).filterValues { it.second }.keys,
                 exported.attributes.keys.filter { it.startsWith(VALUE_TYPE_PREFIX) }.map { it.removePrefix(VALUE_TYPE_PREFIX) }.toSet(),
             )
         }
         // no event that describes state is a log of Embrace's
-        assertEquals(emptyList<Log>(), logs.filter { it.attribute("emb.states.name") != null || it.attribute("emb.entity.id") != null })
+        assertEquals(emptyList<Log>(), logs.filter { it.attribute("emb.app.state.name") != null || it.attribute("emb.entity.id") != null })
     }
 
     /**
@@ -396,18 +396,18 @@ internal class StateAssociationFeatureTest(
         listOf(ACROSS, STEADY, AFTER_THE_FACT, ENDED_EARLIER).forEach { name ->
             val delivered = spans.single { it.name == name }
             listOf(exportedSpan(name), endedSpan(name)).forEach { exported ->
-                listOf("emb.states.seq", "emb.states.end_seq").forEach { key ->
+                listOf("emb.app.state.seq", "emb.app.state.end_seq").forEach { key ->
                     assertEquals(delivered.stateAttribute(key)?.toLong(), exported.attributes[key])
                 }
             }
         }
 
-        val sequence = checkNotNull(exportedSpan(STEADY).attributes["emb.states.seq"]) as Long
+        val sequence = checkNotNull(exportedSpan(STEADY).attributes["emb.app.state.seq"]) as Long
         listOf(logExporter.exportedLogs, processedLogs).forEach { logs ->
             val log = logs.single { it.body == LOG_MESSAGE }
             // a whole number, and never the packed attribute that Embrace's payload has
-            assertEquals(sequence, log.attributes["emb.states.seq"])
-            assertFalse(log.attributes.containsKey("emb.states.packed"))
+            assertEquals(sequence, log.attributes["emb.app.state.seq"])
+            assertFalse(log.attributes.containsKey("emb.app.state.packed"))
             assertEquals(
                 stateSpan.valuesAt(sequence),
                 log.attributes.filterKeys { it.startsWith(VALUE_PREFIX) }.map { it.key.removePrefix(VALUE_PREFIX) to it.value }.toMap(),
@@ -438,14 +438,14 @@ internal class StateAssociationFeatureTest(
         // every change of the process so far, each once and in order, and the snapshot where the session part started
         val changes = events.filter { it.eventName == CHANGE_EVENT }
         val snapshot = events.single { it.eventName == SNAPSHOT_EVENT }
-        assertEquals((1L..changes.size).toList(), changes.map { it.attributes["emb.states.seq"] })
+        assertEquals((1L..changes.size).toList(), changes.map { it.attributes["emb.app.state.seq"] })
         val inBackground = changes.single { it.newValue() == "in-background" }
         val foo = changes.single { it.newValue() == "foo" }
         assertEquals("test", foo.stateName())
         // a change says what the state had before, in both renderings, and the state's first change and the snapshot say none
-        assertEquals("in-background", foo.attributes["emb.states.previous_value"])
-        assertEquals("foo", changes.single { it.newValue() == LAST_VALUE }.attributes["emb.states.previous_value"])
-        assertNull(changes.first { it.stateName() == "test" }.attributes["emb.states.previous_value"])
+        assertEquals("in-background", foo.attributes["emb.app.state.previous_value"])
+        assertEquals("foo", changes.single { it.newValue() == LAST_VALUE }.attributes["emb.app.state.previous_value"])
+        assertNull(changes.first { it.stateName() == "test" }.attributes["emb.app.state.previous_value"])
         assertEquals(emptyList<String>(), snapshot.attributes.keys.filter { it.contains("previous") })
         assertEquals(changeTimeMs.millisToNanos(), foo.timestamp)
         // the change made with no part in progress, then the part starting, then the change made in it. Starting the part
@@ -456,9 +456,9 @@ internal class StateAssociationFeatureTest(
         assertTrue(eventsBeforeFirstPart.none { it.eventName == SNAPSHOT_EVENT })
 
         // the snapshot is every value as the part started, which is what the change log says they were then
-        val partStartSequence = checkNotNull(stateSpan.attributes?.findAttributeValue("emb.states.part_start_seq")).toLong()
-        assertEquals(partStartSequence, snapshot.attributes["emb.states.seq"])
-        assertEquals(inBackground.attributes["emb.states.seq"], snapshot.attributes["emb.states.seq"])
+        val partStartSequence = checkNotNull(stateSpan.attributes?.findAttributeValue("emb.app.state.part_start_seq")).toLong()
+        assertEquals(partStartSequence, snapshot.attributes["emb.app.state.seq"])
+        assertEquals(inBackground.attributes["emb.app.state.seq"], snapshot.attributes["emb.app.state.seq"])
         assertTrue(checkNotNull(snapshot.timestamp) >= checkNotNull(inBackground.timestamp))
         assertEquals(
             stateSpan.valuesAt(partStartSequence),
@@ -467,7 +467,7 @@ internal class StateAssociationFeatureTest(
 
         // the span that ran across the change started at the number before it, and ended at its number
         assertEquals("UNKNOWN", changes.first { it.stateName() == "test" }.newValue())
-        assertEquals(foo.attributes["emb.states.seq"], exportedSpan(ACROSS).attributes["emb.states.end_seq"])
+        assertEquals(foo.attributes["emb.app.state.seq"], exportedSpan(ACROSS).attributes["emb.app.state.end_seq"])
     }
 
     /**
@@ -507,7 +507,7 @@ internal class StateAssociationFeatureTest(
      * values here need the encoding's escapes.
      */
     private fun states(log: Log): Map<String, Pair<String, Boolean>> =
-        checkNotNull(log.attribute("emb.states.packed")).split(";").associate { pair ->
+        checkNotNull(log.attribute("emb.app.state.packed")).split(";").associate { pair ->
             val separator = pair.indexOfFirst { it == '=' || it == '~' }
             pair.substring(0, separator) to (pair.substring(separator + 1) to (pair[separator] == '~'))
         }
@@ -523,15 +523,15 @@ internal class StateAssociationFeatureTest(
 
     private fun endedSpan(name: String): SpanData = endedSpans.single { it.name == name }
 
-    private fun LogRecordData.stateName(): String = attributes["emb.states.name"].toString()
+    private fun LogRecordData.stateName(): String = attributes["emb.app.state.name"].toString()
 
-    private fun LogRecordData.newValue(): String? = attributes["emb.states.new_value"]?.toString()
+    private fun LogRecordData.newValue(): String? = attributes["emb.app.state.new_value"]?.toString()
 
     private fun Log.attribute(key: String): String? = attributes?.findAttributeValue(key)
 
     private fun Span.stateAttribute(key: String): String? = attributes?.findAttributeValue(key)
 
-    private fun Span.stateKeys(): List<String> = attributes.orEmpty().mapNotNull { it.key }.filter { it.startsWith("emb.states.") }
+    private fun Span.stateKeys(): List<String> = attributes.orEmpty().mapNotNull { it.key }.filter { it.startsWith("emb.app.state.") }
 
     private fun isStateValue(key: String): Boolean = VALUE_KEYS.any(key::startsWith)
 
@@ -544,18 +544,18 @@ internal class StateAssociationFeatureTest(
         val values = LinkedHashMap<String, String>()
         checkNotNull(attributes).forEach { attribute ->
             val key = checkNotNull(attribute.key)
-            if (key.startsWith("emb.states.initial_value.")) {
-                values[key.removePrefix("emb.states.initial_value.")] = checkNotNull(attribute.data)
+            if (key.startsWith("emb.app.state.initial_value.")) {
+                values[key.removePrefix("emb.app.state.initial_value.")] = checkNotNull(attribute.data)
             }
         }
-        var last = checkNotNull(attributes?.findAttributeValue("emb.states.initial_seq")).toLong()
+        var last = checkNotNull(attributes?.findAttributeValue("emb.app.state.initial_seq")).toLong()
         checkNotNull(events).forEach { event ->
-            val number = checkNotNull(event.attributes?.findAttributeValue("emb.states.seq")).toLong()
+            val number = checkNotNull(event.attributes?.findAttributeValue("emb.app.state.seq")).toLong()
             assertTrue(number > last)
             last = number
             if (number <= sequence) {
                 values[checkNotNull(event.name).removePrefix("emb-state-")] =
-                    checkNotNull(event.attributes?.findAttributeValue("emb.states.new_value"))
+                    checkNotNull(event.attributes?.findAttributeValue("emb.app.state.new_value"))
             }
         }
         return values
@@ -574,11 +574,11 @@ internal class StateAssociationFeatureTest(
         const val LAST_VALUE = "last"
         const val REMEMBERED_CHANGES = 64
         const val LOG_MESSAGE = "a-log"
-        const val CHANGE_EVENT = "emb.states.change"
-        const val SNAPSHOT_EVENT = "emb.states.snapshot"
-        const val VALUE_PREFIX = "emb.states.value."
-        const val VALUE_TYPE_PREFIX = "emb.states.value_type."
-        val VALUE_KEYS = listOf("emb.states.value", "emb.states.end_value")
+        const val CHANGE_EVENT = "emb.app.state.change"
+        const val SNAPSHOT_EVENT = "emb.app.state.snapshot"
+        const val VALUE_PREFIX = "emb.app.state.value."
+        const val VALUE_TYPE_PREFIX = "emb.app.state.value_type."
+        val VALUE_KEYS = listOf("emb.app.state.value", "emb.app.state.end_value")
         val persistenceWorkers = listOf(Worker.Background.SessionPersistenceWorker, Worker.Background.PeriodicCacheWorker)
     }
 }

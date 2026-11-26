@@ -344,10 +344,10 @@ internal class RealSdkInstanceFactoryTest {
             externalOtelConfig = { addLogExporter(FakeLogRecordExporter()) },
         )
 
-        assertEquals(emptyList<String>(), checkNotNull(beforeReady).keys.filter { it.startsWith("emb.states.") })
+        assertEquals(emptyList<String>(), checkNotNull(beforeReady).keys.filter { it.startsWith("emb.app.state.") })
         val afterReady = emitLog()
-        assertEquals("wifi", afterReady["emb.states.value.network"])
-        assertNotNull(afterReady["emb.states.seq"])
+        assertEquals("wifi", afterReady["emb.app.state.value.network"])
+        assertNotNull(afterReady["emb.app.state.seq"])
     }
 
     /**

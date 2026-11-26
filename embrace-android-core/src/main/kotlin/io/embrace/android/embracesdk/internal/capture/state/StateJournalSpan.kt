@@ -24,27 +24,30 @@ import java.security.MessageDigest
  *
  * The journal is how state is persisted, not how it is delivered. This renders it in the one shape the payload has for it:
  *
- * - every state's value when the journal opened is an attribute, `emb.states.initial_value.<name>`, with
- *   `emb.states.initial_value_type.<name>` beside it for a value the SDK generated
+ * - every state's value when the journal opened is an attribute, `emb.app.state.initial_value.<name>`, with
+ *   `emb.app.state.initial_value_type.<name>` beside it for a value the SDK generated
  * - every change is an event named `emb-state-<name>`, in the order of the journal, carrying its new value and its own
- *   sequence number, `emb.states.seq`
- * - `emb.states.initial_seq` says what the initial values are as of. The events are in the order of their numbers, the
+ *   sequence number, `emb.app.state.seq`
+ * - `emb.app.state.initial_seq` says what the initial values are as of. The events are in the order of their numbers, the
  *   first is numbered above that, and a gap between two numbers is one or more changes a limit refused, which are not
  *   listed. One state can reach its own limit while the others go on, so a gap can be anywhere after the part's start
- * - `emb.states.part_start_seq` says which changes were made before the session part started: those numbered up to it
- * - what is not listed is counted when the part's end is recorded: `emb.states.dropped_changes` for every state together,
- *   and for each state `emb.states.dropped_count.<name>`, with `emb.states.final_value.<name>` for a state that had a
+ * - `emb.app.state.part_start_seq` says which changes were made before the session part started: those numbered up to it
+ * - what is not listed is counted when the part's end is recorded: `emb.app.state.dropped_changes` for every state together,
+ *   and for each state `emb.app.state.dropped_count.<name>`, with `emb.app.state.final_value.<name>` for a state that had a
  *   change refused
- * - a limit that refused a change is stated: `emb.states.limit.<name>` where it was the state's own, and
- *   `emb.states.shared_limit` where it was the one the whole journal has
+ * - a limit that refused a change is stated: `emb.app.state.change_limit.<name>` where it was the state's own, and
+ *   `emb.app.state.global_change_limit` where it was the one the whole journal has. They come from the part's end where the
+ *   journal records it, and otherwise from the record the journal was handed when the limit first refused a change
  *
  * The span covers the session part: it starts and ends when the session part span does. If neither the journal nor the
  * session part span records the part's end, the process died with the part in progress, and the span is left as a
  * snapshot for resurrection to complete like any other. The session part span is given a link to it.
  *
  * A journal that does not record the end of its part is delivered as far as it goes and marked
- * `emb.states.truncated`: the process died, or the journal could not be written to, and either way the values
- * after its last event, and how many changes it did not record, are not known from it. The changes of a journal are in
+ * `emb.app.state.truncated`: the process died, or the journal could not be written to, and either way the values
+ * after its last event, and how many changes it did not record, are not known from it. It still states each limit it
+ * has a record of, so a state whose limit it states has no known value above the first gap in the numbers, no state has
+ * one there if it states the shared limit, and every other state has every change listed. The changes of a journal are in
  * the order of their numbers, and one read back with a change out of that order is delivered up to that change and
  * marked the same way. A gap in the numbers is not a fault, and the span is not cut at one.
  *
@@ -54,8 +57,8 @@ import java.security.MessageDigest
  * the span started with, or where the span has none because it started before the first change. A span with no end number
  * is then one no change is known to have happened during. A journal cut short still has a last recorded number, and that
  * is the one used, and the highest number any record of the journal holds counts, a checkpoint's and a part start's among
- * them. A span with no start number is given one only if another span of the part has a number, which shows the process
- * linked spans.
+ * them, and that of a limit's record, which is the number of the change the limit refused. A span with no start number
+ * is given one only if another span of the part has a number, which shows the process linked spans.
  *
  * The span's ids are worked out from the session part's, so a part delivered twice delivers the same span.
  */
@@ -97,7 +100,8 @@ fun Envelope<SessionPartPayload>.withStateSpan(
         if (span === sessionSpan) span.copy(links = span.links.orEmpty() + link) else span
     }
 
-    // the highest number any record holds, as a checkpoint and a part start carry the number the changes had reached
+    // the highest number any record holds, as a checkpoint, a part start and a limit's record carry the number the changes
+    // had reached
     val lastChange = records.maxOfOrNull { it.sequence }?.takeIf { it > 0 }
     // a span with no number started before the first change only where the process was linking spans, which another span
     // of the part having a number shows
@@ -188,7 +192,8 @@ private fun Span?.sharedAttributes(): List<Attribute> = buildList {
  * lead on from them. Changes dropped during the part leave the events of their state short of the value it ended the
  * part with, which is then given as well, for that state. The count for each state also holds the changes its reporter
  * said it never passed on, so the counts of the states can add up to more than the count for the part. A journal written
- * before states had limits of their own has the count for the part alone, and every state's value.
+ * before states had limits of their own has the count for the part alone, and every state's value. A journal with no
+ * part end has no counts and no final values, and states the limits it has a record of having reached.
  */
 private fun stateAttributes(
     records: List<StateRecord>,
@@ -210,7 +215,8 @@ private fun stateAttributes(
     partStart?.part_start?.dropped_changes?.takeIf { it > 0 }?.let { folded ->
         add(Attribute(StateAttributes.FOLDED_CHANGES, folded.toString()))
     }
-    partEnd?.part_end?.let { end -> addAll(partEndAttributes(end)) }
+    val end = partEnd?.part_end
+    addAll(if (end != null) partEndAttributes(end) else limitsReachedAttributes(records))
     if (truncated) {
         add(Attribute(StateAttributes.TRUNCATED, true.toString()))
     }
@@ -229,11 +235,11 @@ private fun partEndAttributes(end: StatePartEnd): List<Attribute> = buildList {
             add(Attribute("${StateAttributes.DROPPED_COUNT_PREFIX}${dropped.state}", dropped.count.toString()))
         }
         dropped.limit?.let { limit ->
-            add(Attribute("${StateAttributes.LIMIT_PREFIX}${dropped.state}", limit.toString()))
+            add(Attribute("${StateAttributes.CHANGE_LIMIT_PREFIX}${dropped.state}", limit.toString()))
         }
     }
     end.shared_limit?.let { limit ->
-        add(Attribute(StateAttributes.SHARED_LIMIT, limit.toString()))
+        add(Attribute(StateAttributes.GLOBAL_CHANGE_LIMIT, limit.toString()))
     }
     end.values.forEach { value ->
         add(Attribute("${StateAttributes.FINAL_VALUE_PREFIX}${value.state}", value.value_))
@@ -241,6 +247,22 @@ private fun partEndAttributes(end: StatePartEnd): List<Attribute> = buildList {
             add(Attribute("${StateAttributes.FINAL_VALUE_TYPE_PREFIX}${value.state}", SYSTEM_VALUE_TYPE))
         }
     }
+}
+
+/**
+ * The limits the [records] of a journal with no part end say were reached: each state's own, and the one the whole
+ * journal has. The journal is handed such a record the first time in a part that a limit refuses a change.
+ */
+private fun limitsReachedAttributes(records: List<StateRecord>): List<Attribute> {
+    val limits = LinkedHashMap<String, String>()
+    records.forEach { record ->
+        record.limit_reached?.let { reached ->
+            val state = reached.state
+            val key = if (state != null) "${StateAttributes.CHANGE_LIMIT_PREFIX}$state" else StateAttributes.GLOBAL_CHANGE_LIMIT
+            limits[key] = reached.limit.toString()
+        }
+    }
+    return limits.map { (key, limit) -> Attribute(key, limit) }
 }
 
 /**

@@ -8,6 +8,7 @@ import io.embrace.android.embracesdk.internal.limits.SpanLimits
 import io.embrace.android.embracesdk.internal.session.persistence.StateChange
 import io.embrace.android.embracesdk.internal.session.persistence.StateCheckpoint
 import io.embrace.android.embracesdk.internal.session.persistence.StateDroppedCount
+import io.embrace.android.embracesdk.internal.session.persistence.StateLimitReached
 import io.embrace.android.embracesdk.internal.session.persistence.StatePartEnd
 import io.embrace.android.embracesdk.internal.session.persistence.StatePartStart
 import io.embrace.android.embracesdk.internal.session.persistence.StateRecord
@@ -35,6 +36,11 @@ import io.embrace.android.embracesdk.internal.utils.event.EventHandler
  * journal, and the journal ends with those counts, with each limit that refused a change, a state's own and the
  * journal's, and with the value of each state that had a change refused. So the numbers of the changes a journal lists
  * can skip anywhere after its part start.
+ *
+ * The first time in a part that a limit refuses a change, the journal is also handed a record of that limit there and
+ * then: the state and its limit, or the journal's limit with no state. So a journal that never gets its end, because the
+ * process died, still says which limits were reached, and so whose changes its gaps can be. That record is not a change.
+ * It takes no number of its own, counts towards no limit, and [listener] is not told of it.
  *
  * An update can also say how many changes its reporter never passed on, as [StateUpdate.droppedChanges]. Those take no
  * number, as nothing says when they happened, and are counted for their state alone, in the journal in progress, or in
@@ -189,7 +195,7 @@ class StateRecorder(
 
             // the value was replaced first, so a change that is refused here is still what everything stamped from now on carries
             val journal = journal
-            if (journal != null && refusedByALimit(event)) {
+            if (journal != null && refusedByALimit(event, journal)) {
                 return
             }
             val record = StateRecord(
@@ -207,11 +213,12 @@ class StateRecorder(
     }
 
     /**
-     * Whether a limit refuses the change [event] made while a journal is in progress: its state's own limit, which is
+     * Whether a limit refuses the change [event] made while [journal] is in progress: its state's own limit, which is
      * checked first, or the limit on the journal as a whole. A change that is refused is counted for its state and for
-     * the journal, and one that is not is counted towards both limits. Called under [lock].
+     * the journal, and one that is not is counted towards both limits. The first change of a part that a limit refuses
+     * also has that limit recorded in [journal], once for each state's own and once for the journal's. Called under [lock].
      */
-    private fun refusedByALimit(event: StateUpdate): Boolean {
+    private fun refusedByALimit(event: StateUpdate, journal: (List<StateRecord>) -> Unit): Boolean {
         val tally = tallyOf(event.state)
         val byItsOwnLimit = tally.listed >= event.maxChangesInPart
         if (!byItsOwnLimit && recorded < maxChanges) {
@@ -223,14 +230,34 @@ class StateRecorder(
         tally.refused++
         dropped++
         if (byItsOwnLimit) {
-            tally.limit = event.maxChangesInPart.coerceAtLeast(0)
+            val limit = event.maxChangesInPart.coerceAtLeast(0)
+            val firstInThePart = tally.limit == null
+            tally.limit = limit
+            if (firstInThePart) {
+                journal(listOf(limitReached(event, limit, event.state)))
+            }
             onStateLimitApplied(event.state)
         } else {
+            val firstInThePart = !sharedLimitApplied
             sharedLimitApplied = true
+            if (firstInThePart) {
+                journal(listOf(limitReached(event, maxChanges, state = null)))
+            }
             onChangeDropped()
         }
         return true
     }
+
+    /**
+     * The record that [limit] refused the change [event] made, which is the last change there is: the limit of [state], or
+     * the limit on the journal as a whole where there is no state. It carries that change's number and time, as nothing
+     * else says when the limit was reached, and takes no number of its own.
+     */
+    private fun limitReached(event: StateUpdate, limit: Int, state: String?): StateRecord = StateRecord(
+        sequence = sequence,
+        time_ms = event.timeMs,
+        limit_reached = StateLimitReached(state = state, limit = limit),
+    )
 
     private fun tallyOf(state: String): StateTally = tallies.getOrPut(state, ::StateTally)
 
@@ -425,7 +452,7 @@ class StateRecorder(
         /**
          * The start of every key the SDK sets on an event, which a change's own attributes may not use.
          */
-        private const val RESERVED_KEY_PREFIX = "emb.states."
+        private const val RESERVED_KEY_PREFIX = "emb.app.state."
 
         /**
          * The stem of v1's keys, which a change's own attributes may not use either, as a reader that knows them could take one

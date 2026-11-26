@@ -101,17 +101,17 @@ internal class StateAssociationTest(
         val expected = mapOf(
             StateAttributes.SEQUENCE to "3",
             StateAttributes.END_SEQUENCE to "4",
-            "emb.states.value.network" to "wifi",
-            "emb.states.value.screen" to "Initializing",
-            "emb.states.value_type.screen" to "system",
-            "emb.states.end_value.network" to "none",
+            "emb.app.state.value.network" to "wifi",
+            "emb.app.state.value.screen" to "Initializing",
+            "emb.app.state.value_type.screen" to "system",
+            "emb.app.state.end_value.network" to "none",
         )
         assertEquals(expected, spanExporter.exportedSpans.single().stateAttributes())
         assertEquals(expected, endedSpans.single().stateAttributes())
         assertEquals(expected, endedSpans.single().toSpanData().stateAttributes())
         // when it started, the processor saw the values it started with
         assertEquals(
-            expected - StateAttributes.END_SEQUENCE - "emb.states.end_value.network",
+            expected - StateAttributes.END_SEQUENCE - "emb.app.state.end_value.network",
             checkNotNull(startedSpanAttributes["across"]).stateAttributes(),
         )
         assertEquals(
@@ -142,10 +142,10 @@ internal class StateAssociationTest(
 
         val link = mapOf(StateAttributes.SEQUENCE to "3", StateAttributes.END_SEQUENCE to "4")
         val values = mapOf(
-            "emb.states.value.network" to "wifi",
-            "emb.states.value.screen" to "Initializing",
-            "emb.states.value_type.screen" to "system",
-            "emb.states.end_value.network" to "none",
+            "emb.app.state.value.network" to "wifi",
+            "emb.app.state.value.screen" to "Initializing",
+            "emb.app.state.value_type.screen" to "system",
+            "emb.app.state.end_value.network" to "none",
         )
         assertEquals(link + values, exported("earlier").stateAttributes())
         assertEquals(link + values, endedSpans.single().stateAttributes())
@@ -180,9 +180,9 @@ internal class StateAssociationTest(
         assertEquals(
             mapOf(
                 StateAttributes.SEQUENCE to "3",
-                "emb.states.value.network" to "wifi",
-                "emb.states.value.screen" to "Initializing",
-                "emb.states.value_type.screen" to "system",
+                "emb.app.state.value.network" to "wifi",
+                "emb.app.state.value.screen" to "Initializing",
+                "emb.app.state.value_type.screen" to "system",
             ),
             exported("stopped-earlier").stateAttributes(),
         )
@@ -191,11 +191,11 @@ internal class StateAssociationTest(
             mapOf(StateAttributes.SEQUENCE to "3", StateAttributes.END_SEQUENCE to "4"),
             completed("across-the-change").stateAttributes(),
         )
-        assertEquals("wifi", exported("across-the-change").attributes["emb.states.value.network"])
-        assertEquals("none", exported("across-the-change").attributes["emb.states.end_value.network"])
+        assertEquals("wifi", exported("across-the-change").attributes["emb.app.state.value.network"])
+        assertEquals("none", exported("across-the-change").attributes["emb.app.state.end_value.network"])
 
         assertEquals(mapOf(StateAttributes.SEQUENCE to "4"), completed("after-the-change").stateAttributes())
-        assertEquals("none", exported("after-the-change").attributes["emb.states.value.network"])
+        assertEquals("none", exported("after-the-change").attributes["emb.app.state.value.network"])
 
         assertEquals(emptyMap<String, String>(), completed("not-remembered").stateAttributes())
         assertEquals(emptyMap<String, String>(), exported("not-remembered").stateAttributes())
@@ -334,20 +334,20 @@ internal class StateAssociationTest(
         sdk.sdkLogger.emit(body = "a log")
 
         val payload = logSink.logsForNextBatch().single().attributes.orEmpty().associate { it.key to it.data }
-        assertEquals("network=wifi;screen~Initializing", payload["emb.states.packed"])
-        assertEquals("3", payload["emb.states.seq"])
-        assertEquals(emptyList<String>(), payload.keys.filter { it?.startsWith("emb.states.value") == true })
+        assertEquals("network=wifi;screen~Initializing", payload["emb.app.state.packed"])
+        assertEquals("3", payload["emb.app.state.seq"])
+        assertEquals(emptyList<String>(), payload.keys.filter { it?.startsWith("emb.app.state.value") == true })
 
         val plain = mapOf(
-            "emb.states.value.network" to "wifi",
-            "emb.states.value.screen" to "Initializing",
-            "emb.states.value_type.screen" to "system",
+            "emb.app.state.value.network" to "wifi",
+            "emb.app.state.value.screen" to "Initializing",
+            "emb.app.state.value_type.screen" to "system",
         )
         listOf(logExporter.exportedLogs.single(), processedLogs.single()).forEach { log ->
-            assertEquals(plain, log.attributes.filterKeys { it.startsWith("emb.states.value") })
+            assertEquals(plain, log.attributes.filterKeys { it.startsWith("emb.app.state.value") })
             // a whole number, where the payload's is text
-            assertEquals(3L, log.attributes["emb.states.seq"])
-            assertFalse(log.attributes.containsKey("emb.states.packed"))
+            assertEquals(3L, log.attributes["emb.app.state.seq"])
+            assertFalse(log.attributes.containsKey("emb.app.state.packed"))
             assertEquals("part", log.attributes[SESSION_ATTRIBUTE])
         }
     }
@@ -360,9 +360,9 @@ internal class StateAssociationTest(
         sdk.sdkTracer.startSpan("early").end()
 
         val payload = logSink.logsForNextBatch().single().attributes.orEmpty().mapNotNull { it.key }
-        assertEquals(emptyList<String>(), payload.filter { it.startsWith("emb.states.") })
+        assertEquals(emptyList<String>(), payload.filter { it.startsWith("emb.app.state.") })
         listOf(logExporter.exportedLogs.single(), processedLogs.single()).forEach { log ->
-            assertEquals(emptyList<String>(), log.attributes.keys.filter { it.startsWith("emb.states.") })
+            assertEquals(emptyList<String>(), log.attributes.keys.filter { it.startsWith("emb.app.state.") })
         }
         // only the stamp on a log waits: the link on a span reads the state there is
         assertEquals(mapOf(StateAttributes.SEQUENCE to "3"), exported("early").stateAttributes())
@@ -372,8 +372,8 @@ internal class StateAssociationTest(
         sdk.sdkLogger.emit(body = "ready")
         val ready = logSink.logsForNextBatch().single { it.body == "ready" }
         val stamped = ready.attributes.orEmpty().associate { it.key to it.data }
-        assertEquals("network=wifi;screen~Initializing", stamped["emb.states.packed"])
-        assertEquals(3L, logExporter.exportedLogs.last().attributes["emb.states.seq"])
+        assertEquals("network=wifi;screen~Initializing", stamped["emb.app.state.packed"])
+        assertEquals(3L, logExporter.exportedLogs.last().attributes["emb.app.state.seq"])
     }
 
     @Test
@@ -393,13 +393,18 @@ internal class StateAssociationTest(
             it.body to it.attributes.orEmpty().mapNotNull { a -> a.key }.toSet()
         }
         val exited = checkNotNull(stored["exit"])
-        assertEquals(emptyList<String>(), exited.filter { it.startsWith("emb.states") || it == "emb.states.packed" })
+        assertEquals(emptyList<String>(), exited.filter { it.startsWith("emb.app.state") || it == "emb.app.state.packed" })
         val ordinary = checkNotNull(stored["ordinary"])
-        assertTrue(ordinary.containsAll(listOf("emb.states.packed", "emb.states.seq")))
+        assertTrue(ordinary.containsAll(listOf("emb.app.state.packed", "emb.app.state.seq")))
 
         val handed = logExporter.exportedLogs.associateBy { it.body }
-        assertEquals(emptyList<String>(), checkNotNull(handed["exit"]).attributes.keys.filter { it.startsWith("emb.states") })
-        assertTrue(checkNotNull(handed["ordinary"]).attributes.containsKey("emb.states.value.network"))
+        assertEquals(
+            emptyList<String>(),
+            checkNotNull(handed["exit"]).attributes.keys.filter {
+                it.startsWith("emb.app.state")
+            },
+        )
+        assertTrue(checkNotNull(handed["ordinary"]).attributes.containsKey("emb.app.state.value.network"))
         // the rest of the metadata is still stamped on the exit record as before
         assertEquals("", handed.getValue("exit").attributes[SESSION_ATTRIBUTE])
     }
@@ -412,10 +417,10 @@ internal class StateAssociationTest(
         sdk.sdkLogger.emit(body = "a log")
 
         val payload = logSink.logsForNextBatch().single().attributes.orEmpty().associate { it.key to it.data }
-        assertEquals("network=wifi;screen~Initializing", payload["emb.states.packed"])
-        assertEquals("3", payload["emb.states.seq"])
+        assertEquals("network=wifi;screen~Initializing", payload["emb.app.state.packed"])
+        assertEquals("3", payload["emb.app.state.seq"])
         assertEquals(0, stamp.attributesBuilt)
-        assertEquals(emptyList<String>(), payload.keys.filter { it?.startsWith("emb.states.value") == true })
+        assertEquals(emptyList<String>(), payload.keys.filter { it?.startsWith("emb.app.state.value") == true })
     }
 
     @Test
@@ -429,7 +434,7 @@ internal class StateAssociationTest(
         sdk.sdkLogger.emit(body = "a log")
 
         // the packed attribute is added to the payload as it is stored, past the limits on a log record's attributes
-        val packed = logSink.logsForNextBatch().single().attributes.orEmpty().single { it.key == "emb.states.packed" }.data
+        val packed = logSink.logsForNextBatch().single().attributes.orEmpty().single { it.key == "emb.app.state.packed" }.data
         assertEquals(stamp.encoded, packed)
         assertTrue(checkNotNull(packed).startsWith("longest=" + "w".repeat(UNCAPPED_VALUE) + ";state-0="))
     }
@@ -444,15 +449,15 @@ internal class StateAssociationTest(
         sdk.sdkLogger.emit(body = "a log")
 
         val handed = logExporter.exportedLogs.single().attributes
-        val plain = handed.filterKeys { it.startsWith("emb.states.value.") }
+        val plain = handed.filterKeys { it.startsWith("emb.app.state.value.") }
         // the OpenTelemetry SDK keeps at most the configured number of attributes, 400, and drops the rest without saying so:
         // the log's own attributes and the stamp's share it, and the stamp comes after them
         assertTrue(handed.size <= MAX_LOG_ATTRIBUTES)
         // the number is written first, so it is not what the limit drops
-        assertEquals(5L, handed["emb.states.seq"])
+        assertEquals(5L, handed["emb.app.state.seq"])
         assertTrue("${plain.size}", plain.size < MANY_STATES)
         // a value is not cut: no limit on the length of a log record's attribute is configured
-        assertEquals(UNCAPPED_VALUE, plain["emb.states.value.longest"]?.toString()?.length)
+        assertEquals(UNCAPPED_VALUE, plain["emb.app.state.value.longest"]?.toString()?.length)
     }
 
     private fun runSpanAcrossAChange() {
@@ -556,5 +561,5 @@ internal class StateAssociationTest(
     }.stateAttributes()
 
     private fun Map<String, Any>.stateAttributes(): Map<String, String> =
-        filterKeys { it.startsWith("emb.states.") }.mapValues { it.value.toString() }
+        filterKeys { it.startsWith("emb.app.state.") }.mapValues { it.value.toString() }
 }

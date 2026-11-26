@@ -81,10 +81,10 @@ internal class StateRecorderTest {
         val snapshot = recorder.snapshot()
         assertEquals(
             mapOf(
-                "emb.states.value.screen" to "Backgrounded",
-                "emb.states.value_type.screen" to "system",
-                "emb.states.value.network" to "none",
-                "emb.states.value.power" to "low",
+                "emb.app.state.value.screen" to "Backgrounded",
+                "emb.app.state.value_type.screen" to "system",
+                "emb.app.state.value.network" to "none",
+                "emb.app.state.value.power" to "low",
             ),
             snapshot.attributes,
         )
@@ -92,24 +92,24 @@ internal class StateRecorderTest {
         assertTrue(snapshot.attributes === snapshot.attributes)
         assertEquals(
             mapOf(
-                "emb.states.value.screen" to "Backgrounded",
-                "emb.states.value_type.screen" to "system",
-                "emb.states.value.network" to "wifi",
+                "emb.app.state.value.screen" to "Backgrounded",
+                "emb.app.state.value_type.screen" to "system",
+                "emb.app.state.value.network" to "wifi",
             ),
             earlier.attributes,
         )
 
         // a state that has its first value differs from having none
         assertEquals(
-            mapOf("emb.states.end_value.network" to "none", "emb.states.end_value.power" to "low"),
+            mapOf("emb.app.state.end_value.network" to "none", "emb.app.state.end_value.power" to "low"),
             snapshot.endAttributes(earlier),
         )
         assertEquals(
             mapOf(
-                "emb.states.end_value.screen" to "Backgrounded",
-                "emb.states.end_value_type.screen" to "system",
-                "emb.states.end_value.network" to "none",
-                "emb.states.end_value.power" to "low",
+                "emb.app.state.end_value.screen" to "Backgrounded",
+                "emb.app.state.end_value_type.screen" to "system",
+                "emb.app.state.end_value.network" to "none",
+                "emb.app.state.end_value.power" to "low",
             ),
             snapshot.endAttributes(StateSnapshot.NONE),
         )
@@ -315,6 +315,8 @@ internal class StateRecorderTest {
         assertEquals(2, journal.count { it.change != null })
         assertEquals("network=none;power=low", recorder.snapshot().encoded)
         assertEquals(4L, recorder.snapshot().sequence)
+        // the limit is recorded as it first refuses a change, with that change's number, and once however many it refuses
+        assertEquals(listOf("null:2@3"), journal.limitsReached())
 
         recorder.endJournal(clock.now())
         with(checkNotNull(journal.last().part_end)) {
@@ -335,6 +337,7 @@ internal class StateRecorderTest {
         assertEquals(1, nextJournal.count { it.change != null })
         assertEquals(0, checkNotNull(nextJournal.single { it.part_start != null }.part_start).dropped_changes)
         recorder.endJournal(clock.now())
+        assertEquals(emptyList<String>(), nextJournal.limitsReached())
         with(checkNotNull(nextJournal.last().part_end)) {
             assertEquals(0, dropped_changes)
             assertNull(shared_limit)
@@ -365,7 +368,7 @@ internal class StateRecorderTest {
         recorder.beginJournal(clock.now(), journal::addAll)
         update("network", "wifi", maxChangesInPart = 2)
         update("network", "wan", maxChangesInPart = 2)
-        update("network", "none", maxChangesInPart = 2)
+        val firstRefusedAt = update("network", "none", maxChangesInPart = 2)
         update("power", "low")
         update("network", "wifi", maxChangesInPart = 2)
         update("power", "normal")
@@ -373,6 +376,12 @@ internal class StateRecorderTest {
         // the refused changes keep their numbers, so the numbers of the changes listed skip in the middle
         assertEquals(listOf(1L, 2L, 3L, 4L, 5L, 7L, 9L), journal.filter { it.change != null }.map(StateRecord::sequence))
         assertEquals(listOf(1L, 2L, 3L, 4L, 5L, 7L, 9L), told)
+        // the limit is recorded where it first refuses a change, with that change's number and time, and not again for
+        // the next change it refuses, nor for a change that is listed. It is no change, and the listener is not told.
+        assertEquals(listOf("network:2@6"), journal.limitsReached())
+        val reached = journal.indexOfFirst { it.limit_reached != null }
+        assertEquals(5L to 7L, journal[reached - 1].sequence to journal[reached + 1].sequence)
+        assertEquals(firstRefusedAt, journal[reached].time_ms)
         // and the value is the last one reported, listed or not
         assertEquals("network=wifi;power=normal", recorder.snapshot().encoded)
         assertEquals(9L, recorder.snapshot().sequence)
@@ -404,6 +413,8 @@ internal class StateRecorderTest {
             assertEquals(1, dropped_changes)
             assertEquals(listOf("network:1:2"), counts())
         }
+        // and the limit is recorded again in the part it is reached in again
+        assertEquals(listOf("network:2@12"), nextJournal.limitsReached())
     }
 
     @Test
@@ -501,6 +512,8 @@ internal class StateRecorderTest {
         recorder.endJournal(clock.now())
 
         assertEquals(listOf(1L, 3L), journal.filter { it.change != null }.map(StateRecord::sequence))
+        // each limit is recorded as it is reached, and the record of the first used up none of what the journal may list
+        assertEquals(listOf("power:1@2", "null:2@4"), journal.limitsReached())
         with(checkNotNull(journal.last().part_end)) {
             assertEquals(2, dropped_changes)
             assertEquals(listOf("power:1:1", "network:1:null"), counts())
@@ -592,16 +605,16 @@ internal class StateRecorderTest {
     fun `a change's own attribute under either state stem is dropped, and uses up none of the seven a change can carry`() {
         recorder.beginJournal(clock.now(), journal::addAll)
         val reserved = mapOf(
-            "emb.states.new_value" to "spoofed",
-            "emb.states.new_value_type" to "system",
-            "emb.states.seq" to "99",
-            "emb.states.value.network" to "wifi",
-            "emb.states.anything-else" to "x",
+            "emb.app.state.new_value" to "spoofed",
+            "emb.app.state.new_value_type" to "system",
+            "emb.app.state.seq" to "99",
+            "emb.app.state.value.network" to "wifi",
+            "emb.app.state.anything-else" to "x",
             "emb.state.anything-else" to "x",
             "emb.state.initial_value" to "v1",
             // the stems alone, which are v1's foreground or background attribute and the SDK's own
             "emb.state" to "background",
-            "emb.states" to "x",
+            "emb.app.state" to "x",
         )
         val own = (1..8).associate { "key-$it" to "v$it" }
         update("network", "wifi", reserved + own)
@@ -611,7 +624,7 @@ internal class StateRecorderTest {
 
         // v1's count of the transitions an instrumentation dropped is reserved like any other key under its stem: a
         // reporter gives that count beside the update's attributes, and not among them
-        update("network", "wan", mapOf("emb.state.dropped_by_instrumentation" to "2", "emb.states.seq" to "99", "key" to "v"))
+        update("network", "wan", mapOf("emb.state.dropped_by_instrumentation" to "2", "emb.app.state.seq" to "99", "key" to "v"))
         assertEquals(mapOf("key" to "v"), checkNotNull(journal.last().change).attributes)
     }
 
@@ -655,6 +668,14 @@ internal class StateRecorderTest {
         val time = clock.tick()
         recorder.onEvent(StateUpdate(state, value, time, attributes, maxChangesInPart, droppedChanges))
         return time
+    }
+
+    /**
+     * The limits a journal records as reached, each as `state:limit@sequence`, in the journal's order. The state is null
+     * for the limit on the journal as a whole.
+     */
+    private fun List<StateRecord>.limitsReached(): List<String> = mapNotNull { record ->
+        record.limit_reached?.let { "${it.state}:${it.limit}@${record.sequence}" }
     }
 
     /**

@@ -13,7 +13,8 @@ option java_package = "io.embrace.android.embracesdk.internal.session.persistenc
 // ended in the process that started it. The changes are in the order of their sequence. Those
 // before the part start are consecutive from the sequence after the checkpoint's. A change made
 // during the part that a limit refused is not recorded and keeps its number, so the numbers of the
-// changes after the part start can skip, anywhere among them. The part end counts what is missing.
+// changes after the part start can skip, anywhere among them. The first change a limit refuses in
+// a part is followed by a record of that limit, and the part end counts what is missing.
 message StateJournal {
   uint32 format_version = 1;
   repeated StateRecord records = 2;
@@ -23,7 +24,8 @@ message StateJournal {
   int64 written_at_ms = 3;
 }
 
-// One entry in the journal. Exactly one of checkpoint, change, part_start and part_end is set.
+// One entry in the journal. Exactly one of checkpoint, change, part_start, part_end and
+// limit_reached is set.
 message StateRecord {
   // The place of this record in the order of state changes, which runs for the life of the process.
   // A change takes the next number. Any other record carries the number of the last change before it.
@@ -36,6 +38,7 @@ message StateRecord {
   StateChange change = 4;
   StatePartStart part_start = 5;
   StatePartEnd part_end = 6;
+  StateLimitReached limit_reached = 7;
 }
 
 // The value of one state.
@@ -100,4 +103,19 @@ message StateDroppedCount {
   // The most changes of the state that one session part lists. Set only if that limit, and not
   // the limit on the journal as a whole, refused a change of the state during the part.
   optional int32 limit = 3;
+}
+
+// A limit on what the journal lists refused a change, for the first time in the session part. It
+// is recorded as it happens, so that a journal whose part end was never written still says which
+// limits were reached. One is written in a part for each state whose own limit refuses a change,
+// and one for the limit on the journal as a whole. It is not a change: its record carries the
+// sequence of the change that was refused, which is the last change made, and that change's time.
+message StateLimitReached {
+  // The state whose own limit refused a change of it. Not set where the limit is the one on the
+  // journal as a whole.
+  optional string state = 1;
+
+  // The limit: the most changes of the state that one session part lists, or the most changes the
+  // journal holds for every state together.
+  int32 limit = 2;
 }

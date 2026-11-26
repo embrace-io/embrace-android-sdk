@@ -204,15 +204,15 @@ internal class EmbraceLogRecordProcessorTest {
         stateProcessor(stamp, externalReceivers = true).onEmit(log)
 
         // an app's processors and exporters are handed the record: the plain attributes, a whole number, and no packed one
-        assertEquals("wifi", log.attributes["emb.states.value.network"])
-        assertEquals("Backgrounded", log.attributes["emb.states.value.screen"])
-        assertEquals("system", log.attributes["emb.states.value_type.screen"])
-        assertEquals(2L, log.attributes["emb.states.seq"])
-        assertFalse(log.attributes.containsKey("emb.states.packed"))
+        assertEquals("wifi", log.attributes["emb.app.state.value.network"])
+        assertEquals("Backgrounded", log.attributes["emb.app.state.value.screen"])
+        assertEquals("system", log.attributes["emb.app.state.value_type.screen"])
+        assertEquals(2L, log.attributes["emb.app.state.seq"])
+        assertFalse(log.attributes.containsKey("emb.app.state.packed"))
 
         // Embrace's payload is handed the packed attribute and the sequence, beside the record's own and not on it
         assertEquals(
-            listOf(Attribute("emb.states.packed", "network=wifi;screen~Backgrounded"), Attribute("emb.states.seq", "2")),
+            listOf(Attribute("emb.app.state.packed", "network=wifi;screen~Backgrounded"), Attribute("emb.app.state.seq", "2")),
             logRecordExporter.payloadAttributes.getValue(log),
         )
         assertEquals(log, logRecordExporter.exportedLogs.single())
@@ -220,7 +220,7 @@ internal class EmbraceLogRecordProcessorTest {
         // and the record had none of the plain attributes when Embrace's payload was stored
         assertEquals(
             emptyList<String>(),
-            logRecordExporter.attributesAtStore.getValue(log).keys.filter { it.startsWith("emb.states") },
+            logRecordExporter.attributesAtStore.getValue(log).keys.filter { it.startsWith("emb.app.state") },
         )
     }
 
@@ -230,8 +230,8 @@ internal class EmbraceLogRecordProcessorTest {
         val log = FakeReadWriteLogRecord()
         stateProcessor(CountingStateStamp(), externalReceivers = true).onEmit(log)
 
-        assertEquals("wifi", log.attributes["emb.states.value.network"])
-        assertEquals(2L, log.attributes["emb.states.seq"])
+        assertEquals("wifi", log.attributes["emb.app.state.value.network"])
+        assertEquals(2L, log.attributes["emb.app.state.seq"])
     }
 
     @Test
@@ -241,9 +241,9 @@ internal class EmbraceLogRecordProcessorTest {
         stateProcessor(stamp, externalReceivers = false).onEmit(log)
 
         assertEquals(0, stamp.attributesBuilt)
-        assertEquals(emptyList<String>(), log.attributes.keys.filter { it.startsWith("emb.states") })
+        assertEquals(emptyList<String>(), log.attributes.keys.filter { it.startsWith("emb.app.state") })
         assertEquals(
-            listOf("emb.states.packed", "emb.states.seq"),
+            listOf("emb.app.state.packed", "emb.app.state.seq"),
             logRecordExporter.payloadAttributes.getValue(log).map { it.key },
         )
     }
@@ -253,20 +253,20 @@ internal class EmbraceLogRecordProcessorTest {
         // none is given until the SDK is ready
         val early = FakeReadWriteLogRecord()
         stateProcessor(null, externalReceivers = true).onEmit(early)
-        assertEquals(emptyList<String>(), early.attributes.keys.filter { it.startsWith("emb.states") })
+        assertEquals(emptyList<String>(), early.attributes.keys.filter { it.startsWith("emb.app.state") })
         assertEquals(emptyMap<Any, Any>(), logRecordExporter.payloadAttributes)
         assertEquals(early, logRecordExporter.exportedLogs.single())
 
         val empty = FakeReadWriteLogRecord()
         stateProcessor(FakeStateStamp(0), externalReceivers = true).onEmit(empty)
-        assertEquals(emptyList<String>(), empty.attributes.keys.filter { it.startsWith("emb.states") })
+        assertEquals(emptyList<String>(), empty.attributes.keys.filter { it.startsWith("emb.app.state") })
         assertEquals(emptyMap<Any, Any>(), logRecordExporter.payloadAttributes)
 
         val crash = FakeReadWriteLogRecord().apply {
             setStringAttribute(EmbType.System.NativeCrash.key, EmbType.System.NativeCrash.value)
         }
         stateProcessor(CountingStateStamp(), externalReceivers = true).onEmit(crash)
-        assertEquals(emptyList<String>(), crash.attributes.keys.filter { it.startsWith("emb.states") })
+        assertEquals(emptyList<String>(), crash.attributes.keys.filter { it.startsWith("emb.app.state") })
         assertEquals(emptyMap<Any, Any>(), logRecordExporter.payloadAttributes)
 
         // a record that names the session part it belongs to is about another process, as an exit record is
@@ -275,13 +275,13 @@ internal class EmbraceLogRecordProcessorTest {
             setStringAttribute(EmbSessionAttributes.EMB_SESSION_PART_ID, "")
         }
         stateProcessor(CountingStateStamp(), externalReceivers = true).onEmit(exit)
-        assertEquals(emptyList<String>(), exit.attributes.keys.filter { it.startsWith("emb.states") })
+        assertEquals(emptyList<String>(), exit.attributes.keys.filter { it.startsWith("emb.app.state") })
         assertEquals(emptyMap<Any, Any>(), logRecordExporter.payloadAttributes)
         assertEquals(exit, logRecordExporter.exportedLogs.last())
 
-        val stamped = FakeReadWriteLogRecord().apply { setStringAttribute("emb.states.packed", "set=earlier") }
+        val stamped = FakeReadWriteLogRecord().apply { setStringAttribute("emb.app.state.packed", "set=earlier") }
         stateProcessor(CountingStateStamp(), externalReceivers = true).onEmit(stamped)
-        assertEquals("set=earlier", stamped.attributes["emb.states.packed"])
+        assertEquals("set=earlier", stamped.attributes["emb.app.state.packed"])
         assertEquals(emptyMap<Any, Any>(), logRecordExporter.payloadAttributes)
     }
 
@@ -290,7 +290,7 @@ internal class EmbraceLogRecordProcessorTest {
         val stamped = EmbraceLogRecordProcessor(
             uuidSource = TestUuidSource(),
             metadataProvider = {
-                mapOf("emb.states.packed" to "network=wifi", "emb.states.seq" to "2", SESSION_ATTRIBUTE_NAME to "foo")
+                mapOf("emb.app.state.packed" to "network=wifi", "emb.app.state.seq" to "2", SESSION_ATTRIBUTE_NAME to "foo")
             },
             logRecordExporter = logRecordExporter,
         )
@@ -304,11 +304,11 @@ internal class EmbraceLogRecordProcessorTest {
         }
         listOf(ordinary, exit, crash).forEach { stamped.onEmit(it) }
 
-        assertEquals("network=wifi", ordinary.attributes["emb.states.packed"])
-        assertEquals("2", ordinary.attributes["emb.states.seq"])
+        assertEquals("network=wifi", ordinary.attributes["emb.app.state.packed"])
+        assertEquals("2", ordinary.attributes["emb.app.state.seq"])
         listOf(exit, crash).forEach { log ->
-            assertFalse(log.attributes.containsKey("emb.states.packed"))
-            assertFalse(log.attributes.containsKey("emb.states.seq"))
+            assertFalse(log.attributes.containsKey("emb.app.state.packed"))
+            assertFalse(log.attributes.containsKey("emb.app.state.seq"))
         }
         // the rest of the metadata is as it was: stamped on the exit record, and not on the native crash
         assertEquals("foo", exit.attributes[SESSION_ATTRIBUTE_NAME])

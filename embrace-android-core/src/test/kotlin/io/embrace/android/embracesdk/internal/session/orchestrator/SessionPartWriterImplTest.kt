@@ -246,6 +246,11 @@ internal class SessionPartWriterImplTest {
                 assertNull(partEnd.shared_limit)
                 assertEquals(partEnd.dropped_changes, partEnd.dropped_counts.sumOf { it.count })
                 assertTrue(partEnd.dropped_counts.all { it.limit == StateUpdate.DEFAULT_MAX_CHANGES_IN_PART })
+                // and each of those limits was recorded once as it was first reached
+                assertEquals(
+                    partEnd.dropped_counts.map { it.state to it.limit }.sortedBy { it.first },
+                    records.mapNotNull { it.limit_reached }.map { it.state to it.limit }.sortedBy { it.first },
+                )
                 refused += partEnd.dropped_changes
             }
             journaled += changesHeld.size

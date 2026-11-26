@@ -72,6 +72,22 @@ internal class StateJournalReaderTest {
     }
 
     @Test
+    fun `a record of a limit that was reached reads back with its state, or with none for the shared limit`() {
+        val networkLimit = StateLimitReached(state = "network", limit = 100)
+        val ofAState = StateRecord(sequence = 2, time_ms = 1_002L, limit_reached = networkLimit)
+        // a state can be named with nothing, which is not the same as no state being named
+        val ofAStateWithNoName = StateRecord(sequence = 3, limit_reached = StateLimitReached(state = "", limit = 0))
+        val shared = StateRecord(sequence = 4, limit_reached = StateLimitReached(limit = 10_000))
+
+        val decoded = decode(stateJournalLog(listOf(first, ofAState, ofAStateWithNoName, shared)))
+
+        assertEquals(listOf(first, ofAState, ofAStateWithNoName, shared), decoded.records)
+        assertNull(decoded.corruption)
+        assertEquals(listOf("network", "", null), decoded.records.mapNotNull { it.limit_reached }.map { it.state })
+        assertEquals(listOf(100, 0, 10_000), decoded.records.mapNotNull { it.limit_reached }.map { it.limit })
+    }
+
+    @Test
     fun `a journal holding only the header reads back no records`() {
         val decoded = decode(stateJournalHeader())
         assertEquals(emptyList<StateRecord>(), decoded.records)

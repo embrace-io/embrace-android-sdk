@@ -364,8 +364,8 @@ internal class StateOtlpExportHarnessTest {
         values[0] = emptyMap()
         changes.forEach { change ->
             val sequence = checkNotNull(change.long(SEQUENCE))
-            val state = checkNotNull(change.string("emb.states.name"))
-            values[sequence] = values.getValue(sequence - 1) + (state to checkNotNull(change.string("emb.states.new_value")))
+            val state = checkNotNull(change.string("emb.app.state.name"))
+            values[sequence] = values.getValue(sequence - 1) + (state to checkNotNull(change.string("emb.app.state.new_value")))
             assertEquals("process", change.string("emb.entity.type"))
             assertEquals(processIdentifier, change.string(ENTITY_ID))
             assertNull(change["body"])
@@ -510,12 +510,12 @@ internal class StateOtlpExportHarnessTest {
         const val PAGES = 5
         const val GAP_MS = 25L
 
-        const val SEQUENCE = "emb.states.seq"
-        const val END_SEQUENCE = "emb.states.end_seq"
-        const val VALUE_PREFIX = "emb.states.value."
-        const val END_VALUE_PREFIX = "emb.states.end_value."
-        const val CHANGE_EVENT = "emb.states.change"
-        const val SNAPSHOT_EVENT = "emb.states.snapshot"
+        const val SEQUENCE = "emb.app.state.seq"
+        const val END_SEQUENCE = "emb.app.state.end_seq"
+        const val VALUE_PREFIX = "emb.app.state.value."
+        const val END_VALUE_PREFIX = "emb.app.state.end_value."
+        const val CHANGE_EVENT = "emb.app.state.change"
+        const val SNAPSHOT_EVENT = "emb.app.state.snapshot"
         const val ENTITY_ID = "emb.entity.id"
         const val PROCESS_IDENTIFIER = "emb.process_identifier"
         const val TRACE_ID_LENGTH = 32

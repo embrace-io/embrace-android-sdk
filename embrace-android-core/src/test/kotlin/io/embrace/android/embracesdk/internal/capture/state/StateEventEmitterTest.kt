@@ -55,11 +55,11 @@ internal class StateEventEmitterTest {
         assertTrue(logger.logs.isEmpty())
         executor.runCurrentlyBlocked()
 
-        assertEquals(listOf(1L, 2L, 3L), logger.logs.map { it.attributes["emb.states.seq"] })
+        assertEquals(listOf(1L, 2L, 3L), logger.logs.map { it.attributes["emb.app.state.seq"] })
         with(logger.logs[0]) {
             assertChangeEvent(wifiTime)
             assertEquals(
-                changeAttributes(1, "network", "wifi") + mapOf("emb.states.value.network" to "wifi"),
+                changeAttributes(1, "network", "wifi") + mapOf("emb.app.state.value.network" to "wifi"),
                 attributes,
             )
         }
@@ -67,26 +67,26 @@ internal class StateEventEmitterTest {
             assertChangeEvent(screenTime)
             assertEquals(
                 changeAttributes(2, "screen-automatic", "Backgrounded") + mapOf(
-                    "emb.states.new_value_type" to "system",
+                    "emb.app.state.new_value_type" to "system",
                     "key" to "v",
-                    "emb.states.value.network" to "wifi",
-                    "emb.states.value.screen-automatic" to "Backgrounded",
-                    "emb.states.value_type.screen-automatic" to "system",
+                    "emb.app.state.value.network" to "wifi",
+                    "emb.app.state.value.screen-automatic" to "Backgrounded",
+                    "emb.app.state.value_type.screen-automatic" to "system",
                 ),
                 attributes,
             )
         }
         with(logger.logs[2]) {
             assertChangeEvent(offlineTime)
-            assertEquals("none", attributes["emb.states.value.network"])
+            assertEquals("none", attributes["emb.app.state.value.network"])
             // the value the state had before, and none on the first change of each state
-            assertEquals("wifi", attributes["emb.states.previous_value"])
-            assertNull(attributes["emb.states.previous_value_type"])
+            assertEquals("wifi", attributes["emb.app.state.previous_value"])
+            assertNull(attributes["emb.app.state.previous_value_type"])
         }
-        assertNull(logger.logs[0].attributes["emb.states.previous_value"])
-        assertNull(logger.logs[1].attributes["emb.states.previous_value"])
+        assertNull(logger.logs[0].attributes["emb.app.state.previous_value"])
+        assertNull(logger.logs[1].attributes["emb.app.state.previous_value"])
         // the values on the first event are the ones after that change, and not the ones when it was emitted
-        assertNull(logger.logs[0].attributes["emb.states.value.screen-automatic"])
+        assertNull(logger.logs[0].attributes["emb.app.state.value.screen-automatic"])
     }
 
     @Test
@@ -100,12 +100,12 @@ internal class StateEventEmitterTest {
         executor.runCurrentlyBlocked()
 
         assertEquals(
-            listOf("emb.states.change", "emb.states.change", "emb.states.snapshot", "emb.states.change"),
+            listOf("emb.app.state.change", "emb.app.state.change", "emb.app.state.snapshot", "emb.app.state.change"),
             logger.logs.map(FakeLogRecord::eventName),
         )
         assertEquals(changeAttributes(1, "network", "wifi"), logger.logs[0].attributes)
         assertEquals(
-            changeAttributes(2, "screen-automatic", "Backgrounded") + mapOf("emb.states.new_value_type" to "system"),
+            changeAttributes(2, "screen-automatic", "Backgrounded") + mapOf("emb.app.state.new_value_type" to "system"),
             logger.logs[1].attributes,
         )
         with(logger.logs[2]) {
@@ -115,18 +115,18 @@ internal class StateEventEmitterTest {
             assertEquals(
                 mapOf(
                     "emb.type" to "state",
-                    "emb.states.seq" to 2L,
+                    "emb.app.state.seq" to 2L,
                     "emb.entity.type" to "process",
                     "emb.entity.id" to PROCESS_IDENTIFIER,
-                    "emb.states.value.network" to "wifi",
-                    "emb.states.value.screen-automatic" to "Backgrounded",
-                    "emb.states.value_type.screen-automatic" to "system",
+                    "emb.app.state.value.network" to "wifi",
+                    "emb.app.state.value.screen-automatic" to "Backgrounded",
+                    "emb.app.state.value_type.screen-automatic" to "system",
                 ),
                 attributes,
             )
         }
         assertEquals(
-            changeAttributes(3, "network", "none") + mapOf("emb.states.previous_value" to "wifi"),
+            changeAttributes(3, "network", "none") + mapOf("emb.app.state.previous_value" to "wifi"),
             logger.logs[3].attributes,
         )
     }
@@ -142,13 +142,13 @@ internal class StateEventEmitterTest {
             executor.runCurrentlyBlocked()
 
             val change = logger.logs[1]
-            assertEquals("Home", change.attributes["emb.states.new_value"])
-            assertEquals("Backgrounded", change.attributes["emb.states.previous_value"])
-            assertEquals("system", change.attributes["emb.states.previous_value_type"])
-            assertNull(change.attributes["emb.states.new_value_type"])
-            assertNull(logger.logs[0].attributes["emb.states.previous_value"])
+            assertEquals("Home", change.attributes["emb.app.state.new_value"])
+            assertEquals("Backgrounded", change.attributes["emb.app.state.previous_value"])
+            assertEquals("system", change.attributes["emb.app.state.previous_value_type"])
+            assertNull(change.attributes["emb.app.state.new_value_type"])
+            assertNull(logger.logs[0].attributes["emb.app.state.previous_value"])
             val snapshot = logger.logs[2]
-            assertEquals("emb.states.snapshot", snapshot.eventName)
+            assertEquals("emb.app.state.snapshot", snapshot.eventName)
             assertEquals(emptyList<String>(), snapshot.attributes.keys.filter { it.contains("previous") })
         }
     }
@@ -164,11 +164,11 @@ internal class StateEventEmitterTest {
         executor.runCurrentlyBlocked()
 
         // what receives the events sees the sequence numbers stop short, and room is made again
-        assertEquals(listOf(1L, 2L, 3L), logger.logs.map { it.attributes["emb.states.seq"] })
+        assertEquals(listOf(1L, 2L, 3L), logger.logs.map { it.attributes["emb.app.state.seq"] })
         assertEquals(0, emitter.pendingEvents())
         update("network", "after")
         executor.runCurrentlyBlocked()
-        assertEquals(6L, logger.logs.last().attributes["emb.states.seq"])
+        assertEquals(6L, logger.logs.last().attributes["emb.app.state.seq"])
         assertEquals(2, emitter.droppedEvents())
     }
 
@@ -185,12 +185,12 @@ internal class StateEventEmitterTest {
         executor.runCurrentlyBlocked()
 
         assertEquals(
-            listOf("emb.states.snapshot", "emb.states.change", "emb.states.change"),
+            listOf("emb.app.state.snapshot", "emb.app.state.change", "emb.app.state.change"),
             logger.logs.map(FakeLogRecord::eventName),
         )
-        assertEquals(listOf("wifi", "low"), logger.logs.drop(1).map { it.attributes["emb.states.new_value"] })
+        assertEquals(listOf("wifi", "low"), logger.logs.drop(1).map { it.attributes["emb.app.state.new_value"] })
         // what receives the events sees the numbers skip where a change was refused, as the change log's do
-        assertEquals(listOf(1L, 3L), logger.logs.drop(1).map { it.attributes["emb.states.seq"] })
+        assertEquals(listOf(1L, 3L), logger.logs.drop(1).map { it.attributes["emb.app.state.seq"] })
     }
 
     @Test
@@ -242,7 +242,7 @@ internal class StateEventEmitterTest {
         workers.close()
         resume.countDown()
         assertTrue(workers.awaitTermination(TimeUnit.SECONDS.toMillis(WAIT_SECONDS)))
-        assertEquals((1..EVENTS).map(Int::toLong), logger.logs.map { it.attributes["emb.states.seq"] })
+        assertEquals((1..EVENTS).map(Int::toLong), logger.logs.map { it.attributes["emb.app.state.seq"] })
         assertEquals(0, emitter.pendingEvents())
 
         // a change reported once the worker has gone is not emitted, and nothing is kept of it
@@ -252,7 +252,7 @@ internal class StateEventEmitterTest {
     }
 
     private fun FakeLogRecord.assertChangeEvent(timeMs: Long) {
-        assertEquals("emb.states.change", eventName)
+        assertEquals("emb.app.state.change", eventName)
         assertNull(body)
         assertEquals(SeverityNumber.INFO, severityNumber)
         assertEquals("INFO", severityText)
@@ -262,11 +262,11 @@ internal class StateEventEmitterTest {
 
     private fun changeAttributes(sequence: Long, state: String, value: String): Map<String, Any> = mapOf(
         "emb.type" to "state",
-        "emb.states.seq" to sequence,
+        "emb.app.state.seq" to sequence,
         "emb.entity.type" to "process",
         "emb.entity.id" to PROCESS_IDENTIFIER,
-        "emb.states.name" to state,
-        "emb.states.new_value" to value,
+        "emb.app.state.name" to state,
+        "emb.app.state.new_value" to value,
     )
 
     private fun createRecorder(

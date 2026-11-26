@@ -66,7 +66,7 @@ internal class StateKnownDefectsTest {
 
         assertEquals(1, emitter.droppedEvents())
         executor.runCurrentlyBlocked()
-        assertEquals(listOf("emb.states.change"), logger.logs.map { it.eventName })
+        assertEquals(listOf("emb.app.state.change"), logger.logs.map { it.eventName })
     }
 
     @Test
@@ -93,8 +93,8 @@ internal class StateKnownDefectsTest {
             checkNotNull(stateSpan.events).map { it.timestampNanos },
         )
         val attributes = checkNotNull(stateSpan.attributes).associate { it.key to it.data }
-        assertEquals("1", attributes["emb.states.part_start_seq"])
-        assertNull(attributes["emb.states.truncated"])
+        assertEquals("1", attributes["emb.app.state.part_start_seq"])
+        assertNull(attributes["emb.app.state.truncated"])
     }
 
     @Test
@@ -126,8 +126,8 @@ internal class StateKnownDefectsTest {
         recorder.endJournal(clock.now())
 
         val stamp = recorder.snapshot().attributes
-        assertEquals("empty", stamp["emb.states.value."])
-        assertEquals("long", stamp["emb.states.value.$unchecked"])
+        assertEquals("empty", stamp["emb.app.state.value."])
+        assertEquals("long", stamp["emb.app.state.value.$unchecked"])
         val eventNames = checkNotNull(stateSpan().events).map { it.name }
         assertEquals(listOf("emb-state-", "emb-state-$unchecked"), eventNames)
         assertTrue(checkNotNull(eventNames.last()).length > 5_000)

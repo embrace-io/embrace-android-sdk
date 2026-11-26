@@ -47,7 +47,7 @@ internal class DefaultLogRecordExporterTest {
         val logSink: LogSink = LogSinkImpl(FakeErrorHandler())
         val external = FakeLogRecordExporter()
         val log = FakeReadWriteLogRecord().apply { setStringAttribute("own", "1") }
-        val extra = listOf(Attribute("emb.states.packed", "a=b"), Attribute("own", "duplicate"))
+        val extra = listOf(Attribute("emb.app.state.packed", "a=b"), Attribute("own", "duplicate"))
 
         exporter(logSink, listOf(external)).exportInline(log, extra) {
             // the sink has what was stored, and nothing is handed to the external exporters yet
@@ -59,7 +59,7 @@ internal class DefaultLogRecordExporterTest {
 
         // the record's own attributes first, then those it does not already have
         assertEquals(
-            listOf("own" to "1", "emb.states.packed" to "a=b"),
+            listOf("own" to "1", "emb.app.state.packed" to "a=b"),
             logSink.logsForNextBatch().single().attributes.orEmpty().map { it.key to it.data },
         )
         // what the callback put on the record reaches the app's exporters and not the sink
@@ -73,7 +73,7 @@ internal class DefaultLogRecordExporterTest {
         var called = false
         val exporter = DefaultLogRecordExporter(logSink, listOf(external), { false }, immediateExportDispatcher())
 
-        val result = exporter.exportInline(FakeReadWriteLogRecord(), listOf(Attribute("emb.states.packed", "a=b"))) {
+        val result = exporter.exportInline(FakeReadWriteLogRecord(), listOf(Attribute("emb.app.state.packed", "a=b"))) {
             called = true
         }
 

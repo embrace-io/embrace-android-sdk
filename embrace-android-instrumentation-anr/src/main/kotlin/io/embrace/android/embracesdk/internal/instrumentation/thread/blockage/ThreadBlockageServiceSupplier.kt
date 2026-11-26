@@ -16,6 +16,7 @@ fun createThreadBlockageService(args: InstrumentationArgs): ThreadBlockageServic
     val looper by lazy { Looper.getMainLooper() }
 
     val cfg = configService.config.threadBlockage
+    lateinit var service: ThreadBlockageServiceImpl
     val stacktraceSampler by lazy {
         ThreadBlockageSampler(
             clock = args.clock,
@@ -23,6 +24,7 @@ fun createThreadBlockageService(args: InstrumentationArgs): ThreadBlockageServic
             maxIntervalsPerSession = cfg.maxIntervalsPerSession,
             maxSamplesPerInterval = cfg.maxStacktracesPerInterval,
             stacktraceFrameLimit = cfg.stacktraceFrameLimit,
+            onIntervalCompleted = { service.onIntervalCompleted() },
         )
     }
     val blockedThreadDetector by lazy {
@@ -36,10 +38,12 @@ fun createThreadBlockageService(args: InstrumentationArgs): ThreadBlockageServic
             listener = stacktraceSampler,
         )
     }
-    return ThreadBlockageServiceImpl(
+    service = ThreadBlockageServiceImpl(
         args = args,
         blockedThreadDetector = blockedThreadDetector,
         watchdogWorker = watchdogWorker,
         stacktraceSampler = stacktraceSampler,
-    ).apply { scheduleStartupBackgroundCheck() }
+    )
+    service.scheduleStartupBackgroundCheck()
+    return service
 }

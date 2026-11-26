@@ -19,6 +19,7 @@ class ThreadBlockageSampler(
     private val maxIntervalsPerSession: Int,
     private val maxSamplesPerInterval: Int,
     private val stacktraceFrameLimit: Int,
+    private val onIntervalCompleted: () -> Unit = {},
 ) : ThreadBlockageListener, SessionPartChangeListener {
 
     private val intervalSink = AtomicReference(CopyOnWriteArrayList<ThreadBlockageInterval>())
@@ -48,7 +49,8 @@ class ThreadBlockageSampler(
             ThreadBlockageEvent.UNBLOCKED -> {
                 currentBlockage.get()?.apply {
                     val intervals = intervalSink.get()
-                    if (intervals.size < MAX_INTERVAL_COUNT) {
+                    val added = intervals.size < MAX_INTERVAL_COUNT
+                    if (added) {
                         intervals.add(
                             ThreadBlockageInterval(
                                 startTime = startTime,
@@ -61,6 +63,9 @@ class ThreadBlockageSampler(
                         clearLeastValuableSamples(intervals)
                     }
                     currentBlockage.set(null)
+                    if (added) {
+                        onIntervalCompleted()
+                    }
                 }
             }
         }

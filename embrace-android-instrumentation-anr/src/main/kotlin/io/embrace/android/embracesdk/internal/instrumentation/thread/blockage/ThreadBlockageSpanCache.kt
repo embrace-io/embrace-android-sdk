@@ -11,8 +11,11 @@ import kotlin.random.Random
  * same interval instance. Clearing an interval's samples replaces the instance, so it gets remapped.
  */
 internal class ThreadBlockageSpanCache(
-    private val clock: Clock,
+    clock: Clock,
     private val random: Random,
+    private val mapper: (ThreadBlockageInterval, String, String) -> Span = { interval, traceId, spanId ->
+        mapIntervalToSpan(interval, clock, traceId, spanId)
+    },
 ) {
 
     private val lock = Any()
@@ -23,15 +26,14 @@ internal class ThreadBlockageSpanCache(
         val spans = intervals.map { interval ->
             val key = interval.startTime
             if (next.containsKey(key)) {
-                return@map mapIntervalToSpan(interval, clock, generateId(16, random), generateId(8, random))
+                return@map mapper(interval, generateId(16, random), generateId(8, random))
             }
             val prev = cache[key]
             val span = when {
-                prev == null -> mapIntervalToSpan(interval, clock, generateId(16, random), generateId(8, random))
+                prev == null -> mapper(interval, generateId(16, random), generateId(8, random))
                 prev.first === interval -> prev.second
-                else -> mapIntervalToSpan(
+                else -> mapper(
                     interval,
-                    clock,
                     prev.second.traceId ?: generateId(16, random),
                     prev.second.spanId ?: generateId(8, random),
                 )

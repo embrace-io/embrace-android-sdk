@@ -15,7 +15,9 @@ import io.mockk.every
 import io.mockk.mockk
 import org.junit.rules.ExternalResource
 import java.util.concurrent.ScheduledExecutorService
+import java.util.concurrent.atomic.AtomicInteger
 import java.util.concurrent.atomic.AtomicReference
+import kotlin.random.Random
 
 /**
  * A [org.junit.Rule] that creates an [ThreadBlockageServiceImpl] suitable for use in tests
@@ -26,6 +28,7 @@ internal class ThreadBlockageServiceRule<T : ScheduledExecutorService>(
     private val scheduledExecutorSupplier: Provider<T>,
 ) : ExternalResource() {
     val errorHandler = FakeErrorHandler()
+    val mapCount = AtomicInteger()
 
     lateinit var fakeConfigService: FakeConfigService
     lateinit var fakeAppStateTracker: FakeProcessStateTracker
@@ -56,6 +59,7 @@ internal class ThreadBlockageServiceRule<T : ScheduledExecutorService>(
             maxIntervalsPerSession = config.maxIntervalsPerSession,
             maxSamplesPerInterval = config.maxStacktracesPerInterval,
             stacktraceFrameLimit = config.stacktraceFrameLimit,
+            onIntervalCompleted = { service.onIntervalCompleted() },
         )
         blockedThreadDetector = BlockedThreadDetector(
             watchdogWorker = worker,
@@ -78,6 +82,7 @@ internal class ThreadBlockageServiceRule<T : ScheduledExecutorService>(
             blockedThreadDetector = blockedThreadDetector,
             watchdogWorker = worker,
             stacktraceSampler = stacktraceSampler,
+            spanCache = createSpanCache(),
         ).apply { scheduleStartupBackgroundCheck() }
     }
 
@@ -90,6 +95,12 @@ internal class ThreadBlockageServiceRule<T : ScheduledExecutorService>(
             blockedThreadDetector = blockedThreadDetector,
             watchdogWorker = worker,
             stacktraceSampler = stacktraceSampler,
+            spanCache = createSpanCache(),
         ).apply { scheduleStartupBackgroundCheck() }
+    }
+
+    private fun createSpanCache() = ThreadBlockageSpanCache(clock, Random.Default) { interval, traceId, spanId ->
+        mapCount.incrementAndGet()
+        mapIntervalToSpan(interval, clock, traceId, spanId)
     }
 }

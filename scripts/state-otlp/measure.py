@@ -18,12 +18,12 @@ from opentelemetry.proto.collector.logs.v1.logs_service_pb2 import ExportLogsSer
 from opentelemetry.proto.collector.trace.v1.trace_service_pb2 import ExportTraceServiceRequest
 from opentelemetry.proto.common.v1.common_pb2 import KeyValue
 
-STATE_EVENTS = ("emb.states.change", "emb.states.snapshot")
+STATE_EVENTS = ("emb.app.state.change", "emb.app.state.snapshot")
 
 
 def is_state(key):
     # `emb.state` alone is the foreground or background attribute, and v1's keys are under `emb.state.`: neither is part of this
-    return key.startswith(("emb.states.", "emb.entity."))
+    return key.startswith(("emb.app.state.", "emb.entity."))
 
 
 def hex_to_base64(record):
@@ -84,10 +84,10 @@ def measure(directory):
     resource, scope, spans, logs = read(directory)
     events = [log for log in logs if log.get("eventName") in STATE_EVENTS]
     ordinary = [log for log in logs if log.get("eventName") not in STATE_EVENTS]
-    changes = [log for log in events if log["eventName"] == "emb.states.change"]
-    snapshots = [log for log in events if log["eventName"] == "emb.states.snapshot"]
-    linked = [s for s in spans if any(a["key"] == "emb.states.seq" for a in s.get("attributes", []))]
-    crossed = [s for s in spans if any(a["key"] == "emb.states.end_seq" for a in s.get("attributes", []))]
+    changes = [log for log in events if log["eventName"] == "emb.app.state.change"]
+    snapshots = [log for log in events if log["eventName"] == "emb.app.state.snapshot"]
+    linked = [s for s in spans if any(a["key"] == "emb.app.state.seq" for a in s.get("attributes", []))]
+    crossed = [s for s in spans if any(a["key"] == "emb.app.state.end_seq" for a in s.get("attributes", []))]
 
     def added(records):
         return [attribute_bytes([a for a in r.get("attributes", []) if is_state(a["key"])]) for r in records]
@@ -102,7 +102,7 @@ def measure(directory):
         return sizes
 
     states = sorted({a["key"].rsplit(".", 1)[-1] for s in snapshots for a in s["attributes"]
-                     if a["key"].startswith("emb.states.value.")})
+                     if a["key"].startswith("emb.app.state.value.")})
     floor = one_batch({**resource, "attributes": [a for a in resource["attributes"] if not is_state(a["key"])
                                                    and a["key"] != "emb.process_identifier"]},
                       scope, without_state(spans), without_state(ordinary))

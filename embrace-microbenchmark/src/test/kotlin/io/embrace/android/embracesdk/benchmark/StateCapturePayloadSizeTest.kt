@@ -115,13 +115,13 @@ internal class StateCapturePayloadSizeTest {
             val (envelope, partDir) = delivered(CEILING_STATE_COUNT, journaled = true, CEILING_TRANSITIONS_PER_STATE + overshoot)
             val stateSpan = envelope.data.spans.orEmpty().single { it.hasAttribute("emb.type", "state") }
             val attributes = stateSpan.attributes.orEmpty().associate { it.key to it.data }
-            val dropped = attributes["emb.states.dropped_changes"]?.toInt() ?: 0
+            val dropped = attributes["emb.app.state.dropped_changes"]?.toInt() ?: 0
 
             assertEquals(StateRecorder.MAX_JOURNAL_CHANGES, stateSpan.events?.size)
             assertEquals(CEILING_STATE_COUNT * overshoot, dropped)
-            assertEquals(null, attributes["emb.states.truncated"])
+            assertEquals(null, attributes["emb.app.state.truncated"])
             // the values the part ended with are delivered only when the events no longer lead to them
-            assertEquals(if (overshoot == 0) 0 else CEILING_STATE_COUNT, attributes.keys.count { it?.startsWith("emb.states.final_value.") == true })
+            assertEquals(if (overshoot == 0) 0 else CEILING_STATE_COUNT, attributes.keys.count { it?.startsWith("emb.app.state.final_value.") == true })
 
             val measurement = measure(envelope, partDir)
             listOf(
@@ -137,7 +137,7 @@ internal class StateCapturePayloadSizeTest {
     }
 
     /**
-     * What the number each change carries as `emb.states.seq` adds to a session part's change log, by delivering a part and
+     * What the number each change carries as `emb.app.state.seq` adds to a session part's change log, by delivering a part and
      * then taking the number off every event. The difference is the number's own bytes, raw as JSON and compressed.
      */
     @Test
@@ -181,9 +181,9 @@ internal class StateCapturePayloadSizeTest {
             }
             val snapshot = recorder.snapshot()
             val base = listOf(Attribute("emb.session_part_id", "A".repeat(UUID_LENGTH)), Attribute("log.record.uid", "B".repeat(UUID_LENGTH)))
-            val packed = base + Attribute("emb.states.packed", snapshot.encoded) + Attribute("emb.states.seq", snapshot.sequence.toString())
+            val packed = base + Attribute("emb.app.state.packed", snapshot.encoded) + Attribute("emb.app.state.seq", snapshot.sequence.toString())
             val plain = base + snapshot.attributes.map { Attribute(it.key, it.value) } +
-                Attribute("emb.states.seq", snapshot.sequence.toString())
+                Attribute("emb.app.state.seq", snapshot.sequence.toString())
             listOf(1, LOGS_IN_A_BATCH).flatMap { logs ->
                 val floor = logSize(base, logs)
                 val packedSize = logSize(packed, logs)
@@ -228,7 +228,7 @@ internal class StateCapturePayloadSizeTest {
                 if (span.hasAttribute("emb.type", "state")) {
                     span.copy(
                         events = span.events.orEmpty().map { event ->
-                            event.copy(attributes = event.attributes.orEmpty().filter { it.key != "emb.states.seq" })
+                            event.copy(attributes = event.attributes.orEmpty().filter { it.key != "emb.app.state.seq" })
                         },
                     )
                 } else {

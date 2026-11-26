@@ -1234,9 +1234,9 @@ happens past each limit and how it is signaled. These failures are neither:
 
 ## What it costs
 
-Bytes were measured on a JVM through the real span stack, writer and reader, before each state had a limit of its
-own, which changes none of these figures for a part that reaches no limit. The keys were then under a stem three
-characters shorter, so each key in these figures is three bytes short.
+Bytes were measured on a JVM through the real span stack, writer and reader, on the current code. The last two rows
+are the exception. They were taken before each state had a limit of its own, which changes none of these figures for
+a part that reaches no limit, and with the keys under an earlier, shorter stem, so each key in them is a few bytes short.
 Allocations were counted on an emulator before the number went on each event and the log path changed, and have not
 been counted since. Nothing was measured on a device. These are the headline figures, and the internal measurement
 notes have the full tables.
@@ -1244,13 +1244,13 @@ notes have the full tables.
 | What | v1 | This design |
 |---|---|---|
 | Persisting one more change | The whole span written again: up to 61 KB as shipped, for the screen at its limit of 1,000 changes | About 47 bytes appended, however many came before |
-| What 10 idle states add to a part's payload, as JSON | 11.2 KB | 1.5 KB, which is about 77 bytes for each state after the first (689 bytes for nine more) |
-| One change in the delivered payload, as JSON | About 128 bytes | About 178 bytes with its number and 139 without. About 8 compressed and about 5 without. The number is about 39 bytes, and 2 to 3 compressed. |
-| A part with 10 states, as the changes of each state grow | Spans: 140 KB of JSON and 5.3 KB compressed at 100 changes of each | The journal is level with spans at about 20 changes of each. At 100 each it is 179 KB of JSON and 8.0 KB compressed. |
-| A journal at its global limit of 10,000 changes, with short values | Not possible | 1.79 MB of JSON and about 75 KB compressed |
+| What 10 idle states add to a part's payload, as JSON | 11.2 KB | 1.5 KB, which is about 80 bytes for each state after the first (716 bytes for nine more) |
+| One change in the delivered payload, as JSON | About 128 bytes | About 185 bytes with its number and 142 without. About 8 compressed and about 5 without. The number is about 43 bytes, and 2 to 3 compressed. |
+| A part with 10 states, as the changes of each state grow | Spans: 140 KB of JSON and 5.3 KB compressed at 100 changes of each | The journal is level with spans at about 20 changes of each. At 100 each it is 185 KB of JSON and 8.0 KB compressed. |
+| A journal at its global limit of 10,000 changes, with short values | Not possible | 1.85 MB of JSON and about 75 KB compressed |
 | Objects allocated to report one change, with 1 state and with 10 | 34 | 24 and 33, and the same after 5,000 changes as after 50 |
 | Objects allocated by a session part change in which no state changed, with 1 state and with 10 | 819 and 4,166 | 483 and 483 |
-| State on a log, with ten states | | Packed, to Embrace: 326 bytes of JSON, and 3 to 4 compressed in a batch of 100 logs. Plain, to an app's exporters: 658 and 5 to 6. |
+| State on a log, with ten states | | Packed, to Embrace: 332 bytes of JSON, and 3 to 4 compressed in a batch of 100 logs. Plain, to an app's exporters: 691 and 5 to 6. |
 | A change event for an app's exporters | | In the OTLP harness's own scenario, as JSON. `ASSOCIATION`: 554 bytes for a state's first change and 763 with a previous value. `VERBOSE`: 626 and 1,198. |
 | State on a linked span, with five states | | 31 bytes of protobuf on average for the link, and 300 in the verbose rendering |
 
@@ -1259,7 +1259,7 @@ notes have the full tables.
   state while changes are few` writes the part sizes. `a journal at its ceiling delivers that many changes and counts
   the rest` delivers the full journal. `the number on each change adds a few bytes to every event of the change log`
   takes the number off every event and measures the difference. `the stamp on a log adds bytes in each form` subtracts
-  the log without a stamp. On disk nothing changed: about 43 KB for 10 states and 100 changes of each, and 430 KB at
+  the log without a stamp. On disk nothing changed: about 43 KB for 10 states and 100 changes of each, and 440 KB at
   the global limit.
 - **The allocations** come from the benchmarks under [how to run it](#how-to-run-it).
 - **The last two rows** are from [the OTLP harness](#the-otlp-harness), one scripted session sent over OTLP. The
@@ -1271,7 +1271,7 @@ notes have the full tables.
 - **What the limit for each state adds.** A change made during a part looks its state up in a map, and a part end
   passes once over the states that changed. A limit that is reached adds one small record to the journal, once in a
   part. A state that lost a change adds a count to the part end, and up to four attributes to the span. None of it was
-  measured, and the figures above were taken before it.
+  measured, and the allocation counts and the last two rows above were taken before it.
 - **Time on a device, for anything.**
 - **What waking the persistence worker for every change costs.**
 - **Writing each attribute of the plain stamp onto a log record**, which grows with the number of states, and
@@ -1477,11 +1477,11 @@ counts M4 and S5 as Musts, though their importance reads "Must before" a conditi
 | **C3.** A session part change costs the same however many states there are | Should | Met | One checkpoint, and nothing in a data source: the benchmark `changeSessionPart` in `StateCaptureBenchmarks`, which has not been run since the limit for each state | The checkpoint grows by one value for each state, and the part end passes once over the states that changed |
 | **C4.** Stamping a log costs the same however many states there are | Should | Partly | `StateSnapshot.encoded` is built once for each change, and Embrace's payload gets one attribute. `attributes` is built once for each change, and only where the app has a log receiver. | There each attribute is still copied and written for every log. Allocations on the log path are not measured since the split. |
 | **C5.** A state that did not change adds little to a part | Should | Met | A value in the checkpoint: [costs](#what-it-costs) | It still adds to every log |
-| **C6.** A change adds little to a part | Should | Met | One event, of about 178 bytes of JSON with its number and about 8 compressed, which no test asserts: [costs](#what-it-costs) | It costs more than in a span of its own, which is about 128 bytes |
+| **C6.** A change adds little to a part | Should | Met | One event, of about 185 bytes of JSON with its number and about 8 compressed, which no test asserts: [costs](#what-it-costs) | It costs more than in a span of its own, which is about 128 bytes |
 | **C7.** A full part fits the size limits | Must | Partly | A full journal of short values fits: [costs](#what-it-costs) | Long values are bounded only by the 12 MB file, which can pass the upload limit |
 | **C8.** Memory is bounded | Must | Partly | Counts on held changes, the window and the event queue: invariant 17 | Bytes are not bounded. A span that never ends stays in the tracker. State events wait for a slow exporter in a queue with no limit. |
 | **C9.** Cost grows gently with the number of states | Should | Partly | A span's link and a part change do not grow | The copy of the values for each change, the stamp on each log, and the verbose rendering do |
-| **M2.** A new state is cheap to run | Should | Met | No span of its own, and about 77 bytes of JSON for each idle state after the first: [costs](#what-it-costs) | Nothing |
+| **M2.** A new state is cheap to run | Should | Met | No span of its own, and about 80 bytes of JSON for each idle state after the first: [costs](#what-it-costs) | Nothing |
 
 ### R7. Context is of many kinds, owned by different things
 
@@ -1496,7 +1496,7 @@ counts M4 and S5 as Musts, though their importance reads "Must before" a conditi
 | Requirement | Importance | Standing | Mechanism, and where its test is | What is left |
 |---|---|---|---|---|
 | **E6.** What is missing is stated | Should | Met | `emb.app.state.dropped_count.<name>` for each state, `emb.app.state.dropped_changes` and `emb.app.state.folded_changes` for the part, both limits when they are hit, on a truncated change log too, `emb.app.state.truncated`, and the number on each event, where a gap shows a change that is not listed: [delivery](#delivering-a-part) | Folded changes are counted for the part and not for each state. A part that did not end says which limits were reached, and not how many changes each refused (T6). An app's exporters get the gap and no count. |
-| **E8.** Bounded, standard shapes | Should | Partly | A span, its events, attributes and log records | Up to 10,000 events on one span, each with its number, about 39 bytes more before compression, and a state's name as the last part of a key |
+| **E8.** Bounded, standard shapes | Should | Partly | A span, its events, attributes and log records | Up to 10,000 events on one span, each with its number, about 43 bytes more before compression, and a state's name as the last part of a key |
 | **E9.** It is safe to send before the servers change | Should | Not Android's | Android's part is that both steps are off by default | For the servers |
 | **O7.** Nothing exported today is lost | Must | Partly | The stamp under new names, and an event for each change | v1's state spans go. With a span exporter alone, nothing takes their place. |
 | **O8.** Anything packed has a shape a stock Collector can unpack | Should | Met | With association on, nothing an app's exporters get is packed: `assertExportedSpansAndLog` checks that an exported log has no `emb.app.state.packed` | Embrace's payload is packed, and with the first switch alone `emb.app.state.packed` is packed for an app's exporters too |

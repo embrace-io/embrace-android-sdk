@@ -36,13 +36,13 @@ internal class StartupServiceImpl(
     private var endedInForeground: Boolean = false
 
     @Volatile
-    private var attributesProvider: (() -> Map<String, String>)? = null
+    private var attributesProvider: (() -> Map<String, Any>)? = null
 
     /**
      * The built attributes, memoized on first use so the provider is only ever invoked once
      * and every consumer attaches an identical set.
      */
-    private val sdkInitAttributes = AtomicReference<Map<String, String>?>(null)
+    private val sdkInitAttributes = AtomicReference<Map<String, Any>?>(null)
 
     private val recordSdkInitSpanOnce = OneShot()
 
@@ -51,7 +51,7 @@ internal class StartupServiceImpl(
         endTimeMs: Long,
         endState: ProcessState,
         threadName: String,
-        attributesProvider: (() -> Map<String, String>)?,
+        attributesProvider: (() -> Map<String, Any>)?,
     ) {
         sdkInitStartMs = startTimeMs
         sdkInitEndMs = endTimeMs
@@ -67,10 +67,10 @@ internal class StartupServiceImpl(
         val endTimeMs = sdkInitEndMs ?: return
         recordSdkInitSpanOnce {
             val attributes = buildMap {
-                put("ended-in-foreground", endedInForeground.toString())
+                put("ended-in-foreground", endedInForeground)
                 put("thread-name", threadName)
                 startupCounter?.let { counter ->
-                    put(EmbAppAttributes.EMB_APP_VERSION_STARTUP_COUNTER, counter.toString())
+                    put(EmbAppAttributes.EMB_APP_VERSION_STARTUP_COUNTER, counter)
                 }
                 putAll(getSdkInitAttributes())
             }
@@ -89,7 +89,7 @@ internal class StartupServiceImpl(
     override fun getSdkInitEndMs(): Long? = sdkInitEndMs
     override fun getInitThreadName(): String = threadName
     override fun getAppVersionStartupCounter(): Int? = startupCounter
-    override fun getSdkInitAttributes(): Map<String, String> {
+    override fun getSdkInitAttributes(): Map<String, Any> {
         sdkInitAttributes.get()?.let { return it }
         val computed = errorHandler.guardSdkCode(SdkErrorType.SdkInitAttributeCaptureFail, emptyMap()) {
             attributesProvider?.invoke() ?: emptyMap()

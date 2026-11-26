@@ -252,7 +252,7 @@ internal class NoopSdkInstance(
     override fun <T> recordSpan(
         name: String,
         parent: EmbraceSpan?,
-        attributes: Map<String, String>,
+        attributes: Map<String, Any>,
         events: List<EmbraceSpanEvent>,
         autoTerminationMode: AutoTerminationMode,
         code: () -> T,
@@ -267,7 +267,7 @@ internal class NoopSdkInstance(
         endTimeMs: Long,
         errorCode: ErrorCode?,
         parent: EmbraceSpan?,
-        attributes: Map<String, String>,
+        attributes: Map<String, Any>,
         events: List<EmbraceSpanEvent>,
     ): Boolean {
         logDropped("record_completed_span")
@@ -348,7 +348,7 @@ internal class NoopSdkInstance(
 
     override fun getSdkCurrentTimeMs(): Long = clock.now()
 
-    override fun addLoadTraceAttribute(activity: Activity, key: String, value: String) {
+    override fun addLoadTraceAttribute(activity: Activity, key: String, value: Any) {
         logDropped("add_load_trace_attribute")
     }
 
@@ -357,14 +357,14 @@ internal class NoopSdkInstance(
         name: String,
         startTimeMs: Long,
         endTimeMs: Long,
-        attributes: Map<String, String>,
+        attributes: Map<String, Any>,
         events: List<EmbraceSpanEvent>,
         errorCode: ErrorCode?,
     ) {
         logDropped("add_load_trace_child_span")
     }
 
-    override fun addStartupTraceAttribute(key: String, value: String) {
+    override fun addStartupTraceAttribute(key: String, value: Any) {
         logDropped("add_startup_trace_attribute")
     }
 
@@ -372,7 +372,7 @@ internal class NoopSdkInstance(
         name: String,
         startTimeMs: Long,
         endTimeMs: Long,
-        attributes: Map<String, String>,
+        attributes: Map<String, Any>,
         events: List<EmbraceSpanEvent>,
         errorCode: ErrorCode?,
     ) {

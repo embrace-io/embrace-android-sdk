@@ -16,7 +16,7 @@ class FakeInstrumentationApi(
 
     override fun getSdkCurrentTimeMs(): Long = sdkTimeMs
 
-    override fun addLoadTraceAttribute(activity: Activity, key: String, value: String) {
+    override fun addLoadTraceAttribute(activity: Activity, key: String, value: Any) {
     }
 
     override fun addLoadTraceChildSpan(
@@ -24,20 +24,20 @@ class FakeInstrumentationApi(
         name: String,
         startTimeMs: Long,
         endTimeMs: Long,
-        attributes: Map<String, String>,
+        attributes: Map<String, Any>,
         events: List<EmbraceSpanEvent>,
         errorCode: ErrorCode?,
     ) {
     }
 
-    override fun addStartupTraceAttribute(key: String, value: String) {
+    override fun addStartupTraceAttribute(key: String, value: Any) {
     }
 
     override fun addStartupTraceChildSpan(
         name: String,
         startTimeMs: Long,
         endTimeMs: Long,
-        attributes: Map<String, String>,
+        attributes: Map<String, Any>,
         events: List<EmbraceSpanEvent>,
         errorCode: ErrorCode?,
     ) {

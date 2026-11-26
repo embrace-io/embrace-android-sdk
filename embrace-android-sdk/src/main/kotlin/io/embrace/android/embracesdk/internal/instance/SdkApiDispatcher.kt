@@ -211,7 +211,7 @@ internal class SdkApiDispatcher(
     override fun <T> recordSpan(
         name: String,
         parent: EmbraceSpan?,
-        attributes: Map<String, String>,
+        attributes: Map<String, Any>,
         events: List<EmbraceSpanEvent>,
         autoTerminationMode: AutoTerminationMode,
         code: () -> T,
@@ -248,7 +248,7 @@ internal class SdkApiDispatcher(
         endTimeMs: Long,
         errorCode: ErrorCode?,
         parent: EmbraceSpan?,
-        attributes: Map<String, String>,
+        attributes: Map<String, Any>,
         events: List<EmbraceSpanEvent>,
     ): Boolean = errorHandler.guardSdkCode(SdkErrorType.PublicApiFail, false) {
         target.recordCompletedSpan(name, startTimeMs, endTimeMs, errorCode, parent, attributes, events)
@@ -309,7 +309,7 @@ internal class SdkApiDispatcher(
     override fun getSdkCurrentTimeMs(): Long =
         errorHandler.guardSdkCode(SdkErrorType.PublicApiFail, System.currentTimeMillis()) { target.getSdkCurrentTimeMs() }
 
-    override fun addLoadTraceAttribute(activity: Activity, key: String, value: String) =
+    override fun addLoadTraceAttribute(activity: Activity, key: String, value: Any) =
         record("add_load_trace_attribute") { target.addLoadTraceAttribute(activity, key, value) }
 
     override fun addLoadTraceChildSpan(activity: Activity, name: String, startTimeMs: Long, endTimeMs: Long) =
@@ -320,14 +320,14 @@ internal class SdkApiDispatcher(
         name: String,
         startTimeMs: Long,
         endTimeMs: Long,
-        attributes: Map<String, String>,
+        attributes: Map<String, Any>,
         events: List<EmbraceSpanEvent>,
         errorCode: ErrorCode?,
     ) = record("add_load_trace_child_span") {
         target.addLoadTraceChildSpan(activity, name, startTimeMs, endTimeMs, attributes, events, errorCode)
     }
 
-    override fun addStartupTraceAttribute(key: String, value: String) =
+    override fun addStartupTraceAttribute(key: String, value: Any) =
         record("add_startup_trace_attribute") { target.addStartupTraceAttribute(key, value) }
 
     override fun addStartupTraceChildSpan(name: String, startTimeMs: Long, endTimeMs: Long) =
@@ -337,7 +337,7 @@ internal class SdkApiDispatcher(
         name: String,
         startTimeMs: Long,
         endTimeMs: Long,
-        attributes: Map<String, String>,
+        attributes: Map<String, Any>,
         events: List<EmbraceSpanEvent>,
         errorCode: ErrorCode?,
     ) = record("add_startup_trace_child_span") {

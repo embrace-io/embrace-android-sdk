@@ -11,7 +11,7 @@ interface UiLoadTraceModifier {
     /**
      * Add attribute to the root span of the in-process UI Load trace being recorded for the given instanceId.
      */
-    fun addAttribute(instanceId: Int, key: String, value: String)
+    fun addAttribute(instanceId: Int, key: String, value: Any)
 
     /**
      * Add a child span with the given parameters to the in-process UI Load trace being recorded for the given instanceId
@@ -21,7 +21,7 @@ interface UiLoadTraceModifier {
         name: String,
         startTimeMs: Long,
         endTimeMs: Long,
-        attributes: Map<String, String> = emptyMap(),
+        attributes: Map<String, Any> = emptyMap(),
         events: List<SpanEvent> = emptyList(),
         errorCode: ErrorCodeAttribute? = null,
     )

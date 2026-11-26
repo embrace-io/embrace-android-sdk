@@ -21,7 +21,7 @@ fun Span.hasEmbraceAttributeValue(key: String, value: Any): Boolean {
 
 fun Span.toFailedSpan(endTimeMs: Long): Span {
     val isSessionPartSpan = hasEmbraceAttribute(EmbType.Ux.Session)
-    val newAttributes = mutableMapOf<String, String>().apply {
+    val newAttributes = mutableMapOf<String, Any>().apply {
         setEmbraceAttribute(ErrorCodeAttribute.Failure)
         if (isSessionPartSpan) {
             setEmbraceAttribute(AppTerminationCause.Crash)
@@ -32,6 +32,6 @@ fun Span.toFailedSpan(endTimeMs: Long): Span {
         endTimeNanos = endTimeMs.millisToNanos(),
         parentSpanId = parentSpanId ?: OtelIds.INVALID_SPAN_ID,
         status = Span.Status.ERROR,
-        attributes = newAttributes.map { Attribute(it.key, it.value) }.plus(attributes ?: emptyList()),
+        attributes = newAttributes.map { Attribute(it.key, it.value.toPayloadString()) }.plus(attributes ?: emptyList()),
     )
 }

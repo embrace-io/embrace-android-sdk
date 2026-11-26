@@ -160,7 +160,7 @@ internal class SdkInitEnvironmentAttributesTest {
 
     @Test
     fun `a forecast outside the calibrated range is coerced into it`() {
-        listOf(2.5f to "100", 1f to "100", 0f to "0", -1f to "0").forEach { (headroom, expected) ->
+        listOf(2.5f to 100L, 1f to 100L, 0f to 0L, -1f to 0L).forEach { (headroom, expected) ->
             shadowPowerManager.thermalHeadroom = headroom
             val attributes = buildEnvironmentAttributes()
             attributes.assertAttribute(THERMAL_HEADROOM_PCT, expected)
@@ -212,8 +212,8 @@ internal class SdkInitEnvironmentAttributesTest {
     fun `an app installed in the same second reports zero rather than nothing`() {
         setPackageTimestamps(firstInstallTime = NOW_MS, lastUpdateTime = NOW_MS)
         val attributes = buildEnvironmentAttributes()
-        attributes.assertAttribute(SECONDS_SINCE_INSTALL, "0")
-        attributes.assertAttribute(SECONDS_SINCE_UPDATE, "0")
+        attributes.assertAttribute(SECONDS_SINCE_INSTALL, 0L)
+        attributes.assertAttribute(SECONDS_SINCE_UPDATE, 0L)
         attributes.assertDefaultsExcept(SECONDS_SINCE_INSTALL, SECONDS_SINCE_UPDATE)
         assertNoSdkErrors()
     }
@@ -232,7 +232,7 @@ internal class SdkInitEnvironmentAttributesTest {
         setMemoryInfo(availMem = 1_500_000_000L, totalMem = 4_000_000_000L, lowMemory = false)
         val attributes = buildEnvironmentAttributes()
         // 37.5% rounds to 38
-        attributes.assertAttribute(MEM_AVAILABLE_PCT, "38")
+        attributes.assertAttribute(MEM_AVAILABLE_PCT, 38L)
         // the low memory flag is present only when the system reports it
         attributes.assertAbsent(LOW_MEMORY)
         attributes.assertDefaultsExcept(MEM_AVAILABLE_PCT, LOW_MEMORY)
@@ -271,7 +271,7 @@ internal class SdkInitEnvironmentAttributesTest {
     fun `seconds since boot reported from awake time, not wall time since boot`() {
         uptimeMs = 90_500L
         val attributes = buildEnvironmentAttributes()
-        attributes.assertAttribute(SECONDS_SINCE_BOOT, "90")
+        attributes.assertAttribute(SECONDS_SINCE_BOOT, 90L)
         attributes.assertDefaultsExcept(SECONDS_SINCE_BOOT)
         assertNoSdkErrors()
     }
@@ -280,7 +280,7 @@ internal class SdkInitEnvironmentAttributesTest {
     fun `an app launched during boot reports zero rather than nothing`() {
         uptimeMs = 0L
         val attributes = buildEnvironmentAttributes()
-        attributes.assertAttribute(SECONDS_SINCE_BOOT, "0")
+        attributes.assertAttribute(SECONDS_SINCE_BOOT, 0L)
         attributes.assertDefaultsExcept(SECONDS_SINCE_BOOT)
         assertNoSdkErrors()
     }
@@ -307,7 +307,7 @@ internal class SdkInitEnvironmentAttributesTest {
         listOf(null, 0L, -1L).forEach { bytes ->
             prefsFileBytes = bytes
             val attributes = buildEnvironmentAttributes()
-            attributes.assertAttribute(PREFS_FILE_BYTES, "0")
+            attributes.assertAttribute(PREFS_FILE_BYTES, 0L)
             attributes.assertDefaultsExcept(PREFS_FILE_BYTES)
             assertNoSdkErrors()
         }
@@ -326,7 +326,7 @@ internal class SdkInitEnvironmentAttributesTest {
         artOptimizationState = ArtOptimizationState(artCompilerFilter = "verify", hasAppImage = false)
         val attributes = buildEnvironmentAttributes()
         attributes.assertAttribute(ART_COMPILER_FILTER, "verify")
-        attributes.assertAttribute(APP_IMAGE_AT_INIT, "false")
+        attributes.assertAttribute(APP_IMAGE_AT_INIT, false)
         attributes.assertDefaultsExcept(ART_COMPILER_FILTER, APP_IMAGE_AT_INIT)
         assertNoSdkErrors()
     }
@@ -338,7 +338,7 @@ internal class SdkInitEnvironmentAttributesTest {
             artOptimizationState = ArtOptimizationState(artCompilerFilter = filter, hasAppImage = true)
             val attributes = buildEnvironmentAttributes()
             attributes.assertAttribute(ART_COMPILER_FILTER, filter)
-            attributes.assertAttribute(APP_IMAGE_AT_INIT, "true")
+            attributes.assertAttribute(APP_IMAGE_AT_INIT, true)
             attributes.assertDefaultsExcept(ART_COMPILER_FILTER)
             assertNoSdkErrors()
         }
@@ -373,7 +373,7 @@ internal class SdkInitEnvironmentAttributesTest {
         uptimeProvider: () -> Long = { uptimeMs },
         prefsFileSizeProvider: () -> Long? = { prefsFileBytes },
         artOptimizationProvider: () -> ArtOptimizationState? = { artOptimizationState },
-    ): Map<String, String> = sdkInitEnvironmentAttributes(
+    ): Map<String, Any> = sdkInitEnvironmentAttributes(
         nowMs = NOW_MS,
         errorHandler = errorHandler,
         packageInfo = packageInfo,
@@ -407,24 +407,24 @@ internal class SdkInitEnvironmentAttributesTest {
      * Asserts that every attribute carries the value the defaults set up in [setUp] produce, so that a test which
      * breaks one input has to say so for every attribute it affects and no others.
      */
-    private fun Map<String, String>.assertDefaults() = assertDefaultsExcept()
+    private fun Map<String, Any>.assertDefaults() = assertDefaultsExcept()
 
-    private fun Map<String, String>.assertDefaultsExcept(vararg exceptions: String) {
+    private fun Map<String, Any>.assertDefaultsExcept(vararg exceptions: String) {
         assertEquals(
             DEFAULT_ATTRIBUTES.filterKeys { it !in exceptions },
             filterKeys { it !in exceptions },
         )
     }
 
-    private fun Map<String, String>.assertAttribute(key: String, value: String) {
+    private fun Map<String, Any>.assertAttribute(key: String, value: Any) {
         assertEquals(value, this[key])
     }
 
-    private fun Map<String, String>.assertNumberError(key: String) = assertAttribute(key, NUMERIC_ERROR)
+    private fun Map<String, Any>.assertNumberError(key: String) = assertAttribute(key, NUMERIC_ERROR)
 
-    private fun Map<String, String>.assertStringError(key: String) = assertAttribute(key, STRING_ERROR)
+    private fun Map<String, Any>.assertStringError(key: String) = assertAttribute(key, STRING_ERROR)
 
-    private fun Map<String, String>.assertAbsent(key: String) {
+    private fun Map<String, Any>.assertAbsent(key: String) {
         assertFalse(containsKey(key))
     }
 
@@ -454,15 +454,15 @@ internal class SdkInitEnvironmentAttributesTest {
          */
         val DEFAULT_ATTRIBUTES = mapOf(
             THERMAL_STATUS to "moderate",
-            THERMAL_HEADROOM_PCT to "50",
-            SECONDS_SINCE_INSTALL to "90",
-            SECONDS_SINCE_UPDATE to "30",
-            MEM_AVAILABLE_PCT to "25",
-            LOW_MEMORY to "true",
-            SECONDS_SINCE_BOOT to "45",
-            PREFS_FILE_BYTES to "63070",
+            THERMAL_HEADROOM_PCT to 50L,
+            SECONDS_SINCE_INSTALL to 90L,
+            SECONDS_SINCE_UPDATE to 30L,
+            MEM_AVAILABLE_PCT to 25L,
+            LOW_MEMORY to true,
+            SECONDS_SINCE_BOOT to 45L,
+            PREFS_FILE_BYTES to 63070L,
             ART_COMPILER_FILTER to "speed-profile",
-            APP_IMAGE_AT_INIT to "true",
+            APP_IMAGE_AT_INIT to true,
         )
     }
 }

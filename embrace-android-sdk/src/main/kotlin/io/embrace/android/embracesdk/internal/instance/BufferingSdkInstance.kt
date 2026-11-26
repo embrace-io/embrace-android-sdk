@@ -179,7 +179,7 @@ internal class BufferingSdkInstance(
         endTimeMs: Long,
         errorCode: ErrorCode?,
         parent: EmbraceSpan?,
-        attributes: Map<String, String>,
+        attributes: Map<String, Any>,
         events: List<EmbraceSpanEvent>,
     ): Boolean {
         return completedSpanCalls.submit(
@@ -327,7 +327,7 @@ internal class BufferingSdkInstance(
         val endTimeMs: Long,
         val errorCode: ErrorCode?,
         val parent: EmbraceSpan?,
-        val attributes: Map<String, String>,
+        val attributes: Map<String, Any>,
         val events: List<EmbraceSpanEvent>,
     )
 

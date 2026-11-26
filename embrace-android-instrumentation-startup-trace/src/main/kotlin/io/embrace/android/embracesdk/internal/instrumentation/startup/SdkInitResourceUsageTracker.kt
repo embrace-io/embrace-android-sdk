@@ -104,7 +104,7 @@ class SdkInitResourceUsageTracker(
      * data, but we still failed to compute its value, the attribute is written with a sentinel value that is outside
      * the valid range to denote the failure.
      */
-    fun buildAttributes(): Map<String, String> = buildMap {
+    fun buildAttributes(): Map<String, Any> = buildMap {
         safePutAttributes(errorHandler, INIT_WINDOW_ATTRIBUTES) { putInitWindowShares() }
         safePutAttributes(errorHandler, INIT_DISK_READ_KB) { putDiskReadKb() }
         safePutAttributes(errorHandler, INIT_GC_COUNT) { putGcCount() }
@@ -113,7 +113,7 @@ class SdkInitResourceUsageTracker(
     /**
      * Record attributes that represent the shares of the init window which were associated with some known state or work.
      */
-    private fun MutableMap<String, String>.putInitWindowShares() {
+    private fun MutableMap<String, Any>.putInitWindowShares() {
         val wallStart = startWallMs
         val wallEnd = endWallMs
 
@@ -130,13 +130,13 @@ class SdkInitResourceUsageTracker(
         }
     }
 
-    private fun MutableMap<String, String>.putCpuPct(wallMs: Long) {
+    private fun MutableMap<String, Any>.putCpuPct(wallMs: Long) {
         monotonicCounterDelta(key = INIT_CPU_PCT, start = startCpuMs, end = endCpuMs)?.let { cpuMs ->
-            put(INIT_CPU_PCT, wholePercent(cpuMs, wallMs).toString())
+            put(INIT_CPU_PCT, wholePercent(cpuMs, wallMs))
         }
     }
 
-    private fun MutableMap<String, String>.putRunDelayPct(wallMs: Long) {
+    private fun MutableMap<String, Any>.putRunDelayPct(wallMs: Long) {
         val start = startSchedstat
         val end = endSchedstat
         if (start != null && end != null) {
@@ -145,12 +145,12 @@ class SdkInitResourceUsageTracker(
                 start = parseRunDelayNs(start),
                 end = parseRunDelayNs(end),
             )?.let { delayNs ->
-                put(INIT_RUN_DELAY_PCT, wholePercent(delayNs / 1_000_000L, wallMs).toString())
+                put(INIT_RUN_DELAY_PCT, wholePercent(delayNs / 1_000_000L, wallMs))
             }
         }
     }
 
-    private fun MutableMap<String, String>.putDiskReadKb() {
+    private fun MutableMap<String, Any>.putDiskReadKb() {
         val start = startProcIo
         val end = endProcIo
         if (start != null && end != null) {
@@ -159,12 +159,12 @@ class SdkInitResourceUsageTracker(
                 start = parseReadBytes(start),
                 end = parseReadBytes(end),
             )?.let { bytes ->
-                put(INIT_DISK_READ_KB, (bytes / 1024L).toString())
+                put(INIT_DISK_READ_KB, bytes / 1024L)
             }
         }
     }
 
-    private fun MutableMap<String, String>.putGcCount() {
+    private fun MutableMap<String, Any>.putGcCount() {
         if (versionChecker.isAtLeast(INIT_GC_COUNT_MIN_API)) {
             val start = startGcCount
             val end = endGcCount
@@ -174,7 +174,7 @@ class SdkInitResourceUsageTracker(
                     start = start.toLongOrNull(),
                     end = end.toLongOrNull(),
                 )?.let { count ->
-                    put(INIT_GC_COUNT, count.toString())
+                    put(INIT_GC_COUNT, count)
                 }
             }
         }
@@ -185,7 +185,7 @@ class SdkInitResourceUsageTracker(
      * return null, as well as put an entry in the map with the key [key] and the value [NUMERIC_ERROR] to signify the failure
      * attempt.
      */
-    private fun MutableMap<String, String>.monotonicCounterDelta(key: String, start: Long?, end: Long?): Long? =
+    private fun MutableMap<String, Any>.monotonicCounterDelta(key: String, start: Long?, end: Long?): Long? =
         if (start == null || end == null || end < start) {
             put(key, NUMERIC_ERROR)
             errorHandler.trackAttributeError(key)

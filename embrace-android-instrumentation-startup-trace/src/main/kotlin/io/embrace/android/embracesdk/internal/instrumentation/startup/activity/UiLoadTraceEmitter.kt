@@ -208,7 +208,7 @@ internal class UiLoadTraceEmitter(
         )
     }
 
-    override fun addAttribute(instanceId: Int, key: String, value: String) {
+    override fun addAttribute(instanceId: Int, key: String, value: Any) {
         activeTraces[instanceId]?.run {
             root.addAttribute(key, value)
         }
@@ -219,7 +219,7 @@ internal class UiLoadTraceEmitter(
         name: String,
         startTimeMs: Long,
         endTimeMs: Long,
-        attributes: Map<String, String>,
+        attributes: Map<String, Any>,
         events: List<SpanEvent>,
         errorCode: ErrorCodeAttribute?,
     ) {

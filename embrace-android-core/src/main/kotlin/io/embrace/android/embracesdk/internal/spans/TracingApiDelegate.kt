@@ -43,7 +43,7 @@ class TracingApiDelegate(
     override fun <T> recordSpan(
         name: String,
         parent: EmbraceSpan?,
-        attributes: Map<String, String>,
+        attributes: Map<String, Any>,
         events: List<EmbraceSpanEvent>,
         autoTerminationMode: AutoTerminationMode,
         code: () -> T,
@@ -63,7 +63,7 @@ class TracingApiDelegate(
         endTimeMs: Long,
         errorCode: ErrorCode?,
         parent: EmbraceSpan?,
-        attributes: Map<String, String>,
+        attributes: Map<String, Any>,
         events: List<EmbraceSpanEvent>,
     ): Boolean = spanService.recordCompletedSpan(
         name = name,

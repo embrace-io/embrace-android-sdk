@@ -30,7 +30,7 @@ internal class InstrumentationApiDelegate(
 
     override fun getSdkCurrentTimeMs(): Long = clock.now()
 
-    override fun addLoadTraceAttribute(activity: Activity, key: String, value: String) {
+    override fun addLoadTraceAttribute(activity: Activity, key: String, value: Any) {
         uiLoadTraceEmitter?.addAttribute(traceInstanceId(activity), key, value)
     }
 
@@ -39,7 +39,7 @@ internal class InstrumentationApiDelegate(
         name: String,
         startTimeMs: Long,
         endTimeMs: Long,
-        attributes: Map<String, String>,
+        attributes: Map<String, Any>,
         events: List<EmbraceSpanEvent>,
         errorCode: ErrorCode?,
     ) {
@@ -54,7 +54,7 @@ internal class InstrumentationApiDelegate(
         )
     }
 
-    override fun addStartupTraceAttribute(key: String, value: String) {
+    override fun addStartupTraceAttribute(key: String, value: Any) {
         appStartupDataCollector.addAttribute(key, value)
     }
 
@@ -62,7 +62,7 @@ internal class InstrumentationApiDelegate(
         name: String,
         startTimeMs: Long,
         endTimeMs: Long,
-        attributes: Map<String, String>,
+        attributes: Map<String, Any>,
         events: List<EmbraceSpanEvent>,
         errorCode: ErrorCode?,
     ) {

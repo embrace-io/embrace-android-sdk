@@ -26,8 +26,8 @@
         "name": "detailed-event",
         "epochNanos": "169220160530000000",
         "attributes": {
-          "event-boolean": "false",
-          "event-long": "7",
+          "event-boolean": false,
+          "event-long": 7,
           "event-string": "value"
         }
       },

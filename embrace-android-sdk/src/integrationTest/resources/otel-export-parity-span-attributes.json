@@ -10,20 +10,32 @@
     "totalAttributeCount": "15",
     "attributes": {
       "any-value-attr": "wrapped",
-      "boolean-attr": "true",
-      "boolean-list-attr": "[true, false]",
-      "byte-array-attr": "[1, 2, 3]",
+      "boolean-attr": true,
+      "boolean-list-attr": [
+        true,
+        false
+      ],
+      "byte-array-attr": "AQID",
       "created-with": "attribute",
-      "double-attr": "1.5",
-      "double-list-attr": "[1.5, 2.5]",
+      "double-attr": 1.5,
+      "double-list-attr": [
+        1.5,
+        2.5
+      ],
       "emb.process_identifier": "__EMBRACE_TEST_IGNORE__",
       "emb.session_part_id": "__EMBRACE_TEST_IGNORE__",
       "emb.type": "perf",
       "emb.user_session_id": "__EMBRACE_TEST_IGNORE__",
-      "long-attr": "42",
-      "long-list-attr": "[1, 2]",
+      "long-attr": 42,
+      "long-list-attr": [
+        1,
+        2
+      ],
       "string-attr": "value",
-      "string-list-attr": "[a, b]"
+      "string-list-attr": [
+        "a",
+        "b"
+      ]
     },
     "totalRecordedEvents": "0",
     "events": [],

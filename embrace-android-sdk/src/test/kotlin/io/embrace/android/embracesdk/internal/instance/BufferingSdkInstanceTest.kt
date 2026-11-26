@@ -471,8 +471,8 @@ internal class BufferingSdkInstanceTest {
         val calls = mutableListOf<Any>()
         var recordResult = true
         var onRecordCompletedSpan: () -> Unit = {}
-        val spanAttributes = mutableListOf<Map<String, String>>()
-        val spanEvents = mutableListOf<List<Triple<String, Long, Map<String, String>>>>()
+        val spanAttributes = mutableListOf<Map<String, Any>>()
+        val spanEvents = mutableListOf<List<Triple<String, Long, Map<String, Any>>>>()
 
         override fun addSpanExporter(spanExporter: SpanExporter) {
             calls.add(spanExporter)
@@ -500,7 +500,7 @@ internal class BufferingSdkInstanceTest {
             endTimeMs: Long,
             errorCode: ErrorCode?,
             parent: EmbraceSpan?,
-            attributes: Map<String, String>,
+            attributes: Map<String, Any>,
             events: List<EmbraceSpanEvent>,
         ): Boolean {
             calls.add("$name:$startTimeMs-$endTimeMs")

@@ -20,7 +20,7 @@ class FakeAppStartupDataCollector(
     var firstFrameRenderedMs: Long? = null
     var appReadyMs: Long? = null
     var appStartupCompleteCallback: (() -> Unit)? = null
-    var customAttributes: MutableMap<String, String> = ConcurrentHashMap()
+    var customAttributes: MutableMap<String, Any> = ConcurrentHashMap()
 
     override fun applicationInitStart(timestampMs: Long?) {
         applicationInitStartMs = timestampMs ?: clock.now()
@@ -78,13 +78,13 @@ class FakeAppStartupDataCollector(
         name: String,
         startTimeMs: Long,
         endTimeMs: Long,
-        attributes: Map<String, String>,
+        attributes: Map<String, Any>,
         events: List<SpanEvent>,
         errorCode: ErrorCodeAttribute?,
     ) {
     }
 
-    override fun addAttribute(key: String, value: String) {
+    override fun addAttribute(key: String, value: Any) {
         customAttributes[key] = value
     }
 

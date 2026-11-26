@@ -206,7 +206,7 @@ internal class SdkApiDispatcherTest {
         override fun <T> recordSpan(
             name: String,
             parent: EmbraceSpan?,
-            attributes: Map<String, String>,
+            attributes: Map<String, Any>,
             events: List<EmbraceSpanEvent>,
             autoTerminationMode: AutoTerminationMode,
             code: () -> T,

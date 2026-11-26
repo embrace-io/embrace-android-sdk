@@ -856,7 +856,7 @@ internal class EmbraceSpanImplTest(
     }
 
     @Test
-    fun `typed attribute values are snapshotted and exported as their string form`() {
+    fun `typed attribute values are snapshotted as their string form and exported with their type`() {
         embraceSpan = embraceSpanFactory.create(createWrapperForInternalSpan())
         embraceSpan.start()
         embraceSpan.addSystemAttribute("system-long", 5L)
@@ -877,9 +877,11 @@ internal class EmbraceSpanImplTest(
 
         assertTrue(embraceSpan.stop())
         val exported = spanExporter.exportedSpans.single()
-        assertEquals(expectedAttributes, exported.attributes.filterKeys(expectedAttributes::containsKey))
-        assertEquals(expectedEventAttributes, exported.events.single().attributes)
-        assertEquals(mapOf("link-bool" to "true"), exported.links.single().attributes)
+        val expectedExportedAttributes =
+            mapOf("system-long" to 5L, "custom-list" to listOf(true, false), "password" to REDACTED_LABEL)
+        assertEquals(expectedExportedAttributes, exported.attributes.filterKeys(expectedExportedAttributes::containsKey))
+        assertEquals(mapOf("event-double" to 1.0, "password" to REDACTED_LABEL), exported.events.single().attributes)
+        assertEquals(mapOf("link-bool" to true), exported.links.single().attributes)
     }
 
     @Test

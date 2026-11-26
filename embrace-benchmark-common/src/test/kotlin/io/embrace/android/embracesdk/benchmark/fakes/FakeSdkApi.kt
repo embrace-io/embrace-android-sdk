@@ -49,7 +49,7 @@ internal class FakeSdkApi(private val clock: () -> Long) : SdkApi by throwingSdk
     override fun <T> recordSpan(
         name: String,
         parent: EmbraceSpan?,
-        attributes: Map<String, String>,
+        attributes: Map<String, Any>,
         events: List<EmbraceSpanEvent>,
         autoTerminationMode: AutoTerminationMode,
         code: () -> T,

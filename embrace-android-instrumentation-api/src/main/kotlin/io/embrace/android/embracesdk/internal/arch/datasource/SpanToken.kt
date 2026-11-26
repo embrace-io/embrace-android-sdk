@@ -30,7 +30,7 @@ interface SpanToken {
     /**
      * Adds an attribute to the span
      */
-    fun addAttribute(key: String, value: String)
+    fun addAttribute(key: String, value: Any)
 
     /**
      * Gets the start time in ms or null if the span has not started
@@ -46,10 +46,10 @@ interface SpanToken {
     /**
      * Set the value of the attribute with the given key, overwriting the original value if it's already set
      */
-    fun setSystemAttribute(key: String, value: String)
+    fun setSystemAttribute(key: String, value: Any)
 
     /**
      * Add a system event to the span
      */
-    fun addSystemEvent(name: String, eventTimeMs: Long, attributes: Map<String, String>)
+    fun addSystemEvent(name: String, eventTimeMs: Long, attributes: Map<String, Any>)
 }

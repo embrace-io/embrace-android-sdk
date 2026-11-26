@@ -88,7 +88,7 @@ internal class TelemetryDestinationImplTest {
     }
 
     @Test
-    fun `typed log attributes are emitted as their payload string`() {
+    fun `typed log attributes are emitted with their type`() {
         impl = createDestination()
         impl.addLog(
             schemaType = Log(
@@ -100,9 +100,9 @@ internal class TelemetryDestinationImplTest {
             message = "test",
         )
         val attributes = logger.logs.single().attributes
-        assertEquals("5", attributes["long"])
-        assertEquals("[a, b]", attributes["list"])
-        assertEquals("[1, 2]", attributes["bytes"])
+        assertEquals(5L, attributes["long"])
+        assertEquals(listOf("a", "b"), attributes["list"])
+        assertEquals(listOf<Byte>(1, 2), (attributes["bytes"] as ByteArray).toList())
     }
 
     private fun FakeLogRecord.assertFakeEvent(

@@ -27,6 +27,7 @@ import io.embrace.android.embracesdk.internal.arch.InstrumentationProvider
 import io.embrace.android.embracesdk.internal.arch.InstrumentationRegistry
 import io.embrace.android.embracesdk.internal.arch.datasource.DataSource
 import io.embrace.android.embracesdk.internal.arch.datasource.DataSourceFactory
+import io.embrace.android.embracesdk.internal.arch.datasource.StateUpdate
 import io.embrace.android.embracesdk.internal.arch.state.ProcessState
 import io.embrace.android.embracesdk.internal.arch.state.ProcessStateListener
 import io.embrace.android.embracesdk.internal.arch.ui.TapSignal
@@ -68,6 +69,7 @@ import io.embrace.android.embracesdk.internal.worker.BackgroundWorker
 import io.embrace.android.embracesdk.internal.worker.Worker
 import io.embrace.android.embracesdk.semconv.EmbSessionAttributes
 import io.opentelemetry.kotlin.NoopOpenTelemetry
+import io.opentelemetry.kotlin.logging.model.ReadWriteLogRecord
 import okhttp3.OkHttpClient
 import okhttp3.Request
 import okhttp3.mockwebserver.MockResponse
@@ -300,6 +302,52 @@ internal class RealSdkInstanceFactoryTest {
             assertEquals(processIdentifier, resource[EmbSessionAttributes.EMB_PROCESS_IDENTIFIER])
         }
         assertTrue(Worker.Background.StateExportWorker in requestedWorkers)
+    }
+
+    @Test
+    fun `with state associated, a log emitted before the SDK is ready carries no state, and one emitted once it is ready does`() {
+        val associated = FakeConfigService(
+            config = EmbraceConfig(
+                persistence = { PersistenceConfig(multiFileEnabled = { true }) },
+                autoDataCapture = {
+                    AutoDataCaptureConfig(sharedStateSpanEnabled = { true }, stateAssociationEnabled = { true })
+                },
+            ),
+        )
+        fun emitLog(): Map<String, Any> {
+            val record = FakeReadWriteLogRecord()
+            // a real record gives its attributes as they are when they are read, and not as they come to be
+            val log = object : ReadWriteLogRecord by record {
+                override val attributes: Map<String, Any> get() = record.attributes.toMap()
+            }
+            checkNotNull(otelSdkConfig).logRecordProcessor.onEmit(log, NoopOpenTelemetry.context.current())
+            return record.attributes.toMap()
+        }
+        var eventBus: EventBus? = null
+        var beforeReady: Map<String, Any>? = null
+        val overrides = SdkOverrides(
+            otelSdkConfig = { real -> real().also { otelSdkConfig = it } },
+            eventBus = { real -> real().also { eventBus = it } },
+            // made once the recorder is handling updates, and before the SDK says it is ready
+            sessionOrchestrator = { real ->
+                real().also {
+                    checkNotNull(eventBus).emit(StateUpdate.KEY, StateUpdate("network", "wifi", clock.now()))
+                    beforeReady = emitLog()
+                }
+            },
+        )
+
+        // the app has a log exporter, so the state a log is stamped with is on the record itself
+        createInstance(
+            configService = associated,
+            overrides = overrides,
+            externalOtelConfig = { addLogExporter(FakeLogRecordExporter()) },
+        )
+
+        assertEquals(emptyList<String>(), checkNotNull(beforeReady).keys.filter { it.startsWith("emb.states.") })
+        val afterReady = emitLog()
+        assertEquals("wifi", afterReady["emb.states.value.network"])
+        assertNotNull(afterReady["emb.states.seq"])
     }
 
     /**

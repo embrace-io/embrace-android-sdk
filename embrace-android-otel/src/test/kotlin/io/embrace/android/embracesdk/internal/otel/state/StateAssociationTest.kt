@@ -79,6 +79,12 @@ internal class StateAssociationTest(
     @Volatile
     private var state: StateStamp? = null
 
+    /**
+     * Whether a log emitted now is to carry state, which it is once the SDK is ready.
+     */
+    @Volatile
+    private var logsCarryState = true
+
     @Before
     fun setup() {
         clock = FakeClock()
@@ -347,6 +353,30 @@ internal class StateAssociationTest(
     }
 
     @Test
+    fun `while a log is to carry no state, as before the SDK is ready, it has neither form, and a span is linked all the same`() {
+        logsCarryState = false
+        createSdk(exportsEvents = true)
+        sdk.sdkLogger.emit(body = "before ready")
+        sdk.sdkTracer.startSpan("early").end()
+
+        val payload = logSink.logsForNextBatch().single().attributes.orEmpty().mapNotNull { it.key }
+        assertEquals(emptyList<String>(), payload.filter { it.startsWith("emb.states.") })
+        listOf(logExporter.exportedLogs.single(), processedLogs.single()).forEach { log ->
+            assertEquals(emptyList<String>(), log.attributes.keys.filter { it.startsWith("emb.states.") })
+        }
+        // only the stamp on a log waits: the link on a span reads the state there is
+        assertEquals(mapOf(StateAttributes.SEQUENCE to "3"), exported("early").stateAttributes())
+
+        // from then on a log is stamped in both forms
+        logsCarryState = true
+        sdk.sdkLogger.emit(body = "ready")
+        val ready = logSink.logsForNextBatch().single { it.body == "ready" }
+        val stamped = ready.attributes.orEmpty().associate { it.key to it.data }
+        assertEquals("network=wifi;screen~Initializing", stamped["emb.states.packed"])
+        assertEquals(3L, logExporter.exportedLogs.last().attributes["emb.states.seq"])
+    }
+
+    @Test
     fun `an exit record about the last process carries none of this process's state, and an ordinary log carries both forms`() {
         createSdk(exportsEvents = true)
         sdk.sdkLogger.emit(
@@ -473,6 +503,7 @@ internal class StateAssociationTest(
                     valuesOnExportedSpans = valuesOnExportedSpans,
                     exportsEvents = exportsEvents,
                     stateAt = { timeMs -> remembered.lastOrNull { it.sinceMs <= timeMs } },
+                    logStateProvider = { if (logsCarryState) state else null },
                 )
             } else {
                 null

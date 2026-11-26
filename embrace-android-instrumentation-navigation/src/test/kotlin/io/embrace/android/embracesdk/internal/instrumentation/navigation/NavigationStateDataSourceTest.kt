@@ -1,11 +1,16 @@
 package io.embrace.android.embracesdk.internal.instrumentation.navigation
 
 import android.app.Activity
+import io.embrace.android.embracesdk.fakes.FakeConfigService
 import io.embrace.android.embracesdk.fakes.FakeInstrumentationArgs
+import io.embrace.android.embracesdk.internal.arch.datasource.StateUpdate
 import io.embrace.android.embracesdk.internal.arch.navigation.CurrentScreen
 import io.embrace.android.embracesdk.internal.arch.navigation.NavigationSignal
 import io.embrace.android.embracesdk.internal.arch.navigation.ScreenAttributesSource
 import io.embrace.android.embracesdk.internal.arch.schema.SchemaType.NavigationState.Screen
+import io.embrace.android.embracesdk.internal.config.resolved.AutoDataCaptureConfig
+import io.embrace.android.embracesdk.internal.config.resolved.EmbraceConfig
+import io.embrace.android.embracesdk.internal.config.resolved.PersistenceConfig
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotEquals
 import org.junit.Assert.assertTrue
@@ -167,6 +172,26 @@ internal class NavigationStateDataSourceTest {
         }
 
         assertEquals(1000, token.transitions.size)
+    }
+
+    @Test
+    fun `a journaled screen state reports its limit of 1,000 changes in a session part with each update`() {
+        val journaledArgs = FakeInstrumentationArgs(
+            configService = FakeConfigService(
+                config = EmbraceConfig(
+                    persistence = { PersistenceConfig(multiFileEnabled = { true }) },
+                    autoDataCapture = { AutoDataCaptureConfig(sharedStateSpanEnabled = { true }) },
+                ),
+            ),
+        )
+        val updates = mutableListOf<StateUpdate>()
+        journaledArgs.eventBus.addHandler(StateUpdate.KEY) { updates.add(it) }
+        NavigationStateDataSource(journaledArgs).onDataCaptureEnabled()
+        journaledArgs.eventBus.emitState(CurrentScreen.KEY, CurrentScreen(Screen.Named("home"), journaledArgs.clock.tick()))
+
+        assertEquals(listOf("Initializing", "home"), updates.map { it.value.toString() })
+        // the limit is applied by whatever records the updates, and not here
+        assertEquals(listOf(1_000), updates.map(StateUpdate::maxChangesInPart).distinct())
     }
 
     @Test

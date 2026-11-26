@@ -19,7 +19,8 @@ import io.opentelemetry.kotlin.semconv.UserAttributes
  * Supplies the session and user context that is stamped on OTel signals.
  *
  * The services that hold this context are constructed after the OTel SDK, so they are supplied as forward
- * references. Signals recorded before [markReady] carry no context.
+ * references. Signals recorded before [markReady] carry no context, and a log emitted before it carries no state in
+ * either form.
  *
  * @param statesStampedByLogPipeline whether the log pipeline stamps the values [stateSnapshotProvider] supplies itself, by
  * who reads the log, so that [getEventMetadata] leaves them out. Otherwise they are stamped as one string that holds all
@@ -55,6 +56,16 @@ internal class OtelSignalContext(
 
     fun getUserId(): String? = if (ready) {
         userServiceProvider().getUserInfo().userId
+    } else {
+        null
+    }
+
+    /**
+     * The value of every state to stamp on a log emitted now, for a log pipeline that stamps state itself. Null before
+     * [markReady], as a log emitted then carries none of the session's context, and where nothing records state.
+     */
+    fun getLogStateSnapshot(): StateSnapshot? = if (ready) {
+        stateSnapshotProvider()
     } else {
         null
     }

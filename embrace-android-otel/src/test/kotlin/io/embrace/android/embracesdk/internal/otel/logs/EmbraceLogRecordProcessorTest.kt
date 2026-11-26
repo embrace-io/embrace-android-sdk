@@ -39,7 +39,7 @@ internal class EmbraceLogRecordProcessorTest {
         )
     }
 
-    private fun stateProcessor(stamp: StateStamp, externalReceivers: Boolean) = EmbraceLogRecordProcessor(
+    private fun stateProcessor(stamp: StateStamp?, externalReceivers: Boolean) = EmbraceLogRecordProcessor(
         uuidSource = TestUuidSource(),
         metadataProvider = { emptyMap() },
         logRecordExporter = logRecordExporter,
@@ -249,7 +249,14 @@ internal class EmbraceLogRecordProcessorTest {
     }
 
     @Test
-    fun `no state is stamped when none has a value, or on a native crash or an exit record, or on a log with the packed attribute`() {
+    fun `no state is stamped when none is given or has a value, or on a native crash, an exit record or a log with the packed attribute`() {
+        // none is given until the SDK is ready
+        val early = FakeReadWriteLogRecord()
+        stateProcessor(null, externalReceivers = true).onEmit(early)
+        assertEquals(emptyList<String>(), early.attributes.keys.filter { it.startsWith("emb.states") })
+        assertEquals(emptyMap<Any, Any>(), logRecordExporter.payloadAttributes)
+        assertEquals(early, logRecordExporter.exportedLogs.single())
+
         val empty = FakeReadWriteLogRecord()
         stateProcessor(FakeStateStamp(0), externalReceivers = true).onEmit(empty)
         assertEquals(emptyList<String>(), empty.attributes.keys.filter { it.startsWith("emb.states") })

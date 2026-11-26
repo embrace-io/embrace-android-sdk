@@ -2,11 +2,17 @@ package io.embrace.android.embracesdk.internal.capture.state
 
 import io.embrace.android.embracesdk.concurrency.BlockingScheduledExecutorService
 import io.embrace.android.embracesdk.fakes.FakeClock
+import io.embrace.android.embracesdk.fakes.FakeConfigService
+import io.embrace.android.embracesdk.fakes.FakeInstrumentationArgs
 import io.embrace.android.embracesdk.fakes.FakeOpenTelemetryLogger
 import io.embrace.android.embracesdk.fakes.OtelSdkMode
+import io.embrace.android.embracesdk.fakes.TestStateDataSource
 import io.embrace.android.embracesdk.fakes.fakeOpenTelemetry
 import io.embrace.android.embracesdk.internal.arch.datasource.StateUpdate
 import io.embrace.android.embracesdk.internal.clock.millisToNanos
+import io.embrace.android.embracesdk.internal.config.resolved.AutoDataCaptureConfig
+import io.embrace.android.embracesdk.internal.config.resolved.EmbraceConfig
+import io.embrace.android.embracesdk.internal.config.resolved.PersistenceConfig
 import io.embrace.android.embracesdk.internal.otel.state.StateEventLogger
 import io.embrace.android.embracesdk.internal.payload.Attribute
 import io.embrace.android.embracesdk.internal.payload.Envelope
@@ -125,6 +131,38 @@ internal class StateKnownDefectsTest {
         val eventNames = checkNotNull(stateSpan().events).map { it.name }
         assertEquals(listOf("emb-state-", "emb-state-$unchecked"), eventNames)
         assertTrue(checkNotNull(eventNames.last()).length > 5_000)
+    }
+
+    @Test
+    fun `the data source and the recorder each decide what a change is, so one can report a change the other takes for a repeat`() {
+        val args = FakeInstrumentationArgs(
+            configService = FakeConfigService(
+                config = EmbraceConfig(
+                    persistence = { PersistenceConfig(multiFileEnabled = { true }) },
+                    autoDataCapture = { AutoDataCaptureConfig(sharedStateSpanEnabled = { true }) },
+                ),
+            ),
+        )
+        val recorder = StateRecorder(clock)
+        val emitted = mutableListOf<StateUpdate>()
+        args.eventBus.addHandler(StateUpdate.KEY) { emitted += it }
+        args.eventBus.addHandler(StateUpdate.KEY, recorder)
+        val dataSource = TestStateDataSource(args)
+        dataSource.onDataCaptureEnabled()
+        recorder.beginJournal(clock.now(), journal::addAll)
+
+        // two values that are the same up to where a value is cut
+        val sameUpToTheCut = "v".repeat(2_000)
+        dataSource.onStateChange(sameUpToTheCut + "a", clock.now())
+        dataSource.onStateChange(sameUpToTheCut + "b", clock.now())
+        recorder.endJournal(clock.now())
+
+        // the data source compares the values, and emits each as a change
+        assertEquals(3, emitted.size)
+        // the recorder compares the cut text: the second takes no number, and is counted nowhere as it is no loss to it
+        assertEquals(2L, recorder.snapshot().sequence)
+        assertEquals(2, journal.count { it.change != null })
+        assertEquals(emptyList<Any>(), checkNotNull(journal.last().part_end).dropped_counts)
     }
 
     /**

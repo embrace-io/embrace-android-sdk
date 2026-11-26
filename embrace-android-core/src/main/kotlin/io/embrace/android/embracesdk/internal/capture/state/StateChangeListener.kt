@@ -14,7 +14,7 @@ interface StateChangeListener {
     /**
      * A state took a new value. [record] is the change, and [snapshot] the value of every state after it. [previous] is the
      * value the state had before, or null if this is its first. A change the recorder counts and does not record, because
-     * its journal is full, is not reported.
+     * a limit refused it, is not reported.
      */
     fun onChange(record: StateRecord, snapshot: StateSnapshot, previous: StateValue?)
 

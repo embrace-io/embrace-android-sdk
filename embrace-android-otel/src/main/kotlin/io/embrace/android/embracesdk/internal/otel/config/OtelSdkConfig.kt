@@ -168,7 +168,7 @@ class OtelSdkConfig(
             eventMetadataProvider,
             logRecordExporter,
             if (stateAssociation?.exportsEvents == true) logRecordExporter::exportExternally else null,
-            stateAssociation?.stateProvider,
+            stateAssociation?.logStateProvider,
             externalLogExporters.isNotEmpty() || externalLogRecordProcessors.isNotEmpty(),
         )
     }

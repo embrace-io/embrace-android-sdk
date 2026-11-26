@@ -10,9 +10,10 @@ option java_package = "io.embrace.android.embracesdk.internal.session.persistenc
 //
 // A journal opens with a checkpoint, then the changes made since it and before the session part
 // started, then a part start, then the changes made during the part, and a part end if the part
-// ended in the process that started it. The changes are consecutive: the first has the sequence
-// after the checkpoint's and each of the rest the sequence after the one before it, so a journal
-// read as far as it goes leads from the checkpoint's values to the values at its last change.
+// ended in the process that started it. The changes are in the order of their sequence. Those
+// before the part start are consecutive from the sequence after the checkpoint's. A change made
+// during the part that a limit refused is not recorded and keeps its number, so the numbers of the
+// changes after the part start can skip, anywhere among them. The part end counts what is missing.
 message StateJournal {
   uint32 format_version = 1;
   repeated StateRecord records = 2;
@@ -68,10 +69,35 @@ message StatePartStart {
 
 // The session part ended in the process that started it.
 message StatePartEnd {
-  // Changes made during the part that were not recorded, as the journal had reached its limit.
+  // Changes made during the part that took a number and were not recorded, as a limit refused
+  // them: the limit of the change's own state, or the limit on the journal as a whole.
   int32 dropped_changes = 1;
 
-  // The value of every state when the part ended. Present only if changes were dropped, as the
-  // values cannot then be worked out from the records.
+  // The value, when the part ended, of each state that had a change refused, as that value cannot
+  // be worked out from the records. A journal written before states had limits of their own holds
+  // every state's value here, whenever it dropped a change.
   repeated StateValue values = 2;
+
+  // What the journal does not list of each state, for the states it does not list something of.
+  // A journal written before states had limits of their own holds none.
+  repeated StateDroppedCount dropped_counts = 3;
+
+  // The most changes the journal holds for every state together, counting those it opened with.
+  // Set only if that limit refused a change during the part.
+  optional int32 shared_limit = 4;
+}
+
+// How many changes of one state the journal of a session part does not list.
+message StateDroppedCount {
+  // The name of the state.
+  string state = 1;
+
+  // The changes of the state made during the part that a limit refused, which took a number, and
+  // the changes the state's reporter said it never passed on, which took none. Those reported
+  // while no session part was in progress are counted in the journal of the next part to start.
+  int32 count = 2;
+
+  // The most changes of the state that one session part lists. Set only if that limit, and not
+  // the limit on the journal as a whole, refused a change of the state during the part.
+  optional int32 limit = 3;
 }

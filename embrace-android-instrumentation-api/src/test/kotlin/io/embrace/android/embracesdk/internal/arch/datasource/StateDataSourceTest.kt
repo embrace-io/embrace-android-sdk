@@ -2,6 +2,7 @@ package io.embrace.android.embracesdk.internal.arch.datasource
 
 import io.embrace.android.embracesdk.fakes.FakeConfigService
 import io.embrace.android.embracesdk.fakes.FakeInstrumentationArgs
+import io.embrace.android.embracesdk.fakes.TestState
 import io.embrace.android.embracesdk.fakes.TestStateDataSource
 import io.embrace.android.embracesdk.internal.config.resolved.AutoDataCaptureConfig
 import io.embrace.android.embracesdk.internal.config.resolved.EmbraceConfig
@@ -9,6 +10,7 @@ import io.embrace.android.embracesdk.internal.config.resolved.PersistenceConfig
 import io.embrace.android.embracesdk.semconv.EmbStateTransitionAttributes
 import io.embrace.android.embracesdk.semconv.ExperimentalSemconv
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNotEquals
 import org.junit.Assert.assertTrue
 import org.junit.Before
@@ -125,47 +127,62 @@ internal class StateDataSourceTest {
 
     @OptIn(ExperimentalSemconv::class)
     @Test
-    fun `a journaled state emits each change of value and counts the transitions it did not emit`() {
+    fun `a journaled state emits each change of value with its limit, and passes on the transitions its instrumentation dropped`() {
         val updates = journalUpdates()
         dataSource.onDataCaptureEnabled()
         dataSource.onStateChange("a", 1L)
+        // a repeated value loses nothing, so it is neither emitted nor counted
         dataSource.onStateChange("a", 2L)
-        dataSource.onStateChange("a", 3L, droppedTransitions = 2)
+        // one that comes with a count is emitted, so that the count is reported, and carries nothing else
+        dataSource.onStateChange("a", 3L, mapOf("ignored" to "value"), droppedTransitions = 2)
         dataSource.onStateChange("b", 4L, mapOf("key" to "value"))
         dataSource.onPreSessionEnd()
         dataSource.onPostSessionChange()
-        dataSource.onStateChange("c", 5L)
+        dataSource.onStateChange("c", 5L, droppedTransitions = 1)
 
         assertEquals(listOf("test"), updates.map(StateUpdate::state).distinct())
-        assertEquals(listOf<Any>("UNKNOWN", "a", "b", "c"), updates.map(StateUpdate::value))
-        assertEquals(listOf(1L, 4L, 5L), updates.drop(1).map(StateUpdate::timeMs))
-        assertEquals(emptyMap<String, String>(), updates[1].attributes)
-        // two updates that changed nothing, and two transitions the instrumentation said it dropped
+        assertEquals(listOf<Any>("UNKNOWN", "a", "a", "b", "c"), updates.map(StateUpdate::value))
+        assertEquals(listOf(1L, 3L, 4L, 5L), updates.drop(1).map(StateUpdate::timeMs))
+        assertEquals(listOf(0, 0, 2, 0, 1), updates.map(StateUpdate::droppedChanges))
         assertEquals(
-            mapOf("key" to "value", EmbStateTransitionAttributes.EMB_STATE_DROPPED_BY_INSTRUMENTATION to "4"),
-            updates[2].attributes,
+            listOf(emptyMap(), emptyMap(), emptyMap(), mapOf("key" to "value"), emptyMap()),
+            updates.map(StateUpdate::attributes),
         )
-        assertEquals(emptyMap<String, String>(), updates[3].attributes)
+        // the count is no longer written as an attribute of a change
+        assertTrue(updates.none { EmbStateTransitionAttributes.EMB_STATE_DROPPED_BY_INSTRUMENTATION in it.attributes })
+        // every update carries the limit the data source would apply to a span of its own, which is 100 unless it gives one
+        assertEquals(listOf(MAX_TRANSITIONS), updates.map(StateUpdate::maxChangesInPart).distinct())
         assertEquals("c", dataSource.getCurrentStateValue())
         // a session part changing is nothing to a journaled state
         assertTrue(args.destination.createdStateTokens.isEmpty())
+
+        // a data source that gives a limit of its own passes that on, and does not apply it itself
+        val limited = object : StateDataSource<Any>(args, ::TestState, "UNKNOWN", maxTransitions = 2) {}
+        limited.onDataCaptureEnabled()
+        repeat(5) { limited.onStateChange("value-$it", it.toLong()) }
+        assertEquals(listOf<Any>("UNKNOWN", "value-0", "value-1", "value-2", "value-3", "value-4"), updates.drop(5).map(StateUpdate::value))
+        assertEquals(listOf(2), updates.drop(5).map(StateUpdate::maxChangesInPart).distinct())
     }
 
-    @OptIn(ExperimentalSemconv::class)
     @Test
-    fun `a reporter cannot set the count of transitions the instrumentation dropped on a journaled change`() {
+    fun `a state captured lazily is present from the start when journaled, and starts on first use when it has a span of its own`() {
         val updates = journalUpdates()
-        dataSource.onDataCaptureEnabled()
-        val forged = mapOf(EmbStateTransitionAttributes.EMB_STATE_DROPPED_BY_INSTRUMENTATION to "99", "key" to "value")
-        dataSource.onStateChange("a", 1L, forged)
-        dataSource.onStateChange("b", 2L, forged, droppedTransitions = 3)
+        val journaled = lazyDataSource()
+        journaled.onDataCaptureEnabled()
 
-        // with no count the forged one is removed, and with one it is replaced by the data source's
-        assertEquals(mapOf("key" to "value"), updates[1].attributes)
-        assertEquals(
-            mapOf("key" to "value", EmbStateTransitionAttributes.EMB_STATE_DROPPED_BY_INSTRUMENTATION to "3"),
-            updates[2].attributes,
-        )
+        // its default is reported as capture is enabled, whatever the data source says about capturing on creation
+        assertEquals(listOf<Any>("UNKNOWN"), updates.map(StateUpdate::value))
+        assertTrue(journaled.isActive())
+
+        // with a span for each state, nothing is captured until the state first changes
+        args = FakeInstrumentationArgs(sessionPartIdSupplier = { "part-id" })
+        val withSpan = lazyDataSource()
+        withSpan.onDataCaptureEnabled()
+        assertFalse(withSpan.isActive())
+        assertTrue(args.destination.createdStateTokens.isEmpty())
+        withSpan.onStateChange("a", 1L)
+        assertTrue(withSpan.isActive())
+        assertEquals(1, args.destination.createdStateTokens.size)
     }
 
     @Test
@@ -192,6 +209,13 @@ internal class StateDataSourceTest {
         assertEquals(REPORTING_THREADS * UPDATES_PER_THREAD + 1, updates.size)
         assertEquals(0, staleUpdates.get())
         assertEquals(dataSource.getCurrentStateValue(), updates.last().value)
+    }
+
+    /**
+     * A data source of the test state that does not capture on creation, as the power state's does not.
+     */
+    private fun lazyDataSource(): StateDataSource<Any> = object : StateDataSource<Any>(args, ::TestState, "UNKNOWN") {
+        override val captureStateOnCreation = false
     }
 
     /**

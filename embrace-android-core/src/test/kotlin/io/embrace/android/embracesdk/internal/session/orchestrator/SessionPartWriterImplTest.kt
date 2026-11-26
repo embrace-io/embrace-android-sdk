@@ -172,8 +172,9 @@ internal class SessionPartWriterImplTest {
     /**
      * State changes are reported from any thread while session parts change on another, and are written by a worker that
      * neither waits for. Whatever the interleaving, every change is accounted for once: journaled with the part it was made
-     * in or the next to start, or folded into the values that next journal opens with. Read one after another, the journals
-     * lead from each change to the next with none missing.
+     * in or the next to start, or folded into the values that next journal opens with, or refused by its state's limit for
+     * the part and counted in that part's end. Read one after another, the journals lead from each number to the next with
+     * none unaccounted for.
      */
     @Test
     fun `state changes racing session part changes are each journaled once and in order`() {
@@ -214,9 +215,11 @@ internal class SessionPartWriterImplTest {
         var lastChange = 0L
         var journaled = 0
         var folded = 0
+        var refused = 0
         partIds.forEach { partId ->
             val records = journalRecordsOnDisk(partId)
-            val foldedBefore = checkNotNull(records.single { it.part_start != null }.part_start).dropped_changes
+            val partStart = records.indexOfFirst { it.part_start != null }
+            val foldedBefore = checkNotNull(records[partStart].part_start).dropped_changes
             val changesHeld = records.filter { it.change != null }
 
             // a journal opens with the values as of the last change before the ones it holds, which is the last change of
@@ -224,17 +227,32 @@ internal class SessionPartWriterImplTest {
             assertNotNull(records.first().checkpoint)
             assertEquals(lastChange + foldedBefore, records.first().sequence)
             lastChange = records.first().sequence
-            changesHeld.forEach { assertEquals(++lastChange, it.sequence) }
+            // the changes from before the part follow one another, as no limit refuses a change that is held
+            records.subList(0, partStart).filter { it.change != null }.forEach { assertEquals(++lastChange, it.sequence) }
+            assertEquals(lastChange, records[partStart].sequence)
+            // those made during it are in order, and skip a number for each change a state's limit refused
+            records.subList(partStart, records.size).filter { it.change != null }.forEach {
+                assertTrue(it.sequence > lastChange)
+                lastChange = it.sequence
+            }
 
             with(records.last()) {
-                assertEquals(lastChange, sequence)
-                assertEquals(0, checkNotNull(part_end).dropped_changes)
+                val partEnd = checkNotNull(part_end)
+                assertTrue(sequence >= lastChange)
+                lastChange = sequence
+                // what the journal lists and what it counts as refused add up to the numbers it covers
+                assertEquals(sequence - records.first().sequence, (changesHeld.size + partEnd.dropped_changes).toLong())
+                // every refusal was a state's own limit, and the count for each state says whose
+                assertNull(partEnd.shared_limit)
+                assertEquals(partEnd.dropped_changes, partEnd.dropped_counts.sumOf { it.count })
+                assertTrue(partEnd.dropped_counts.all { it.limit == StateUpdate.DEFAULT_MAX_CHANGES_IN_PART })
+                refused += partEnd.dropped_changes
             }
             journaled += changesHeld.size
             folded += foldedBefore
         }
         assertEquals(changes.toLong(), lastChange)
-        assertEquals(changes, journaled + folded)
+        assertEquals(changes, journaled + folded + refused)
         assertEquals(lastChange, recorder.snapshot().sequence)
         assertNoSdkErrors()
     }

@@ -8,7 +8,9 @@ import io.embrace.android.embracesdk.internal.payload.Attribute
 import io.embrace.android.embracesdk.internal.payload.Envelope
 import io.embrace.android.embracesdk.internal.payload.SessionPartPayload
 import io.embrace.android.embracesdk.internal.payload.Span
+import io.embrace.android.embracesdk.internal.session.persistence.StatePartEnd
 import io.embrace.android.embracesdk.internal.session.persistence.StateRecord
+import io.embrace.android.embracesdk.internal.session.persistence.StateValue
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotEquals
 import org.junit.Assert.assertNull
@@ -250,18 +252,91 @@ internal class StateJournalSpanTest {
     }
 
     @Test
-    fun `changes a journal dropped are counted and the values it ended with are delivered`() {
-        recorder = StateRecorder(clock, maxChanges = 1)
+    fun `a journal that reaches the shared limit states it, counts what each state lost, and states no limit of a state's own`() {
+        recorder = StateRecorder(clock, maxChanges = 2)
         recorder.beginJournal(clock.now(), journal::addAll)
         update("network", "wifi")
+        update("power", "low")
         update("network", "wan")
         recorder.endJournal(clock.now())
 
         val stateSpan = checkNotNull(envelope(spans = listOf(sessionSpan)).withStateSpan(journal).data.spans).last()
+        val attributes = stateSpan.attributeMap()
 
-        assertEquals(1, stateSpan.events?.size)
-        assertEquals("1", stateSpan.attributeMap()["emb.states.dropped_changes"])
-        assertEquals("wan", stateSpan.attributeMap()["emb.states.final_value.network"])
+        assertEquals(2, stateSpan.events?.size)
+        assertEquals("1", attributes["emb.states.dropped_changes"])
+        assertEquals("2", attributes["emb.states.shared_limit"])
+        // the state that lost a change is counted and given its final value, and its own limit was not what refused it
+        assertEquals("1", attributes["emb.states.dropped_count.network"])
+        assertEquals("wan", attributes["emb.states.final_value.network"])
+        assertNull(attributes["emb.states.limit.network"])
+        // the other state lost nothing, so the events lead to its value
+        assertEquals(emptyList<String?>(), attributes.keys.filter { it?.endsWith(".power") == true })
+        assertNull(attributes["emb.states.truncated"])
+    }
+
+    @Test
+    fun `a state that reached its own limit has its count, its limit and its final value on the span, and the others go on`() {
+        recorder.beginJournal(clock.now(), journal::addAll)
+        update("network", "wifi", maxChangesInPart = 1)
+        update("network", "wan", maxChangesInPart = 1)
+        update("power", "low", droppedChanges = 3)
+        update("network", "none", maxChangesInPart = 1)
+        update("screen", Backgrounded, maxChangesInPart = 0)
+        update("power", "normal")
+        recorder.endJournal(clock.now())
+
+        val stateSpan = stateSpanOf(listOf(sessionSpan))
+        val attributes = stateSpan.attributeMap()
+
+        // the span is not cut at a gap in the numbers, which is where a limit refused a change, and is not marked
+        assertEquals(listOf("wifi", "low", "normal"), stateSpan.newValues())
+        assertEquals(listOf("1", "3", "6"), checkNotNull(stateSpan.events).map { it.attributeMap()["emb.states.seq"] })
+        assertNull(attributes["emb.states.truncated"])
+
+        // changes that took a number and are not listed, for every state together
+        assertEquals("3", attributes["emb.states.dropped_changes"])
+        assertNull(attributes["emb.states.shared_limit"])
+        assertEquals("2", attributes["emb.states.dropped_count.network"])
+        assertEquals("1", attributes["emb.states.limit.network"])
+        assertEquals("none", attributes["emb.states.final_value.network"])
+        assertNull(attributes["emb.states.final_value_type.network"])
+        // a limit that lists nothing is stated as well
+        assertEquals("1", attributes["emb.states.dropped_count.screen"])
+        assertEquals("0", attributes["emb.states.limit.screen"])
+        assertEquals("Backgrounded", attributes["emb.states.final_value.screen"])
+        assertEquals("system", attributes["emb.states.final_value_type.screen"])
+        // what a reporter dropped is in its state's count alone: no limit refused it, and the events lead to the value
+        assertEquals("3", attributes["emb.states.dropped_count.power"])
+        assertNull(attributes["emb.states.limit.power"])
+        assertNull(attributes["emb.states.final_value.power"])
+    }
+
+    @Test
+    fun `a journal written before states had limits of their own is delivered with its one count and every final value`() {
+        recorder.beginJournal(clock.now(), journal::addAll)
+        update("network", "wifi")
+        update("power", "low")
+        // as the part end was written then: one count for the part, and the value of every state
+        val written = journal + StateRecord(
+            sequence = 5,
+            time_ms = clock.now(),
+            part_end = StatePartEnd(
+                dropped_changes = 3,
+                values = listOf(StateValue(state = "network", value_ = "none"), StateValue(state = "power", value_ = "normal")),
+            ),
+        )
+        // read back from the bytes it was written as
+        val readBack = written.map { StateRecord.ADAPTER.decode(it.encode()) }
+
+        val attributes = checkNotNull(envelope(spans = listOf(sessionSpan)).withStateSpan(readBack).data.spans).last().attributeMap()
+
+        assertEquals("3", attributes["emb.states.dropped_changes"])
+        assertEquals("none", attributes["emb.states.final_value.network"])
+        assertEquals("normal", attributes["emb.states.final_value.power"])
+        assertEquals(emptyList<String?>(), attributes.keys.filter { it?.startsWith("emb.states.dropped_count.") == true })
+        assertEquals(emptyList<String?>(), attributes.keys.filter { it?.contains("limit") == true })
+        assertNull(attributes["emb.states.truncated"])
     }
 
     @Test
@@ -270,8 +345,8 @@ internal class StateJournalSpanTest {
         update("network", "wifi")
         update("network", "wan")
         recorder.beginJournal(clock.now(), journal::addAll)
-        update("screen", Backgrounded)
         update("network", "none")
+        update("screen", Backgrounded)
         recorder.endJournal(clock.now())
 
         val stateSpan = stateSpanOf(listOf(sessionSpan))
@@ -281,14 +356,14 @@ internal class StateJournalSpanTest {
         assertEquals("1", attributes["emb.states.folded_changes"])
         assertEquals("1", attributes["emb.states.initial_seq"])
         assertEquals("wifi", attributes["emb.states.initial_value.network"])
-        assertEquals(listOf("wan", "Backgrounded"), stateSpan.newValues())
-        // the numbers follow initial_seq, and the dropped change has none
+        assertEquals(listOf("wan", "none"), stateSpan.newValues())
+        // the numbers follow initial_seq, and the dropped change is not among them
         assertEquals(listOf("2", "3"), checkNotNull(stateSpan.events).map { it.attributeMap()["emb.states.seq"] })
         assertEquals("1", attributes["emb.states.dropped_changes"])
-        assertEquals("none", attributes["emb.states.final_value.network"])
-        assertNull(attributes["emb.states.final_value_type.network"])
+        // the value the part ended with is given for the state that had a change dropped, and not for the other
         assertEquals("Backgrounded", attributes["emb.states.final_value.screen"])
         assertEquals("system", attributes["emb.states.final_value_type.screen"])
+        assertNull(attributes["emb.states.final_value.network"])
         assertNull(attributes["emb.states.truncated"])
     }
 
@@ -348,21 +423,30 @@ internal class StateJournalSpanTest {
     }
 
     @Test
-    fun `a journal with a change missing is delivered up to the missing change and marked`() {
+    fun `a journal is delivered whole across a gap in its changes' numbers, and up to a change that is out of order`() {
         recorder.beginJournal(clock.now(), journal::addAll)
         update("network", "wifi")
         update("network", "wan")
         update("network", "none")
         recorder.endJournal(clock.now())
-        val missingOne = journal.filterNot { it.change != null && it.sequence == 2L }
 
-        val envelope = envelope(snapshots = listOf(sessionSpan)).withStateSpan(missingOne)
+        // a number that skips is a change that is not listed, which a limit can leave anywhere, and nothing is cut there
+        val skipping = journal.filterNot { it.change != null && it.sequence == 2L }
+        val whole = checkNotNull(envelope(spans = listOf(sessionSpan)).withStateSpan(skipping).data.spans).last()
+        assertEquals(listOf("wifi", "none"), whole.newValues())
+        assertNull(whole.attributeMap()["emb.states.truncated"])
 
-        // the end of the part is recorded after the missing change, so is not taken from the journal either
+        // a change numbered at or below the one before it is not something a journal is written with
+        val outOfOrder = journal.filter { it.change == null || it.sequence != 2L }.toMutableList().apply {
+            add(indexOfFirst { it.part_end != null }, journal.first { it.change != null && it.sequence == 2L })
+        }
+        val envelope = envelope(snapshots = listOf(sessionSpan)).withStateSpan(outOfOrder)
+
+        // the end of the part is recorded after that change, so is not taken from the journal either
         val stateSpan = checkNotNull(envelope.data.spanSnapshots).last()
         assertNull(stateSpan.endTimeNanos)
         assertEquals("true", stateSpan.attributeMap()["emb.states.truncated"])
-        assertEquals(listOf("wifi"), stateSpan.newValues())
+        assertEquals(listOf("wifi", "none"), stateSpan.newValues())
     }
 
     @Test
@@ -371,9 +455,15 @@ internal class StateJournalSpanTest {
         assertSame(envelope, envelope.withStateSpan(emptyList()))
     }
 
-    private fun update(state: String, value: Any, attributes: Map<String, String> = emptyMap()): Long {
+    private fun update(
+        state: String,
+        value: Any,
+        attributes: Map<String, String> = emptyMap(),
+        maxChangesInPart: Int = StateUpdate.DEFAULT_MAX_CHANGES_IN_PART,
+        droppedChanges: Int = 0,
+    ): Long {
         val time = clock.tick()
-        recorder.onEvent(StateUpdate(state, value, time, attributes))
+        recorder.onEvent(StateUpdate(state, value, time, attributes, maxChangesInPart, droppedChanges))
         return time
     }
 

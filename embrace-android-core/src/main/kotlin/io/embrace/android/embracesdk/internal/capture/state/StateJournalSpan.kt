@@ -13,6 +13,7 @@ import io.embrace.android.embracesdk.internal.payload.Link
 import io.embrace.android.embracesdk.internal.payload.SessionPartPayload
 import io.embrace.android.embracesdk.internal.payload.Span
 import io.embrace.android.embracesdk.internal.payload.SpanEvent
+import io.embrace.android.embracesdk.internal.session.persistence.StatePartEnd
 import io.embrace.android.embracesdk.internal.session.persistence.StateRecord
 import io.embrace.android.embracesdk.semconv.EmbSessionAttributes
 import java.nio.ByteBuffer
@@ -27,9 +28,15 @@ import java.security.MessageDigest
  *   `emb.states.initial_value_type.<name>` beside it for a value the SDK generated
  * - every change is an event named `emb-state-<name>`, in the order of the journal, carrying its new value and its own
  *   sequence number, `emb.states.seq`
- * - `emb.states.initial_seq` says what the initial values are as of. The changes of a journal are consecutive, so the
- *   first event is numbered one more than that and each event after it the next
+ * - `emb.states.initial_seq` says what the initial values are as of. The events are in the order of their numbers, the
+ *   first is numbered above that, and a gap between two numbers is one or more changes a limit refused, which are not
+ *   listed. One state can reach its own limit while the others go on, so a gap can be anywhere after the part's start
  * - `emb.states.part_start_seq` says which changes were made before the session part started: those numbered up to it
+ * - what is not listed is counted when the part's end is recorded: `emb.states.dropped_changes` for every state together,
+ *   and for each state `emb.states.dropped_count.<name>`, with `emb.states.final_value.<name>` for a state that had a
+ *   change refused
+ * - a limit that refused a change is stated: `emb.states.limit.<name>` where it was the state's own, and
+ *   `emb.states.shared_limit` where it was the one the whole journal has
  *
  * The span covers the session part: it starts and ends when the session part span does. If neither the journal nor the
  * session part span records the part's end, the process died with the part in progress, and the span is left as a
@@ -37,8 +44,9 @@ import java.security.MessageDigest
  *
  * A journal that does not record the end of its part is delivered as far as it goes and marked
  * `emb.states.truncated`: the process died, or the journal could not be written to, and either way the values
- * after its last event, and how many changes it did not record, are not known from it. The changes of a journal are
- * consecutive, and one read back with a change missing is delivered up to the missing change and marked the same way.
+ * after its last event, and how many changes it did not record, are not known from it. The changes of a journal are in
+ * the order of their numbers, and one read back with a change out of that order is delivered up to that change and
+ * marked the same way. A gap in the numbers is not a fault, and the span is not cut at one.
  *
  * Where [completesRunningSpans], and the part was left by a process that died, which is when neither the session part span
  * nor the journal records its end, each span the part has as a snapshot, which was running when the process died, is given
@@ -56,7 +64,7 @@ fun Envelope<SessionPartPayload>.withStateSpan(
     completesRunningSpans: Boolean = false,
 ): Envelope<SessionPartPayload> {
     val opening = journal.firstOrNull()?.takeIf { it.checkpoint != null } ?: return this
-    val records = journal.upToFirstMissingChange()
+    val records = journal.upToFirstChangeOutOfOrder()
     val partStart = records.firstOrNull { it.part_start != null }
     val partEnd = records.lastOrNull { it.part_end != null }
     val sessionSpan = (data.spans.orEmpty() + data.spanSnapshots.orEmpty())
@@ -132,14 +140,15 @@ private fun Span.withEndSequence(lastChange: Long, spansAreLinked: Boolean): Spa
 }
 
 /**
- * The records of a journal up to the first change that does not have the sequence after the change before it, which is all
- * of them unless a change is missing. The journal opens with a checkpoint, whose sequence the first change follows.
+ * The records of a journal up to the first change whose sequence is not above that of the change before it, which is all
+ * of them unless the journal is not in the order it was written in. The journal opens with a checkpoint, whose sequence
+ * the first change is above. A sequence that skips is a change a limit refused, and nothing is cut there.
  */
-private fun List<StateRecord>.upToFirstMissingChange(): List<StateRecord> {
+private fun List<StateRecord>.upToFirstChangeOutOfOrder(): List<StateRecord> {
     var last = first().sequence
     forEachIndexed { index, record ->
         if (record.change != null) {
-            if (record.sequence != last + 1) {
+            if (record.sequence <= last) {
                 return subList(0, index)
             }
             last = record.sequence
@@ -176,8 +185,10 @@ private fun Span?.sharedAttributes(): List<Attribute> = buildList {
  * which changes came before the session part started, how many changes it does not hold, and whether it stops short.
  *
  * Two counts are kept apart. Changes folded into the opening values were made before those values, so the events still
- * lead on from them. Changes dropped during the part leave the events short of the values the part ended with, which are
- * then given as well.
+ * lead on from them. Changes dropped during the part leave the events of their state short of the value it ended the
+ * part with, which is then given as well, for that state. The count for each state also holds the changes its reporter
+ * said it never passed on, so the counts of the states can add up to more than the count for the part. A journal written
+ * before states had limits of their own has the count for the part alone, and every state's value.
  */
 private fun stateAttributes(
     records: List<StateRecord>,
@@ -199,19 +210,36 @@ private fun stateAttributes(
     partStart?.part_start?.dropped_changes?.takeIf { it > 0 }?.let { folded ->
         add(Attribute(StateAttributes.FOLDED_CHANGES, folded.toString()))
     }
-    partEnd?.part_end?.let { end ->
-        if (end.dropped_changes > 0) {
-            add(Attribute(StateAttributes.DROPPED_CHANGES, end.dropped_changes.toString()))
-        }
-        end.values.forEach { value ->
-            add(Attribute("${StateAttributes.FINAL_VALUE_PREFIX}${value.state}", value.value_))
-            if (value.system) {
-                add(Attribute("${StateAttributes.FINAL_VALUE_TYPE_PREFIX}${value.state}", SYSTEM_VALUE_TYPE))
-            }
-        }
-    }
+    partEnd?.part_end?.let { end -> addAll(partEndAttributes(end)) }
     if (truncated) {
         add(Attribute(StateAttributes.TRUNCATED, true.toString()))
+    }
+}
+
+/**
+ * What the [end] of a part says its journal does not list: how many changes for every state together and for each state,
+ * each limit that refused one, and the value the part ended with for each state that had a change refused.
+ */
+private fun partEndAttributes(end: StatePartEnd): List<Attribute> = buildList {
+    if (end.dropped_changes > 0) {
+        add(Attribute(StateAttributes.DROPPED_CHANGES, end.dropped_changes.toString()))
+    }
+    end.dropped_counts.forEach { dropped ->
+        if (dropped.count > 0) {
+            add(Attribute("${StateAttributes.DROPPED_COUNT_PREFIX}${dropped.state}", dropped.count.toString()))
+        }
+        dropped.limit?.let { limit ->
+            add(Attribute("${StateAttributes.LIMIT_PREFIX}${dropped.state}", limit.toString()))
+        }
+    }
+    end.shared_limit?.let { limit ->
+        add(Attribute(StateAttributes.SHARED_LIMIT, limit.toString()))
+    }
+    end.values.forEach { value ->
+        add(Attribute("${StateAttributes.FINAL_VALUE_PREFIX}${value.state}", value.value_))
+        if (value.system) {
+            add(Attribute("${StateAttributes.FINAL_VALUE_TYPE_PREFIX}${value.state}", SYSTEM_VALUE_TYPE))
+        }
     }
 }
 

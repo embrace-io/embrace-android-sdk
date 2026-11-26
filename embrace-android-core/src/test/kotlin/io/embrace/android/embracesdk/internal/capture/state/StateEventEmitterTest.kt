@@ -45,7 +45,9 @@ internal class StateEventEmitterTest {
     fun `each change is emitted off the thread that reported it, in order, with the value of every state after it`() {
         createRecorder(includeValues = true)
         val wifiTime = update("network", "wifi")
-        val screenTime = update("screen-automatic", Backgrounded, mapOf("emb.state.dropped_by_instrumentation" to "2"))
+        // one attribute of the change's own, and one under a stem that is reserved, which is not carried
+        val ownAndReserved = mapOf("emb.state.dropped_by_instrumentation" to "2", "key" to "v")
+        val screenTime = update("screen-automatic", Backgrounded, ownAndReserved)
         update("network", "wifi")
         val offlineTime = update("network", "none")
 
@@ -66,7 +68,7 @@ internal class StateEventEmitterTest {
             assertEquals(
                 changeAttributes(2, "screen-automatic", "Backgrounded") + mapOf(
                     "emb.states.new_value_type" to "system",
-                    "emb.state.dropped_by_instrumentation" to "2",
+                    "key" to "v",
                     "emb.states.value.network" to "wifi",
                     "emb.states.value.screen-automatic" to "Backgrounded",
                     "emb.states.value_type.screen-automatic" to "system",
@@ -171,15 +173,24 @@ internal class StateEventEmitterTest {
     }
 
     @Test
-    fun `a change the journal has no room for is not emitted`() {
-        createRecorder(includeValues = false, maxChanges = 1)
+    fun `a change a limit refuses is not emitted, whether the limit is the journal's or the state's own`() {
+        createRecorder(includeValues = false, maxChanges = 2)
         recorder.beginJournal(clock.now()) { }
-        update("network", "wifi")
-        update("network", "none")
+        update("network", "wifi", maxChangesInPart = 1)
+        // past the state's own limit
+        update("network", "none", maxChangesInPart = 1)
+        update("power", "low")
+        // past the journal's
+        update("power", "normal")
         executor.runCurrentlyBlocked()
 
-        assertEquals(listOf("emb.states.snapshot", "emb.states.change"), logger.logs.map(FakeLogRecord::eventName))
-        assertEquals("wifi", logger.logs.last().attributes["emb.states.new_value"])
+        assertEquals(
+            listOf("emb.states.snapshot", "emb.states.change", "emb.states.change"),
+            logger.logs.map(FakeLogRecord::eventName),
+        )
+        assertEquals(listOf("wifi", "low"), logger.logs.drop(1).map { it.attributes["emb.states.new_value"] })
+        // what receives the events sees the numbers skip where a change was refused, as the change log's do
+        assertEquals(listOf(1L, 3L), logger.logs.drop(1).map { it.attributes["emb.states.seq"] })
     }
 
     @Test
@@ -275,9 +286,14 @@ internal class StateEventEmitterTest {
         recorder = StateRecorder(clock, maxChanges = maxChanges, listener = emitter)
     }
 
-    private fun update(state: String, value: Any, attributes: Map<String, String> = emptyMap()): Long {
+    private fun update(
+        state: String,
+        value: Any,
+        attributes: Map<String, String> = emptyMap(),
+        maxChangesInPart: Int = StateUpdate.DEFAULT_MAX_CHANGES_IN_PART,
+    ): Long {
         val time = clock.tick()
-        recorder.onEvent(StateUpdate(state, value, time, attributes))
+        recorder.onEvent(StateUpdate(state, value, time, attributes, maxChangesInPart))
         return time
     }
 

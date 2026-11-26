@@ -30,7 +30,8 @@ import java.util.concurrent.atomic.AtomicInteger
  * At most [maxPendingEvents] events wait to be emitted. Each one holds the value of every state, and an app's log
  * record processor can take as long as it likes over an event, so without a limit a slow one would keep an unbounded
  * amount of the past in memory. An event that arrives when that many are waiting is left out and counted. Whatever
- * receives the events sees the sequence numbers skip.
+ * receives the events sees the sequence numbers skip, as it does where a limit refused a change, which the recorder
+ * does not report here.
  *
  * @param includeValues whether the event for a change also carries the value of every state after that change.
  * @param maxPendingEvents the most events that wait to be emitted.

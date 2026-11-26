@@ -36,6 +36,42 @@ internal class StateJournalReaderTest {
     }
 
     @Test
+    fun `changes whose numbers skip are all read, and a part end reads back with each count and each limit that was set`() {
+        val end = StateRecord(
+            sequence = 5,
+            time_ms = 2_000L,
+            part_end = StatePartEnd(
+                dropped_changes = 3,
+                values = listOf(StateValue(state = "network", value_ = "none")),
+                dropped_counts = listOf(
+                    StateDroppedCount(state = "network", count = 3, limit = 0),
+                    StateDroppedCount(state = "power", count = 2),
+                ),
+                shared_limit = 10_000,
+            ),
+        )
+        // the second change is not there: a limit refused it, and it kept its number
+        val decoded = decode(stateJournalLog(listOf(first, third, end)))
+
+        assertEquals(listOf(first, third, end), decoded.records)
+        assertNull(decoded.corruption)
+        with(checkNotNull(decoded.records.last().part_end)) {
+            // a limit of nothing is a limit, and is told apart from none having been reached
+            assertEquals(0, dropped_counts[0].limit)
+            assertNull(dropped_counts[1].limit)
+            assertEquals(10_000, shared_limit)
+        }
+
+        // a part end written before states had limits of their own reads back with no count for a state and no limit
+        val earlier = StateRecord(sequence = 5, part_end = StatePartEnd(dropped_changes = 3))
+        with(checkNotNull(decode(stateJournalLog(listOf(first, earlier))).records.last().part_end)) {
+            assertEquals(3, dropped_changes)
+            assertEquals(emptyList<StateDroppedCount>(), dropped_counts)
+            assertNull(shared_limit)
+        }
+    }
+
+    @Test
     fun `a journal holding only the header reads back no records`() {
         val decoded = decode(stateJournalHeader())
         assertEquals(emptyList<StateRecord>(), decoded.records)

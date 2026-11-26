@@ -5,6 +5,8 @@ import io.embrace.android.embracesdk.assertions.findSpansOfType
 import io.embrace.android.embracesdk.assertions.getLastLog
 import io.embrace.android.embracesdk.assertions.hasLinkToEmbraceSpan
 import io.embrace.android.embracesdk.fakes.TestStateDataSource
+import io.embrace.android.embracesdk.fakes.config.FakeEnabledFeatureConfig
+import io.embrace.android.embracesdk.fakes.config.FakeInstrumentedConfig
 import io.embrace.android.embracesdk.internal.arch.schema.EmbType
 import io.embrace.android.embracesdk.internal.arch.schema.LinkType
 import io.embrace.android.embracesdk.internal.config.remote.BackgroundActivityRemoteConfig
@@ -120,6 +122,93 @@ internal class StateJournalFeatureTest(
     }
 
     @Test
+    fun `a state that reaches its limit is counted and no longer listed, while the others are and every log still has its value`() {
+        testRule.runTest(
+            persistedRemoteConfig = journaledConfig(backgroundActivity = BackgroundActivityRemoteConfig(0f)),
+            testCaseAction = {
+                recordSession {
+                    // three more changes than a state with no limit of its own lists in a session part
+                    repeat(TEST_STATE_LIMIT + 3) { changeTestState("value-$it") }
+                    embrace.addUserPersona("beta")
+                    embrace.logInfo("after-limit")
+                }
+                recordSession {
+                    changeTestState("next-part")
+                }
+            },
+            assertAction = {
+                val parts = deliveredParts(2).sortedBy { it.findSessionPartSpan().startTimeNanos }
+                val (limited, next) = parts.map { it.stateSpan() }
+                val attributes = checkNotNull(limited.attributes)
+
+                // the first hundred changes of the part are listed, and the personas go on being listed after them
+                val events = limited.eventsAfterPartStart()
+                assertEquals(
+                    (0 until TEST_STATE_LIMIT).map { "value-$it" },
+                    events.filter { it.name == "emb-state-test" }.map { it.newValue() },
+                )
+                val personas = events.last { it.name == "emb-state-personas" }
+                assertTrue(limited.sequenceOf(personas) > limited.sequenceOf(events.last { it.name == "emb-state-test" }) + 3)
+
+                // what is missing is counted for the part and for the state, with the limit that refused it and the value
+                // the state ended the part with. No other state is counted, and the limit every state shares was not reached.
+                assertEquals("3", attributes.findAttributeValue("emb.states.dropped_changes"))
+                assertEquals("3", attributes.findAttributeValue("emb.states.dropped_count.test"))
+                assertEquals("$TEST_STATE_LIMIT", attributes.findAttributeValue("emb.states.limit.test"))
+                assertEquals("value-${TEST_STATE_LIMIT + 2}", attributes.findAttributeValue("emb.states.final_value.test"))
+                assertEquals(
+                    listOf("emb.states.dropped_count.test", "emb.states.final_value.test", "emb.states.limit.test"),
+                    attributes.mapNotNull { it.key }.filter { key -> PER_STATE_COUNT_PREFIXES.any(key::startsWith) }.sorted(),
+                )
+                assertNull(attributes.findAttributeValue("emb.states.shared_limit"))
+                assertNull(attributes.findAttributeValue("emb.states.truncated"))
+                // each refused change is tracked under the name the state's data source has, as its own limit would be
+                val sessionPartAttributes = checkNotNull(parts.first().findSessionPartSpan().attributes)
+                assertEquals("3", sessionPartAttributes.findAttributeValue("emb.private.applied_limit.test_state_data_source.drop"))
+                assertNull(sessionPartAttributes.findAttributeValue("emb.private.applied_limit.state_change.drop"))
+
+                // the log written after the limit was reached has the state's value as it was then, which the events of
+                // its part no longer lead to, at a number the span does not list
+                val log = checkNotNull(getSingleLogEnvelope().getLastLog().attributes)
+                val logged = decodeStates(checkNotNull(log.findAttributeValue("emb.states.packed")))
+                assertEquals("value-${TEST_STATE_LIMIT + 2}", logged["test"])
+                assertEquals("value-${TEST_STATE_LIMIT - 1}", limited.valuesAt(Long.MAX_VALUE)["test"])
+                assertEquals(limited.sequenceOf(personas), checkNotNull(log.findAttributeValue("emb.states.seq")).toLong())
+
+                // the next part opens with the value the last ended with, and counts from nothing again
+                val nextAttributes = checkNotNull(next.attributes)
+                assertEquals("value-${TEST_STATE_LIMIT + 2}", nextAttributes.findAttributeValue("emb.states.initial_value.test"))
+                assertEquals(listOf("next-part"), next.eventsAfterPartStart().filter { it.name == "emb-state-test" }.map { it.newValue() })
+                assertNull(nextAttributes.findAttributeValue("emb.states.dropped_changes"))
+                assertNull(nextAttributes.findAttributeValue("emb.states.dropped_count.test"))
+            },
+        )
+    }
+
+    @Test
+    fun `the power state is present from the start, as unknown and then as the mode that was read`() {
+        testRule.runTest(
+            instrumentedConfig = FakeInstrumentedConfig(enabledFeatures = FakeEnabledFeatureConfig(powerSaveCapture = true)),
+            persistedRemoteConfig = journaledConfig(backgroundActivity = BackgroundActivityRemoteConfig(0f)),
+            testCaseAction = {
+                recordSession {
+                    embrace.logInfo("in-session")
+                }
+            },
+            assertAction = {
+                // power saving was never on, and the state is there all the same: with a span for each state it would not be
+                val stateSpan = deliveredParts().single().stateSpan()
+                assertEquals(
+                    listOf("unknown", "normal"),
+                    checkNotNull(stateSpan.events).filter { it.name == "emb-state-power" }.map { it.newValue() },
+                )
+                val log = checkNotNull(getSingleLogEnvelope().getLastLog().attributes)
+                assertEquals("normal", decodeStates(checkNotNull(log.findAttributeValue("emb.states.packed")))["power"])
+            },
+        )
+    }
+
+    @Test
     fun `changes made in a session part that crashed are delivered with it by the next launch`() {
         testRule.runTest(
             persistedRemoteConfig = journaledConfig(),
@@ -218,14 +307,15 @@ internal class StateJournalFeatureTest(
     }
 
     /**
-     * The place of [event] in the order of state changes, which the event carries as `emb.states.seq`. The changes a span
-     * holds are consecutive, so it also equals the event's position after the sequence the span's initial values are as of.
+     * The place of [event] in the order of state changes, which the event carries as `emb.states.seq`. The events of a span
+     * are in that order, and the numbers skip where a limit refused a change, so an event's number is at least its position
+     * after the sequence the span's initial values are as of.
      */
     private fun Span.sequenceOf(event: SpanEvent): Long {
         val initialSequence = checkNotNull(attributes?.findAttributeValue("emb.states.initial_seq")).toLong()
-        val counted = initialSequence + checkNotNull(events).indexOfFirst { it === event } + 1
-        assertEquals(counted, checkNotNull(event.attributes?.findAttributeValue("emb.states.seq")).toLong())
-        return counted
+        val sequence = checkNotNull(event.attributes?.findAttributeValue("emb.states.seq")).toLong()
+        assertTrue(sequence >= initialSequence + checkNotNull(events).indexOfFirst { it === event } + 1)
+        return sequence
     }
 
     /**
@@ -259,6 +349,16 @@ internal class StateJournalFeatureTest(
     private companion object {
         const val INITIAL_VALUE_PREFIX = "emb.states.initial_value."
         const val STATE_EVENT_PREFIX = "emb-state-"
+
+        /**
+         * How many changes of the test state a session part lists, as its data source gives no limit of its own.
+         */
+        const val TEST_STATE_LIMIT = 100
+
+        /**
+         * The starts of the attributes a change log has for a state it does not list every change of.
+         */
+        val PER_STATE_COUNT_PREFIXES = listOf("emb.states.dropped_count.", "emb.states.limit.", "emb.states.final_value")
 
         val persistenceWorkers = listOf(
             Worker.Background.SessionPersistenceWorker,

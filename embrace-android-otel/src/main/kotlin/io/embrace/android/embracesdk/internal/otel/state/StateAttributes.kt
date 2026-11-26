@@ -53,7 +53,8 @@ object StateAttributes {
     const val INITIAL_VALUE_TYPE_PREFIX: String = "emb.states.initial_value_type."
 
     /**
-     * Followed by a state's name: its value when a session part ended, as its change log records it.
+     * Followed by a state's name: its value when a session part ended, as its change log records it for a state that had
+     * a change refused by a limit.
      */
     const val FINAL_VALUE_PREFIX: String = "emb.states.final_value."
 
@@ -79,9 +80,28 @@ object StateAttributes {
     const val FOLDED_CHANGES: String = "emb.states.folded_changes"
 
     /**
-     * How many changes a change log did not record because it was full.
+     * How many changes made during a session part took a number and are not listed in its change log, for every state
+     * together, because a limit refused them: a state's own, or the one the whole change log has.
      */
     const val DROPPED_CHANGES: String = "emb.states.dropped_changes"
+
+    /**
+     * Followed by a state's name: how many of its changes a change log does not list. Those are the changes a limit
+     * refused, and the changes the state's instrumentation reported that it never passed on.
+     */
+    const val DROPPED_COUNT_PREFIX: String = "emb.states.dropped_count."
+
+    /**
+     * Followed by a state's name: the most changes of that state one session part's change log lists, where that limit
+     * refused a change of the state during the part.
+     */
+    const val LIMIT_PREFIX: String = "emb.states.limit."
+
+    /**
+     * The most changes one session part's change log lists for every state together, counting those made before the part
+     * that it opens with, where that limit refused a change during the part.
+     */
+    const val SHARED_LIMIT: String = "emb.states.shared_limit"
 
     /**
      * Set to true on a change log that stops short: the process died with the part in progress, or the log could not be

@@ -537,11 +537,10 @@ internal class StateAssociationFeatureTest(
 
     /**
      * The value of every state as of the change numbered [sequence], worked out from the span the change log is delivered
-     * as: the values it opened with, then each change up to that one. The changes a span holds are consecutive, so the
-     * number of a change is its position after the sequence the initial values are as of.
+     * as: the values it opened with, then each change numbered up to that one. An event carries its own number. The events
+     * are in the order of their numbers, which skip where a limit refused a change, and no limit is reached here.
      */
     private fun Span.valuesAt(sequence: Long): Map<String, String> {
-        val initialSequence = checkNotNull(attributes?.findAttributeValue("emb.states.initial_seq")).toLong()
         val values = LinkedHashMap<String, String>()
         checkNotNull(attributes).forEach { attribute ->
             val key = checkNotNull(attribute.key)
@@ -549,10 +548,15 @@ internal class StateAssociationFeatureTest(
                 values[key.removePrefix("emb.states.initial_value.")] = checkNotNull(attribute.data)
             }
         }
-        checkNotNull(events).take((sequence - initialSequence).toInt()).forEachIndexed { index, event ->
-            assertEquals(initialSequence + index + 1, checkNotNull(event.attributes?.findAttributeValue("emb.states.seq")).toLong())
-            values[checkNotNull(event.name).removePrefix("emb-state-")] =
-                checkNotNull(event.attributes?.findAttributeValue("emb.states.new_value"))
+        var last = checkNotNull(attributes?.findAttributeValue("emb.states.initial_seq")).toLong()
+        checkNotNull(events).forEach { event ->
+            val number = checkNotNull(event.attributes?.findAttributeValue("emb.states.seq")).toLong()
+            assertTrue(number > last)
+            last = number
+            if (number <= sequence) {
+                values[checkNotNull(event.name).removePrefix("emb-state-")] =
+                    checkNotNull(event.attributes?.findAttributeValue("emb.states.new_value"))
+            }
         }
         return values
     }

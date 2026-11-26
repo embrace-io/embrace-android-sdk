@@ -243,6 +243,8 @@ internal fun createRealSdkInstance(
                             valuesOnExportedSpans = stateExportMode == StateExportMode.VERBOSE,
                             exportsEvents = stateExportMode != StateExportMode.OFF,
                             stateAt = { timeMs -> stateRecorder?.snapshotAt(timeMs) },
+                            // no state on a log until the SDK is ready, as with the rest of what a log is stamped with
+                            logStateProvider = otelSignalContext::getLogStateSnapshot,
                         )
                     } else {
                         null
@@ -352,6 +354,10 @@ internal fun createRealSdkInstance(
             StateRecorder(
                 clock = clock,
                 onChangeDropped = { telemetryService.trackAppliedLimit(STATE_CHANGE_LIMIT_TYPE, AppliedLimitType.DROP) },
+                // tracked under the name the state's data source has, as the limit of a state with a span of its own is
+                onStateLimitApplied = { state ->
+                    telemetryService.trackAppliedLimit("$state$STATE_DATA_SOURCE_SUFFIX", AppliedLimitType.DROP)
+                },
                 // An app's own exporters and processors are sent each change as it is made, off the thread that made it,
                 // and on a worker of its own, as an app's log record processor runs where an event is emitted.
                 listener = if (stateEventsEmitted) {
@@ -1015,6 +1021,13 @@ private inline fun <T> init(name: String, recordDuration: Boolean = false, suppl
     EmbTrace.trace("$name-init", recordDuration) { supplier() }
 
 /**
- * What a state change is tracked as when it is not recorded, because a limit on how many are kept was reached.
+ * What a state change is tracked as when it is not recorded, because the limit on how many a journal holds for every state
+ * together was reached, or the limit on how many are held with no session part in progress.
  */
 private const val STATE_CHANGE_LIMIT_TYPE = "state_change"
+
+/**
+ * What follows a state's name in what a change is tracked as when the state's own limit refuses it: together they are the
+ * instrumentation name of the state's data source.
+ */
+private const val STATE_DATA_SOURCE_SUFFIX = "_state_data_source"

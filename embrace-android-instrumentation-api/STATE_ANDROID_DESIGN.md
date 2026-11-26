@@ -1375,6 +1375,9 @@ A reader should assume none of what follows works.
   defines, such as the screen, and cannot make a state by reporting a name. No call across the bridge is built.
 - **A check that a state qualifies.** Nothing in the code refuses a data source that declares a limit above 100, and
   nothing checks that a screen's name is a template. Both are kept by review of each data source.
+- **Counting, and not keeping, a change made with no session part.** It is the answer recommended for the design, as
+  v1 does, until a full review is done. The build holds such a change and lists it at the head of the next part's
+  change log: [the journal](#the-journal).
 - **Taking a state out.** A state stays declared for the life of the process, with its last value, after its data
   source's capture is disabled.
 - **The process identifier on a log.** Every span carries `emb.process_identifier`, set as it starts in
@@ -1438,7 +1441,8 @@ defect is present, and is to be turned around when the defect is fixed. None of 
   and by the wiring from the state's name and the same suffix. They agree by convention.
 - **With no session part a state's limit does not apply.** A state that flaps while no part runs can put up to
   1,000 changes at the head of the next part's change log, ten times its limit, push other states' held changes into
-  the opening values, and send an event for each to an app's exporters. It is open, among the [questions for the
+  the opening values, and send an event for each to an app's exporters. Counting such a change and not keeping it
+  is recommended and not built: question 6 among the [questions for the
   reviewers](#questions-for-the-reviewers).
 - **A record lost from the middle of a journal reads as a refused change.** The renderer cuts only at a change out
   of order, since a limit leaves a gap in the numbers. The weakness is accepted: nothing known loses a record, and
@@ -1629,7 +1633,7 @@ These are the seven a reviewer of the code would raise. The internal measurement
 | 3 | The limits on changes | Decided, and built: a limit for each state, 100 and 1,000 for the screen, beside the global 10,000, which is a backstop. A state's first value counts toward its limit. Each limit is recorded as it is first reached, and stated on a truncated change log too. |
 | 4 | The length of a value | Decided, and built: 2,000 characters, cut as v1 cuts it. |
 | 5 | What the recorder does when the writer stops | Nothing (built). Or it is told, and counts what follows as dropped. |
-| 6 | What happens to a change made with no session part | Open, for a larger group to discuss. Held, up to 1,000, and listed at the head of the next part's change log, with an event to an app's exporters as it happens (built). Or the same, under each state's limit. Or counted and not kept, as v1 does, which takes the hold, the folding and `emb.app.state.part_start_seq` out of the design. As built, a state's limit does not apply to what is held. Changes after the last part are not sent to Embrace, which is decided. |
+| 6 | What happens to a change made with no session part | Open. Held, up to 1,000, and listed at the head of the next part's change log, with an event to an app's exporters as it happens (built). Or the same, under each state's limit. Or counted and not kept, as v1 does, which takes the hold, the folding and `emb.app.state.part_start_seq` out of the design: this is the one recommended. A full review will be done later, and the choice may be revisited after it, so the build holds such a change until then. As built, a state's limit does not apply to what is held. Changes after the last part are not sent to Embrace, which is decided. |
 | 7 | The size of the window | 64 snapshots (built). Or another size. |
 | 8 | When the rendering is settled | At start (built). Or when an exporter is added. |
 | 9 | The event queue | Leave out the newest at 1,000 (built). Or the oldest. And whether to report it, and to bound what waits for an exporter: neither is built. |

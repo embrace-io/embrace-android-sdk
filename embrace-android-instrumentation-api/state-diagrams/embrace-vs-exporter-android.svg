@@ -24,13 +24,13 @@
 <text x="517.152" y="270" font-family="Inter, 'Helvetica Neue', Helvetica, Arial, sans-serif" font-size="14" fill="#52606D">ASSOCIATION or VERBOSE, and an app can choose either</text>
 <circle cx="170" cy="148" r="6" fill="#059669"/>
 <text x="184" y="152" font-family="Inter, 'Helvetica Neue', Helvetica, Arial, sans-serif" font-size="14" fill="#1F2933">The stamp, packed</text>
-<text x="164" y="172" font-family="SFMono-Regular, Menlo, Consolas, monospace" font-size="12" fill="#1F2933">emb.states.packed</text>
-<text x="164" y="188" font-family="SFMono-Regular, Menlo, Consolas, monospace" font-size="12" fill="#1F2933">emb.states.seq</text>
+<text x="164" y="172" font-family="SFMono-Regular, Menlo, Consolas, monospace" font-size="12" fill="#1F2933">emb.app.state.packed</text>
+<text x="164" y="188" font-family="SFMono-Regular, Menlo, Consolas, monospace" font-size="12" fill="#1F2933">emb.app.state.seq</text>
 <text x="164" y="204" font-family="Inter, 'Helvetica Neue', Helvetica, Arial, sans-serif" font-size="12" fill="#52606D">every state in one string</text>
 <rect x="344" y="143" width="22" height="10" rx="3" fill="#7C3AED"/>
 <text x="374" y="152" font-family="Inter, 'Helvetica Neue', Helvetica, Arial, sans-serif" font-size="14" fill="#1F2933">The link</text>
-<text x="344" y="172" font-family="SFMono-Regular, Menlo, Consolas, monospace" font-size="12" fill="#1F2933">emb.states.seq</text>
-<text x="344" y="188" font-family="SFMono-Regular, Menlo, Consolas, monospace" font-size="12" fill="#1F2933">emb.states.end_seq</text>
+<text x="344" y="172" font-family="SFMono-Regular, Menlo, Consolas, monospace" font-size="12" fill="#1F2933">emb.app.state.seq</text>
+<text x="344" y="188" font-family="SFMono-Regular, Menlo, Consolas, monospace" font-size="12" fill="#1F2933">emb.app.state.end_seq</text>
 <text x="344" y="204" font-family="Inter, 'Helvetica Neue', Helvetica, Arial, sans-serif" font-size="12" fill="#52606D">two numbers, no values</text>
 <rect x="562" y="143" width="22" height="10" rx="3" fill="#2563EB"/>
 <line x1="567" y1="143" x2="567" y2="153" stroke="#FFFFFF" stroke-width="1.5"/>
@@ -45,8 +45,8 @@
 <text x="837" y="191" font-family="Inter, 'Helvetica Neue', Helvetica, Arial, sans-serif" font-size="12" fill="#52606D" text-anchor="middle">skips Embrace&#x27;s LogSink</text>
 <circle cx="170" cy="298" r="6" fill="#059669"/>
 <text x="184" y="302" font-family="Inter, 'Helvetica Neue', Helvetica, Arial, sans-serif" font-size="14" fill="#1F2933">The stamp, plain</text>
-<text x="164" y="322" font-family="SFMono-Regular, Menlo, Consolas, monospace" font-size="12" fill="#1F2933">emb.states.value.&lt;name&gt;</text>
-<text x="164" y="338" font-family="SFMono-Regular, Menlo, Consolas, monospace" font-size="12" fill="#1F2933">emb.states.seq</text>
+<text x="164" y="322" font-family="SFMono-Regular, Menlo, Consolas, monospace" font-size="12" fill="#1F2933">emb.app.state.value.&lt;name&gt;</text>
+<text x="164" y="338" font-family="SFMono-Regular, Menlo, Consolas, monospace" font-size="12" fill="#1F2933">emb.app.state.seq</text>
 <text x="164" y="354" font-family="Inter, 'Helvetica Neue', Helvetica, Arial, sans-serif" font-size="12" fill="#52606D">one attribute for each state,</text>
 <text x="164" y="370" font-family="Inter, 'Helvetica Neue', Helvetica, Arial, sans-serif" font-size="12" fill="#52606D">only if the app has a log</text>
 <text x="164" y="386" font-family="Inter, 'Helvetica Neue', Helvetica, Arial, sans-serif" font-size="12" fill="#52606D">exporter or processor</text>
@@ -58,8 +58,8 @@
 <rect x="344" y="383" width="206" height="124" rx="6" fill="#FFFFFF" stroke="#0E7490" stroke-width="1" stroke-dasharray="4 3"/>
 <rect x="352" y="374" width="113.527" height="18" rx="9" fill="#0E7490"/>
 <text x="359" y="387" font-family="Inter, 'Helvetica Neue', Helvetica, Arial, sans-serif" font-size="12" fill="#FFFFFF" font-weight="600">VERBOSE adds</text>
-<text x="352" y="411" font-family="SFMono-Regular, Menlo, Consolas, monospace" font-size="12" fill="#1F2933">emb.states.value.&lt;name&gt;</text>
-<text x="352" y="427" font-family="SFMono-Regular, Menlo, Consolas, monospace" font-size="12" fill="#1F2933">emb.states.end_value.&lt;name&gt;</text>
+<text x="352" y="411" font-family="SFMono-Regular, Menlo, Consolas, monospace" font-size="12" fill="#1F2933">emb.app.state.value.&lt;name&gt;</text>
+<text x="352" y="427" font-family="SFMono-Regular, Menlo, Consolas, monospace" font-size="12" fill="#1F2933">emb.app.state.end_value.&lt;name&gt;</text>
 <text x="352" y="443" font-family="Inter, 'Helvetica Neue', Helvetica, Arial, sans-serif" font-size="12" fill="#52606D">through a wrapper, and never</text>
 <text x="352" y="459" font-family="Inter, 'Helvetica Neue', Helvetica, Arial, sans-serif" font-size="12" fill="#52606D">written on the span</text>
 <text x="352" y="481" font-family="Inter, 'Helvetica Neue', Helvetica, Arial, sans-serif" font-size="12" fill="#52606D">the default for an app with</text>
@@ -70,10 +70,10 @@
 <rect x="748.729" y="289" width="20.543" height="18" rx="9" fill="#0E7490"/>
 <text x="759" y="302.2" font-family="Inter, 'Helvetica Neue', Helvetica, Arial, sans-serif" font-size="12" fill="#FFFFFF" text-anchor="middle" font-weight="600">n</text>
 <text x="780" y="302" font-family="Inter, 'Helvetica Neue', Helvetica, Arial, sans-serif" font-size="14" fill="#1F2933">State events</text>
-<text x="750" y="322" font-family="SFMono-Regular, Menlo, Consolas, monospace" font-size="12" fill="#1F2933">emb.states.change</text>
+<text x="750" y="322" font-family="SFMono-Regular, Menlo, Consolas, monospace" font-size="12" fill="#1F2933">emb.app.state.change</text>
 <text x="750" y="338" font-family="Inter, 'Helvetica Neue', Helvetica, Arial, sans-serif" font-size="12" fill="#52606D">each change, with its number</text>
 <text x="750" y="354" font-family="Inter, 'Helvetica Neue', Helvetica, Arial, sans-serif" font-size="12" fill="#52606D">and the value before it</text>
-<text x="750" y="370" font-family="SFMono-Regular, Menlo, Consolas, monospace" font-size="12" fill="#1F2933">emb.states.snapshot</text>
+<text x="750" y="370" font-family="SFMono-Regular, Menlo, Consolas, monospace" font-size="12" fill="#1F2933">emb.app.state.snapshot</text>
 <text x="750" y="386" font-family="Inter, 'Helvetica Neue', Helvetica, Arial, sans-serif" font-size="12" fill="#52606D">as a session part starts</text>
 <text x="750" y="408" font-family="Inter, 'Helvetica Neue', Helvetica, Arial, sans-serif" font-size="12" fill="#52606D">Events go only to a log</text>
 <text x="750" y="424" font-family="Inter, 'Helvetica Neue', Helvetica, Arial, sans-serif" font-size="12" fill="#52606D">exporter or processor</text>

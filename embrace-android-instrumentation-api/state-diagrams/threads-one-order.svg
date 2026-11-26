@@ -78,7 +78,7 @@
 <text x="656" y="358.2" font-family="Inter, 'Helvetica Neue', Helvetica, Arial, sans-serif" font-size="12" fill="#FFFFFF" text-anchor="middle" font-weight="600">42</text>
 <rect x="669.648" y="343" width="28.7031" height="22" rx="11" fill="#0E7490"/>
 <text x="684" y="358.2" font-family="Inter, 'Helvetica Neue', Helvetica, Arial, sans-serif" font-size="12" fill="#FFFFFF" text-anchor="middle" font-weight="600">43</text>
-<text x="714" y="351" font-family="Inter, 'Helvetica Neue', Helvetica, Arial, sans-serif" font-size="12" fill="#1F2933" xml:space="preserve"><tspan font-family="SFMono-Regular, Menlo, Consolas, monospace">emb.states.change</tspan><tspan> events</tspan></text>
+<text x="714" y="351" font-family="Inter, 'Helvetica Neue', Helvetica, Arial, sans-serif" font-size="12" fill="#1F2933" xml:space="preserve"><tspan font-family="SFMono-Regular, Menlo, Consolas, monospace">emb.app.state.change</tspan><tspan> events</tspan></text>
 <text x="714" y="367" font-family="Inter, 'Helvetica Neue', Helvetica, Arial, sans-serif" font-size="12" fill="#52606D">to the app&#x27;s log exporters</text>
 <line x1="244" y1="416" x2="924" y2="416" stroke="#2563EB" stroke-width="2"/>
 <rect x="243.648" y="405" width="28.7031" height="22" rx="11" fill="#FFFFFF" stroke="#2563EB" stroke-width="1.5"/>
@@ -91,7 +91,7 @@
 <text x="554" y="420.2" font-family="Inter, 'Helvetica Neue', Helvetica, Arial, sans-serif" font-size="12" fill="#FFFFFF" text-anchor="middle" font-weight="600">43</text>
 <line x1="516" y1="418" x2="516" y2="459" stroke="#9AA5B1" stroke-width="1" stroke-dasharray="2 4"/>
 <circle cx="516" cy="466" r="6" fill="#059669"/>
-<text x="530" y="470" font-family="Inter, 'Helvetica Neue', Helvetica, Arial, sans-serif" font-size="12" fill="#52606D" xml:space="preserve"><tspan font-family="SFMono-Regular, Menlo, Consolas, monospace" fill="#1F2933">emb.states.seq = 42</tspan><tspan> and every state&#x27;s value then</tspan></text>
+<text x="530" y="470" font-family="Inter, 'Helvetica Neue', Helvetica, Arial, sans-serif" font-size="12" fill="#52606D" xml:space="preserve"><tspan font-family="SFMono-Regular, Menlo, Consolas, monospace" fill="#1F2933">emb.app.state.seq = 42</tspan><tspan> and every state&#x27;s value then</tspan></text>
 <line x1="300" y1="418" x2="300" y2="499" stroke="#9AA5B1" stroke-width="1" stroke-dasharray="2 4"/>
 <line x1="880" y1="418" x2="880" y2="499" stroke="#9AA5B1" stroke-width="1" stroke-dasharray="2 4"/>
 <rect x="300" y="499" width="580" height="22" rx="4" fill="#7C3AED"/>
@@ -99,8 +99,8 @@
 <text x="300" y="514.2" font-family="Inter, 'Helvetica Neue', Helvetica, Arial, sans-serif" font-size="12" fill="#FFFFFF" text-anchor="middle" font-weight="600">40</text>
 <rect x="865.648" y="499" width="28.7031" height="22" rx="11" fill="#2563EB"/>
 <text x="880" y="514.2" font-family="Inter, 'Helvetica Neue', Helvetica, Arial, sans-serif" font-size="12" fill="#FFFFFF" text-anchor="middle" font-weight="600">43</text>
-<text x="318" y="514.3" font-family="SFMono-Regular, Menlo, Consolas, monospace" font-size="12" fill="#FFFFFF">emb.states.seq</text>
-<text x="862" y="514.3" font-family="SFMono-Regular, Menlo, Consolas, monospace" font-size="12" fill="#FFFFFF" text-anchor="end">emb.states.end_seq</text>
+<text x="318" y="514.3" font-family="SFMono-Regular, Menlo, Consolas, monospace" font-size="12" fill="#FFFFFF">emb.app.state.seq</text>
+<text x="862" y="514.3" font-family="SFMono-Regular, Menlo, Consolas, monospace" font-size="12" fill="#FFFFFF" text-anchor="end">emb.app.state.end_seq</text>
 <rect x="612" y="75" width="324" height="122" rx="6" fill="#FFFFFF" stroke="#D8DEE4" stroke-width="1"/>
 <text x="624" y="94" font-family="Inter, 'Helvetica Neue', Helvetica, Arial, sans-serif" font-size="12" fill="#52606D">By time: a tie, and one out of order</text>
 <text x="924" y="94" font-family="Inter, 'Helvetica Neue', Helvetica, Arial, sans-serif" font-size="12" fill="#52606D" text-anchor="end">By the lock</text>

@@ -1,6 +1,6 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 420" width="960" height="420" role="img" aria-labelledby="span-link-title span-link-desc">
 <title id="span-link-title">A span on a timeline of state changes, with its two sequence numbers</title>
-<desc id="span-link-desc">Two states change during a session part, and each change takes the next number in one sequence: 41, then 42. A span that starts after change 41 and ends after change 42 carries emb.states.seq 41 and emb.states.end_seq 42, and a log emitted after change 42 carries that number and every state&#x27;s value.</desc>
+<desc id="span-link-desc">Two states change during a session part, and each change takes the next number in one sequence: 41, then 42. A span that starts after change 41 and ends after change 42 carries emb.app.state.seq 41 and emb.app.state.end_seq 42, and a log emitted after change 42 carries that number and every state&#x27;s value.</desc>
 <defs><marker id="span-link-arrow-9aa5b1" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse" markerUnits="userSpaceOnUse"><path d="M0 0 L10 5 L0 10 Z" fill="#9AA5B1"/></marker><marker id="span-link-arrow-2563eb" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse" markerUnits="userSpaceOnUse"><path d="M0 0 L10 5 L0 10 Z" fill="#2563EB"/></marker></defs>
 <rect x="0.5" y="0.5" width="959" height="419" rx="12" fill="#FFFFFF" stroke="#D8DEE4"/>
 <text x="24" y="38" font-family="Inter, 'Helvetica Neue', Helvetica, Arial, sans-serif" font-size="18" fill="#1F2933" font-weight="600">The link on a span: two sequence numbers</text>
@@ -45,14 +45,14 @@
 <text x="400" y="266.2" font-family="Inter, 'Helvetica Neue', Helvetica, Arial, sans-serif" font-size="12" fill="#FFFFFF" text-anchor="middle" font-weight="600">41</text>
 <rect x="661.648" y="251" width="28.7031" height="22" rx="11" fill="#2563EB"/>
 <text x="676" y="266.2" font-family="Inter, 'Helvetica Neue', Helvetica, Arial, sans-serif" font-size="12" fill="#FFFFFF" text-anchor="middle" font-weight="600">42</text>
-<text x="389" y="291" font-family="SFMono-Regular, Menlo, Consolas, monospace" font-size="12" fill="#1F2933">emb.states.seq</text>
-<text x="687" y="291" font-family="SFMono-Regular, Menlo, Consolas, monospace" font-size="12" fill="#1F2933" text-anchor="end">emb.states.end_seq</text>
+<text x="389" y="291" font-family="SFMono-Regular, Menlo, Consolas, monospace" font-size="12" fill="#1F2933">emb.app.state.seq</text>
+<text x="687" y="291" font-family="SFMono-Regular, Menlo, Consolas, monospace" font-size="12" fill="#1F2933" text-anchor="end">emb.app.state.end_seq</text>
 <text x="24" y="331" font-family="Inter, 'Helvetica Neue', Helvetica, Arial, sans-serif" font-size="14" fill="#1F2933">A log</text>
 <text x="580" y="314" font-family="Inter, 'Helvetica Neue', Helvetica, Arial, sans-serif" font-size="12" fill="#52606D">the form an app&#x27;s own exporters get</text>
 <circle cx="566" cy="326" r="6" fill="#059669"/>
-<text x="580" y="330" font-family="SFMono-Regular, Menlo, Consolas, monospace" font-size="12" fill="#1F2933">emb.states.seq = 42</text>
-<text x="580" y="346" font-family="SFMono-Regular, Menlo, Consolas, monospace" font-size="12" fill="#1F2933">emb.states.value.network = none</text>
-<text x="580" y="362" font-family="SFMono-Regular, Menlo, Consolas, monospace" font-size="12" fill="#1F2933">emb.states.value.screen-automatic = CartActivity</text>
+<text x="580" y="330" font-family="SFMono-Regular, Menlo, Consolas, monospace" font-size="12" fill="#1F2933">emb.app.state.seq = 42</text>
+<text x="580" y="346" font-family="SFMono-Regular, Menlo, Consolas, monospace" font-size="12" fill="#1F2933">emb.app.state.value.network = none</text>
+<text x="580" y="362" font-family="SFMono-Regular, Menlo, Consolas, monospace" font-size="12" fill="#1F2933">emb.app.state.value.screen-automatic = CartActivity</text>
 <path d="M31 383 L38 390 L31 397 L24 390 Z" fill="#D97706"/>
 <text x="46" y="394" font-family="Inter, 'Helvetica Neue', Helvetica, Arial, sans-serif" font-size="12" fill="#52606D">A change of a state.</text>
 <text x="174" y="394" font-family="Inter, 'Helvetica Neue', Helvetica, Arial, sans-serif" font-size="12" fill="#52606D">Each number is the last change before that end of the span. A log carries the values as well.</text>

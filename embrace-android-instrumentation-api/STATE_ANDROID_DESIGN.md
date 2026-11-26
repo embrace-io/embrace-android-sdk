@@ -1,4 +1,4 @@
-> AI Influence Level: [AIL 4, AI Created, Human Basic Idea](https://danielmiessler.com/blog/ai-influence-level-ail) · last judged 2026-11-25
+> AI Influence Level: [AIL 4, AI Created, Human Basic Idea](https://danielmiessler.com/blog/ai-influence-level-ail) · last judged 2026-11-26
 
 # State capture: the Android design
 
@@ -23,16 +23,17 @@ describes both steps as one design.
 
 | Step | What it turns on |
 |---|---|
-| **1. The journal** | One recorder orders every change of every state and holds every value. Each change is appended to a journal file that travels with the session part, and the journal is delivered as one span, `emb-states`, the change log. Each log is stamped with one packed string, which both readers of a log see. |
+| **1. The journal** | One recorder orders every change of every state and holds every value. Each change is appended to a journal file that travels with the session part, and the journal is delivered as one span, `emb-states`, the change log. A change past its state's limit for the part, or past the limit every state shares, is counted and not listed. Each log is stamped with one packed string, which both readers of a log see. |
 | **2. Association** | The stamp on a log is split by reader: Embrace's payload keeps the packed string, and an app's own log exporters and processors get one attribute for each state, built only if the app has one. Each span carries a link of up to two sequence numbers, and a window of the recorder's last 64 snapshots places a span that is given its times. An app's own OpenTelemetry exporters get one of two renderings, association only or verbose, with change and snapshot events, or neither. |
 
 ### Status
 
 - **It is a proof of concept**, built to find out whether the design holds. It is not shippable as it is. Once the
   specification is settled, it is rebuilt or hardened into something that ships.
-- **Built and tested:** the recorder, the journal file with its writer and reader, the change log as one span, both
-  forms of the stamp on logs, the link on spans and on their snapshots, the window of recent snapshots, and both
-  renderings for an app's own exporters with their events.
+- **Built and tested:** the recorder, the journal file with its writer and reader, the change log as one span, a
+  limit for each state beside the shared one with a count for each state of what is not listed, both forms of the
+  stamp on logs, the link on spans and on their snapshots, the window of recent snapshots, and both renderings for an
+  app's own exporters with their events.
 - **Not built, known to be wrong, or not tested:** [what is not
   built](#what-is-not-built-and-what-is-known-to-be-wrong) has the lists, and [what it costs](#what-it-costs) has
   what was measured.
@@ -62,6 +63,9 @@ describes both steps as one design.
   value as of a sequence number.
 - **Held** changes are those made with no session part in progress, kept in memory for the next part's journal.
   **Folded** changes are held changes that were applied to the checkpoint and are no longer listed.
+- **A refused change** is one made during a session part that a limit kept out of the journal: its state's own
+  limit, or the shared limit. It still takes a number and still replaces the state's value. **A reported drop** is a
+  change a state's instrumentation says it never passed on. It takes no number.
 - **The change log** is the journal as it is delivered: the span `emb-states`.
 - **The stamp** is what a log carries of state: the packed form is one string, and the plain form is one attribute for
   each state. **The link** is the sequence numbers a span carries, up to two.
@@ -77,16 +81,17 @@ tests are beside each module's code under `src/test`. The integration tests are 
 
 | File | What it holds |
 |---|---|
-| `embrace-android-instrumentation-api/…/internal/arch/datasource/StateUpdate.kt` | `StateUpdate`: a state's name, its value, when it took that value, and attributes of the change. `StateUpdate.KEY` is the event bus channel. |
-| `embrace-android-instrumentation-api/…/internal/arch/datasource/StateDataSource.kt` | v1's data source. When the journal is on, it holds no span and emits a `StateUpdate` for each change of value (`journalUpdate`). |
+| `embrace-android-instrumentation-api/…/internal/arch/datasource/StateUpdate.kt` | `StateUpdate`: a state's name, its value, when it took that value, attributes of the change, the state's limit on changes in a session part, and how many changes its reporter dropped. `StateUpdate.KEY` is the event bus channel. |
+| `embrace-android-instrumentation-api/…/internal/arch/datasource/StateDataSource.kt` | v1's data source. When the journal is on, it holds no span and emits a `StateUpdate` for each change of value (`journalUpdate`), with its limit and with any transitions its instrumentation dropped. |
+| `embrace-android-instrumentation-power-save/…/internal/instrumentation/powersave/PowerStateDataSource.kt` | The power state. Lazy in v1. With the journal on it reports `unknown`, then `normal` or `low`. |
 | `embrace-android-infra/…/internal/utils/event/EventBus.kt` | The event bus. `emit` runs each handler on the calling thread. |
-| `embrace-android-core/…/internal/capture/state/StateRecorder.kt` | The recorder: the one lock, the sequence and every state's value. |
+| `embrace-android-core/…/internal/capture/state/StateRecorder.kt` | The recorder: the one lock, the sequence, every state's value, both limits and the count for each state. |
 | `embrace-android-core/…/internal/capture/state/StateSnapshot.kt` | The snapshot, and its two forms for a stamp: `encoded` (the packed string, which Embrace's payload gets) and `attributes` (one for each state, which an app's exporters get). |
 | `embrace-android-core/…/internal/capture/state/StateChangeListener.kt` | What the recorder tells of each change and each part start, under its lock. |
 | `embrace-android-core/…/internal/capture/state/StateEventEmitter.kt` | The listener that turns changes and part starts into events for an app's exporters. |
 | `embrace-android-core/…/internal/capture/state/StateJournalSpan.kt` | `withStateSpan`: renders a part's journal as the `emb-states` span when the part is read. |
 | `embrace-android-core/…/internal/capture/state/MetadataStates.kt` | `reportPersonasAsState`: the user's personas reported as a state, as a demonstration. |
-| `embrace-android-session-persistence/src/main/proto/embrace/session/persistence/state_journal.proto` | The journal's records: `StateJournal`, `StateRecord`, `StateCheckpoint`, `StateChange`, `StatePartStart`, `StatePartEnd`, `StateValue`. |
+| `embrace-android-session-persistence/src/main/proto/embrace/session/persistence/state_journal.proto` | The journal's records: `StateJournal`, `StateRecord`, `StateCheckpoint`, `StateChange`, `StatePartStart`, `StatePartEnd`, `StateDroppedCount`, `StateValue`. |
 | `embrace-android-session-persistence/…/internal/session/persistence/StateJournalWriter.kt` | Appends records to `state_journal.pb`. |
 | `embrace-android-session-persistence/…/internal/session/persistence/StateJournalReader.kt` | Reads the journal back. |
 | `embrace-android-session-persistence/…/internal/session/persistence/SessionPartDecoder.kt` | Reads a part's files. `readStateJournalFile` reads the journal, and a journal that cannot be read never fails the part. |
@@ -94,7 +99,7 @@ tests are beside each module's code under `src/test`. The integration tests are 
 | `embrace-android-core/…/internal/session/orchestrator/SessionPartWriterImpl.kt` | Owns a part's files, and begins and ends the recorder's journal at a part boundary. |
 | `embrace-android-core/…/internal/session/orchestrator/TelemetryWriteScheduler.kt`, `OrderedTelemetryQueue.kt` | The queue between the recorder and the persistence worker. |
 | `embrace-android-core/…/internal/resurrection/SessionPartReader.kt` | Reads a part for delivery, calls `withStateSpan` (`SessionPartReader.kt:175`), and resurrects a dead part. |
-| `embrace-android-sdk/…/internal/injection/OtelSignalContext.kt` | `getEventMetadata`: the metadata every log carries. It leaves state out where association is on, and gives the packed stamp where it is not. |
+| `embrace-android-sdk/…/internal/injection/OtelSignalContext.kt` | `getEventMetadata`: the metadata every log carries. It leaves state out where association is on, and gives the packed stamp where it is not. `getLogStateSnapshot`: the state the log pipeline stamps where association is on. Both give nothing before `markReady`. |
 | `embrace-android-otel/…/internal/otel/logs/EmbraceLogRecordProcessor.kt` | Stamps each log by who reads it: the packed form into Embrace's payload, then the plain form onto the record if the app has a log receiver. Gives a log about another process none. Routes a state event past Embrace's payload. |
 | `embrace-android-otel/…/internal/otel/state/StateStamp.kt`, `StateAttributes.kt`, `StateAssociation.kt` | What the OpenTelemetry module sees of a snapshot, the attribute and event names, and the seam the SDK module fills in. |
 | `embrace-android-otel/…/internal/otel/state/SpanStateTracker.kt`, `SpanStateLink.kt` | The link on a span, and the decorated spans an app's exporters are handed. |
@@ -103,7 +108,7 @@ tests are beside each module's code under `src/test`. The integration tests are 
 | `embrace-android-otel/…/internal/otel/spans/EmbraceSpanProcessor.kt`, `EmbraceSpanFactoryImpl.kt`, `DefaultSpanExporter.kt` | Where the tracker is called. |
 | `embrace-android-otel/…/internal/otel/logs/DefaultLogRecordExporter.kt`, `…/otel/payload/LogMapper.kt` | `exportInline` stores a log for Embrace's payload with the packed attributes added to the stored copy. `exportExternally` hands a state event to an app's log exporters only. |
 | `embrace-android-otel/…/internal/otel/config/OtelSdkConfig.kt` | Builds the tracker, the decorators and the Resource from a `StateAssociation`. |
-| `embrace-android-sdk/…/internal/instance/RealSdkInstanceFactory.kt` | The wiring: reads the switches (lines 179 to 198) and creates the recorder and the emitter (lines 350 to 374). |
+| `embrace-android-sdk/…/internal/instance/RealSdkInstanceFactory.kt` | The wiring: reads the switches (lines 179 to 198) and creates the recorder and the emitter (lines 352 to 381). |
 | `embrace-android-config/…/internal/config/resolved/AutoDataCaptureConfig.kt`, `ConfigResolver.kt`, `StateExportMode.kt` | The settings, and `StateExportMode.defaultFor`. `embrace-android-payload/…/internal/config/remote/RemoteConfig.kt` has the remote keys. |
 
 ## The issues it overcomes
@@ -114,10 +119,10 @@ The evidence is v1's code. What v1 was measured to cost is under [what it costs]
 
 | What v1 cannot do, and where its code shows it | What answers it here |
 |---|---|
-| **Order changes across states.** Each state has a span of its own, and `StateDataSource.onStateChange` replaces `currentState` and then records the event through the part's token, as two steps with no lock around them (`StateDataSource.kt:110` to `135`). | One lock and one sequence: [the recorder](#the-recorder) |
+| **Order changes across states.** Each state has a span of its own, and `StateDataSource.onStateChange` replaces `currentState` and then records the event through the part's token, as two steps with no lock around them (`StateDataSource.kt:105` to `130`). | One lock and one sequence: [the recorder](#the-recorder) |
 | **Give a log values of one moment.** `InstrumentationRegistryImpl.getCurrentStates` reads each data source in turn, so two states that change during the read can be mixed. | One immutable `StateSnapshot`, read once for a log: [the snapshot](#the-snapshot) |
-| **Record a change with no session part.** With no token, a change is counted and thrown away: `unrecordedTransitions.updateNotInSession(1)` (`StateDataSource.kt:151`). It is sent as the count `emb.state.not_in_session`. | Held changes, which open the next part's journal: [the journal](#the-journal) |
-| **Keep more than 100 changes of a state in a part**, or 1,000 for the screen. `DEFAULT_MAX_TRANSITIONS = 100` in `StateDataSource.kt`, and `MAX_NAVIGATION_STATE_TRANSITIONS = 1000` in `NavigationStateDataSource.kt`. The rest are counted in `emb.state.dropped_by_instrumentation`, and the span has no final value. | A ceiling of 10,000 for a journal, shared by every state: [the journal](#the-journal) |
+| **Record a change with no session part.** With no token, a change is counted and thrown away: `unrecordedTransitions.updateNotInSession(1)` (`StateDataSource.kt:146`). It is sent as the count `emb.state.not_in_session`. | Held changes, which open the next part's journal: [the journal](#the-journal) |
+| **Keep a state's value right past its limit, and say what is missing.** A part keeps 100 changes of a state, or 1,000 for the screen: `DEFAULT_MAX_TRANSITIONS = 100` in `StateDataSource.kt`, and `MAX_NAVIGATION_STATE_TRANSITIONS = 1000` in `NavigationStateDataSource.kt`. The limit is applied in the data source, so a change past it never reaches the span. The rest are counted in `emb.state.dropped_by_instrumentation` together with updates that only repeated the value, the limit's value is nowhere in the data, and the span has no final value. | The same limits, applied in the recorder after the value is replaced. The change log counts real losses for each state, states each limit that was hit, and gives the final value: [the journal](#the-journal), [every limit](#every-limit) |
 | **Cost nothing for a state that did not change.** `onPreSessionEnd` and `onPostSessionChange` stop and start a span for each state at every part change. Each state span that ends gets two links from the session part span and one back to it (`CurrentSessionPartSpanImpl.kt:151` to `176`). | A data source does nothing at a part boundary, and an idle state is one value in the journal's checkpoint: [reporting a state](#reporting-a-state) |
 | **Persist a change at a cost that does not grow.** A span in progress is persisted by writing the whole span again, `SPAN_SNAPSHOT_WRITE_DELAY_MS` (2,000 ms) after a change. | An append-only journal: [the journal](#the-journal) |
 | **Keep its links in a busy part.** The session part span holds 100 system links (`OtelLimitsConfig.getMaxSystemLinkCount`), and state spans end last. | One `STATE` link, added in `withStateSpan` when the part is read: [delivering a part](#delivering-a-part) |
@@ -143,7 +148,7 @@ The evidence is v1's code. What v1 was measured to cost is under [what it costs]
 | Nothing waits for a write | A queue insert under the lock, one worker | [The journal](#the-journal) |
 | A cost that does not grow with changes | Append only, in `StateJournalWriter.writeImpl` | [The journal](#the-journal) |
 | A cost that does not grow with states | A checkpoint, a shared stamp, two numbers | [Session part boundaries](#session-part-boundaries), [the stamp on logs](#the-stamp-on-logs), [the link on spans](#the-link-on-spans) |
-| Limits that do not lie | Counts, final values, a mark | [Every limit](#every-limit) |
+| Limits that do not lie | A count for each state and for the part, the value of each limit that was hit, final values, a mark | [Every limit](#every-limit) |
 | A span read against state | Two numbers, of which a span carries both, one or neither | [The link on spans](#the-link-on-spans) |
 | A span that is given its times | The window of 64 snapshots | [The link on spans](#the-link-on-spans) |
 | Values for an app's exporters only | Decorated spans, a marked context | [What an app's own exporters get](#what-an-apps-own-exporters-get) |
@@ -204,7 +209,7 @@ The network goes from wifi to none while a session part is in progress. Both swi
 
 | Thread | What it does for state | What it can wait on |
 |---|---|---|
-| Whatever reports a state. Power saving reports its first reading, if power saving is on, from the `non-io-reg` worker, and each change after it from `PowerSaveModeReceiver.onReceive`, which is registered with no handler and so runs on the main thread. The network and the screen report on whichever thread their source calls them on, which was not traced. | `StateDataSource.journalUpdate`, then `StateRecorder.onEvent` in full: the comparison, the sequence, the snapshot, two queue inserts and up to two submissions to workers | Its data source's `journalLock`, and the recorder's lock. No I/O, and nothing of the app's. |
+| Whatever reports a state. Power saving reports its default on whichever thread enables its capture, its first reading from the `non-io-reg` worker, and each change after it from `PowerSaveModeReceiver.onReceive`, which is registered with no handler and so runs on the main thread. The network and the screen report on whichever thread their source calls them on, which was not traced. | `StateDataSource.journalUpdate`, then `StateRecorder.onEvent` in full: the comparison, the sequence, the snapshot, the two limits, two queue inserts and up to two submissions to workers | Its data source's `journalLock`, and the recorder's lock. No I/O, and nothing of the app's. |
 | Whatever changes the session part, on the main thread. | `SessionPartWriterImpl.onSessionPartStarted` and `onSessionPartEnded`, which call `beginJournal` and `endJournal` | The orchestrator's lock, the writer's `bufferLock`, the recorder's lock. No I/O. |
 | `session-persistence`, one thread (`WorkerThreadPoolImpl.kt:106`) | Every append to the journal, and sealing a part | The disk |
 | The worker that reads parts for delivery. When a part's writes complete, the read is submitted to `io-reg` (`createSessionOrchestrator` in `UserSessionOrchestrationFactories.kt`). | `readStateJournal`, then `withStateSpan` | The disk, and intake |
@@ -217,7 +222,7 @@ The network goes from wifi to none while a session part is in progress. Both swi
 
 | Lock | What it guards | Held while |
 |---|---|---|
-| `StateRecorder.lock` | Every field [the recorder](#the-recorder) lists under `lock`, and every write to `current` and `recent` | The journal callback (a queue insert and a submission), the listener (a queue insert and at most a submission), and `onChangeDropped` (a call to `InternalTelemetryService.trackAppliedLimit`). |
+| `StateRecorder.lock` | Every field [the recorder](#the-recorder) lists under `lock`, and every write to `current` and `recent` | The journal callback (a queue insert and a submission), the listener (a queue insert and at most a submission), and `onChangeDropped` or `onStateLimitApplied` (each a call to `InternalTelemetryService.trackAppliedLimit`). |
 | `StateDataSource.journalLock`, one for each data source | That the last update a state emits is the value it holds | `outgoingValueAttributes`, and the whole of `StateRecorder.onEvent` |
 | The lock inside `reportPersonasAsState` | The same, for personas | Reading the user's personas, and the whole of `StateRecorder.onEvent` |
 | `SessionPartWriterImpl.bufferLock` | Which part is current | `beginJournal` and `endJournal` |
@@ -235,7 +240,9 @@ The network goes from wifi to none while a session part is in progress. Both swi
 ### Reporting a state
 
 A state is reported by emitting a `StateUpdate` on the event bus: the state's name, its value, the time it took
-that value, and any attributes of the change. The recorder decides whether the update is a change.
+that value, any attributes of the change, the state's limit on changes in a session part, and how many changes its
+reporter dropped since its last update. The recorder decides whether the update is a change, and whether a limit
+refuses it.
 
 - **The channel is `StateUpdate.KEY`.** `EventBus.emit` runs every handler on the thread that emitted, in the order
   they were registered. The recorder is the one handler, registered in `RealSdkInstanceFactory.kt` as it is
@@ -247,26 +254,41 @@ that value, and any attributes of the change. The recorder decides whether the u
   `sharedStateSpanEnabled` and multi-file persistence are on. `onStateChange` then goes to `journalUpdate` and no
   span is made. `onPreSessionEnd` and `onPostSessionChange` return at once, so a data source does nothing at a part
   boundary.
-- **A state's default is its first update.** `StateDataSource.startStateCapture` emits the default value when data
-  capture is enabled, unless `captureStateOnCreation` is false. So the network is present as `unknown`, and the
-  screen as `Initializing`, which is marked as generated, from the moment their instrumentation starts. Power
-  saving sets `captureStateOnCreation` to false and reports nothing until power saving is first switched on
-  (`PowerStateDataSource.onPowerSaveModeChanged`), so until then the recorder has no state `power`.
-- **An update that leaves the value as it was is not emitted.** `journalUpdate` counts it, with any transitions the
-  instrumentation said it dropped, and attaches the count to the next change as
-  `emb.state.dropped_by_instrumentation`, put first so that it is not the attribute cut. It is the one key under
-  `emb.state.` that a change's own attributes may carry, and only the data source sets it: a reporter's value under
-  that key is replaced by the count, or removed where there is none. `StateDataSourceTest` `a journaled state emits
-  each change of value and counts the transitions it did not emit`, and `a reporter cannot set the count of
-  transitions the instrumentation dropped on a journaled change`.
+- **A state's default is its first update, and every state is present from the start.** With the journal on,
+  `StateDataSource.onDataCaptureEnabled` emits the default value when data capture is enabled, whatever
+  `captureStateOnCreation` says. So the network is present as `unknown`, the screen as `Initializing`, which is
+  marked as generated, and power saving as `unknown`, from the moment their instrumentation starts.
+  `StateDataSourceTest` `a state captured lazily is present from the start when journaled, and starts on first use
+  when it has a span of its own`.
+- **Power saving reports `normal` as well as `low`.** `PowerStateDataSource` sets `captureStateOnCreation` to false.
+  With the journal on that no longer delays it: it reports `unknown` as capture is enabled, and `normal` or `low` as
+  soon as the worker has read the mode (`PowerStateDataSource.onPowerSaveModeChanged`), so every log says which.
+  With the journal off it is as lazy as it was, and reports nothing until power saving is first switched on.
+  `PowerStateDataSourceTest` `a journaled power state is unknown when capture starts, then normal or low as soon as
+  the mode is read` and `a power state with a span of its own is not captured until power saving is first on`.
+  Through the whole SDK, `StateJournalFeatureTest` `the power state is present from the start, as unknown and then
+  as the mode that was read`.
+- **An update that repeats the value is not emitted, and is not counted.** Nothing is lost by it. v1 counts it with
+  the transitions that were dropped, and this design does not.
+- **Transitions the instrumentation dropped are passed on as a count.** `onStateChange` takes `droppedTransitions`,
+  and `journalUpdate` gives it to the update as `StateUpdate.droppedChanges`. An update with a count is emitted even
+  if it repeats the value, so that the count reaches the recorder, and such a repeat carries no attributes.
+  `emb.state.dropped_by_instrumentation` is not written on a journaled change. No instrumentation in the SDK passes
+  a count today. `StateDataSourceTest` `a journaled state emits each change of value with its limit, and passes on
+  the transitions its instrumentation dropped`.
 - **A change away from a value carries what is known of that value.** The result of `outgoingValueAttributes` for
   the value being left goes on the change. The screen uses it for the dropped and expected frame counts
   `VitalsDataSource` kept while that screen was showing.
-- **v1's limit for each state is not applied.** `journalUpdate` does not pass through the data source's limit
-  strategy, so a journaled state is held only to the journal's shared ceiling.
+- **The limit for each state is passed on, and not applied here.** Every update carries the data source's
+  `maxTransitions` as `StateUpdate.maxChangesInPart`: 100 (`DEFAULT_MAX_TRANSITIONS`), and 1,000 for the screen
+  (`MAX_NAVIGATION_STATE_TRANSITIONS`). `journalUpdate` does not pass through the data source's limit strategy. The
+  recorder applies the limit, after it has replaced the value. A reporter that names no limit, such as
+  `reportPersonasAsState`, gets `StateUpdate.DEFAULT_MAX_CHANGES_IN_PART`, which is 100. The same test of
+  `StateDataSourceTest`, and `NavigationStateDataSourceTest` `a journaled screen state reports its limit of 1,000
+  changes in a session part with each update`.
 - **Personas are reported as a state, as a demonstration.** `reportPersonasAsState` reports the user's personas,
   sorted and joined by commas, once at start and again whenever the user's information changes, with no data
-  source and no span. It is wired wherever the recorder exists (`RealSdkInstanceFactory.kt:886`), with no switch of
+  source and no span. It is wired wherever the recorder exists (`RealSdkInstanceFactory.kt:892`), with no switch of
   its own. So with the first switch on every log and every change log carries a state named `personas`, with an
   empty value for a user with none. The first test of `StateJournalFeatureTest`, under [the stamp on
   logs](#the-stamp-on-logs), delivers it.
@@ -279,6 +301,10 @@ What a reporter has to get right:
   holds as it is emitted` checks the first.
 - **Give the time the value took effect**, which can be earlier than the report. The recorder keeps it and does not
   order by it.
+- **Give its limit with every update**, if 100 changes of the state in a part is not the limit it wants. The
+  recorder applies the limit of the update in hand.
+- **Give the count of what it dropped**, if it knows it missed changes. The count goes with its next update, which
+  may repeat the value.
 - **Expect to be held for as long as the recorder's lock is.**
 
 ### The recorder
@@ -295,25 +321,35 @@ is. It is created only where the journal is on, with `keepRecent` set where asso
 | `opening`, `openingTimeMs` | The values the next journal opens with, and when they held | `lock` |
 | `held` | The changes made since `opening`, oldest first | `lock` |
 | `folded` | How many changes were folded into `opening` since the last journal ended | `lock` |
-| `recorded`, `dropped` | How many changes the journal in progress holds, counting those it opened with, and how many it does not | `lock` |
+| `recorded`, `dropped` | How many changes the journal in progress holds, counting those it opened with, and how many made during the part a limit refused | `lock` |
+| `tallies` | For each state: how many of its changes made during the part the journal lists, how many a limit refused, how many its reporter said it dropped, and its own limit if that refused one. Emptied when a journal ends. | `lock` |
+| `sharedLimitApplied` | Whether the shared limit refused a change of the journal in progress | `lock` |
 
 What `onEvent` does, in order:
 
-1. **Outside the lock:** the value becomes text with `toString`, cut to 2,000 characters. It is generated,
-   `system`, if the value object is a `SystemStateValue` (`SchemaType.State.valueType`).
-2. **Under the lock, the comparison.** If the state already has that text and that `system` flag, the update is not
-   a change and `onEvent` returns. A state's first value is always a change.
-3. **The number and the snapshot.** `sequence` goes up by one. `current.with` copies the map of every state's value
+1. **Outside the lock:** the value becomes text with `toString`, cut as v1 cuts an attribute's value
+   (`PropertyUtils.truncate`): text of more than 2,000 characters becomes its first 1,997 and `...`, and the cut
+   never splits a surrogate pair. It is generated, `system`, if the value object is a `SystemStateValue`
+   (`SchemaType.State.valueType`).
+2. **Under the lock, the reported drops.** If the update says its reporter dropped changes, that count is added to
+   the state's tally. It takes no number, since nothing says when those changes happened.
+3. **The comparison.** If the state already has that text and that `system` flag, the update is not a change and
+   `onEvent` returns. A state's first value is always a change.
+4. **The number and the snapshot.** `sequence` goes up by one. `current.with` copies the map of every state's value
    with the new value in place, and the copy becomes `current`. With `keepRecent` the copy also notes `clock.now()`
    as `sinceMs`, and `remember` adds it to `recent`, dropping the oldest past 64.
-4. **The ceiling.** If a journal is open and `recorded` has reached `maxChanges`, the change is counted in
-   `dropped`, `onChangeDropped` is called, and `onEvent` returns. The snapshot was already replaced, so the values
-   stay right. The listener is not told.
-5. **The record.** A `StateRecord` is made with the sequence, the reporter's time, the value, and the change's
+5. **The two limits**, in `refusedByALimit`, only if a journal is open. The state's own limit is checked first: if
+   the journal already lists `maxChangesInPart` changes of this state made during the part, the change is refused,
+   the limit is noted in the state's tally, and `onStateLimitApplied` is called with the state's name. Then the
+   shared limit: if `recorded` has reached `maxChanges`, the change is refused, `sharedLimitApplied` is set, and
+   `onChangeDropped` is called. A refused change is counted in the state's tally and in `dropped`, and `onEvent`
+   returns. The snapshot was already replaced, so the values stay right. The listener is not told. A change that is
+   not refused is counted toward both limits.
+6. **The record.** A `StateRecord` is made with the sequence, the reporter's time, the value, and the change's
    attributes after `limited`.
-6. **The journal or the hold.** With a journal open, `recorded` goes up and the record is handed to the callback.
-   With none, `hold` keeps it.
-7. **The listener.** `listener.onChange` is told the record, the snapshot that change produced, and the value the
+7. **The journal or the hold.** With a journal open, the record is handed to the callback. With none, `hold` keeps
+   it, and no limit but the hold's own applies.
+8. **The listener.** `listener.onChange` is told the record, the snapshot that change produced, and the value the
    state had before, which is null for its first change.
 
 What follows from that:
@@ -323,23 +359,30 @@ What follows from that:
   searched by. A change reported late has a `sinceMs` later than its `time_ms`. `StateJournalSpanTest`'s test of a
   part that ended, under [delivering a part](#delivering-a-part), checks the `time_ms` of a change held from before
   the part and of one made in it.
-- **Two values that differ only after their 2,000th character are the same value**, since the comparison is of the
-  cut text. Not tested.
+- **Two values that differ only after their 1,997th character are the same value**, where both are longer than
+  2,000, since the comparison is of the cut text. A data source compares the values themselves, so it reports a
+  change the recorder takes for a repeat: `StateKnownDefectsTest` `the data source and the recorder each decide what
+  a change is, so one can report a change the other takes for a repeat`.
+- **A refused change keeps its number.** So the numbers of the changes a journal lists can skip, anywhere after its
+  part start, since one state can reach its limit while the others go on. `StateRecorderTest` `a state that reaches
+  its own limit is no longer listed while the others are, and its value stays right`.
 - **A state never leaves the snapshot**, and nothing gives it no value.
 - **The map is copied for every change.** That is what makes a snapshot safe to read with no lock, and it grows
   with the number of states. [What it costs](#what-it-costs) has the count.
 - **The clock is read once for a change with association on, and not at all with it off.** `StateRecorderTest` `a
   recorder that remembers nothing does not read the clock for a change, and knows no past snapshot`.
-- **A change's attributes are limited by `limited`:** the first 7 in the order the reporter gave them, each key cut
-  to 1,000 characters and each value to 2,000. The 7 is `OtelLimitsConfig.getMaxEventAttributeCount`, which is 10,
-  less the three an event is given for the value, its type and its number. Nothing says an attribute was left out.
-  `StateRecorderTest` `a value or an attribute longer than a span event could carry is cut short`.
+- **A change's attributes are limited by `limited`:** the first 7 in the order the reporter gave them, each cut the
+  way the value is: a key of more than 1,000 characters to its first 997 and `...`, and a value of more than 2,000
+  to its first 1,997 and `...`. The 7 is `OtelLimitsConfig.getMaxEventAttributeCount`, which is 10, less the three
+  an event is given for the value, its type and its number. Nothing says an attribute was left out.
+  `StateRecorderTest` `a value or an attribute longer than a span event could carry is cut to 1,997 characters and
+  three dots`, which also cuts at a surrogate pair.
 - **A change's own attribute under `emb.states.` or `emb.state.`, or keyed with either stem alone, is dropped,**
-  before the count, so it uses up none of the 7. The one exception is `emb.state.dropped_by_instrumentation`. So no
-  reporter can set a key the SDK writes on a change, in the change log or in an event for an app's exporters. A key
-  outside the stems, such as `emb.type`, is kept in the change log, and an event has the SDK's value for each key
-  the SDK writes. `StateRecorderTest` `a change's own attribute under either state stem is dropped, and uses up none
-  of the seven a change can carry`.
+  before the count, so it uses up none of the 7. There is no exception: `emb.state.dropped_by_instrumentation` is
+  dropped like the rest. So no reporter can set a key the SDK writes on a change, in the change log or in an event
+  for an app's exporters. A key outside the stems, such as `emb.type`, is kept in the change log, and an event has
+  the SDK's value for each key the SDK writes. `StateRecorderTest` `a change's own attribute under either state stem
+  is dropped, and uses up none of the seven a change can carry`.
 - **A state's name is not validated, cut or escaped.**
 
 ### The snapshot
@@ -349,8 +392,8 @@ states were first reported, and `sinceMs`. Everything read from one instance des
 
 - **`encoded`** is the packed form, the one Embrace's payload carries: `name=value` for each state, joined by `;`. A
   generated value is written `name~value`. A `;`, `=`, `~` or `\` inside a name or a value is preceded by `\`.
-  Each value has been cut to 2,000 characters by the recorder before it is joined, so no cut can fall inside the
-  string.
+  Each value has been cut to at most 2,000 characters by the recorder before it is joined, so no cut can fall
+  inside the string.
 - **`attributes`** is the plain form, the one an app's own exporters get: `emb.states.value.<name>` for each state,
   and `emb.states.value_type.<name>` with the value `system` for a generated one.
 - **`endAttributes(start)`** is each state whose value or `system` flag differs from `start`, as
@@ -388,11 +431,24 @@ valid `StateJournal`:
 | Checkpoint | The number the values are as of | When those values held: the end of the last part, or the time of the last change folded in, or when the recorder was created | `values`: every state's name, value and `system` flag |
 | Change | The change's own number | When its reporter says it happened | `value`: the state's name, new value and `system` flag. `attributes`: the change's own. |
 | Part start | The number of the last change before the part | When the part started | `dropped_changes`: how many changes were folded into the checkpoint |
-| Part end | The number of the last change made, recorded or not | When the journal was ended | `dropped_changes`: how many changes the journal did not record. `values`: every state's value, only if that count is above 0. |
+| Part end | The number of the last change made, recorded or not | When the journal was ended | `dropped_changes`: how many changes made during the part took a number and were refused by a limit. `dropped_counts`: for each state with a count, a `StateDroppedCount` with the state, the count, and the state's own limit if that refused a change. `shared_limit`: the shared limit, if that refused a change. `values`: the final value of each state that had a change refused. |
 
 A journal holds, in this order, one checkpoint, the changes held from before the part, one part start, the changes
-of the part, and one part end if the part ended in the process that started it. The changes are consecutive from
-the number after the checkpoint's.
+of the part, and one part end if the part ended in the process that started it. The changes are in the order of
+their numbers. Those held from before the part are consecutive from the number after the checkpoint's. Those made
+during the part skip a number for each change a limit refused, anywhere among them.
+
+**The count for a state** is the changes of that state a limit refused during the part, plus the drops its
+instrumentation reported. The first kind took numbers and is also in `dropped_changes`. The second took none. So the
+counts of the states add up to `dropped_changes` or more, and to exactly that where no instrumentation reported a
+drop. A state's limit is an optional field, so a limit of 0 is told apart from no limit having been reached.
+
+**A journal written before states had limits of their own** has a part end with one total and every state's value,
+and no count for a state. The fields it used kept their numbers and the format version did not change, so it reads
+back and is delivered as it was written: the total, every final value, and no count or limit. `StateJournalReaderTest`
+`changes whose numbers skip are all read, and a part end reads back with each count and each limit that was set`,
+and `StateJournalSpanTest` `a journal written before states had limits of their own is delivered with its one count
+and every final value`.
 
 **The writer.** `SessionPartWriterImpl` owns the file, as it owns a part's other files.
 
@@ -412,7 +468,7 @@ the number after the checkpoint's.
   the device losing power. Not tested.
 
 **The order guarantee.** What is on disk is always the start of what the recorder handed over, with nothing missing
-from the middle. Four things make that so:
+from the middle. A change a limit refused was never handed over. Four things make that so:
 
 1. **Records enter the queue in sequence order**, because the callback runs under the recorder's lock.
 2. **One thread appends them** in the order they were queued.
@@ -426,19 +482,38 @@ from the middle. Four things make that so:
    reading stops. `StateJournalReaderTest` `a record cut short by a process that died is not an error` and `reading
    stops at a record that does not decode and reports it`.
 
-A fifth check sits behind them. `upToFirstMissingChange` in `StateJournalSpan.kt` cuts the delivered span at the
-first change whose number is not one more than the change before it, and the span is marked: `StateJournalSpanTest`
-`a journal with a change missing is delivered up to the missing change and marked`. Nothing known can produce such
-a journal.
+A fifth check sits behind them. `upToFirstChangeOutOfOrder` in `StateJournalSpan.kt`
+cuts the delivered span at the first change whose number is not above the number of the change before it, and the
+span is marked. A gap in the numbers is not a fault, since a limit leaves one, and the span is not cut there:
+`StateJournalSpanTest` `a journal is delivered whole across a gap in its changes' numbers, and up to a change that
+is out of order`. Nothing known can produce a journal out of order. A record lost from the middle of a journal reads as a refused change, and nothing on the device checks
+the gaps against the part end's count.
 
-**The ceiling.** A journal holds at most `MAX_JOURNAL_CHANGES`, 10,000 changes, counting those it opened with from
-before its part. A change past it is tracked through `InternalTelemetryService.trackAppliedLimit` as
-`state_change`, as well as counted in `dropped`. The ceiling is one count shared by every state, so one state that
-changes constantly can use it up. Each journal has the ceiling to itself. `StateRecorderTest` `a journal that
-reaches its limit stops recording changes and still ends with the right values`.
+**The two limits.** Both are counts of changes, and each journal has both to itself.
+
+- **Each state's own.** A journal lists at most `StateUpdate.maxChangesInPart` changes of one state made while its
+  part is in progress: 100, or what the state's reporter gives, which is 1,000 for the screen. The count starts
+  from nothing with each part. Changes held from before the part are listed and do not count toward it.
+  `StateRecorderTest` `a state that reaches its own limit is no longer listed while the others are, and its value
+  stays right`, and `a state whose reporter names no limit lists 100 changes in a session part`.
+- **The shared one.** A journal holds at most `MAX_JOURNAL_CHANGES`, 10,000 changes of every state together,
+  counting those it opened with from before its part. With the three states v1 has, a part's own changes come to at
+  most 1,200 and the held ones to 1,000, so these three cannot reach it. It is a backstop for an app with many
+  states. `StateRecorderTest` `a journal that reaches its limit stops recording changes and still ends with the
+  right values`.
+- **A change either limit refuses** keeps its number and has already replaced the state's value. It is not listed,
+  it loses its own attributes, and no event is made of it for an app's exporters. It is counted for its state and in
+  `dropped`, and the part end says which limit refused: the state's own in that state's count, the shared one in
+  `shared_limit`.
+- **Each is tracked through `InternalTelemetryService.trackAppliedLimit`**, once for each refused change. A state's
+  own limit is tracked as v1 tracks it, under the name of the state's data source, `<state>_state_data_source`
+  (`RealSdkInstanceFactory.kt:358` to `360`). The shared limit is tracked as `state_change`
+  (`RealSdkInstanceFactory.kt:356`). The limit test of `StateJournalFeatureTest`, under [delivering a
+  part](#delivering-a-part), finds three refused changes of the test state as
+  `emb.private.applied_limit.test_state_data_source.drop` on the session part span, and nothing under `state_change`.
 
 **Held changes and folding.** With no journal open, `hold` keeps each change in `held`, up to `maxHeldChanges`,
-which is the ceiling divided by `HELD_SHARE`: 1,000. One more than that, and the oldest held change is folded:
+which is the shared limit divided by `HELD_SHARE`: 1,000. One more than that, and the oldest held change is folded:
 
 - **The checkpoint moves forward by one change:** the value is applied to `opening`.
 - **The checkpoint's time moves with it:** `openingTimeMs` becomes that change's time.
@@ -448,12 +523,16 @@ So a long stretch with no part costs a bounded number of records, the next journ
 to the present with no change missing, and the changes it lists are the ones nearest the part. `StateRecorderTest`
 `more changes than are held for the next journal are folded into the values it opens with`.
 
+**A drop reported with no journal open** stays in its state's tally, and is counted in the next journal, the one
+that would have listed the change. `StateRecorderTest` `changes a reporter says it dropped are counted for their
+state in the part they belong to, and a repeated value is not`.
+
 **When a write fails or the file is full.** The writer stops, and tracks `SdkErrorType.StateJournalWriteFail`. The
 recorder is not told. It goes on handing records over, counts them as recorded, and at the part's end hands over a
-part end that the writer also refuses. So the journal on disk has no part end, and is delivered marked as cut
-short, on a span that did end. How many changes it is missing, and the values at the end of the part, are not known
-from it. If nothing of the first append lands, the part is delivered with no `emb-states` span, and nothing in the
-payload says why.
+part end that the writer also refuses. So the journal on disk has no part end, and is delivered marked as cut short,
+on a span that did end. How many changes it is missing, the count for each state, the limits that were hit and the
+values at the end of the part are not known from it. If nothing of the first append lands, the part is delivered with
+no `emb-states` span, and nothing in the payload says why.
 
 ### Session part boundaries
 
@@ -468,26 +547,31 @@ queues to that part's writer. Under the recorder's lock, `beginJournal`:
 2. **Hands over one list:** the checkpoint from `opening`, every held change, and a part start carrying `folded`.
    `StateJournalFeatureTest` `changes made with no session part in progress are delivered with the next part to
    start`.
-3. **Counts the held changes towards the ceiling.** `recorded` is set to their number, and `held`, `folded` and
-   `dropped` are cleared.
+3. **Counts the held changes toward the shared limit, and toward no state's own.** `recorded` is set to their
+   number, and `held`, `folded` and `dropped` are cleared. Each state's count of listed changes starts from nothing,
+   since the end of the last journal emptied the tallies. A drop reported since then is still there, to be counted in
+   this journal.
 4. **Keeps the callback** as `journal`.
 5. **Tells the listener**, through `onPartStart`, the part's start time and the current snapshot.
 
 **A part ends.** `onSessionPartEnded` calls `StateRecorder.endJournal(clock.now())`, under the same `bufferLock` a
 part starts under, so that it cannot end the journal of the part after this one. `endJournalUnderLock` hands over a
-part end with the count of dropped changes, and with every state's value if that count is above 0. It then clears
-`journal`, and keeps the current snapshot as `opening` and the end time as `openingTimeMs`. `SessionPartWriterImpl`
-then flushes the part's queues and seals the part on the worker.
+part end with the count of changes refused, the count for each state that has one, each limit that refused a change,
+and the value of each state that had a change refused. So a count is on the journal of the part it happened in, and
+does not wait for the state's next change. It then clears `journal` and the tallies, and keeps the current snapshot
+as `opening` and the end time as `openingTimeMs`. `SessionPartWriterImpl` then flushes the part's queues and seals
+the part on the worker.
 
 ![The lock, and not a change's time, decides which journal lists it: a change reported just after a boundary is listed in the part whose span has ended, or held and listed before the next part's start.](state-diagrams/boundary-race.svg)
 
 **What a reader can rely on at a boundary:**
 
-- **A change is in exactly one journal.** It is in the journal that was open when the recorder's lock was taken for
-  it, or held for the next: `SessionPartWriterImplTest` `state changes are journaled with the session part they
-  were made in or the next to start`. `SessionPartWriterImplTest` `state changes racing session part changes are
-  each journaled once and in order` runs 4 threads making 2,000 changes each while up to 100 parts start and end,
-  and accounts for all 8,000.
+- **A change is in exactly one journal, or counted in exactly one.** It is in the journal that was open when the
+  recorder's lock was taken for it, or held for the next: `SessionPartWriterImplTest` `state changes are journaled
+  with the session part they were made in or the next to start`. A change a limit refused is counted in the end of
+  the journal that was open. `SessionPartWriterImplTest` `state changes racing session part changes are each
+  journaled once and in order` runs 4 threads making 2,000 changes each, of a state each with the limit of 100,
+  while up to 100 parts start and end, and accounts for all 8,000 as listed, folded or refused.
 - **Journals chain.** A journal's checkpoint has the sequence the last journal ended on, plus what was folded
   since. The same test checks it for every part.
 - **"Before the part" means before the journal began, and not an earlier time.** The lock decides the listing, and
@@ -525,15 +609,33 @@ span and one link. A part with no journal, or whose journal does not open with a
 | `emb.states.initial_seq` | The checkpoint's sequence |
 | `emb.states.part_start_seq` | The part start record's sequence. If the journal stops before its part start, the sequence of its last change, or of the checkpoint if it has no change. |
 | `emb.states.folded_changes` | The part start's count, if above 0 |
-| `emb.states.dropped_changes` | The part end's count, if above 0 |
-| `emb.states.final_value.<name>`, `emb.states.final_value_type.<name>` | The part end's values, which it has only when changes were dropped |
-| `emb.states.truncated` | `true`, if the journal has no part end or was cut at a missing change |
+| `emb.states.dropped_changes` | The part end's count of the changes made during the part that took a number and are not listed, for every state together, if above 0 |
+| `emb.states.dropped_count.<name>` | The part end's count for that state, if above 0: the changes of the state a limit refused, and the drops its instrumentation reported |
+| `emb.states.limit.<name>` | The state's own limit, only where that limit refused a change of the state in this part |
+| `emb.states.shared_limit` | The shared limit, only where it refused a change in this part |
+| `emb.states.final_value.<name>`, `emb.states.final_value_type.<name>` | The part end's values: each state that had a change refused. A journal written before states had limits of their own has every state's. |
+| `emb.states.truncated` | `true`, if the journal has no part end or was cut at a change out of order |
 | An event for each change, named `emb-state-<name>` | In the journal's order, with the record's time. Its attributes are the change's own, at most 7, then `emb.states.seq`, then `emb.states.new_value`, then `emb.states.new_value_type` as `system` for a generated value. |
 
 - **Each event carries its number** as `emb.states.seq`, so a reader does not count from `emb.states.initial_seq`, and
-  a gap in the numbers shows a missing change. The first event is the change numbered `emb.states.initial_seq` plus
-  one, and each after it the next. Events up to `emb.states.part_start_seq` were listed before the part. A truncated
-  change log's last event says the last number it recorded. [What it costs](#what-it-costs) has the number's bytes.
+  a gap between two numbers is one or more changes the log does not list. Events up to `emb.states.part_start_seq`
+  were listed before the part, and are consecutive from `emb.states.initial_seq` plus one. After it a gap can be
+  anywhere, and not only at the end, since one state can reach its limit while the others go on. The span is
+  not cut at a gap. A truncated change log's last event says the last number it recorded. [What it
+  costs](#what-it-costs) has the number's bytes.
+- **Both limits are stated in the data when they are hit**, and what each state lost is counted. A state's own
+  limit is `emb.states.limit.<name>`, and the shared one is `emb.states.shared_limit`. Each is absent from a part in
+  which it refused nothing. A change the shared limit refused is still counted for its state, and its state still
+  gets its final value. `StateJournalSpanTest` `a state that reached its own limit has its count, its limit and its
+  final value on the span, and the others go on`, and `a journal that reaches the shared limit states it, counts
+  what each state lost, and states no limit of a state's own`. Through the whole SDK, `StateJournalFeatureTest` `a
+  state that reaches its limit is counted and no longer listed, while the others are and every log still has its
+  value`, which also finds the next part counting from nothing.
+- **The counts add up from one part to the next.** A change log's `emb.states.initial_seq`, plus the events it
+  lists, plus its `emb.states.dropped_changes`, is the number its part ended on. The next part's
+  `emb.states.initial_seq` is that number plus its own `emb.states.folded_changes`. A reported drop took no number,
+  so it is in its state's count and not in that sum.
+- **A truncated change log has no counts**, no limits and no final values. They are written with the part's end.
 - **A span the dead process left running gets its end number here.** Where the part has no end, neither on the
   session part span nor in the journal, `withStateSpan(journal, completesRunningSpans)` gives each of the part's
   span snapshots, the session part span included, `emb.states.end_seq`: the highest number any record of the journal
@@ -545,7 +647,11 @@ span and one link. A part with no journal, or whose journal does not open with a
   boundary is given the number the journal's checkpoint and part start hold` and `a span with no number is given an
   end number only if another span of the part has one`.
 - **Every state's value at a number** is the initial values with each event up to that number applied. That is how
-  a reader resolves a span's link and checks a log's stamp. The integration tests do exactly this in `valuesAt`.
+  a reader resolves a span's link and checks a log's stamp. The integration tests do exactly this in `valuesAt`. It
+  holds state by state where the part ended. A state with no `emb.states.dropped_count.<name>` has every change
+  listed, so its value at any number is known. A state that had a change refused has no known value at a number
+  above the first gap after the part's start, until `emb.states.final_value.<name>` at the part's end. A part that
+  did not end has no counts, so above the first gap in its numbers no state's value is known.
 - **The link.** The session part span is given one link to the state span, with `emb.link_type` as `STATE` and the
   part's id. It is added here, so the limit on a live span's links does not apply.
 - **The span is built outside the OpenTelemetry pipeline.** No processor or exporter of the app's ever sees
@@ -581,6 +687,10 @@ first record is not a checkpoint.
 
 - **After a JVM crash no new part is started**, so changes made while the process is still dying are held, and
   lost.
+- **Changes made after a process's last part are not sent to Embrace.** That is decided, and is what the fourth
+  row does. An app's exporters still get them as events, as they happen. A drop reported then is lost the same way.
+- **A part that did not end has no counts.** The count for each state, both limits and the final values are in the
+  part end, so a killed part's change log has none of them, as its mark says.
 - **The kill in the tests is simulated.** The integration test stops the persistence workers and starts a second
   SDK on the same storage.
 
@@ -616,26 +726,31 @@ the sequence number to both readers, in two forms.
 - **The values are put together once for each change.** Writing each plain attribute onto the record still happens for
   every log where the app has a log receiver, and grows with the number of states. Embrace's payload gets one
   attribute however many states there are.
-- **A log carries no stamp** before any state has a value, when it already has `emb.states.packed` (a record keeps
-  an attribute of the stamp's name), or when it describes another process: a native crash's log, and any log that
-  already names a session part, as the record of why the last process exited does, with an empty one. Such a log
-  never gets this process's state, with association on or off, and getting the dead process's is [not
-  built](#not-built). `EmbraceLogRecordProcessorTest` `no state is stamped when none has a value, or on a native
-  crash or an exit record, or on a log with the packed attribute` and `a packed stamp the metadata supplies is left
-  off a log about another process, and kept on an ordinary one`, and `StateAssociationTest` `an exit record about
-  the last process carries none of this process's state, and an ordinary log carries both forms`.
-- **With association on, a log can be stamped before `OtelSignalContext.markReady`.** The gate that kept state off a
-  log until the end of SDK start was in `getEventMetadata`, which does not build the stamp. A log emitted between
-  the recorder's creation and `markReady` can carry state and none of the session's ids. Personas are reported before
-  `markReady` is called (`RealSdkInstanceFactory.kt:886` and `907`). Whether any log is emitted in that window was not
-  traced. Not tested.
+- **A log carries no stamp** before the SDK is ready, before any state has a value, when it already has
+  `emb.states.packed` (a record keeps an attribute of the stamp's name), or when it describes another process: a
+  native crash's log, and any log that already names a session part, as the record of why the last process exited
+  does, with an empty one. Such a log never gets this process's state, with association on or off, and getting the
+  dead process's is [not built](#not-built). `EmbraceLogRecordProcessorTest` `no state is stamped when none is given
+  or has a value, or on a native crash, an exit record or a log with the packed attribute` and `a packed stamp the
+  metadata supplies is left off a log about another process, and kept on an ordinary one`, and
+  `StateAssociationTest` `an exit record about the last process carries none of this process's state, and an
+  ordinary log carries both forms`.
+- **No log is stamped before `OtelSignalContext.markReady`**, in either form, as in v1. With association off the
+  gate is in `getEventMetadata`. With it on, the log pipeline reads state through
+  `OtelSignalContext.getLogStateSnapshot`, which gives none until `markReady` (`RealSdkInstanceFactory.kt:247` and
+  `913`). Personas are reported before that (`RealSdkInstanceFactory.kt:892`), so a state can have a value in that
+  window. The gate is on the stamp alone: a span that starts in that window is linked as before.
+  `RealSdkInstanceFactoryTest` `with state associated, a log emitted before the SDK is ready carries no state, and
+  one emitted once it is ready does`, `OtelSignalContextTest` `no context is supplied before ready`, and
+  `StateAssociationTest` `while a log is to carry no state, as before the SDK is ready, it has neither form, and a
+  span is linked all the same`.
 - **`StateExportMode.OFF` still gives a log the plain stamp,** where the app has a log receiver: the mode governs
   events and the values on spans, and not the stamp. A state event carries no stamp either: [what an app's own
   exporters get](#what-an-apps-own-exporters-get) has why.
 - **The packed form passes none of the SDK's own limits and no redaction,** and the plain form is cut at 400
-  attributes. The recorder cuts a value to 2,000 characters and does not cut a state's name. The packed attribute is
-  added after the log is converted, so no limit cuts it: `StateAssociationTest` `many long states reach Embrace's
-  payload whole in the packed stamp, which no limit on a log attribute cuts` sends 501 states, one of 5,000
+  attributes. The recorder cuts a value to at most 2,000 characters and does not cut a state's name. The packed
+  attribute is added after the log is converted, so no limit cuts it: `StateAssociationTest` `many long states reach
+  Embrace's payload whole in the packed stamp, which no limit on a log attribute cuts` sends 501 states, one of 5,000
   characters, and the whole string arrives. The plain form is on the record, under the OpenTelemetry SDK's limit of
   400 attributes (`attributeCountLimit`, `OtelSdkWrapper.kt:100`). The log's own attributes come first, then the
   number, then the values, and what does not fit is dropped with nothing to say so: with 501 states the number
@@ -650,10 +765,13 @@ span of their session part`, the first test of its class, checks it for the pack
 in `StateAssociationFeatureTest` checks Embrace's payload the same way. `assertExportedSpansAndLog` checks that the
 plain attributes an app's exporter and processor get hold the same values as the packed string, and that the exported
 log has no `emb.states.packed`. It holds as far as the change log of the log's part lists the changes. In these cases
-a log carries a number its change log does not reach, and still has its own values. The last two are read from the
+a log carries a number its change log does not list, and still has its own values. The last two are read from the
 code, and not tested.
 
-- **Past the ceiling, or after a kill.**
+- **Past either limit, or after a kill.** Past a state's own limit the log's number can fall in a gap in the middle
+  of its change log. The log has every state's value all the same, and replaying the change log gives the right
+  value for every state that has no count: the limit test of `StateJournalFeatureTest`, under [delivering a
+  part](#delivering-a-part), reads a log written after its state reached the limit.
 - **Once the writer has stopped.**
 - **A log emitted with no session part in progress, or as a part changes**, can name one part and carry a number that
   only the next part's change log reaches. `onEmit` reads the session ids and then the snapshot, and nothing orders
@@ -814,7 +932,7 @@ the app has something that receives log records: a log exporter or a log record 
 | `emb.entity.type`, `emb.entity.id` | `process`, and the SDK's identifier for the process | The same |
 | `emb.states.name`, `emb.states.new_value`, `emb.states.new_value_type` | The state, its new value, and `system` for a generated value | Absent |
 | `emb.states.previous_value`, `emb.states.previous_value_type` | The value the state had before, and `system` for a generated one. Absent on a state's first change. In both renderings. | Absent |
-| The change's own attributes | Present, at most 7, none under `emb.states.` or `emb.state.` but `emb.state.dropped_by_instrumentation`. They are written first, so none can replace one the SDK sets. | Absent |
+| The change's own attributes | Present, at most 7, none under `emb.states.` or `emb.state.`. They are written first, so none can replace one the SDK sets. | Absent |
 | `emb.states.value.<name>`, `emb.states.value_type.<name>` | In `VERBOSE` only: every value after that change, from the snapshot the change produced | Always: every value as the part started |
 
 How an event gets out:
@@ -844,8 +962,10 @@ What bounds it, and what does not:
 - **The bound is on events waiting for the worker.** A slow log record processor of the app's holds the worker, so
   it is what the bound protects against. A slow exporter does not: its events wait in `ExternalExportDispatcher`,
   behind every span and log the SDK exports, in a queue with no limit.
-- **A change dropped at the journal's ceiling is not emitted.** `StateEventEmitterTest` `a change the journal has
-  no room for is not emitted`.
+- **A change a limit refuses is not emitted**, whether the limit is the state's own or the shared one, so both
+  readers see the same history. An app's exporter sees `emb.states.seq` skip between two change events, and gets no
+  count of what was refused. `StateEventEmitterTest` `a change a limit refuses is not emitted, whether the limit is
+  the journal's or the state's own`.
 - **A change made with no session part is emitted as it happens**, where the change log carries it only once the
   next part starts.
 - **Once the worker has shut down with the SDK, nothing more is queued.** A pass already running emits what it was
@@ -890,7 +1010,10 @@ What `RealSdkInstanceFactory.kt` makes of them, once, as the SDK starts:
   such an app cannot switch either step on, and no app can choose a rendering from its own code.
 - **With the first switch off, nothing here runs** and v1 is unchanged. That is read from the code. It rests on the
   defaults, in `AutoDataCaptureConfigTest` `defaults match resolved default config`, and on v1's own tests,
-  `StateFeatureTest` among them, which run with it off. No test here runs with the first switch off and looks for
+  `StateFeatureTest` among them, which run with it off. v1 keeps its own limit strategy, its count under
+  `emb.state.dropped_by_instrumentation` and its lazy power state: `StateDataSourceTest` `transitions over the limit
+  are counted as dropped`, and the test of a power state with a span of its own under [reporting a
+  state](#reporting-a-state). No test here runs with the first switch off and looks for
   the journal's absence. With the second off, the first step is unchanged: `StateAssociationFeatureTest` `with the
   switch off, no span carries anything of state, and a span is not handed to the SDK as it ends`.
 - **v1 and this design are never both on for a process.** A journaled data source makes no span.
@@ -904,14 +1027,16 @@ span only if it has configured an exporter or a processor` checks both defaults,
 
 These must always hold. Each has the test that checks it, what it costs, and where to push to try to break it.
 
-1. **One sequence.** Every change of every state takes the next number under `StateRecorder.lock`. Numbers start at
-   1, go up by one, and are never reused in a process. Test: `StateRecorderTest` `updates reported from several
-   threads are journaled in the order of their sequence`, with 8 threads and 500 updates each. Cost: every reporter
-   serializes on one lock. Push on: anything that could run for long under that lock.
+1. **One sequence.** Every change of every state takes the next number under `StateRecorder.lock`. Numbers start at 1,
+   go up by one, and are never reused in a process. A change a limit refuses takes its number like any other. Test:
+   `StateRecorderTest` `updates reported from several threads are journaled in the order of their sequence`, with 8
+   threads and 500 updates each, of states given a limit of 500. Cost: every reporter serializes on one lock. Push on:
+   anything that could run for long under that lock.
 2. **Only a change takes a number.** An update that leaves a state's text and `system` flag as they were takes none
-   and is recorded nowhere. Test: `StateRecorderTest` `changes of every state share one order and unchanged values
-   are not changes`. Cost: the recorder cannot say how often a state was reported. Push on: values that differ only
-   past 2,000 characters.
+   and is recorded nowhere. If it reports drops, they are counted for its state, and they take no number either.
+   Tests: `StateRecorderTest` `changes of every state share one order and unchanged values are not changes`, and the
+   test of reported drops under [the journal](#the-journal). Cost: the recorder cannot say how often a state was
+   reported. Push on: values that differ only past 1,997 characters, which the data source reports as changes.
 3. **A snapshot never changes, and the snapshot numbered N is changes 1 to N applied in order.** Tests: the test of
    invariant 1 replays the whole journal and compares it with the last snapshot, so it checks the last N and not
    each one. The second test under [the snapshot](#the-snapshot) reads an earlier snapshot after later changes and
@@ -922,21 +1047,24 @@ These must always hold. Each has the test that checks it, what it costs, and whe
    does not decode, both stated there. Cost: one bad record ends the journal for its part. Push on: a second thread
    ever writing to the journal, or a queue that is drained out of order.
 5. **Every change is accounted for once.** While the process lives, a change is listed in exactly one journal, or
-   folded and counted, or dropped and counted. Test: the race test of `SessionPartWriterImplTest`, under [session
-   part boundaries](#session-part-boundaries). Cost: part boundaries take the recorder's lock. Push on: a boundary
-   that does not go through `SessionPartWriterImpl`, and two part changes at once.
+   folded and counted, or refused by a limit and counted, for its state and for its part. Test: the race test of
+   `SessionPartWriterImplTest`, under [session part boundaries](#session-part-boundaries), which checks for every part
+   that the changes listed and the changes counted add up to the numbers the journal covers. Cost: part boundaries
+   take the recorder's lock. Push on: a boundary that does not go through `SessionPartWriterImpl`, and two part
+   changes at once.
 6. **Journals chain**, as [session part boundaries](#session-part-boundaries) states it. Test: the same race test,
    for every part. Cost: none. Push on: a journal left open when the next begins.
 7. **A journal stands alone.** It opens with every state's value, so its part can be read without any other. Test:
    `StateRecorderTest` `changes made with no session part in progress open the journal of the next part`. Cost: a
    checkpoint that grows by one value for each state. Push on: a journal whose first record is lost.
-8. **Past the ceiling the values stay right.** Stamps and links go on following the true sequence, the changes not
-   recorded are counted, and the part end carries every value. Test: the ceiling's, of `StateRecorderTest`, under
-   [the journal](#the-journal). Cost: a log or a span can carry a number its change log does not list. Push on: the
-   writer stopping for another reason, where nothing is counted.
+8. **Past either limit the values stay right.** Stamps and links go on following the true sequence. The changes not
+   recorded are counted for their state and for the part, each limit that refused one is stated, and the part end
+   carries the value of each state that lost a change. Tests: the two limit tests of `StateRecorderTest`, under [the
+   journal](#the-journal). Cost: a log or a span can carry a number its change log does not list, anywhere in the
+   part and not only at its end. Push on: the writer stopping for another reason, where nothing is counted.
 9. **A journal with no part end is marked when it is delivered.** So an unmarked `emb-states` lists every change
-   between its opening values and its end, apart from the ones it counts as dropped. Tests: the test of
-   `StateJournalSpanTest` for a journal that stops before its part ended, under [delivering a
+   between its opening values and its end, apart from the ones it counts as dropped, state by state. Tests: the test
+   of `StateJournalSpanTest` for a journal that stops before its part ended, under [delivering a
    part](#delivering-a-part), and the kill test of `StateJournalFeatureTest`, under [the process
    ending](#the-process-ending). Cost: none. Push on: a part end that is written when changes before it were not.
 10. **Delivering a part twice delivers the same span.** Test: that of `StateJournalSpanTest` under [delivering a
@@ -966,7 +1094,7 @@ These must always hold. Each has the test that checks it, what it costs, and whe
     `nothing a state change or a session part change does waits for the worker`, which holds the persistence worker
     and would time out if anything waited for it, and `StateEventEmitterTest` `each change is emitted off the
     thread that reported it, in order, with the value of every state after it`. Cost: a kill loses what the worker
-    had not appended. Push on: what `onChangeDropped` does under the lock.
+    had not appended. Push on: what `onChangeDropped` and `onStateLimitApplied` do under the lock.
 16. **Events leave in the order of the sequence, one at a time.** Test: the ordering test of
     `StateEventEmitterTest`, under [what an app's own exporters get](#what-an-apps-own-exporters-get). Cost: one
     slow log record processor delays every event behind it. Push on: two passes running at once.
@@ -988,11 +1116,12 @@ These must always hold. Each has the test that checks it, what it costs, and whe
 
 | Limit | Value | Where it is set | Past it | How it is signaled |
 |---|---|---|---|---|
-| Changes in one journal, counting those held from before its part | 10,000 | `StateRecorder.MAX_JOURNAL_CHANGES` | The change is not recorded. The values still follow it. No event is made for it. | `emb.states.dropped_changes`, and every `emb.states.final_value.<name>`, on the span. `trackAppliedLimit("state_change", DROP)`. |
-| Changes held with no session part | 1,000 | `maxChanges / HELD_SHARE` in `StateRecorder` | The oldest is folded into the next checkpoint | `emb.states.folded_changes` on the span. The same `state_change` limit, which cannot be told from a drop. |
-| The length of a value | 2,000 characters, where the data model document recommends 1,024 | `SpanLimits.Internal.maxAttributeValueLength` | Cut | Nothing |
-| A change's own attributes | 7 | `OtelLimitsConfig.getMaxEventAttributeCount`, less 3 | A key under `emb.states.` or `emb.state.` is dropped first, with one exception. Then the first 7 are kept. | Nothing |
-| An attribute's key and value | 1,000 and 2,000 characters | `SpanLimits.Internal` | Cut | Nothing |
+| Changes of one state made during a session part. Changes held from before the part do not count. | 100, or what the state's reporter gives: 1,000 for the screen | `StateUpdate.maxChangesInPart`, which `StateDataSource` fills from its `maxTransitions`, and `StateUpdate.DEFAULT_MAX_CHANGES_IN_PART` | The change is not recorded. The value still follows it. No event is made for it. The other states go on being listed. | On the span: `emb.states.limit.<name>`, `emb.states.dropped_count.<name>` and `emb.states.final_value.<name>` for that state, and `emb.states.dropped_changes`. `trackAppliedLimit("<state>_state_data_source", DROP)`. |
+| Changes in one journal, counting those held from before its part | 10,000 | `StateRecorder.MAX_JOURNAL_CHANGES` | The same, for every state | On the span: `emb.states.shared_limit` and `emb.states.dropped_changes`, and for each state that lost a change `emb.states.dropped_count.<name>` and `emb.states.final_value.<name>`. `trackAppliedLimit("state_change", DROP)`. |
+| Changes held with no session part | 1,000 | `maxChanges / HELD_SHARE` in `StateRecorder` | The oldest is folded into the next checkpoint | `emb.states.folded_changes` on the span. The same `state_change` limit, which cannot be told from a change the shared limit refused. |
+| The length of a value | 2,000 characters, which is v1's limit | `SpanLimits.Internal.maxAttributeValueLength` | Cut as v1 cuts it, to 1,997 characters and `...`, and never inside a surrogate pair | Nothing but the `...` |
+| A change's own attributes | 7 | `OtelLimitsConfig.getMaxEventAttributeCount`, less 3 | A key under `emb.states.` or `emb.state.` is dropped first. Then the first 7 are kept. | Nothing |
+| An attribute's key and value | 1,000 and 2,000 characters | `SpanLimits.Internal` | Cut the same way, to 997 and to 1,997 characters and `...` | Nothing but the `...` |
 | A state's name, and the number of states | None of their own. The 1 MB of one record, two rows down, bounds the number of states and the length of their values together. | | | |
 | The journal file | 12 MB | `MAX_PART_FILE_BYTES` | The writer stops for the part | `emb.states.truncated`. `SdkErrorType.StateJournalWriteFail`. No count, and no final values. |
 | One record in the journal. That includes the checkpoint and the part end, each of which can hold every state's value. | 1 MB | `MAX_RECORD_BYTES` | The writer stops for the part. A checkpoint over it is the first record refused, so the journal never starts. | The same. For a journal that never starts, `StateJournalWriteFail` and nothing in the payload. |
@@ -1004,6 +1133,10 @@ These must always hold. Each has the test that checks it, what it costs, and whe
 The count of changes does not bound bytes: with long values the 12 MB file limit is reached first, where the writer
 stops.
 
+Both limits on changes are stated in the data when they are hit: a state's own as `emb.states.limit.<name>`, and the
+shared one as `emb.states.shared_limit`. With the three states v1 has, a part's own changes come to at most 1,200
+(100, 100 and 1,000) and the held ones to 1,000, so the shared limit is a backstop for an app with many states.
+
 ### What is held in memory
 
 | What | How much | What bounds it |
@@ -1011,7 +1144,8 @@ stops.
 | `StateRecorder.current` | One map with an entry for each state | The number of states, which nothing limits |
 | `StateRecorder.recent`, with association on | Up to 64 snapshots. Each is a map of its own that shares its values with its neighbours, but for the one that changed. A snapshot also keeps the `attributes` map or the `encoded` string built from it. | `RECENT_SNAPSHOTS`. By arithmetic, and not measured, a snapshot of five values is about half a kilobyte, so the window is about 30 KB. |
 | `StateRecorder.opening` | One snapshot | |
-| A part's `OrderedTelemetryQueue` | The records the worker has not yet appended | Nothing of its own. The ceiling bounds what one part can queue. |
+| `StateRecorder.tallies` | One small object for each state that changed during the part in progress, or reported a drop | The number of states. Emptied at each part end. |
+| A part's `OrderedTelemetryQueue` | The records the worker has not yet appended | Nothing of its own. The shared limit bounds what one part can queue. |
 | `SpanStateTracker.starts` | One reference for each linked span in progress, which keeps that snapshot alive | The number of spans in progress |
 | `SpanStateTracker.ends`, verbose only | One reference for each span that a state changed during, from its end until `SpanStateReleaseProcessor` runs | The span's own export |
 | `ExternalExportDispatcher`'s queue | Every span, log and state event waiting for the app's exporters | Nothing. This is as it was before this work, and state events add to it. |
@@ -1033,7 +1167,8 @@ happens past each limit and how it is signaled. These failures are neither:
 
 ## What it costs
 
-Bytes were measured on a JVM through the real span stack, writer and reader, on the code as it now stands.
+Bytes were measured on a JVM through the real span stack, writer and reader, before each state had a limit of its
+own, which changes none of these figures for a part that reaches no limit.
 Allocations were counted on an emulator before the number went on each event and the log path changed, and have not
 been counted since. Nothing was measured on a device. These are the headline figures, and the internal measurement
 notes have the full tables.
@@ -1044,7 +1179,7 @@ notes have the full tables.
 | What 10 idle states add to a part's payload, as JSON | 11.2 KB | 1.5 KB, which is about 77 bytes for each state after the first (689 bytes for nine more) |
 | One change in the delivered payload, as JSON | About 128 bytes | About 178 bytes with its number and 139 without. About 8 compressed and about 5 without. The number is about 39 bytes, and 2 to 3 compressed. |
 | A part with 10 states, as the changes of each state grow | Spans: 140 KB of JSON and 5.3 KB compressed at 100 changes of each | The journal is level with spans at about 20 changes of each. At 100 each it is 179 KB of JSON and 8.0 KB compressed. |
-| A journal at its ceiling of 10,000 changes, with short values | Not possible | 1.79 MB of JSON and about 75 KB compressed |
+| A journal at its shared limit of 10,000 changes, with short values | Not possible | 1.79 MB of JSON and about 75 KB compressed |
 | Objects allocated to report one change, with 1 state and with 10 | 34 | 24 and 33, and the same after 5,000 changes as after 50 |
 | Objects allocated by a session part change in which no state changed, with 1 state and with 10 | 819 and 4,166 | 483 and 483 |
 | State on a log, with ten states | | Packed, to Embrace: 326 bytes of JSON, and 3 to 4 compressed in a batch of 100 logs. Plain, to an app's exporters: 658 and 5 to 6. |
@@ -1057,7 +1192,7 @@ notes have the full tables.
   the rest` delivers the full journal. `the number on each change adds a few bytes to every event of the change log`
   takes the number off every event and measures the difference. `the stamp on a log adds bytes in each form` subtracts
   the log without a stamp. On disk nothing changed: about 43 KB for 10 states and 100 changes of each, and 430 KB at
-  the ceiling.
+  the shared limit.
 - **The allocations** come from the benchmarks under [how to run it](#how-to-run-it).
 - **The last two rows** are from [the OTLP harness](#the-otlp-harness), one scripted session sent over OTLP. The
   change event is the harness's own scenario and not a controlled record, and the span row was taken before the keys
@@ -1065,6 +1200,9 @@ notes have the full tables.
 
 ### Not measured
 
+- **What the limit for each state adds.** A change made during a part looks its state up in a map, and a part end
+  passes once over the states that changed. A state that lost a change adds a count to the part end, and up to
+  four attributes to the span. None of it was measured, and the figures above were taken before it.
 - **Time on a device, for anything.**
 - **What waking the persistence worker for every change costs.**
 - **Writing each attribute of the plain stamp onto a log record**, which grows with the number of states, and
@@ -1083,18 +1221,24 @@ A reader should assume none of what follows works.
   `EmbraceLogRecordProcessor` gives them none of this process's state. Nothing reads the dead part's journal for the
   values the dead process last had.
 - **Events a dead process had not emitted.** The SDK does not record how far the events had got.
-- **A lazily captured state present from the start.** `power` does not exist until power saving is first on.
 - **A call for a hosted SDK, or an app, to report a state.** Nothing outside the SDK's own modules can emit a
-  `StateUpdate`.
+  `StateUpdate`. Such a call would get the limit of 100 unless it names another.
 - **The process identifier on a log.** Every span carries `emb.process_identifier`, set as it starts in
   `EmbraceSpanProcessor.onStart`. `emb-states` is built outside the tracer and copies it from the session part span.
   Ordinary logs do not carry it, and that is left as it is. An app's exporters get it in the Resource.
 - **A limit in bytes below the file's 12 MB.** The data model document sets none, on purpose: a change log is
   bounded by counts. A journal near 12 MB could by itself make a payload of more than 3 MB compressed, which is not
   sent, so where values can be long it is the limit on a value's length that has to hold it.
-- **A share of the ceiling for each state, and a count of what is missing for each state.**
+- **A count of what was refused, for an app's exporters.** They see `emb.states.seq` skip between two change
+  events. Nothing tells them how many changes were refused, of which state, or by which limit.
+- **A check of the gaps against the counts.** Nothing on the device checks that the gaps in a journal's numbers add
+  up to its part end's `dropped_changes`, so a record lost from the middle of a journal would read as a refused
+  change. The check from one part to the next, under [delivering a part](#delivering-a-part), is left to a reader.
+- **`emb.state.transition_count`**, which v1's design asks for. It is replaced on purpose: a reader counts a
+  state's events, and adds its `emb.states.dropped_count.<name>` for the total.
 - **Redaction, and any check of a state's name.**
-- **Keeping held changes on the device.** Changes made before a process's first part or after its last die with it.
+- **Keeping held changes on the device, and sending Embrace the changes made after a process's last part.** Changes
+  made before a process's first part or after its last die with it. For those after the last part that is decided.
 - **Telling the recorder that the writer has stopped.**
 - **Reporting an event left out at the queue's limit, a value that was cut, or an attribute that was dropped.**
 - **Names from the semantic convention files.** The new names are constants written by hand, in `StateAttributes`.
@@ -1105,40 +1249,61 @@ A reader should assume none of what follows works.
 
 ### Known to be wrong, or weak
 
-`StateKnownDefectsTest` holds four of these as tests. Each asserts what the code does today, so it passes while its
-defect is present, and is to be turned around when the defect is fixed. None of these is fixed. Ten of the entries
-below were checked against the code, and each holds.
+`StateKnownDefectsTest` holds five of these as tests. Each asserts what the code does today, so it passes while its
+defect is present, and is to be turned around when the defect is fixed. None of these is fixed.
+
+- **The data source and the recorder each decide whether an update is a change, by different tests.**
+  `StateDataSource.journalUpdate` compares the values. `StateRecorder.onEvent` compares the cut text and the
+  `system` mark. Two values that differ only past 1,997 characters are a change to the first and a repeat to the
+  second. The data source has by then collected the attributes of the value being left, and for the screen
+  collecting them clears them, so they go with an update the recorder does not record. `StateKnownDefectsTest` `the
+  data source and the recorder each decide what a change is, so one can report a change the other takes for a
+  repeat`.
+- **A part that did not end cannot be read state by state.** The counts and the limits are written when the part
+  ends. A change log that is truncated can have a gap in its numbers, from a change a limit refused, and nothing in
+  it says which state the gap belongs to. So a reader can trust no state's value above the first gap. With the
+  shared limit alone a gap could only be at a log's end. A record written to the journal when a state first reaches
+  its limit would say whose gap it is, and is not built.
+- **One count holds two kinds of loss.** `emb.states.dropped_count.<name>` adds the changes a limit refused to the
+  drops the instrumentation reported. The first took numbers and the second did not, and a reader can tell them
+  apart only for the part as a whole, where `emb.states.dropped_changes` is the first kind alone: [the
+  journal](#the-journal). No instrumentation reports a drop today.
+- **A state's limit travels with each update.** Two reporters of one state can give different limits. The recorder
+  applies the limit of the update in hand, and the limit the part end states is that of the last update refused.
+- **The limit counts a state's first value.** A state first reported while a part is in progress uses one of its
+  100 for that value. v1 counts transitions only, and gives the first value as the span's initial value.
+- **The telemetry name for a state's limit is built from the state's name**, as `<state>_state_data_source`. A state
+  with no data source, such as `personas`, is tracked under that pattern too, and the name is not checked.
+- **A record lost from the middle of a journal reads as a refused change.** The renderer cuts only at a change out of order, since a limit leaves a gap in the numbers: [the journal](#the-journal).
+- **A drop reported after a process's last part is lost**, as held changes are.
 
 - **A slow exporter of the app's is not bounded**: [what an app's own exporters
   get](#what-an-apps-own-exporters-get).
 - **An event left out is counted where nothing reads it**, and it can be the snapshot event of a part start: the
   same section, with its test.
-- **When the writer stops, nothing counts what follows.** The span is marked, and that is all: [the
-  journal](#the-journal).
+- **When the writer stops, nothing counts what follows.** The span is marked, and that is all. The counts for each
+  state and the limits that were hit go with the part end, which is not written: [the journal](#the-journal).
 - **A part whose journal never started is delivered with no state and no sign of it**: [the journal](#the-journal),
   and the test of a part with no journal under [delivering a part](#delivering-a-part).
 - **A change is listed by the lock and timed by its reporter.** Both session part spans change over before either
   journal call, so at a part boundary an event can lie outside its span: [session part
   boundaries](#session-part-boundaries), with its picture and its test.
-- **The `state_change` limit means two things**: a change folded, and a change dropped. `hold` and `onEvent` call
-  the one `onChangeDropped`, which `RealSdkInstanceFactory.kt:354` tracks under the one name: `StateKnownDefectsTest`
-  `a change folded and a change dropped are reported through the one callback, so one limit name counts both`.
+- **The `state_change` limit means two things**: a change folded, and a change the shared limit refused. `hold` and
+  `refusedByALimit` call the one `onChangeDropped`, which `RealSdkInstanceFactory.kt:356` tracks under the one name:
+  `StateKnownDefectsTest` `a change folded and a change dropped are reported through the one callback, so one limit
+  name counts both`.
 - **The personas state is on whenever the first switch is**, with an empty value for a user with none: [reporting a
   state](#reporting-a-state).
 - **A state's name is used as it is given.** `StateKnownDefectsTest` `a state's name is not checked, so an empty
   one and a long one with a line break reach attribute keys and event names`: an empty name, and one of over 5,000
   characters with a line break in it, go into the snapshot's attribute keys and the change log's event names as
   they are. Only the packed string escapes a name.
-- **The plain stamp is cut silently at the log record's 400 attributes**, and a value is capped at 2,000 characters
-  where the data model document recommends 1,024. Neither form has redaction: [the stamp on logs](#the-stamp-on-logs).
-- **`StateExportMode.OFF` still gives the plain stamp**, and **a log can be stamped before `markReady`** with none
-  of the session's ids: [the stamp on logs](#the-stamp-on-logs). The second is not tested.
+- **The plain stamp is cut silently at the log record's 400 attributes**, and neither form has redaction: [the
+  stamp on logs](#the-stamp-on-logs).
+- **`StateExportMode.OFF` still gives the plain stamp**: [the stamp on logs](#the-stamp-on-logs).
 - **An end time older than the window reads as "nothing changed"**, with no mark, **a time the app supplies is
   trusted** to be on the SDK's clock, and **order within one millisecond is lost** for a span placed through the
   window and for one that reads the current snapshot: [the link on spans](#the-link-on-spans).
-- **`emb.state.dropped_by_instrumentation` rides on journaled changes**, as the one key under `emb.state.` that a
-  change may carry, and it uses one of the 7. The data source sets it and a reporter cannot, but the recorder lets it
-  through from any reporter on the bus: [reporting a state](#reporting-a-state).
 - **The rendering is fixed when the SDK starts**: [what an app's own exporters
   get](#what-an-apps-own-exporters-get).
 - **A span that never ends keeps an entry in the tracker** for the life of the process: [the link on
@@ -1151,12 +1316,17 @@ below were checked against the code, and each holds.
 - **The edges of a part boundary** where a change's time and its listing disagree, through the orchestrator.
 - **The whole SDK on the Java implementation of OpenTelemetry.** `StateAssociationTest` runs the OpenTelemetry
   module's part on both.
+- **The screen's limit of 1,000 through the whole SDK.** The data source's update is tested to carry it, and the
+  recorder to apply whatever limit an update carries. The integration test reaches the limit of 100 with the test
+  state.
+- **A journal file written by an earlier build.** The earlier shape of a part end is tested as a record that is
+  encoded and read back, and not as a file from that build.
 - **Anything on a device.**
 
 ## Acceptance: every requirement
 
-Of the 60 requirements, the Android proof of concept stands as **Met on 33, Partly on 21 and Not met on 2, and 4
-are not Android's to meet**. Of the 33 Musts, 20 are Met, 9 Partly and 2 Not met, and 2 are not Android's. That
+Of the 60 requirements, the Android proof of concept stands as **Met on 34, Partly on 20 and Not met on 2, and 4
+are not Android's to meet**. Of the 33 Musts, 19 are Met, 10 Partly and 2 Not met, and 2 are not Android's. That
 counts M4 and S5 as Musts, though their importance reads "Must before" a condition.
 
 - **"Met"** means the requirement's own text is satisfied by what is built and tested in the proof of concept,
@@ -1173,9 +1343,9 @@ counts M4 and S5 as Musts, though their importance reads "Must before" a conditi
 |---|---|---|---|---|
 | **T1.** One current value | Must | Met | `StateRecorder.current`, which the stamp, the link and the events all read: the three checks above | Nothing |
 | **T4.** When it happened, and when it was learned | Should | Met | `StateRecord.time_ms` from the reporter, apart from `sequence`: [the recorder](#the-recorder) | The time the recorder learned of a change is kept in memory only |
-| **T5.** Every change in a part, up to a limit set by payload size | Must | Met | `MAX_JOURNAL_CHANGES`: [the journal](#the-journal), [costs](#what-it-costs) | The limit is a count shared by every state, and not bytes (C7) |
-| **T6.** Past the limit, nothing is wrong, only missing | Must | Partly | `dropped`, and the part end's values: [the journal](#the-journal) | Where the writer stops there is a mark, and no count or final values |
-| **T9.** A state has a value as soon as its instrumentation starts | Should | Partly | `StateDataSource.startStateCapture` reports the default. In `StateJournalFeatureTest` the test state opens as `UNKNOWN`. | A lazily captured state, `power`, is absent until first switched on |
+| **T5.** Every change in a part, up to a limit for each state and a shared limit set by payload size, both stated in the data | Must | Met | `StateUpdate.maxChangesInPart` and `MAX_JOURNAL_CHANGES`, stated as `emb.states.limit.<name>` and `emb.states.shared_limit` when they are hit: [the journal](#the-journal), [delivery](#delivering-a-part), [costs](#what-it-costs) | Each limit is a count, and not bytes (C7). A limit is in the data only for a part in which it refused a change. |
+| **T6.** Past the limit, nothing is wrong, only missing | Must | Partly | The value is replaced before either limit is applied, and the part end has the count and the final value of each state that lost a change: [the journal](#the-journal) | Where the writer stops there is a mark, and no count or final values |
+| **T9.** A state has a value as soon as its instrumentation starts | Should | Met | `StateDataSource.onDataCaptureEnabled` reports the default whatever `captureStateOnCreation` says, and power saving reports `unknown` and then `normal` or `low`: [reporting](#reporting-a-state) | The power state is `unknown` until the mode is read |
 | **T10.** Generated and observed values are told apart | Should | Met | `StateValue.system`: [the snapshot](#the-snapshot). A change's own attribute under `emb.states.` or `emb.state.` is dropped, so none can carry the mark onto an observed value, in the change log or in an event for an app's exporters: `StateRecorderTest`. | A log that already has an attribute of the stamp's name keeps it (invariant 11) |
 | **T11.** A change keeps its own attributes, and they cannot displace its value | Should | Met | `StateRecorder.limited` keeps 7 and drops a key under `emb.states.` or `emb.state.`: [the recorder](#the-recorder) | A key outside `emb.states.` and `emb.state.` is kept as given, and cannot displace the value |
 | **M1.** Anything can report a state | Should | Met | `StateUpdate` on the event bus, and `reportPersonasAsState`: [reporting](#reporting-a-state) | No call from outside the SDK's modules (X3) |
@@ -1187,7 +1357,7 @@ counts M4 and S5 as Musts, though their importance reads "Must before" a conditi
 |---|---|---|---|---|
 | **T2.** One order across states | Must | Met | One lock and one sequence: invariants 1 and 5 | It is the order the SDK learned of the changes |
 | **T3.** Values of one moment | Must | Met | An immutable `StateSnapshot`: invariant 3, and `assertEmbracePayload` | Nothing |
-| **T12.** A log's stamp agrees with the history | Must | Met | The stamp's `emb.states.seq`: [the stamp](#the-stamp-on-logs) | The cases listed there, in which a log's number is not in its change log |
+| **T12.** A log's stamp agrees with the history | Must | Partly | The stamp's `emb.states.seq`: [the stamp](#the-stamp-on-logs) | Past a state's limit, 100 for most, the history of that state falls behind the stamp, as it does in v1. The log still has its own values, and the change log says which state and by how many. The other cases listed there, in which a log's number is not in its change log. |
 | **E4.** The order of changes around a moment is known | Must | Met | `emb-states` is in the sequence's order, and a log and a span each carry their number: the tests of T12 | Nothing on Android |
 
 ### R3. A record has to be tied to the context in force when it was made
@@ -1195,7 +1365,7 @@ counts M4 and S5 as Musts, though their importance reads "Must before" a conditi
 | Requirement | Importance | Standing | Mechanism, and where its test is | What is left |
 |---|---|---|---|---|
 | **E1.** A log's state is read from the log | Must | Met | `emb.states.packed` and `emb.states.seq` in Embrace's payload, and `emb.states.value.<name>` for an app's exporters: `assertEmbracePayload`, `assertExportedSpansAndLog` | A native crash's log (E3). The packed string has to be parsed. No redaction (M4). |
-| **E2.** A span can be read against state | Must | Partly | `emb.states.seq` and `emb.states.end_seq`, with `emb-states` in the same payload, and an end number given to a span the next launch completes: invariants 12 and 13 | A span that started in an earlier part. A number past what the change log lists. Times older than the window, which get no end number and no mark. |
+| **E2.** A span can be read against state | Must | Partly | `emb.states.seq` and `emb.states.end_seq`, with `emb-states` in the same payload, and an end number given to a span the next launch completes: invariants 12 and 13 | A span that started in an earlier part. A number the change log does not list, which is resolved only for the states that have no count. Times older than the window, which get no end number and no mark. |
 | **E7.** A part's state can always be found | Must | Met | `emb-states` in the part's envelope, with `emb.type` as `state` and a link from the session part span: [delivery](#delivering-a-part) | A part whose journal never started has none, and does not say so (P3) |
 | **O1.** A log carries each state as a plain attribute | Must | Met | The plain stamp reaches an app's exporters and processors where it has a log receiver: `assertExportedSpansAndLog` | With the first switch alone it is a packed string. The plain stamp is cut silently at the record's 400 attributes. |
 | **O2.** A span can be read against state without a join | Could | Partly | The verbose rendering: [exporters](#what-an-apps-own-exporters-get) | Only in the verbose rendering. That is the default for an app with only a span exporter. An app that receives logs gets the link by default, and the events resolve it. |
@@ -1210,7 +1380,7 @@ counts M4 and S5 as Musts, though their importance reads "Must before" a conditi
 | **T8.** A part stands alone | Must | Met | The checkpoint: invariant 7, [delivery](#delivering-a-part) | Nothing |
 | **E5.** What changed with no session part is delivered | Should | Met | Held changes are events before `emb.states.part_start_seq`: the same sections as T7 | Past 1,000 they are folded and counted |
 | **E10.** History can be stitched across the parts of a process, and a missing part noticed | Could | Met | `emb.states.initial_seq` follows the last part's last number: invariant 6 | Nothing on Android |
-| **P6.** Changes after a process's last part | Could | Partly | An app's exporters get them as events, as they happen: `assertExportedEvents`, for a change with no part | To Embrace they are held for a part that never comes |
+| **P6.** Changes after a process's last part | Could | Partly | An app's exporters get them as events, as they happen: `assertExportedEvents`, for a change with no part | To Embrace they are not sent, which is decided: they are held for a part that never comes |
 | **O6.** It works for an app that only exports OpenTelemetry | Must | Not met | In place toward it: the stamp, the link and the events are made in the OpenTelemetry pipeline and need no Embrace payload | It cannot be switched on in such an app ([configuration](#configuration)), and no test runs one |
 
 ### R5. The process dies without notice
@@ -1219,7 +1389,7 @@ counts M4 and S5 as Musts, though their importance reads "Must before" a conditi
 |---|---|---|---|---|
 | **P1.** A part that ends, or crashes in the JVM, delivers everything | Must | Met | `endJournal`, and the flush in `onCrash`: [process ending](#the-process-ending) | Bounded by the 3,000 ms wait |
 | **P2.** A part whose process is killed delivers what was captured | Must | Met | Records queued at once, read back by the next launch: the same section | The kill is simulated (S4). How much is lost on a device is not measured. |
-| **P3.** What survives is consistent | Must | Partly | The writer, the reader and the renderer each stop at the first gap, and the span is marked: invariants 4 and 9 | A journal that never started says nothing: its part is delivered with no `emb-states`, and nothing in the payload says so |
+| **P3.** What survives is consistent | Must | Partly | The writer and the reader each stop at the first record they cannot take, the renderer stops at a change out of order, and the span is marked: invariants 4 and 9 | A journal that never started says nothing: its part is delivered with no `emb-states`, and nothing in the payload says so. A record lost from the middle would read as a refused change. |
 | **P4.** Nothing waits for a write | Must | Met | A queue insert under the lock: invariant 15 | Nothing |
 | **P5.** No memory mapping | Should | Met | `SpanCollectionFile.append` writes to a `FileOutputStream`. By construction. | Nothing |
 | **E3.** The state at a crash that kills the process is known | Must | Partly | The dead part's `emb-states`, as far as it was appended, marked as cut short: [process ending](#the-process-ending) | The crash's own log carries no stamp. With no part in progress, nothing is kept. |
@@ -1231,7 +1401,7 @@ counts M4 and S5 as Musts, though their importance reads "Must before" a conditi
 |---|---|---|---|---|
 | **C1.** Reporting a change does no I/O and costs the same however many came before | Must | Met | `StateRecorder.onEvent`: invariant 15, and the benchmark `recordChanges` in `StateChangeScalingBenchmarks` | Time. It wakes a worker for every change. |
 | **C2.** Persisting a change costs the same however many came before | Must | Met | An append: [the journal](#the-journal) | Nothing |
-| **C3.** A session part change costs the same however many states there are | Should | Met | One checkpoint, and nothing in a data source: the benchmark `changeSessionPart` in `StateCaptureBenchmarks` | The checkpoint grows by one value for each state |
+| **C3.** A session part change costs the same however many states there are | Should | Met | One checkpoint, and nothing in a data source: the benchmark `changeSessionPart` in `StateCaptureBenchmarks`, which has not been run since the limit for each state | The checkpoint grows by one value for each state, and the part end passes once over the states that changed |
 | **C4.** Stamping a log costs the same however many states there are | Should | Partly | `StateSnapshot.encoded` is built once for each change, and Embrace's payload gets one attribute. `attributes` is built once for each change, and only where the app has a log receiver. | There each attribute is still copied and written for every log. Allocations on the log path are not measured since the split. |
 | **C5.** A state that did not change adds little to a part | Should | Met | A value in the checkpoint: [costs](#what-it-costs) | It still adds to every log |
 | **C6.** A change adds little to a part | Should | Met | One event, of about 178 bytes of JSON with its number and about 8 compressed, which no test asserts: [costs](#what-it-costs) | It costs more than in a span of its own, which is about 128 bytes |
@@ -1245,14 +1415,14 @@ counts M4 and S5 as Musts, though their importance reads "Must before" a conditi
 | Requirement | Importance | Standing | Mechanism, and where its test is | What is left |
 |---|---|---|---|---|
 | **M3.** Runtime context is tracked one way | Must | Met | The network, the screen and power saving are reported as states by one path: [reporting](#reporting-a-state). Personas are app-set context, which this requirement does not cover, and are reported as a demonstration. | Nothing |
-| **M4.** Each state has its own rules | Must before personal data becomes a state | Partly | One cap of 2,000 characters, for every state | No cap of a state's own, and no redaction |
+| **M4.** Each state has its own rules | Must before personal data becomes a state | Partly | A limit on changes that each state's reporter gives. One cap of 2,000 characters, for every state. | No cap on length of a state's own, and no redaction |
 | **M6.** Names do not collide and are generated | Could | Partly | Every key of this design has a stem of its own, `emb.states.`, and a state's name is the last part of every key it is in | The names are written by hand, and not generated from the semantic convention files. |
 
 ### R8. Two readers, several SDKs, and a change that must break none
 
 | Requirement | Importance | Standing | Mechanism, and where its test is | What is left |
 |---|---|---|---|---|
-| **E6.** What is missing is stated | Should | Partly | `emb.states.folded_changes`, `emb.states.dropped_changes`, `emb.states.truncated`, and the number on each event, where a gap shows a missing change: [delivery](#delivering-a-part) | For the journal as a whole, and not for each state |
+| **E6.** What is missing is stated | Should | Met | `emb.states.dropped_count.<name>` for each state, `emb.states.dropped_changes` and `emb.states.folded_changes` for the part, both limits when they are hit, `emb.states.truncated`, and the number on each event, where a gap shows a change that is not listed: [delivery](#delivering-a-part) | Folded changes are counted for the part and not for each state. Where the writer stops there is a mark and no count (T6). An app's exporters get the gap and no count. |
 | **E8.** Bounded, standard shapes | Should | Partly | A span, its events, attributes and log records | Up to 10,000 events on one span, each with its number, about 39 bytes more before compression, and a state's name as the last part of a key |
 | **E9.** It is safe to send before the servers change | Should | Not Android's | Android's part is that both steps are off by default | For the servers |
 | **O7.** Nothing exported today is lost | Must | Partly | The stamp under new names, and an event for each change | v1's state spans go. With a span exporter alone, nothing takes their place. |
@@ -1263,17 +1433,18 @@ counts M4 and S5 as Musts, though their importance reads "Must before" a conditi
 | **X4.** The same names mean the same thing from every SDK | Should | Not Android's | Android's names are in `StateAttributes` and `StateJournalSpan.kt` | For every SDK together |
 | **S1.** Off by default, and the existing switches honored | Must | Met | The defaults in `AutoDataCaptureConfig`, and `statesJournaled`: [configuration](#configuration) | Nothing |
 | **S2.** It works with multi-file persistence and the Kotlin OpenTelemetry implementation | Must | Met | Every integration test here runs with both | Nothing |
-| **S3.** A limit that is hit is reported | Should | Partly | `trackAppliedLimit("state_change")`, and the counts on the span | One name for two limits. Not for each state. Nothing for a dropped event or a cut value. |
+| **S3.** A limit that is hit is reported | Should | Partly | `trackAppliedLimit` under `<state>_state_data_source` for a state's own limit and under `state_change` for the shared one, and the counts and both limits on the span | `state_change` is still one name for the shared limit and for folding. Nothing for a dropped event or a cut value. |
 | **S4.** The behavior that matters is tested | Must | Partly | Order under concurrency, a JVM crash, a kill and a log's stamp each have a test | Two part changes at once. A real kill. What is not built. |
 | **S5.** Time on a device is known | Must before it ships | Not met | The benchmarks are written | Devices |
 
 ## Designs set aside, and why
 
-These are the six a reviewer of the code would raise. The internal measurement notes also have the earlier builds.
+These are the seven a reviewer of the code would raise. The internal measurement notes also have the earlier builds.
 
 | Design | Why it was set aside |
 |---|---|
 | A span for each state, as v1 has | No order across states, nothing with no part, and a change costs more with every change before it |
+| The limit for each state applied in the data source, as v1 applies it | A change it refused would never reach the recorder, so every log after it would carry a stale value. The recorder applies the limit after it has replaced the value. |
 | A memory-mapped journal | It would survive any kill with no worker in between. It was not needed so far, it brings its own recovery, and requirement P5 is against it. It stays the option if losing what the worker had not reached proves too much. |
 | The packed string as the stamp for an app's exporters | Embrace's payload has it. A customer's pipeline would have to parse it, and its mark for a generated value is its own. |
 | The packed form put on the record, and taken off for an app's exporters | An OpenTelemetry log record can only be added to. |
@@ -1286,18 +1457,21 @@ These are the six a reviewer of the code would raise. The internal measurement n
 |---|---|---|
 | 1 | How much may a kill lose | What the worker had not appended, never synced (built). Or a sync for each append. Or a memory-mapped journal. |
 | 2 | Whether to wake the worker for every change | Every change (built). Or one write for a burst. |
-| 3 | Whether the ceiling is shared | One count for a part (built). Or a share for each state. |
-| 4 | The length of a value | 2,000 characters (built). Or 1,024, as proposed for every SDK. Or less. |
+| 3 | The limits on changes | Decided, and built: a limit for each state, 100 and 1,000 for the screen, beside the shared 10,000, which is a backstop. |
+| 4 | The length of a value | Decided, and built: 2,000 characters, cut as v1 cuts it. |
 | 5 | What the recorder does when the writer stops | Nothing (built). Or it is told, and counts what follows as dropped. |
-| 6 | How many changes to hold with no part, and whether on the device | 1,000 in memory (built). Or another number. Or written to disk, which would also keep changes after the last part. |
+| 6 | How many changes to hold with no part, and whether on the device | 1,000 in memory (built). Or another number. Or written to disk. Changes after the last part are not sent to Embrace, which is decided. |
 | 7 | The size of the window | 64 snapshots (built). Or another size. |
 | 8 | When the rendering is settled | At start (built). Or when an exporter is added. |
 | 9 | The event queue | Leave out the newest at 1,000 (built). Or the oldest. And whether to report it, and to bound what waits for an exporter: neither is built. |
-| 10 | A state not yet known | Absent until first reported. Or present as `unknown` from the start. Built: present for the network and the screen, absent for `power`. |
+| 10 | A state not yet known | Decided, and built: present from the start, as `unknown` or a name of its own, for every state. |
 | 11 | The personas state | On with the first switch (built). Or remove it. Or keep it behind a switch of its own. |
 | 12 | A change's time against its listing at a part boundary | Listed by the lock (built). Or list by time. Or state the rule in the cross-SDK model. |
 | 13 | `StateDataSource` | One class for v1 and for this design while both exist, with `journaled` branches (built). Or a reporter of its own. |
 | 14 | How it is split for review | One change, far over the repository's guideline (built). Or the journal, then the change log, then the association. Or another order. |
+| 15 | Where an update is judged a change | In the data source and again in the recorder, by different tests (built). Or in the recorder alone. |
+| 16 | The count for a state | One count of refused changes and reported drops, as the data model has it (built). Or one of each. |
+| 17 | A record lost from the middle of a journal | Not detected (built). Or the renderer checks the gaps against the part end's count, and marks the span. |
 
 ## How to run it
 
@@ -1325,9 +1499,11 @@ are the evidence for this document:
 |---|---|
 | `embrace-android-core` | `StateRecorderTest`, `StateJournalSpanTest`, `StateEventEmitterTest`, `StateKnownDefectsTest`, which records the defects listed under what is known to be wrong, and the two state tests of `SessionPartWriterImplTest` |
 | `embrace-android-session-persistence` | `StateJournalWriterTest`, `StateJournalReaderTest`, `SessionReconstructionServiceStateJournalTest` |
-| `embrace-android-otel` | `SpanStateTrackerTest`, `StateAssociationTest`, `StateSpanProcessorsTest` |
+| `embrace-android-otel` | `SpanStateTrackerTest`, `StateAssociationTest`, `StateSpanProcessorsTest`, and the state tests of `EmbraceLogRecordProcessorTest` |
 | `embrace-android-instrumentation-api` | `StateDataSourceTest` |
+| `embrace-android-instrumentation-power-save`, `embrace-android-instrumentation-navigation` | `PowerStateDataSourceTest`, and the journaled test of `NavigationStateDataSourceTest` |
 | `embrace-android-config` | `AutoDataCaptureConfigTest` |
+| `embrace-android-sdk`, unit tests | `OtelSignalContextTest`, and the state tests of `RealSdkInstanceFactoryTest` |
 | `embrace-android-sdk`, integration tests | `StateJournalFeatureTest`, `StateAssociationFeatureTest`, `StateOtlpExportHarnessTest` |
 | `embrace-microbenchmark`, JVM tests | `StateCapturePayloadSizeTest`, which writes its tables to `embrace-microbenchmark/build/reports/state-capture/` |
 

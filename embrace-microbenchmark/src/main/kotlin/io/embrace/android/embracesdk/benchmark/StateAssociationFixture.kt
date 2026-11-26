@@ -160,6 +160,8 @@ internal class StateAssociationFixture(
                 state = StateCaptureFixture.STATE_NAMES[stateIndex],
                 value = StateCaptureFixture.STATE_VALUES[count % StateCaptureFixture.STATE_VALUES.size],
                 timeMs = clock.now(),
+                // as many as the benchmark makes, so that what is measured is a change that is recorded
+                maxChangesInPart = Int.MAX_VALUE,
             ),
         )
     }

@@ -31,7 +31,7 @@ describes both steps as one design.
 - **It is a proof of concept**, built to find out whether the design holds. It is not shippable as it is. Once the
   specification is settled, it is rebuilt or hardened into something that ships.
 - **Built and tested:** the recorder, the journal file with its writer and reader, the change log as one span, a
-  limit for each state beside the shared one with a count for each state of what is not listed, both forms of the
+  limit for each state beside the global one with a count for each state of what is not listed, both forms of the
   stamp on logs, the link on spans and on their snapshots, the window of recent snapshots, and both renderings for an
   app's own exporters with their events.
 - **Not built, known to be wrong, or not tested:** [what is not
@@ -64,7 +64,7 @@ describes both steps as one design.
 - **Held** changes are those made with no session part in progress, kept in memory for the next part's journal.
   **Folded** changes are held changes that were applied to the checkpoint and are no longer listed.
 - **A refused change** is one made during a session part that a limit kept out of the journal: its state's own
-  limit, or the shared limit. It still takes a number and still replaces the state's value. **A limit record** is
+  limit, or the global limit. It still takes a number and still replaces the state's value. **A limit record** is
   the entry the journal gets the first time in a part that a limit refuses a change. **A reported drop** is a
   change a state's instrumentation says it never passed on. It takes no number.
 - **The change log** is the journal as it is delivered: the span `emb-states`.
@@ -171,7 +171,7 @@ differ in places, and a row says which where it matters.
 | 5 | A change made with no session part is counted, in `emb.state.not_in_session`, and not kept | It is held and listed at the head of the next part's journal. Past 1,000 held, the oldest are counted in `emb.app.state.folded_changes` | The change is worth more than a count of it: [session part boundaries](#session-part-boundaries) |
 | 6 | The count of what a state lost includes updates that repeated its value. That is the code, and v1's design counts what the SDK could not record | Real losses only: changes a limit refused and changes the instrumentation dropped | A count above zero always means the state's record is incomplete |
 | 7 | `emb.state.transition_count` on each state's span | Not carried | A reader counts the state's events, and adds its count of what is missing |
-| 8 | No limit across states | A shared limit of 10,000 beside each state's own, stated as `emb.app.state.global_change_limit` when it is reached | One span holds every state, so it needs a bound of its own: [every limit](#every-limit) |
+| 8 | No limit across states | A global limit of 10,000 beside each state's own, stated as `emb.app.state.global_change_limit` when it is reached | One span holds every state, so it needs a bound of its own: [every limit](#every-limit) |
 | 9 | The limit's value is not in the data. v1's design asks for it and the code never wrote it | `emb.app.state.change_limit.<name>`, recorded when the limit is first reached | It follows v1's design and departs from v1's code |
 | 10 | A state's first value is its span's initial value, and does not use its limit | A state's first value is a change, and counts toward its limit | One rule for every change a journal lists |
 | 11 | A state's source may start on first use, and the state is absent from logs until then | Every state has a value from the moment its capture is enabled | Starting late saved a span for each state in every part, which this design does not have: [reporting a state](#reporting-a-state) |
@@ -350,7 +350,7 @@ is. It is created only where the journal is on, with `keepRecent` set where asso
 | `folded` | How many changes were folded into `opening` since the last journal ended | `lock` |
 | `recorded`, `dropped` | How many changes the journal in progress holds, counting those it opened with, and how many made during the part a limit refused | `lock` |
 | `tallies` | For each state: how many of its changes made during the part the journal lists, how many a limit refused, how many its reporter said it dropped, and its own limit if that refused one, which also says its limit record is written. Emptied when a journal ends. | `lock` |
-| `sharedLimitApplied` | Whether the shared limit refused a change of the journal in progress, which also says its limit record is written | `lock` |
+| `globalLimitApplied` | Whether the global limit refused a change of the journal in progress, which also says its limit record is written | `lock` |
 
 What `onEvent` does, in order:
 
@@ -368,10 +368,10 @@ What `onEvent` does, in order:
 5. **The two limits**, in `refusedByALimit`, only if a journal is open. The state's own limit is checked first: if
    the journal already lists `maxChangesInPart` changes of this state made during the part, the change is refused,
    the limit is noted in the state's tally, and `onStateLimitApplied` is called with the state's name. Then the
-   shared limit: if `recorded` has reached `maxChanges`, the change is refused, `sharedLimitApplied` is set, and
+   global limit: if `recorded` has reached `maxChanges`, the change is refused, `globalLimitApplied` is set, and
    `onChangeDropped` is called. A refused change is counted in the state's tally and in `dropped` before anything is
    called, and `onEvent` returns. The first change of a part that a limit refuses also hands the journal a limit
-   record, before the callback: once for each state's own limit, and once for the shared one. The snapshot was
+   record, before the callback: once for each state's own limit, and once for the global one. The snapshot was
    already replaced, so the values stay right. The listener is not told, of the change or of the limit record. A
    change that is not refused is counted toward both limits.
 6. **The record.** A `StateRecord` is made with the sequence, the reporter's time, the value, and the change's
@@ -460,14 +460,14 @@ valid `StateJournal`:
 | Checkpoint | The number the values are as of | When those values held: the end of the last part, or the time of the last change folded in, or when the recorder was created | `values`: every state's name, value and `system` flag |
 | Change | The change's own number | When its reporter says it happened | `value`: the state's name, new value and `system` flag. `attributes`: the change's own. |
 | Part start | The number of the last change before the part | When the part started | `dropped_changes`: how many changes were folded into the checkpoint |
-| Limit reached | The number of the change the limit refused, which is the last change made. It takes none of its own. | That change's time, as its reporter gave it | A `StateLimitReached`. `state`: the state whose own limit refused a change, and absent for the shared limit. `limit`: the limit. |
-| Part end | The number of the last change made, recorded or not | When the journal was ended | `dropped_changes`: how many changes made during the part took a number and were refused by a limit. `dropped_counts`: for each state with a count, a `StateDroppedCount` with the state, the count, and the state's own limit if that refused a change. `shared_limit`: the shared limit, if that refused a change. `values`: the final value of each state that had a change refused. |
+| Limit reached | The number of the change the limit refused, which is the last change made. It takes none of its own. | That change's time, as its reporter gave it | A `StateLimitReached`. `state`: the state whose own limit refused a change, and absent for the global limit. `limit`: the limit. |
+| Part end | The number of the last change made, recorded or not | When the journal was ended | `dropped_changes`: how many changes made during the part took a number and were refused by a limit. `dropped_counts`: for each state with a count, a `StateDroppedCount` with the state, the count, and the state's own limit if that refused a change. `global_limit`: the global limit, if that refused a change. `values`: the final value of each state that had a change refused. |
 
 A journal holds, in this order, one checkpoint, the changes held from before the part, one part start, the changes
 of the part, and one part end if the part ended in the process that started it. The changes are in the order of
 their numbers. Those held from before the part are consecutive from the number after the checkpoint's. Those made
 during the part skip a number for each change a limit refused, anywhere among them. Among them is a limit record
-where a limit first refused a change: at most one for each state, and one for the shared limit. It follows every
+where a limit first refused a change: at most one for each state, and one for the global limit. It follows every
 change listed before that refusal and comes before every change listed after it. So every gap a journal shows comes
 after the record of the limit that made it, however short the journal is cut.
 
@@ -534,35 +534,35 @@ as a refused change. Nothing known loses one, since a journal is only appended t
   first value as the span's initial value and counts only the changes after it, which is a decided difference.
   `StateRecorderTest` `a state that reaches its own limit is no longer listed while the others are, and its value
   stays right`, and `a state whose reporter names no limit lists 100 changes in a session part`.
-- **The shared one.** A journal holds at most `MAX_JOURNAL_CHANGES`, 10,000 changes of every state together,
+- **The global one.** A journal holds at most `MAX_JOURNAL_CHANGES`, 10,000 changes of every state together,
   counting those it opened with from before its part. With the three states v1 has, a part's own changes come to at
   most 1,200 and the held ones to 1,000, so these three cannot reach it. It is a backstop for an app with many
   states. `StateRecorderTest` `a journal that reaches its limit stops recording changes and still ends with the
   right values`.
 - **A change either limit refuses** keeps its number and has already replaced the state's value. It is not listed,
   it loses its own attributes, and no event is made of it for an app's exporters. It is counted for its state and in
-  `dropped`, and the part end says which limit refused: the state's own in that state's count, the shared one in
-  `shared_limit`.
+  `dropped`, and the part end says which limit refused: the state's own in that state's count, the global one in
+  `global_limit`.
 - **A limit is recorded when it is first reached.** The first time in a part that a state's own limit refuses a
   change of that state, `refusedByALimit` hands the journal a limit record at once: the state and the limit's
-  value. The same, once in a part, when the shared limit first refuses a change, with no state named. So a journal
+  value. The same, once in a part, when the global limit first refuses a change, with no state named. So a journal
   whose part end is never written still says which limits were reached. The record is not a change. It takes no
   number of its own, it counts toward neither limit, the listener is not told of it, and an app's exporters get
   nothing for it. The counts and the final values are written only at the part's end. `StateRecorderTest` `a state
   that reaches its own limit is no longer listed while the others are, and its value stays right`, which finds the
   record once in the part and again in the next, `a journal that reaches its limit stops recording changes and
-  still ends with the right values` and `a part in which a state's own limit and the shared limit each refuse a
+  still ends with the right values` and `a part in which a state's own limit and the global limit each refuse a
   change states both`. `StateJournalReaderTest` `a record of a limit that was reached reads back with its state, or
-  with none for the shared limit`.
+  with none for the global limit`.
 - **Each is tracked through `InternalTelemetryService.trackAppliedLimit`**, once for each refused change. A state's
   own limit is tracked as v1 tracks it, under the name of the state's data source, `<state>_state_data_source`
-  (`RealSdkInstanceFactory.kt:358` to `360`). The shared limit is tracked as `state_change`
+  (`RealSdkInstanceFactory.kt:358` to `360`). The global limit is tracked as `state_change`
   (`RealSdkInstanceFactory.kt:356`). The limit test of `StateJournalFeatureTest`, under [delivering a
   part](#delivering-a-part), finds three refused changes of the test state as
   `emb.private.applied_limit.test_state_data_source.drop` on the session part span, and nothing under `state_change`.
 
 **Held changes and folding.** With no journal open, `hold` keeps each change in `held`, up to `maxHeldChanges`,
-which is the shared limit divided by `HELD_SHARE`: 1,000. One more than that, and the oldest held change is folded:
+which is the global limit divided by `HELD_SHARE`: 1,000. One more than that, and the oldest held change is folded:
 
 - **The checkpoint moves forward by one change:** the value is applied to `opening`.
 - **The checkpoint's time moves with it:** `openingTimeMs` becomes that change's time.
@@ -597,7 +597,7 @@ queues to that part's writer. Under the recorder's lock, `beginJournal`:
 2. **Hands over one list:** the checkpoint from `opening`, every held change, and a part start carrying `folded`.
    `StateJournalFeatureTest` `changes made with no session part in progress are delivered with the next part to
    start`.
-3. **Counts the held changes toward the shared limit, and toward no state's own.** `recorded` is set to their
+3. **Counts the held changes toward the global limit, and toward no state's own.** `recorded` is set to their
    number, and `held`, `folded` and `dropped` are cleared. Each state's count of listed changes starts from nothing,
    since the end of the last journal emptied the tallies. A drop reported since then is still there, to be counted in
    this journal.
@@ -663,7 +663,7 @@ span and one link. A part with no journal, or whose journal does not open with a
 | `emb.app.state.dropped_changes` | The part end's count of the changes made during the part that took a number and are not listed, for every state together, if above 0 |
 | `emb.app.state.dropped_count.<name>` | The part end's count for that state, if above 0: the changes of the state a limit refused, and the drops its instrumentation reported |
 | `emb.app.state.change_limit.<name>` | The state's own limit, only where that limit refused a change of the state in this part. From the part end, and in a journal with no part end from the state's limit record. |
-| `emb.app.state.global_change_limit` | The shared limit, only where it refused a change in this part. From the part end, and in a journal with no part end from the shared limit's record. |
+| `emb.app.state.global_change_limit` | The global limit, only where it refused a change in this part. From the part end, and in a journal with no part end from the global limit's record. |
 | `emb.app.state.final_value.<name>`, `emb.app.state.final_value_type.<name>` | The part end's values: each state that had a change refused. A journal written before states had limits of their own has every state's. |
 | `emb.app.state.truncated` | `true`, if the journal has no part end or was cut at a change out of order |
 | An event for each change, named `emb-state-<name>` | In the journal's order, with the record's time. Its attributes are the change's own, at most 7, then `emb.app.state.seq`, then `emb.app.state.new_value`, then `emb.app.state.new_value_type` as `system` for a generated value. |
@@ -675,11 +675,11 @@ span and one link. A part with no journal, or whose journal does not open with a
   not cut at a gap. A truncated change log's last event says the last number it recorded. [What it
   costs](#what-it-costs) has the number's bytes.
 - **Both limits are stated in the data when they are hit**, and what each state lost is counted. A state's own
-  limit is `emb.app.state.change_limit.<name>`, and the shared one is `emb.app.state.global_change_limit`. Each is absent
+  limit is `emb.app.state.change_limit.<name>`, and the global one is `emb.app.state.global_change_limit`. Each is absent
   from a part in which it refused nothing, and each is on the change log of a part that did not end as well as of
-  one that did. A change the shared limit refused is still counted for its state, and its state still gets its
+  one that did. A change the global limit refused is still counted for its state, and its state still gets its
   final value. `StateJournalSpanTest` `a state that reached its own limit has its count, its limit and its
-  final value on the span, and the others go on`, and `a journal that reaches the shared limit states it, counts
+  final value on the span, and the others go on`, and `a journal that reaches the global limit states it, counts
   what each state lost, and states no limit of a state's own`. Through the whole SDK, `StateJournalFeatureTest` `a
   state that reaches its limit is counted and no longer listed, while the others are and every log still has its
   value`, which also finds the next part counting from nothing.
@@ -1025,7 +1025,7 @@ What bounds it, and what does not:
 - **The bound is on events waiting for the worker.** A slow log record processor of the app's holds the worker, so
   it is what the bound protects against. A slow exporter does not: its events wait in `ExternalExportDispatcher`,
   behind every span and log the SDK exports, in a queue with no limit.
-- **A change a limit refuses is not emitted**, whether the limit is the state's own or the shared one, so both
+- **A change a limit refuses is not emitted**, whether the limit is the state's own or the global one, so both
   readers see the same history. An app's exporter sees `emb.app.state.seq` skip between two change events, and gets no
   count of what was refused, and nothing for a limit record. `StateEventEmitterTest` `a change a limit refuses is
   not emitted, whether the limit is the journal's or the state's own`.
@@ -1129,7 +1129,7 @@ These must always hold. Each has the test that checks it, what it costs, and whe
 9. **A journal with no part end is marked when it is delivered, and states each limit that was reached.** So an
    unmarked `emb-states` lists every change between its opening values and its end, apart from the ones it counts as
    dropped, state by state. A marked one lists every change up to its last event for each state whose limit it does
-   not state, unless it states the shared limit. Tests: the test
+   not state, unless it states the global limit. Tests: the test
    of `StateJournalSpanTest` for a journal that stops before its part ended, under [delivering a
    part](#delivering-a-part), and the kill test of `StateJournalFeatureTest`, under [the process
    ending](#the-process-ending). Cost: none. Push on: a part end that is written when changes before it were not.
@@ -1184,7 +1184,7 @@ These must always hold. Each has the test that checks it, what it costs, and whe
 |---|---|---|---|---|
 | Changes of one state made during a session part, its first value included. Changes held from before the part do not count. | 100, or what the state's reporter gives: 1,000 for the screen | `StateUpdate.maxChangesInPart`, which `StateDataSource` fills from its `maxTransitions`, and `StateUpdate.DEFAULT_MAX_CHANGES_IN_PART` | The change is not recorded. The value still follows it. No event is made for it. The other states go on being listed. | On the span: `emb.app.state.change_limit.<name>`, `emb.app.state.dropped_count.<name>` and `emb.app.state.final_value.<name>` for that state, and `emb.app.state.dropped_changes`. On a truncated span, the limit alone. `trackAppliedLimit("<state>_state_data_source", DROP)`. |
 | Changes in one journal, counting those held from before its part | 10,000 | `StateRecorder.MAX_JOURNAL_CHANGES` | The same, for every state | On the span: `emb.app.state.global_change_limit` and `emb.app.state.dropped_changes`, and for each state that lost a change `emb.app.state.dropped_count.<name>` and `emb.app.state.final_value.<name>`. On a truncated span, the limit alone. `trackAppliedLimit("state_change", DROP)`. |
-| Changes held with no session part | 1,000 | `maxChanges / HELD_SHARE` in `StateRecorder` | The oldest is folded into the next checkpoint | `emb.app.state.folded_changes` on the span. The same `state_change` limit, which cannot be told from a change the shared limit refused. |
+| Changes held with no session part | 1,000 | `maxChanges / HELD_SHARE` in `StateRecorder` | The oldest is folded into the next checkpoint | `emb.app.state.folded_changes` on the span. The same `state_change` limit, which cannot be told from a change the global limit refused. |
 | The length of a value | 2,000 characters, which is v1's limit | `SpanLimits.Internal.maxAttributeValueLength` | Cut as v1 cuts it, to 1,997 characters and `...`, and never inside a surrogate pair | Nothing but the `...` |
 | A change's own attributes | 7 | `OtelLimitsConfig.getMaxEventAttributeCount`, less 3 | A key under `emb.app.state.` or `emb.state.` is dropped first. Then the first 7 are kept. | Nothing |
 | An attribute's key and value | 1,000 and 2,000 characters | `SpanLimits.Internal` | Cut the same way, to 997 and to 1,997 characters and `...` | Nothing but the `...` |
@@ -1200,8 +1200,8 @@ The count of changes does not bound bytes: with long values the 12 MB file limit
 stops.
 
 Both limits on changes are stated in the data when they are hit: a state's own as `emb.app.state.change_limit.<name>`,
-and the shared one as `emb.app.state.global_change_limit`. With the three states v1 has, a part's own changes come to at
-most 1,200 (100, 100 and 1,000) and the held ones to 1,000, so the shared limit is a backstop for an app with many
+and the global one as `emb.app.state.global_change_limit`. With the three states v1 has, a part's own changes come to at
+most 1,200 (100, 100 and 1,000) and the held ones to 1,000, so the global limit is a backstop for an app with many
 states.
 
 ### What is held in memory
@@ -1212,7 +1212,7 @@ states.
 | `StateRecorder.recent`, with association on | Up to 64 snapshots. Each is a map of its own that shares its values with its neighbours, but for the one that changed. A snapshot also keeps the `attributes` map or the `encoded` string built from it. | `RECENT_SNAPSHOTS`. By arithmetic, and not measured, a snapshot of five values is about half a kilobyte, so the window is about 30 KB. |
 | `StateRecorder.opening` | One snapshot | |
 | `StateRecorder.tallies` | One small object for each state that changed during the part in progress, or reported a drop | The number of states. Emptied at each part end. |
-| A part's `OrderedTelemetryQueue` | The records the worker has not yet appended | Nothing of its own. The shared limit bounds what one part can queue. |
+| A part's `OrderedTelemetryQueue` | The records the worker has not yet appended | Nothing of its own. The global limit bounds what one part can queue. |
 | `SpanStateTracker.starts` | One reference for each linked span in progress, which keeps that snapshot alive | The number of spans in progress |
 | `SpanStateTracker.ends`, verbose only | One reference for each span that a state changed during, from its end until `SpanStateReleaseProcessor` runs | The span's own export |
 | `ExternalExportDispatcher`'s queue | Every span, log and state event waiting for the app's exporters | Nothing. This is as it was before this work, and state events add to it. |
@@ -1247,7 +1247,7 @@ notes have the full tables.
 | What 10 idle states add to a part's payload, as JSON | 11.2 KB | 1.5 KB, which is about 77 bytes for each state after the first (689 bytes for nine more) |
 | One change in the delivered payload, as JSON | About 128 bytes | About 178 bytes with its number and 139 without. About 8 compressed and about 5 without. The number is about 39 bytes, and 2 to 3 compressed. |
 | A part with 10 states, as the changes of each state grow | Spans: 140 KB of JSON and 5.3 KB compressed at 100 changes of each | The journal is level with spans at about 20 changes of each. At 100 each it is 179 KB of JSON and 8.0 KB compressed. |
-| A journal at its shared limit of 10,000 changes, with short values | Not possible | 1.79 MB of JSON and about 75 KB compressed |
+| A journal at its global limit of 10,000 changes, with short values | Not possible | 1.79 MB of JSON and about 75 KB compressed |
 | Objects allocated to report one change, with 1 state and with 10 | 34 | 24 and 33, and the same after 5,000 changes as after 50 |
 | Objects allocated by a session part change in which no state changed, with 1 state and with 10 | 819 and 4,166 | 483 and 483 |
 | State on a log, with ten states | | Packed, to Embrace: 326 bytes of JSON, and 3 to 4 compressed in a batch of 100 logs. Plain, to an app's exporters: 658 and 5 to 6. |
@@ -1260,7 +1260,7 @@ notes have the full tables.
   the rest` delivers the full journal. `the number on each change adds a few bytes to every event of the change log`
   takes the number off every event and measures the difference. `the stamp on a log adds bytes in each form` subtracts
   the log without a stamp. On disk nothing changed: about 43 KB for 10 states and 100 changes of each, and 430 KB at
-  the shared limit.
+  the global limit.
 - **The allocations** come from the benchmarks under [how to run it](#how-to-run-it).
 - **The last two rows** are from [the OTLP harness](#the-otlp-harness), one scripted session sent over OTLP. The
   change event is the harness's own scenario and not a controlled record, and the span row was taken before the keys
@@ -1361,7 +1361,7 @@ defect is present, and is to be turned around when the defect is fixed. None of 
 - **A change is listed by the lock and timed by its reporter.** Both session part spans change over before either
   journal call, so at a part boundary an event can lie outside its span: [session part
   boundaries](#session-part-boundaries), with its picture and its test.
-- **The `state_change` limit means two things**: a change folded, and a change the shared limit refused. `hold` and
+- **The `state_change` limit means two things**: a change folded, and a change the global limit refused. `hold` and
   `refusedByALimit` call the one `onChangeDropped`, which `RealSdkInstanceFactory.kt:356` tracks under the one name:
   `StateKnownDefectsTest` `a change folded and a change dropped are reported through the one callback, so one limit
   name counts both`.
@@ -1416,7 +1416,7 @@ counts M4 and S5 as Musts, though their importance reads "Must before" a conditi
 |---|---|---|---|---|
 | **T1.** One current value | Must | Met | `StateRecorder.current`, which the stamp, the link and the events all read: the three checks above | Nothing |
 | **T4.** When it happened, and when it was learned | Should | Met | `StateRecord.time_ms` from the reporter, apart from `sequence`: [the recorder](#the-recorder) | The time the recorder learned of a change is kept in memory only |
-| **T5.** Every change in a part, up to a limit for each state and a shared limit set by payload size, both stated in the data | Must | Met | `StateUpdate.maxChangesInPart` and `MAX_JOURNAL_CHANGES`, stated as `emb.app.state.change_limit.<name>` and `emb.app.state.global_change_limit` when they are hit, whether or not the part ended: [the journal](#the-journal), [delivery](#delivering-a-part), [costs](#what-it-costs) | Each limit is a count, and not bytes (C7). A limit is in the data only for a part in which it refused a change. A state's first value counts toward its limit, where v1 counts only the changes after it. |
+| **T5.** Every change in a part, up to a limit for each state and a global limit set by payload size, both stated in the data | Must | Met | `StateUpdate.maxChangesInPart` and `MAX_JOURNAL_CHANGES`, stated as `emb.app.state.change_limit.<name>` and `emb.app.state.global_change_limit` when they are hit, whether or not the part ended: [the journal](#the-journal), [delivery](#delivering-a-part), [costs](#what-it-costs) | Each limit is a count, and not bytes (C7). A limit is in the data only for a part in which it refused a change. A state's first value counts toward its limit, where v1 counts only the changes after it. |
 | **T6.** Past the limit, nothing is wrong, only missing | Must | Partly | The value is replaced before either limit is applied, each limit is recorded as it is first reached, and the part end has the count and the final value of each state that lost a change: [the journal](#the-journal) | A part that did not end states its limits, and has no count or final values. Where the writer stops there is a mark, and a limit only if it was recorded before. |
 | **T9.** A state has a value as soon as its instrumentation starts | Should | Met | `StateDataSource.onDataCaptureEnabled` reports the default whatever `captureStateOnCreation` says, and power saving reports `unknown` and then `normal` or `low`: [reporting](#reporting-a-state) | The power state is `unknown` until the mode is read |
 | **T10.** Generated and observed values are told apart | Should | Met | `StateValue.system`: [the snapshot](#the-snapshot). A change's own attribute under `emb.app.state.` or `emb.state.` is dropped, so none can carry the mark onto an observed value, in the change log or in an event for an app's exporters: `StateRecorderTest`. | A log that already has an attribute of the stamp's name keeps it (invariant 11) |
@@ -1506,7 +1506,7 @@ counts M4 and S5 as Musts, though their importance reads "Must before" a conditi
 | **X4.** The same names mean the same thing from every SDK | Should | Not Android's | Android's names are in `StateAttributes` and `StateJournalSpan.kt` | For every SDK together |
 | **S1.** Off by default, and the existing switches honored | Must | Met | The defaults in `AutoDataCaptureConfig`, and `statesJournaled`: [configuration](#configuration) | Nothing |
 | **S2.** It works with multi-file persistence and the Kotlin OpenTelemetry implementation | Must | Met | Every integration test here runs with both | Nothing |
-| **S3.** A limit that is hit is reported | Should | Partly | `trackAppliedLimit` under `<state>_state_data_source` for a state's own limit and under `state_change` for the shared one, and the counts and both limits on the span | `state_change` is still one name for the shared limit and for folding. Nothing for a dropped event or a cut value. |
+| **S3.** A limit that is hit is reported | Should | Partly | `trackAppliedLimit` under `<state>_state_data_source` for a state's own limit and under `state_change` for the global one, and the counts and both limits on the span | `state_change` is still one name for the global limit and for folding. Nothing for a dropped event or a cut value. |
 | **S4.** The behavior that matters is tested | Must | Partly | Order under concurrency, a JVM crash, a kill and a log's stamp each have a test | Two part changes at once. A real kill. What is not built. |
 | **S5.** Time on a device is known | Must before it ships | Not met | The benchmarks are written | Devices |
 
@@ -1530,7 +1530,7 @@ These are the seven a reviewer of the code would raise. The internal measurement
 |---|---|---|
 | 1 | How much may a kill lose | What the worker had not appended, never synced (built). Or a sync for each append. Or a memory-mapped journal. |
 | 2 | Whether to wake the worker for every change | Every change (built). Or one write for a burst. |
-| 3 | The limits on changes | Decided, and built: a limit for each state, 100 and 1,000 for the screen, beside the shared 10,000, which is a backstop. A state's first value counts toward its limit. Each limit is recorded as it is first reached, and stated on a truncated change log too. |
+| 3 | The limits on changes | Decided, and built: a limit for each state, 100 and 1,000 for the screen, beside the global 10,000, which is a backstop. A state's first value counts toward its limit. Each limit is recorded as it is first reached, and stated on a truncated change log too. |
 | 4 | The length of a value | Decided, and built: 2,000 characters, cut as v1 cuts it. |
 | 5 | What the recorder does when the writer stops | Nothing (built). Or it is told, and counts what follows as dropped. |
 | 6 | How many changes to hold with no part, and whether on the device | 1,000 in memory (built). Or another number. Or written to disk. Changes after the last part are not sent to Embrace, which is decided. |

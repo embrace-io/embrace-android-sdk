@@ -44,7 +44,7 @@ internal class StateJournalReaderTest {
                 dropped_changes = 3,
                 values = listOf(StateValue(state = "network", value_ = "none")),
                 dropped_counts = listOf(
-                    StateDroppedCount(state = "network", count = 3, limit = 0),
+                    StateDroppedCount(state = "network", count = 3, limit = 0, final_sequence = 5),
                     StateDroppedCount(state = "power", count = 2),
                 ),
                 global_limit = 10_000,
@@ -59,6 +59,9 @@ internal class StateJournalReaderTest {
             // a limit of nothing is a limit, and is told apart from none having been reached
             assertEquals(0, dropped_counts[0].limit)
             assertNull(dropped_counts[1].limit)
+            // the number of a state's last change is there for a state that had a change refused, and for no other
+            assertEquals(5L, dropped_counts[0].final_sequence)
+            assertNull(dropped_counts[1].final_sequence)
             assertEquals(10_000, global_limit)
         }
 

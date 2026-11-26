@@ -7,6 +7,7 @@ import io.embrace.android.embracesdk.fakes.FakeLogRecord
 import io.embrace.android.embracesdk.fakes.FakeOpenTelemetryLogger
 import io.embrace.android.embracesdk.fakes.OtelSdkMode
 import io.embrace.android.embracesdk.fakes.fakeOpenTelemetry
+import io.embrace.android.embracesdk.internal.arch.datasource.StateDeclaration
 import io.embrace.android.embracesdk.internal.arch.datasource.StateUpdate
 import io.embrace.android.embracesdk.internal.arch.schema.SystemStateValue
 import io.embrace.android.embracesdk.internal.clock.millisToNanos
@@ -45,9 +46,11 @@ internal class StateEventEmitterTest {
     fun `each change is emitted off the thread that reported it, in order, with the value of every state after it`() {
         createRecorder(includeValues = true)
         val wifiTime = update("network", "wifi")
-        // one attribute of the change's own, and one under a stem that is reserved, which is not carried
-        val ownAndReserved = mapOf("emb.state.dropped_by_instrumentation" to "2", "key" to "v")
-        val screenTime = update("screen-automatic", Backgrounded, ownAndReserved)
+        // one attribute under a key the state declares, one under a stem that is reserved, which no declaration gets, and
+        // one that is not declared: only the first is carried
+        val reported = mapOf("emb.state.dropped_by_instrumentation" to "2", "key" to "v", "undeclared" to "x")
+        recorder.declare(StateDeclaration("screen-automatic", attributeKeys = reported.keys - "undeclared"))
+        val screenTime = update("screen-automatic", Backgrounded, reported)
         update("network", "wifi")
         val offlineTime = update("network", "none")
 
@@ -286,14 +289,19 @@ internal class StateEventEmitterTest {
         recorder = StateRecorder(clock, maxChanges = maxChanges, listener = emitter)
     }
 
+    /**
+     * Reports [value] for [state], as its data source would: the state is declared first, with [maxChangesInPart] and no
+     * attribute keys, unless a test has declared it already.
+     */
     private fun update(
         state: String,
         value: Any,
         attributes: Map<String, String> = emptyMap(),
-        maxChangesInPart: Int = StateUpdate.DEFAULT_MAX_CHANGES_IN_PART,
+        maxChangesInPart: Int = StateDeclaration.DEFAULT_MAX_CHANGES_IN_PART,
     ): Long {
+        recorder.declare(StateDeclaration(state, maxChangesInPart))
         val time = clock.tick()
-        recorder.onEvent(StateUpdate(state, value, time, attributes, maxChangesInPart))
+        recorder.onEvent(StateUpdate(state, value, time, attributes))
         return time
     }
 

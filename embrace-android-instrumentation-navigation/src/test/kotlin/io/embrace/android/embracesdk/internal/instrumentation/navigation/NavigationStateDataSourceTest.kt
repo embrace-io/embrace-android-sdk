@@ -3,6 +3,7 @@ package io.embrace.android.embracesdk.internal.instrumentation.navigation
 import android.app.Activity
 import io.embrace.android.embracesdk.fakes.FakeConfigService
 import io.embrace.android.embracesdk.fakes.FakeInstrumentationArgs
+import io.embrace.android.embracesdk.internal.arch.datasource.StateDeclaration
 import io.embrace.android.embracesdk.internal.arch.datasource.StateUpdate
 import io.embrace.android.embracesdk.internal.arch.navigation.CurrentScreen
 import io.embrace.android.embracesdk.internal.arch.navigation.NavigationSignal
@@ -175,7 +176,7 @@ internal class NavigationStateDataSourceTest {
     }
 
     @Test
-    fun `a journaled screen state reports its limit of 1,000 changes in a session part with each update`() {
+    fun `a journaled screen state declares its limit of 1,000 changes in a session part and the two frame counts as its keys`() {
         val journaledArgs = FakeInstrumentationArgs(
             configService = FakeConfigService(
                 config = EmbraceConfig(
@@ -185,13 +186,32 @@ internal class NavigationStateDataSourceTest {
             ),
         )
         val updates = mutableListOf<StateUpdate>()
+        val declarations = mutableListOf<StateDeclaration>()
+        journaledArgs.eventBus.addHandler(StateDeclaration.KEY) { declarations.add(it) }
         journaledArgs.eventBus.addHandler(StateUpdate.KEY) { updates.add(it) }
+        // a source of screen attributes that adds one beside the frame counts, as another module could
+        journaledArgs.navigationTrackingService.addScreenAttributesSource { sink ->
+            sink("smoothness.dropped_frames", "3")
+            sink("smoothness.expected_frames", "60")
+            sink("lower.level.detail", "x")
+        }
         NavigationStateDataSource(journaledArgs).onDataCaptureEnabled()
         journaledArgs.eventBus.emitState(CurrentScreen.KEY, CurrentScreen(Screen.Named("home"), journaledArgs.clock.tick()))
+        journaledArgs.eventBus.emitState(CurrentScreen.KEY, CurrentScreen(Screen.Named("cart"), journaledArgs.clock.tick()))
 
-        assertEquals(listOf("Initializing", "home"), updates.map { it.value.toString() })
-        // the limit is applied by whatever records the updates, and not here
-        assertEquals(listOf(1_000), updates.map(StateUpdate::maxChangesInPart).distinct())
+        assertEquals(listOf("Initializing", "home", "cart"), updates.map { it.value.toString() })
+        // the screen is the one state with a limit above 100, and it is declared once: the limit is applied by whatever
+        // records the updates, and not here
+        with(declarations.single()) {
+            assertEquals("screen-automatic", state)
+            assertEquals(1_000, maxChangesInPart)
+            assertEquals(setOf("smoothness.dropped_frames", "smoothness.expected_frames"), attributeKeys)
+        }
+        // what any source adds for the screen being left is passed on, and whatever records the change keeps the declared keys
+        assertEquals(
+            setOf("smoothness.dropped_frames", "smoothness.expected_frames", "lower.level.detail"),
+            updates.last().attributes.keys,
+        )
     }
 
     @Test

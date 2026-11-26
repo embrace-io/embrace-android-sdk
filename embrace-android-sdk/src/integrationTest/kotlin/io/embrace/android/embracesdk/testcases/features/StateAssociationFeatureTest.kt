@@ -7,6 +7,8 @@ import io.embrace.android.embracesdk.fakes.FakeLogRecordProcessor
 import io.embrace.android.embracesdk.fakes.FakeSpanExporter
 import io.embrace.android.embracesdk.fakes.FakeSpanProcessor
 import io.embrace.android.embracesdk.fakes.TestStateDataSource
+import io.embrace.android.embracesdk.fakes.config.FakeEnabledFeatureConfig
+import io.embrace.android.embracesdk.fakes.config.FakeInstrumentedConfig
 import io.embrace.android.embracesdk.internal.arch.schema.EmbType
 import io.embrace.android.embracesdk.internal.clock.millisToNanos
 import io.embrace.android.embracesdk.internal.config.behavior.DEFAULT_PERIODIC_CACHE_INTERVAL_MS
@@ -72,8 +74,8 @@ internal class StateAssociationFeatureTest(
                 assertEquals("in-background", across.attributes["emb.app.state.value.test"])
                 assertEquals("foo", across.attributes["emb.app.state.end_value.test"])
                 // a state that did not change while the span ran has a value at its start, and none at its end
-                assertTrue(across.attributes.containsKey("emb.app.state.value.personas"))
-                assertFalse(across.attributes.containsKey("emb.app.state.end_value.personas"))
+                assertTrue(across.attributes.containsKey("emb.app.state.value.network"))
+                assertFalse(across.attributes.containsKey("emb.app.state.end_value.network"))
             }
             with(exportedSpan(STEADY)) {
                 assertEquals("foo", attributes["emb.app.state.value.test"])
@@ -280,6 +282,10 @@ internal class StateAssociationFeatureTest(
     private fun runScenario(exportMode: String, expectEvents: Boolean = true, assertMode: () -> Unit) {
         var changeTimeMs = 0L
         testRule.runTest(
+            // the network state is captured beside the test state, and does not change during the scenario
+            instrumentedConfig = FakeInstrumentedConfig(
+                enabledFeatures = FakeEnabledFeatureConfig(networkConnectivityCapture = true),
+            ),
             persistedRemoteConfig = associatedConfig(exportMode),
             preSdkStartAction = {
                 embrace.addSpanExporter(spanExporter)

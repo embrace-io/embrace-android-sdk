@@ -4,6 +4,7 @@ import android.content.Intent
 import android.os.PowerManager
 import io.embrace.android.embracesdk.fakes.FakeConfigService
 import io.embrace.android.embracesdk.fakes.FakeInstrumentationArgs
+import io.embrace.android.embracesdk.internal.arch.datasource.StateDeclaration
 import io.embrace.android.embracesdk.internal.arch.datasource.StateUpdate
 import io.embrace.android.embracesdk.internal.arch.schema.SchemaType.PowerState.PowerMode
 import io.embrace.android.embracesdk.internal.config.resolved.AutoDataCaptureConfig
@@ -20,6 +21,7 @@ internal class PowerStateDataSourceTest {
     private lateinit var application: FakeApplication
     private lateinit var args: FakeInstrumentationArgs
     private lateinit var updates: MutableList<StateUpdate>
+    private lateinit var declarations: MutableList<StateDeclaration>
     private var powerSaveMode = false
 
     @Before
@@ -36,8 +38,12 @@ internal class PowerStateDataSourceTest {
         // its default as capture is enabled, and the mode as soon as it is read, though power saving has never been on
         assertEquals(listOf<Any>(PowerMode.UNKNOWN, PowerMode.NORMAL), updates.map(StateUpdate::value))
         assertEquals(listOf("unknown", "normal"), updates.map { it.value.toString() })
-        // no limit of its own, so it is given the one every state has
-        assertEquals(listOf(StateUpdate.DEFAULT_MAX_CHANGES_IN_PART), updates.map(StateUpdate::maxChangesInPart).distinct())
+        // it is declared once, before its first value, with the limit every state has and no attribute keys
+        with(declarations.single()) {
+            assertEquals("power", state)
+            assertEquals(StateDeclaration.DEFAULT_MAX_CHANGES_IN_PART, maxChangesInPart)
+            assertEquals(emptySet<String>(), attributeKeys)
+        }
 
         changePowerSaveMode(true)
         changePowerSaveMode(false)
@@ -73,8 +79,9 @@ internal class PowerStateDataSourceTest {
         changePowerSaveMode(false)
         val token = args.destination.createdStateTokens.single()
         assertEquals(listOf<Any>(PowerMode.LOW, PowerMode.NORMAL), token.transitions.map { it.second })
-        // nothing is reported for a journal
+        // nothing is declared or reported for a journal
         assertTrue(updates.isEmpty())
+        assertTrue(declarations.isEmpty())
     }
 
     private fun dataSource(journaled: Boolean): PowerStateDataSource {
@@ -89,6 +96,12 @@ internal class PowerStateDataSourceTest {
             sessionPartIdSupplier = { "part-id" },
         )
         updates = mutableListOf()
+        declarations = mutableListOf()
+        args.eventBus.addHandler(StateDeclaration.KEY) { declaration ->
+            // nothing has been reported of a state when it is declared
+            assertTrue(updates.isEmpty())
+            declarations.add(declaration)
+        }
         args.eventBus.addHandler(StateUpdate.KEY) { updates.add(it) }
         return PowerStateDataSource(args) { PowerSaveModeSource { powerSaveMode } }
     }

@@ -103,6 +103,11 @@ message StateDroppedCount {
   // The most changes of the state that one session part lists. Set only if that limit, and not
   // the limit on the journal as a whole, refused a change of the state during the part.
   optional int32 limit = 3;
+
+  // The sequence of the state's last change during the part. Set only if a limit refused a change
+  // of the state during the part. It is where the state's value in the part end holds from: the
+  // state's value is not known between the first change the journal does not list and this one.
+  optional int64 final_sequence = 4;
 }
 
 // A limit on what the journal lists refused a change, for the first time in the session part. It

@@ -17,7 +17,6 @@ import io.embrace.android.embracesdk.internal.api.delegate.UserSessionApiDelegat
 import io.embrace.android.embracesdk.internal.api.delegate.ViewTrackingApiDelegate
 import io.embrace.android.embracesdk.internal.arch.InstrumentationRegistry
 import io.embrace.android.embracesdk.internal.arch.InstrumentationRegistryImpl
-import io.embrace.android.embracesdk.internal.arch.datasource.StateUpdate
 import io.embrace.android.embracesdk.internal.arch.destination.TelemetryDestinationImpl
 import io.embrace.android.embracesdk.internal.arch.startup.StartupClassifierImpl
 import io.embrace.android.embracesdk.internal.arch.state.ProcessStateTracker
@@ -26,7 +25,6 @@ import io.embrace.android.embracesdk.internal.capture.experiment.ExperimentTrack
 import io.embrace.android.embracesdk.internal.capture.session.UserSessionPropertiesService
 import io.embrace.android.embracesdk.internal.capture.state.StateEventEmitter
 import io.embrace.android.embracesdk.internal.capture.state.StateRecorder
-import io.embrace.android.embracesdk.internal.capture.state.reportPersonasAsState
 import io.embrace.android.embracesdk.internal.capture.user.UserService
 import io.embrace.android.embracesdk.internal.config.behavior.SensitiveKeysBehavior
 import io.embrace.android.embracesdk.internal.config.resolved.StateExportMode
@@ -358,6 +356,9 @@ internal fun createRealSdkInstance(
                 onStateLimitApplied = { state ->
                     telemetryService.trackAppliedLimit("$state$STATE_DATA_SOURCE_SUFFIX", AppliedLimitType.DROP)
                 },
+                onUndeclaredState = {
+                    telemetryService.trackAppliedLimit(UNDECLARED_STATE_UPDATE_TYPE, AppliedLimitType.DROP)
+                },
                 // An app's own exporters and processors are sent each change as it is made, off the thread that made it,
                 // and on a worker of its own, as an app's log record processor runs where an event is emitted.
                 listener = if (stateEventsEmitted) {
@@ -374,7 +375,11 @@ internal fun createRealSdkInstance(
                     null
                 },
                 keepRecent = statesAssociated,
-            ).also { eventBus.addHandler(StateUpdate.KEY, it) }
+            ).also {
+                // it listens from the moment it is created, which is before any state's data source starts capture, so that
+                // each state's declaration reaches it ahead of the state's first update
+                it.listenTo(eventBus)
+            }
         } else {
             null
         }
@@ -888,10 +893,6 @@ internal fun createRealSdkInstance(
         }
     }
 
-    if (stateRecorder != null) {
-        reportPersonasAsState(userService.value, eventBus, clock)
-    }
-
     // registered here, not when the service is created, so creating it never waits on the orchestrator's lock
     sessionOrchestrator.addUserSessionListener { event ->
         if (event is SessionStateEvent.UserSessionEnded && networkSpanParentService.isInitialized()) {
@@ -1031,3 +1032,8 @@ private const val STATE_CHANGE_LIMIT_TYPE = "state_change"
  * instrumentation name of the state's data source.
  */
 private const val STATE_DATA_SOURCE_SUFFIX = "_state_data_source"
+
+/**
+ * What an update is tracked as when it is discarded because no data source has declared its state.
+ */
+private const val UNDECLARED_STATE_UPDATE_TYPE = "undeclared_state_update"

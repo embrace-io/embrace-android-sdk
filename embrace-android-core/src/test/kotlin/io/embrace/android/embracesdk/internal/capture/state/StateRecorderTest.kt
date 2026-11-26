@@ -1,9 +1,17 @@
 package io.embrace.android.embracesdk.internal.capture.state
 
 import io.embrace.android.embracesdk.fakes.FakeClock
+import io.embrace.android.embracesdk.fakes.FakeConfigService
+import io.embrace.android.embracesdk.fakes.FakeInstrumentationArgs
+import io.embrace.android.embracesdk.fakes.TestState
+import io.embrace.android.embracesdk.internal.arch.datasource.StateDataSource
+import io.embrace.android.embracesdk.internal.arch.datasource.StateDeclaration
 import io.embrace.android.embracesdk.internal.arch.datasource.StateUpdate
 import io.embrace.android.embracesdk.internal.arch.schema.SystemStateValue
 import io.embrace.android.embracesdk.internal.clock.Clock
+import io.embrace.android.embracesdk.internal.config.resolved.AutoDataCaptureConfig
+import io.embrace.android.embracesdk.internal.config.resolved.EmbraceConfig
+import io.embrace.android.embracesdk.internal.config.resolved.PersistenceConfig
 import io.embrace.android.embracesdk.internal.session.persistence.StatePartEnd
 import io.embrace.android.embracesdk.internal.session.persistence.StateRecord
 import io.embrace.android.embracesdk.internal.session.persistence.StateValue
@@ -38,6 +46,7 @@ internal class StateRecorderTest {
 
     @Test
     fun `changes of every state share one order and unchanged values are not changes`() {
+        declare("network", attributeKeys = setOf("key"))
         recorder.beginJournal(clock.now(), journal::addAll)
         update("network", "wifi")
         update("power", "low")
@@ -129,6 +138,7 @@ internal class StateRecorderTest {
         clock.tick(10)
         val secondChange = update("network", "none")
         // a second change in the same millisecond
+        declare("power")
         recorder.onEvent(StateUpdate("power", "low", secondChange))
         clock.tick(10)
 
@@ -325,6 +335,8 @@ internal class StateRecorderTest {
             // the limit that refused them is the journal's, which is stated, and no state reached its own
             assertEquals(2, global_limit)
             assertEquals(listOf("network:1:null", "power:1:null"), counts())
+            // each state that lost a change says the number of its last change, which its final value holds from
+            assertEquals(listOf("network@3", "power@4"), finalSequences())
         }
 
         assertEquals(2, changesDropped)
@@ -394,6 +406,8 @@ internal class StateRecorderTest {
                 // the count, the limit and the value the part ended with, for the state that reached its limit and no other
                 assertEquals(listOf("network:2:2"), counts())
                 assertEquals(listOf("network=wifi"), values.map { "${it.state}=${it.value_}" })
+                // and the number of its last change, the second one refused, from which that value holds
+                assertEquals(listOf("network@8"), finalSequences())
                 assertNull(global_limit)
             }
         }
@@ -418,9 +432,10 @@ internal class StateRecorderTest {
     }
 
     @Test
-    fun `a state whose reporter names no limit lists 100 changes in a session part`() {
+    fun `a state declared with no limit of its own lists 100 changes in a session part`() {
+        recorder.declare(StateDeclaration("network"))
         recorder.beginJournal(clock.now(), journal::addAll)
-        repeat(StateUpdate.DEFAULT_MAX_CHANGES_IN_PART + 1) { update("network", "value-$it") }
+        repeat(StateDeclaration.DEFAULT_MAX_CHANGES_IN_PART + 1) { update("network", "value-$it") }
         update("power", "low")
         recorder.endJournal(clock.now())
 
@@ -450,8 +465,9 @@ internal class StateRecorderTest {
             // a reported drop took no number, so it is in its state's count and not in the count for the part
             assertEquals(0, dropped_changes)
             assertEquals(listOf("power:5:null"), counts())
-            // the changes listed still lead to the last value reported, so none is given
+            // the changes listed still lead to the last value reported, so none is given, and no number it holds from
             assertEquals(emptyList<Any>(), values)
+            assertEquals(listOf("power@null"), finalSequences())
         }
 
         // reported with no part in progress, it is counted in the next part's journal, and in no part after that
@@ -571,15 +587,19 @@ internal class StateRecorderTest {
 
     @Test
     fun `a value or an attribute longer than a span event could carry is cut to 1,997 characters and three dots`() {
-        recorder.beginJournal(clock.now(), journal::addAll)
         val attributes = (1..20).associate { "key-$it" to "v".repeat(5000) }
+        val longKey = "k".repeat(1500)
+        declare("route", attributeKeys = attributes.keys)
+        declare("path", attributeKeys = setOf(longKey))
+        recorder.beginJournal(clock.now(), journal::addAll)
         update("route", "r".repeat(5000), attributes)
 
         val cutValue = "r".repeat(1997) + "..."
         val change = checkNotNull(journal.last().change)
         assertEquals(cutValue, change.value_?.value_)
-        // three fewer than an event can carry, which leaves room for the value, its type and its number
-        assertEquals(7, change.attributes.size)
+        // a declaration keeps seven keys: three fewer than an event can carry, which leaves room for the value, its type
+        // and its number
+        assertEquals((1..7).map { "key-$it" }, change.attributes.keys.toList())
         assertEquals(setOf("v".repeat(1997) + "..."), change.attributes.values.toSet())
         assertEquals(cutValue, recorder.snapshot().values.getValue("route").value_)
 
@@ -589,7 +609,7 @@ internal class StateRecorderTest {
 
         // the cut never splits a pair: one that straddles it goes whole, in a value and in an attribute's value
         val straddling = "r".repeat(1996) + PAIR + "r".repeat(100)
-        update("route", straddling, mapOf("k".repeat(1500) to straddling))
+        update("path", straddling, mapOf(longKey to straddling))
         val cutBeforeThePair = "r".repeat(1996) + "..."
         with(checkNotNull(journal.last().change)) {
             assertEquals(cutBeforeThePair, value_?.value_)
@@ -602,8 +622,7 @@ internal class StateRecorderTest {
     }
 
     @Test
-    fun `a change's own attribute under either state stem is dropped, and uses up none of the seven a change can carry`() {
-        recorder.beginJournal(clock.now(), journal::addAll)
+    fun `a change keeps only the keys its state declared, at most seven, and never a key under either state stem`() {
         val reserved = mapOf(
             "emb.app.state.new_value" to "spoofed",
             "emb.app.state.new_value_type" to "system",
@@ -612,20 +631,127 @@ internal class StateRecorderTest {
             "emb.app.state.anything-else" to "x",
             "emb.state.anything-else" to "x",
             "emb.state.initial_value" to "v1",
+            // v1's count of the transitions an instrumentation dropped, which a reporter gives beside an update's attributes
+            "emb.state.dropped_by_instrumentation" to "2",
             // the stems alone, which are v1's foreground or background attribute and the SDK's own
             "emb.state" to "background",
             "emb.app.state" to "x",
         )
         val own = (1..8).associate { "key-$it" to "v$it" }
-        update("network", "wifi", reserved + own)
+        // the declaration names the reserved keys first: they are left out of it, and use up none of the seven it keeps
+        declare("network", attributeKeys = reserved.keys + own.keys)
+        declare("power")
+        recorder.beginJournal(clock.now(), journal::addAll)
+        update("network", "wifi", reserved + own + ("undeclared" to "x"))
 
-        // the reserved keys are dropped first and the first seven of the rest are kept, in the order they were given
+        // the first seven keys the declaration names that are not reserved are kept, and nothing else
         assertEquals((1..7).associate { "key-$it" to "v$it" }, checkNotNull(journal.last().change).attributes)
 
-        // v1's count of the transitions an instrumentation dropped is reserved like any other key under its stem: a
-        // reporter gives that count beside the update's attributes, and not among them
-        update("network", "wan", mapOf("emb.state.dropped_by_instrumentation" to "2", "emb.app.state.seq" to "99", "key" to "v"))
-        assertEquals(mapOf("key" to "v"), checkNotNull(journal.last().change).attributes)
+        // a declared key is kept wherever it comes among a change's attributes, and one that is not declared is dropped
+        update("network", "wan", mapOf("undeclared" to "x", "emb.app.state.seq" to "99", "key-3" to "v"))
+        assertEquals(mapOf("key-3" to "v"), checkNotNull(journal.last().change).attributes)
+
+        // a state declared with no keys carries none
+        update("power", "low", own)
+        assertEquals(emptyMap<String, String>(), checkNotNull(journal.last().change).attributes)
+    }
+
+    @Test
+    fun `an update for a state that no data source declared is discarded and counted, and a declared one is recorded`() {
+        var undeclared = 0
+        val told = mutableListOf<String>()
+        val listener = object : StateChangeListener {
+            override fun onChange(record: StateRecord, snapshot: StateSnapshot, previous: StateValue?) {
+                told += snapshot.encoded
+            }
+
+            override fun onPartStart(timeMs: Long, snapshot: StateSnapshot) {
+            }
+        }
+        recorder = StateRecorder(clock, onUndeclaredState = { undeclared++ }, listener = listener, keepRecent = true)
+
+        // with no session part: nothing is held for the next part's journal
+        recorder.onEvent(StateUpdate("ghost", "first", clock.tick()))
+        recorder.beginJournal(clock.now(), journal::addAll)
+        // and with one: no number, no value, no record, nothing told, and what it says it dropped is not counted either
+        recorder.onEvent(StateUpdate("ghost", "second", clock.tick(), mapOf("key" to "value"), droppedChanges = 3))
+
+        assertEquals(2, undeclared)
+        assertEquals(0L, recorder.snapshot().sequence)
+        assertTrue(recorder.snapshot().isEmpty())
+        assertSame(recorder.snapshot(), recorder.snapshotAt(clock.now()))
+        assertEquals(emptyList<String>(), told)
+        assertEquals(emptyList<StateRecord>(), journal.filter { it.change != null })
+
+        // the same name, once a data source declares it, is recorded from its next update on
+        declare("ghost")
+        declare("network")
+        recorder.onEvent(StateUpdate("ghost", "third", clock.tick()))
+        update("network", "wifi")
+        recorder.endJournal(clock.now())
+
+        assertEquals(2, undeclared)
+        assertEquals(listOf("ghost=third", "ghost=third;network=wifi"), told)
+        assertEquals(listOf(1L, 2L), journal.filter { it.change != null }.map(StateRecord::sequence))
+        with(checkNotNull(journal.last().part_end)) {
+            assertEquals(0, dropped_changes)
+            assertEquals(emptyList<Any>(), dropped_counts)
+        }
+    }
+
+    @Test
+    fun `a data source declares its state on the bus before the value it starts with, and its limit and keys are applied here`() {
+        val args = FakeInstrumentationArgs(
+            configService = FakeConfigService(
+                config = EmbraceConfig(
+                    persistence = { PersistenceConfig(multiFileEnabled = { true }) },
+                    autoDataCapture = { AutoDataCaptureConfig(sharedStateSpanEnabled = { true }) },
+                ),
+            ),
+        )
+        recorder = StateRecorder(clock, onUndeclaredState = { changesDropped++ })
+        recorder.listenTo(args.eventBus)
+        recorder.beginJournal(clock.now(), journal::addAll)
+        // a data source like any other, with a limit of two and one attribute key
+        val dataSource = object : StateDataSource<Any>(args, ::TestState, "UNKNOWN", 2, setOf("key")) {}
+        dataSource.onDataCaptureEnabled()
+        dataSource.onStateChange("a", clock.tick(), mapOf("key" to "kept", "other" to "dropped"))
+        dataSource.onStateChange("b", clock.tick())
+        recorder.endJournal(clock.now())
+
+        // the value it starts with found the state declared, so it is the first change, and nothing was discarded
+        assertEquals(0, changesDropped)
+        assertEquals(listOf("UNKNOWN", "a"), journal.mapNotNull { it.change?.value_?.value_ })
+        assertEquals(mapOf("key" to "kept"), journal.last { it.change != null }.change?.attributes)
+        assertEquals("test=b", recorder.snapshot().encoded)
+        with(checkNotNull(journal.last().part_end)) {
+            assertEquals(listOf("test:1:2"), counts())
+            assertEquals(listOf("test@3"), finalSequences())
+        }
+    }
+
+    @Test
+    fun `a state's limit and keys are those it was first declared with, and a second declaration of its name changes nothing`() {
+        recorder.declare(StateDeclaration("network", maxChangesInPart = 1, attributeKeys = setOf("first")))
+        // as a second data source that reported the same state would declare it
+        recorder.declare(StateDeclaration("network", maxChangesInPart = 5, attributeKeys = setOf("second")))
+        recorder.beginJournal(clock.now(), journal::addAll)
+        update("network", "wifi", mapOf("first" to "kept", "second" to "dropped"))
+        update("network", "wan")
+        recorder.endJournal(clock.now())
+
+        assertEquals(mapOf("first" to "kept"), journal.single { it.change != null }.change?.attributes)
+        with(checkNotNull(journal.last().part_end)) {
+            assertEquals(listOf("network:1:1"), counts())
+        }
+
+        // a limit below nothing lists nothing, and is stated as nothing
+        recorder.declare(StateDeclaration("power", maxChangesInPart = -1))
+        val nextJournal = mutableListOf<StateRecord>()
+        recorder.beginJournal(clock.now(), nextJournal::addAll)
+        update("power", "low")
+        recorder.endJournal(clock.now())
+        assertEquals(listOf("power:1:0"), checkNotNull(nextJournal.last().part_end).counts())
     }
 
     @Test
@@ -658,15 +784,32 @@ internal class StateRecorderTest {
         assertEquals(replayed, snapshot.values.mapValues { it.value.value_ })
     }
 
+    /**
+     * Declares [state] to the recorder, as its data source does when its capture starts. The first declaration of a name
+     * is the one that stands.
+     */
+    private fun declare(
+        state: String,
+        maxChangesInPart: Int = StateDeclaration.DEFAULT_MAX_CHANGES_IN_PART,
+        attributeKeys: Set<String> = emptySet(),
+    ) {
+        recorder.declare(StateDeclaration(state, maxChangesInPart, attributeKeys))
+    }
+
+    /**
+     * Reports [value] for [state], as its data source would: the state is declared first, with [maxChangesInPart] and no
+     * attribute keys, unless a test has declared it already.
+     */
     private fun update(
         state: String,
         value: Any,
         attributes: Map<String, String> = emptyMap(),
-        maxChangesInPart: Int = StateUpdate.DEFAULT_MAX_CHANGES_IN_PART,
+        maxChangesInPart: Int = StateDeclaration.DEFAULT_MAX_CHANGES_IN_PART,
         droppedChanges: Int = 0,
     ): Long {
+        declare(state, maxChangesInPart)
         val time = clock.tick()
-        recorder.onEvent(StateUpdate(state, value, time, attributes, maxChangesInPart, droppedChanges))
+        recorder.onEvent(StateUpdate(state, value, time, attributes, droppedChanges))
         return time
     }
 
@@ -682,6 +825,12 @@ internal class StateRecorderTest {
      * What a part end counts as not listed, as `state:count:limit` for each state it counts something for.
      */
     private fun StatePartEnd.counts(): List<String> = dropped_counts.map { "${it.state}:${it.count}:${it.limit}" }
+
+    /**
+     * The number of each counted state's last change, as `state@number`, which a part end has for a state that had a
+     * change refused.
+     */
+    private fun StatePartEnd.finalSequences(): List<String> = dropped_counts.map { "${it.state}@${it.final_sequence}" }
 
     private object Backgrounded : SystemStateValue {
         override fun toString(): String = "Backgrounded"

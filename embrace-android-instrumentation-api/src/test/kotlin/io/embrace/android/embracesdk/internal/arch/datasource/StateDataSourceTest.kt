@@ -26,6 +26,13 @@ internal class StateDataSourceTest {
     private lateinit var args: FakeInstrumentationArgs
     private lateinit var dataSource: TestStateDataSource
 
+    /**
+     * The declarations a journaled data source emitted, and everything it emitted, in order: `declared <state>` for a
+     * declaration and the value for an update.
+     */
+    private lateinit var declarations: MutableList<StateDeclaration>
+    private lateinit var emitted: MutableList<String>
+
     @Before
     fun setUp() {
         args = FakeInstrumentationArgs(sessionPartIdSupplier = { "part-id" })
@@ -127,7 +134,7 @@ internal class StateDataSourceTest {
 
     @OptIn(ExperimentalSemconv::class)
     @Test
-    fun `a journaled state emits each change of value with its limit, and passes on the transitions its instrumentation dropped`() {
+    fun `a journaled state declares itself once before its first update, and emits each change of value and the dropped transitions`() {
         val updates = journalUpdates()
         dataSource.onDataCaptureEnabled()
         dataSource.onStateChange("a", 1L)
@@ -140,28 +147,49 @@ internal class StateDataSourceTest {
         dataSource.onPostSessionChange()
         dataSource.onStateChange("c", 5L, droppedTransitions = 1)
 
+        // the state is declared once, as capture starts: its name, the limit every state has unless its data source gives
+        // another, and no attribute keys
+        with(declarations.single()) {
+            assertEquals("test", state)
+            assertEquals(MAX_TRANSITIONS, maxChangesInPart)
+            assertEquals(emptySet<String>(), attributeKeys)
+        }
+        // and before anything is reported of it, the default value that capture starts with included
+        assertEquals(listOf("declared test", "UNKNOWN", "a"), emitted.take(3))
+
         assertEquals(listOf("test"), updates.map(StateUpdate::state).distinct())
         assertEquals(listOf<Any>("UNKNOWN", "a", "a", "b", "c"), updates.map(StateUpdate::value))
         assertEquals(listOf(1L, 3L, 4L, 5L), updates.drop(1).map(StateUpdate::timeMs))
         assertEquals(listOf(0, 0, 2, 0, 1), updates.map(StateUpdate::droppedChanges))
+        // an update carries every attribute it was reported with: which are kept is for whatever records the updates
         assertEquals(
             listOf(emptyMap(), emptyMap(), emptyMap(), mapOf("key" to "value"), emptyMap()),
             updates.map(StateUpdate::attributes),
         )
-        // the count is no longer written as an attribute of a change
+        // the count is not written as an attribute of a change
         assertTrue(updates.none { EmbStateTransitionAttributes.EMB_STATE_DROPPED_BY_INSTRUMENTATION in it.attributes })
-        // every update carries the limit the data source would apply to a span of its own, which is 100 unless it gives one
-        assertEquals(listOf(MAX_TRANSITIONS), updates.map(StateUpdate::maxChangesInPart).distinct())
         assertEquals("c", dataSource.getCurrentStateValue())
         // a session part changing is nothing to a journaled state
         assertTrue(args.destination.createdStateTokens.isEmpty())
 
-        // a data source that gives a limit of its own passes that on, and does not apply it itself
-        val limited = object : StateDataSource<Any>(args, ::TestState, "UNKNOWN", maxTransitions = 2) {}
+        // a data source that gives a limit and attribute keys of its own declares those, and applies neither itself
+        val limited = object : StateDataSource<Any>(args, ::TestState, "UNKNOWN", 2, setOf("key")) {}
         limited.onDataCaptureEnabled()
-        repeat(5) { limited.onStateChange("value-$it", it.toLong()) }
+        repeat(5) { limited.onStateChange("value-$it", it.toLong(), mapOf("key" to "kept", "other" to "passed on")) }
+        with(declarations.last()) {
+            assertEquals(2, maxChangesInPart)
+            assertEquals(setOf("key"), attributeKeys)
+        }
         assertEquals(listOf<Any>("UNKNOWN", "value-0", "value-1", "value-2", "value-3", "value-4"), updates.drop(5).map(StateUpdate::value))
-        assertEquals(listOf(2), updates.drop(5).map(StateUpdate::maxChangesInPart).distinct())
+        assertEquals(setOf("key", "other"), updates.last().attributes.keys)
+
+        // a data source whose first value arrives before its capture is enabled declares itself before that value, and once
+        val early = TestStateDataSource(args)
+        val emittedBefore = emitted.size
+        early.onStateChange("first", 1L)
+        early.onDataCaptureEnabled()
+        early.onStateChange("second", 2L)
+        assertEquals(listOf("declared test", "first", "second"), emitted.drop(emittedBefore))
     }
 
     @Test
@@ -176,6 +204,9 @@ internal class StateDataSourceTest {
 
         // with a span for each state, nothing is captured until the state first changes
         args = FakeInstrumentationArgs(sessionPartIdSupplier = { "part-id" })
+        val onTheBus = mutableListOf<Any>()
+        args.eventBus.addHandler(StateDeclaration.KEY) { onTheBus.add(it) }
+        args.eventBus.addHandler(StateUpdate.KEY) { onTheBus.add(it) }
         val withSpan = lazyDataSource()
         withSpan.onDataCaptureEnabled()
         assertFalse(withSpan.isActive())
@@ -183,6 +214,8 @@ internal class StateDataSourceTest {
         withSpan.onStateChange("a", 1L)
         assertTrue(withSpan.isActive())
         assertEquals(1, args.destination.createdStateTokens.size)
+        // and it declares nothing and reports nothing on the event bus
+        assertEquals(emptyList<Any>(), onTheBus)
     }
 
     @Test
@@ -233,7 +266,16 @@ internal class StateDataSourceTest {
         )
         dataSource = TestStateDataSource(args)
         val updates = Collections.synchronizedList(mutableListOf<StateUpdate>())
-        args.eventBus.addHandler(StateUpdate.KEY) { updates.add(it) }
+        declarations = Collections.synchronizedList(mutableListOf())
+        emitted = Collections.synchronizedList(mutableListOf())
+        args.eventBus.addHandler(StateDeclaration.KEY) { declaration ->
+            declarations.add(declaration)
+            emitted.add("declared ${declaration.state}")
+        }
+        args.eventBus.addHandler(StateUpdate.KEY) { update ->
+            updates.add(update)
+            emitted.add(update.value.toString())
+        }
         return updates
     }
 

@@ -33,8 +33,9 @@ import java.security.MessageDigest
  *   listed. One state can reach its own limit while the others go on, so a gap can be anywhere after the part's start
  * - `emb.app.state.part_start_seq` says which changes were made before the session part started: those numbered up to it
  * - what is not listed is counted when the part's end is recorded: `emb.app.state.dropped_changes` for every state together,
- *   and for each state `emb.app.state.dropped_count.<name>`, with `emb.app.state.final_value.<name>` for a state that had a
- *   change refused
+ *   and for each state `emb.app.state.dropped_count.<name>`. A state that had a change refused also has
+ *   `emb.app.state.final_value.<name>`, its value when the part ended, and `emb.app.state.final_seq.<name>`, the number of
+ *   its last change, from which that value holds
  * - a limit that refused a change is stated: `emb.app.state.change_limit.<name>` where it was the state's own, and
  *   `emb.app.state.global_change_limit` where it was the one the whole journal has. They come from the part's end where the
  *   journal records it, and otherwise from the record the journal was handed when the limit first refused a change
@@ -224,7 +225,8 @@ private fun stateAttributes(
 
 /**
  * What the [end] of a part says its journal does not list: how many changes for every state together and for each state,
- * each limit that refused one, and the value the part ended with for each state that had a change refused.
+ * each limit that refused one, and for each state that had a change refused the value the part ended with and the number
+ * of the state's last change, which is where that value holds from.
  */
 private fun partEndAttributes(end: StatePartEnd): List<Attribute> = buildList {
     if (end.dropped_changes > 0) {
@@ -241,10 +243,15 @@ private fun partEndAttributes(end: StatePartEnd): List<Attribute> = buildList {
     end.global_limit?.let { limit ->
         add(Attribute(StateAttributes.GLOBAL_CHANGE_LIMIT, limit.toString()))
     }
+    // the number each state's final value holds from, which a journal has for a state that had a change refused
+    val finalSequences = end.dropped_counts.associate { it.state to it.final_sequence }
     end.values.forEach { value ->
         add(Attribute("${StateAttributes.FINAL_VALUE_PREFIX}${value.state}", value.value_))
         if (value.system) {
             add(Attribute("${StateAttributes.FINAL_VALUE_TYPE_PREFIX}${value.state}", SYSTEM_VALUE_TYPE))
+        }
+        finalSequences[value.state]?.let { sequence ->
+            add(Attribute("${StateAttributes.FINAL_SEQUENCE_PREFIX}${value.state}", sequence.toString()))
         }
     }
 }

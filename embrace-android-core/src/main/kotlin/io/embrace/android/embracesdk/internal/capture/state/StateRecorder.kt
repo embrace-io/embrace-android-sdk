@@ -1,5 +1,6 @@
 package io.embrace.android.embracesdk.internal.capture.state
 
+import io.embrace.android.embracesdk.internal.arch.datasource.StateDeclaration
 import io.embrace.android.embracesdk.internal.arch.datasource.StateUpdate
 import io.embrace.android.embracesdk.internal.arch.schema.SchemaType
 import io.embrace.android.embracesdk.internal.clock.Clock
@@ -14,12 +15,19 @@ import io.embrace.android.embracesdk.internal.session.persistence.StatePartStart
 import io.embrace.android.embracesdk.internal.session.persistence.StateRecord
 import io.embrace.android.embracesdk.internal.session.persistence.StateValue
 import io.embrace.android.embracesdk.internal.utils.PropertyUtils
+import io.embrace.android.embracesdk.internal.utils.event.EventBus
 import io.embrace.android.embracesdk.internal.utils.event.EventHandler
 
 /**
  * Decides the order of state changes, and holds the value of every state.
  *
- * Every [StateUpdate] passes through one lock, whichever thread reports it. Under that lock an update that changes its
+ * A state exists here only once its data source has declared it, with a [StateDeclaration] that gives its name, its
+ * limit and the keys its changes' attributes may use. The first declaration of a name stands for the life of the
+ * process, and a later one of the same name changes nothing. An update for a state that has not been declared is
+ * discarded: it takes no number, leaves [snapshot] as it is, and is handed to nothing. It is only counted, through
+ * [onUndeclaredState].
+ *
+ * Every [StateUpdate] of a declared state passes through one lock, whichever thread reports it. Under that lock an update that changes its
  * state's value takes the next sequence number, replaces [snapshot] with one that holds the new value, and is handed to
  * the journal. So the order of the journal, the sequence, and the values anything else reads from [snapshot] cannot
  * disagree.
@@ -28,8 +36,8 @@ import io.embrace.android.embracesdk.internal.utils.event.EventHandler
  * are handed over in sequence order, what has been persisted at any moment is the start of the sequence with nothing
  * missing from it.
  *
- * A journal belongs to a session part. Two limits bound what it lists. Each state has its own, which its update carries
- * as [StateUpdate.maxChangesInPart]: the most changes of that state made while the part is in progress. The journal as a
+ * A journal belongs to a session part. Two limits bound what it lists. Each state has its own, which its declaration
+ * gives as [StateDeclaration.maxChangesInPart]: the most changes of that state made while the part is in progress. The journal as a
  * whole holds at most [maxChanges] changes, counting those it opened with, a limit on what a part's payload should
  * carry. A change either limit refuses still takes its number and still replaces its state's value, so everything read
  * from [snapshot] stays right. It is not handed to the journal or to [listener]. It is counted, for its state and for the
@@ -56,6 +64,7 @@ import io.embrace.android.embracesdk.internal.utils.event.EventHandler
  * @param onChangeDropped called for each change the limit on a journal as a whole refuses, and for each held change that
  * is folded.
  * @param onStateLimitApplied called with a state's name for each change of it that the state's own limit refuses.
+ * @param onUndeclaredState called for each update that is discarded because its state has not been declared.
  * @param keepRecent whether this notes when each change takes effect and remembers the snapshots of the most recent
  * changes, so that [snapshotAt] can say which values held at a time in the recent past. That is for telemetry
  * associated with state, and nothing else reads it.
@@ -66,11 +75,19 @@ class StateRecorder(
     private val maxHeldChanges: Int = maxChanges / HELD_SHARE,
     private val onChangeDropped: () -> Unit = {},
     private val onStateLimitApplied: (state: String) -> Unit = {},
+    private val onUndeclaredState: () -> Unit = {},
     private val listener: StateChangeListener? = null,
     private val keepRecent: Boolean = false,
 ) : EventHandler<StateUpdate> {
 
     private val lock = Any()
+
+    /**
+     * What each declared state is, by its name, guarded by [lock]. A state is added by [declare] and never taken out.
+     */
+    private val declared = HashMap<String, DeclaredState>()
+
+    private val declarationHandler = EventHandler<StateDeclaration>(::declare)
 
     /**
      * The number of the last change, guarded by [lock].
@@ -170,57 +187,107 @@ class StateRecorder(
         return null
     }
 
+    /**
+     * Registers this recorder with [eventBus] for the declarations and the updates of every state. A data source emits its
+     * declaration before its first update, on one thread, and the bus delivers each as it is emitted, so the declaration is
+     * always here first. One emitted before this is called is lost, and every update of that state is then discarded.
+     */
+    fun listenTo(eventBus: EventBus) {
+        eventBus.addHandler(StateDeclaration.KEY, declarationHandler)
+        eventBus.addHandler(StateUpdate.KEY, this)
+    }
+
+    /**
+     * Makes the state [declaration] names one this recorder records, with the limit and the attribute keys it gives. The
+     * first declaration of a name stands: a state has one limit for the life of the process, so a later declaration of the
+     * same name changes nothing. No data source makes one today, since each state has one data source and it declares once.
+     *
+     * Of the keys it gives, those the SDK reserves are left out, and the first [MAX_ATTRIBUTES] of the rest are kept, which
+     * is as many attributes of its own as a change can carry.
+     */
+    fun declare(declaration: StateDeclaration) {
+        synchronized(lock) {
+            if (declaration.state !in declared) {
+                declared[declaration.state] = DeclaredState(
+                    maxChangesInPart = declaration.maxChangesInPart.coerceAtLeast(0),
+                    attributeKeys = declaration.attributeKeys.filterNot { it.isReserved() }.take(MAX_ATTRIBUTES).toSet(),
+                )
+            }
+        }
+    }
+
     override fun onEvent(event: StateUpdate) {
         val value = PropertyUtils.truncate(event.value.toString(), MAX_VALUE_LENGTH)
         val system = SchemaType.State.valueType(event.value) != null
-        synchronized(lock) {
-            if (event.droppedChanges > 0) {
-                // what a reporter never passed on has no place in the order of changes, so it is counted and takes no number
-                val tally = tallyOf(event.state)
-                tally.reported = sumUpToTheMost(tally.reported, event.droppedChanges)
+        val known = synchronized(lock) {
+            val state = declared[event.state]
+            if (state != null) {
+                record(event, state, value, system)
             }
-            val previous = current.values[event.state]
-            if (previous != null && previous.value_ == value && previous.system == system) {
-                return
-            }
-            val stateValue = StateValue(state = event.state, value_ = value, system = system)
-            sequence++
-            val snapshot = if (keepRecent) {
-                current.with(sequence, stateValue, clock.now()).also(::remember)
-            } else {
-                // nothing reads when a change took effect, so the clock is not read for it
-                current.with(sequence, stateValue)
-            }
-            current = snapshot
-
-            // the value was replaced first, so a change that is refused here is still what everything stamped from now on carries
-            val journal = journal
-            if (journal != null && refusedByALimit(event, journal)) {
-                return
-            }
-            val record = StateRecord(
-                sequence = sequence,
-                time_ms = event.timeMs,
-                change = StateChange(value_ = stateValue, attributes = event.attributes.limited()),
-            )
-            if (journal != null) {
-                journal(listOf(record))
-            } else {
-                hold(record)
-            }
-            listener?.onChange(record, snapshot, previous)
+            state != null
+        }
+        if (!known) {
+            // nothing of it was kept: no number, no value, no record. It is only counted, so that it can be seen
+            onUndeclaredState()
         }
     }
 
     /**
-     * Whether a limit refuses the change [event] made while [journal] is in progress: its state's own limit, which is
-     * checked first, or the limit on the journal as a whole. A change that is refused is counted for its state and for
+     * Records the update [event] of the declared state [state], whose value as text is [value]. Called under [lock].
+     */
+    private fun record(event: StateUpdate, state: DeclaredState, value: String, system: Boolean) {
+        if (event.droppedChanges > 0) {
+            // what a reporter never passed on has no place in the order of changes, so it is counted and takes no number
+            val tally = tallyOf(event.state)
+            tally.reported = sumUpToTheMost(tally.reported, event.droppedChanges)
+        }
+        val previous = current.values[event.state]
+        if (previous != null && previous.value_ == value && previous.system == system) {
+            return
+        }
+        val stateValue = StateValue(state = event.state, value_ = value, system = system)
+        sequence++
+        val snapshot = if (keepRecent) {
+            current.with(sequence, stateValue, clock.now()).also(::remember)
+        } else {
+            // nothing reads when a change took effect, so the clock is not read for it
+            current.with(sequence, stateValue)
+        }
+        current = snapshot
+
+        // the value was replaced first, so a change that is refused here is still what everything stamped from now on carries
+        val journal = journal
+        if (journal != null && refusedByALimit(event, state, journal)) {
+            return
+        }
+        val record = StateRecord(
+            sequence = sequence,
+            time_ms = event.timeMs,
+            change = StateChange(value_ = stateValue, attributes = event.attributes.limitedTo(state.attributeKeys)),
+        )
+        if (journal != null) {
+            journal(listOf(record))
+        } else {
+            hold(record)
+        }
+        listener?.onChange(record, snapshot, previous)
+    }
+
+    /**
+     * Whether a limit refuses the change [event] made while [journal] is in progress: the limit [state] was declared with,
+     * which is checked first, or the limit on the journal as a whole. A change that is refused is counted for its state and for
      * the journal, and one that is not is counted towards both limits. The first change of a part that a limit refuses
      * also has that limit recorded in [journal], once for each state's own and once for the journal's. Called under [lock].
      */
-    private fun refusedByALimit(event: StateUpdate, journal: (List<StateRecord>) -> Unit): Boolean {
+    private fun refusedByALimit(
+        event: StateUpdate,
+        state: DeclaredState,
+        journal: (List<StateRecord>) -> Unit,
+    ): Boolean {
         val tally = tallyOf(event.state)
-        val byItsOwnLimit = tally.listed >= event.maxChangesInPart
+        // the number of the state's last change in the part, which its final value holds from if a change of it is refused
+        tally.lastChange = sequence
+        val byItsOwnLimit = tally.listed >= state.maxChangesInPart
         if (!byItsOwnLimit && recorded < maxChanges) {
             tally.listed++
             recorded++
@@ -230,11 +297,10 @@ class StateRecorder(
         tally.refused++
         dropped++
         if (byItsOwnLimit) {
-            val limit = event.maxChangesInPart.coerceAtLeast(0)
             val firstInThePart = tally.limit == null
-            tally.limit = limit
+            tally.limit = state.maxChangesInPart
             if (firstInThePart) {
-                journal(listOf(limitReached(event, limit, event.state)))
+                journal(listOf(limitReached(event, state.maxChangesInPart, event.state)))
             }
             onStateLimitApplied(event.state)
         } else {
@@ -331,10 +397,7 @@ class StateRecorder(
                         } else {
                             emptyList()
                         },
-                        dropped_counts = tallies.mapNotNull { (state, tally) ->
-                            val count = sumUpToTheMost(tally.refused, tally.reported)
-                            if (count > 0) StateDroppedCount(state = state, count = count, limit = tally.limit) else null
-                        },
+                        dropped_counts = tallies.mapNotNull { (state, tally) -> tally.droppedCount(state) },
                         global_limit = if (globalLimitApplied) maxChanges else null,
                     ),
                 ),
@@ -373,17 +436,35 @@ class StateRecorder(
         }
     }
 
-    private fun Map<String, String>.limited(): Map<String, String> {
-        if (isEmpty()) {
-            return this
+    /**
+     * What the journal's end says of [state] if the journal does not list every change of it: how many it does not list,
+     * the state's own limit if that refused one, and the number of the state's last change if a limit refused one, which
+     * is where the value the part ended with holds from. Null if every change of the state is listed.
+     */
+    private fun StateTally.droppedCount(state: String): StateDroppedCount? {
+        val count = sumUpToTheMost(refused, reported)
+        if (count == 0) {
+            return null
         }
-        val limited = LinkedHashMap<String, String>(minOf(size, MAX_ATTRIBUTES))
+        return StateDroppedCount(
+            state = state,
+            count = count,
+            limit = limit,
+            final_sequence = if (refused > 0) lastChange else null,
+        )
+    }
+
+    /**
+     * The attributes of a change that it keeps: those under one of [keys], which are the keys its state was declared with,
+     * no more than [MAX_ATTRIBUTES] of them and none of them reserved. Every other attribute is dropped.
+     */
+    private fun Map<String, String>.limitedTo(keys: Set<String>): Map<String, String> {
+        if (isEmpty() || keys.isEmpty()) {
+            return emptyMap()
+        }
+        val limited = LinkedHashMap<String, String>(minOf(size, keys.size))
         for ((key, value) in this) {
-            // a reserved key is dropped before the count is applied, so that it uses up none of what a change can carry
-            if (!key.isReserved()) {
-                if (limited.size == MAX_ATTRIBUTES) {
-                    break
-                }
+            if (key in keys) {
                 limited[PropertyUtils.truncate(key, MAX_KEY_LENGTH)] = PropertyUtils.truncate(value, MAX_VALUE_LENGTH)
             }
         }
@@ -391,14 +472,21 @@ class StateRecorder(
     }
 
     /**
-     * Whether a change's own attribute may not use this key: it is under [RESERVED_KEY_PREFIX], which is the SDK's, or
-     * under v1's stem, or is one of the two stems alone, so that none of a change's attributes can replace or sit beside
-     * one the SDK sets. There is no exception: the count of transitions an instrumentation dropped, which v1 writes
-     * under its stem, is reported as [StateUpdate.droppedChanges] and counted for the state.
+     * Whether a change's own attribute may not use this key, so that a declaration that names it does not get it: it is
+     * under [RESERVED_KEY_PREFIX], which is the SDK's, or under v1's stem, or is one of the two stems alone, so that none
+     * of a change's attributes can replace or sit beside one the SDK sets. There is no exception: the count of transitions
+     * an instrumentation dropped, which v1 writes under its stem, is reported as [StateUpdate.droppedChanges] and counted
+     * for the state.
      */
     private fun String.isReserved(): Boolean =
         startsWith(RESERVED_KEY_PREFIX) || this == RESERVED_KEY_PREFIX.removeSuffix(".") ||
             startsWith(V1_KEY_PREFIX) || this == V1_KEY_PREFIX.removeSuffix(".")
+
+    /**
+     * What a state was declared to be: the most changes of it that one session part lists, and the keys its changes'
+     * attributes may use.
+     */
+    private class DeclaredState(val maxChangesInPart: Int, val attributeKeys: Set<String>)
 
     /**
      * What a journal in progress lists, and does not list, of one state.
@@ -423,6 +511,11 @@ class StateRecorder(
          * The state's own limit, if that refused a change of the state during the part.
          */
         var limit: Int? = null
+
+        /**
+         * The number of the last change of the state made during the part, listed or refused.
+         */
+        var lastChange = 0L
     }
 
     companion object {

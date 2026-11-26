@@ -64,6 +64,12 @@ object StateAttributes {
     const val FINAL_VALUE_TYPE_PREFIX: String = "emb.app.state.final_value_type."
 
     /**
+     * Followed by a state's name: the number of the state's last change in a session part, for a state that had a change
+     * refused by a limit. The state's final value holds from that number to the part's end.
+     */
+    const val FINAL_SEQUENCE_PREFIX: String = "emb.app.state.final_seq."
+
+    /**
      * The number of the last state change that the opening values of a session part's change log are as of.
      */
     const val INITIAL_SEQUENCE: String = "emb.app.state.initial_seq"

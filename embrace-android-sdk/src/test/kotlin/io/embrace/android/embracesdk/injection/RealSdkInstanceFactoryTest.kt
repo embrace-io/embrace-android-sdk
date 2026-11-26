@@ -27,6 +27,7 @@ import io.embrace.android.embracesdk.internal.arch.InstrumentationProvider
 import io.embrace.android.embracesdk.internal.arch.InstrumentationRegistry
 import io.embrace.android.embracesdk.internal.arch.datasource.DataSource
 import io.embrace.android.embracesdk.internal.arch.datasource.DataSourceFactory
+import io.embrace.android.embracesdk.internal.arch.datasource.StateDeclaration
 import io.embrace.android.embracesdk.internal.arch.datasource.StateUpdate
 import io.embrace.android.embracesdk.internal.arch.state.ProcessState
 import io.embrace.android.embracesdk.internal.arch.state.ProcessStateListener
@@ -328,9 +329,11 @@ internal class RealSdkInstanceFactoryTest {
         val overrides = SdkOverrides(
             otelSdkConfig = { real -> real().also { otelSdkConfig = it } },
             eventBus = { real -> real().also { eventBus = it } },
-            // made once the recorder is handling updates, and before the SDK says it is ready
+            // made once the recorder is listening, and before the SDK says it is ready: a state is declared and given a
+            // value, as its data source would
             sessionOrchestrator = { real ->
                 real().also {
+                    checkNotNull(eventBus).emit(StateDeclaration.KEY, StateDeclaration("network"))
                     checkNotNull(eventBus).emit(StateUpdate.KEY, StateUpdate("network", "wifi", clock.now()))
                     beforeReady = emitLog()
                 }

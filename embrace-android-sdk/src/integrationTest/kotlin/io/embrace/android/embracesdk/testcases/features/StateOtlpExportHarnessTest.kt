@@ -65,8 +65,8 @@ import java.util.concurrent.ConcurrentLinkedQueue
  * makes about 20 state changes, about 30 spans and about 20 logs. One span runs across a change of the network, one starts
  * in the first session part and ends in the second, and one is recorded after the fact.
  *
- * Beside `network`, `power` and `screen-automatic`, two more states are in what is sent: `personas`, which the proof of
- * concept reports as a state, and `test`, from a data source the tests' fakes register in every integration test.
+ * Beside `network`, `power` and `screen-automatic`, one more state is in what is sent: `test`, from a data source the
+ * tests' fakes register in every integration test.
  */
 @RunWith(AndroidJUnit4::class)
 internal class StateOtlpExportHarnessTest {

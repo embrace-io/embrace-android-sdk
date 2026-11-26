@@ -9,6 +9,7 @@ import io.embrace.android.embracesdk.fakes.FakeErrorHandler
 import io.embrace.android.embracesdk.fakes.FakeInternalTelemetryService
 import io.embrace.android.embracesdk.fakes.FakeSectionRecorder
 import io.embrace.android.embracesdk.fakes.TestUuidSource
+import io.embrace.android.embracesdk.internal.arch.datasource.StateDeclaration
 import io.embrace.android.embracesdk.internal.arch.datasource.StateUpdate
 import io.embrace.android.embracesdk.internal.arch.schema.EmbType
 import io.embrace.android.embracesdk.internal.capture.state.StateRecorder
@@ -145,7 +146,7 @@ internal class SessionPartWriterImplTest {
 
     @Test
     fun `state changes are journaled with the session part they were made in or the next to start`() {
-        val recorder = StateRecorder(clock)
+        val recorder = StateRecorder(clock).apply { declare(StateDeclaration("network")) }
         val writer = createWriter(stateRecorder = recorder)
 
         // no session part is in progress, so this is held for the next one
@@ -182,6 +183,8 @@ internal class SessionPartWriterImplTest {
         // room in a journal for every change, and for few enough between two that some are folded
         val changes = RACING_REPORTERS * RACING_UPDATES
         val recorder = StateRecorder(clock, maxChanges = changes, maxHeldChanges = RACING_HELD_CHANGES)
+        // each reporter's state is declared with the limit a state has unless it is a named exception
+        repeat(RACING_REPORTERS) { reporter -> recorder.declare(StateDeclaration("state-$reporter")) }
         val writer = createWriter(worker = BackgroundWorker(persistence), stateRecorder = recorder)
         val start = CountDownLatch(1)
         val reporters = (0 until RACING_REPORTERS).map { reporter ->
@@ -245,7 +248,7 @@ internal class SessionPartWriterImplTest {
                 // every refusal was a state's own limit, and the count for each state says whose
                 assertNull(partEnd.global_limit)
                 assertEquals(partEnd.dropped_changes, partEnd.dropped_counts.sumOf { it.count })
-                assertTrue(partEnd.dropped_counts.all { it.limit == StateUpdate.DEFAULT_MAX_CHANGES_IN_PART })
+                assertTrue(partEnd.dropped_counts.all { it.limit == StateDeclaration.DEFAULT_MAX_CHANGES_IN_PART })
                 // and each of those limits was recorded once as it was first reached
                 assertEquals(
                     partEnd.dropped_counts.map { it.state to it.limit }.sortedBy { it.first },

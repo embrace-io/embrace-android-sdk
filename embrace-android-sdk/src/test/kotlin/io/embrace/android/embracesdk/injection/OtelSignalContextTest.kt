@@ -3,6 +3,7 @@ package io.embrace.android.embracesdk.injection
 import io.embrace.android.embracesdk.fakes.FakeClock
 import io.embrace.android.embracesdk.fakes.FakeSessionIdsProvider
 import io.embrace.android.embracesdk.fakes.FakeUserService
+import io.embrace.android.embracesdk.internal.arch.datasource.StateDeclaration
 import io.embrace.android.embracesdk.internal.arch.datasource.StateUpdate
 import io.embrace.android.embracesdk.internal.capture.state.StateRecorder
 import io.embrace.android.embracesdk.internal.injection.OtelSignalContext
@@ -14,7 +15,10 @@ import org.junit.Test
 
 internal class OtelSignalContextTest {
 
-    private val recorderWithAState = StateRecorder(FakeClock()).apply { onEvent(StateUpdate("network", "wifi", 1L)) }
+    private val recorderWithAState = StateRecorder(FakeClock()).apply {
+        declare(StateDeclaration("network"))
+        onEvent(StateUpdate("network", "wifi", 1L))
+    }
 
     @Test
     fun `no context is supplied before ready`() {

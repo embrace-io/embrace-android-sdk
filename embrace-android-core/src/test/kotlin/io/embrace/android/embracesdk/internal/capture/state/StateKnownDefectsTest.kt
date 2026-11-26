@@ -8,6 +8,7 @@ import io.embrace.android.embracesdk.fakes.FakeOpenTelemetryLogger
 import io.embrace.android.embracesdk.fakes.OtelSdkMode
 import io.embrace.android.embracesdk.fakes.TestStateDataSource
 import io.embrace.android.embracesdk.fakes.fakeOpenTelemetry
+import io.embrace.android.embracesdk.internal.arch.datasource.StateDeclaration
 import io.embrace.android.embracesdk.internal.arch.datasource.StateUpdate
 import io.embrace.android.embracesdk.internal.clock.millisToNanos
 import io.embrace.android.embracesdk.internal.config.resolved.AutoDataCaptureConfig
@@ -60,7 +61,7 @@ internal class StateKnownDefectsTest {
     @Test
     fun `the event left out when too many are waiting can be the one that says a session part started`() {
         val emitter = emitter(maxPendingEvents = 1)
-        val recorder = StateRecorder(clock, listener = emitter)
+        val recorder = StateRecorder(clock, listener = emitter).declaring("network")
         recorder.onEvent(StateUpdate("network", "wifi", clock.now()))
         recorder.beginJournal(clock.now(), journal::addAll)
 
@@ -71,7 +72,7 @@ internal class StateKnownDefectsTest {
 
     @Test
     fun `a change is listed by when it was recorded and not by its time, so an event can lie outside its span with no mark`() {
-        val recorder = StateRecorder(clock)
+        val recorder = StateRecorder(clock).declaring("network")
         recorder.onEvent(StateUpdate("network", "wifi", PART_START_MS + 500))
         recorder.beginJournal(PART_START_MS, journal::addAll)
         recorder.onEvent(StateUpdate("network", "wan", PART_START_MS - 500))
@@ -101,6 +102,7 @@ internal class StateKnownDefectsTest {
     fun `a change folded and a change dropped are reported through the one callback, so one limit name counts both`() {
         var reported = 0
         val recorder = StateRecorder(clock, maxChanges = 2, maxHeldChanges = 1, onChangeDropped = { reported++ })
+            .declaring("network")
         recorder.onEvent(StateUpdate("network", "wifi", clock.now()))
         recorder.onEvent(StateUpdate("network", "wan", clock.now()))
         assertEquals(1, reported)
@@ -119,7 +121,8 @@ internal class StateKnownDefectsTest {
     @Test
     fun `a state's name is not checked, so an empty one and a long one with a line break reach attribute keys and event names`() {
         val unchecked = "line\nbreak " + "x".repeat(5_000)
-        val recorder = StateRecorder(clock)
+        // a name is taken as its data source declares it
+        val recorder = StateRecorder(clock).declaring("", unchecked)
         recorder.beginJournal(clock.now(), journal::addAll)
         recorder.onEvent(StateUpdate("", "empty", clock.now()))
         recorder.onEvent(StateUpdate(unchecked, "long", clock.now()))
@@ -146,7 +149,7 @@ internal class StateKnownDefectsTest {
         val recorder = StateRecorder(clock)
         val emitted = mutableListOf<StateUpdate>()
         args.eventBus.addHandler(StateUpdate.KEY) { emitted += it }
-        args.eventBus.addHandler(StateUpdate.KEY, recorder)
+        recorder.listenTo(args.eventBus)
         val dataSource = TestStateDataSource(args)
         dataSource.onDataCaptureEnabled()
         recorder.beginJournal(clock.now(), journal::addAll)
@@ -163,6 +166,13 @@ internal class StateKnownDefectsTest {
         assertEquals(2L, recorder.snapshot().sequence)
         assertEquals(2, journal.count { it.change != null })
         assertEquals(emptyList<Any>(), checkNotNull(journal.last().part_end).dropped_counts)
+    }
+
+    /**
+     * This recorder with each of [states] declared, as a data source declares its state when its capture starts.
+     */
+    private fun StateRecorder.declaring(vararg states: String): StateRecorder = apply {
+        states.forEach { declare(StateDeclaration(it)) }
     }
 
     /**

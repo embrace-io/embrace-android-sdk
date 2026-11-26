@@ -7,8 +7,10 @@ import io.embrace.android.embracesdk.assertions.hasLinkToEmbraceSpan
 import io.embrace.android.embracesdk.fakes.TestStateDataSource
 import io.embrace.android.embracesdk.fakes.config.FakeEnabledFeatureConfig
 import io.embrace.android.embracesdk.fakes.config.FakeInstrumentedConfig
+import io.embrace.android.embracesdk.internal.arch.datasource.StateUpdate
 import io.embrace.android.embracesdk.internal.arch.schema.EmbType
 import io.embrace.android.embracesdk.internal.arch.schema.LinkType
+import io.embrace.android.embracesdk.internal.capture.connectivity.ConnectivityStatus
 import io.embrace.android.embracesdk.internal.config.remote.BackgroundActivityRemoteConfig
 import io.embrace.android.embracesdk.internal.config.remote.RemoteConfig
 import io.embrace.android.embracesdk.internal.otel.sdk.findAttributeValue
@@ -50,11 +52,14 @@ internal class StateJournalFeatureTest(
     @Test
     fun `changes of every state are delivered in the order they were made, as one span of their session part`() {
         testRule.runTest(
+            instrumentedConfig = networkStateCaptured,
             persistedRemoteConfig = journaledConfig(),
             testCaseAction = {
                 recordSession {
                     changeTestState("foo")
-                    embrace.addUserPersona("beta")
+                    simulateConnectivityChange(ConnectivityStatus.Wan(true))
+                    // a state no data source has declared: its update is discarded
+                    eventBus.emit(StateUpdate.KEY, StateUpdate("undeclared", "value", clock.now()))
                     changeTestState("bar")
                     embrace.logInfo("after-bar")
                     changeTestState("baz")
@@ -68,32 +73,45 @@ internal class StateJournalFeatureTest(
                 assertEquals(sessionPartSpan.endTimeNanos, stateSpan.endTimeNanos)
                 assertTrue(sessionPartSpan.hasLinkToEmbraceSpan(stateSpan, LinkType.State))
 
-                // the test state and the personas were both captured before this part started
+                // the test state and the network were both declared and captured before this part started: the value a
+                // data source starts with reached the recorder after its declaration, and is what the span opens with
                 val attributes = checkNotNull(stateSpan.attributes)
                 assertEquals("UNKNOWN", attributes.findAttributeValue("emb.app.state.initial_value.test"))
-                assertNotNull(attributes.findAttributeValue("emb.app.state.initial_value.personas"))
+                assertNotNull(attributes.findAttributeValue("emb.app.state.initial_value.network"))
 
-                // a state the SDK defines and a piece of user metadata, in one order
+                // two states of two data sources, in one order
                 val events = stateSpan.eventsAfterPartStart()
-                val changes = events.filter { it.name == "emb-state-test" || it.name == "emb-state-personas" }
+                val changes = events.filter { it.name == "emb-state-test" || it.name == "emb-state-network" }
                 assertEquals(
-                    listOf("emb-state-test", "emb-state-personas", "emb-state-test", "emb-state-test"),
+                    listOf("emb-state-test", "emb-state-network", "emb-state-test", "emb-state-test"),
                     changes.map { it.name },
                 )
-                assertEquals("foo", changes[0].newValue())
-                // the personas are one value: every persona the user has, in order
-                assertTrue("beta" in checkNotNull(changes[1].newValue()).split(","))
-                assertEquals("bar", changes[2].newValue())
-                assertEquals("baz", changes[3].newValue())
+                assertEquals(listOf("foo", "wan", "bar", "baz"), changes.map { it.newValue() })
 
                 assertNull(attributes.findAttributeValue("emb.app.state.truncated"))
+
+                // the update of a state that was not declared left nothing: no value, no event, no number of its own, only
+                // a count in the SDK's own telemetry
+                assertEquals(
+                    emptyList<String>(),
+                    attributes.mapNotNull { it.key }.filter { it.endsWith(".undeclared") },
+                )
+                assertTrue(checkNotNull(stateSpan.events).none { it.name == "emb-state-undeclared" })
+                assertEquals(stateSpan.sequenceOf(changes[1]) + 1, stateSpan.sequenceOf(changes[2]))
+                assertEquals(
+                    "1",
+                    part.findSessionPartSpan().attributes?.findAttributeValue("emb.private.applied_limit.undeclared_state_update.drop"),
+                )
 
                 // the log was written between two changes, and says so: it carries the sequence of the change before it,
                 // and the value every state had then, which is what the span leads to at that sequence
                 val log = checkNotNull(getSingleLogEnvelope().getLastLog().attributes)
                 val loggedSequence = checkNotNull(log.findAttributeValue("emb.app.state.seq")).toLong()
                 assertEquals(stateSpan.sequenceOf(changes[2]), loggedSequence)
-                assertEquals(stateSpan.valuesAt(loggedSequence), decodeStates(checkNotNull(log.findAttributeValue("emb.app.state.packed"))))
+                val logged = decodeStates(checkNotNull(log.findAttributeValue("emb.app.state.packed")))
+                assertEquals(stateSpan.valuesAt(loggedSequence), logged)
+                assertEquals("wan", logged["network"])
+                assertNull(logged["undeclared"])
             },
         )
     }
@@ -124,12 +142,13 @@ internal class StateJournalFeatureTest(
     @Test
     fun `a state that reaches its limit is counted and no longer listed, while the others are and every log still has its value`() {
         testRule.runTest(
+            instrumentedConfig = networkStateCaptured,
             persistedRemoteConfig = journaledConfig(backgroundActivity = BackgroundActivityRemoteConfig(0f)),
             testCaseAction = {
                 recordSession {
                     // three more changes than a state with no limit of its own lists in a session part
                     repeat(TEST_STATE_LIMIT + 3) { changeTestState("value-$it") }
-                    embrace.addUserPersona("beta")
+                    simulateConnectivityChange(ConnectivityStatus.Wan(true))
                     embrace.logInfo("after-limit")
                 }
                 recordSession {
@@ -141,14 +160,15 @@ internal class StateJournalFeatureTest(
                 val (limited, next) = parts.map { it.stateSpan() }
                 val attributes = checkNotNull(limited.attributes)
 
-                // the first hundred changes of the part are listed, and the personas go on being listed after them
+                // the first hundred changes of the part are listed, and the network goes on being listed after them
                 val events = limited.eventsAfterPartStart()
                 assertEquals(
                     (0 until TEST_STATE_LIMIT).map { "value-$it" },
                     events.filter { it.name == "emb-state-test" }.map { it.newValue() },
                 )
-                val personas = events.last { it.name == "emb-state-personas" }
-                assertTrue(limited.sequenceOf(personas) > limited.sequenceOf(events.last { it.name == "emb-state-test" }) + 3)
+                val lastListed = limited.sequenceOf(events.last { it.name == "emb-state-test" })
+                val network = events.last { it.name == "emb-state-network" }
+                assertEquals(lastListed + 4, limited.sequenceOf(network))
 
                 // what is missing is counted for the part and for the state, with the limit that refused it and the value
                 // the state ended the part with. No other state is counted, and the limit every state shares was not reached.
@@ -156,8 +176,17 @@ internal class StateJournalFeatureTest(
                 assertEquals("3", attributes.findAttributeValue("emb.app.state.dropped_count.test"))
                 assertEquals("$TEST_STATE_LIMIT", attributes.findAttributeValue("emb.app.state.change_limit.test"))
                 assertEquals("value-${TEST_STATE_LIMIT + 2}", attributes.findAttributeValue("emb.app.state.final_value.test"))
+                // and the number of the state's last change, the third one refused: what is numbered from the first gap
+                // up to it has no value for the state, and what is numbered at or after it, as the network's change is,
+                // has the final value
+                assertEquals("${lastListed + 3}", attributes.findAttributeValue("emb.app.state.final_seq.test"))
                 assertEquals(
-                    listOf("emb.app.state.change_limit.test", "emb.app.state.dropped_count.test", "emb.app.state.final_value.test"),
+                    listOf(
+                        "emb.app.state.change_limit.test",
+                        "emb.app.state.dropped_count.test",
+                        "emb.app.state.final_seq.test",
+                        "emb.app.state.final_value.test",
+                    ),
                     attributes.mapNotNull { it.key }.filter { key -> PER_STATE_COUNT_PREFIXES.any(key::startsWith) }.sorted(),
                 )
                 assertNull(attributes.findAttributeValue("emb.app.state.global_change_limit"))
@@ -173,7 +202,7 @@ internal class StateJournalFeatureTest(
                 val logged = decodeStates(checkNotNull(log.findAttributeValue("emb.app.state.packed")))
                 assertEquals("value-${TEST_STATE_LIMIT + 2}", logged["test"])
                 assertEquals("value-${TEST_STATE_LIMIT - 1}", limited.valuesAt(Long.MAX_VALUE)["test"])
-                assertEquals(limited.sequenceOf(personas), checkNotNull(log.findAttributeValue("emb.app.state.seq")).toLong())
+                assertEquals(limited.sequenceOf(network), checkNotNull(log.findAttributeValue("emb.app.state.seq")).toLong())
 
                 // the next part opens with the value the last ended with, and counts from nothing again
                 val nextAttributes = checkNotNull(next.attributes)
@@ -246,12 +275,13 @@ internal class StateJournalFeatureTest(
     @Test
     fun `changes made in a session part the process was killed in are delivered by the next launch, with the limit a state reached`() {
         testRule.runTest(
+            instrumentedConfig = networkStateCaptured,
             persistedRemoteConfig = journaledConfig(),
             testCaseAction = {
                 recordSession(endInBackground = false) {
                     // two more changes than the part lists of the state, and then a change of another state
                     repeat(TEST_STATE_LIMIT + 2) { changeTestState("before-kill-$it") }
-                    embrace.addUserPersona("beta")
+                    simulateConnectivityChange(ConnectivityStatus.Wan(true))
                 }
                 // nothing ends the part or its journal: writes that were not made yet are lost with the process
                 persistenceWorkers.forEach { worker ->
@@ -299,8 +329,8 @@ internal class StateJournalFeatureTest(
                 )
                 assertNull(attributes.findAttributeValue("emb.app.state.dropped_changes"))
                 assertNull(attributes.findAttributeValue("emb.app.state.global_change_limit"))
-                val personas = events.last { it.name == "emb-state-personas" }
-                assertTrue(stateSpan.sequenceOf(personas) > stateSpan.sequenceOf(events.last { it.name == "emb-state-test" }) + 2)
+                val network = events.last { it.name == "emb-state-network" }
+                assertEquals(stateSpan.sequenceOf(events.last { it.name == "emb-state-test" }) + 3, stateSpan.sequenceOf(network))
             },
         )
     }
@@ -375,7 +405,14 @@ internal class StateJournalFeatureTest(
         /**
          * The starts of the attributes a change log has for a state it does not list every change of.
          */
-        val PER_STATE_COUNT_PREFIXES = listOf("emb.app.state.dropped_count.", "emb.app.state.change_limit.", "emb.app.state.final_value")
+        val PER_STATE_COUNT_PREFIXES = listOf("emb.app.state.dropped_count.", "emb.app.state.change_limit.", "emb.app.state.final_")
+
+        /**
+         * The network state is captured, beside the test state every integration test has.
+         */
+        val networkStateCaptured = FakeInstrumentedConfig(
+            enabledFeatures = FakeEnabledFeatureConfig(networkConnectivityCapture = true),
+        )
 
         val persistenceWorkers = listOf(
             Worker.Background.SessionPersistenceWorker,

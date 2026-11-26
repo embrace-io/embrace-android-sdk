@@ -22,14 +22,20 @@ import java.util.concurrent.atomic.AtomicReference
  * When state changes are journaled, no span is cut. Every change of value reported to [onStateChange] is emitted on the event
  * bus as a [StateUpdate] instead, for whatever records them to order against the updates of every other state, and session
  * parts are not this data source's concern. Capture then begins when the data source is enabled whatever
- * [captureStateOnCreation] says, so that the state has a value from then on, and the limit on transitions is passed on with
- * each update for whatever records them to apply.
+ * [captureStateOnCreation] says, so that the state has a value from then on. As capture begins, and before the first update,
+ * the data source declares the state on the event bus with a [StateDeclaration]: its name, the limit on transitions, and
+ * [transitionAttributeKeys]. Whatever records the updates applies both, and keeps nothing of a state that was not declared.
+ *
+ * @param maxTransitions the most transitions of the state that one session part keeps.
+ * @param transitionAttributeKeys the keys of the attributes a transition of this state may carry where state changes are
+ * journaled. An attribute under any other key is not kept there.
  */
 abstract class StateDataSource<T : Any>(
     private val args: InstrumentationArgs,
     private val stateTypeFactory: (initialValue: T) -> SchemaType.State<T>,
     defaultValue: T,
     private val maxTransitions: Int = DEFAULT_MAX_TRANSITIONS,
+    private val transitionAttributeKeys: Set<String> = emptySet(),
 ) : SessionPartEndListener, SessionPartChangeListener, DataSourceImpl(
     args = args,
     limitStrategy = UpToLimitStrategy { maxTransitions },
@@ -209,13 +215,11 @@ abstract class StateDataSource<T : Any>(
 
     private fun startStateCapture() {
         if (journaled) {
-            // the value the state starts with is its first update
+            // the state is declared, and the value it starts with is its first update
             synchronized(journalLock) {
                 if (stateCaptureActive.compareAndSet(false, true)) {
-                    args.eventBus.emit(
-                        StateUpdate.KEY,
-                        StateUpdate(stateName, currentState.get(), clock.now(), maxChangesInPart = maxTransitions),
-                    )
+                    declareState()
+                    args.eventBus.emit(StateUpdate.KEY, StateUpdate(stateName, currentState.get(), clock.now()))
                 }
             }
             return
@@ -225,6 +229,15 @@ abstract class StateDataSource<T : Any>(
                 createSessionStateSpan(currentState.get())
             }
         }
+    }
+
+    /**
+     * Declares the state to whatever records its updates: its name, its limit and the keys a transition's attributes may
+     * use. It is emitted once, as capture begins, under [journalLock] and before the first update, so that the first update
+     * finds the state declared.
+     */
+    private fun declareState() {
+        args.eventBus.emit(StateDeclaration.KEY, StateDeclaration(stateName, maxTransitions, transitionAttributeKeys))
     }
 
     /**
@@ -240,6 +253,9 @@ abstract class StateDataSource<T : Any>(
     ) {
         synchronized(journalLock) {
             val firstUpdate = stateCaptureActive.compareAndSet(false, true)
+            if (firstUpdate) {
+                declareState()
+            }
             val oldState = currentState.getAndSet(newState)
             val changed = firstUpdate || newState != oldState
             if (!changed && droppedTransitions <= 0) {
@@ -258,7 +274,6 @@ abstract class StateDataSource<T : Any>(
                     value = newState,
                     timeMs = transitionTimeMs,
                     attributes = attributes,
-                    maxChangesInPart = maxTransitions,
                     droppedChanges = droppedTransitions.coerceAtLeast(0),
                 ),
             )

@@ -12,6 +12,7 @@ class FakeUiLoadEventListener : UiLoadEventListener {
                 instanceId = instanceId,
                 activityName = activityName,
                 timestampMs = timestampMs,
+                manualEnd = manualEnd,
             ),
         )
     }
@@ -33,6 +34,7 @@ class FakeUiLoadEventListener : UiLoadEventListener {
                 instanceId = instanceId,
                 activityName = activityName,
                 timestampMs = timestampMs,
+                manualEnd = manualEnd,
             ),
         )
     }
@@ -112,5 +114,6 @@ class FakeUiLoadEventListener : UiLoadEventListener {
         val instanceId: Int,
         val activityName: String? = null,
         val timestampMs: Long? = null,
+        val manualEnd: Boolean? = null,
     )
 }

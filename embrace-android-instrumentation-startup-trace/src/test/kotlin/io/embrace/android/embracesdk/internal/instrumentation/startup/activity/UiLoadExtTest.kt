@@ -142,6 +142,26 @@ internal class UiLoadExtTest {
     }
 
     @Test
+    fun `trace decisions are made per activity class`() {
+        createEventEmitter(sdkInt = UPSIDE_DOWN_CAKE, autoTraceEnabled = false, activityClass = FakeTracedActivity::class)
+        val traced = listOf(activityController, Robolectric.buildActivity(FakeTracedActivity::class.java))
+        val notTraced = Robolectric.buildActivity(Activity::class.java)
+        val custom = Robolectric.buildActivity(FakeCustomTracedActivity::class.java)
+
+        (traced + notTraced + custom).forEach {
+            activityController = it
+            stepThroughActivityLifecycle()
+        }
+
+        val starts = uiLoadEventListener.events.filter { it.stage == "create" || it.stage == "start" }
+        val expected = (traced.map { it.get() to false } + (custom.get() to true)).flatMap { (activity, manualEnd) ->
+            listOf("create", "start").map { stage -> Triple(stage, traceInstanceId(activity), manualEnd) }
+        }
+        assertEquals(expected, starts.map { Triple(it.stage, it.instanceId, it.manualEnd) })
+        assertTrue(uiLoadEventListener.events.none { it.instanceId == traceInstanceId(notTraced.get()) })
+    }
+
+    @Test
     fun `closing the event emitter closes the draw event emitter in U`() {
         createEventEmitter(sdkInt = UPSIDE_DOWN_CAKE, autoTraceEnabled = true, activityClass = Activity::class)
         (eventEmitter as AutoCloseable).close()

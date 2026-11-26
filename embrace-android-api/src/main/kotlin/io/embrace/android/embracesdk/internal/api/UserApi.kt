@@ -1,11 +1,8 @@
 package io.embrace.android.embracesdk.internal.api
 
-import io.embrace.android.embracesdk.annotation.InternalApi
-
 /**
  * The public API that is used to set user information.
  */
-@InternalApi
 public interface UserApi {
 
     /**

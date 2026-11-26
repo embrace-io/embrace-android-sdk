@@ -1,12 +1,10 @@
 package io.embrace.android.embracesdk.internal.api
 
 import io.embrace.android.embracesdk.Severity
-import io.embrace.android.embracesdk.annotation.InternalApi
 
 /**
  * The public API that is used to send log messages.
  */
-@InternalApi
 public interface LogsApi {
 
     /**

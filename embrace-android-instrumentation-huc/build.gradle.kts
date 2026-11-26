@@ -9,6 +9,12 @@ android {
     defaultConfig.consumerProguardFiles("embrace-proguard.cfg")
 }
 
+kotlin {
+    compilerOptions {
+        optIn.add("io.embrace.android.embracesdk.annotation.InternalApi")
+    }
+}
+
 dependencies {
 
     compileOnly(project(":embrace-android-core"))

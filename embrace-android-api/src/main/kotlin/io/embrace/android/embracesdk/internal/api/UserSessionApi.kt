@@ -2,12 +2,10 @@ package io.embrace.android.embracesdk.internal.api
 
 import io.embrace.android.embracesdk.PropertyScope
 import io.embrace.android.embracesdk.UserSessionListener
-import io.embrace.android.embracesdk.annotation.InternalApi
 
 /**
  * The public API that is used to interact with user sessions.
  */
-@InternalApi
 public interface UserSessionApi {
 
     /**

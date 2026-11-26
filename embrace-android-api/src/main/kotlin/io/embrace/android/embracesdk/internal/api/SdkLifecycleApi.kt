@@ -1,14 +1,12 @@
 package io.embrace.android.embracesdk.internal.api
 
 import android.content.Context
-import io.embrace.android.embracesdk.annotation.InternalApi
 
 /**
  * Declares the functions of Embrace's public API that start and disable the SDK. You should not use
  * the interface [SdkLifecycleApi] directly or implement it in your own custom classes, as new functions
  * may be added in the future. Use the Embrace class instead.
  */
-@InternalApi
 public interface SdkLifecycleApi {
 
     /**

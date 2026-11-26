@@ -1,8 +1,5 @@
 package io.embrace.android.embracesdk.internal.api
 
-import io.embrace.android.embracesdk.annotation.InternalApi
-
-@InternalApi
 public interface BreadcrumbApi {
 
     /**

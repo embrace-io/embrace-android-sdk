@@ -52,5 +52,5 @@ public fun SdkApi.addJavaLogRecordProcessor(logRecordProcessor: OtelJavaLogRecor
  * If it is set to `true`, the OtelJavaOpenTelemetry instance may behave inconsistently.
  */
 public fun SdkApi.getJavaOpenTelemetry(): OtelJavaOpenTelemetry {
-    return this.getOpenTelemetryKotlin().toOtelJavaApi()
+    return this.getOpenTelemetry().toOtelJavaApi()
 }

@@ -277,7 +277,7 @@ internal class ExternalLoggerTest(
     }
 
     private fun EmbraceActionInterface.initializeOTel() {
-        embOpenTelemetry = embrace.getOpenTelemetryKotlin()
+        embOpenTelemetry = embrace.getOpenTelemetry()
         embLogger = embOpenTelemetry.loggerProvider.getLogger(name = "external-logger", version = "1.1.0")
     }
 

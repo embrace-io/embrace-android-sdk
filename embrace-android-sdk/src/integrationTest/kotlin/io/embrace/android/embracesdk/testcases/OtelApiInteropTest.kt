@@ -60,7 +60,7 @@ internal class OtelApiInteropTest(
     }
 
     private fun EmbraceActionInterface.recordKotlinApiTelemetry() {
-        val otel = embrace.getOpenTelemetryKotlin()
+        val otel = embrace.getOpenTelemetry()
         val span = otel.tracerProvider.getTracer(TRACER_NAME).startSpan(SPAN) {
             setStringAttribute(ATTR_KEY, ATTR_VALUE)
         }

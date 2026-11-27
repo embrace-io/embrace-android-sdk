@@ -34,7 +34,7 @@ object ProfileJourney {
         if (!Embrace.isStarted) {
             return "sdk-not-started"
         }
-        val kotlinOtel = Embrace.getOpenTelemetryKotlin()
+        val kotlinOtel = Embrace.getOpenTelemetry()
         val tracer = kotlinOtel.tracerProvider.getTracer(INSTRUMENTATION_NAME)
         val logger = kotlinOtel.loggerProvider.getLogger(INSTRUMENTATION_NAME)
         val javaOtel = Embrace.getJavaOpenTelemetry()

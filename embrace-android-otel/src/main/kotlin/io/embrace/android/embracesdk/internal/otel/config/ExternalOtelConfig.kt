@@ -19,7 +19,7 @@ class ExternalOtelConfig {
     private val spanProcessors = CopyOnWriteArrayList<SpanProcessor>()
     private val logExporters = CopyOnWriteArrayList<LogRecordExporter>()
     private val logRecordProcessors = CopyOnWriteArrayList<LogRecordProcessor>()
-    private val resourceAttributes: MutableMap<String, String> = ConcurrentHashMap()
+    private val resourceAttributes: MutableMap<String, Any> = ConcurrentHashMap()
 
     fun addSpanExporter(spanExporter: SpanExporter) {
         spanExporters.add(spanExporter)
@@ -37,7 +37,7 @@ class ExternalOtelConfig {
         logRecordProcessors.add(logRecordProcessor)
     }
 
-    fun setResourceAttribute(key: String, value: String) {
+    fun setResourceAttribute(key: String, value: Any) {
         resourceAttributes[key] = value
     }
 
@@ -49,7 +49,7 @@ class ExternalOtelConfig {
 
     fun getLogRecordProcessors(): List<LogRecordProcessor> = logRecordProcessors
 
-    fun getResourceAttributes(): Map<String, String> = resourceAttributes
+    fun getResourceAttributes(): Map<String, Any> = resourceAttributes
 
     fun hasConfiguredOtlpExport(): Boolean = logExporters.isNotEmpty() || logRecordProcessors.isNotEmpty() ||
         spanExporters.isNotEmpty() || spanProcessors.isNotEmpty()

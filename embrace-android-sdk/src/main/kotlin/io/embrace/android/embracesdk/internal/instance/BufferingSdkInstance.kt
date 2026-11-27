@@ -166,7 +166,7 @@ internal class BufferingSdkInstance(
         )
     }
 
-    override fun setResourceAttribute(key: String, value: String) {
+    override fun setResourceAttribute(key: String, value: Any) {
         otelConfigCalls.submit(
             buffer = { calls -> bufferOTelConfig(calls, OTelConfigCall.SetResourceAttribute(key, value)) },
             forward = { it.setResourceAttribute(key, value) },
@@ -213,7 +213,7 @@ internal class BufferingSdkInstance(
 
     override fun getSdkCurrentTimeMs(): Long = clock.now()
 
-    override fun getOpenTelemetryKotlin(): OpenTelemetry = NoopOpenTelemetry
+    override fun getOpenTelemetry(): OpenTelemetry = NoopOpenTelemetry
 
     @Deprecated("This is no longer supported")
     override fun generateW3cTraceparent(): String = DefaultTraceparentGenerator.generateW3cTraceparent()
@@ -318,7 +318,7 @@ internal class BufferingSdkInstance(
         class AddSpanProcessor(val processor: SpanProcessor) : OTelConfigCall()
         class AddLogRecordExporter(val exporter: LogRecordExporter) : OTelConfigCall()
         class AddLogRecordProcessor(val processor: LogRecordProcessor) : OTelConfigCall()
-        class SetResourceAttribute(val key: String, val value: String) : OTelConfigCall()
+        class SetResourceAttribute(val key: String, val value: Any) : OTelConfigCall()
     }
 
     private class CompletedSpanCall(

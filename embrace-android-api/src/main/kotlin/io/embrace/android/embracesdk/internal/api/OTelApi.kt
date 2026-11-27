@@ -39,12 +39,20 @@ public interface OTelApi {
      * Returns an [OpenTelemetry] instance that uses the API from opentelemetry-kotlin. This API
      * is currently experimental and is subject to breaking change without warning.
      */
-    public fun getOpenTelemetryKotlin(): OpenTelemetry
+    public fun getOpenTelemetry(): OpenTelemetry
 
     /**
-     * Set an attribute on the resource used by the OTel SDK instance with the given String key and value.
+     * Returns an [OpenTelemetry] instance that uses the API from opentelemetry-kotlin.
+     */
+    @Deprecated("Use getOpenTelemetry() instead.", ReplaceWith("getOpenTelemetry()"))
+    public fun getOpenTelemetryKotlin(): OpenTelemetry = getOpenTelemetry()
+
+    /**
+     * Set an attribute on the resource used by the OTel SDK instance with the given key and typed value.
+     * The value keeps its type where OTel has a matching attribute type (for example String, Boolean, Long, Double,
+     * or a List of one of those). Any other value is set as a String.
      * The value set will override any value set previously or by the Embrace SDK.
      * This must be called before the SDK is started in order for it to take effect.
      */
-    public fun setResourceAttribute(key: String, value: String)
+    public fun setResourceAttribute(key: String, value: Any)
 }

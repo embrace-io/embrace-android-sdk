@@ -141,7 +141,7 @@ internal class ExperimentsDataDeliveryTest(
         testRule.runTest(
             testCaseAction = {
                 recordSession {
-                    val tracer = embrace.getOpenTelemetryKotlin().getTracer("external-tracer")
+                    val tracer = embrace.getOpenTelemetry().getTracer("external-tracer")
                     val span = tracer.startSpan("external-span")
                     span.setStringAttribute(EmbCommonAttributes.EMB_EXPERIMENTS, "spoof")
                     span.end()

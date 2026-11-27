@@ -56,18 +56,25 @@ class LeakDetectionDataSource internal constructor(
     }
 
     /**
-     * Encodes the GC cycles every currently-tracked suspect survived since the previous report into one session attribute,
-     * back-attributed to whichever session part originally tracked each one closed - see [encodeLeakSuspects]. Nothing is
-     * written when there is nothing to report, rather than setting an empty attribute on every session part.
+     * Writes the GC cycles every currently-tracked suspect survived since the previous report as one session attribute,
+     * and the close times of those confirmed since then as another - see [encodeLeakSuspects] and [encodeLeakCandidates].
+     * Both are back-attributed to whichever session part originally tracked each suspect closed. Nothing is written for an
+     * attribute with nothing to report, rather than setting an empty one on every session part.
      */
     override fun onPreSessionEnd() {
         // read once, so that no collection falls between this report and the baseline for the next one
         val cycleCount = leakDetector.currentGcCycleCount()
-        val encoded = encodeLeakSuspects(leakDetector.suspects(previousReportedCycleCount, cycleCount))
+        val suspects = leakDetector.suspects(previousReportedCycleCount, cycleCount)
         previousReportedCycleCount = cycleCount
-        if (encoded.isNotEmpty()) {
+        addIfNotEmpty(EmbSessionAttributes.EMB_MEMORY_LEAK_SUSPECTS, encodeLeakSuspects(suspects))
+        val candidates = encodeLeakCandidates(suspects, clock.now(), dropped = 0)
+        addIfNotEmpty(EmbSessionAttributes.EMB_MEMORY_LEAK_CANDIDATES, candidates)
+    }
+
+    private fun addIfNotEmpty(key: String, value: String) {
+        if (value.isNotEmpty()) {
             captureTelemetry {
-                addSessionPartAttribute(EmbSessionAttributes.EMB_MEMORY_LEAK_SUSPECTS, encoded)
+                addSessionPartAttribute(key, value)
             }
         }
     }

@@ -845,15 +845,8 @@ internal class SdkStateIntegrationTest(
             val listener = UserSessionListener { }
             embrace.addUserSessionListener(listener)
             embrace.removeUserSessionListener(listener)
-            embrace.setUserIdentifier("user-id")
-            embrace.clearUserIdentifier()
-            embrace.setUserEmail("user@example.com")
-            embrace.clearUserEmail()
-            embrace.addUserPersona("persona")
-            embrace.clearUserPersona("persona")
-            embrace.clearAllUserPersonas()
-            embrace.setUsername("username")
-            embrace.clearUsername()
+            embrace.userIdentifier = "user-id"
+            embrace.userIdentifier = null
             embrace.addBreadcrumb("breadcrumb")
             embrace.appReady()
             embrace.activityLoaded(activity)

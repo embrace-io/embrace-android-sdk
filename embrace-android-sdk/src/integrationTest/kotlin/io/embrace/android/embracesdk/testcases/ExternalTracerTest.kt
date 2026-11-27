@@ -271,13 +271,13 @@ internal class ExternalTracerTest(
                 initializeTracer()
                 recordSession {
                     embTracer.startSpan("no-user-span").end()
-                    embrace.setUserIdentifier("user-abc")
+                    embrace.userIdentifier = "user-abc"
                     val ongoingSpan = embTracer.startSpan("ongoing-span")
                     embTracer.startSpan("user-span").end()
-                    embrace.setUserIdentifier("user-xyz")
+                    embrace.userIdentifier = "user-xyz"
                     embTracer.startSpan("changed-user-span").end()
                     ongoingSpan.end()
-                    embrace.setUserIdentifier(null)
+                    embrace.userIdentifier = null
                     embTracer.startSpan("cleared-user-span").end()
                 }
             },

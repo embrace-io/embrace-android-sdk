@@ -20,74 +20,61 @@ internal class UserFeaturesTest(
     @JvmField
     val testRule: SdkIntegrationTestRule = SdkIntegrationTestRule(otelSdkMode = otelSdkMode)
 
-    @Suppress("DEPRECATION")
     @Test
-    fun `user info setting and clearing`() {
+    fun `user identifier setting and clearing`() {
         testRule.runTest(
             setupAction = {
                 getStore().editAndCommit {
                     putString("io.embrace.userid", "customId")
-                    putString("io.embrace.username", "customUserName")
-                    putString("io.embrace.useremail", "custom@domain.com")
                 }
             },
             testCaseAction = {
-                recordSession()
                 recordSession {
-                    embrace.clearUserIdentifier()
-                    embrace.clearUsername()
-                    embrace.clearUserEmail()
+                    assertEquals("customId", embrace.userIdentifier)
                 }
                 recordSession {
-                    embrace.setUserIdentifier("newId")
-                    embrace.setUsername("newUserName")
-                    embrace.setUserEmail("new@domain.com")
+                    embrace.userIdentifier = null
+                    assertNull(embrace.userIdentifier)
+                }
+                recordSession {
+                    embrace.userIdentifier = "newId"
+                    assertEquals("newId", embrace.userIdentifier)
                 }
                 recordSession()
             },
             assertAction = {
                 val sessions = getSessionEnvelopes(4)
-                sessions[0].assertUserInfo("customId", "customUserName", "custom@domain.com")
-                sessions[1].assertUserInfo(null, null, null)
-                sessions[2].assertUserInfo("newId", "newUserName", "new@domain.com")
-                sessions[3].assertUserInfo("newId", "newUserName", "new@domain.com")
+                sessions[0].assertUserId("customId")
+                sessions[1].assertUserId(null)
+                sessions[2].assertUserId("newId")
+                sessions[3].assertUserId("newId")
             }
         )
     }
 
-    @Suppress("DEPRECATION")
     @Test
-    fun `user info set with the superior storage system enabled stays out of prefs`() {
+    fun `user identifier set with the superior storage system enabled stays out of prefs`() {
         testRule.runTest(
             setupAction = {
                 superiorStorageSystemEnabled = true
             },
             testCaseAction = {
                 recordSession {
-                    embrace.setUserIdentifier("newId")
-                    embrace.setUsername("newUserName")
-                    embrace.setUserEmail("new@domain.com")
+                    embrace.userIdentifier = "newId"
                 }
                 recordSession()
             },
             assertAction = {
                 val sessions = getSessionEnvelopes(2)
-                sessions[0].assertUserInfo("newId", "newUserName", "new@domain.com")
-                sessions[1].assertUserInfo("newId", "newUserName", "new@domain.com")
+                sessions[0].assertUserId("newId")
+                sessions[1].assertUserId("newId")
                 assertNull(testRule.setup.getStore().getString("io.embrace.userid"))
             }
         )
     }
 
-    private fun Envelope<SessionPartPayload>.assertUserInfo(
-        userId: String?,
-        userName: String?,
-        email: String?,
-    ) {
-        val ref = checkNotNull(metadata)
-        assertEquals(userId, ref.userId)
-        assertEquals(userName, ref.username)
-        assertEquals(email, ref.email)
+    private fun Envelope<SessionPartPayload>.assertUserId(userId: String?) {
+        assertEquals(userId, checkNotNull(metadata).userId)
     }
 
     internal companion object {

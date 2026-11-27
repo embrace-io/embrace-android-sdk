@@ -231,9 +231,9 @@ internal class ExternalLoggerTest(
                 initializeOTel()
                 recordSession {
                     embLogger.emit(body = "no-user")
-                    embrace.setUserIdentifier("user-abc")
+                    embrace.userIdentifier = "user-abc"
                     embLogger.emit(body = "with-user")
-                    embrace.setUserIdentifier(null)
+                    embrace.userIdentifier = null
                     embLogger.emit(body = "without-user")
                 }
             },

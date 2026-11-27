@@ -59,11 +59,7 @@ object ProfileJourney {
     @Suppress("DEPRECATION")
     private fun userAndSession(iteration: Int) {
         val key = "profile-${iteration % DISTINCT_KEYS}"
-        Embrace.setUserIdentifier("profile-user-$iteration")
-        Embrace.setUsername("profile-username")
-        Embrace.setUserEmail("profile@example.com")
-        Embrace.addUserPersona(key)
-        Embrace.clearUserPersona(key)
+        Embrace.userIdentifier = "profile-user-$iteration"
         Embrace.addUserSessionProperty(key, "value-$iteration", PropertyScope.USER_SESSION)
         Embrace.addUserSessionProperty("$key-permanent", "value", PropertyScope.PERMANENT)
         Embrace.removeUserSessionProperty("$key-permanent")

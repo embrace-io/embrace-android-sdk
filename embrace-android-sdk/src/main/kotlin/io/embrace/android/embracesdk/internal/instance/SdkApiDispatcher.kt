@@ -163,27 +163,9 @@ internal class SdkApiDispatcher(
     override fun removeUserSessionListener(listener: UserSessionListener) =
         record("remove_user_session_listener") { target.removeUserSessionListener(listener) }
 
-    override fun setUserIdentifier(userId: String?) = record("set_user_identifier") { target.setUserIdentifier(userId) }
-
-    override fun clearUserIdentifier() = record("clear_user_identifier") { target.clearUserIdentifier() }
-
-    @Deprecated("Use discouraged. Personal identifying information shouldn't be stored in telemetry.")
-    override fun setUserEmail(email: String?) = record("set_user_email") { target.setUserEmail(email) }
-
-    @Deprecated("Use discouraged. Personal identifying information shouldn't be stored in telemetry.")
-    override fun clearUserEmail() = record("clear_user_email") { target.clearUserEmail() }
-
-    override fun addUserPersona(persona: String) = record("add_user_persona") { target.addUserPersona(persona) }
-
-    override fun clearUserPersona(persona: String) = record("clear_user_persona") { target.clearUserPersona(persona) }
-
-    override fun clearAllUserPersonas() = record("clear_user_personas") { target.clearAllUserPersonas() }
-
-    @Deprecated("Use discouraged. Personal identifying information shouldn't be stored in telemetry.")
-    override fun setUsername(username: String?) = record("set_username") { target.setUsername(username) }
-
-    @Deprecated("Use discouraged. Personal identifying information shouldn't be stored in telemetry.")
-    override fun clearUsername() = record("clear_username") { target.clearUsername() }
+    override var userIdentifier: String?
+        get() = record("get_user_identifier", null) { target.userIdentifier }
+        set(value) = record("set_user_identifier") { target.userIdentifier = value }
 
     override fun createSpan(name: String, parent: EmbraceSpan?, autoTerminationMode: AutoTerminationMode): EmbraceSpan =
         errorHandler.guardSdkCode(SdkErrorType.PublicApiFail, NoopEmbraceSdkSpan) {

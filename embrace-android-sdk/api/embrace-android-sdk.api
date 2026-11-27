@@ -13,19 +13,13 @@ public final class io/embrace/android/embracesdk/Embrace : io/embrace/android/em
 	public fun addStartupTraceAttribute (Ljava/lang/String;Ljava/lang/String;)V
 	public fun addStartupTraceChildSpan (Ljava/lang/String;JJ)V
 	public fun addStartupTraceChildSpan (Ljava/lang/String;JJLjava/util/Map;Ljava/util/List;Lio/embrace/android/embracesdk/spans/ErrorCode;)V
-	public fun addUserPersona (Ljava/lang/String;)V
 	public fun addUserSessionListener (Lio/embrace/android/embracesdk/UserSessionListener;)V
 	public fun addUserSessionProperty (Ljava/lang/String;Ljava/lang/String;Lio/embrace/android/embracesdk/PropertyScope;)Z
 	public fun appReady ()V
 	public fun applicationInitEnd ()V
 	public fun applicationInitStart ()V
-	public fun clearAllUserPersonas ()V
 	public fun clearNetworkSpanParent ()V
 	public fun clearNetworkSpanParent (Lio/embrace/android/embracesdk/network/NetworkSpanParentToken;)Z
-	public fun clearUserEmail ()V
-	public fun clearUserIdentifier ()V
-	public fun clearUserPersona (Ljava/lang/String;)V
-	public fun clearUsername ()V
 	public fun createExperiment (Ljava/lang/String;Ljava/lang/String;Ljava/lang/Long;)Lio/embrace/android/embracesdk/experiments/TrackedExperiment;
 	public fun createFeatureFlag (Ljava/lang/String;Ljava/lang/String;Ljava/lang/Long;)Lio/embrace/android/embracesdk/experiments/TrackedFeatureFlag;
 	public fun createSpan (Ljava/lang/String;Lio/embrace/android/embracesdk/spans/EmbraceSpan;Lio/embrace/android/embracesdk/spans/AutoTerminationMode;)Lio/embrace/android/embracesdk/spans/EmbraceSpan;
@@ -40,6 +34,7 @@ public final class io/embrace/android/embracesdk/Embrace : io/embrace/android/em
 	public fun getOpenTelemetryKotlin ()Lio/opentelemetry/kotlin/OpenTelemetry;
 	public fun getSdkCurrentTimeMs ()J
 	public fun getSpan (Ljava/lang/String;)Lio/embrace/android/embracesdk/spans/EmbraceSpan;
+	public fun getUserIdentifier ()Ljava/lang/String;
 	public fun isStarted ()Z
 	public fun logCustomStacktrace ([Ljava/lang/StackTraceElement;Lio/embrace/android/embracesdk/Severity;Ljava/util/Map;Ljava/lang/String;)V
 	public fun logError (Ljava/lang/String;)V
@@ -61,9 +56,7 @@ public final class io/embrace/android/embracesdk/Embrace : io/embrace/android/em
 	public fun setNetworkSpanParent (Lio/opentelemetry/kotlin/tracing/SpanContext;)Lio/embrace/android/embracesdk/network/NetworkSpanParentToken;
 	public fun setNetworkSpanParentProvider (Lio/embrace/android/embracesdk/network/NetworkSpanParentProvider;)V
 	public fun setResourceAttribute (Ljava/lang/String;Ljava/lang/String;)V
-	public fun setUserEmail (Ljava/lang/String;)V
 	public fun setUserIdentifier (Ljava/lang/String;)V
-	public fun setUsername (Ljava/lang/String;)V
 	public fun start (Landroid/content/Context;)V
 	public fun startSpan (Ljava/lang/String;Lio/embrace/android/embracesdk/spans/EmbraceSpan;Ljava/lang/Long;Lio/embrace/android/embracesdk/spans/AutoTerminationMode;)Lio/embrace/android/embracesdk/spans/EmbraceSpan;
 	public fun startView (Ljava/lang/String;)Z

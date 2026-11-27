@@ -125,25 +125,14 @@ internal abstract class MultiFilePersistenceParityTestBase(
      * Changes everything in the envelope that a session part persists outside its spans: the user
      * info, and the envelope resource via the hosted SDK version.
      */
-    @Suppress("DEPRECATION")
     protected fun EmbraceActionInterface.changeEnvelopeMetadata(token: String) {
-        embrace.setUserIdentifier("$token-id")
-        embrace.setUsername("$token-name")
-        embrace.setUserEmail("$token@domain.com")
-        embrace.clearAllUserPersonas()
-        embrace.addUserPersona("${token}_persona")
+        embrace.userIdentifier = "$token-id"
         EmbraceInternalApi.flutterInternalInterface.setHostedSdkVersion("$token-sdk")
     }
 
     protected fun Envelope<SessionPartPayload>.assertEnvelopeMetadata(token: String) {
         val metadata = checkNotNull(metadata)
         assertEquals("$token-id", metadata.userId)
-        assertEquals("$token-name", metadata.username)
-        assertEquals("$token@domain.com", metadata.email)
-        assertEquals(
-            setOf("${token}_persona"),
-            metadata.personas.orEmpty().filter { it.endsWith("_persona") }.toSet(),
-        )
         assertEquals("$token-sdk", resource?.hostedSdkVersion)
     }
 

@@ -9,64 +9,11 @@ import io.embrace.android.embracesdk.annotation.InternalApi
 public interface UserApi {
 
     /**
-     * Sets the user ID. This would typically be some form of unique identifier such as a UUID or database key for the user.
-     * This ID will persist across app launches until it is explicitly removed using [clearUserIdentifier]
-     * or otherwise cleared. Do not put personal identifying information such as email addresses in this field.
+     * The user ID. This would typically be some form of unique identifier such as a UUID or database key for the user.
+     * Once set, it persists across app launches until it is otherwise cleared. Set it to null to clear it, for example
+     * when the user logs out. Do not put personal identifying information such as email addresses in this field.
      *
-     * @param userId the unique identifier for the user
+     * Reads return null if no ID is set, the SDK hasn't started, or it has been disabled.
      */
-    public fun setUserIdentifier(userId: String?)
-
-    /**
-     * Clears the currently set user ID. For example, if the user logs out.
-     */
-    public fun clearUserIdentifier()
-
-    /**
-     * Sets the current user's email address.
-     *
-     * @param email the email address of the current user
-     */
-    @Deprecated("Use discouraged. Personal identifying information shouldn't be stored in telemetry.")
-    public fun setUserEmail(email: String?)
-
-    /**
-     * Clears the currently set user's email address.
-     */
-    @Deprecated("Use discouraged. Personal identifying information shouldn't be stored in telemetry.")
-    public fun clearUserEmail()
-
-    /**
-     * Adds a custom user persona. A persona is a trait associated with a given user. A maximum
-     * of 10 personas can be set.
-     *
-     * @param persona the persona to set
-     */
-    public fun addUserPersona(persona: String)
-
-    /**
-     * Clears the custom user persona, if it is set.
-     *
-     * @param persona the persona to clear
-     */
-    public fun clearUserPersona(persona: String)
-
-    /**
-     * Clears all custom user personas from the user.
-     */
-    public fun clearAllUserPersonas()
-
-    /**
-     * Sets the username of the currently logged in user.
-     *
-     * @param username the username to set
-     */
-    @Deprecated("Use discouraged. Personal identifying information shouldn't be stored in telemetry.")
-    public fun setUsername(username: String?)
-
-    /**
-     * Clears the username of the currently logged in user, for example if the user has logged out.
-     */
-    @Deprecated("Use discouraged. Personal identifying information shouldn't be stored in telemetry.")
-    public fun clearUsername()
+    public var userIdentifier: String?
 }

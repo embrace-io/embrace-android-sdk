@@ -69,7 +69,7 @@ internal class SdkApiDispatcherTest {
     @Test
     fun `calls reach the target`() {
         sdk.logInfo("message")
-        sdk.setUserIdentifier("user")
+        sdk.userIdentifier = "user"
         sdk.addUserSessionProperty("key", "value", PropertyScope.PERMANENT)
         assertEquals(listOf("logInfo/1", "setUserIdentifier/1", "addUserSessionProperty/3"), calls)
     }
@@ -109,7 +109,7 @@ internal class SdkApiDispatcherTest {
     fun `public api usage is recorded`() {
         sdk.logInfo("message")
         sdk.logException(RuntimeException())
-        sdk.setUserIdentifier("user")
+        sdk.userIdentifier = "user"
         sdk.endUserSession()
         sdk.trackExperiment("exp")
         sdk.trackExperiments(emptyList())

@@ -44,9 +44,7 @@ internal class UserSessionApiTest(
             ),
             testCaseAction = {
                 startTime = recordSession {
-                    embrace.setUserIdentifier("some id")
-                    embrace.setUserEmail("user@email.com")
-                    embrace.setUsername("John Doe")
+                    embrace.userIdentifier = "some id"
                 }.startTimeMs
             },
             assertAction = {
@@ -85,8 +83,6 @@ internal class UserSessionApiTest(
                     EmbSessionAttributes.EMB_SESSION_END_TYPE to "state",
                     "emb.type" to "ux.session",
                     EmbSessionAttributes.EMB_ERROR_LOG_COUNT to "0",
-                    "emb.usage.set_username" to "1",
-                    "emb.usage.set_user_email" to "1",
                     "emb.usage.set_user_identifier" to "1",
                     EmbSessionAttributes.EMB_STARTUP_DURATION to "0",
                     EmbAppAttributes.EMB_APP_VERSION_STARTUP_COUNTER to "1"

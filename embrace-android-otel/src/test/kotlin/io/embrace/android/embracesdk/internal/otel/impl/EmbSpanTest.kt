@@ -20,6 +20,7 @@ import io.embrace.android.embracesdk.internal.otel.spans.EmbraceSdkSpan
 import io.embrace.android.embracesdk.internal.otel.spans.EmbraceSpanFactoryImpl
 import io.embrace.android.embracesdk.internal.otel.spans.OtelSpanStartArgs
 import io.embrace.android.embracesdk.internal.otel.spans.SpanRepository
+import io.embrace.android.embracesdk.internal.otel.spans.toOtelSpanContext
 import io.opentelemetry.kotlin.Clock
 import io.opentelemetry.kotlin.attributes.AnyValue
 import io.opentelemetry.kotlin.getTracer
@@ -268,7 +269,7 @@ internal class EmbSpanTest(
     @Test
     fun `add span link`() {
         with(embSpan) {
-            val linkedSpanContext = checkNotNull(FakeEmbraceSdkSpan.started().spanContext)
+            val linkedSpanContext = checkNotNull(FakeEmbraceSdkSpan.started().spanContext).toOtelSpanContext()
             addLink(linkedSpanContext) {
                 setBooleanAttribute("boolean", true)
             }
@@ -290,7 +291,7 @@ internal class EmbSpanTest(
                 setAnyValueAttribute("any", AnyValue.StringValue("wrapped"))
                 setByteArrayAttribute("bytes", bytes)
             }
-            addLink(checkNotNull(FakeEmbraceSdkSpan.started().spanContext)) {
+            addLink(checkNotNull(FakeEmbraceSdkSpan.started().spanContext).toOtelSpanContext()) {
                 setAnyValueAttribute("any", AnyValue.BoolValue(true))
                 setByteArrayAttribute("bytes", bytes)
             }
@@ -322,7 +323,7 @@ internal class EmbSpanTest(
             setByteArrayAttribute("bytes", byteArrayOf(1))
             setAnyValueAttribute("any", AnyValue.LongValue(1L))
             addEvent("event")
-            addLink(checkNotNull(FakeEmbraceSdkSpan.started().spanContext))
+            addLink(checkNotNull(FakeEmbraceSdkSpan.started().spanContext).toOtelSpanContext())
             setName("name")
             setStatus(StatusData.Error("error"))
             end()

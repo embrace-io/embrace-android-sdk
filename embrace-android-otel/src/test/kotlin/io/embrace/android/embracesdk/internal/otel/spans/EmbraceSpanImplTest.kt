@@ -148,6 +148,7 @@ internal class EmbraceSpanImplTest(
         with(embraceSpan) {
             assertNull(traceId)
             assertNull(spanId)
+            assertNull(spanContext)
             assertFalse(isRecording)
             assertFalse(addEvent("eventName"))
             assertFalse(addAttribute("first", "value"))
@@ -169,6 +170,13 @@ internal class EmbraceSpanImplTest(
             assertFalse(start())
             assertNotNull(traceId)
             assertNotNull(spanId)
+            with(checkNotNull(spanContext)) {
+                assertEquals(embraceSpan.traceId, traceId)
+                assertEquals(embraceSpan.spanId, spanId)
+                assertTrue(isValid)
+                assertFalse(isRemote)
+                assertTrue(traceFlags.isSampled)
+            }
             assertTrue(isRecording)
             assertEquals(EXPECTED_SPAN_NAME, name())
             assertEquals(SpanKind.INTERNAL, spanKind)
@@ -289,7 +297,7 @@ internal class EmbraceSpanImplTest(
         with(embraceSpan) {
             assertTrue(start())
             val linkedSpan = FakeEmbraceSdkSpan.stopped()
-            val spanContext = checkNotNull(linkedSpan.spanContext)
+            val spanContext = checkNotNull(linkedSpan.spanContext).toOtelSpanContext()
             assertTrue(embraceSpan.addLink(spanContext))
             assertTrue(updateNotified)
         }
@@ -300,7 +308,7 @@ internal class EmbraceSpanImplTest(
         with(embraceSpan) {
             assertTrue(start())
             val linkedSpan = FakeEmbraceSdkSpan.stopped()
-            val spanContext = checkNotNull(linkedSpan.spanContext)
+            val spanContext = checkNotNull(linkedSpan.spanContext).toOtelSpanContext()
             assertTrue(embraceSpan.addSystemLink(spanContext, LinkType.PreviousSessionPart))
             assertTrue(updateNotified)
         }
@@ -500,7 +508,7 @@ internal class EmbraceSpanImplTest(
             assertTrue(addEvent("an-event"))
             assertTrue(
                 addSystemLink(
-                    checkNotNull(FakeEmbraceSdkSpan.stopped().spanContext),
+                    checkNotNull(FakeEmbraceSdkSpan.stopped().spanContext).toOtelSpanContext(),
                     LinkType.PreviousSessionPart,
                 ),
             )
@@ -672,13 +680,13 @@ internal class EmbraceSpanImplTest(
     fun `check system link limits`() {
         assertTrue(embraceSpan.start())
         repeat(dataValidator.otelLimitsConfig.getMaxSystemLinkCount()) {
-            val spanContext = checkNotNull(FakeEmbraceSdkSpan.stopped().spanContext)
+            val spanContext = checkNotNull(FakeEmbraceSdkSpan.stopped().spanContext).toOtelSpanContext()
             assertTrue(embraceSpan.addSystemLink(spanContext, LinkType.PreviousSessionPart))
         }
 
         assertFalse(
             embraceSpan.addSystemLink(
-                checkNotNull(FakeEmbraceSdkSpan.stopped().spanContext),
+                checkNotNull(FakeEmbraceSdkSpan.stopped().spanContext).toOtelSpanContext(),
                 LinkType.PreviousSessionPart,
             ),
         )
@@ -714,7 +722,7 @@ internal class EmbraceSpanImplTest(
 
             val linkedSpan = FakeEmbraceSdkSpan.stopped()
             val linkAttrs = mapOf("link-attr" to "value")
-            val spanContext = checkNotNull(linkedSpan.spanContext)
+            val spanContext = checkNotNull(linkedSpan.spanContext).toOtelSpanContext()
             assertTrue(embraceSpan.addLink(spanContext, linkAttrs))
             assertTrue(embraceSpan.addSystemLink(spanContext, LinkType.PreviousSessionPart))
 
@@ -863,7 +871,7 @@ internal class EmbraceSpanImplTest(
         embraceSpan.addCustomAttribute("custom-list", listOf(true, false))
         embraceSpan.addCustomAttribute("password", 123456L)
         embraceSpan.addCustomEvent("event", null, mapOf("event-double" to 1.0, "password" to 654321L))
-        embraceSpan.addCustomLink(checkNotNull(FakeEmbraceSdkSpan.started().spanContext), mapOf("link-bool" to true))
+        embraceSpan.addCustomLink(checkNotNull(FakeEmbraceSdkSpan.started().spanContext).toOtelSpanContext(), mapOf("link-bool" to true))
         assertEquals(5L, embraceSpan.attributes()["system-long"])
         assertEquals(REDACTED_LABEL, embraceSpan.attributes()["password"])
 
@@ -886,7 +894,7 @@ internal class EmbraceSpanImplTest(
     fun `link attributes are unaffected by the caller mutating the map afterwards`() {
         embraceSpan.start()
         val attributes = mutableMapOf("key" to "value")
-        assertTrue(embraceSpan.addLink(checkNotNull(FakeEmbraceSdkSpan.started().spanContext), attributes))
+        assertTrue(embraceSpan.addLink(checkNotNull(FakeEmbraceSdkSpan.started().spanContext).toOtelSpanContext(), attributes))
         attributes.clear()
         assertEquals(mapOf("key" to "value"), checkNotNull(embraceSpan.snapshot()).links?.single()?.attributes?.toEmbracePayload())
     }
@@ -896,7 +904,7 @@ internal class EmbraceSpanImplTest(
         embraceSpan.start()
         @Suppress("UNCHECKED_CAST")
         val attributes = mapOf<String?, String?>("key" to "value", "null-value" to null, null to "null-key") as Map<String, String>
-        assertTrue(embraceSpan.addLink(checkNotNull(FakeEmbraceSdkSpan.started().spanContext), attributes))
+        assertTrue(embraceSpan.addLink(checkNotNull(FakeEmbraceSdkSpan.started().spanContext).toOtelSpanContext(), attributes))
         assertTrue(embraceSpan.addEvent("event", null, attributes))
 
         assertTrue(embraceSpan.stop())

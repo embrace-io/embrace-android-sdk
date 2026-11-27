@@ -5,6 +5,7 @@ import io.embrace.android.embracesdk.internal.logging.ErrorHandler
 import io.embrace.android.embracesdk.internal.logging.SdkErrorType
 import io.embrace.android.embracesdk.internal.logging.guardSdkCode
 import io.embrace.android.embracesdk.internal.otel.spans.EmbraceSdkSpan
+import io.embrace.android.embracesdk.internal.otel.spans.toOtelSpanContext
 import io.embrace.android.embracesdk.internal.payload.Link
 import io.embrace.android.embracesdk.internal.payload.SpanEvent
 import io.opentelemetry.kotlin.Clock
@@ -79,7 +80,7 @@ class EmbSpan(
     }
 
     override val spanContext: SpanContext
-        get() = guard(null) { impl.spanContext } ?: createInvalidSpanContext()
+        get() = guard(null) { impl.spanContext?.toOtelSpanContext() } ?: createInvalidSpanContext()
 
     override fun isRecording(): Boolean = guard(false) { impl.isRecording }
 
@@ -110,7 +111,7 @@ class EmbSpan(
     }
 
     override val parent: SpanContext
-        get() = guard(null) { impl.parent?.spanContext } ?: createInvalidSpanContext()
+        get() = guard(null) { impl.parent?.spanContext?.toOtelSpanContext() } ?: createInvalidSpanContext()
 
     val spanKind: SpanKind
         get() = guard(SpanKind.INTERNAL) { impl.spanKind }

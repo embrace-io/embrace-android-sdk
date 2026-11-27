@@ -111,7 +111,7 @@ internal class SpanChangeNotificationTest(
             errorHandler = FakeErrorHandler(),
         )
         fakeClock.tick(100)
-        linkTarget = checkNotNull(createSpan().apply { start() }.spanContext)
+        linkTarget = checkNotNull(createSpan().apply { start() }.spanContext).toOtelSpanContext()
         observed.clear()
     }
 

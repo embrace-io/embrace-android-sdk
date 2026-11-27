@@ -201,14 +201,15 @@ private class EmbraceSpanImpl(
 
     override val parent: EmbraceSpan? = parentContext.getEmbraceSpan()
 
-    override val spanContext: SpanContext?
-        get() = startedSpan.get()?.spanContext
+    @Volatile
+    override var spanContext: io.embrace.android.embracesdk.context.SpanContext? = null
+        private set
 
     override val traceId: String?
-        get() = spanContext?.traceId
+        get() = startedSpan.get()?.spanContext?.traceId
 
     override val spanId: String?
-        get() = spanContext?.spanId
+        get() = startedSpan.get()?.spanContext?.spanId
 
     override val isRecording: Boolean
         get() = !discarded && startedSpan.get()?.isRecording() == true
@@ -230,6 +231,7 @@ private class EmbraceSpanImpl(
             val newSpan = args.startSpan(attemptedStartTimeMs)
             if (newSpan.isRecording()) {
                 startedSpan.set(newSpan)
+                spanContext = newSpan.spanContext.toEmbraceSpanContext()
                 startArgs = null
             } else {
                 return@guard false
@@ -472,6 +474,11 @@ private class EmbraceSpanImpl(
             }
             EmbraceLinkData(linkedSpanContext, attrs)
         }
+
+    override fun addLink(linkedSpan: EmbraceSpan, attributes: Map<String, String>): Boolean = guard(false) {
+        val linkedSpanContext = linkedSpan.spanContext ?: return@guard false
+        addCustomLink(linkedSpanContext.toOtelSpanContext(), attributes)
+    }
 
     override fun addLink(linkedSpanContext: SpanContext, attributes: Map<String, String>): Boolean =
         addCustomLink(linkedSpanContext, attributes)

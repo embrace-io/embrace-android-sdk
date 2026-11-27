@@ -17,6 +17,7 @@ import io.embrace.android.embracesdk.internal.otel.spans.EmbraceSdkSpan
 import io.embrace.android.embracesdk.internal.otel.spans.EmbraceSpanFactory
 import io.embrace.android.embracesdk.internal.otel.spans.OtelSpanStartArgs
 import io.embrace.android.embracesdk.internal.otel.spans.SpanRepository
+import io.embrace.android.embracesdk.internal.otel.spans.toOtelSpanContext
 import io.embrace.android.embracesdk.internal.payload.Span
 import io.embrace.android.embracesdk.internal.telemetry.AppliedLimitType
 import io.embrace.android.embracesdk.internal.telemetry.InternalTelemetryService
@@ -150,7 +151,7 @@ internal class CurrentSessionPartSpanImpl(
 
         if (currentSessionPartSpan != spanToStop) {
             val linkAttrs = state?.cachedPartLinkAttrs() ?: emptyMap()
-            spanToStop?.spanContext?.let { spanToStopContext ->
+            spanToStop?.spanContext?.toOtelSpanContext()?.let { spanToStopContext ->
                 if (currentSessionPartSpan != null) {
                     currentSessionPartSpan.addSystemLink(
                         linkedSpanContext = spanToStopContext,
@@ -167,7 +168,7 @@ internal class CurrentSessionPartSpanImpl(
                 }
             }
 
-            currentSessionPartSpan?.spanContext?.let { sessionPartSpanContext ->
+            currentSessionPartSpan?.spanContext?.toOtelSpanContext()?.let { sessionPartSpanContext ->
                 spanToStop?.addSystemLink(
                     linkedSpanContext = sessionPartSpanContext,
                     type = LinkType.EndSessionPart,
@@ -203,7 +204,7 @@ internal class CurrentSessionPartSpanImpl(
 
                 if (appTerminationCause == null) {
                     endingSessionPartSpan.stop()
-                    lastSessionPartLink = endingSessionPartSpan.spanContext?.let {
+                    lastSessionPartLink = endingSessionPartSpan.spanContext?.toOtelSpanContext()?.let {
                         EmbraceLinkData(it, endingState.cachedPartLinkAttrs())
                     }
                     spanRepository.clearCompletedEmbraceSpans()

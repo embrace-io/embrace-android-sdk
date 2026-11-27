@@ -20,6 +20,8 @@ import io.embrace.android.embracesdk.internal.otel.spans.SpanTerminationMode
 import io.embrace.android.embracesdk.internal.otel.spans.getEmbraceSpan
 import io.embrace.android.embracesdk.internal.otel.spans.toAutoTerminationMode
 import io.embrace.android.embracesdk.internal.otel.spans.toErrorCodeAttribute
+import io.embrace.android.embracesdk.internal.otel.spans.toEmbraceSpanContext
+import io.embrace.android.embracesdk.internal.otel.spans.toOtelSpanContext
 import io.embrace.android.embracesdk.internal.otel.toEmbracePayload
 import io.embrace.android.embracesdk.internal.payload.Link
 import io.embrace.android.embracesdk.internal.payload.SpanEvent
@@ -64,14 +66,14 @@ class FakeEmbraceSdkSpan(
     override val parent: EmbraceSpan?
         get() = parentContext.getEmbraceSpan()
 
-    override val spanContext: SpanContext?
-        get() = sdkSpan?.spanContext
+    override val spanContext: io.embrace.android.embracesdk.context.SpanContext?
+        get() = sdkSpan?.spanContext?.toEmbraceSpanContext()
 
     override val traceId: String?
-        get() = spanContext?.traceId
+        get() = sdkSpan?.spanContext?.traceId
 
     override val spanId: String?
-        get() = spanContext?.spanId
+        get() = sdkSpan?.spanContext?.spanId
 
     var discarded: Boolean = false
         private set
@@ -95,7 +97,7 @@ class FakeEmbraceSdkSpan(
             spanId = Random.nextBytes(8).toHexString(),
         ),
         startTimestamp = timestampMs.millisToNanos(),
-        parent = parentContext.getEmbraceSpan()?.spanContext
+        parent = parentContext.getEmbraceSpan()?.spanContext?.toOtelSpanContext()
             ?: createInvalidSpanContext()
     )
 
@@ -167,6 +169,9 @@ class FakeEmbraceSdkSpan(
         name = newName
         return true
     }
+
+    override fun addLink(linkedSpan: EmbraceSpan, attributes: Map<String, String>): Boolean =
+        linkedSpan.spanContext?.let { addLink(it.toOtelSpanContext(), attributes) } ?: false
 
     override fun addLink(linkedSpanContext: SpanContext, attributes: Map<String, String>): Boolean =
         addCustomLink(linkedSpanContext, attributes)

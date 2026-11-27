@@ -26,6 +26,7 @@ import io.embrace.android.embracesdk.internal.clock.millisToNanos
 import io.embrace.android.embracesdk.internal.otel.sdk.findAttributeValue
 import io.embrace.android.embracesdk.internal.otel.sdk.id.OtelIds
 import io.embrace.android.embracesdk.internal.otel.spans.NoopEmbraceSdkSpan
+import io.embrace.android.embracesdk.internal.otel.spans.toOtelSpanContext
 import io.embrace.android.embracesdk.internal.payload.Attribute
 import io.embrace.android.embracesdk.internal.payload.Span
 import io.embrace.android.embracesdk.internal.payload.SpanEvent
@@ -399,7 +400,7 @@ internal class TracingApiTest(
     @Test
     fun `span links`() {
         val fakeSpan = FakeEmbraceSdkSpan.started()
-        val remoteSpanContext = checkNotNull(fakeSpan.spanContext)
+        val remoteSpanContext = checkNotNull(fakeSpan.spanContext).toOtelSpanContext()
         testRule.runTest(
             testCaseAction = {
                 recordSession {

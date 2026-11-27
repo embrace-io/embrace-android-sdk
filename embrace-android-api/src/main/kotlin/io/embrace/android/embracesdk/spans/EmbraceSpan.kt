@@ -9,9 +9,9 @@ import io.opentelemetry.kotlin.tracing.SpanContext
 public interface EmbraceSpan {
 
     /**
-     * The [SpanContext] for this [EmbraceSpan] instance. This is null if the span has not been started.
+     * The span context for this [EmbraceSpan] instance. This is null if the span has not been started.
      */
-    public val spanContext: SpanContext?
+    public val spanContext: io.embrace.android.embracesdk.context.SpanContext?
 
     /**
      * ID of the Trace that this Span belongs to. The format adheres to the OpenTelemetry standard for Trace IDs
@@ -93,14 +93,7 @@ public interface EmbraceSpan {
     public fun addLink(
         linkedSpan: EmbraceSpan,
         attributes: Map<String, String> = emptyMap(),
-    ): Boolean {
-        val spanContext = linkedSpan.spanContext
-        return if (spanContext != null) {
-            addLink(linkedSpanContext = spanContext, attributes = attributes)
-        } else {
-            false
-        }
-    }
+    ): Boolean
 
     /**
      * Add a link to the span with the given [SpanContext] with the given attributes

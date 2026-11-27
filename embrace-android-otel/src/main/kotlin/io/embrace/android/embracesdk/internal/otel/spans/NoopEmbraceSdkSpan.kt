@@ -16,7 +16,7 @@ import io.opentelemetry.kotlin.tracing.StatusData
 
 object NoopEmbraceSdkSpan : EmbraceSdkSpan {
 
-    override val spanContext: SpanContext? = null
+    override val spanContext: io.embrace.android.embracesdk.context.SpanContext? = null
     override val traceId: String? = null
     override val spanId: String? = null
     override val isRecording: Boolean = false
@@ -46,6 +46,8 @@ object NoopEmbraceSdkSpan : EmbraceSdkSpan {
     override fun addAttribute(key: String, value: String): Boolean = false
 
     override fun updateName(newName: String): Boolean = false
+
+    override fun addLink(linkedSpan: EmbraceSpan, attributes: Map<String, String>): Boolean = false
 
     override fun addLink(
         linkedSpanContext: SpanContext,

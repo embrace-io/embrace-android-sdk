@@ -5,6 +5,7 @@ import io.embrace.android.embracesdk.internal.logging.SdkErrorType
 import io.embrace.android.embracesdk.internal.otel.sdk.toEmbraceObjectName
 import io.embrace.android.embracesdk.internal.otel.spans.EmbraceSdkSpan
 import io.embrace.android.embracesdk.internal.otel.spans.SpanService
+import io.embrace.android.embracesdk.internal.otel.spans.toOtelSpanContext
 import io.embrace.android.embracesdk.internal.telemetry.AppliedLimitType
 import io.embrace.android.embracesdk.internal.telemetry.InternalTelemetryService
 import io.embrace.android.embracesdk.internal.utils.NetworkUtils.stripUrl
@@ -66,7 +67,8 @@ internal class NetworkSpanParentServiceImpl(
     override fun appDecision(request: HttpRequestInfo): NetworkSpanParent = decide(request, active)
 
     // a stopped span may no longer be tracked, so its span context alone wouldn't be rejected
-    override fun set(span: EmbraceSpan): NetworkSpanParentToken = set(span.spanContext?.takeIf { span.isRecording })
+    override fun set(span: EmbraceSpan): NetworkSpanParentToken =
+        set(span.spanContext?.takeIf { span.isRecording }?.toOtelSpanContext())
 
     override fun set(spanContext: SpanContext?): NetworkSpanParentToken {
         if (spanContext == null || !spanContext.isValid) {

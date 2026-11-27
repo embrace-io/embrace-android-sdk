@@ -58,6 +58,27 @@ public abstract interface annotation class io/embrace/android/embracesdk/annotat
 public abstract interface annotation class io/embrace/android/embracesdk/annotation/NotTracedActivity : java/lang/annotation/Annotation {
 }
 
+public abstract interface class io/embrace/android/embracesdk/context/SpanContext {
+	public abstract fun getSpanId ()Ljava/lang/String;
+	public abstract fun getSpanIdBytes ()[B
+	public abstract fun getTraceFlags ()Lio/embrace/android/embracesdk/context/TraceFlags;
+	public abstract fun getTraceId ()Ljava/lang/String;
+	public abstract fun getTraceIdBytes ()[B
+	public abstract fun getTraceState ()Lio/embrace/android/embracesdk/context/TraceState;
+	public abstract fun isRemote ()Z
+	public abstract fun isValid ()Z
+}
+
+public abstract interface class io/embrace/android/embracesdk/context/TraceFlags {
+	public abstract fun isRandom ()Z
+	public abstract fun isSampled ()Z
+}
+
+public abstract interface class io/embrace/android/embracesdk/context/TraceState {
+	public abstract fun asMap ()Ljava/util/Map;
+	public abstract fun get (Ljava/lang/String;)Ljava/lang/String;
+}
+
 public abstract interface class io/embrace/android/embracesdk/experiments/TrackedEntry {
 	public abstract fun getId ()Ljava/lang/String;
 	public abstract fun getStartedAt ()Ljava/lang/Long;
@@ -368,7 +389,7 @@ public abstract interface class io/embrace/android/embracesdk/spans/EmbraceSpan 
 	public abstract fun addLink (Lio/opentelemetry/kotlin/tracing/SpanContext;Ljava/util/Map;)Z
 	public abstract fun getAutoTerminationMode ()Lio/embrace/android/embracesdk/spans/AutoTerminationMode;
 	public abstract fun getParent ()Lio/embrace/android/embracesdk/spans/EmbraceSpan;
-	public abstract fun getSpanContext ()Lio/opentelemetry/kotlin/tracing/SpanContext;
+	public abstract fun getSpanContext ()Lio/embrace/android/embracesdk/context/SpanContext;
 	public abstract fun getSpanId ()Ljava/lang/String;
 	public abstract fun getTraceId ()Ljava/lang/String;
 	public abstract fun isRecording ()Z
@@ -380,7 +401,6 @@ public abstract interface class io/embrace/android/embracesdk/spans/EmbraceSpan 
 
 public final class io/embrace/android/embracesdk/spans/EmbraceSpan$DefaultImpls {
 	public static synthetic fun addEvent$default (Lio/embrace/android/embracesdk/spans/EmbraceSpan;Ljava/lang/String;Ljava/lang/Long;Ljava/util/Map;ILjava/lang/Object;)Z
-	public static fun addLink (Lio/embrace/android/embracesdk/spans/EmbraceSpan;Lio/embrace/android/embracesdk/spans/EmbraceSpan;Ljava/util/Map;)Z
 	public static synthetic fun addLink$default (Lio/embrace/android/embracesdk/spans/EmbraceSpan;Lio/embrace/android/embracesdk/spans/EmbraceSpan;Ljava/util/Map;ILjava/lang/Object;)Z
 	public static synthetic fun addLink$default (Lio/embrace/android/embracesdk/spans/EmbraceSpan;Lio/opentelemetry/kotlin/tracing/SpanContext;Ljava/util/Map;ILjava/lang/Object;)Z
 	public static synthetic fun recordException$default (Lio/embrace/android/embracesdk/spans/EmbraceSpan;Ljava/lang/Throwable;Ljava/util/Map;ILjava/lang/Object;)Z

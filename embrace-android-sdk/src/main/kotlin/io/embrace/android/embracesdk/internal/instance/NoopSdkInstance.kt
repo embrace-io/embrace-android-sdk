@@ -81,10 +81,12 @@ internal class NoopSdkInstance(
         logDropped("log_message")
     }
 
+    @Deprecated("Log attachments are deprecated and will be removed in a future release.")
     override fun logMessage(message: String, severity: Severity, attributes: Map<String, Any>, attachment: ByteArray) {
         logDropped("log_message")
     }
 
+    @Deprecated("Log attachments are deprecated and will be removed in a future release.")
     override fun logMessage(
         message: String,
         severity: Severity,

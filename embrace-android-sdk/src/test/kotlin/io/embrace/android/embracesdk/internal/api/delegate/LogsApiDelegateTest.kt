@@ -159,6 +159,7 @@ internal class LogsApiDelegateTest {
     }
 
     @Test
+    @Suppress("DEPRECATION")
     fun `attachment too large tracks drop`() {
         val largeAttachment = ByteArray(2 * 1024 * 1024) // 2MB, exceeds 1MB limit
         delegate.logMessage("test", Severity.INFO, emptyMap(), largeAttachment)
@@ -168,6 +169,7 @@ internal class LogsApiDelegateTest {
     }
 
     @Test
+    @Suppress("DEPRECATION")
     fun `attachment over session limit tracks drop`() {
         val attachment = ByteArray(100) // Small valid attachment
         // Log 6 attachments (limit is 5 per session)
@@ -181,6 +183,7 @@ internal class LogsApiDelegateTest {
     }
 
     @Test
+    @Suppress("DEPRECATION")
     fun `valid attachment does not track drop`() {
         val attachment = ByteArray(100) // Small valid attachment
         delegate.logMessage("test", Severity.INFO, emptyMap(), attachment)

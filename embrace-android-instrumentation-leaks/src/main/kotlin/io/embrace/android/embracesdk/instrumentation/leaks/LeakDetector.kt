@@ -70,7 +70,7 @@ internal class LeakDetector(
      * The number of GC cycles the runtime has performed so far, per [gcCycleCountReader]. Only meaningful as a delta
      * between two reads - see [suspects] and [onSentinelReclaimed].
      */
-    private fun currentGcCycleCount(): Long {
+    fun currentGcCycleCount(): Long {
         val value = gcCycleCountReader()?.toLongOrNull() ?: return lastKnownGcCycleCount
         lastKnownGcCycleCount = value
         return value
@@ -222,23 +222,27 @@ internal class LeakDetector(
 
     /**
      * A snapshot of every confirmed suspect still reachable, safe to hand outside the detector: it never carries the tracked
-     * object itself, only what [trackClosed] was given, its identity, and how many GC cycles it has survived since being
-     * confirmed.
+     * object itself, only what [trackClosed] was given, its identity, and how many GC cycles it has survived between
+     * [baseCycleCount] (the count at the previous report) and [cycleCount]. Suspects that survived none are left out.
      */
-    fun suspects(): List<LeakSnapshot> {
-        val cycleCount = currentGcCycleCount()
+    fun suspects(baseCycleCount: Long, cycleCount: Long): List<LeakSnapshot> {
         return synchronized(trackedSuspects) {
             trackedSuspects.mapNotNull { suspect ->
                 val referent = suspect.get() ?: return@mapNotNull null
                 // The suspectedAtCycle is captured after the first GC cycle (when a TrackedReference becomes a ConfirmedSuspect).
-                // So we +1 here so that cycle is represented in the reporting (instead of reporting a confusing 0 value).
-                val cyclesSurvived = cycleCount - suspect.suspectedAtCycle + 1
-                LeakSnapshot(
-                    suspect.trackedAtMs,
-                    suspect.token,
-                    cyclesSurvived,
-                    System.identityHashCode(referent),
-                )
+                // So one confirmed since the previous report counts from one before it, so that cycle is represented too.
+                val cyclesSurvived = cycleCount - maxOf(baseCycleCount, suspect.suspectedAtCycle - 1)
+
+                if (cyclesSurvived > 0) {
+                    LeakSnapshot(
+                        suspect.trackedAtMs,
+                        suspect.token,
+                        cyclesSurvived,
+                        System.identityHashCode(referent),
+                    )
+                } else {
+                    null
+                }
             }
         }
     }

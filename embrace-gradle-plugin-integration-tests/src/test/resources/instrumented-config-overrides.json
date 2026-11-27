@@ -53,10 +53,6 @@
           "returnValue": "true"
         },
         {
-          "signature": "isHttpUrlConnectionCaptureEnabled()Z",
-          "returnValue": "false"
-        },
-        {
           "signature": "isJvmCrashCaptureEnabled()Z",
           "returnValue": "false"
         },
@@ -75,10 +71,6 @@
         {
           "signature": "isPowerSaveModeCaptureEnabled()Z",
           "returnValue": "false"
-        },
-        {
-          "signature": "isRequestContentLengthCaptureEnabled()Z",
-          "returnValue": "true"
         },
         {
           "signature": "isThreadBlockageCaptureEnabled()Z",

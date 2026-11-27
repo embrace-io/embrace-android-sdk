@@ -23,7 +23,6 @@ include(
     ":embrace-android-instrumentation-crash-jvm",
     ":embrace-android-instrumentation-crash-ndk",
     ":embrace-android-instrumentation-fcm",
-    ":embrace-android-instrumentation-huc",
     ":embrace-android-instrumentation-huc-lite",
     ":embrace-android-instrumentation-leaks",
     ":embrace-android-instrumentation-network-common",

@@ -7,7 +7,7 @@
       "enabled": true
     },
     "networking": {
-      "capture_request_content_length": false
+      "capture_okhttp_response_body_size": false
     },
     "taps": {
       "capture_coordinates": false

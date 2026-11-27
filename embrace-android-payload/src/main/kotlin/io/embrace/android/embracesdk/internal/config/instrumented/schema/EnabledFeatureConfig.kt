@@ -118,13 +118,6 @@ interface EnabledFeatureConfig {
     fun isFcmPiiDataCaptureEnabled(): Boolean = false
 
     /**
-     * Gates whether request content length should be captured
-     *
-     * sdk_config.networking.capture_request_content_length
-     */
-    fun isRequestContentLengthCaptureEnabled(): Boolean = false
-
-    /**
      * Gates whether the size of an OkHttp response body is captured when the response has no
      * Content-Length header. Determining the size in that case requires buffering the entire body
      * into memory, which can cause excessive heap usage or OOM for large/streaming responses, so
@@ -133,13 +126,6 @@ interface EnabledFeatureConfig {
      * sdk_config.networking.capture_okhttp_response_body_size
      */
     fun isOkHttpResponseBodySizeCaptureEnabled(): Boolean = false
-
-    /**
-     * Gates whether HttpUrlConnection network requests should be captured
-     *
-     * sdk_config.networking.enable_native_monitoring
-     */
-    fun isHttpUrlConnectionCaptureEnabled(): Boolean = false
 
     /**
      * Gates whether HUC Lite instrumentation should be enabled

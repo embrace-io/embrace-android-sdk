@@ -11,7 +11,6 @@ class FakeNetworkBehavior(
     private val requestSpanTimeoutMs: Long = 600_000L,
     private val networkSpanParentProviderSlowMs: Long = 5L,
     private val domains: Map<String, Int> = emptyMap(),
-    private val captureHttpUrlConnectionRequests: Boolean = false,
     private val okHttpResponseBodySizeCaptureEnabled: Boolean = false,
     private val hucLiteInstrumentationEnabled: Boolean = true,
     private val urlEnabled: Boolean = true,
@@ -22,9 +21,7 @@ class FakeNetworkBehavior(
     override val configDeliveredAt: Long = FakeClock.DEFAULT_FAKE_CURRENT_TIME,
 ) : NetworkBehavior {
 
-    override fun isRequestContentLengthCaptureEnabled(): Boolean = false
     override fun isOkHttpResponseBodySizeCaptureEnabled(): Boolean = okHttpResponseBodySizeCaptureEnabled
-    override fun isHttpUrlConnectionCaptureEnabled(): Boolean = captureHttpUrlConnectionRequests
     override fun isHucLiteInstrumentationEnabled(): Boolean = hucLiteInstrumentationEnabled
     override fun getLimitsByDomain(): Map<String, Int> = domains
     override fun getRequestLimitPerDomain(): Int = captureLimit

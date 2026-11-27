@@ -45,8 +45,6 @@ import io.embrace.android.embracesdk.internal.instrumentation.crash.LastRunCrash
 import io.embrace.android.embracesdk.internal.instrumentation.crash.jvm.JvmCrashDataSource
 import io.embrace.android.embracesdk.internal.instrumentation.crash.jvm.JvmCrashInstrumentationProvider
 import io.embrace.android.embracesdk.internal.instrumentation.crash.ndk.NativeCrashDataSource
-import io.embrace.android.embracesdk.internal.instrumentation.network.NetworkCaptureDataSource
-import io.embrace.android.embracesdk.internal.instrumentation.network.NetworkRequestDataSource
 import io.embrace.android.embracesdk.internal.instrumentation.network.NetworkStateDataSource
 import io.embrace.android.embracesdk.internal.instrumentation.network.NetworkStatusDataSource
 import io.embrace.android.embracesdk.internal.instrumentation.startup.AppStartupDataCollector
@@ -238,7 +236,6 @@ internal class RealSdkInstance(
         runCatching { processStateTracker.close() }
         runCatching { networkConnectivityService.close() }
         runCatching { instrumentationRegistry.close() }
-        runCatching { resetHucInstrumentation() }
         runCatching { threadBlockageService?.close() }
         runCatching { startupTracker.close() }
         runCatching { otelSdkConfig.value.close() }
@@ -370,8 +367,6 @@ internal class RealSdkInstance(
                     workerThreadPool.backgroundWorker(Worker.Background.IoRegWorker),
                 )
             }
-
-            initializeHucInstrumentation()
         }
     }
 
@@ -394,49 +389,11 @@ internal class RealSdkInstance(
     }
 
     /**
-     * Initializes HttpUrlConnection instrumentation via reflection, if the module is present and capture is enabled.
-     */
-    private fun initializeHucInstrumentation() {
-        val networkBehavior = configService.networkBehavior
-        errorHandler.guardSdkCode(SdkErrorType.Ignored) {
-            if (networkBehavior.isHttpUrlConnectionCaptureEnabled()) {
-                EmbTrace.trace(sectionName = "huc-init", recordDuration = true) {
-                    val trackerClass = Class.forName("io.embrace.android.embracesdk.instrumentation.huc.HttpUrlConnectionTracker")
-                    val objectField = trackerClass.getDeclaredField("INSTANCE")
-                    val trackerObject = objectField.get(null)
-                    val initMethod = trackerClass.getDeclaredMethod(
-                        "registerUrlStreamHandlerFactory",
-                        Boolean::class.java,
-                        InstrumentationArgs::class.java,
-                        NetworkRequestDataSource::class.java,
-                        NetworkCaptureDataSource::class.java,
-                    )
-                    initMethod.invoke(
-                        trackerObject,
-                        networkBehavior.isRequestContentLengthCaptureEnabled(),
-                        instrumentationArgs,
-                        instrumentationRegistry.findByType(NetworkRequestDataSource::class),
-                        instrumentationRegistry.findByType(NetworkCaptureDataSource::class),
-                    )
-                }
-            }
-        }
-    }
-
-    /**
      * Cancels HTTP calls that are already running, which would otherwise block worker shutdown until they time out.
      */
     private fun cancelHttpRequests() {
         if (okHttpClient.isInitialized()) {
             okHttpClient.value.dispatcher.cancelAll()
-        }
-    }
-
-    private fun resetHucInstrumentation() {
-        if (configService.networkBehavior.isHttpUrlConnectionCaptureEnabled()) {
-            val trackerClass = Class.forName("io.embrace.android.embracesdk.instrumentation.huc.HttpUrlConnectionTracker")
-            val trackerObject = trackerClass.getDeclaredField("INSTANCE").get(null)
-            trackerClass.getDeclaredMethod("reset").invoke(trackerObject)
         }
     }
 

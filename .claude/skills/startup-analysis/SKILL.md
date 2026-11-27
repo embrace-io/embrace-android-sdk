@@ -192,8 +192,7 @@ sets the iteration count (default 20).
 ## Missing sections
 
 `tools/startup analyze` prints "not in these traces" for a canonical section with no slice, whether
-the SDK under test doesn't record it or the feature is off (`huc-init` without
-HttpURLConnection capture). Report those explicitly; never present the found set as complete.
+the SDK under test doesn't record it or the feature is off. Report those explicitly; never present the found set as complete.
 
 ## Traces from a released SDK
 

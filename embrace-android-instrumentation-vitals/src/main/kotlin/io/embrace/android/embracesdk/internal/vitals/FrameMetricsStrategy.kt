@@ -15,7 +15,6 @@ import io.embrace.android.embracesdk.internal.vitals.smoothness.SmoothnessReport
  * the frame became visible; `frameDispatchNanos` is when its render work was dispatched, in the same base;
  * `jankBudgetNanos` is how long the frame may render before it counts as jank.
  */
-@RequiresApi(Build.VERSION_CODES.N)
 internal interface FrameMetricsStrategy {
 
     @WorkerThread
@@ -62,7 +61,6 @@ internal interface FrameMetricsStrategy {
          * @param jankHeuristicMultiplier the grace multiplier to apply to the refresh rate before a delayed frame is considered dropped
          * @param versionChecker selects the strategy for the device's API level
          */
-        @RequiresApi(Build.VERSION_CODES.N)
         fun create(
             refreshIntervalNanos: Long,
             jankHeuristicMultiplier: Double = SmoothnessReporter.DEFAULT_JANK_HEURISTIC_MULTIPLIER,
@@ -121,7 +119,6 @@ private class Api26FrameMetricsStrategy(
  * [jankHeuristicMultiplier]. First-draw frames are not distinguished here, as `FIRST_DRAW_FRAME` is
  * unavailable, and the frame's start is approximated by the delivery time less its duration.
  */
-@RequiresApi(Build.VERSION_CODES.N)
 private class LegacyFrameMetricsStrategy(
     private var refreshIntervalNanos: Long,
     private val jankHeuristicMultiplier: Double,

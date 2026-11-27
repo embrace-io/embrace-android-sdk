@@ -77,8 +77,6 @@ internal class VitalsWindowCallback(
         menu: Menu?,
         deviceId: Int,
     ) {
-        if (versionChecker.isAtLeast(Build.VERSION_CODES.N)) {
-            delegate.onProvideKeyboardShortcuts(data, menu, deviceId)
-        }
+        delegate.onProvideKeyboardShortcuts(data, menu, deviceId)
     }
 }

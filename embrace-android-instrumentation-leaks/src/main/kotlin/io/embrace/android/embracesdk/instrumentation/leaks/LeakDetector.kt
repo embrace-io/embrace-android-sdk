@@ -1,12 +1,10 @@
 package io.embrace.android.embracesdk.instrumentation.leaks
 
-import android.os.Build
 import android.os.Debug
 import io.embrace.android.embracesdk.internal.clock.Clock
 import io.embrace.android.embracesdk.internal.logging.ErrorHandler
 import io.embrace.android.embracesdk.internal.logging.SdkErrorType
 import io.embrace.android.embracesdk.internal.logging.guardSdkCode
-import io.embrace.android.embracesdk.internal.utils.VersionChecker
 import java.lang.ref.PhantomReference
 import java.lang.ref.Reference
 import java.lang.ref.ReferenceQueue
@@ -44,17 +42,7 @@ private typealias Untracked = Unit
 internal class LeakDetector(
     private val clock: Clock,
     private val errorHandler: ErrorHandler,
-    versionChecker: VersionChecker,
-    // guarded here (rather than relying on LeakDetectionInstrumentationProvider never constructing this class below API
-    // 23) so that lint's own NewApi check, which can't trace that guard through a lazily-invoked factory in another
-    // file, can see it too
-    private val gcCycleCountReader: () -> String? = {
-        if (versionChecker.isAtLeast(Build.VERSION_CODES.M)) {
-            Debug.getRuntimeStat(ART_GC_COUNT_STAT)
-        } else {
-            null
-        }
-    },
+    private val gcCycleCountReader: () -> String? = { Debug.getRuntimeStat(ART_GC_COUNT_STAT) },
 ) {
     private val queue = ReferenceQueue<Any>()
 

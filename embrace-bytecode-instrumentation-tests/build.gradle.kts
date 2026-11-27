@@ -7,7 +7,7 @@ plugins {
 android {
     namespace = "io.embrace.android.gradle.test.fixtures"
     compileSdk = 36
-    defaultConfig.minSdk = 21
+    defaultConfig.minSdk = 24
 
     buildTypes {
         release {

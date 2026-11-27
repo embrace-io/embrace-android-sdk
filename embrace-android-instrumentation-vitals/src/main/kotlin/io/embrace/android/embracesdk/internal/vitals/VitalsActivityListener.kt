@@ -1,12 +1,10 @@
 package io.embrace.android.embracesdk.internal.vitals
 
 import android.app.Activity
-import android.os.Build
 import android.os.Handler
 import android.os.Looper
 import android.os.SystemClock
 import android.view.Window
-import androidx.annotation.RequiresApi
 import io.embrace.android.embracesdk.internal.arch.lifecycle.ActivityCreated
 import io.embrace.android.embracesdk.internal.arch.lifecycle.ActivityLifecycle
 import io.embrace.android.embracesdk.internal.logging.ErrorHandler
@@ -21,7 +19,6 @@ import java.util.WeakHashMap
  * ([VitalsWindowCallback]) once per window, and the frame-metrics listener on resume, removed on
  * pause. Only instantiated on API 24+.
  */
-@RequiresApi(Build.VERSION_CODES.N)
 internal class VitalsActivityListener(
     private val focalCallbacks: FocalInteractionCallbacks,
     private val navSource: ActivityNavigationSource,

@@ -1,7 +1,6 @@
 package io.embrace.android.embracesdk.instrumentation.leaks
 
 import io.embrace.android.embracesdk.fakes.FakeErrorHandler
-import io.embrace.android.embracesdk.internal.utils.BuildVersionChecker
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
 import org.junit.Before
@@ -23,7 +22,6 @@ internal class LeakDetectorReachabilityTest {
         detector = LeakDetector(
             clock = { 0L },
             errorHandler = FakeErrorHandler(),
-            versionChecker = BuildVersionChecker,
             gcCycleCountReader = { "0" },
         )
     }

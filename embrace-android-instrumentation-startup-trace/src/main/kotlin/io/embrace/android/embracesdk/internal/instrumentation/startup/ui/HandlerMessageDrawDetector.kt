@@ -1,15 +1,12 @@
 package io.embrace.android.embracesdk.internal.instrumentation.startup.ui
 
 import android.app.Activity
-import android.os.Build.VERSION_CODES.M
 import android.os.Message
-import androidx.annotation.RequiresApi
 import io.embrace.android.embracesdk.internal.handler.MainThreadHandler
 import io.embrace.android.embracesdk.internal.logging.ErrorHandler
 import io.embrace.android.embracesdk.internal.logging.SdkErrorType
 import io.embrace.android.embracesdk.internal.logging.guardSdkCode
 
-@RequiresApi(M)
 internal class HandlerMessageDrawDetector(
     private val handler: MainThreadHandler,
     private val errorHandler: ErrorHandler,

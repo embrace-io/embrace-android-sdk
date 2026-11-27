@@ -1,9 +1,6 @@
 package io.embrace.android.embracesdk.internal
 
-import android.annotation.SuppressLint
 import android.os.Build
-import io.embrace.android.embracesdk.internal.utils.BuildVersionChecker
-import io.embrace.android.embracesdk.internal.utils.VersionChecker
 
 /**
  * Information about the device, app, or OS that can be retrieved without disk or platform API access
@@ -51,16 +48,7 @@ data class SystemInfo(
     val primaryAbi: String = getPrimaryAbi(),
 )
 
-internal fun getOsBuild(
-    versionChecker: VersionChecker = BuildVersionChecker,
-    baseOs: () -> String = @SuppressLint("NewApi") { Build.VERSION.BASE_OS },
-): String {
-    return if (versionChecker.isAtLeast(Build.VERSION_CODES.M)) {
-        baseOs()
-    } else {
-        ""
-    }
-}
+internal fun getOsBuild(baseOs: () -> String? = { Build.VERSION.BASE_OS }): String = baseOs() ?: ""
 
 internal fun getOsVersion(release: () -> String? = { Build.VERSION.RELEASE }): String {
     return try {

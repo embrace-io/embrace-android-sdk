@@ -3,7 +3,6 @@ package io.embrace.android.embracesdk.internal.injection
 import android.app.ActivityManager
 import android.content.Context
 import android.net.ConnectivityManager
-import android.os.Build
 import io.embrace.android.embracesdk.internal.arch.datasource.TelemetryDestination
 import io.embrace.android.embracesdk.internal.arch.navigation.NavigationTrackingService
 import io.embrace.android.embracesdk.internal.arch.state.ProcessStateTracker
@@ -50,16 +49,13 @@ fun createNetworkConnectivityService(
     configService: ConfigService,
     worker: BackgroundWorker,
     errorHandler: ErrorHandler,
-    versionChecker: VersionChecker,
 ): NetworkConnectivityService {
     val connectivityManager: Lazy<ConnectivityManager?> = lazy {
         EmbTrace.trace("connectivity-manager-init") {
             context.getSystemServiceSafe<ConnectivityManager>(Context.CONNECTIVITY_SERVICE)
         }
     }
-    return if (versionChecker.isAtLeast(Build.VERSION_CODES.N) &&
-        configService.config.autoDataCapture.networkCallbackConnectivityServiceEnabled
-    ) {
+    return if (configService.config.autoDataCapture.networkCallbackConnectivityServiceEnabled) {
         NetworkCallbackConnectivityService(worker, errorHandler, connectivityManager)
     } else {
         EmbraceNetworkConnectivityService(

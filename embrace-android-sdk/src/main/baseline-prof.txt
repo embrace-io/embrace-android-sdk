@@ -167,9 +167,9 @@ HSPLio/embrace/android/embracesdk/internal/SystemInfoKt;-><clinit>()V
 HSPLio/embrace/android/embracesdk/internal/SystemInfoKt;->getDeviceManufacturer()Ljava/lang/String;
 HSPLio/embrace/android/embracesdk/internal/SystemInfoKt;->getDeviceModel()Ljava/lang/String;
 HSPLio/embrace/android/embracesdk/internal/SystemInfoKt;->getOsApiLevel()Ljava/lang/String;
-HSPLio/embrace/android/embracesdk/internal/SystemInfoKt;->getOsBuild$default(Lio/embrace/android/embracesdk/internal/utils/VersionChecker;Lkotlin/jvm/functions/Function0;ILjava/lang/Object;)Ljava/lang/String;
+HSPLio/embrace/android/embracesdk/internal/SystemInfoKt;->getOsBuild$default(Lkotlin/jvm/functions/Function0;ILjava/lang/Object;)Ljava/lang/String;
 HSPLio/embrace/android/embracesdk/internal/SystemInfoKt;->getOsBuild$lambda$0()Ljava/lang/String;
-HSPLio/embrace/android/embracesdk/internal/SystemInfoKt;->getOsBuild(Lio/embrace/android/embracesdk/internal/utils/VersionChecker;Lkotlin/jvm/functions/Function0;)Ljava/lang/String;
+HSPLio/embrace/android/embracesdk/internal/SystemInfoKt;->getOsBuild(Lkotlin/jvm/functions/Function0;)Ljava/lang/String;
 HSPLio/embrace/android/embracesdk/internal/SystemInfoKt;->getOsVersion$default(Lkotlin/jvm/functions/Function0;ILjava/lang/Object;)Ljava/lang/String;
 HSPLio/embrace/android/embracesdk/internal/SystemInfoKt;->getOsVersion$lambda$0()Ljava/lang/String;
 HSPLio/embrace/android/embracesdk/internal/SystemInfoKt;->getOsVersion(Lkotlin/jvm/functions/Function0;)Ljava/lang/String;

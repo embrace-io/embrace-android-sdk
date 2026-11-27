@@ -35,21 +35,21 @@ object NoopEmbraceSdkSpan : EmbraceSdkSpan {
     override fun addEvent(
         name: String,
         timestampMs: Long?,
-        attributes: Map<String, String>,
+        attributes: Map<String, Any>,
     ): Boolean = false
 
     override fun recordException(
         exception: Throwable,
-        attributes: Map<String, String>,
+        attributes: Map<String, Any>,
     ): Boolean = false
 
-    override fun addAttribute(key: String, value: String): Boolean = false
+    override fun addAttribute(key: String, value: Any): Boolean = false
 
     override fun updateName(newName: String): Boolean = false
 
     override fun addLink(
         linkedSpanContext: SpanContext,
-        attributes: Map<String, String>,
+        attributes: Map<String, Any>,
     ): Boolean = false
 
     override fun asNewContext(): Context? = null
@@ -76,12 +76,6 @@ object NoopEmbraceSdkSpan : EmbraceSdkSpan {
         timestampMs: Long?,
         attributes: Map<String, Any>?,
     ): Boolean = false
-
-    override fun addCustomAttribute(key: String, value: Any): Boolean = false
-
-    override fun addCustomEvent(name: String, timestampMs: Long?, attributes: Map<String, Any>): Boolean = false
-
-    override fun addCustomLink(linkedSpanContext: SpanContext, attributes: Map<String, Any>): Boolean = false
 
     override fun getStartTimeMs(): Long? = null
 

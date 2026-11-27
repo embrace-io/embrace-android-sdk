@@ -134,10 +134,7 @@ class FakeEmbraceSdkSpan(
         return true
     }
 
-    override fun addEvent(name: String, timestampMs: Long?, attributes: Map<String, String>): Boolean =
-        addCustomEvent(name, timestampMs, attributes)
-
-    override fun addCustomEvent(name: String, timestampMs: Long?, attributes: Map<String, Any>): Boolean {
+    override fun addEvent(name: String, timestampMs: Long?, attributes: Map<String, Any>): Boolean {
         events.add(
             SpanEventImpl(
                 name = name,
@@ -148,17 +145,15 @@ class FakeEmbraceSdkSpan(
         return true
     }
 
-    override fun recordException(exception: Throwable, attributes: Map<String, String>): Boolean =
+    override fun recordException(exception: Throwable, attributes: Map<String, Any>): Boolean =
         addEvent(InstrumentedConfigImpl.otelLimits.getExceptionEventName(), null, attributes)
 
     override fun addSystemEvent(name: String, timestampMs: Long?, attributes: Map<String, Any>?): Boolean =
-        addCustomEvent(name, timestampMs, attributes ?: emptyMap())
+        addEvent(name, timestampMs, attributes ?: emptyMap())
 
     override fun getStartTimeMs(): Long? = spanStartTimeMs
 
-    override fun addAttribute(key: String, value: String): Boolean = addCustomAttribute(key, value)
-
-    override fun addCustomAttribute(key: String, value: Any): Boolean {
+    override fun addAttribute(key: String, value: Any): Boolean {
         attributes[key] = value
         return true
     }
@@ -168,10 +163,7 @@ class FakeEmbraceSdkSpan(
         return true
     }
 
-    override fun addLink(linkedSpanContext: SpanContext, attributes: Map<String, String>): Boolean =
-        addCustomLink(linkedSpanContext, attributes)
-
-    override fun addCustomLink(linkedSpanContext: SpanContext, attributes: Map<String, Any>): Boolean {
+    override fun addLink(linkedSpanContext: SpanContext, attributes: Map<String, Any>): Boolean {
         links.add(EmbraceLinkData(linkedSpanContext, attributes))
         return true
     }

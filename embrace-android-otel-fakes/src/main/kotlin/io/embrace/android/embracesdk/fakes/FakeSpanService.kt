@@ -117,9 +117,9 @@ class FakeSpanService : SpanService {
                 private = private,
             ).apply {
                 start(startTimeMs)
-                attributes.forEach { (key, value) -> addCustomAttribute(key, value) }
+                attributes.forEach { (key, value) -> addAttribute(key, value) }
                 events.forEach {
-                    addCustomEvent(it.name, it.timestampNanos, it.attributes)
+                    addEvent(it.name, it.timestampNanos, it.attributes)
                 }
                 stopWithErrorCode(errorCode, endTimeMs)
             }

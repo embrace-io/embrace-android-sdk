@@ -29,43 +29,43 @@ class EmbSpan(
 ) : Span, SpanCreationAction {
 
     override fun setStringAttribute(key: String, value: String) = guard {
-        impl.addCustomAttribute(key, value)
+        impl.addAttribute(key, value)
     }
 
     override fun setStringListAttribute(key: String, value: List<String>) = guard {
-        impl.addCustomAttribute(key, value.toList())
+        impl.addAttribute(key, value.toList())
     }
 
     override fun setLongListAttribute(key: String, value: List<Long>) = guard {
-        impl.addCustomAttribute(key, value.toList())
+        impl.addAttribute(key, value.toList())
     }
 
     override fun setLongAttribute(key: String, value: Long) = guard {
-        impl.addCustomAttribute(key, value)
+        impl.addAttribute(key, value)
     }
 
     override fun setDoubleListAttribute(key: String, value: List<Double>) = guard {
-        impl.addCustomAttribute(key, value.toList())
+        impl.addAttribute(key, value.toList())
     }
 
     override fun setDoubleAttribute(key: String, value: Double) = guard {
-        impl.addCustomAttribute(key, value)
+        impl.addAttribute(key, value)
     }
 
     override fun setBooleanListAttribute(key: String, value: List<Boolean>) = guard {
-        impl.addCustomAttribute(key, value.toList())
+        impl.addAttribute(key, value.toList())
     }
 
     override fun setBooleanAttribute(key: String, value: Boolean) = guard {
-        impl.addCustomAttribute(key, value)
+        impl.addAttribute(key, value)
     }
 
     override fun setByteArrayAttribute(key: String, value: ByteArray) = guard {
-        impl.addCustomAttribute(key, value)
+        impl.addAttribute(key, value)
     }
 
     override fun setAnyValueAttribute(key: String, value: AnyValue) = guard {
-        impl.addCustomAttribute(key, value)
+        impl.addAttribute(key, value)
     }
 
     override fun end(): Unit = guard {
@@ -87,7 +87,7 @@ class EmbSpan(
         val container = EmbAttributesMutator()
         attributes?.invoke(container)
         guard {
-            impl.addCustomEvent(name, timestamp, container.attributes)
+            impl.addEvent(name, timestamp, container.attributes)
         }
     }
 
@@ -95,7 +95,7 @@ class EmbSpan(
         val container = EmbAttributesMutator()
         attributes?.invoke(container)
         guard {
-            impl.addCustomLink(spanContext, container.attributes)
+            impl.addLink(spanContext, container.attributes)
         }
     }
 

@@ -111,7 +111,7 @@ class TelemetryDestinationImpl(
             parentSpanContext = remoteParent,
         ).apply {
             schemaType.attributes().forEach {
-                addCustomAttribute(it.key, it.value)
+                addAttribute(it.key, it.value)
             }
             sessionUpdateAction?.invoke()
         }

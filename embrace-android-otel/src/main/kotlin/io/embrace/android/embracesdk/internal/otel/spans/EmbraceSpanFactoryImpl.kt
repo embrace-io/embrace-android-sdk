@@ -344,10 +344,7 @@ private class EmbraceSpanImpl(
         }
     }
 
-    override fun addEvent(name: String, timestampMs: Long?, attributes: Map<String, String>): Boolean =
-        addCustomEvent(name, timestampMs, attributes)
-
-    override fun addCustomEvent(name: String, timestampMs: Long?, attributes: Map<String, Any>): Boolean = guard(false) {
+    override fun addEvent(name: String, timestampMs: Long?, attributes: Map<String, Any>): Boolean = guard(false) {
         recordEvent(
             system = false,
             max = deps.dataValidator.otelLimitsConfig.getMaxCustomEventCount(),
@@ -361,7 +358,7 @@ private class EmbraceSpanImpl(
         }
     }
 
-    override fun recordException(exception: Throwable, attributes: Map<String, String>): Boolean = guard(false) {
+    override fun recordException(exception: Throwable, attributes: Map<String, Any>): Boolean = guard(false) {
         recordEvent(
             system = false,
             max = deps.dataValidator.otelLimitsConfig.getMaxCustomEventCount(),
@@ -406,9 +403,7 @@ private class EmbraceSpanImpl(
 
     override fun getStartTimeMs(): Long? = spanStartTimeMs.takeIf { it > UNSET_TIME }
 
-    override fun addAttribute(key: String, value: String): Boolean = addCustomAttribute(key, value)
-
-    override fun addCustomAttribute(key: String, value: Any): Boolean = guard(false) {
+    override fun addAttribute(key: String, value: Any): Boolean = guard(false) {
         // Reserved attribute that can't be set by customers.
         // In the future, this should be expanded to more reserved attributes.
         if (key == EmbCommonAttributes.EMB_EXPERIMENTS) {
@@ -473,10 +468,7 @@ private class EmbraceSpanImpl(
             EmbraceLinkData(linkedSpanContext, attrs)
         }
 
-    override fun addLink(linkedSpanContext: SpanContext, attributes: Map<String, String>): Boolean =
-        addCustomLink(linkedSpanContext, attributes)
-
-    override fun addCustomLink(linkedSpanContext: SpanContext, attributes: Map<String, Any>): Boolean = guard(false) {
+    override fun addLink(linkedSpanContext: SpanContext, attributes: Map<String, Any>): Boolean = guard(false) {
         recordLink(system = false, max = deps.dataValidator.otelLimitsConfig.getMaxCustomLinkCount()) {
             EmbraceLinkData(linkedSpanContext, deps.dataValidator.truncateAttributes(attributes, false))
         }

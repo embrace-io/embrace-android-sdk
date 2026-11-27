@@ -2,10 +2,8 @@ package io.embrace.android.embracesdk.internal.vitals
 
 import android.content.Context
 import android.hardware.display.DisplayManager
-import android.os.Build
 import android.os.Looper
 import android.view.Display
-import androidx.annotation.RequiresApi
 import androidx.annotation.VisibleForTesting
 import androidx.annotation.WorkerThread
 import io.embrace.android.embracesdk.internal.arch.InstrumentationArgs
@@ -34,7 +32,6 @@ import io.embrace.android.embracesdk.semconv.EmbFrameCountsAttributes
  * feeding the single tracker. The tracker scopes a focal moment to a user interaction and reports
  * framerate quality over it.
  */
-@RequiresApi(Build.VERSION_CODES.N)
 internal class VitalsDataSource(
     private val args: InstrumentationArgs,
 ) : DataSourceImpl(

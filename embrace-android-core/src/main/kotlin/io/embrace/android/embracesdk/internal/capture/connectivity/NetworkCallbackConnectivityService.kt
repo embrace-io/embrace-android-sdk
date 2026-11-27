@@ -7,8 +7,6 @@ import android.net.NetworkCapabilities.NET_CAPABILITY_INTERNET
 import android.net.NetworkCapabilities.NET_CAPABILITY_VALIDATED
 import android.net.NetworkCapabilities.TRANSPORT_CELLULAR
 import android.net.NetworkCapabilities.TRANSPORT_WIFI
-import android.os.Build
-import androidx.annotation.RequiresApi
 import io.embrace.android.embracesdk.internal.logging.ErrorHandler
 import io.embrace.android.embracesdk.internal.logging.SdkErrorType
 import io.embrace.android.embracesdk.internal.logging.guardSdkCode
@@ -16,7 +14,6 @@ import io.embrace.android.embracesdk.internal.worker.BackgroundWorker
 import java.util.concurrent.CopyOnWriteArrayList
 import java.util.concurrent.atomic.AtomicReference
 
-@RequiresApi(Build.VERSION_CODES.N)
 internal class NetworkCallbackConnectivityService(
     private val backgroundWorker: BackgroundWorker,
     private val errorHandler: ErrorHandler,
@@ -118,7 +115,6 @@ internal class NetworkCallbackConnectivityService(
 /**
  * Maps a network's capabilities to the [ConnectivityStatus] reported for it.
  */
-@RequiresApi(Build.VERSION_CODES.N)
 internal fun connectivityStatus(hasCapability: (Int) -> Boolean, hasTransport: (Int) -> Boolean): ConnectivityStatus {
     val canConnect = hasCapability(NET_CAPABILITY_INTERNET)
     val connected = hasCapability(NET_CAPABILITY_VALIDATED)

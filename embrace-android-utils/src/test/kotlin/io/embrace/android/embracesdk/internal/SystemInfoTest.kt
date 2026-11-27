@@ -1,11 +1,6 @@
 package io.embrace.android.embracesdk.internal
 
 import android.os.Build
-import android.os.Build.VERSION_CODES.LOLLIPOP
-import android.os.Build.VERSION_CODES.LOLLIPOP_MR1
-import android.os.Build.VERSION_CODES.M
-import android.os.Build.VERSION_CODES.TIRAMISU
-import io.embrace.android.embracesdk.internal.utils.VersionChecker
 import org.junit.Assert.assertEquals
 import org.junit.Test
 
@@ -22,13 +17,9 @@ internal class SystemInfoTest {
     }
 
     @Test
-    fun `os build is only read from API 23`() {
-        forEachSdk(LOLLIPOP, LOLLIPOP_MR1) { versionChecker ->
-            assertEquals("", getOsBuild(versionChecker) { BASE_OS })
-        }
-        forEachSdk(M, TIRAMISU) { versionChecker ->
-            assertEquals(BASE_OS, getOsBuild(versionChecker) { BASE_OS })
-        }
+    fun `os build is read from the base OS`() {
+        assertEquals(BASE_OS, getOsBuild { BASE_OS })
+        assertEquals("", getOsBuild { null })
     }
 
     @Test
@@ -39,16 +30,6 @@ internal class SystemInfoTest {
 
         // Takes the first regardless if subsequent ones are supported
         assertEquals(Build.UNKNOWN, getPrimaryAbi { arrayOf("riscv64", "arm64-v8a") })
-    }
-
-    private fun forEachSdk(vararg sdkInts: Int, action: (VersionChecker) -> Unit) {
-        sdkInts.forEach { sdkInt ->
-            try {
-                action(VersionChecker { min -> sdkInt >= min })
-            } catch (e: AssertionError) {
-                throw AssertionError("Failed at API $sdkInt", e)
-            }
-        }
     }
 
     private companion object {

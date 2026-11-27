@@ -25,7 +25,6 @@ internal class ActivityLeakDetectionLifecycleCallbacksTest {
     private val leakDetector = LeakDetector(
         clock = { 0L },
         errorHandler = errorHandler,
-        versionChecker = BuildVersionChecker,
     )
 
     @Test

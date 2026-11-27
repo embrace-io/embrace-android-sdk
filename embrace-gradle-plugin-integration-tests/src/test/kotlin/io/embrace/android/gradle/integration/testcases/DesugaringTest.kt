@@ -31,7 +31,7 @@ class DesugaringTest {
             fixture = "android-desugaring",
             // the useFullClasspathForDexingTransform workaround only affects D8 dexing, which debug builds use
             tasks = listOf("assembleDebug"),
-            additionalArgs = listOf("-PminSdk=21"),
+            additionalArgs = listOf("-PminSdk=24"),
             projectType = ProjectType.ANDROID,
             setup = {
                 setupEmptyHandshakeResponse()

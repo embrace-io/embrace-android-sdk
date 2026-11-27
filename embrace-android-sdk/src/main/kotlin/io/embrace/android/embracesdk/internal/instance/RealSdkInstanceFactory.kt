@@ -330,7 +330,6 @@ internal fun createRealSdkInstance(
                 configService = configService,
                 worker = workerThreadPool.backgroundWorker(Worker.Background.NonIoRegWorker),
                 errorHandler = errorHandler,
-                versionChecker = versionChecker,
             )
         }
     }

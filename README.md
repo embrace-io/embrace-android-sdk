@@ -1,5 +1,5 @@
 [![codecov](https://codecov.io/gh/embrace-io/embrace-android-sdk/graph/badge.svg?token=4kNC8ceoVB)](https://codecov.io/gh/embrace-io/embrace-android-sdk)
-[![android api](https://img.shields.io/badge/Android_API-21-green.svg "Android min API 21")](https://dash.embrace.io/signup/)
+[![android api](https://img.shields.io/badge/Android_API-24-green.svg "Android min API 24")](https://dash.embrace.io/signup/)
 [![build](https://img.shields.io/github/actions/workflow/status/embrace-io/embrace-android-sdk/ci-gradle.yml)](https://github.com/embrace-io/embrace-android-sdk/actions)
 [![latest version](https://shields.io/github/v/release/embrace-io/embrace-android-sdk)](https://shields.io/github/v/release/embrace-io/embrace-android-sdk)
 [![Apache-2.0](https://img.shields.io/badge/license-Apache--2.0-orange)](./LICENSE.txt)

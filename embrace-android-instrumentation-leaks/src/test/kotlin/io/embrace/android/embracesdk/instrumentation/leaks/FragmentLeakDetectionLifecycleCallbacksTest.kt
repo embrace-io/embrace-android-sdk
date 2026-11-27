@@ -13,7 +13,6 @@ import androidx.fragment.app.FragmentActivity
 import io.embrace.android.embracesdk.fakes.FakeErrorHandler
 import io.embrace.android.embracesdk.internal.logging.SdkErrorType
 import io.embrace.android.embracesdk.internal.session.id.SessionIdsSnapshot
-import io.embrace.android.embracesdk.internal.utils.BuildVersionChecker
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertNull
@@ -33,7 +32,7 @@ internal class FragmentLeakDetectionLifecycleCallbacksTest {
 
     @Before
     fun setUp() {
-        leakDetector = LeakDetector(clock = { 0L }, errorHandler = errorHandler, versionChecker = BuildVersionChecker)
+        leakDetector = LeakDetector(clock = { 0L }, errorHandler = errorHandler)
         callbacks = FragmentLeakDetectionLifecycleCallbacks(leakDetector, { SESSION_IDS }, errorHandler)
     }
 
@@ -111,7 +110,6 @@ internal class FragmentLeakDetectionLifecycleCallbacksTest {
         val detector = LeakDetector(
             clock = { 0L },
             errorHandler = errorHandler,
-            versionChecker = BuildVersionChecker,
             gcCycleCountReader = { "0" },
         )
         val activity = buildActivity(FragmentActivity::class.java).setup().get()

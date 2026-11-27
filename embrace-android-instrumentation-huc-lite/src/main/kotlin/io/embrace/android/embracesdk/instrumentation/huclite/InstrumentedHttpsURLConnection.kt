@@ -1,11 +1,8 @@
 package io.embrace.android.embracesdk.instrumentation.huclite
 
-import android.os.Build
 import io.embrace.android.embracesdk.internal.clock.Clock
 import io.embrace.android.embracesdk.internal.instrumentation.HucLiteDataSource
 import io.embrace.android.embracesdk.internal.instrumentation.HucLiteDataSource.RequestData
-import io.embrace.android.embracesdk.internal.utils.BuildVersionChecker
-import io.embrace.android.embracesdk.internal.utils.VersionChecker
 import io.embrace.android.embracesdk.internal.utils.concurrent.OneShot
 import java.io.FileNotFoundException
 import java.io.InputStream
@@ -26,7 +23,6 @@ internal class InstrumentedHttpsURLConnection(
     private val wrappedConnection: HttpsURLConnection,
     private val clock: Clock,
     hucLiteDataSource: HucLiteDataSource,
-    private val versionChecker: VersionChecker = BuildVersionChecker,
 ) : HttpsURLConnection(wrappedConnection.url) {
 
     private val requestTriggered = OneShot()
@@ -118,11 +114,7 @@ internal class InstrumentedHttpsURLConnection(
 
     override fun getHeaderFieldLong(name: String?, default: Long): Long =
         invokeRequestTriggeringMethod {
-            if (versionChecker.isAtLeast(Build.VERSION_CODES.N)) {
-                wrappedConnection.getHeaderFieldLong(name, default)
-            } else {
-                wrappedConnection.getHeaderFieldInt(name, default.toInt()).toLong()
-            }
+            wrappedConnection.getHeaderFieldLong(name, default)
         }
 
     override fun getHeaderFieldDate(name: String?, default: Long): Long =
@@ -142,11 +134,7 @@ internal class InstrumentedHttpsURLConnection(
 
     override fun getContentLengthLong(): Long =
         invokeRequestTriggeringMethod {
-            if (versionChecker.isAtLeast(Build.VERSION_CODES.N)) {
-                wrappedConnection.contentLengthLong
-            } else {
-                wrappedConnection.contentLength.toLong()
-            }
+            wrappedConnection.contentLengthLong
         }
 
     override fun getContentType(): String? =

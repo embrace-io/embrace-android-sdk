@@ -1,8 +1,6 @@
 package io.embrace.android.embracesdk.instrumentation.huclite
 
-import android.os.Build.VERSION_CODES
 import io.embrace.android.embracesdk.internal.logging.SdkErrorType
-import io.embrace.android.embracesdk.internal.utils.VersionChecker
 import io.mockk.every
 import io.mockk.mockk
 import io.mockk.verify
@@ -32,8 +30,6 @@ internal class InstrumentedHttpsURLConnectionTest {
     fun setup() {
         harness = HucTestHarness()
     }
-
-    private fun harnessOnSdk(sdkInt: Int) = HucTestHarness(VersionChecker { min -> sdkInt >= min })
 
     @Test
     fun `standard GET request lifecycle records a request`() = harness.runTest {
@@ -379,25 +375,13 @@ internal class InstrumentedHttpsURLConnectionTest {
     }
 
     @Test
-    fun `getHeaderFieldLong delegates to wrapped connection for Android 24+ and records telemetry`() =
-        harnessOnSdk(VERSION_CODES.UPSIDE_DOWN_CAKE).runTest {
-            every { mockWrappedConnection.getHeaderFieldLong(FAKE_FIELD_NAME, 0L) } returns 1024L
-            val result = instrumentedConnection.getHeaderFieldLong(FAKE_FIELD_NAME, 0L)
-            assertEquals(1024L, result)
-            verify(exactly = 1) { mockWrappedConnection.getHeaderFieldLong(FAKE_FIELD_NAME, 0L) }
-            assertSingleSuccessfulRequest()
-        }
-
-    @Test
-    fun `getHeaderFieldLong delegates to wrapped connection and records telemetry`() =
-        harnessOnSdk(VERSION_CODES.M).runTest {
-            every { mockWrappedConnection.getHeaderFieldInt(FAKE_FIELD_NAME, 0) } returns 1024
-            val result = instrumentedConnection.getHeaderFieldLong(FAKE_FIELD_NAME, 0L)
-            assertEquals(1024L, result)
-            verify(exactly = 1) { mockWrappedConnection.getHeaderFieldInt(FAKE_FIELD_NAME, 0) }
-            verify(exactly = 0) { mockWrappedConnection.getHeaderFieldLong(any(), any()) }
-            assertSingleSuccessfulRequest()
-        }
+    fun `getHeaderFieldLong delegates to wrapped connection and records telemetry`() = harness.runTest {
+        every { mockWrappedConnection.getHeaderFieldLong(FAKE_FIELD_NAME, 0L) } returns 1024L
+        val result = instrumentedConnection.getHeaderFieldLong(FAKE_FIELD_NAME, 0L)
+        assertEquals(1024L, result)
+        verify(exactly = 1) { mockWrappedConnection.getHeaderFieldLong(FAKE_FIELD_NAME, 0L) }
+        assertSingleSuccessfulRequest()
+    }
 
     @Test
     fun `getHeaderFieldDate delegates to wrapped connection and records telemetry`() = harness.runTest {
@@ -427,25 +411,13 @@ internal class InstrumentedHttpsURLConnectionTest {
     }
 
     @Test
-    fun `getContentLengthLong delegates to wrapped connection on Android 24+ and records telemetry`() =
-        harnessOnSdk(VERSION_CODES.UPSIDE_DOWN_CAKE).runTest {
-            every { mockWrappedConnection.contentLengthLong } returns 512L
-            val result = instrumentedConnection.contentLengthLong
-            assertEquals(512L, result)
-            verify(exactly = 1) { mockWrappedConnection.contentLengthLong }
-            assertSingleSuccessfulRequest()
-        }
-
-    @Test
-    fun `getContentLengthLong delegates to wrapped connection and records telemetry`() =
-        harnessOnSdk(VERSION_CODES.M).runTest {
-            every { mockWrappedConnection.contentLength } returns 512
-            val result = instrumentedConnection.contentLengthLong
-            assertEquals(512L, result)
-            verify(exactly = 1) { mockWrappedConnection.contentLength }
-            verify(exactly = 0) { mockWrappedConnection.contentLengthLong }
-            assertSingleSuccessfulRequest()
-        }
+    fun `getContentLengthLong delegates to wrapped connection and records telemetry`() = harness.runTest {
+        every { mockWrappedConnection.contentLengthLong } returns 512L
+        val result = instrumentedConnection.contentLengthLong
+        assertEquals(512L, result)
+        verify(exactly = 1) { mockWrappedConnection.contentLengthLong }
+        assertSingleSuccessfulRequest()
+    }
 
     @Test
     fun `getContentType delegates to wrapped connection and records telemetry`() = harness.runTest {

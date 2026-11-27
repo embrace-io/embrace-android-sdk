@@ -60,7 +60,7 @@ kotlinCoreLibrariesVersion = "2.0.21"
 minCompileSdk = "34"
 minAgpVersion = "8.0.2"
 compileSdk = "37"
-minSdk = "21"
+minSdk = "24"
 
 [libraries]
 detekt-gradle-plugin = { module = "io.gitlab.arturbosch.detekt:detekt-gradle-plugin", version.ref = "detekt" }

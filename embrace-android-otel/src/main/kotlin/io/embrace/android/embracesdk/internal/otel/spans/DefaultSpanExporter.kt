@@ -4,6 +4,7 @@ import io.embrace.android.embracesdk.internal.otel.export.ExternalExportDispatch
 import io.embrace.android.embracesdk.internal.otel.export.InlineExporter
 import io.embrace.android.embracesdk.internal.otel.sdk.StoreDataResult
 import io.embrace.android.embracesdk.internal.otel.sdk.toEmbracePayload
+import io.embrace.android.embracesdk.internal.otel.sdk.toEmbracePayloadWithoutStateValues
 import io.opentelemetry.kotlin.export.OperationResultCode
 import io.opentelemetry.kotlin.tracing.data.SpanData
 import io.opentelemetry.kotlin.tracing.export.SpanExporter
@@ -16,13 +17,18 @@ internal class DefaultSpanExporter(
     private val externalExporters: List<SpanExporter>,
     private val exportCheck: () -> Boolean,
     private val externalExportDispatcher: ExternalExportDispatcher,
+    private val stripStateValues: () -> Boolean = { false },
 ) : SpanExporter, InlineExporter<SpanData> {
 
     override fun exportInline(telemetry: List<SpanData>): OperationResultCode {
         if (!exportCheck()) {
             return OperationResultCode.Success
         }
-        val result = spanRepository.storeCompletedOtelSpans(telemetry.map(SpanData::toEmbracePayload))
+        val payload = when {
+            stripStateValues() -> telemetry.map(SpanData::toEmbracePayloadWithoutStateValues)
+            else -> telemetry.map(SpanData::toEmbracePayload)
+        }
+        val result = spanRepository.storeCompletedOtelSpans(payload)
 
         if (result == StoreDataResult.SUCCESS && externalExporters.isNotEmpty()) {
             externalExportDispatcher.dispatch(externalExporters) { it.export(telemetry) }

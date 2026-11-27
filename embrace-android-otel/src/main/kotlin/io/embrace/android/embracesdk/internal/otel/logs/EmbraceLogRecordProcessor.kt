@@ -5,6 +5,8 @@ package io.embrace.android.embracesdk.internal.otel.logs
 import io.embrace.android.embracesdk.internal.arch.schema.EmbType
 import io.embrace.android.embracesdk.internal.arch.schema.PrivateSpan
 import io.embrace.android.embracesdk.internal.otel.export.InlineExporter
+import io.embrace.android.embracesdk.internal.otel.state.isStateReplay
+import io.embrace.android.embracesdk.internal.otel.state.isStateReplayRecord
 import io.embrace.android.embracesdk.internal.utils.Provider
 import io.embrace.android.embracesdk.internal.utils.UuidSource
 import io.embrace.android.embracesdk.semconv.EmbCommonAttributes
@@ -23,11 +25,23 @@ internal class EmbraceLogRecordProcessor(
     private val uuidSource: UuidSource,
     private val metadataProvider: Provider<Map<String, String>>,
     private val logRecordExporter: InlineExporter<LogRecordData>,
+
+    /**
+     * Where a state change or a snapshot replayed for the app's own exporters goes: to those exporters and nowhere else. Null
+     * when nothing is replayed.
+     */
+    private val stateReplayExporter: ((List<LogRecordData>) -> Unit)? = null,
 ) : LogRecordProcessor {
 
     override suspend fun forceFlush(): OperationResultCode = logRecordExporter.forceFlush()
 
     override fun onEmit(log: ReadWriteLogRecord, context: Context) {
+        if (stateReplayExporter != null && context.isStateReplay() && log.isStateReplayRecord()) {
+            // a replayed state change belongs to the process and to no session part, so none of what is stamped on a log applies,
+            // and Embrace's payload has the change log in its place
+            stateReplayExporter.invoke(listOf(log))
+            return
+        }
         val attributes = log.attributes
 
         if (!attributes.containsKey(LogAttributes.LOG_RECORD_UID)) {

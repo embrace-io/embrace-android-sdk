@@ -31,4 +31,13 @@ interface EmbraceInternalInterface {
      * are ignored.
      */
     fun setHostedPlatformVersion(version: String?)
+
+    /**
+     * Reports that the state called [name] has had [value] since [changedAtMs], in milliseconds since the epoch on the hosted
+     * SDK's own clock. This is how a hosted SDK supplies what only it knows, such as the screen a route or a scene is.
+     *
+     * [name] has to be a state this SDK already defines, such as `screen-automatic`. A report for any other name is discarded:
+     * a hosted SDK cannot create a state by naming one. Nothing happens either unless the app state data model is switched on.
+     */
+    fun reportState(name: String, value: String, changedAtMs: Long) {}
 }

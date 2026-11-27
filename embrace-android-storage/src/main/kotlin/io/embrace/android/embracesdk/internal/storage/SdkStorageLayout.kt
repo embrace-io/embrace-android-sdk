@@ -19,7 +19,7 @@ object SdkStorageLayout {
      * The version of this layout. Raise it whenever the layout starts allowing a directory or entry it didn't before,
      * so that an older SDK running after a downgrade doesn't sweep what a newer one wrote.
      */
-    const val LAYOUT_VERSION: Int = 1
+    const val LAYOUT_VERSION: Int = 2
 
     /**
      * The file in the root that records the highest [LAYOUT_VERSION] that has run on this install

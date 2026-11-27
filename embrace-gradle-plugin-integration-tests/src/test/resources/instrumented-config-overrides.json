@@ -1,6 +1,19 @@
 {
   "values": [
     {
+      "className": "AppStateLocalConfigImpl",
+      "methods": [
+        {
+          "signature": "getExportMode()Ljava/lang/String;",
+          "returnValue": "verbose"
+        },
+        {
+          "signature": "isEnabled()Z",
+          "returnValue": "true"
+        }
+      ]
+    },
+    {
       "className": "BaseUrlConfigImpl",
       "methods": [
         {

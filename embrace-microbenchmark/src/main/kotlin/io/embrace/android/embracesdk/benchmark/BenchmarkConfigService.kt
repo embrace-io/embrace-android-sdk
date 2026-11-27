@@ -24,8 +24,8 @@ import io.embrace.android.embracesdk.internal.payload.AppFramework
 internal class BenchmarkConfigService(
     thresholdCheck: BehaviorThresholdCheck,
     remoteConfig: RemoteConfig,
+    override val config: EmbraceConfig = EmbraceConfig(),
 ) : ConfigService {
-    override val config: EmbraceConfig = EmbraceConfig()
     override val sessionBehavior: UserSessionBehavior = UserSessionBehaviorImpl(remoteConfig)
     override val networkBehavior: NetworkBehavior = NetworkBehaviorImpl(InstrumentedConfigImpl, remoteConfig, 0)
     override val traceparentInjectionBehavior: TraceparentInjectionBehavior =

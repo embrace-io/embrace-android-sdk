@@ -142,6 +142,7 @@ internal class SdkIntegrationTestRule(
         serverResponseConfigEtag: String = "server_etag_value",
         expectSdkToStart: Boolean = startSdk,
         expectedSdkState: SdkState = if (expectSdkToStart) SdkState.ENABLED else SdkState.DISABLED,
+        registerLogExporter: Boolean = true,
         setupAction: EmbraceSetupInterface.() -> Unit = {},
         preSdkStartAction: EmbracePreSdkStartInterface.() -> Unit = {},
         testCaseAction: EmbraceActionInterface.() -> Unit,
@@ -193,7 +194,9 @@ internal class SdkIntegrationTestRule(
             preSdkStartAction(preSdkStart)
             //TODO: Filtered span and log exporters should be migrated to Kotlin.
             sdkStateHolder.api.addSpanExporter(spanExporter.toOtelKotlinSpanExporter())
-            sdkStateHolder.api.addLogRecordExporter(logExporter.toOtelKotlinLogRecordExporter())
+            if (registerLogExporter) {
+                sdkStateHolder.api.addLogRecordExporter(logExporter.toOtelKotlinLogRecordExporter())
+            }
 
             // persist config here before the SDK starts up: the SDK reads it during start()
             persistConfig(persistedConfig)

@@ -18,9 +18,12 @@ import io.embrace.android.embracesdk.internal.otel.payload.toPayloadString
 import io.embrace.android.embracesdk.internal.otel.sdk.DataValidator
 import io.embrace.android.embracesdk.internal.otel.sdk.id.OtelIds
 import io.embrace.android.embracesdk.internal.otel.sdk.setEmbraceAttribute
+import io.embrace.android.embracesdk.internal.otel.state.StateTelemetry
 import io.embrace.android.embracesdk.internal.otel.toEmbracePayload
 import io.embrace.android.embracesdk.internal.payload.Attribute
 import io.embrace.android.embracesdk.internal.payload.Link
+import io.embrace.android.embracesdk.internal.state.AppStateKeys
+import io.embrace.android.embracesdk.internal.state.StateSnapshot
 import io.embrace.android.embracesdk.internal.telemetry.AppliedLimitType
 import io.embrace.android.embracesdk.internal.telemetry.InternalTelemetryService
 import io.embrace.android.embracesdk.internal.utils.truncatedStacktraceText
@@ -48,6 +51,7 @@ class EmbraceSpanFactoryImpl(
     redactionFunction: ((key: String, value: String) -> String)? = null,
     telemetryService: InternalTelemetryService,
     errorHandler: ErrorHandler,
+    stateTelemetry: StateTelemetry? = null,
 ) : EmbraceSpanFactory {
 
     private val deps = SpanDependencies(
@@ -58,6 +62,7 @@ class EmbraceSpanFactoryImpl(
         redactionFunction = redactionFunction,
         telemetryService = telemetryService,
         errorHandler = errorHandler,
+        stateTelemetry = stateTelemetry,
     )
 
     override fun create(otelSpanStartArgs: OtelSpanStartArgs): EmbraceSdkSpan = EmbraceSpanImpl(
@@ -78,6 +83,7 @@ private class SpanDependencies(
     val redactionFunction: ((key: String, value: String) -> String)?,
     val telemetryService: InternalTelemetryService,
     val errorHandler: ErrorHandler,
+    val stateTelemetry: StateTelemetry?,
 )
 
 private const val SPAN_LINK_TELEMETRY_TYPE = "span_link"
@@ -119,6 +125,20 @@ private class EmbraceSpanImpl(
 
     @Volatile
     private var discarded: Boolean = false
+
+    /**
+     * Every state's value as this span started, by the span's own start time, or null if state is not tracked or the start is
+     * older than what is still known. The number of its last change is the first half of the span's link into the change log.
+     */
+    @Volatile
+    private var stateAtStart: StateSnapshot? = null
+
+    /**
+     * The number of the last state change before this span ended, or 0 until it ends. It is the second half of the link when it
+     * differs from the first.
+     */
+    @Volatile
+    private var stateSeqAtEnd: Long = 0L
 
     override val terminationMode: SpanTerminationMode = otelSpanStartArgs.terminationMode
 
@@ -254,6 +274,7 @@ private class EmbraceSpanImpl(
             }
 
             spanStartTimeMs = attemptedStartTimeMs
+            linkToStateAtStart(attemptedStartTimeMs)
         }
 
         notifyChanged()
@@ -297,6 +318,7 @@ private class EmbraceSpanImpl(
                 }
 
                 populateAttributes(spanToStop)
+                linkToStateAtEnd(spanToStop, attemptedEndTimeMs)
                 populateEvents(spanToStop)
                 populateLinks(spanToStop)
 
@@ -611,8 +633,11 @@ private class EmbraceSpanImpl(
     private fun redactCustomLinks(customLinks: List<EmbraceLinkData>): List<EmbraceLinkData> =
         customLinks.map { it.copy(attributes = it.attributes.redactIfSensitive()) }
 
-    private fun getAttributesPayload(): List<Attribute> =
-        systemAttributes.toEmbracePayload() + customAttributes.redactIfSensitive().toEmbracePayload()
+    private fun getAttributesPayload(): List<Attribute> {
+        val attributes = systemAttributes.toEmbracePayload() + customAttributes.redactIfSensitive().toEmbracePayload()
+        val atStart = stateAtStart ?: return attributes
+        return attributes + stateLinkPayload(atStart)
+    }
 
     private fun canSnapshot(): Boolean = spanId != null && spanStartTimeMs > UNSET_TIME
 
@@ -696,6 +721,47 @@ private class EmbraceSpanImpl(
         customLinks ?: ArrayList<EmbraceLinkData>(INITIAL_COLLECTION_CAPACITY).also { customLinks = it }
 
     private fun spanStarted() = startedSpan.get() != null
+
+    /**
+     * Places this span among the state changes by its own start time. A span given a start in the past is placed among the recent
+     * snapshots, and gets no link if its start is older than those.
+     */
+    private fun linkToStateAtStart(startTimeMs: Long) {
+        val telemetry = deps.stateTelemetry ?: return
+        guard(Unit) {
+            stateAtStart = telemetry.snapshotAt(startTimeMs)
+        }
+    }
+
+    /**
+     * Places this span's end among the state changes by its own end time, and writes the link on the OpenTelemetry span in the form
+     * the app's own exporters take. Embrace's payload reads the same numbers from that span, as text.
+     */
+    private fun linkToStateAtEnd(spanToStop: Span, endTimeMs: Long) {
+        val telemetry = deps.stateTelemetry ?: return
+        val atStart = stateAtStart ?: return
+        guard(Unit) {
+            val atEnd = telemetry.snapshotAt(endTimeMs)
+            stateSeqAtEnd = atEnd?.seq ?: 0L
+            telemetry.writeSpanExportForm(spanToStop, atStart, atEnd)
+        }
+    }
+
+    /**
+     * The link as a snapshot of this span carries it: the number at its start and, once it has ended, the number at its end when
+     * a state changed while it ran.
+     */
+    private fun stateLinkPayload(atStart: StateSnapshot): List<Attribute> {
+        val endSeq = stateSeqAtEnd
+        return buildList(2) {
+            if (atStart.seq > 0) {
+                add(Attribute(AppStateKeys.SEQ, atStart.seqText()))
+            }
+            if (endSeq > atStart.seq) {
+                add(Attribute(AppStateKeys.END_SEQ, endSeq.toString()))
+            }
+        }
+    }
 
     /**
      * Whether this span's own data can still be changed: freely before it starts, and while it is

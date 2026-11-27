@@ -1,3 +1,5 @@
+@file:OptIn(ExperimentalSemconv::class)
+
 package io.embrace.android.embracesdk.internal.instrumentation.navigation
 
 import io.embrace.android.embracesdk.internal.arch.InstrumentationArgs
@@ -5,7 +7,8 @@ import io.embrace.android.embracesdk.internal.arch.datasource.StateDataSource
 import io.embrace.android.embracesdk.internal.arch.navigation.CurrentScreen
 import io.embrace.android.embracesdk.internal.arch.schema.SchemaType.NavigationState
 import io.embrace.android.embracesdk.internal.arch.schema.SchemaType.NavigationState.Screen
-import io.embrace.android.embracesdk.internal.arch.schema.SystemStateValue
+import io.embrace.android.embracesdk.semconv.EmbFrameCountsAttributes
+import io.embrace.android.embracesdk.semconv.ExperimentalSemconv
 
 /**
  * Reports the screen published against [CurrentScreen.KEY] as navigation state, knowing nothing about where it was resolved.
@@ -18,6 +21,7 @@ class NavigationStateDataSource(
     stateTypeFactory = ::NavigationState,
     defaultValue = Screen.Initializing,
     maxTransitions = MAX_NAVIGATION_STATE_TRANSITIONS,
+    changeAttributeKeys = SCREEN_CHANGE_ATTRIBUTE_KEYS,
 ) {
 
     override fun onDataCaptureEnabled() {
@@ -31,8 +35,8 @@ class NavigationStateDataSource(
         activityTracker?.close()
     }
 
-    override fun outgoingValueAttributes(value: Screen): Map<String, String> {
-        if (value is SystemStateValue) {
+    override fun outgoingAttributes(generated: Boolean): Map<String, String> {
+        if (generated) {
             // no app screen was showing: collect only to discard what accrued, so it isn't attributed to the next screen
             args.navigationTrackingService.collectScreenAttributes { _, _ -> }
             return emptyMap()
@@ -44,5 +48,13 @@ class NavigationStateDataSource(
 
     companion object {
         private const val MAX_NAVIGATION_STATE_TRANSITIONS = 1000
+
+        /**
+         * What a change of screen may carry about the screen being left: the frames it dropped and those it was expected to draw.
+         */
+        private val SCREEN_CHANGE_ATTRIBUTE_KEYS = setOf(
+            EmbFrameCountsAttributes.SMOOTHNESS_DROPPED_FRAMES,
+            EmbFrameCountsAttributes.SMOOTHNESS_EXPECTED_FRAMES,
+        )
     }
 }

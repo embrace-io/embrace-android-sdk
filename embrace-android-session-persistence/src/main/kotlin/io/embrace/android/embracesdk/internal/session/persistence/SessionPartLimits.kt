@@ -39,3 +39,5 @@ internal const val TOO_MANY_PERSISTED_SPANS_MSG = "Session part holds more spans
 internal const val DROPPED_SPAN_SNAPSHOT_MSG = "Span snapshots dropped to keep the log within its limits"
 
 internal const val DROPPED_COMPLETED_SPAN_MSG = "Completed span dropped to keep the log within its limits"
+
+internal const val DROPPED_STATE_JOURNAL_ENTRY_MSG = "State journal entry dropped to keep the file within its limits"

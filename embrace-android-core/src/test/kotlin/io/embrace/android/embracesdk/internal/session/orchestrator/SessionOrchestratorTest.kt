@@ -20,6 +20,7 @@ import io.embrace.android.embracesdk.fakes.FakePayloadMessageCollator
 import io.embrace.android.embracesdk.fakes.FakePayloadStore
 import io.embrace.android.embracesdk.fakes.FakePersistedSdkStateStore
 import io.embrace.android.embracesdk.fakes.FakeProcessStateTracker
+import io.embrace.android.embracesdk.fakes.FakeSessionPartWriter
 import io.embrace.android.embracesdk.fakes.FakeTelemetryDestination
 import io.embrace.android.embracesdk.fakes.FakeUserSessionPropertiesService
 import io.embrace.android.embracesdk.fakes.FakeVersionChecker
@@ -57,6 +58,13 @@ import io.embrace.android.embracesdk.internal.session.message.PayloadFactoryImpl
 import io.embrace.android.embracesdk.internal.session.persistence.SessionPartDirectory
 import io.embrace.android.embracesdk.internal.session.persistence.SpanCollection
 import io.embrace.android.embracesdk.internal.session.persistence.SpanProto
+import io.embrace.android.embracesdk.internal.state.StateChange
+import io.embrace.android.embracesdk.internal.state.StateDefinition
+import io.embrace.android.embracesdk.internal.state.StateJournal
+import io.embrace.android.embracesdk.internal.state.StateJournalRecord
+import io.embrace.android.embracesdk.internal.state.StateRecorder
+import io.embrace.android.embracesdk.internal.state.StateReplay
+import io.embrace.android.embracesdk.internal.state.StateSnapshot
 import io.embrace.android.embracesdk.internal.store.OrdinalStore
 import io.embrace.android.embracesdk.internal.store.OrdinalStoreImpl
 import io.embrace.android.embracesdk.internal.store.PersistedSdkState
@@ -1135,6 +1143,223 @@ internal class SessionOrchestratorTest {
         assertNoSdkErrors()
     }
 
+    @Test
+    fun `the change log closes after the old part's payload is assembled and the next opens after the new part starts`() {
+        val stateRecording = StateRecording()
+        createOrchestrator(
+            startingProcessState = ProcessState.FOREGROUND,
+            sessionPartWriterOverride = stateRecording.writer,
+            stateRecorder = stateRecording.recorder,
+        )
+        val first = checkNotNull(sessionTracker.getActiveSessionPartId())
+        clock.tick(10000)
+        val transitionTime = clock.now()
+        orchestrator.onBackground()
+        val second = checkNotNull(sessionTracker.getActiveSessionPartId())
+
+        assertEquals(
+            listOf(
+                "started:$first",
+                "journal:PartOpened:$first",
+                "journal:PartClosed:$first",
+                "ended:$first",
+                "started:$second",
+                "journal:PartOpened:$second",
+            ),
+            stateRecording.writer.callLog,
+        )
+        assertEquals(listOf(orchestratorStartTimeMs, transitionTime), stateRecording.openedAt)
+        // the old part's payload was in the store when its change log closed, and not when it opened
+        assertEquals(
+            listOf("PartOpened:0", "PartClosed:1", "PartOpened:1"),
+            stateRecording.journalSeen.map { (record, stored) -> "${record::class.simpleName}:$stored" },
+        )
+        assertNoSdkErrors()
+    }
+
+    @Test
+    fun `a jvm crash closes the change log and opens none`() {
+        val stateRecording = StateRecording()
+        createOrchestrator(
+            startingProcessState = ProcessState.FOREGROUND,
+            sessionPartWriterOverride = stateRecording.writer,
+            stateRecorder = stateRecording.recorder,
+        )
+        val first = checkNotNull(sessionTracker.getActiveSessionPartId())
+        clock.tick(10000)
+        orchestrator.handleCrash("crash-id")
+
+        assertEquals(
+            listOf("started:$first", "journal:PartOpened:$first", "journal:PartClosed:$first", "ended:$first"),
+            stateRecording.writer.callLog,
+        )
+        assertEquals(listOf(orchestratorStartTimeMs), stateRecording.openedAt)
+        assertNoSdkErrors()
+    }
+
+    @Test
+    fun `a part that ends with no new part closes its change log and opens none`() {
+        val stateRecording = StateRecording()
+        createOrchestrator(
+            startingProcessState = ProcessState.FOREGROUND,
+            configService = FakeConfigService(config = backgroundActivityConfig(false)),
+            sessionPartWriterOverride = stateRecording.writer,
+            stateRecorder = stateRecording.recorder,
+        )
+        val first = checkNotNull(sessionTracker.getActiveSessionPartId())
+        clock.tick(10000)
+        orchestrator.onBackground()
+
+        assertNull(sessionTracker.getActiveSessionPartId())
+        assertEquals(
+            listOf("started:$first", "journal:PartOpened:$first", "journal:PartClosed:$first", "ended:$first"),
+            stateRecording.writer.callLog,
+        )
+        assertNoSdkErrors()
+    }
+
+    @Test
+    fun `no change log opens or closes when the orchestrator has no state recorder`() {
+        val stateRecording = StateRecording()
+        createOrchestrator(
+            startingProcessState = ProcessState.FOREGROUND,
+            sessionPartWriterOverride = stateRecording.writer,
+            stateRecorder = null,
+        )
+        val first = checkNotNull(sessionTracker.getActiveSessionPartId())
+        clock.tick(10000)
+        orchestrator.onBackground()
+        val second = checkNotNull(sessionTracker.getActiveSessionPartId())
+
+        assertEquals(emptyList<Any>(), stateRecording.writer.journalRecords)
+        assertEquals(emptyList<Long>(), stateRecording.openedAt)
+        assertEquals(
+            listOf("started:$first", "ended:$first", "started:$second"),
+            stateRecording.writer.callLog,
+        )
+        assertNoSdkErrors()
+    }
+
+    /**
+     * Right behaviour: the recorder's part changes at the same instant as the session part span, so a change is in the part whose
+     * span was running when it was reported. A change reported once the old span has stopped is not in the old part.
+     *
+     * Today the recorder closes the part only after the old part's payload is assembled, so a change reported between the span
+     * stopping and that close is listed in the old part's journal, with a time after the part's span ended.
+     */
+    @Test
+    fun `a change reported after the old part's span stopped and before the recorder closes the part is listed in the old part`() {
+        val stateRecording = StateRecording()
+        createOrchestrator(
+            startingProcessState = ProcessState.FOREGROUND,
+            sessionPartWriterOverride = stateRecording.writer,
+            stateRecorder = stateRecording.recorder,
+        )
+        val first = checkNotNull(sessionTracker.getActiveSessionPartId())
+        var spanStoppedAtMs = -1L
+        val whenSpanCompleted = currentSessionPartSpan.onSessionSpanCompleted
+        currentSessionPartSpan.onSessionSpanCompleted = { spans ->
+            whenSpanCompleted(spans)
+            if (spanStoppedAtMs < 0) {
+                spanStoppedAtMs = clock.now()
+                // the report is made later than the span stopped, as one arriving from another thread would be
+                stateRecording.recorder.update("network", "cell", false, clock.tick(5L))
+            }
+        }
+        clock.tick(10000)
+        orchestrator.onBackground()
+
+        assertTrue(spanStoppedAtMs > 0)
+        val callLog = stateRecording.writer.callLog
+        assertTrue(callLog.indexOf("journal:Change:$first") in 0 until callLog.indexOf("journal:PartClosed:$first"))
+        val change = stateRecording.writer.journalRecords.filterIsInstance<StateJournalRecord.Change>().single()
+        assertEquals(first, change.sessionPartId)
+        assertEquals("cell", change.change.value)
+        assertTrue(change.change.timeMs > spanStoppedAtMs)
+        assertEquals(listOf("cell"), stateRecording.replayed.map { it.value })
+        assertNoSdkErrors()
+    }
+
+    /**
+     * Right behaviour: as above, a change reported once the new part's span is running is in the new part.
+     *
+     * Today the recorder opens the part only after the part writer has started the new part's directory, so a change reported
+     * between the new span starting and that open is counted as made with no session part: it is not listed in either part,
+     * nothing is replayed for it, and the new part's opening record counts it.
+     */
+    @Test
+    fun `a change reported after the new part's span started and before the recorder opens the part is counted as made with no part`() {
+        val stateRecording = StateRecording()
+        var activeAtReport: String? = null
+        var armed = false
+        val reportingWriter = object : SessionPartWriter by stateRecording.writer {
+            override fun onSessionPartStarted(timestamp: Long, userSessionId: String, sessionPartId: String) {
+                stateRecording.writer.onSessionPartStarted(timestamp, userSessionId, sessionPartId)
+                if (armed && activeAtReport == null) {
+                    activeAtReport = sessionTracker.getActiveSessionPartId()
+                    stateRecording.recorder.update("network", "cell", false, clock.now())
+                }
+            }
+        }
+        createOrchestrator(
+            startingProcessState = ProcessState.FOREGROUND,
+            sessionPartWriterOverride = reportingWriter,
+            stateRecorder = stateRecording.recorder,
+        )
+        checkNotNull(sessionTracker.getActiveSessionPartId())
+        armed = true
+        clock.tick(10000)
+        orchestrator.onBackground()
+        val second = checkNotNull(sessionTracker.getActiveSessionPartId())
+
+        // the new part was the active one, with its span running, when the report was made
+        assertEquals(second, activeAtReport)
+        val opened = stateRecording.writer.journalRecords.filterIsInstance<StateJournalRecord.PartOpened>().last {
+            it.sessionPartId == second
+        }
+        assertEquals(1, opened.states.single { it.name == "network" }.notInSessionCount)
+        assertEquals("cell", opened.states.single { it.name == "network" }.value)
+        assertTrue(stateRecording.writer.journalRecords.none { it is StateJournalRecord.Change })
+        assertEquals(emptyList<String>(), stateRecording.replayed.map { it.value })
+        assertNoSdkErrors()
+    }
+
+    /**
+     * A real [StateRecorder] whose journal is [writer], with a state declared, and what it was told as parts opened.
+     */
+    private inner class StateRecording {
+        val writer = FakeSessionPartWriter()
+        val recorder = StateRecorder(clock)
+
+        /** When each part opened, as the replay was told. */
+        val openedAt = mutableListOf<Long>()
+
+        /** Each change the replay was handed. */
+        val replayed = mutableListOf<StateChange>()
+
+        /** Each record the journal got, with how many session part payloads the store held at the time. */
+        val journalSeen = mutableListOf<Pair<StateJournalRecord, Int>>()
+
+        init {
+            recorder.attach(
+                StateJournal { record ->
+                    journalSeen.add(record to store.storedSessionPartPayloads.size)
+                    writer.append(record)
+                },
+            )
+            recorder.attach(object : StateReplay {
+                override fun onPartOpened(snapshot: StateSnapshot, timeMs: Long) {
+                    openedAt.add(timeMs)
+                }
+
+                override fun onChange(change: StateChange) {
+                    replayed.add(change)
+                }
+            })
+            recorder.declare(StateDefinition("network"), "wifi", false, clock.now())
+        }
+    }
+
     private fun createOrchestrator(
         startingProcessState: ProcessState,
         configService: FakeConfigService =
@@ -1142,6 +1367,8 @@ internal class SessionOrchestratorTest {
         ordinalStoreOverride: OrdinalStore? = null,
         stateStoreOverride: PersistedSdkStateStore? = null,
         writeBatcherOverride: StoreWriteBatcher? = null,
+        sessionPartWriterOverride: SessionPartWriter? = null,
+        stateRecorder: StateRecorder? = null,
     ) {
         store = FakePayloadStore()
         appStateTracker = FakeProcessStateTracker(startingProcessState)
@@ -1185,7 +1412,7 @@ internal class SessionOrchestratorTest {
             add { fakeDataSource }
         }
 
-        val sessionPartWriter = SessionPartWriterImpl(
+        val sessionPartWriter = sessionPartWriterOverride ?: SessionPartWriterImpl(
             lazy { sessionsDir },
             BackgroundWorker(sessionPersistenceExecutor),
             configService,
@@ -1230,6 +1457,7 @@ internal class SessionOrchestratorTest {
             TestUuidSource(),
             startupClassifier,
             sessionPartWriter,
+            stateRecorder,
         ).apply {
             attach()
             start()

@@ -25,6 +25,7 @@ class ConfigInstrumentationTest {
 
     private val variants = listOf("debug", "release", "overrides")
     private val classNames = listOf(
+        "AppStateLocalConfigImpl",
         "BaseUrlConfigImpl",
         "EnabledFeatureConfigImpl",
         "NetworkCaptureConfigImpl",

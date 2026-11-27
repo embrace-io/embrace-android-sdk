@@ -53,6 +53,19 @@ class ConfigFileParsingTest {
     }
 
     @Test
+    fun `the state keys are read from sdk_config and kept in the json the SDK reads`() {
+        val json = """
+            {"sdk_config": {"shared_state_span_enabled": true, "state_association_enabled": false, "state_export_mode": "verbose"}}
+        """.trimIndent()
+        val config = checkNotNull(parse(json))
+
+        assertEquals(true, config.sdkConfig?.sharedStateSpanEnabled)
+        assertEquals(false, config.sdkConfig?.stateAssociationEnabled)
+        assertEquals("verbose", config.sdkConfig?.stateExportMode)
+        assertEquals(json.minify(), config.json)
+    }
+
+    @Test
     fun `empty object gives all null fields`() {
         assertEquals(EmbraceVariantConfig(null, null, null, null, null, json = "{}"), parse("{}"))
     }

@@ -46,6 +46,29 @@ internal class ExternalOtelConfigTest {
         assertEquals(true, config.hasConfiguredOtlpExport())
     }
 
+    @Test
+    fun `what the app receives is told apart by logs and spans`() {
+        val logsOnly = ExternalOtelConfig().apply { addLogExporter(FakeLogRecordExporter()) }
+        assertEquals(true, logsOnly.receivesLogs())
+        assertEquals(false, logsOnly.receivesSpans())
+
+        val logProcessorOnly = ExternalOtelConfig().apply { addLogRecordProcessor(FakeLogRecordProcessor()) }
+        assertEquals(true, logProcessorOnly.receivesLogs())
+        assertEquals(false, logProcessorOnly.receivesSpans())
+
+        val spanExporterOnly = ExternalOtelConfig().apply { addSpanExporter(FakeSpanExporter()) }
+        assertEquals(false, spanExporterOnly.receivesLogs())
+        assertEquals(true, spanExporterOnly.receivesSpans())
+
+        val spanProcessorOnly = ExternalOtelConfig().apply { addSpanProcessor(FakeSpanProcessor()) }
+        assertEquals(false, spanProcessorOnly.receivesLogs())
+        assertEquals(true, spanProcessorOnly.receivesSpans())
+
+        val none = ExternalOtelConfig()
+        assertEquals(false, none.receivesLogs())
+        assertEquals(false, none.receivesSpans())
+    }
+
     private class Components {
         val spanExporter = FakeSpanExporter()
         val spanProcessor = FakeSpanProcessor()

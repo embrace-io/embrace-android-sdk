@@ -6,6 +6,7 @@ import io.embrace.android.embracesdk.fakes.FakeSpan
 import io.embrace.android.embracesdk.fakes.FakeSpanExporter
 import io.embrace.android.embracesdk.internal.otel.export.ExternalExportDispatcher
 import io.embrace.android.embracesdk.internal.otel.export.immediateExportDispatcher
+import io.embrace.android.embracesdk.internal.state.AppStateKeys
 import io.opentelemetry.kotlin.export.OperationResultCode
 import io.opentelemetry.kotlin.tracing.data.SpanData
 import io.opentelemetry.kotlin.tracing.export.SpanExporter
@@ -24,11 +25,13 @@ internal class DefaultSpanExporterTest {
         externalExporters: List<SpanExporter> = emptyList(),
         exportCheck: () -> Boolean = { true },
         dispatcher: ExternalExportDispatcher = immediateExportDispatcher(),
+        stripStateValues: () -> Boolean = { false },
     ) = DefaultSpanExporter(
         spanRepository = spanRepository,
         externalExporters = externalExporters,
         exportCheck = exportCheck,
         externalExportDispatcher = dispatcher,
+        stripStateValues = stripStateValues,
     )
 
     private fun threadRecordingExporter(threads: MutableList<String>) = object : SpanExporter {
@@ -126,4 +129,49 @@ internal class DefaultSpanExporterTest {
         assertTrue(spanRepository.completedOtelSpans().isEmpty())
         assertTrue(externalExporter.exportedSpans.isEmpty())
     }
+
+    @Test
+    fun `state values are left out of Embrace's payload and kept for external exporters when asked`() {
+        val spanRepository = SpanRepository(FakeErrorHandler())
+        val externalExporter = FakeSpanExporter()
+        // the numbers are long on the span an exporter gets
+        val attributes = mapOf<String, Any>(
+            "custom" to "x",
+            AppStateKeys.SEQ to 2L,
+            AppStateKeys.END_SEQ to 3L,
+            "${AppStateKeys.VALUE_PREFIX}network" to "wifi",
+            "${AppStateKeys.VALUE_TYPE_PREFIX}screen-automatic" to AppStateKeys.VALUE_TYPE_SYSTEM,
+            "${AppStateKeys.END_VALUE_PREFIX}network" to "cell",
+            "${AppStateKeys.END_VALUE_TYPE_PREFIX}screen-automatic" to AppStateKeys.VALUE_TYPE_SYSTEM,
+        )
+        val span = SpanWithAttributes(FakeReadWriteSpan(FakeSpan(name = "public-span")), attributes)
+
+        exporter(spanRepository, listOf(externalExporter), stripStateValues = { true }).exportInline(listOf(span))
+
+        assertEquals(
+            mapOf("custom" to "x", AppStateKeys.SEQ to "2", AppStateKeys.END_SEQ to "3"),
+            spanRepository.completedOtelSpans().single().attributes?.associate { it.key to it.data },
+        )
+        assertEquals(attributes, externalExporter.exportedSpans.single().attributes)
+    }
+
+    @Test
+    fun `state values stay in Embrace's payload when not asked to strip them`() {
+        val spanRepository = SpanRepository(FakeErrorHandler())
+        val fake = FakeSpan(name = "public-span").apply {
+            setStringAttribute("${AppStateKeys.VALUE_PREFIX}network", "wifi")
+        }
+
+        exporter(spanRepository).exportInline(listOf(FakeReadWriteSpan(fake)))
+
+        assertEquals(
+            mapOf("${AppStateKeys.VALUE_PREFIX}network" to "wifi"),
+            spanRepository.completedOtelSpans().single().attributes?.associate { it.key to it.data },
+        )
+    }
+
+    private class SpanWithAttributes(
+        delegate: FakeReadWriteSpan,
+        override val attributes: Map<String, Any>,
+    ) : SpanData by delegate
 }

@@ -22,6 +22,7 @@ import io.embrace.android.embracesdk.internal.logging.guardSdkCode
 import io.embrace.android.embracesdk.internal.logs.LogExceptionType
 import io.embrace.android.embracesdk.internal.payload.JsException
 import io.embrace.android.embracesdk.internal.serialization.PlatformSerializer
+import io.embrace.android.embracesdk.internal.state.StateReport
 import io.embrace.android.embracesdk.internal.telemetry.InternalTelemetryService
 import io.embrace.android.embracesdk.internal.utils.encodeToUTF8String
 import io.embrace.android.embracesdk.semconv.EmbAndroidAttributes
@@ -38,6 +39,7 @@ internal class HostedSdkInternalInterfaceImpl(
     private val hostedSdkVersionInfo: HostedSdkVersionInfo,
     private val errorHandler: ErrorHandler,
     private val telemetryService: InternalTelemetryService,
+    private val stateReporter: (StateReport) -> Unit = {},
 ) : EmbraceInternalInterface,
     ReactNativeInternalInterface,
     UnityInternalInterface,
@@ -63,6 +65,12 @@ internal class HostedSdkInternalInterfaceImpl(
 
     override fun setHostedPlatformVersion(version: String?) = record("set_hosted_platform_version") {
         updateHostedPlatformVersion(version)
+    }
+
+    override fun reportState(name: String, value: String, changedAtMs: Long) = record("report_state") {
+        // the state's own data source takes it up and passes it on as its own, so the latest report stands whoever made it. It
+        // is discarded unless a data source defines the state
+        stateReporter(StateReport(state = name, value = value, timeMs = changedAtMs))
     }
 
     override fun logUnhandledJsException(

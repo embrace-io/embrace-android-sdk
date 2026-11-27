@@ -40,6 +40,9 @@
       "capture_unity_thread": true
     },
     "multi_file_persistence_enabled": true,
+    "shared_state_span_enabled": true,
+    "state_association_enabled": true,
+    "state_export_mode": "verbose",
     "view_config": {
       "enable_automatic_activity_capture": false
     },

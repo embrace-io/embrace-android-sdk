@@ -69,6 +69,7 @@ internal class OrphanSweeperTest {
             SdkDir.TELEMETRY_PENDING_SESSION_PARTS to "$SESSION_PART_DIR/metadata.pb",
             SdkDir.TELEMETRY_PENDING_SESSION_PARTS to "$SESSION_PART_DIR/completed_spans.pb",
             SdkDir.TELEMETRY_PENDING_SESSION_PARTS to "$SESSION_PART_DIR/span_snapshots.pb",
+            SdkDir.TELEMETRY_PENDING_SESSION_PARTS to "$SESSION_PART_DIR/state_journal.pb",
         ).map { (dir, name) -> staleWithAncestors(write(storage.dir(dir) / name)) }
 
         assertEquals(0, sweep())
@@ -146,12 +147,12 @@ internal class OrphanSweeperTest {
         val orphan = write(root / "orphan")
         assertEquals(1, sweep())
         assertFalse(fileSystem.exists(orphan))
-        assertEquals("1", fileSystem.read(marker) { readUtf8() })
+        assertEquals(SdkStorageLayout.LAYOUT_VERSION.toString(), fileSystem.read(marker) { readUtf8() })
     }
 
     @Test
     fun `an equal marker sweeps`() {
-        write(marker, "1")
+        write(marker, SdkStorageLayout.LAYOUT_VERSION.toString())
         val orphan = write(root / "orphan")
         assertEquals(1, sweep())
         assertFalse(fileSystem.exists(orphan))

@@ -4,19 +4,28 @@ package io.embrace.android.embracesdk.internal.otel.logs
 
 import io.embrace.android.embracesdk.fakes.FakeLogRecordExporter
 import io.embrace.android.embracesdk.fakes.FakeReadWriteLogRecord
+import io.embrace.android.embracesdk.fakes.OtelSdkMode
 import io.embrace.android.embracesdk.fakes.TestUuidSource
+import io.embrace.android.embracesdk.fakes.fakeOpenTelemetry
+import io.embrace.android.embracesdk.fixtures.fakeContextKey
 import io.embrace.android.embracesdk.internal.arch.schema.EmbType
 import io.embrace.android.embracesdk.internal.arch.schema.PrivateSpan
+import io.embrace.android.embracesdk.internal.otel.state.markedAsStateReplay
+import io.embrace.android.embracesdk.internal.state.AppStateKeys
 import io.embrace.android.embracesdk.semconv.EmbCommonAttributes
 import io.embrace.android.embracesdk.semconv.EmbSessionAttributes
 import io.embrace.android.embracesdk.semconv.ExperimentalSemconv
 import io.opentelemetry.kotlin.NoopOpenTelemetry
+import io.opentelemetry.kotlin.context.Context
 import io.opentelemetry.kotlin.export.OperationResultCode
+import io.opentelemetry.kotlin.logging.data.LogRecordData
 import io.opentelemetry.kotlin.semconv.LogAttributes
 import kotlinx.coroutines.runBlocking
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNotNull
+import org.junit.Assert.assertSame
+import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
 
@@ -190,6 +199,93 @@ internal class EmbraceLogRecordProcessorTest {
         assertEquals(OperationResultCode.Success, result)
         assertEquals(1, logRecordExporter.forceFlushCount)
     }
+
+    @Test
+    fun `a record emitted with the replay context goes to the replay exporter once and nothing is done to it`() {
+        val replayed = mutableListOf<LogRecordData>()
+        val replayProcessor = replayProcessor(replayed::addAll)
+        listOf(AppStateKeys.CHANGE_EVENT_NAME, AppStateKeys.SNAPSHOT_EVENT_NAME).forEach { eventName ->
+            val log = FakeReadWriteLogRecord(eventName = eventName).apply {
+                setStringAttribute(EmbType.State.key, EmbType.State.value)
+            }
+
+            replayProcessor.onEmit(log, replayContext())
+
+            assertSame(log, replayed.last())
+            assertEquals(mapOf<String, Any>(EmbType.State.key to EmbType.State.value), log.attributes)
+        }
+        assertEquals(2, replayed.size)
+        assertTrue(logRecordExporter.exportedLogs.isEmpty())
+    }
+
+    @Test
+    fun `a log that only has the name and type of a state change is an ordinary log when its context is not the replay one`() {
+        val replayed = mutableListOf<LogRecordData>()
+        val log = FakeReadWriteLogRecord(eventName = AppStateKeys.CHANGE_EVENT_NAME).apply {
+            setStringAttribute(EmbType.State.key, EmbType.State.value)
+        }
+
+        replayProcessor(replayed::addAll).onEmit(log, NoopOpenTelemetry.context.current())
+
+        assertNotNull(log.attributes[LogAttributes.LOG_RECORD_UID])
+        assertEquals("foo", log.attributes[SESSION_ATTRIBUTE_NAME])
+        assertSame(log, logRecordExporter.exportedLogs.single())
+        assertTrue(replayed.isEmpty())
+    }
+
+    @Test
+    fun `a record with the replay context and any other event name is an ordinary log`() {
+        // a log that an app's own log record processor emits with the context it was handed has the mark and not the name
+        val replayed = mutableListOf<LogRecordData>()
+        listOf("another.event", null).forEach { eventName ->
+            val log = FakeReadWriteLogRecord(eventName = eventName).apply {
+                setStringAttribute(EmbType.State.key, EmbType.State.value)
+            }
+
+            replayProcessor(replayed::addAll).onEmit(log, replayContext())
+
+            assertNotNull(log.attributes[LogAttributes.LOG_RECORD_UID])
+            assertSame(log, logRecordExporter.exportedLogs.last())
+        }
+        assertTrue(replayed.isEmpty())
+        assertEquals(2, logRecordExporter.exportedLogs.size)
+    }
+
+    @Test
+    fun `a context carrying another key is not the replay context`() {
+        val replayed = mutableListOf<LogRecordData>()
+        val log = FakeReadWriteLogRecord()
+
+        replayProcessor(replayed::addAll).onEmit(log, otelRoot().set(fakeContextKey, "value"))
+
+        assertNotNull(log.attributes[LogAttributes.LOG_RECORD_UID])
+        assertSame(log, logRecordExporter.exportedLogs.single())
+        assertTrue(replayed.isEmpty())
+    }
+
+    @Test
+    fun `a record with the replay context is an ordinary log when nothing is replayed`() {
+        val log = FakeReadWriteLogRecord(eventName = AppStateKeys.CHANGE_EVENT_NAME).apply {
+            setStringAttribute(EmbType.State.key, EmbType.State.value)
+        }
+
+        processor.onEmit(log, replayContext())
+
+        assertNotNull(log.attributes[LogAttributes.LOG_RECORD_UID])
+        assertEquals("my-session-part", log.attributes[EmbSessionAttributes.EMB_SESSION_PART_ID])
+        assertSame(log, logRecordExporter.exportedLogs.single())
+    }
+
+    private fun otelRoot(): Context = fakeOpenTelemetry(OtelSdkMode.REGULAR).context.root()
+
+    private fun replayContext(): Context = otelRoot().markedAsStateReplay()
+
+    private fun replayProcessor(stateReplayExporter: (List<LogRecordData>) -> Unit) = EmbraceLogRecordProcessor(
+        uuidSource = TestUuidSource(),
+        metadataProvider = { METADATA },
+        logRecordExporter = logRecordExporter,
+        stateReplayExporter = stateReplayExporter,
+    )
 
     private fun EmbraceLogRecordProcessor.onEmit(log: FakeReadWriteLogRecord) =
         onEmit(log, NoopOpenTelemetry.context.current())

@@ -33,6 +33,13 @@ import io.embrace.android.embracesdk.semconv.ExperimentalSemconv
  */
 class SessionPartResurrector(
     private val cachedLogEnvelopeStore: CachedLogEnvelopeStore,
+
+    /**
+     * Whether this launch carries what a dead part's change log says of its process onto the rest of that part: the stamp on a
+     * native crash's log, and the end of the link on a span the process left running. It is off when the app state data model is
+     * off in this launch. Which spans get an end is decided by the dead part, not here: see [DeadPartState].
+     */
+    private val recoverDeadProcessState: () -> Boolean = { true },
 ) {
 
     /**
@@ -58,6 +65,8 @@ class SessionPartResurrector(
     ): Envelope<SessionPartPayload>? {
         val deadSessionPartSpan = deadPart.getSessionPartSpan()
         val sessionPartId = deadSessionPartSpan?.resolveSessionPartIdForCrashMatch()
+        // what the dead process recorded of state is an addition to its part, so failing to read it must not cost the part
+        val deadPartState = if (recoverDeadProcessState()) runCatching { DeadPartState.of(deadPart) }.getOrNull() else null
 
         val nativeCrash = if (nativeCrashService != null && sessionPartId != null) {
             nativeCrashProvider(sessionPartId)?.also { crash ->
@@ -85,6 +94,11 @@ class SessionPartResurrector(
                                     EmbCommonAttributes.EMB_EXPERIMENTS,
                                 ),
                             )?.let(::putAll)
+
+                            // the crash's log says what the state was as the process died, from what that process recorded.
+                            // It is in the form a log about a dead process is given, which only a launch that records state
+                            // itself turns into what each reader takes.
+                            deadPartState?.stamp()?.let(::putAll)
                         },
                     )
 
@@ -100,6 +114,7 @@ class SessionPartResurrector(
             userSessionTerminationReason = userSessionTerminationReason,
             isBackgroundOnly = isBackgroundOnly,
             lastWrittenMs = lastWrittenMs,
+            deadPartState = deadPartState,
         )
     }
 
@@ -112,6 +127,7 @@ class SessionPartResurrector(
         userSessionTerminationReason: String?,
         isBackgroundOnly: Boolean,
         lastWrittenMs: Long?,
+        deadPartState: DeadPartState?,
     ): Envelope<SessionPartPayload>? {
         val completedSpanIds = data.spans?.map { it.spanId }?.toSet() ?: emptySet()
         val snapshots = data.spanSnapshots
@@ -129,7 +145,10 @@ class SessionPartResurrector(
         // span times.
         val estimatedEndTimeMs = lastWrittenMs ?: estimateEndTimeMs(persistedSpans, snapshots.orEmpty())
         val failedSpans = snapshots
-            ?.map { it.toFailedSpan(endTimeMs = maxOf(estimatedEndTimeMs, it.startTimeMs())) }
+            ?.map {
+                val failed = it.toFailedSpan(endTimeMs = maxOf(estimatedEndTimeMs, it.startTimeMs()))
+                deadPartState?.let { state -> runCatching { state.completeLink(failed) }.getOrNull() } ?: failed
+            }
             ?: emptyList()
         val completedSpans = persistedSpans + failedSpans
         val sessionPartSpan = completedSpans.singleOrNull { it.hasEmbraceAttribute(EmbType.Ux.Session) } ?: return null

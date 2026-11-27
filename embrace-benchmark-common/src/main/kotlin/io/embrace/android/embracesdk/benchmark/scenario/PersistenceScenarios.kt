@@ -107,7 +107,7 @@ object PersistenceScenarios {
         embrace.logException(
             IOException("receipt cache miss"),
             severity = Severity.WARNING,
-            properties = mapOf("order.id" to "A-99213"),
+            attributes = mapOf("order.id" to "A-99213"),
         )
         advanceTime(2_500)
 

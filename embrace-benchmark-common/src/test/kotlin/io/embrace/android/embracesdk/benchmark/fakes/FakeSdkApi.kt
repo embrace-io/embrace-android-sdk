@@ -82,8 +82,8 @@ internal class FakeSdkApi(private val clock: () -> Long) : SdkApi by throwingSdk
         logs += Log(Severity.ERROR, message)
     }
 
-    override fun logException(throwable: Throwable, severity: Severity, properties: Map<String, Any>, message: String?) {
-        logs += Log(severity, message ?: throwable.message.orEmpty(), properties, throwable)
+    override fun logException(throwable: Throwable, severity: Severity, attributes: Map<String, Any>, message: String?) {
+        logs += Log(severity, message ?: throwable.message.orEmpty(), attributes, throwable)
     }
 
     data class Log(

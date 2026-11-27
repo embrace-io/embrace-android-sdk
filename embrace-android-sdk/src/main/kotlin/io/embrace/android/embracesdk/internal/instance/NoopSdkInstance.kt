@@ -77,18 +77,18 @@ internal class NoopSdkInstance(
 
     override fun start(context: Context) {}
 
-    override fun logMessage(message: String, severity: Severity, properties: Map<String, Any>) {
+    override fun logMessage(message: String, severity: Severity, attributes: Map<String, Any>) {
         logDropped("log_message")
     }
 
-    override fun logMessage(message: String, severity: Severity, properties: Map<String, Any>, attachment: ByteArray) {
+    override fun logMessage(message: String, severity: Severity, attributes: Map<String, Any>, attachment: ByteArray) {
         logDropped("log_message")
     }
 
     override fun logMessage(
         message: String,
         severity: Severity,
-        properties: Map<String, Any>,
+        attributes: Map<String, Any>,
         attachmentId: String,
         attachmentUrl: String,
     ) {
@@ -107,14 +107,14 @@ internal class NoopSdkInstance(
         logDropped("log_message")
     }
 
-    override fun logException(throwable: Throwable, severity: Severity, properties: Map<String, Any>, message: String?) {
+    override fun logException(throwable: Throwable, severity: Severity, attributes: Map<String, Any>, message: String?) {
         logDropped("log_message")
     }
 
     override fun logCustomStacktrace(
         stacktraceElements: Array<StackTraceElement>,
         severity: Severity,
-        properties: Map<String, Any>,
+        attributes: Map<String, Any>,
         message: String?,
     ) {
         logDropped("log_message")

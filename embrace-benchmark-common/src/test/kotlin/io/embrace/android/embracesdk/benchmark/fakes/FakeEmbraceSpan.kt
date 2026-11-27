@@ -31,7 +31,7 @@ internal class FakeEmbraceSpan(
     val attributes: MutableMap<String, String> = mutableMapOf()
     val events: MutableList<Event> = mutableListOf()
 
-    override val spanContext: SpanContext? = null
+    override val spanContext: io.embrace.android.embracesdk.context.SpanContext? = null
     override val traceId: String? = null
     override val spanId: String? = null
 
@@ -75,6 +75,8 @@ internal class FakeEmbraceSpan(
         error("recordException")
 
     override fun updateName(newName: String): Boolean = error("updateName")
+
+    override fun addLink(linkedSpan: EmbraceSpan, attributes: Map<String, String>): Boolean = error("addLink")
 
     override fun addLink(linkedSpanContext: SpanContext, attributes: Map<String, String>): Boolean = error("addLink")
 

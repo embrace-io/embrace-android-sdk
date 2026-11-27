@@ -6,6 +6,7 @@ import io.embrace.android.embracesdk.fakes.FakeInternalTelemetryService
 import io.embrace.android.embracesdk.fakes.FakeSpanContext
 import io.embrace.android.embracesdk.fakes.FakeSpanService
 import io.embrace.android.embracesdk.internal.network.http.MutableHttpRequestInfoImpl
+import io.embrace.android.embracesdk.internal.otel.spans.toOtelSpanContext
 import io.embrace.android.embracesdk.internal.telemetry.AppliedLimitType
 import io.embrace.android.embracesdk.network.NetworkSpanParent
 import io.embrace.android.embracesdk.network.NetworkSpanStartInfo
@@ -69,10 +70,10 @@ internal class NetworkSpanParentServiceImplTest {
     @Test
     fun `a tracked parent is cleared when its span stops but not when another span does`() {
         val span = trackedSpan()
-        service.set(span.spanContext)
+        service.set(span.spanContext?.toOtelSpanContext())
 
         service.onSpanStopped(checkNotNull(trackedSpan().spanId))
-        assertEquals(span.spanContext?.spanId, currentParentSpanId())
+        assertEquals(span.spanContext?.toOtelSpanContext()?.spanId, currentParentSpanId())
         service.onSpanStopped(checkNotNull(span.spanId))
         assertNull(currentParentSpanId())
     }
@@ -110,7 +111,7 @@ internal class NetworkSpanParentServiceImplTest {
 
         assertSame(NoopNetworkSpanParentToken, service.set(FakeSpanContext()))
         assertSame(NoopNetworkSpanParentToken, service.set(null))
-        assertSame(NoopNetworkSpanParentToken, service.set(ended.spanContext))
+        assertSame(NoopNetworkSpanParentToken, service.set(ended.spanContext?.toOtelSpanContext()))
         assertSame(NoopNetworkSpanParentToken, service.set(FakeEmbraceSdkSpan.started().apply { stop() }))
         assertEquals(context.spanId, currentParentSpanId())
         assertEquals(1, errorHandler.warningMessages.size)
@@ -120,7 +121,7 @@ internal class NetworkSpanParentServiceImplTest {
     fun `replacing an active parent warns with the name of a tracked span and the span ID of an untracked one`() {
         val checkout = trackedSpan("checkout")
         val untracked = untrackedContext()
-        service.set(checkout.spanContext)
+        service.set(checkout.spanContext?.toOtelSpanContext())
         service.set(untracked)
 
         assertEquals(
@@ -143,7 +144,7 @@ internal class NetworkSpanParentServiceImplTest {
     @Test
     fun `setting the active parent again is not a conflict and keeps its token`() {
         val checkout = trackedSpan("checkout")
-        val context = checkNotNull(checkout.spanContext)
+        val context = checkNotNull(checkout.spanContext).toOtelSpanContext()
         val token = service.set(context)
         assertSame(token, service.set(context))
         assertSame(token, service.set(createSpanContext(context.traceId, context.spanId) { isSampled = true }))
@@ -158,16 +159,16 @@ internal class NetworkSpanParentServiceImplTest {
     fun `a replaced tracked span gets one event naming the replacing span for its first conflict only`() {
         val checkout = trackedSpan("checkout")
         val search = trackedSpan("search")
-        service.set(checkout.spanContext)
-        service.set(search.spanContext)
-        service.set(checkout.spanContext)
-        service.set(trackedSpan("results").spanContext)
+        service.set(checkout.spanContext?.toOtelSpanContext())
+        service.set(search.spanContext?.toOtelSpanContext())
+        service.set(checkout.spanContext?.toOtelSpanContext())
+        service.set(trackedSpan("results").spanContext?.toOtelSpanContext())
 
         with(checkout.events.single()) {
             assertEquals("emb-network-span-parent-replaced", name)
             assertEquals(
                 mapOf(
-                    EmbNetworkSpanParentAttributes.EMB_REPLACED_BY_SPAN_ID to checkNotNull(search.spanContext).spanId,
+                    EmbNetworkSpanParentAttributes.EMB_REPLACED_BY_SPAN_ID to checkNotNull(search.spanContext).toOtelSpanContext().spanId,
                     EmbNetworkSpanParentAttributes.EMB_REPLACED_BY_NAME to "search",
                 ),
                 attributes,
@@ -181,7 +182,7 @@ internal class NetworkSpanParentServiceImplTest {
     fun `the event for an untracked replacing span has its span ID but no name`() {
         val checkout = trackedSpan("checkout")
         val untracked = untrackedContext()
-        service.set(checkout.spanContext)
+        service.set(checkout.spanContext?.toOtelSpanContext())
         service.set(untracked)
 
         assertEquals(
@@ -193,7 +194,7 @@ internal class NetworkSpanParentServiceImplTest {
     @Test
     fun `an ended replaced span gets no event`() {
         val checkout = trackedSpan("checkout")
-        service.set(checkout.spanContext)
+        service.set(checkout.spanContext?.toOtelSpanContext())
         checkout.stop()
         service.set(untrackedContext())
 
@@ -248,7 +249,7 @@ internal class NetworkSpanParentServiceImplTest {
         }
         service.appDecision(request)
         val tracked = trackedSpan()
-        val trackedContext = checkNotNull(tracked.spanContext)
+        val trackedContext = checkNotNull(tracked.spanContext).toOtelSpanContext()
         service.set(trackedContext)
         service.appDecision(request)
         val untracked = untrackedContext()
@@ -409,7 +410,7 @@ internal class NetworkSpanParentServiceImplTest {
 
     private fun currentParentSpanId(): String? = service.currentParent()?.spanId
 
-    private fun untrackedContext(): SpanContext = checkNotNull(FakeEmbraceSdkSpan.started().spanContext)
+    private fun untrackedContext(): SpanContext = checkNotNull(FakeEmbraceSdkSpan.started().spanContext).toOtelSpanContext()
 
     private fun trackedSpan(): FakeEmbraceSdkSpan = FakeEmbraceSdkSpan.started().also(spanService::addKnownSpan)
 

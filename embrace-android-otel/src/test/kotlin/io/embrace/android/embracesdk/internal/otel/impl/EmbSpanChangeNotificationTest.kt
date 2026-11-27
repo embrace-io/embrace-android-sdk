@@ -16,6 +16,7 @@ import io.embrace.android.embracesdk.internal.otel.spans.EmbraceSpanFactoryImpl
 import io.embrace.android.embracesdk.internal.otel.spans.OtelSpanStartArgs
 import io.embrace.android.embracesdk.internal.otel.spans.SpanRepository
 import io.embrace.android.embracesdk.internal.otel.spans.SpanServiceImpl
+import io.embrace.android.embracesdk.internal.otel.spans.toOtelSpanContext
 import io.opentelemetry.kotlin.OpenTelemetry
 import io.opentelemetry.kotlin.attributes.AnyValue
 import io.opentelemetry.kotlin.getTracer
@@ -99,7 +100,7 @@ internal class EmbSpanChangeNotificationTest(
             errorHandler = FakeErrorHandler(),
         )
         fakeClock.tick(100)
-        linkTarget = checkNotNull(createStartedSpan().spanContext)
+        linkTarget = checkNotNull(createStartedSpan().spanContext).toOtelSpanContext()
         observed.clear()
     }
 

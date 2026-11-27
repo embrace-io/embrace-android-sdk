@@ -6,6 +6,7 @@ import io.embrace.android.embracesdk.fakes.FakeReadWriteLogRecord
 import io.embrace.android.embracesdk.internal.otel.export.ExternalExportDispatcher
 import io.embrace.android.embracesdk.internal.otel.export.immediateExportDispatcher
 import io.embrace.android.embracesdk.internal.otel.payload.toEmbracePayload
+import io.embrace.android.embracesdk.internal.payload.Attribute
 import io.opentelemetry.kotlin.export.OperationResultCode
 import io.opentelemetry.kotlin.logging.data.LogRecordData
 import io.opentelemetry.kotlin.logging.export.LogRecordExporter
@@ -39,6 +40,63 @@ internal class DefaultLogRecordExporterTest {
 
         assertFalse(logSink.logsForNextBatch().isEmpty())
         assertEquals(data.toEmbracePayload(), logSink.logsForNextBatch()[0])
+    }
+
+    @Test
+    fun `exportInline() with payload attributes stores them after the record, then calls back before exporters get it`() {
+        val logSink: LogSink = LogSinkImpl(FakeErrorHandler())
+        val external = FakeLogRecordExporter()
+        val log = FakeReadWriteLogRecord().apply { setStringAttribute("own", "1") }
+        val extra = listOf(Attribute("emb.app.state.packed", "a=b"), Attribute("own", "duplicate"))
+
+        exporter(logSink, listOf(external)).exportInline(log, extra) {
+            // the sink has what was stored, and nothing is handed to the external exporters yet
+            assertEquals(1, logSink.storedLogCount())
+            assertTrue(external.exportedLogs.isEmpty())
+            log.setStringAttribute("late", "2")
+        }
+        val attributesWhenHandedOver = external.exportedLogs.single().attributes
+
+        // the record's own attributes first, then those it does not already have
+        assertEquals(
+            listOf("own" to "1", "emb.app.state.packed" to "a=b"),
+            logSink.logsForNextBatch().single().attributes.orEmpty().map { it.key to it.data },
+        )
+        // what the callback put on the record reaches the app's exporters and not the sink
+        assertEquals("2", attributesWhenHandedOver["late"])
+    }
+
+    @Test
+    fun `exportInline() with payload attributes stores nothing and never calls back when export is disabled`() {
+        val logSink: LogSink = LogSinkImpl(FakeErrorHandler())
+        val external = FakeLogRecordExporter()
+        var called = false
+        val exporter = DefaultLogRecordExporter(logSink, listOf(external), { false }, immediateExportDispatcher())
+
+        val result = exporter.exportInline(FakeReadWriteLogRecord(), listOf(Attribute("emb.app.state.packed", "a=b"))) {
+            called = true
+        }
+
+        assertEquals(OperationResultCode.Success, result)
+        assertFalse(called)
+        assertTrue(logSink.logsForNextBatch().isEmpty())
+        assertTrue(external.exportedLogs.isEmpty())
+    }
+
+    @Test
+    fun `exportExternally() hands records to the external exporters and never to the sink`() {
+        val logSink: LogSink = LogSinkImpl(FakeErrorHandler())
+        val external = FakeLogRecordExporter()
+        var exportEnabled = true
+        val exporter =
+            DefaultLogRecordExporter(logSink, listOf(external), { exportEnabled }, immediateExportDispatcher())
+
+        exporter.exportExternally(listOf(FakeReadWriteLogRecord(eventName = "an-event")))
+        exportEnabled = false
+        exporter.exportExternally(listOf(FakeReadWriteLogRecord(eventName = "after-export-was-disabled")))
+
+        assertEquals(listOf("an-event"), external.exportedLogs.map { it.eventName })
+        assertTrue(logSink.logsForNextBatch().isEmpty())
     }
 
     @Test

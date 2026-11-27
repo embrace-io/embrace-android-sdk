@@ -9,13 +9,16 @@ import io.opentelemetry.kotlin.tracing.data.SpanData
 import io.opentelemetry.kotlin.tracing.export.SpanExporter
 
 /**
- * Exports the given completed span to the given [SpanRepository] as well as any configured external exporter
+ * Exports the given completed span to the given [SpanRepository] as well as any configured external exporter.
+ *
+ * [decorate], if there is one, is applied to what the external exporters are handed, and never to what is stored.
  */
 internal class DefaultSpanExporter(
     private val spanRepository: SpanRepository,
     private val externalExporters: List<SpanExporter>,
     private val exportCheck: () -> Boolean,
     private val externalExportDispatcher: ExternalExportDispatcher,
+    private val decorate: ((SpanData) -> SpanData)? = null,
 ) : SpanExporter, InlineExporter<SpanData> {
 
     override fun exportInline(telemetry: List<SpanData>): OperationResultCode {
@@ -25,7 +28,8 @@ internal class DefaultSpanExporter(
         val result = spanRepository.storeCompletedOtelSpans(telemetry.map(SpanData::toEmbracePayload))
 
         if (result == StoreDataResult.SUCCESS && externalExporters.isNotEmpty()) {
-            externalExportDispatcher.dispatch(externalExporters) { it.export(telemetry) }
+            val exported = if (decorate != null) telemetry.map(decorate) else telemetry
+            externalExportDispatcher.dispatch(externalExporters) { it.export(exported) }
         }
 
         return when (result) {

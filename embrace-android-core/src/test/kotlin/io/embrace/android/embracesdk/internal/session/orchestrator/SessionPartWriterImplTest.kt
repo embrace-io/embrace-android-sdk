@@ -9,7 +9,10 @@ import io.embrace.android.embracesdk.fakes.FakeErrorHandler
 import io.embrace.android.embracesdk.fakes.FakeInternalTelemetryService
 import io.embrace.android.embracesdk.fakes.FakeSectionRecorder
 import io.embrace.android.embracesdk.fakes.TestUuidSource
+import io.embrace.android.embracesdk.internal.arch.datasource.StateDeclaration
+import io.embrace.android.embracesdk.internal.arch.datasource.StateUpdate
 import io.embrace.android.embracesdk.internal.arch.schema.EmbType
+import io.embrace.android.embracesdk.internal.capture.state.StateRecorder
 import io.embrace.android.embracesdk.internal.clock.millisToNanos
 import io.embrace.android.embracesdk.internal.config.resolved.EmbraceConfig
 import io.embrace.android.embracesdk.internal.config.resolved.PersistenceConfig
@@ -23,6 +26,8 @@ import io.embrace.android.embracesdk.internal.session.persistence.SessionMetadat
 import io.embrace.android.embracesdk.internal.session.persistence.SessionPartDirectory
 import io.embrace.android.embracesdk.internal.session.persistence.SpanCollection
 import io.embrace.android.embracesdk.internal.session.persistence.SpanProto
+import io.embrace.android.embracesdk.internal.session.persistence.StateJournal
+import io.embrace.android.embracesdk.internal.session.persistence.StateRecord
 import io.embrace.android.embracesdk.internal.telemetry.AppliedLimitType
 import io.embrace.android.embracesdk.internal.utils.SystemTrace
 import io.embrace.android.embracesdk.internal.worker.BackgroundWorker
@@ -37,9 +42,12 @@ import org.junit.Rule
 import org.junit.Test
 import org.junit.rules.TemporaryFolder
 import java.io.File
+import java.util.concurrent.CountDownLatch
+import java.util.concurrent.Executors
 import java.util.concurrent.ScheduledExecutorService
 import java.util.concurrent.ScheduledFuture
 import java.util.concurrent.TimeUnit
+import kotlin.concurrent.thread
 
 internal class SessionPartWriterImplTest {
 
@@ -50,9 +58,14 @@ internal class SessionPartWriterImplTest {
         private const val METADATA_FILE_NAME = "metadata.pb"
         private const val SPAN_SNAPSHOTS_FILE_NAME = "span_snapshots.pb"
         private const val COMPLETED_SPANS_FILE_NAME = "completed_spans.pb"
+        private const val STATE_JOURNAL_FILE_NAME = "state_journal.pb"
         private const val ENVELOPE_VERSION = "0.1.0"
         private const val ENVELOPE_TYPE = "spans"
         private val SYMBOLS = mapOf("armeabi-v7a" to "my-symbols")
+        private const val RACING_REPORTERS = 4
+        private const val RACING_UPDATES = 2000
+        private const val RACING_PARTS = 100
+        private const val RACE_TIMEOUT_SECONDS = 30L
     }
 
     @get:Rule
@@ -127,6 +140,133 @@ internal class SessionPartWriterImplTest {
         assertEquals(startedAt, directory.timestamp)
         assertEquals(USER_SESSION_ID, directory.userSessionId)
         assertEquals(SESSION_PART_ID, directory.sessionPartId)
+        assertNoSdkErrors()
+    }
+
+    @Test
+    fun `state changes are journaled with the session part they were made in, and those made between parts are counted in the next`() {
+        val recorder = StateRecorder(clock).apply { declare(StateDeclaration("network")) }
+        val writer = createWriter(stateRecorder = recorder)
+
+        // no session part is in progress, so this is in no journal, and the next one counts it
+        recorder.onEvent(StateUpdate("network", "wifi", clock.now()))
+        writer.onSessionPartStarted(clock.now(), USER_SESSION_ID, SESSION_PART_ID)
+        recorder.onEvent(StateUpdate("network", "wan", clock.tick(100)))
+        drain()
+
+        // journaled while the part is still in progress, in the order the changes were made
+        assertEquals(listOf("checkpoint", "part start", "wan"), journalOnDisk(SESSION_PART_ID))
+        assertEquals(listOf("network" to 1), countedWithNoPart(SESSION_PART_ID))
+
+        clock.tick(10000)
+        writer.endPart()
+        writer.onSessionPartEnded(SESSION_PART_ID)
+        recorder.onEvent(StateUpdate("network", "none", clock.tick(100)))
+        writer.onSessionPartStarted(clock.now(), USER_SESSION_ID, OTHER_SESSION_PART_ID)
+        drain()
+
+        assertEquals(listOf("checkpoint", "part start", "wan", "part end"), journalOnDisk(SESSION_PART_ID))
+        assertEquals(listOf("checkpoint", "part start"), journalOnDisk(OTHER_SESSION_PART_ID))
+        assertEquals(listOf("network" to 1), countedWithNoPart(OTHER_SESSION_PART_ID))
+        // the next part opens with the value the change between the two left
+        val opening = journalRecordsOnDisk(OTHER_SESSION_PART_ID).first()
+        assertEquals(listOf("none"), checkNotNull(opening.checkpoint).values.map { it.value_ })
+        assertEquals(3L, opening.sequence)
+        assertNoSdkErrors()
+    }
+
+    /**
+     * State changes are reported from any thread while session parts change on another, and are written by a worker that
+     * neither waits for. Whatever the interleaving, every change is accounted for once: journaled with the part it was made
+     * in, or refused by its state's limit for the part and counted in that part's end, or made with no part in progress and
+     * counted in the start of the next part. Read one after another, the journals lead from each number to the next with
+     * none unaccounted for.
+     */
+    @Test
+    fun `state changes racing session part changes are each journaled or counted once, and in order`() {
+        val persistence = Executors.newSingleThreadScheduledExecutor()
+        // room in a journal for every change
+        val changes = RACING_REPORTERS * RACING_UPDATES
+        val recorder = StateRecorder(clock, maxChanges = changes)
+        // each reporter's state is declared with the limit a state has unless it is a named exception
+        repeat(RACING_REPORTERS) { reporter -> recorder.declare(StateDeclaration("state-$reporter")) }
+        val writer = createWriter(worker = BackgroundWorker(persistence), stateRecorder = recorder)
+        val start = CountDownLatch(1)
+        val reporters = (0 until RACING_REPORTERS).map { reporter ->
+            thread {
+                start.await(RACE_TIMEOUT_SECONDS, TimeUnit.SECONDS)
+                repeat(RACING_UPDATES) { recorder.onEvent(StateUpdate("state-$reporter", "value-$it", clock.now())) }
+            }
+        }
+
+        val partIds = mutableListOf<String>()
+        fun runPart() {
+            val partId = "%032x".format(partIds.size)
+            partIds += partId
+            writer.onSessionPartStarted(clock.now(), USER_SESSION_ID, partId)
+            Thread.sleep(1)
+            writer.endPart()
+            writer.onSessionPartEnded(partId)
+            Thread.sleep(1)
+        }
+        start.countDown()
+        // a bounded number of parts, well short of how many directories are kept on disk
+        while (reporters.any(Thread::isAlive) && partIds.size < RACING_PARTS) {
+            runPart()
+        }
+        reporters.forEach { it.join(TimeUnit.SECONDS.toMillis(RACE_TIMEOUT_SECONDS)) }
+        // one more, to count the changes made after the last of those ended
+        runPart()
+        persistence.submit {}.get(RACE_TIMEOUT_SECONDS, TimeUnit.SECONDS)
+        persistence.shutdownNow()
+
+        var lastChange = 0L
+        var journaled = 0
+        var betweenParts = 0
+        var refused = 0
+        partIds.forEach { partId ->
+            val records = journalRecordsOnDisk(partId)
+            val partStart = checkNotNull(records[1].part_start)
+            val countedBefore = partStart.not_in_session_counts.sumOf { it.count }
+            val changesListed = records.filter { it.change != null }
+
+            // a journal opens with the values as of the last change made before it, which is the last change of the
+            // journal before it and every change made between the two, each of which its start counts for its state
+            assertNotNull(records.first().checkpoint)
+            assertEquals(lastChange + countedBefore, records.first().sequence)
+            assertEquals(records.first().sequence, records[1].sequence)
+            assertTrue(partStart.not_in_session_counts.all { it.count > 0 })
+            lastChange = records.first().sequence
+            // the changes it lists were made during it: they are in order, and skip a number for each change a state's
+            // limit refused
+            changesListed.forEach {
+                assertTrue(it.sequence > lastChange)
+                lastChange = it.sequence
+            }
+
+            with(records.last()) {
+                val partEnd = checkNotNull(part_end)
+                assertTrue(sequence >= lastChange)
+                lastChange = sequence
+                // what the journal lists and what it counts as refused add up to the numbers it covers
+                assertEquals(sequence - records.first().sequence, (changesListed.size + partEnd.dropped_changes).toLong())
+                // every refusal was a state's own limit, and the count for each state says whose
+                assertNull(partEnd.global_limit)
+                assertEquals(partEnd.dropped_changes, partEnd.dropped_counts.sumOf { it.count })
+                assertTrue(partEnd.dropped_counts.all { it.limit == StateDeclaration.DEFAULT_MAX_CHANGES_IN_PART })
+                // and each of those limits was recorded once as it was first reached
+                assertEquals(
+                    partEnd.dropped_counts.map { it.state to it.limit }.sortedBy { it.first },
+                    records.mapNotNull { it.limit_reached }.map { it.state to it.limit }.sortedBy { it.first },
+                )
+                refused += partEnd.dropped_changes
+            }
+            journaled += changesListed.size
+            betweenParts += countedBefore
+        }
+        assertEquals(changes.toLong(), lastChange)
+        assertEquals(changes, journaled + betweenParts + refused)
+        assertEquals(lastChange, recorder.snapshot().sequence)
         assertNoSdkErrors()
     }
 
@@ -1734,6 +1874,7 @@ internal class SessionPartWriterImplTest {
         sessionsDir: File = this.sessionsDir,
         worker: BackgroundWorker = BackgroundWorker(executor),
         onWritesComplete: () -> Unit = {},
+        stateRecorder: StateRecorder? = null,
     ) = SessionPartWriterImpl(
         lazy { sessionsDir },
         worker,
@@ -1750,6 +1891,7 @@ internal class SessionPartWriterImplTest {
         },
         telemetryService,
         onWritesComplete = onWritesComplete,
+        stateRecorder = stateRecorder,
     )
 
     private fun configService(
@@ -1852,6 +1994,32 @@ internal class SessionPartWriterImplTest {
     private fun completedSpansOnDisk(sessionPartId: String): List<SpanProto> {
         val bytes = partFile(sessionPartId, COMPLETED_SPANS_FILE_NAME)?.readBytes() ?: return emptyList()
         return SpanCollection.ADAPTER.decode(bytes).spans
+    }
+
+    /**
+     * What each record of the state journal on disk for [sessionPartId] is, in order: the value a change was to, or the
+     * kind of any other record.
+     */
+    private fun journalOnDisk(sessionPartId: String): List<String> = journalRecordsOnDisk(sessionPartId).map { record ->
+        when {
+            record.checkpoint != null -> "checkpoint"
+            record.part_start != null -> "part start"
+            record.part_end != null -> "part end"
+            else -> record.change?.value_?.value_ ?: "unknown"
+        }
+    }
+
+    /**
+     * What the journal of a part counts as changed with no session part in progress before it, by state.
+     */
+    private fun countedWithNoPart(sessionPartId: String): List<Pair<String, Int>> {
+        val partStart = journalRecordsOnDisk(sessionPartId).mapNotNull(StateRecord::part_start).single()
+        return partStart.not_in_session_counts.map { it.state to it.count }
+    }
+
+    private fun journalRecordsOnDisk(sessionPartId: String): List<StateRecord> {
+        val file = checkNotNull(partFile(sessionPartId, STATE_JOURNAL_FILE_NAME)) { "no state journal on disk" }
+        return StateJournal.ADAPTER.decode(file.readBytes()).records
     }
 
     private fun partFile(sessionPartId: String, fileName: String): File? {

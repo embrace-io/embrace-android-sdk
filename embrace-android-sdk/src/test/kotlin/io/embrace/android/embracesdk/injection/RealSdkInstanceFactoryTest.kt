@@ -8,11 +8,14 @@ import android.os.Looper
 import android.os.Process
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import io.embrace.android.embracesdk.assertions.waitUntilConditionMet
+import io.embrace.android.embracesdk.fakes.FakeAttributesMutator
 import io.embrace.android.embracesdk.fakes.FakeClock
 import io.embrace.android.embracesdk.fakes.FakeConfigService
 import io.embrace.android.embracesdk.fakes.FakeErrorHandler
+import io.embrace.android.embracesdk.fakes.FakeLogRecordExporter
 import io.embrace.android.embracesdk.fakes.FakeNetworkConnectivityService
 import io.embrace.android.embracesdk.fakes.FakeReadWriteLogRecord
+import io.embrace.android.embracesdk.fakes.FakeSpanExporter
 import io.embrace.android.embracesdk.fakes.OtelSdkMode
 import io.embrace.android.embracesdk.fakes.TELEMETRY_DIRS
 import io.embrace.android.embracesdk.fakes.TestPlatformSerializer
@@ -24,6 +27,8 @@ import io.embrace.android.embracesdk.internal.arch.InstrumentationProvider
 import io.embrace.android.embracesdk.internal.arch.InstrumentationRegistry
 import io.embrace.android.embracesdk.internal.arch.datasource.DataSource
 import io.embrace.android.embracesdk.internal.arch.datasource.DataSourceFactory
+import io.embrace.android.embracesdk.internal.arch.datasource.StateDeclaration
+import io.embrace.android.embracesdk.internal.arch.datasource.StateUpdate
 import io.embrace.android.embracesdk.internal.arch.state.ProcessState
 import io.embrace.android.embracesdk.internal.arch.state.ProcessStateListener
 import io.embrace.android.embracesdk.internal.arch.ui.TapSignal
@@ -35,11 +40,14 @@ import io.embrace.android.embracesdk.internal.config.remote.OtelKotlinSdkConfig
 import io.embrace.android.embracesdk.internal.config.remote.RemoteConfig
 import io.embrace.android.embracesdk.internal.config.resolved.AutoDataCaptureConfig
 import io.embrace.android.embracesdk.internal.config.resolved.EmbraceConfig
+import io.embrace.android.embracesdk.internal.config.resolved.PersistenceConfig
+import io.embrace.android.embracesdk.internal.config.resolved.StateExportMode
 import io.embrace.android.embracesdk.internal.delivery.intake.IntakeService
 import io.embrace.android.embracesdk.internal.injection.ConfigLoadServices
 import io.embrace.android.embracesdk.internal.injection.PreStartServices
 import io.embrace.android.embracesdk.internal.injection.SdkOverrides
 import io.embrace.android.embracesdk.internal.injection.WorkerThreadPool
+import io.embrace.android.embracesdk.internal.injection.WorkerThreadPoolImpl
 import io.embrace.android.embracesdk.internal.injection.lazyOkHttpClient
 import io.embrace.android.embracesdk.internal.instance.RealSdkInstance
 import io.embrace.android.embracesdk.internal.instance.createRealSdkInstance
@@ -50,6 +58,7 @@ import io.embrace.android.embracesdk.internal.instrumentation.startup.SdkInitRes
 import io.embrace.android.embracesdk.internal.instrumentation.thread.blockage.ThreadBlockageService
 import io.embrace.android.embracesdk.internal.logging.ErrorHandler
 import io.embrace.android.embracesdk.internal.logs.LogOrchestrator
+import io.embrace.android.embracesdk.internal.otel.config.ExternalOtelConfig
 import io.embrace.android.embracesdk.internal.otel.config.OtelSdkConfig
 import io.embrace.android.embracesdk.internal.otel.sdk.OtelSdkWrapper
 import io.embrace.android.embracesdk.internal.session.lifecycle.LifecycleTracker
@@ -61,6 +70,7 @@ import io.embrace.android.embracesdk.internal.worker.BackgroundWorker
 import io.embrace.android.embracesdk.internal.worker.Worker
 import io.embrace.android.embracesdk.semconv.EmbSessionAttributes
 import io.opentelemetry.kotlin.NoopOpenTelemetry
+import io.opentelemetry.kotlin.logging.model.ReadWriteLogRecord
 import okhttp3.OkHttpClient
 import okhttp3.Request
 import okhttp3.mockwebserver.MockResponse
@@ -141,8 +151,10 @@ internal class RealSdkInstanceFactoryTest {
         workerThreadPool: WorkerThreadPool? = null,
         overrides: SdkOverrides = this.overrides,
         okHttpClient: Lazy<OkHttpClient> = lazyOkHttpClient(),
+        externalOtelConfig: ExternalOtelConfig.() -> Unit = {},
     ): RealSdkInstance {
         val preStartServices = PreStartServices(errorHandler, clock)
+        preStartServices.externalOtelConfig.externalOtelConfig()
         return createRealSdkInstance(
             context = context,
             preStartServices = preStartServices,
@@ -175,6 +187,170 @@ internal class RealSdkInstanceFactoryTest {
         val log = FakeReadWriteLogRecord()
         processor.onEmit(log, NoopOpenTelemetry.context.current())
         assertTrue(log.attributes.containsKey(EmbSessionAttributes.EMB_STATE))
+    }
+
+    @Test
+    fun `an app is given more of state than the link on a span only if it has configured an exporter or a processor`() {
+        val byDefault = FakeConfigService(
+            config = EmbraceConfig(
+                persistence = { PersistenceConfig(multiFileEnabled = { true }) },
+                autoDataCapture = {
+                    AutoDataCaptureConfig(sharedStateSpanEnabled = { true }, stateAssociationEnabled = { true })
+                },
+            ),
+        )
+        val namedAssociation = FakeConfigService(
+            config = EmbraceConfig(
+                persistence = { PersistenceConfig(multiFileEnabled = { true }) },
+                autoDataCapture = {
+                    AutoDataCaptureConfig(
+                        sharedStateSpanEnabled = { true },
+                        stateAssociationEnabled = { true },
+                        stateExportMode = { StateExportMode.ASSOCIATION },
+                    )
+                },
+            ),
+        )
+        val associated = FakeConfigService(
+            config = EmbraceConfig(
+                persistence = { PersistenceConfig(multiFileEnabled = { true }) },
+                autoDataCapture = {
+                    AutoDataCaptureConfig(
+                        sharedStateSpanEnabled = { true },
+                        stateAssociationEnabled = { true },
+                        stateExportMode = { StateExportMode.VERBOSE },
+                    )
+                },
+            ),
+        )
+        val requestedWorkers = mutableListOf<Worker>()
+        val workers = WorkerThreadPoolImpl(errorHandler)
+        val workerThreadPool = object : WorkerThreadPool by workers {
+            override fun backgroundWorker(worker: Worker.Background): BackgroundWorker {
+                requestedWorkers.add(worker)
+                return workers.backgroundWorker(worker)
+            }
+        }
+
+        // the mode is verbose, which is not the default, and there is nobody to emit an event for, or to keep the values of a span for
+        createInstance(configService = associated, workerThreadPool = workerThreadPool)
+        with(checkNotNull(otelSdkConfig)) {
+            assertNotNull(spanStateLink)
+            assertTrue(spanProcessor.isOnEndingRequired())
+            assertTrue(trailingSpanProcessors.isEmpty())
+            val resource = FakeAttributesMutator().apply(resourceAction).attributes
+            assertFalse(resource.containsKey(EmbSessionAttributes.EMB_PROCESS_IDENTIFIER))
+        }
+        assertFalse(Worker.Background.StateExportWorker in requestedWorkers)
+
+        // with no mode named, an app with only a span exporter gets the values on its spans, as nothing would resolve a number
+        createInstance(
+            configService = byDefault,
+            workerThreadPool = workerThreadPool,
+            externalOtelConfig = { addSpanExporter(FakeSpanExporter()) },
+        )
+        with(checkNotNull(otelSdkConfig)) {
+            assertNotNull(spanStateLink)
+            assertEquals(1, trailingSpanProcessors.size)
+        }
+
+        // with no mode named, an app with a log receiver gets association only, and so no values on its spans
+        createInstance(
+            configService = byDefault,
+            workerThreadPool = workerThreadPool,
+            externalOtelConfig = {
+                addSpanExporter(FakeSpanExporter())
+                addLogExporter(FakeLogRecordExporter())
+            },
+        )
+        with(checkNotNull(otelSdkConfig)) {
+            assertTrue(trailingSpanProcessors.isEmpty())
+        }
+        requestedWorkers.clear()
+
+        // a mode that is named wins: association for a span exporter alone
+        createInstance(
+            configService = namedAssociation,
+            workerThreadPool = workerThreadPool,
+            externalOtelConfig = { addSpanExporter(FakeSpanExporter()) },
+        )
+        with(checkNotNull(otelSdkConfig)) {
+            assertTrue(trailingSpanProcessors.isEmpty())
+        }
+
+        // a span exporter alone gets what the mode gives a span, and no events, as nothing receives log records
+        createInstance(
+            configService = associated,
+            workerThreadPool = workerThreadPool,
+            externalOtelConfig = { addSpanExporter(FakeSpanExporter()) },
+        )
+        with(checkNotNull(otelSdkConfig)) {
+            assertEquals(1, trailingSpanProcessors.size)
+            val resource = FakeAttributesMutator().apply(resourceAction).attributes
+            assertEquals(processIdentifier, resource[EmbSessionAttributes.EMB_PROCESS_IDENTIFIER])
+        }
+        assertFalse(Worker.Background.StateExportWorker in requestedWorkers)
+
+        createInstance(
+            configService = associated,
+            workerThreadPool = workerThreadPool,
+            externalOtelConfig = { addLogExporter(FakeLogRecordExporter()) },
+        )
+        with(checkNotNull(otelSdkConfig)) {
+            assertNotNull(spanStateLink)
+            assertEquals(1, trailingSpanProcessors.size)
+            val resource = FakeAttributesMutator().apply(resourceAction).attributes
+            assertEquals(processIdentifier, resource[EmbSessionAttributes.EMB_PROCESS_IDENTIFIER])
+        }
+        assertTrue(Worker.Background.StateExportWorker in requestedWorkers)
+    }
+
+    @Test
+    fun `with state associated, a log emitted before the SDK is ready carries no state, and one emitted once it is ready does`() {
+        val associated = FakeConfigService(
+            config = EmbraceConfig(
+                persistence = { PersistenceConfig(multiFileEnabled = { true }) },
+                autoDataCapture = {
+                    AutoDataCaptureConfig(sharedStateSpanEnabled = { true }, stateAssociationEnabled = { true })
+                },
+            ),
+        )
+        fun emitLog(): Map<String, Any> {
+            val record = FakeReadWriteLogRecord()
+            // a real record gives its attributes as they are when they are read, and not as they come to be
+            val log = object : ReadWriteLogRecord by record {
+                override val attributes: Map<String, Any> get() = record.attributes.toMap()
+            }
+            checkNotNull(otelSdkConfig).logRecordProcessor.onEmit(log, NoopOpenTelemetry.context.current())
+            return record.attributes.toMap()
+        }
+        var eventBus: EventBus? = null
+        var beforeReady: Map<String, Any>? = null
+        val overrides = SdkOverrides(
+            otelSdkConfig = { real -> real().also { otelSdkConfig = it } },
+            eventBus = { real -> real().also { eventBus = it } },
+            // made once the recorder is listening, and before the SDK says it is ready: a state is declared and given a
+            // value, as its data source would
+            sessionOrchestrator = { real ->
+                real().also {
+                    checkNotNull(eventBus).emit(StateDeclaration.KEY, StateDeclaration("network"))
+                    checkNotNull(eventBus).emit(StateUpdate.KEY, StateUpdate("network", "wifi", clock.now()))
+                    beforeReady = emitLog()
+                }
+            },
+        )
+
+        // the app has a log exporter, so the state a log is stamped with is on the record itself
+        createInstance(
+            configService = associated,
+            overrides = overrides,
+            externalOtelConfig = { addLogExporter(FakeLogRecordExporter()) },
+        )
+
+        assertEquals(emptyList<String>(), checkNotNull(beforeReady).keys.filter { it.startsWith("emb.app.state.") })
+        val afterReady = emitLog()
+        assertEquals("wifi", afterReady["emb.app.state.value.network"])
+        assertNotNull(afterReady["emb.app.state.seq"])
     }
 
     /**

@@ -18,6 +18,8 @@ import io.embrace.android.embracesdk.internal.otel.payload.toPayloadString
 import io.embrace.android.embracesdk.internal.otel.sdk.DataValidator
 import io.embrace.android.embracesdk.internal.otel.sdk.id.OtelIds
 import io.embrace.android.embracesdk.internal.otel.sdk.setEmbraceAttribute
+import io.embrace.android.embracesdk.internal.otel.state.SpanStateLink
+import io.embrace.android.embracesdk.internal.otel.state.StateAttributes
 import io.embrace.android.embracesdk.internal.otel.toEmbracePayload
 import io.embrace.android.embracesdk.internal.payload.Attribute
 import io.embrace.android.embracesdk.internal.payload.Link
@@ -48,6 +50,7 @@ class EmbraceSpanFactoryImpl(
     redactionFunction: ((key: String, value: String) -> String)? = null,
     telemetryService: InternalTelemetryService,
     errorHandler: ErrorHandler,
+    stateLink: SpanStateLink? = null,
 ) : EmbraceSpanFactory {
 
     private val deps = SpanDependencies(
@@ -55,6 +58,7 @@ class EmbraceSpanFactoryImpl(
         spanRepository = spanRepository,
         dataValidator = dataValidator,
         stopCallback = stopCallback,
+        stateLink = stateLink,
         redactionFunction = redactionFunction,
         telemetryService = telemetryService,
         errorHandler = errorHandler,
@@ -75,6 +79,7 @@ private class SpanDependencies(
     val spanRepository: SpanRepository,
     val dataValidator: DataValidator,
     val stopCallback: ((spanId: String) -> Unit)?,
+    val stateLink: SpanStateLink?,
     val redactionFunction: ((key: String, value: String) -> String)?,
     val telemetryService: InternalTelemetryService,
     val errorHandler: ErrorHandler,
@@ -235,6 +240,12 @@ private class EmbraceSpanImpl(
                 return@guard false
             }
 
+            // The processor that links a span to state has written the number on the OTel span by now. It is kept here
+            // too, as a snapshot of a span in progress is made of what this span holds, and not of the OTel span.
+            deps.stateLink?.startSequence(newSpan.spanContext.spanId)?.let { sequence ->
+                systemAttributes[StateAttributes.SEQUENCE] = sequence
+            }
+
             val started = guard(false) {
                 deps.spanRepository.trackStartedEmbraceSpan(this)
                 newSpan.setName(spanName)
@@ -300,7 +311,7 @@ private class EmbraceSpanImpl(
                 populateEvents(spanToStop)
                 populateLinks(spanToStop)
 
-                spanToStop.end(attemptedEndTimeMs.millisToNanos())
+                endOtelSpan(spanToStop, attemptedEndTimeMs, given = requestedEndTimeMs > UNSET_TIME)
 
                 successful = !isRecording
                 if (successful) {
@@ -316,6 +327,18 @@ private class EmbraceSpanImpl(
         successful
     }
 
+    /**
+     * Ends [spanToStop] at [endTimeMs]. If that is a time the span was [given], whatever links the span to state is told
+     * it first, as the OTel span cannot always say when it ends by the time that is asked of it. A time that was read
+     * from the clock is now, which is what the end of a span is otherwise taken to be.
+     */
+    private fun endOtelSpan(spanToStop: Span, endTimeMs: Long, given: Boolean) {
+        if (given) {
+            deps.stateLink?.let { link -> spanId?.let { link.onEndTimeGiven(it, endTimeMs) } }
+        }
+        spanToStop.end(endTimeMs.millisToNanos())
+    }
+
     override fun discard(): Boolean = guard(false) {
         synchronized(startedSpan) {
             if (!isRecording) {
@@ -325,6 +348,7 @@ private class EmbraceSpanImpl(
             discarded = true
             releaseRetainedData()
         }
+        deps.stateLink?.let { link -> spanId?.let(link::onDiscarded) }
         deps.spanRepository.untrackEmbraceSpan(this)
         notifyChanged()
         true
@@ -731,7 +755,12 @@ private class EmbraceSpanImpl(
     }
 
     private fun populateAttributes(spanToStop: Span) {
-        spanToStop.setPayloadStringAttributes(systemAttributes)
+        systemAttributes.forEach { (key, value) ->
+            // the OTel span has had this since it started, as the whole number it is
+            if (key != StateAttributes.SEQUENCE) {
+                spanToStop.setStringAttribute(key, value.toPayloadString().orEmpty())
+            }
+        }
         spanToStop.setPayloadStringAttributes(customAttributes.redactIfSensitive())
     }
 

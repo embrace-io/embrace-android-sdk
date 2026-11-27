@@ -1,0 +1,657 @@
+package io.embrace.android.embracesdk.testcases.features
+
+import io.embrace.android.embracesdk.assertions.findSessionPartSpan
+import io.embrace.android.embracesdk.assertions.findSpansOfType
+import io.embrace.android.embracesdk.fakes.FakeLogRecordExporter
+import io.embrace.android.embracesdk.fakes.FakeLogRecordProcessor
+import io.embrace.android.embracesdk.fakes.FakeSpanExporter
+import io.embrace.android.embracesdk.fakes.FakeSpanProcessor
+import io.embrace.android.embracesdk.fakes.TestStateDataSource
+import io.embrace.android.embracesdk.fakes.config.FakeEnabledFeatureConfig
+import io.embrace.android.embracesdk.fakes.config.FakeInstrumentedConfig
+import io.embrace.android.embracesdk.internal.arch.schema.EmbType
+import io.embrace.android.embracesdk.internal.clock.millisToNanos
+import io.embrace.android.embracesdk.internal.config.behavior.DEFAULT_PERIODIC_CACHE_INTERVAL_MS
+import io.embrace.android.embracesdk.internal.config.remote.BackgroundActivityRemoteConfig
+import io.embrace.android.embracesdk.internal.config.remote.RemoteConfig
+import io.embrace.android.embracesdk.internal.otel.sdk.findAttributeValue
+import io.embrace.android.embracesdk.internal.payload.Envelope
+import io.embrace.android.embracesdk.internal.payload.Log
+import io.embrace.android.embracesdk.internal.payload.SessionPartPayload
+import io.embrace.android.embracesdk.internal.payload.Span
+import io.embrace.android.embracesdk.internal.worker.Worker
+import io.embrace.android.embracesdk.testcases.persistence.MultiFilePersistenceParityTestBase
+import io.embrace.android.embracesdk.testframework.OtelSdkMode
+import io.embrace.android.embracesdk.testframework.actions.EmbraceActionInterface
+import io.embrace.android.embracesdk.testframework.actions.EmbracePayloadAssertionInterface
+import io.opentelemetry.kotlin.logging.SeverityNumber
+import io.opentelemetry.kotlin.logging.data.LogRecordData
+import io.opentelemetry.kotlin.tracing.data.SpanData
+import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
+import org.junit.Assert.assertNull
+import org.junit.Assert.assertTrue
+import org.junit.Assume.assumeTrue
+import org.junit.Before
+import org.junit.Test
+import org.junit.runner.RunWith
+import org.robolectric.ParameterizedRobolectricTestRunner
+
+/**
+ * Telemetry associated with state: the link on a span and the stamp on a log, in Embrace's payload and in what an app's
+ * own exporters and processors are handed, and what else those are handed in each mode. It builds on the journal of state
+ * changes, so it applies where that does: multi-file persistence and the Kotlin OpenTelemetry implementation.
+ *
+ * The worker that emits state events is faked, and emits nothing until a test tells it to, so that an event is built
+ * later than its change was made, as it can be on a device.
+ */
+@RunWith(ParameterizedRobolectricTestRunner::class)
+internal class StateAssociationFeatureTest(
+    persistenceMode: PersistenceMode,
+    private val otelSdkMode: OtelSdkMode,
+) : MultiFilePersistenceParityTestBase(persistenceMode, otelSdkMode, listOf(Worker.Background.StateExportWorker)) {
+
+    private lateinit var spanExporter: FakeSpanExporter
+    private lateinit var logExporter: FakeLogRecordExporter
+    private lateinit var endedSpans: MutableList<SpanData>
+    private lateinit var processedLogs: MutableList<LogRecordData>
+    private var eventsBeforeFirstPart: List<LogRecordData> = emptyList()
+
+    @Before
+    fun multiFileAndKotlinOpenTelemetryOnly() {
+        assumeTrue(persistenceMode == PersistenceMode.MULTI_FILE)
+        assumeTrue(otelSdkMode == OtelSdkMode.REGULAR)
+        spanExporter = FakeSpanExporter()
+        logExporter = FakeLogRecordExporter()
+        endedSpans = mutableListOf()
+        processedLogs = mutableListOf()
+    }
+
+    @Test
+    fun `verbose - an app's exporters get the values on every span and every change event, and Embrace's payload gets none`() {
+        runScenario("verbose") {
+            listOf(exportedSpan(ACROSS), endedSpan(ACROSS)).forEach { across ->
+                assertEquals("in-background", across.attributes["emb.app.state.value.test"])
+                assertEquals("foo", across.attributes["emb.app.state.end_value.test"])
+                // a state that did not change while the span ran has a value at its start, and none at its end
+                assertTrue(across.attributes.containsKey("emb.app.state.value.network"))
+                assertFalse(across.attributes.containsKey("emb.app.state.end_value.network"))
+            }
+            with(exportedSpan(STEADY)) {
+                assertEquals("foo", attributes["emb.app.state.value.test"])
+                assertEquals(emptyList<String>(), attributes.keys.filter { it.startsWith("emb.app.state.end_value") })
+            }
+            // the values of a span that is given its times are the ones that held at those times
+            listOf(exportedSpan(AFTER_THE_FACT), endedSpan(AFTER_THE_FACT)).forEach { afterTheFact ->
+                assertEquals("in-background", afterTheFact.attributes["emb.app.state.value.test"])
+                assertEquals("foo", afterTheFact.attributes["emb.app.state.end_value.test"])
+            }
+            listOf(exportedSpan(ENDED_EARLIER), endedSpan(ENDED_EARLIER)).forEach { endedEarlier ->
+                assertEquals("in-background", endedEarlier.attributes["emb.app.state.value.test"])
+                assertEquals(emptyList<String>(), endedEarlier.attributes.keys.filter { it.startsWith("emb.app.state.end_value") })
+            }
+
+            // each change event carries the value of every state after that change
+            val changes = stateEvents().filter { it.eventName == CHANGE_EVENT }
+            changes.forEach { change ->
+                assertEquals(change.attributes["emb.app.state.new_value"], change.attributes["emb.app.state.value.${change.stateName()}"])
+            }
+            // And those are the values after it, not the ones when the event was built: the events of the session part
+            // were all built once it was over, when the state had its last value.
+            assertEquals("foo", changes.single { it.newValue() == "foo" }.attributes["emb.app.state.value.test"])
+            assertEquals(LAST_VALUE, changes.last { it.stateName() == "test" }.newValue())
+        }
+    }
+
+    @Test
+    fun `association - an app's exporters get the link alone on a span and each change alone`() {
+        runScenario("association") {
+            (spanExporter.exportedSpans + endedSpans).forEach { span ->
+                assertEquals(emptyList<String>(), span.attributes.keys.filter(::isStateValue))
+            }
+            stateEvents().filter { it.eventName == CHANGE_EVENT }.forEach { change ->
+                assertEquals(emptyList<String>(), change.attributes.keys.filter(::isStateValue))
+            }
+        }
+    }
+
+    @Test
+    fun `off - an app's exporters get the link on a span and the stamp on a log, and no events`() {
+        runScenario("off", expectEvents = false) {
+            (spanExporter.exportedSpans + endedSpans).forEach { span ->
+                assertEquals(emptyList<String>(), span.attributes.keys.filter(::isStateValue))
+            }
+            assertEquals(emptyList<LogRecordData>(), stateEvents())
+            assertEquals(emptyList<LogRecordData>(), processedLogs.filter { it.eventName != null })
+            assertFalse(exportedSpan(ACROSS).resource.attributes.containsKey("emb.process_identifier"))
+        }
+    }
+
+    @Test
+    fun `a state that changes with no session part is counted by the next part, a log made then has its value, and no event is made`() {
+        testRule.runTest(
+            persistedRemoteConfig = associatedConfig("association"),
+            preSdkStartAction = {
+                embrace.addLogRecordExporter(logExporter)
+            },
+            testCaseAction = {
+                // background activity is off, so no session part is in progress while the app is in the background
+                changeTestState("in-background")
+                changeTestState("still-in-background")
+                embrace.logInfo(LOG_MESSAGE)
+                emitStateEvents()
+                eventsBeforeFirstPart = stateEvents()
+                recordSession {
+                    changeTestState("foo")
+                }
+                changeTestState("in-background-again")
+                recordSession { }
+                emitStateEvents()
+            },
+            assertAction = {
+                val (first, next) = deliveredParts(2).sortedBy { it.findSessionPartSpan().startTimeNanos }
+                    .map { it.findSpansOfType(EmbType.State).single() }
+
+                // the change log of the next part to start counts the changes for their state: the value the state's data
+                // source started with and the two after it. It lists none of them, and opens with the value they left.
+                assertEquals("3", first.stateAttribute("emb.app.state.not_in_session_count.test"))
+                assertEquals("still-in-background", first.stateAttribute("emb.app.state.initial_value.test"))
+                assertEquals(listOf("foo"), first.newValuesOf("test"))
+                val initialSequence = checkNotNull(first.stateAttribute("emb.app.state.initial_seq")).toLong()
+                // and the part after it counts the one change made since the first ended
+                assertEquals("1", next.stateAttribute("emb.app.state.not_in_session_count.test"))
+                assertEquals("in-background-again", next.stateAttribute("emb.app.state.initial_value.test"))
+                assertEquals(emptyList<String>(), next.newValuesOf("test"))
+
+                // the log made in the background has the value the state had then, in Embrace's payload and as an app's
+                // exporter was handed it, and the number of the last change, which no change log lists
+                val log = getLogEnvelopes(1).flatMap { checkNotNull(it.data.logs) }.single { it.body == LOG_MESSAGE }
+                assertEquals("still-in-background", states(log)["test"]?.first)
+                val loggedSequence = checkNotNull(log.attribute("emb.app.state.seq")).toLong()
+                assertTrue(loggedSequence in 3..initialSequence)
+                val exported = logExporter.exportedLogs.single { it.body == LOG_MESSAGE }
+                assertEquals("still-in-background", exported.attributes["emb.app.state.value.test"])
+                assertEquals(loggedSequence, exported.attributes["emb.app.state.seq"])
+
+                // an app's exporter is handed no event for a change made with no session part: nothing before the first
+                // part started, and of the test state only the change made during a part
+                assertEquals(emptyList<LogRecordData>(), eventsBeforeFirstPart)
+                val events = stateEvents()
+                val changes = events.filter { it.eventName == CHANGE_EVENT }
+                assertEquals(listOf("foo"), changes.filter { it.stateName() == "test" }.map { it.newValue() })
+                assertEquals("still-in-background", changes.single { it.newValue() == "foo" }.attributes["emb.app.state.previous_value"])
+                // what it is handed as each part starts has the value those changes left
+                assertEquals(
+                    listOf("still-in-background", "in-background-again"),
+                    events.filter { it.eventName == SNAPSHOT_EVENT }.map { it.attributes["emb.app.state.value.test"] },
+                )
+            },
+        )
+    }
+
+    @Test
+    fun `with the switch off, no span carries anything of state, and a span is not handed to the SDK as it ends`() {
+        testRule.runTest(
+            persistedRemoteConfig = associatedConfig("verbose").copy(pctStateAssociationEnabled = 0.0f),
+            preSdkStartAction = {
+                embrace.addSpanExporter(spanExporter)
+                embrace.addLogRecordExporter(logExporter)
+                embrace.addSpanProcessor(FakeSpanProcessor(onEndAction = { endedSpans.add(it.toSpanData()) }))
+            },
+            testCaseAction = {
+                changeTestState("in-background")
+                recordSession {
+                    val across = embrace.startSpan(ACROSS)
+                    val changeTimeMs = changeTestState("foo")
+                    across.stop()
+                    embrace.recordCompletedSpan(AFTER_THE_FACT, changeTimeMs - 20, changeTimeMs)
+                    embrace.logInfo(LOG_MESSAGE)
+                    embrace.startSpan(LEFT_OPEN)
+                }
+            },
+            assertAction = {
+                val part = deliveredParts().single()
+                // with the switch off a log keeps the packed stamp, for Embrace's payload and an app's exporter alike
+                val deliveredLog = getLogEnvelopes(1).flatMap { checkNotNull(it.data.logs) }.single { it.body == LOG_MESSAGE }
+                val exported = logExporter.exportedLogs.single { it.body == LOG_MESSAGE }
+                assertEquals(deliveredLog.attribute("emb.app.state.packed"), exported.attributes["emb.app.state.packed"])
+                assertEquals("foo", states(deliveredLog)["test"]?.first)
+                assertEquals(deliveredLog.attribute("emb.app.state.seq"), exported.attributes["emb.app.state.seq"])
+                assertEquals(emptyList<String>(), exported.attributes.keys.filter { it.startsWith("emb.app.state.value") })
+                // the change log is still delivered, as the span it was before
+                val stateSpan = part.findSpansOfType(EmbType.State).single()
+                val delivered = (checkNotNull(part.data.spans) + checkNotNull(part.data.spanSnapshots)) - stateSpan
+                assertTrue(delivered.map { it.name }.containsAll(listOf(ACROSS, AFTER_THE_FACT, LEFT_OPEN)))
+                delivered.forEach { span -> assertEquals(span.name, emptyList<String>(), span.stateKeys()) }
+                assertTrue(spanExporter.exportedSpans.map { it.name }.containsAll(listOf(ACROSS, AFTER_THE_FACT)))
+                (spanExporter.exportedSpans + endedSpans).forEach { span ->
+                    assertEquals(span.name, emptyList<String>(), span.attributes.keys.filter { it.startsWith("emb.app.state.") })
+                }
+                assertFalse(testRule.services.otelSdkConfig.spanProcessor.isOnEndingRequired())
+            },
+        )
+    }
+
+    @Test
+    fun `a span that is given a time is linked to it only while the snapshot that held then is among the last 64`() {
+        var forgottenMs = 0L
+        testRule.runTest(
+            persistedRemoteConfig = associatedConfig("off"),
+            testCaseAction = {
+                recordSession {
+                    val endForgotten = embrace.startSpan(END_FORGOTTEN)
+                    forgottenMs = changeTestState("forgotten")
+                    repeat(REMEMBERED_CHANGES + 5) { changeTestState("value-$it") }
+                    clock.tick(100)
+
+                    // its start is from before the oldest snapshot that is remembered, and so is the end of the next one
+                    embrace.recordCompletedSpan(START_FORGOTTEN, forgottenMs + 10, clock.now() - 10)
+                    endForgotten.stop(endTimeMs = forgottenMs + 10)
+                    embrace.recordCompletedSpan(AFTER_THE_FACT, clock.now() - 20, clock.now() - 10)
+                    // and this one started just before the last change, and ended after it
+                    embrace.recordCompletedSpan(ACROSS, clock.now() - 150, clock.now() - 10)
+                }
+            },
+            assertAction = {
+                val part = deliveredParts().single()
+                val stateSpan = part.findSpansOfType(EmbType.State).single()
+                val spans = checkNotNull(part.data.spans)
+
+                // nothing can be known of the start, so there is no link at all
+                assertEquals(emptyList<String>(), spans.single { it.name == START_FORGOTTEN }.stateKeys())
+
+                // nothing can be known of the end, so the span keeps the number it started with and has none for its end
+                val endForgotten = spans.single { it.name == END_FORGOTTEN }
+                assertEquals(listOf("emb.app.state.seq"), endForgotten.stateKeys())
+                assertEquals("UNKNOWN", stateSpan.valuesAt(checkNotNull(endForgotten.stateAttribute("emb.app.state.seq")).toLong())["test"])
+
+                val lastValue = "value-${REMEMBERED_CHANGES + 4}"
+                val afterTheFact = spans.single { it.name == AFTER_THE_FACT }
+                assertEquals(listOf("emb.app.state.seq"), afterTheFact.stateKeys())
+                assertEquals(lastValue, stateSpan.valuesAt(checkNotNull(afterTheFact.stateAttribute("emb.app.state.seq")).toLong())["test"])
+
+                val across = spans.single { it.name == ACROSS }
+                val startSequence = checkNotNull(across.stateAttribute("emb.app.state.seq")).toLong()
+                assertEquals("value-${REMEMBERED_CHANGES + 3}", stateSpan.valuesAt(startSequence)["test"])
+                assertEquals((startSequence + 1).toString(), across.stateAttribute("emb.app.state.end_seq"))
+            },
+        )
+    }
+
+    @Test
+    fun `a span in progress when its process dies is delivered by the next launch with the number it started with`() {
+        testRule.runTest(
+            persistedRemoteConfig = associatedConfig("off"),
+            testCaseAction = {
+                recordSession(endInBackground = false) {
+                    persistDueWrites()
+                    changeTestState("before-the-span")
+                    embrace.startSpan(BEFORE_LEFT_OPEN).stop()
+                    embrace.startSpan(LEFT_OPEN)
+                    // a change made while it is in progress, which a snapshot of it says nothing of
+                    changeTestState("after-the-span")
+                    embrace.startSpan(AFTER_LEFT_OPEN).stop()
+                    clock.tick(DEFAULT_PERIODIC_CACHE_INTERVAL_MS)
+                    persistDueWrites()
+                }
+                // the process dies: every write still waiting dies with it
+                persistenceWorkers.forEach { worker ->
+                    testRule.setup.getFakedWorkerExecutor(worker).apply {
+                        blockingMode = true
+                        shutdownNow()
+                    }
+                }
+                testRule.services.intakeService.shutdown()
+            },
+            assertAction = {
+                assertEquals(0, getSessionEnvelopes(0).size)
+            },
+        )
+        testRule.services.networkConnectivityService.close()
+        testRule.services.otelSdkConfig.close()
+        testRule.services.workerThreadPool.close()
+
+        testRule.runTest(
+            persistedRemoteConfig = associatedConfig("off"),
+            testCaseAction = {},
+            assertAction = {
+                val part = deliveredParts().single()
+                val spans = checkNotNull(part.data.spans) + part.data.spanSnapshots.orEmpty()
+                val leftOpen = spans.single { it.name == LEFT_OPEN }
+                val before = checkNotNull(spans.single { it.name == BEFORE_LEFT_OPEN }.stateAttribute("emb.app.state.seq"))
+                val after = checkNotNull(spans.single { it.name == AFTER_LEFT_OPEN }.stateAttribute("emb.app.state.seq"))
+
+                // what the next launch read back is the snapshot of the span that was persisted, which has its link, and the
+                // number of the last change the dead part's change log lists as its end, as a change came while it ran
+                assertEquals(listOf("emb.app.state.seq", "emb.app.state.end_seq"), leftOpen.stateKeys())
+                assertEquals(before, leftOpen.stateAttribute("emb.app.state.seq"))
+                assertEquals(after, leftOpen.stateAttribute("emb.app.state.end_seq"))
+                assertEquals(before.toLong() + 1, after.toLong())
+            },
+        )
+    }
+
+    /**
+     * Runs one scenario with what an app's exporters and processors are given set to [exportMode], asserts everything that
+     * does not depend on that, and then [assertMode].
+     *
+     * The scenario: a state changes with no session part in progress, as background activity is off, which makes no event.
+     * Then, in a session part, a span runs across a change of that state, and another does that is told afterwards that it
+     * ended before the change. A span starts and ends after the change, a span is recorded after the fact with a start from before the
+     * change and an end from after it, a log is written, and a span starts that is still in progress when the part ends.
+     * The state changes once more at the end, and only then are the state events of the part emitted.
+     */
+    private fun runScenario(exportMode: String, expectEvents: Boolean = true, assertMode: () -> Unit) {
+        var changeTimeMs = 0L
+        testRule.runTest(
+            // the network state is captured beside the test state, and does not change during the scenario
+            instrumentedConfig = FakeInstrumentedConfig(
+                enabledFeatures = FakeEnabledFeatureConfig(networkConnectivityCapture = true),
+            ),
+            persistedRemoteConfig = associatedConfig(exportMode),
+            preSdkStartAction = {
+                embrace.addSpanExporter(spanExporter)
+                embrace.addLogRecordExporter(logExporter)
+                embrace.addSpanProcessor(FakeSpanProcessor(onEndAction = { endedSpans.add(it.toSpanData()) }))
+                embrace.addLogRecordProcessor(FakeLogRecordProcessor { processedLogs.add(it.toLogRecordData()) })
+            },
+            testCaseAction = {
+                changeTestState("in-background")
+                // an app's processor is handed nothing for a change made with no session part in progress
+                emitStateEvents()
+                eventsBeforeFirstPart = processedLogs.filter { it.eventName != null }
+                recordSession {
+                    val across = embrace.startSpan(ACROSS)
+                    val endedEarlier = embrace.startSpan(ENDED_EARLIER)
+                    changeTimeMs = changeTestState("foo")
+                    clock.tick(50)
+                    across.stop()
+                    endedEarlier.stop(endTimeMs = changeTimeMs - 1)
+                    embrace.startSpan(STEADY).stop()
+                    embrace.recordCompletedSpan(AFTER_THE_FACT, changeTimeMs - 20, changeTimeMs + 10)
+                    embrace.logInfo(LOG_MESSAGE)
+                    embrace.startSpan(LEFT_OPEN)
+                    changeTestState(LAST_VALUE)
+                }
+                emitStateEvents()
+            },
+            assertAction = {
+                val part = deliveredParts().single()
+                val stateSpan = part.findSpansOfType(EmbType.State).single()
+                assertEmbracePayload(part, stateSpan)
+                assertExportedSpansAndLog(part, stateSpan)
+                if (expectEvents) {
+                    assertExportedEvents(part, stateSpan, changeTimeMs)
+                }
+                assertMode()
+            },
+        )
+    }
+
+    /**
+     * Embrace's own payload has the link on spans, the packed attribute `emb.app.state.packed` and the sequence number on a log, and the
+     * change log as one span. It has none of what is made for an app's exporters.
+     */
+    private fun EmbracePayloadAssertionInterface.assertEmbracePayload(part: Envelope<SessionPartPayload>, stateSpan: Span) {
+        assertEquals("emb-states", stateSpan.name)
+        val spans = checkNotNull(part.data.spans)
+
+        // the two numbers resolve to values through the change log in the same payload
+        val across = spans.single { it.name == ACROSS }
+        val startSequence = checkNotNull(across.stateAttribute("emb.app.state.seq")).toLong()
+        val endSequence = checkNotNull(across.stateAttribute("emb.app.state.end_seq")).toLong()
+        assertEquals("in-background", stateSpan.valuesAt(startSequence)["test"])
+        assertEquals("foo", stateSpan.valuesAt(endSequence)["test"])
+        assertEquals(startSequence + 1, endSequence)
+
+        val steady = spans.single { it.name == STEADY }
+        assertEquals(endSequence, steady.stateAttribute("emb.app.state.seq")?.toLong())
+        assertNull(steady.stateAttribute("emb.app.state.end_seq"))
+
+        // a span recorded after the fact has the numbers that held at the times it was given, which are from before and
+        // after the change, and not the one that held when it was recorded
+        with(spans.single { it.name == AFTER_THE_FACT }) {
+            assertEquals(startSequence, stateAttribute("emb.app.state.seq")?.toLong())
+            assertEquals(endSequence, stateAttribute("emb.app.state.end_seq")?.toLong())
+        }
+        // a span that is told after the change that it ended before it has no number for its end
+        with(spans.single { it.name == ENDED_EARLIER }) {
+            assertEquals(startSequence, stateAttribute("emb.app.state.seq")?.toLong())
+            assertNull(stateAttribute("emb.app.state.end_seq"))
+        }
+        // a span still in progress has the number it started with, in the snapshot of it the part is delivered with
+        val leftOpen = checkNotNull(part.data.spanSnapshots).single { it.name == LEFT_OPEN }
+        assertEquals(listOf("emb.app.state.seq"), leftOpen.stateKeys())
+        assertEquals(endSequence, leftOpen.stateAttribute("emb.app.state.seq")?.toLong())
+
+        // and no span has a value
+        assertEquals(
+            emptyList<String>(),
+            (spans + checkNotNull(part.data.spanSnapshots)).flatMap { it.stateKeys() }.filter(::isStateValue),
+        )
+
+        val logs = getLogEnvelopes(1).flatMap { checkNotNull(it.data.logs) }
+        val log = logs.single { it.body == LOG_MESSAGE }
+        assertEquals(endSequence.toString(), log.attribute("emb.app.state.seq"))
+        // Embrace's payload has one packed attribute for the states, and none of the plain ones an app's exporters get
+        assertEquals(stateSpan.valuesAt(endSequence), decodeStates(checkNotNull(log.attribute("emb.app.state.packed"))))
+        assertEquals(
+            emptyList<String>(),
+            checkNotNull(log.attributes).mapNotNull { it.key }.filter { it.startsWith("emb.app.state.value") },
+        )
+        // the same log, as an app's exporter and processor were handed it, has the same values in the plain form
+        listOf(logExporter.exportedLogs, processedLogs).forEach { exportedLogs ->
+            val exported = exportedLogs.single { it.body == LOG_MESSAGE }
+            val plain = exported.attributes.filterKeys { it.startsWith(VALUE_PREFIX) }
+                .map { it.key.removePrefix(VALUE_PREFIX) to it.value }.toMap()
+            assertEquals(decodeStates(checkNotNull(log.attribute("emb.app.state.packed"))), plain)
+            assertEquals(log.attribute("emb.app.state.seq"), exported.attributes["emb.app.state.seq"].toString())
+            assertEquals(
+                states(log).filterValues { it.second }.keys,
+                exported.attributes.keys.filter { it.startsWith(VALUE_TYPE_PREFIX) }.map { it.removePrefix(VALUE_TYPE_PREFIX) }.toSet(),
+            )
+        }
+        // no event that describes state is a log of Embrace's
+        assertEquals(emptyList<Log>(), logs.filter { it.attribute("emb.app.state.name") != null || it.attribute("emb.entity.id") != null })
+    }
+
+    /**
+     * An app's exporter and processor are handed the same link on a span and the same stamp on a log as Embrace's payload
+     * has.
+     */
+    private fun assertExportedSpansAndLog(part: Envelope<SessionPartPayload>, stateSpan: Span) {
+        val spans = checkNotNull(part.data.spans)
+        listOf(ACROSS, STEADY, AFTER_THE_FACT, ENDED_EARLIER).forEach { name ->
+            val delivered = spans.single { it.name == name }
+            listOf(exportedSpan(name), endedSpan(name)).forEach { exported ->
+                listOf("emb.app.state.seq", "emb.app.state.end_seq").forEach { key ->
+                    assertEquals(delivered.stateAttribute(key)?.toLong(), exported.attributes[key])
+                }
+            }
+        }
+
+        val sequence = checkNotNull(exportedSpan(STEADY).attributes["emb.app.state.seq"]) as Long
+        listOf(logExporter.exportedLogs, processedLogs).forEach { logs ->
+            val log = logs.single { it.body == LOG_MESSAGE }
+            // a whole number, and never the packed attribute that Embrace's payload has
+            assertEquals(sequence, log.attributes["emb.app.state.seq"])
+            assertFalse(log.attributes.containsKey("emb.app.state.packed"))
+            assertEquals(
+                stateSpan.valuesAt(sequence),
+                log.attributes.filterKeys { it.startsWith(VALUE_PREFIX) }.map { it.key.removePrefix(VALUE_PREFIX) to it.value }.toMap(),
+            )
+        }
+    }
+
+    /**
+     * An app's log exporter and log record processor are handed the value of every state when the session part started, and
+     * then every change made during the part, in order. They are handed nothing for a change made with no session part in
+     * progress.
+     */
+    private fun assertExportedEvents(part: Envelope<SessionPartPayload>, stateSpan: Span, changeTimeMs: Long) {
+        val events = stateEvents()
+        assertEquals(events.map { it.eventName to it.attributes }, processedLogs.filter { it.eventName != null }.map { it.eventName to it.attributes })
+        val processIdentifier = checkNotNull(part.findSessionPartSpan().attributes?.findAttributeValue("emb.process_identifier"))
+
+        events.forEach { event ->
+            assertNull(event.body)
+            assertEquals(SeverityNumber.INFO, event.severityNumber)
+            assertEquals("state", event.attributes["emb.type"])
+            assertEquals("process", event.attributes["emb.entity.type"])
+            assertEquals(processIdentifier, event.attributes["emb.entity.id"])
+            assertEquals(processIdentifier, event.resource.attributes["emb.process_identifier"])
+            // it belongs to the process and not to a session part, and nothing a log is stamped with is on it
+            assertEquals(emptyList<String>(), event.attributes.keys.filter { it.contains("session") || it == "log.record.uid" })
+        }
+
+        // the snapshot where the session part started, and then every change of the part, each once and in order
+        val changes = events.filter { it.eventName == CHANGE_EVENT }
+        val snapshot = events.single { it.eventName == SNAPSHOT_EVENT }
+        assertEquals(snapshot, events.first())
+        val partStartSequence = checkNotNull(stateSpan.stateAttribute("emb.app.state.initial_seq")).toLong()
+        assertEquals((1L..changes.size).map { partStartSequence + it }, changes.map { it.attributes["emb.app.state.seq"] })
+        val foo = changes.single { it.newValue() == "foo" }
+        assertEquals("test", foo.stateName())
+        // a change says what the state had before, in both renderings, and the snapshot says none
+        assertEquals("in-background", foo.attributes["emb.app.state.previous_value"])
+        assertEquals("foo", changes.single { it.newValue() == LAST_VALUE }.attributes["emb.app.state.previous_value"])
+        assertEquals(emptyList<String>(), snapshot.attributes.keys.filter { it.contains("previous") })
+        assertEquals(changeTimeMs.millisToNanos(), foo.timestamp)
+
+        // no event was made for the change made with no part in progress, or for the value the state started with: the
+        // change log counts both for the state
+        assertEquals(emptyList<LogRecordData>(), eventsBeforeFirstPart)
+        assertEquals(emptyList<LogRecordData>(), events.filter { it.newValue() == "in-background" || it.newValue() == "UNKNOWN" })
+        assertEquals("2", stateSpan.stateAttribute("emb.app.state.not_in_session_count.test"))
+
+        // the snapshot is every value as the part started, which is what the change log says they were then, and has the
+        // value that change left
+        assertEquals(partStartSequence, snapshot.attributes["emb.app.state.seq"])
+        assertEquals("in-background", snapshot.attributes["emb.app.state.value.test"])
+        assertEquals(
+            stateSpan.valuesAt(partStartSequence),
+            snapshot.attributes.filterKeys { it.startsWith(VALUE_PREFIX) }.map { it.key.removePrefix(VALUE_PREFIX) to it.value }.toMap(),
+        )
+
+        // the span that ran across the change started at the number before it, and ended at its number
+        assertEquals(foo.attributes["emb.app.state.seq"], exportedSpan(ACROSS).attributes["emb.app.state.end_seq"])
+    }
+
+    /**
+     * The remote config that associates telemetry with state, and gives an app's exporters and processors [exportMode].
+     */
+    private fun associatedConfig(exportMode: String): RemoteConfig = remoteConfig(BackgroundActivityRemoteConfig(0f)).copy(
+        pctStateCaptureEnabledV2 = 100.0f,
+        pctSharedStateSpanEnabled = 100.0f,
+        pctStateAssociationEnabled = 100.0f,
+        stateExportMode = exportMode,
+    )
+
+    /**
+     * Emits the state events that have been queued since this was last called, on the worker that emits them.
+     */
+    private fun emitStateEvents() {
+        testRule.setup.getFakedWorkerExecutor(Worker.Background.StateExportWorker).runCurrentlyBlocked()
+    }
+
+    /**
+     * Runs every persistence write that is due by now.
+     */
+    private fun persistDueWrites() {
+        persistenceWorkers.forEach { worker ->
+            testRule.setup.getFakedWorkerExecutor(worker).runCurrentlyBlocked()
+        }
+    }
+
+    private fun EmbraceActionInterface.changeTestState(value: String): Long {
+        val time = clock.tick(100L)
+        findDataSource<TestStateDataSource>().onStateChange(newState = value, transitionTimeMs = time)
+        return time
+    }
+
+    /**
+     * Every state a log's packed attribute holds, by name to its value and whether the SDK generated it. None of the
+     * values here need the encoding's escapes.
+     */
+    private fun states(log: Log): Map<String, Pair<String, Boolean>> =
+        checkNotNull(log.attribute("emb.app.state.packed")).split(";").associate { pair ->
+            val separator = pair.indexOfFirst { it == '=' || it == '~' }
+            pair.substring(0, separator) to (pair.substring(separator + 1) to (pair[separator] == '~'))
+        }
+
+    private fun decodeStates(encoded: String): Map<String, String> = encoded.split(";").associate { pair ->
+        val separator = pair.indexOfFirst { it == '=' || it == '~' }
+        pair.substring(0, separator) to pair.substring(separator + 1)
+    }
+
+    private fun stateEvents(): List<LogRecordData> = logExporter.exportedLogs.filter { it.eventName != null }
+
+    private fun exportedSpan(name: String): SpanData = spanExporter.exportedSpans.single { it.name == name }
+
+    private fun endedSpan(name: String): SpanData = endedSpans.single { it.name == name }
+
+    private fun LogRecordData.stateName(): String = attributes["emb.app.state.name"].toString()
+
+    private fun LogRecordData.newValue(): String? = attributes["emb.app.state.new_value"]?.toString()
+
+    private fun Log.attribute(key: String): String? = attributes?.findAttributeValue(key)
+
+    private fun Span.stateAttribute(key: String): String? = attributes?.findAttributeValue(key)
+
+    /**
+     * The values the changes of [state] that the span lists took, in order.
+     */
+    private fun Span.newValuesOf(state: String): List<String?> = checkNotNull(events).filter { it.name == "emb-state-$state" }
+        .map { it.attributes?.findAttributeValue("emb.app.state.new_value") }
+
+    private fun Span.stateKeys(): List<String> = attributes.orEmpty().mapNotNull { it.key }.filter { it.startsWith("emb.app.state.") }
+
+    private fun isStateValue(key: String): Boolean = VALUE_KEYS.any(key::startsWith)
+
+    /**
+     * The value of every state as of the change numbered [sequence], worked out from the span the change log is delivered
+     * as: the values it opened with, then each change numbered up to that one. An event carries its own number. The events
+     * are in the order of their numbers, which skip where a limit refused a change, and no limit is reached here.
+     */
+    private fun Span.valuesAt(sequence: Long): Map<String, String> {
+        val values = LinkedHashMap<String, String>()
+        checkNotNull(attributes).forEach { attribute ->
+            val key = checkNotNull(attribute.key)
+            if (key.startsWith("emb.app.state.initial_value.")) {
+                values[key.removePrefix("emb.app.state.initial_value.")] = checkNotNull(attribute.data)
+            }
+        }
+        var last = checkNotNull(attributes?.findAttributeValue("emb.app.state.initial_seq")).toLong()
+        checkNotNull(events).forEach { event ->
+            val number = checkNotNull(event.attributes?.findAttributeValue("emb.app.state.seq")).toLong()
+            assertTrue(number > last)
+            last = number
+            if (number <= sequence) {
+                values[checkNotNull(event.name).removePrefix("emb-state-")] =
+                    checkNotNull(event.attributes?.findAttributeValue("emb.app.state.new_value"))
+            }
+        }
+        return values
+    }
+
+    private companion object {
+        const val ACROSS = "across-a-change"
+        const val STEADY = "after-the-change"
+        const val AFTER_THE_FACT = "recorded-after-the-fact"
+        const val ENDED_EARLIER = "ended-before-the-change"
+        const val LEFT_OPEN = "left-open"
+        const val BEFORE_LEFT_OPEN = "before-left-open"
+        const val AFTER_LEFT_OPEN = "after-left-open"
+        const val START_FORGOTTEN = "start-forgotten"
+        const val END_FORGOTTEN = "end-forgotten"
+        const val LAST_VALUE = "last"
+        const val REMEMBERED_CHANGES = 64
+        const val LOG_MESSAGE = "a-log"
+        const val CHANGE_EVENT = "emb.app.state.change"
+        const val SNAPSHOT_EVENT = "emb.app.state.snapshot"
+        const val VALUE_PREFIX = "emb.app.state.value."
+        const val VALUE_TYPE_PREFIX = "emb.app.state.value_type."
+        val VALUE_KEYS = listOf("emb.app.state.value", "emb.app.state.end_value")
+        val persistenceWorkers = listOf(Worker.Background.SessionPersistenceWorker, Worker.Background.PeriodicCacheWorker)
+    }
+}

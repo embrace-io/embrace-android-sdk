@@ -6,6 +6,7 @@ import io.embrace.android.embracesdk.internal.arch.startup.StartupClassifier
 import io.embrace.android.embracesdk.internal.arch.state.ProcessStateTracker
 import io.embrace.android.embracesdk.internal.capture.metadata.MetadataService
 import io.embrace.android.embracesdk.internal.capture.session.UserSessionPropertiesService
+import io.embrace.android.embracesdk.internal.capture.state.StateRecorder
 import io.embrace.android.embracesdk.internal.capture.user.UserService
 import io.embrace.android.embracesdk.internal.clock.Clock
 import io.embrace.android.embracesdk.internal.config.ConfigService
@@ -123,6 +124,7 @@ fun createSessionOrchestrator(
     sessionPersistenceWorker: BackgroundWorker,
     sessionReadWorker: BackgroundWorker,
     sessionPartReader: SessionPartReader?,
+    stateRecorder: StateRecorder? = null,
 ): SessionOrchestrator {
     val payloadMessageCollator = PayloadMessageCollatorImpl(
         sessionPartEnvelopeSource,
@@ -167,6 +169,7 @@ fun createSessionOrchestrator(
             onWritesComplete = {
                 sessionReadWorker.submit { reader.readPersistedSessionParts() }
             },
+            stateRecorder = stateRecorder,
         ).also { writer ->
             userService.addUserInfoListener(writer::onMetadataChanged)
             spanRepository.addCompletedOtelSpansListener(writer::onSpanCompleted)

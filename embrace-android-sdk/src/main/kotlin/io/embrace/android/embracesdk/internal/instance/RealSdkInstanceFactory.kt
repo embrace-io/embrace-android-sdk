@@ -23,8 +23,11 @@ import io.embrace.android.embracesdk.internal.arch.state.ProcessStateTracker
 import io.embrace.android.embracesdk.internal.capture.crumbs.BreadcrumbDataSource
 import io.embrace.android.embracesdk.internal.capture.experiment.ExperimentTrackingService
 import io.embrace.android.embracesdk.internal.capture.session.UserSessionPropertiesService
+import io.embrace.android.embracesdk.internal.capture.state.StateEventEmitter
+import io.embrace.android.embracesdk.internal.capture.state.StateRecorder
 import io.embrace.android.embracesdk.internal.capture.user.UserService
 import io.embrace.android.embracesdk.internal.config.behavior.SensitiveKeysBehavior
+import io.embrace.android.embracesdk.internal.config.resolved.StateExportMode
 import io.embrace.android.embracesdk.internal.delivery.StoredTelemetryMetadata
 import io.embrace.android.embracesdk.internal.delivery.debug.DeliveryTracer
 import io.embrace.android.embracesdk.internal.delivery.intake.IntakeServiceImpl
@@ -88,6 +91,8 @@ import io.embrace.android.embracesdk.internal.otel.spans.EmbraceSpanFactoryImpl
 import io.embrace.android.embracesdk.internal.otel.spans.SpanRepository
 import io.embrace.android.embracesdk.internal.otel.spans.SpanService
 import io.embrace.android.embracesdk.internal.otel.spans.SpanServiceImpl
+import io.embrace.android.embracesdk.internal.otel.state.StateAssociation
+import io.embrace.android.embracesdk.internal.otel.state.StateEventLogger
 import io.embrace.android.embracesdk.internal.session.id.SessionIdsProvider
 import io.embrace.android.embracesdk.internal.session.id.SessionPartTracker
 import io.embrace.android.embracesdk.internal.session.lifecycle.ActivityLifecycleRelay
@@ -100,6 +105,7 @@ import io.embrace.android.embracesdk.internal.storage.StatFsAvailabilityChecker
 import io.embrace.android.embracesdk.internal.store.Ordinal
 import io.embrace.android.embracesdk.internal.store.OrdinalStore
 import io.embrace.android.embracesdk.internal.store.PersistedSdkStateStore
+import io.embrace.android.embracesdk.internal.telemetry.AppliedLimitType
 import io.embrace.android.embracesdk.internal.utils.BuildVersionChecker
 import io.embrace.android.embracesdk.internal.utils.EmbTrace
 import io.embrace.android.embracesdk.internal.utils.event.EventBus
@@ -154,6 +160,7 @@ internal fun createRealSdkInstance(
     lateinit var spanService: Lazy<SpanService>
     lateinit var embraceSpanFactory: EmbraceSpanFactory
     lateinit var sessionOrchestrator: SessionOrchestrator
+    var stateRecorder: StateRecorder? = null
 
     val startupClassifier = init(name = "startup-classifier", recordDuration = true) {
         StartupClassifierImpl()
@@ -161,6 +168,32 @@ internal fun createRealSdkInstance(
 
     val workerThreadPool = init("worker-thread-pool") { configLoadServices.workerThreadPool }
     val configService = init("config-service") { configLoadServices.configService }
+
+    // State changes are journaled only where a session part's telemetry is persisted as multiple files, which is what
+    // gives the journal somewhere to be written, and only where state is captured at all. Telemetry is associated with
+    // state by sequence number, and a log is stamped with every state's value, only where the changes are journaled. The log
+    // pipeline stamps a log by who reads it: Embrace's payload gets the packed attribute, and an app's own processors and
+    // exporters get one attribute for each state.
+    val statesJournaled = with(configService.config) {
+        autoDataCapture.stateCaptureEnabled && autoDataCapture.sharedStateSpanEnabled && persistence.multiFileEnabled
+    }
+    val statesAssociated = statesJournaled && configService.config.autoDataCapture.stateAssociationEnabled
+
+    // An app's own exporters and processors are given more of state only if the app has configured one by now. With none
+    // there is nobody to emit an event for, or to keep a span's values for. One added from here on gets what the mode
+    // read here gives it: the link on a span and the stamp on a log.
+    val stateExportMode = if (statesAssociated && preStartServices.externalOtelConfig.hasConfiguredOtlpExport()) {
+        // a mode the remote config names is honored as it is, and one it does not name is picked by what the app receives
+        configService.config.autoDataCapture.stateExportMode
+            ?: StateExportMode.defaultFor(hasLogReceiver = preStartServices.externalOtelConfig.hasConfiguredLogExport())
+    } else {
+        StateExportMode.OFF
+    }
+
+    // An event that describes state is a log record, so one is made only if the app has something that receives log
+    // records. With a span exporter alone, the app gets what the mode gives a span and no events.
+    val stateEventsEmitted = stateExportMode != StateExportMode.OFF &&
+        preStartServices.externalOtelConfig.hasConfiguredLogExport()
 
     val otelSignalContext = init("otel-signal-context") {
         OtelSignalContext(
@@ -171,6 +204,8 @@ internal fun createRealSdkInstance(
             experimentTrackingServiceProvider = { experimentTrackingService.value },
             userSessionPropertiesServiceProvider = { userSessionPropertiesService },
             instrumentationRegistryProvider = { instrumentationRegistry },
+            stateSnapshotProvider = { stateRecorder?.snapshot() },
+            statesStampedByLogPipeline = statesAssociated,
         )
     }
 
@@ -200,6 +235,18 @@ internal fun createRealSdkInstance(
                     sessionIdsProvider = otelSignalContext::getSessionIdsProvider,
                     userIdProvider = otelSignalContext::getUserId,
                     eventMetadataProvider = otelSignalContext::getEventMetadata,
+                    stateAssociation = if (statesAssociated) {
+                        StateAssociation(
+                            stateProvider = { stateRecorder?.snapshot() },
+                            valuesOnExportedSpans = stateExportMode == StateExportMode.VERBOSE,
+                            exportsEvents = stateExportMode != StateExportMode.OFF,
+                            stateAt = { timeMs -> stateRecorder?.snapshotAt(timeMs) },
+                            // no state on a log until the SDK is ready, as with the rest of what a log is stamped with
+                            logStateProvider = otelSignalContext::getLogStateSnapshot,
+                        )
+                    } else {
+                        null
+                    },
                 )
             }
         }
@@ -268,6 +315,7 @@ internal fun createRealSdkInstance(
             redactionFunction = createRedactionFunction(sensitiveKeysBehavior),
             telemetryService = telemetryService,
             errorHandler = errorHandler,
+            stateLink = if (statesAssociated) otelSdkConfig.value.spanStateLink else null,
         )
     }
 
@@ -297,6 +345,44 @@ internal fun createRealSdkInstance(
 
     val eventBus: EventBus by lazy {
         EmbTrace.trace("event-bus-init") { overrides?.eventBus.resolve { EventBus(errorHandler) } }
+    }
+
+    stateRecorder = init("state-recorder") {
+        if (statesJournaled) {
+            StateRecorder(
+                clock = clock,
+                onChangeDropped = { telemetryService.trackAppliedLimit(STATE_CHANGE_LIMIT_TYPE, AppliedLimitType.DROP) },
+                // tracked under the name the state's data source has, as the limit of a state with a span of its own is
+                onStateLimitApplied = { state ->
+                    telemetryService.trackAppliedLimit("$state$STATE_DATA_SOURCE_SUFFIX", AppliedLimitType.DROP)
+                },
+                onUndeclaredState = {
+                    telemetryService.trackAppliedLimit(UNDECLARED_STATE_UPDATE_TYPE, AppliedLimitType.DROP)
+                },
+                // An app's own exporters and processors are sent each change as it is made, off the thread that made it,
+                // and on a worker of its own, as an app's log record processor runs where an event is emitted.
+                listener = if (stateEventsEmitted) {
+                    StateEventEmitter(
+                        logger = StateEventLogger(
+                            loggerProvider = { otelSdkWrapper.value.sdkLogger },
+                            rootContextProvider = { otelSdkWrapper.value.openTelemetryKotlin.context.root() },
+                        ),
+                        worker = workerThreadPool.backgroundWorker(Worker.Background.StateExportWorker),
+                        processIdentifierProvider = { otelSdkConfig.value.processIdentifier },
+                        includeValues = stateExportMode == StateExportMode.VERBOSE,
+                    )
+                } else {
+                    null
+                },
+                keepRecent = statesAssociated,
+            ).also {
+                // it listens from the moment it is created, which is before any state's data source starts capture, so that
+                // each state's declaration reaches it ahead of the state's first update
+                it.listenTo(eventBus)
+            }
+        } else {
+            null
+        }
     }
 
     val activityLifecycleRelay = ActivityLifecycleRelay(appContext as Application, eventBus, errorHandler)
@@ -802,6 +888,7 @@ internal fun createRealSdkInstance(
                 sessionPersistenceWorker = workerThreadPool.backgroundWorker(Worker.Background.SessionPersistenceWorker),
                 sessionReadWorker = workerThreadPool.backgroundWorker(Worker.Background.IoRegWorker),
                 sessionPartReader = sessionPartReader,
+                stateRecorder = stateRecorder,
             )
         }
     }
@@ -933,3 +1020,20 @@ internal fun createRealSdkInstance(
 
 private inline fun <T> init(name: String, recordDuration: Boolean = false, supplier: () -> T): T =
     EmbTrace.trace("$name-init", recordDuration) { supplier() }
+
+/**
+ * What a state change is tracked as when it is not recorded, because the limit on how many a journal holds for every state
+ * together was reached.
+ */
+private const val STATE_CHANGE_LIMIT_TYPE = "state_change"
+
+/**
+ * What follows a state's name in what a change is tracked as when the state's own limit refuses it: together they are the
+ * instrumentation name of the state's data source.
+ */
+private const val STATE_DATA_SOURCE_SUFFIX = "_state_data_source"
+
+/**
+ * What an update is tracked as when it is discarded because no data source has declared its state.
+ */
+private const val UNDECLARED_STATE_UPDATE_TYPE = "undeclared_state_update"

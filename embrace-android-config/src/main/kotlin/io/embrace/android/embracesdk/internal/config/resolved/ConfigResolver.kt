@@ -118,6 +118,9 @@ fun resolveAutoDataCapture(
         uiLoadTracingTraceAll = { features.isUiLoadTracingTraceAll() && uiLoadEnabledRemotely },
         endStartupWithAppReadyEnabled = features::isEndStartupWithAppReadyEnabled,
         stateCaptureEnabled = { rolloutEnabled(remote?.pctStateCaptureEnabledV2, bucket) },
+        sharedStateSpanEnabled = { rolloutEnabled(remote?.pctSharedStateSpanEnabled, bucket) },
+        stateAssociationEnabled = { rolloutEnabled(remote?.pctStateAssociationEnabled, bucket) },
+        stateExportMode = { StateExportMode.fromRemote(remote?.stateExportMode) },
         networkCallbackConnectivityServiceEnabled = {
             rolloutEnabled(remote?.pctNetworkCallbackConnectivityServiceEnabled, bucket)
         },

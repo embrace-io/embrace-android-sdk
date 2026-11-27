@@ -10,4 +10,5 @@ enum class SessionPartFile(
     METADATA(METADATA_FILE_NAME, "mf-read-metadata"),
     COMPLETED_SPANS(COMPLETED_SPANS_FILE_NAME, "mf-read-completed-spans"),
     SPAN_SNAPSHOTS(SPAN_SNAPSHOTS_FILE_NAME, "mf-read-span-snapshots"),
+    STATE_JOURNAL(STATE_JOURNAL_FILE_NAME, "mf-read-state-journal"),
 }

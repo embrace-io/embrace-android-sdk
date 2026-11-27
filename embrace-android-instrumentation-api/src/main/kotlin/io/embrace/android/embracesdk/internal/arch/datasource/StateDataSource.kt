@@ -18,18 +18,32 @@ import java.util.concurrent.atomic.AtomicReference
  * When state capture begins, a span will be cut for each session part that it overlaps with. By default, state capture begins when the
  * data source is created, but it can be deferred to when [onStateChange] is first called if [captureStateOnCreation] is overridden and
  * set to false.
+ *
+ * When state changes are journaled, no span is cut. Every change of value reported to [onStateChange] is emitted on the event
+ * bus as a [StateUpdate] instead, for whatever records them to order against the updates of every other state, and session
+ * parts are not this data source's concern. Capture then begins when the data source is enabled whatever
+ * [captureStateOnCreation] says, so that the state has a value from then on. As capture begins, and before the first update,
+ * the data source declares the state on the event bus with a [StateDeclaration]: its name, the limit on transitions, and
+ * [transitionAttributeKeys]. Whatever records the updates applies both, and keeps nothing of a state that was not declared.
+ *
+ * @param maxTransitions the most transitions of the state that one session part keeps.
+ * @param transitionAttributeKeys the keys of the attributes a transition of this state may carry where state changes are
+ * journaled. An attribute under any other key is not kept there.
  */
 abstract class StateDataSource<T : Any>(
     private val args: InstrumentationArgs,
     private val stateTypeFactory: (initialValue: T) -> SchemaType.State<T>,
     defaultValue: T,
-    maxTransitions: Int = DEFAULT_MAX_TRANSITIONS,
+    private val maxTransitions: Int = DEFAULT_MAX_TRANSITIONS,
+    private val transitionAttributeKeys: Set<String> = emptySet(),
 ) : SessionPartEndListener, SessionPartChangeListener, DataSourceImpl(
     args = args,
     limitStrategy = UpToLimitStrategy { maxTransitions },
     instrumentationName = "${stateTypeFactory(defaultValue).stateName}_state_data_source",
 ) {
-    val stateAttributeKey: String = "emb.state.${stateTypeFactory(defaultValue).stateName}"
+    private val stateName: String = stateTypeFactory(defaultValue).stateName
+
+    val stateAttributeKey: String = "emb.state.$stateName"
 
     /**
      * Attribute key under which the type of the current state value is stored when the state value is a system value.
@@ -38,9 +52,23 @@ abstract class StateDataSource<T : Any>(
 
     /**
      * If true, state capture will begin when [onDataCaptureEnabled] is called. Otherwise, it will happen lazily when [onStateChange]
-     * is first invoked using the new value as the initial state.
+     * is first invoked using the new value as the initial state. It is not read where state changes are journaled: capture then
+     * always begins when [onDataCaptureEnabled] is called.
      */
     protected open val captureStateOnCreation: Boolean = true
+
+    /**
+     * Whether state changes are journaled, which needs a session part's telemetry to be persisted as multiple files.
+     */
+    protected val journaled: Boolean by lazy {
+        with(args.configService.config) { autoDataCapture.sharedStateSpanEnabled && persistence.multiFileEnabled }
+    }
+
+    /**
+     * Held while a journaled update replaces the state's value and is emitted, so that updates reported from several threads
+     * are emitted in the order they replaced the value, and the last one emitted is the value the state holds.
+     */
+    private val journalLock = Any()
 
     private val currentState: AtomicReference<T> = AtomicReference(defaultValue)
     private val partStateToken: AtomicReference<SessionPartStateToken<T>?> = AtomicReference()
@@ -72,6 +100,10 @@ abstract class StateDataSource<T : Any>(
         transitionAttributes: Map<String, String> = emptyMap(),
         droppedTransitions: Int = 0,
     ) {
+        if (journaled) {
+            journalUpdate(newState, transitionTimeMs, transitionAttributes, droppedTransitions)
+            return
+        }
         if (!stateCaptureActive.get()) {
             startStateCapture()
         }
@@ -151,13 +183,17 @@ abstract class StateDataSource<T : Any>(
 
     @CallSuper
     override fun onDataCaptureEnabled() {
-        if (captureStateOnCreation) {
+        // a journaled state has a value from the moment its capture is enabled, so it is never left to start on first use
+        if (captureStateOnCreation || journaled) {
             startStateCapture()
         }
     }
 
     @CallSuper
     override fun onPreSessionEnd() {
+        if (journaled) {
+            return
+        }
         synchronized(partStateLock) {
             partEnding = true
             partStateToken.getAndSet(null)
@@ -168,6 +204,9 @@ abstract class StateDataSource<T : Any>(
 
     @CallSuper
     override fun onPostSessionChange() {
+        if (journaled) {
+            return
+        }
         synchronized(partStateLock) {
             partEnding = false
             createSessionStateSpan(currentState.get())
@@ -175,10 +214,69 @@ abstract class StateDataSource<T : Any>(
     }
 
     private fun startStateCapture() {
+        if (journaled) {
+            // the state is declared, and the value it starts with is its first update
+            synchronized(journalLock) {
+                if (stateCaptureActive.compareAndSet(false, true)) {
+                    declareState()
+                    args.eventBus.emit(StateUpdate.KEY, StateUpdate(stateName, currentState.get(), clock.now()))
+                }
+            }
+            return
+        }
         synchronized(partStateLock) {
             if (stateCaptureActive.compareAndSet(false, true) && !partEnding) {
                 createSessionStateSpan(currentState.get())
             }
+        }
+    }
+
+    /**
+     * Declares the state to whatever records its updates: its name, its limit and the keys a transition's attributes may
+     * use. It is emitted once, as capture begins, under [journalLock] and before the first update, so that the first update
+     * finds the state declared.
+     */
+    private fun declareState() {
+        args.eventBus.emit(StateDeclaration.KEY, StateDeclaration(stateName, maxTransitions, transitionAttributeKeys))
+    }
+
+    /**
+     * Emits [newState] as an update if it changes the state's value, or is the first value reported, or comes with a count
+     * of transitions the instrumentation dropped, which whatever records the updates counts for this state. Where it falls
+     * among the changes of every state, and whether the state's limit lets it be listed, is decided there too.
+     */
+    private fun journalUpdate(
+        newState: T,
+        transitionTimeMs: Long,
+        transitionAttributes: Map<String, String>,
+        droppedTransitions: Int,
+    ) {
+        synchronized(journalLock) {
+            val firstUpdate = stateCaptureActive.compareAndSet(false, true)
+            if (firstUpdate) {
+                declareState()
+            }
+            val oldState = currentState.getAndSet(newState)
+            val changed = firstUpdate || newState != oldState
+            if (!changed && droppedTransitions <= 0) {
+                // nothing is lost when a value is repeated, so there is nothing to report
+                return
+            }
+            val attributes = when {
+                !changed -> emptyMap()
+                firstUpdate -> transitionAttributes
+                else -> outgoingValueAttributes(oldState) + transitionAttributes
+            }
+            args.eventBus.emit(
+                StateUpdate.KEY,
+                StateUpdate(
+                    state = stateName,
+                    value = newState,
+                    timeMs = transitionTimeMs,
+                    attributes = attributes,
+                    droppedChanges = droppedTransitions.coerceAtLeast(0),
+                ),
+            )
         }
     }
 

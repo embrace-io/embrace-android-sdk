@@ -1,5 +1,6 @@
 package io.embrace.android.embracesdk.internal.resurrection
 
+import io.embrace.android.embracesdk.internal.capture.state.withStateSpan
 import io.embrace.android.embracesdk.internal.config.ConfigService
 import io.embrace.android.embracesdk.internal.delivery.PayloadType
 import io.embrace.android.embracesdk.internal.delivery.StoredTelemetryMetadata
@@ -171,7 +172,7 @@ class SessionPartReader(
                 return true
             }
             val deliverable = deliverable(
-                envelope = part.envelope,
+                envelope = part.envelope.withStateSpan(part.stateJournal, completesRunningSpans = statesAssociated()),
                 directory = directory,
                 isLastPartOfUserSession = isLastPartOfUserSession,
                 performingResurrection = performingResurrection,
@@ -251,6 +252,15 @@ class SessionPartReader(
         if (result == IntakeResult.STORED) {
             errorHandler.guardSdkCode(SdkErrorType.PayloadResurrectionPayloadFail, intake.afterStored)
         }
+    }
+
+    /**
+     * Whether telemetry is associated with state, so that a span the dead process left running is given the end number the
+     * journal's last change says, as the spans of a live process are.
+     */
+    private fun statesAssociated(): Boolean = with(configService.config) {
+        autoDataCapture.stateCaptureEnabled && autoDataCapture.sharedStateSpanEnabled &&
+            autoDataCapture.stateAssociationEnabled && persistence.multiFileEnabled
     }
 
     private fun deleteSessionPartData(directory: SessionPartDirectory, reason: String) {

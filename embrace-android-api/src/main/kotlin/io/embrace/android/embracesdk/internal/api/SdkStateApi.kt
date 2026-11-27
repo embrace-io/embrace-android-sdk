@@ -3,7 +3,8 @@ package io.embrace.android.embracesdk.internal.api
 import io.embrace.android.embracesdk.LastRunEndState
 import io.embrace.android.embracesdk.annotation.InternalApi
 
-@InternalApi
+@OptIn(ExperimentalSubclassOptIn::class)
+@SubclassOptInRequired(InternalApi::class)
 public interface SdkStateApi {
 
     /**

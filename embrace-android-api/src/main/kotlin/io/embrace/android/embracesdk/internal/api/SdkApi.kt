@@ -6,7 +6,8 @@ import io.embrace.android.embracesdk.spans.TracingApi
 /**
  * @suppress
  */
-@InternalApi
+@OptIn(ExperimentalSubclassOptIn::class)
+@SubclassOptInRequired(InternalApi::class)
 public interface SdkApi :
     LogsApi,
     NetworkRequestApi,

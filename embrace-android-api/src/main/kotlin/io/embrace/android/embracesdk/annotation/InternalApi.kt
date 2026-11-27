@@ -5,4 +5,5 @@ package io.embrace.android.embracesdk.annotation
  * and may change without warning, so are used at your own risk. Please contact support@embrace.io
  * if you have a use case that cannot be fulfilled using our public API.
  */
+@RequiresOptIn
 public annotation class InternalApi

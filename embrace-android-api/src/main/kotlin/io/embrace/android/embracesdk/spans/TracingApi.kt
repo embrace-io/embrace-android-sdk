@@ -1,9 +1,13 @@
 package io.embrace.android.embracesdk.spans
 
+import io.embrace.android.embracesdk.annotation.InternalApi
+
 /**
  * The public API used to add traces to your application. Note that [recordCompletedSpan] can be used before the SDK is initialized.
  * The actual trace won't be recorded until the SDK is started, but it's safe to use this prior to SDK initialization.
  */
+@OptIn(ExperimentalSubclassOptIn::class)
+@SubclassOptInRequired(InternalApi::class)
 public interface TracingApi {
 
     /**

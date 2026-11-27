@@ -5,7 +5,6 @@ import io.embrace.android.embracesdk.annotation.InternalApi
 /**
  * The additional data captured if network body capture is enabled for the URL
  */
-@InternalApi
 public data class NetworkCaptureData(
     val requestHeaders: Map<String, String>?,
     val requestQueryParams: String?,

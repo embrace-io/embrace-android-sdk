@@ -1,5 +1,6 @@
 package io.embrace.android.embracesdk.network
 
+import io.embrace.android.embracesdk.annotation.InternalApi
 import io.embrace.android.embracesdk.network.http.HttpRequestInfo
 import io.embrace.android.embracesdk.spans.EmbraceSpan
 import io.opentelemetry.kotlin.tracing.SpanContext
@@ -8,6 +9,8 @@ import io.opentelemetry.kotlin.tracing.SpanContext
  * What a [NetworkSpanParentProvider] is given about a captured request's network span before it starts. You should not implement the
  * `NetworkSpanStartInfo` interface directly in your own custom classes, as new properties may be added in the future.
  */
+@OptIn(ExperimentalSubclassOptIn::class)
+@SubclassOptInRequired(InternalApi::class)
 public interface NetworkSpanStartInfo {
 
     /**

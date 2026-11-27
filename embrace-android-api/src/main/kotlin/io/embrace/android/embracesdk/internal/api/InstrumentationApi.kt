@@ -8,7 +8,8 @@ import io.embrace.android.embracesdk.spans.ErrorCode
 /**
  * API to control and customize Embrace instrumentation
  */
-@InternalApi
+@OptIn(ExperimentalSubclassOptIn::class)
+@SubclassOptInRequired(InternalApi::class)
 public interface InstrumentationApi {
     /**
      * Notify the Embrace SDK that app startup has completed and the UI is ready to be used.

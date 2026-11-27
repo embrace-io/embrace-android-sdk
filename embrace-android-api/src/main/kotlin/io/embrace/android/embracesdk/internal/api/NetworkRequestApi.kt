@@ -11,7 +11,8 @@ import io.opentelemetry.kotlin.tracing.SpanContext
 /**
  * The public API that is used for capturing network requests manually
  */
-@InternalApi
+@OptIn(ExperimentalSubclassOptIn::class)
+@SubclassOptInRequired(InternalApi::class)
 public interface NetworkRequestApi {
 
     /**

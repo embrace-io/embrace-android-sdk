@@ -5,7 +5,8 @@ import io.embrace.android.embracesdk.annotation.InternalApi
 /**
  * The public API that is used to set user information.
  */
-@InternalApi
+@OptIn(ExperimentalSubclassOptIn::class)
+@SubclassOptInRequired(InternalApi::class)
 public interface UserApi {
 
     /**

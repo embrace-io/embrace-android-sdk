@@ -1,9 +1,13 @@
 package io.embrace.android.embracesdk.experiments
 
+import io.embrace.android.embracesdk.annotation.InternalApi
+
 /**
  * The state shared by every experiment or feature flag tracked on this app instance. Use [TrackedExperiment] or [TrackedFeatureFlag]
  * to say which of the two is being tracked.
  */
+@OptIn(ExperimentalSubclassOptIn::class)
+@SubclassOptInRequired(InternalApi::class)
 public interface TrackedEntry {
 
     /**

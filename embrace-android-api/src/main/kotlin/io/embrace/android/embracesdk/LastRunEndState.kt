@@ -3,19 +3,19 @@ package io.embrace.android.embracesdk
 /**
  * Enum representing the end state of the last run of the application.
  */
-public enum class LastRunEndState(public val value: Int) {
+public enum class LastRunEndState {
     /**
      * The SDK has not been started yet.
      */
-    INVALID(0),
+    INVALID,
 
     /**
      * The last run resulted in a crash.
      */
-    CRASH(1),
+    CRASH,
 
     /**
      * The last run did not result in a crash.
      */
-    CLEAN_EXIT(2),
+    CLEAN_EXIT,
 }

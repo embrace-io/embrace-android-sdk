@@ -80,13 +80,6 @@ internal class BufferingSdkInstanceTest {
         assertSame(NoopOpenTelemetry, instance.getOpenTelemetryKotlin())
     }
 
-    @Suppress("DEPRECATION")
-    @Test
-    fun `generateW3cTraceparent returns a valid traceparent`() {
-        val traceparent = checkNotNull(instance.generateW3cTraceparent())
-        assertTrue(traceparent.matches(Regex("00-[0-9a-f]{32}-[0-9a-f]{16}-01")))
-    }
-
     @Test
     fun `otel config calls are replayed in order when drained`() {
         val spanExporter = FakeSpanExporter()

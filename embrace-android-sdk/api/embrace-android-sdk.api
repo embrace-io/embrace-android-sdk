@@ -32,10 +32,8 @@ public final class io/embrace/android/embracesdk/Embrace : io/embrace/android/em
 	public fun disable ()V
 	public fun endUserSession ()V
 	public fun endView (Ljava/lang/String;)Z
-	public fun generateW3cTraceparent ()Ljava/lang/String;
 	public fun getCurrentUserSessionId ()Ljava/lang/String;
 	public fun getDeviceId ()Ljava/lang/String;
-	public static final fun getInstance ()Lio/embrace/android/embracesdk/Embrace;
 	public fun getLastRunEndState ()Lio/embrace/android/embracesdk/LastRunEndState;
 	public fun getOpenTelemetryKotlin ()Lio/opentelemetry/kotlin/OpenTelemetry;
 	public fun getSdkCurrentTimeMs ()J
@@ -48,7 +46,6 @@ public final class io/embrace/android/embracesdk/Embrace : io/embrace/android/em
 	public fun logMessage (Ljava/lang/String;Lio/embrace/android/embracesdk/Severity;Ljava/util/Map;)V
 	public fun logMessage (Ljava/lang/String;Lio/embrace/android/embracesdk/Severity;Ljava/util/Map;Ljava/lang/String;Ljava/lang/String;)V
 	public fun logMessage (Ljava/lang/String;Lio/embrace/android/embracesdk/Severity;Ljava/util/Map;[B)V
-	public fun logPushNotification (Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/Integer;Ljava/lang/Integer;Ljava/lang/Boolean;Ljava/lang/Boolean;)V
 	public fun logWarning (Ljava/lang/String;)V
 	public fun observeNavigation (Landroid/app/Activity;Ljava/lang/Object;)V
 	public fun recordCompletedSpan (Ljava/lang/String;JJLio/embrace/android/embracesdk/spans/ErrorCode;Lio/embrace/android/embracesdk/spans/EmbraceSpan;Ljava/util/Map;Ljava/util/List;)Z

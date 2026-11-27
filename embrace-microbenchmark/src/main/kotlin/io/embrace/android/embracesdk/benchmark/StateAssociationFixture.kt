@@ -93,8 +93,10 @@ internal class StateAssociationFixture(
         repeat(stateCount) { index ->
             recorder.declare(StateDeclaration(StateCaptureFixture.STATE_NAMES[index], maxChangesInPart = Int.MAX_VALUE))
         }
-        repeat(stateCount, ::transition)
+        // the journal is open before any state has a value, so that each state's first value is a change that is recorded
+        // and emitted, as every change a benchmark makes after it is
         recorder.beginJournal(clock.now()) { }
+        repeat(stateCount, ::transition)
         awaitEvents()
     }
 

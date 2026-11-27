@@ -206,8 +206,7 @@ def change_log_span(items):
     return Span(
         trace_id=(1 << 100).to_bytes(16, "big"), span_id=(1 << 60).to_bytes(8, "big"), name="emb-states",
         start_time_unix_nano=items[0][1], end_time_unix_nano=items[-1][1], kind=Span.SPAN_KIND_INTERNAL,
-        attributes=attributes({**RECORD, "emb.type": "state", "emb.app.state.initial_seq": 0,
-                               "emb.app.state.part_start_seq": 0, **opening}),
+        attributes=attributes({**RECORD, "emb.type": "state", "emb.app.state.initial_seq": 0, **opening}),
         events=events,
     )
 

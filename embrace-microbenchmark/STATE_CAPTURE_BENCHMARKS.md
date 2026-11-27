@@ -8,8 +8,8 @@ assumes nothing beyond this file and a checkout of the commit that contains it.
 The SDK captures "states": pieces of context such as network, power and the current screen, whose changes are recorded
 so that telemetry can be read in context. Today each state is recorded into a span of its own. A proof of concept
 records every change of every state into one journal instead: an in-memory recorder decides the order, and each change
-is appended to a file as a small record. The design and what is already measured are in
-`embrace-android-instrumentation-api/STATE_ANDROID_DESIGN.md`.
+is appended to a file as a small record. The design, with what is already measured, is an Embrace-internal page that
+the pull request's description names.
 
 Bytes on disk and in the payload are already measured and do not need a device. What is missing is time: how many
 microseconds each approach costs on real hardware, and whether that cost grows as changes accumulate. The numbers need

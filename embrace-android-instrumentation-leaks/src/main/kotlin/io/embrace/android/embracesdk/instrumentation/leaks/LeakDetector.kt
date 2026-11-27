@@ -78,22 +78,32 @@ internal class LeakDetector(
 
     /**
      * The current stage of each tracked object: its [Sentinel] while open, the [TrackedReference] or [ConfirmedSuspect]
-     * watching it once closed, or [Untracked] once reopened. Keys are held weakly so that a collected object
-     * drops out along with its stage, and so no value may reach its own key.
+     * watching it once closed, or [Untracked] once reopened or dropped. Keys are held weakly so that a collected object
+     * drops out along with its stage, and so no value may reach its own key. That also bounds it by the tracked objects the
+     * app itself is still holding.
      */
     private val lifecycles = WeakHashMap<Any, Any>()
 
     /**
      * References waiting for their sentinel to be reclaimed. Held strongly because a [Reference] that becomes unreachable is
-     * never enqueued.
+     * never enqueued. Each leaves at the first collection that reclaims its sentinel, so this is bounded by the objects
+     * closed since then.
      */
     private val watched = HashSet<TrackedReference>()
 
     /**
      * Confirmed suspects not yet actually collected. Held strongly for the same reason as [watched]: each entry's
-     * [ConfirmedSuspect] must stay reachable itself in order to eventually be enqueued.
+     * [ConfirmedSuspect] must stay reachable itself in order to eventually be enqueued. Unlike [watched], an entry only
+     * leaves once its object is collected or reopened, so this is capped at [MAX_TRACKED_SUSPECTS] to keep an app that
+     * leaks on every navigation from growing it for the life of the process.
      */
     private val trackedSuspects = HashSet<ConfirmedSuspect>()
+
+    /**
+     * Suspects confirmed while [trackedSuspects] was full, since [takeDropped] was last called. Guarded by the
+     * [trackedSuspects] monitor.
+     */
+    private var droppedSuspectsCount = 0
 
     private val running = AtomicBoolean(false)
 
@@ -303,10 +313,13 @@ internal class LeakDetector(
             return false
         }
 
-        lifecycles[referent] = to
         when (to) {
-            is TrackedReference -> watch(to)
-            is ConfirmedSuspect -> addSuspect(to)
+            is TrackedReference -> {
+                lifecycles[referent] = to
+                watch(to)
+            }
+            // a suspect past the cap is dropped and, like a reopened object, never tracked again
+            is ConfirmedSuspect -> lifecycles[referent] = if (addSuspect(to)) to else Untracked
         }
         true
     }
@@ -322,11 +335,19 @@ internal class LeakDetector(
             watched.remove(ref)
         }
 
-    private fun addSuspect(suspect: ConfirmedSuspect) {
+    /**
+     * Returns false without tracking [suspect], which is counted in [droppedSuspectsCount] instead, once [MAX_TRACKED_SUSPECTS] are
+     * already tracked.
+     */
+    private fun addSuspect(suspect: ConfirmedSuspect): Boolean =
         synchronized(trackedSuspects) {
-            trackedSuspects.add(suspect)
+            if (trackedSuspects.size >= MAX_TRACKED_SUSPECTS) {
+                droppedSuspectsCount++
+                false
+            } else {
+                trackedSuspects.add(suspect)
+            }
         }
-    }
 
     private fun removeSuspect(suspect: ConfirmedSuspect) {
         synchronized(trackedSuspects) {
@@ -345,7 +366,16 @@ internal class LeakDetector(
 
         synchronized(trackedSuspects) {
             trackedSuspects.clear()
+            droppedSuspectsCount = 0
         }
+    }
+
+    /**
+     * How many suspects were confirmed while [MAX_TRACKED_SUSPECTS] were already tracked since this was last called, and so
+     * were never tracked or reported.
+     */
+    fun takeDropped(): Int = synchronized(trackedSuspects) {
+        droppedSuspectsCount.also { droppedSuspectsCount = 0 }
     }
 
     private fun dispatch(reclaimed: Reference<*>) {
@@ -422,5 +452,6 @@ internal class LeakDetector(
     internal companion object {
         const val THREAD_NAME = "emb-leak-detector"
         const val ART_GC_COUNT_STAT = "art.gc.gc-count"
+        const val MAX_TRACKED_SUSPECTS = 256
     }
 }

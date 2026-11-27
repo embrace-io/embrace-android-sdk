@@ -1,23 +1,32 @@
 # yaml-language-server: $schema=../../../buildSrc/src/main/resources/config.schema.json
 AppStateConfig:
-  app_state_enabled:
+  shared_state_span_enabled:
     property: enabled
     default: false
     local:
       type: Boolean
-      json: sdk_config.app_state_enabled
+      json: sdk_config.shared_state_span_enabled
     remote:
       type: Pct
-      sdk: pctAppStateEnabled
-  app_state_export_mode:
+      sdk: pctSharedStateSpanEnabled
+  state_association_enabled:
+    property: associationEnabled
+    default: false
+    local:
+      type: Boolean
+      json: sdk_config.state_association_enabled
+    remote:
+      type: Pct
+      sdk: pctStateAssociationEnabled
+  state_export_mode:
     property: exportMode
     default: ""
     local:
       type: String
-      json: sdk_config.app_state_export_mode
+      json: sdk_config.state_export_mode
     remote:
       type: String
-      sdk: appStateExportMode
+      sdk: stateExportMode
 PersistenceConfig:
   multi_file_persistence_enabled:
     property: multiFileEnabled

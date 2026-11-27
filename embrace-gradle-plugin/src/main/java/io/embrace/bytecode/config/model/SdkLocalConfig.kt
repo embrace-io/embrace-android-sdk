@@ -30,16 +30,22 @@ data class SdkLocalConfig(
     val multiFilePersistenceEnabled: Boolean? = null,
 
     /**
-     * Whether the app state data model is enabled
+     * Whether state is recorded as the app state data model: one change log for a session part and a stamp on every log
      */
-    @SerialName("app_state_enabled")
-    val appStateEnabled: Boolean? = null,
+    @SerialName("shared_state_span_enabled")
+    val sharedStateSpanEnabled: Boolean? = null,
 
     /**
-     * How app state is rendered for the app's own OpenTelemetry exporters
+     * Whether spans are linked to state and changes are replayed for the app's own OpenTelemetry exporters
      */
-    @SerialName("app_state_export_mode")
-    val appStateExportMode: String? = null,
+    @SerialName("state_association_enabled")
+    val stateAssociationEnabled: Boolean? = null,
+
+    /**
+     * How state is rendered for the app's own OpenTelemetry exporters
+     */
+    @SerialName("state_export_mode")
+    val stateExportMode: String? = null,
 
     /**
      * View settings

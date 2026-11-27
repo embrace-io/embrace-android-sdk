@@ -65,12 +65,17 @@
           "default": false,
           "type": "boolean"
         },
-        "app_state_enabled": {
-          "description": "Switches on the app state data model: a stamp on every log, a link on every span and one change log span in each session part. Requires multi-file persistence unless the app only exports OpenTelemetry. Can be overridden by remote config.",
+        "shared_state_span_enabled": {
+          "description": "Switches on the first step of the app state data model: one change log span in each session part and a stamp on every log. Requires multi-file persistence unless the app only exports OpenTelemetry. Can be overridden by remote config.",
           "default": false,
           "type": "boolean"
         },
-        "app_state_export_mode": {
+        "state_association_enabled": {
+          "description": "Switches on the second step of the app state data model: a link on every span, and each change replayed for the app's own OpenTelemetry exporters. Does nothing unless `shared_state_span_enabled` is on. Can be overridden by remote config.",
+          "default": false,
+          "type": "boolean"
+        },
+        "state_export_mode": {
           "description": "How state is rendered for the app's own OpenTelemetry exporters: `association` or `verbose`. When unset the SDK chooses by which exporters the app registered. Can be overridden by remote config.",
           "type": "string"
         },

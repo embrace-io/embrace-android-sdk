@@ -131,16 +131,24 @@ data class RemoteConfig(
     val pctStateCaptureEnabledV2: Float? = null,
 
     /**
-     * Percentage of devices for which the app state data model is enabled.
+     * Percentage of devices for which state is recorded by one recorder, kept in a journal and sent as one change log for a
+     * session part, with a stamp on every log. It is the first of the app state data model's two steps.
      */
-    @SerialName("pct_app_state_enabled")
-    val pctAppStateEnabled: Float? = null,
+    @SerialName("pct_shared_state_span_enabled")
+    val pctSharedStateSpanEnabled: Float? = null,
 
     /**
-     * How app state is rendered for the app's own OpenTelemetry exporters: association or verbose.
+     * Percentage of devices for which spans are linked to state and changes are replayed for the app's own OpenTelemetry
+     * exporters. It is the second step, and does nothing without the first.
      */
-    @SerialName("app_state_export_mode")
-    val appStateExportMode: String? = null,
+    @SerialName("pct_state_association_enabled")
+    val pctStateAssociationEnabled: Float? = null,
+
+    /**
+     * How state is rendered for the app's own OpenTelemetry exporters: association or verbose.
+     */
+    @SerialName("state_export_mode")
+    val stateExportMode: String? = null,
 
     /**
      * Percentage of devices for which the NetworkCallback-based NetworkConnectivityService implementation is enabled.

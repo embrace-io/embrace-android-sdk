@@ -2,12 +2,14 @@ package io.embrace.android.embracesdk.internal.injection
 
 import io.embrace.android.embracesdk.internal.arch.InstrumentationRegistry
 import io.embrace.android.embracesdk.internal.arch.attrs.toEmbraceAttributeName
+import io.embrace.android.embracesdk.internal.arch.schema.StateKeys
 import io.embrace.android.embracesdk.internal.arch.state.ProcessStateTracker
 import io.embrace.android.embracesdk.internal.capture.experiment.ExperimentTrackingService
 import io.embrace.android.embracesdk.internal.capture.session.UserSessionPropertiesService
 import io.embrace.android.embracesdk.internal.capture.user.UserService
 import io.embrace.android.embracesdk.internal.session.id.SessionIdsProvider
 import io.embrace.android.embracesdk.internal.session.id.SessionPartTracker
+import io.embrace.android.embracesdk.internal.state.StateSnapshot
 import io.embrace.android.embracesdk.internal.utils.Provider
 import io.embrace.android.embracesdk.semconv.EmbCommonAttributes
 import io.embrace.android.embracesdk.semconv.EmbSessionAttributes
@@ -28,6 +30,7 @@ internal class OtelSignalContext(
     private val experimentTrackingServiceProvider: Provider<ExperimentTrackingService>,
     private val userSessionPropertiesServiceProvider: Provider<UserSessionPropertiesService>,
     private val instrumentationRegistryProvider: Provider<InstrumentationRegistry>,
+    private val stateStampProvider: Provider<StateSnapshot?> = { null },
 ) {
 
     @Volatile
@@ -81,8 +84,19 @@ internal class OtelSignalContext(
                         property.key.toEmbraceAttributeName()
                     },
             )
-            instrumentationRegistryProvider().getCurrentStates().forEach {
-                put(it.key, it.value.toString())
+            val stateStamp = stateStampProvider()
+            if (stateStamp != null) {
+                // v2: every state's value, packed, and the number of the last change, all from one set of values
+                if (stateStamp.size > 0) {
+                    put(StateKeys.PACKED, stateStamp.packed)
+                }
+                if (stateStamp.seq > 0) {
+                    put(StateKeys.SEQ, stateStamp.seq.toString())
+                }
+            } else {
+                instrumentationRegistryProvider().getCurrentStates().forEach {
+                    put(it.key, it.value.toString())
+                }
             }
         }
     }

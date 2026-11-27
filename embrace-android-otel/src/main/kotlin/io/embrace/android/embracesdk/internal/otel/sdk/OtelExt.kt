@@ -1,6 +1,7 @@
 package io.embrace.android.embracesdk.internal.otel.sdk
 
 import io.embrace.android.embracesdk.internal.arch.attrs.EmbraceAttribute
+import io.embrace.android.embracesdk.internal.arch.schema.StateKeys
 import io.embrace.android.embracesdk.internal.otel.payload.toPayloadString
 import io.embrace.android.embracesdk.internal.otel.toEmbracePayload
 import io.embrace.android.embracesdk.internal.payload.Attribute
@@ -23,7 +24,10 @@ fun SpanData.toEmbracePayload(): Span = Span(
     endTimeNanos = endTimestamp ?: 0,
     status = status.toEmbracePayload(),
     events = events.map(SpanEventData::toEmbracePayload),
-    attributes = attributes.map { Attribute(it.key, it.value.toPayloadString()) },
+    // the values of the verbose state rendering are for a customer's exporter: Embrace's servers resolve the link
+    attributes = attributes.mapNotNull {
+        if (StateKeys.isSpanValueKey(it.key)) null else Attribute(it.key, it.value.toPayloadString())
+    },
     links = links.map(SpanLinkData::toEmbracePayload),
 )
 

@@ -7,6 +7,7 @@ import io.embrace.android.embracesdk.internal.arch.datasource.SpanEvent
 import io.embrace.android.embracesdk.internal.arch.datasource.SpanEventImpl
 import io.embrace.android.embracesdk.internal.arch.schema.ErrorCodeAttribute
 import io.embrace.android.embracesdk.internal.arch.schema.LinkType
+import io.embrace.android.embracesdk.internal.arch.schema.StateKeys
 import io.embrace.android.embracesdk.internal.clock.millisToNanos
 import io.embrace.android.embracesdk.internal.clock.nanosToMillis
 import io.embrace.android.embracesdk.internal.clock.normalizeTimestampAsMillis
@@ -21,6 +22,8 @@ import io.embrace.android.embracesdk.internal.otel.sdk.setEmbraceAttribute
 import io.embrace.android.embracesdk.internal.otel.toEmbracePayload
 import io.embrace.android.embracesdk.internal.payload.Attribute
 import io.embrace.android.embracesdk.internal.payload.Link
+import io.embrace.android.embracesdk.internal.state.StateReader
+import io.embrace.android.embracesdk.internal.state.StateSnapshot
 import io.embrace.android.embracesdk.internal.telemetry.AppliedLimitType
 import io.embrace.android.embracesdk.internal.telemetry.InternalTelemetryService
 import io.embrace.android.embracesdk.internal.utils.truncatedStacktraceText
@@ -48,6 +51,8 @@ class EmbraceSpanFactoryImpl(
     redactionFunction: ((key: String, value: String) -> String)? = null,
     telemetryService: InternalTelemetryService,
     errorHandler: ErrorHandler,
+    stateReader: StateReader? = null,
+    verboseStateExport: Boolean = false,
 ) : EmbraceSpanFactory {
 
     private val deps = SpanDependencies(
@@ -58,6 +63,8 @@ class EmbraceSpanFactoryImpl(
         redactionFunction = redactionFunction,
         telemetryService = telemetryService,
         errorHandler = errorHandler,
+        stateReader = stateReader,
+        verboseStateExport = verboseStateExport,
     )
 
     override fun create(otelSpanStartArgs: OtelSpanStartArgs): EmbraceSdkSpan = EmbraceSpanImpl(
@@ -78,6 +85,8 @@ private class SpanDependencies(
     val redactionFunction: ((key: String, value: String) -> String)?,
     val telemetryService: InternalTelemetryService,
     val errorHandler: ErrorHandler,
+    val stateReader: StateReader?,
+    val verboseStateExport: Boolean,
 )
 
 private const val SPAN_LINK_TELEMETRY_TYPE = "span_link"
@@ -87,6 +96,11 @@ private const val SPAN_EVENT_TELEMETRY_TYPE = "span_event"
  * Sentinel for a start/end time that has not been recorded.
  */
 private const val UNSET_TIME = 0L
+
+/**
+ * Sentinel for a span that has no link into the state change log.
+ */
+private const val UNKNOWN_STATE_SEQ = -1L
 
 /**
  * Initial capacity for the lazily created event/link collections that aims
@@ -116,6 +130,18 @@ private class EmbraceSpanImpl(
 
     @Volatile
     private var spanEndTimeMs: Long = UNSET_TIME
+
+    /**
+     * The number of the last state change before this span started, 0 if it started before any change, or
+     * [UNKNOWN_STATE_SEQ] if it was given a start older than the window of recent values, when it carries no link.
+     */
+    private var startStateSeq: Long = UNKNOWN_STATE_SEQ
+
+    /**
+     * The values in force when this span started, kept only to render them for a customer's exporter in the verbose
+     * rendering.
+     */
+    private var startState: StateSnapshot? = null
 
     @Volatile
     private var discarded: Boolean = false
@@ -254,10 +280,79 @@ private class EmbraceSpanImpl(
             }
 
             spanStartTimeMs = attemptedStartTimeMs
+            linkStateAtStart(requestedStartTimeMs > UNSET_TIME, attemptedStartTimeMs)
         }
 
         notifyChanged()
         true
+    }
+
+    /**
+     * Reads the sequence as the span starts, or places the span by the start it was given among the recent values.
+     * Set as a system attribute so that a snapshot of the span carries it too.
+     */
+    private fun linkStateAtStart(timeGiven: Boolean, startTimeMs: Long) {
+        val reader = deps.stateReader ?: return
+        guard(Unit) {
+            val snapshot = if (timeGiven) reader.snapshotAt(startTimeMs) else reader.current()
+            if (snapshot != null) {
+                startStateSeq = snapshot.seq
+                if (deps.verboseStateExport) {
+                    startState = snapshot
+                }
+                if (snapshot.seq > 0) {
+                    setSystemAttribute(StateKeys.SEQ, snapshot.seq.toString())
+                }
+            }
+        }
+    }
+
+    /**
+     * Reads the sequence as the span ends, or places the end it was given, and links it if a state changed while it
+     * ran. In the verbose rendering, also puts the values onto the span a customer's exporter gets.
+     */
+    private fun linkStateAtEnd(spanToStop: Span, timeGiven: Boolean, endTimeMs: Long) {
+        val reader = deps.stateReader ?: return
+        if (startStateSeq == UNKNOWN_STATE_SEQ) {
+            return
+        }
+        guard(Unit) {
+            val end = if (timeGiven) reader.snapshotAt(endTimeMs) else reader.current()
+            if (end != null && end.seq != startStateSeq) {
+                setSystemAttribute(StateKeys.END_SEQ, end.seq.toString())
+            }
+            val start = startState ?: return@guard
+            renderVerboseValues(spanToStop, start, end)
+        }
+    }
+
+    /**
+     * The verbose rendering for a customer's exporter: every state's value at the start, and each value that differed
+     * at the end. Embrace's own payload drops them, and resolves the link instead.
+     */
+    private fun renderVerboseValues(spanToStop: Span, start: StateSnapshot, end: StateSnapshot?) {
+        for (index in 0 until start.size) {
+            val name = start.name(index)
+            spanToStop.setStringAttribute(StateKeys.value(name), start.value(index))
+            if (start.isSystem(index)) {
+                spanToStop.setStringAttribute(StateKeys.valueType(name), StateKeys.SYSTEM)
+            }
+        }
+        if (end == null || end.seq == start.seq) {
+            return
+        }
+        for (index in 0 until end.size) {
+            val name = end.name(index)
+            val startIndex = start.indexOf(name)
+            val differs = startIndex < 0 || start.value(startIndex) != end.value(index) ||
+                start.isSystem(startIndex) != end.isSystem(index)
+            if (differs) {
+                spanToStop.setStringAttribute(StateKeys.endValue(name), end.value(index))
+                if (end.isSystem(index)) {
+                    spanToStop.setStringAttribute(StateKeys.endValueType(name), StateKeys.SYSTEM)
+                }
+            }
+        }
     }
 
     override fun stop(errorCode: ErrorCode?, endTimeMs: Long?): Boolean =
@@ -296,6 +391,7 @@ private class EmbraceSpanImpl(
                     spanToStop.setEmbraceAttribute(ErrorCodeAttribute.Failure)
                 }
 
+                linkStateAtEnd(spanToStop, requestedEndTimeMs > UNSET_TIME, attemptedEndTimeMs)
                 populateAttributes(spanToStop)
                 populateEvents(spanToStop)
                 populateLinks(spanToStop)

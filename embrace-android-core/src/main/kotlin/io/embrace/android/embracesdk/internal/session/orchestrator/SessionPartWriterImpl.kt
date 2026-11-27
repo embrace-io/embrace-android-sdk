@@ -22,6 +22,8 @@ import io.embrace.android.embracesdk.internal.session.persistence.SessionPartDir
 import io.embrace.android.embracesdk.internal.session.persistence.SessionPartWriteTarget
 import io.embrace.android.embracesdk.internal.session.persistence.SessionPartWriteTracker
 import io.embrace.android.embracesdk.internal.session.persistence.SpanSnapshotsWriter
+import io.embrace.android.embracesdk.internal.session.persistence.StateJournalRecord
+import io.embrace.android.embracesdk.internal.session.persistence.StateJournalWriter
 import io.embrace.android.embracesdk.internal.spans.CurrentSessionPartSpan
 import io.embrace.android.embracesdk.internal.telemetry.AppliedLimitType
 import io.embrace.android.embracesdk.internal.telemetry.InternalTelemetryService
@@ -29,6 +31,8 @@ import io.embrace.android.embracesdk.internal.utils.EmbTrace
 import io.embrace.android.embracesdk.internal.utils.UuidSource
 import io.embrace.android.embracesdk.internal.worker.BackgroundWorker
 import java.io.File
+import java.util.concurrent.ConcurrentLinkedQueue
+import java.util.concurrent.atomic.AtomicBoolean
 
 /**
  * Writes session part telemetry to disk, if multi-file persistence mode is enabled.
@@ -56,6 +60,7 @@ class SessionPartWriterImpl(
     internal companion object {
         private const val CRASH_DRAIN_TIMEOUT_MS: Long = 3000
         private const val MAX_CARRIED_OVER_SPANS: Int = 1000
+        private const val MAX_HELD_STATE_RECORDS: Int = 1000
         private const val CARRIED_OVER_SPAN_LIMIT_TYPE: String = "carried_over_span"
 
         /**
@@ -87,6 +92,17 @@ class SessionPartWriterImpl(
     private val bufferLock = Any()
     private val carriedOverSpans = ArrayDeque<Span>()
 
+    /**
+     * State journal records for a session part that has started for the state recorder and not yet for this writer,
+     * which learns of a new part after the instrumentation does. Guarded by [bufferLock].
+     */
+    private val heldStateRecords = ArrayDeque<Pair<String, StateJournalRecord>>()
+
+    /**
+     * The part whose held state records overflowed, whose journal is then marked incomplete. Guarded by [bufferLock].
+     */
+    private var heldStateRecordsOverflowed: String? = null
+
     override fun onSessionPartStarted(timestamp: Long, userSessionId: String, sessionPartId: String) {
         if (!acceptingWrites()) {
             return
@@ -112,6 +128,19 @@ class SessionPartWriterImpl(
                     reportMissedEnd("Session part started before the previous one ended")
                     finish(orphan, crashing = false)
                 }
+                // state records held for this part are queued before `current` is published, so that a change reported
+                // through the lock-free path once it is can never land ahead of the record that opens the part's journal
+                heldStateRecords.forEach { (partId, record) ->
+                    if (partId == sessionPartId) {
+                        writers.appendStateRecord(record)
+                    }
+                }
+                heldStateRecords.clear()
+                if (heldStateRecordsOverflowed == sessionPartId) {
+                    writers.markStateJournalIncomplete()
+                }
+                heldStateRecordsOverflowed = null
+
                 // Change what `current` is and queue the metadata write for the new session part, then the spans to be carried over
                 current = writers
                 queueMetadataWrite(writers, WriteStrategy.IMMEDIATE)
@@ -210,6 +239,23 @@ class SessionPartWriterImpl(
                 else -> writers.spanSnapshotWrites.remove(span)
             }
         }
+    }
+
+    override fun onStateJournalRecord(sessionPartId: String, record: StateJournalRecord) {
+        if (!acceptingWrites()) {
+            return
+        }
+        val writers = current?.takeIf { it.directory.sessionPartId == sessionPartId } ?: synchronized(bufferLock) {
+            current?.takeIf { it.directory.sessionPartId == sessionPartId } ?: run {
+                if (heldStateRecords.size < MAX_HELD_STATE_RECORDS) {
+                    heldStateRecords.add(Pair(sessionPartId, record))
+                } else {
+                    heldStateRecordsOverflowed = sessionPartId
+                }
+                return
+            }
+        }
+        writers.appendStateRecord(record)
     }
 
     private fun onResourceChanged() {
@@ -390,6 +436,39 @@ class SessionPartWriterImpl(
 
         val completedSpans = CompletedSpansWriter(target, errorHandler)
         val spanSnapshots = SpanSnapshotsWriter(target, errorHandler)
+        private val stateJournal = StateJournalWriter(target, errorHandler)
+        private val pendingStateRecords = ConcurrentLinkedQueue<StateJournalRecord>()
+        private val stateDrainScheduled = AtomicBoolean(false)
+
+        /**
+         * Queues [record] for the state journal. A write is not debounced, so that a kill loses as little as it can,
+         * and a burst of records wakes the [worker] once rather than once for each record. A record queued before the
+         * part is sealed is written before the seal, since both run on the [worker] in the order they were submitted.
+         */
+        /**
+         * Records were lost before they could be queued, so nothing more is written to the journal and it reads back as
+         * a log whose end was not recorded, rather than a complete one with a hole.
+         */
+        fun markStateJournalIncomplete() {
+            worker.submit { stateJournal.markIncomplete() }
+        }
+
+        fun appendStateRecord(record: StateJournalRecord) {
+            pendingStateRecords.add(record)
+            if (stateDrainScheduled.compareAndSet(false, true)) {
+                val drain = guard(SdkErrorType.CompletedSpansWriteFail) { abandoned }(
+                    Runnable {
+                        stateDrainScheduled.set(false)
+                        val batch = ArrayList<StateJournalRecord>()
+                        while (true) {
+                            batch.add(pendingStateRecords.poll() ?: break)
+                        }
+                        stateJournal.append(batch)
+                    },
+                )
+                worker.submit(drain)
+            }
+        }
 
         val metadataWrites = TelemetryWriteScheduler(
             worker = worker,
@@ -450,6 +529,7 @@ class SessionPartWriterImpl(
             sealed = true
             completedSpans.close()
             spanSnapshots.close()
+            stateJournal.close()
         }
     }
 }

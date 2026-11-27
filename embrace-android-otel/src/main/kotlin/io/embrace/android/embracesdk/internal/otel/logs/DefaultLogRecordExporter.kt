@@ -23,10 +23,23 @@ internal class DefaultLogRecordExporter(
         if (!exportCheck()) {
             return OperationResultCode.Success
         }
-        val result = logSink.storeLogs(telemetry.map(LogRecordData::toEmbracePayload))
+        // a record meant for a customer's exporters alone never reaches Embrace's own payload
+        val (exportOnly, embraceLogs) = if (telemetry.none { it.attributes.containsKey(EXPORT_ONLY_KEY) }) {
+            Pair(emptyList(), telemetry)
+        } else {
+            telemetry.partition { it.attributes.containsKey(EXPORT_ONLY_KEY) }
+        }
+        val result = if (embraceLogs.isEmpty()) {
+            StoreDataResult.SUCCESS
+        } else {
+            logSink.storeLogs(embraceLogs.map(LogRecordData::toEmbracePayload))
+        }
 
         if (result == StoreDataResult.SUCCESS && externalExporters.isNotEmpty()) {
             val snapshot = telemetry.map { (it as? ReadableLogRecord)?.toLogRecordData() ?: it }
+            externalExportDispatcher.dispatch(externalExporters) { it.export(snapshot) }
+        } else if (exportOnly.isNotEmpty() && externalExporters.isNotEmpty()) {
+            val snapshot = exportOnly.map { (it as? ReadableLogRecord)?.toLogRecordData() ?: it }
             externalExportDispatcher.dispatch(externalExporters) { it.export(snapshot) }
         }
 

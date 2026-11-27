@@ -38,7 +38,8 @@ class PowerStateDataSource(
 
     private fun onPowerSaveModeChanged(powerSaveMode: Boolean) {
         val timestamp = clock.now()
-        if (getCurrentStateValue() != PowerMode.UNKNOWN || powerSaveMode) {
+        // v2 reports power saving from the moment capture starts, so it reports normal as well as low
+        if (args.stateRecorder != null || getCurrentStateValue() != PowerMode.UNKNOWN || powerSaveMode) {
             onStateChange(
                 newState = if (powerSaveMode) {
                     PowerMode.LOW

@@ -35,6 +35,7 @@ import io.embrace.android.embracesdk.internal.injection.ConfigLoadServices
 import io.embrace.android.embracesdk.internal.injection.OtelSignalContext
 import io.embrace.android.embracesdk.internal.injection.PreStartServices
 import io.embrace.android.embracesdk.internal.injection.SdkOverrides
+import io.embrace.android.embracesdk.internal.injection.StateCapture
 import io.embrace.android.embracesdk.internal.injection.applicationContextOrSelf
 import io.embrace.android.embracesdk.internal.injection.createCachedLogEnvelopeStore
 import io.embrace.android.embracesdk.internal.injection.createCurrentSessionPartSpan
@@ -62,6 +63,7 @@ import io.embrace.android.embracesdk.internal.injection.createSessionOrchestrato
 import io.embrace.android.embracesdk.internal.injection.createSessionPartEnvelopeSource
 import io.embrace.android.embracesdk.internal.injection.createSessionPartReader
 import io.embrace.android.embracesdk.internal.injection.createSessionPartTracker
+import io.embrace.android.embracesdk.internal.injection.createStateCapture
 import io.embrace.android.embracesdk.internal.injection.createUserService
 import io.embrace.android.embracesdk.internal.injection.createUserSessionPropertiesService
 import io.embrace.android.embracesdk.internal.injection.resolve
@@ -94,6 +96,7 @@ import io.embrace.android.embracesdk.internal.session.lifecycle.ActivityLifecycl
 import io.embrace.android.embracesdk.internal.session.lifecycle.createLifecycleTracker
 import io.embrace.android.embracesdk.internal.session.orchestrator.SessionOrchestrator
 import io.embrace.android.embracesdk.internal.spans.TracingApiDelegate
+import io.embrace.android.embracesdk.internal.state.StateExportMode
 import io.embrace.android.embracesdk.internal.storage.EmbraceStorageService
 import io.embrace.android.embracesdk.internal.storage.SdkDir
 import io.embrace.android.embracesdk.internal.storage.StatFsAvailabilityChecker
@@ -154,6 +157,7 @@ internal fun createRealSdkInstance(
     lateinit var spanService: Lazy<SpanService>
     lateinit var embraceSpanFactory: EmbraceSpanFactory
     lateinit var sessionOrchestrator: SessionOrchestrator
+    var stateCapture: StateCapture? = null
 
     val startupClassifier = init(name = "startup-classifier", recordDuration = true) {
         StartupClassifierImpl()
@@ -171,6 +175,7 @@ internal fun createRealSdkInstance(
             experimentTrackingServiceProvider = { experimentTrackingService.value },
             userSessionPropertiesServiceProvider = { userSessionPropertiesService },
             instrumentationRegistryProvider = { instrumentationRegistry },
+            stateStampProvider = { stateCapture?.stamp() },
         )
     }
 
@@ -218,6 +223,19 @@ internal fun createRealSdkInstance(
             }
         }
     }
+
+    stateCapture = init("state-capture") {
+        createStateCapture(
+            configService = configService,
+            clock = clock,
+            externalOtelConfig = preStartServices.externalOtelConfig,
+            sessionPartIdProvider = { sessionPartTracker.getActiveSessionPartId() },
+            replayWorker = workerThreadPool.backgroundWorker(Worker.Background.NonIoRegWorker),
+            loggerSupplier = { otelSdkWrapper.value.sdkLogger },
+            processIdentifierProvider = { otelSdkConfig.value.processIdentifier },
+        )
+    }
+    val stateAssociation = stateCapture?.takeIf { it.associationEnabled }
 
     val dataValidator = init("data-validator") {
         DataValidator(
@@ -268,6 +286,8 @@ internal fun createRealSdkInstance(
             redactionFunction = createRedactionFunction(sensitiveKeysBehavior),
             telemetryService = telemetryService,
             errorHandler = errorHandler,
+            stateReader = stateAssociation?.recorder,
+            verboseStateExport = stateAssociation?.exportMode == StateExportMode.VERBOSE,
         )
     }
 
@@ -336,7 +356,10 @@ internal fun createRealSdkInstance(
     }
 
     sessionPartTracker = init("session-part-tracker") {
-        createSessionPartTracker(appContext, errorHandler, versionChecker)
+        createSessionPartTracker(appContext, errorHandler, versionChecker).also { tracker ->
+            // the recorder learns of every part boundary, from the first part on
+            stateCapture?.attach(tracker)
+        }
     }
 
     sessionIdsProvider = init("session-ids-provider") {
@@ -418,6 +441,7 @@ internal fun createRealSdkInstance(
             crashMarkerFileProvider = crashMarkerFile::value,
             sdkStorage = sdkStorage,
             eventBus = eventBus,
+            stateRecorder = stateCapture?.recorder,
             networkSpanParents = object : NetworkSpanParents {
                 override fun currentParent(): NetworkSpanParent? =
                     if (networkSpanParentService.isInitialized()) {
@@ -802,6 +826,7 @@ internal fun createRealSdkInstance(
                 sessionPersistenceWorker = workerThreadPool.backgroundWorker(Worker.Background.SessionPersistenceWorker),
                 sessionReadWorker = workerThreadPool.backgroundWorker(Worker.Background.IoRegWorker),
                 sessionPartReader = sessionPartReader,
+                onSessionPartWriter = { writer -> stateCapture?.onSessionPartWriter(writer) },
             )
         }
     }
@@ -900,6 +925,7 @@ internal fun createRealSdkInstance(
                 hostedSdkVersionInfo = hostedSdkVersionInfo,
                 errorHandler = errorHandler,
                 telemetryService = telemetryService,
+                stateRecorderProvider = { stateCapture?.recorder },
             ),
             viewTrackingApiDelegate = ViewTrackingApiDelegate(
                 registry = instrumentationRegistry,

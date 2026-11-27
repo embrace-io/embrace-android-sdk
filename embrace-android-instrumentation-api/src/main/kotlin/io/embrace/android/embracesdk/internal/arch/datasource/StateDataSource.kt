@@ -6,6 +6,7 @@ import io.embrace.android.embracesdk.internal.arch.SessionPartChangeListener
 import io.embrace.android.embracesdk.internal.arch.SessionPartEndListener
 import io.embrace.android.embracesdk.internal.arch.limits.UpToLimitStrategy
 import io.embrace.android.embracesdk.internal.arch.schema.SchemaType
+import io.embrace.android.embracesdk.internal.arch.state.StateDefinition
 import io.embrace.android.embracesdk.internal.logging.SdkErrorType
 import io.embrace.android.embracesdk.internal.logging.guardSdkCode
 import java.util.concurrent.atomic.AtomicBoolean
@@ -30,6 +31,25 @@ abstract class StateDataSource<T : Any>(
     instrumentationName = "${stateTypeFactory(defaultValue).stateName}_state_data_source",
 ) {
     val stateAttributeKey: String = "emb.state.${stateTypeFactory(defaultValue).stateName}"
+
+    /**
+     * The one recorder of every state, when v2 of the runtime state data model is on. This data source then reports
+     * each change to it, and no longer captures a span of its own for each session part.
+     */
+    private val recorder = args.stateRecorder
+
+    /**
+     * The keys of the attributes a change of this state may carry under v2. Any other key is dropped.
+     */
+    protected open val declaredAttributeKeys: Set<String> = emptySet()
+
+    private val stateDefinition: StateDefinition by lazy {
+        StateDefinition(
+            name = stateTypeFactory(defaultValue).stateName,
+            changeLimit = maxTransitions,
+            attributeKeys = declaredAttributeKeys,
+        )
+    }
 
     /**
      * Attribute key under which the type of the current state value is stored when the state value is a system value.
@@ -72,6 +92,10 @@ abstract class StateDataSource<T : Any>(
         transitionAttributes: Map<String, String> = emptyMap(),
         droppedTransitions: Int = 0,
     ) {
+        if (recorder != null) {
+            recordChange(newState, transitionTimeMs, transitionAttributes, droppedTransitions)
+            return
+        }
         if (!stateCaptureActive.get()) {
             startStateCapture()
         }
@@ -130,6 +154,10 @@ abstract class StateDataSource<T : Any>(
      * Return the attributes that represent the current state value, i.e. the literal value and type, if applicable.
      */
     fun currentStateAttributes(): Map<String, Any> {
+        if (recorder != null) {
+            // v2 stamps every state from the recorder, in its own form
+            return emptyMap()
+        }
         val value = currentState.get()
         return buildMap {
             put(stateAttributeKey, value)
@@ -151,6 +179,13 @@ abstract class StateDataSource<T : Any>(
 
     @CallSuper
     override fun onDataCaptureEnabled() {
+        if (recorder != null) {
+            // under v2 a state has a value from the moment its instrumentation starts, and never starts on first use
+            stateCaptureActive.set(true)
+            val initial = currentState.get()
+            recorder.define(stateDefinition, initial.toString(), SchemaType.State.valueType(initial) != null, args.clock.now())
+            return
+        }
         if (captureStateOnCreation) {
             startStateCapture()
         }
@@ -158,6 +193,9 @@ abstract class StateDataSource<T : Any>(
 
     @CallSuper
     override fun onPreSessionEnd() {
+        if (recorder != null) {
+            return
+        }
         synchronized(partStateLock) {
             partEnding = true
             partStateToken.getAndSet(null)
@@ -168,9 +206,40 @@ abstract class StateDataSource<T : Any>(
 
     @CallSuper
     override fun onPostSessionChange() {
+        if (recorder != null) {
+            return
+        }
         synchronized(partStateLock) {
             partEnding = false
             createSessionStateSpan(currentState.get())
+        }
+    }
+
+    /**
+     * Reports an update to the recorder, which collects the attributes of the value being left only for a real change,
+     * since collecting them resets what the screen has accrued.
+     */
+    private fun recordChange(
+        newState: T,
+        transitionTimeMs: Long,
+        transitionAttributes: Map<String, String>,
+        droppedTransitions: Int,
+    ) {
+        val recorder = recorder ?: return
+        if (droppedTransitions > 0) {
+            recorder.reportDropped(stateDefinition.name, droppedTransitions)
+        }
+        // the recorder alone decides whether this is a change, under its lock, so it and this source never disagree on the
+        // value. The value being left is swapped in that same order, and its attributes collected once for the change.
+        recorder.record(
+            name = stateDefinition.name,
+            value = newState.toString(),
+            isSystem = SchemaType.State.valueType(newState) != null,
+            timeMs = transitionTimeMs,
+        ) {
+            val oldState = currentState.getAndSet(newState)
+            val outgoing = if (oldState != newState) outgoingValueAttributes(oldState) else emptyMap()
+            if (outgoing.isEmpty()) transitionAttributes else outgoing + transitionAttributes
         }
     }
 

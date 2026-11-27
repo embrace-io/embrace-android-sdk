@@ -9,6 +9,7 @@ import io.embrace.android.embracesdk.internal.arch.SessionPartEndListener
 import io.embrace.android.embracesdk.internal.arch.datasource.TelemetryDestination
 import io.embrace.android.embracesdk.internal.arch.navigation.NavigationTrackingService
 import io.embrace.android.embracesdk.internal.arch.state.ProcessStateTracker
+import io.embrace.android.embracesdk.internal.arch.state.StateRecorder
 import io.embrace.android.embracesdk.internal.arch.store.DeliveredAeiStore
 import io.embrace.android.embracesdk.internal.arch.store.NetworkCaptureRuleStore
 import io.embrace.android.embracesdk.internal.capture.session.UserSessionPropertiesService
@@ -62,6 +63,7 @@ internal class InstrumentationArgsImpl(
     override val sdkStorage: SdkStorage,
     override val eventBus: EventBus,
     override val networkSpanParents: NetworkSpanParents,
+    override val stateRecorder: StateRecorder? = null,
 ) : InstrumentationArgs {
 
     override val crashMarkerFile: File by lazy { crashMarkerFileProvider() }

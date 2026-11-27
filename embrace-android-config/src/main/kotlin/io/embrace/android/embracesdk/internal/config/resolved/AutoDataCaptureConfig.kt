@@ -72,6 +72,23 @@ interface AutoDataCaptureConfig {
     val stateCaptureEnabled: Boolean
 
     /**
+     * Whether state is captured with v2 of the runtime state data model, in place of v1.
+     */
+    val sharedStateSpanEnabled: Boolean
+
+    /**
+     * Whether, with v2 on, logs carry the state stamp, spans carry the link, and state is rendered for a customer's
+     * exporters.
+     */
+    val stateAssociationEnabled: Boolean
+
+    /**
+     * How state is rendered for a customer's exporters, "association" or "verbose", or null to follow what the app
+     * can use.
+     */
+    val stateExportMode: String?
+
+    /**
      * Whether the NetworkCallback-based connectivity service implementation is enabled.
      */
     val networkCallbackConnectivityServiceEnabled: Boolean
@@ -136,6 +153,9 @@ inline fun AutoDataCaptureConfig(
     crossinline uiLoadTracingTraceAll: () -> Boolean? = { null },
     crossinline endStartupWithAppReadyEnabled: () -> Boolean? = { null },
     crossinline stateCaptureEnabled: () -> Boolean? = { null },
+    crossinline sharedStateSpanEnabled: () -> Boolean? = { null },
+    crossinline stateAssociationEnabled: () -> Boolean? = { null },
+    crossinline stateExportMode: () -> String? = { null },
     crossinline networkCallbackConnectivityServiceEnabled: () -> Boolean? = { null },
     crossinline navigationStateCaptureEnabled: () -> Boolean? = { null },
     crossinline smoothnessCaptureEnabled: () -> Boolean? = { null },
@@ -159,6 +179,9 @@ inline fun AutoDataCaptureConfig(
     override val uiLoadTracingTraceAll: Boolean = uiLoadTracingTraceAll() ?: true
     override val endStartupWithAppReadyEnabled: Boolean = endStartupWithAppReadyEnabled() ?: false
     override val stateCaptureEnabled: Boolean = stateCaptureEnabled() ?: true
+    override val sharedStateSpanEnabled: Boolean = sharedStateSpanEnabled() ?: false
+    override val stateAssociationEnabled: Boolean = stateAssociationEnabled() ?: false
+    override val stateExportMode: String? = stateExportMode()
     override val networkCallbackConnectivityServiceEnabled: Boolean = networkCallbackConnectivityServiceEnabled() ?: false
     override val navigationStateCaptureEnabled: Boolean = navigationStateCaptureEnabled() ?: true
     override val smoothnessCaptureEnabled: Boolean = smoothnessCaptureEnabled() ?: false

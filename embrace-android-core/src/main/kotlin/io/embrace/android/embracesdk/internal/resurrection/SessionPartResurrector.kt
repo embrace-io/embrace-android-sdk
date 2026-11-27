@@ -54,6 +54,7 @@ class SessionPartResurrector(
         userSessionTerminationReason: String?,
         isBackgroundOnly: Boolean,
         lastWrittenMs: Long? = null,
+        deadProcessStateStamp: Map<String, String> = emptyMap(),
         sendNativeCrash: (send: () -> Unit) -> Unit = { send -> send() },
     ): Envelope<SessionPartPayload>? {
         val deadSessionPartSpan = deadPart.getSessionPartSpan()
@@ -85,6 +86,8 @@ class SessionPartResurrector(
                                     EmbCommonAttributes.EMB_EXPERIMENTS,
                                 ),
                             )?.let(::putAll)
+                            // the last values the dead process recorded, never those of the process writing the log
+                            putAll(deadProcessStateStamp)
                         },
                     )
 

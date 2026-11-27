@@ -1,31 +1,34 @@
 package io.embrace.android.embracesdk.testcases.features
 
-import io.embrace.android.embracesdk.internal.storage.SdkStorage
-import io.embrace.android.embracesdk.fakes.testSdkStorage
 import io.embrace.android.embracesdk.assertions.getLastLog
 import io.embrace.android.embracesdk.assertions.getSessionPartId
 import io.embrace.android.embracesdk.assertions.getUserSessionId
 import io.embrace.android.embracesdk.fakes.FakePayloadStorageService
 import io.embrace.android.embracesdk.fakes.TestPlatformSerializer
+import io.embrace.android.embracesdk.fakes.TestStateDataSource
 import io.embrace.android.embracesdk.fakes.config.FakeEnabledFeatureConfig
 import io.embrace.android.embracesdk.fakes.config.FakeInstrumentedConfig
 import io.embrace.android.embracesdk.fakes.fakeEnvelopeMetadata
 import io.embrace.android.embracesdk.fakes.fakeEnvelopeResource
+import io.embrace.android.embracesdk.fakes.testSdkStorage
 import io.embrace.android.embracesdk.fixtures.fakeCachedSessionStoredTelemetryMetadata
 import io.embrace.android.embracesdk.fixtures.fakeNativeCrashStoredTelemetryMetadata
+import io.embrace.android.embracesdk.internal.arch.schema.StateKeys
 import io.embrace.android.embracesdk.internal.arch.state.ProcessState
 import io.embrace.android.embracesdk.internal.config.remote.BackgroundActivityRemoteConfig
 import io.embrace.android.embracesdk.internal.config.remote.RemoteConfig
 import io.embrace.android.embracesdk.internal.delivery.PayloadType
 import io.embrace.android.embracesdk.internal.delivery.StoredTelemetryMetadata
 import io.embrace.android.embracesdk.internal.delivery.SupportedEnvelopeType
-import io.embrace.android.embracesdk.internal.storage.SdkDir
 import io.embrace.android.embracesdk.internal.otel.sdk.findAttributeValue
 import io.embrace.android.embracesdk.internal.payload.Envelope
 import io.embrace.android.embracesdk.internal.payload.SessionPartPayload
 import io.embrace.android.embracesdk.internal.payload.Span
 import io.embrace.android.embracesdk.internal.session.getSessionPartSpan
 import io.embrace.android.embracesdk.internal.session.persistence.SessionPartDirectory
+import io.embrace.android.embracesdk.internal.state.StatePacking
+import io.embrace.android.embracesdk.internal.storage.SdkDir
+import io.embrace.android.embracesdk.internal.storage.SdkStorage
 import io.embrace.android.embracesdk.internal.worker.Worker
 import io.embrace.android.embracesdk.semconv.EmbSessionAttributes
 import io.embrace.android.embracesdk.semconv.EmbSpanAttributes
@@ -200,6 +203,66 @@ internal class ResurrectionFeatureTest(
 
                 // span snapshots were converted to failed spans
                 assertSpanSnapshotConversion(sessionEnvelope, sessionPartSpan)
+            },
+        )
+    }
+
+    @Test
+    fun `a native crash resurrected under state v2 is stamped with the last values the dead process recorded`() {
+        var storage: SdkStorage? = null
+        var sessionPartDir: SessionPartDirectory? = null
+        val stateV2 = RemoteConfig(
+            pctMultiFilePersistenceEnabled = 100f,
+            pctStateCaptureEnabledV2 = 100f,
+            pctSharedStateSpanEnabled = 100f,
+            pctStateAssociationEnabled = 100f,
+        )
+        val config = FakeInstrumentedConfig(
+            enabledFeatures = FakeEnabledFeatureConfig(nativeCrashCapture = true),
+            symbols = symbols,
+        )
+
+        testRule.runTest(
+            persistedRemoteConfig = stateV2,
+            instrumentedConfig = config,
+            testCaseAction = {
+                storage = testSdkStorage(testRule.services.appContext)
+                recordSession(isBackgroundActivityEnabled = true, endInBackground = false) {
+                    findDataSource<TestStateDataSource>().onStateChange("before-crash", clock.tick(100))
+                }
+                shutdownSdkWithIncompleteSession()
+            },
+            assertAction = {
+                sessionPartDir = obtainSessionPartDirectory(storage)
+            },
+        )
+
+        val dir = checkNotNull(sessionPartDir)
+        val crashData = createFakeCrashMatchingSessionPart(dir)
+
+        testRule.runTest(
+            persistedRemoteConfig = stateV2,
+            instrumentedConfig = config,
+            setupAction = {
+                setupFakeNativeCrash(serializer, crashData)
+            },
+            testCaseAction = {
+                // the process writing the crash has values of its own, which the crash must not carry
+                findDataSource<TestStateDataSource>().onStateChange("after-relaunch", clock.tick(100))
+            },
+            assertAction = {
+                val sessionEnvelope = getSessionEnvelopes(1, ProcessState.FOREGROUND).single()
+                val changeLog = checkNotNull(sessionEnvelope.data.spans?.single { it.name == StateKeys.CHANGE_LOG_SPAN_NAME })
+                val lastSeq = changeLog.events.orEmpty().maxOf { checkNotNull(it.attributes?.findAttributeValue(StateKeys.SEQ)).toLong() }
+
+                val crashAttrs = checkNotNull(getSingleLogEnvelope().getLastLog().attributes)
+                val stamp = buildMap {
+                    StatePacking.unpack(checkNotNull(crashAttrs.findAttributeValue(StateKeys.PACKED))) { name, value, _ ->
+                        put(name, value)
+                    }
+                }
+                assertEquals("before-crash", stamp["test"])
+                assertEquals(lastSeq.toString(), crashAttrs.findAttributeValue(StateKeys.SEQ))
             },
         )
     }

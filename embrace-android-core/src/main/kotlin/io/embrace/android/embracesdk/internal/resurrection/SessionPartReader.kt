@@ -13,6 +13,7 @@ import io.embrace.android.embracesdk.internal.otel.sdk.findAttributeValue
 import io.embrace.android.embracesdk.internal.payload.Envelope
 import io.embrace.android.embracesdk.internal.payload.SessionPartPayload
 import io.embrace.android.embracesdk.internal.session.getSessionPartSpan
+import io.embrace.android.embracesdk.internal.session.persistence.DecodedStateJournal
 import io.embrace.android.embracesdk.internal.session.persistence.SessionPartDirectory
 import io.embrace.android.embracesdk.internal.session.persistence.SessionPartDirectoryStore
 import io.embrace.android.embracesdk.internal.session.persistence.SessionPartWriteTracker
@@ -176,6 +177,7 @@ class SessionPartReader(
                 isLastPartOfUserSession = isLastPartOfUserSession,
                 performingResurrection = performingResurrection,
                 lastWrittenMs = part.lastWrittenMs,
+                stateJournal = part.stateJournal,
             ) ?: return true
             val task = intakeService.take(
                 intake = deliverable.envelope,
@@ -274,6 +276,7 @@ class SessionPartReader(
         isLastPartOfUserSession: Boolean,
         performingResurrection: Boolean,
         lastWrittenMs: Long?,
+        stateJournal: DecodedStateJournal? = null,
     ): Deliverable? {
         val recordedProcessIdentifier = envelope.findProcessIdentifier()
         val processIdentifier = recordedProcessIdentifier ?: processIdProvider()
@@ -283,11 +286,16 @@ class SessionPartReader(
             recordedProcessIdentifier != processIdProvider()
         }
         return if (isDead) {
-            resurrect(envelope, directory, processIdentifier, isLastPartOfUserSession, lastWrittenMs)?.let {
-                Deliverable(it.envelope, processIdentifier, it.afterStored)
+            // a span the next launch completes ends at the last change the dead part's journal records
+            // the link and the stamp are association's, so with it off the dead part gets its change log alone
+            val associationEnabled = configService.config.autoDataCapture.stateAssociationEnabled
+            val deadState = stateJournal?.takeIf { associationEnabled }?.deadProcessState()
+            val deadPart = deadState?.let { envelope.withStateEndOnSnapshots(it.lastSeq) } ?: envelope
+            resurrect(deadPart, directory, processIdentifier, isLastPartOfUserSession, lastWrittenMs, deadState)?.let {
+                Deliverable(it.envelope.withStateChangeLog(stateJournal), processIdentifier, it.afterStored)
             }
         } else {
-            Deliverable(envelope, processIdentifier)
+            Deliverable(envelope.withStateChangeLog(stateJournal), processIdentifier)
         }
     }
 
@@ -301,6 +309,7 @@ class SessionPartReader(
         processIdentifier: String,
         isLastPartOfUserSession: Boolean,
         lastWrittenMs: Long?,
+        deadState: DeadProcessState?,
     ): MultiFileDeadPartResurrector.ResurrectedPart? {
         val resurrected = errorHandler.guardSdkCode(SdkErrorType.PayloadResurrectionPayloadFail, null) {
             deadPartResurrector.resurrect(
@@ -309,6 +318,7 @@ class SessionPartReader(
                 processIdentifier = processIdentifier,
                 isLastPartOfUserSession = isLastPartOfUserSession,
                 lastWrittenMs = lastWrittenMs,
+                deadProcessStateStamp = deadState?.stamp().orEmpty(),
             )
         }
         if (resurrected == null) {

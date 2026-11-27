@@ -60,8 +60,26 @@ class SessionPartDecoder(
         )
         val lastWrittenMs =
             maxOf(metadataProto.written_at_ms, completedSpansFile.lastWrittenMs, spanSnapshotsFile.lastWrittenMs)
-        return DecodedSessionPart(envelope, lastWrittenMs.takeIf { it > 0 })
+        return DecodedSessionPart(envelope, lastWrittenMs.takeIf { it > 0 }, readStateJournalFile(source))
     }
+
+    /**
+     * Reads the part's state journal, or null if it has none or it cannot be read. A journal cut short by a process
+     * dying keeps every record before the cut.
+     */
+    private fun readStateJournalFile(source: SessionPartSource): DecodedStateJournal? =
+        SystemTrace.trace(SessionPartFile.STATE_JOURNAL.traceSection) {
+            if (!source.exists(SessionPartFile.STATE_JOURNAL)) {
+                return@trace null
+            }
+            errorHandler.guardSdkCode(SdkErrorType.SessionReconstructionFail, null) {
+                if (source.sizeBytes(SessionPartFile.STATE_JOURNAL) > MAX_PART_FILE_BYTES) {
+                    throw IOException(OVERSIZED_PART_FILE_MSG)
+                }
+                val bytes = openOrThrow(source, SessionPartFile.STATE_JOURNAL).use { it.readByteArray() }
+                readStateJournal(bytes)
+            }
+        }
 
     /**
      * Removes spans that share a span ID with another span in the payload.

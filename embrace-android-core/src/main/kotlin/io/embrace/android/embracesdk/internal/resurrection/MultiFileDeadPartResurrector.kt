@@ -30,6 +30,7 @@ class MultiFileDeadPartResurrector(
      * session part span. [processIdentifier] is the process that persisted it, and
      * [isLastPartOfUserSession] is whether no later part of the same user session is on disk.
      * [lastWrittenMs] is the last time the part's files were written, if they record it.
+     * [deadProcessStateStamp] is the state stamp of the dead process, for its native crash.
      */
     fun resurrect(
         deadPart: Envelope<SessionPartPayload>,
@@ -37,6 +38,7 @@ class MultiFileDeadPartResurrector(
         processIdentifier: String,
         isLastPartOfUserSession: Boolean,
         lastWrittenMs: Long?,
+        deadProcessStateStamp: Map<String, String> = emptyMap(),
     ): ResurrectedPart? {
         val restoreDecision = restoreDecisionProvider()?.takeIf { it.userSessionId == directory.userSessionId }
         val terminationReason = if (isLastPartOfUserSession) {
@@ -57,6 +59,7 @@ class MultiFileDeadPartResurrector(
             userSessionTerminationReason = terminationReason,
             isBackgroundOnly = restoreDecision?.backgroundOnly == true,
             lastWrittenMs = lastWrittenMs,
+            deadProcessStateStamp = deadProcessStateStamp,
             sendNativeCrash = { send -> sendNativeCrash = send },
         ) ?: return null
         return ResurrectedPart(envelope) { sendNativeCrash?.invoke() }

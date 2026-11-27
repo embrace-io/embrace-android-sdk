@@ -7,8 +7,11 @@ class MinifiedTestApplication : Application() {
 
     override fun onCreate() {
         super.onCreate()
-        Embrace.addSpanExporter(RecordingSpanExporter)
-        Embrace.start(this)
+        Embrace.start(this) {
+            otel {
+                addSpanExporter(RecordingSpanExporter)
+            }
+        }
         Embrace.startSpan(STARTUP_SPAN_NAME).stop()
     }
 

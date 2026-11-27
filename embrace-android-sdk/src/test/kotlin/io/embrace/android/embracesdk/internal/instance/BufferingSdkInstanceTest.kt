@@ -4,10 +4,6 @@ import io.embrace.android.embracesdk.experiments.TrackedExperiment
 import io.embrace.android.embracesdk.experiments.TrackedFeatureFlag
 import io.embrace.android.embracesdk.fakes.FakeClock
 import io.embrace.android.embracesdk.fakes.FakeErrorHandler
-import io.embrace.android.embracesdk.fakes.FakeLogRecordExporter
-import io.embrace.android.embracesdk.fakes.FakeLogRecordProcessor
-import io.embrace.android.embracesdk.fakes.FakeSpanExporter
-import io.embrace.android.embracesdk.fakes.FakeSpanProcessor
 import io.embrace.android.embracesdk.internal.api.SdkApi
 import io.embrace.android.embracesdk.internal.capture.experiment.ExperimentApiCall
 import io.embrace.android.embracesdk.internal.capture.experiment.ExperimentKind
@@ -18,10 +14,6 @@ import io.embrace.android.embracesdk.spans.EmbraceSpan
 import io.embrace.android.embracesdk.spans.EmbraceSpanEvent
 import io.embrace.android.embracesdk.spans.ErrorCode
 import io.opentelemetry.kotlin.NoopOpenTelemetry
-import io.opentelemetry.kotlin.logging.export.LogRecordExporter
-import io.opentelemetry.kotlin.logging.export.LogRecordProcessor
-import io.opentelemetry.kotlin.tracing.export.SpanExporter
-import io.opentelemetry.kotlin.tracing.export.SpanProcessor
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNull
@@ -85,33 +77,6 @@ internal class BufferingSdkInstanceTest {
     fun `generateW3cTraceparent returns a valid traceparent`() {
         val traceparent = checkNotNull(instance.generateW3cTraceparent())
         assertTrue(traceparent.matches(Regex("00-[0-9a-f]{32}-[0-9a-f]{16}-01")))
-    }
-
-    @Test
-    fun `otel config calls are replayed in order when drained`() {
-        val spanExporter = FakeSpanExporter()
-        val spanProcessor = FakeSpanProcessor()
-        val logExporter = FakeLogRecordExporter()
-        val logProcessor = FakeLogRecordProcessor()
-        instance.addSpanExporter(spanExporter)
-        instance.setResourceAttribute("key", "value")
-        instance.addSpanProcessor(spanProcessor)
-        instance.addLogRecordExporter(logExporter)
-        instance.addLogRecordProcessor(logProcessor)
-        assertTrue(target.calls.isEmpty())
-
-        instance.drainOTelConfig(target)
-        assertEquals(
-            listOf(spanExporter, "key=value", spanProcessor, logExporter, logProcessor),
-            target.calls,
-        )
-    }
-
-    @Test
-    fun `otel config calls after draining are forwarded`() {
-        instance.drainOTelConfig(target)
-        instance.setResourceAttribute("key", "value")
-        assertEquals(listOf("key=value"), target.calls)
     }
 
     @Test
@@ -235,12 +200,10 @@ internal class BufferingSdkInstanceTest {
 
     @Test
     fun `calls are ignored after close whether or not their group was drained`() {
-        instance.drainOTelConfig(target)
         instance.drainCompletedSpans(target)
         instance.trackExperiment("buffered", startedAt = 1L)
         instance.close()
 
-        instance.setResourceAttribute("key", "value")
         assertFalse(instance.recordCompletedSpan("span", 1, 2))
         instance.trackExperiment("exp1", startedAt = 1L)
         instance.applicationInitStart()
@@ -253,12 +216,11 @@ internal class BufferingSdkInstanceTest {
 
     @Test
     fun `groups drain independently`() {
-        instance.setResourceAttribute("key", "value")
         instance.recordCompletedSpan("span", 1, 2)
         instance.trackExperiment("exp1", startedAt = 1L)
-        instance.drainOTelConfig(target)
+        instance.drainCompletedSpans(target)
 
-        assertEquals(listOf("key=value"), target.calls)
+        assertEquals(listOf("span:1-2"), target.calls)
         assertTrue(replayed.isEmpty())
     }
 
@@ -473,26 +435,6 @@ internal class BufferingSdkInstanceTest {
         var onRecordCompletedSpan: () -> Unit = {}
         val spanAttributes = mutableListOf<Map<String, String>>()
         val spanEvents = mutableListOf<List<Triple<String, Long, Map<String, String>>>>()
-
-        override fun addSpanExporter(spanExporter: SpanExporter) {
-            calls.add(spanExporter)
-        }
-
-        override fun addSpanProcessor(spanProcessor: SpanProcessor) {
-            calls.add(spanProcessor)
-        }
-
-        override fun addLogRecordExporter(logRecordExporter: LogRecordExporter) {
-            calls.add(logRecordExporter)
-        }
-
-        override fun addLogRecordProcessor(logRecordProcessor: LogRecordProcessor) {
-            calls.add(logRecordProcessor)
-        }
-
-        override fun setResourceAttribute(key: String, value: String) {
-            calls.add("$key=$value")
-        }
 
         override fun recordCompletedSpan(
             name: String,

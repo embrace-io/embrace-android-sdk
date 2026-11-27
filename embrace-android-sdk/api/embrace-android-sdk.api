@@ -6,10 +6,6 @@ public final class io/embrace/android/embracesdk/Embrace : io/embrace/android/em
 	public fun addLoadTraceAttribute (Landroid/app/Activity;Ljava/lang/String;Ljava/lang/String;)V
 	public fun addLoadTraceChildSpan (Landroid/app/Activity;Ljava/lang/String;JJ)V
 	public fun addLoadTraceChildSpan (Landroid/app/Activity;Ljava/lang/String;JJLjava/util/Map;Ljava/util/List;Lio/embrace/android/embracesdk/spans/ErrorCode;)V
-	public fun addLogRecordExporter (Lio/opentelemetry/kotlin/logging/export/LogRecordExporter;)V
-	public fun addLogRecordProcessor (Lio/opentelemetry/kotlin/logging/export/LogRecordProcessor;)V
-	public fun addSpanExporter (Lio/opentelemetry/kotlin/tracing/export/SpanExporter;)V
-	public fun addSpanProcessor (Lio/opentelemetry/kotlin/tracing/export/SpanProcessor;)V
 	public fun addStartupTraceAttribute (Ljava/lang/String;Ljava/lang/String;)V
 	public fun addStartupTraceChildSpan (Ljava/lang/String;JJ)V
 	public fun addStartupTraceChildSpan (Ljava/lang/String;JJLjava/util/Map;Ljava/util/List;Lio/embrace/android/embracesdk/spans/ErrorCode;)V
@@ -60,11 +56,10 @@ public final class io/embrace/android/embracesdk/Embrace : io/embrace/android/em
 	public fun setNetworkSpanParent (Lio/embrace/android/embracesdk/spans/EmbraceSpan;)Lio/embrace/android/embracesdk/network/NetworkSpanParentToken;
 	public fun setNetworkSpanParent (Lio/opentelemetry/kotlin/tracing/SpanContext;)Lio/embrace/android/embracesdk/network/NetworkSpanParentToken;
 	public fun setNetworkSpanParentProvider (Lio/embrace/android/embracesdk/network/NetworkSpanParentProvider;)V
-	public fun setResourceAttribute (Ljava/lang/String;Ljava/lang/String;)V
 	public fun setUserEmail (Ljava/lang/String;)V
 	public fun setUserIdentifier (Ljava/lang/String;)V
 	public fun setUsername (Ljava/lang/String;)V
-	public fun start (Landroid/content/Context;)V
+	public fun start (Landroid/content/Context;Lkotlin/jvm/functions/Function1;)V
 	public fun startSpan (Ljava/lang/String;Lio/embrace/android/embracesdk/spans/EmbraceSpan;Ljava/lang/Long;Lio/embrace/android/embracesdk/spans/AutoTerminationMode;)Lio/embrace/android/embracesdk/spans/EmbraceSpan;
 	public fun startView (Ljava/lang/String;)Z
 	public fun trackExperiment (Ljava/lang/String;Ljava/lang/String;Ljava/lang/Long;)V

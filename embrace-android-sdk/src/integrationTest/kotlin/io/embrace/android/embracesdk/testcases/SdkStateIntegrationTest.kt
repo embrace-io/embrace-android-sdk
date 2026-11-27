@@ -14,6 +14,8 @@ import io.embrace.android.embracesdk.LastRunEndState
 import io.embrace.android.embracesdk.PropertyScope
 import io.embrace.android.embracesdk.Severity
 import io.embrace.android.embracesdk.UserSessionListener
+import io.embrace.android.embracesdk.config.OTelConfig
+import io.embrace.android.embracesdk.config.SdkConfig
 import io.embrace.android.embracesdk.assertions.findSpanByName
 import io.embrace.android.embracesdk.assertions.returnIfConditionMet
 import io.embrace.android.embracesdk.assertions.waitUntilConditionMet
@@ -139,7 +141,7 @@ internal class SdkStateIntegrationTest(
                 calls.callDroppedApis(embrace)
                 assertEquals(SdkState.NOT_STARTED, sdkState)
 
-                embrace.start(context)
+                startSdk(context, calls.sdkConfig)
                 assertEquals(SdkState.ENABLED, sdkState)
                 recordSession {
                     embrace.startSpan(SPAN_1).stop()
@@ -176,7 +178,7 @@ internal class SdkStateIntegrationTest(
                 embrace.disable()
                 assertEquals(SdkState.DISABLED, sdkState)
 
-                embrace.start(context)
+                startSdk(context)
                 assertEquals(SdkState.DISABLED, sdkState)
                 assertFalse(embrace.isStarted)
                 assertInternalApiIsNoop()
@@ -259,7 +261,7 @@ internal class SdkStateIntegrationTest(
                 }
 
                 // a failed start is not retried
-                embrace.start(context)
+                startSdk(context)
                 assertEquals(SdkState.FAILED, sdkState)
             },
             assertAction = {
@@ -337,7 +339,7 @@ internal class SdkStateIntegrationTest(
             testCaseAction = {
                 recordSession {
                     val userSessionId = embrace.currentUserSessionId
-                    embrace.start(context)
+                    startSdk(context)
                     assertEquals(SdkState.ENABLED, sdkState)
                     assertEquals(userSessionId, embrace.currentUserSessionId)
                 }
@@ -403,9 +405,11 @@ internal class SdkStateIntegrationTest(
         val spanProcessor = FakeSpanProcessor()
         val logRecordProcessor = FakeLogRecordProcessor()
         testRule.runTest(
-            preSdkStartAction = {
-                embrace.addSpanProcessor(spanProcessor)
-                embrace.addLogRecordProcessor(logRecordProcessor)
+            sdkConfig = {
+                otel {
+                    addSpanProcessor(spanProcessor)
+                    addLogRecordProcessor(logRecordProcessor)
+                }
             },
             testCaseAction = {
                 recordSession {
@@ -499,7 +503,6 @@ internal class SdkStateIntegrationTest(
             assertAction = {
                 discardDisableStorageErrors(errorHandler)
                 calls.assertDropped(errorHandler, disabled = true)
-                calls.assertOTelConfigNotApplied()
                 awaitStorageDeleted()
                 assertEquals(0, getLogEnvelopes(0).size)
                 assertEquals(0, getSessionEnvelopes(0).size)
@@ -544,7 +547,7 @@ internal class SdkStateIntegrationTest(
                 assertFalse(calls.callBufferedApis(embrace))
                 calls.callDroppedApis(embrace, disabled = true)
 
-                embrace.start(context)
+                startSdk(context, calls.sdkConfig)
                 assertEquals(SdkState.DISABLED, sdkState)
                 assertFalse(embrace.isStarted)
                 assertNull(embrace.currentUserSessionId)
@@ -554,7 +557,7 @@ internal class SdkStateIntegrationTest(
                 discardDisableStorageErrors(errorHandler)
                 calls.assertDropped(errorHandler, disabled = true)
 
-                // calls made while disabled are not replayed
+                // calls made while disabled are not replayed, and the start's config is not applied
                 calls.assertOTelConfigNotApplied()
                 assertEquals(0, getLogEnvelopes(0).size)
                 assertEquals(0, getSessionEnvelopes(0).size)
@@ -571,7 +574,7 @@ internal class SdkStateIntegrationTest(
                 val internalInterface = EmbraceInternalApi.internalInterface
                 internalInterface.addEnvelopeResource("before", "start")
 
-                embrace.start(context)
+                startSdk(context)
                 assertInternalApiIsLive()
                 EmbraceInternalApi.internalInterface.addEnvelopeResource("after", "start")
                 internalInterface.addEnvelopeResource("held", "start")
@@ -593,7 +596,7 @@ internal class SdkStateIntegrationTest(
             expectSdkToStart = false,
             testCaseAction = {
                 assertInternalApiIsNoop()
-                embrace.start(context)
+                startSdk(context)
                 assertEquals(SdkState.DISABLED, sdkState)
                 assertInternalApiIsNoop()
             },
@@ -606,7 +609,7 @@ internal class SdkStateIntegrationTest(
             persistedRemoteConfig = sdkDisabledConfig,
             expectSdkToStart = false,
             testCaseAction = {
-                embrace.start(context)
+                startSdk(context)
                 assertEquals(SdkState.DISABLED, sdkState)
                 assertFalse(embrace.isStarted)
             },
@@ -627,7 +630,7 @@ internal class SdkStateIntegrationTest(
             testCaseAction = {
                 embrace.disable()
                 assertEquals(SdkState.DISABLED, sdkState)
-                embrace.start(context)
+                startSdk(context)
                 assertEquals(SdkState.DISABLED, sdkState)
                 assertFalse(embrace.isStarted)
                 assertInternalApiIsNoop()
@@ -653,7 +656,7 @@ internal class SdkStateIntegrationTest(
                 assertInternalApiIsNoop()
                 assertFalse(EmbraceInternalApi.internalInterface.isNetworkSpanForwardingEnabled())
 
-                embrace.start(context)
+                startSdk(context)
                 assertEquals(SdkState.DISABLED, sdkState)
                 assertInternalApiIsNoop()
             },
@@ -766,14 +769,22 @@ internal class SdkStateIntegrationTest(
                 "f:flag-c:x:$startMs"
 
         /**
+         * Configures OTel with every function of [OTelConfig].
+         */
+        val sdkConfig: SdkConfig.() -> Unit = {
+            otel {
+                addSpanExporter(spanExporter)
+                addSpanProcessor(spanProcessor)
+                addLogRecordExporter(logRecordExporter)
+                addLogRecordProcessor(logRecordProcessor)
+                setResourceAttribute(RESOURCE_ATTR_KEY, RESOURCE_ATTR_VALUE)
+            }
+        }
+
+        /**
          * Calls every function that is buffered before start.
          */
         fun callBufferedApis(embrace: SdkApi): Boolean {
-            embrace.addSpanExporter(spanExporter)
-            embrace.addSpanProcessor(spanProcessor)
-            embrace.addLogRecordExporter(logRecordExporter)
-            embrace.addLogRecordProcessor(logRecordProcessor)
-            embrace.setResourceAttribute(RESOURCE_ATTR_KEY, RESOURCE_ATTR_VALUE)
             embrace.trackExperiment("exp-a", "a", startMs)
             embrace.trackExperiments(
                 listOf(
@@ -887,7 +898,7 @@ internal class SdkStateIntegrationTest(
             assertNoSdkErrors(errorHandler)
             if (disabled) {
                 assertEquals(
-                    listOf("Embrace SDK is disabled, cannot add_span_exporter. Subsequent dropped calls will not be logged."),
+                    listOf("Embrace SDK is disabled, cannot track_experiment. Subsequent dropped calls will not be logged."),
                     errorHandler.infoMessages.map { it.msg }.filter { it.startsWith("Embrace SDK is disabled") },
                 )
             } else {
@@ -899,7 +910,7 @@ internal class SdkStateIntegrationTest(
         }
 
         /**
-         * Asserts that the exporters and processors added by [callBufferedApis] received the given telemetry.
+         * Asserts that the exporters and processors added by [sdkConfig] received the given telemetry.
          */
         fun assertOTelConfigApplied(spanName: String, logBody: String) {
             assertTrue(spanExporter.exportedSpans.any { it.name == spanName })
@@ -909,7 +920,7 @@ internal class SdkStateIntegrationTest(
         }
 
         /**
-         * Asserts that the exporters and processors added by [callBufferedApis] received no telemetry.
+         * Asserts that the exporters and processors added by [sdkConfig] received no telemetry.
          */
         fun assertOTelConfigNotApplied() {
             assertEquals(emptyList<SpanData>(), spanExporter.exportedSpans)

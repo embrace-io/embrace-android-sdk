@@ -622,7 +622,7 @@ internal class SdkStateHolderTest {
         persistedTelemetryDeletion: PersistedTelemetryDeletion = recordDeletion,
         instanceFactory: () -> SdkInstance?,
     ) = SdkStateHolder(
-        realSdkInstanceFactory = {
+        realSdkInstanceFactory = { _, _ ->
             calls += "instantiate"
             instanceFactory()
         },

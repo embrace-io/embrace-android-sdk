@@ -8,6 +8,7 @@ import io.embrace.android.embracesdk.LastRunEndState
 import io.embrace.android.embracesdk.PropertyScope
 import io.embrace.android.embracesdk.Severity
 import io.embrace.android.embracesdk.UserSessionListener
+import io.embrace.android.embracesdk.config.SdkConfig
 import io.embrace.android.embracesdk.experiments.TrackedExperiment
 import io.embrace.android.embracesdk.experiments.TrackedFeatureFlag
 import io.embrace.android.embracesdk.internal.EmbraceInternalApi
@@ -31,11 +32,7 @@ import io.embrace.android.embracesdk.spans.EmbraceSpanEvent
 import io.embrace.android.embracesdk.spans.ErrorCode
 import io.opentelemetry.kotlin.NoopOpenTelemetry
 import io.opentelemetry.kotlin.OpenTelemetry
-import io.opentelemetry.kotlin.logging.export.LogRecordExporter
-import io.opentelemetry.kotlin.logging.export.LogRecordProcessor
 import io.opentelemetry.kotlin.tracing.SpanContext
-import io.opentelemetry.kotlin.tracing.export.SpanExporter
-import io.opentelemetry.kotlin.tracing.export.SpanProcessor
 
 /**
  * An [SdkApi] implementation that forwards every call to [target], except [start] and [disable], which call [onStart]
@@ -47,7 +44,7 @@ internal class SdkApiDispatcher(
     initialTarget: SdkInstance,
     private val telemetryService: InternalTelemetryService,
     private val errorHandler: ErrorHandler,
-    private val onStart: (Context) -> Unit,
+    private val onStart: (Context, (SdkConfig.() -> Unit)?) -> Unit,
     private val onDisable: () -> Unit,
 ) : SdkApi {
 
@@ -66,7 +63,8 @@ internal class SdkApiDispatcher(
         errorHandler.guardSdkCode(SdkErrorType.PublicApiFail, NoopOpenTelemetry) { target.getOpenTelemetryKotlin() }
     }
 
-    override fun start(context: Context) = errorHandler.guardSdkCode(SdkErrorType.PublicApiFail) { onStart(context) }
+    override fun start(context: Context, config: (SdkConfig.() -> Unit)?) =
+        errorHandler.guardSdkCode(SdkErrorType.PublicApiFail) { onStart(context, config) }
 
     override fun logMessage(message: String, severity: Severity, properties: Map<String, Any>) =
         record("log_message") { target.logMessage(message, severity, properties) }
@@ -283,22 +281,7 @@ internal class SdkApiDispatcher(
         LastRunEndState.INVALID,
     ) { target.lastRunEndState }
 
-    override fun addLogRecordExporter(logRecordExporter: LogRecordExporter) =
-        errorHandler.guardSdkCode(SdkErrorType.PublicApiFail) { target.addLogRecordExporter(logRecordExporter) }
-
-    override fun addSpanExporter(spanExporter: SpanExporter) =
-        errorHandler.guardSdkCode(SdkErrorType.PublicApiFail) { target.addSpanExporter(spanExporter) }
-
-    override fun addSpanProcessor(spanProcessor: SpanProcessor) =
-        errorHandler.guardSdkCode(SdkErrorType.PublicApiFail) { target.addSpanProcessor(spanProcessor) }
-
-    override fun addLogRecordProcessor(logRecordProcessor: LogRecordProcessor) =
-        errorHandler.guardSdkCode(SdkErrorType.PublicApiFail) { target.addLogRecordProcessor(logRecordProcessor) }
-
     override fun getOpenTelemetryKotlin(): OpenTelemetry = openTelemetryKotlin
-
-    override fun setResourceAttribute(key: String, value: String) =
-        errorHandler.guardSdkCode(SdkErrorType.PublicApiFail) { target.setResourceAttribute(key, value) }
 
     override fun addBreadcrumb(message: String) = record("add_breadcrumb") { target.addBreadcrumb(message) }
 

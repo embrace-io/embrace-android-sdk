@@ -81,7 +81,11 @@ internal class TracingApiTest(
             instrumentedConfig = FakeInstrumentedConfig(enabledFeatures = FakeEnabledFeatureConfig(bgActivityCapture = true)),
             preSdkStartAction = {
                 clock.tick(100L)
-                embrace.addSpanExporter(spanExporter)
+            },
+            sdkConfig = {
+                otel {
+                    addSpanExporter(spanExporter)
+                }
             },
             testCaseAction = {
                 results.add(

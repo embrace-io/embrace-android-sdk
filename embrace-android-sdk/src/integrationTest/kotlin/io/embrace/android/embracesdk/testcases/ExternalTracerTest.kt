@@ -2,6 +2,7 @@ package io.embrace.android.embracesdk.testcases
 
 import io.embrace.android.embracesdk.assertions.assertEmbraceSpanData
 import io.embrace.android.embracesdk.assertions.withSortedAttributes
+import io.embrace.android.embracesdk.config.SdkConfig
 import io.embrace.android.embracesdk.fakes.FakeSpanExporter
 import io.embrace.android.embracesdk.internal.clock.millisToNanos
 import io.embrace.android.embracesdk.internal.otel.impl.EmbSpan
@@ -15,7 +16,6 @@ import io.embrace.android.embracesdk.spans.ErrorCode
 import io.embrace.android.embracesdk.testframework.OtelSdkMode
 import io.embrace.android.embracesdk.testframework.SdkIntegrationTestRule
 import io.embrace.android.embracesdk.testframework.actions.EmbraceActionInterface
-import io.embrace.android.embracesdk.testframework.actions.EmbracePreSdkStartInterface
 import io.opentelemetry.kotlin.OpenTelemetry
 import io.opentelemetry.kotlin.getTracer
 import io.opentelemetry.kotlin.semconv.ExceptionAttributes
@@ -56,7 +56,7 @@ internal class ExternalTracerTest(
     @Test
     fun `record a span with getTracer`() {
         testRule.runTest(
-            preSdkStartAction = {
+            sdkConfig = {
                 setupExporter()
             },
             testCaseAction = {
@@ -78,7 +78,7 @@ internal class ExternalTracerTest(
         var trackStartMs: Long = -1L
 
         testRule.runTest(
-            preSdkStartAction = {
+            sdkConfig = {
                 setupExporter()
             },
             testCaseAction = {
@@ -181,7 +181,7 @@ internal class ExternalTracerTest(
     @Test
     fun `span with explicit parent`() {
         testRule.runTest(
-            preSdkStartAction = {
+            sdkConfig = {
                 setupExporter()
             },
             testCaseAction = {
@@ -213,7 +213,7 @@ internal class ExternalTracerTest(
         var endTimeMs: Long? = null
 
         testRule.runTest(
-            preSdkStartAction = {
+            sdkConfig = {
                 setupExporter()
             },
             testCaseAction = {
@@ -264,7 +264,7 @@ internal class ExternalTracerTest(
     @Test
     fun `user id on exported span reflects the value at span start`() {
         testRule.runTest(
-            preSdkStartAction = {
+            sdkConfig = {
                 setupExporter()
             },
             testCaseAction = {
@@ -298,7 +298,7 @@ internal class ExternalTracerTest(
         var linkedSpanId: String? = null
 
         testRule.runTest(
-            preSdkStartAction = {
+            sdkConfig = {
                 setupExporter()
             },
             testCaseAction = {
@@ -357,8 +357,10 @@ internal class ExternalTracerTest(
         )
     }
 
-    private fun EmbracePreSdkStartInterface.setupExporter() {
-        embrace.addSpanExporter(spanExporter)
+    private fun SdkConfig.setupExporter() {
+        otel {
+            addSpanExporter(spanExporter)
+        }
     }
 
     private fun EmbraceActionInterface.initializeTracer() {

@@ -1,9 +1,12 @@
 package io.embrace.android.embracesdk.testframework.actions
 
 import android.app.Activity
+import android.content.Context
 import androidx.compose.runtime.snapshots.Snapshot.Companion.sendApplyNotifications
 import androidx.lifecycle.Lifecycle
+import androidx.test.core.app.ApplicationProvider
 import io.embrace.android.embracesdk.Embrace
+import io.embrace.android.embracesdk.config.SdkConfig
 import io.embrace.android.embracesdk.fakes.FakeClock
 import io.embrace.android.embracesdk.fakes.HasBackStack
 import io.embrace.android.embracesdk.fakes.HasNavController
@@ -28,6 +31,7 @@ internal class EmbraceActionInterface(
     private val eventBusSupplier: () -> EventBus,
     private val embraceSupplier: () -> SdkApi,
     private val sdkStateSupplier: () -> SdkState,
+    private val startConfig: SdkConfig.() -> Unit,
 ) {
 
     /**
@@ -49,6 +53,16 @@ internal class EmbraceActionInterface(
 
     val clock: FakeClock
         get() = setup.getClock()
+
+    /**
+     * Starts the SDK, for tests that start it themselves, with [config] followed by the config the test rule starts it with.
+     */
+    fun startSdk(context: Context = ApplicationProvider.getApplicationContext(), config: SdkConfig.() -> Unit = {}) {
+        embrace.start(context) {
+            config()
+            startConfig()
+        }
+    }
 
     private var appHasStarted: Boolean = false
 

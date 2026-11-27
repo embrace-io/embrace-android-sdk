@@ -2,6 +2,7 @@ package io.embrace.android.embracesdk.internal.api
 
 import android.content.Context
 import io.embrace.android.embracesdk.annotation.InternalApi
+import io.embrace.android.embracesdk.config.SdkConfig
 
 /**
  * Declares the functions of Embrace's public API that start and disable the SDK. You should not use
@@ -20,8 +21,9 @@ public interface SdkLifecycleApi {
      * the Embrace SDK must be initialized after any other SDK.
      *
      * @param context an instance of the application context
+     * @param config configures the SDK before it starts. Only the configuration of the first start is applied.
      */
-    public fun start(context: Context)
+    public fun start(context: Context, config: (SdkConfig.() -> Unit)? = null)
 
     /**
      * If a user wishes to opt-out of exporting data to Embrace, you should:

@@ -8,6 +8,7 @@ import io.embrace.android.embracesdk.LastRunEndState
 import io.embrace.android.embracesdk.PropertyScope
 import io.embrace.android.embracesdk.Severity
 import io.embrace.android.embracesdk.UserSessionListener
+import io.embrace.android.embracesdk.config.SdkConfig
 import io.embrace.android.embracesdk.experiments.TrackedExperiment
 import io.embrace.android.embracesdk.experiments.TrackedFeatureFlag
 import io.embrace.android.embracesdk.internal.InternalInterfaceApi
@@ -30,11 +31,7 @@ import io.embrace.android.embracesdk.spans.EmbraceSpanEvent
 import io.embrace.android.embracesdk.spans.ErrorCode
 import io.opentelemetry.kotlin.NoopOpenTelemetry
 import io.opentelemetry.kotlin.OpenTelemetry
-import io.opentelemetry.kotlin.logging.export.LogRecordExporter
-import io.opentelemetry.kotlin.logging.export.LogRecordProcessor
 import io.opentelemetry.kotlin.tracing.SpanContext
-import io.opentelemetry.kotlin.tracing.export.SpanExporter
-import io.opentelemetry.kotlin.tracing.export.SpanProcessor
 
 /**
  * A no-op implementation of [SdkApi]. The first API call that gets dropped logs [message] along
@@ -75,7 +72,7 @@ internal class NoopSdkInstance(
 
     override fun onEnabled() {}
 
-    override fun start(context: Context) {}
+    override fun start(context: Context, config: (SdkConfig.() -> Unit)?) {}
 
     override fun logMessage(message: String, severity: Severity, properties: Map<String, Any>) {
         logDropped("log_message")
@@ -309,29 +306,9 @@ internal class NoopSdkInstance(
 
     override val lastRunEndState: LastRunEndState = LastRunEndState.INVALID
 
-    override fun addLogRecordExporter(logRecordExporter: LogRecordExporter) {
-        logDropped("add_log_record_exporter")
-    }
-
-    override fun addSpanExporter(spanExporter: SpanExporter) {
-        logDropped("add_span_exporter")
-    }
-
-    override fun addSpanProcessor(spanProcessor: SpanProcessor) {
-        logDropped("add_span_processor")
-    }
-
-    override fun addLogRecordProcessor(logRecordProcessor: LogRecordProcessor) {
-        logDropped("add_log_record_processor")
-    }
-
     override fun getOpenTelemetryKotlin(): OpenTelemetry {
         logDropped("get_opentelemetry_kotlin")
         return NoopOpenTelemetry
-    }
-
-    override fun setResourceAttribute(key: String, value: String) {
-        logDropped("set_resource_attribute")
     }
 
     override fun addBreadcrumb(message: String) {

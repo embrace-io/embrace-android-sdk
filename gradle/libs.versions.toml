@@ -7,13 +7,12 @@ kotlinGradlePlugin = "2.4.21"
 koverGradlePlugin = "0.9.11"
 lint = "32.3.1"
 openTelemetryCore = "1.68.0"
-lifecycle = "2.8.7"
+lifecycle = "2.11.1"
 annotation = "1.11.0"
 otelKotlin = "0.10.0"
-kotlinxCoroutines = "1.10.2"
-kotlinxSerialization = "1.8.1"
-# The Gradle plugin must stay on a release built with Kotlin < 2.1: Gradle 8.0.2 compiles build scripts with Kotlin 1.8,
-# which can't read 2.1 module metadata
+kotlinxCoroutines = "1.11.0"
+# bump both manually: see .github/dependabot.yml.
+kotlinxSerialization = "1.9.0"
 kotlinxSerializationGradlePlugin = "1.7.3"
 protobuf = "4.36.2"
 wire = "7.2.2"
@@ -39,8 +38,7 @@ navigation = "2.10.2"
 navigation3 = "1.1.5"
 asmUtil = "9.11.1"
 gradleTestKit = "8.11.1"
-# 1.5.7-18+ ships Java 22 classes that Gradle 8.0.x can't instrument. See .github/dependabot.yml.
-zstdJni = "1.5.7-17"
+zstdJni = "1.5.7-28"
 detekt = "1.23.8"
 buildconfig = "6.1.2"
 # bump manually: see .github/dependabot.yml.

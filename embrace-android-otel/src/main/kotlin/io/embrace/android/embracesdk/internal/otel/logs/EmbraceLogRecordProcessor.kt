@@ -5,6 +5,7 @@ package io.embrace.android.embracesdk.internal.otel.logs
 import io.embrace.android.embracesdk.internal.arch.schema.EmbType
 import io.embrace.android.embracesdk.internal.arch.schema.PrivateSpan
 import io.embrace.android.embracesdk.internal.otel.export.InlineExporter
+import io.embrace.android.embracesdk.internal.otel.state.StateTelemetry
 import io.embrace.android.embracesdk.internal.utils.Provider
 import io.embrace.android.embracesdk.internal.utils.UuidSource
 import io.embrace.android.embracesdk.semconv.EmbCommonAttributes
@@ -23,12 +24,18 @@ internal class EmbraceLogRecordProcessor(
     private val uuidSource: UuidSource,
     private val metadataProvider: Provider<Map<String, String>>,
     private val logRecordExporter: InlineExporter<LogRecordData>,
+    private val stateTelemetry: StateTelemetry? = null,
 ) : LogRecordProcessor {
 
     override suspend fun forceFlush(): OperationResultCode = logRecordExporter.forceFlush()
 
     override fun onEmit(log: ReadWriteLogRecord, context: Context) {
         val attributes = log.attributes
+        if (stateTelemetry != null && stateTelemetry.kindOf(log.eventName, attributes) == StateTelemetry.LogKind.REPLAY) {
+            // a replayed state change belongs to the process and to no session part, so none of what is stamped on a log applies
+            logRecordExporter.exportInline(listOf(log))
+            return
+        }
 
         if (!attributes.containsKey(LogAttributes.LOG_RECORD_UID)) {
             log.setStringAttribute(LogAttributes.LOG_RECORD_UID, uuidSource.createUuid())

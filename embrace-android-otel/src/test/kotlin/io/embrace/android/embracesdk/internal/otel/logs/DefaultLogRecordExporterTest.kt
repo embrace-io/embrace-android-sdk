@@ -1,11 +1,19 @@
 package io.embrace.android.embracesdk.internal.otel.logs
 
+import io.embrace.android.embracesdk.fakes.FakeClock
 import io.embrace.android.embracesdk.fakes.FakeErrorHandler
 import io.embrace.android.embracesdk.fakes.FakeLogRecordExporter
 import io.embrace.android.embracesdk.fakes.FakeReadWriteLogRecord
+import io.embrace.android.embracesdk.internal.arch.schema.EmbType
 import io.embrace.android.embracesdk.internal.otel.export.ExternalExportDispatcher
 import io.embrace.android.embracesdk.internal.otel.export.immediateExportDispatcher
 import io.embrace.android.embracesdk.internal.otel.payload.toEmbracePayload
+import io.embrace.android.embracesdk.internal.otel.state.StateExportMode
+import io.embrace.android.embracesdk.internal.otel.state.StateTelemetry
+import io.embrace.android.embracesdk.internal.payload.Attribute
+import io.embrace.android.embracesdk.internal.state.AppStateKeys
+import io.embrace.android.embracesdk.internal.state.StateDefinition
+import io.embrace.android.embracesdk.internal.state.StateRecorder
 import io.opentelemetry.kotlin.export.OperationResultCode
 import io.opentelemetry.kotlin.logging.data.LogRecordData
 import io.opentelemetry.kotlin.logging.export.LogRecordExporter
@@ -14,21 +22,40 @@ import kotlinx.coroutines.runBlocking
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
+import org.junit.Before
 import org.junit.Test
 import java.util.concurrent.Executor
 
 internal class DefaultLogRecordExporterTest {
 
+    private lateinit var clock: FakeClock
+    private lateinit var recorder: StateRecorder
+    private lateinit var stateTelemetry: StateTelemetry
+
+    @Before
+    fun setUp() {
+        clock = FakeClock(10_000L)
+        recorder = StateRecorder(clock)
+        stateTelemetry = StateTelemetry(recorder, exportMode = { StateExportMode.ASSOCIATION })
+    }
+
     private fun exporter(
         logSink: LogSink,
         externalExporters: List<LogRecordExporter> = emptyList(),
         dispatcher: ExternalExportDispatcher = immediateExportDispatcher(),
+        stateTelemetry: StateTelemetry? = null,
     ) = DefaultLogRecordExporter(
         logSink = logSink,
         externalExporters = externalExporters,
         exportCheck = { true },
         externalExportDispatcher = dispatcher,
+        stateTelemetry = stateTelemetry,
     )
+
+    private fun declareStates() {
+        recorder.declare(StateDefinition("network"), "wifi", false, clock.now())
+        recorder.declare(StateDefinition("screen-automatic"), "Initializing", true, clock.now())
+    }
 
     @Test
     fun `export() should store logs in LogSink`() {
@@ -128,5 +155,152 @@ internal class DefaultLogRecordExporterTest {
 
         assertTrue(logSink.logsForNextBatch().isEmpty())
         assertTrue(externalExporter.exportedLogs.isEmpty())
+    }
+
+    @Test
+    fun `an ordinary log is stored with the packed stamp and the number as text and then carries the plain form`() {
+        declareStates()
+        val logSink: LogSink = LogSinkImpl(FakeErrorHandler())
+        val externalExporter = FakeLogRecordExporter()
+        val log = FakeReadWriteLogRecord().apply { setStringAttribute("custom", "x") }
+
+        exporter(logSink, listOf(externalExporter), stateTelemetry = stateTelemetry).exportInline(listOf(log))
+
+        assertEquals(
+            listOf(
+                Attribute("custom", "x"),
+                Attribute(AppStateKeys.PACKED, "network=wifi;screen-automatic~Initializing"),
+                Attribute(AppStateKeys.SEQ, "2"),
+            ),
+            logSink.logsForNextBatch().single().attributes,
+        )
+        val plainForm = mapOf<String, Any>(
+            "custom" to "x",
+            "${AppStateKeys.VALUE_PREFIX}network" to "wifi",
+            "${AppStateKeys.VALUE_PREFIX}screen-automatic" to "Initializing",
+            "${AppStateKeys.VALUE_TYPE_PREFIX}screen-automatic" to AppStateKeys.VALUE_TYPE_SYSTEM,
+            AppStateKeys.SEQ to 2L,
+        )
+        assertEquals(plainForm, log.attributes)
+        assertEquals(plainForm, externalExporter.exportedLogs.single().attributes)
+    }
+
+    @Test
+    fun `an app that receives no logs gets no plain form, and Embrace still gets the packed stamp`() {
+        declareStates()
+        val logSink: LogSink = LogSinkImpl(FakeErrorHandler())
+        val externalExporter = FakeLogRecordExporter()
+        val log = FakeReadWriteLogRecord().apply { setStringAttribute("custom", "x") }
+        val noLogs = StateTelemetry(recorder, exportMode = { StateExportMode.ASSOCIATION }, receivesLogs = { false })
+
+        exporter(logSink, listOf(externalExporter), stateTelemetry = noLogs).exportInline(listOf(log))
+
+        assertEquals(
+            listOf(
+                Attribute("custom", "x"),
+                Attribute(AppStateKeys.PACKED, "network=wifi;screen-automatic~Initializing"),
+                Attribute(AppStateKeys.SEQ, "2"),
+            ),
+            logSink.logsForNextBatch().single().attributes,
+        )
+        assertEquals(mapOf<String, Any>("custom" to "x"), log.attributes)
+        assertEquals(mapOf<String, Any>("custom" to "x"), externalExporter.exportedLogs.single().attributes)
+    }
+
+    @Test
+    fun `a log emitted before any state exists is stored unchanged`() {
+        val logSink: LogSink = LogSinkImpl(FakeErrorHandler())
+        val log = FakeReadWriteLogRecord().apply { setStringAttribute("custom", "x") }
+
+        exporter(logSink, stateTelemetry = stateTelemetry).exportInline(listOf(log))
+
+        assertEquals(log.toEmbracePayload(), logSink.logsForNextBatch().single())
+        assertEquals(mapOf<String, Any>("custom" to "x"), log.attributes)
+    }
+
+    @Test
+    fun `a replayed record is not stored, but is still sent to the app's exporters unstamped`() {
+        declareStates()
+        val logSink: LogSink = LogSinkImpl(FakeErrorHandler())
+        val externalExporter = FakeLogRecordExporter()
+        val replay = FakeReadWriteLogRecord(eventName = AppStateKeys.CHANGE_EVENT_NAME).apply {
+            setStringAttribute(EmbType.State.key, EmbType.State.value)
+        }
+
+        val result = exporter(logSink, listOf(externalExporter), stateTelemetry = stateTelemetry)
+            .exportInline(listOf(replay))
+
+        assertEquals(OperationResultCode.Success, result)
+        assertTrue(logSink.logsForNextBatch().isEmpty())
+        assertEquals(mapOf<String, Any>(EmbType.State.key to EmbType.State.value), externalExporter.exportedLogs.single().attributes)
+    }
+
+    @Test
+    fun `a batch with a replayed record stores only the others`() {
+        declareStates()
+        val logSink: LogSink = LogSinkImpl(FakeErrorHandler())
+        val replay = FakeReadWriteLogRecord(eventName = AppStateKeys.SNAPSHOT_EVENT_NAME).apply {
+            setStringAttribute(EmbType.State.key, EmbType.State.value)
+        }
+        val ordinary = FakeReadWriteLogRecord(body = "hello")
+
+        exporter(logSink, stateTelemetry = stateTelemetry).exportInline(listOf(replay, ordinary))
+
+        assertEquals(listOf("hello"), logSink.logsForNextBatch().map { it.body })
+    }
+
+    @Test
+    fun `a native crash and an exit log are never stamped with the current state`() {
+        declareStates()
+        recorder.update("network", "cell", false, clock.now())
+        listOf(EmbType.System.NativeCrash, EmbType.System.Exit).forEach { type ->
+            val logSink: LogSink = LogSinkImpl(FakeErrorHandler())
+            val log = FakeReadWriteLogRecord().apply { setStringAttribute(type.key, type.value) }
+
+            exporter(logSink, stateTelemetry = stateTelemetry).exportInline(listOf(log))
+
+            assertEquals(listOf(Attribute(type.key, type.value)), logSink.logsForNextBatch().single().attributes)
+            assertEquals(mapOf<String, Any>(type.key to type.value), log.attributes)
+        }
+    }
+
+    @Test
+    fun `plain state attributes of a dead process are packed for Embrace and its number becomes a long`() {
+        declareStates()
+        recorder.update("network", "cell", false, clock.now())
+        val logSink: LogSink = LogSinkImpl(FakeErrorHandler())
+        val log = FakeReadWriteLogRecord().apply {
+            setStringAttribute(EmbType.System.NativeCrash.key, EmbType.System.NativeCrash.value)
+            setStringAttribute("${AppStateKeys.VALUE_PREFIX}network", "none")
+            setStringAttribute("${AppStateKeys.VALUE_PREFIX}screen-automatic", "Home")
+            setStringAttribute("${AppStateKeys.VALUE_TYPE_PREFIX}screen-automatic", AppStateKeys.VALUE_TYPE_SYSTEM)
+            setStringAttribute(AppStateKeys.SEQ, "41")
+        }
+
+        exporter(logSink, stateTelemetry = stateTelemetry).exportInline(listOf(log))
+
+        assertEquals(
+            listOf(
+                Attribute(EmbType.System.NativeCrash.key, EmbType.System.NativeCrash.value),
+                Attribute(AppStateKeys.SEQ, "41"),
+                Attribute(AppStateKeys.PACKED, "network=none;screen-automatic~Home"),
+            ),
+            logSink.logsForNextBatch().single().attributes,
+        )
+        assertEquals(41L, log.attributes[AppStateKeys.SEQ])
+    }
+
+    @Test
+    fun `without state telemetry a log with state attributes is stored as it is`() {
+        val logSink: LogSink = LogSinkImpl(FakeErrorHandler())
+        val log = FakeReadWriteLogRecord().apply {
+            setStringAttribute("${AppStateKeys.VALUE_PREFIX}network", "none")
+            setStringAttribute(AppStateKeys.SEQ, "41")
+        }
+
+        exporter(logSink).exportInline(listOf(log))
+
+        assertEquals(log.toEmbracePayload(), logSink.logsForNextBatch().single())
+        assertEquals("41", log.attributes[AppStateKeys.SEQ])
     }
 }

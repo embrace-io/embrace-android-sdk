@@ -7,6 +7,11 @@ import java.util.concurrent.ConcurrentLinkedQueue
 class FakeNativeCrashService : NativeCrashService {
 
     val nativeCrashesSent = ConcurrentLinkedQueue<Pair<NativeCrashData, Map<String, String>>>()
+
+    /**
+     * The metadata each crash was sent with, as given, whereas [nativeCrashesSent] re-keys it by value.
+     */
+    val metadataSent = ConcurrentLinkedQueue<Map<String, String>>()
     private val nativeCrashDataBlobs = mutableListOf<Pair<NativeCrashData, Map<String, String>>>()
 
     override fun getNativeCrashes(): List<NativeCrashData> = nativeCrashDataBlobs.map { it.first }
@@ -16,6 +21,7 @@ class FakeNativeCrashService : NativeCrashService {
         userSessionProperties: Map<String, String>,
         metadata: Map<String, String>,
     ) {
+        metadataSent.add(metadata)
         nativeCrashesSent.add(Pair(nativeCrash, metadata.mapKeys { it.value } + userSessionProperties))
     }
 

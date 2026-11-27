@@ -38,7 +38,7 @@ class PowerStateDataSource(
 
     private fun onPowerSaveModeChanged(powerSaveMode: Boolean) {
         val timestamp = clock.now()
-        if (getCurrentStateValue() != PowerMode.UNKNOWN || powerSaveMode) {
+        if (reportsEveryValue || getCurrentStateValue() != PowerMode.UNKNOWN || powerSaveMode) {
             onStateChange(
                 newState = if (powerSaveMode) {
                     PowerMode.LOW

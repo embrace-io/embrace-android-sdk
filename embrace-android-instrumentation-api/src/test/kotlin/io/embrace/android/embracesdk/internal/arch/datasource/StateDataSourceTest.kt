@@ -1,9 +1,19 @@
 package io.embrace.android.embracesdk.internal.arch.datasource
 
 import io.embrace.android.embracesdk.fakes.FakeInstrumentationArgs
+import io.embrace.android.embracesdk.fakes.TEST_STATE_DECLARED_ATTRIBUTE_KEY
+import io.embrace.android.embracesdk.fakes.TestState
 import io.embrace.android.embracesdk.fakes.TestStateDataSource
+import io.embrace.android.embracesdk.fakes.TestStateValue
+import io.embrace.android.embracesdk.fakes.appStateEnabledConfigService
+import io.embrace.android.embracesdk.internal.arch.InstrumentationArgs
+import io.embrace.android.embracesdk.internal.state.StateDeclaration
+import io.embrace.android.embracesdk.internal.state.StateDrops
+import io.embrace.android.embracesdk.internal.state.StateEvents
+import io.embrace.android.embracesdk.internal.state.StateUpdate
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotEquals
+import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
 import java.util.Collections
@@ -15,11 +25,15 @@ internal class StateDataSourceTest {
 
     private lateinit var args: FakeInstrumentationArgs
     private lateinit var dataSource: TestStateDataSource
+    private val declarations = mutableListOf<StateDeclaration>()
+    private val updates = mutableListOf<StateUpdate>()
+    private val drops = mutableListOf<StateDrops>()
 
     @Before
     fun setUp() {
         args = FakeInstrumentationArgs(sessionPartIdSupplier = { "part-id" })
         dataSource = TestStateDataSource(args)
+        listenToBus(args)
     }
 
     @Test
@@ -113,6 +127,156 @@ internal class StateDataSourceTest {
         val tokens = args.destination.createdStateTokens
         assertEquals(1, tokens.size)
         assertEquals(0L, tokens.single().endTimeMs)
+    }
+
+    @Test
+    fun `with the model on enabling declares the state with its definition and default value`() {
+        val modelArgs = modelOnArgs()
+        TestStateDataSource(modelArgs).onDataCaptureEnabled()
+
+        val declaration = declarations.single()
+        assertEquals("test", declaration.definition.name)
+        assertEquals(MAX_TRANSITIONS, declaration.definition.changeLimit)
+        assertEquals(setOf(TEST_STATE_DECLARED_ATTRIBUTE_KEY), declaration.definition.attributeKeys)
+        assertEquals("UNKNOWN", declaration.initialValue)
+        assertEquals(false, declaration.system)
+        assertEquals(modelArgs.clock.now(), declaration.timeMs)
+    }
+
+    @Test
+    fun `with the model on a generated default is declared as generated with its own limit and keys`() {
+        val modelArgs = modelOnArgs()
+        val generated = TestStateValue.SystemValue("start")
+        object : StateDataSource<Any>(
+            args = modelArgs,
+            stateTypeFactory = ::TestState,
+            defaultValue = generated,
+            maxTransitions = 7,
+            changeAttributeKeys = setOf("kept", "emb.app.state.reserved", "emb.state.legacy"),
+        ) {}.onDataCaptureEnabled()
+
+        val declaration = declarations.single()
+        assertEquals(7, declaration.definition.changeLimit)
+        assertEquals(setOf("kept"), declaration.definition.attributeKeys)
+        assertEquals("$generated", declaration.initialValue)
+        assertEquals(true, declaration.system)
+    }
+
+    @Test
+    fun `with the model on a change emits an update with the value, the time and the attributes`() {
+        val modelArgs = modelOnArgs()
+        val source = TestStateDataSource(modelArgs).apply { onDataCaptureEnabled() }
+
+        source.onStateChange("a", 5000L, mapOf(TEST_STATE_DECLARED_ATTRIBUTE_KEY to "x"))
+
+        val update = updates.single()
+        assertEquals("test", update.state)
+        assertEquals("a", update.value)
+        assertEquals(false, update.system)
+        assertEquals(5000L, update.timeMs)
+        assertEquals(mapOf(TEST_STATE_DECLARED_ATTRIBUTE_KEY to "x"), update.attributes)
+        assertEquals("a", source.getCurrentStateValue())
+    }
+
+    @Test
+    fun `with the model on a generated value is emitted as generated`() {
+        val source = TestStateDataSource(modelOnArgs()).apply { onDataCaptureEnabled() }
+        val generated = TestStateValue.SystemValue("x")
+
+        source.onStateChange(generated, 5000L)
+        source.onStateChange(TestStateValue.NonSystemValue("x"), 6000L)
+
+        assertEquals(listOf("$generated", "${TestStateValue.NonSystemValue("x")}"), updates.map { it.value })
+        assertEquals(listOf(true, false), updates.map { it.system })
+    }
+
+    @Test
+    fun `with the model on the attributes of the value being left go with the transition's`() {
+        val modelArgs = modelOnArgs()
+        val source = object : StateDataSource<Any>(
+            args = modelArgs,
+            stateTypeFactory = ::TestState,
+            defaultValue = "UNKNOWN",
+            changeAttributeKeys = setOf("outgoing", "transition", "shared"),
+        ) {
+            override fun outgoingValueAttributes(value: Any): Map<String, String> =
+                mapOf("outgoing" to value.toString(), "shared" to "from-outgoing")
+        }.apply { onDataCaptureEnabled() }
+
+        source.onStateChange("a", 1L)
+        source.onStateChange("b", 2L, mapOf("transition" to "t", "shared" to "from-transition"))
+
+        assertEquals(
+            listOf(
+                mapOf("outgoing" to "UNKNOWN", "shared" to "from-outgoing"),
+                mapOf("outgoing" to "a", "shared" to "from-transition", "transition" to "t"),
+            ),
+            updates.map { it.attributes },
+        )
+    }
+
+    @Test
+    fun `with the model on a repeated value emits nothing`() {
+        val source = TestStateDataSource(modelOnArgs()).apply { onDataCaptureEnabled() }
+
+        source.onStateChange("UNKNOWN", 1L)
+        source.onStateChange("a", 2L)
+        source.onStateChange("a", 3L)
+
+        assertEquals(listOf("a"), updates.map { it.value })
+        assertEquals(listOf(2L), updates.map { it.timeMs })
+    }
+
+    @Test
+    fun `with the model on dropped transitions are reported as dropped`() {
+        val source = TestStateDataSource(modelOnArgs()).apply { onDataCaptureEnabled() }
+
+        source.onStateChange("a", 1L, droppedTransitions = 3)
+        source.onStateChange("a", 2L, droppedTransitions = 2)
+        source.onStateChange("b", 3L)
+
+        assertEquals(listOf("test" to 3, "test" to 2), drops.map { it.state to it.count })
+        assertEquals(listOf("a", "b"), updates.map { it.value })
+    }
+
+    @Test
+    fun `with the model on no span is started and nothing happens at a part boundary`() {
+        val modelArgs = modelOnArgs()
+        val source = TestStateDataSource(modelArgs).apply { onDataCaptureEnabled() }
+
+        source.onStateChange("a", 1L)
+        source.onPreSessionEnd()
+        source.onPostSessionChange()
+        source.onStateChange("b", 2L)
+        source.onPreSessionEnd()
+
+        assertTrue(modelArgs.destination.createdStateTokens.isEmpty())
+        assertTrue(modelArgs.destination.createdSpans.isEmpty())
+        assertEquals(emptyMap<String, Any>(), source.currentStateAttributes())
+        assertEquals(listOf("a", "b"), updates.map { it.value })
+    }
+
+    @Test
+    fun `with the model off nothing reaches the bus and the state still describes itself`() {
+        dataSource.onDataCaptureEnabled()
+        dataSource.onStateChange("a", 1L, droppedTransitions = 2)
+
+        assertTrue(declarations.isEmpty())
+        assertTrue(updates.isEmpty())
+        assertTrue(drops.isEmpty())
+        assertEquals(mapOf<String, Any>("emb.state.test" to "a"), dataSource.currentStateAttributes())
+        assertEquals(1, args.destination.createdStateTokens.size)
+    }
+
+    private fun modelOnArgs(): FakeInstrumentationArgs = FakeInstrumentationArgs(
+        sessionPartIdSupplier = { "part-id" },
+        configService = appStateEnabledConfigService(),
+    ).also(::listenToBus)
+
+    private fun listenToBus(args: InstrumentationArgs) {
+        args.eventBus.addHandler(StateEvents.DECLARED) { declarations.add(it) }
+        args.eventBus.addHandler(StateEvents.UPDATED) { updates.add(it) }
+        args.eventBus.addHandler(StateEvents.DROPPED) { drops.add(it) }
     }
 
     private companion object {

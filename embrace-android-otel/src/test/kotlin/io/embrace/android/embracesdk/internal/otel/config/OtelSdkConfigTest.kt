@@ -1,6 +1,7 @@
 package io.embrace.android.embracesdk.internal.otel.config
 
 import io.embrace.android.embracesdk.fakes.FakeAttributesMutator
+import io.embrace.android.embracesdk.fakes.FakeClock
 import io.embrace.android.embracesdk.fakes.FakeErrorHandler
 import io.embrace.android.embracesdk.fakes.FakeLogRecordExporter
 import io.embrace.android.embracesdk.fakes.FakeLogRecordProcessor
@@ -14,6 +15,10 @@ import io.embrace.android.embracesdk.internal.SystemInfo
 import io.embrace.android.embracesdk.internal.otel.export.immediateExportDispatcher
 import io.embrace.android.embracesdk.internal.otel.logs.LogSinkImpl
 import io.embrace.android.embracesdk.internal.otel.spans.SpanRepository
+import io.embrace.android.embracesdk.internal.otel.state.StateExportMode
+import io.embrace.android.embracesdk.internal.otel.state.StateTelemetry
+import io.embrace.android.embracesdk.internal.state.AppStateKeys
+import io.embrace.android.embracesdk.internal.state.StateRecorder
 import io.opentelemetry.kotlin.NoopOpenTelemetry
 import io.opentelemetry.kotlin.semconv.AndroidAttributes
 import io.opentelemetry.kotlin.semconv.DeviceAttributes
@@ -21,6 +26,7 @@ import io.opentelemetry.kotlin.semconv.OsAttributes
 import io.opentelemetry.kotlin.semconv.ServiceAttributes
 import io.opentelemetry.kotlin.semconv.TelemetryAttributes
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
 import org.junit.Test
 
 internal class OtelSdkConfigTest {
@@ -108,6 +114,30 @@ internal class OtelSdkConfigTest {
         assertEquals(1, logExporter.shutdownCount)
         assertEquals(1, spanProcessor.shutdownCount)
         assertEquals(1, logProcessor.shutdownCount)
+    }
+
+    @Test
+    fun `the process identifier is in the resource only when state telemetry is supplied`() {
+        fun resource(stateTelemetry: StateTelemetry?) = FakeAttributesMutator().apply(
+            OtelSdkConfig(
+                spanRepository = SpanRepository(FakeErrorHandler()),
+                logSink = LogSinkImpl(FakeErrorHandler()),
+                sdkName = "sdk",
+                sdkVersion = "1.0",
+                appVersion = "2.5.1",
+                packageName = "com.test.app",
+                systemInfo = SystemInfo(),
+                uuidSource = TestUuidSource(),
+                processIdentifierProvider = { "process-id" },
+                externalExportDispatcher = immediateExportDispatcher(),
+                stateTelemetry = stateTelemetry,
+            ).resourceAction,
+        ).attributes
+
+        val telemetry = StateTelemetry(StateRecorder(FakeClock()), exportMode = { StateExportMode.ASSOCIATION })
+
+        assertEquals("process-id", resource(telemetry)[AppStateKeys.PROCESS_IDENTIFIER])
+        assertFalse(resource(null).containsKey(AppStateKeys.PROCESS_IDENTIFIER))
     }
 
     private fun config(externalConfig: ExternalOtelConfig) = OtelSdkConfig(

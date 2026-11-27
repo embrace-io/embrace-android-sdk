@@ -6,8 +6,15 @@ import io.embrace.android.embracesdk.internal.arch.SessionPartChangeListener
 import io.embrace.android.embracesdk.internal.arch.SessionPartEndListener
 import io.embrace.android.embracesdk.internal.arch.limits.UpToLimitStrategy
 import io.embrace.android.embracesdk.internal.arch.schema.SchemaType
+import io.embrace.android.embracesdk.internal.arch.schema.SystemStateValue
+import io.embrace.android.embracesdk.internal.config.isAppStateEnabled
 import io.embrace.android.embracesdk.internal.logging.SdkErrorType
 import io.embrace.android.embracesdk.internal.logging.guardSdkCode
+import io.embrace.android.embracesdk.internal.state.StateDeclaration
+import io.embrace.android.embracesdk.internal.state.StateDefinition
+import io.embrace.android.embracesdk.internal.state.StateDrops
+import io.embrace.android.embracesdk.internal.state.StateEvents
+import io.embrace.android.embracesdk.internal.state.StateUpdate
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicReference
 
@@ -18,18 +25,52 @@ import java.util.concurrent.atomic.AtomicReference
  * When state capture begins, a span will be cut for each session part that it overlaps with. By default, state capture begins when the
  * data source is created, but it can be deferred to when [onStateChange] is first called if [captureStateOnCreation] is overridden and
  * set to false.
+ *
+ * When the app state data model is on, none of that happens here. This data source then only defines the state, by its name, its
+ * limit on changes ([maxTransitions]) and the attribute keys a change of it may carry ([changeAttributeKeys]), and reports each
+ * value over the event bus to the one recorder, which decides what is a change, puts every change of every state in one order and
+ * enforces the limit. The state has a value from the moment this data source is enabled, whatever [captureStateOnCreation] says.
  */
 abstract class StateDataSource<T : Any>(
     private val args: InstrumentationArgs,
     private val stateTypeFactory: (initialValue: T) -> SchemaType.State<T>,
     defaultValue: T,
     maxTransitions: Int = DEFAULT_MAX_TRANSITIONS,
+    changeAttributeKeys: Set<String> = emptySet(),
 ) : SessionPartEndListener, SessionPartChangeListener, DataSourceImpl(
     args = args,
     limitStrategy = UpToLimitStrategy { maxTransitions },
     instrumentationName = "${stateTypeFactory(defaultValue).stateName}_state_data_source",
 ) {
-    val stateAttributeKey: String = "emb.state.${stateTypeFactory(defaultValue).stateName}"
+    private val stateName: String = stateTypeFactory(defaultValue).stateName
+
+    val stateAttributeKey: String = "emb.state.$stateName"
+
+    /**
+     * What this data source declares to the recorder when the app state data model is on, or null when it is off.
+     */
+    private val stateDefinition: StateDefinition? = if (args.configService.isAppStateEnabled()) {
+        StateDefinition(stateName, maxTransitions, changeAttributeKeys)
+    } else {
+        null
+    }
+
+    /**
+     * Whether every value is reported from the moment this data source is enabled, a default or an unknown one included, as the app
+     * state data model has it. Otherwise a data source may leave a state out until it has something to say.
+     */
+    protected val reportsEveryValue: Boolean = stateDefinition != null
+
+    /**
+     * Whether this data source has declared its state to the recorder, which it does as it is enabled.
+     */
+    @Volatile
+    private var declared = false
+
+    /**
+     * Held while a value is handed to the recorder. See [reportToRecorder].
+     */
+    private val reportLock = Any()
 
     /**
      * Attribute key under which the type of the current state value is stored when the state value is a system value.
@@ -72,6 +113,10 @@ abstract class StateDataSource<T : Any>(
         transitionAttributes: Map<String, String> = emptyMap(),
         droppedTransitions: Int = 0,
     ) {
+        if (stateDefinition != null) {
+            reportToRecorder(newState, transitionTimeMs, transitionAttributes, droppedTransitions)
+            return
+        }
         if (!stateCaptureActive.get()) {
             startStateCapture()
         }
@@ -130,6 +175,10 @@ abstract class StateDataSource<T : Any>(
      * Return the attributes that represent the current state value, i.e. the literal value and type, if applicable.
      */
     fun currentStateAttributes(): Map<String, Any> {
+        if (stateDefinition != null) {
+            // the recorder's values are what a log is stamped with
+            return emptyMap()
+        }
         val value = currentState.get()
         return buildMap {
             put(stateAttributeKey, value)
@@ -151,13 +200,60 @@ abstract class StateDataSource<T : Any>(
 
     @CallSuper
     override fun onDataCaptureEnabled() {
-        if (captureStateOnCreation) {
+        if (stateDefinition != null) {
+            synchronized(reportLock) {
+                // a value reported before this point is the one the state is declared with, so that the recorder starts from
+                // what this data source last reported
+                val firstValue = currentState.get()
+                args.eventBus.emit(
+                    StateEvents.DECLARED,
+                    StateDeclaration(stateDefinition, firstValue.toString(), firstValue is SystemStateValue, clock.now()),
+                )
+                declared = true
+            }
+        } else if (captureStateOnCreation) {
             startStateCapture()
+        }
+    }
+
+    /**
+     * Reports [newState] to the recorder, with the attributes of the value being left when it differs from the one last reported.
+     */
+    private fun reportToRecorder(
+        newState: T,
+        transitionTimeMs: Long,
+        transitionAttributes: Map<String, String>,
+        droppedTransitions: Int,
+    ) {
+        errorHandler.guardSdkCode(SdkErrorType.DataSourceDataCaptureFail) {
+            // held so that two threads reporting this state hand their values to the recorder in the order this data source took
+            // them in. The recorder is what orders changes across states, and never calls back into a data source.
+            synchronized(reportLock) {
+                if (!declared) {
+                    // the recorder discards an update for a state it has not been told of, so keep the value to declare it with
+                    currentState.set(newState)
+                    return
+                }
+                if (droppedTransitions > 0) {
+                    args.eventBus.emit(StateEvents.DROPPED, StateDrops(stateName, droppedTransitions))
+                }
+                val oldState = currentState.getAndSet(newState)
+                if (newState != oldState) {
+                    val attributes = outgoingValueAttributes(oldState) + transitionAttributes
+                    args.eventBus.emit(
+                        StateEvents.UPDATED,
+                        StateUpdate(stateName, newState.toString(), newState is SystemStateValue, transitionTimeMs, attributes),
+                    )
+                }
+            }
         }
     }
 
     @CallSuper
     override fun onPreSessionEnd() {
+        if (stateDefinition != null) {
+            return
+        }
         synchronized(partStateLock) {
             partEnding = true
             partStateToken.getAndSet(null)
@@ -168,6 +264,9 @@ abstract class StateDataSource<T : Any>(
 
     @CallSuper
     override fun onPostSessionChange() {
+        if (stateDefinition != null) {
+            return
+        }
         synchronized(partStateLock) {
             partEnding = false
             createSessionStateSpan(currentState.get())

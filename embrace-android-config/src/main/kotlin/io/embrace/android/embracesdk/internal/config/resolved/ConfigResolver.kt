@@ -1,12 +1,20 @@
 package io.embrace.android.embracesdk.internal.config.resolved
 
+import io.embrace.android.embracesdk.internal.config.instrumented.AppStateLocalConfigImpl
 import io.embrace.android.embracesdk.internal.config.instrumented.PersistenceLocalConfigImpl
+import io.embrace.android.embracesdk.internal.config.instrumented.schema.AppStateLocalConfig
 import io.embrace.android.embracesdk.internal.config.instrumented.schema.InstrumentedConfig
 import io.embrace.android.embracesdk.internal.config.remote.RemoteConfig
 
-fun resolveConfig(local: InstrumentedConfig, remote: RemoteConfig?, bucket: Lazy<Float>): EmbraceConfig = EmbraceConfig(
+fun resolveConfig(
+    local: InstrumentedConfig,
+    remote: RemoteConfig?,
+    bucket: Lazy<Float>,
+    appStateLocal: AppStateLocalConfig = AppStateLocalConfigImpl,
+): EmbraceConfig = EmbraceConfig(
     breadcrumb = { resolveBreadcrumb(local, remote) },
     persistence = { resolvePersistence(PersistenceLocalConfigImpl, remote, bucket) },
+    appState = { resolveAppState(appStateLocal, remote, bucket) },
     threadBlockage = { resolveThreadBlockage(remote, bucket) },
     aei = { resolveAei(local, remote, bucket) },
     log = { resolveLog(remote) },

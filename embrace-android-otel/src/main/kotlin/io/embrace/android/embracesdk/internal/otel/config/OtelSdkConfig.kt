@@ -13,7 +13,9 @@ import io.embrace.android.embracesdk.internal.otel.spans.EmbraceSpanProcessor
 import io.embrace.android.embracesdk.internal.otel.spans.PrivateTelemetryFilteringSpanExporter
 import io.embrace.android.embracesdk.internal.otel.spans.PrivateTelemetryFilteringSpanProcessor
 import io.embrace.android.embracesdk.internal.otel.spans.SpanRepository
+import io.embrace.android.embracesdk.internal.otel.state.StateTelemetry
 import io.embrace.android.embracesdk.internal.session.id.SessionIdsProvider
+import io.embrace.android.embracesdk.internal.state.AppStateKeys
 import io.embrace.android.embracesdk.internal.utils.EmbTrace
 import io.embrace.android.embracesdk.internal.utils.UuidSource
 import io.opentelemetry.kotlin.attributes.AttributesMutator
@@ -40,6 +42,7 @@ class OtelSdkConfig(
     private val processIdentifierProvider: () -> String = IdGenerator.Companion::generateLaunchInstanceId,
     private val externalExportDispatcher: ExternalExportDispatcher,
     val externalConfig: ExternalOtelConfig = ExternalOtelConfig(),
+    private val stateTelemetry: StateTelemetry? = null,
 ) : AutoCloseable {
 
     val resourceAction: AttributesMutator.() -> Unit
@@ -56,6 +59,10 @@ class OtelSdkConfig(
             setStringAttribute(DeviceAttributes.DEVICE_MODEL_NAME, systemInfo.deviceModel)
             setStringAttribute(TelemetryAttributes.TELEMETRY_DISTRO_NAME, sdkName)
             setStringAttribute(TelemetryAttributes.TELEMETRY_DISTRO_VERSION, sdkVersion)
+            if (stateTelemetry != null) {
+                // the sequence that state is ordered by belongs to this process, so what the app's own exporters get says which
+                setStringAttribute(AppStateKeys.PROCESS_IDENTIFIER, processIdentifier)
+            }
 
             externalConfig.getResourceAttributes().forEach {
                 setStringAttribute(it.key, it.value)
@@ -97,6 +104,7 @@ class OtelSdkConfig(
             externalExporters = externalConfig.getSpanExporters().map(::PrivateTelemetryFilteringSpanExporter),
             exportCheck = exportCheck,
             externalExportDispatcher = externalExportDispatcher,
+            stripStateValues = { stateTelemetry?.isVerbose() == true },
         )
     }
     val spanProcessor: SpanProcessor by lazy {
@@ -114,6 +122,7 @@ class OtelSdkConfig(
             externalExporters = externalConfig.getLogExporters().map(::PrivateTelemetryFilteringLogRecordExporter),
             exportCheck = exportCheck,
             externalExportDispatcher = externalExportDispatcher,
+            stateTelemetry = stateTelemetry,
         )
     }
 
@@ -122,6 +131,7 @@ class OtelSdkConfig(
             uuidSource,
             eventMetadataProvider,
             logRecordExporter,
+            stateTelemetry,
         )
     }
 

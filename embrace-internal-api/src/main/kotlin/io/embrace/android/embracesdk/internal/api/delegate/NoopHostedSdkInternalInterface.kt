@@ -20,6 +20,8 @@ internal object NoopHostedSdkInternalInterface :
 
     override fun setHostedPlatformVersion(version: String?) {}
 
+    override fun reportState(name: String, value: String, changedAtMs: Long) {}
+
     override fun logUnhandledJsException(name: String, message: String, type: String?, stacktrace: String?) {}
 
     override fun setJavaScriptPatchNumber(number: String?) {}

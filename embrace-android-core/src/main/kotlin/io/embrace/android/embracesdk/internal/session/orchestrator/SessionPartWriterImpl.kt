@@ -22,7 +22,9 @@ import io.embrace.android.embracesdk.internal.session.persistence.SessionPartDir
 import io.embrace.android.embracesdk.internal.session.persistence.SessionPartWriteTarget
 import io.embrace.android.embracesdk.internal.session.persistence.SessionPartWriteTracker
 import io.embrace.android.embracesdk.internal.session.persistence.SpanSnapshotsWriter
+import io.embrace.android.embracesdk.internal.session.persistence.StateJournalWriter
 import io.embrace.android.embracesdk.internal.spans.CurrentSessionPartSpan
+import io.embrace.android.embracesdk.internal.state.StateJournalRecord
 import io.embrace.android.embracesdk.internal.telemetry.AppliedLimitType
 import io.embrace.android.embracesdk.internal.telemetry.InternalTelemetryService
 import io.embrace.android.embracesdk.internal.utils.EmbTrace
@@ -66,6 +68,12 @@ class SessionPartWriterImpl(
         const val METADATA_WRITE_DELAY_MS: Long = 500
         const val SPAN_SNAPSHOT_WRITE_DELAY_MS: Long = 2000
         const val COMPLETED_SPAN_WRITE_DELAY_MS: Long = 2000
+
+        /**
+         * A state change is appended as soon as the worker gets to it, since what is not yet written is what a kill loses. Every
+         * record queued by then goes in the same write, so a burst of changes wakes the worker once.
+         */
+        const val STATE_JOURNAL_WRITE_DELAY_MS: Long = 0
     }
 
     /**
@@ -209,6 +217,16 @@ class SessionPartWriterImpl(
                 span.isRecording -> writers.spanSnapshotWrites.write(WriteStrategy.DEBOUNCED, span)
                 else -> writers.spanSnapshotWrites.remove(span)
             }
+        }
+    }
+
+    override fun append(record: StateJournalRecord) {
+        if (!acceptingWrites()) {
+            return
+        }
+        val writers = current ?: return
+        if (writers.directory.sessionPartId == record.sessionPartId) {
+            writers.stateJournal.value.writes.write(WriteStrategy.DEBOUNCED, record)
         }
     }
 
@@ -391,6 +409,11 @@ class SessionPartWriterImpl(
         val completedSpans = CompletedSpansWriter(target, errorHandler)
         val spanSnapshots = SpanSnapshotsWriter(target, errorHandler)
 
+        /**
+         * The part's state journal, created by the first record made for the part. A part with state not recorded has none.
+         */
+        val stateJournal: Lazy<PartStateJournal> = lazy { PartStateJournal(target) { abandoned } }
+
         val metadataWrites = TelemetryWriteScheduler(
             worker = worker,
             delayMs = METADATA_WRITE_DELAY_MS,
@@ -419,6 +442,9 @@ class SessionPartWriterImpl(
             metadataWrites.flush()
             completedSpanWrites.flush()
             spanSnapshotWrites.flush()
+            if (stateJournal.isInitialized()) {
+                stateJournal.value.writes.flush()
+            }
         }
 
         fun snapshotsOf(spans: List<EmbraceSdkSpan>): List<Span> =
@@ -450,6 +476,25 @@ class SessionPartWriterImpl(
             sealed = true
             completedSpans.close()
             spanSnapshots.close()
+            if (stateJournal.isInitialized()) {
+                stateJournal.value.writer.close()
+            }
         }
+    }
+
+    /**
+     * Appends one session part's state journal: the file's [writer], and the queue its records wait in for the [worker].
+     */
+    private inner class PartStateJournal(target: SessionPartWriteTarget, abandoned: () -> Boolean) {
+
+        val writer = StateJournalWriter(target, errorHandler)
+
+        val writes = TelemetryWriteScheduler(
+            worker = worker,
+            delayMs = STATE_JOURNAL_WRITE_DELAY_MS,
+            queue = OrderedTelemetryQueue<StateJournalRecord>(),
+            guard = guard(SdkErrorType.StateJournalWriteFail, abandoned),
+            onWrite = { writer.write(it) },
+        )
     }
 }

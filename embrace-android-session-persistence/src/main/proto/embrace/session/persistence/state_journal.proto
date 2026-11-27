@@ -1,0 +1,77 @@
+syntax = "proto3";
+
+package embrace.session.persistence;
+
+import "embrace/session/persistence/span.proto";
+
+option java_package = "io.embrace.android.embracesdk.internal.session.persistence";
+
+// An append-only journal of the state changes of one session part, held in state_journal.pb.
+//
+// Entries are appended in the order they are recorded. Each is a frame of its own, so a write cut short
+// loses only the entry it was writing.
+message StateJournalFile {
+  uint32 format_version = 1;
+  repeated StateJournalEntry entries = 2;
+
+  // When the write ending with this field was made, in milliseconds since the epoch by the SDK clock.
+  // Every write ends with one, after its entries. 0 if unknown.
+  int64 written_at_ms = 3;
+}
+
+message StateJournalEntry {
+  oneof entry {
+    StateJournalOpened opened = 1;
+    StateJournalChange change = 2;
+    StateJournalLimit limit = 3;
+    StateJournalClosed closed = 4;
+  }
+}
+
+// The session part started.
+message StateJournalOpened {
+  int64 initial_seq = 1;
+  repeated StateJournalOpeningState states = 2;
+
+  // The ids of the span the journal is rendered as, generated once when this entry is written so that
+  // rendering the journal again gives the same span.
+  string trace_id = 3;
+  string span_id = 4;
+}
+
+message StateJournalOpeningState {
+  string name = 1;
+  string value = 2;
+  bool system = 3;
+  int32 not_in_session_count = 4;
+}
+
+message StateJournalChange {
+  int64 seq = 1;
+  string name = 2;
+  int64 time_ms = 3;
+  string value = 4;
+  bool system = 5;
+  repeated AttributeProto attributes = 6;
+}
+
+// A limit refused a change. An empty name is the limit across every state.
+message StateJournalLimit {
+  string name = 1;
+  int32 limit = 2;
+}
+
+// The session part ended.
+message StateJournalClosed {
+  int32 dropped_changes = 1;
+  repeated StateJournalClosingState states = 2;
+}
+
+message StateJournalClosingState {
+  string name = 1;
+  int32 dropped_count = 2;
+  bool has_final = 3;
+  string final_value = 4;
+  bool final_system = 5;
+  int64 final_seq = 6;
+}

@@ -2,11 +2,16 @@
 
 package io.embrace.android.embracesdk.internal.otel.logs
 
+import io.embrace.android.embracesdk.fakes.FakeClock
 import io.embrace.android.embracesdk.fakes.FakeLogRecordExporter
 import io.embrace.android.embracesdk.fakes.FakeReadWriteLogRecord
 import io.embrace.android.embracesdk.fakes.TestUuidSource
 import io.embrace.android.embracesdk.internal.arch.schema.EmbType
 import io.embrace.android.embracesdk.internal.arch.schema.PrivateSpan
+import io.embrace.android.embracesdk.internal.otel.state.StateExportMode
+import io.embrace.android.embracesdk.internal.otel.state.StateTelemetry
+import io.embrace.android.embracesdk.internal.state.AppStateKeys
+import io.embrace.android.embracesdk.internal.state.StateRecorder
 import io.embrace.android.embracesdk.semconv.EmbCommonAttributes
 import io.embrace.android.embracesdk.semconv.EmbSessionAttributes
 import io.embrace.android.embracesdk.semconv.ExperimentalSemconv
@@ -17,6 +22,7 @@ import kotlinx.coroutines.runBlocking
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNotNull
+import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
 
@@ -190,6 +196,51 @@ internal class EmbraceLogRecordProcessorTest {
         assertEquals(OperationResultCode.Success, result)
         assertEquals(1, logRecordExporter.forceFlushCount)
     }
+
+    @Test
+    fun `a replayed state record is exported with none of what is stamped on a log`() {
+        val stateProcessor = stateProcessor()
+        listOf(AppStateKeys.CHANGE_EVENT_NAME, AppStateKeys.SNAPSHOT_EVENT_NAME).forEach { eventName ->
+            val log = FakeReadWriteLogRecord(eventName = eventName).apply {
+                setStringAttribute(EmbType.State.key, EmbType.State.value)
+            }
+
+            stateProcessor.onEmit(log)
+
+            assertEquals(log, logRecordExporter.exportedLogs.last())
+            assertEquals(mapOf<String, Any>(EmbType.State.key to EmbType.State.value), log.attributes)
+        }
+        assertEquals(2, logRecordExporter.exportedLogs.size)
+    }
+
+    @Test
+    fun `a log with another event name under the state type is stamped like any other`() {
+        val log = FakeReadWriteLogRecord(eventName = "another.event").apply {
+            setStringAttribute(EmbType.State.key, EmbType.State.value)
+        }
+
+        stateProcessor().onEmit(log)
+
+        assertNotNull(log.attributes[LogAttributes.LOG_RECORD_UID])
+        assertEquals("foo", log.attributes[SESSION_ATTRIBUTE_NAME])
+    }
+
+    @Test
+    fun `an ordinary log is stamped when the processor has state telemetry`() {
+        val log = FakeReadWriteLogRecord()
+
+        stateProcessor().onEmit(log)
+
+        assertTrue(log.attributes.containsKey(LogAttributes.LOG_RECORD_UID))
+        assertEquals("my-session-part", log.attributes[EmbSessionAttributes.EMB_SESSION_PART_ID])
+    }
+
+    private fun stateProcessor() = EmbraceLogRecordProcessor(
+        uuidSource = TestUuidSource(),
+        metadataProvider = { METADATA },
+        logRecordExporter = logRecordExporter,
+        stateTelemetry = StateTelemetry(StateRecorder(FakeClock()), exportMode = { StateExportMode.ASSOCIATION }),
+    )
 
     private fun EmbraceLogRecordProcessor.onEmit(log: FakeReadWriteLogRecord) =
         onEmit(log, NoopOpenTelemetry.context.current())

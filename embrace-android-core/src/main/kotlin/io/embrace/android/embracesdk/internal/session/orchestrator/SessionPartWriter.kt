@@ -2,11 +2,13 @@ package io.embrace.android.embracesdk.internal.session.orchestrator
 
 import io.embrace.android.embracesdk.internal.otel.spans.EmbraceSdkSpan
 import io.embrace.android.embracesdk.internal.payload.Span
+import io.embrace.android.embracesdk.internal.state.StateJournal
+import io.embrace.android.embracesdk.internal.state.StateJournalRecord
 
 /**
  * Writes the telemetry for the active session part to its own directory on disk.
  */
-interface SessionPartWriter {
+interface SessionPartWriter : StateJournal {
 
     /**
      * A new session part has started. Creates the directory that holds its telemetry.
@@ -35,6 +37,12 @@ interface SessionPartWriter {
      * itself, which is snapshotted until the part ends.
      */
     fun onSpanSnapshotChanged(span: EmbraceSdkSpan)
+
+    /**
+     * A record of the state journal has been made for the session part it names. It is queued to be appended to that part's
+     * journal file, and dropped if that part is not the one being written.
+     */
+    override fun append(record: StateJournalRecord)
 
     /**
      * The process is terminating due to a JVM crash. Blocks until the necessary session part info

@@ -2,8 +2,6 @@ package io.embrace.android.gradle.plugin.buildreporter
 
 import io.embrace.android.gradle.plugin.agp.AgpWrapper
 import io.embrace.android.gradle.plugin.config.PluginBehavior
-import io.embrace.android.gradle.plugin.gradle.GradleVersion
-import io.embrace.android.gradle.plugin.gradle.GradleVersion.Companion.isAtLeast
 import io.embrace.android.gradle.plugin.network.BuildTelemetryRequest
 import io.embrace.android.gradle.plugin.network.VariantBuildTelemetry
 import io.embrace.android.gradle.plugin.system.JavaSystemWrapper
@@ -90,13 +88,7 @@ class BuildTelemetryCollector {
 
     private fun Project.isConfigurationCacheEnabled(): Boolean {
         return try {
-            if (isAtLeast(GradleVersion.GRADLE_8_5)) {
-                return BuildFeaturesWrapper().isConfigurationCacheEnabled(project).get()
-            } else {
-                val isConfigurationCacheRequestedMethod =
-                    this.gradle.startParameter::class.java.getMethod("isConfigurationCacheRequested")
-                return isConfigurationCacheRequestedMethod.invoke(this.gradle.startParameter) as Boolean
-            }
+            BuildFeaturesWrapper().isConfigurationCacheEnabled(project).get()
         } catch (e: Throwable) {
             false
         }

@@ -1,13 +1,12 @@
 package io.embrace.android.gradle.plugin.agp
 
 import com.android.build.api.AndroidPluginVersion
+import io.embrace.embrace_gradle_plugin.BuildConfig
 
 sealed class AgpVersion(private val version: AndroidPluginVersion) : Comparable<AgpVersion> {
 
     class CURRENT(version: AndroidPluginVersion) : AgpVersion(version)
-    object MIN_VERSION : AgpVersion(AndroidPluginVersion(8, 0, 2))
-    object AGP_8_1_0 : AgpVersion(AndroidPluginVersion(8, 1, 0))
-    object AGP_8_3_0 : AgpVersion(AndroidPluginVersion(8, 3, 0))
+    object MIN_VERSION : AgpVersion(parse(BuildConfig.MIN_AGP_VERSION))
 
     override fun compareTo(other: AgpVersion): Int {
         return version.compareTo(other.version)
@@ -16,4 +15,9 @@ sealed class AgpVersion(private val version: AndroidPluginVersion) : Comparable<
     override fun toString(): String {
         return "${version.major}.${version.minor}.${version.micro}"
     }
+}
+
+private fun parse(version: String): AndroidPluginVersion {
+    val (major, minor, micro) = version.split(".").map(String::toInt)
+    return AndroidPluginVersion(major, minor, micro)
 }

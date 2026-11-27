@@ -67,28 +67,6 @@ class AndroidNdkTest {
     }
 
     @Test
-    fun `send 3rd party native library symbols with legacyNativeLibsLookup on the maximum AGP version`() {
-        rule.runTest(
-            fixture = "android-3rd-party-symbols",
-            tasks = listOf("build"),
-            additionalArgs = listOf("-PlegacyNativeLibsLookup=true"),
-            projectType = ProjectType.ANDROID,
-            setup = {
-                setupMockResponses(
-                    defaultExpectedLibs,
-                    defaultExpectedArchs,
-                    defaultExpectedVariants,
-                )
-            },
-            assertions = {
-                verifyBuildTelemetryRequestSent(variantsSentInBuildTelemetry)
-                verifyHandshakes(defaultExpectedLibs, defaultExpectedArchs, defaultExpectedVariants)
-                verifyUploads(defaultExpectedLibs, defaultExpectedArchs, defaultExpectedVariants)
-            },
-        )
-    }
-
-    @Test
     fun `send 3rd party native library symbols on the minimum AGP version`() {
         rule.runTest(
             fixture = "android-3rd-party-symbols",

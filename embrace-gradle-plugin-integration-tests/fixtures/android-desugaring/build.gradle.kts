@@ -5,7 +5,7 @@ plugins {
     id("org.jetbrains.kotlin.android") apply false
 }
 
-val agpVersion = project.findProperty("agp_version")?.toString() ?: "8.0.0"
+val agpVersion = project.findProperty("agp_version")?.toString() ?: "8.9.1"
 val agpMajorVersion = agpVersion.split(".").firstOrNull()?.toIntOrNull() ?: 8
 
 // For AGP 8.x, apply the Kotlin plugin. AGP 9+ has built-in Kotlin support.

@@ -7,7 +7,6 @@ import org.gradle.invocation.DefaultGradle
 
 /**
  * A wrapper around the BuildFeatures API, used to check if the configuration cache is enabled.
- * BuildFeatures API is available for Gradle 8.5 and above.
  */
 class BuildFeaturesWrapper {
     fun isConfigurationCacheEnabled(project: Project): Provider<Boolean> {

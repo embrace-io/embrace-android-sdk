@@ -353,12 +353,31 @@ public final class io/embrace/android/embracesdk/network/http/MutableHttpRequest
 	public static fun getNativeRequest (Lio/embrace/android/embracesdk/network/http/MutableHttpRequestInfo;)Ljava/lang/Object;
 }
 
-public final class io/embrace/android/embracesdk/spans/AutoTerminationMode : java/lang/Enum {
-	public static final field NONE Lio/embrace/android/embracesdk/spans/AutoTerminationMode;
-	public static final field ON_BACKGROUND Lio/embrace/android/embracesdk/spans/AutoTerminationMode;
-	public static fun getEntries ()Lkotlin/enums/EnumEntries;
-	public static fun valueOf (Ljava/lang/String;)Lio/embrace/android/embracesdk/spans/AutoTerminationMode;
-	public static fun values ()[Lio/embrace/android/embracesdk/spans/AutoTerminationMode;
+public abstract class io/embrace/android/embracesdk/spans/AutoTerminationMode {
+	public static final field Companion Lio/embrace/android/embracesdk/spans/AutoTerminationMode$Companion;
+	public static final fun getNONE ()Lio/embrace/android/embracesdk/spans/AutoTerminationMode;
+	public static final fun getON_BACKGROUND ()Lio/embrace/android/embracesdk/spans/AutoTerminationMode;
+}
+
+public final class io/embrace/android/embracesdk/spans/AutoTerminationMode$Companion {
+	public final fun getNONE ()Lio/embrace/android/embracesdk/spans/AutoTerminationMode;
+	public final fun getON_BACKGROUND ()Lio/embrace/android/embracesdk/spans/AutoTerminationMode;
+}
+
+public final class io/embrace/android/embracesdk/spans/AutoTerminationMode$None : io/embrace/android/embracesdk/spans/AutoTerminationMode {
+	public static final field INSTANCE Lio/embrace/android/embracesdk/spans/AutoTerminationMode$None;
+}
+
+public final class io/embrace/android/embracesdk/spans/AutoTerminationMode$OnBackground : io/embrace/android/embracesdk/spans/AutoTerminationMode {
+	public static final field INSTANCE Lio/embrace/android/embracesdk/spans/AutoTerminationMode$OnBackground;
+}
+
+public final class io/embrace/android/embracesdk/spans/AutoTerminationMode$Timeout : io/embrace/android/embracesdk/spans/AutoTerminationMode {
+	public fun <init> (J)V
+	public fun equals (Ljava/lang/Object;)Z
+	public final fun getTimeoutMs ()J
+	public fun hashCode ()I
+	public fun toString ()Ljava/lang/String;
 }
 
 public abstract interface class io/embrace/android/embracesdk/spans/EmbraceSpan {

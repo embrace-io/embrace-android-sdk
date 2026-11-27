@@ -558,4 +558,4 @@ internal class RealSdkInstance(
     private fun existingPrefsFile(context: Context): File? = defaultPrefsFile(context).takeIf(File::exists)
 }
 
-private const val SPAN_TIMEOUT_SWEEP_INTERVAL_MS = 30_000L
+private const val SPAN_TIMEOUT_SWEEP_INTERVAL_MS = 2_000L

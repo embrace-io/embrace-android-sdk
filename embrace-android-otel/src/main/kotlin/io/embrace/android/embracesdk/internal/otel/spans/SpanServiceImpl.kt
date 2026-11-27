@@ -6,6 +6,7 @@ import io.embrace.android.embracesdk.internal.arch.schema.ErrorCodeAttribute
 import io.embrace.android.embracesdk.internal.clock.nanosToMillis
 import io.embrace.android.embracesdk.internal.clock.normalizeTimestampAsMillis
 import io.embrace.android.embracesdk.internal.otel.sdk.DataValidator
+import io.embrace.android.embracesdk.spans.AutoTerminationMode
 import io.embrace.android.embracesdk.spans.EmbraceSpan
 import io.opentelemetry.kotlin.OpenTelemetry
 import io.opentelemetry.kotlin.tracing.SpanContext
@@ -30,7 +31,7 @@ class SpanServiceImpl(
         type: EmbType,
         internal: Boolean,
         private: Boolean,
-        terminationMode: SpanTerminationMode,
+        autoTerminationMode: AutoTerminationMode,
     ): EmbraceSdkSpan {
         return if (name.isNotBlank() && canStartNewSpan(parent, internal, type)) {
             embraceSpanFactory.create(
@@ -40,7 +41,7 @@ class SpanServiceImpl(
                     internal = internal,
                     private = private,
                     tracer = tracer,
-                    terminationMode = terminationMode,
+                    autoTerminationMode = autoTerminationMode,
                     parentCtx = (parent as? EmbraceSdkSpan)?.createContext(openTelemetry)
                         ?: parentSpanContext?.let { openTelemetry.context.root().storeSpanContext(it) },
                     openTelemetry = openTelemetry,
@@ -73,7 +74,7 @@ class SpanServiceImpl(
         type: EmbType,
         internal: Boolean,
         private: Boolean,
-        terminationMode: SpanTerminationMode,
+        autoTerminationMode: AutoTerminationMode,
         parentSpanContext: SpanContext?,
     ): EmbraceSdkSpan {
         val newSpan = createSpan(
@@ -83,7 +84,7 @@ class SpanServiceImpl(
             type = type,
             internal = internal,
             private = private,
-            terminationMode = terminationMode,
+            autoTerminationMode = autoTerminationMode,
         )
         return when {
             newSpan.start(startTimeMs) -> newSpan
@@ -99,7 +100,7 @@ class SpanServiceImpl(
         private: Boolean,
         attributes: Map<String, Any>,
         events: List<SpanEvent>,
-        terminationMode: SpanTerminationMode,
+        autoTerminationMode: AutoTerminationMode,
         code: () -> T,
     ): T {
         val returnValue: T
@@ -109,7 +110,7 @@ class SpanServiceImpl(
             type = type,
             internal = internal,
             private = private,
-            terminationMode = terminationMode,
+            autoTerminationMode = autoTerminationMode,
         )
         try {
             if (span.start()) {

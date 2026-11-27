@@ -194,45 +194,11 @@ internal class NoopSdkInstance(
         logDropped("remove_user_session_listener")
     }
 
-    override fun setUserIdentifier(userId: String?) {
-        logDropped("set_user_identifier")
-    }
-
-    override fun clearUserIdentifier() {
-        logDropped("clear_user_identifier")
-    }
-
-    @Deprecated("Use discouraged. Personal identifying information shouldn't be stored in telemetry.")
-    override fun setUserEmail(email: String?) {
-        logDropped("set_user_email")
-    }
-
-    @Deprecated("Use discouraged. Personal identifying information shouldn't be stored in telemetry.")
-    override fun clearUserEmail() {
-        logDropped("clear_user_email")
-    }
-
-    override fun addUserPersona(persona: String) {
-        logDropped("add_user_persona")
-    }
-
-    override fun clearUserPersona(persona: String) {
-        logDropped("clear_user_persona")
-    }
-
-    override fun clearAllUserPersonas() {
-        logDropped("clear_user_personas")
-    }
-
-    @Deprecated("Use discouraged. Personal identifying information shouldn't be stored in telemetry.")
-    override fun setUsername(username: String?) {
-        logDropped("set_username")
-    }
-
-    @Deprecated("Use discouraged. Personal identifying information shouldn't be stored in telemetry.")
-    override fun clearUsername() {
-        logDropped("clear_username")
-    }
+    override var userIdentifier: String?
+        get() = null
+        set(value) {
+            logDropped("set_user_identifier")
+        }
 
     override fun createSpan(name: String, parent: EmbraceSpan?, autoTerminationMode: AutoTerminationMode): EmbraceSpan {
         logDropped("create_span")

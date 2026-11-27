@@ -5,12 +5,10 @@
     "shared_lib_symbol_mapping": "__EMBRACE_TEST_IGNORE__"
   },
   "metadata": {
-    "email": "user@email.com",
     "locale": "__EMBRACE_TEST_IGNORE__",
     "personas": "__EMBRACE_TEST_IGNORE__",
     "timezone_description": "__EMBRACE_TEST_IGNORE__",
-    "user_id": "some id",
-    "username": "John Doe"
+    "user_id": "some id"
   },
   "resource": {
     "app_version": "2.5.1",

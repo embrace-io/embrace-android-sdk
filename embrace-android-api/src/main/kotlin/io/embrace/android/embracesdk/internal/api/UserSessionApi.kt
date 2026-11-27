@@ -20,7 +20,8 @@ public interface UserSessionApi {
      * exceeds the maximum length will be truncated.
      * @param scope     The lifetime scope of the property. Use [PropertyScope.USER_SESSION] for properties that are cleared
      * at the end of the user session, [PropertyScope.PROCESS] for properties that survive user session boundaries but not process
-     * death, or [PropertyScope.PERMANENT] for properties that persist through app launches.
+     * death, or [PropertyScope.PERMANENT] for properties that persist through app launches. Defaults to
+     * [PropertyScope.USER_SESSION].
      *
      * @return True if the property was successfully added. Reasons this may fail include an invalid key or value, or if the
      * session has exceeded its total properties limit.
@@ -28,7 +29,7 @@ public interface UserSessionApi {
     public fun addUserSessionProperty(
         key: String,
         value: String,
-        scope: PropertyScope,
+        scope: PropertyScope = PropertyScope.USER_SESSION,
     ): Boolean
 
     /**

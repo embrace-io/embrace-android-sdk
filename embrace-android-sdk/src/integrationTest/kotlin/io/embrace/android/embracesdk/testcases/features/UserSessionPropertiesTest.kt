@@ -174,7 +174,7 @@ internal class UserSessionPropertiesTest(
     }
 
     private fun SdkApi.addTemporaryProperty(key: String) {
-        addUserSessionProperty(key, VALUE, PropertyScope.USER_SESSION)
+        addUserSessionProperty(key, VALUE)
     }
 
     private fun Span.assertPropertyExistence(exist: List<String> = emptyList(), missing: List<String> = emptyList()) {

@@ -47,8 +47,10 @@ class ExportBuildInfoTest {
             additionalArgs = listOf(
                 "-Pembrace.exportBuildInfo=true",
                 "-Pembrace.disableMappingFileUpload=true",
-                "-Pembrace.disableCollectBuildData=true",
             ),
+            setup = { projectDir ->
+                File(projectDir, "build.gradle").appendText("\nembrace { telemetryEnabled.set(false) }\n")
+            },
             assertions = { projectDir ->
                 val buildInfo = readBuildInfoExport(projectDir, "release")
                 assertTrue(buildInfo.buildId.matches(Regex("[A-F0-9]{32}")))

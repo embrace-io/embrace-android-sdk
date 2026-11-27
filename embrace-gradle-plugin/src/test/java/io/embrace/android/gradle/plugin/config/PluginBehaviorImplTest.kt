@@ -31,18 +31,6 @@ class PluginBehaviorImplTest {
     }
 
     @Test
-    fun `telemetry disabled valid`() {
-        addGradleProperty(EMBRACE_DISABLE_COLLECT_BUILD_DATA, "true")
-        assertTrue(behavior.isTelemetryDisabled.get())
-    }
-
-    @Test
-    fun `telemetry disabled invalid`() {
-        addGradleProperty(EMBRACE_DISABLE_COLLECT_BUILD_DATA, "foo")
-        assertFalse(behavior.isTelemetryDisabled.get())
-    }
-
-    @Test
     fun `telemetry disabled via embrace extension`() {
         embrace.telemetryEnabled.set(false)
         assertTrue(behavior.isTelemetryDisabled.get())
@@ -151,20 +139,9 @@ class PluginBehaviorImplTest {
      * If Unity EDM is enabled, Embrace dependency should not be auto-added.
      */
     @Test
-    fun `autoAddEmbraceComposeDependency unity edm override`() {
+    fun `autoAddEmbraceDependencies unity edm override`() {
         addGradleProperty(EMBRACE_UNITY_EXTERNAL_DEPENDENCY_MANAGER, "true")
         assertFalse(behavior.autoAddEmbraceDependencies)
-    }
-
-    @Test
-    fun `autoAddEmbraceComposeDependency default`() {
-        assertFalse(behavior.autoAddEmbraceComposeDependency)
-    }
-
-    @Test
-    fun `autoAddEmbraceComposeDependency enabled via embrace`() {
-        embrace.autoAddEmbraceComposeClickDependency.set(true)
-        assertTrue(behavior.autoAddEmbraceComposeDependency)
     }
 
     @Test

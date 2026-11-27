@@ -18,8 +18,8 @@ class FakeOpenTelemetryLogger : Logger {
     override fun emit(
         body: Any?,
         eventName: String?,
-        timestamp: Long?,
-        observedTimestamp: Long?,
+        timestamp: Long,
+        observedTimestamp: Long,
         context: Context?,
         severityNumber: SeverityNumber?,
         severityText: String?,

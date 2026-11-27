@@ -494,7 +494,7 @@ private class EmbraceSpanImpl(
                 traceId = traceId,
                 spanId = spanId,
                 parentSpanId = parent?.spanId
-                    ?: parentContext.extractSpan().spanContext.takeIf { it.isValid }?.spanId
+                    ?: parentContext.span.spanContext.takeIf { it.isValid }?.spanId
                     ?: OtelIds.INVALID_SPAN_ID,
                 name = name(),
                 startTimeNanos = spanStartTimeMs.takeIf { it > UNSET_TIME }?.millisToNanos(),

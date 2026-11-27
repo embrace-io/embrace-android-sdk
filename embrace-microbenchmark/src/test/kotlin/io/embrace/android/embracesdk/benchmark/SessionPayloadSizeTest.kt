@@ -154,7 +154,7 @@ internal class SessionPayloadSizeTest(
             "SMALL COMPAT span_snapshots.pb" to 805L,
             "SMALL COMPAT completed_spans.pb" to 4748L,
             "SMALL COMPAT multi-file blocks" to 16384L,
-            "SMALL COMPAT session.json.gz" to 1587L,
+            "SMALL COMPAT session.json.gz" to 1549L,
             "SMALL COMPAT single-file blocks" to 4096L,
 
             "SMALL REGULAR metadata.pb" to 403L,
@@ -168,7 +168,7 @@ internal class SessionPayloadSizeTest(
             "MEDIUM COMPAT span_snapshots.pb" to 805L,
             "MEDIUM COMPAT completed_spans.pb" to 46058L,
             "MEDIUM COMPAT multi-file blocks" to 57344L,
-            "MEDIUM COMPAT session.json.gz" to 7015L,
+            "MEDIUM COMPAT session.json.gz" to 6938L,
             "MEDIUM COMPAT single-file blocks" to 8192L,
 
             "MEDIUM REGULAR metadata.pb" to 403L,

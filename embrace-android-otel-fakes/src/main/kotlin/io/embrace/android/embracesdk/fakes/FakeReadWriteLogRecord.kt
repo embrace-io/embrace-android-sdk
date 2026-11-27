@@ -23,6 +23,10 @@ class FakeReadWriteLogRecord(
     override val droppedAttributesCount: Int = 0,
 ) : ReadWriteLogRecord, AttributesMutator by attributeContainer {
 
+    override fun removeAttribute(key: String) {
+        attributeContainer.attributes.remove(key)
+    }
+
     override fun toLogRecordData(): LogRecordData = FakeReadWriteLogRecord(
         body = body,
         eventName = eventName,

@@ -20,7 +20,7 @@ internal class EmbInvalidSpan : Span, SpanCreationAction {
 
     override fun setStatus(status: StatusData) {}
 
-    override fun addEvent(name: String, timestamp: Long?, attributes: (AttributesMutator.() -> Unit)?) {
+    override fun addEvent(name: String, timestamp: Long, attributes: (AttributesMutator.() -> Unit)?) {
     }
 
     override fun addLink(spanContext: SpanContext, attributes: (AttributesMutator.() -> Unit)?) {

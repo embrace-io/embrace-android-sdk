@@ -83,11 +83,11 @@ class EmbSpan(
 
     override fun isRecording(): Boolean = guard(false) { impl.isRecording }
 
-    override fun addEvent(name: String, timestamp: Long?, attributes: (AttributesMutator.() -> Unit)?) {
+    override fun addEvent(name: String, timestamp: Long, attributes: (AttributesMutator.() -> Unit)?) {
         val container = EmbAttributesMutator()
         attributes?.invoke(container)
         guard {
-            impl.addCustomEvent(name, timestamp, container.attributes)
+            impl.addCustomEvent(name, timestamp.takeIf { it > 0 }, container.attributes)
         }
     }
 

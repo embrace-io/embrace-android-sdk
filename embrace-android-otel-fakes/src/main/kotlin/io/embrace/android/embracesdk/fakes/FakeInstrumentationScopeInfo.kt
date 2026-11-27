@@ -7,4 +7,5 @@ internal class FakeInstrumentationScopeInfo(
     override val name: String = "fake",
     override val schemaUrl: String? = null,
     override val version: String? = null,
+    override val droppedAttributesCount: Int = 0,
 ) : InstrumentationScopeInfo

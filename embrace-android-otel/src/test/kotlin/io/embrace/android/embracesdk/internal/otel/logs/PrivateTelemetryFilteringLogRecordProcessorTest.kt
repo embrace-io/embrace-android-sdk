@@ -3,7 +3,7 @@ package io.embrace.android.embracesdk.internal.otel.logs
 import io.embrace.android.embracesdk.fakes.FakeLogRecordProcessor
 import io.embrace.android.embracesdk.fakes.FakeReadWriteLogRecord
 import io.embrace.android.embracesdk.internal.arch.schema.PrivateSpan
-import io.opentelemetry.kotlin.NoopOpenTelemetry
+import io.opentelemetry.kotlin.context.currentContext
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Test
@@ -17,7 +17,7 @@ internal class PrivateTelemetryFilteringLogRecordProcessorTest {
         listOf(
             FakeReadWriteLogRecord(body = "public"),
             FakeReadWriteLogRecord(body = "private").apply { setStringAttribute(PrivateSpan.key, PrivateSpan.value) },
-        ).forEach { processor.onEmit(it, NoopOpenTelemetry.context.current()) }
+        ).forEach { processor.onEmit(it, currentContext()) }
         assertEquals(listOf("public"), delegate.processedLogBodies)
     }
 
@@ -25,7 +25,7 @@ internal class PrivateTelemetryFilteringLogRecordProcessorTest {
     fun `nothing is forwarded when the export check fails`() {
         val delegate = FakeLogRecordProcessor()
         val processor = PrivateTelemetryFilteringLogRecordProcessor(delegate) { false }
-        processor.onEmit(FakeReadWriteLogRecord(body = "public"), NoopOpenTelemetry.context.current())
+        processor.onEmit(FakeReadWriteLogRecord(body = "public"), currentContext())
         assertTrue(delegate.processedLogBodies.isEmpty())
     }
 }

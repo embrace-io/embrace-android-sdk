@@ -96,7 +96,7 @@ class OtelSdkWrapper(
             },
             loggerProvider = {
                 resource(attributes = configuration.resourceAction)
-                logLimits {
+                logRecordLimits {
                     attributeCountLimit = limits.getMaxTotalAttributeCount()
                 }
                 export {

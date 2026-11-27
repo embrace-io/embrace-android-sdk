@@ -58,6 +58,7 @@ dependencies {
 
     implementation(libs.opentelemetry.kotlin.api)
     implementation(libs.opentelemetry.kotlin.api.ext)
+    implementation(libs.opentelemetry.kotlin.sdk.api)
     implementation(libs.opentelemetry.kotlin.semconv)
     implementation(libs.opentelemetry.kotlin.noop)
     implementation(platform(libs.okhttp.bom))

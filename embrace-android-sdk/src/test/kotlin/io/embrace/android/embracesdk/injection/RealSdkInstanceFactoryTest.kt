@@ -60,7 +60,7 @@ import io.embrace.android.embracesdk.internal.utils.event.EventBus
 import io.embrace.android.embracesdk.internal.worker.BackgroundWorker
 import io.embrace.android.embracesdk.internal.worker.Worker
 import io.embrace.android.embracesdk.semconv.EmbSessionAttributes
-import io.opentelemetry.kotlin.NoopOpenTelemetry
+import io.opentelemetry.kotlin.context.currentContext
 import okhttp3.OkHttpClient
 import okhttp3.Request
 import okhttp3.mockwebserver.MockResponse
@@ -173,7 +173,7 @@ internal class RealSdkInstanceFactoryTest {
         val processor = checkNotNull(otelSdkConfig).logRecordProcessor
 
         val log = FakeReadWriteLogRecord()
-        processor.onEmit(log, NoopOpenTelemetry.context.current())
+        processor.onEmit(log, currentContext())
         assertTrue(log.attributes.containsKey(EmbSessionAttributes.EMB_STATE))
     }
 
@@ -475,7 +475,7 @@ internal class RealSdkInstanceFactoryTest {
 
     private fun emittedLogState(): Any? {
         val log = FakeReadWriteLogRecord()
-        checkNotNull(otelSdkConfig).logRecordProcessor.onEmit(log, NoopOpenTelemetry.context.current())
+        checkNotNull(otelSdkConfig).logRecordProcessor.onEmit(log, currentContext())
         return log.attributes[EmbSessionAttributes.EMB_STATE]
     }
 

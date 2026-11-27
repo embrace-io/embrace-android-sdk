@@ -17,6 +17,7 @@ import io.embrace.android.embracesdk.testframework.SdkIntegrationTestRule
 import io.embrace.android.embracesdk.testframework.actions.EmbraceActionInterface
 import io.embrace.android.embracesdk.testframework.actions.EmbracePreSdkStartInterface
 import io.opentelemetry.kotlin.OpenTelemetry
+import io.opentelemetry.kotlin.context.rootContext
 import io.opentelemetry.kotlin.getTracer
 import io.opentelemetry.kotlin.semconv.ExceptionAttributes
 import io.opentelemetry.kotlin.semconv.UserAttributes
@@ -89,7 +90,7 @@ internal class ExternalTracerTest(
                     embrace.trackExperiment(id = "checkout-flow", variant = "variant-a", startedAt = trackStartMs)
                     val span = embTracer.startSpan("external-span")
                     startTimeMs = clock.now()
-                    val parentContext = embOpenTelemetry.context.root().storeSpan(span)
+                    val parentContext = rootContext().storeSpan(span)
                     val childSpan = embTracer.startSpan("child-span", parentContext)
                     childSpan.setStatus(StatusData.Error("oh no"))
                     val exception = RuntimeException("bah")
@@ -189,7 +190,7 @@ internal class ExternalTracerTest(
                 embOpenTelemetry = embrace.getOpenTelemetryKotlin()
                 recordSession {
                     val parentSpan = embTracer.startSpan("external-span")
-                    val parentContext = embOpenTelemetry.context.root().storeSpan(parentSpan)
+                    val parentContext = rootContext().storeSpan(parentSpan)
                     embTracer.startSpan("set-parent-explicitly", parentContext).end()
                     parentSpan.end()
                 }

@@ -11,7 +11,7 @@ openTelemetryCore = "1.68.0"
 # which breaks our minimum supported Kotlin (2.0.21). See .github/dependabot.yml.
 lifecycle = "2.8.7"
 annotation = "1.11.0"
-otelKotlin = "0.10.0"
+otelKotlin = "0.11.0"
 # Pinned to 1.10.x: 1.11.0+ requires kotlin-stdlib 2.2.20, which breaks our minimum supported Kotlin (2.0.21).
 kotlinxCoroutines = "1.10.2"
 kotlinxSerialization = "1.8.1"
@@ -127,7 +127,6 @@ kotlinx-serialization-core = { module = "org.jetbrains.kotlinx:kotlinx-serializa
 kotlinx-serialization-json = { module = "org.jetbrains.kotlinx:kotlinx-serialization-json", version.ref = "kotlinxSerialization" }
 kotlinx-serialization-json-okio = { module = "org.jetbrains.kotlinx:kotlinx-serialization-json-okio", version.ref = "kotlinxSerialization" }
 kotlinx-serialization-json-gradle-plugin = { module = "org.jetbrains.kotlinx:kotlinx-serialization-json", version.ref = "kotlinxSerializationGradlePlugin" }
-opentelemetry-kotlin = { module = "io.opentelemetry.kotlin:core", version.ref = "otelKotlin" }
 opentelemetry-kotlin-api = { module = "io.opentelemetry.kotlin:api", version.ref = "otelKotlin" }
 opentelemetry-kotlin-api-ext = { module = "io.opentelemetry.kotlin:api-ext", version.ref = "otelKotlin" }
 opentelemetry-kotlin-sdk-api = { module = "io.opentelemetry.kotlin:sdk-api", version.ref = "otelKotlin" }

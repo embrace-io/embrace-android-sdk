@@ -10,6 +10,7 @@ import io.embrace.android.embracesdk.testframework.actions.EmbraceActionInterfac
 import io.embrace.android.embracesdk.testframework.actions.EmbraceOtelExportAssertionInterface
 import io.opentelemetry.kotlin.OpenTelemetry
 import io.opentelemetry.kotlin.attributes.AnyValue
+import io.opentelemetry.kotlin.context.rootContext
 import io.opentelemetry.kotlin.logging.Logger
 import io.opentelemetry.kotlin.logging.SeverityNumber
 import io.opentelemetry.kotlin.tracing.SpanContext
@@ -171,7 +172,7 @@ internal class OtelExportParityTest(
             testCaseAction = {
                 recordSession {
                     val parent = tracer.startSpan("aaa-parent-span")
-                    val parentContext = otel.context.root().storeSpan(parent)
+                    val parentContext = rootContext().storeSpan(parent)
                     val child = tracer.startSpan("bbb-child-span", parentContext = parentContext)
                     val linking = tracer.startSpan("ccc-linking-span") {
                         addLink(parent.spanContext) {
@@ -272,7 +273,7 @@ internal class OtelExportParityTest(
                         body = "in-span",
                         timestamp = timestamp,
                         observedTimestamp = timestamp,
-                        context = otel.context.root().storeSpan(span),
+                        context = rootContext().storeSpan(span),
                         severityNumber = SeverityNumber.WARN,
                         severityText = "WARN",
                     ) {

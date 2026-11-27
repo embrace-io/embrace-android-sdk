@@ -17,6 +17,8 @@ import io.embrace.android.embracesdk.internal.otel.logs.LogSink
 import io.embrace.android.embracesdk.internal.otel.logs.LogSinkImpl
 import io.embrace.android.embracesdk.internal.otel.spans.SpanRepository
 import io.opentelemetry.kotlin.context.createContextKey
+import io.opentelemetry.kotlin.context.currentContext
+import io.opentelemetry.kotlin.context.rootContext
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
 import org.junit.Before
@@ -139,19 +141,19 @@ internal class OpenTelemetrySdkTest(
 
     @Test
     fun `implicit context is confined to the thread that attached it`() {
-        val otel =
-            createSdkOtelInstance(useKotlinSdk = otelSdkMode.useKotlinSdk, clock = FakeOtelKotlinClock(FakeClock()))
+        // creating the SDK installs its context storage
+        createSdkOtelInstance(useKotlinSdk = otelSdkMode.useKotlinSdk, clock = FakeOtelKotlinClock(FakeClock()))
         val key = createContextKey<String>("test-key")
-        val root = otel.context.root()
+        val root = rootContext()
         val attached = root.set(key, "value")
 
         val scope = attached.attach()
         try {
-            assertEquals("value", otel.context.current().get(key))
+            assertEquals("value", currentContext().get(key))
 
             val executor = Executors.newSingleThreadExecutor()
             try {
-                val otherThreadValue = executor.submit<String?> { otel.context.current().get(key) }
+                val otherThreadValue = executor.submit<String?> { currentContext().get(key) }
                 assertNull(otherThreadValue.get(1, TimeUnit.SECONDS))
             } finally {
                 executor.shutdown()
@@ -160,7 +162,7 @@ internal class OpenTelemetrySdkTest(
             scope.detach()
         }
 
-        assertNull(otel.context.current().get(key))
+        assertNull(currentContext().get(key))
     }
 
     private fun createOtelSdkConfig(): OtelSdkConfig {

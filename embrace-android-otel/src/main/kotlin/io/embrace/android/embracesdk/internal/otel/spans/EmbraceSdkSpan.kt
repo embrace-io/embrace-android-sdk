@@ -8,10 +8,10 @@ import io.embrace.android.embracesdk.internal.payload.Link
 import io.embrace.android.embracesdk.internal.payload.Span
 import io.embrace.android.embracesdk.internal.payload.SpanEvent
 import io.embrace.android.embracesdk.spans.EmbraceSpan
-import io.opentelemetry.kotlin.OpenTelemetry
 import io.opentelemetry.kotlin.context.Context
 import io.opentelemetry.kotlin.context.ContextKey
 import io.opentelemetry.kotlin.context.createContextKey
+import io.opentelemetry.kotlin.context.rootContext
 import io.opentelemetry.kotlin.tracing.SpanContext
 import io.opentelemetry.kotlin.tracing.SpanKind
 import io.opentelemetry.kotlin.tracing.StatusData
@@ -151,7 +151,7 @@ private val embraceSpanContextKey: ContextKey<EmbraceSdkSpan> = createContextKey
 
 fun Context.getEmbraceSpan(): EmbraceSdkSpan? = get(embraceSpanContextKey)
 
-fun EmbraceSdkSpan.createContext(openTelemetry: OpenTelemetry): Context {
-    val newParentContext = asNewContext() ?: openTelemetry.context.root()
+fun EmbraceSdkSpan.createContext(): Context {
+    val newParentContext = asNewContext() ?: rootContext()
     return newParentContext.set(embraceSpanContextKey, this)
 }

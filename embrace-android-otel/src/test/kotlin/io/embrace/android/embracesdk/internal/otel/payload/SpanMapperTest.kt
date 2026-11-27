@@ -141,7 +141,7 @@ internal class SpanMapperTest {
         override val links: List<SpanLinkData>,
     ) : SpanData {
         override val spanKind: SpanKind = SpanKind.INTERNAL
-        override val hasEnded: Boolean = endTimestamp != null
+        override val isEnded: Boolean = endTimestamp != null
         override val droppedEventsCount: Int = 0
         override val droppedLinksCount: Int = 0
         override val droppedAttributesCount: Int = 0

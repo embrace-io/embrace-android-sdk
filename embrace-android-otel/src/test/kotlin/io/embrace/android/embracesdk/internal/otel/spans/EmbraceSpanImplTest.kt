@@ -54,6 +54,7 @@ import io.embrace.android.embracesdk.internal.utils.truncatedStacktraceText
 import io.embrace.android.embracesdk.semconv.EmbCommonAttributes
 import io.embrace.android.embracesdk.spans.ErrorCode
 import io.opentelemetry.kotlin.context.Context
+import io.opentelemetry.kotlin.context.rootContext
 import io.opentelemetry.kotlin.getTracer
 import io.opentelemetry.kotlin.semconv.ExceptionAttributes
 import io.opentelemetry.kotlin.tracing.SpanCreationAction
@@ -822,7 +823,7 @@ internal class EmbraceSpanImplTest(
 
     @Test
     fun `validate context objects are propagated from the parent to the child span`() {
-        val newParentContext = fakeOpenTelemetry(otelSdkMode).context.root().set(fakeContextKey, "fake-value")
+        val newParentContext = rootContext().set(fakeContextKey, "fake-value")
         val wrapper = createWrapperForInternalSpan(parentContext = newParentContext)
         embraceSpan = embraceSpanFactory.create(wrapper)
 
@@ -1372,7 +1373,7 @@ internal class EmbraceSpanImplTest(
             name: String,
             parentContext: Context?,
             spanKind: SpanKind,
-            startTimestamp: Long?,
+            startTimestamp: Long,
             action: (SpanCreationAction.() -> Unit)?,
         ): OtelSpan = span
     }

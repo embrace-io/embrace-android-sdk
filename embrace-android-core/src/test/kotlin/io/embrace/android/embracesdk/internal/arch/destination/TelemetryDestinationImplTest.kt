@@ -275,7 +275,7 @@ internal class TelemetryDestinationImplTest {
 
         val span = spanService.createdSpans.single()
         assertNull(span.parent)
-        with(span.parentContext.extractSpan().spanContext) {
+        with(span.parentContext.span.spanContext) {
             assertEquals(REMOTE_TRACE_ID, traceId)
             assertEquals(REMOTE_SPAN_ID, spanId)
             assertTrue(isRemote)
@@ -298,7 +298,7 @@ internal class TelemetryDestinationImplTest {
 
         val span = spanService.createdSpans.single()
         assertNull(span.parent)
-        assertEquals(REMOTE_TRACE_ID, span.parentContext.extractSpan().spanContext.traceId)
+        assertEquals(REMOTE_TRACE_ID, span.parentContext.span.spanContext.traceId)
     }
 
     @Test
@@ -327,7 +327,7 @@ internal class TelemetryDestinationImplTest {
 
         val span = spanService.createdSpans.single()
         assertNull(span.parent)
-        assertFalse(span.parentContext.extractSpan().spanContext.isValid)
+        assertFalse(span.parentContext.span.spanContext.isValid)
     }
 
     @Test

@@ -5,7 +5,7 @@ import io.embrace.android.embracesdk.fakes.FakeReadWriteSpan
 import io.embrace.android.embracesdk.fakes.FakeSpan
 import io.embrace.android.embracesdk.fakes.FakeSpanProcessor
 import io.embrace.android.embracesdk.internal.logging.SdkErrorType
-import io.opentelemetry.kotlin.NoopOpenTelemetry
+import io.opentelemetry.kotlin.context.currentContext
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertSame
 import org.junit.Assert.assertTrue
@@ -20,7 +20,7 @@ internal class ErrorReportingSpanProcessorTest {
     fun `calls are forwarded`() {
         val delegate = FakeSpanProcessor()
         val processor = ErrorReportingSpanProcessor(delegate, errorHandler)
-        processor.onStart(span, NoopOpenTelemetry.context.current())
+        processor.onStart(span, currentContext())
         processor.onEnding(span)
         processor.onEnd(span)
         assertEquals(listOf("span"), delegate.startedSpanNames)
@@ -33,7 +33,7 @@ internal class ErrorReportingSpanProcessorTest {
     fun `onStart failure is tracked`() {
         val cause = IllegalStateException("boom")
         val processor = ErrorReportingSpanProcessor(FakeSpanProcessor(onStartAction = { throw cause }), errorHandler)
-        processor.onStart(span, NoopOpenTelemetry.context.current())
+        processor.onStart(span, currentContext())
         assertTracked(cause)
     }
 

@@ -14,7 +14,7 @@ import io.embrace.android.embracesdk.internal.SystemInfo
 import io.embrace.android.embracesdk.internal.otel.export.immediateExportDispatcher
 import io.embrace.android.embracesdk.internal.otel.logs.LogSinkImpl
 import io.embrace.android.embracesdk.internal.otel.spans.SpanRepository
-import io.opentelemetry.kotlin.NoopOpenTelemetry
+import io.opentelemetry.kotlin.context.currentContext
 import io.opentelemetry.kotlin.semconv.AndroidAttributes
 import io.opentelemetry.kotlin.semconv.DeviceAttributes
 import io.opentelemetry.kotlin.semconv.OsAttributes
@@ -79,7 +79,7 @@ internal class OtelSdkConfigTest {
         )
         val span = FakeReadWriteSpan(FakeSpan(name = "span"))
         val log = FakeReadWriteLogRecord(body = "log")
-        val context = NoopOpenTelemetry.context.current()
+        val context = currentContext()
         configuration.externalSpanProcessors.single().onEnd(span)
         configuration.externalLogRecordProcessors.single().onEmit(log, context)
         configuration.disableDataExport()

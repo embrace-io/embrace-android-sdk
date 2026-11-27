@@ -36,7 +36,7 @@ class FakeReadableSpan(
     override val droppedLinksCount: Int get() = liveRead()
     override val resource: Resource get() = liveRead()
     override val instrumentationScopeInfo: InstrumentationScopeInfo get() = liveRead()
-    override val hasEnded: Boolean get() = liveRead()
+    override val isEnded: Boolean get() = liveRead()
     override val droppedAttributesCount: Int get() = liveRead()
 
     private fun liveRead(): Nothing = throw UnsupportedOperationException("read the live span instead of its snapshot")

@@ -26,6 +26,9 @@ internal class ForwardingInternalInterface(
     override fun setHostedPlatformVersion(version: String?) =
         target().internalInterface.setHostedPlatformVersion(version)
 
+    override fun reportState(name: String, value: String, changedAtMs: Long) =
+        target().internalInterface.reportState(name, value, changedAtMs)
+
     override fun logUnhandledJsException(name: String, message: String, type: String?, stacktrace: String?) =
         target().reactNativeInternalInterface.logUnhandledJsException(name, message, type, stacktrace)
 

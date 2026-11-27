@@ -1,4 +1,23 @@
 # yaml-language-server: $schema=../../../buildSrc/src/main/resources/config.schema.json
+AppStateConfig:
+  app_state_enabled:
+    property: enabled
+    default: false
+    local:
+      type: Boolean
+      json: sdk_config.app_state_enabled
+    remote:
+      type: Pct
+      sdk: pctAppStateEnabled
+  app_state_export_mode:
+    property: exportMode
+    default: ""
+    local:
+      type: String
+      json: sdk_config.app_state_export_mode
+    remote:
+      type: String
+      sdk: appStateExportMode
 PersistenceConfig:
   multi_file_persistence_enabled:
     property: multiFileEnabled

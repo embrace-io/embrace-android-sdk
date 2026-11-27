@@ -62,9 +62,11 @@ import io.embrace.android.embracesdk.internal.injection.createSessionOrchestrato
 import io.embrace.android.embracesdk.internal.injection.createSessionPartEnvelopeSource
 import io.embrace.android.embracesdk.internal.injection.createSessionPartReader
 import io.embrace.android.embracesdk.internal.injection.createSessionPartTracker
+import io.embrace.android.embracesdk.internal.injection.createStateTelemetry
 import io.embrace.android.embracesdk.internal.injection.createUserService
 import io.embrace.android.embracesdk.internal.injection.createUserSessionPropertiesService
 import io.embrace.android.embracesdk.internal.injection.resolve
+import io.embrace.android.embracesdk.internal.injection.startStateReplay
 import io.embrace.android.embracesdk.internal.instrumentation.crash.CrashFileMarkerImpl
 import io.embrace.android.embracesdk.internal.instrumentation.crash.LastRunCrashVerifier
 import io.embrace.android.embracesdk.internal.instrumentation.crash.ndk.NativeCrashDataSource
@@ -94,6 +96,7 @@ import io.embrace.android.embracesdk.internal.session.lifecycle.ActivityLifecycl
 import io.embrace.android.embracesdk.internal.session.lifecycle.createLifecycleTracker
 import io.embrace.android.embracesdk.internal.session.orchestrator.SessionOrchestrator
 import io.embrace.android.embracesdk.internal.spans.TracingApiDelegate
+import io.embrace.android.embracesdk.internal.state.StateEvents
 import io.embrace.android.embracesdk.internal.storage.EmbraceStorageService
 import io.embrace.android.embracesdk.internal.storage.SdkDir
 import io.embrace.android.embracesdk.internal.storage.StatFsAvailabilityChecker
@@ -162,6 +165,14 @@ internal fun createRealSdkInstance(
     val workerThreadPool = init("worker-thread-pool") { configLoadServices.workerThreadPool }
     val configService = init("config-service") { configLoadServices.configService }
 
+    val eventBus: EventBus by lazy {
+        EmbTrace.trace("event-bus-init") { overrides?.eventBus.resolve { EventBus(errorHandler) } }
+    }
+
+    val stateTelemetry = init("state-telemetry") {
+        createStateTelemetry(configService, clock, telemetryService, preStartServices.externalOtelConfig) { eventBus }
+    }
+
     val otelSignalContext = init("otel-signal-context") {
         OtelSignalContext(
             sessionIdsProvider = { sessionIdsProvider },
@@ -200,6 +211,7 @@ internal fun createRealSdkInstance(
                     sessionIdsProvider = otelSignalContext::getSessionIdsProvider,
                     userIdProvider = otelSignalContext::getUserId,
                     eventMetadataProvider = otelSignalContext::getEventMetadata,
+                    stateTelemetry = stateTelemetry,
                 )
             }
         }
@@ -268,6 +280,7 @@ internal fun createRealSdkInstance(
             redactionFunction = createRedactionFunction(sensitiveKeysBehavior),
             telemetryService = telemetryService,
             errorHandler = errorHandler,
+            stateTelemetry = stateTelemetry,
         )
     }
 
@@ -294,10 +307,6 @@ internal fun createRealSdkInstance(
 
     val persistedSdkStateStore: PersistedSdkStateStore by configLoadServices.persistedSdkStateStore
     val ordinalStore: OrdinalStore by configLoadServices.ordinalStore
-
-    val eventBus: EventBus by lazy {
-        EmbTrace.trace("event-bus-init") { overrides?.eventBus.resolve { EventBus(errorHandler) } }
-    }
 
     val activityLifecycleRelay = ActivityLifecycleRelay(appContext as Application, eventBus, errorHandler)
 
@@ -802,6 +811,21 @@ internal fun createRealSdkInstance(
                 sessionPersistenceWorker = workerThreadPool.backgroundWorker(Worker.Background.SessionPersistenceWorker),
                 sessionReadWorker = workerThreadPool.backgroundWorker(Worker.Background.IoRegWorker),
                 sessionPartReader = sessionPartReader,
+                stateRecorder = stateTelemetry?.recorder,
+            )
+        }
+    }
+
+    if (stateTelemetry != null) {
+        EmbTrace.trace("state-replay-init") {
+            startStateReplay(
+                stateTelemetry = stateTelemetry,
+                externalOtelConfig = preStartServices.externalOtelConfig,
+                loggerProvider = { otelSdkWrapper.value.sdkLogger },
+                worker = workerThreadPool.backgroundWorker(Worker.Background.NonIoRegWorker),
+                processIdentifier = { otelSdkConfig.value.processIdentifier },
+                errorHandler = errorHandler,
+                telemetryService = telemetryService,
             )
         }
     }
@@ -900,6 +924,7 @@ internal fun createRealSdkInstance(
                 hostedSdkVersionInfo = hostedSdkVersionInfo,
                 errorHandler = errorHandler,
                 telemetryService = telemetryService,
+                stateReporter = { eventBus.emit(StateEvents.UPDATED, it) },
             ),
             viewTrackingApiDelegate = ViewTrackingApiDelegate(
                 registry = instrumentationRegistry,

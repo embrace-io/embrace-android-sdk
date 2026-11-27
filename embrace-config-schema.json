@@ -65,6 +65,15 @@
           "default": false,
           "type": "boolean"
         },
+        "app_state_enabled": {
+          "description": "Switches on the app state data model: a stamp on every log, a link on every span and one change log span in each session part. Requires multi-file persistence unless the app only exports OpenTelemetry. Can be overridden by remote config.",
+          "default": false,
+          "type": "boolean"
+        },
+        "app_state_export_mode": {
+          "description": "How state is rendered for the app's own OpenTelemetry exporters: `association` or `verbose`. When unset the SDK chooses by which exporters the app registered. Can be overridden by remote config.",
+          "type": "string"
+        },
         "view_config": {
           "type": "object",
           "properties": {

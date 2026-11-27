@@ -14,6 +14,7 @@ import io.embrace.android.embracesdk.internal.otel.logs.LogSink
 import io.embrace.android.embracesdk.internal.otel.sdk.IdGenerator
 import io.embrace.android.embracesdk.internal.otel.spans.EmbraceSpanFactory
 import io.embrace.android.embracesdk.internal.otel.spans.SpanRepository
+import io.embrace.android.embracesdk.internal.otel.state.StateTelemetry
 import io.embrace.android.embracesdk.internal.session.id.SessionIdsProvider
 import io.embrace.android.embracesdk.internal.spans.CurrentSessionPartSpan
 import io.embrace.android.embracesdk.internal.spans.CurrentSessionPartSpanImpl
@@ -34,6 +35,7 @@ fun createOtelSdkConfig(
     sessionIdsProvider: () -> SessionIdsProvider? = { null },
     userIdProvider: () -> String? = { null },
     eventMetadataProvider: () -> Map<String, String> = { emptyMap() },
+    stateTelemetry: StateTelemetry? = null,
 ): OtelSdkConfig = OtelSdkConfig(
     spanRepository = spanRepository,
     logSink = logSink,
@@ -49,6 +51,7 @@ fun createOtelSdkConfig(
     processIdentifierProvider = IdGenerator.Companion::generateLaunchInstanceId,
     externalExportDispatcher = ExternalExportDispatcher(errorHandler),
     externalConfig = externalOtelConfig,
+    stateTelemetry = stateTelemetry,
 )
 
 fun createCurrentSessionPartSpan(

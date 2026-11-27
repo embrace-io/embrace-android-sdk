@@ -27,6 +27,7 @@ import io.embrace.android.embracesdk.internal.session.UserSessionState
 import io.embrace.android.embracesdk.internal.session.UserSessionState.Active
 import io.embrace.android.embracesdk.internal.session.id.SessionPartTracker
 import io.embrace.android.embracesdk.internal.session.message.PayloadFactory
+import io.embrace.android.embracesdk.internal.state.StateRecorder
 import io.embrace.android.embracesdk.internal.store.Ordinal
 import io.embrace.android.embracesdk.internal.store.OrdinalStore
 import io.embrace.android.embracesdk.internal.store.PersistedSdkStateStore
@@ -61,6 +62,7 @@ internal class SessionOrchestratorImpl(
     private val uuidSource: UuidSource,
     private val startupClassifier: StartupClassifier,
     private val sessionPartWriter: SessionPartWriter?,
+    private val stateRecorder: StateRecorder? = null,
 ) : SessionOrchestrator {
 
     /**
@@ -366,8 +368,16 @@ internal class SessionOrchestratorImpl(
                         val newSessionPart = sessionTracker.newActiveSessionPart(
                             endSessionPartCallback = {
                                 // End the current session or background activity, if either exist.
-                                EmbTrace.trace("end-current-session") {
-                                    processEndMessage(oldSessionAction?.invoke(this))
+                                try {
+                                    EmbTrace.trace("end-current-session") {
+                                        processEndMessage(oldSessionAction?.invoke(this))
+                                    }
+                                } finally {
+                                    // the part's change log closes once its session part span has stopped, so that it lists
+                                    // every state change up to then, and while the part's directory is still the one being
+                                    // written, which is the only time its closing record can reach its journal. That holds
+                                    // even if ending the part failed.
+                                    stateRecorder?.closePart()
                                 }
 
                                 // persist the stopped session part span
@@ -413,6 +423,9 @@ internal class SessionOrchestratorImpl(
                                     userSessionId = userSession?.userSessionId ?: "",
                                     sessionPartId = newSessionPart.sessionPartId,
                                 )
+
+                                // the part's change log opens once its directory exists, with every state's value as it is now
+                                stateRecorder?.openPart(newSessionPart.sessionPartId, timestamp)
 
                                 scheduleLastActivityUpdate(userSession, endAppState)
 

@@ -3,6 +3,8 @@ package io.embrace.android.embracesdk.internal.injection
 import io.embrace.android.embracesdk.core.BuildConfig
 import io.embrace.android.embracesdk.internal.config.ConfigServiceImpl
 import io.embrace.android.embracesdk.internal.config.PersistedConfig
+import io.embrace.android.embracesdk.internal.config.instrumented.AppStateLocalConfigImpl
+import io.embrace.android.embracesdk.internal.config.instrumented.schema.AppStateLocalConfig
 import io.embrace.android.embracesdk.internal.config.instrumented.schema.InstrumentedConfig
 import io.embrace.android.embracesdk.internal.config.source.OkHttpRemoteConfigSource
 import io.embrace.android.embracesdk.internal.config.source.RemoteConfigSource
@@ -26,6 +28,7 @@ internal fun createConfigService(
         apiLevel = preStartServices.systemInfo.androidOsApiLevel.toIntOrNull() ?: 0,
         errorHandler = preStartServices.errorHandler,
     ),
+    appStateLocalConfig: AppStateLocalConfig = AppStateLocalConfigImpl,
 ): ConfigServiceImpl = ConfigServiceImpl(
     instrumentedConfig = instrumentedConfig,
     persistedConfig = persistedConfig,
@@ -35,4 +38,5 @@ internal fun createConfigService(
     hasConfiguredOtlpExport = preStartServices.externalOtelConfig::hasConfiguredOtlpExport,
     primaryAbi = preStartServices.systemInfo.primaryAbi,
     errorHandler = preStartServices.errorHandler,
+    appStateLocalConfig = appStateLocalConfig,
 )

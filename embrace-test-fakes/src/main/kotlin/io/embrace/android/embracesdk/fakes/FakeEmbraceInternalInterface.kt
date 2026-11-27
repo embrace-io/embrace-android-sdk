@@ -19,4 +19,7 @@ class FakeEmbraceInternalInterface(
 
     override fun setHostedPlatformVersion(version: String?) {
     }
+
+    override fun reportState(name: String, value: String, changedAtMs: Long) {
+    }
 }

@@ -30,6 +30,18 @@ data class SdkLocalConfig(
     val multiFilePersistenceEnabled: Boolean? = null,
 
     /**
+     * Whether the app state data model is enabled
+     */
+    @SerialName("app_state_enabled")
+    val appStateEnabled: Boolean? = null,
+
+    /**
+     * How app state is rendered for the app's own OpenTelemetry exporters
+     */
+    @SerialName("app_state_export_mode")
+    val appStateExportMode: String? = null,
+
+    /**
      * View settings
      */
     @SerialName("view_config")

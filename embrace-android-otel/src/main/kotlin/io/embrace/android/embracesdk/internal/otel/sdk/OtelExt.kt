@@ -7,6 +7,7 @@ import io.embrace.android.embracesdk.internal.payload.Attribute
 import io.embrace.android.embracesdk.internal.payload.Link
 import io.embrace.android.embracesdk.internal.payload.Span
 import io.embrace.android.embracesdk.internal.payload.SpanEvent
+import io.embrace.android.embracesdk.internal.state.AppStateKeys
 import io.opentelemetry.kotlin.tracing.data.SpanData
 import io.opentelemetry.kotlin.tracing.data.SpanEventData
 import io.opentelemetry.kotlin.tracing.data.SpanLinkData
@@ -14,7 +15,23 @@ import io.opentelemetry.kotlin.tracing.data.SpanLinkData
 fun io.opentelemetry.kotlin.tracing.Span.setEmbraceAttribute(embraceAttribute: EmbraceAttribute) =
     setStringAttribute(embraceAttribute.key, embraceAttribute.value)
 
-fun SpanData.toEmbracePayload(): Span = Span(
+fun SpanData.toEmbracePayload(): Span = toEmbracePayload(
+    attributes.map {
+        Attribute(it.key, it.value.toPayloadString())
+    },
+)
+
+/**
+ * This span as Embrace's payload carries it when state values are written on spans for the app's own exporters: without those
+ * values, since Embrace's payload carries the link to the change log and resolves it there.
+ */
+fun SpanData.toEmbracePayloadWithoutStateValues(): Span = toEmbracePayload(
+    attributes.mapNotNull { (key, value) ->
+        if (AppStateKeys.isCustomerValueKey(key)) null else Attribute(key, value.toPayloadString())
+    },
+)
+
+private fun SpanData.toEmbracePayload(payloadAttributes: List<Attribute>): Span = Span(
     traceId = spanContext.traceId,
     spanId = spanContext.spanId,
     parentSpanId = parent.spanId,
@@ -23,7 +40,7 @@ fun SpanData.toEmbracePayload(): Span = Span(
     endTimeNanos = endTimestamp ?: 0,
     status = status.toEmbracePayload(),
     events = events.map(SpanEventData::toEmbracePayload),
-    attributes = attributes.map { Attribute(it.key, it.value.toPayloadString()) },
+    attributes = payloadAttributes,
     links = links.map(SpanLinkData::toEmbracePayload),
 )
 

@@ -1,5 +1,6 @@
 package io.embrace.android.embracesdk.internal.session.orchestrator
 
+import com.squareup.wire.ProtoReader
 import io.embrace.android.embracesdk.concurrency.BlockingScheduledExecutorService
 import io.embrace.android.embracesdk.fakes.FakeClock
 import io.embrace.android.embracesdk.fakes.FakeConfigService
@@ -23,9 +24,16 @@ import io.embrace.android.embracesdk.internal.session.persistence.SessionMetadat
 import io.embrace.android.embracesdk.internal.session.persistence.SessionPartDirectory
 import io.embrace.android.embracesdk.internal.session.persistence.SpanCollection
 import io.embrace.android.embracesdk.internal.session.persistence.SpanProto
+import io.embrace.android.embracesdk.internal.session.persistence.StateJournalEntry
+import io.embrace.android.embracesdk.internal.session.persistence.StateJournalFile
+import io.embrace.android.embracesdk.internal.state.OpeningState
+import io.embrace.android.embracesdk.internal.state.StateDefinition
+import io.embrace.android.embracesdk.internal.state.StateJournalRecord
+import io.embrace.android.embracesdk.internal.state.StateRecorder
 import io.embrace.android.embracesdk.internal.telemetry.AppliedLimitType
 import io.embrace.android.embracesdk.internal.utils.SystemTrace
 import io.embrace.android.embracesdk.internal.worker.BackgroundWorker
+import okio.Buffer
 import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
@@ -50,6 +58,8 @@ internal class SessionPartWriterImplTest {
         private const val METADATA_FILE_NAME = "metadata.pb"
         private const val SPAN_SNAPSHOTS_FILE_NAME = "span_snapshots.pb"
         private const val COMPLETED_SPANS_FILE_NAME = "completed_spans.pb"
+        private const val STATE_JOURNAL_FILE_NAME = "state_journal.pb"
+        private const val WRITTEN_AT_TAG = 3
         private const val ENVELOPE_VERSION = "0.1.0"
         private const val ENVELOPE_TYPE = "spans"
         private val SYMBOLS = mapOf("armeabi-v7a" to "my-symbols")
@@ -1649,6 +1659,108 @@ internal class SessionPartWriterImplTest {
     /**
      * Records the delay that each write is armed with.
      */
+    @Test
+    fun `state journal records for the current part are appended to its journal in order`() {
+        val writer = createWriter()
+        writer.onSessionPartStarted(clock.now(), USER_SESSION_ID, SESSION_PART_ID)
+        drain()
+        val stateRecorder = StateRecorder(clock)
+        stateRecorder.journal = writer
+        stateRecorder.declare(StateDefinition("network"), "wifi", false, clock.now())
+
+        stateRecorder.openPart(SESSION_PART_ID, clock.now())
+        clock.tick(1000)
+        stateRecorder.update("network", "cell", false, clock.now())
+        clock.tick(1000)
+        stateRecorder.update("network", "none", false, clock.now())
+        stateRecorder.closePart()
+        drain()
+
+        val entries = journalOnDisk(SESSION_PART_ID).entries
+        assertEquals(listOf("opened", "change", "change", "closed"), entries.map(::entryKind))
+        val opened = checkNotNull(entries[0].opened)
+        assertEquals(1L, opened.initial_seq)
+        assertEquals(listOf("network"), opened.states.map { it.name })
+        assertEquals(listOf("wifi"), opened.states.map { it.value_ })
+        assertEquals(listOf(2L, 3L), entries.mapNotNull { it.change?.seq })
+        assertEquals(listOf("cell", "none"), entries.mapNotNull { it.change?.value_ })
+        assertEquals(0, checkNotNull(entries[3].closed).dropped_changes)
+        assertNoSdkErrors()
+    }
+
+    @Test
+    fun `a state journal record for another part is dropped`() {
+        val writer = createWriter()
+        writer.onSessionPartStarted(clock.now(), USER_SESSION_ID, SESSION_PART_ID)
+        drain()
+
+        writer.append(StateJournalRecord.LimitReached(OTHER_SESSION_PART_ID, "network", 100))
+        drain()
+        assertNull(partFile(SESSION_PART_ID, STATE_JOURNAL_FILE_NAME))
+
+        writer.append(StateJournalRecord.LimitReached(SESSION_PART_ID, "network", 100))
+        drain()
+        val entries = journalOnDisk(SESSION_PART_ID).entries
+        assertEquals(listOf("limit"), entries.map(::entryKind))
+        assertEquals("network", checkNotNull(entries.single().limit).name)
+        assertEquals(100, checkNotNull(entries.single().limit).limit)
+        assertNoSdkErrors()
+    }
+
+    @Test
+    fun `nothing is written to the state journal when multi file persistence is disabled`() {
+        val writer = createWriter(enabled = false)
+        writer.onSessionPartStarted(clock.now(), USER_SESSION_ID, SESSION_PART_ID)
+        writer.append(StateJournalRecord.PartOpened(SESSION_PART_ID, 1L, listOf(OpeningState("network", "wifi", false, 0))))
+
+        assertEquals(emptyList<SessionPartDirectory>(), sessionPartDirs())
+        assertEquals(0, executor.scheduledTasksCount())
+        assertNoSdkErrors()
+    }
+
+    @Test
+    fun `a state journal record appended after the part ended is dropped`() {
+        val writer = createWriter()
+        writer.onSessionPartStarted(clock.now(), USER_SESSION_ID, SESSION_PART_ID)
+        drain()
+        clock.tick(1000)
+        writer.endPart()
+        writer.onSessionPartEnded(SESSION_PART_ID)
+        drain()
+
+        writer.append(StateJournalRecord.LimitReached(SESSION_PART_ID, "network", 100))
+        drain()
+
+        assertNull(partFile(SESSION_PART_ID, STATE_JOURNAL_FILE_NAME))
+        assertNoSdkErrors()
+    }
+
+    @Test
+    fun `a burst of state journal records before the worker runs is one append to the file`() {
+        val writer = createWriter()
+        writer.onSessionPartStarted(clock.now(), USER_SESSION_ID, SESSION_PART_ID)
+        drain()
+
+        val submitsBefore = executor.submitCount
+        repeat(3) { index ->
+            writer.append(StateJournalRecord.LimitReached(SESSION_PART_ID, "state-$index", index + 1))
+        }
+        // the first append wakes the worker and the others join its write
+        assertEquals(submitsBefore + 1, executor.submitCount)
+        assertNull(partFile(SESSION_PART_ID, STATE_JOURNAL_FILE_NAME))
+        drain()
+
+        val entries = journalOnDisk(SESSION_PART_ID).entries
+        assertEquals(listOf("state-0", "state-1", "state-2"), entries.map { checkNotNull(it.limit).name })
+        assertEquals(listOf(1, 2, 3), entries.map { checkNotNull(it.limit).limit })
+        assertEquals(1, journalAppendCount(SESSION_PART_ID))
+
+        writer.append(StateJournalRecord.LimitReached(SESSION_PART_ID, "state-3", 4))
+        drain()
+        assertEquals(2, journalAppendCount(SESSION_PART_ID))
+        assertNoSdkErrors()
+    }
+
     private class DelayRecordingExecutor(
         private val delegate: ScheduledExecutorService,
         private val delays: MutableList<Long>,
@@ -1857,6 +1969,46 @@ internal class SessionPartWriterImplTest {
     private fun partFile(sessionPartId: String, fileName: String): File? {
         val directory = partDirs().single { it.sessionPartId == sessionPartId }
         return File(File(sessionsDir, directory.dirName), fileName).takeIf(File::isFile)
+    }
+
+    private fun journalBytes(sessionPartId: String): ByteArray =
+        checkNotNull(partFile(sessionPartId, STATE_JOURNAL_FILE_NAME)).readBytes()
+
+    /**
+     * The journal of [sessionPartId] as the file holds it: every append is a message of its own, which decoding the file as one
+     * message merges.
+     */
+    private fun journalOnDisk(
+        sessionPartId: String,
+    ): StateJournalFile = StateJournalFile.ADAPTER.decode(journalBytes(sessionPartId))
+
+    /**
+     * How many appends made the journal file, as every append ends with the time it was written.
+     */
+    private fun journalAppendCount(sessionPartId: String): Int {
+        val reader = ProtoReader(Buffer().write(journalBytes(sessionPartId)))
+        val token = reader.beginMessage()
+        var appends = 0
+        while (true) {
+            val tag = reader.nextTag()
+            if (tag == -1) {
+                break
+            }
+            if (tag == WRITTEN_AT_TAG) {
+                appends++
+            }
+            reader.readUnknownField(tag)
+        }
+        reader.endMessageAndGetUnknownFields(token)
+        return appends
+    }
+
+    private fun entryKind(entry: StateJournalEntry): String = when {
+        entry.opened != null -> "opened"
+        entry.change != null -> "change"
+        entry.limit != null -> "limit"
+        entry.closed != null -> "closed"
+        else -> "none"
     }
 
     private fun assertSdkErrors(vararg expected: String) {

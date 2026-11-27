@@ -9,6 +9,7 @@ import io.embrace.android.embracesdk.internal.capture.session.UserSessionPropert
 import io.embrace.android.embracesdk.internal.capture.user.UserService
 import io.embrace.android.embracesdk.internal.clock.Clock
 import io.embrace.android.embracesdk.internal.config.ConfigService
+import io.embrace.android.embracesdk.internal.config.isAppStateEnabled
 import io.embrace.android.embracesdk.internal.delivery.caching.PayloadCachingService
 import io.embrace.android.embracesdk.internal.delivery.intake.IntakeService
 import io.embrace.android.embracesdk.internal.delivery.storage.CachedLogEnvelopeStore
@@ -38,6 +39,7 @@ import io.embrace.android.embracesdk.internal.session.persistence.SessionPartDir
 import io.embrace.android.embracesdk.internal.session.persistence.SessionPartWriteTracker
 import io.embrace.android.embracesdk.internal.session.persistence.SessionReconstructionService
 import io.embrace.android.embracesdk.internal.spans.CurrentSessionPartSpan
+import io.embrace.android.embracesdk.internal.state.StateRecorder
 import io.embrace.android.embracesdk.internal.storage.SdkDir
 import io.embrace.android.embracesdk.internal.storage.SdkStorage
 import io.embrace.android.embracesdk.internal.storage.lazyFile
@@ -77,7 +79,7 @@ fun createSessionPartReader(
         intakeService = intakeService,
         writeTracker = sessionPartWriteTracker,
         deadPartResurrector = MultiFileDeadPartResurrector(
-            resurrector = SessionPartResurrector(cachedLogEnvelopeStore),
+            resurrector = SessionPartResurrector(cachedLogEnvelopeStore, configService::isAppStateEnabled),
             nativeCrashServiceProvider = nativeCrashServiceProvider,
             restoreDecisionProvider = restoreDecisionProvider,
         ),
@@ -123,6 +125,7 @@ fun createSessionOrchestrator(
     sessionPersistenceWorker: BackgroundWorker,
     sessionReadWorker: BackgroundWorker,
     sessionPartReader: SessionPartReader?,
+    stateRecorder: StateRecorder? = null,
 ): SessionOrchestrator {
     val payloadMessageCollator = PayloadMessageCollatorImpl(
         sessionPartEnvelopeSource,
@@ -173,6 +176,7 @@ fun createSessionOrchestrator(
             spanRepository.addSpanChangeListener { span ->
                 writer.onSpanSnapshotChanged(span)
             }
+            stateRecorder?.journal = writer
         }
     }
 
@@ -196,5 +200,6 @@ fun createSessionOrchestrator(
         uuidSource,
         startupClassifier,
         sessionPartWriter,
+        stateRecorder,
     ).apply { attach() }
 }

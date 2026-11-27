@@ -74,7 +74,11 @@ internal class ForwardingInternalInterfaceTest {
     }
 
     private fun args(method: Method): Array<Any> = method.parameterTypes.map {
-        if (it == Context::class.java) Application() else "value"
+        when (it) {
+            Context::class.java -> Application()
+            Long::class.javaPrimitiveType -> 0L
+            else -> "value"
+        }
     }.toTypedArray()
 
     private class RecordingInternalInterfaceApi(private val calls: MutableList<String>) : InternalInterfaceApi {

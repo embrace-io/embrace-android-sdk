@@ -5,6 +5,8 @@ import io.embrace.android.embracesdk.internal.config.behavior.NetworkBehaviorImp
 import io.embrace.android.embracesdk.internal.config.behavior.NetworkSpanForwardingBehaviorImpl
 import io.embrace.android.embracesdk.internal.config.behavior.TraceparentInjectionBehaviorImpl
 import io.embrace.android.embracesdk.internal.config.behavior.UserSessionBehaviorImpl
+import io.embrace.android.embracesdk.internal.config.instrumented.AppStateLocalConfigImpl
+import io.embrace.android.embracesdk.internal.config.instrumented.schema.AppStateLocalConfig
 import io.embrace.android.embracesdk.internal.config.instrumented.schema.InstrumentedConfig
 import io.embrace.android.embracesdk.internal.config.remote.RemoteConfig
 import io.embrace.android.embracesdk.internal.config.resolved.EmbraceConfig
@@ -33,6 +35,7 @@ class ConfigServiceImpl(
     private val primaryAbi: String,
     private val errorHandler: ErrorHandler,
     private val hasConfiguredOtlpExport: () -> Boolean,
+    appStateLocalConfig: AppStateLocalConfig = AppStateLocalConfigImpl,
 ) : ConfigService {
 
     override val buildInfo: BuildInfo = with(instrumentedConfig.project) {
@@ -65,7 +68,7 @@ class ConfigServiceImpl(
     private val thresholdCheck: BehaviorThresholdCheck = persistedConfig.thresholdCheck
 
     override val config: EmbraceConfig =
-        resolveConfig(instrumentedConfig, remoteConfig, lazy(thresholdCheck::getNormalizedDeviceId))
+        resolveConfig(instrumentedConfig, remoteConfig, lazy(thresholdCheck::getNormalizedDeviceId), appStateLocalConfig)
     override val sessionBehavior = UserSessionBehaviorImpl(remoteConfig)
     override val networkBehavior =
         NetworkBehaviorImpl(instrumentedConfig, remoteConfig, persistedConfig.configDeliveredAt)

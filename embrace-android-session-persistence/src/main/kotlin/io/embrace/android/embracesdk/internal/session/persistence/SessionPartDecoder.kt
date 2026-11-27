@@ -47,19 +47,24 @@ class SessionPartDecoder(
         // file until then, so it needs no handling of its own here
         val deduped = dedupeSpanIds(completedSpansFile.spans, completedIds, spanSnapshotsFile.spans)
 
+        val changeLog = readChangeLog(source, deduped)
         val envelope = Envelope(
             resource = resource.toPayload(),
             metadata = metadataProto.toPayload(),
             version = metadataProto.envelope_version,
             type = metadataProto.envelope_type,
             data = SessionPartPayload(
-                spans = deduped.spans,
-                spanSnapshots = deduped.spanSnapshots,
+                spans = changeLog.closedSpan?.let { deduped.spans + it } ?: deduped.spans,
+                spanSnapshots = changeLog.openSpan?.let { deduped.spanSnapshots + it } ?: deduped.spanSnapshots,
                 sharedLibSymbolMapping = metadataProto.shared_lib_symbol_mapping?.symbols,
             ),
         )
-        val lastWrittenMs =
-            maxOf(metadataProto.written_at_ms, completedSpansFile.lastWrittenMs, spanSnapshotsFile.lastWrittenMs)
+        val lastWrittenMs = maxOf(
+            metadataProto.written_at_ms,
+            completedSpansFile.lastWrittenMs,
+            spanSnapshotsFile.lastWrittenMs,
+            changeLog.lastWrittenMs,
+        )
         return DecodedSessionPart(envelope, lastWrittenMs.takeIf { it > 0 })
     }
 
@@ -134,6 +139,32 @@ class SessionPartDecoder(
         }
     }
 
+    /**
+     * Renders the state journal into the change log span, or nothing if the part has no journal or it cannot be read. The
+     * span does not count against the span budget. A journal that cannot be read costs the part its change log and nothing else.
+     */
+    private fun readChangeLog(source: SessionPartSource, spans: PartSpans): DecodedChangeLog =
+        SystemTrace.trace(SessionPartFile.STATE_JOURNAL.traceSection) {
+            if (!source.exists(SessionPartFile.STATE_JOURNAL)) {
+                return@trace DecodedChangeLog.NONE
+            }
+            errorHandler.guardSdkCode(SdkErrorType.SessionReconstructionFail, DecodedChangeLog.NONE) {
+                if (source.sizeBytes(SessionPartFile.STATE_JOURNAL) > MAX_PART_FILE_BYTES) {
+                    trackFailure(IOException(OVERSIZED_PART_FILE_MSG))
+                }
+                val journal = openOrThrow(source, SessionPartFile.STATE_JOURNAL).use { src -> readStateJournal(src) }
+                journal.corruption?.let(::trackFailure)
+                val sessionSpan = spans.spans.firstOrNull(Span::isSessionSpan)
+                    ?: spans.spanSnapshots.firstOrNull(Span::isSessionSpan)
+                val rendered = renderChangeLogSpan(journal, sessionSpan)
+                DecodedChangeLog(
+                    closedSpan = rendered?.takeIf { it.endTimeNanos != null },
+                    openSpan = rendered?.takeIf { it.endTimeNanos == null },
+                    lastWrittenMs = journal.lastWrittenMs,
+                )
+            }
+        }
+
     private fun readCompletedSpansFile(source: SessionPartSource, budget: SpanBudget): DecodedSpanCollections =
         readSpanCollectionFile(source, SessionPartFile.COMPLETED_SPANS, budget) { src, maxSpans ->
             readCompletedSpans(src, maxSpans = maxSpans)
@@ -194,6 +225,12 @@ class SessionPartDecoder(
 
     private fun trackFailure(exc: Throwable) {
         errorHandler.trackSdkError(SdkErrorType.SessionReconstructionFail, exc)
+    }
+
+    private class DecodedChangeLog(val closedSpan: Span?, val openSpan: Span?, val lastWrittenMs: Long) {
+        companion object {
+            val NONE = DecodedChangeLog(null, null, 0L)
+        }
     }
 
     private class PartSpans(val spans: List<Span>, val spanSnapshots: List<Span>)

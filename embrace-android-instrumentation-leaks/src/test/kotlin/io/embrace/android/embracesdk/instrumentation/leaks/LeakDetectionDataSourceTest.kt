@@ -5,6 +5,7 @@ import io.embrace.android.embracesdk.internal.session.id.SessionIdsSnapshot
 import io.embrace.android.embracesdk.semconv.EmbSessionAttributes
 import org.junit.After
 import org.junit.Assert.assertFalse
+import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
@@ -15,13 +16,18 @@ import org.robolectric.RuntimeEnvironment
 @RunWith(RobolectricTestRunner::class)
 internal class LeakDetectionDataSourceTest {
 
+    // a real counter has counted collections by the time anything is confirmed, since confirming takes two
+    private var gcCycleCount: Long = 2L
+
     private lateinit var args: FakeInstrumentationArgs
     private lateinit var dataSource: LeakDetectionDataSource
 
     @Before
     fun setUp() {
+        gcCycleCount = 2L
         args = FakeInstrumentationArgs(RuntimeEnvironment.getApplication())
-        dataSource = LeakDetectionDataSource(args)
+        val detector = LeakDetector(args.clock, args.errorHandler, args.versionChecker) { gcCycleCount.toString() }
+        dataSource = LeakDetectionDataSource(args, detector)
 
         // nothing is tracked unless the detector is running, and this is how it is started in production
         dataSource.onDataCaptureEnabled()
@@ -33,19 +39,27 @@ internal class LeakDetectionDataSourceTest {
     }
 
     @Test
-    fun `a confirmed suspect is encoded into the memory leak suspects session attribute at session part end`() {
+    fun `a confirmed suspect is reported with the cycles it survived since the previous session part`() {
         val leaked = Any()
         confirmLeak(leaked, sessionIds = SESSION_IDS)
 
         dataSource.onPreSessionEnd()
-
-        val encoded = args.destination.attributes[EmbSessionAttributes.EMB_MEMORY_LEAK_SUSPECTS]
         assertTrue(
-            "expected the part_session group key, object type and class name; the exact cycle count isn't asserted here" +
-                " since it depends on the real GC-cycle counter - see LeakSuspectEncoderTest for that math",
-            encoded?.startsWith("part-1_session-1:activity|${leaked.javaClass.name}|") == true,
+            "the confirming collection counts as one",
+            encoded()?.startsWith("part-1_session-1:activity|${leaked.javaClass.name}|1|") == true,
         )
+
+        args.destination.attributes.clear()
+        gcCycleCount += 3
+        dataSource.onPreSessionEnd()
+        assertTrue(encoded()?.startsWith("part-1_session-1:activity|${leaked.javaClass.name}|3|") == true)
+
+        args.destination.attributes.clear()
+        dataSource.onPreSessionEnd()
+        assertNull("no collection since the previous part", encoded())
     }
+
+    private fun encoded(): String? = args.destination.attributes[EmbSessionAttributes.EMB_MEMORY_LEAK_SUSPECTS]
 
     @Test
     fun `nothing is reported when there are no confirmed suspects`() {

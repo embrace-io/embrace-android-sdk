@@ -10,7 +10,7 @@ private const val GC_RETRY_DELAY_MS = 25L
  */
 internal fun awaitSuspect(detector: LeakDetector, objectType: String): LeakContext {
     repeat(GC_ATTEMPTS) {
-        val match = detector.suspects()
+        val match = detector.confirmedSuspects()
             .mapNotNull { it.token as? LeakContext }
             .firstOrNull { it.objectType == objectType }
         if (match != null) return match

@@ -27,7 +27,8 @@ internal class LeakDetectorTest {
     @Before
     fun setUp() {
         now = 1000L
-        gcCycleCount = 0L
+        // a real counter has counted collections by the time anything is confirmed, since confirming takes two
+        gcCycleCount = 1L
         detector = LeakDetector(
             clock = { now },
             errorHandler = FakeErrorHandler(),
@@ -56,12 +57,12 @@ internal class LeakDetectorTest {
 
         now = 9000L
         val confirmation = checkNotNull(detector.onSentinelReclaimed(ref))
-        assertTrue("outliving one sentinel only makes it a suspect", detector.suspects().isEmpty())
+        assertTrue("outliving one sentinel only makes it a suspect", suspects().isEmpty())
 
         gcCycleCount = 3L
         assertNull("confirming ends the sentinel chain", detector.onSentinelReclaimed(confirmation))
 
-        val suspect = detector.suspects().single()
+        val suspect = suspects().single()
         assertEquals(5000L, suspect.trackedAtMs)
         assertSame(token, suspect.token)
         assertEquals("surviving the sentinel that confirmed it already counts as one cycle survived", 1L, suspect.cyclesSurvived)
@@ -71,8 +72,32 @@ internal class LeakDetectorTest {
         assertEquals(
             "4 more cycles have passed since confirmation, on top of the 1 already counted",
             5L,
-            detector.suspects().single().cyclesSurvived,
+            suspects().single().cyclesSurvived,
         )
+    }
+
+    @Test
+    fun `a report counts the cycles each suspect survived since the previous report`() {
+        // held strongly for the duration of the test so that neither can be collected
+        val earlier = Any()
+        val later = Any()
+        gcCycleCount = 10L
+        detector.trackOpened(earlier, OWNER)
+        confirmAfterSecondSentinel(checkNotNull(detector.trackClosed(earlier, OWNER, "earlier")))
+
+        val first = detector.suspects(0L, 12L).single()
+        assertEquals("a first report includes the confirming collection", 3L, first.cyclesSurvived)
+
+        gcCycleCount = 14L
+        detector.trackOpened(later, OWNER)
+        confirmAfterSecondSentinel(checkNotNull(detector.trackClosed(later, OWNER, "later")))
+
+        assertEquals(
+            "one confirmed before the previous report counts from it, one confirmed since from its confirmation",
+            mapOf("earlier" to 4L, "later" to 3L),
+            detector.suspects(12L, 16L).associate { it.token to it.cyclesSurvived },
+        )
+        assertTrue("nothing survived since the previous report", detector.suspects(16L, 16L).isEmpty())
     }
 
     @Test
@@ -87,12 +112,12 @@ internal class LeakDetectorTest {
         confirmAfterSecondSentinel(firstRef)
         confirmAfterSecondSentinel(secondRef)
 
-        val snapshots = detector.suspects().associateBy { it.token }
+        val snapshots = suspects().associateBy { it.token }
         assertEquals(System.identityHashCode(first), snapshots.getValue("first").id)
         assertEquals(System.identityHashCode(second), snapshots.getValue("second").id)
 
         // stable across repeated snapshots, not re-randomized per call
-        assertEquals(snapshots.getValue("first").id, detector.suspects().single { it.token == "first" }.id)
+        assertEquals(snapshots.getValue("first").id, suspects().single { it.token == "first" }.id)
     }
 
     @Test
@@ -108,7 +133,7 @@ internal class LeakDetectorTest {
         confirmation.target.clear()
 
         assertNull(detector.onSentinelReclaimed(confirmation))
-        assertTrue("a hold that was released is not a leak", detector.suspects().isEmpty())
+        assertTrue("a hold that was released is not a leak", suspects().isEmpty())
     }
 
     @Test
@@ -134,7 +159,7 @@ internal class LeakDetectorTest {
         ref.target.clear()
 
         assertNull("a collected object is never suspected", detector.onSentinelReclaimed(ref))
-        assertTrue("an object that was collected is not a leak", detector.suspects().isEmpty())
+        assertTrue("an object that was collected is not a leak", suspects().isEmpty())
     }
 
     @Test
@@ -204,7 +229,7 @@ internal class LeakDetectorTest {
         detector.trackOpened(reused, OWNER)
 
         assertNull(detector.onSentinelReclaimed(confirmation))
-        assertTrue("an object put back into use is not a leak", detector.suspects().isEmpty())
+        assertTrue("an object put back into use is not a leak", suspects().isEmpty())
     }
 
     @Test
@@ -212,11 +237,11 @@ internal class LeakDetectorTest {
         val reused = Any()
         detector.trackOpened(reused, OWNER)
         confirmAfterSecondSentinel(checkNotNull(detector.trackClosed(reused, OWNER)))
-        assertEquals(1, detector.suspects().size)
+        assertEquals(1, suspects().size)
 
         detector.trackOpened(reused, OWNER)
 
-        assertTrue("an object put back into use is not a leak", detector.suspects().isEmpty())
+        assertTrue("an object put back into use is not a leak", suspects().isEmpty())
         assertTrue(detector.confirmedSuspects().isEmpty())
     }
 
@@ -231,10 +256,10 @@ internal class LeakDetectorTest {
         val secondRef = checkNotNull(detector.trackClosed(second, OWNER, "second"))
 
         confirmAfterSecondSentinel(firstRef)
-        assertEquals(listOf("first"), detector.suspects().map { it.token })
+        assertEquals(listOf("first"), suspects().map { it.token })
 
         confirmAfterSecondSentinel(secondRef)
-        assertEquals(setOf("first", "second"), detector.suspects().map { it.token }.toSet())
+        assertEquals(setOf("first", "second"), suspects().map { it.token }.toSet())
     }
 
     @Test
@@ -244,14 +269,14 @@ internal class LeakDetectorTest {
         val ref = checkNotNull(detector.trackClosed(leaked, OWNER))
 
         val confirmation = confirmAfterSecondSentinel(ref)
-        assertEquals(1, detector.suspects().size)
+        assertEquals(1, suspects().size)
 
         repeat(5) {
             detector.onSentinelReclaimed(ref)
             detector.onSentinelReclaimed(confirmation)
         }
 
-        assertEquals(1, detector.suspects().size)
+        assertEquals(1, suspects().size)
     }
 
     @Test
@@ -261,12 +286,12 @@ internal class LeakDetectorTest {
         val ref = checkNotNull(detector.trackClosed(leaked, OWNER))
         confirmAfterSecondSentinel(ref)
 
-        assertEquals(1, detector.suspects().size)
+        assertEquals(1, suspects().size)
 
         val suspect = detector.confirmedSuspects().single()
         detector.onSuspectCollected(suspect)
 
-        assertTrue("an object that was actually collected is not a leak", detector.suspects().isEmpty())
+        assertTrue("an object that was actually collected is not a leak", suspects().isEmpty())
     }
 
     @Test
@@ -280,7 +305,7 @@ internal class LeakDetectorTest {
         // for onSuspectCollected to catch up via the queue
         detector.confirmedSuspects().single().clear()
 
-        assertTrue("a suspect with nothing left to read is not reported", detector.suspects().isEmpty())
+        assertTrue("a suspect with nothing left to read is not reported", suspects().isEmpty())
     }
 
     @Test
@@ -293,7 +318,7 @@ internal class LeakDetectorTest {
         detector.stop()
         detector.onSentinelReclaimed(ref)
 
-        assertTrue(detector.suspects().isEmpty())
+        assertTrue(suspects().isEmpty())
     }
 
     @Test
@@ -324,11 +349,11 @@ internal class LeakDetectorTest {
         }
 
         val deadline = System.currentTimeMillis() + THREAD_EXIT_TIMEOUT_MS
-        while (detector.suspects().isEmpty() && System.currentTimeMillis() < deadline) {
+        while (suspects().isEmpty() && System.currentTimeMillis() < deadline) {
             Thread.sleep(10)
         }
 
-        assertEquals("only the reference whose dispatch didn't throw is confirmed", 1, detector.suspects().size)
+        assertEquals("only the reference whose dispatch didn't throw is confirmed", 1, suspects().size)
         assertEquals(SdkErrorType.DataSourceDataCaptureFail.toString(), errorHandler.sdkErrorMessages.single().msg)
         assertTrue(checkNotNull(detectorThread()).isAlive)
     }
@@ -383,10 +408,10 @@ internal class LeakDetectorTest {
 
         assertEquals(total, referents.size)
         assertEquals(total, reclaimed.size)
-        assertEquals(total - collectedCount, detector.suspects().size)
+        assertEquals(total - collectedCount, suspects().size)
         assertEquals(
             (0 until total).filter { it % 4 != 0 }.toSet(),
-            detector.suspects().map { it.token }.toSet(),
+            suspects().map { it.token }.toSet(),
         )
         assertTrue(
             "every reference has already been handled, so none may still be watched",
@@ -428,7 +453,7 @@ internal class LeakDetectorTest {
         runActionsConcurrently(workers + reclaimer)
 
         assertEquals(total, referents.size)
-        assertTrue("no reused object may be reported", detector.suspects().isEmpty())
+        assertTrue("no reused object may be reported", suspects().isEmpty())
     }
 
     /**
@@ -440,6 +465,11 @@ internal class LeakDetectorTest {
         detector.onSentinelReclaimed(confirmation)
         return confirmation
     }
+
+    /**
+     * Every suspect, with the cycles it has survived since the counter started.
+     */
+    private fun suspects(): List<LeakDetector.LeakSnapshot> = detector.suspects(0L, gcCycleCount)
 
     private fun detectorThread(): Thread? =
         Thread.getAllStackTraces().keys.firstOrNull { it.name == LeakDetector.THREAD_NAME }

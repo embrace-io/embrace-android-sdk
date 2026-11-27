@@ -14,14 +14,13 @@ dependencies {
 
 val target = JvmTarget.JVM_11
 val coreLibrariesVersion = project.findVersion("kotlinCoreLibrariesVersion")
-val minKotlinVersion = KotlinVersion.KOTLIN_2_0
+val minKotlinVersion = KotlinVersion.KOTLIN_2_2
 
 kotlin.compilerOptions {
     apiVersion.set(minKotlinVersion)
     languageVersion.set(minKotlinVersion)
     jvmTarget.set(target)
     allWarningsAsErrors.set(true)
-    freeCompilerArgs.add("-Xsuppress-version-warnings")
     if (project.findProperty("io.opentelemetry.kotlin.optIn") == "true") {
         optIn.add("io.opentelemetry.kotlin.ExperimentalApi")
     }

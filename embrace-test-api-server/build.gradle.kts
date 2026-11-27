@@ -35,7 +35,6 @@ versionCatalogs.named("libs").findVersion("kotlinCoreLibrariesVersion").ifPresen
     kotlin.coreLibrariesVersion = stdlib.requiredVersion
     kotlin.compilerOptions {
         apiVersion.set(KotlinVersion.fromVersion(stdlib.requiredVersion.substringBeforeLast('.')))
-        freeCompilerArgs.add("-Xsuppress-version-warnings")
     }
 }
 

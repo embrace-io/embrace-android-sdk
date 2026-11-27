@@ -33,20 +33,11 @@ updates:
       # newer Kotlin versions than the SDK's minimum supported Kotlin (and the Gradle plugin's
       # Gradle 8.0.2 build-script Kotlin) can read. Bump it manually when the minimum is raised.
       - dependency-name: "org.jetbrains.kotlinx:kotlinx-serialization-*"
-      # kotlinx-coroutines 1.11.0+ depends on kotlin-stdlib 2.2.20, whose metadata can't be read by the
-      # SDK's minimum supported Kotlin (2.0.21). Remove this once the minimum supported Kotlin is 2.1+.
-      - dependency-name: "org.jetbrains.kotlinx:kotlinx-coroutines-*"
-        versions: ["[1.11.0,)"]
       # OkHttp is compileOnly: the instrumentation must compile against the oldest OkHttp it supports.
       # OkHttp 5 makes Response.body non-null, which turns the null checks that OkHttp 4 users still
       # need into -Werror failures. Remove this once OkHttp 4 support is dropped.
       - dependency-name: "com.squareup.okhttp3:okhttp-bom"
         versions: ["[5.0.0,)"]
-      # androidx.lifecycle 2.9.0+ declares minAndroidGradlePluginVersion 8.1.1 in its AAR metadata,
-      # above the SDK's minAgpVersion, and 2.11.0+ needs kotlin-stdlib 2.1.20, above the SDK's
-      # minimum supported Kotlin. Remove this once both minimums are raised.
-      - dependency-name: "androidx.lifecycle:*"
-        versions: ["[2.9.0,)"]
       # gradle-api is pinned in gradle/libs.versions.toml under two aliases. agp-api-min uses
       # minAgpVersion: the integration test plugin ships it at runtime, and a newer one overrides
       # the fixture's gradle-api on TestMatrix.MinVersion.

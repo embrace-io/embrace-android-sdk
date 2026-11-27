@@ -7,12 +7,9 @@ kotlinGradlePlugin = "2.4.21"
 koverGradlePlugin = "0.9.11"
 lint = "32.3.1"
 openTelemetryCore = "1.68.0"
-# Pinned to 2.8.x: 2.9.0+ requires AGP 8.1.1 (above our minAgpVersion) and 2.11.0+ requires kotlin-stdlib 2.1.20,
-# which breaks our minimum supported Kotlin (2.0.21). See .github/dependabot.yml.
 lifecycle = "2.8.7"
 annotation = "1.11.0"
 otelKotlin = "0.10.0"
-# Pinned to 1.10.x: 1.11.0+ requires kotlin-stdlib 2.2.20, which breaks our minimum supported Kotlin (2.0.21).
 kotlinxCoroutines = "1.10.2"
 kotlinxSerialization = "1.8.1"
 # The Gradle plugin must stay on a release built with Kotlin < 2.1: Gradle 8.0.2 compiles build scripts with Kotlin 1.8,
@@ -55,7 +52,7 @@ androidxBenchmark = "1.5.0"
 # Perfetto's native trace_processor_shell, used by androidx-benchmark-traceprocessor via :embrace-analysis-cli
 perfettoTraceProcessor = "59.1"
 jvmTargetCompatibility = "11"
-kotlinCoreLibrariesVersion = "2.0.21"
+kotlinCoreLibrariesVersion = "2.2.0"
 minCompileSdk = "34"
 # The minimum supported AGP and Gradle. The Gradle plugin enforces both, and TestMatrix.MinVersion runs on them.
 # The gradle-api library (agp-api-min) is pinned to minAgpVersion.

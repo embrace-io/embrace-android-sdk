@@ -37,10 +37,8 @@ internal fun JsonElement.toAny(): Any = when (this) {
     JsonNull -> "null"
     is JsonObject -> mapValues { (_, v) -> v.toAny() }
     is JsonArray -> map { it.toAny() }
-    is JsonPrimitive -> when {
-        isString -> content
-        else -> booleanOrNull ?: longOrNull ?: doubleOrNull ?: content
-    }
+    is JsonPrimitive if isString -> content
+    is JsonPrimitive -> booleanOrNull ?: longOrNull ?: doubleOrNull ?: content
 }
 
 /**

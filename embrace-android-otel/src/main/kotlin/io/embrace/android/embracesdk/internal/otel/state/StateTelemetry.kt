@@ -108,12 +108,15 @@ class StateTelemetry(
     )
 
     /**
-     * The attributes a log sent to Embrace carries: its own [attributes], then the stamp for [snapshot].
+     * The attributes a log sent to Embrace carries: its own [attributes], then the stamp for [snapshot]. The stamp's two keys are
+     * the SDK's, so an attribute the log already has under either is left out, and the payload never has two of one key.
      */
     fun withPackedStamp(attributes: Map<String, Any>, snapshot: StateSnapshot): List<Attribute> {
         val out = ArrayList<Attribute>(attributes.size + 2)
         for ((key, value) in attributes) {
-            out.add(Attribute(key, value.toPayloadString()))
+            if (key != AppStateKeys.PACKED && key != AppStateKeys.SEQ) {
+                out.add(Attribute(key, value.toPayloadString()))
+            }
         }
         out.add(Attribute(AppStateKeys.PACKED, snapshot.packed()))
         out.add(Attribute(AppStateKeys.SEQ, snapshot.seqText()))

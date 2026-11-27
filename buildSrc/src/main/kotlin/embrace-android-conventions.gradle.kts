@@ -65,6 +65,9 @@ android {
     }
     kotlin {
         compilerOptions {
+            if (project.findProperty("io.embrace.android.embracesdk.internalApi.optIn") != "false") {
+                optIn.add("io.embrace.android.embracesdk.annotation.InternalApi")
+            }
             if (project.findProperty("io.opentelemetry.kotlin.optIn") == "true") {
                 optIn.add("io.opentelemetry.kotlin.ExperimentalApi")
             }

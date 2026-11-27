@@ -8,7 +8,8 @@ import io.embrace.android.embracesdk.annotation.InternalApi
  * [EmbraceAndroidApi] directly or implement it in your own custom classes,
  * as new functions may be added in the future. Use the Embrace class instead.
  */
-@InternalApi
+@OptIn(ExperimentalSubclassOptIn::class)
+@SubclassOptInRequired(InternalApi::class)
 public interface EmbraceAndroidApi {
 
     /**

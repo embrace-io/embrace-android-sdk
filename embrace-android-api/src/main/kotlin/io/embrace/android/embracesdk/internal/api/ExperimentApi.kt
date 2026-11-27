@@ -1,5 +1,6 @@
 package io.embrace.android.embracesdk.internal.api
 
+import io.embrace.android.embracesdk.annotation.InternalApi
 import io.embrace.android.embracesdk.experiments.TrackedExperiment
 import io.embrace.android.embracesdk.experiments.TrackedFeatureFlag
 
@@ -8,6 +9,8 @@ import io.embrace.android.embracesdk.experiments.TrackedFeatureFlag
  * each kind, so an experiment and a feature flag may share an ID. The SDK does not persist this state, and users need to call this each
  * time the app starts up.
  */
+@OptIn(ExperimentalSubclassOptIn::class)
+@SubclassOptInRequired(InternalApi::class)
 public interface ExperimentApi {
 
     /**

@@ -6,7 +6,8 @@ import io.embrace.android.embracesdk.annotation.InternalApi
 /**
  * The public API that is used to send log messages.
  */
-@InternalApi
+@OptIn(ExperimentalSubclassOptIn::class)
+@SubclassOptInRequired(InternalApi::class)
 public interface LogsApi {
 
     /**

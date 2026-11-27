@@ -10,7 +10,8 @@ import io.opentelemetry.kotlin.tracing.export.SpanProcessor
 /**
  * Methods that enable integration with the the large OTel ecosystem through standard OTel APIs and concepts.
  */
-@InternalApi
+@OptIn(ExperimentalSubclassOptIn::class)
+@SubclassOptInRequired(InternalApi::class)
 public interface OTelApi {
 
     /**

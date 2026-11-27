@@ -48,7 +48,11 @@ internal class SpanChangeNotificationTest(
 
     private val mutators: Map<String, EmbraceSdkSpan.() -> Unit> = mapOf(
         "start" to { start() },
-        "stop" to { stop() },
+        "end" to { end() },
+        "stop" to {
+            @Suppress("DEPRECATION")
+            stop()
+        },
         "stopWithErrorCode" to { stopWithErrorCode(ErrorCodeAttribute.Failure) },
         "discard" to { discard() },
         "addEvent" to { addEvent("an-event") },

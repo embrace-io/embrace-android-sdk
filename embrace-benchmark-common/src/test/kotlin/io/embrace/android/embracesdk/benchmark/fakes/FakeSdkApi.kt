@@ -58,9 +58,9 @@ internal class FakeSdkApi(private val clock: () -> Long) : SdkApi by throwingSdk
         val span = newSpan(name, parent, autoTerminationMode, startTimeMs = null)
         attributes.forEach(span::addAttribute)
         try {
-            return code().also { span.stop() }
+            return code().also { span.end() }
         } catch (exc: Throwable) {
-            span.stop(ErrorCode.FAILURE)
+            span.end(ErrorCode.FAILURE)
             throw exc
         }
     }

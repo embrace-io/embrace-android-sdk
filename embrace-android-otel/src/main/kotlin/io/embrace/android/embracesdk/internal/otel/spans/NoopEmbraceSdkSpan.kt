@@ -26,7 +26,7 @@ object NoopEmbraceSdkSpan : EmbraceSdkSpan {
 
     override fun start(startTimeMs: Long?): Boolean = false
 
-    override fun stop(errorCode: ErrorCode?, endTimeMs: Long?): Boolean = false
+    override fun end(errorCode: ErrorCode?, endTimeMs: Long?): Boolean = false
 
     override fun stopWithErrorCode(errorCode: ErrorCodeAttribute?, endTimeMs: Long?): Boolean = false
 

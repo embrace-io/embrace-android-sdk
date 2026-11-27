@@ -1276,7 +1276,7 @@ internal class SessionPartWriterImplTest {
         inFlightSpans = listOf(span)
         writer.onSpanSnapshotChanged(span)
 
-        span.stop()
+        span.end()
         inFlightSpans = emptyList()
         writer.onSpanSnapshotChanged(span)
         drain()
@@ -1297,7 +1297,7 @@ internal class SessionPartWriterImplTest {
         drain()
         assertEquals(listOf("view-load"), inFlightSpanNamesOnDisk(SESSION_PART_ID))
 
-        span.stop()
+        span.end()
         inFlightSpans = emptyList()
         writer.onSpanSnapshotChanged(span)
         drain()

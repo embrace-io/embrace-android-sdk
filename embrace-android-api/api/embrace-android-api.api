@@ -366,6 +366,7 @@ public abstract interface class io/embrace/android/embracesdk/spans/EmbraceSpan 
 	public abstract fun addEvent (Ljava/lang/String;Ljava/lang/Long;Ljava/util/Map;)Z
 	public abstract fun addLink (Lio/embrace/android/embracesdk/spans/EmbraceSpan;Ljava/util/Map;)Z
 	public abstract fun addLink (Lio/opentelemetry/kotlin/tracing/SpanContext;Ljava/util/Map;)Z
+	public abstract fun end (Lio/embrace/android/embracesdk/spans/ErrorCode;Ljava/lang/Long;)Z
 	public abstract fun getAutoTerminationMode ()Lio/embrace/android/embracesdk/spans/AutoTerminationMode;
 	public abstract fun getParent ()Lio/embrace/android/embracesdk/spans/EmbraceSpan;
 	public abstract fun getSpanContext ()Lio/opentelemetry/kotlin/tracing/SpanContext;
@@ -383,8 +384,10 @@ public final class io/embrace/android/embracesdk/spans/EmbraceSpan$DefaultImpls 
 	public static fun addLink (Lio/embrace/android/embracesdk/spans/EmbraceSpan;Lio/embrace/android/embracesdk/spans/EmbraceSpan;Ljava/util/Map;)Z
 	public static synthetic fun addLink$default (Lio/embrace/android/embracesdk/spans/EmbraceSpan;Lio/embrace/android/embracesdk/spans/EmbraceSpan;Ljava/util/Map;ILjava/lang/Object;)Z
 	public static synthetic fun addLink$default (Lio/embrace/android/embracesdk/spans/EmbraceSpan;Lio/opentelemetry/kotlin/tracing/SpanContext;Ljava/util/Map;ILjava/lang/Object;)Z
+	public static synthetic fun end$default (Lio/embrace/android/embracesdk/spans/EmbraceSpan;Lio/embrace/android/embracesdk/spans/ErrorCode;Ljava/lang/Long;ILjava/lang/Object;)Z
 	public static synthetic fun recordException$default (Lio/embrace/android/embracesdk/spans/EmbraceSpan;Ljava/lang/Throwable;Ljava/util/Map;ILjava/lang/Object;)Z
 	public static synthetic fun start$default (Lio/embrace/android/embracesdk/spans/EmbraceSpan;Ljava/lang/Long;ILjava/lang/Object;)Z
+	public static fun stop (Lio/embrace/android/embracesdk/spans/EmbraceSpan;Lio/embrace/android/embracesdk/spans/ErrorCode;Ljava/lang/Long;)Z
 	public static synthetic fun stop$default (Lio/embrace/android/embracesdk/spans/EmbraceSpan;Lio/embrace/android/embracesdk/spans/ErrorCode;Ljava/lang/Long;ILjava/lang/Object;)Z
 }
 

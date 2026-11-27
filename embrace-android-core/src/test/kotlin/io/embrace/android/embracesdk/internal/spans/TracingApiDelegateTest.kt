@@ -59,7 +59,7 @@ internal class TracingApiDelegateTest(
         val embraceSpan = checkNotNull(tracer.createSpan(name = "test-span"))
         assertNotNull(embraceSpan)
         assertTrue(embraceSpan.start())
-        assertTrue(embraceSpan.stop())
+        assertTrue(embraceSpan.end())
         verifyPublicSpan("test-span")
     }
 
@@ -70,7 +70,7 @@ internal class TracingApiDelegateTest(
         val expectedStartTimeMs = clock.now() - 1L
         val expectedEndTimeMs = clock.now() + 2L
         assertTrue(embraceSpan.start(startTimeMs = expectedStartTimeMs))
-        assertTrue(embraceSpan.stop(endTimeMs = expectedEndTimeMs))
+        assertTrue(embraceSpan.end(endTimeMs = expectedEndTimeMs))
         with(verifyPublicSpan("test-span")) {
             assertEquals(expectedStartTimeMs, startTimeNanos?.nanosToMillis())
             assertEquals(expectedEndTimeMs, endTimeNanos?.nanosToMillis())
@@ -83,7 +83,7 @@ internal class TracingApiDelegateTest(
             val embraceSpan = checkNotNull(tracer.createSpan(name = "test-span"))
             assertNotNull(embraceSpan)
             assertTrue(embraceSpan.start())
-            assertTrue(embraceSpan.stop(errorCode))
+            assertTrue(embraceSpan.end(errorCode))
             verifyPublicSpan(name = "test-span", errorCode = errorCode)
             spanRepository.flushOtelSpans()
         }
@@ -102,8 +102,8 @@ internal class TracingApiDelegateTest(
                 startTimeMs = childStartTimeMs,
             ),
         )
-        assertTrue(parent.stop())
-        assertTrue(child.stop())
+        assertTrue(parent.end())
+        assertTrue(child.end())
         val spans = spanRepository.flushOtelSpans()
         assertEquals(2, spans.size)
         assertEquals(childStartTimeMs, spans[1].startTimeNanos?.nanosToMillis())
@@ -306,7 +306,7 @@ internal class TracingApiDelegateTest(
                 attributes = mapOf("key" to "value"),
             ),
         )
-        assertTrue(span.stop())
+        assertTrue(span.end())
         with(verifyPublicSpan("my-span")) {
             assertEquals(2, events?.size)
             assertEquals(eventTimeNanos, events?.get(0)?.timestampNanos)
@@ -327,7 +327,7 @@ internal class TracingApiDelegateTest(
         )
         clock.tick(10L)
         val expectedEndTimeNanos = clock.now().millisToNanos()
-        assertTrue(span.stop(endTimeMs = expectedEndTimeNanos))
+        assertTrue(span.end(endTimeMs = expectedEndTimeNanos))
         with(verifyPublicSpan("fallback-span")) {
             assertEquals(expectedStartTimeNanos, startTimeNanos)
             assertEquals(expectedEndTimeNanos, endTimeNanos)

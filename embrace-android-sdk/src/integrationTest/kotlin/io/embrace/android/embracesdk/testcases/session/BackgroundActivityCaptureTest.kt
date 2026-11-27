@@ -77,7 +77,7 @@ internal class BackgroundActivityCaptureTest(
                 }
 
                 traceStopMs = clock.tick(100L)
-                assertTrue(trace.stop())
+                assertTrue(trace.end())
 
                 // Check what should and shouldn't be logged when there is no background activity and the app is in the background
                 assertTrue(embrace.isStarted)

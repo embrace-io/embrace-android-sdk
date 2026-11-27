@@ -83,7 +83,7 @@ internal class SpanAutoTerminationTest(
 
                     val childD = embrace.startSpan(CHILD_START_SPAN_D, parent = parent)
                     embrace.startSpan(CHILD_START_SPAN_E, parent = childD)
-                    childD?.stop()
+                    childD?.end()
 
                     // create a span with auto termination
                     embrace.createSpan(
@@ -109,7 +109,7 @@ internal class SpanAutoTerminationTest(
                         autoTerminationMode = AutoTerminationMode.ON_BACKGROUND
                     )?.apply {
                         start()
-                        stop()
+                        end()
                     }
                 }
 
@@ -119,7 +119,7 @@ internal class SpanAutoTerminationTest(
                 // second session
                 secondSessionPartTimestamps = recordSession {
                     // stop a span without auto termination
-                    hangingSpan?.stop()
+                    hangingSpan?.end()
                 }
             },
             assertAction = {

@@ -106,12 +106,12 @@ internal class NetworkSpanParentServiceImplTest {
     fun `rejected parents keep the previous parent and warn once`() {
         val context = untrackedContext()
         service.set(context)
-        val ended = trackedSpan().apply { stop() }
+        val ended = trackedSpan().apply { end() }
 
         assertSame(NoopNetworkSpanParentToken, service.set(FakeSpanContext()))
         assertSame(NoopNetworkSpanParentToken, service.set(null))
         assertSame(NoopNetworkSpanParentToken, service.set(ended.spanContext))
-        assertSame(NoopNetworkSpanParentToken, service.set(FakeEmbraceSdkSpan.started().apply { stop() }))
+        assertSame(NoopNetworkSpanParentToken, service.set(FakeEmbraceSdkSpan.started().apply { end() }))
         assertEquals(context.spanId, currentParentSpanId())
         assertEquals(1, errorHandler.warningMessages.size)
     }
@@ -194,7 +194,7 @@ internal class NetworkSpanParentServiceImplTest {
     fun `an ended replaced span gets no event`() {
         val checkout = trackedSpan("checkout")
         service.set(checkout.spanContext)
-        checkout.stop()
+        checkout.end()
         service.set(untrackedContext())
 
         assertTrue(checkout.events.isEmpty())

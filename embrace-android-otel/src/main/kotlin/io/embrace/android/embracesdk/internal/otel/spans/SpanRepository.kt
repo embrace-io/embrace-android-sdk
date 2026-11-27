@@ -246,7 +246,7 @@ class SpanRepository(
     private fun terminateSpansIfRequired(endTimeMs: Long, nodes: List<SpanNode>) {
         nodes.forEach { node ->
             if (node.span.isRecording) {
-                errorHandler.guardSdkCode(SdkErrorType.SpanStopFail) { node.span.stop(endTimeMs = endTimeMs) }
+                errorHandler.guardSdkCode(SdkErrorType.SpanStopFail) { node.span.end(endTimeMs = endTimeMs) }
             }
             terminateSpansIfRequired(endTimeMs, node.children)
         }

@@ -72,7 +72,7 @@ internal class MultiFilePersistencePayloadParityTest(
                     }
                     val span = checkNotNull(embrace.startSpan("stopped-span"))
                     clock.tick(50)
-                    span.stop()
+                    span.end()
                 }
             },
             assertAction = {

@@ -34,7 +34,7 @@ internal class SensitiveKeysRedactionFeatureTest(
                     embrace.startSpan("test span")?.apply {
                         addAttribute("password", "1234")
                         addAttribute("not a password", "1234")
-                        stop()
+                        end()
                     }
                 }
             },
@@ -58,7 +58,7 @@ internal class SensitiveKeysRedactionFeatureTest(
                     embrace.startSpan("test span")?.apply {
                         addEvent("event", null, mapOf("password" to "123456", "status" to "ok"))
                         addEvent("anotherEvent", null, mapOf("password" to "654321", "someKey" to "someValue"))
-                        stop()
+                        end()
                     }
                 }
             },

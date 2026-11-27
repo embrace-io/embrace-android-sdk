@@ -7,6 +7,7 @@ import io.embrace.android.embracesdk.fakes.TestStateDataSource
 import io.embrace.android.embracesdk.fakes.TestStateValue
 import io.embrace.android.embracesdk.fakes.appStateEnabledConfigService
 import io.embrace.android.embracesdk.internal.arch.InstrumentationArgs
+import io.embrace.android.embracesdk.internal.arch.schema.SchemaType
 import io.embrace.android.embracesdk.internal.state.StateDeclaration
 import io.embrace.android.embracesdk.internal.state.StateDrops
 import io.embrace.android.embracesdk.internal.state.StateEvents
@@ -404,6 +405,30 @@ internal class StateDataSourceTest {
     }
 
     @Test
+    fun `with the model on a state whose name cannot name one reports an SDK error once and declares and reports nothing`() {
+        val modelArgs = modelOnArgs()
+        modelArgs.errorHandler.throwOnSdkError = false
+        val recorder = recorderOn(modelArgs)
+        val declarations = mutableListOf<StateDeclaration>()
+        modelArgs.eventBus.addHandler(StateEvents.DECLARED) { declarations.add(it) }
+        val source = object : StateDataSource<Any>(
+            args = modelArgs,
+            stateTypeFactory = ::BadlyNamedState,
+            defaultValue = "UNKNOWN",
+        ) {}
+
+        source.onDataCaptureEnabled()
+        source.onStateChange("hot", 1L)
+        modelArgs.eventBus.emit(StateEvents.REPORTED, StateReport("thermal_state", "cool", 2L))
+
+        val error = modelArgs.errorHandler.sdkErrorMessages.single()
+        assertTrue(checkNotNull(error.throwable?.message).contains("thermal_state"))
+        assertTrue(declarations.isEmpty())
+        assertTrue(updates.isEmpty())
+        assertEquals(0L, recorder.current().seq)
+    }
+
+    @Test
     fun `with the model off a report from outside does nothing`() {
         dataSource.onDataCaptureEnabled()
         dataSource.onStateChange("a", 1L)
@@ -443,6 +468,8 @@ internal class StateDataSourceTest {
         args.eventBus.addHandler(StateEvents.UPDATED) { updates.add(it) }
         args.eventBus.addHandler(StateEvents.DROPPED) { drops.add(it) }
     }
+
+    private class BadlyNamedState(initialValue: Any) : SchemaType.State<Any>(initialValue, "thermal_state")
 
     private companion object {
         const val MAX_TRANSITIONS = 100

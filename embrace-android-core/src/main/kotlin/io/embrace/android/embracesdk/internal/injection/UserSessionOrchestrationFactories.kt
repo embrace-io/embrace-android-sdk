@@ -10,7 +10,6 @@ import io.embrace.android.embracesdk.internal.capture.user.UserService
 import io.embrace.android.embracesdk.internal.clock.Clock
 import io.embrace.android.embracesdk.internal.config.ConfigService
 import io.embrace.android.embracesdk.internal.config.isAppStateEnabled
-import io.embrace.android.embracesdk.internal.config.isStateAssociationEnabled
 import io.embrace.android.embracesdk.internal.delivery.caching.PayloadCachingService
 import io.embrace.android.embracesdk.internal.delivery.intake.IntakeService
 import io.embrace.android.embracesdk.internal.delivery.storage.CachedLogEnvelopeStore
@@ -82,8 +81,7 @@ fun createSessionPartReader(
         deadPartResurrector = MultiFileDeadPartResurrector(
             resurrector = SessionPartResurrector(
                 cachedLogEnvelopeStore,
-                stampDeadProcessState = configService::isAppStateEnabled,
-                completeSpanLinks = configService::isStateAssociationEnabled,
+                recoverDeadProcessState = configService::isAppStateEnabled,
             ),
             nativeCrashServiceProvider = nativeCrashServiceProvider,
             restoreDecisionProvider = restoreDecisionProvider,

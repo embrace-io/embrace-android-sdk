@@ -1,8 +1,10 @@
 package io.embrace.android.embracesdk.internal.otel.state
 
+import io.embrace.android.embracesdk.internal.state.AppStateKeys
 import io.opentelemetry.kotlin.context.Context
 import io.opentelemetry.kotlin.context.ContextKey
 import io.opentelemetry.kotlin.context.createContextKey
+import io.opentelemetry.kotlin.logging.data.LogRecordData
 
 private val stateReplayKey: ContextKey<Boolean> = createContextKey("embrace-state-replay")
 
@@ -17,3 +19,11 @@ internal fun Context.markedAsStateReplay(): Context = set(stateReplayKey, true)
  * record describes the process and no session part, so it is not stamped and is not sent to Embrace.
  */
 internal fun Context.isStateReplay(): Boolean = get(stateReplayKey) == true
+
+/**
+ * Whether this record has the event name of a replayed state change or snapshot. A record is taken for a replay only when it has
+ * one of the two names and was emitted with the marked context: the name alone could be an app's own log, and the mark alone
+ * could be a log an app's log record processor emitted with the context it was handed.
+ */
+internal fun LogRecordData.isStateReplayRecord(): Boolean =
+    eventName == AppStateKeys.CHANGE_EVENT_NAME || eventName == AppStateKeys.SNAPSHOT_EVENT_NAME

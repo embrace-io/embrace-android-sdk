@@ -162,7 +162,7 @@ internal class TelemetryDestinationHarness(
 
     /**
      * Starts replaying state changes to the app's own log exporters of [externalOtelConfig] on [worker], as the SDK does as it is
-     * put together, for a harness whose config has the model on. Nothing is replayed unless the model's second step is on and the
+     * put together, for a harness whose config has the model on. Nothing is replayed unless the model's first step is on and the
      * app has something that receives logs.
      */
     fun startReplay(worker: BackgroundWorker) {
@@ -170,7 +170,7 @@ internal class TelemetryDestinationHarness(
             stateTelemetry = checkNotNull(stateTelemetry) { "the app state data model is off" },
             externalOtelConfig = externalOtelConfig,
             loggerProvider = { otelSdkWrapper.sdkLogger },
-            worker = worker,
+            worker = { worker },
             processIdentifier = { PROCESS_IDENTIFIER },
             errorHandler = initServices.errorHandler,
             telemetryService = initServices.telemetryService,

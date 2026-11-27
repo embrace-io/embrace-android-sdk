@@ -131,7 +131,7 @@ class OtelSdkConfig(
             uuidSource,
             eventMetadataProvider,
             logRecordExporter,
-            stateReplayExporter = if (stateTelemetry?.associationEnabled == true) logRecordExporter::exportExternally else null,
+            stateReplayExporter = if (stateTelemetry != null) logRecordExporter::exportExternally else null,
         )
     }
 

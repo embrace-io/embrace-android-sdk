@@ -10,6 +10,7 @@ import io.embrace.android.embracesdk.internal.state.AppStateKeys
 import io.embrace.android.embracesdk.internal.state.StateDefinition
 import io.embrace.android.embracesdk.internal.state.StateRecorder
 import io.embrace.android.embracesdk.internal.state.StateSnapshot
+import io.opentelemetry.kotlin.attributes.AttributesMutator
 import io.opentelemetry.kotlin.logging.data.LogRecordData
 import org.junit.Assert.assertEquals
 import org.junit.Before
@@ -37,24 +38,58 @@ internal class StateTelemetryTest {
     }
 
     @Test
-    fun `with the second step off the rendering is never verbose`() {
+    fun `with the second step off no values go on a span, and a replayed change still follows the rendering`() {
         StateExportMode.entries.forEach { mode ->
             val telemetry = StateTelemetry(recorder, exportMode = { mode }, associationEnabled = false)
             assertEquals(false, telemetry.isVerbose())
+            assertEquals(mode == StateExportMode.VERBOSE, telemetry.isVerboseReplay())
         }
     }
 
     @Test
+    fun `values go on a span only in the verbose rendering, with the second step on and something to receive spans`() {
+        fun telemetry(mode: StateExportMode, receivesSpans: Boolean) =
+            StateTelemetry(recorder, exportMode = { mode }, receivesSpans = { receivesSpans })
+
+        assertEquals(true, telemetry(StateExportMode.VERBOSE, receivesSpans = true).isVerbose())
+        assertEquals(false, telemetry(StateExportMode.VERBOSE, receivesSpans = false).isVerbose())
+        assertEquals(false, telemetry(StateExportMode.ASSOCIATION, receivesSpans = true).isVerbose())
+        // what a replayed change carries does not depend on spans
+        assertEquals(true, telemetry(StateExportMode.VERBOSE, receivesSpans = false).isVerboseReplay())
+    }
+
+    @Test
+    fun `a stamp that throws as it is written is reported as skipped and does not reach the caller`() {
+        var skipped = 0
+        val telemetry = StateTelemetry(
+            recorder,
+            exportMode = { StateExportMode.ASSOCIATION },
+            onPlainStampSkipped = { skipped++ },
+        )
+        val record = FakeReadWriteLogRecord()
+        val throwing = object : LogRecordData by record, AttributesMutator by record {
+            override val attributes: Map<String, Any> = mapOf(AppStateKeys.SEQ to "12")
+            override fun setStringAttribute(key: String, value: String) = error("cannot be written")
+            override fun setLongAttribute(key: String, value: Long) = error("cannot be written")
+        }
+
+        telemetry.writeLogExportForm(throwing as LogRecordData, twoStates())
+        telemetry.writeDeadProcessSeq(throwing, throwing.attributes)
+
+        assertEquals(2, skipped)
+    }
+
+    @Test
     fun `only the log of a process that has died is of that kind, and an event name changes nothing`() {
-        assertEquals(LogKind.DEAD_PROCESS, association.kindOf(log(EmbType.System.NativeCrash.value)))
-        assertEquals(LogKind.DEAD_PROCESS, association.kindOf(log(EmbType.System.Exit.value)))
-        assertEquals(LogKind.LIVE, association.kindOf(log(EmbType.State.value, AppStateKeys.CHANGE_EVENT_NAME)))
-        assertEquals(LogKind.LIVE, association.kindOf(log(EmbType.State.value, AppStateKeys.SNAPSHOT_EVENT_NAME)))
-        assertEquals(LogKind.LIVE, association.kindOf(log(EmbType.State.value, "another.event")))
-        assertEquals(LogKind.LIVE, association.kindOf(log(EmbType.State.value, null)))
-        assertEquals(LogKind.LIVE, association.kindOf(log(EmbType.System.Log.value)))
-        assertEquals(LogKind.LIVE, association.kindOf(log(null, AppStateKeys.CHANGE_EVENT_NAME)))
-        assertEquals(LogKind.LIVE, association.kindOf(log(null)))
+        assertEquals(LogKind.DEAD_PROCESS, association.kindOf(log(EmbType.System.NativeCrash.value).attributes))
+        assertEquals(LogKind.DEAD_PROCESS, association.kindOf(log(EmbType.System.Exit.value).attributes))
+        assertEquals(LogKind.LIVE, association.kindOf(log(EmbType.State.value, AppStateKeys.CHANGE_EVENT_NAME).attributes))
+        assertEquals(LogKind.LIVE, association.kindOf(log(EmbType.State.value, AppStateKeys.SNAPSHOT_EVENT_NAME).attributes))
+        assertEquals(LogKind.LIVE, association.kindOf(log(EmbType.State.value, "another.event").attributes))
+        assertEquals(LogKind.LIVE, association.kindOf(log(EmbType.State.value, null).attributes))
+        assertEquals(LogKind.LIVE, association.kindOf(log(EmbType.System.Log.value).attributes))
+        assertEquals(LogKind.LIVE, association.kindOf(log(null, AppStateKeys.CHANGE_EVENT_NAME).attributes))
+        assertEquals(LogKind.LIVE, association.kindOf(log(null).attributes))
     }
 
     @Test
@@ -66,7 +101,7 @@ internal class StateTelemetryTest {
     }
 
     @Test
-    fun `the kind of a log is the same read from its attributes as from the record`() {
+    fun `the kind of a log is read from its type and nothing else`() {
         listOf(
             EmbType.System.NativeCrash.value to LogKind.DEAD_PROCESS,
             EmbType.System.Exit.value to LogKind.DEAD_PROCESS,
@@ -74,7 +109,6 @@ internal class StateTelemetryTest {
             EmbType.System.Log.value to LogKind.LIVE,
         ).forEach { (type, kind) ->
             assertEquals(kind, association.kindOf(mapOf<String, Any>(EmbType.State.key to type)))
-            assertEquals(kind, association.kindOf(log(type)))
         }
         assertEquals(LogKind.LIVE, association.kindOf(emptyMap()))
         assertEquals(LogKind.LIVE, association.kindOf(mapOf<String, Any>("other" to EmbType.System.NativeCrash.value)))
@@ -230,24 +264,24 @@ internal class StateTelemetryTest {
     fun `the number on a log of a dead process becomes a long`() {
         val record = FakeReadWriteLogRecord()
         record.setStringAttribute(AppStateKeys.SEQ, "12")
-        association.writeDeadProcessSeq(record)
+        association.writeDeadProcessSeq(record, record.attributes)
         assertEquals(12L, record.attributes[AppStateKeys.SEQ])
     }
 
     @Test
     fun `a number on a log of a dead process that is absent or not a number is left alone`() {
         val absent = FakeReadWriteLogRecord()
-        association.writeDeadProcessSeq(absent)
+        association.writeDeadProcessSeq(absent, absent.attributes)
         assertEquals(emptyMap<String, Any>(), absent.attributes)
 
         val notANumber = FakeReadWriteLogRecord()
         notANumber.setStringAttribute(AppStateKeys.SEQ, "twelve")
-        association.writeDeadProcessSeq(notANumber)
+        association.writeDeadProcessSeq(notANumber, notANumber.attributes)
         assertEquals("twelve", notANumber.attributes[AppStateKeys.SEQ])
 
         val alreadyLong = FakeReadWriteLogRecord()
         alreadyLong.setLongAttribute(AppStateKeys.SEQ, 5L)
-        association.writeDeadProcessSeq(alreadyLong)
+        association.writeDeadProcessSeq(alreadyLong, alreadyLong.attributes)
         assertEquals(5L, alreadyLong.attributes[AppStateKeys.SEQ])
     }
 

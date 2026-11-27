@@ -35,7 +35,7 @@ fun createStateTelemetry(
     if (!configService.isAppStateEnabled()) {
         return null
     }
-    // the model's second step: spans linked to state, and changes replayed for the app's own exporters
+    // the model's second step: spans linked to state
     val associationEnabled = configService.isStateAssociationEnabled()
     // only a span given its own times reads the recent snapshots, so they are kept only where spans are linked
     val recorder = StateRecorder(clock, telemetryService, keepsWindow = associationEnabled)
@@ -52,6 +52,7 @@ fun createStateTelemetry(
         receivesLogs = externalOtelConfig::receivesLogs,
         associationEnabled = associationEnabled,
         onPlainStampSkipped = { telemetryService.trackAppliedLimit(PLAIN_STAMP_TELEMETRY_NAME, AppliedLimitType.DROP) },
+        receivesSpans = externalOtelConfig::receivesSpans,
     )
 }
 
@@ -59,28 +60,30 @@ fun createStateTelemetry(
 private const val PLAIN_STAMP_TELEMETRY_NAME = "state_log_stamp"
 
 /**
- * Starts replaying state changes to the app's own exporters as events, if the model's second step is on and the app registered
- * anything that receives log records. An app with only a span exporter gets none, and gets the values on its spans instead.
+ * Starts replaying state changes to the app's own exporters as events, if the app registered anything that receives log records.
+ * It is part of the model's first step: the events are what such an app gets in place of the state spans it is exported with the
+ * model off. An app with only a span exporter gets none, and gets the values on its spans instead, which takes the second step.
  *
- * [worker] is used for nothing else: an app's own log record processor runs on it for as long as it takes.
+ * [worker] is asked for only if the replay starts, and is used for nothing else: an app's own log record processor runs on it
+ * for as long as it takes.
  */
 fun startStateReplay(
     stateTelemetry: StateTelemetry,
     externalOtelConfig: ExternalOtelConfig,
     loggerProvider: Provider<Logger>,
-    worker: BackgroundWorker,
+    worker: Provider<BackgroundWorker>,
     processIdentifier: Provider<String>,
     errorHandler: ErrorHandler,
     telemetryService: InternalTelemetryService,
     rootContextProvider: Provider<Context>,
 ) {
-    if (!stateTelemetry.associationEnabled || !externalOtelConfig.receivesLogs()) {
+    if (!externalOtelConfig.receivesLogs()) {
         return
     }
     stateTelemetry.recorder.attach(
         StateReplayEmitter(
             loggerProvider = loggerProvider,
-            worker = worker,
+            worker = worker(),
             processIdentifier = processIdentifier,
             stateTelemetry = stateTelemetry,
             errorHandler = errorHandler,

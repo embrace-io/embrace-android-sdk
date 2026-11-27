@@ -28,6 +28,7 @@ import io.embrace.android.embracesdk.testframework.actions.EmbracePayloadAsserti
 import io.embrace.android.embracesdk.testframework.actions.EmbraceSetupInterface
 import io.opentelemetry.kotlin.aliases.OtelJavaLogRecordData
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Rule
@@ -179,6 +180,84 @@ internal class AppStateKnownDefectsTest(otelSdkMode: OtelSdkMode) {
         )
     }
 
+    /**
+     * Right behaviour: an app whose only exporter takes spans loses nothing it is exported with the model off when the first step
+     * is turned on. With the model off its exporter gets a span for each state.
+     *
+     * Today, with the first step alone and no log exporter registered, its exporter gets nothing of state: no span for a state,
+     * no change log, no value on a span and no link, because values on spans and links both take the second step.
+     */
+    @Test
+    fun `an app with only a span exporter gets no state of any kind at it with the first step alone`() {
+        testRule.runTest(
+            persistedRemoteConfig = appStateOn.copy(pctStateAssociationEnabled = 0f),
+            registerLogExporter = false,
+            testCaseAction = {
+                recordSession {
+                    findDataSource<TestStateDataSource>().onStateChange(newState = "foo", transitionTimeMs = clock.tick(100L))
+                    embrace.startSpan("ordinary")?.stop()
+                }
+            },
+            otelExportAssertion = {
+                val span = awaitSpans(1) { it.name == "ordinary" }.single().attributes.toStringMap()
+                assertTrue(span.keys.none { it.startsWith(AppStateKeys.STEM) })
+                assertTrue(
+                    awaitSpans(0) {
+                        it.name == AppStateKeys.CHANGE_LOG_SPAN_NAME ||
+                            it.name.startsWith("emb-state") ||
+                            it.attributes.toStringMap()[EmbType.State.key] == "state"
+                    }.isEmpty()
+                )
+            },
+        )
+    }
+
+    /**
+     * Right behaviour: a span that started before the recorder's window of recent snapshots, which so has no start number, is not
+     * given an end number by the next launch, as there is no start to pair it with.
+     *
+     * Today the next launch cannot tell it from a span that started before the first change, so in a part whose process linked
+     * spans it gives the span an end number though it has no start number.
+     */
+    @Test
+    fun `a span older than the window of snapshots that the process left running gets an end number and has no start number`() {
+        testRule.runTest(
+            persistedRemoteConfig = appStateOn,
+            testCaseAction = {
+                recordSession(endInBackground = false) {
+                    persistDueWrites()
+                    val state = findDataSource<TestStateDataSource>()
+                    val startedAt = clock.now()
+                    // more changes than the window of 64 snapshots holds, so that what held at the start is no longer known
+                    repeat(WINDOW_SIZE + 6) { i ->
+                        state.onStateChange(newState = "change-$i", transitionTimeMs = clock.tick(10L))
+                    }
+                    embrace.startSpan("older-than-window", null, startedAt)
+                    persistAfterOneInterval()
+                }
+                killProcess()
+            },
+            assertAction = {
+                assertEquals(0, getSessionEnvelopes(0).size)
+            },
+        )
+        testRule.services.networkConnectivityService.close()
+        testRule.services.otelSdkConfig.close()
+        testRule.services.workerThreadPool.close()
+        testRule.runTest(
+            persistedRemoteConfig = appStateOn,
+            testCaseAction = {},
+            assertAction = {
+                val deadPart = getSessionEnvelopes(1, assertOrdering = false).single()
+                val span = deadPart.findSpansByName("older-than-window").single()
+                assertNull(span.attribute(AppStateKeys.SEQ))
+                assertNotNull(span.attribute(AppStateKeys.END_SEQ))
+                // the process did link other spans
+                assertNotNull(deadPart.findSessionPartSpan().attribute(AppStateKeys.SEQ))
+            },
+        )
+    }
+
     private fun EmbraceActionInterface.persistAfterOneInterval() {
         clock.tick(DEFAULT_PERIODIC_CACHE_INTERVAL_MS)
         persistDueWrites()
@@ -220,6 +299,7 @@ internal class AppStateKnownDefectsTest(otelSdkMode: OtelSdkMode) {
             .sortedBy { it.findSessionPartSpan().startTimeNanos }
 
     internal companion object {
+        private const val WINDOW_SIZE = 64
         private const val JOURNALED_NOT_REPLAYED = "journaled-not-replayed"
         private val persistenceWorkers = listOf(
             Worker.Background.SessionPersistenceWorker,

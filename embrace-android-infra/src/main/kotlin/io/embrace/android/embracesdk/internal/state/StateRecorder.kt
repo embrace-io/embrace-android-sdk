@@ -119,12 +119,14 @@ class StateRecorder(
      */
     fun declare(definition: StateDefinition, initialValue: String, system: Boolean, timeMs: Long): Boolean {
         if (!StateDefinition.isValidName(definition.name)) {
+            telemetryService?.trackAppliedLimit(REFUSED_DECLARATION_TELEMETRY_NAME, AppliedLimitType.DROP)
             return false
         }
         val value = StateValues.cap(initialValue)
         synchronized(lock) {
             val before = snapshot
             if (before.indexOf(definition.name) >= 0) {
+                telemetryService?.trackAppliedLimit(REFUSED_DECLARATION_TELEMETRY_NAME, AppliedLimitType.DROP)
                 return false
             }
             val after = before.plus(definition, value, system, before.seq + 1, clock.now())
@@ -408,6 +410,9 @@ class StateRecorder(
 
         /** The name a change refused by the limit across every state is tracked under, apart from any state's own. */
         const val GLOBAL_LIMIT_TELEMETRY_NAME: String = "state_change"
+
+        /** The name a declaration that is refused, for its name or because the state is already declared, is tracked under. */
+        const val REFUSED_DECLARATION_TELEMETRY_NAME: String = "refused_state_declaration"
 
         /** The name an update or a report for a state nothing declared is tracked under. */
         const val UNDECLARED_STATE_TELEMETRY_NAME: String = "undeclared_state_update"

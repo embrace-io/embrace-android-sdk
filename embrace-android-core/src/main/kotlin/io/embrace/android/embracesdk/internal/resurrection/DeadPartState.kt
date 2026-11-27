@@ -11,10 +11,13 @@ import io.embrace.android.embracesdk.internal.session.persistence.lastListedStat
 import io.embrace.android.embracesdk.internal.state.AppStateKeys
 
 /**
- * What a dead session part's change log says of the process that left it. The change log is the span rendered from the journal the
- * process appended each state change to, so it holds what that process recorded up to the moment it died.
+ * What a dead session part says of the process that left it. Its change log is the span rendered from the journal the process
+ * appended each state change to, so it holds what that process recorded up to the moment it died.
+ *
+ * [linkedSpans] is whether that process linked spans to state. It is a fact about the dead process, which may have run with other
+ * switches than the process reading its part, so it is read from the part and never from this launch's configuration.
  */
-internal class DeadPartState(changeLog: Span) {
+internal class DeadPartState(changeLog: Span, private val linkedSpans: Boolean) {
 
     private val listed = lastListedStates(changeLog)
 
@@ -47,10 +50,15 @@ internal class DeadPartState(changeLog: Span) {
     /**
      * A span the dead process left running, completed with the last number in its change log as the end of its link, when that is
      * later than the number it started at. Without it, a span with no end number would read as one that nothing changed under.
+     *
+     * Nothing is added to the spans of a process that did not link spans to state: an end number alone would say that the span
+     * started before the first change and that every change since was made under it. In a process that did link them, a span with
+     * no start number is taken to have started before the first change. One that has none because its start was older than what
+     * the recorder still knew cannot be told from that, and is completed the same way.
      */
     fun completeLink(span: Span): Span {
         val last = lastSeq ?: return span
-        if (span.isStateChangeLog()) {
+        if (!linkedSpans || span.isStateChangeLog()) {
             return span
         }
         val attributes = span.attributes.orEmpty()
@@ -68,13 +76,24 @@ internal class DeadPartState(changeLog: Span) {
     companion object {
 
         /**
-         * What the change log in [deadPart] says, or null if the part has none, as when state was not being recorded.
+         * What [deadPart] says, or null if it has no change log, as when state was not being recorded.
          */
         fun of(deadPart: Envelope<SessionPartPayload>): DeadPartState? {
             val changeLog = deadPart.data.spanSnapshots?.firstOrNull { it.isStateChangeLog() }
                 ?: deadPart.data.spans?.firstOrNull { it.isStateChangeLog() }
-            return changeLog?.let(::DeadPartState)
+            return changeLog?.let { DeadPartState(it, deadPart.hasSpanLinkedToState()) }
         }
+
+        /**
+         * Whether the process that left this part linked spans to state, which shows as a start number on any span of the part
+         * that started after the first change. A part of such a process with no such span, one that died before any span
+         * started after its states were declared, reads as a part of a process that linked none.
+         */
+        private fun Envelope<SessionPartPayload>.hasSpanLinkedToState(): Boolean =
+            data.spans?.any { it.hasStartNumber() } == true || data.spanSnapshots?.any { it.hasStartNumber() } == true
+
+        private fun Span.hasStartNumber(): Boolean =
+            !isStateChangeLog() && attributes?.findAttributeValue(AppStateKeys.SEQ) != null
     }
 }
 

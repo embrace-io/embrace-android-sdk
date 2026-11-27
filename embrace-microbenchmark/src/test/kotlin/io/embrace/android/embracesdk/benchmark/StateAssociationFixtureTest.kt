@@ -29,11 +29,12 @@ internal class StateAssociationFixtureTest {
     }
 
     @Test
-    fun `the first step stamps a log for Embrace and the app's exporter and links no span`() {
+    fun `the first step stamps a log, replays every change and links no span`() {
         StateAssociationFixture(states, StateAssociationMode.FIRST_STEP).use { fixture ->
             fixture.startAndEndSpan()
             fixture.recordLog()
-            val exported = fixture.exportedWhen { it.spans == 1 && it.logs == 1 }
+            // the part's snapshot and each state's first change
+            val exported = fixture.exportedWhen { it.spans == 1 && it.logs == 1 && it.stateEvents >= 1 + states }
             val stored = fixture.storedLogAttributes().single()
             assertTrue(stored.containsKey(AppStateKeys.PACKED))
             assertTrue(stored.containsKey(AppStateKeys.SEQ))
@@ -41,7 +42,7 @@ internal class StateAssociationFixtureTest {
             assertTrue(fixture.stampLogPacked().isNotEmpty())
             assertEquals(0, exported.spansLinked)
             assertEquals(1, exported.logsStamped)
-            assertEquals(0, exported.stateEvents)
+            assertEquals(1 + states, exported.stateEvents)
         }
     }
 

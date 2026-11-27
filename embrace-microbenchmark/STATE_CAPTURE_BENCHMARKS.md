@@ -16,9 +16,11 @@ each change is appended to a journal file of the session part as a small record,
 change log span is rendered when the part is read back for delivery. The model has two switches, which the benchmarks
 set through the resolved config the SDK is put together from:
 
-- The **first step** (`AppStateConfig.enabled`): the recorder, the journal, the change log, and the stamp on every log.
-- The **second step** (`AppStateConfig.associationEnabled`): the link on every span, the values on spans in the verbose
-  rendering, and each change replayed as an event for the app's own log exporters.
+- The **first step** (`AppStateConfig.enabled`): the recorder, the journal, the change log, the stamp on every log, and
+  each change and part snapshot replayed as an event for the app's own log exporters, where the app has one.
+- The **second step** (`AppStateConfig.associationEnabled`): spans only. The link on every span, the values on spans in
+  the verbose rendering (which also needs the app to have something that receives spans), and the recorder's window of
+  recent snapshots.
 
 Bytes on disk and in the payload are measured by JVM tests and do not need a device. What is missing is time: how many
 microseconds each approach costs on real hardware, and whether that cost grows as changes accumulate. The numbers need
@@ -77,7 +79,7 @@ ANDROID_SERIAL=<serial> ./gradlew :embrace-microbenchmark:connectedReleaseAndroi
   '-Pandroid.testInstrumentationRunnerArguments.tests_regex=.*NaiveOtelStateBenchmarks#.*'
 ```
 
-By their parameter lists `StateAssociationBenchmarks` is 74 benchmarks and 52 cases skipped, and
+By their parameter lists `StateAssociationBenchmarks` is 78 benchmarks and 48 cases skipped, and
 `NaiveOtelStateBenchmarks` 27 and 3 (also not observed on a device). The summary script below does not read them: read their
 `benchmarkData.json` directly.
 
@@ -169,8 +171,9 @@ change between them, and the floor with no states.
       renders its change log span here, so this is the cost it moved out of the session part change. Set it beside the
       difference in `changeSessionPartAfterTransitions`.
    11. `StateAssociationBenchmarks`, against its `NONE` rows: what does the second step add to a span
-       (`startAndEndSpan`), to a log (`recordLog`) and to reporting a change (`reportChanges`), in each rendering, and
-       how does each grow with the number of states? `FIRST_STEP` rows are what the stamp alone costs.
+       (`startAndEndSpan`), in each rendering, and how does it grow with the number of states? What do the stamp on a
+       log (`recordLog`) and the replay of a change (`reportChanges`, `reportChangesAndEmitEvents`) cost in `FIRST_STEP`,
+       which has both and no link on a span?
    12. `NaiveOtelStateBenchmarks`: the same measurements for states recorded as an app could without the model, with a
        holder for each state, a stamp on every span and log, and a log for every change. Set its `recordSpans`,
        `recordLogs` and `transitions` beside the journal's.
@@ -190,7 +193,8 @@ the harness makes the model's `StateTelemetry` and recorder with the SDK's own `
 is on), and a session part change that calls what the SDK's orchestrator calls, in its order. A session part change here
 is what the change asks of state capture, of the session part span and of the part writer, on the thread that makes it.
 Reading a part back is measured on its own with `SessionReconstructionService`, and serializing and sending it are left
-out. The model's first step alone is on for the journal; the second step is `StateAssociationBenchmarks`'s.
+out. The model's first step alone is on for the journal, with no app exporter registered, so nothing is replayed; the second step
+and the replay are `StateAssociationBenchmarks`'s.
 
 The span-per-state side runs with its limit on changes lifted from 100 for each state to 10,000, so that it can be
 measured at 500 and 1,500 changes at all. In production a state stops recording at 100, or 1,000 for navigation. The
@@ -211,9 +215,10 @@ journal side has the same per-state limit, and the 10,000 limit on a part's chan
 `StateAssociationBenchmarks` uses `StateAssociationFixture`: the real recorder, `StateTelemetry`, `startStateReplay`, span
 factory and log pipeline, with an app's span exporter and log exporter that read what they are handed and keep a count.
 Nothing is persisted, and the recorder's journal discards what it is given. Its modes are the model's switches and what
-the app registered: `NONE` (model off, the floor, no states), `FIRST_STEP` (a log is stamped), `NO_APP_LOG_EXPORTER`
-(both steps, an app with only a span exporter, which gets the values on its spans and no replay), `ASSOCIATION` and
-`VERBOSE` (both steps, each rendering, with a log exporter). `StateAssociationFixtureTest` checks on the JVM that each mode
+the app registered: `NONE` (model off, the floor, no states), `FIRST_STEP` (a log is stamped and every change is replayed
+to the app's log exporter; no span is linked), `NO_APP_LOG_EXPORTER` (both steps, an app with only a span exporter, which
+gets the values on its spans and no replay), `ASSOCIATION` and `VERBOSE` (both steps, each rendering, with a log exporter).
+The rendering of a replayed change in `FIRST_STEP` is the association one: it has no verbose variant here. `StateAssociationFixtureTest` checks on the JVM that each mode
 does what its name says. An app's exporters run on the SDK's export thread, which no benchmark waits for.
 
 | Benchmark | One measured run is | It stands for |
@@ -222,7 +227,7 @@ does what its name says. An app's exporters run on the SDK's export thread, whic
 | `recordLog` | Emitting one log through the real pipeline | What a log pays for both stamps: packed for Embrace, one attribute for each state for the app's exporter |
 | `stampLog` | Building the plain stamp of one log, for `FIRST_STEP` only | What an app's exporter gets, built apart from the pipeline, to compare with `stampLogPacked` |
 | `stampLogPacked` | Building the packed stamp of one log, for `FIRST_STEP` only | What Embrace's payload gets |
-| `reportChanges` | 50 changes in the value of one state, each batch in a part of its own, the event worker held | What the reporting thread pays for a change: with a replay, queueing the event |
+| `reportChanges` | 50 changes in the value of one state, each batch in a part of its own, the event worker held | What the reporting thread pays for a change: with a replay (every mode but `NONE` and `NO_APP_LOG_EXPORTER`), queueing the event |
 | `reportChangesAndEmitEvents` | The same, and the events built and emitted before the run ends | With `reportChanges` taken away, what the events cost on the worker that emits them. The two threads overlap, so the allocation count is not the reporting thread's alone. |
 
 `NaiveOtelStateBenchmarks` uses `NaiveOtelStateFixture`, which records states with the model off, as an app could with
@@ -242,7 +247,7 @@ way of recording, as the difference from the same session part with no states. R
 ## What was not ported
 
 - The other proof of concept had a third rendering for the app's exporters, in which the export mode was `OFF`: spans
-  linked and logs stamped but no event for a change. This implementation has no such rendering (association off is the
-  first step alone, which also links no span), so `StateAssociationMode` has no counterpart of it.
+  linked and logs stamped but no event for a change. This implementation has no such rendering (the second step is spans
+  only, and the first step replays changes), so `StateAssociationMode` has no counterpart of it.
 - Nothing in this module drives the end-to-end export to a real OpenTelemetry Collector. See
   `scripts/state-otlp/` and `StateOtlpExportHarnessTest` for that.

@@ -2,15 +2,16 @@
 # Runs the SDK's OTLP harness in one rendering against a fresh OpenTelemetry Collector, and keeps what the Collector
 # wrote. Run from the repository root:
 #
-#   OTELCOL=/path/to/otelcol-contrib scripts/state-otlp/run.sh VERBOSE|ASSOCIATION|FIRST_STEP [output directory]
+#   OTELCOL=/path/to/otelcol-contrib scripts/state-otlp/run.sh VERBOSE|ASSOCIATION|FIRST_STEP|FIRST_STEP_VERBOSE [output directory]
 #
 # The Collector is the contrib distribution, since the statements in collector.yaml need its transform processor. What
 # arrived is in raw-traces.jsonl and raw-logs.jsonl, and what the statements made of it in ottl-traces.jsonl and
 # ottl-logs.jsonl. scripts/state-otlp/measure.py reads the first two.
 #
-# FIRST_STEP is the app state data model's first step alone: a log is stamped, and no span is linked and no change replayed.
+# FIRST_STEP is the app state data model's first step alone: a log is stamped and every change is replayed, and no span is
+# linked. FIRST_STEP_VERBOSE is the same with every value on a replayed change.
 set -u
-MODE=${1:?VERBOSE, ASSOCIATION or FIRST_STEP}
+MODE=${1:?VERBOSE, ASSOCIATION, FIRST_STEP or FIRST_STEP_VERBOSE}
 export STATE_OTLP_OUT=${2:-$PWD/build/state-otlp/$MODE}
 OTELCOL=${OTELCOL:-otelcol-contrib}
 rm -rf "$STATE_OTLP_OUT"; mkdir -p "$STATE_OTLP_OUT"

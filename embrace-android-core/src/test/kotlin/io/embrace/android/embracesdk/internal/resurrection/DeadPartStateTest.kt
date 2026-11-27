@@ -2,6 +2,7 @@ package io.embrace.android.embracesdk.internal.resurrection
 
 import io.embrace.android.embracesdk.fakes.fakeIncompleteSessionEnvelope
 import io.embrace.android.embracesdk.internal.arch.schema.EmbType
+import io.embrace.android.embracesdk.internal.otel.sdk.findAttributeValue
 import io.embrace.android.embracesdk.internal.payload.Attribute
 import io.embrace.android.embracesdk.internal.payload.Envelope
 import io.embrace.android.embracesdk.internal.payload.SessionPartPayload
@@ -42,7 +43,7 @@ internal class DeadPartStateTest {
 
     @Test
     fun `the stamp is the last value of each state, which of them the SDK generated, and the last number`() {
-        val stamp = DeadPartState(changeLog()).stamp()
+        val stamp = deadPartState(changeLog()).stamp()
 
         assertEquals(
             mapOf(
@@ -57,7 +58,7 @@ internal class DeadPartStateTest {
 
     @Test
     fun `the stamp is the opening values when the part listed no change`() {
-        val stamp = DeadPartState(changeLog(events = emptyList())).stamp()
+        val stamp = deadPartState(changeLog(events = emptyList())).stamp()
 
         assertEquals(
             mapOf(
@@ -81,7 +82,7 @@ internal class DeadPartStateTest {
                 "${AppStateKeys.VALUE_TYPE_PREFIX}screen-automatic" to AppStateKeys.VALUE_TYPE_SYSTEM,
                 AppStateKeys.SEQ to "5",
             ),
-            DeadPartState(limited).stamp(),
+            deadPartState(limited).stamp(),
         )
     }
 
@@ -89,34 +90,34 @@ internal class DeadPartStateTest {
     fun `the stamp is empty when the limit across every state is stated`() {
         val limited = changeLog(extraAttributes = listOf(Attribute(AppStateKeys.GLOBAL_CHANGE_LIMIT, "10000")))
 
-        assertEquals(emptyMap<String, String>(), DeadPartState(limited).stamp())
+        assertEquals(emptyMap<String, String>(), deadPartState(limited).stamp())
     }
 
     @Test
     fun `the stamp is empty when the change log lists no states`() {
         val empty = changeLog(initialValues = emptyList(), events = emptyList())
 
-        assertEquals(emptyMap<String, String>(), DeadPartState(empty).stamp())
+        assertEquals(emptyMap<String, String>(), deadPartState(empty).stamp())
     }
 
     @Test
     fun `the last number is that of the last listed change, or the initial number with none`() {
-        assertEquals(5L, DeadPartState(changeLog()).lastSeq)
-        assertEquals(3L, DeadPartState(changeLog(events = emptyList())).lastSeq)
+        assertEquals(5L, deadPartState(changeLog()).lastSeq)
+        assertEquals(3L, deadPartState(changeLog(events = emptyList())).lastSeq)
     }
 
     @Test
     fun `with the limit across every state stated the last number still comes from the change log`() {
         val limit = Attribute(AppStateKeys.GLOBAL_CHANGE_LIMIT, "10000")
 
-        assertEquals(5L, DeadPartState(changeLog(extraAttributes = listOf(limit))).lastSeq)
-        assertEquals(3L, DeadPartState(changeLog(events = emptyList(), extraAttributes = listOf(limit))).lastSeq)
-        assertNull(DeadPartState(changeLog(initialSeq = null, events = emptyList(), extraAttributes = listOf(limit))).lastSeq)
+        assertEquals(5L, deadPartState(changeLog(extraAttributes = listOf(limit))).lastSeq)
+        assertEquals(3L, deadPartState(changeLog(events = emptyList(), extraAttributes = listOf(limit))).lastSeq)
+        assertNull(deadPartState(changeLog(initialSeq = null, events = emptyList(), extraAttributes = listOf(limit))).lastSeq)
     }
 
     @Test
     fun `a span the process left running gets the last number as its end number`() {
-        val state = DeadPartState(changeLog())
+        val state = deadPartState(changeLog())
 
         val completed = state.completeLink(span(seq = "3"))
 
@@ -128,23 +129,63 @@ internal class DeadPartStateTest {
 
     @Test
     fun `a span with no start number gets the last number as its end number`() {
-        val completed = DeadPartState(changeLog()).completeLink(span(seq = null))
+        val completed = deadPartState(changeLog()).completeLink(span(seq = null))
 
         assertEquals(listOf(Attribute("custom", "x"), Attribute(AppStateKeys.END_SEQ, "5")), completed.attributes)
+    }
+
+    @Test
+    fun `a span of a process that linked no spans is left as it is`() {
+        // an end number alone would say the span started before the first change and that every change was made under it
+        val span = span(seq = null)
+
+        assertSame(span, deadPartState(changeLog(), linkedSpans = false).completeLink(span))
+    }
+
+    @Test
+    fun `a part is of a process that linked spans when any of its spans or snapshots has a start number`() {
+        val changeLog = changeLog()
+        fun part(
+            spans: List<Span>,
+            snapshots: List<Span>,
+        ) = Envelope(data = SessionPartPayload(spans = spans, spanSnapshots = snapshots))
+        val unlinked = span(seq = null)
+
+        // the process left a running span with a start number: its spans are completed, the one with no start number too
+        val linkedBySnapshot =
+            checkNotNull(DeadPartState.of(part(emptyList(), listOf(changeLog, span(seq = "3"), unlinked))))
+        assertEquals("5", linkedBySnapshot.completeLink(unlinked).attributes.orEmpty().findAttributeValue(AppStateKeys.END_SEQ))
+
+        // a span the process had finished shows it as well
+        val linkedByFinishedSpan =
+            checkNotNull(DeadPartState.of(part(listOf(span(seq = "3")), listOf(changeLog, unlinked))))
+        assertEquals("5", linkedByFinishedSpan.completeLink(unlinked).attributes.orEmpty().findAttributeValue(AppStateKeys.END_SEQ))
+
+        // no span has a start number: the process did not link spans, so none is given an end
+        val notLinked = checkNotNull(DeadPartState.of(part(listOf(unlinked), listOf(changeLog, unlinked))))
+        assertSame(unlinked, notLinked.completeLink(unlinked))
+
+        // the stamp of a native crash's log does not depend on it
+        assertEquals("5", notLinked.stamp()[AppStateKeys.SEQ])
+    }
+
+    @Test
+    fun `a part with no change log says nothing of its process`() {
+        assertNull(DeadPartState.of(Envelope(data = SessionPartPayload(spans = listOf(span(seq = "3")), spanSnapshots = emptyList()))))
     }
 
     @Test
     fun `a span that already has an end number is left as it is`() {
         val span = span(seq = "3", endSeq = "4")
 
-        assertSame(span, DeadPartState(changeLog()).completeLink(span))
+        assertSame(span, deadPartState(changeLog()).completeLink(span))
     }
 
     @Test
     fun `a span that started at the last number is left as it is`() {
         val atLast = span(seq = "5")
         val afterLast = span(seq = "6")
-        val state = DeadPartState(changeLog())
+        val state = deadPartState(changeLog())
 
         assertSame(atLast, state.completeLink(atLast))
         assertSame(afterLast, state.completeLink(afterLast))
@@ -154,7 +195,7 @@ internal class DeadPartStateTest {
     fun `the change log itself is left as it is`() {
         val changeLog = changeLog()
 
-        assertSame(changeLog, DeadPartState(changeLog).completeLink(changeLog))
+        assertSame(changeLog, deadPartState(changeLog).completeLink(changeLog))
     }
 
     @Test
@@ -163,8 +204,10 @@ internal class DeadPartStateTest {
             changeLog(initialSeq = null, events = emptyList(), extraAttributes = listOf(Attribute(AppStateKeys.GLOBAL_CHANGE_LIMIT, "1")))
         val span = span(seq = "3")
 
-        assertSame(span, DeadPartState(unknown).completeLink(span))
+        assertSame(span, deadPartState(unknown).completeLink(span))
     }
+
+    private fun deadPartState(changeLog: Span, linkedSpans: Boolean = true) = DeadPartState(changeLog, linkedSpans)
 
     private fun span(seq: String?, endSeq: String? = null) = Span(
         spanId = "span-id",

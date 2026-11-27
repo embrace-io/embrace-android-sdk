@@ -823,7 +823,7 @@ internal fun createRealSdkInstance(
                 stateTelemetry = stateTelemetry,
                 externalOtelConfig = preStartServices.externalOtelConfig,
                 loggerProvider = { otelSdkWrapper.value.sdkLogger },
-                worker = workerThreadPool.backgroundWorker(Worker.Background.StateExportWorker),
+                worker = { workerThreadPool.backgroundWorker(Worker.Background.StateExportWorker) },
                 processIdentifier = { otelSdkConfig.value.processIdentifier },
                 errorHandler = errorHandler,
                 telemetryService = telemetryService,

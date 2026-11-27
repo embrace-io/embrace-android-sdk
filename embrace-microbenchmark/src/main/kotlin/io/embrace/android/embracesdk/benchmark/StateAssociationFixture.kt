@@ -28,7 +28,8 @@ import java.util.concurrent.TimeUnit
 
 /**
  * How telemetry is associated with state in a benchmark, by the two switches of the app state data model and what the app
- * registered to receive telemetry. [exportMode] is the rendering the app's own exporters are given, as the config names it:
+ * registered to receive telemetry. The first step stamps logs and replays changes; the second links spans. [exportMode] is
+ * the rendering the app's own exporters are given, as the config names it:
  * empty leaves the SDK to choose by what the app registered, which is the verbose rendering where the app has a span exporter
  * and no log exporter.
  */
@@ -45,7 +46,7 @@ enum class StateAssociationMode(
     NONE(firstStep = false, secondStep = false, exportMode = ""),
 
     /**
-     * The first step alone: a log is stamped, a span is not linked and nothing is replayed.
+     * The first step alone: a log is stamped and every change is replayed to the app's log exporter, and a span is not linked.
      */
     FIRST_STEP(firstStep = true, secondStep = false, exportMode = ""),
 
@@ -66,19 +67,20 @@ enum class StateAssociationMode(
     ;
 
     /**
-     * Whether a change is replayed as an event for the app's log exporter.
+     * Whether a change is replayed as an event for the app's log exporter, which the first step does for an app that has one.
      */
-    internal val replaysChanges: Boolean get() = secondStep && appLogExporter
+    internal val replaysChanges: Boolean get() = firstStep && appLogExporter
 }
 
 /**
- * [stateCount] states that telemetry is associated with as [mode] says: a span by the number of the last state change before
- * it started and before it ended, and a log by the packed attribute in Embrace's payload and, where an app has a log exporter,
- * one attribute for each state on what that exporter is handed.
+ * [stateCount] states that telemetry is associated with as [mode] says: a span, with the second step, by the number of the last
+ * state change before it started and before it ended, and a log by the packed attribute in Embrace's payload and, where an app
+ * has a log exporter, one attribute for each state on what that exporter is handed. With the first step, changes are also
+ * replayed to that exporter.
  *
  * It runs the SDK's real recorder, with the telemetry the SDK makes of it (`createStateTelemetry`, `startStateReplay`), its span
  * stack and its logging pipeline, with an app's span exporter and log exporter that read what they are handed and keep nothing. It
- * persists nothing, so what a benchmark measures here is the association alone. The recorder has a session part open and a
+ * persists nothing, so what a benchmark measures here is the association and the replay alone. The recorder has a session part open and a
  * journal that takes any number of changes and discards them, as it would behave in an app. [startPart] opens the next part,
  * which a long run needs for the recorder's limit on the changes of one part.
  *

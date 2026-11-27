@@ -234,6 +234,24 @@ internal class EmbraceLogRecordProcessorTest {
     }
 
     @Test
+    fun `a record with the replay context and any other event name is an ordinary log`() {
+        // a log that an app's own log record processor emits with the context it was handed has the mark and not the name
+        val replayed = mutableListOf<LogRecordData>()
+        listOf("another.event", null).forEach { eventName ->
+            val log = FakeReadWriteLogRecord(eventName = eventName).apply {
+                setStringAttribute(EmbType.State.key, EmbType.State.value)
+            }
+
+            replayProcessor(replayed::addAll).onEmit(log, replayContext())
+
+            assertNotNull(log.attributes[LogAttributes.LOG_RECORD_UID])
+            assertSame(log, logRecordExporter.exportedLogs.last())
+        }
+        assertTrue(replayed.isEmpty())
+        assertEquals(2, logRecordExporter.exportedLogs.size)
+    }
+
+    @Test
     fun `a context carrying another key is not the replay context`() {
         val replayed = mutableListOf<LogRecordData>()
         val log = FakeReadWriteLogRecord()

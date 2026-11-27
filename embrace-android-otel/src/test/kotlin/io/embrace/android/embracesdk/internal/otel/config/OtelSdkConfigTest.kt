@@ -145,8 +145,8 @@ internal class OtelSdkConfigTest {
     }
 
     @Test
-    fun `a replayed record skips Embrace's store only when the second step is on`() {
-        fun emitReplay(associationEnabled: Boolean): Triple<Int, Int, Boolean> {
+    fun `a replayed record skips Embrace's store whenever the model is on, with the second step or without it`() {
+        fun emitReplay(stateTelemetry: StateTelemetry?): Triple<Int, Int, Boolean> {
             val sink = LogSinkImpl(FakeErrorHandler())
             val external = FakeLogRecordExporter()
             val configuration = OtelSdkConfig(
@@ -160,11 +160,7 @@ internal class OtelSdkConfigTest {
                 uuidSource = TestUuidSource(),
                 externalExportDispatcher = immediateExportDispatcher(),
                 externalConfig = ExternalOtelConfig().apply { addLogExporter(external) },
-                stateTelemetry = StateTelemetry(
-                    StateRecorder(FakeClock()),
-                    exportMode = { StateExportMode.ASSOCIATION },
-                    associationEnabled = associationEnabled,
-                ),
+                stateTelemetry = stateTelemetry,
             )
             val log = FakeReadWriteLogRecord(eventName = AppStateKeys.CHANGE_EVENT_NAME)
             val replayContext = fakeOpenTelemetry(OtelSdkMode.REGULAR).context.root().markedAsStateReplay()
@@ -178,10 +174,17 @@ internal class OtelSdkConfigTest {
             )
         }
 
-        // replayed: only the app's exporter gets it, and it is not given a log id
-        assertEquals(Triple(0, 1, false), emitReplay(associationEnabled = true))
-        // not replayed: the mark means nothing, so it is an ordinary log that is stored and exported
-        assertEquals(Triple(1, 1, true), emitReplay(associationEnabled = false))
+        fun telemetry(associationEnabled: Boolean) = StateTelemetry(
+            StateRecorder(FakeClock()),
+            exportMode = { StateExportMode.ASSOCIATION },
+            associationEnabled = associationEnabled,
+        )
+
+        // replayed: only the app's exporter gets it, and it is not given a log id, whichever steps are on
+        assertEquals(Triple(0, 1, false), emitReplay(telemetry(associationEnabled = true)))
+        assertEquals(Triple(0, 1, false), emitReplay(telemetry(associationEnabled = false)))
+        // the model is off: the mark means nothing, so it is an ordinary log that is stored and exported
+        assertEquals(Triple(1, 1, true), emitReplay(null))
     }
 
     private fun config(externalConfig: ExternalOtelConfig) = OtelSdkConfig(

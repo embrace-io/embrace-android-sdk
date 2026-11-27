@@ -54,8 +54,8 @@ import java.util.concurrent.ConcurrentLinkedQueue
  *
  * - `EMBRACE_OTLP_ENDPOINT`: where to send, such as `http://localhost:4318`. Spans go to `/v1/traces` under it and log
  *   records, the state events among them, to `/v1/logs`.
- * - `EMBRACE_STATE_EXPORT_MODE`: `ASSOCIATION`, which is the default, `VERBOSE` or `FIRST_STEP`, which is the app state data
- *   model's first step alone: a log is stamped, and no span is linked and no change is replayed.
+ * - `EMBRACE_STATE_EXPORT_MODE`: `ASSOCIATION`, which is the default, `VERBOSE`, `FIRST_STEP` or `FIRST_STEP_VERBOSE`. The
+ *   last two are the app state data model's first step alone: a log is stamped and every change is replayed, and no span is linked.
  * - `EMBRACE_OTLP_TIME`: `fixed` starts the scenario at the fixed time tests run at, which is in 1975. Otherwise it starts
  *   at the current time, as whatever is behind the endpoint may turn old telemetry away.
  *
@@ -165,21 +165,27 @@ internal class StateOtlpExportHarnessTest {
     }
 
     @Test
-    fun `first step - what is posted has the stamp on a log, and no link on a span and no event`() {
+    fun `first step - what is posted has the stamp on a log and each change as an event, and nothing on a span`() {
         val posted = postScenario(Rendering.FIRST_STEP)
+        posted.assertFirstStepOnly()
 
-        assertEquals(emptyList<JsonObject>(), posted.logRecords.filter { it["eventName"] != null })
-        posted.spans.forEach { span ->
-            assertNull(span.name(), span.attribute(SEQUENCE))
-            assertNull(span.name(), span.attribute(END_SEQUENCE))
-            assertEquals(span.name(), emptyMap<String, String>(), span.strings(VALUE_PREFIX) + span.strings(END_VALUE_PREFIX))
+        // the changes and snapshots are replayed with the first step, each change carrying the change alone
+        posted.events(CHANGE_EVENT).forEach { change ->
+            assertEquals(emptyMap<String, String>(), change.strings(VALUE_PREFIX))
         }
-        // a log made with a state in force says which, in the form an app's exporter takes: a number and a value for each state
-        val log = posted.logRecords.single { it.body() == "Review photo upload took longer than expected" }
-        assertNotNull(log.long(SEQUENCE))
-        assertTrue(log.strings(VALUE_PREFIX).keys.containsAll(listOf("network", "screen-automatic")))
-        // the sequence belongs to this process, and the Resource says which, though nothing is replayed that needs it
-        posted.resources.forEach { resource -> assertNotNull(resource.attribute(PROCESS_IDENTIFIER)) }
+        assertEquals(2, posted.events(SNAPSHOT_EVENT).size)
+        assertTrue(posted.events(CHANGE_EVENT).isNotEmpty())
+    }
+
+    @Test
+    fun `first step, verbose - a replayed change carries every value though no span carries anything`() {
+        val posted = postScenario(Rendering.FIRST_STEP_VERBOSE)
+        posted.assertFirstStepOnly()
+
+        assertTrue(posted.events(CHANGE_EVENT).isNotEmpty())
+        posted.events(CHANGE_EVENT).forEach { change ->
+            assertTrue(change.strings(VALUE_PREFIX).keys.containsAll(listOf("network", "power", "screen-automatic")))
+        }
     }
 
     @Test
@@ -372,6 +378,27 @@ internal class StateOtlpExportHarnessTest {
     }
 
     /**
+     * What the first step alone gives, whatever the rendering: no span has a number or a value, a log has the number and one
+     * attribute for each state, and every event and the Resource say which process the states belong to.
+     */
+    private fun Posted.assertFirstStepOnly() {
+        spans.forEach { span ->
+            assertNull(span.name(), span.attribute(SEQUENCE))
+            assertNull(span.name(), span.attribute(END_SEQUENCE))
+            assertEquals(span.name(), emptyMap<String, String>(), span.strings(VALUE_PREFIX) + span.strings(END_VALUE_PREFIX))
+        }
+        val log = logRecords.single { it.body() == "Review photo upload took longer than expected" }
+        assertNotNull(log.long(SEQUENCE))
+        assertTrue(log.strings(VALUE_PREFIX).keys.containsAll(listOf("network", "screen-automatic")))
+        val processIdentifier = checkNotNull(resources.first().string(PROCESS_IDENTIFIER))
+        resources.forEach { resource -> assertEquals(processIdentifier, resource.string(PROCESS_IDENTIFIER)) }
+        (events(CHANGE_EVENT) + events(SNAPSHOT_EVENT)).forEach { event ->
+            assertEquals(processIdentifier, event.string(ENTITY_ID))
+        }
+        assertEquals(logRecords.count { it["eventName"] != null }, events(CHANGE_EVENT).size + events(SNAPSHOT_EVENT).size)
+    }
+
+    /**
      * The events are the value of every state when each of the two session parts started, and every change made during a
      * session part, each once and in order. A change made with no session part in progress has no event, and the next
      * snapshot has the value it left. Replaying each part's changes from its snapshot gives the value of every state as of
@@ -553,8 +580,11 @@ internal class StateOtlpExportHarnessTest {
      * How the app state data model is switched for a run, and so what an app's exporters are given.
      */
     private enum class Rendering(val secondStep: Boolean, val exportMode: String?) {
-        /** The first step alone. */
+        /** The first step alone: changes are replayed, with the change alone on an event, and no span carries anything. */
         FIRST_STEP(secondStep = false, exportMode = null),
+
+        /** The first step alone, with every value on a replayed change too. */
+        FIRST_STEP_VERBOSE(secondStep = false, exportMode = "verbose"),
 
         /** Both steps, with a span carrying the two numbers alone and a change event the change alone. */
         ASSOCIATION(secondStep = true, exportMode = "association"),

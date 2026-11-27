@@ -70,6 +70,8 @@ internal class StateRecorderTest {
 
         assertEquals(1L, recorder.current().seq)
         assertEquals("wifi", recorder.current().value(0))
+        // each of the four refused declarations is counted, so that a state that never appears can be traced to one
+        assertEquals(List(4) { "refused_state_declaration" to AppliedLimitType.DROP }, telemetryService.appliedLimits)
     }
 
     @Test

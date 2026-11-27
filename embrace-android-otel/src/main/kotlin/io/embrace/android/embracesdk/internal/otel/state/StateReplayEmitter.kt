@@ -116,7 +116,7 @@ class StateReplayEmitter(
             if (change != null) {
                 setChange(change)
             }
-            if (change == null || stateTelemetry.isVerbose()) {
+            if (change == null || stateTelemetry.isVerboseReplay()) {
                 setValues(pending.snapshot)
             }
         }

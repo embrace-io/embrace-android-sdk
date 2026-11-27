@@ -88,16 +88,18 @@ internal class AppStateStepsTest(otelSdkMode: OtelSdkMode) {
 
     private val firstStepOnlyVerbose = firstStepOnly.copy(stateExportMode = "verbose")
 
+    private val bothSteps = firstStepOnly.copy(pctStateAssociationEnabled = 100f)
+
     private val secondStepOnly = firstStepOnly.copy(pctSharedStateSpanEnabled = 0f, pctStateAssociationEnabled = 100f)
 
     @Test
-    fun `with the first step alone the change log and the stamp on a log are there and no span is linked to state`() {
-        runFirstStepOnly(firstStepOnly)
+    fun `with the first step alone the change log, the stamp and the replay are there and no span is linked to state`() {
+        runFirstStepOnly(firstStepOnly, verbose = false)
     }
 
     @Test
-    fun `with the first step alone the verbose rendering adds no state values to spans`() {
-        runFirstStepOnly(firstStepOnlyVerbose)
+    fun `with the first step alone the verbose rendering puts every value on a replayed change and none on a span`() {
+        runFirstStepOnly(firstStepOnlyVerbose, verbose = true)
     }
 
     @Test
@@ -141,6 +143,43 @@ internal class AppStateStepsTest(otelSdkMode: OtelSdkMode) {
             assertNull(leftRunning.attribute(AppStateKeys.END_SEQ))
             assertNull(deadEnvelope.findSessionPartSpan().attribute(AppStateKeys.END_SEQ))
             assertTrue(deadEnvelope.allSpans().none { it.hasLink() })
+        }
+    }
+
+    @Test
+    fun `a part that died with the first step alone gets no end number from a launch with both steps on, and its native crash is still stamped`() {
+        val crash = killedInANativeCrashedPart(firstLaunchConfig = firstStepOnly)
+        relaunch(
+            instrumentedConfig = nativeCrashConfig,
+            remoteConfig = bothSteps,
+            setupAction = { setupFakeNativeCrash(TestPlatformSerializer(), storedNativeCrash(crash, getClock().now())) },
+        ) {
+            val deadEnvelope = getSessionEnvelopes(1).single()
+            // none of what the dead process left has a link to complete, the session part span included
+            assertTrue(deadEnvelope.allSpans().none { it.attribute(AppStateKeys.END_SEQ) != null })
+            assertNull(deadEnvelope.findSpanByName("left-running").attribute(AppStateKeys.SEQ))
+
+            val crashLog = checkNotNull(getSingleLogEnvelope().getLogOfType(EmbType.System.NativeCrash).attributes)
+            assertEquals("checkout;step=2" to false, crashLog.packedState("test"))
+        }
+    }
+
+    @Test
+    fun `a part that died with both steps on gets its end numbers from a launch with the first step alone`() {
+        val crash = killedInANativeCrashedPart(firstLaunchConfig = bothSteps)
+        relaunch(
+            instrumentedConfig = nativeCrashConfig,
+            remoteConfig = firstStepOnly,
+            setupAction = { setupFakeNativeCrash(TestPlatformSerializer(), storedNativeCrash(crash, getClock().now())) },
+        ) {
+            val deadEnvelope = getSessionEnvelopes(1).single()
+            val changeLog = deadEnvelope.findSpanByName(AppStateKeys.CHANGE_LOG_SPAN_NAME)
+            val lastSeq = checkNotNull(changeLog.events).last().attribute(AppStateKeys.SEQ)
+
+            val leftRunning = deadEnvelope.findSpanByName("left-running")
+            assertNotNull(leftRunning.attribute(AppStateKeys.SEQ))
+            assertEquals(lastSeq, leftRunning.attribute(AppStateKeys.END_SEQ))
+            assertEquals(lastSeq, deadEnvelope.findSessionPartSpan().attribute(AppStateKeys.END_SEQ))
         }
     }
 
@@ -235,16 +274,23 @@ internal class AppStateStepsTest(otelSdkMode: OtelSdkMode) {
                 assertTrue(envelope.allSpans().none { it.hasLink() })
             },
             otelExportAssertion = {
-                assertTrue(awaitLogs(0) { it.eventName == AppStateKeys.CHANGE_EVENT_NAME }.isEmpty())
+                // the change is replayed, after the declaration of the state, and no span carries a link
+                val changes = awaitLogs(2) { it.eventName == AppStateKeys.CHANGE_EVENT_NAME && it.isOf("test") }
+                assertEquals("foo", changes.last().attributes.toStringMap()[AppStateKeys.NEW_VALUE])
+                assertEquals(2, awaitLogs(2) { it.eventName == AppStateKeys.SNAPSHOT_EVENT_NAME }.size)
+                val span = awaitSpans(1) { it.name == "changed-under" }.single().attributes.toStringMap()
+                assertTrue(span.keys.none { it == AppStateKeys.SEQ || it == AppStateKeys.END_SEQ })
             },
         )
     }
 
     /**
      * Records one part on [remoteConfig], which has the first step on and the second off, and asserts what the first step alone
-     * gives Embrace's payload and the app's exporters.
+     * gives Embrace's payload and the app's exporters, which includes the replay of changes and part snapshots.
      */
-    private fun runFirstStepOnly(remoteConfig: RemoteConfig) {
+    private fun runFirstStepOnly(remoteConfig: RemoteConfig, verbose: Boolean) {
+        var changeSeqs = emptyList<Long>()
+        var initialSeq = 0L
         testRule.runTest(
             persistedRemoteConfig = remoteConfig,
             testCaseAction = {
@@ -264,6 +310,8 @@ internal class AppStateStepsTest(otelSdkMode: OtelSdkMode) {
                 val changeLog = envelope.findSpanByName(AppStateKeys.CHANGE_LOG_SPAN_NAME)
                 assertEquals(listOf("foo", "$generatedValue"), changeLog.stateEvents("test").map { it.attribute(AppStateKeys.NEW_VALUE) })
                 assertEquals(listOf(null, "system"), changeLog.stateEvents("test").map { it.attribute(AppStateKeys.NEW_VALUE_TYPE) })
+                changeSeqs = changeLog.stateEvents("test").map { checkNotNull(it.attribute(AppStateKeys.SEQ)).toLong() }
+                initialSeq = checkNotNull(changeLog.attribute(AppStateKeys.INITIAL_SEQ)).toLong()
 
                 val logs = getSingleLogEnvelope().getLogs { it.body in setOf("before", "after") }.associateBy { it.body }
                 val before = checkNotNull(logs.getValue("before").attributes)
@@ -294,13 +342,46 @@ internal class AppStateStepsTest(otelSdkMode: OtelSdkMode) {
                 assertTrue(span.toStringMap().keys.none { it == AppStateKeys.SEQ || it == AppStateKeys.END_SEQ })
                 assertTrue(span.toStringMap().keys.none(AppStateKeys::isCustomerValueKey))
 
-                // nothing is replayed to the app's exporters
-                assertTrue(
-                    awaitLogs(0) {
-                        it.eventName == AppStateKeys.CHANGE_EVENT_NAME || it.eventName == AppStateKeys.SNAPSHOT_EVENT_NAME
-                    }.isEmpty()
-                )
+                // the changes are replayed, the first of them being the declaration of the state
+                val changes = awaitLogs(3) { it.isChangeOf("test") }.drop(1)
+                assertEquals(listOf("foo", "$generatedValue"), changes.map { it.attributes.toStringMap()[AppStateKeys.NEW_VALUE] })
+                assertEquals(changeSeqs, changes.map { it.attributes.get(AttributeKey.longKey(AppStateKeys.SEQ)) })
+                changes.forEach { change ->
+                    val attributes = change.attributes.toStringMap()
+                    assertEquals(verbose, attributes.keys.any { it.startsWith(AppStateKeys.VALUE_PREFIX) })
+                }
+                if (verbose) {
+                    val values = changes.last().attributes.toStringMap()
+                    assertEquals("$generatedValue", values[AppStateKeys.VALUE_PREFIX + "test"])
+                    assertTrue(values.keys.count { it.startsWith(AppStateKeys.VALUE_PREFIX) } > 1)
+                }
+
+                // and the snapshot of the part's start, with the number its change log opens with
+                val snapshots = awaitLogs(2) { it.eventName == AppStateKeys.SNAPSHOT_EVENT_NAME }
+                assertTrue(snapshots.any { it.attributes.get(AttributeKey.longKey(AppStateKeys.SEQ)) == initialSeq })
             },
+        )
+    }
+
+    /**
+     * Runs a launch on [firstLaunchConfig] in which a span is left running and a state changes, then kills the process, and returns
+     * the native crash that the launch left for the next one.
+     */
+    private fun killedInANativeCrashedPart(firstLaunchConfig: RemoteConfig): NativeCrashData {
+        lateinit var deadPart: SessionIdsSnapshot
+        firstLaunch(instrumentedConfig = nativeCrashConfig, remoteConfig = firstLaunchConfig) {
+            deadPart = testRule.services.sessionIdsProvider.getActiveSessionIds()
+            embrace.startSpan("left-running")
+            findDataSource<TestStateDataSource>().onStateChange(newState = "checkout;step=2", transitionTimeMs = clock.tick(100L))
+            persistAfterOneInterval()
+        }
+        return NativeCrashData(
+            nativeCrashId = "dead-process-crash",
+            sessionPartId = deadPart.sessionPartId,
+            userSessionId = deadPart.userSessionId,
+            timestamp = 0L,
+            crash = "crash",
+            symbols = null,
         )
     }
 
@@ -309,11 +390,12 @@ internal class AppStateStepsTest(otelSdkMode: OtelSdkMode) {
      */
     private fun firstLaunch(
         instrumentedConfig: FakeInstrumentedConfig = FakeInstrumentedConfig(),
+        remoteConfig: RemoteConfig = firstStepOnly,
         action: EmbraceActionInterface.() -> Unit,
     ) {
         testRule.runTest(
             instrumentedConfig = instrumentedConfig,
-            persistedRemoteConfig = firstStepOnly,
+            persistedRemoteConfig = remoteConfig,
             testCaseAction = {
                 recordSession(endInBackground = false) {
                     persistDueWrites()
@@ -332,6 +414,7 @@ internal class AppStateStepsTest(otelSdkMode: OtelSdkMode) {
      */
     private fun relaunch(
         instrumentedConfig: FakeInstrumentedConfig = FakeInstrumentedConfig(),
+        remoteConfig: RemoteConfig = firstStepOnly,
         setupAction: EmbraceSetupInterface.() -> Unit = {},
         otelExportAssertion: EmbraceOtelExportAssertionInterface.() -> Unit = {},
         assertAction: EmbracePayloadAssertionInterface.() -> Unit,
@@ -341,7 +424,7 @@ internal class AppStateStepsTest(otelSdkMode: OtelSdkMode) {
         testRule.services.workerThreadPool.close()
         testRule.runTest(
             instrumentedConfig = instrumentedConfig,
-            persistedRemoteConfig = firstStepOnly,
+            persistedRemoteConfig = remoteConfig,
             setupAction = setupAction,
             testCaseAction = {},
             assertAction = assertAction,
@@ -403,6 +486,9 @@ internal class AppStateStepsTest(otelSdkMode: OtelSdkMode) {
 
     private fun io.opentelemetry.kotlin.aliases.OtelJavaLogRecordData.isOf(state: String): Boolean =
         attributes.toStringMap()[AppStateKeys.NAME] == state
+
+    private fun io.opentelemetry.kotlin.aliases.OtelJavaLogRecordData.isChangeOf(state: String): Boolean =
+        eventName == AppStateKeys.CHANGE_EVENT_NAME && isOf(state)
 
     private fun List<Attribute>.packedState(state: String): Pair<String, Boolean>? =
         findAttributeValue(AppStateKeys.PACKED)

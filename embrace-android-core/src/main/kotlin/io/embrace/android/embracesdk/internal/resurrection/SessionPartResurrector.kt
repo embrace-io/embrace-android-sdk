@@ -33,13 +33,13 @@ import io.embrace.android.embracesdk.semconv.ExperimentalSemconv
  */
 class SessionPartResurrector(
     private val cachedLogEnvelopeStore: CachedLogEnvelopeStore,
-    private val stampDeadProcessState: () -> Boolean = { true },
 
     /**
-     * Whether a span the dead process left running is given the end of its link to state, which only a launch that links spans
-     * to state does.
+     * Whether this launch carries what a dead part's change log says of its process onto the rest of that part: the stamp on a
+     * native crash's log, and the end of the link on a span the process left running. It is off when the app state data model is
+     * off in this launch. Which spans get an end is decided by the dead part, not here: see [DeadPartState].
      */
-    private val completeSpanLinks: () -> Boolean = { true },
+    private val recoverDeadProcessState: () -> Boolean = { true },
 ) {
 
     /**
@@ -66,7 +66,7 @@ class SessionPartResurrector(
         val deadSessionPartSpan = deadPart.getSessionPartSpan()
         val sessionPartId = deadSessionPartSpan?.resolveSessionPartIdForCrashMatch()
         // what the dead process recorded of state is an addition to its part, so failing to read it must not cost the part
-        val deadPartState = runCatching { DeadPartState.of(deadPart) }.getOrNull()
+        val deadPartState = if (recoverDeadProcessState()) runCatching { DeadPartState.of(deadPart) }.getOrNull() else null
 
         val nativeCrash = if (nativeCrashService != null && sessionPartId != null) {
             nativeCrashProvider(sessionPartId)?.also { crash ->
@@ -98,9 +98,7 @@ class SessionPartResurrector(
                             // the crash's log says what the state was as the process died, from what that process recorded.
                             // It is in the form a log about a dead process is given, which only a launch that records state
                             // itself turns into what each reader takes.
-                            if (stampDeadProcessState()) {
-                                deadPartState?.stamp()?.let(::putAll)
-                            }
+                            deadPartState?.stamp()?.let(::putAll)
                         },
                     )
 
@@ -116,7 +114,7 @@ class SessionPartResurrector(
             userSessionTerminationReason = userSessionTerminationReason,
             isBackgroundOnly = isBackgroundOnly,
             lastWrittenMs = lastWrittenMs,
-            deadPartState = deadPartState?.takeIf { completeSpanLinks() },
+            deadPartState = deadPartState,
         )
     }
 

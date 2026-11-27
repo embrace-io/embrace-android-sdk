@@ -228,6 +228,15 @@ abstract class StateDataSource<T : Any>(
     @CallSuper
     override fun onDataCaptureEnabled() {
         if (stateDefinition != null) {
+            if (!StateDefinition.isValidName(stateName)) {
+                // the recorder would refuse the declaration, and every report after it, without a word: say so once, here,
+                // where whoever adds a state will see it
+                errorHandler.trackSdkError(
+                    SdkErrorType.DataSourceDataCaptureFail,
+                    IllegalArgumentException("'$stateName' cannot name a state: lower-case letters, digits and hyphens only"),
+                )
+                return
+            }
             synchronized(reportLock) {
                 // a value reported before this point is the one the state is declared with, so that the recorder starts from
                 // what this data source last reported

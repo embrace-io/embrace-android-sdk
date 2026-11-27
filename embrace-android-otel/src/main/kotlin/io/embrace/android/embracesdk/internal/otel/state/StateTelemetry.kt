@@ -22,8 +22,8 @@ class StateTelemetry(
     receivesLogs: () -> Boolean = { true },
 
     /**
-     * Whether the model's second step is on: spans are linked to state, and changes are replayed for the app's own exporters.
-     * With it off a log is still stamped, and nothing else here runs.
+     * Whether the model's second step is on: spans are linked to state. With it off a log is still stamped and changes are still
+     * replayed for the app's own exporters, and no span carries anything.
      */
     val associationEnabled: Boolean = true,
 
@@ -32,10 +32,18 @@ class StateTelemetry(
      * written to. Embrace's copy is stamped all the same.
      */
     private val onPlainStampSkipped: () -> Unit = {},
+
+    /**
+     * Whether the app registered anything that is handed spans. When it did not, nothing reads the values the verbose rendering
+     * puts on a span, so they are not written.
+     */
+    receivesSpans: () -> Boolean = { true },
 ) {
 
+    private val verboseMode: Boolean by lazy(LazyThreadSafetyMode.PUBLICATION) { exportMode() == StateExportMode.VERBOSE }
+
     private val verbose: Boolean by lazy(LazyThreadSafetyMode.PUBLICATION) {
-        associationEnabled && exportMode() == StateExportMode.VERBOSE
+        associationEnabled && verboseMode && receivesSpans()
     }
 
     private val logsReceived: Boolean by lazy(LazyThreadSafetyMode.PUBLICATION, receivesLogs)
@@ -47,9 +55,16 @@ class StateTelemetry(
     fun appReceivesLogs(): Boolean = logsReceived
 
     /**
-     * Whether the values go on what the app's own exporters get of a span and of a change, beside the numbers.
+     * Whether the values go on what the app's own exporters get of a span, beside the two numbers. That takes the second step, the
+     * verbose rendering, and something to receive spans.
      */
     fun isVerbose(): Boolean = verbose
+
+    /**
+     * Whether a change replayed for the app's own exporters also carries every state's value after it. That is the verbose
+     * rendering's, whether or not spans are linked.
+     */
+    fun isVerboseReplay(): Boolean = verboseMode
 
     /**
      * The snapshot that held at [timeMs], or null if that is older than what the recorder still knows.
@@ -87,12 +102,7 @@ class StateTelemetry(
     }
 
     /**
-     * What kind of log [record] is, which decides the state it is stamped with and where it is sent.
-     */
-    fun kindOf(record: LogRecordData): LogKind = kindOf(record.attributes)
-
-    /**
-     * What kind of log one with [attributes] is, for a caller that has already read them from the record.
+     * What kind of log one with [attributes] is, which decides the state it is stamped with.
      */
     fun kindOf(attributes: Map<String, Any>): LogKind = when (attributes[EMB_TYPE]) {
         NATIVE_CRASH_TYPE, EXIT_TYPE -> LogKind.DEAD_PROCESS
@@ -139,8 +149,13 @@ class StateTelemetry(
         val mutator = record as? AttributesMutator
         if (mutator == null) {
             onPlainStampSkipped()
-        } else {
+            return
+        }
+        // this is done for the app's exporters while Embrace's copy of the log waits to be stored, so it must not throw
+        try {
             writeLogExportForm(mutator, snapshot)
+        } catch (_: Throwable) {
+            onPlainStampSkipped()
         }
     }
 
@@ -171,18 +186,16 @@ class StateTelemetry(
 
     /**
      * Rewrites the number on a log about a process that has died as a whole number, which is the type the app's own exporters get it
-     * as. Such a log is given its attributes as text.
-     */
-    fun writeDeadProcessSeq(record: LogRecordData) {
-        writeDeadProcessSeq(record, record.attributes)
-    }
-
-    /**
-     * As above, for a caller that has already read the record's [attributes].
+     * as. Such a log is given its [attributes] as text. Like the stamp of a live log, this is done for the app's exporters while
+     * Embrace's copy waits to be stored, so it does not throw.
      */
     fun writeDeadProcessSeq(record: LogRecordData, attributes: Map<String, Any>) {
         val seq = (attributes[AppStateKeys.SEQ] as? String)?.toLongOrNull() ?: return
-        (record as? AttributesMutator)?.setLongAttribute(AppStateKeys.SEQ, seq)
+        try {
+            (record as? AttributesMutator)?.setLongAttribute(AppStateKeys.SEQ, seq)
+        } catch (_: Throwable) {
+            onPlainStampSkipped()
+        }
     }
 
     private fun AttributesMutator.setValues(snapshot: StateSnapshot) {

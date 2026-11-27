@@ -48,19 +48,19 @@ internal class LogsApiDelegate(
     override fun logMessage(
         message: String,
         severity: Severity,
-        properties: Map<String, Any>,
+        attributes: Map<String, Any>,
     ) {
         logMessageImpl(
             severity = severity,
             message = message,
-            attributes = properties,
+            attributes = attributes,
         )
     }
 
     override fun logMessage(
         message: String,
         severity: Severity,
-        properties: Map<String, Any>,
+        attributes: Map<String, Any>,
         attachment: ByteArray,
     ) {
         val obj = attachmentService.createAttachment(attachment)
@@ -68,7 +68,7 @@ internal class LogsApiDelegate(
         logMessageImpl(
             severity = severity,
             message = message,
-            attributes = properties,
+            attributes = attributes,
             attachment = obj,
         )
     }
@@ -76,7 +76,7 @@ internal class LogsApiDelegate(
     override fun logMessage(
         message: String,
         severity: Severity,
-        properties: Map<String, Any>,
+        attributes: Map<String, Any>,
         attachmentId: String,
         attachmentUrl: String,
     ) {
@@ -85,7 +85,7 @@ internal class LogsApiDelegate(
         logMessageImpl(
             severity = severity,
             message = message,
-            attributes = properties,
+            attributes = attributes,
             attachment = obj,
         )
     }
@@ -104,14 +104,14 @@ internal class LogsApiDelegate(
     override fun logException(
         throwable: Throwable,
         severity: Severity,
-        properties: Map<String, Any>,
+        attributes: Map<String, Any>,
         message: String?,
     ) {
         val exceptionMessage = throwable.message ?: ""
         logMessageImpl(
             severity = severity,
             message = message ?: exceptionMessage,
-            attributes = properties,
+            attributes = attributes,
             exceptionData = ExceptionData(
                 name = throwable.javaClass.simpleName,
                 message = exceptionMessage,
@@ -124,13 +124,13 @@ internal class LogsApiDelegate(
     override fun logCustomStacktrace(
         stacktraceElements: Array<StackTraceElement>,
         severity: Severity,
-        properties: Map<String, Any>,
+        attributes: Map<String, Any>,
         message: String?,
     ) {
         logMessageImpl(
             severity = severity,
             message = message ?: "",
-            attributes = properties,
+            attributes = attributes,
             exceptionData = ExceptionData(
                 name = null,
                 message = message,

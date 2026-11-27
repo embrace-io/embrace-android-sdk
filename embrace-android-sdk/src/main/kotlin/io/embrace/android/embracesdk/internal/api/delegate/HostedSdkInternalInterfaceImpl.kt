@@ -166,7 +166,7 @@ internal class HostedSdkInternalInterfaceImpl(
         logsApi.logMessage(
             severity = Severity.ERROR,
             message = "Unity exception",
-            properties = attrs,
+            attributes = attrs,
         )
     }
 

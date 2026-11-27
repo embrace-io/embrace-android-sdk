@@ -15,12 +15,12 @@ public interface LogsApi {
      *
      * @param message    the message to remotely log
      * @param severity   the severity level of the log message
-     * @param properties the properties to attach to the log message
+     * @param attributes the attributes to attach to the log message
      */
     public fun logMessage(
         message: String,
         severity: Severity,
-        properties: Map<String, Any> = emptyMap(),
+        attributes: Map<String, Any> = emptyMap(),
     )
 
     /**
@@ -30,13 +30,13 @@ public interface LogsApi {
      *
      * @param message    the message to remotely log
      * @param severity   the severity level of the log message
-     * @param properties the properties to attach to the log message
+     * @param attributes the attributes to attach to the log message
      * @param attachment an attachment to include with the log message. This must be < 1MB in size.
      */
     public fun logMessage(
         message: String,
         severity: Severity,
-        properties: Map<String, Any> = emptyMap(),
+        attributes: Map<String, Any> = emptyMap(),
         attachment: ByteArray,
     )
 
@@ -47,14 +47,14 @@ public interface LogsApi {
      *
      * @param message    the message to remotely log
      * @param severity   the severity level of the log message
-     * @param properties the properties to attach to the log message
+     * @param attributes the attributes to attach to the log message
      * @param attachmentId a UUID that identifies the attachment
      * @param attachmentUrl a URL that gives the location of the attachment
      */
     public fun logMessage(
         message: String,
         severity: Severity,
-        properties: Map<String, Any> = emptyMap(),
+        attributes: Map<String, Any> = emptyMap(),
         attachmentId: String,
         attachmentUrl: String,
     )
@@ -90,13 +90,13 @@ public interface LogsApi {
      *
      * @param throwable       the throwable to remotely log
      * @param severity        the severity level of the log message
-     * @param properties      custom key-value pairs to include with the log message
+     * @param attributes      custom key-value pairs to include with the log message
      * @param message         the message to remotely log instead of the throwable message
      */
     public fun logException(
         throwable: Throwable,
         severity: Severity = Severity.ERROR,
-        properties: Map<String, Any> = emptyMap(),
+        attributes: Map<String, Any> = emptyMap(),
         message: String? = null,
     )
 
@@ -107,13 +107,13 @@ public interface LogsApi {
      *
      * @param stacktraceElements the stacktrace to remotely log
      * @param severity           the severity level of the log message
-     * @param properties         custom key-value pairs to include with the log message
+     * @param attributes         custom key-value pairs to include with the log message
      * @param message            the message to remotely log instead of the throwable message
      */
     public fun logCustomStacktrace(
         stacktraceElements: Array<StackTraceElement>,
         severity: Severity = Severity.ERROR,
-        properties: Map<String, Any> = emptyMap(),
+        attributes: Map<String, Any> = emptyMap(),
         message: String? = null,
     )
 

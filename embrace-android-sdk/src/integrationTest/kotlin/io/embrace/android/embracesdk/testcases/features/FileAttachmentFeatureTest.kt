@@ -283,7 +283,7 @@ internal class FileAttachmentFeatureTest(
         embrace.logMessage(
             message = "test message",
             severity = Severity.INFO,
-            properties = mapOf("key" to "value"),
+            attributes = mapOf("key" to "value"),
             attachmentId = id,
             attachmentUrl = url,
         )
@@ -295,7 +295,7 @@ internal class FileAttachmentFeatureTest(
         embrace.logMessage(
             message = "test message",
             severity = Severity.INFO,
-            properties = mapOf("key" to "value"),
+            attributes = mapOf("key" to "value"),
             attachment = byteArray
         )
     }

@@ -68,19 +68,19 @@ internal class SdkApiDispatcher(
 
     override fun start(context: Context) = errorHandler.guardSdkCode(SdkErrorType.PublicApiFail) { onStart(context) }
 
-    override fun logMessage(message: String, severity: Severity, properties: Map<String, Any>) =
-        record("log_message") { target.logMessage(message, severity, properties) }
+    override fun logMessage(message: String, severity: Severity, attributes: Map<String, Any>) =
+        record("log_message") { target.logMessage(message, severity, attributes) }
 
-    override fun logMessage(message: String, severity: Severity, properties: Map<String, Any>, attachment: ByteArray) =
-        record("log_message") { target.logMessage(message, severity, properties, attachment) }
+    override fun logMessage(message: String, severity: Severity, attributes: Map<String, Any>, attachment: ByteArray) =
+        record("log_message") { target.logMessage(message, severity, attributes, attachment) }
 
     override fun logMessage(
         message: String,
         severity: Severity,
-        properties: Map<String, Any>,
+        attributes: Map<String, Any>,
         attachmentId: String,
         attachmentUrl: String,
-    ) = record("log_message") { target.logMessage(message, severity, properties, attachmentId, attachmentUrl) }
+    ) = record("log_message") { target.logMessage(message, severity, attributes, attachmentId, attachmentUrl) }
 
     override fun logInfo(message: String) = record("log_message") { target.logInfo(message) }
 
@@ -88,15 +88,15 @@ internal class SdkApiDispatcher(
 
     override fun logError(message: String) = record("log_message") { target.logError(message) }
 
-    override fun logException(throwable: Throwable, severity: Severity, properties: Map<String, Any>, message: String?) =
-        record("log_message") { target.logException(throwable, severity, properties, message) }
+    override fun logException(throwable: Throwable, severity: Severity, attributes: Map<String, Any>, message: String?) =
+        record("log_message") { target.logException(throwable, severity, attributes, message) }
 
     override fun logCustomStacktrace(
         stacktraceElements: Array<StackTraceElement>,
         severity: Severity,
-        properties: Map<String, Any>,
+        attributes: Map<String, Any>,
         message: String?,
-    ) = record("log_message") { target.logCustomStacktrace(stacktraceElements, severity, properties, message) }
+    ) = record("log_message") { target.logCustomStacktrace(stacktraceElements, severity, attributes, message) }
 
     @Deprecated("This API is deprecated and will be removed in a future release.Use logMessage() instead.")
     override fun logPushNotification(

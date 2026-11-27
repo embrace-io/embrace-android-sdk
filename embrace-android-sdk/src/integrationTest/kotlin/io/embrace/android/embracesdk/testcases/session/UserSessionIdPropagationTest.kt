@@ -108,7 +108,7 @@ internal class UserSessionIdPropagationTest(
         testRule.runTest(
             testCaseAction = {
                 recordSession {
-                    embrace.logMessage("test", Severity.INFO)
+                    embrace.logMessage("test", Severity.Info)
                     flushLogBatch()
                 }
             },
@@ -141,7 +141,7 @@ internal class UserSessionIdPropagationTest(
                 )
             },
             testCaseAction = {
-                embrace.logMessage("cold-window-log", Severity.INFO)
+                embrace.logMessage("cold-window-log", Severity.Info)
                 recordSession {
                     flushLogBatch()
                 }
@@ -167,7 +167,7 @@ internal class UserSessionIdPropagationTest(
                 )
             },
             testCaseAction = {
-                embrace.logMessage("cold-window-log", Severity.INFO)
+                embrace.logMessage("cold-window-log", Severity.Info)
                 recordSession {
                     flushLogBatch()
                 }
@@ -188,7 +188,7 @@ internal class UserSessionIdPropagationTest(
     fun `log before foreground carries the new user session id when no session is persisted`() {
         testRule.runTest(
             testCaseAction = {
-                embrace.logMessage("cold-window-log", Severity.INFO)
+                embrace.logMessage("cold-window-log", Severity.Info)
                 recordSession {
                     flushLogBatch()
                 }
@@ -208,8 +208,8 @@ internal class UserSessionIdPropagationTest(
     fun `log in second part of same user session carries same user session id but different session part id`() {
         testRule.runTest(
             testCaseAction = {
-                recordSession { embrace.logMessage("part1", Severity.INFO) }
-                recordSession { embrace.logMessage("part2", Severity.INFO) }
+                recordSession { embrace.logMessage("part1", Severity.Info) }
+                recordSession { embrace.logMessage("part2", Severity.Info) }
             },
             assertAction = {
                 val logs = getSingleLogEnvelope().getLogsOfType(EmbType.System.Log)
@@ -234,11 +234,11 @@ internal class UserSessionIdPropagationTest(
         testRule.runTest(
             testCaseAction = {
                 recordSession {
-                    embrace.logMessage("first-session-log", Severity.INFO)
+                    embrace.logMessage("first-session-log", Severity.Info)
                     clock.tick(10_000)
                     embrace.endUserSession()
                     clock.tick(1_000)
-                    embrace.logMessage("second-session-log", Severity.INFO)
+                    embrace.logMessage("second-session-log", Severity.Info)
                 }
             },
             assertAction = {

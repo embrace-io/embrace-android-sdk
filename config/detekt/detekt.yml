@@ -47,6 +47,17 @@ formatting:
 potential-bugs:
   ElseCaseInsteadOfExhaustiveWhen:
     active: true
+naming:
+  EnumNaming:
+    active: true
+    enumEntryPattern: '[A-Z][a-zA-Z0-9]*'
+    includes:
+      - '**/embrace-android-api/src/main/**'
+      - '**/embrace-android-sdk/src/main/**'
+      - '**/embrace-android-otel-java/src/main/**'
+      - '**/embrace-android-instrumentation-androidx-navigation/src/main/**'
+    excludes:
+      - '**/internal/**'
 style:
   ForbiddenImport:
     active: true

@@ -3,6 +3,7 @@ package io.embrace.android.embracesdk.internal.arch.destination
 import io.embrace.android.embracesdk.Severity
 import io.embrace.android.embracesdk.assertions.assertNonSystemStateValue
 import io.embrace.android.embracesdk.assertions.assertSystemStateValue
+import io.embrace.android.embracesdk.assertions.getOtelSeverity
 import io.embrace.android.embracesdk.fakes.FakeClock
 import io.embrace.android.embracesdk.fakes.FakeClock.Companion.DEFAULT_FAKE_CURRENT_TIME
 import io.embrace.android.embracesdk.fakes.FakeCurrentSessionPartSpan
@@ -80,7 +81,7 @@ internal class TelemetryDestinationImplTest {
         logger.logs.single().assertFakeEvent(
             expectedTimestamp = clock.now().millisToNanos(),
             expectedMessage = "test",
-            expectedSeverity = Severity.ERROR,
+            expectedSeverity = Severity.Error,
             expectedSchemaType = expectedSchemaType,
             expectedIsPrivate = false,
         )
@@ -114,7 +115,7 @@ internal class TelemetryDestinationImplTest {
     ) {
         assertEquals(expectedTimestamp, timestamp)
         assertEquals(expectedMessage, body)
-        assertEquals(expectedSeverity.name, severityNumber?.name)
+        assertEquals(getOtelSeverity(expectedSeverity), severityNumber)
         assertAttributes(
             expectedSchemaType = expectedSchemaType,
             expectedAdditionalAttributes = if (expectedIsPrivate) {
@@ -148,7 +149,7 @@ internal class TelemetryDestinationImplTest {
         logger.logs.single().assertFakeEvent(
             expectedTimestamp = clock.now().millisToNanos(),
             expectedMessage = "test",
-            expectedSeverity = Severity.ERROR,
+            expectedSeverity = Severity.Error,
             expectedSchemaType = expectedSchemaType,
             expectedIsPrivate = true,
         )
@@ -162,7 +163,7 @@ internal class TelemetryDestinationImplTest {
         logger.logs.last().assertFakeEvent(
             expectedTimestamp = clock.now().millisToNanos(),
             expectedMessage = "test",
-            expectedSeverity = Severity.ERROR,
+            expectedSeverity = Severity.Error,
             expectedSchemaType = expectedSchemaType,
             expectedIsPrivate = false,
         )
@@ -182,7 +183,7 @@ internal class TelemetryDestinationImplTest {
         logger.logs.single().assertFakeEvent(
             expectedTimestamp = fakeTimeMs.millisToNanos(),
             expectedMessage = "test",
-            expectedSeverity = Severity.ERROR,
+            expectedSeverity = Severity.Error,
             expectedSchemaType = expectedSchemaType,
             expectedIsPrivate = false,
         )

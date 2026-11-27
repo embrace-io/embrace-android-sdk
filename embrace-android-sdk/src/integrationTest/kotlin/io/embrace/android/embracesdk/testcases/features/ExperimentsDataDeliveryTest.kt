@@ -72,7 +72,7 @@ internal class ExperimentsDataDeliveryTest(
                 recordSession {
                     trackStartMs = clock.now()
                     embrace.trackExperiment(id = "checkout-flow", variant = "variant-a", startedAt = trackStartMs)
-                    embrace.logMessage("log with experiments", Severity.INFO)
+                    embrace.logMessage("log with experiments", Severity.Info)
                     flushLogBatch()
                 }
             },
@@ -123,7 +123,7 @@ internal class ExperimentsDataDeliveryTest(
                 recordSession {
                     embrace.logMessage(
                         "loggy log",
-                        Severity.INFO,
+                        Severity.Info,
                         mapOf(EmbCommonAttributes.EMB_EXPERIMENTS to "spoof"),
                     )
                     flushLogBatch()

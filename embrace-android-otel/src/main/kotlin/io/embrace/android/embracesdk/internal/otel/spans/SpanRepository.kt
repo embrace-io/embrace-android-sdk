@@ -144,7 +144,7 @@ class SpanRepository(
      */
     fun autoTerminateEmbraceSpans(now: Long) {
         val roots = buildSpanTree()
-        terminateSpansIfRequired(now, roots.filter { it.span.autoTerminationMode == AutoTerminationMode.ON_BACKGROUND })
+        terminateSpansIfRequired(now, roots.filter { it.span.autoTerminationMode == AutoTerminationMode.OnBackground })
     }
 
     /**

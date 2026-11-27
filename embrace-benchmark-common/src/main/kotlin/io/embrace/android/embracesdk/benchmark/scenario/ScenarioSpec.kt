@@ -86,7 +86,7 @@ interface ScenarioScope {
     }
 }
 
-private val DEFAULT_METHOD = HttpMethod.GET
+private val DEFAULT_METHOD = HttpMethod.Get
 private const val DEFAULT_STATUS_CODE = 200
 private const val DEFAULT_BYTES_RECEIVED = 4_096L
 private const val REQUEST_DURATION_MS = 80L

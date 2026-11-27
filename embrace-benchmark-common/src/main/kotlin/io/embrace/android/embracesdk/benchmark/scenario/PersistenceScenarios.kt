@@ -49,7 +49,7 @@ object PersistenceScenarios {
         id = "browse_feed",
         description = "6 feed pages, each opening one item",
     ) {
-        embrace.addUserSessionProperty("user.tier", "free", PropertyScope.USER_SESSION)
+        embrace.addUserSessionProperty("user.tier", "free", PropertyScope.UserSession)
 
         repeat(6) { page ->
             embrace.recordSpan("feed-page-load", attributes = mapOf("feed.page" to page.toString())) {
@@ -77,8 +77,8 @@ object PersistenceScenarios {
         id = "checkout_flow",
         description = "checkout with a failed payment and a successful retry",
     ) {
-        embrace.addUserSessionProperty("user.tier", "member", PropertyScope.USER_SESSION)
-        embrace.addUserSessionProperty("cart.currency", "GBP", PropertyScope.USER_SESSION)
+        embrace.addUserSessionProperty("user.tier", "member", PropertyScope.UserSession)
+        embrace.addUserSessionProperty("cart.currency", "GBP", PropertyScope.UserSession)
 
         embrace.recordSpan("cart-load", attributes = mapOf("cart.items" to "3")) {
             recordRequest("https://api.example.com/v1/cart")
@@ -95,10 +95,10 @@ object PersistenceScenarios {
         advanceTime(3_500)
 
         embrace.recordSpan("payment-submit") {
-            recordRequest("https://pay.example.com/v1/charge", method = HttpMethod.POST, statusCode = 503)
+            recordRequest("https://pay.example.com/v1/charge", method = HttpMethod.Post, statusCode = 503)
             embrace.logWarning("payment gateway unavailable, retrying")
             advanceTime(1_400)
-            recordRequest("https://pay.example.com/v1/charge", method = HttpMethod.POST)
+            recordRequest("https://pay.example.com/v1/charge", method = HttpMethod.Post)
             advanceTime(900)
         }
         embrace.addBreadcrumb("payment accepted")
@@ -106,7 +106,7 @@ object PersistenceScenarios {
         // the receipt fails to render from cache, which the app handles and logs
         embrace.logException(
             IOException("receipt cache miss"),
-            severity = Severity.WARNING,
+            severity = Severity.Warning,
             properties = mapOf("order.id" to "A-99213"),
         )
         advanceTime(2_500)
@@ -142,7 +142,7 @@ object PersistenceScenarios {
         id = "long_engaged_session",
         description = "~36 screens with a break in the middle",
     ) {
-        embrace.addUserSessionProperty("user.tier", "member", PropertyScope.USER_SESSION)
+        embrace.addUserSessionProperty("user.tier", "member", PropertyScope.UserSession)
 
         repeat(18) { step ->
             embrace.recordSpan("screen-load", attributes = mapOf("screen.name" to "category-$step")) {

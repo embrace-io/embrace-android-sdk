@@ -54,7 +54,7 @@ internal class PeriodicPartCacheTest(
         testRule.runTest(
             testCaseAction = {
                 recordSession {
-                    embrace.addUserSessionProperty("Test", "Test", PropertyScope.PERMANENT)
+                    embrace.addUserSessionProperty("Test", "Test", PropertyScope.Permanent)
                     testRule.setup.getFakedWorkerExecutor(Worker.Background.PeriodicCacheWorker)
                         .moveForwardAndRunBlocked(PERIODIC_CACHE_INTERVAL_MS)
                     snapshot = returnIfConditionMet(
@@ -66,7 +66,7 @@ internal class PeriodicPartCacheTest(
                         },
                         errorMessageSupplier = { "Timeout waiting for cached session" }
                     )
-                    embrace.addUserSessionProperty("Test", "Passed", PropertyScope.PERMANENT)
+                    embrace.addUserSessionProperty("Test", "Passed", PropertyScope.Permanent)
                 }
             },
             assertAction = {

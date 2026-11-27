@@ -79,7 +79,7 @@ internal class SessionPartIdentityTest(
         testRule.runTest(
             testCaseAction = {
                 recordSession {
-                    embrace.logMessage("test", Severity.INFO)
+                    embrace.logMessage("test", Severity.Info)
                 }
             },
             assertAction = {

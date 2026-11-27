@@ -79,7 +79,7 @@ internal class SpanMapperTest {
         assertEquals(terminationTimeMs, failedSpan.endTimeNanos?.nanosToMillis())
         assertEquals(Span.Status.ERROR, checkNotNull(failedSpan.status))
         assertEquals(snapshot.events?.single(), failedSpan.events?.single())
-        failedSpan.assertError(ErrorCode.FAILURE)
+        failedSpan.assertError(ErrorCode.Failure)
         failedSpan.assertIsTypePerformance()
         failedSpan.assertNotPrivateSpan()
         val attributesOfFailedSpan = failedSpan.attributes?.associate { it.key to it.data } ?: emptyMap()

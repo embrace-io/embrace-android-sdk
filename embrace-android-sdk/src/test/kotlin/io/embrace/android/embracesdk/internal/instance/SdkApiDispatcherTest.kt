@@ -70,7 +70,7 @@ internal class SdkApiDispatcherTest {
     fun `calls reach the target`() {
         sdk.logInfo("message")
         sdk.setUserIdentifier("user")
-        sdk.addUserSessionProperty("key", "value", PropertyScope.PERMANENT)
+        sdk.addUserSessionProperty("key", "value", PropertyScope.Permanent)
         assertEquals(listOf("logInfo/1", "setUserIdentifier/1", "addUserSessionProperty/3"), calls)
     }
 

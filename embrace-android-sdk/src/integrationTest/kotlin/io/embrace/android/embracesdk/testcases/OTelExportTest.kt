@@ -106,7 +106,7 @@ internal class OTelExportTest(
             testCaseAction = {
                 recordSession {
                     logTimestampNanos = clock.now().millisToNanos()
-                    embrace.logMessage("test message", Severity.INFO)
+                    embrace.logMessage("test message", Severity.Info)
                 }
             },
             otelExportAssertion = {
@@ -157,7 +157,7 @@ internal class OTelExportTest(
             },
             testCaseAction = {
                 recordSession {
-                    embrace.logMessage(logMessage, Severity.INFO)
+                    embrace.logMessage(logMessage, Severity.Info)
                 }
             },
             otelExportAssertion = {
@@ -188,7 +188,7 @@ internal class OTelExportTest(
             testCaseAction = {
                 recordSession {
                     embrace.startSpan("public-span").stop()
-                    embrace.logMessage("public-log", Severity.INFO)
+                    embrace.logMessage("public-log", Severity.Info)
                     errorHandler.trackSdkError(SdkErrorType.InternalInterfaceFail, RuntimeException("internal"))
                 }
             },
@@ -241,7 +241,7 @@ internal class OTelExportTest(
             },
             testCaseAction = {
                 recordSession {
-                    embrace.logMessage(logMessage, Severity.INFO)
+                    embrace.logMessage(logMessage, Severity.Info)
                 }
             },
             otelExportAssertion = {
@@ -283,7 +283,7 @@ internal class OTelExportTest(
             },
             testCaseAction = {
                 recordSession {
-                    embrace.logMessage("test-java-processor-log", Severity.INFO)
+                    embrace.logMessage("test-java-processor-log", Severity.Info)
                 }
             },
             otelExportAssertion = {
@@ -308,7 +308,7 @@ internal class OTelExportTest(
             testCaseAction = {
                 recordSession {
                     embrace.startSpan(spanName).stop()
-                    embrace.logMessage(logMessage, Severity.INFO)
+                    embrace.logMessage(logMessage, Severity.Info)
                 }
             },
             otelExportAssertion = {
@@ -342,7 +342,7 @@ internal class OTelExportTest(
             testCaseAction = {
                 recordSession {
                     embrace.startSpan(spanName).stop()
-                    embrace.logMessage(logMessage, Severity.INFO)
+                    embrace.logMessage(logMessage, Severity.Info)
                 }
             },
             assertAction = {

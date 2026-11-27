@@ -6,6 +6,7 @@ import io.embrace.android.embracesdk.PropertyScope
 import io.embrace.android.embracesdk.assertions.assertOtelLogReceived
 import io.embrace.android.embracesdk.assertions.getLogOfType
 import io.embrace.android.embracesdk.assertions.getOtelSeverity
+import io.embrace.android.embracesdk.assertions.getSeverityText
 import io.embrace.android.embracesdk.fakes.config.FakeEnabledFeatureConfig
 import io.embrace.android.embracesdk.fakes.config.FakeInstrumentedConfig
 import io.embrace.android.embracesdk.internal.arch.attrs.isEmbraceAttributeName
@@ -67,7 +68,7 @@ internal class LogFeatureTest(
                     expectedTimeMs = logTimestamps.remove(),
                     expectedMessage = "test message",
                     expectedSeverityNumber = SeverityNumber.INFO,
-                    expectedSeverityText = Severity.INFO.name,
+                    expectedSeverityText = getSeverityText(Severity.Info),
                     expectedState = "foreground",
                 )
             }
@@ -89,7 +90,7 @@ internal class LogFeatureTest(
                     logReceived = log,
                     expectedMessage = "test message",
                     expectedSeverityNumber = SeverityNumber.WARN,
-                    expectedSeverityText = Severity.WARNING.name,
+                    expectedSeverityText = getSeverityText(Severity.Warning),
                     expectedTimeMs = logTimestamps.remove(),
                 )
             }
@@ -112,7 +113,7 @@ internal class LogFeatureTest(
                     log,
                     expectedMessage = "test message",
                     expectedSeverityNumber = SeverityNumber.ERROR,
-                    expectedSeverityText = Severity.ERROR.name,
+                    expectedSeverityText = getSeverityText(Severity.Error),
                     expectedTimeMs = logTimestamps.remove(),
                 )
             }
@@ -140,7 +141,7 @@ internal class LogFeatureTest(
                         logs[severity],
                         expectedMessage = expectedMessage,
                         expectedSeverityNumber = getOtelSeverity(severity),
-                        expectedSeverityText = severity.name,
+                        expectedSeverityText = getSeverityText(severity),
                         expectedTimeMs = logTimestamps.remove(),
                     )
                 }
@@ -169,7 +170,7 @@ internal class LogFeatureTest(
                         logs[severity],
                         expectedMessage = expectedMessage,
                         expectedSeverityNumber = getOtelSeverity(severity),
-                        expectedSeverityText = severity.name,
+                        expectedSeverityText = getSeverityText(severity),
                         expectedTimeMs = logTimestamps.remove(),
                         expectedProperties = customProperties,
                     )
@@ -192,7 +193,7 @@ internal class LogFeatureTest(
                     log,
                     expectedMessage = checkNotNull(testException.message),
                     expectedSeverityNumber = SeverityNumber.ERROR,
-                    expectedSeverityText = Severity.ERROR.name,
+                    expectedSeverityText = getSeverityText(Severity.Error),
                     expectedTimeMs = logTimestamps.remove(),
                     expectedType = LogExceptionType.HANDLED.value,
                     expectedExceptionName = testException.javaClass.simpleName,
@@ -210,7 +211,7 @@ internal class LogFeatureTest(
             instrumentedConfig = instrumentedConfig,
             testCaseAction = {
                 logTimestamps.add(clock.now())
-                embrace.logException(testException, Severity.INFO)
+                embrace.logException(testException, Severity.Info)
                 clock.tick(2000L)
             },
             assertAction = {
@@ -219,7 +220,7 @@ internal class LogFeatureTest(
                     log,
                     expectedMessage = checkNotNull(testException.message),
                     expectedSeverityNumber = SeverityNumber.INFO,
-                    expectedSeverityText = Severity.INFO.name,
+                    expectedSeverityText = getSeverityText(Severity.Info),
                     expectedTimeMs = logTimestamps.remove(),
                     expectedType = LogExceptionType.HANDLED.value,
                     expectedExceptionName = testException.javaClass.simpleName,
@@ -253,7 +254,7 @@ internal class LogFeatureTest(
                         logs[severity],
                         expectedMessage = checkNotNull(testException.message),
                         expectedSeverityNumber = getOtelSeverity(severity),
-                        expectedSeverityText = severity.name,
+                        expectedSeverityText = getSeverityText(severity),
                         expectedTimeMs = logTimestamps.remove(),
                         expectedType = LogExceptionType.HANDLED.value,
                         expectedExceptionName = testException.javaClass.simpleName,
@@ -288,7 +289,7 @@ internal class LogFeatureTest(
                         logs[severity],
                         expectedMessage = expectedMessage,
                         expectedSeverityNumber = getOtelSeverity(severity),
-                        expectedSeverityText = severity.name,
+                        expectedSeverityText = getSeverityText(severity),
                         expectedTimeMs = logTimestamps.remove(),
                         expectedType = LogExceptionType.HANDLED.value,
                         expectedExceptionName = testException.javaClass.simpleName,
@@ -316,8 +317,8 @@ internal class LogFeatureTest(
                 assertOtelLogReceived(
                     log,
                     expectedMessage = "",
-                    expectedSeverityNumber = getOtelSeverity(Severity.ERROR),
-                    expectedSeverityText = Severity.ERROR.name,
+                    expectedSeverityNumber = getOtelSeverity(Severity.Error),
+                    expectedSeverityText = getSeverityText(Severity.Error),
                     expectedTimeMs = logTimestamps.remove(),
                     expectedType = LogExceptionType.HANDLED.value,
                     expectedStacktrace = stacktrace.toList(),
@@ -346,7 +347,7 @@ internal class LogFeatureTest(
                         logs[severity],
                         expectedMessage = "",
                         expectedSeverityNumber = getOtelSeverity(severity),
-                        expectedSeverityText = severity.name,
+                        expectedSeverityText = getSeverityText(severity),
                         expectedTimeMs = logTimestamps.remove(),
                         expectedType = LogExceptionType.HANDLED.value,
                         expectedStacktrace = stacktrace.toList(),
@@ -376,7 +377,7 @@ internal class LogFeatureTest(
                         logs[severity],
                         expectedMessage = "",
                         expectedSeverityNumber = getOtelSeverity(severity),
-                        expectedSeverityText = severity.name,
+                        expectedSeverityText = getSeverityText(severity),
                         expectedTimeMs = logTimestamps.remove(),
                         expectedType = LogExceptionType.HANDLED.value,
                         expectedStacktrace = stacktrace.toList(),
@@ -414,7 +415,7 @@ internal class LogFeatureTest(
                         logs[severity],
                         expectedMessage = expectedMessage,
                         expectedSeverityNumber = getOtelSeverity(severity),
-                        expectedSeverityText = severity.name,
+                        expectedSeverityText = getSeverityText(severity),
                         expectedTimeMs = logTimestamps.remove(),
                         expectedType = LogExceptionType.HANDLED.value,
                         expectedStacktrace = stacktrace.toList(),
@@ -437,9 +438,9 @@ internal class LogFeatureTest(
             testCaseAction = {
                 recordSession {
                     repeat(150) {
-                        embrace.addUserSessionProperty("session-prop$it", "val", PropertyScope.PERMANENT)
+                        embrace.addUserSessionProperty("session-prop$it", "val", PropertyScope.Permanent)
                     }
-                    embrace.logMessage("test", Severity.INFO, props)
+                    embrace.logMessage("test", Severity.Info, props)
                 }
             },
             assertAction = {
@@ -465,9 +466,9 @@ internal class LogFeatureTest(
             testCaseAction = {
                 recordSession {
                     repeat(maxCustomSessionProps + 1) {
-                        embrace.addUserSessionProperty("session-prop$it", "val", PropertyScope.PERMANENT)
+                        embrace.addUserSessionProperty("session-prop$it", "val", PropertyScope.Permanent)
                     }
-                    embrace.logMessage("test", Severity.INFO)
+                    embrace.logMessage("test", Severity.Info)
                 }
             },
             otelExportAssertion = {
@@ -480,9 +481,9 @@ internal class LogFeatureTest(
 
     private fun getEmbraceSeverity(severityNumber: Int): Severity {
         return when (severityNumber) {
-            OtelJavaSeverity.INFO.severityNumber -> Severity.INFO
-            OtelJavaSeverity.WARN.severityNumber -> Severity.WARNING
-            OtelJavaSeverity.ERROR.severityNumber -> Severity.ERROR
+            OtelJavaSeverity.INFO.severityNumber -> Severity.Info
+            OtelJavaSeverity.WARN.severityNumber -> Severity.Warning
+            OtelJavaSeverity.ERROR.severityNumber -> Severity.Error
             else -> error("Unexpected severityNumber $severityNumber")
         }
     }

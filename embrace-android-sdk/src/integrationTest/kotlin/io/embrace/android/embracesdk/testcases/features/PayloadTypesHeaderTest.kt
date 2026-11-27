@@ -100,7 +100,7 @@ internal class PayloadTypesHeaderTest(
                 errorHandler.trackSdkError(SdkErrorType.InternalInterfaceFail, RuntimeException("some SDK error"))
                 embrace.logMessage(
                     "Flutter error occurred",
-                    Severity.ERROR,
+                    Severity.Error,
                     mapOf(
                         "emb.type" to "sys.flutter_exception",
                         EmbSessionAttributes.EMB_PRIVATE_SEND_MODE to "immediate",

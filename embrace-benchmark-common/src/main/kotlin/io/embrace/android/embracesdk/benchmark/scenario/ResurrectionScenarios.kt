@@ -92,7 +92,7 @@ internal fun deadSessionPart(id: String, contents: PartContents): ScenarioSpec =
         "${contents.inFlightSpans} spans still running when the app instance dies",
 ) {
     repeat(contents.sessionProperties) { index ->
-        embrace.addUserSessionProperty("benchmark.property.$index", "value-$index", PropertyScope.USER_SESSION)
+        embrace.addUserSessionProperty("benchmark.property.$index", "value-$index", PropertyScope.UserSession)
     }
     repeat(contents.requests) { request ->
         val endMs = nowMs

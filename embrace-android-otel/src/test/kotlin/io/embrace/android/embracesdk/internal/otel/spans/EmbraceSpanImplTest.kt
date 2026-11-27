@@ -233,7 +233,7 @@ internal class EmbraceSpanImplTest(
             val expectedStartTimeMs = fakeClock.now() + 1000
             val expectedEndTimeMs = fakeClock.now() + 5700
             assertTrue(start(startTimeMs = expectedStartTimeMs))
-            assertTrue(stop(errorCode = ErrorCode.FAILURE, endTimeMs = expectedEndTimeMs))
+            assertTrue(stop(errorCode = ErrorCode.Failure, endTimeMs = expectedEndTimeMs))
             assertSnapshot(
                 expectedStartTimeMs = expectedStartTimeMs,
                 expectedEndTimeMs = expectedEndTimeMs,
@@ -249,7 +249,7 @@ internal class EmbraceSpanImplTest(
             val expectedStartTimeMs = fakeClock.now() + 99
             val expectedEndTimeMs = fakeClock.now() + 505
             assertTrue(start(startTimeMs = expectedStartTimeMs.millisToNanos()))
-            assertTrue(stop(errorCode = ErrorCode.FAILURE, endTimeMs = expectedEndTimeMs.millisToNanos()))
+            assertTrue(stop(errorCode = ErrorCode.Failure, endTimeMs = expectedEndTimeMs.millisToNanos()))
             assertSnapshot(
                 expectedStartTimeMs = expectedStartTimeMs,
                 expectedEndTimeMs = expectedEndTimeMs,
@@ -529,7 +529,7 @@ internal class EmbraceSpanImplTest(
     fun `cannot stop twice irrespective of error code`() {
         with(embraceSpan) {
             assertTrue(start())
-            assertTrue(stop(ErrorCode.FAILURE))
+            assertTrue(stop(ErrorCode.Failure))
             assertFalse(stop())
             assertEquals(0, spanRepository.getActiveEmbraceSpans().size)
             assertEquals(1, spanRepository.getCompletedEmbraceSpans().size)

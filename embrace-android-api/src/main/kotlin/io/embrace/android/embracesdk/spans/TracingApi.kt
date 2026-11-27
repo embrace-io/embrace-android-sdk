@@ -16,7 +16,7 @@ public interface TracingApi {
     public fun createSpan(
         name: String,
         parent: EmbraceSpan? = null,
-        autoTerminationMode: AutoTerminationMode = AutoTerminationMode.NONE,
+        autoTerminationMode: AutoTerminationMode = AutoTerminationMode.None,
     ): EmbraceSpan
 
     /**
@@ -27,7 +27,7 @@ public interface TracingApi {
         name: String,
         parent: EmbraceSpan? = null,
         startTimeMs: Long? = null,
-        autoTerminationMode: AutoTerminationMode = AutoTerminationMode.NONE,
+        autoTerminationMode: AutoTerminationMode = AutoTerminationMode.None,
     ): EmbraceSpan
 
     /**
@@ -42,7 +42,7 @@ public interface TracingApi {
         parent: EmbraceSpan? = null,
         attributes: Map<String, String> = emptyMap(),
         events: List<EmbraceSpanEvent> = emptyList(),
-        autoTerminationMode: AutoTerminationMode = AutoTerminationMode.NONE,
+        autoTerminationMode: AutoTerminationMode = AutoTerminationMode.None,
         code: () -> T,
     ): T
 

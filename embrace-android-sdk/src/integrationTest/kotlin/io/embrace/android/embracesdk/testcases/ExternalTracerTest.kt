@@ -150,7 +150,7 @@ internal class ExternalTracerTest(
                     expectedEndTimeMs = checkNotNull(childEndTimeMs),
                     expectedParentId = checkNotNull(parent.spanId),
                     expectedStatus = Span.Status.ERROR,
-                    expectedErrorCode = ErrorCode.FAILURE,
+                    expectedErrorCode = ErrorCode.Failure,
                     expectedEvents = listOf(
                         SpanEvent(
                             name = "exception",

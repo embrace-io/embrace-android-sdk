@@ -33,13 +33,13 @@ internal class NoopSdkInstanceTest {
         assertFalse(instance.isStarted)
         assertEquals("", instance.deviceId)
         assertNull(instance.currentUserSessionId)
-        assertEquals(LastRunEndState.INVALID, instance.lastRunEndState)
+        assertEquals(LastRunEndState.Invalid, instance.lastRunEndState)
         assertTrue(errorHandler.infoMessages.isEmpty())
     }
 
     @Test
     fun `records nothing`() {
-        assertFalse(instance.addUserSessionProperty("key", "value", PropertyScope.PERMANENT))
+        assertFalse(instance.addUserSessionProperty("key", "value", PropertyScope.Permanent))
         assertFalse(instance.recordCompletedSpan("span", 1, 2))
         assertSame(NoopEmbraceSdkSpan, instance.startSpan("span"))
         assertNull(instance.getSpan("id"))

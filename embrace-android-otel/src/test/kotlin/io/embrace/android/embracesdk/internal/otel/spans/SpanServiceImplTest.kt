@@ -433,7 +433,7 @@ internal class SpanServiceImplTest(
         }
 
         with(verifyAndReturnSoleCompletedSpan("emb-test-span")) {
-            assertError(ErrorCode.FAILURE)
+            assertError(ErrorCode.Failure)
         }
     }
 

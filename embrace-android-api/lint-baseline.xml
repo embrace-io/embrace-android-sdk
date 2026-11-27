@@ -78,4 +78,37 @@
             column="22"/>
     </issue>
 
+    <issue
+        id="EmbracePublicApiPackageRule"
+        message="Don&apos;t put classes in the io.embrace.android.embracesdk package unless they&apos;re part of the public API. Please move the new class to an appropriate package or (if you&apos;re adding to the public API) suppress this error via the lint baseline file."
+        errorLine1="    public companion object {"
+        errorLine2="                     ~~~~~~">
+        <location
+            file="src/main/kotlin/io/embrace/android/embracesdk/LastRunEndState.kt"
+            line="23"
+            column="22"/>
+    </issue>
+
+    <issue
+        id="EmbracePublicApiPackageRule"
+        message="Don&apos;t put classes in the io.embrace.android.embracesdk package unless they&apos;re part of the public API. Please move the new class to an appropriate package or (if you&apos;re adding to the public API) suppress this error via the lint baseline file."
+        errorLine1="    public companion object {"
+        errorLine2="                     ~~~~~~">
+        <location
+            file="src/main/kotlin/io/embrace/android/embracesdk/PropertyScope.kt"
+            line="24"
+            column="22"/>
+    </issue>
+
+    <issue
+        id="EmbracePublicApiPackageRule"
+        message="Don&apos;t put classes in the io.embrace.android.embracesdk package unless they&apos;re part of the public API. Please move the new class to an appropriate package or (if you&apos;re adding to the public API) suppress this error via the lint baseline file."
+        errorLine1="    public companion object {"
+        errorLine2="                     ~~~~~~">
+        <location
+            file="src/main/kotlin/io/embrace/android/embracesdk/Severity.kt"
+            line="24"
+            column="22"/>
+    </issue>
+
 </issues>

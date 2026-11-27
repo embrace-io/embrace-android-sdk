@@ -64,8 +64,8 @@ object ProfileJourney {
         Embrace.setUserEmail("profile@example.com")
         Embrace.addUserPersona(key)
         Embrace.clearUserPersona(key)
-        Embrace.addUserSessionProperty(key, "value-$iteration", PropertyScope.USER_SESSION)
-        Embrace.addUserSessionProperty("$key-permanent", "value", PropertyScope.PERMANENT)
+        Embrace.addUserSessionProperty(key, "value-$iteration", PropertyScope.UserSession)
+        Embrace.addUserSessionProperty("$key-permanent", "value", PropertyScope.Permanent)
         Embrace.removeUserSessionProperty("$key-permanent")
         Embrace.trackExperiment(key, "variant-a")
         Embrace.trackFeatureFlag(key, "on")
@@ -85,7 +85,7 @@ object ProfileJourney {
         child.updateName("profile-child-renamed")
         child.addLink(parent, attributes)
         child.recordException(IllegalStateException("profile"), attributes)
-        child.stop(ErrorCode.FAILURE)
+        child.stop(ErrorCode.Failure)
 
         parent.spanId?.let(Embrace::getSpan)
         Embrace.recordSpan("profile-recorded", parent, attributes) { iteration * 2 }
@@ -109,9 +109,9 @@ object ProfileJourney {
         Embrace.logInfo("profile info")
         Embrace.logWarning("profile warning")
         Embrace.logError("profile error")
-        Embrace.logMessage("profile message", Severity.WARNING, properties)
-        Embrace.logException(exception, Severity.ERROR, properties, "profile exception")
-        Embrace.logCustomStacktrace(exception.stackTrace, Severity.ERROR, properties, "profile stacktrace")
+        Embrace.logMessage("profile message", Severity.Warning, properties)
+        Embrace.logException(exception, Severity.Error, properties, "profile exception")
+        Embrace.logCustomStacktrace(exception.stackTrace, Severity.Error, properties, "profile stacktrace")
         Embrace.addBreadcrumb("profile breadcrumb $iteration")
     }
 

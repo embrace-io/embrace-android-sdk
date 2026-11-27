@@ -60,7 +60,7 @@ internal class FakeSdkApi(private val clock: () -> Long) : SdkApi by throwingSdk
         try {
             return code().also { span.stop() }
         } catch (exc: Throwable) {
-            span.stop(ErrorCode.FAILURE)
+            span.stop(ErrorCode.Failure)
             throw exc
         }
     }
@@ -71,15 +71,15 @@ internal class FakeSdkApi(private val clock: () -> Long) : SdkApi by throwingSdk
     }
 
     override fun logInfo(message: String) {
-        logs += Log(Severity.INFO, message)
+        logs += Log(Severity.Info, message)
     }
 
     override fun logWarning(message: String) {
-        logs += Log(Severity.WARNING, message)
+        logs += Log(Severity.Warning, message)
     }
 
     override fun logError(message: String) {
-        logs += Log(Severity.ERROR, message)
+        logs += Log(Severity.Error, message)
     }
 
     override fun logException(throwable: Throwable, severity: Severity, properties: Map<String, Any>, message: String?) {

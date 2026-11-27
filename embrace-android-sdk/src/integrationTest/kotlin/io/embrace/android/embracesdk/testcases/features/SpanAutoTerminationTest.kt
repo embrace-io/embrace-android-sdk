@@ -65,18 +65,18 @@ internal class SpanAutoTerminationTest(
                     // start a span without auto termination
                     hangingSpan = embrace.startSpan(
                         ROOT_HANGING_SPAN,
-                        autoTerminationMode = AutoTerminationMode.NONE
+                        autoTerminationMode = AutoTerminationMode.None
                     )
 
                     // start a span with children and auto termination
                     val parent = embrace.startSpan(
                         ROOT_START_SPAN,
-                        autoTerminationMode = AutoTerminationMode.ON_BACKGROUND
+                        autoTerminationMode = AutoTerminationMode.OnBackground
                     )
                     embrace.startSpan(
                         CHILD_START_SPAN_A,
                         parent = parent,
-                        autoTerminationMode = AutoTerminationMode.ON_BACKGROUND
+                        autoTerminationMode = AutoTerminationMode.OnBackground
                     )
                     val childB = embrace.startSpan(CHILD_START_SPAN_B, parent = parent)
                     embrace.startSpan(CHILD_START_SPAN_C, parent = childB)
@@ -88,7 +88,7 @@ internal class SpanAutoTerminationTest(
                     // create a span with auto termination
                     embrace.createSpan(
                         ROOT_CREATE_SPAN,
-                        autoTerminationMode = AutoTerminationMode.ON_BACKGROUND
+                        autoTerminationMode = AutoTerminationMode.OnBackground
                     )?.start()
 
                     // record a span
@@ -106,7 +106,7 @@ internal class SpanAutoTerminationTest(
                     // stop a span with auto termination
                     embrace.createSpan(
                         ROOT_STOPPED_SPAN,
-                        autoTerminationMode = AutoTerminationMode.ON_BACKGROUND
+                        autoTerminationMode = AutoTerminationMode.OnBackground
                     )?.apply {
                         start()
                         stop()
@@ -114,7 +114,7 @@ internal class SpanAutoTerminationTest(
                 }
 
                 // background activity
-                embrace.startSpan(BG_SPAN, autoTerminationMode = AutoTerminationMode.ON_BACKGROUND)
+                embrace.startSpan(BG_SPAN, autoTerminationMode = AutoTerminationMode.OnBackground)
 
                 // second session
                 secondSessionPartTimestamps = recordSession {

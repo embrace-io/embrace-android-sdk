@@ -82,7 +82,7 @@ internal class OtelApiInteropTest(
         val span = checkNotNull(embrace.startSpan(SPAN))
         span.addAttribute(ATTR_KEY, ATTR_VALUE)
         span.addEvent(EVENT, attributes = mapOf(ATTR_KEY to ATTR_VALUE))
-        embrace.logMessage(LOG, Severity.INFO, mapOf(ATTR_KEY to ATTR_VALUE))
+        embrace.logMessage(LOG, Severity.Info, mapOf(ATTR_KEY to ATTR_VALUE))
         span.stop()
     }
 

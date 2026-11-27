@@ -45,7 +45,7 @@ class BenchmarkActivity : Activity() {
         Embrace.setUserIdentifier("benchmark-user")
         Embrace.addUserPersona("benchmark-persona")
         repeat(20) {
-            Embrace.addUserSessionProperty("property-$it", "value-$it", PropertyScope.USER_SESSION)
+            Embrace.addUserSessionProperty("property-$it", "value-$it", PropertyScope.UserSession)
             Embrace.addBreadcrumb("breadcrumb-$it")
         }
         repeat(10) { Embrace.startSpan("completed-span-$it").populate().stop() }

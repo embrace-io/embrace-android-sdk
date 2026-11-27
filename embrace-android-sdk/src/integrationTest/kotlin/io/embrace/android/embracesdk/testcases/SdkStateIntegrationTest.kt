@@ -807,9 +807,9 @@ internal class SdkStateIntegrationTest(
             val activity = Robolectric.buildActivity(Activity::class.java).get()
             embrace.applicationInitStart()
             embrace.applicationInitEnd()
-            embrace.logMessage(LOG_1, Severity.INFO)
-            embrace.logMessage(LOG_1, Severity.INFO, emptyMap(), ByteArray(1))
-            embrace.logMessage(LOG_1, Severity.INFO, emptyMap(), "attachment-id", "https://example.com")
+            embrace.logMessage(LOG_1, Severity.Info)
+            embrace.logMessage(LOG_1, Severity.Info, emptyMap(), ByteArray(1))
+            embrace.logMessage(LOG_1, Severity.Info, emptyMap(), "attachment-id", "https://example.com")
             embrace.logInfo(LOG_1)
             embrace.logWarning(LOG_1)
             embrace.logError(LOG_1)
@@ -828,7 +828,7 @@ internal class SdkStateIntegrationTest(
             embrace.recordNetworkRequest(
                 EmbraceNetworkRequest.fromCompletedRequest(
                     "https://example.com",
-                    HttpMethod.GET,
+                    HttpMethod.Get,
                     startMs,
                     endMs,
                     0,
@@ -839,7 +839,7 @@ internal class SdkStateIntegrationTest(
             val modifier = HttpRequestInfoModifier { }
             embrace.addHttpRequestInfoModifier(modifier)
             embrace.removeHttpRequestInfoModifier(modifier)
-            assertFalse(embrace.addUserSessionProperty("key", "value", PropertyScope.USER_SESSION))
+            assertFalse(embrace.addUserSessionProperty("key", "value", PropertyScope.UserSession))
             assertFalse(embrace.removeUserSessionProperty("key"))
             embrace.endUserSession()
             val listener = UserSessionListener { }
@@ -876,7 +876,7 @@ internal class SdkStateIntegrationTest(
             assertFalse(embrace.isStarted)
             assertEquals("", embrace.deviceId)
             assertNull(embrace.currentUserSessionId)
-            assertEquals(LastRunEndState.INVALID, embrace.lastRunEndState)
+            assertEquals(LastRunEndState.Invalid, embrace.lastRunEndState)
             assertFalse(EmbraceInternalApi.internalInterface.isNetworkSpanForwardingEnabled())
         }
 

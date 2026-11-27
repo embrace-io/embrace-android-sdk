@@ -23,12 +23,12 @@ internal class SdkStateApiDelegate(
         get() {
             return if (isStarted) {
                 if (crashVerifier.didLastRunCrash()) {
-                    LastRunEndState.CRASH
+                    LastRunEndState.Crash
                 } else {
-                    LastRunEndState.CLEAN_EXIT
+                    LastRunEndState.CleanExit
                 }
             } else {
-                LastRunEndState.INVALID
+                LastRunEndState.Invalid
             }
         }
 }

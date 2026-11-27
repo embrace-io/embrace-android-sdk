@@ -28,13 +28,13 @@ internal class UserSessionApiDelegateTest {
 
     @Test
     fun `add session property`() {
-        delegate.addUserSessionProperty("test", "value", PropertyScope.USER_SESSION)
+        delegate.addUserSessionProperty("test", "value", PropertyScope.UserSession)
         assertEquals("value", userSessionPropertiesService.props["test"])
     }
 
     @Test
     fun `remove session property`() {
-        delegate.addUserSessionProperty("test", "value", PropertyScope.USER_SESSION)
+        delegate.addUserSessionProperty("test", "value", PropertyScope.UserSession)
         delegate.removeUserSessionProperty("test")
         assertNull(userSessionPropertiesService.props["test"])
     }

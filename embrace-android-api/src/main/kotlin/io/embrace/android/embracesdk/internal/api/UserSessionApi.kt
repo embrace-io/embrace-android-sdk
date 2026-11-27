@@ -18,9 +18,9 @@ public interface UserSessionApi {
      * that exceeds the maximum length will be truncated.
      * @param value     The value associated with the given key. The maximum length for this is 1024 characters. A value passed in that
      * exceeds the maximum length will be truncated.
-     * @param scope     The lifetime scope of the property. Use [PropertyScope.USER_SESSION] for properties that are cleared
-     * at the end of the user session, [PropertyScope.PROCESS] for properties that survive user session boundaries but not process
-     * death, or [PropertyScope.PERMANENT] for properties that persist through app launches.
+     * @param scope     The lifetime scope of the property. Use [PropertyScope.UserSession] for properties that are cleared
+     * at the end of the user session, [PropertyScope.Process] for properties that survive user session boundaries but not process
+     * death, or [PropertyScope.Permanent] for properties that persist through app launches.
      *
      * @return True if the property was successfully added. Reasons this may fail include an invalid key or value, or if the
      * session has exceeded its total properties limit.

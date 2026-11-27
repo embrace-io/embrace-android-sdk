@@ -13,9 +13,9 @@ import io.embrace.android.embracesdk.spans.ErrorCode
  */
 
 fun ErrorCode.toErrorCodeAttribute(): ErrorCodeAttribute = when (this) {
-    ErrorCode.FAILURE -> ErrorCodeAttribute.Failure
-    ErrorCode.USER_ABANDON -> ErrorCodeAttribute.UserAbandon
-    ErrorCode.UNKNOWN -> ErrorCodeAttribute.Unknown
+    ErrorCode.Failure -> ErrorCodeAttribute.Failure
+    ErrorCode.UserAbandon -> ErrorCodeAttribute.UserAbandon
+    ErrorCode.Unknown -> ErrorCodeAttribute.Unknown
 }
 
 fun EmbraceSpanEvent.toSpanEvent(): SpanEvent = SpanEventImpl(name, timestampNanos, attributes)

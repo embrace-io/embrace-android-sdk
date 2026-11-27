@@ -41,9 +41,9 @@ internal class LogsApiDelegate(
     private val telemetryService: InternalTelemetryService,
 ) : LogsApi {
 
-    override fun logInfo(message: String) = logMessage(message, Severity.INFO)
-    override fun logWarning(message: String) = logMessage(message, Severity.WARNING)
-    override fun logError(message: String) = logMessage(message, Severity.ERROR)
+    override fun logInfo(message: String) = logMessage(message, Severity.Info)
+    override fun logWarning(message: String) = logMessage(message, Severity.Warning)
+    override fun logError(message: String) = logMessage(message, Severity.Error)
 
     override fun logMessage(
         message: String,
@@ -180,9 +180,9 @@ internal class LogsApiDelegate(
 
         // map severity value
         val logSeverity = when (severity) {
-            Severity.INFO -> LogSeverity.INFO
-            Severity.WARNING -> LogSeverity.WARNING
-            Severity.ERROR -> LogSeverity.ERROR
+            Severity.Info -> LogSeverity.INFO
+            Severity.Warning -> LogSeverity.WARNING
+            Severity.Error -> LogSeverity.ERROR
         }
 
         // send log

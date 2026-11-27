@@ -22,7 +22,7 @@ object NoopEmbraceSdkSpan : EmbraceSdkSpan {
     override val isRecording: Boolean = false
     override val parent: EmbraceSpan? = null
     override val terminationMode: SpanTerminationMode = SpanTerminationMode.None
-    override val autoTerminationMode: AutoTerminationMode = AutoTerminationMode.NONE
+    override val autoTerminationMode: AutoTerminationMode = AutoTerminationMode.None
 
     override fun start(startTimeMs: Long?): Boolean = false
 

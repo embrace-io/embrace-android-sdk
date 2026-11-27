@@ -307,7 +307,7 @@ internal class NoopSdkInstance(
 
     override val currentUserSessionId: String? = null
 
-    override val lastRunEndState: LastRunEndState = LastRunEndState.INVALID
+    override val lastRunEndState: LastRunEndState = LastRunEndState.Invalid
 
     override fun addLogRecordExporter(logRecordExporter: LogRecordExporter) {
         logDropped("add_log_record_exporter")

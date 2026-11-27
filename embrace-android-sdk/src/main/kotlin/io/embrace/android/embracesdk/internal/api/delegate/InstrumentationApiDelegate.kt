@@ -88,9 +88,9 @@ internal class InstrumentationApiDelegate(
 
     private fun ErrorCode?.toErrorCodeAttribute(): ErrorCodeAttribute? {
         return when (this) {
-            ErrorCode.FAILURE -> ErrorCodeAttribute.Failure
-            ErrorCode.UNKNOWN -> ErrorCodeAttribute.Unknown
-            ErrorCode.USER_ABANDON -> ErrorCodeAttribute.UserAbandon
+            ErrorCode.Failure -> ErrorCodeAttribute.Failure
+            ErrorCode.Unknown -> ErrorCodeAttribute.Unknown
+            ErrorCode.UserAbandon -> ErrorCodeAttribute.UserAbandon
             null -> null
         }
     }

@@ -146,7 +146,7 @@ internal class ExternalOtelJavaTracerTest(
                     expectedEndTimeMs = checkNotNull(childEndTimeMs),
                     expectedParentId = checkNotNull(parent.spanId),
                     expectedStatus = io.embrace.android.embracesdk.internal.payload.Span.Status.ERROR,
-                    expectedErrorCode = ErrorCode.FAILURE,
+                    expectedErrorCode = ErrorCode.Failure,
                     expectedEvents = listOf(
                         SpanEvent(
                             name = "exception",

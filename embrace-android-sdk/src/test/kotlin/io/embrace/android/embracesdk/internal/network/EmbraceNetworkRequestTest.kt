@@ -16,7 +16,7 @@ private const val RESPONSE_CODE = 304
 private const val TRACE_ID = "trace-id"
 private const val ERR_TYPE = "err_type"
 private const val ERR_MSG = "err_msg"
-private val httpMethod = HttpMethod.GET
+private val httpMethod = HttpMethod.Get
 private val traceParent = DefaultTraceparentGenerator.generateW3cTraceparent()
 
 internal class EmbraceNetworkRequestTest {
@@ -161,13 +161,13 @@ internal class EmbraceNetworkRequestTest {
 
     @Test
     fun testHttpMethodFromString() {
-        assertEquals(HttpMethod.PATCH, HttpMethod.fromString("patch"))
-        assertEquals(HttpMethod.GET, HttpMethod.fromString("PROPFIND"))
+        assertEquals(HttpMethod.Patch, HttpMethod.fromString("patch"))
+        assertEquals(HttpMethod.Get, HttpMethod.fromString("PROPFIND"))
     }
 
     private fun verifyDefaultCompletedRequest(request: EmbraceNetworkRequest) {
         assertEquals(URL, request.url)
-        assertEquals(httpMethod.name, request.httpMethod)
+        assertEquals(httpMethod.name.uppercase(), request.httpMethod)
         assertEquals(START_TIME, request.startTime)
         assertEquals(END_TIME, request.endTime)
         assertEquals(BYTES_SENT, request.bytesSent)
@@ -177,7 +177,7 @@ internal class EmbraceNetworkRequestTest {
 
     private fun verifyDefaultIncompleteRequest(request: EmbraceNetworkRequest) {
         assertEquals(URL, request.url)
-        assertEquals(httpMethod.name, request.httpMethod)
+        assertEquals(httpMethod.name.uppercase(), request.httpMethod)
         assertEquals(START_TIME, request.startTime)
         assertEquals(END_TIME, request.endTime)
         assertEquals(ERR_TYPE, request.errorType)

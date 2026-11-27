@@ -82,7 +82,7 @@ internal class UserSessionGoldenFileTest(
         var pendingUserSessionId: String? = null
         testRule.runTest(
             testCaseAction = {
-                embrace.logMessage("Hi", Severity.INFO, mapOf(EmbSessionAttributes.EMB_PRIVATE_SEND_MODE to "immediate"))
+                embrace.logMessage("Hi", Severity.Info, mapOf(EmbSessionAttributes.EMB_PRIVATE_SEND_MODE to "immediate"))
                 pendingUserSessionId = checkNotNull(
                     testRule.services.sessionOrchestrator.currentUserSession()
                 ).userSessionId

@@ -69,7 +69,7 @@ internal class OtelExportParityTest(
         testRule.runTest(
             testCaseAction = {
                 recordSession {
-                    embrace.logMessage(LOG_MESSAGE, Severity.WARNING, mapOf("my-attribute" to "my-value"))
+                    embrace.logMessage(LOG_MESSAGE, Severity.Warning, mapOf("my-attribute" to "my-value"))
                 }
             },
             otelExportAssertion = {

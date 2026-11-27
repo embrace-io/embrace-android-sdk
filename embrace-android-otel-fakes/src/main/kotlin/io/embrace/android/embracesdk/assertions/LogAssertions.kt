@@ -63,11 +63,17 @@ fun assertOtelLogReceived(
     }
 }
 
+fun getSeverityText(severity: Severity): String = when (severity) {
+    Severity.Info -> "INFO"
+    Severity.Warning -> "WARNING"
+    Severity.Error -> "ERROR"
+}
+
 fun getOtelSeverity(severity: Severity): SeverityNumber {
     return when (severity) {
-        Severity.INFO -> SeverityNumber.INFO
-        Severity.WARNING -> SeverityNumber.WARN
-        Severity.ERROR -> SeverityNumber.ERROR
+        Severity.Info -> SeverityNumber.INFO
+        Severity.Warning -> SeverityNumber.WARN
+        Severity.Error -> SeverityNumber.ERROR
     }
 }
 

@@ -93,7 +93,7 @@ internal class ExternalLoggerTest(
                     trackStartMs = clock.now()
                     embrace.trackExperiment(id = "checkout-flow", variant = "variant-a", startedAt = trackStartMs)
                     logTime = clock.now().millisToNanos()
-                    embrace.addUserSessionProperty("session-attr", "blah", PropertyScope.PERMANENT)
+                    embrace.addUserSessionProperty("session-attr", "blah", PropertyScope.Permanent)
                     embLogger.emit(
                         body = "test",
                         eventName = null,
@@ -169,7 +169,7 @@ internal class ExternalLoggerTest(
                 observedTime = clock.now().millisToNanos()
                 clock.tick()
                 logTime = clock.now().millisToNanos()
-                embrace.addUserSessionProperty("bg-attr", "blah", PropertyScope.PERMANENT)
+                embrace.addUserSessionProperty("bg-attr", "blah", PropertyScope.Permanent)
                 val sessionIds = testRule.services.sessionIdsProvider.getActiveSessionIds()
                 userSessionId = sessionIds.userSessionId
                 sessionPartId = sessionIds.sessionPartId

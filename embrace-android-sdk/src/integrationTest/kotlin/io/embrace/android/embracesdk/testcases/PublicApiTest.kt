@@ -97,10 +97,10 @@ internal class PublicApiTest(
         testRule.runTest(
             instrumentedConfig = instrumentedConfig,
             preSdkStartAction = {
-                assertEquals(LastRunEndState.INVALID, embrace.lastRunEndState)
+                assertEquals(LastRunEndState.Invalid, embrace.lastRunEndState)
             },
             testCaseAction = {
-                assertEquals(LastRunEndState.CLEAN_EXIT, embrace.lastRunEndState)
+                assertEquals(LastRunEndState.CleanExit, embrace.lastRunEndState)
             }
         )
     }

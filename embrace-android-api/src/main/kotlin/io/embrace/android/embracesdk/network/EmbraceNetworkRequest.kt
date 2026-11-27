@@ -2,7 +2,6 @@ package io.embrace.android.embracesdk.network
 
 import io.embrace.android.embracesdk.internal.network.http.NetworkCaptureData
 import io.embrace.android.embracesdk.network.http.HttpMethod
-import java.util.Locale
 
 /**
  * This class is used to create manually-recorded network requests.
@@ -172,6 +171,6 @@ public class EmbraceNetworkRequest private constructor(
             )
         }
 
-        internal fun HttpMethod.asString(): String = name.uppercase(Locale.getDefault())
+        internal fun HttpMethod.asString(): String = name.uppercase()
     }
 }

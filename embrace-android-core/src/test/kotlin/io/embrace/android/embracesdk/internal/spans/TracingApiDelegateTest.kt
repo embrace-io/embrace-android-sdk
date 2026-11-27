@@ -189,11 +189,11 @@ internal class TracingApiDelegateTest(
                 name = expectedName,
                 startTimeMs = expectedStartTimeMs,
                 endTimeMs = expectedEndTimeMs,
-                errorCode = ErrorCode.FAILURE,
+                errorCode = ErrorCode.Failure,
             ),
         )
 
-        with(verifyPublicSpan(expectedName, true, ErrorCode.FAILURE)) {
+        with(verifyPublicSpan(expectedName, true, ErrorCode.Failure)) {
             assertEquals(expectedStartTimeMs, startTimeNanos?.nanosToMillis())
             assertEquals(expectedEndTimeMs, endTimeNanos?.nanosToMillis())
             assertTrue(status == Span.Status.ERROR)
@@ -237,11 +237,11 @@ internal class TracingApiDelegateTest(
                 startTimeMs = expectedStartTimeMs,
                 endTimeMs = expectedEndTimeMs,
                 parent = parentSpan,
-                errorCode = ErrorCode.USER_ABANDON,
+                errorCode = ErrorCode.UserAbandon,
             ),
         )
 
-        with(verifyPublicSpan(expectedName, false, ErrorCode.USER_ABANDON)) {
+        with(verifyPublicSpan(expectedName, false, ErrorCode.UserAbandon)) {
             assertEquals(expectedStartTimeMs, startTimeNanos?.nanosToMillis())
             assertEquals(expectedEndTimeMs, endTimeNanos?.nanosToMillis())
             assertTrue(status == Span.Status.ERROR)

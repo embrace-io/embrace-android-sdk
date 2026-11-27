@@ -65,7 +65,7 @@ internal class LogsApiDelegateTest {
 
     @Test
     fun logMessage() {
-        delegate.logMessageImpl(severity = Severity.WARNING, message = "test")
+        delegate.logMessageImpl(severity = Severity.Warning, message = "test")
         val log = logService.loggedMessages.single()
         assertEquals("test", log.message)
         assertEquals(LogSeverity.WARNING, log.severity)
@@ -83,7 +83,7 @@ internal class LogsApiDelegateTest {
 
     @Test
     fun testLogException() {
-        delegate.logException(RuntimeException("test"), Severity.INFO)
+        delegate.logException(RuntimeException("test"), Severity.Info)
         val log = logService.loggedMessages.single()
         assertEquals("test", log.message)
         assertEquals(LogSeverity.INFO, log.severity)
@@ -93,7 +93,7 @@ internal class LogsApiDelegateTest {
     @Test
     fun testLogException1() {
         val props = mapOf("foo" to "bar")
-        delegate.logException(RuntimeException("test"), Severity.INFO, props)
+        delegate.logException(RuntimeException("test"), Severity.Info, props)
         val log = logService.loggedMessages.single()
         assertEquals("test", log.message)
         assertEquals(LogSeverity.INFO, log.severity)
@@ -104,7 +104,7 @@ internal class LogsApiDelegateTest {
     @Test
     fun testLogException2() {
         val props = mapOf("foo" to "bar")
-        delegate.logException(RuntimeException("test"), Severity.INFO, props, "custom_message")
+        delegate.logException(RuntimeException("test"), Severity.Info, props, "custom_message")
         val log = logService.loggedMessages.single()
         assertEquals("custom_message", log.message)
         assertEquals(LogSeverity.INFO, log.severity)
@@ -125,7 +125,7 @@ internal class LogsApiDelegateTest {
     @Test
     fun testLogCustomStacktrace() {
         val stacktrace = RuntimeException("test").stackTrace
-        delegate.logCustomStacktrace(stacktrace, Severity.INFO)
+        delegate.logCustomStacktrace(stacktrace, Severity.Info)
         val log = logService.loggedMessages.single()
         assertEquals("", log.message)
         assertEquals(LogSeverity.INFO, log.severity)
@@ -136,7 +136,7 @@ internal class LogsApiDelegateTest {
     fun testLogCustomStacktrace1() {
         val props = mapOf("foo" to "bar")
         val stacktrace = RuntimeException("test").stackTrace
-        delegate.logCustomStacktrace(stacktrace, Severity.INFO, props)
+        delegate.logCustomStacktrace(stacktrace, Severity.Info, props)
 
         val log = logService.loggedMessages.single()
         assertEquals("", log.message)
@@ -149,7 +149,7 @@ internal class LogsApiDelegateTest {
     fun testLogCustomStacktrace2() {
         val props = mapOf("foo" to "bar")
         val stacktrace = RuntimeException("test").stackTrace
-        delegate.logCustomStacktrace(stacktrace, Severity.INFO, props, "my message")
+        delegate.logCustomStacktrace(stacktrace, Severity.Info, props, "my message")
 
         val log = logService.loggedMessages.single()
         assertEquals("my message", log.message)
@@ -161,7 +161,7 @@ internal class LogsApiDelegateTest {
     @Test
     fun `attachment too large tracks drop`() {
         val largeAttachment = ByteArray(2 * 1024 * 1024) // 2MB, exceeds 1MB limit
-        delegate.logMessage("test", Severity.INFO, emptyMap(), largeAttachment)
+        delegate.logMessage("test", Severity.Info, emptyMap(), largeAttachment)
 
         assertEquals(1, telemetryService.appliedLimits.size)
         assertEquals("attachment" to AppliedLimitType.DROP, telemetryService.appliedLimits.first())
@@ -172,7 +172,7 @@ internal class LogsApiDelegateTest {
         val attachment = ByteArray(100) // Small valid attachment
         // Log 6 attachments (limit is 5 per session)
         repeat(6) {
-            delegate.logMessage("test", Severity.INFO, emptyMap(), attachment)
+            delegate.logMessage("test", Severity.Info, emptyMap(), attachment)
         }
 
         // The 6th attachment should be dropped
@@ -183,7 +183,7 @@ internal class LogsApiDelegateTest {
     @Test
     fun `valid attachment does not track drop`() {
         val attachment = ByteArray(100) // Small valid attachment
-        delegate.logMessage("test", Severity.INFO, emptyMap(), attachment)
+        delegate.logMessage("test", Severity.Info, emptyMap(), attachment)
 
         assertTrue(telemetryService.appliedLimits.isEmpty())
     }

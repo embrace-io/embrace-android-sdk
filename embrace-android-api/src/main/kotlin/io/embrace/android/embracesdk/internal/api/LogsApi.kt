@@ -95,7 +95,7 @@ public interface LogsApi {
      */
     public fun logException(
         throwable: Throwable,
-        severity: Severity = Severity.ERROR,
+        severity: Severity = Severity.Error,
         properties: Map<String, Any> = emptyMap(),
         message: String? = null,
     )
@@ -112,7 +112,7 @@ public interface LogsApi {
      */
     public fun logCustomStacktrace(
         stacktraceElements: Array<StackTraceElement>,
-        severity: Severity = Severity.ERROR,
+        severity: Severity = Severity.Error,
         properties: Map<String, Any> = emptyMap(),
         message: String? = null,
     )

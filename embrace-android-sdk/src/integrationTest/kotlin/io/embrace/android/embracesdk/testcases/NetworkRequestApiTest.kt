@@ -47,7 +47,7 @@ internal class NetworkRequestApiTest(
         assertSingleNetworkRequestInSession(
             EmbraceNetworkRequest.fromCompletedRequest(
                 URL,
-                HttpMethod.GET,
+                HttpMethod.Get,
                 START_TIME,
                 END_TIME,
                 BYTES_SENT,
@@ -62,7 +62,7 @@ internal class NetworkRequestApiTest(
         assertSingleNetworkRequestInSession(
             EmbraceNetworkRequest.fromCompletedRequest(
                 LONG_URL,
-                HttpMethod.GET,
+                HttpMethod.Get,
                 START_TIME,
                 END_TIME,
                 BYTES_SENT,
@@ -77,7 +77,7 @@ internal class NetworkRequestApiTest(
         assertSingleNetworkRequestInSession(
             expectedRequest = EmbraceNetworkRequest.fromCompletedRequest(
                 URL,
-                HttpMethod.POST,
+                HttpMethod.Post,
                 START_TIME,
                 END_TIME,
                 BYTES_SENT,
@@ -93,7 +93,7 @@ internal class NetworkRequestApiTest(
         assertSingleNetworkRequestInSession(
             expectedRequest = EmbraceNetworkRequest.fromCompletedRequest(
                 URL,
-                HttpMethod.GET,
+                HttpMethod.Get,
                 START_TIME,
                 END_TIME,
                 BYTES_SENT,
@@ -111,7 +111,7 @@ internal class NetworkRequestApiTest(
         assertSingleNetworkRequestInSession(
             expectedRequest = EmbraceNetworkRequest.fromCompletedRequest(
                 URL,
-                HttpMethod.GET,
+                HttpMethod.Get,
                 START_TIME,
                 END_TIME,
                 BYTES_SENT,
@@ -129,7 +129,7 @@ internal class NetworkRequestApiTest(
         assertSingleNetworkRequestInSession(
             EmbraceNetworkRequest.fromIncompleteRequest(
                 URL,
-                HttpMethod.GET,
+                HttpMethod.Get,
                 START_TIME,
                 END_TIME,
                 NullPointerException::class.toString(),
@@ -144,7 +144,7 @@ internal class NetworkRequestApiTest(
         assertSingleNetworkRequestInSession(
             EmbraceNetworkRequest.fromIncompleteRequest(
                 URL,
-                HttpMethod.POST,
+                HttpMethod.Post,
                 START_TIME,
                 END_TIME,
                 NullPointerException::class.toString(),
@@ -160,7 +160,7 @@ internal class NetworkRequestApiTest(
         assertSingleNetworkRequestInSession(
             EmbraceNetworkRequest.fromIncompleteRequest(
                 URL,
-                HttpMethod.GET,
+                HttpMethod.Get,
                 START_TIME,
                 END_TIME,
                 NullPointerException::class.toString(),
@@ -178,7 +178,7 @@ internal class NetworkRequestApiTest(
         assertSingleNetworkRequestInSession(
             EmbraceNetworkRequest.fromIncompleteRequest(
                 URL,
-                HttpMethod.GET,
+                HttpMethod.Get,
                 START_TIME,
                 END_TIME,
                 NullPointerException::class.toString(),
@@ -212,7 +212,7 @@ internal class NetworkRequestApiTest(
                     embrace.recordNetworkRequest(
                         EmbraceNetworkRequest.fromCompletedRequest(
                             DISABLED_URL,
-                            HttpMethod.GET,
+                            HttpMethod.Get,
                             START_TIME,
                             END_TIME,
                             BYTES_SENT,
@@ -224,7 +224,7 @@ internal class NetworkRequestApiTest(
                     embrace.recordNetworkRequest(
                         EmbraceNetworkRequest.fromIncompleteRequest(
                             DISABLED_URL,
-                            HttpMethod.GET,
+                            HttpMethod.Get,
                             START_TIME + 1,
                             END_TIME,
                             NullPointerException::class.toString(),
@@ -235,7 +235,7 @@ internal class NetworkRequestApiTest(
                     embrace.recordNetworkRequest(
                         EmbraceNetworkRequest.fromCompletedRequest(
                             URL,
-                            HttpMethod.GET,
+                            HttpMethod.Get,
                             START_TIME + 2,
                             END_TIME,
                             BYTES_SENT,
@@ -265,7 +265,7 @@ internal class NetworkRequestApiTest(
 
                     val request = EmbraceNetworkRequest.fromCompletedRequest(
                         URL,
-                        HttpMethod.GET,
+                        HttpMethod.Get,
                         START_TIME,
                         END_TIME,
                         BYTES_SENT,
@@ -315,7 +315,7 @@ internal class NetworkRequestApiTest(
                         embrace.recordNetworkRequest(
                             EmbraceNetworkRequest.fromCompletedRequest(
                                 URL,
-                                HttpMethod.GET,
+                                HttpMethod.Get,
                                 START_TIME + it,
                                 END_TIME,
                                 BYTES_SENT,
@@ -354,7 +354,7 @@ internal class NetworkRequestApiTest(
                     embrace.recordNetworkRequest(
                         EmbraceNetworkRequest.fromCompletedRequest(
                             URL,
-                            HttpMethod.GET,
+                            HttpMethod.Get,
                             START_TIME,
                             END_TIME,
                             BYTES_SENT,
@@ -415,7 +415,7 @@ internal class NetworkRequestApiTest(
                     embrace.recordNetworkRequest(
                         EmbraceNetworkRequest.fromCompletedRequest(
                             URL,
-                            HttpMethod.GET,
+                            HttpMethod.Get,
                             START_TIME,
                             END_TIME,
                             BYTES_SENT,
@@ -450,7 +450,7 @@ internal class NetworkRequestApiTest(
                     embrace.recordNetworkRequest(
                         EmbraceNetworkRequest.fromCompletedRequest(
                             URL,
-                            HttpMethod.GET,
+                            HttpMethod.Get,
                             START_TIME,
                             END_TIME,
                             BYTES_SENT,
@@ -492,7 +492,7 @@ internal class NetworkRequestApiTest(
                     embrace.recordNetworkRequest(
                         EmbraceNetworkRequest.fromCompletedRequest(
                             URL,
-                            HttpMethod.GET,
+                            HttpMethod.Get,
                             START_TIME,
                             END_TIME,
                             BYTES_SENT,

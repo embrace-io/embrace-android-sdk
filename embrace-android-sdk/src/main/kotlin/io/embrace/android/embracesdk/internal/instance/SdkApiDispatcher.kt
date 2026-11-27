@@ -280,7 +280,7 @@ internal class SdkApiDispatcher(
 
     override val lastRunEndState: LastRunEndState get() = errorHandler.guardSdkCode(
         SdkErrorType.PublicApiFail,
-        LastRunEndState.INVALID,
+        LastRunEndState.Invalid,
     ) { target.lastRunEndState }
 
     override fun addLogRecordExporter(logRecordExporter: LogRecordExporter) =

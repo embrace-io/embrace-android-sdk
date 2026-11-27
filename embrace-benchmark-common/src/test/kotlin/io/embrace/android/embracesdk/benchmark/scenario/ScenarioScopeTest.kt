@@ -12,7 +12,7 @@ internal class ScenarioScopeTest {
 
     @Test
     fun `a recorded request is a completed request that took 80ms of scenario time`() {
-        scope.recordRequest("https://api.example.com/v1/cart", HttpMethod.POST, statusCode = 503, bytesReceived = 12)
+        scope.recordRequest("https://api.example.com/v1/cart", HttpMethod.Post, statusCode = 503, bytesReceived = 12)
 
         assertEquals(80, scope.elapsedMs)
         with(scope.embrace.networkRequests.single()) {
@@ -43,7 +43,7 @@ internal class ScenarioScopeTest {
             "https://api.example.com/v1/cart",
             startTimeMs = START_TIME_MS - 250,
             endTimeMs = START_TIME_MS - 30,
-            method = HttpMethod.POST,
+            method = HttpMethod.Post,
             statusCode = 503,
             bytesReceived = 12,
         )

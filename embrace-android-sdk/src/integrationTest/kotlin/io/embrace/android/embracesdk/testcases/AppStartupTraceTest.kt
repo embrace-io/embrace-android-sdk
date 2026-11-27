@@ -100,7 +100,7 @@ internal class AppStartupTraceTest(
                             )
                         )
                     ),
-                    errorCode = ErrorCode.FAILURE
+                    errorCode = ErrorCode.Failure
                 )
                 embrace.addStartupTraceAttribute("custom-attribute", "yes")
                 clock.tick(55)
@@ -399,7 +399,7 @@ internal class AppStartupTraceTest(
                 val session = payloadStorageService.getPersistedCrashedSession()
                 val spans = session.findSpansOfType(EmbType.Performance.Default).associateBy { it.name }
                 with(checkNotNull(spans["emb-app-startup-cold"])) {
-                    assertError(ErrorCode.FAILURE)
+                    assertError(ErrorCode.Failure)
                     assertEquals(crashTimestamp, checkNotNull(endTimeNanos).nanosToMillis())
                 }
 
@@ -429,7 +429,7 @@ internal class AppStartupTraceTest(
                 val session = getSingleSessionEnvelope()
                 val spans = session.findSpansOfType(EmbType.Performance.Default).associateBy { it.name }
                 with(checkNotNull(spans["emb-app-startup-cold"])) {
-                    assertError(ErrorCode.USER_ABANDON)
+                    assertError(ErrorCode.UserAbandon)
                     assertEquals(backgroundTime, checkNotNull(endTimeNanos).nanosToMillis())
                 }
 
@@ -463,7 +463,7 @@ internal class AppStartupTraceTest(
                 val session = payloadStorageService.getPersistedCrashedSession()
                 val spans = session.findSpansOfType(EmbType.Performance.Default).associateBy { it.name }
                 with(checkNotNull(spans["emb-app-startup-warm"])) {
-                    assertError(ErrorCode.FAILURE)
+                    assertError(ErrorCode.Failure)
                     assertEquals(startupActivityInitMs, checkNotNull(startTimeNanos).nanosToMillis())
                     assertEquals(crashTimestamp, checkNotNull(endTimeNanos).nanosToMillis())
                 }
@@ -496,7 +496,7 @@ internal class AppStartupTraceTest(
                 val session = getSingleSessionEnvelope()
                 val spans = session.findSpansOfType(EmbType.Performance.Default).associateBy { it.name }
                 with(checkNotNull(spans["emb-app-startup-warm"])) {
-                    assertError(ErrorCode.USER_ABANDON)
+                    assertError(ErrorCode.UserAbandon)
                     assertEquals(startupActivityInitMs, checkNotNull(startTimeNanos).nanosToMillis())
                     assertEquals(backgroundTime, checkNotNull(endTimeNanos).nanosToMillis())
                 }

@@ -53,7 +53,7 @@ class FakeCurrentSessionPartSpan(
     ): List<Span> {
         val endingSessionPartSpan = checkNotNull(sessionPartSpan)
         val errorCode = if (appTerminationCause != null) {
-            ErrorCode.FAILURE
+            ErrorCode.Failure
         } else {
             null
         }

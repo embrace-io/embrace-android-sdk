@@ -738,7 +738,7 @@ internal class CurrentSessionPartSpanImplTests(
             with(lastFlushedSpan) {
                 assertEquals("emb-session", name)
                 assertIsType(EmbType.Ux.Session)
-                assertError(ErrorCode.FAILURE)
+                assertError(ErrorCode.Failure)
                 assertHasEmbraceAttribute(cause)
             }
 
@@ -765,7 +765,7 @@ internal class CurrentSessionPartSpanImplTests(
             expectedStartTimeMs = sessionStartTimeMs,
             expectedEndTimeMs = crashTimeMs,
             expectedParentId = OtelIds.INVALID_SPAN_ID,
-            expectedErrorCode = ErrorCode.FAILURE,
+            expectedErrorCode = ErrorCode.Failure,
             expectedCustomAttributes = mapOf(
                 AppTerminationCause.Crash.asPair(),
                 EmbType.Ux.Session.asPair(),
@@ -777,7 +777,7 @@ internal class CurrentSessionPartSpanImplTests(
             expectedStartTimeMs = crashSpanStartTimeMs,
             expectedEndTimeMs = crashTimeMs,
             expectedParentId = OtelIds.INVALID_SPAN_ID,
-            expectedErrorCode = ErrorCode.FAILURE,
+            expectedErrorCode = ErrorCode.Failure,
             expectedCustomAttributes = mapOf(
                 EmbType.Performance.Default.asPair(),
             ),

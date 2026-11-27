@@ -200,7 +200,7 @@ internal class UiLoadTest(
                         ),
                         expectedParentId = OtelIds.INVALID_SPAN_ID,
                         expectedStatus = Span.Status.ERROR,
-                        expectedErrorCode = ErrorCode.USER_ABANDON,
+                        expectedErrorCode = ErrorCode.UserAbandon,
                     )
                 }
             }

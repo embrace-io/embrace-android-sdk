@@ -7,15 +7,30 @@ public enum class LastRunEndState(public val value: Int) {
     /**
      * The SDK has not been started yet.
      */
-    INVALID(0),
+    Invalid(0),
 
     /**
      * The last run resulted in a crash.
      */
-    CRASH(1),
+    Crash(1),
 
     /**
      * The last run did not result in a crash.
      */
-    CLEAN_EXIT(2),
+    CleanExit(2),
+    ;
+
+    public companion object {
+        @Deprecated("Use Invalid", ReplaceWith("LastRunEndState.Invalid"))
+        @JvmField
+        public val INVALID: LastRunEndState = Invalid
+
+        @Deprecated("Use Crash", ReplaceWith("LastRunEndState.Crash"))
+        @JvmField
+        public val CRASH: LastRunEndState = Crash
+
+        @Deprecated("Use CleanExit", ReplaceWith("LastRunEndState.CleanExit"))
+        @JvmField
+        public val CLEAN_EXIT: LastRunEndState = CleanExit
+    }
 }

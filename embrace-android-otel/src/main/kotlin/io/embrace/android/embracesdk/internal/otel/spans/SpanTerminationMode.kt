@@ -29,15 +29,15 @@ sealed class SpanTerminationMode {
  * Maps the public [AutoTerminationMode] onto its internal [SpanTerminationMode] equivalent.
  */
 fun AutoTerminationMode.toTerminationMode(): SpanTerminationMode = when (this) {
-    AutoTerminationMode.NONE -> SpanTerminationMode.None
-    AutoTerminationMode.ON_BACKGROUND -> SpanTerminationMode.OnBackground
+    AutoTerminationMode.None -> SpanTerminationMode.None
+    AutoTerminationMode.OnBackground -> SpanTerminationMode.OnBackground
 }
 
 /**
  * Maps the internal [SpanTerminationMode] back onto the public [AutoTerminationMode]. [SpanTerminationMode.Timeout]
- * has no public equivalent, so it surfaces as [AutoTerminationMode.NONE].
+ * has no public equivalent, so it surfaces as [AutoTerminationMode.None].
  */
 fun SpanTerminationMode.toAutoTerminationMode(): AutoTerminationMode = when (this) {
-    SpanTerminationMode.OnBackground -> AutoTerminationMode.ON_BACKGROUND
-    else -> AutoTerminationMode.NONE
+    SpanTerminationMode.OnBackground -> AutoTerminationMode.OnBackground
+    else -> AutoTerminationMode.None
 }

@@ -126,8 +126,8 @@ internal class MultiFilePersistencePayloadParityTest(
             },
             testCaseAction = {
                 recordSession {
-                    embrace.addUserSessionProperty("permanent", "value", PropertyScope.PERMANENT)
-                    embrace.addUserSessionProperty("temporary", "value", PropertyScope.USER_SESSION)
+                    embrace.addUserSessionProperty("permanent", "value", PropertyScope.Permanent)
+                    embrace.addUserSessionProperty("temporary", "value", PropertyScope.UserSession)
                 }
             },
             assertAction = {
@@ -170,7 +170,7 @@ internal class MultiFilePersistencePayloadParityTest(
                     embrace.recordNetworkRequest(
                         EmbraceNetworkRequest.fromCompletedRequest(
                             "https://embrace.io",
-                            HttpMethod.GET,
+                            HttpMethod.Get,
                             clock.now(),
                             clock.now() + 100,
                             100,

@@ -101,7 +101,7 @@ internal class DeadSessionPartParityTest(
             persistAfterOneInterval()
 
             clock.tick(10_000)
-            embrace.addUserSessionProperty("late", "value", PropertyScope.USER_SESSION)
+            embrace.addUserSessionProperty("late", "value", PropertyScope.UserSession)
             persistAfterOneInterval()
             lastWriteMs = clock.now()
         }

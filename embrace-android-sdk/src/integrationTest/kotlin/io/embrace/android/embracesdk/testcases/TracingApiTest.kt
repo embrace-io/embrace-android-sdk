@@ -133,7 +133,7 @@ internal class TracingApiTest(
                             name = "completed-span",
                             startTimeMs = failedOpStartTimeMs.millisToNanos(),
                             endTimeMs = failedOpEndTimeMs.millisToNanos(),
-                            errorCode = ErrorCode.FAILURE,
+                            errorCode = ErrorCode.Failure,
                             parent = parentSpan,
                             attributes = attributes,
                             events = events
@@ -248,7 +248,7 @@ internal class TracingApiTest(
                     expectedEndTimeMs = testStartTimeMs + 300,
                     expectedParentId = expectedParentId,
                     expectedTraceId = traceRootSpan.traceId,
-                    expectedErrorCode = ErrorCode.FAILURE,
+                    expectedErrorCode = ErrorCode.Failure,
                     expectedCustomAttributes = mapOf(Pair("test-attr", "false")),
                     expectedEvents = listOf(
                         SpanEvent(

@@ -18,9 +18,9 @@ internal class UserSessionApiDelegate(
      */
     override fun addUserSessionProperty(key: String, value: String, scope: PropertyScope): Boolean {
         val internalScope = when (scope) {
-            PropertyScope.USER_SESSION -> io.embrace.android.embracesdk.internal.capture.session.PropertyScope.USER_SESSION
-            PropertyScope.PROCESS -> io.embrace.android.embracesdk.internal.capture.session.PropertyScope.PROCESS
-            PropertyScope.PERMANENT -> io.embrace.android.embracesdk.internal.capture.session.PropertyScope.PERMANENT
+            PropertyScope.UserSession -> io.embrace.android.embracesdk.internal.capture.session.PropertyScope.USER_SESSION
+            PropertyScope.Process -> io.embrace.android.embracesdk.internal.capture.session.PropertyScope.PROCESS
+            PropertyScope.Permanent -> io.embrace.android.embracesdk.internal.capture.session.PropertyScope.PERMANENT
         }
         return userSessionPropertiesService.addProperty(key, value, internalScope)
     }

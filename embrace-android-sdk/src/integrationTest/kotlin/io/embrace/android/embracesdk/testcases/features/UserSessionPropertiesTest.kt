@@ -170,11 +170,11 @@ internal class UserSessionPropertiesTest(
     }
 
     private fun SdkApi.addPermanentProperty(key: String) {
-        addUserSessionProperty(key, VALUE, PropertyScope.PERMANENT)
+        addUserSessionProperty(key, VALUE, PropertyScope.Permanent)
     }
 
     private fun SdkApi.addTemporaryProperty(key: String) {
-        addUserSessionProperty(key, VALUE, PropertyScope.USER_SESSION)
+        addUserSessionProperty(key, VALUE, PropertyScope.UserSession)
     }
 
     private fun Span.assertPropertyExistence(exist: List<String> = emptyList(), missing: List<String> = emptyList()) {

@@ -23,27 +23,12 @@ class NetworkStateDataSource(
         when (this) {
             ConnectivityStatus.None -> Status.NOT_REACHABLE
             ConnectivityStatus.Unverified -> Status.UNVERIFIED
-            is ConnectivityStatus.Unknown -> {
-                if (isConnected) {
-                    Status.UNKNOWN
-                } else {
-                    Status.UNKNOWN_CONNECTING
-                }
-            }
-            is ConnectivityStatus.Wan -> {
-                if (isConnected) {
-                    Status.WAN
-                } else {
-                    Status.WAN_CONNECTING
-                }
-            }
-            is ConnectivityStatus.Wifi -> {
-                if (isConnected) {
-                    Status.WIFI
-                } else {
-                    Status.WIFI_CONNECTING
-                }
-            }
+            is ConnectivityStatus.Unknown if isConnected -> Status.UNKNOWN
+            is ConnectivityStatus.Unknown -> Status.UNKNOWN_CONNECTING
+            is ConnectivityStatus.Wan if isConnected -> Status.WAN
+            is ConnectivityStatus.Wan -> Status.WAN_CONNECTING
+            is ConnectivityStatus.Wifi if isConnected -> Status.WIFI
+            is ConnectivityStatus.Wifi -> Status.WIFI_CONNECTING
         }
 }
 

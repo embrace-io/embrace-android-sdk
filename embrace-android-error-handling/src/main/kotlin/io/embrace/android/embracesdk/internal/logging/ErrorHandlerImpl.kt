@@ -226,7 +226,7 @@ class ErrorHandlerImpl(
             if (handlerState.compareAndSet(current, recording)) {
                 when (current) {
                     is HandlerState.Buffered -> recordBufferedErrors(current)
-                    is HandlerState.Recording -> if (current.recorder !== sink) {
+                    is HandlerState.Recording if current.recorder !== sink -> {
                         awaitRecordsInFlight("Replaced SDK error sink with SDK errors still being recorded")
                         closeSink(current.recorder)
                     }

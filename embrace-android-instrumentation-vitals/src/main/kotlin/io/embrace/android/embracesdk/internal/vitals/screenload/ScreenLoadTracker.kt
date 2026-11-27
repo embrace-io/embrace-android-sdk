@@ -80,18 +80,16 @@ internal class ScreenLoadTracker(
     fun onNavigationStart(screenName: String? = null, eventTime: Long = uptimeMillis()) {
         when (state) {
             State.IDLE -> openLoad(eventTime)
-            State.CANDIDATE -> {
-                if (eventTime <= startUptimeMs + navigationTimeoutMs) {
-                    state = State.CONFIRMED
-                    navStartMs = eventTime
-                    // the candidate is now a real load, so start the clock on it reporting
-                    scheduleTimeout()
-                } else {
-                    // the previous "tap" event is too far in the past to be considered part of the screen load
-                    // so we move the "start time" to now
-                    openLoad(eventTime)
-                }
+            State.CANDIDATE if eventTime <= startUptimeMs + navigationTimeoutMs -> {
+                state = State.CONFIRMED
+                navStartMs = eventTime
+                // the candidate is now a real load, so start the clock on it reporting
+                scheduleTimeout()
             }
+
+            // the previous "tap" event is too far in the past to be considered part of the screen load
+            // so we move the "start time" to now
+            State.CANDIDATE -> openLoad(eventTime)
 
             State.CONFIRMED -> {}
             State.SETTLING -> {

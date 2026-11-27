@@ -1,5 +1,6 @@
 package io.embrace.android.embracesdk.instrumentation.leaks
 
+import io.embrace.android.embracesdk.instrumentation.leaks.LeakDetector.LeakSnapshot
 import io.embrace.android.embracesdk.internal.session.id.SessionIdsSnapshot
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
@@ -8,121 +9,95 @@ import org.junit.Test
 internal class LeakSuspectEncoderTest {
 
     @Test
-    fun `no suspects encodes to an empty string`() {
+    fun `nothing to report encodes as empty, but a dropped count alone still encodes a candidates header`() {
         assertEquals("", encodeLeakSuspects(emptyList()))
+        assertEquals("", encodeLeakCandidates(emptyList(), BASE_MS, dropped = 0))
+        assertEquals("$BASE_MS;3", encodeLeakCandidates(emptyList(), BASE_MS, dropped = 3))
     }
 
     @Test
-    fun `a single suspect encodes as one group with one entry, id rendered as hex`() {
-        val suspects = listOf(snapshot(reportedClass = String::class.java, cyclesSurvived = 4, id = 255))
-
-        assertEquals("part_sess:activity|java.lang.String|4|ff", encodeLeakSuspects(suspects))
-    }
-
-    @Test
-    fun `a negative id is encoded as its unsigned hex form, not a minus sign`() {
-        val suspects = listOf(snapshot(id = -1))
-
-        assertEquals("part_sess:activity|java.lang.String|0|ffffffff", encodeLeakSuspects(suspects))
-    }
-
-    @Test
-    fun `suspects sharing a session part are grouped, ordered by cyclesSurvived descending`() {
+    fun `suspects are summed per class and grouped by session part, most cycles first`() {
         val suspects = listOf(
-            snapshot(reportedClass = Thread::class.java, cyclesSurvived = 2, id = 1),
-            snapshot(reportedClass = StringBuilder::class.java, cyclesSurvived = 5, id = 2),
+            snapshot("part-1", String::class.java, cycles = 3),
+            snapshot("part-2", Thread::class.java, cycles = 7, objectType = "fragment"),
+            snapshot("part-1", StringBuilder::class.java, cycles = 1, objectType = "fragment_view"),
+            snapshot("part-1", String::class.java, cycles = 2),
         )
 
         assertEquals(
-            "part_sess:activity|java.lang.StringBuilder|5|2,activity|java.lang.Thread|2|1",
+            "2;part-2_session-1:fragment|java.lang.Thread|7;" +
+                "part-1_session-1:activity|java.lang.String|5,fragment_view|java.lang.StringBuilder|1",
             encodeLeakSuspects(suspects),
         )
     }
 
     @Test
-    fun `two distinct instances of the same class in the same group are both included, told apart by id`() {
+    fun `a suspect with no token or no session is left out of both attributes`() {
         val suspects = listOf(
-            snapshot(reportedClass = String::class.java, cyclesSurvived = 3, id = 1),
-            snapshot(reportedClass = String::class.java, cyclesSurvived = 3, id = 2),
-        )
-
-        assertEquals(
-            "part_sess:activity|java.lang.String|3|1,activity|java.lang.String|3|2",
-            encodeLeakSuspects(suspects),
-        )
-    }
-
-    @Test
-    fun `suspects from different session parts are encoded as separate groups`() {
-        val suspects = listOf(
-            snapshot(sessionPartId = "part1", objectType = "activity", reportedClass = String::class.java, cyclesSurvived = 10, id = 1),
-            snapshot(sessionPartId = "part2", objectType = "fragment", reportedClass = Thread::class.java, cyclesSurvived = 20, id = 2),
-        )
-
-        // groups appear in the order their first (highest-cyclesSurvived) member was reached
-        assertEquals(
-            "part2_sess:fragment|java.lang.Thread|20|2;part1_sess:activity|java.lang.String|10|1",
-            encodeLeakSuspects(suspects),
-        )
-    }
-
-    @Test
-    fun `a suspect whose token is not a LeakContext is dropped`() {
-        val suspects = listOf(
-            LeakDetector.LeakSnapshot(trackedAtMs = 0L, token = "not a LeakContext", cyclesSurvived = 1, id = 0),
+            LeakSnapshot(trackedAtMs = 0L, token = null, cyclesSurvived = 1, isNew = true),
+            snapshot("", String::class.java, cycles = 1),
         )
 
         assertEquals("", encodeLeakSuspects(suspects))
+        assertEquals("", encodeLeakCandidates(suspects, BASE_MS, dropped = 0))
     }
 
     @Test
-    fun `a suspect with no known session part is dropped`() {
-        assertEquals("", encodeLeakSuspects(listOf(snapshot(sessionPartId = ""))))
-    }
-
-    @Test
-    fun `a suspect with no known user session is dropped`() {
-        assertEquals("", encodeLeakSuspects(listOf(snapshot(userSessionId = ""))))
-    }
-
-    @Test
-    fun `truncation keeps the highest cyclesSurvived and stops at the first candidate that does not fit`() {
+    fun `rows that don't fit are left out while later shorter ones are still written, within the limit`() {
         val suspects = listOf(
-            // renders to 39 characters on its own
-            snapshot(reportedClass = String::class.java, cyclesSurvived = 5),
-            // would take the total to 69
-            snapshot(reportedClass = Thread::class.java, cyclesSurvived = 3),
-            // would take the total to only 64 - fits the budget, but is never tried because the one above didn't
-            snapshot(objectType = "x", reportedClass = Runnable::class.java, cyclesSurvived = 1),
+            snapshot("part-1", LeakSuspectEncoderTest::class.java, cycles = 9),
+            snapshot("part-1", String::class.java, cycles = 1),
+        )
+        assertEquals("2;part-1_session-1:activity|java.lang.String|1", encodeLeakSuspects(suspects, maxLength = 50))
+
+        val crowdedSuspects = (1..64).map { snapshot("part-$it", String::class.java, cycles = it.toLong()) }
+        val crowded = encodeLeakSuspects(crowdedSuspects)
+        assertTrue(crowded.length <= 2000)
+        assertTrue("not every row fits", crowded.count { it == ';' } < 64)
+
+        val closeTimes = List(3) { snapshot("part-1", String::class.java, closedAgoMs = 10_000L * (it + 1)) }
+        assertEquals(
+            "the two oldest close times fit, the newest doesn't",
+            "$BASE_MS;0;part-1_session-1:activity|java.lang.String|30000.20000",
+            encodeLeakCandidates(closeTimes, BASE_MS, dropped = 0, maxLength = 72),
+        )
+    }
+
+    @Test
+    fun `candidates list only new suspects' close times, oldest first, after the base and dropped count`() {
+        val suspects = listOf(
+            snapshot("part-1", String::class.java, closedAgoMs = 41_200),
+            snapshot("part-2", Thread::class.java, closedAgoMs = 77_000, objectType = "fragment"),
+            snapshot("part-1", String::class.java, closedAgoMs = 90_000),
+            snapshot("part-1", String::class.java, closedAgoMs = 5_000, isNew = false),
         )
 
-        assertEquals("part_sess:activity|java.lang.String|5|0", encodeLeakSuspects(suspects, maxLength = 66))
-    }
-
-    @Test
-    fun `the encoded result never exceeds maxLength`() {
-        val suspects = (1..50).map {
-            snapshot(cyclesSurvived = it.toLong(), id = it)
-        }
-
-        assertTrue(encodeLeakSuspects(suspects, maxLength = 100).length <= 100)
+        assertEquals(
+            "$BASE_MS;2;part-1_session-1:activity|java.lang.String|90000.41200;" +
+                "part-2_session-1:fragment|java.lang.Thread|77000",
+            encodeLeakCandidates(suspects, BASE_MS, dropped = 2),
+        )
     }
 
     private fun snapshot(
-        sessionPartId: String = "part",
-        userSessionId: String = "sess",
+        sessionPartId: String,
+        reportedClass: Class<*>,
+        cycles: Long = 1,
+        closedAgoMs: Long = 0,
+        isNew: Boolean = true,
         objectType: String = "activity",
-        reportedClass: Class<*> = String::class.java,
-        cyclesSurvived: Long = 0L,
-        id: Int = 0,
-    ): LeakDetector.LeakSnapshot = LeakDetector.LeakSnapshot(
-        trackedAtMs = 0L,
+    ): LeakSnapshot = LeakSnapshot(
+        trackedAtMs = BASE_MS - closedAgoMs,
         token = LeakContext(
             objectType,
-            SessionIdsSnapshot(userSessionId = userSessionId, sessionPartId = sessionPartId),
+            SessionIdsSnapshot(userSessionId = "session-1", sessionPartId = sessionPartId),
             reportedClass,
         ),
-        cyclesSurvived = cyclesSurvived,
-        id = id,
+        cyclesSurvived = cycles,
+        isNew = isNew,
     )
+
+    private companion object {
+        const val BASE_MS = 1_795_000_000_000L
+    }
 }

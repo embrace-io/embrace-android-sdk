@@ -65,7 +65,13 @@ object EmbSessionAttributes {
     const val EMB_IS_FINAL_SESSION_PART: String = "emb.is_final_session_part"
 
     /**
-     * Confirmed leak suspects still reachable at the end of this session part, as delimited entries of object type, class name, GC cycles survived, and identity hash.
+     * Close times of leak suspects confirmed since the previous report, as milliseconds before a base timestamp, per object type and class and grouped by the session part each was closed in, after the base timestamp and the number of suspects that could not be tracked.
+     */
+    @ExperimentalSemconv
+    const val EMB_MEMORY_LEAK_CANDIDATES: String = "emb.memory_leak_candidates"
+
+    /**
+     * GC cycles survived since the previous report by confirmed leak suspects still reachable, summed per object type and class and grouped by the session part each was closed in, after a format version.
      */
     @ExperimentalSemconv
     const val EMB_MEMORY_LEAK_SUSPECTS: String = "emb.memory_leak_suspects"

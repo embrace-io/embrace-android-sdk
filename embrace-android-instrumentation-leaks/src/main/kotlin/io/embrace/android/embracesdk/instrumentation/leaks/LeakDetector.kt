@@ -222,13 +222,16 @@ internal class LeakDetector(
 
     /**
      * A snapshot of every confirmed suspect still reachable, safe to hand outside the detector: it never carries the tracked
-     * object itself, only what [trackClosed] was given, its identity, and how many GC cycles it has survived between
-     * [baseCycleCount] (the count at the previous report) and [cycleCount]. Suspects that survived none are left out.
+     * object itself, only what [trackClosed] was given, how many GC cycles it has survived between [baseCycleCount] (the
+     * count at the previous report) and [cycleCount], and whether it was confirmed since then. Suspects that survived none
+     * are left out.
      */
     fun suspects(baseCycleCount: Long, cycleCount: Long): List<LeakSnapshot> {
         return synchronized(trackedSuspects) {
             trackedSuspects.mapNotNull { suspect ->
-                val referent = suspect.get() ?: return@mapNotNull null
+                if (suspect.get() == null) {
+                    return@mapNotNull null
+                }
                 // The suspectedAtCycle is captured after the first GC cycle (when a TrackedReference becomes a ConfirmedSuspect).
                 // So one confirmed since the previous report counts from one before it, so that cycle is represented too.
                 val cyclesSurvived = cycleCount - maxOf(baseCycleCount, suspect.suspectedAtCycle - 1)
@@ -238,7 +241,7 @@ internal class LeakDetector(
                         suspect.trackedAtMs,
                         suspect.token,
                         cyclesSurvived,
-                        System.identityHashCode(referent),
+                        suspect.suspectedAtCycle > baseCycleCount,
                     )
                 } else {
                     null
@@ -391,8 +394,8 @@ internal class LeakDetector(
      * finalization as well, and would hold the referent's memory alive until explicitly cleared; neither is needed here,
      * since nothing but bookkeeping happens once a suspect is gone.
      *
-     * [get] doubles as the live read [suspects] uses for the identity hashcode, since unlike a [PhantomReference] a
-     * [WeakReference] hands the referent back for as long as it is still reachable.
+     * [get] lets [suspects] skip a suspect that has already been cleared but not yet dequeued, since unlike a
+     * [PhantomReference] a [WeakReference] reports whether its referent is still reachable.
      */
     internal class ConfirmedSuspect(
         referent: Any,
@@ -406,16 +409,14 @@ internal class LeakDetector(
      * One entry of [suspects]: everything needed to report a confirmed suspect, read fresh at snapshot time rather than
      * retained by the [ConfirmedSuspect] itself, and nothing that could retain the object it describes.
      *
-     * [id] is the referent's identity hashcode - stable for its lifetime regardless of when it's first read, so a
-     * suspect reported again in a later session part can be told apart from a different instance of the same class
-     * confirmed in the same one. Not guaranteed unique (identity hashcodes can collide, or be reused once an object is
-     * actually collected), but at the scale of suspects any one class accumulates here the odds are negligible.
+     * [isNew] marks a suspect confirmed since the previous report, which is the one report its close time ([trackedAtMs])
+     * is sent in.
      */
     internal data class LeakSnapshot(
         val trackedAtMs: Long,
         val token: Any?,
         val cyclesSurvived: Long,
-        val id: Int,
+        val isNew: Boolean,
     )
 
     internal companion object {

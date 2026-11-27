@@ -66,7 +66,6 @@ internal class LeakDetectorTest {
         assertEquals(5000L, suspect.trackedAtMs)
         assertSame(token, suspect.token)
         assertEquals("surviving the sentinel that confirmed it already counts as one cycle survived", 1L, suspect.cyclesSurvived)
-        assertEquals(System.identityHashCode(leaked), suspect.id)
 
         gcCycleCount = 7L
         assertEquals(
@@ -87,6 +86,7 @@ internal class LeakDetectorTest {
 
         val first = detector.suspects(0L, 12L).single()
         assertEquals("a first report includes the confirming collection", 3L, first.cyclesSurvived)
+        assertTrue("confirmed since the previous report", first.isNew)
 
         gcCycleCount = 14L
         detector.trackOpened(later, OWNER)
@@ -97,27 +97,12 @@ internal class LeakDetectorTest {
             mapOf("earlier" to 4L, "later" to 3L),
             detector.suspects(12L, 16L).associate { it.token to it.cyclesSurvived },
         )
+        assertEquals(
+            "only the one confirmed since the previous report is new",
+            mapOf("earlier" to false, "later" to true),
+            detector.suspects(12L, 16L).associate { it.token to it.isNew },
+        )
         assertTrue("nothing survived since the previous report", detector.suspects(16L, 16L).isEmpty())
-    }
-
-    @Test
-    fun `id identifies the referent and stays stable across repeated snapshots`() {
-        val first = Any()
-        val second = Any()
-
-        detector.trackOpened(first, OWNER)
-        detector.trackOpened(second, OWNER)
-        val firstRef = checkNotNull(detector.trackClosed(first, OWNER, "first"))
-        val secondRef = checkNotNull(detector.trackClosed(second, OWNER, "second"))
-        confirmAfterSecondSentinel(firstRef)
-        confirmAfterSecondSentinel(secondRef)
-
-        val snapshots = suspects().associateBy { it.token }
-        assertEquals(System.identityHashCode(first), snapshots.getValue("first").id)
-        assertEquals(System.identityHashCode(second), snapshots.getValue("second").id)
-
-        // stable across repeated snapshots, not re-randomized per call
-        assertEquals(snapshots.getValue("first").id, suspects().single { it.token == "first" }.id)
     }
 
     @Test

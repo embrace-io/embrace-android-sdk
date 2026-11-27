@@ -35,6 +35,7 @@ attribute_groups:
       - ref: emb.clock_network_drift
       - ref: emb.clock_gnss_drift
       - ref: emb.memory_leak_suspects
+      - ref: emb.memory_leak_candidates
 
 attributes:
   - key: emb.state
@@ -241,6 +242,11 @@ attributes:
     examples: ["987", "-789"]
   - key: emb.memory_leak_suspects
     type: string
-    brief: "Confirmed leak suspects still reachable at the end of this session part, as delimited entries of object type, class name, GC cycles survived, and identity hash."
+    brief: "GC cycles survived since the previous report by confirmed leak suspects still reachable, summed per object type and class and grouped by the session part each was closed in, after a format version."
     stability: development
-    examples: ["part123_sess456:activity|com.example.MainActivity|4|1a2b3c4d"]
+    examples: ["2;part123_sess456:activity|com.example.MainActivity|4"]
+  - key: emb.memory_leak_candidates
+    type: string
+    brief: "Close times of leak suspects confirmed since the previous report, as milliseconds before a base timestamp, per object type and class and grouped by the session part each was closed in, after the base timestamp and the number of suspects that could not be tracked."
+    stability: development
+    examples: ["1795000000000;0;part123_sess456:activity|com.example.MainActivity|41200.90000"]

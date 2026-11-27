@@ -2,6 +2,7 @@ package io.embrace.android.embracesdk.testcases
 
 import io.embrace.android.embracesdk.Severity
 import io.embrace.android.embracesdk.assertions.getLogWithAttributeValue
+import io.embrace.android.embracesdk.config.OTelConfig
 import io.embrace.android.embracesdk.fakes.FakeErrorHandler
 import io.embrace.android.embracesdk.fakes.FakeLogRecordExporter
 import io.embrace.android.embracesdk.fakes.FakeLogRecordProcessor
@@ -51,10 +52,12 @@ internal class OTelExportTest(
     fun `session part span exported to user-supplied exporter`() {
         val fakeSpanExporter = FakeSpanExporter()
         testRule.runTest(
-            preSdkStartAction = {
-                embrace.setResourceAttribute(ServiceAttributes.SERVICE_NAME, "my.app")
-                embrace.setResourceAttribute("test", "foo")
-                embrace.addSpanExporter(fakeSpanExporter)
+            sdkConfig = {
+                otel {
+                    setResourceAttribute(ServiceAttributes.SERVICE_NAME, "my.app")
+                    setResourceAttribute("test", "foo")
+                    addSpanExporter(fakeSpanExporter)
+                }
             },
             testCaseAction = {
                 recordSession {
@@ -77,12 +80,18 @@ internal class OTelExportTest(
     }
 
     @Test
-    fun `a SpanExporter added after initialization won't be used`() {
+    fun `a SpanExporter added through config that escaped start won't be used`() {
         val fakeSpanExporter = FakeSpanExporter()
+        lateinit var escapedConfig: OTelConfig
 
         testRule.runTest(
+            sdkConfig = {
+                otel {
+                    escapedConfig = this
+                }
+            },
             testCaseAction = {
-                embrace.addSpanExporter(fakeSpanExporter)
+                escapedConfig.addSpanExporter(fakeSpanExporter)
                 recordSession {
                     embrace.startSpan("test").stop()
                 }
@@ -99,9 +108,11 @@ internal class OTelExportTest(
         var logTimestampNanos = 0L
 
         testRule.runTest(
-            preSdkStartAction = {
-                embrace.setResourceAttribute(ServiceAttributes.SERVICE_NAME, "my.app")
-                embrace.setResourceAttribute("test", "foo")
+            sdkConfig = {
+                otel {
+                    setResourceAttribute(ServiceAttributes.SERVICE_NAME, "my.app")
+                    setResourceAttribute("test", "foo")
+                }
             },
             testCaseAction = {
                 recordSession {
@@ -130,8 +141,10 @@ internal class OTelExportTest(
         val spanName = "test-processor-span"
 
         testRule.runTest(
-            preSdkStartAction = {
-                embrace.addSpanProcessor(processor)
+            sdkConfig = {
+                otel {
+                    addSpanProcessor(processor)
+                }
             },
             testCaseAction = {
                 recordSession {
@@ -152,8 +165,10 @@ internal class OTelExportTest(
         val logMessage = "test-processor-log"
 
         testRule.runTest(
-            preSdkStartAction = {
-                embrace.addLogRecordProcessor(processor)
+            sdkConfig = {
+                otel {
+                    addLogRecordProcessor(processor)
+                }
             },
             testCaseAction = {
                 recordSession {
@@ -179,11 +194,13 @@ internal class OTelExportTest(
             setupAction = {
                 errorHandler = getFakeErrorHandler().apply { throwOnSdkError = false }
             },
-            preSdkStartAction = {
-                embrace.addSpanProcessor(spanProcessor)
-                embrace.addLogRecordProcessor(logProcessor)
-                embrace.addSpanExporter(spanExporter)
-                embrace.addLogRecordExporter(logExporter)
+            sdkConfig = {
+                otel {
+                    addSpanProcessor(spanProcessor)
+                    addLogRecordProcessor(logProcessor)
+                    addSpanExporter(spanExporter)
+                    addLogRecordExporter(logExporter)
+                }
             },
             testCaseAction = {
                 recordSession {
@@ -214,8 +231,10 @@ internal class OTelExportTest(
         val spanName = "test-java-exporter-span"
 
         testRule.runTest(
-            preSdkStartAction = {
-                embrace.addJavaSpanExporter(exporter)
+            sdkConfig = {
+                otel {
+                    addJavaSpanExporter(exporter)
+                }
             },
             testCaseAction = {
                 recordSession {
@@ -236,8 +255,10 @@ internal class OTelExportTest(
         val logMessage = "test-java-exporter-log"
 
         testRule.runTest(
-            preSdkStartAction = {
-                embrace.addJavaLogRecordExporter(exporter)
+            sdkConfig = {
+                otel {
+                    addJavaLogRecordExporter(exporter)
+                }
             },
             testCaseAction = {
                 recordSession {
@@ -257,8 +278,10 @@ internal class OTelExportTest(
         val spanName = "test-java-processor-span"
 
         testRule.runTest(
-            preSdkStartAction = {
-                embrace.addJavaSpanProcessor(processor)
+            sdkConfig = {
+                otel {
+                    addJavaSpanProcessor(processor)
+                }
             },
             testCaseAction = {
                 recordSession {
@@ -278,8 +301,10 @@ internal class OTelExportTest(
         val processor = FakeOtelJavaLogRecordProcessor()
 
         testRule.runTest(
-            preSdkStartAction = {
-                embrace.addJavaLogRecordProcessor(processor)
+            sdkConfig = {
+                otel {
+                    addJavaLogRecordProcessor(processor)
+                }
             },
             testCaseAction = {
                 recordSession {
@@ -301,9 +326,11 @@ internal class OTelExportTest(
         val logMessage = "Hello, World!"
 
         testRule.runTest(
-            preSdkStartAction = {
-                embrace.addLogRecordExporter(logRecordExporter)
-                embrace.addSpanExporter(spanExporter)
+            sdkConfig = {
+                otel {
+                    addLogRecordExporter(logRecordExporter)
+                    addSpanExporter(spanExporter)
+                }
             },
             testCaseAction = {
                 recordSession {
@@ -335,9 +362,11 @@ internal class OTelExportTest(
             setupAction = {
                 errorHandler = getFakeErrorHandler().apply { throwOnSdkError = false }
             },
-            preSdkStartAction = {
-                embrace.addLogRecordExporter(logRecordExporter)
-                embrace.addSpanExporter(spanExporter)
+            sdkConfig = {
+                otel {
+                    addLogRecordExporter(logRecordExporter)
+                    addSpanExporter(spanExporter)
+                }
             },
             testCaseAction = {
                 recordSession {
@@ -370,8 +399,10 @@ internal class OTelExportTest(
             instrumentedConfig = FakeInstrumentedConfig(
                 project = FakeProjectConfig(packageName = packageName)
             ),
-            preSdkStartAction = {
-                embrace.addSpanExporter(spanExporter)
+            sdkConfig = {
+                otel {
+                    addSpanExporter(spanExporter)
+                }
             },
             testCaseAction = {
                 recordSession { }
@@ -432,10 +463,12 @@ internal class OTelExportTest(
         )
 
         testRule.runTest(
-            preSdkStartAction = {
-                embrace.addSpanProcessor(processor1)
-                embrace.addSpanProcessor(processor2)
-                embrace.addSpanProcessor(processor3)
+            sdkConfig = {
+                otel {
+                    addSpanProcessor(processor1)
+                    addSpanProcessor(processor2)
+                    addSpanProcessor(processor3)
+                }
             },
             testCaseAction = {
                 recordSession {
@@ -471,10 +504,12 @@ internal class OTelExportTest(
             }
         )
         testRule.runTest(
-            preSdkStartAction = {
-                embrace.addLogRecordProcessor(processor1)
-                embrace.addLogRecordProcessor(processor2)
-                embrace.addLogRecordProcessor(processor3)
+            sdkConfig = {
+                otel {
+                    addLogRecordProcessor(processor1)
+                    addLogRecordProcessor(processor2)
+                    addLogRecordProcessor(processor3)
+                }
             },
             testCaseAction = {
                 recordSession {

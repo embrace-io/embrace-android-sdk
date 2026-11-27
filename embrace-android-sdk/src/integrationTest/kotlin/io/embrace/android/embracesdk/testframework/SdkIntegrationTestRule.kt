@@ -5,6 +5,7 @@ import io.embrace.android.embracesdk.internal.storage.SdkDir
 import io.embrace.android.embracesdk.fakes.testSdkStorage
 import android.content.Context
 import androidx.test.core.app.ApplicationProvider
+import io.embrace.android.embracesdk.config.SdkConfig
 import io.embrace.android.embracesdk.fakes.FakeClock
 import io.embrace.android.embracesdk.fakes.FakeConfigService
 import io.embrace.android.embracesdk.fakes.TestPlatformSerializer
@@ -144,6 +145,7 @@ internal class SdkIntegrationTestRule(
         expectedSdkState: SdkState = if (expectSdkToStart) SdkState.ENABLED else SdkState.DISABLED,
         setupAction: EmbraceSetupInterface.() -> Unit = {},
         preSdkStartAction: EmbracePreSdkStartInterface.() -> Unit = {},
+        sdkConfig: SdkConfig.() -> Unit = {},
         testCaseAction: EmbraceActionInterface.() -> Unit,
         assertAction: EmbracePayloadAssertionInterface.() -> Unit = {},
         otelExportAssertion: EmbraceOtelExportAssertionInterface.() -> Unit = {},
@@ -171,35 +173,41 @@ internal class SdkIntegrationTestRule(
                 baseUrls = FakeBaseUrlConfig(configImpl = baseUrl, dataImpl = baseUrl)
             ),
         )
+        spanExporter = FilteredSpanExporter()
+        logExporter = FilteredLogExporter()
+        otelAssertion = EmbraceOtelExportAssertionInterface(spanExporter, logExporter)
+        val startConfig: SdkConfig.() -> Unit = {
+            sdkConfig()
+            //TODO: Filtered span and log exporters should be migrated to Kotlin.
+            otel {
+                addSpanExporter(spanExporter.toOtelKotlinSpanExporter())
+                addLogRecordExporter(logExporter.toOtelKotlinLogRecordExporter())
+            }
+        }
         action = EmbraceActionInterface(
             setup,
             { services.instrumentationRegistry },
             { services.eventBus },
             { sdkStateHolder.api },
             { sdkStateHolder.state },
+            startConfig,
         )
         payloadAssertion = EmbracePayloadAssertionInterface(
             setup.initServices.jsonSerializer,
             deliveryTracer,
             deliveryDecoder,
         ) { sdkStateHolder.state }
-        spanExporter = FilteredSpanExporter()
-        logExporter = FilteredLogExporter()
-        otelAssertion = EmbraceOtelExportAssertionInterface(spanExporter, logExporter)
 
         setupAction(setup)
         with(setup) {
             sdkStateHolder = createStateHolder(deliveryTracer)
             preSdkStartAction(preSdkStart)
-            //TODO: Filtered span and log exporters should be migrated to Kotlin.
-            sdkStateHolder.api.addSpanExporter(spanExporter.toOtelKotlinSpanExporter())
-            sdkStateHolder.api.addLogRecordExporter(logExporter.toOtelKotlinLogRecordExporter())
 
             // persist config here before the SDK starts up: the SDK reads it during start()
             persistConfig(persistedConfig)
 
             if (startSdk) {
-                sdkStateHolder.api.start(ApplicationProvider.getApplicationContext())
+                sdkStateHolder.api.start(ApplicationProvider.getApplicationContext(), startConfig)
                 assertEquals(
                     "SDK did not start in integration test.",
                     expectSdkToStart,

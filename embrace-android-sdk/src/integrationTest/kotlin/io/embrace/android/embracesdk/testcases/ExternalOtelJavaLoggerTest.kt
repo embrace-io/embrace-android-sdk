@@ -4,6 +4,7 @@ import io.embrace.android.embracesdk.PropertyScope
 import io.embrace.android.embracesdk.assertions.getLastLog
 import io.embrace.android.embracesdk.assertions.getSessionPartId
 import io.embrace.android.embracesdk.assertions.getUserSessionId
+import io.embrace.android.embracesdk.config.SdkConfig
 import io.embrace.android.embracesdk.fakes.FakeOtelJavaLogRecordExporter
 import io.embrace.android.embracesdk.fakes.config.FakeEnabledFeatureConfig
 import io.embrace.android.embracesdk.fakes.config.FakeInstrumentedConfig
@@ -19,7 +20,6 @@ import io.embrace.android.embracesdk.semconv.EmbSessionAttributes
 import io.embrace.android.embracesdk.testframework.OtelSdkMode
 import io.embrace.android.embracesdk.testframework.SdkIntegrationTestRule
 import io.embrace.android.embracesdk.testframework.actions.EmbraceActionInterface
-import io.embrace.android.embracesdk.testframework.actions.EmbracePreSdkStartInterface
 import io.opentelemetry.kotlin.aliases.OtelJavaContext
 import io.opentelemetry.kotlin.aliases.OtelJavaLogRecordData
 import io.opentelemetry.kotlin.aliases.OtelJavaLogger
@@ -74,9 +74,11 @@ internal class ExternalOtelJavaLoggerTest(
         var exportedOTelLog: OtelJavaLogRecordData?
         testRule.runTest(
             instrumentedConfig = instrumentedConfig,
-            preSdkStartAction = {
+            sdkConfig = {
                 setupExporter()
-                embrace.setResourceAttribute("my-resource-attr", "foo")
+                otel {
+                    setResourceAttribute("my-resource-attr", "foo")
+                }
             },
             testCaseAction = {
                 initializeOTel()
@@ -137,9 +139,11 @@ internal class ExternalOtelJavaLoggerTest(
         var exportedOTelLog: OtelJavaLogRecordData?
         testRule.runTest(
             instrumentedConfig = instrumentedConfig,
-            preSdkStartAction = {
+            sdkConfig = {
                 setupExporter()
-                embrace.setResourceAttribute("my-resource-attr", "foo")
+                otel {
+                    setResourceAttribute("my-resource-attr", "foo")
+                }
             },
             testCaseAction = {
                 initializeOTel()
@@ -194,8 +198,10 @@ internal class ExternalOtelJavaLoggerTest(
         )
     }
 
-    private fun EmbracePreSdkStartInterface.setupExporter() {
-        embrace.addJavaLogRecordExporter(logExporter)
+    private fun SdkConfig.setupExporter() {
+        otel {
+            addJavaLogRecordExporter(logExporter)
+        }
     }
 
     private fun EmbraceActionInterface.initializeOTel() {

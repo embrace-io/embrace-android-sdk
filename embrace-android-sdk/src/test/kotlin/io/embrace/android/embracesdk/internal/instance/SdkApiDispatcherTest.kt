@@ -2,6 +2,7 @@ package io.embrace.android.embracesdk.internal.instance
 
 import android.app.Activity
 import io.embrace.android.embracesdk.PropertyScope
+import io.embrace.android.embracesdk.config.SdkConfig
 import io.embrace.android.embracesdk.fakes.FakeErrorHandler
 import io.embrace.android.embracesdk.fakes.FakeInternalTelemetryService
 import io.embrace.android.embracesdk.fakes.FakeSpanContext
@@ -25,6 +26,7 @@ import java.lang.reflect.Proxy
 internal class SdkApiDispatcherTest {
 
     private val calls = mutableListOf<String>()
+    private val startConfigs = mutableListOf<(SdkConfig.() -> Unit)?>()
     private lateinit var telemetryService: FakeInternalTelemetryService
     private lateinit var errorHandler: FakeErrorHandler
     private lateinit var sdk: SdkApiDispatcher
@@ -37,16 +39,22 @@ internal class SdkApiDispatcherTest {
             recordingSdkApi(calls),
             telemetryService,
             errorHandler,
-            onStart = { calls += "onStart" },
+            onStart = { _, config ->
+                calls += "onStart"
+                startConfigs += config
+            },
             onDisable = { calls += "onDisable" },
         )
     }
 
     @Test
     fun `lifecycle calls do not reach the target`() {
+        val config: SdkConfig.() -> Unit = {}
         sdk.start(Activity())
+        sdk.start(Activity(), config)
         sdk.disable()
-        assertEquals(listOf("onStart", "onDisable"), calls)
+        assertEquals(listOf("onStart", "onStart", "onDisable"), calls)
+        assertEquals(listOf(null, config), startConfigs)
     }
 
     @Test
@@ -55,7 +63,7 @@ internal class SdkApiDispatcherTest {
             recordingSdkApi(calls),
             telemetryService,
             errorHandler,
-            onStart = { error("start failed") },
+            onStart = { _, _ -> error("start failed") },
             onDisable = { error("disable failed") },
         )
         dispatcher.start(Activity())

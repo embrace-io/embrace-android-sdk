@@ -2,6 +2,7 @@ package io.embrace.android.embracesdk.testcases
 
 import io.embrace.android.embracesdk.assertions.assertEmbraceSpanData
 import io.embrace.android.embracesdk.assertions.withSortedAttributes
+import io.embrace.android.embracesdk.config.SdkConfig
 import io.embrace.android.embracesdk.fakes.FakeOtelJavaSpanExporter
 import io.embrace.android.embracesdk.internal.clock.millisToNanos
 import io.embrace.android.embracesdk.internal.otel.sdk.id.OtelIds
@@ -14,7 +15,6 @@ import io.embrace.android.embracesdk.spans.ErrorCode
 import io.embrace.android.embracesdk.testframework.OtelSdkMode
 import io.embrace.android.embracesdk.testframework.SdkIntegrationTestRule
 import io.embrace.android.embracesdk.testframework.actions.EmbraceActionInterface
-import io.embrace.android.embracesdk.testframework.actions.EmbracePreSdkStartInterface
 import io.opentelemetry.kotlin.aliases.OtelJavaAttributes
 import io.opentelemetry.kotlin.aliases.OtelJavaContext
 import io.opentelemetry.kotlin.aliases.OtelJavaOpenTelemetry
@@ -56,7 +56,7 @@ internal class ExternalOtelJavaTracerTest(
     @Test
     fun `check correctness of implementations used by Tracer`() {
         testRule.runTest(
-            preSdkStartAction = {
+            sdkConfig = {
                 setupExporter()
             },
             testCaseAction = {
@@ -81,7 +81,7 @@ internal class ExternalOtelJavaTracerTest(
         var parentContext: OtelJavaContext?
 
         testRule.runTest(
-            preSdkStartAction = {
+            sdkConfig = {
                 setupExporter()
             },
             testCaseAction = {
@@ -179,7 +179,7 @@ internal class ExternalOtelJavaTracerTest(
     @Test
     fun `span with explicit parent`() {
         testRule.runTest(
-            preSdkStartAction = {
+            sdkConfig = {
                 setupExporter()
             },
             testCaseAction = {
@@ -210,7 +210,7 @@ internal class ExternalOtelJavaTracerTest(
         var endTimeMs: Long? = null
 
         testRule.runTest(
-            preSdkStartAction = {
+            sdkConfig = {
                 setupExporter()
             },
             testCaseAction = {
@@ -258,7 +258,7 @@ internal class ExternalOtelJavaTracerTest(
     @Test
     fun `opentelemetry instance can be used to log spans`() {
         testRule.runTest(
-            preSdkStartAction = {
+            sdkConfig = {
                 setupExporter()
             },
             testCaseAction = {
@@ -289,8 +289,10 @@ internal class ExternalOtelJavaTracerTest(
         )
     }
 
-    private fun EmbracePreSdkStartInterface.setupExporter() {
-        embrace.addJavaSpanExporter(spanExporter)
+    private fun SdkConfig.setupExporter() {
+        otel {
+            addJavaSpanExporter(spanExporter)
+        }
     }
 
     private fun EmbraceActionInterface.initializeTracer() {

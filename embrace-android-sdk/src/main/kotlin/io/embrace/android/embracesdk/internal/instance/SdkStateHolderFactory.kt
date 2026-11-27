@@ -2,7 +2,8 @@ package io.embrace.android.embracesdk.internal.instance
 
 import android.content.Context
 import android.util.Log
-import io.embrace.android.embracesdk.internal.api.delegate.PreStartOTelApi
+import io.embrace.android.embracesdk.config.SdkConfig
+import io.embrace.android.embracesdk.internal.api.delegate.SdkConfigImpl
 import io.embrace.android.embracesdk.internal.injection.ConfigLoadServices
 import io.embrace.android.embracesdk.internal.injection.ConfigLoadServicesSupplier
 import io.embrace.android.embracesdk.internal.injection.PreStartServices
@@ -36,12 +37,12 @@ internal fun createSdkStateHolder(
     }
     return EmbTrace.trace("sdk-state-holder-init") {
         SdkStateHolder(
-            realSdkInstanceFactory = { context ->
+            realSdkInstanceFactory = { context, config ->
                 EmbTrace.trace(sectionName = "modules-init", recordDuration = true) {
                     createSdkInstance(
                         context,
+                        config,
                         preStartServices,
-                        buffer,
                         configLoadServicesSupplier,
                         sdkInitResourceUsageTrackerSupplier,
                         overrides,
@@ -64,8 +65,8 @@ internal fun createSdkStateHolder(
  */
 private fun createSdkInstance(
     context: Context,
+    config: (SdkConfig.() -> Unit)?,
     preStartServices: PreStartServices,
-    buffer: BufferingSdkInstance,
     configLoadServicesSupplier: ConfigLoadServicesSupplier?,
     sdkInitResourceUsageTrackerSupplier: Provider<SdkInitResourceUsageTracker>?,
     overrides: SdkOverrides?,
@@ -76,9 +77,11 @@ private fun createSdkInstance(
     // and the perf samples cover the same interval as the span
     val sdkStartTimeMs = preStartServices.clock.now()
 
-    // drained before the config service is created, as it checks whether OTLP export has been configured
-    EmbTrace.trace("drain-otel-config") {
-        buffer.drainOTelConfig(PreStartOTelApi(preStartServices.externalOtelConfig))
+    // applied before the config service is created, as it checks whether OTLP export has been configured
+    if (config != null) {
+        EmbTrace.trace("apply-sdk-config") {
+            SdkConfigImpl(preStartServices.externalOtelConfig, preStartServices.errorHandler).configure(config)
+        }
     }
     val sdkInitResourceUsageTracker = EmbTrace.trace("sdk-init-resource-usage-tracker-init") {
         (sdkInitResourceUsageTrackerSupplier?.invoke() ?: SdkInitResourceUsageTracker(preStartServices.errorHandler)).apply {

@@ -43,14 +43,16 @@ internal class SdkStateHolderFactoryTest {
     }
 
     @Test
-    fun `otel config set before start is applied to pre-start services`() {
+    fun `otel config passed to start is applied to pre-start services`() {
         val holder = createSdkStateHolder(
             preStartServices = preStartServices,
             sdkInitResourceUsageTrackerSupplier = { error("failed to init") },
         )
-        holder.api.addSpanExporter(FakeSpanExporter())
-        assertFalse(preStartServices.externalOtelConfig.hasConfiguredOtlpExport())
-        holder.start(context)
+        holder.api.start(context) {
+            otel {
+                addSpanExporter(FakeSpanExporter())
+            }
+        }
         assertTrue(preStartServices.externalOtelConfig.hasConfiguredOtlpExport())
         assertEquals(SdkState.FAILED, holder.state)
     }

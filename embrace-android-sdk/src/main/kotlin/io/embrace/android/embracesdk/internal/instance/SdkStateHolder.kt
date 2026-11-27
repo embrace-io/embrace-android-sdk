@@ -2,6 +2,7 @@ package io.embrace.android.embracesdk.internal.instance
 
 import android.content.Context
 import android.util.Log
+import io.embrace.android.embracesdk.config.SdkConfig
 import io.embrace.android.embracesdk.internal.api.SdkApi
 import io.embrace.android.embracesdk.internal.logging.ErrorHandler
 import io.embrace.android.embracesdk.internal.logging.SdkErrorType
@@ -23,8 +24,9 @@ import io.embrace.android.embracesdk.internal.utils.Provider
  * ```
  *
  * Starting means the public start call, from when it is made until it returns. During it, the [SdkInstance] is created by
- * [realSdkInstanceFactory] and then enabled: the start fails if [SdkInstance.enable] does. Once it has succeeded, the SDK
- * transitions to [SdkState.ENABLED] and serves calls, including through the public `isStarted`, while
+ * [realSdkInstanceFactory], which applies the start's [SdkConfig], and then enabled: the start fails if
+ * [SdkInstance.enable] does. Once it has succeeded, the SDK transitions to [SdkState.ENABLED] and serves calls, including
+ * through the public `isStarted`, while
  * [SdkInstance.onEnabled] finishes the instance's init before the start returns. A null instance means the SDK is
  * disabled by config. Each change of [SdkState] is a transition, which points the public API at the instance that serves
  * calls in the new state. The calls buffered before the SDK is enabled are handed to the instance before it is published,
@@ -70,9 +72,9 @@ internal class SdkStateHolder(
     private var telemetryDeletionOnDisable: (() -> Unit)? = null
 
     /**
-     * Starts the SDK. Has no effect unless the SDK is in [SdkState.NOT_STARTED].
+     * Starts the SDK, configured by [config] if supplied. Has no effect unless the SDK is in [SdkState.NOT_STARTED].
      */
-    fun start(context: Context) {
+    fun start(context: Context, config: (SdkConfig.() -> Unit)? = null) {
         EmbTrace.trace("sdk-start") {
             synchronized(lock) {
                 // the factory is invoked at most once, as only an SDK that no call has reached yet holds it. The lock is
@@ -80,7 +82,7 @@ internal class SdkStateHolder(
                 val pending = pendingCall
                 if (pending is PendingCall.None) {
                     pendingCall = PendingCall.Start
-                    runStart(pending.factory, context)
+                    runStart(pending.factory, context, config)
                 }
             }
         }
@@ -124,13 +126,13 @@ internal class SdkStateHolder(
     }
 
     /**
-     * Creates an [SdkInstance] with [factory] and enables it, or ends the start without one if that fails or the SDK is
-     * disabled by config. Called under [lock], for the one start the SDK gets.
+     * Creates an [SdkInstance] with [factory], configured by [config], and enables it, or ends the start without one if
+     * that fails or the SDK is disabled by config. Called under [lock], for the one start the SDK gets.
      */
-    private fun runStart(factory: SdkInstanceFactory, context: Context) {
+    private fun runStart(factory: SdkInstanceFactory, context: Context, config: (SdkConfig.() -> Unit)?) {
         try {
             val next = try {
-                factory(context)
+                factory(context, config)
             } catch (exc: Throwable) {
                 reportStartFailure(exc)
                 terminate(
@@ -268,9 +270,10 @@ internal class SdkStateHolder(
 }
 
 /**
- * Creates the [SdkInstance] that a start enables, or returns null if the SDK is disabled by config.
+ * Creates the [SdkInstance] that a start enables, configured by the start's [SdkConfig] if one was supplied, or returns
+ * null if the SDK is disabled by config.
  */
-internal typealias SdkInstanceFactory = (Context) -> SdkInstance?
+internal typealias SdkInstanceFactory = (Context, (SdkConfig.() -> Unit)?) -> SdkInstance?
 
 /**
  * Finds the telemetry the SDK persisted through the [Context] it was started with, and returns a function

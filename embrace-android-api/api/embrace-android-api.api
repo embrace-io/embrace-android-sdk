@@ -58,6 +58,21 @@ public abstract interface annotation class io/embrace/android/embracesdk/annotat
 public abstract interface annotation class io/embrace/android/embracesdk/annotation/NotTracedActivity : java/lang/annotation/Annotation {
 }
 
+public abstract interface class io/embrace/android/embracesdk/config/OTelConfig {
+	public abstract fun addLogRecordExporter (Lio/opentelemetry/kotlin/logging/export/LogRecordExporter;)V
+	public abstract fun addLogRecordProcessor (Lio/opentelemetry/kotlin/logging/export/LogRecordProcessor;)V
+	public abstract fun addSpanExporter (Lio/opentelemetry/kotlin/tracing/export/SpanExporter;)V
+	public abstract fun addSpanProcessor (Lio/opentelemetry/kotlin/tracing/export/SpanProcessor;)V
+	public abstract fun setResourceAttribute (Ljava/lang/String;Ljava/lang/String;)V
+}
+
+public abstract interface class io/embrace/android/embracesdk/config/SdkConfig {
+	public abstract fun otel (Lkotlin/jvm/functions/Function1;)V
+}
+
+public abstract interface annotation class io/embrace/android/embracesdk/config/SdkConfigDsl : java/lang/annotation/Annotation {
+}
+
 public abstract interface class io/embrace/android/embracesdk/experiments/TrackedEntry {
 	public abstract fun getId ()Ljava/lang/String;
 	public abstract fun getStartedAt ()Ljava/lang/Long;
@@ -160,12 +175,7 @@ public abstract interface class io/embrace/android/embracesdk/internal/api/Netwo
 }
 
 public abstract interface class io/embrace/android/embracesdk/internal/api/OTelApi {
-	public abstract fun addLogRecordExporter (Lio/opentelemetry/kotlin/logging/export/LogRecordExporter;)V
-	public abstract fun addLogRecordProcessor (Lio/opentelemetry/kotlin/logging/export/LogRecordProcessor;)V
-	public abstract fun addSpanExporter (Lio/opentelemetry/kotlin/tracing/export/SpanExporter;)V
-	public abstract fun addSpanProcessor (Lio/opentelemetry/kotlin/tracing/export/SpanProcessor;)V
 	public abstract fun getOpenTelemetryKotlin ()Lio/opentelemetry/kotlin/OpenTelemetry;
-	public abstract fun setResourceAttribute (Ljava/lang/String;Ljava/lang/String;)V
 }
 
 public abstract interface class io/embrace/android/embracesdk/internal/api/SdkApi : io/embrace/android/embracesdk/internal/api/BreadcrumbApi, io/embrace/android/embracesdk/internal/api/EmbraceAndroidApi, io/embrace/android/embracesdk/internal/api/ExperimentApi, io/embrace/android/embracesdk/internal/api/InstrumentationApi, io/embrace/android/embracesdk/internal/api/LogsApi, io/embrace/android/embracesdk/internal/api/NetworkRequestApi, io/embrace/android/embracesdk/internal/api/OTelApi, io/embrace/android/embracesdk/internal/api/SdkLifecycleApi, io/embrace/android/embracesdk/internal/api/SdkStateApi, io/embrace/android/embracesdk/internal/api/UserApi, io/embrace/android/embracesdk/internal/api/UserSessionApi, io/embrace/android/embracesdk/spans/TracingApi {
@@ -182,7 +192,11 @@ public final class io/embrace/android/embracesdk/internal/api/SdkApi$DefaultImpl
 
 public abstract interface class io/embrace/android/embracesdk/internal/api/SdkLifecycleApi {
 	public abstract fun disable ()V
-	public abstract fun start (Landroid/content/Context;)V
+	public abstract fun start (Landroid/content/Context;Lkotlin/jvm/functions/Function1;)V
+}
+
+public final class io/embrace/android/embracesdk/internal/api/SdkLifecycleApi$DefaultImpls {
+	public static synthetic fun start$default (Lio/embrace/android/embracesdk/internal/api/SdkLifecycleApi;Landroid/content/Context;Lkotlin/jvm/functions/Function1;ILjava/lang/Object;)V
 }
 
 public abstract interface class io/embrace/android/embracesdk/internal/api/SdkStateApi {

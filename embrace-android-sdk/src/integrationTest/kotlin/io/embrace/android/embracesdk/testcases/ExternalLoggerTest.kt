@@ -6,6 +6,7 @@ import io.embrace.android.embracesdk.PropertyScope
 import io.embrace.android.embracesdk.assertions.getLastLog
 import io.embrace.android.embracesdk.assertions.getSessionPartId
 import io.embrace.android.embracesdk.assertions.getUserSessionId
+import io.embrace.android.embracesdk.config.SdkConfig
 import io.embrace.android.embracesdk.fakes.FakeLogRecordExporter
 import io.embrace.android.embracesdk.fakes.config.FakeEnabledFeatureConfig
 import io.embrace.android.embracesdk.fakes.config.FakeInstrumentedConfig
@@ -22,7 +23,6 @@ import io.embrace.android.embracesdk.testframework.OtelSdkMode
 import io.embrace.android.embracesdk.testframework.SdkIntegrationTestRule
 import io.embrace.android.embracesdk.testframework.actions.EmbraceActionInterface
 import io.embrace.android.embracesdk.testframework.actions.EmbraceOtelExportAssertionInterface
-import io.embrace.android.embracesdk.testframework.actions.EmbracePreSdkStartInterface
 import io.opentelemetry.kotlin.OpenTelemetry
 import io.opentelemetry.kotlin.getTracer
 import io.opentelemetry.kotlin.logging.Logger
@@ -81,9 +81,11 @@ internal class ExternalLoggerTest(
         var exportedOTelLog: LogRecordData? = null
         testRule.runTest(
             instrumentedConfig = instrumentedConfig,
-            preSdkStartAction = {
+            sdkConfig = {
                 setupExporter()
-                embrace.setResourceAttribute("my-resource-attr", "foo")
+                otel {
+                    setResourceAttribute("my-resource-attr", "foo")
+                }
             },
             testCaseAction = {
                 initializeOTel()
@@ -160,9 +162,11 @@ internal class ExternalLoggerTest(
         var exportedOTelLog: LogRecordData? = null
         testRule.runTest(
             instrumentedConfig = instrumentedConfig,
-            preSdkStartAction = {
+            sdkConfig = {
                 setupExporter()
-                embrace.setResourceAttribute("my-resource-attr", "foo")
+                otel {
+                    setResourceAttribute("my-resource-attr", "foo")
+                }
             },
             testCaseAction = {
                 initializeOTel()
@@ -224,7 +228,7 @@ internal class ExternalLoggerTest(
     fun `user id is stamped on exported log when set`() {
         testRule.runTest(
             instrumentedConfig = instrumentedConfig,
-            preSdkStartAction = {
+            sdkConfig = {
                 setupExporter()
             },
             testCaseAction = {
@@ -250,7 +254,7 @@ internal class ExternalLoggerTest(
     fun `exception passed to the otel logging API is recorded on the exported log`() {
         testRule.runTest(
             instrumentedConfig = instrumentedConfig,
-            preSdkStartAction = {
+            sdkConfig = {
                 setupExporter()
             },
             testCaseAction = {
@@ -272,8 +276,10 @@ internal class ExternalLoggerTest(
         )
     }
 
-    private fun EmbracePreSdkStartInterface.setupExporter() {
-        embrace.addLogRecordExporter(logExporter)
+    private fun SdkConfig.setupExporter() {
+        otel {
+            addLogRecordExporter(logExporter)
+        }
     }
 
     private fun EmbraceActionInterface.initializeOTel() {

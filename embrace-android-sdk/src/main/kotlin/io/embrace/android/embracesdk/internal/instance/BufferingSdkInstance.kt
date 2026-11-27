@@ -7,7 +7,6 @@ import io.embrace.android.embracesdk.experiments.TrackedEntry
 import io.embrace.android.embracesdk.experiments.TrackedExperiment
 import io.embrace.android.embracesdk.experiments.TrackedFeatureFlag
 import io.embrace.android.embracesdk.internal.api.ExperimentApi
-import io.embrace.android.embracesdk.internal.api.OTelApi
 import io.embrace.android.embracesdk.internal.api.SdkApi
 import io.embrace.android.embracesdk.internal.arch.datasource.LogSeverity
 import io.embrace.android.embracesdk.internal.arch.datasource.TelemetryDestination
@@ -31,10 +30,6 @@ import io.embrace.android.embracesdk.spans.ErrorCode
 import io.embrace.android.embracesdk.spans.TracingApi
 import io.opentelemetry.kotlin.NoopOpenTelemetry
 import io.opentelemetry.kotlin.OpenTelemetry
-import io.opentelemetry.kotlin.logging.export.LogRecordExporter
-import io.opentelemetry.kotlin.logging.export.LogRecordProcessor
-import io.opentelemetry.kotlin.tracing.export.SpanExporter
-import io.opentelemetry.kotlin.tracing.export.SpanProcessor
 import java.util.concurrent.TimeUnit
 
 /**
@@ -51,11 +46,9 @@ internal class BufferingSdkInstance(
 ) : SdkInstance,
     InternalSdkApi by NoopSdkInstance(clock, errorHandler, NoopSdkInstance.SDK_NOT_INITIALIZED) {
 
-    private val otelConfigCalls = CallBuffer<OTelApi, OTelConfigCall>()
     private val completedSpanCalls = CallBuffer<TracingApi, CompletedSpanCall>()
     private val experimentCalls = CallBuffer<ExperimentApi, ExperimentApiCall>()
 
-    private var bufferedOTelConfigCount = 0
     private var bufferedSpanCount = 0
     private var bufferedExperimentEntryCount = 0
 
@@ -65,20 +58,6 @@ internal class BufferingSdkInstance(
 
     @Volatile
     private var closed = false
-
-    fun drainOTelConfig(target: OTelApi) {
-        otelConfigCalls.drain(target) { calls ->
-            errorHandler.guardSdkCodeEach(SdkErrorType.PublicApiFail, calls) { call ->
-                when (call) {
-                    is OTelConfigCall.AddSpanExporter -> target.addSpanExporter(call.exporter)
-                    is OTelConfigCall.AddSpanProcessor -> target.addSpanProcessor(call.processor)
-                    is OTelConfigCall.AddLogRecordExporter -> target.addLogRecordExporter(call.exporter)
-                    is OTelConfigCall.AddLogRecordProcessor -> target.addLogRecordProcessor(call.processor)
-                    is OTelConfigCall.SetResourceAttribute -> target.setResourceAttribute(call.key, call.value)
-                }
-            }
-        }
-    }
 
     fun drainCompletedSpans(target: TracingApi) {
         completedSpanCalls.drain(target) { calls ->
@@ -133,44 +112,8 @@ internal class BufferingSdkInstance(
 
     override fun close() {
         closed = true
-        otelConfigCalls.close()
         completedSpanCalls.close()
         experimentCalls.close()
-    }
-
-    override fun addSpanExporter(spanExporter: SpanExporter) {
-        otelConfigCalls.submit(
-            buffer = { calls -> bufferOTelConfig(calls, OTelConfigCall.AddSpanExporter(spanExporter)) },
-            forward = { it.addSpanExporter(spanExporter) },
-        )
-    }
-
-    override fun addSpanProcessor(spanProcessor: SpanProcessor) {
-        otelConfigCalls.submit(
-            buffer = { calls -> bufferOTelConfig(calls, OTelConfigCall.AddSpanProcessor(spanProcessor)) },
-            forward = { it.addSpanProcessor(spanProcessor) },
-        )
-    }
-
-    override fun addLogRecordExporter(logRecordExporter: LogRecordExporter) {
-        otelConfigCalls.submit(
-            buffer = { calls -> bufferOTelConfig(calls, OTelConfigCall.AddLogRecordExporter(logRecordExporter)) },
-            forward = { it.addLogRecordExporter(logRecordExporter) },
-        )
-    }
-
-    override fun addLogRecordProcessor(logRecordProcessor: LogRecordProcessor) {
-        otelConfigCalls.submit(
-            buffer = { calls -> bufferOTelConfig(calls, OTelConfigCall.AddLogRecordProcessor(logRecordProcessor)) },
-            forward = { it.addLogRecordProcessor(logRecordProcessor) },
-        )
-    }
-
-    override fun setResourceAttribute(key: String, value: String) {
-        otelConfigCalls.submit(
-            buffer = { calls -> bufferOTelConfig(calls, OTelConfigCall.SetResourceAttribute(key, value)) },
-            forward = { it.setResourceAttribute(key, value) },
-        )
     }
 
     override fun recordCompletedSpan(
@@ -264,13 +207,6 @@ internal class BufferingSdkInstance(
         )
     }
 
-    private fun bufferOTelConfig(calls: MutableList<OTelConfigCall>, call: OTelConfigCall) {
-        if (bufferedOTelConfigCount < MAX_BUFFERED_OTEL_CONFIG_CALLS) {
-            bufferedOTelConfigCount++
-            calls.add(call)
-        }
-    }
-
     private fun copyEvent(event: EmbraceSpanEvent): EmbraceSpanEvent = checkNotNull(
         EmbraceSpanEvent.create(
             name = event.name,
@@ -311,14 +247,6 @@ internal class BufferingSdkInstance(
             return null
         }
         return entries.take(remaining)
-    }
-
-    private sealed class OTelConfigCall {
-        class AddSpanExporter(val exporter: SpanExporter) : OTelConfigCall()
-        class AddSpanProcessor(val processor: SpanProcessor) : OTelConfigCall()
-        class AddLogRecordExporter(val exporter: LogRecordExporter) : OTelConfigCall()
-        class AddLogRecordProcessor(val processor: LogRecordProcessor) : OTelConfigCall()
-        class SetResourceAttribute(val key: String, val value: String) : OTelConfigCall()
     }
 
     private class CompletedSpanCall(
@@ -399,7 +327,6 @@ internal class BufferingSdkInstance(
     }
 
     private companion object {
-        private const val MAX_BUFFERED_OTEL_CONFIG_CALLS = 1000
         private const val MAX_BUFFERED_SPAN_CALLS = 1000
         private const val MAX_BUFFERED_EXPERIMENT_ENTRIES = ExperimentConfig.MAX_COUNT_LIMIT
     }

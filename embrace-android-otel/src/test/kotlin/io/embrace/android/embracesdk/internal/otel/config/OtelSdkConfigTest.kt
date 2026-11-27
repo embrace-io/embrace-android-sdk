@@ -145,8 +145,8 @@ internal class OtelSdkConfigTest {
     }
 
     @Test
-    fun `a replayed record skips Embrace's store whenever the model is on, with the second step or without it`() {
-        fun emitReplay(stateTelemetry: StateTelemetry?): Triple<Int, Int, Boolean> {
+    fun `a replayed record skips Embrace's store whenever the model is on and the app receives logs, whichever steps are on`() {
+        fun emitReplay(stateTelemetry: StateTelemetry?, receivesLogs: Boolean = true): Triple<Int, Int, Boolean> {
             val sink = LogSinkImpl(FakeErrorHandler())
             val external = FakeLogRecordExporter()
             val configuration = OtelSdkConfig(
@@ -159,7 +159,11 @@ internal class OtelSdkConfigTest {
                 systemInfo = SystemInfo(),
                 uuidSource = TestUuidSource(),
                 externalExportDispatcher = immediateExportDispatcher(),
-                externalConfig = ExternalOtelConfig().apply { addLogExporter(external) },
+                externalConfig = ExternalOtelConfig().apply {
+                    if (receivesLogs) {
+                        addLogExporter(external)
+                    }
+                },
                 stateTelemetry = stateTelemetry,
             )
             val log = FakeReadWriteLogRecord(eventName = AppStateKeys.CHANGE_EVENT_NAME)
@@ -185,6 +189,8 @@ internal class OtelSdkConfigTest {
         assertEquals(Triple(0, 1, false), emitReplay(telemetry(associationEnabled = false)))
         // the model is off: the mark means nothing, so it is an ordinary log that is stored and exported
         assertEquals(Triple(1, 1, true), emitReplay(null))
+        // nothing receives logs, so nothing is replayed and no log's context is looked at: it is an ordinary log
+        assertEquals(Triple(1, 0, true), emitReplay(telemetry(associationEnabled = true), receivesLogs = false))
     }
 
     private fun config(externalConfig: ExternalOtelConfig) = OtelSdkConfig(

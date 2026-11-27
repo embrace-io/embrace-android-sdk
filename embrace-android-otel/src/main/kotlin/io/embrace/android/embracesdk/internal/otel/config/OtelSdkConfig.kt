@@ -131,7 +131,12 @@ class OtelSdkConfig(
             uuidSource,
             eventMetadataProvider,
             logRecordExporter,
-            stateReplayExporter = if (stateTelemetry != null) logRecordExporter::exportExternally else null,
+            // changes are replayed only to an app that receives logs, so only then does a log's context need looking at
+            stateReplayExporter = if (stateTelemetry != null && externalConfig.receivesLogs()) {
+                logRecordExporter::exportExternally
+            } else {
+                null
+            },
         )
     }
 

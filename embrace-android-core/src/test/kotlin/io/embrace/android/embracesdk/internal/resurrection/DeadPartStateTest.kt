@@ -143,7 +143,7 @@ internal class DeadPartStateTest {
     }
 
     @Test
-    fun `a part is of a process that linked spans when any of its spans or snapshots has a start number`() {
+    fun `a part is of a process that linked spans when any of its spans or snapshots has either number of a link`() {
         val changeLog = changeLog()
         fun part(
             spans: List<Span>,
@@ -161,7 +161,12 @@ internal class DeadPartStateTest {
             checkNotNull(DeadPartState.of(part(listOf(span(seq = "3")), listOf(changeLog, unlinked))))
         assertEquals("5", linkedByFinishedSpan.completeLink(unlinked).attributes.orEmpty().findAttributeValue(AppStateKeys.END_SEQ))
 
-        // no span has a start number: the process did not link spans, so none is given an end
+        // so does a span that started before the first change and finished after one: it has an end number alone
+        val linkedByEndNumber =
+            checkNotNull(DeadPartState.of(part(listOf(span(seq = null, endSeq = "4")), listOf(changeLog, unlinked))))
+        assertEquals("5", linkedByEndNumber.completeLink(unlinked).attributes.orEmpty().findAttributeValue(AppStateKeys.END_SEQ))
+
+        // no span has either number: the process did not link spans, so none is given an end
         val notLinked = checkNotNull(DeadPartState.of(part(listOf(unlinked), listOf(changeLog, unlinked))))
         assertSame(unlinked, notLinked.completeLink(unlinked))
 

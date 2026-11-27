@@ -85,15 +85,25 @@ internal class DeadPartState(changeLog: Span, private val linkedSpans: Boolean) 
         }
 
         /**
-         * Whether the process that left this part linked spans to state, which shows as a start number on any span of the part
-         * that started after the first change. A part of such a process with no such span, one that died before any span
-         * started after its states were declared, reads as a part of a process that linked none.
+         * Whether the process that left this part linked spans to state, which shows as either number of a link on any span of
+         * the part: a start number on one that started after the first change, or an end number on one that finished after a
+         * change. Only a process that links spans writes either.
+         *
+         * A part of such a process with no such span reads as a part of a process that linked none. That is the first part of
+         * a process that died before any span started after its states were declared: the part's own span starts before
+         * they are, so it has no start number, and it is then left with no end number either.
          */
         private fun Envelope<SessionPartPayload>.hasSpanLinkedToState(): Boolean =
-            data.spans?.any { it.hasStartNumber() } == true || data.spanSnapshots?.any { it.hasStartNumber() } == true
+            data.spans?.any { it.hasLinkNumber() } == true || data.spanSnapshots?.any { it.hasLinkNumber() } == true
 
-        private fun Span.hasStartNumber(): Boolean =
-            !isStateChangeLog() && attributes?.findAttributeValue(AppStateKeys.SEQ) != null
+        private fun Span.hasLinkNumber(): Boolean {
+            if (isStateChangeLog()) {
+                return false
+            }
+            val attributes = attributes ?: return false
+            return attributes.findAttributeValue(AppStateKeys.SEQ) != null ||
+                attributes.findAttributeValue(AppStateKeys.END_SEQ) != null
+        }
     }
 }
 

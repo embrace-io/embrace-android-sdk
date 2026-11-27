@@ -25,5 +25,8 @@ internal fun Context.isStateReplay(): Boolean = get(stateReplayKey) == true
  * one of the two names and was emitted with the marked context: the name alone could be an app's own log, and the mark alone
  * could be a log an app's log record processor emitted with the context it was handed.
  */
-internal fun LogRecordData.isStateReplayRecord(): Boolean =
-    eventName == AppStateKeys.CHANGE_EVENT_NAME || eventName == AppStateKeys.SNAPSHOT_EVENT_NAME
+internal fun LogRecordData.isStateReplayRecord(): Boolean {
+    // read once: in compat mode a getter on the live record copies it
+    val name = eventName
+    return name == AppStateKeys.CHANGE_EVENT_NAME || name == AppStateKeys.SNAPSHOT_EVENT_NAME
+}

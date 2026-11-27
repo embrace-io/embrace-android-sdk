@@ -110,6 +110,33 @@ internal class TracingApiDelegateTest(
     }
 
     @Test
+    fun `start a span with a start action`() {
+        val linked = checkNotNull(tracer.startSpan(name = "linked-span"))
+        val span = tracer.startSpan(name = "test-span") {
+            addAttribute("key", "value")
+            addEvent("event", clock.now())
+            addLink(linked)
+        }
+        assertTrue(span.stop())
+        assertTrue(linked.stop())
+        val spans = spanRepository.flushOtelSpans()
+        with(spans.single { it.name == "test-span" }) {
+            assertEquals("value", attributes?.findAttributeValue("key"))
+            assertEquals("event", events?.single()?.name)
+            assertEquals(1, links?.count { it.spanId == linked.spanId })
+        }
+    }
+
+    @Test
+    fun `start action on a span that cannot start returns noop`() {
+        val notStartedParent = checkNotNull(tracer.createSpan(name = "test-span"))
+        val span = tracer.startSpan(name = "child-span", parent = notStartedParent) {
+            addAttribute("key", "value")
+        }
+        assertEquals(NoopEmbraceSdkSpan, span)
+    }
+
+    @Test
     fun `long span names truncated`() {
         assertNotNull(tracer.startSpan(name = TOO_LONG_SPAN_NAME))
     }

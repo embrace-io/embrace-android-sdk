@@ -13,6 +13,7 @@ import io.embrace.android.embracesdk.internal.clock.normalizeTimestampAsMillis
 import io.embrace.android.embracesdk.internal.logging.ErrorHandler
 import io.embrace.android.embracesdk.internal.logging.SdkErrorType
 import io.embrace.android.embracesdk.internal.logging.guardSdkCode
+import io.embrace.android.embracesdk.internal.logging.guardUserCode
 import io.embrace.android.embracesdk.internal.otel.payload.toEmbracePayload
 import io.embrace.android.embracesdk.internal.otel.payload.toPayloadString
 import io.embrace.android.embracesdk.internal.otel.sdk.DataValidator
@@ -29,13 +30,16 @@ import io.embrace.android.embracesdk.semconv.ExperimentalSemconv
 import io.embrace.android.embracesdk.spans.AutoTerminationMode
 import io.embrace.android.embracesdk.spans.EmbraceSpan
 import io.embrace.android.embracesdk.spans.ErrorCode
+import io.embrace.android.embracesdk.spans.SpanStartAction
 import io.opentelemetry.kotlin.Clock
 import io.opentelemetry.kotlin.attributes.AttributesMutator
 import io.opentelemetry.kotlin.context.Context
 import io.opentelemetry.kotlin.semconv.ExceptionAttributes
 import io.opentelemetry.kotlin.tracing.Span
 import io.opentelemetry.kotlin.tracing.SpanContext
+import io.opentelemetry.kotlin.tracing.SpanCreationAction
 import io.opentelemetry.kotlin.tracing.SpanKind
+import io.opentelemetry.kotlin.tracing.SpanLinkCreator
 import io.opentelemetry.kotlin.tracing.StatusData
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.atomic.AtomicReference
@@ -197,6 +201,9 @@ private class EmbraceSpanImpl(
     @Volatile
     private var customLinkCount: Int = 0
 
+    private var applyingStartAction: Boolean = false
+    private var creationLinkCount: Int = 0
+
     private val parentContext = otelSpanStartArgs.parentContext
 
     override val parent: EmbraceSpan? = parentContext.getEmbraceSpan()
@@ -225,9 +232,11 @@ private class EmbraceSpanImpl(
             deps.openTelemetryClock.now().nanosToMillis()
         }
 
+        val creationAction = startArgs?.startAction?.let(::applyStartAction)
+
         synchronized(startedSpan) {
             val args = startArgs ?: return@guard false
-            val newSpan = args.startSpan(attemptedStartTimeMs)
+            val newSpan = args.startSpan(attemptedStartTimeMs, creationAction)
             if (newSpan.isRecording()) {
                 startedSpan.set(newSpan)
                 startArgs = null
@@ -420,7 +429,7 @@ private class EmbraceSpanImpl(
             var added = false
             var changed = false
             synchronized(customAttributes) {
-                if (customAttributes.size < maxAttributeCount && isRecording) {
+                if (customAttributes.size < maxAttributeCount && canAddCustomData()) {
                     val attribute = deps.dataValidator.truncateAttribute(
                         key = key,
                         value = value,
@@ -431,7 +440,7 @@ private class EmbraceSpanImpl(
                 }
             }
             if (added) {
-                if (changed) {
+                if (changed && !applyingStartAction) {
                     notifyChanged()
                 }
                 return@guard true
@@ -622,9 +631,9 @@ private class EmbraceSpanImpl(
      */
     private inline fun recordEvent(system: Boolean, max: Int, eventSupplier: () -> SpanEvent?): Boolean {
         var added = false
-        if (isRecording && eventCount(system) < max) {
+        if (canAddCustomData() && eventCount(system) < max) {
             synchronized(collectionLock) {
-                if (eventCount(system) < max && isRecording) {
+                if (eventCount(system) < max && canAddCustomData()) {
                     eventSupplier()?.let { event ->
                         if (system) {
                             systemEvents().add(event)
@@ -640,7 +649,9 @@ private class EmbraceSpanImpl(
         }
 
         if (added) {
-            notifyChanged()
+            if (!applyingStartAction) {
+                notifyChanged()
+            }
             return true
         }
 
@@ -653,9 +664,9 @@ private class EmbraceSpanImpl(
      */
     private inline fun recordLink(system: Boolean, max: Int, linkSupplier: () -> EmbraceLinkData): Boolean {
         var added = false
-        if (isRecording && linkCount(system) < max) {
+        if (canAddCustomData() && linkCount(system) < max) {
             synchronized(collectionLock) {
-                if (linkCount(system) < max && isRecording) {
+                if (linkCount(system) < max && canAddCustomData()) {
                     val link = linkSupplier()
                     if (system) {
                         systemLinks().add(link)
@@ -670,7 +681,9 @@ private class EmbraceSpanImpl(
         }
 
         if (added) {
-            notifyChanged()
+            if (!applyingStartAction) {
+                notifyChanged()
+            }
             return true
         }
 
@@ -703,6 +716,41 @@ private class EmbraceSpanImpl(
      * deliberately a lock-free read so callers holding another monitor never acquire [startedSpan].
      */
     private fun mutable() = !spanStarted() || isRecording
+
+    private fun canAddCustomData() = isRecording || applyingStartAction
+
+    /**
+     * Runs [action] before the OTel span starts and returns what must be passed at its creation so samplers can see it.
+     */
+    private fun applyStartAction(action: SpanStartAction.() -> Unit): (SpanCreationAction.() -> Unit)? {
+        applyingStartAction = true
+        val applied = guard(false) {
+            deps.errorHandler.guardUserCode { SpanStartActionAdapter(this).action() }
+            true
+        }
+        applyingStartAction = false
+        if (!applied) {
+            // nothing else can add custom data before start, so this drops exactly what the failed action added
+            customAttributes.clear()
+            synchronized(collectionLock) {
+                customEvents = null
+                customEventCount = 0
+                customLinks = null
+                customLinkCount = 0
+            }
+            return null
+        }
+        val attributes = customAttributes.redactIfSensitive()
+        val links = withLinkCopies { _, custom -> redactCustomLinks(custom) }
+        if (attributes.isEmpty() && links.isEmpty()) {
+            return null
+        }
+        creationLinkCount = links.size
+        return {
+            setPayloadStringAttributes(attributes)
+            addLinks(links)
+        }
+    }
 
     /**
      * Tells the repository this span's data changed. Must be called after the monitor is released.
@@ -752,11 +800,15 @@ private class EmbraceSpanImpl(
 
     private fun populateLinks(spanToStop: Span) {
         withLinkCopies { system, custom ->
-            (system + redactCustomLinks(custom)).forEach {
-                val linkAttributes = deps.dataValidator.truncateAttributes(it.attributes, false)
-                spanToStop.addLink(it.spanContext) {
-                    setPayloadStringAttributes(linkAttributes)
-                }
+            spanToStop.addLinks(system + redactCustomLinks(custom.drop(creationLinkCount)))
+        }
+    }
+
+    private fun SpanLinkCreator.addLinks(links: List<EmbraceLinkData>) {
+        links.forEach {
+            val linkAttributes = deps.dataValidator.truncateAttributes(it.attributes, false)
+            addLink(it.spanContext) {
+                setPayloadStringAttributes(linkAttributes)
             }
         }
     }
@@ -769,4 +821,22 @@ private class EmbraceSpanImpl(
             name = name,
             internal = internal,
         )
+}
+
+private class SpanStartActionAdapter(private val span: EmbraceSpan) : SpanStartAction {
+    override fun addAttribute(key: String, value: String) {
+        span.addAttribute(key, value)
+    }
+
+    override fun addEvent(name: String, timestampMs: Long?, attributes: Map<String, String>) {
+        span.addEvent(name, timestampMs, attributes)
+    }
+
+    override fun addLink(linkedSpan: EmbraceSpan, attributes: Map<String, String>) {
+        span.addLink(linkedSpan, attributes)
+    }
+
+    override fun addLink(linkedSpanContext: SpanContext, attributes: Map<String, String>) {
+        span.addLink(linkedSpanContext, attributes)
+    }
 }

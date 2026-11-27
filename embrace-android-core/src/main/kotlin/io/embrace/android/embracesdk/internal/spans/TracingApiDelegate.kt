@@ -8,6 +8,7 @@ import io.embrace.android.embracesdk.spans.AutoTerminationMode
 import io.embrace.android.embracesdk.spans.EmbraceSpan
 import io.embrace.android.embracesdk.spans.EmbraceSpanEvent
 import io.embrace.android.embracesdk.spans.ErrorCode
+import io.embrace.android.embracesdk.spans.SpanStartAction
 import io.embrace.android.embracesdk.spans.TracingApi
 
 class TracingApiDelegate(
@@ -38,6 +39,22 @@ class TracingApiDelegate(
             startTimeMs = startTimeMs,
             internal = false,
             terminationMode = autoTerminationMode.toTerminationMode(),
+        )
+
+    override fun startSpan(
+        name: String,
+        parent: EmbraceSpan?,
+        startTimeMs: Long?,
+        autoTerminationMode: AutoTerminationMode,
+        action: SpanStartAction.() -> Unit,
+    ): EmbraceSpan =
+        spanService.startSpan(
+            name = name,
+            parent = parent,
+            startTimeMs = startTimeMs,
+            internal = false,
+            terminationMode = autoTerminationMode.toTerminationMode(),
+            startAction = action,
         )
 
     override fun <T> recordSpan(

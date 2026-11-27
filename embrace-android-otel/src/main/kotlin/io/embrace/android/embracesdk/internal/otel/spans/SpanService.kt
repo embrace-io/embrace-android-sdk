@@ -4,6 +4,7 @@ import io.embrace.android.embracesdk.internal.arch.datasource.SpanEvent
 import io.embrace.android.embracesdk.internal.arch.schema.EmbType
 import io.embrace.android.embracesdk.internal.arch.schema.ErrorCodeAttribute
 import io.embrace.android.embracesdk.spans.EmbraceSpan
+import io.embrace.android.embracesdk.spans.SpanStartAction
 import io.opentelemetry.kotlin.tracing.SpanContext
 
 /**
@@ -24,6 +25,7 @@ interface SpanService {
         internal: Boolean = true,
         private: Boolean = false,
         terminationMode: SpanTerminationMode = SpanTerminationMode.None,
+        startAction: (SpanStartAction.() -> Unit)? = null,
     ): EmbraceSdkSpan
 
     /**
@@ -44,6 +46,7 @@ interface SpanService {
         private: Boolean = false,
         terminationMode: SpanTerminationMode = SpanTerminationMode.None,
         parentSpanContext: SpanContext? = null,
+        startAction: (SpanStartAction.() -> Unit)? = null,
     ): EmbraceSdkSpan
 
     /**

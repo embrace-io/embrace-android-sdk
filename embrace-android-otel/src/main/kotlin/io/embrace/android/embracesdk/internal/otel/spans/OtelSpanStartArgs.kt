@@ -5,6 +5,7 @@ import io.embrace.android.embracesdk.internal.arch.schema.EmbType
 import io.embrace.android.embracesdk.internal.arch.schema.PrivateSpan
 import io.embrace.android.embracesdk.internal.clock.millisToNanos
 import io.embrace.android.embracesdk.internal.otel.sdk.toEmbraceObjectName
+import io.embrace.android.embracesdk.spans.SpanStartAction
 import io.opentelemetry.kotlin.OpenTelemetry
 import io.opentelemetry.kotlin.context.Context
 import io.opentelemetry.kotlin.tracing.Span
@@ -26,14 +27,14 @@ class OtelSpanStartArgs(
     val startTimeMs: Long? = null,
     val spanKind: SpanKind? = null,
     val openTelemetry: OpenTelemetry,
+    val startAction: (SpanStartAction.() -> Unit)? = null,
 ) {
     val parentContext: Context = parentCtx ?: openTelemetry.context.root()
     val initialSpanName: String = name.prependEmbracePrefix(internal)
 
     val embraceAttributes = mutableListOf<EmbraceAttribute>(type)
 
-    // a null action lets the tracer skip allocating span creation state for non-private spans
-    private val spanCreationAction: (SpanCreationAction.() -> Unit)? = if (private) markPrivate else null
+    private val isPrivate: Boolean = private
 
     init {
         if (private) {
@@ -49,13 +50,23 @@ class OtelSpanStartArgs(
         }
     }
 
-    fun startSpan(startTimeMs: Long): Span {
+    fun startSpan(startTimeMs: Long, creationAction: (SpanCreationAction.() -> Unit)? = null): Span {
+        val action: (SpanCreationAction.() -> Unit)? = when {
+            creationAction == null -> if (isPrivate) markPrivate else null
+            isPrivate -> {
+                {
+                    markPrivate()
+                    creationAction()
+                }
+            }
+            else -> creationAction
+        }
         return tracer.startSpan(
             name = initialSpanName,
             parentContext = parentContext,
             spanKind = spanKind ?: SpanKind.INTERNAL,
             startTimestamp = startTimeMs.millisToNanos(),
-            action = spanCreationAction,
+            action = action,
         )
     }
 

@@ -66,6 +66,7 @@ public final class io/embrace/android/embracesdk/Embrace : io/embrace/android/em
 	public fun setUsername (Ljava/lang/String;)V
 	public fun start (Landroid/content/Context;)V
 	public fun startSpan (Ljava/lang/String;Lio/embrace/android/embracesdk/spans/EmbraceSpan;Ljava/lang/Long;Lio/embrace/android/embracesdk/spans/AutoTerminationMode;)Lio/embrace/android/embracesdk/spans/EmbraceSpan;
+	public fun startSpan (Ljava/lang/String;Lio/embrace/android/embracesdk/spans/EmbraceSpan;Ljava/lang/Long;Lio/embrace/android/embracesdk/spans/AutoTerminationMode;Lkotlin/jvm/functions/Function1;)Lio/embrace/android/embracesdk/spans/EmbraceSpan;
 	public fun startView (Ljava/lang/String;)Z
 	public fun trackExperiment (Ljava/lang/String;Ljava/lang/String;Ljava/lang/Long;)V
 	public fun trackExperiments (Ljava/util/List;)V

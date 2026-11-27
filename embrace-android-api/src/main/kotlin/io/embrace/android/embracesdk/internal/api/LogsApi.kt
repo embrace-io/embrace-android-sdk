@@ -116,32 +116,4 @@ public interface LogsApi {
         properties: Map<String, Any> = emptyMap(),
         message: String? = null,
     )
-
-    /**
-     * Saves captured push notification information into a user session
-     *
-     * @param title                    the title of the notification as a string (or null)
-     * @param body                     the body of the notification as a string (or null)
-     * @param topic                    the notification topic (if a user subscribed to one), or null
-     * @param id                       A unique ID identifying the message
-     * @param notificationPriority     the notificationPriority of the message (as resolved on the device)
-     * @param messageDeliveredPriority the priority of the message (as resolved on the server)
-     * @param isNotification           if it is a notification message.
-     * @param hasData                  if the message contains payload data.
-     * @suppress
-     */
-    @Deprecated(
-        "This API is deprecated and will be removed in a future release." +
-            "Use logMessage() instead.",
-    )
-    public fun logPushNotification(
-        title: String?,
-        body: String?,
-        topic: String?,
-        id: String?,
-        notificationPriority: Int?,
-        messageDeliveredPriority: Int?,
-        isNotification: Boolean?,
-        hasData: Boolean?,
-    )
 }

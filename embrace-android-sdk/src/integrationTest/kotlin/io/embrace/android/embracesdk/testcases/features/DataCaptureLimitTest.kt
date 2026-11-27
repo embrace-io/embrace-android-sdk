@@ -8,6 +8,8 @@ import io.embrace.android.embracesdk.internal.config.remote.DataRemoteConfig
 import io.embrace.android.embracesdk.internal.config.remote.RemoteConfig
 import io.embrace.android.embracesdk.internal.config.remote.UiRemoteConfig
 import io.embrace.android.embracesdk.internal.config.resolved.BreadcrumbConfig
+import io.embrace.android.embracesdk.internal.instrumentation.fcm.PushNotificationBreadcrumb.NotificationType
+import io.embrace.android.embracesdk.internal.instrumentation.fcm.fcmDataSource
 import io.embrace.android.embracesdk.internal.payload.Envelope
 import io.embrace.android.embracesdk.internal.payload.SessionPartPayload
 import io.embrace.android.embracesdk.testframework.OtelSdkMode
@@ -75,7 +77,6 @@ internal class DataCaptureLimitTest(
         )
     }
 
-    @Suppress("DEPRECATION")
     @Test
     fun `low span event limit is honoured by the session span`() {
         val limit = 20
@@ -86,7 +87,14 @@ internal class DataCaptureLimitTest(
             testCaseAction = {
                 recordSession {
                     repeat(limit + 30) {
-                        embrace.logPushNotification("title", "body", "from", "id", 1, 2, true, true)
+                        checkNotNull(fcmDataSource).logPushNotification(
+                            "title",
+                            "body",
+                            "from",
+                            "id",
+                            1,
+                            NotificationType.NOTIFICATION_AND_DATA,
+                        )
                     }
                 }
             },

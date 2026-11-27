@@ -98,29 +98,6 @@ internal class SdkApiDispatcher(
         message: String?,
     ) = record("log_message") { target.logCustomStacktrace(stacktraceElements, severity, properties, message) }
 
-    @Deprecated("This API is deprecated and will be removed in a future release.Use logMessage() instead.")
-    override fun logPushNotification(
-        title: String?,
-        body: String?,
-        topic: String?,
-        id: String?,
-        notificationPriority: Int?,
-        messageDeliveredPriority: Int?,
-        isNotification: Boolean?,
-        hasData: Boolean?,
-    ) = record("log_push_notification") {
-        target.logPushNotification(
-            title,
-            body,
-            topic,
-            id,
-            notificationPriority,
-            messageDeliveredPriority,
-            isNotification,
-            hasData,
-        )
-    }
-
     override fun recordNetworkRequest(networkRequest: EmbraceNetworkRequest) =
         record("record_network_request") { target.recordNetworkRequest(networkRequest) }
 
@@ -144,10 +121,6 @@ internal class SdkApiDispatcher(
 
     override fun setNetworkSpanParentProvider(provider: NetworkSpanParentProvider) =
         record("set_network_span_parent_provider") { target.setNetworkSpanParentProvider(provider) }
-
-    @Deprecated("This is no longer supported")
-    override fun generateW3cTraceparent(): String? =
-        errorHandler.guardSdkCode(SdkErrorType.PublicApiFail, null) { target.generateW3cTraceparent() }
 
     override fun addUserSessionProperty(key: String, value: String, scope: PropertyScope): Boolean =
         record("add_session_property", false) { target.addUserSessionProperty(key, value, scope) }

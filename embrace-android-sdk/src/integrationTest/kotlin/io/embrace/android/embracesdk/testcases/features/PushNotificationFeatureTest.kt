@@ -1,4 +1,4 @@
-package io.embrace.android.embracesdk.testcases
+package io.embrace.android.embracesdk.testcases.features
 
 import io.embrace.android.embracesdk.assertions.findEventOfType
 import io.embrace.android.embracesdk.assertions.findSessionPartSpan
@@ -6,6 +6,8 @@ import io.embrace.android.embracesdk.fakes.config.FakeEnabledFeatureConfig
 import io.embrace.android.embracesdk.fakes.config.FakeInstrumentedConfig
 import io.embrace.android.embracesdk.internal.arch.schema.EmbType
 import io.embrace.android.embracesdk.internal.arch.attrs.asPair
+import io.embrace.android.embracesdk.internal.instrumentation.fcm.PushNotificationBreadcrumb.NotificationType
+import io.embrace.android.embracesdk.internal.instrumentation.fcm.fcmDataSource
 import io.embrace.android.embracesdk.internal.payload.Envelope
 import io.embrace.android.embracesdk.internal.payload.SessionPartPayload
 import io.embrace.android.embracesdk.testframework.OtelSdkMode
@@ -18,9 +20,8 @@ import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.ParameterizedRobolectricTestRunner
 
-@Suppress("DEPRECATION")
 @RunWith(ParameterizedRobolectricTestRunner::class)
-internal class PushNotificationApiTest(
+internal class PushNotificationFeatureTest(
     private val otelSdkMode: OtelSdkMode,
 ) {
 
@@ -33,7 +34,7 @@ internal class PushNotificationApiTest(
         testRule.runTest(
             testCaseAction = {
                 recordSession {
-                    embrace.logPushNotification("title", "body", "from", "id", 1, 2, true, true)
+                    logPushNotification(NotificationType.NOTIFICATION_AND_DATA)
                 }
             },
             assertAction = {
@@ -48,7 +49,7 @@ internal class PushNotificationApiTest(
         testRule.runTest(
             testCaseAction = {
                 recordSession {
-                    embrace.logPushNotification("title", "body", "from", "id", 1, 2, false, true)
+                    logPushNotification(NotificationType.DATA)
                 }
             },
             assertAction = {
@@ -63,7 +64,7 @@ internal class PushNotificationApiTest(
         testRule.runTest(
             testCaseAction = {
                 recordSession {
-                    embrace.logPushNotification("title", "body", "from", "id", 1, 2, true, false)
+                    logPushNotification(NotificationType.NOTIFICATION)
                 }
             },
             assertAction = {
@@ -78,7 +79,7 @@ internal class PushNotificationApiTest(
         testRule.runTest(
             testCaseAction = {
                 recordSession {
-                    embrace.logPushNotification("title", "body", "from", "id", 1, 2, false, false)
+                    logPushNotification(NotificationType.UNKNOWN)
                 }
             },
             assertAction = {
@@ -96,7 +97,7 @@ internal class PushNotificationApiTest(
             ),
             testCaseAction = {
                 recordSession {
-                    embrace.logPushNotification("title", "body", "from", "id", 1, 2, true, true)
+                    logPushNotification(NotificationType.NOTIFICATION_AND_DATA)
                 }
             },
             assertAction = {
@@ -115,6 +116,10 @@ internal class PushNotificationApiTest(
                 ))
             }
         )
+    }
+
+    private fun logPushNotification(type: NotificationType) {
+        checkNotNull(fcmDataSource).logPushNotification("title", "body", "from", "id", 1, type)
     }
 
     private fun Envelope<SessionPartPayload>.assertNotification(type: String) {

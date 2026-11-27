@@ -2,7 +2,6 @@ package io.embrace.android.embracesdk.internal.api.delegate
 
 import io.embrace.android.embracesdk.internal.api.NetworkRequestApi
 import io.embrace.android.embracesdk.internal.arch.InstrumentationRegistry
-import io.embrace.android.embracesdk.internal.instrumentation.network.DefaultTraceparentGenerator
 import io.embrace.android.embracesdk.internal.instrumentation.network.HttpNetworkRequest
 import io.embrace.android.embracesdk.internal.instrumentation.network.NetworkCaptureDataSource
 import io.embrace.android.embracesdk.internal.instrumentation.network.NetworkRequestDataSource
@@ -54,9 +53,6 @@ internal class NetworkRequestApiDelegate(
     override fun setNetworkSpanParentProvider(provider: NetworkSpanParentProvider) {
         networkSpanParentService.value.setAppProvider(provider)
     }
-
-    @Deprecated("This is no longer supported")
-    override fun generateW3cTraceparent(): String = DefaultTraceparentGenerator.generateW3cTraceparent()
 
     private fun logNetworkRequest(request: EmbraceNetworkRequest) {
         val req = request.toHttpNetworkRequest()

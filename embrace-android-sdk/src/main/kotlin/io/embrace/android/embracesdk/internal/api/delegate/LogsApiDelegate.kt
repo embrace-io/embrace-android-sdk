@@ -8,8 +8,6 @@ import io.embrace.android.embracesdk.internal.arch.schema.SchemaType.Exception
 import io.embrace.android.embracesdk.internal.arch.schema.SchemaType.Log
 import io.embrace.android.embracesdk.internal.arch.schema.SendMode
 import io.embrace.android.embracesdk.internal.arch.schema.TelemetryAttributes
-import io.embrace.android.embracesdk.internal.instrumentation.fcm.PushNotificationBreadcrumb
-import io.embrace.android.embracesdk.internal.instrumentation.fcm.fcmDataSource
 import io.embrace.android.embracesdk.internal.logging.ErrorHandler
 import io.embrace.android.embracesdk.internal.logging.SdkErrorType
 import io.embrace.android.embracesdk.internal.logging.guardSdkCode
@@ -230,22 +228,4 @@ internal class LogsApiDelegate(
         errorHandler.guardSdkCode(SdkErrorType.SafeDataCaptureFail, null) {
             serializer.truncatedStacktrace(elements)
         }
-
-    @Deprecated("This API is deprecated and will be removed in a future release.Use logMessage() instead.")
-    override fun logPushNotification(
-        title: String?,
-        body: String?,
-        topic: String?,
-        id: String?,
-        notificationPriority: Int?,
-        messageDeliveredPriority: Int?,
-        isNotification: Boolean?,
-        hasData: Boolean?,
-    ) {
-        if (hasData == null || isNotification == null || messageDeliveredPriority == null) {
-            return
-        }
-        val type = PushNotificationBreadcrumb.NotificationType.notificationTypeFor(hasData, isNotification)
-        fcmDataSource?.logPushNotification(title, body, topic, id, notificationPriority, type)
-    }
 }

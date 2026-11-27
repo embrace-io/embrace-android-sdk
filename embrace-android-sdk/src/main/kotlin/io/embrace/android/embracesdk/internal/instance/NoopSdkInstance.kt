@@ -120,20 +120,6 @@ internal class NoopSdkInstance(
         logDropped("log_message")
     }
 
-    @Deprecated("This API is deprecated and will be removed in a future release.Use logMessage() instead.")
-    override fun logPushNotification(
-        title: String?,
-        body: String?,
-        topic: String?,
-        id: String?,
-        notificationPriority: Int?,
-        messageDeliveredPriority: Int?,
-        isNotification: Boolean?,
-        hasData: Boolean?,
-    ) {
-        logDropped("log_push_notification")
-    }
-
     override fun recordNetworkRequest(networkRequest: EmbraceNetworkRequest) {
         logDropped("record_network_request")
     }
@@ -168,9 +154,6 @@ internal class NoopSdkInstance(
     override fun setNetworkSpanParentProvider(provider: NetworkSpanParentProvider) {
         logDropped("set_network_span_parent_provider")
     }
-
-    @Deprecated("This is no longer supported")
-    override fun generateW3cTraceparent(): String? = null
 
     override fun addUserSessionProperty(key: String, value: String, scope: PropertyScope): Boolean {
         logDropped("add_session_property")

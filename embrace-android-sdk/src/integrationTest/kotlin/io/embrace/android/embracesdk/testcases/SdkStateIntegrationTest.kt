@@ -815,16 +815,6 @@ internal class SdkStateIntegrationTest(
             embrace.logError(LOG_1)
             embrace.logException(IllegalStateException(LOG_1))
             embrace.logCustomStacktrace(Thread.currentThread().stackTrace)
-            embrace.logPushNotification(
-                title = "title",
-                body = "body",
-                topic = "topic",
-                id = "id",
-                notificationPriority = 1,
-                messageDeliveredPriority = 1,
-                isNotification = true,
-                hasData = true,
-            )
             embrace.recordNetworkRequest(
                 EmbraceNetworkRequest.fromCompletedRequest(
                     "https://example.com",
@@ -870,7 +860,6 @@ internal class SdkStateIntegrationTest(
             assertSame(NoopEmbraceSdkSpan, embrace.startSpan("span"))
             assertEquals("result", embrace.recordSpan("span") { "result" })
             assertNull(embrace.getSpan("0000000000000000"))
-            assertEquals(disabled, embrace.generateW3cTraceparent() == null)
             assertNotNull(embrace.getOpenTelemetryKotlin())
             assertEquals(startMs, embrace.getSdkCurrentTimeMs())
             assertFalse(embrace.isStarted)

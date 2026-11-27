@@ -61,7 +61,4 @@ public interface NetworkRequestApi {
      * one; it must be called after start.
      */
     public fun setNetworkSpanParentProvider(provider: NetworkSpanParentProvider)
-
-    @Deprecated("This is no longer supported")
-    public fun generateW3cTraceparent(): String?
 }

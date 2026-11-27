@@ -135,7 +135,6 @@ public abstract interface class io/embrace/android/embracesdk/internal/api/LogsA
 	public abstract fun logMessage (Ljava/lang/String;Lio/embrace/android/embracesdk/Severity;Ljava/util/Map;)V
 	public abstract fun logMessage (Ljava/lang/String;Lio/embrace/android/embracesdk/Severity;Ljava/util/Map;Ljava/lang/String;Ljava/lang/String;)V
 	public abstract fun logMessage (Ljava/lang/String;Lio/embrace/android/embracesdk/Severity;Ljava/util/Map;[B)V
-	public abstract fun logPushNotification (Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/Integer;Ljava/lang/Integer;Ljava/lang/Boolean;Ljava/lang/Boolean;)V
 	public abstract fun logWarning (Ljava/lang/String;)V
 }
 
@@ -151,7 +150,6 @@ public abstract interface class io/embrace/android/embracesdk/internal/api/Netwo
 	public abstract fun addHttpRequestInfoModifier (Lio/embrace/android/embracesdk/network/http/HttpRequestInfoModifier;)V
 	public abstract fun clearNetworkSpanParent ()V
 	public abstract fun clearNetworkSpanParent (Lio/embrace/android/embracesdk/network/NetworkSpanParentToken;)Z
-	public abstract fun generateW3cTraceparent ()Ljava/lang/String;
 	public abstract fun recordNetworkRequest (Lio/embrace/android/embracesdk/network/EmbraceNetworkRequest;)V
 	public abstract fun removeHttpRequestInfoModifier (Lio/embrace/android/embracesdk/network/http/HttpRequestInfoModifier;)V
 	public abstract fun setNetworkSpanParent (Lio/embrace/android/embracesdk/spans/EmbraceSpan;)Lio/embrace/android/embracesdk/network/NetworkSpanParentToken;

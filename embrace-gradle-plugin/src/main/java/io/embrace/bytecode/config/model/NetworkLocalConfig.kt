@@ -18,17 +18,11 @@ data class NetworkLocalConfig(
     @SerialName("domains")
     val domains: List<DomainLocalConfig>? = null,
 
-    @SerialName("capture_request_content_length")
-    val captureRequestContentLength: Boolean? = null,
-
     @SerialName("capture_okhttp_response_body_size")
     val captureOkHttpResponseBodySize: Boolean? = null,
 
     @SerialName("disabled_url_patterns")
     val disabledUrlPatterns: List<String>? = null,
-
-    @SerialName("enable_native_monitoring")
-    val enableNativeMonitoring: Boolean? = null,
 
     @SerialName("enable_huc_lite_instrumentation")
     val enableHucLiteInstrumentation: Boolean? = null,

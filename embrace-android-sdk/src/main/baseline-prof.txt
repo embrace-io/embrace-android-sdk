@@ -1150,7 +1150,6 @@ HSPLio/embrace/android/embracesdk/internal/config/behavior/NetworkBehaviorImpl;-
 HSPLio/embrace/android/embracesdk/internal/config/behavior/NetworkBehaviorImpl;->getNetworkCaptureRules()Ljava/util/Set;
 HSPLio/embrace/android/embracesdk/internal/config/behavior/NetworkBehaviorImpl;->getRequestLimitPerDomain()I
 HSPLio/embrace/android/embracesdk/internal/config/behavior/NetworkBehaviorImpl;->getRequestSpanTimeoutMs()J
-HSPLio/embrace/android/embracesdk/internal/config/behavior/NetworkBehaviorImpl;->isHttpUrlConnectionCaptureEnabled()Z
 HSPLio/embrace/android/embracesdk/internal/config/behavior/NetworkBehaviorImpl;->isHucLiteInstrumentationEnabled()Z
 HSPLio/embrace/android/embracesdk/internal/config/behavior/NetworkBehaviorImpl;->isOkHttpResponseBodySizeCaptureEnabled()Z
 HSPLio/embrace/android/embracesdk/internal/config/behavior/NetworkBehaviorImpl;->isUrlEnabled(Ljava/lang/String;)Z
@@ -1242,7 +1241,6 @@ HSPLio/embrace/android/embracesdk/internal/config/instrumented/EnabledFeatureCon
 HSPLio/embrace/android/embracesdk/internal/config/instrumented/EnabledFeatureConfigImpl;->isDiskUsageCaptureEnabled()Z
 HSPLio/embrace/android/embracesdk/internal/config/instrumented/EnabledFeatureConfigImpl;->isEndStartupWithAppReadyEnabled()Z
 HSPLio/embrace/android/embracesdk/internal/config/instrumented/EnabledFeatureConfigImpl;->isFcmPiiDataCaptureEnabled()Z
-HSPLio/embrace/android/embracesdk/internal/config/instrumented/EnabledFeatureConfigImpl;->isHttpUrlConnectionCaptureEnabled()Z
 HSPLio/embrace/android/embracesdk/internal/config/instrumented/EnabledFeatureConfigImpl;->isHucLiteInstrumentationEnabled()Z
 HSPLio/embrace/android/embracesdk/internal/config/instrumented/EnabledFeatureConfigImpl;->isJvmCrashCaptureEnabled()Z
 HSPLio/embrace/android/embracesdk/internal/config/instrumented/EnabledFeatureConfigImpl;->isNativeCrashCaptureEnabled()Z
@@ -1329,7 +1327,6 @@ HSPLio/embrace/android/embracesdk/internal/config/instrumented/schema/EnabledFea
 HSPLio/embrace/android/embracesdk/internal/config/instrumented/schema/EnabledFeatureConfig$DefaultImpls;->isDiskUsageCaptureEnabled(Lio/embrace/android/embracesdk/internal/config/instrumented/schema/EnabledFeatureConfig;)Z
 HSPLio/embrace/android/embracesdk/internal/config/instrumented/schema/EnabledFeatureConfig$DefaultImpls;->isEndStartupWithAppReadyEnabled(Lio/embrace/android/embracesdk/internal/config/instrumented/schema/EnabledFeatureConfig;)Z
 HSPLio/embrace/android/embracesdk/internal/config/instrumented/schema/EnabledFeatureConfig$DefaultImpls;->isFcmPiiDataCaptureEnabled(Lio/embrace/android/embracesdk/internal/config/instrumented/schema/EnabledFeatureConfig;)Z
-HSPLio/embrace/android/embracesdk/internal/config/instrumented/schema/EnabledFeatureConfig$DefaultImpls;->isHttpUrlConnectionCaptureEnabled(Lio/embrace/android/embracesdk/internal/config/instrumented/schema/EnabledFeatureConfig;)Z
 HSPLio/embrace/android/embracesdk/internal/config/instrumented/schema/EnabledFeatureConfig$DefaultImpls;->isHucLiteInstrumentationEnabled(Lio/embrace/android/embracesdk/internal/config/instrumented/schema/EnabledFeatureConfig;)Z
 HSPLio/embrace/android/embracesdk/internal/config/instrumented/schema/EnabledFeatureConfig$DefaultImpls;->isJvmCrashCaptureEnabled(Lio/embrace/android/embracesdk/internal/config/instrumented/schema/EnabledFeatureConfig;)Z
 HSPLio/embrace/android/embracesdk/internal/config/instrumented/schema/EnabledFeatureConfig$DefaultImpls;->isNativeCrashCaptureEnabled(Lio/embrace/android/embracesdk/internal/config/instrumented/schema/EnabledFeatureConfig;)Z
@@ -2583,7 +2580,6 @@ HSPLio/embrace/android/embracesdk/internal/instance/RealSdkInstance;->existingPr
 HSPLio/embrace/android/embracesdk/internal/instance/RealSdkInstance;->getCurrentUserSessionId()Ljava/lang/String;
 HSPLio/embrace/android/embracesdk/internal/instance/RealSdkInstance;->getOpenTelemetryKotlin()Lio/opentelemetry/kotlin/OpenTelemetry;
 HSPLio/embrace/android/embracesdk/internal/instance/RealSdkInstance;->getSpan(Ljava/lang/String;)Lio/embrace/android/embracesdk/spans/EmbraceSpan;
-HSPLio/embrace/android/embracesdk/internal/instance/RealSdkInstance;->initializeHucInstrumentation()V
 HSPLio/embrace/android/embracesdk/internal/instance/RealSdkInstance;->isStarted()Z
 HSPLio/embrace/android/embracesdk/internal/instance/RealSdkInstance;->loadInstrumentation()V
 HSPLio/embrace/android/embracesdk/internal/instance/RealSdkInstance;->loadInstrumentationProviders()Ljava/util/List;

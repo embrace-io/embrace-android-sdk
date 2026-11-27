@@ -26,7 +26,6 @@ val CANONICAL_SECTIONS: List<CanonicalSection> = listOf(
     CanonicalSection("emb-start-first-session", 1),
     CanonicalSection("emb-post-services-setup", 0),
     CanonicalSection("emb-load-instrumentation", 1),
-    CanonicalSection("emb-huc-init", 1),
 )
 
 /**

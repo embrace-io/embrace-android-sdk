@@ -51,7 +51,7 @@ internal class StartupReportTest {
     @Test
     fun `a canonical section no trace has reads as not in these traces`() {
         val text = report(startupMetrics())
-        assertTrue(lines(text).contains("  ${"  ↳ emb-huc-init".padEnd(60)}${"-- not in these traces --".padStart(41)}"))
+        assertTrue(lines(text).contains("  ${"  ↳ emb-load-instrumentation".padEnd(60)}${"-- not in these traces --".padStart(41)}"))
     }
 
     @Test

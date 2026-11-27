@@ -1,8 +1,5 @@
 package io.embrace.android.embracesdk.internal.config.behavior
 
-import io.embrace.android.embracesdk.fakes.FakeClock
-import io.embrace.android.embracesdk.fakes.config.FakeEnabledFeatureConfig
-import io.embrace.android.embracesdk.fakes.config.FakeInstrumentedConfig
 import io.embrace.android.embracesdk.fakes.createNetworkBehavior
 import io.embrace.android.embracesdk.internal.config.remote.DataRemoteConfig
 import io.embrace.android.embracesdk.internal.config.remote.NetworkCaptureRuleRemoteConfig
@@ -39,8 +36,6 @@ internal class NetworkBehaviorImplTest {
     @Test
     fun testDefaults() {
         with(createNetworkBehavior(remoteCfg = null)) {
-            assertFalse(isRequestContentLengthCaptureEnabled())
-            assertFalse(isHttpUrlConnectionCaptureEnabled())
             assertTrue(isHucLiteInstrumentationEnabled())
             assertEquals(1000, getRequestLimitPerDomain())
             assertEquals(600_000L, getRequestSpanTimeoutMs())
@@ -88,22 +83,5 @@ internal class NetworkBehaviorImplTest {
             assertFalse(isUrlEnabled("https://example.com/path"))
             assertTrue(isUrlEnabled("https://google.com/path"))
         }
-    }
-
-    @Test
-    fun `only HUC Lite disabled when HUC is enabled`() {
-        val networkBehavior = NetworkBehaviorImpl(
-            local = FakeInstrumentedConfig(
-                enabledFeatures = FakeEnabledFeatureConfig(
-                    httpUrlConnectionCapture = true,
-                    hucLiteInstrumentation = true,
-                ),
-            ),
-            remote = null,
-            configDeliveredAt = FakeClock.DEFAULT_FAKE_CURRENT_TIME,
-            disabledUrlPatterns = null,
-        )
-        assertTrue(networkBehavior.isHttpUrlConnectionCaptureEnabled())
-        assertFalse(networkBehavior.isHucLiteInstrumentationEnabled())
     }
 }

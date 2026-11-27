@@ -190,7 +190,6 @@ androidComponents {
 
 dependencies {
     implementation(project(":embrace-android-sdk"))
-    implementation(project(":embrace-android-instrumentation-huc"))
     implementation(project(":embrace-android-instrumentation-androidx-navigation"))
     implementation(project(":embrace-android-instrumentation-compose-tap"))
 

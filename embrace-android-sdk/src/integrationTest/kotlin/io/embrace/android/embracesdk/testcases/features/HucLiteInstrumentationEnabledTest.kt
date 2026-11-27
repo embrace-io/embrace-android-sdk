@@ -68,28 +68,6 @@ internal class HucLiteInstrumentationEnabledTest(
         )
     }
 
-    @Test
-    fun `SDK starts when both HUC instrumentations are enabled`() {
-        testRule.runTest(
-            setupAction = {
-                getFakeErrorHandler().throwOnSdkError = false
-            },
-            instrumentedConfig = FakeInstrumentedConfig(
-                enabledFeatures = FakeEnabledFeatureConfig(
-                    hucLiteInstrumentation = true,
-                    httpUrlConnectionCapture = true,
-                )
-            ),
-            testCaseAction = {
-                assertTrue(embrace.isStarted)
-                recordSession()
-            },
-            assertAction = {
-                assertNotNull(getSingleSessionEnvelope())
-            },
-        )
-    }
-
     private fun Log.assertHucLiteInitializationAttempt(attempted: Boolean) {
         val attrs = checkNotNull(attributes)
         assertEquals(

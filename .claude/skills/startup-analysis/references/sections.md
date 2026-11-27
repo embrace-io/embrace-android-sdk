@@ -47,8 +47,7 @@ take a large share of the window, are shown; `--all-sections` lists every one.
 │  └─ ● start-first-session       the initial session-part transition
 ├─ ● post-services-setup
 │  ├─ ○ service-registration
-│  ├─ ● load-instrumentation
-│  └─ ● huc-init                  only when HttpURLConnection capture is enabled (off in ExampleApp)
+│  └─ ● load-instrumentation
 └─ ○ startup-tracking             after the durations are recorded, so never an attribute
 floating: ● key-value-store-init and ● prefs-first-read nest wherever the store is first touched
 ```
@@ -65,7 +64,7 @@ recording); those slices show under "other emb-* sections" and are not part of t
 
 | Environment | Sections present |
 |---|---|
-| Real device via `Embrace` entry point (this skill) | all of the above; `huc-init` only with HttpURLConnection capture on |
+| Real device via `Embrace` entry point (this skill) | all of the above |
 | Robolectric integration harness | all EXCEPT `embrace-impl-init` (harness bypasses the entry point). Authoritative list: `SpanAssertions.expectedSdkInitSections` in embrace-android-otel-fakes |
 
 ## Slow passes

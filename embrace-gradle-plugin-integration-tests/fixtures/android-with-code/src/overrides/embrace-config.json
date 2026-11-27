@@ -24,8 +24,6 @@
           "domain_limit": 30
         }
       ],
-      "capture_request_content_length": true,
-      "enable_native_monitoring": false,
       "enable_network_span_forwarding": true
     },
     "automatic_data_capture": {

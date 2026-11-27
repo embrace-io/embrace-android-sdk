@@ -260,7 +260,7 @@ private class EmbraceSpanImpl(
         true
     }
 
-    override fun stop(errorCode: ErrorCode?, endTimeMs: Long?): Boolean =
+    override fun end(errorCode: ErrorCode?, endTimeMs: Long?): Boolean =
         stopWithErrorCode(errorCode?.toErrorCodeAttribute(), endTimeMs)
 
     override fun stopWithErrorCode(errorCode: ErrorCodeAttribute?, endTimeMs: Long?): Boolean = guard(false) {

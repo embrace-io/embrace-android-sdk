@@ -109,7 +109,7 @@ internal fun deadSessionPart(id: String, contents: PartContents): ScenarioSpec =
         embrace.startSpan("item-load", startTimeMs = startMs).apply {
             spanAttributes(span).forEach { (key, value) -> addAttribute(key, value) }
             addEvent("item-fetched", startMs + durationMs(span) / 2, emptyMap())
-            stop(endTimeMs = endMs)
+            end(endTimeMs = endMs)
         }
     }
     repeat(contents.breadcrumbs) { breadcrumb ->

@@ -106,7 +106,7 @@ internal class ExperimentsDataDeliveryTest(
                 recordSession {
                     val span = checkNotNull(embrace.startSpan("customer-span"))
                     span.addAttribute(EmbCommonAttributes.EMB_EXPERIMENTS, "spoof")
-                    span.stop()
+                    span.end()
                 }
             },
             assertAction = {

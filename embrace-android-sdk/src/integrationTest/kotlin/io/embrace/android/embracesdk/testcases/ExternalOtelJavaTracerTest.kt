@@ -100,7 +100,7 @@ internal class ExternalOtelJavaTracerTest(
                         childSpan.end()
 
                         val embraceSpan = checkNotNull(embrace.startSpan("another-root"))
-                        embraceSpan.stop()
+                        embraceSpan.end()
                         embTracer.spanBuilder("no-parent").setNoParent().startSpan().end()
                         parentContext = OtelJavaContext.current()
                     }

@@ -125,9 +125,9 @@ internal class SessionPartPayloadTest(
                         assertTrue(startAndEndInDifferentSessions.start())
                     }
                 }
-                assertTrue(startInSessionEndInBackground.stop())
+                assertTrue(startInSessionEndInBackground.end())
                 recordSession {
-                    assertTrue(startAndEndInDifferentSessions.stop())
+                    assertTrue(startAndEndInDifferentSessions.end())
                 }
             },
             assertAction = {

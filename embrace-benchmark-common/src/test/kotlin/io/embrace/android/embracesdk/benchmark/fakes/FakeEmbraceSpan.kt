@@ -46,7 +46,7 @@ internal class FakeEmbraceSpan(
         return true
     }
 
-    override fun stop(errorCode: ErrorCode?, endTimeMs: Long?): Boolean {
+    override fun end(errorCode: ErrorCode?, endTimeMs: Long?): Boolean {
         if (!isRecording) {
             return false
         }

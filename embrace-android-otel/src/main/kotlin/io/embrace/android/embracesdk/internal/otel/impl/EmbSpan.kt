@@ -74,7 +74,7 @@ class EmbSpan(
 
     override fun end(timestamp: Long) = guard {
         if (isRecording()) {
-            impl.stop(endTimeMs = timestamp.nanosToMillis())
+            impl.end(endTimeMs = timestamp.nanosToMillis())
         }
     }
 

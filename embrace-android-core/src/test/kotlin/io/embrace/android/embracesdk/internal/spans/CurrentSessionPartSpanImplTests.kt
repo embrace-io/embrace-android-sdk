@@ -922,7 +922,7 @@ internal class CurrentSessionPartSpanImplTests(
         assertTrue(parentSpan.start())
         val parentSpanId = checkNotNull(parentSpan.spanId)
         val parentSpanFromService = checkNotNull(spanRepository.getEmbraceSpan(parentSpanId))
-        assertTrue(parentSpanFromService.stop())
+        assertTrue(parentSpanFromService.end())
         currentSessionPartSpan.endSession(startNewSession = true)
 
         // completed span not available after flush
@@ -938,7 +938,7 @@ internal class CurrentSessionPartSpanImplTests(
 
         // active span from before flush is still available and working
         val activeSpanFromBeforeFlush = checkNotNull(spanRepository.getEmbraceSpan(embraceSpanId))
-        assertTrue(activeSpanFromBeforeFlush.stop())
+        assertTrue(activeSpanFromBeforeFlush.end())
         val currentSpans = spanRepository.completedOtelSpans()
         assertEquals(1, currentSpans.size)
         assertEquals("emb-test-span", currentSpans[0].name)
@@ -952,7 +952,7 @@ internal class CurrentSessionPartSpanImplTests(
         sessionPartSpan.setSystemAttribute(EmbSessionAttributes.EMB_USER_SESSION_ID, userSessionId)
         sessionPartSpan.setSystemAttribute(EmbSessionAttributes.EMB_SESSION_PART_ID, sessionPartId)
         val span = spanService.startSpan("test").apply {
-            stop()
+            end()
         }
 
         // a stopped span releases its retained link data, so read it back from the exported payload
@@ -981,7 +981,7 @@ internal class CurrentSessionPartSpanImplTests(
         val sessionPartId = currentSessionPartSpan.getId()
 
         val earlySpan = spanService.startSpan("early").apply {
-            stop()
+            end()
         }
         val earlyLink = checkNotNull(earlySpan.exportedSpan().links).single()
         earlyLink.validateSystemLink(
@@ -999,7 +999,7 @@ internal class CurrentSessionPartSpanImplTests(
         sessionPartSpan.setSystemAttribute(EmbSessionAttributes.EMB_USER_SESSION_ID, userSessionId)
 
         val lateSpan = spanService.startSpan("late").apply {
-            stop()
+            end()
         }
         checkNotNull(lateSpan.exportedSpan().links).single().validateSystemLink(
             linkedSpan = checkNotNull(sessionPartSpan.snapshot()),
@@ -1023,7 +1023,7 @@ internal class CurrentSessionPartSpanImplTests(
 
         repeat(2) { count ->
             val span = spanService.startSpan("test-$count").apply {
-                stop()
+                end()
             }
             checkNotNull(span.exportedSpan().links).single().validateSystemLink(
                 linkedSpan = checkNotNull(sessionPartSpan.snapshot()),
@@ -1054,7 +1054,7 @@ internal class CurrentSessionPartSpanImplTests(
     fun `span stop callback will not create links if there's no active session`() {
         val span = spanService.startSpan("test").apply {
             currentSessionPartSpan.endSession(false)
-            stop()
+            end()
         }
 
         val spanSnapshot = checkNotNull(span.snapshot())

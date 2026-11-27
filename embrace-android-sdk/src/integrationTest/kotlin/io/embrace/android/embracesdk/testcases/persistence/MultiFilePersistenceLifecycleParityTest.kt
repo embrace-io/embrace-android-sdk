@@ -140,7 +140,7 @@ internal class MultiFilePersistenceLifecycleParityTest(
                     span = checkNotNull(embrace.startSpan("late-span"))
                 }
                 clock.tick(100)
-                span.stop()
+                span.end()
                 clock.tick(20000)
                 recordSession()
             },
@@ -380,7 +380,7 @@ internal class MultiFilePersistenceLifecycleParityTest(
                 }
                 clock.tick(20000)
                 recordSession {
-                    span.stop()
+                    span.end()
                 }
             },
             assertAction = {

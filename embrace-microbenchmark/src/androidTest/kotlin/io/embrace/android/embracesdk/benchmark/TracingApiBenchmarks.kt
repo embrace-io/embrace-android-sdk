@@ -120,7 +120,7 @@ class TracingApiBenchmarks(private val otelSdkMode: OtelSdkMode) {
             }
 
             spans.forEach {
-                it.stop()
+                it.end()
             }
 
             verifyAndCleanup()
@@ -146,7 +146,7 @@ class TracingApiBenchmarks(private val otelSdkMode: OtelSdkMode) {
             }
 
             spans.forEach {
-                it.stop()
+                it.end()
             }
 
             verifyAndCleanup()
@@ -161,7 +161,7 @@ class TracingApiBenchmarks(private val otelSdkMode: OtelSdkMode) {
                 spans.add(createSpan(name = "test", start = true))
             }
             spans.forEach {
-                it.stop()
+                it.end()
             }
             verifyAndCleanup()
         }
@@ -246,10 +246,10 @@ class TracingApiBenchmarks(private val otelSdkMode: OtelSdkMode) {
     private fun List<EmbraceSpan>.stopTrace() {
         forEach {
             if (it.parent != null) {
-                it.stop()
+                it.end()
             }
         }
-        single { it.parent == null }.stop()
+        single { it.parent == null }.end()
     }
 
     private fun createSpan(
@@ -287,7 +287,7 @@ class TracingApiBenchmarks(private val otelSdkMode: OtelSdkMode) {
     private fun BenchmarkRule.Scope.stopAndCleanup(spans: List<EmbraceSpan>) {
         runWithMeasurementDisabled {
             spans.forEach {
-                it.stop()
+                it.end()
             }
         }
         verifyAndCleanup()

@@ -57,7 +57,7 @@ class FakeCurrentSessionPartSpan(
         } else {
             null
         }
-        endingSessionPartSpan.stop(errorCode, clock.now())
+        endingSessionPartSpan.end(errorCode, clock.now())
         val payload = listOf(checkNotNull(endingSessionPartSpan.snapshot()))
         onSessionSpanCompleted(payload)
         sessionIteration.incrementAndGet()

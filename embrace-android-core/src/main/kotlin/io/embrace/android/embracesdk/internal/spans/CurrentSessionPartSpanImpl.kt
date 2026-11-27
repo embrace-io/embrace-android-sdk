@@ -202,7 +202,7 @@ internal class CurrentSessionPartSpanImpl(
                 }
 
                 if (appTerminationCause == null) {
-                    endingSessionPartSpan.stop()
+                    endingSessionPartSpan.end()
                     lastSessionPartLink = endingSessionPartSpan.spanContext?.let {
                         EmbraceLinkData(it, endingState.cachedPartLinkAttrs())
                     }

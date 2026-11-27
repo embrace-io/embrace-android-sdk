@@ -58,7 +58,7 @@ internal class OkHttpTraceparentFeatureTest(
                     expectedParentSpanId = parent.spanId
 
                     executeRequest("00-${parent.traceId}-${parent.spanId}-01")
-                    parent.stop()
+                    parent.end()
                 }
             },
             assertAction = {

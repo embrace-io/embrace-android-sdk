@@ -125,7 +125,7 @@ class SpanServiceImpl(
                 }
             }
             returnValue = code()
-            span.stop()
+            span.end()
         } catch (t: Throwable) {
             span.stopWithErrorCode(ErrorCodeAttribute.Failure)
             throw t

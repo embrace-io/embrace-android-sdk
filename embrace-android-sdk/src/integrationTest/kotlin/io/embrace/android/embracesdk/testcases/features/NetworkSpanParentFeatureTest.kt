@@ -36,7 +36,7 @@ internal class NetworkSpanParentFeatureTest(
                     embrace.setNetworkSpanParent(checkout)
                     runRequest(CHILD_URL)
                     val inFlightId = startRequest(IN_FLIGHT_URL)
-                    checkout.stop()
+                    checkout.end()
                     endRequest(inFlightId, IN_FLIGHT_URL)
                     runRequest(AFTER_END_URL)
                 }
@@ -107,7 +107,7 @@ internal class NetworkSpanParentFeatureTest(
                     runRequest(CHILD_URL)
                     runRequest(AFTER_END_URL)
                     runRequest(OTHER_URL)
-                    checkout.stop()
+                    checkout.end()
                 }
             },
             assertAction = {

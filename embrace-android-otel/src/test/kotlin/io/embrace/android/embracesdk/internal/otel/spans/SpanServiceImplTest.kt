@@ -81,7 +81,7 @@ internal class SpanServiceImplTest(
         val embraceSpan = checkNotNull(spansService.createSpan("test-span"))
         assertNull(embraceSpan.parent)
         assertTrue(embraceSpan.start())
-        assertTrue(embraceSpan.stop())
+        assertTrue(embraceSpan.end())
         with(verifyAndReturnSoleCompletedSpan("emb-test-span")) {
             assertEquals(OtelIds.INVALID_SPAN_ID, parentSpanId)
             assertIsTypePerformance()
@@ -96,7 +96,7 @@ internal class SpanServiceImplTest(
         )
         assertNull(embraceSpan.parent)
         assertTrue(embraceSpan.start())
-        assertTrue(embraceSpan.stop())
+        assertTrue(embraceSpan.end())
         with(verifyAndReturnSoleCompletedSpan("emb-test-span")) {
             assertNotPrivateSpan()
         }
@@ -109,7 +109,7 @@ internal class SpanServiceImplTest(
         )
         assertNull(embraceSpan.parent)
         assertTrue(embraceSpan.start())
-        assertTrue(embraceSpan.stop())
+        assertTrue(embraceSpan.end())
         with(verifyAndReturnSoleCompletedSpan("test-span")) {
             assertIsPrivateSpan()
         }
@@ -120,7 +120,7 @@ internal class SpanServiceImplTest(
         val embraceSpan = checkNotNull(spansService.createSpan(name = "test-span"))
         assertNull(embraceSpan.parent)
         assertTrue(embraceSpan.start(clock.now() - 1))
-        assertTrue(embraceSpan.stop(endTimeMs = clock.now() + 10))
+        assertTrue(embraceSpan.end(endTimeMs = clock.now() + 10))
         verifyAndReturnSoleCompletedSpan("emb-test-span")
     }
 
@@ -133,7 +133,7 @@ internal class SpanServiceImplTest(
             ),
         )
         assertTrue(embraceSpan.start())
-        assertTrue(embraceSpan.stop())
+        assertTrue(embraceSpan.end())
         with(verifyAndReturnSoleCompletedSpan("emb-test-span")) {
             assertEquals(OtelIds.INVALID_SPAN_ID, parentSpanId)
             assertIsTypePerformance()
@@ -148,8 +148,8 @@ internal class SpanServiceImplTest(
         checkNotNull(childSpan).start()
         assertTrue(parentSpan.traceId == childSpan.traceId)
         assertTrue(parentSpan.spanId == checkNotNull(childSpan.parent).spanId)
-        assertTrue(childSpan.stop())
-        assertTrue(parentSpan.stop())
+        assertTrue(childSpan.end())
+        assertTrue(parentSpan.end())
 
         val currentSpans = spanRepository.completedOtelSpans()
         assertEquals(2, currentSpans.size)
@@ -179,7 +179,7 @@ internal class SpanServiceImplTest(
         assertEquals(REMOTE_TRACE_ID, span.traceId)
         assertEquals(REMOTE_SPAN_ID, checkNotNull(span.snapshot()).parentSpanId)
 
-        assertTrue(span.stop())
+        assertTrue(span.end())
         with(verifyAndReturnSoleCompletedSpan("emb-remote-child")) {
             assertEquals(REMOTE_TRACE_ID, traceId)
             assertEquals(REMOTE_SPAN_ID, parentSpanId)
@@ -223,7 +223,7 @@ internal class SpanServiceImplTest(
         )
         clock.tick(40L)
         val childSpanEndTimeMs = clock.now()
-        assertTrue(child.stop())
+        assertTrue(child.end())
         with(spanRepository.flushOtelSpans().single()) {
             assertEquals("emb-child-span", name)
             assertEquals(childStartTimeMs, startTimeNanos?.nanosToMillis())
@@ -233,7 +233,7 @@ internal class SpanServiceImplTest(
         }
         clock.tick(10)
         val parentEndTime = clock.now()
-        assertTrue(parent.stop())
+        assertTrue(parent.end())
         with(spanRepository.flushOtelSpans().single()) {
             assertEquals("emb-test-span", name)
             assertEquals(parentStartTime, startTimeNanos?.nanosToMillis())
@@ -301,7 +301,7 @@ internal class SpanServiceImplTest(
             assertEquals(expectedEndTimeMs, endTimeNanos?.nanosToMillis())
             assertNotPrivateSpan()
         }
-        assertTrue(parentSpan.stop())
+        assertTrue(parentSpan.end())
 
         val currentSpans = spanRepository.completedOtelSpans()
         assertEquals(2, currentSpans.size)
@@ -411,7 +411,7 @@ internal class SpanServiceImplTest(
             parentSpan.hashCode()
         }
 
-        assertTrue(parentSpan.stop())
+        assertTrue(parentSpan.end())
 
         val currentSpans = spanRepository.completedOtelSpans()
         assertEquals(2, currentSpans.size)

@@ -7,7 +7,7 @@ import io.embrace.android.embracesdk.spans.ErrorCode
 internal class ThrowingEmbraceSdkSpan(
     delegate: FakeEmbraceSdkSpan,
 ) : EmbraceSdkSpan by delegate {
-    override fun stop(errorCode: ErrorCode?, endTimeMs: Long?): Boolean = error("stop failed")
+    override fun end(errorCode: ErrorCode?, endTimeMs: Long?): Boolean = error("stop failed")
 
     override fun stopWithErrorCode(errorCode: ErrorCodeAttribute?, endTimeMs: Long?): Boolean = error("stop failed")
 }

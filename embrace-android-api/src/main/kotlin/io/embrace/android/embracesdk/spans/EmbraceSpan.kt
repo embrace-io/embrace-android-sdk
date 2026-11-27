@@ -45,14 +45,23 @@ public interface EmbraceSpan {
     public fun start(startTimeMs: Long? = null): Boolean
 
     /**
-     * Stop the recording of the Span with an [ErrorCode] at the specific time, a non-null value indicating an unsuccessful completion of
-     * the underlying operation with the given reason. Returns true if this call triggered the stopping of the recording. Returns false if
-     * the Span has not been started or if it has already been stopped.
+     * End the recording of the Span with an [ErrorCode] at the specific time, a non-null value indicating an unsuccessful completion of
+     * the underlying operation with the given reason. Returns true if this call triggered the ending of the recording. Returns false if
+     * the Span has not been started or if it has already been ended.
      */
-    public fun stop(
+    public fun end(
         errorCode: ErrorCode? = null,
         endTimeMs: Long? = null,
     ): Boolean
+
+    /**
+     * Equivalent to [end].
+     */
+    @Deprecated("Use end() instead.", ReplaceWith("end(errorCode, endTimeMs)"))
+    public fun stop(
+        errorCode: ErrorCode? = null,
+        endTimeMs: Long? = null,
+    ): Boolean = end(errorCode, endTimeMs)
 
     /**
      * Add an [EmbraceSpanEvent] with the given [name]. If [timestampMs] is null, the current time will be used. Optionally, the specific

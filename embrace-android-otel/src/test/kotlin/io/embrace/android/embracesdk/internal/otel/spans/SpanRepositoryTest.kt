@@ -89,7 +89,7 @@ internal class SpanRepositoryTest {
         repository.trackStartedEmbraceSpan(span)
         assertEquals(1, repository.getActiveEmbraceSpans().size)
         assertEquals(0, repository.getCompletedEmbraceSpans().size)
-        span.stop()
+        span.end()
         assertEquals(0, repository.getActiveEmbraceSpans().size)
         assertEquals(1, repository.getCompletedEmbraceSpans().size)
     }
@@ -154,7 +154,7 @@ internal class SpanRepositoryTest {
     fun `already stopped timed out spans are not stopped again`() {
         val span = FakeEmbraceSdkSpan(terminationMode = SpanTerminationMode.Timeout(1000L)).apply {
             start(100L)
-            stop(endTimeMs = 500L)
+            end(endTimeMs = 500L)
         }
         repository.trackStartedEmbraceSpan(span)
 
@@ -174,7 +174,7 @@ internal class SpanRepositoryTest {
         ).apply { start(0L) }
         val child = createChildSpan(openTelemetry, parent = autoRoot)
         val grandchild = createChildSpan(openTelemetry, parent = child)
-        val stoppedChild = createChildSpan(openTelemetry, parent = autoRoot).apply { stop(endTimeMs = 50L) }
+        val stoppedChild = createChildSpan(openTelemetry, parent = autoRoot).apply { end(endTimeMs = 50L) }
         val childOfStoppedChild = createChildSpan(openTelemetry, parent = stoppedChild)
         val nonAutoRoot = FakeEmbraceSdkSpan(openTelemetry = openTelemetry).apply { start(0L) }
         val childOfNonAutoRoot = createChildSpan(openTelemetry, parent = nonAutoRoot)

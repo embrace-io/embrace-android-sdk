@@ -52,7 +52,7 @@ internal class OtelExportParityTest(
                     embrace.startSpan(SPAN_NAME).apply {
                         addAttribute("my-attribute", "my-value")
                         addEvent("my-event")
-                    }.stop()
+                    }.end()
                 }
             },
             otelExportAssertion = {

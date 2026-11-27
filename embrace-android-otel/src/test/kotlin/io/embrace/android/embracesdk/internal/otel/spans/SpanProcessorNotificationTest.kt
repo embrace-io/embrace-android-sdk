@@ -92,7 +92,7 @@ internal class SpanProcessorNotificationTest(
         span.start()
         assertEquals("start should be the only notification", listOf(span), observed)
 
-        span.stop()
+        span.end()
         assertEquals("stop should add exactly one more", listOf(span, span), observed)
     }
 
@@ -115,7 +115,7 @@ internal class SpanProcessorNotificationTest(
     fun `attributes written by a span processor do reach the exported span`() {
         createSpan().apply {
             start()
-            stop()
+            end()
         }
 
         val exported = spanExporter.exportedSpans.single { it.name == SPAN_NAME }.attributes

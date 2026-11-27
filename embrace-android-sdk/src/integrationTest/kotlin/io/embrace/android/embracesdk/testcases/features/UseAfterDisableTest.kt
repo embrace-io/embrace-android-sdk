@@ -118,7 +118,7 @@ internal class UseAfterDisableTest(
                     errorMessageSupplier = { "disable() did not clear storage: ${persistedFiles()}" },
                 )
                 recordSession {
-                    embrace.startSpan("span").stop()
+                    embrace.startSpan("span").end()
                     embrace.logInfo("log")
                     embrace.addBreadcrumb("breadcrumb")
                 }

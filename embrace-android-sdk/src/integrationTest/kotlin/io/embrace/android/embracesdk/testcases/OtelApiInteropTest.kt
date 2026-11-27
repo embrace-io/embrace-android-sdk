@@ -83,7 +83,7 @@ internal class OtelApiInteropTest(
         span.addAttribute(ATTR_KEY, ATTR_VALUE)
         span.addEvent(EVENT, attributes = mapOf(ATTR_KEY to ATTR_VALUE))
         embrace.logMessage(LOG, Severity.INFO, mapOf(ATTR_KEY to ATTR_VALUE))
-        span.stop()
+        span.end()
     }
 
     private fun assertTelemetryExported(action: EmbraceActionInterface.() -> Unit) {

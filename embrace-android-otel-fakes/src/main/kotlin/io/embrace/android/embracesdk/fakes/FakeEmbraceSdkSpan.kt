@@ -99,7 +99,7 @@ class FakeEmbraceSdkSpan(
             ?: createInvalidSpanContext()
     )
 
-    override fun stop(errorCode: ErrorCode?, endTimeMs: Long?): Boolean =
+    override fun end(errorCode: ErrorCode?, endTimeMs: Long?): Boolean =
         stopWithErrorCode(errorCode?.toErrorCodeAttribute(), endTimeMs)
 
     override fun stopWithErrorCode(errorCode: ErrorCodeAttribute?, endTimeMs: Long?): Boolean {
@@ -268,7 +268,7 @@ class FakeEmbraceSdkSpan(
                 name = "stopped"
             ).apply {
                 start()
-                stop()
+                end()
             }
 
         fun sessionPartSpan(
@@ -296,7 +296,7 @@ class FakeEmbraceSdkSpan(
                 setSystemAttribute(EmbSessionAttributes.EMB_PROCESS_IDENTIFIER, processIdentifier)
                 setSystemAttribute(EmbSessionAttributes.EMB_STATE, "foreground")
                 if (endTimeMs != null) {
-                    stop(endTimeMs = endTimeMs)
+                    end(endTimeMs = endTimeMs)
                 }
             }
     }

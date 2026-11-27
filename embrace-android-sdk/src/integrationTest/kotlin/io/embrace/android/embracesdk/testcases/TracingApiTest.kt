@@ -109,7 +109,7 @@ internal class TracingApiTest(
                     parentSpan.addEvent(name = "delayed event", timestampMs = clock.now() - 50L, emptyMap())
                     val failedOpEndTimeMs = embrace.getSdkCurrentTimeMs()
 
-                    assertTrue(parentSpan.stop())
+                    assertTrue(parentSpan.end())
 
                     val attributes = mapOf(
                         Pair(TOO_LONG_ATTRIBUTE_KEY, "value"),
@@ -147,9 +147,9 @@ internal class TracingApiTest(
                             startTimeMs = clock.now() + 10L
                         )
                     )
-                    assertTrue(bonusSpan.stop(endTimeMs = clock.now() + 1))
+                    assertTrue(bonusSpan.end(endTimeMs = clock.now() + 1))
                     clock.tick(300L)
-                    assertTrue(bonusSpan2.stop())
+                    assertTrue(bonusSpan2.end())
                     val unendingSpan = checkNotNull(embrace.startSpan("unending-span"))
                     clock.tick(100L)
                     unendingSpan.addAttribute("unending-key", "unending-value")
@@ -330,11 +330,11 @@ internal class TracingApiTest(
                         childThreadId = Thread.currentThread().compatThreadId()
                         currentContext2 = OtelJavaContext.current()
                         val child = checkNotNull(embrace.startSpan(name = "child", parent = parent))
-                        assertTrue(child.stop())
+                        assertTrue(child.end())
                         latch.countDown()
                     }
                     latch.await(1, TimeUnit.SECONDS)
-                    assertTrue(parent.stop())
+                    assertTrue(parent.end())
                     assertNotEquals(-1L, childThreadId)
                     assertNotEquals(parentThreadId, childThreadId)
                     assertEquals(currentContext, currentContext2)
@@ -410,8 +410,8 @@ internal class TracingApiTest(
                     clock.tick(100L)
                     op2.addLink(op, mapOf("test" to "value"))
                     op2.addLink(remoteSpanContext)
-                    op2.stop()
-                    op.stop()
+                    op2.end()
+                    op.end()
                 }
             },
             assertAction = {
@@ -447,11 +447,11 @@ internal class TracingApiTest(
                 recordSession {
                     span1.start()
                     span2.start()
-                    span1.stop()
+                    span1.end()
                 }
 
                 recordSession {
-                    span2.stop()
+                    span2.end()
                 }
             },
             assertAction = {

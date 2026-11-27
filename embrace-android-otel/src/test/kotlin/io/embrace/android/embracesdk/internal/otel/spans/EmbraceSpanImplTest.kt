@@ -197,7 +197,7 @@ internal class EmbraceSpanImplTest(
             assertTrue(start())
             val expectedStartTimeMs = fakeClock.now()
             fakeClock.tick(200)
-            assertTrue(stop())
+            assertTrue(end())
             val expectedEndTimeMs = fakeClock.now()
             assertSnapshot(
                 expectedStartTimeMs = expectedStartTimeMs,
@@ -221,7 +221,7 @@ internal class EmbraceSpanImplTest(
             assertEquals(notificationsBefore + 1, notifications.get())
 
             assertFalse(discard())
-            assertFalse(stop())
+            assertFalse(end())
         }
         assertTrue(spanExporter.exportedSpans.isEmpty())
         assertNull(stoppedSpanId)
@@ -233,7 +233,7 @@ internal class EmbraceSpanImplTest(
             val expectedStartTimeMs = fakeClock.now() + 1000
             val expectedEndTimeMs = fakeClock.now() + 5700
             assertTrue(start(startTimeMs = expectedStartTimeMs))
-            assertTrue(stop(errorCode = ErrorCode.FAILURE, endTimeMs = expectedEndTimeMs))
+            assertTrue(end(errorCode = ErrorCode.FAILURE, endTimeMs = expectedEndTimeMs))
             assertSnapshot(
                 expectedStartTimeMs = expectedStartTimeMs,
                 expectedEndTimeMs = expectedEndTimeMs,
@@ -249,7 +249,7 @@ internal class EmbraceSpanImplTest(
             val expectedStartTimeMs = fakeClock.now() + 99
             val expectedEndTimeMs = fakeClock.now() + 505
             assertTrue(start(startTimeMs = expectedStartTimeMs.millisToNanos()))
-            assertTrue(stop(errorCode = ErrorCode.FAILURE, endTimeMs = expectedEndTimeMs.millisToNanos()))
+            assertTrue(end(errorCode = ErrorCode.FAILURE, endTimeMs = expectedEndTimeMs.millisToNanos()))
             assertSnapshot(
                 expectedStartTimeMs = expectedStartTimeMs,
                 expectedEndTimeMs = expectedEndTimeMs,
@@ -320,7 +320,7 @@ internal class EmbraceSpanImplTest(
             assertTrue(embraceSpan.updateName("new-new-name"))
             assertEquals("new-new-name", embraceSpan.name())
             assertEquals("new-new-name", embraceSpan.snapshot()?.name)
-            assertTrue(stop())
+            assertTrue(end())
             assertFalse(embraceSpan.updateName("failed-to-update"))
             assertEquals("new-new-name", embraceSpan.name())
             assertEquals("new-new-name", embraceSpan.snapshot()?.name)
@@ -381,7 +381,7 @@ internal class EmbraceSpanImplTest(
         }
 
         with(embraceSpan) {
-            assertTrue(stop())
+            assertTrue(end())
             assertFalse(recordException(exception = IllegalStateException()))
             // retained event data is released once the span is stopped and exported
             assertEquals(0, events().size)
@@ -461,7 +461,7 @@ internal class EmbraceSpanImplTest(
         inStart.await(THREAD_JOIN_TIMEOUT_MS, TimeUnit.MILLISECONDS)
 
         // the stop has read its end time and waits for the start, which still holds the span's lock
-        val stopper = thread { span.stop(endTimeMs = startTimeMs - 1000) }
+        val stopper = thread { span.end(endTimeMs = startTimeMs - 1000) }
         val deadline = System.currentTimeMillis() + THREAD_JOIN_TIMEOUT_MS
         while (stopper.state != Thread.State.BLOCKED && System.currentTimeMillis() < deadline) {
             Thread.yield()
@@ -483,7 +483,7 @@ internal class EmbraceSpanImplTest(
             assertTrue(start())
             assertFalse(addEvent("event", null, brokenMap))
             assertFalse(recordException(RuntimeException(), brokenMap))
-            assertTrue(stop())
+            assertTrue(end())
         }
         assertEquals(
             listOf(SdkErrorType.SpanOperationFail.toString(), SdkErrorType.SpanOperationFail.toString()),
@@ -510,7 +510,7 @@ internal class EmbraceSpanImplTest(
         }
 
         val spanId = checkNotNull(embraceSpan.spanId)
-        assertTrue(embraceSpan.stop())
+        assertTrue(embraceSpan.end())
 
         // the span is still tracked and retrievable by id, retaining its identity and attributes
         val tracked = checkNotNull(spanRepository.getEmbraceSpan(spanId))
@@ -529,8 +529,8 @@ internal class EmbraceSpanImplTest(
     fun `cannot stop twice irrespective of error code`() {
         with(embraceSpan) {
             assertTrue(start())
-            assertTrue(stop(ErrorCode.FAILURE))
-            assertFalse(stop())
+            assertTrue(end(ErrorCode.FAILURE))
+            assertFalse(end())
             assertEquals(0, spanRepository.getActiveEmbraceSpans().size)
             assertEquals(1, spanRepository.getCompletedEmbraceSpans().size)
         }
@@ -567,7 +567,7 @@ internal class EmbraceSpanImplTest(
             )
             assertFalse(addEvent("failed event"))
             assertFalse(recordException(exception = RuntimeException()))
-            assertTrue(stop())
+            assertTrue(end())
         }
     }
 
@@ -771,7 +771,7 @@ internal class EmbraceSpanImplTest(
     fun `OTel clock used if end time passed is zero`() {
         assertTrue(embraceSpan.start())
         val stopTimeMs = fakeClock.tick()
-        assertTrue(embraceSpan.stop(endTimeMs = 0L))
+        assertTrue(embraceSpan.end(endTimeMs = 0L))
         assertEquals(stopTimeMs.millisToNanos(), embraceSpan.snapshot()?.endTimeNanos)
     }
 
@@ -779,7 +779,7 @@ internal class EmbraceSpanImplTest(
     fun `end time before start time is clamped to the start time`() {
         val startTimeMs = fakeClock.now()
         assertTrue(embraceSpan.start(startTimeMs))
-        assertTrue(embraceSpan.stop(endTimeMs = startTimeMs - 1000))
+        assertTrue(embraceSpan.end(endTimeMs = startTimeMs - 1000))
         val exported = spanExporter.exportedSpans.single()
         assertEquals(exported.startTimestamp, exported.endTimestamp)
         assertEquals(startTimeMs.millisToNanos(), embraceSpan.snapshot()?.endTimeNanos)
@@ -805,7 +805,7 @@ internal class EmbraceSpanImplTest(
         assertNull(embraceSpan.snapshot()?.endTimeNanos)
 
         val expectedEndTimeMs = fakeClock.tick()
-        assertTrue(embraceSpan.stop())
+        assertTrue(embraceSpan.end())
         assertEquals(expectedStartTimeMs, embraceSpan.getStartTimeMs())
         assertEquals(expectedEndTimeMs, embraceSpan.snapshot()?.endTimeNanos?.nanosToMillis())
     }
@@ -849,7 +849,7 @@ internal class EmbraceSpanImplTest(
         assertEquals(REDACTED_LABEL, embraceSpan.attributes()["password"])
 
         // and when the span is stopped, the attributes exported to the OTel span are redacted too
-        assertTrue(embraceSpan.stop())
+        assertTrue(embraceSpan.end())
         val exported = exportedSpanAttributes.single()
         assertEquals(REDACTED_LABEL, exported["password"])
         assertEquals("ok", exported["status"])
@@ -875,7 +875,7 @@ internal class EmbraceSpanImplTest(
         assertEquals(expectedEventAttributes, snapshot.events?.single()?.attributes?.toEmbracePayload())
         assertEquals(mapOf("link-bool" to "true"), snapshot.links?.single()?.attributes?.toEmbracePayload())
 
-        assertTrue(embraceSpan.stop())
+        assertTrue(embraceSpan.end())
         val exported = spanExporter.exportedSpans.single()
         assertEquals(expectedAttributes, exported.attributes.filterKeys(expectedAttributes::containsKey))
         assertEquals(expectedEventAttributes, exported.events.single().attributes)
@@ -899,7 +899,7 @@ internal class EmbraceSpanImplTest(
         assertTrue(embraceSpan.addLink(checkNotNull(FakeEmbraceSdkSpan.started().spanContext), attributes))
         assertTrue(embraceSpan.addEvent("event", null, attributes))
 
-        assertTrue(embraceSpan.stop())
+        assertTrue(embraceSpan.end())
         val exported = spanExporter.exportedSpans.single()
         assertEquals(mapOf("key" to "value"), exported.links.single().attributes)
         assertEquals(mapOf("key" to "value"), exported.events.single().attributes)
@@ -992,7 +992,7 @@ internal class EmbraceSpanImplTest(
         assertTrue(embraceSpan.start())
         assertEquals(listOf(true), recordingWhenNotified)
 
-        assertTrue(embraceSpan.stop())
+        assertTrue(embraceSpan.end())
         assertEquals(listOf(true, false), recordingWhenNotified)
     }
 
@@ -1042,7 +1042,7 @@ internal class EmbraceSpanImplTest(
         with(embraceSpan) {
             assertTrue(start())
             addSystemAttribute("system-key", "value")
-            assertTrue(stop())
+            assertTrue(end())
             val afterStop = notifications.get()
             val dropsAfterStop = telemetryService.appliedLimits.size
 
@@ -1071,7 +1071,7 @@ internal class EmbraceSpanImplTest(
             assertEquals(1, notifications.get())
             assertEquals(Span.Status.OK, checkNotNull(snapshot()).status)
 
-            assertTrue(stop())
+            assertTrue(end())
             assertEquals(StatusData.Ok, spanExporter.exportedSpans.single { it.name == EXPECTED_SPAN_NAME }.status)
         }
     }
@@ -1081,7 +1081,7 @@ internal class EmbraceSpanImplTest(
         with(embraceSpan) {
             assertTrue(start())
             status = StatusData.Ok
-            assertTrue(stop())
+            assertTrue(end())
             val afterStop = notifications.get()
             status = StatusData.Error("too late")
 
@@ -1216,7 +1216,7 @@ internal class EmbraceSpanImplTest(
                 {
                     try {
                         assertTrue(writerRunning.await(THREAD_JOIN_TIMEOUT_MS, TimeUnit.MILLISECONDS))
-                        assertTrue(embraceSpan.stop())
+                        assertTrue(embraceSpan.end())
                     } finally {
                         stopFinished.set(true)
                     }
@@ -1225,7 +1225,7 @@ internal class EmbraceSpanImplTest(
         )
 
         assertFalse(embraceSpan.isRecording)
-        assertFalse(embraceSpan.stop())
+        assertFalse(embraceSpan.end())
         val exported = exportedSpanAttributes.single()
         exported[RACY_KEY]?.let {
             assertEquals(RACY_VALUE, it)
@@ -1295,7 +1295,7 @@ internal class EmbraceSpanImplTest(
     }
 
     private fun EmbraceSdkSpan.validateStoppedSpan() {
-        assertFalse(stop())
+        assertFalse(end())
         assertNotNull(traceId)
         assertNotNull(spanId)
         assertFalse(isRecording)

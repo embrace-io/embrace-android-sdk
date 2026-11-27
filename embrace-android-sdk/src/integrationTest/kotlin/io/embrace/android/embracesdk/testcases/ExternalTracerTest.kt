@@ -101,7 +101,7 @@ internal class ExternalTracerTest(
                     childSpan.end()
 
                     val embraceSpan = checkNotNull(embrace.startSpan("another-root"))
-                    embraceSpan.stop()
+                    embraceSpan.end()
                     embTracer.startSpan("no-parent").end()
 
                     span.setLongAttribute("failures", 1L)

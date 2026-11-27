@@ -57,6 +57,7 @@ internal class LogsApiDelegate(
         )
     }
 
+    @Deprecated("Log attachments are deprecated and will be removed in a future release.")
     override fun logMessage(
         message: String,
         severity: Severity,
@@ -73,6 +74,7 @@ internal class LogsApiDelegate(
         )
     }
 
+    @Deprecated("Log attachments are deprecated and will be removed in a future release.")
     override fun logMessage(
         message: String,
         severity: Severity,

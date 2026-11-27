@@ -71,9 +71,11 @@ internal class SdkApiDispatcher(
     override fun logMessage(message: String, severity: Severity, attributes: Map<String, Any>) =
         record("log_message") { target.logMessage(message, severity, attributes) }
 
+    @Deprecated("Log attachments are deprecated and will be removed in a future release.")
     override fun logMessage(message: String, severity: Severity, attributes: Map<String, Any>, attachment: ByteArray) =
         record("log_message") { target.logMessage(message, severity, attributes, attachment) }
 
+    @Deprecated("Log attachments are deprecated and will be removed in a future release.")
     override fun logMessage(
         message: String,
         severity: Severity,

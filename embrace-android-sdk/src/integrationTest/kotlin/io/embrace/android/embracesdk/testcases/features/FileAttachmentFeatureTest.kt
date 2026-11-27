@@ -276,6 +276,7 @@ internal class FileAttachmentFeatureTest(
         checkNotNull(UUID.fromString(id))
     }
 
+    @Suppress("DEPRECATION")
     private fun EmbraceActionInterface.logWithUserHostedAttachment(
         id: String,
         url: String,
@@ -289,6 +290,7 @@ internal class FileAttachmentFeatureTest(
         )
     }
 
+    @Suppress("DEPRECATION")
     private fun EmbraceActionInterface.logWithEmbraceHostedAttachment(
         byteArray: ByteArray,
     ) {

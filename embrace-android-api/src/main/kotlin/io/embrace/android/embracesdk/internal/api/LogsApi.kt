@@ -33,6 +33,7 @@ public interface LogsApi {
      * @param attributes the attributes to attach to the log message
      * @param attachment an attachment to include with the log message. This must be < 1MB in size.
      */
+    @Deprecated("Log attachments are deprecated and will be removed in a future release.")
     public fun logMessage(
         message: String,
         severity: Severity,
@@ -51,6 +52,7 @@ public interface LogsApi {
      * @param attachmentId a UUID that identifies the attachment
      * @param attachmentUrl a URL that gives the location of the attachment
      */
+    @Deprecated("Log attachments are deprecated and will be removed in a future release.")
     public fun logMessage(
         message: String,
         severity: Severity,

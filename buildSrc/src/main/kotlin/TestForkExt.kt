@@ -1,4 +1,5 @@
 import org.gradle.api.Project
+import org.gradle.api.provider.Provider
 import java.time.Duration
 
 /**
@@ -19,10 +20,14 @@ fun Project.testForkCount(): Int {
 fun Project.testHeapSize(): String = if (path in LARGE_TEST_MODULES) "2g" else "1g"
 
 /**
- * Upper bound on a single Test task. The slowest (plugin integration tests) takes ~7 min on CI, so a hang fails
- * fast and names the stuck task instead of running until the CI job timeout.
+ * Upper bound on a single Test task. The slowest (plugin integration tests) takes ~7 min on CI, so
+ * a hang fails fast and names the stuck task instead of running until the CI job timeout. Slower machines,
+ * can raise this with the `embrace.testTaskTimeoutMinutes` property.
  */
-val TEST_TASK_TIMEOUT: Duration = Duration.ofMinutes(15)
+fun Project.testTaskTimeout(): Provider<Duration> =
+    providers.gradleProperty("embrace.testTaskTimeoutMinutes")
+        .map { Duration.ofMinutes(it.toLong()) }
+        .orElse(Duration.ofMinutes(15))
 
 private const val CLASSES_PER_FORK = 8
 private val LARGE_TEST_MODULES = setOf(":embrace-android-sdk", ":embrace-android-core")

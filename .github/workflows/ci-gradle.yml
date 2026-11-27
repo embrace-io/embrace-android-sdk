@@ -20,19 +20,29 @@ jobs:
     runs-on: ubuntu-latest
     outputs:
       where: ${{ steps.choose.outputs.where }}
+      job-timeout: ${{ steps.choose.outputs.job-timeout }}
+      test-timeout: ${{ steps.choose.outputs.test-timeout }}
     steps:
+      # Dependabot PRs run on the standard 4-core runner, where the plugin integration tests take
+      # longer than on Depot, so they need longer timeouts
       - id: choose
         run: |
           if [ ${GITHUB_ACTOR} != 'dependabot[bot]' ]; then
               echo "where=${DEPOT_RUNNER}" >> $GITHUB_OUTPUT
+              echo "job-timeout=30" >> $GITHUB_OUTPUT
+              echo "test-timeout=15" >> $GITHUB_OUTPUT
           else
               echo "where=ubuntu-latest" >> $GITHUB_OUTPUT
+              echo "job-timeout=60" >> $GITHUB_OUTPUT
+              echo "test-timeout=40" >> $GITHUB_OUTPUT
           fi
 
   gradle:
     needs: environment
     runs-on: ${{ needs.environment.outputs.where }}
-    timeout-minutes: 30
+    timeout-minutes: ${{ fromJSON(needs.environment.outputs.job-timeout) }}
+    env:
+      ORG_GRADLE_PROJECT_embrace.testTaskTimeoutMinutes: ${{ needs.environment.outputs.test-timeout }}
     strategy:
       matrix:
         gradle-task: ['build', 'bundleReleaseExampleApp', 'test']
@@ -44,6 +54,7 @@ jobs:
         with:
           tool-cache: false
           android: false
+          large-packages: false
 
       - name: Checkout Branch
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1

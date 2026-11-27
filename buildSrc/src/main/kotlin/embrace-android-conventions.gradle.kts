@@ -30,6 +30,7 @@ android {
 
     val forkCount = project.testForkCount()
     val heapSize = project.testHeapSize()
+    val testTimeout = project.testTaskTimeout()
 
     testOptions {
         // Calling Android logging methods will throw exceptions if this is false
@@ -54,7 +55,7 @@ android {
                 test.jvmArgs("-Xshare:off")
                 // Robolectric needs this to emulate SDK 36+
                 test.jvmArgs("--add-opens=java.base/jdk.internal.access=ALL-UNNAMED")
-                test.timeout.set(TEST_TASK_TIMEOUT)
+                test.timeout.set(testTimeout)
 
                 // Disable test discovery failure for modules without test sources
                 test.failOnNoDiscoveredTests.set(false)

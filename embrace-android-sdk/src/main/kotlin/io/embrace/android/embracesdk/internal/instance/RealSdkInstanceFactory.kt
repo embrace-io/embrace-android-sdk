@@ -4,6 +4,7 @@ import android.app.ActivityManager
 import android.app.Application
 import android.content.Context
 import io.embrace.android.embracesdk.SessionStateEvent
+import io.embrace.android.embracesdk.UserSessionListener
 import io.embrace.android.embracesdk.internal.api.delegate.BreadcrumbApiDelegate
 import io.embrace.android.embracesdk.internal.api.delegate.ExperimentApiDelegate
 import io.embrace.android.embracesdk.internal.api.delegate.HostedSdkInternalInterfaceImpl
@@ -14,6 +15,7 @@ import io.embrace.android.embracesdk.internal.api.delegate.OTelApiDelegate
 import io.embrace.android.embracesdk.internal.api.delegate.SdkStateApiDelegate
 import io.embrace.android.embracesdk.internal.api.delegate.UserApiDelegate
 import io.embrace.android.embracesdk.internal.api.delegate.UserSessionApiDelegate
+import io.embrace.android.embracesdk.internal.api.delegate.UserSessionListenerAdapter
 import io.embrace.android.embracesdk.internal.api.delegate.ViewTrackingApiDelegate
 import io.embrace.android.embracesdk.internal.arch.InstrumentationRegistry
 import io.embrace.android.embracesdk.internal.arch.InstrumentationRegistryImpl
@@ -128,6 +130,7 @@ internal fun createRealSdkInstance(
     configLoadServices: ConfigLoadServices,
     sdkStartTimeMs: Long,
     sdkInitResourceUsageTracker: SdkInitResourceUsageTracker,
+    userSessionListeners: List<UserSessionListener>,
     overrides: SdkOverrides? = null,
 ): RealSdkInstance {
     val clock = preStartServices.clock
@@ -811,6 +814,10 @@ internal fun createRealSdkInstance(
         if (event is SessionStateEvent.UserSessionEnded && networkSpanParentService.isInitialized()) {
             networkSpanParentService.value.onUserSessionEnded(event.userSessionId)
         }
+    }
+    // the app's listeners, registered after the SDK's own so that its state is up to date when they are invoked
+    userSessionListeners.forEach { listener ->
+        sessionOrchestrator.addUserSessionListener(UserSessionListenerAdapter(listener))
     }
 
     // the side effects of initialization, once every service is constructed

@@ -46,15 +46,10 @@ internal class UserSessionApiDelegateTest {
     }
 
     @Test
-    fun `add user session listener`() {
-        delegate.addUserSessionListener { }
-        assertEquals(1, sessionOrchestrator.userSessionListeners.size)
-    }
-
-    @Test
     fun `remove user session listener unregisters the same instance despite wrapping`() {
         val listener = UserSessionListener { }
-        delegate.addUserSessionListener(listener)
+        sessionOrchestrator.addUserSessionListener(UserSessionListenerAdapter(listener))
+        delegate.removeUserSessionListener(UserSessionListener { })
         assertEquals(1, sessionOrchestrator.userSessionListeners.size)
 
         delegate.removeUserSessionListener(listener)

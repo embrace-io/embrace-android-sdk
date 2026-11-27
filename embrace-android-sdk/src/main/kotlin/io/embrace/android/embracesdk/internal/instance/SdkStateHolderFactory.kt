@@ -78,10 +78,14 @@ private fun createSdkInstance(
     val sdkStartTimeMs = preStartServices.clock.now()
 
     // applied before the config service is created, as it checks whether OTLP export has been configured
-    if (config != null) {
+    val userSessionListeners = if (config != null) {
         EmbTrace.trace("apply-sdk-config") {
-            SdkConfigImpl(preStartServices.externalOtelConfig, preStartServices.errorHandler).configure(config)
+            SdkConfigImpl(preStartServices.externalOtelConfig, preStartServices.errorHandler)
+                .apply { configure(config) }
+                .userSessionListeners
         }
+    } else {
+        emptyList()
     }
     val sdkInitResourceUsageTracker = EmbTrace.trace("sdk-init-resource-usage-tracker-init") {
         (sdkInitResourceUsageTrackerSupplier?.invoke() ?: SdkInitResourceUsageTracker(preStartServices.errorHandler)).apply {
@@ -115,6 +119,7 @@ private fun createSdkInstance(
                 configLoadServices,
                 sdkStartTimeMs,
                 sdkInitResourceUsageTracker,
+                userSessionListeners,
                 overrides,
             )
         }

@@ -155,9 +155,6 @@ internal class SdkApiDispatcher(
 
     override fun endUserSession() = record("end_session") { target.endUserSession() }
 
-    override fun addUserSessionListener(listener: UserSessionListener) =
-        record("add_user_session_listener") { target.addUserSessionListener(listener) }
-
     override fun removeUserSessionListener(listener: UserSessionListener) =
         record("remove_user_session_listener") { target.removeUserSessionListener(listener) }
 

@@ -44,12 +44,9 @@ public interface UserSessionApi {
     public fun endUserSession()
 
     /**
-     * Registers a listener that is invoked for user session lifecycle events.
-     */
-    public fun addUserSessionListener(listener: UserSessionListener)
-
-    /**
-     * Unregisters a listener previously registered with [addUserSessionListener].
+     * Unregisters a listener that was registered with
+     * [UserSessionConfig.addListener][io.embrace.android.embracesdk.config.UserSessionConfig.addListener] when the SDK
+     * started. Has no effect if the listener is not registered.
      */
     public fun removeUserSessionListener(listener: UserSessionListener)
 }

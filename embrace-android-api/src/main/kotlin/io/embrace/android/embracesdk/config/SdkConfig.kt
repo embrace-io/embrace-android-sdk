@@ -22,4 +22,9 @@ public interface SdkConfig {
      * Configures how the SDK integrates with OpenTelemetry.
      */
     public fun otel(action: OTelConfig.() -> Unit)
+
+    /**
+     * Configures how the app observes user sessions.
+     */
+    public fun userSession(action: UserSessionConfig.() -> Unit)
 }

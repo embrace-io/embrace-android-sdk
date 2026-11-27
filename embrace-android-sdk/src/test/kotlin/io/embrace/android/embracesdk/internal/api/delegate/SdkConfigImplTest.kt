@@ -1,7 +1,9 @@
 package io.embrace.android.embracesdk.internal.api.delegate
 
+import io.embrace.android.embracesdk.UserSessionListener
 import io.embrace.android.embracesdk.config.OTelConfig
 import io.embrace.android.embracesdk.config.SdkConfig
+import io.embrace.android.embracesdk.config.UserSessionConfig
 import io.embrace.android.embracesdk.fakes.FakeErrorHandler
 import io.embrace.android.embracesdk.fakes.FakeLogRecordExporter
 import io.embrace.android.embracesdk.fakes.FakeLogRecordProcessor
@@ -28,11 +30,13 @@ internal class SdkConfigImplTest {
     }
 
     @Test
-    fun `otel config is applied`() {
+    fun `config is applied`() {
         val spanExporter = FakeSpanExporter()
         val spanProcessor = FakeSpanProcessor()
         val logRecordExporter = FakeLogRecordExporter()
         val logRecordProcessor = FakeLogRecordProcessor()
+        val firstListener = UserSessionListener { }
+        val secondListener = UserSessionListener { }
         sdkConfig.configure {
             otel {
                 addSpanExporter(spanExporter)
@@ -41,7 +45,13 @@ internal class SdkConfigImplTest {
                 addLogRecordProcessor(logRecordProcessor)
                 setResourceAttribute("key", "value")
             }
+            userSession {
+                addListener(firstListener)
+                addListener(secondListener)
+                addListener(firstListener)
+            }
         }
+        assertEquals(listOf(firstListener, secondListener), sdkConfig.userSessionListeners)
         assertEquals(listOf(spanExporter), otelConfig.getSpanExporters())
         assertEquals(listOf(spanProcessor), otelConfig.getSpanProcessors())
         assertEquals(listOf(logRecordExporter), otelConfig.getLogExporters())
@@ -86,26 +96,37 @@ internal class SdkConfigImplTest {
     fun `calls on config that escaped the block are dropped`() {
         lateinit var escapedSdkConfig: SdkConfig
         lateinit var escapedOTelConfig: OTelConfig
+        lateinit var escapedUserSessionConfig: UserSessionConfig
         sdkConfig.configure {
             escapedSdkConfig = this
             otel {
                 escapedOTelConfig = this
             }
+            userSession {
+                escapedUserSessionConfig = this
+            }
         }
         escapedOTelConfig.addSpanExporter(FakeSpanExporter())
         escapedOTelConfig.setResourceAttribute("key", "value")
+        escapedUserSessionConfig.addListener { }
         escapedSdkConfig.otel {
             addSpanProcessor(FakeSpanProcessor())
+        }
+        escapedSdkConfig.userSession {
+            addListener { }
         }
 
         assertTrue(otelConfig.getSpanExporters().isEmpty())
         assertTrue(otelConfig.getSpanProcessors().isEmpty())
         assertTrue(otelConfig.getResourceAttributes().isEmpty())
+        assertTrue(sdkConfig.userSessionListeners.isEmpty())
         assertEquals(
             listOf(
                 "SDK config is only applied during Embrace.start(), cannot add_span_exporter.",
                 "SDK config is only applied during Embrace.start(), cannot set_resource_attribute.",
+                "SDK config is only applied during Embrace.start(), cannot add_user_session_listener.",
                 "SDK config is only applied during Embrace.start(), cannot configure otel.",
+                "SDK config is only applied during Embrace.start(), cannot configure user_session.",
             ),
             errorHandler.warningMessages.map { it.msg },
         )

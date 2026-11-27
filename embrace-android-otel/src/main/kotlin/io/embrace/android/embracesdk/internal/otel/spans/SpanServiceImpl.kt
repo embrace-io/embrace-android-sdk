@@ -7,6 +7,7 @@ import io.embrace.android.embracesdk.internal.clock.nanosToMillis
 import io.embrace.android.embracesdk.internal.clock.normalizeTimestampAsMillis
 import io.embrace.android.embracesdk.internal.otel.sdk.DataValidator
 import io.embrace.android.embracesdk.spans.EmbraceSpan
+import io.embrace.android.embracesdk.spans.SpanStartAction
 import io.opentelemetry.kotlin.OpenTelemetry
 import io.opentelemetry.kotlin.tracing.SpanContext
 import io.opentelemetry.kotlin.tracing.Tracer
@@ -31,6 +32,7 @@ class SpanServiceImpl(
         internal: Boolean,
         private: Boolean,
         terminationMode: SpanTerminationMode,
+        startAction: (SpanStartAction.() -> Unit)?,
     ): EmbraceSdkSpan {
         return if (name.isNotBlank() && canStartNewSpan(parent, internal, type)) {
             embraceSpanFactory.create(
@@ -44,6 +46,7 @@ class SpanServiceImpl(
                     parentCtx = (parent as? EmbraceSdkSpan)?.createContext(openTelemetry)
                         ?: parentSpanContext?.let { openTelemetry.context.root().storeSpanContext(it) },
                     openTelemetry = openTelemetry,
+                    startAction = startAction,
                 ),
             )
         } else {
@@ -75,6 +78,7 @@ class SpanServiceImpl(
         private: Boolean,
         terminationMode: SpanTerminationMode,
         parentSpanContext: SpanContext?,
+        startAction: (SpanStartAction.() -> Unit)?,
     ): EmbraceSdkSpan {
         val newSpan = createSpan(
             name = name,
@@ -84,6 +88,7 @@ class SpanServiceImpl(
             internal = internal,
             private = private,
             terminationMode = terminationMode,
+            startAction = startAction,
         )
         return when {
             newSpan.start(startTimeMs) -> newSpan

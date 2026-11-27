@@ -439,6 +439,51 @@ internal class TracingApiTest(
     }
 
     @Test
+    fun `start span with start action`() {
+        val fakeSpan = FakeEmbraceSdkSpan.started()
+        val remoteSpanContext = checkNotNull(fakeSpan.spanContext)
+        testRule.runTest(
+            testCaseAction = {
+                recordSession {
+                    clock.tick(100L)
+                    val op = checkNotNull(embrace.startSpan("my-op"))
+                    clock.tick(100L)
+                    val op2 = embrace.startSpan("my-op-2") {
+                        addAttribute("key", "value")
+                        addEvent("my-event", clock.now())
+                        addLink(op, mapOf("test" to "value"))
+                        addLink(remoteSpanContext)
+                    }
+                    clock.tick(100L)
+                    op2.stop()
+                    op.stop()
+                }
+            },
+            assertAction = {
+                with(getSingleSessionEnvelope()) {
+                    val op = findSpanByName(name = "my-op")
+                    val op2 = findSpanByName(name = "my-op-2")
+                    assertEquals("value", op2.attributes?.findAttributeValue("key"))
+                    assertEquals("my-event", op2.events?.single()?.name)
+                    val links = checkNotNull(op2.findCustomLinks())
+                    assertEquals(2, links.size)
+                    links[0].validateLinkToSpan(linkedSpan = op, expectedAttributes = mapOf("test" to "value"))
+                    links[1].validateLinkToSpanContext(remoteSpanContext)
+                }
+            },
+            otelExportAssertion = {
+                val linkedToSpan = awaitSpans(1) { it.name == "my-op" }.single().toEmbracePayload()
+                val spanWithLinks = awaitSpans(1) { it.name == "my-op-2" }.single().toEmbracePayload()
+                assertEquals("value", spanWithLinks.attributes?.findAttributeValue("key"))
+                val links = checkNotNull(spanWithLinks.findCustomLinks())
+                assertEquals(2, links.size)
+                links[0].validateLinkToSpan(linkedSpan = linkedToSpan, expectedAttributes = mapOf("test" to "value"))
+                assertTrue(links[1].isLinkedToSpanContext(remoteSpanContext))
+            }
+        )
+    }
+
+    @Test
     fun `correct session id populated in spans`() {
         testRule.runTest(
             testCaseAction = {

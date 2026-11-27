@@ -28,6 +28,7 @@ import io.embrace.android.embracesdk.spans.AutoTerminationMode
 import io.embrace.android.embracesdk.spans.EmbraceSpan
 import io.embrace.android.embracesdk.spans.EmbraceSpanEvent
 import io.embrace.android.embracesdk.spans.ErrorCode
+import io.embrace.android.embracesdk.spans.SpanStartAction
 import io.opentelemetry.kotlin.NoopOpenTelemetry
 import io.opentelemetry.kotlin.OpenTelemetry
 import io.opentelemetry.kotlin.logging.export.LogRecordExporter
@@ -244,6 +245,17 @@ internal class NoopSdkInstance(
         parent: EmbraceSpan?,
         startTimeMs: Long?,
         autoTerminationMode: AutoTerminationMode,
+    ): EmbraceSpan {
+        logDropped("start_span")
+        return NoopEmbraceSdkSpan
+    }
+
+    override fun startSpan(
+        name: String,
+        parent: EmbraceSpan?,
+        startTimeMs: Long?,
+        autoTerminationMode: AutoTerminationMode,
+        action: SpanStartAction.() -> Unit,
     ): EmbraceSpan {
         logDropped("start_span")
         return NoopEmbraceSdkSpan

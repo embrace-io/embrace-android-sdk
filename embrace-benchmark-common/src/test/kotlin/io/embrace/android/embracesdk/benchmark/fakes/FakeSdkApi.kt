@@ -8,6 +8,7 @@ import io.embrace.android.embracesdk.spans.AutoTerminationMode
 import io.embrace.android.embracesdk.spans.EmbraceSpan
 import io.embrace.android.embracesdk.spans.EmbraceSpanEvent
 import io.embrace.android.embracesdk.spans.ErrorCode
+import io.embrace.android.embracesdk.spans.SpanStartAction
 import java.lang.reflect.Proxy
 
 /**
@@ -44,6 +45,14 @@ internal class FakeSdkApi(private val clock: () -> Long) : SdkApi by throwingSdk
         parent: EmbraceSpan?,
         startTimeMs: Long?,
         autoTerminationMode: AutoTerminationMode,
+    ): EmbraceSpan = newSpan(name, parent, autoTerminationMode, startTimeMs)
+
+    override fun startSpan(
+        name: String,
+        parent: EmbraceSpan?,
+        startTimeMs: Long?,
+        autoTerminationMode: AutoTerminationMode,
+        action: SpanStartAction.() -> Unit,
     ): EmbraceSpan = newSpan(name, parent, autoTerminationMode, startTimeMs)
 
     override fun <T> recordSpan(

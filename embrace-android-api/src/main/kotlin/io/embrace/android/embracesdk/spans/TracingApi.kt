@@ -31,6 +31,17 @@ public interface TracingApi {
     ): EmbraceSpan
 
     /**
+     * Equivalent to [startSpan], but [action] configures the span before it starts so that samplers can see its attributes and links.
+     */
+    public fun startSpan(
+        name: String,
+        parent: EmbraceSpan? = null,
+        startTimeMs: Long? = null,
+        autoTerminationMode: AutoTerminationMode = AutoTerminationMode.NONE,
+        action: SpanStartAction.() -> Unit,
+    ): EmbraceSpan
+
+    /**
      * Execute the given block of code and record a new span around it with the given parent with optional attributes and list
      * of [EmbraceSpanEvent]. Passing in a parent that is null will result in a new trace with the new span as its root. If the span
      * cannot be created, the block of code will still run and return correctly. If an exception or error is thrown inside the block,

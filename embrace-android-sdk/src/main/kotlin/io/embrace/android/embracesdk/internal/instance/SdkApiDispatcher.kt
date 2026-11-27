@@ -29,6 +29,7 @@ import io.embrace.android.embracesdk.spans.AutoTerminationMode
 import io.embrace.android.embracesdk.spans.EmbraceSpan
 import io.embrace.android.embracesdk.spans.EmbraceSpanEvent
 import io.embrace.android.embracesdk.spans.ErrorCode
+import io.embrace.android.embracesdk.spans.SpanStartAction
 import io.opentelemetry.kotlin.NoopOpenTelemetry
 import io.opentelemetry.kotlin.OpenTelemetry
 import io.opentelemetry.kotlin.logging.export.LogRecordExporter
@@ -206,6 +207,16 @@ internal class SdkApiDispatcher(
             startTimeMs,
             autoTerminationMode,
         )
+    }
+
+    override fun startSpan(
+        name: String,
+        parent: EmbraceSpan?,
+        startTimeMs: Long?,
+        autoTerminationMode: AutoTerminationMode,
+        action: SpanStartAction.() -> Unit,
+    ): EmbraceSpan = errorHandler.guardSdkCode(SdkErrorType.PublicApiFail, NoopEmbraceSdkSpan) {
+        target.startSpan(name, parent, startTimeMs, autoTerminationMode, action)
     }
 
     override fun <T> recordSpan(

@@ -131,6 +131,27 @@ data class RemoteConfig(
     val pctStateCaptureEnabledV2: Float? = null,
 
     /**
+     * Percentage of devices that capture state with v2 of the runtime state data model: one recorder, a journal on
+     * disk, and one change log span for each session part, in place of v1's span for each state.
+     */
+    @SerialName("pct_shared_state_span_enabled")
+    val pctSharedStateSpanEnabled: Float? = null,
+
+    /**
+     * Percentage of devices that, with v2 on, stamp every log with every state's value, link every span into the
+     * change log, and render state for a customer's exporters.
+     */
+    @SerialName("pct_state_association_enabled")
+    val pctStateAssociationEnabled: Float? = null,
+
+    /**
+     * How state is rendered for a customer's exporters under v2: "association" or "verbose". Unset follows what the
+     * app can use.
+     */
+    @SerialName("state_export_mode")
+    val stateExportMode: String? = null,
+
+    /**
      * Percentage of devices for which the NetworkCallback-based NetworkConnectivityService implementation is enabled.
      */
     @SerialName("pct_network_callback_connectivity_service_enabled")

@@ -1,0 +1,81 @@
+syntax = "proto3";
+
+package embrace.session.persistence;
+
+option java_package = "io.embrace.android.embracesdk.internal.session.persistence";
+
+// The journal of state changes for one session part, held in state_journal.pb, from which the part's change log is
+// rendered.
+//
+// It is appended to a record at a time, so the file is one StateJournal message whose records are concatenated. A
+// reader keeps every complete record, so a process that dies mid-append loses only the record it was writing.
+message StateJournal {
+  uint32 format_version = 1;
+  repeated StateJournalRecord records = 2;
+}
+
+message StateJournalRecord {
+  oneof record {
+    StatePartOpened opened = 1;
+    StateChangeRecord change = 2;
+    StateLimitReached limit = 3;
+    StatePartClosed closed = 4;
+  }
+}
+
+message StateValueRecord {
+  string name = 1;
+  string state_value = 2;
+  bool system = 3;
+}
+
+message StateCountRecord {
+  string name = 1;
+  int64 count = 2;
+}
+
+// The first record: every state's value when the part's change log opens.
+message StatePartOpened {
+  // The number of the last change before the part started.
+  int64 initial_seq = 1;
+  repeated StateValueRecord values = 2;
+  // For each state, the changes made with no session part since the part before ended.
+  repeated StateCountRecord not_in_session_counts = 3;
+}
+
+// A change the change log lists.
+message StateChangeRecord {
+  int64 seq = 1;
+  string name = 2;
+  string state_value = 3;
+  bool system = 4;
+  // When the change happened, by its reporter's clock.
+  int64 time_ms = 5;
+  // The attributes of the value being left, only those the state's data source declared.
+  map<string, string> attributes = 6;
+}
+
+// A limit reached for the first time in the part, recorded as it is reached so that a part whose end is never recorded
+// still states it.
+message StateLimitReached {
+  // The state whose own limit was reached, or empty for the limit on every state together.
+  string name = 1;
+  int32 limit = 2;
+}
+
+message StateFinalRecord {
+  string name = 1;
+  string state_value = 2;
+  bool system = 3;
+  int64 seq = 4;
+}
+
+// The last record, written when the part ends. A journal without one belongs to a part whose end was not recorded.
+message StatePartClosed {
+  // How many changes took a number during the part and are not listed, for every state together.
+  int64 dropped_changes = 1;
+  // For each state, the changes the log does not list: those a limit refused and those its instrumentation dropped.
+  repeated StateCountRecord dropped_counts = 2;
+  // The final value and last change of each state that had a change refused.
+  repeated StateFinalRecord finals = 3;
+}

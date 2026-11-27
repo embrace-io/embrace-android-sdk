@@ -7,6 +7,7 @@ import io.embrace.android.embracesdk.internal.SystemInfo
 import io.embrace.android.embracesdk.internal.arch.datasource.TelemetryDestination
 import io.embrace.android.embracesdk.internal.arch.navigation.NavigationTrackingService
 import io.embrace.android.embracesdk.internal.arch.state.ProcessStateTracker
+import io.embrace.android.embracesdk.internal.arch.state.StateRecorder
 import io.embrace.android.embracesdk.internal.arch.store.DeliveredAeiStore
 import io.embrace.android.embracesdk.internal.arch.store.NetworkCaptureRuleStore
 import io.embrace.android.embracesdk.internal.clock.Clock
@@ -46,6 +47,13 @@ interface InstrumentationArgs {
      * An interface where telemetry can be written.
      */
     val destination: TelemetryDestination
+
+    /**
+     * The one recorder of every state's changes, or null when v2 of the runtime state data model is off, in which case
+     * each state is captured as v1 does it.
+     */
+    val stateRecorder: StateRecorder?
+        get() = null
 
     /**
      * Logs messages & guards SDK code, tracking SDK errors for Embrace's telemetry.

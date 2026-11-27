@@ -11,6 +11,7 @@ import io.embrace.android.embracesdk.internal.api.LogsApi
 import io.embrace.android.embracesdk.internal.arch.InstrumentationRegistry
 import io.embrace.android.embracesdk.internal.arch.schema.EmbType.System.ReactNativeCrash.embAndroidReactNativeCrashJsException
 import io.embrace.android.embracesdk.internal.arch.schema.SchemaType
+import io.embrace.android.embracesdk.internal.arch.state.StateRecorder
 import io.embrace.android.embracesdk.internal.capture.metadata.RnBundleIdTracker
 import io.embrace.android.embracesdk.internal.config.ConfigService
 import io.embrace.android.embracesdk.internal.envelope.metadata.HostedSdkVersionInfo
@@ -38,6 +39,7 @@ internal class HostedSdkInternalInterfaceImpl(
     private val hostedSdkVersionInfo: HostedSdkVersionInfo,
     private val errorHandler: ErrorHandler,
     private val telemetryService: InternalTelemetryService,
+    private val stateRecorderProvider: () -> StateRecorder? = { null },
 ) : EmbraceInternalInterface,
     ReactNativeInternalInterface,
     UnityInternalInterface,
@@ -51,6 +53,11 @@ internal class HostedSdkInternalInterfaceImpl(
 
     override fun isNetworkSpanForwardingEnabled(): Boolean = errorHandler.guardSdkCode(SdkErrorType.PublicApiFail, false) {
         configService.networkSpanForwardingBehavior.isNetworkSpanForwardingEnabled()
+    }
+
+    override fun reportState(name: String, value: String, timeMs: Long) = record("report_state") {
+        // the recorder discards a report for a state no native data source defines
+        stateRecorderProvider()?.record(name = name, value = value, isSystem = false, timeMs = timeMs)
     }
 
     override fun addEnvelopeResource(key: String, value: String) = record("add_envelope_resource") {

@@ -33,6 +33,7 @@ import io.embrace.android.embracesdk.internal.session.orchestrator.PayloadStore
 import io.embrace.android.embracesdk.internal.session.orchestrator.SessionOrchestrator
 import io.embrace.android.embracesdk.internal.session.orchestrator.SessionOrchestratorImpl
 import io.embrace.android.embracesdk.internal.session.orchestrator.SessionPartSpanAttrPopulatorImpl
+import io.embrace.android.embracesdk.internal.session.orchestrator.SessionPartWriter
 import io.embrace.android.embracesdk.internal.session.orchestrator.SessionPartWriterImpl
 import io.embrace.android.embracesdk.internal.session.persistence.SessionPartDirectoryStore
 import io.embrace.android.embracesdk.internal.session.persistence.SessionPartWriteTracker
@@ -123,6 +124,7 @@ fun createSessionOrchestrator(
     sessionPersistenceWorker: BackgroundWorker,
     sessionReadWorker: BackgroundWorker,
     sessionPartReader: SessionPartReader?,
+    onSessionPartWriter: (SessionPartWriter) -> Unit = {},
 ): SessionOrchestrator {
     val payloadMessageCollator = PayloadMessageCollatorImpl(
         sessionPartEnvelopeSource,
@@ -173,6 +175,7 @@ fun createSessionOrchestrator(
             spanRepository.addSpanChangeListener { span ->
                 writer.onSpanSnapshotChanged(span)
             }
+            onSessionPartWriter(writer)
         }
     }
 

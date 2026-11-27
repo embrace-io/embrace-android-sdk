@@ -13,7 +13,8 @@ private const val PAYLOAD_V2_TOKEN_COUNT = 9
 private const val SESSION_PART_DIR_TOKEN_COUNT = 5
 private const val SESSION_PART_DIR_VERSION_TOKEN = "v1"
 
-private val SESSION_PART_FILE_NAMES = setOf("metadata.pb", "completed_spans.pb", "span_snapshots.pb")
+private val SESSION_PART_FILE_NAMES =
+    setOf("metadata.pb", "completed_spans.pb", "span_snapshots.pb", "state_journal.pb")
 
 private val REMOTE_CONFIG_FILE_NAMES = setOf("most_recent_response", "etag", "cached_config")
 

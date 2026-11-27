@@ -146,7 +146,7 @@ internal class OrphanSweeperTest {
         val orphan = write(root / "orphan")
         assertEquals(1, sweep())
         assertFalse(fileSystem.exists(orphan))
-        assertEquals("1", fileSystem.read(marker) { readUtf8() })
+        assertEquals(SdkStorageLayout.LAYOUT_VERSION.toString(), fileSystem.read(marker) { readUtf8() })
     }
 
     @Test

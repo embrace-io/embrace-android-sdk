@@ -4,6 +4,7 @@ package io.embrace.android.embracesdk.internal.otel.logs
 
 import io.embrace.android.embracesdk.internal.arch.schema.EmbType
 import io.embrace.android.embracesdk.internal.arch.schema.PrivateSpan
+import io.embrace.android.embracesdk.internal.arch.schema.StateKeys
 import io.embrace.android.embracesdk.internal.otel.export.InlineExporter
 import io.embrace.android.embracesdk.internal.utils.Provider
 import io.embrace.android.embracesdk.internal.utils.UuidSource
@@ -34,7 +35,9 @@ internal class EmbraceLogRecordProcessor(
             log.setStringAttribute(LogAttributes.LOG_RECORD_UID, uuidSource.createUuid())
         }
 
-        if (!attributes.ignoreCurrentProcessMetadata()) {
+        // a record meant only for a customer's exporters, such as a replayed state change, carries no session's ids
+        if (!attributes.ignoreCurrentProcessMetadata() && !attributes.containsKey(EXPORT_ONLY_KEY)) {
+            val describesDeadProcess = attributes.describesDeadProcess()
             // the experiment records attribute is reserved for the SDK, so any value found here should be erased.
             if (attributes.containsKey(EmbCommonAttributes.EMB_EXPERIMENTS)) {
                 log.setStringAttribute(EmbCommonAttributes.EMB_EXPERIMENTS, "")
@@ -48,6 +51,8 @@ internal class EmbraceLogRecordProcessor(
                             log.setStringAttribute(key, value)
                         }
                     }
+                    // the state stamp of the process that writes a log about a process that died is never its own
+                    describesDeadProcess && (key == StateKeys.PACKED || key == StateKeys.SEQ) -> Unit
                     // never override what the instrumentation has already set. Telemetry that knows which
                     // session it belongs to - such as an app exit reported by a later process - sets the
                     // session attributes itself, and leaves them blank if the session it describes is unknown.
@@ -71,6 +76,13 @@ internal class EmbraceLogRecordProcessor(
      */
     private fun Map<String, Any>.ignoreCurrentProcessMetadata(): Boolean =
         get(EmbType.System.NativeCrash.key) == EmbType.System.NativeCrash.value
+
+    /**
+     * Whether the record is an app exit reported by a later process, which keeps the rest of the current metadata as it
+     * always has, and never the state stamp of the process writing it.
+     */
+    private fun Map<String, Any>.describesDeadProcess(): Boolean =
+        get(EmbType.System.Exit.key) == EmbType.System.Exit.value
 
     private fun Map<String, Any>.isPrivate(): Boolean =
         get(PrivateSpan.key) == PrivateSpan.value

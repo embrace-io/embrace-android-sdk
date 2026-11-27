@@ -7,6 +7,7 @@ import io.embrace.android.embracesdk.internal.otel.logs.EmbraceLogRecordProcesso
 import io.embrace.android.embracesdk.internal.otel.logs.LogSink
 import io.embrace.android.embracesdk.internal.otel.logs.PrivateTelemetryFilteringLogRecordExporter
 import io.embrace.android.embracesdk.internal.otel.logs.PrivateTelemetryFilteringLogRecordProcessor
+import io.embrace.android.embracesdk.internal.otel.logs.StateRenderingLogRecordExporter
 import io.embrace.android.embracesdk.internal.otel.sdk.IdGenerator
 import io.embrace.android.embracesdk.internal.otel.spans.DefaultSpanExporter
 import io.embrace.android.embracesdk.internal.otel.spans.EmbraceSpanProcessor
@@ -111,7 +112,9 @@ class OtelSdkConfig(
     private val logRecordExporter: DefaultLogRecordExporter by lazy {
         DefaultLogRecordExporter(
             logSink = logSink,
-            externalExporters = externalConfig.getLogExporters().map(::PrivateTelemetryFilteringLogRecordExporter),
+            externalExporters = externalConfig.getLogExporters().map {
+                StateRenderingLogRecordExporter(PrivateTelemetryFilteringLogRecordExporter(it))
+            },
             exportCheck = exportCheck,
             externalExportDispatcher = externalExportDispatcher,
         )

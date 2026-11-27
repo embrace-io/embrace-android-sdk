@@ -15,7 +15,9 @@ internal class PrivateTelemetryFilteringLogRecordProcessor(
 ) : LogRecordProcessor by delegate {
 
     override fun onEmit(log: ReadWriteLogRecord, context: Context) {
-        if (exportCheck() && !log.attributes.containsKey(PrivateSpan.key)) {
+        // a replayed state change is for a customer's exporters only, which get it rendered for them
+        val attributes = log.attributes
+        if (exportCheck() && !attributes.containsKey(PrivateSpan.key) && !attributes.containsKey(EXPORT_ONLY_KEY)) {
             delegate.onEmit(log, context)
         }
     }

@@ -1,3 +1,5 @@
+@file:OptIn(ExperimentalSemconv::class)
+
 package io.embrace.android.embracesdk.internal.instrumentation.navigation
 
 import io.embrace.android.embracesdk.internal.arch.InstrumentationArgs
@@ -6,6 +8,8 @@ import io.embrace.android.embracesdk.internal.arch.navigation.CurrentScreen
 import io.embrace.android.embracesdk.internal.arch.schema.SchemaType.NavigationState
 import io.embrace.android.embracesdk.internal.arch.schema.SchemaType.NavigationState.Screen
 import io.embrace.android.embracesdk.internal.arch.schema.SystemStateValue
+import io.embrace.android.embracesdk.semconv.EmbFrameCountsAttributes
+import io.embrace.android.embracesdk.semconv.ExperimentalSemconv
 
 /**
  * Reports the screen published against [CurrentScreen.KEY] as navigation state, knowing nothing about where it was resolved.
@@ -19,6 +23,14 @@ class NavigationStateDataSource(
     defaultValue = Screen.Initializing,
     maxTransitions = MAX_NAVIGATION_STATE_TRANSITIONS,
 ) {
+
+    /**
+     * A change of screen carries the frame counts of the screen being left.
+     */
+    override val declaredAttributeKeys: Set<String> = setOf(
+        EmbFrameCountsAttributes.SMOOTHNESS_DROPPED_FRAMES,
+        EmbFrameCountsAttributes.SMOOTHNESS_EXPECTED_FRAMES,
+    )
 
     override fun onDataCaptureEnabled() {
         super.onDataCaptureEnabled()

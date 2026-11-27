@@ -8,6 +8,7 @@ import io.embrace.android.embracesdk.internal.arch.InstrumentationArgs
 import io.embrace.android.embracesdk.internal.arch.datasource.TelemetryDestination
 import io.embrace.android.embracesdk.internal.arch.navigation.NavigationTrackingService
 import io.embrace.android.embracesdk.internal.arch.state.ProcessStateTracker
+import io.embrace.android.embracesdk.internal.arch.state.StateRecorder
 import io.embrace.android.embracesdk.internal.arch.store.DeliveredAeiStore
 import io.embrace.android.embracesdk.internal.arch.store.NetworkCaptureRuleStore
 import io.embrace.android.embracesdk.internal.capture.session.UserSessionPropertiesService
@@ -54,6 +55,7 @@ fun createInstrumentationArgs(
     sdkStorage: SdkStorage,
     eventBus: EventBus,
     networkSpanParents: NetworkSpanParents,
+    stateRecorder: StateRecorder? = null,
 ): InstrumentationArgs = InstrumentationArgsImpl(
     configService = configService,
     destination = destination,
@@ -81,4 +83,5 @@ fun createInstrumentationArgs(
     sdkStorage = sdkStorage,
     eventBus = eventBus,
     networkSpanParents = networkSpanParents,
+    stateRecorder = stateRecorder,
 )

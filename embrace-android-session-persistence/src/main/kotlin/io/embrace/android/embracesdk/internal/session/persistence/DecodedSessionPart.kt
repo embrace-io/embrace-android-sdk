@@ -9,8 +9,11 @@ import io.embrace.android.embracesdk.internal.payload.SessionPartPayload
  *
  * [lastWrittenMs] is only needed to resurrect a part left by a process that died, but whether a part is dead
  * is only known once it has been decoded, so it is read for every part along with its envelope.
+ *
+ * [stateJournal] is the part's state journal, from which its change log is rendered, or null if it has none.
  */
 class DecodedSessionPart(
     val envelope: Envelope<SessionPartPayload>,
     val lastWrittenMs: Long?,
+    val stateJournal: DecodedStateJournal? = null,
 )

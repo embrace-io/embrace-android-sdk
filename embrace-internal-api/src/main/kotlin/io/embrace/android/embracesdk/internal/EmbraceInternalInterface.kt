@@ -31,4 +31,11 @@ interface EmbraceInternalInterface {
      * are ignored.
      */
     fun setHostedPlatformVersion(version: String?)
+
+    /**
+     * Reports that the state [name], which a native data source defines, such as the screen (`screen-automatic`),
+     * took [value] at [timeMs], by the hosted SDK's clock. A hosted SDK cannot make a state by reporting a name: a
+     * report for a state no data source defines is discarded. Does nothing unless v2 of runtime state capture is on.
+     */
+    fun reportState(name: String, value: String, timeMs: Long) {}
 }

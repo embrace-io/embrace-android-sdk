@@ -26,6 +26,7 @@ import io.embrace.android.embracesdk.internal.payload.Span
 import io.embrace.android.embracesdk.internal.payload.SpanEvent
 import io.embrace.android.embracesdk.internal.session.getSessionPartSpan
 import io.embrace.android.embracesdk.internal.session.getUserSessionProperties
+import io.embrace.android.embracesdk.internal.state.AppStateKeys
 import io.embrace.android.embracesdk.semconv.EmbSessionAttributes
 import io.embrace.android.embracesdk.semconv.ExperimentalSemconv
 import org.junit.Assert.assertEquals
@@ -275,6 +276,72 @@ internal class SessionPartResurrectorTest {
         assertEquals(emptyList<Envelope<*>>(), cachedLogEnvelopeStore.createdEnvelopes)
         assertTrue(nativeCrashService.nativeCrashesSent.isEmpty())
     }
+
+    @Test
+    fun `every span the dead process left running is completed with the end of its link, bar the change log`() {
+        val deadPart = incompleteEnvelope().withChangeLog()
+        val resurrected = checkNotNull(resurrect(deadPart))
+
+        val spans = checkNotNull(resurrected.data.spans)
+        val (changeLogs, others) = spans.partition { it.isStateChangeLog() }
+        assertEquals(1, changeLogs.size)
+        assertEquals(
+            null,
+            changeLogs.single().attributes.orEmpty().findAttributeValue(AppStateKeys.END_SEQ),
+        )
+        assertEquals(2, others.size)
+        others.forEach { span ->
+            assertEquals("5", span.attributes.orEmpty().findAttributeValue(AppStateKeys.END_SEQ))
+        }
+    }
+
+    @Test
+    fun `a span that started at the last number is not given an end number`() {
+        val deadPart = incompleteEnvelope().withChangeLog().withSessionSpanAttribute(AppStateKeys.SEQ, "5")
+        val resurrected = checkNotNull(resurrect(deadPart))
+
+        val sessionSpan = checkNotNull(resurrected.getSessionPartSpan())
+        assertNull(sessionSpan.attributes.orEmpty().findAttributeValue(AppStateKeys.END_SEQ))
+    }
+
+    @Test
+    fun `no end number is given when the part has no change log`() {
+        val resurrected = checkNotNull(resurrect(incompleteEnvelope()))
+
+        checkNotNull(resurrected.data.spans).forEach { span ->
+            assertNull(span.attributes.orEmpty().findAttributeValue(AppStateKeys.END_SEQ))
+        }
+    }
+
+    @Test
+    fun `the native crash metadata holds the dead part's last state and none of the live values`() {
+        val deadPart = incompleteEnvelope(sessionPartId = FAKE_SESSION_PART_ID).withChangeLog()
+        resurrect(deadPart, crash = nativeCrashData(FAKE_SESSION_PART_ID))
+
+        val metadata = nativeCrashService.metadataSent.single()
+        assertEquals(PROCESS_ID, metadata[EmbSessionAttributes.EMB_PROCESS_IDENTIFIER])
+        assertEquals(
+            mapOf(
+                "${AppStateKeys.VALUE_PREFIX}network" to "cell",
+                "${AppStateKeys.VALUE_PREFIX}screen-automatic" to "Home",
+                "${AppStateKeys.VALUE_TYPE_PREFIX}screen-automatic" to AppStateKeys.VALUE_TYPE_SYSTEM,
+                AppStateKeys.SEQ to "5",
+            ),
+            metadata.filterKeys { it.startsWith(AppStateKeys.STEM) },
+        )
+    }
+
+    @Test
+    fun `the native crash metadata has no state when the part has no change log`() {
+        resurrect(incompleteEnvelope(sessionPartId = FAKE_SESSION_PART_ID), crash = nativeCrashData(FAKE_SESSION_PART_ID))
+
+        val metadata = nativeCrashService.metadataSent.single()
+        assertEquals(emptyMap<String, String>(), metadata.filterKeys { it.startsWith(AppStateKeys.STEM) })
+    }
+
+    private fun Envelope<SessionPartPayload>.withChangeLog() = copy(
+        data = data.copy(spanSnapshots = checkNotNull(data.spanSnapshots) + DeadPartStateTest.changeLog()),
+    )
 
     private fun resurrect(
         deadPart: Envelope<SessionPartPayload>,

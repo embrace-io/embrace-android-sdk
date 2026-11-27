@@ -49,6 +49,8 @@ sealed class SdkErrorType(private val severity: Severity) {
     object DuplicateSpanIds : SdkErrorType(ERROR)
     object CompletedSpansWriteFail : SdkErrorType(ERROR)
     object SpanSnapshotsWriteFail : SdkErrorType(ERROR)
+    object StateJournalWriteFail : SdkErrorType(ERROR)
+    object StateReplayFail : SdkErrorType(ERROR)
     object InternalInterfaceFail : SdkErrorType(ERROR)
     object PublicApiFail : SdkErrorType(ERROR)
     object NativeReadFail : SdkErrorType(Severity.WARNING)

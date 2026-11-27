@@ -18,6 +18,8 @@ internal const val COMPLETED_SPANS_FILE_NAME = "completed_spans.pb"
 
 internal const val SPAN_SNAPSHOTS_FILE_NAME = "span_snapshots.pb"
 
+internal const val STATE_JOURNAL_FILE_NAME = "state_journal.pb"
+
 /** Field numbers of the records held in a span collection file, which is read one record at a time. */
 internal const val SPAN_COLLECTION_VERSION_TAG = 1
 

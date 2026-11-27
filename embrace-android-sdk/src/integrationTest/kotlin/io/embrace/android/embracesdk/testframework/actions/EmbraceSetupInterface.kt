@@ -25,6 +25,8 @@ import io.embrace.android.embracesdk.internal.arch.InstrumentationProvider
 import io.embrace.android.embracesdk.internal.clock.millisToNanos
 import io.embrace.android.embracesdk.internal.config.BuildInfo
 import io.embrace.android.embracesdk.internal.config.ConfigService
+import io.embrace.android.embracesdk.internal.config.instrumented.AppStateLocalConfigImpl
+import io.embrace.android.embracesdk.internal.config.instrumented.schema.AppStateLocalConfig
 import io.embrace.android.embracesdk.internal.delivery.debug.DeliveryTracer
 import io.embrace.android.embracesdk.internal.delivery.storage.PayloadStorageServiceImpl
 import io.embrace.android.embracesdk.internal.storage.SdkDir
@@ -132,6 +134,13 @@ internal class EmbraceSetupInterface(
     var constructionFailure: Throwable? = null
 
     /**
+     * The local (embrace-config.json) values of the app state config. Set in `setupAction`, e.g. with
+     * `FakeAppStateLocalConfig(enabled = true)`, to make a test with no app id see a local value, since such an
+     * app loads no remote config.
+     */
+    var appStateLocalConfig: AppStateLocalConfig = AppStateLocalConfigImpl
+
+    /**
      * When set, the SDK keeps its state in the files under `noBackupFilesDir/xcor/` rather than in prefs.
      */
     var superiorStorageSystemEnabled: Boolean = false
@@ -206,7 +215,15 @@ internal class EmbraceSetupInterface(
                 workerThreadPoolSupplier = { workerThreadPool },
                 configServiceSupplier = { preStartServices, instrumentedConfig, serializer, okHttpClient, workerThreadPool, persistedConfig ->
                     DecoratedConfigService(
-                        createConfigService(preStartServices, instrumentedConfig, serializer, okHttpClient, workerThreadPool, persistedConfig)
+                        createConfigService(
+                            preStartServices,
+                            instrumentedConfig,
+                            serializer,
+                            okHttpClient,
+                            workerThreadPool,
+                            persistedConfig,
+                            appStateLocalConfig = appStateLocalConfig,
+                        )
                     ).also { services.configService = it }
                 },
                 superiorStorageSystemEnabled = superiorStorageSystemEnabled,

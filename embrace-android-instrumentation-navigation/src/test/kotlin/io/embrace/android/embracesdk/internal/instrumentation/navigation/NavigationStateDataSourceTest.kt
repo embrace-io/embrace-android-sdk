@@ -2,16 +2,23 @@ package io.embrace.android.embracesdk.internal.instrumentation.navigation
 
 import android.app.Activity
 import io.embrace.android.embracesdk.fakes.FakeInstrumentationArgs
+import io.embrace.android.embracesdk.fakes.appStateEnabledConfigService
 import io.embrace.android.embracesdk.internal.arch.navigation.CurrentScreen
 import io.embrace.android.embracesdk.internal.arch.navigation.NavigationSignal
 import io.embrace.android.embracesdk.internal.arch.navigation.ScreenAttributesSource
 import io.embrace.android.embracesdk.internal.arch.schema.SchemaType.NavigationState.Screen
+import io.embrace.android.embracesdk.internal.state.StateDeclaration
+import io.embrace.android.embracesdk.internal.state.StateEvents
+import io.embrace.android.embracesdk.internal.state.StateUpdate
+import io.embrace.android.embracesdk.semconv.EmbFrameCountsAttributes
+import io.embrace.android.embracesdk.semconv.ExperimentalSemconv
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotEquals
 import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
 
+@OptIn(ExperimentalSemconv::class)
 internal class NavigationStateDataSourceTest {
     private lateinit var dataSource: NavigationStateDataSource
     private lateinit var args: FakeInstrumentationArgs
@@ -184,6 +191,48 @@ internal class NavigationStateDataSourceTest {
         args.eventBus.startActivity(activity)
         args.eventBus.resumeActivity(activity)
         assertTrue(signals.isEmpty())
+    }
+
+    @Test
+    fun `with the app state model on the screen state declares the two frame count keys`() {
+        val modelArgs = FakeInstrumentationArgs(configService = appStateEnabledConfigService())
+        val declarations = mutableListOf<StateDeclaration>()
+        modelArgs.eventBus.addHandler(StateEvents.DECLARED) { declarations.add(it) }
+
+        NavigationStateDataSource(modelArgs).onDataCaptureEnabled()
+
+        val declaration = declarations.single()
+        assertEquals("screen-automatic", declaration.definition.name)
+        assertEquals(1000, declaration.definition.changeLimit)
+        assertEquals(
+            setOf(EmbFrameCountsAttributes.SMOOTHNESS_DROPPED_FRAMES, EmbFrameCountsAttributes.SMOOTHNESS_EXPECTED_FRAMES),
+            declaration.definition.attributeKeys,
+        )
+        assertEquals("${Screen.Initializing}", declaration.initialValue)
+        assertEquals(true, declaration.system)
+    }
+
+    @Test
+    fun `with the app state model on a screen change is reported over the bus with the screen being left`() {
+        val modelArgs = FakeInstrumentationArgs(configService = appStateEnabledConfigService())
+        val updates = mutableListOf<StateUpdate>()
+        modelArgs.eventBus.addHandler(StateEvents.UPDATED) { updates.add(it) }
+        modelArgs.navigationTrackingService.addScreenAttributesSource(CountingScreenAttributesSource())
+        NavigationStateDataSource(modelArgs).onDataCaptureEnabled()
+
+        val homeTime = modelArgs.clock.tick()
+        modelArgs.eventBus.emitState(CurrentScreen.KEY, CurrentScreen(Screen.Named("home"), homeTime))
+        val settingsTime = modelArgs.clock.tick()
+        modelArgs.eventBus.emitState(CurrentScreen.KEY, CurrentScreen(Screen.Named("settings"), settingsTime))
+
+        assertEquals(listOf("screen-automatic", "screen-automatic"), updates.map { it.state })
+        assertEquals(listOf("${Screen.Named("home")}", "${Screen.Named("settings")}"), updates.map { it.value })
+        assertEquals(listOf(false, false), updates.map { it.system })
+        assertEquals(listOf(homeTime, settingsTime), updates.map { it.timeMs })
+        // nothing was showing before the first screen, whose collection is discarded, and the second change leaves the home screen
+        assertEquals(emptyMap<String, String>(), updates[0].attributes)
+        assertEquals(mapOf("screen.visit" to "2"), updates[1].attributes)
+        assertEquals(emptyList<Any>(), modelArgs.destination.createdStateTokens)
     }
 
     private class CountingScreenAttributesSource : ScreenAttributesSource {

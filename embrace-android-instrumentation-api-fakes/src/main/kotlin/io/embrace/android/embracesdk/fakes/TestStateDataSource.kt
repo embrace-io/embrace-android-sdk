@@ -14,7 +14,13 @@ class TestStateDataSource(
     args = args,
     stateTypeFactory = ::TestState,
     defaultValue = "UNKNOWN",
+    changeAttributeKeys = setOf(TEST_STATE_DECLARED_ATTRIBUTE_KEY),
 )
+
+/**
+ * The one attribute key a change of the test state may carry when the app state data model is on.
+ */
+const val TEST_STATE_DECLARED_ATTRIBUTE_KEY: String = "test.declared"
 
 class TestState(initialValue: Any) : State<Any>(initialValue, "test")
 

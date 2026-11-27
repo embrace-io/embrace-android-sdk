@@ -19,6 +19,8 @@
       "enable_otel_kotlin_sdk": true
     },
     "multi_file_persistence_enabled": true,
+    "app_state_enabled": true,
+    "app_state_export_mode": "verbose",
     "view_config": {
       "enable_automatic_activity_capture": false
     },

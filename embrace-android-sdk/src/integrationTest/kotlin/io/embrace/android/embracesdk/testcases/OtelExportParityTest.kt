@@ -316,7 +316,7 @@ internal class OtelExportParityTest(
     ) {
         testRule.runTest(
             testCaseAction = {
-                otel = embrace.getOpenTelemetryKotlin()
+                otel = embrace.getOpenTelemetry()
                 tracer = otel.tracerProvider.getTracer(name = TRACER_NAME, version = "1.0.0")
                 logger = otel.loggerProvider.getLogger(name = LOGGER_NAME, version = "1.1.0")
                 testCaseAction()

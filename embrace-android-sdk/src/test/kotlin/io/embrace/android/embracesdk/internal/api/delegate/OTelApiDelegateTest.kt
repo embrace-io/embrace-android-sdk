@@ -80,7 +80,7 @@ internal class OTelApiDelegateTest(
     fun `get opentelemetry kotlin returns sdk instance`() {
         assertSame(
             otelSdkWrapper.openTelemetryKotlin,
-            delegate.getOpenTelemetryKotlin(),
+            delegate.getOpenTelemetry(),
         )
     }
 

@@ -63,7 +63,7 @@ internal class SdkApiDispatcher(
     }
 
     private val openTelemetryKotlin = LateBindingOpenTelemetry {
-        errorHandler.guardSdkCode(SdkErrorType.PublicApiFail, NoopOpenTelemetry) { target.getOpenTelemetryKotlin() }
+        errorHandler.guardSdkCode(SdkErrorType.PublicApiFail, NoopOpenTelemetry) { target.getOpenTelemetry() }
     }
 
     override fun start(context: Context) = errorHandler.guardSdkCode(SdkErrorType.PublicApiFail) { onStart(context) }
@@ -295,9 +295,9 @@ internal class SdkApiDispatcher(
     override fun addLogRecordProcessor(logRecordProcessor: LogRecordProcessor) =
         errorHandler.guardSdkCode(SdkErrorType.PublicApiFail) { target.addLogRecordProcessor(logRecordProcessor) }
 
-    override fun getOpenTelemetryKotlin(): OpenTelemetry = openTelemetryKotlin
+    override fun getOpenTelemetry(): OpenTelemetry = openTelemetryKotlin
 
-    override fun setResourceAttribute(key: String, value: String) =
+    override fun setResourceAttribute(key: String, value: Any) =
         errorHandler.guardSdkCode(SdkErrorType.PublicApiFail) { target.setResourceAttribute(key, value) }
 
     override fun addBreadcrumb(message: String) = record("add_breadcrumb") { target.addBreadcrumb(message) }

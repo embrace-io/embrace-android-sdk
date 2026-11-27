@@ -871,7 +871,7 @@ internal class SdkStateIntegrationTest(
             assertEquals("result", embrace.recordSpan("span") { "result" })
             assertNull(embrace.getSpan("0000000000000000"))
             assertEquals(disabled, embrace.generateW3cTraceparent() == null)
-            assertNotNull(embrace.getOpenTelemetryKotlin())
+            assertNotNull(embrace.getOpenTelemetry())
             assertEquals(startMs, embrace.getSdkCurrentTimeMs())
             assertFalse(embrace.isStarted)
             assertEquals("", embrace.deviceId)

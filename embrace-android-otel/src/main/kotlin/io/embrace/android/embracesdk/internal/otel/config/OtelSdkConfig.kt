@@ -8,6 +8,7 @@ import io.embrace.android.embracesdk.internal.otel.logs.LogSink
 import io.embrace.android.embracesdk.internal.otel.logs.PrivateTelemetryFilteringLogRecordExporter
 import io.embrace.android.embracesdk.internal.otel.logs.PrivateTelemetryFilteringLogRecordProcessor
 import io.embrace.android.embracesdk.internal.otel.sdk.IdGenerator
+import io.embrace.android.embracesdk.internal.otel.sdk.setTypedAttributes
 import io.embrace.android.embracesdk.internal.otel.spans.DefaultSpanExporter
 import io.embrace.android.embracesdk.internal.otel.spans.EmbraceSpanProcessor
 import io.embrace.android.embracesdk.internal.otel.spans.PrivateTelemetryFilteringSpanExporter
@@ -57,9 +58,7 @@ class OtelSdkConfig(
             setStringAttribute(TelemetryAttributes.TELEMETRY_DISTRO_NAME, sdkName)
             setStringAttribute(TelemetryAttributes.TELEMETRY_DISTRO_VERSION, sdkVersion)
 
-            externalConfig.getResourceAttributes().forEach {
-                setStringAttribute(it.key, it.value)
-            }
+            setTypedAttributes(externalConfig.getResourceAttributes())
         }
 
     /**

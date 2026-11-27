@@ -82,7 +82,7 @@ internal class ExternalTracerTest(
                 setupExporter()
             },
             testCaseAction = {
-                embOpenTelemetry = embrace.getOpenTelemetryKotlin()
+                embOpenTelemetry = embrace.getOpenTelemetry()
                 initializeTracer()
                 recordSession {
                     trackStartMs = clock.now()
@@ -186,7 +186,7 @@ internal class ExternalTracerTest(
             },
             testCaseAction = {
                 initializeTracer()
-                embOpenTelemetry = embrace.getOpenTelemetryKotlin()
+                embOpenTelemetry = embrace.getOpenTelemetry()
                 recordSession {
                     val parentSpan = embTracer.startSpan("external-span")
                     val parentContext = embOpenTelemetry.context.root().storeSpan(parentSpan)
@@ -345,7 +345,7 @@ internal class ExternalTracerTest(
     fun `tracer obtained before SDK start binds to SDK once started`() {
         testRule.runTest(
             preSdkStartAction = {
-                embTracer = embrace.getOpenTelemetryKotlin().getTracer("test-tracer")
+                embTracer = embrace.getOpenTelemetry().getTracer("test-tracer")
                 val span = embTracer.startSpan("test-span")
                 assertFalse(span.isRecording())
                 span.end()
@@ -362,7 +362,7 @@ internal class ExternalTracerTest(
     }
 
     private fun EmbraceActionInterface.initializeTracer() {
-        embTracer = embrace.getOpenTelemetryKotlin().getTracer("external-tracer")
+        embTracer = embrace.getOpenTelemetry().getTracer("external-tracer")
     }
 
     internal companion object {

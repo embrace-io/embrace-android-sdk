@@ -171,7 +171,7 @@ internal class RealSdkInstance(
     override val isStarted: Boolean
         get() = enabled
 
-    override fun getOpenTelemetryKotlin(): OpenTelemetry = otelApiDelegate.getOpenTelemetryKotlin()
+    override fun getOpenTelemetry(): OpenTelemetry = otelApiDelegate.getOpenTelemetry()
 
     override fun onTransition(buffer: BufferingSdkInstance) {
         buffer.drainCompletedSpans(tracingApi)

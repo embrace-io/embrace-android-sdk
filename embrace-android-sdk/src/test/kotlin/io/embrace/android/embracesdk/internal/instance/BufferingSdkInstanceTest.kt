@@ -76,8 +76,8 @@ internal class BufferingSdkInstanceTest {
     }
 
     @Test
-    fun `getOpenTelemetryKotlin returns noop`() {
-        assertSame(NoopOpenTelemetry, instance.getOpenTelemetryKotlin())
+    fun `getOpenTelemetry returns noop`() {
+        assertSame(NoopOpenTelemetry, instance.getOpenTelemetry())
     }
 
     @Suppress("DEPRECATION")
@@ -490,7 +490,7 @@ internal class BufferingSdkInstanceTest {
             calls.add(logRecordProcessor)
         }
 
-        override fun setResourceAttribute(key: String, value: String) {
+        override fun setResourceAttribute(key: String, value: Any) {
             calls.add("$key=$value")
         }
 

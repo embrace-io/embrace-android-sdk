@@ -24,9 +24,9 @@ internal class OTelApiDelegate(
     override fun addLogRecordProcessor(logRecordProcessor: LogRecordProcessor) {
     }
 
-    override fun setResourceAttribute(key: String, value: String) {
+    override fun setResourceAttribute(key: String, value: Any) {
     }
 
-    override fun getOpenTelemetryKotlin(): OpenTelemetry =
+    override fun getOpenTelemetry(): OpenTelemetry =
         otelSdkWrapper.value.openTelemetryKotlin
 }

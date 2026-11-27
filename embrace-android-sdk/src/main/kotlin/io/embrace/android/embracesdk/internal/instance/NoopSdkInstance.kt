@@ -325,12 +325,12 @@ internal class NoopSdkInstance(
         logDropped("add_log_record_processor")
     }
 
-    override fun getOpenTelemetryKotlin(): OpenTelemetry {
-        logDropped("get_opentelemetry_kotlin")
+    override fun getOpenTelemetry(): OpenTelemetry {
+        logDropped("get_opentelemetry")
         return NoopOpenTelemetry
     }
 
-    override fun setResourceAttribute(key: String, value: String) {
+    override fun setResourceAttribute(key: String, value: Any) {
         logDropped("set_resource_attribute")
     }
 

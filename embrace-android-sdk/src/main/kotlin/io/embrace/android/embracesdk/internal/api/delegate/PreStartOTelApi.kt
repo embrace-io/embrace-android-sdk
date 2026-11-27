@@ -17,7 +17,7 @@ internal class PreStartOTelApi(
     private val config: ExternalOtelConfig,
 ) : OTelApi {
 
-    override fun getOpenTelemetryKotlin(): OpenTelemetry = NoopOpenTelemetry
+    override fun getOpenTelemetry(): OpenTelemetry = NoopOpenTelemetry
 
     override fun addSpanExporter(spanExporter: SpanExporter) {
         config.addSpanExporter(spanExporter)
@@ -35,7 +35,7 @@ internal class PreStartOTelApi(
         config.addLogRecordProcessor(logRecordProcessor)
     }
 
-    override fun setResourceAttribute(key: String, value: String) {
+    override fun setResourceAttribute(key: String, value: Any) {
         config.setResourceAttribute(key, value)
     }
 }

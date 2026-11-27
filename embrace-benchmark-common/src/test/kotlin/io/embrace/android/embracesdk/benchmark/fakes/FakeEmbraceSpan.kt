@@ -28,7 +28,7 @@ internal class FakeEmbraceSpan(
     var errorCode: ErrorCode? = null
         private set
 
-    val attributes: MutableMap<String, String> = mutableMapOf()
+    val attributes: MutableMap<String, Any> = mutableMapOf()
     val events: MutableList<Event> = mutableListOf()
 
     override val spanContext: SpanContext? = null
@@ -55,7 +55,7 @@ internal class FakeEmbraceSpan(
         return true
     }
 
-    override fun addEvent(name: String, timestampMs: Long?, attributes: Map<String, String>): Boolean {
+    override fun addEvent(name: String, timestampMs: Long?, attributes: Map<String, Any>): Boolean {
         if (!isRecording) {
             return false
         }
@@ -63,7 +63,7 @@ internal class FakeEmbraceSpan(
         return true
     }
 
-    override fun addAttribute(key: String, value: String): Boolean {
+    override fun addAttribute(key: String, value: Any): Boolean {
         if (!isRecording) {
             return false
         }
@@ -71,16 +71,16 @@ internal class FakeEmbraceSpan(
         return true
     }
 
-    override fun recordException(exception: Throwable, attributes: Map<String, String>): Boolean =
+    override fun recordException(exception: Throwable, attributes: Map<String, Any>): Boolean =
         error("recordException")
 
     override fun updateName(newName: String): Boolean = error("updateName")
 
-    override fun addLink(linkedSpanContext: SpanContext, attributes: Map<String, String>): Boolean = error("addLink")
+    override fun addLink(linkedSpanContext: SpanContext, attributes: Map<String, Any>): Boolean = error("addLink")
 
     data class Event(
         val name: String,
         val timestampMs: Long,
-        val attributes: Map<String, String>,
+        val attributes: Map<String, Any>,
     )
 }

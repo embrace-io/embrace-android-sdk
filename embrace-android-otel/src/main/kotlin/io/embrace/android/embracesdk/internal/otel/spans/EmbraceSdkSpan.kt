@@ -90,21 +90,6 @@ interface EmbraceSdkSpan : EmbraceSpan {
         attributes: Map<String, Any>?,
     ): Boolean
 
-    /**
-     * Typed equivalent of [addAttribute].
-     */
-    fun addCustomAttribute(key: String, value: Any): Boolean
-
-    /**
-     * Typed equivalent of [addEvent].
-     */
-    fun addCustomEvent(name: String, timestampMs: Long?, attributes: Map<String, Any>): Boolean
-
-    /**
-     * Typed equivalent of [addLink].
-     */
-    fun addCustomLink(linkedSpanContext: SpanContext, attributes: Map<String, Any>): Boolean
-
     fun getStartTimeMs(): Long?
 
     /**

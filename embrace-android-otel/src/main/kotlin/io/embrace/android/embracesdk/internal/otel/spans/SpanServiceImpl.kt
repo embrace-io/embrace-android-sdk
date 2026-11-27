@@ -114,10 +114,10 @@ class SpanServiceImpl(
         try {
             if (span.start()) {
                 attributes.forEach { attribute ->
-                    span.addCustomAttribute(attribute.key, attribute.value)
+                    span.addAttribute(attribute.key, attribute.value)
                 }
                 events.forEach { event ->
-                    span.addCustomEvent(
+                    span.addEvent(
                         event.name,
                         event.timestampNanos.nanosToMillis(),
                         event.attributes,
@@ -172,10 +172,10 @@ class SpanServiceImpl(
             )
             if (newSpan.start(validStartTimeMs)) {
                 validAttributes.forEach {
-                    newSpan.addCustomAttribute(it.key, it.value)
+                    newSpan.addAttribute(it.key, it.value)
                 }
                 validEvents.forEach {
-                    newSpan.addCustomEvent(it.name, it.timestampNanos.nanosToMillis(), it.attributes)
+                    newSpan.addEvent(it.name, it.timestampNanos.nanosToMillis(), it.attributes)
                 }
                 return newSpan.stopWithErrorCode(errorCode, endTimeMs)
             }

@@ -63,7 +63,7 @@ public interface EmbraceSpan {
     public fun addEvent(
         name: String,
         timestampMs: Long? = null,
-        attributes: Map<String, String> = emptyMap(),
+        attributes: Map<String, Any> = emptyMap(),
     ): Boolean
 
     /**
@@ -73,14 +73,14 @@ public interface EmbraceSpan {
      */
     public fun recordException(
         exception: Throwable,
-        attributes: Map<String, String> = emptyMap(),
+        attributes: Map<String, Any> = emptyMap(),
     ): Boolean
 
     /**
      * Add the given key-value pair as an Attribute to the Event. Returns false if the Attribute was definitely not added. Returns true
      * if the validation at the Embrace Level has passed and the call to add the Attribute at the OpenTelemetry level was successful.
      */
-    public fun addAttribute(key: String, value: String): Boolean
+    public fun addAttribute(key: String, value: Any): Boolean
 
     /**
      * Update the name of the span. Returns false if the update was not successful, like when it has already been stopped
@@ -92,7 +92,7 @@ public interface EmbraceSpan {
      */
     public fun addLink(
         linkedSpan: EmbraceSpan,
-        attributes: Map<String, String> = emptyMap(),
+        attributes: Map<String, Any> = emptyMap(),
     ): Boolean {
         val spanContext = linkedSpan.spanContext
         return if (spanContext != null) {
@@ -107,6 +107,6 @@ public interface EmbraceSpan {
      */
     public fun addLink(
         linkedSpanContext: SpanContext,
-        attributes: Map<String, String> = emptyMap(),
+        attributes: Map<String, Any> = emptyMap(),
     ): Boolean
 }

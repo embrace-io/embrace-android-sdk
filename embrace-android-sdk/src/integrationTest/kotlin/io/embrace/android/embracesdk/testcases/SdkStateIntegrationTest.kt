@@ -13,7 +13,6 @@ import io.embrace.android.embracesdk.fakes.testSdkStorage
 import io.embrace.android.embracesdk.LastRunEndState
 import io.embrace.android.embracesdk.PropertyScope
 import io.embrace.android.embracesdk.Severity
-import io.embrace.android.embracesdk.UserSessionListener
 import io.embrace.android.embracesdk.config.OTelConfig
 import io.embrace.android.embracesdk.config.SdkConfig
 import io.embrace.android.embracesdk.assertions.findSpanByName
@@ -853,9 +852,7 @@ internal class SdkStateIntegrationTest(
             assertFalse(embrace.addUserSessionProperty("key", "value", PropertyScope.USER_SESSION))
             assertFalse(embrace.removeUserSessionProperty("key"))
             embrace.endUserSession()
-            val listener = UserSessionListener { }
-            embrace.addUserSessionListener(listener)
-            embrace.removeUserSessionListener(listener)
+            embrace.removeUserSessionListener { }
             embrace.setUserIdentifier("user-id")
             embrace.clearUserIdentifier()
             embrace.setUserEmail("user@example.com")

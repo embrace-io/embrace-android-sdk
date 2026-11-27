@@ -183,10 +183,6 @@ internal class NoopSdkInstance(
         logDropped("end_session")
     }
 
-    override fun addUserSessionListener(listener: UserSessionListener) {
-        logDropped("add_user_session_listener")
-    }
-
     override fun removeUserSessionListener(listener: UserSessionListener) {
         logDropped("remove_user_session_listener")
     }

@@ -68,9 +68,14 @@ public abstract interface class io/embrace/android/embracesdk/config/OTelConfig 
 
 public abstract interface class io/embrace/android/embracesdk/config/SdkConfig {
 	public abstract fun otel (Lkotlin/jvm/functions/Function1;)V
+	public abstract fun userSession (Lkotlin/jvm/functions/Function1;)V
 }
 
 public abstract interface annotation class io/embrace/android/embracesdk/config/SdkConfigDsl : java/lang/annotation/Annotation {
+}
+
+public abstract interface class io/embrace/android/embracesdk/config/UserSessionConfig {
+	public abstract fun addListener (Lio/embrace/android/embracesdk/UserSessionListener;)V
 }
 
 public abstract interface class io/embrace/android/embracesdk/experiments/TrackedEntry {
@@ -219,7 +224,6 @@ public abstract interface class io/embrace/android/embracesdk/internal/api/UserA
 }
 
 public abstract interface class io/embrace/android/embracesdk/internal/api/UserSessionApi {
-	public abstract fun addUserSessionListener (Lio/embrace/android/embracesdk/UserSessionListener;)V
 	public abstract fun addUserSessionProperty (Ljava/lang/String;Ljava/lang/String;Lio/embrace/android/embracesdk/PropertyScope;)Z
 	public abstract fun endUserSession ()V
 	public abstract fun removeUserSessionListener (Lio/embrace/android/embracesdk/UserSessionListener;)V

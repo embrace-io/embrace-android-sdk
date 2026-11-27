@@ -1,5 +1,7 @@
 package io.embrace.android.embracesdk.testcases
 
+import io.embrace.android.embracesdk.SessionStateEvent
+import io.embrace.android.embracesdk.UserSessionListener
 import io.embrace.android.embracesdk.assertions.toMap
 import io.embrace.android.embracesdk.fakes.config.FakeEnabledFeatureConfig
 import io.embrace.android.embracesdk.fakes.config.FakeInstrumentedConfig
@@ -17,6 +19,7 @@ import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.ParameterizedRobolectricTestRunner
+import java.util.concurrent.CopyOnWriteArrayList
 
 @RunWith(ParameterizedRobolectricTestRunner::class)
 internal class UserSessionApiTest(
@@ -93,6 +96,41 @@ internal class UserSessionApiTest(
                 ).toSortedMap()
 
                 assertEquals(expected, attributesToCheck)
+            }
+        )
+    }
+
+    @Test
+    fun `user session listener added at start receives events once until removed`() {
+        val events = CopyOnWriteArrayList<SessionStateEvent>()
+        val listener = UserSessionListener { events.add(it) }
+        lateinit var userSessionId: String
+        lateinit var nextUserSessionId: String
+
+        testRule.runTest(
+            sdkConfig = {
+                userSession {
+                    addListener(listener)
+                    addListener(listener)
+                }
+            },
+            testCaseAction = {
+                recordSession {
+                    userSessionId = checkNotNull(embrace.currentUserSessionId)
+                    embrace.endUserSession()
+                    nextUserSessionId = checkNotNull(embrace.currentUserSessionId)
+                    embrace.removeUserSessionListener(listener)
+                    embrace.endUserSession()
+                }
+            },
+            assertAction = {
+                val sessionEvents = events.filter { it.userSessionId == userSessionId }
+                assertTrue(sessionEvents.first() is SessionStateEvent.UserSessionActive)
+                assertEquals(1, sessionEvents.count { it is SessionStateEvent.UserSessionActive })
+                assertEquals(1, sessionEvents.count { it is SessionStateEvent.UserSessionEnded })
+
+                // removed before the next user session ended
+                assertTrue(events.none { it is SessionStateEvent.UserSessionEnded && it.userSessionId == nextUserSessionId })
             }
         )
     }

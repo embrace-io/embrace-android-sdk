@@ -155,6 +155,7 @@ internal class RealSdkInstanceFactoryTest {
             ),
             sdkStartTimeMs = clock.now(),
             sdkInitResourceUsageTracker = SdkInitResourceUsageTracker(errorHandler),
+            userSessionListeners = emptyList(),
             overrides = overrides,
         ).also(instances::add)
     }
@@ -222,6 +223,7 @@ internal class RealSdkInstanceFactoryTest {
             ),
             sdkStartTimeMs = clock.now(),
             sdkInitResourceUsageTracker = SdkInitResourceUsageTracker(errorHandler),
+            userSessionListeners = emptyList(),
             overrides = overrides,
         ).also(instances::add)
     }

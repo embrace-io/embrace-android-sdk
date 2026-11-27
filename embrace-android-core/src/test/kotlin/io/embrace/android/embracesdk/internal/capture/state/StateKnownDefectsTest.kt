@@ -62,16 +62,21 @@ internal class StateKnownDefectsTest {
     fun `the event left out when too many are waiting can be the one that says a session part started`() {
         val emitter = emitter(maxPendingEvents = 1)
         val recorder = StateRecorder(clock, listener = emitter).declaring("network")
-        recorder.onEvent(StateUpdate("network", "wifi", clock.now()))
         recorder.beginJournal(clock.now(), journal::addAll)
+        executor.runCurrentlyBlocked()
+        // a change of the first part is still waiting to be emitted when the second part starts
+        recorder.onEvent(StateUpdate("network", "wifi", clock.now()))
+        recorder.endJournal(clock.now())
+        recorder.beginJournal(clock.now(), mutableListOf<StateRecord>()::addAll)
 
         assertEquals(1, emitter.droppedEvents())
         executor.runCurrentlyBlocked()
-        assertEquals(listOf("emb.app.state.change"), logger.logs.map { it.eventName })
+        // the first part's start and its change are emitted, and nothing says the second part started
+        assertEquals(listOf("emb.app.state.snapshot", "emb.app.state.change"), logger.logs.map { it.eventName })
     }
 
     @Test
-    fun `a change is listed by when it was recorded and not by its time, so an event can lie outside its span with no mark`() {
+    fun `a change is listed or counted by when it was recorded and not by its time, so an event can lie outside its span with no mark`() {
         val recorder = StateRecorder(clock).declaring("network")
         recorder.onEvent(StateUpdate("network", "wifi", PART_START_MS + 500))
         recorder.beginJournal(PART_START_MS, journal::addAll)
@@ -79,43 +84,27 @@ internal class StateKnownDefectsTest {
         recorder.onEvent(StateUpdate("network", "none", PART_END_MS + 500))
         recorder.endJournal(PART_END_MS + 1_000)
 
-        // a change timed after the part started is listed before the part start, and one timed before it is listed after
-        val partStart = journal.indexOfFirst { it.part_start != null }
-        assertEquals(PART_START_MS, journal[partStart].time_ms)
-        assertEquals("wifi" to PART_START_MS + 500, journal[partStart - 1].let { it.change?.value_?.value_ to it.time_ms })
-        assertEquals("wan" to PART_START_MS - 500, journal[partStart + 1].let { it.change?.value_?.value_ to it.time_ms })
+        // a change timed after the part started is counted as made with no session part, and listed nowhere, and one
+        // timed before the part started is listed in it
+        val partStart = journal.single { it.part_start != null }
+        assertEquals(PART_START_MS, partStart.time_ms)
+        assertEquals(listOf("network" to 1), partStart.part_start?.not_in_session_counts?.map { it.state to it.count })
+        assertEquals(
+            listOf("wan" to PART_START_MS - 500, "none" to PART_END_MS + 500),
+            journal.filter { it.change != null }.map { it.change?.value_?.value_ to it.time_ms },
+        )
 
-        // the span covers the session part, two of its three events lie outside it, and nothing says so
+        // the span covers the session part, both of its events lie outside it, and nothing says so
         val stateSpan = stateSpan()
         assertEquals(PART_START_MS.millisToNanos(), stateSpan.startTimeNanos)
         assertEquals(PART_END_MS.millisToNanos(), stateSpan.endTimeNanos)
         assertEquals(
-            listOf(PART_START_MS + 500, PART_START_MS - 500, PART_END_MS + 500).map { it.millisToNanos() },
+            listOf(PART_START_MS - 500, PART_END_MS + 500).map { it.millisToNanos() },
             checkNotNull(stateSpan.events).map { it.timestampNanos },
         )
         val attributes = checkNotNull(stateSpan.attributes).associate { it.key to it.data }
-        assertEquals("1", attributes["emb.app.state.part_start_seq"])
+        assertEquals("1", attributes["emb.app.state.not_in_session_count.network"])
         assertNull(attributes["emb.app.state.truncated"])
-    }
-
-    @Test
-    fun `a change folded and a change dropped are reported through the one callback, so one limit name counts both`() {
-        var reported = 0
-        val recorder = StateRecorder(clock, maxChanges = 2, maxHeldChanges = 1, onChangeDropped = { reported++ })
-            .declaring("network")
-        recorder.onEvent(StateUpdate("network", "wifi", clock.now()))
-        recorder.onEvent(StateUpdate("network", "wan", clock.now()))
-        assertEquals(1, reported)
-
-        recorder.beginJournal(clock.now(), journal::addAll)
-        recorder.onEvent(StateUpdate("network", "none", clock.now()))
-        recorder.onEvent(StateUpdate("network", "wifi", clock.now()))
-        recorder.endJournal(clock.now())
-        assertEquals(2, reported)
-
-        // the journal keeps apart what the callback does not: one change was folded and one was dropped
-        assertEquals(1, journal.single { it.part_start != null }.part_start?.dropped_changes)
-        assertEquals(1, journal.single { it.part_end != null }.part_end?.dropped_changes)
     }
 
     @Test
@@ -151,8 +140,8 @@ internal class StateKnownDefectsTest {
         args.eventBus.addHandler(StateUpdate.KEY) { emitted += it }
         recorder.listenTo(args.eventBus)
         val dataSource = TestStateDataSource(args)
-        dataSource.onDataCaptureEnabled()
         recorder.beginJournal(clock.now(), journal::addAll)
+        dataSource.onDataCaptureEnabled()
 
         // two values that are the same up to where a value is cut
         val sameUpToTheCut = "v".repeat(2_000)

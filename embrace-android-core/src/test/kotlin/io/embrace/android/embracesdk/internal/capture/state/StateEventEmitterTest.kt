@@ -45,6 +45,7 @@ internal class StateEventEmitterTest {
     @Test
     fun `each change is emitted off the thread that reported it, in order, with the value of every state after it`() {
         createRecorder(includeValues = true)
+        beginPart()
         val wifiTime = update("network", "wifi")
         // one attribute under a key the state declares, one under a stem that is reserved, which no declaration gets, and
         // one that is not declared: only the first is carried
@@ -58,15 +59,18 @@ internal class StateEventEmitterTest {
         assertTrue(logger.logs.isEmpty())
         executor.runCurrentlyBlocked()
 
-        assertEquals(listOf(1L, 2L, 3L), logger.logs.map { it.attributes["emb.app.state.seq"] })
-        with(logger.logs[0]) {
+        // the part's start, which found no state with a value, and then the changes
+        assertEquals("emb.app.state.snapshot", logger.logs.first().eventName)
+        val changes = logger.logs.drop(1)
+        assertEquals(listOf(1L, 2L, 3L), changes.map { it.attributes["emb.app.state.seq"] })
+        with(changes[0]) {
             assertChangeEvent(wifiTime)
             assertEquals(
                 changeAttributes(1, "network", "wifi") + mapOf("emb.app.state.value.network" to "wifi"),
                 attributes,
             )
         }
-        with(logger.logs[1]) {
+        with(changes[1]) {
             assertChangeEvent(screenTime)
             assertEquals(
                 changeAttributes(2, "screen-automatic", "Backgrounded") + mapOf(
@@ -79,33 +83,73 @@ internal class StateEventEmitterTest {
                 attributes,
             )
         }
-        with(logger.logs[2]) {
+        with(changes[2]) {
             assertChangeEvent(offlineTime)
             assertEquals("none", attributes["emb.app.state.value.network"])
             // the value the state had before, and none on the first change of each state
             assertEquals("wifi", attributes["emb.app.state.previous_value"])
             assertNull(attributes["emb.app.state.previous_value_type"])
         }
-        assertNull(logger.logs[0].attributes["emb.app.state.previous_value"])
-        assertNull(logger.logs[1].attributes["emb.app.state.previous_value"])
+        assertNull(changes[0].attributes["emb.app.state.previous_value"])
+        assertNull(changes[1].attributes["emb.app.state.previous_value"])
         // the values on the first event are the ones after that change, and not the ones when it was emitted
-        assertNull(logger.logs[0].attributes["emb.app.state.value.screen-automatic"])
+        assertNull(changes[0].attributes["emb.app.state.value.screen-automatic"])
+    }
+
+    @Test
+    fun `a change made with no session part in progress is not emitted, and the start of the next part carries the value it left`() {
+        createRecorder(includeValues = true)
+        // before the first part, and between two parts
+        update("network", "wifi")
+        update("network", "wan")
+        beginPart()
+        update("network", "none")
+        recorder.endJournal(clock.tick())
+        update("network", "wifi")
+        update("power", "low")
+        val secondPartStart = beginPart()
+        executor.runCurrentlyBlocked()
+
+        assertEquals(
+            listOf("emb.app.state.snapshot", "emb.app.state.change", "emb.app.state.snapshot"),
+            logger.logs.map(FakeLogRecord::eventName),
+        )
+        // the numbers the events carry skip the changes that were not emitted
+        assertEquals(listOf(2L, 3L, 5L), logger.logs.map { it.attributes["emb.app.state.seq"] })
+        assertEquals("wan", logger.logs[0].attributes["emb.app.state.value.network"])
+        with(logger.logs[1]) {
+            assertEquals("none", attributes["emb.app.state.new_value"])
+            assertEquals("wan", attributes["emb.app.state.previous_value"])
+        }
+        with(logger.logs[2]) {
+            assertEquals(secondPartStart.millisToNanos(), timestamp)
+            assertEquals("wifi", attributes["emb.app.state.value.network"])
+            assertEquals("low", attributes["emb.app.state.value.power"])
+        }
     }
 
     @Test
     fun `without the values, a change is emitted alone, and the start of a session part carries every value either way`() {
         createRecorder(includeValues = false)
+        beginPart()
         update("network", "wifi")
         update("screen-automatic", Backgrounded)
-        val partStart = clock.tick(1000)
-        recorder.beginJournal(partStart) { }
+        recorder.endJournal(clock.tick())
+        val partStart = beginPart()
         update("network", "none")
         executor.runCurrentlyBlocked()
 
         assertEquals(
-            listOf("emb.app.state.change", "emb.app.state.change", "emb.app.state.snapshot", "emb.app.state.change"),
+            listOf(
+                "emb.app.state.snapshot",
+                "emb.app.state.change",
+                "emb.app.state.change",
+                "emb.app.state.snapshot",
+                "emb.app.state.change",
+            ),
             logger.logs.map(FakeLogRecord::eventName),
         )
+        logger.logs.removeAt(0)
         assertEquals(changeAttributes(1, "network", "wifi"), logger.logs[0].attributes)
         assertEquals(
             changeAttributes(2, "screen-automatic", "Backgrounded") + mapOf("emb.app.state.new_value_type" to "system"),
@@ -139,10 +183,13 @@ internal class StateEventEmitterTest {
         listOf(true, false).forEach { includeValues ->
             logger.logs.clear()
             createRecorder(includeValues = includeValues)
+            beginPart()
             update("screen-automatic", Backgrounded)
             update("screen-automatic", "Home")
-            recorder.beginJournal(clock.tick(1000)) { }
+            recorder.endJournal(clock.tick())
+            beginPart()
             executor.runCurrentlyBlocked()
+            logger.logs.removeAt(0)
 
             val change = logger.logs[1]
             assertEquals("Home", change.attributes["emb.app.state.new_value"])
@@ -159,6 +206,9 @@ internal class StateEventEmitterTest {
     @Test
     fun `no more than the limit wait to be emitted, and the ones left out are counted`() {
         createRecorder(includeValues = true, maxPendingEvents = 3)
+        beginPart()
+        executor.runCurrentlyBlocked()
+        logger.logs.clear()
         repeat(5) { index -> update("network", "value-$index") }
 
         // nothing has been emitted yet, so the fourth and fifth changes found three waiting
@@ -235,22 +285,22 @@ internal class StateEventEmitterTest {
             eventLogger = waitingLogger,
         )
 
-        update("network", "value-0")
+        beginPart()
         assertTrue(emitting.await(WAIT_SECONDS, TimeUnit.SECONDS))
-        // the worker is in the middle of emitting the first event while the rest are reported
-        repeat(EVENTS - 1) { update("network", "value-${it + 1}") }
-        assertEquals(EVENTS - 1, emitter.pendingEvents())
+        // the worker is in the middle of emitting the first event, the part's start, while the changes are reported
+        repeat(EVENTS) { update("network", "value-$it") }
+        assertEquals(EVENTS, emitter.pendingEvents())
 
         // the workers shut down with the SDK while that pass is under way, and it still emits everything it was left
         workers.close()
         resume.countDown()
         assertTrue(workers.awaitTermination(TimeUnit.SECONDS.toMillis(WAIT_SECONDS)))
-        assertEquals((1..EVENTS).map(Int::toLong), logger.logs.map { it.attributes["emb.app.state.seq"] })
+        assertEquals((0..EVENTS).map(Int::toLong), logger.logs.map { it.attributes["emb.app.state.seq"] })
         assertEquals(0, emitter.pendingEvents())
 
         // a change reported once the worker has gone is not emitted, and nothing is kept of it
         repeat(EVENTS) { update("network", "after-shutdown-$it") }
-        assertEquals(EVENTS, logger.logs.size)
+        assertEquals(EVENTS + 1, logger.logs.size)
         assertEquals(0, emitter.pendingEvents())
     }
 
@@ -287,6 +337,15 @@ internal class StateEventEmitterTest {
             maxPendingEvents = maxPendingEvents,
         )
         recorder = StateRecorder(clock, maxChanges = maxChanges, listener = emitter)
+    }
+
+    /**
+     * Starts a session part's change log, which is what a change has to be made during to be emitted.
+     */
+    private fun beginPart(): Long {
+        val time = clock.tick(1000)
+        recorder.beginJournal(time) { }
+        return time
     }
 
     /**

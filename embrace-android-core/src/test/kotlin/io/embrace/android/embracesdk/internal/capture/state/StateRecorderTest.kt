@@ -13,6 +13,7 @@ import io.embrace.android.embracesdk.internal.config.resolved.AutoDataCaptureCon
 import io.embrace.android.embracesdk.internal.config.resolved.EmbraceConfig
 import io.embrace.android.embracesdk.internal.config.resolved.PersistenceConfig
 import io.embrace.android.embracesdk.internal.session.persistence.StatePartEnd
+import io.embrace.android.embracesdk.internal.session.persistence.StatePartStart
 import io.embrace.android.embracesdk.internal.session.persistence.StateRecord
 import io.embrace.android.embracesdk.internal.session.persistence.StateValue
 import org.junit.Assert.assertEquals
@@ -205,6 +206,7 @@ internal class StateRecorderTest {
             }
         }
         recorder = StateRecorder(clock, listener = listener, keepRecent = true)
+        recorder.beginJournal(clock.now()) { }
         val reporter = thread { update("network", "wifi") }
         assertTrue(recording.await(WAIT_SECONDS, TimeUnit.SECONDS))
 
@@ -222,7 +224,7 @@ internal class StateRecorderTest {
     }
 
     @Test
-    fun `a listener is told of each recorded change as it is made, with the values after it, and of each part that starts`() {
+    fun `a listener is told of each change a journal lists as it is made, with the values after it, and of each part that starts`() {
         val told = mutableListOf<String>()
         val listener = object : StateChangeListener {
             override fun onChange(record: StateRecord, snapshot: StateSnapshot, previous: StateValue?) {
@@ -231,16 +233,17 @@ internal class StateRecorderTest {
             }
 
             override fun onPartStart(timeMs: Long, snapshot: StateSnapshot) {
-                told.add("part@$timeMs:${snapshot.sequence}")
+                told.add("part@$timeMs:${snapshot.sequence}:${snapshot.encoded}")
             }
         }
-        recorder = StateRecorder(clock, maxChanges = 3, maxHeldChanges = 1, listener = listener)
+        recorder = StateRecorder(clock, maxChanges = 2, listener = listener)
 
-        // with no part in progress a change is reported when it is made, even one that is later folded away
+        // with no part in progress a change is not reported
         update("network", "wifi")
         update("network", "wan")
-        assertEquals(listOf("1:network=wifi", "2:network=wan"), told)
+        assertEquals(emptyList<String>(), told)
 
+        // the start of a part is reported with the values those changes left
         val partStart = clock.tick(1000)
         recorder.beginJournal(partStart, journal::addAll)
         update("power", "low")
@@ -251,9 +254,7 @@ internal class StateRecorderTest {
         update("network", "wifi")
         assertEquals(
             listOf(
-                "1:network=wifi",
-                "2:network=wan",
-                "part@$partStart:2",
+                "part@$partStart:2:network=wan",
                 "3:network=wan;power=low",
                 "4:network=none;power=low",
             ),
@@ -263,49 +264,84 @@ internal class StateRecorderTest {
     }
 
     @Test
-    fun `changes made with no session part in progress open the journal of the next part`() {
-        val processStart = clock.now()
-        update("network", "wifi")
-        update("network", "wan")
-        assertTrue(journal.isEmpty())
+    fun `a change made with no journal open takes a number and replaces the value, is counted for its state, and is kept nowhere`() {
+        val told = mutableListOf<String>()
+        val listener = object : StateChangeListener {
+            override fun onChange(record: StateRecord, snapshot: StateSnapshot, previous: StateValue?) {
+                told.add("${record.sequence}:${snapshot.encoded}")
+            }
 
+            override fun onPartStart(timeMs: Long, snapshot: StateSnapshot) {
+                told.add("part:${snapshot.sequence}")
+            }
+        }
+        recorder = StateRecorder(clock, listener = listener, keepRecent = true)
+        // a state's first value counts like any other change, and an update that repeats the value is no change
+        update("network", "wifi")
+        clock.tick(10)
+        val secondChange = update("network", "wan")
+        update("network", "wan")
+        clock.tick(10)
+        update("power", "low")
+
+        // each took its number and replaced the value, so a stamp is right, and so is the value at a recent time
+        assertEquals(3L, recorder.snapshot().sequence)
+        assertEquals("network=wan;power=low", recorder.snapshot().encoded)
+        assertEquals("network=wan", recorder.snapshotAt(secondChange)?.encoded)
+        assertEquals(2L, recorder.snapshotAt(secondChange)?.sequence)
+        // none was handed to a journal, as there was none, and none to the listener
+        assertTrue(journal.isEmpty())
+        assertEquals(emptyList<String>(), told)
+
+        // the next journal opens with every state's value as it stands, as of the last number, and its start carries
+        // the count for each state. It lists none of those changes.
         val partStart = clock.tick(1000)
         recorder.beginJournal(partStart, journal::addAll)
-
-        // every state had no value when the process started
+        assertEquals(2, journal.size)
         with(journal[0]) {
-            assertEquals(0L, sequence)
-            assertEquals(processStart, time_ms)
-            assertEquals(emptyList<Any>(), checkNotNull(checkpoint).values)
-        }
-        assertEquals(listOf("wifi", "wan"), journal.subList(1, 3).map { it.change?.value_?.value_ })
-        with(journal[3]) {
-            assertNotNull(part_start)
-            assertEquals(2L, sequence)
+            assertEquals(3L, sequence)
             assertEquals(partStart, time_ms)
+            assertEquals(listOf("network=wan", "power=low"), checkNotNull(checkpoint).values.map { "${it.state}=${it.value_}" })
         }
+        with(journal[1]) {
+            assertEquals(3L, sequence)
+            assertEquals(partStart, time_ms)
+            assertEquals(listOf("network:2", "power:1"), checkNotNull(part_start).notInSession())
+        }
+        assertEquals(listOf("part:3"), told)
 
         update("network", "none")
         val partEnd = clock.tick(1000)
         recorder.endJournal(partEnd)
+        assertEquals(listOf(4L), journal.filter { it.change != null }.map(StateRecord::sequence))
         with(journal.last()) {
             assertNotNull(part_end)
-            assertEquals(3L, sequence)
+            assertEquals(4L, sequence)
             assertEquals(partEnd, time_ms)
             assertEquals(0, checkNotNull(part_end).dropped_changes)
         }
 
-        // the next journal opens with the values the last one ended with
-        update("power", "low")
+        // a change made after a journal ended is in no journal. The counts start again with each journal: the next one
+        // counts what changed since this one ended, and opens with the values as they then stand.
+        update("power", "normal")
+        assertEquals(listOf(4L), journal.filter { it.change != null }.map(StateRecord::sequence))
         val nextJournal = mutableListOf<StateRecord>()
         recorder.beginJournal(clock.tick(1000), nextJournal::addAll)
         with(nextJournal[0]) {
-            assertEquals(3L, sequence)
-            assertEquals(partEnd, time_ms)
-            assertEquals(listOf("network=none"), checkNotNull(checkpoint).values.map { "${it.state}=${it.value_}" })
+            assertEquals(5L, sequence)
+            assertEquals(
+                listOf("network=none", "power=normal"),
+                checkNotNull(checkpoint).values.map { "${it.state}=${it.value_}" },
+            )
         }
-        assertEquals("low", nextJournal[1].change?.value_?.value_)
-        assertEquals(4L, nextJournal[2].sequence)
+        assertEquals(listOf("power:1"), checkNotNull(nextJournal[1].part_start).notInSession())
+        recorder.endJournal(clock.now())
+
+        // and a journal that begins with nothing changed since the last one ended has no count
+        val lastJournal = mutableListOf<StateRecord>()
+        recorder.beginJournal(clock.now(), lastJournal::addAll)
+        assertEquals(5L, lastJournal[0].sequence)
+        assertEquals(emptyList<String>(), checkNotNull(lastJournal[1].part_start).notInSession())
     }
 
     @Test
@@ -347,7 +383,7 @@ internal class StateRecorderTest {
         recorder.beginJournal(clock.now(), nextJournal::addAll)
         update("power", "normal")
         assertEquals(1, nextJournal.count { it.change != null })
-        assertEquals(0, checkNotNull(nextJournal.single { it.part_start != null }.part_start).dropped_changes)
+        assertEquals(emptyList<String>(), checkNotNull(nextJournal.single { it.part_start != null }.part_start).notInSession())
         recorder.endJournal(clock.now())
         assertEquals(emptyList<String>(), nextJournal.limitsReached())
         with(checkNotNull(nextJournal.last().part_end)) {
@@ -375,8 +411,8 @@ internal class StateRecorderTest {
             onStateLimitApplied = { stateLimitsApplied += it },
             listener = listener,
         )
-        // changes held from before the part are listed, and use up none of the state's limit for the part
-        repeat(3) { update("network", "held-$it", maxChangesInPart = 2) }
+        // changes made before the part are counted and not listed, and use up none of the state's limit for the part
+        repeat(3) { update("network", "before-$it", maxChangesInPart = 2) }
         recorder.beginJournal(clock.now(), journal::addAll)
         update("network", "wifi", maxChangesInPart = 2)
         update("network", "wan", maxChangesInPart = 2)
@@ -386,8 +422,9 @@ internal class StateRecorderTest {
         update("power", "normal")
 
         // the refused changes keep their numbers, so the numbers of the changes listed skip in the middle
-        assertEquals(listOf(1L, 2L, 3L, 4L, 5L, 7L, 9L), journal.filter { it.change != null }.map(StateRecord::sequence))
-        assertEquals(listOf(1L, 2L, 3L, 4L, 5L, 7L, 9L), told)
+        assertEquals(listOf(4L, 5L, 7L, 9L), journal.filter { it.change != null }.map(StateRecord::sequence))
+        assertEquals(listOf(4L, 5L, 7L, 9L), told)
+        assertEquals(listOf("network:3"), checkNotNull(journal[1].part_start).notInSession())
         // the limit is recorded where it first refuses a change, with that change's number and time, and not again for
         // the next change it refuses, nor for a change that is listed. It is no change, and the listener is not told.
         assertEquals(listOf("network:2@6"), journal.limitsReached())
@@ -477,6 +514,8 @@ internal class StateRecorderTest {
         update("power", "normal", droppedChanges = 1)
         recorder.endJournal(clock.now())
         assertEquals(listOf("power:5:null"), checkNotNull(nextJournal.last().part_end).counts())
+        // what a reporter dropped is no part of the count of changes made with no journal open
+        assertEquals(emptyList<String>(), checkNotNull(nextJournal[1].part_start).notInSession())
 
         val lastJournal = mutableListOf<StateRecord>()
         recorder.beginJournal(clock.now(), lastJournal::addAll)
@@ -540,49 +579,38 @@ internal class StateRecorderTest {
     }
 
     @Test
-    fun `more changes than are held for the next journal are folded into the values it opens with`() {
-        recorder = StateRecorder(clock, maxChanges = 4, maxHeldChanges = 2, onChangeDropped = { changesDropped++ })
+    fun `changes made with no journal open use up none of the global limit, which counts a part's own changes`() {
+        recorder = StateRecorder(clock, maxChanges = 2, onChangeDropped = { changesDropped++ })
+        // more changes with no journal open than a journal may list: none is refused, as none is kept
         update("network", "wifi")
-        val lastFolded = update("power", "low")
+        update("power", "low")
         update("network", "wan")
         update("network", "none")
+        assertEquals(0, changesDropped)
         recorder.beginJournal(clock.tick(1000), journal::addAll)
 
-        // the two oldest changes are no longer records, and the journal opens with the values after them
         with(journal[0]) {
-            assertEquals(2L, sequence)
-            assertEquals(lastFolded, time_ms)
+            assertEquals(4L, sequence)
             assertEquals(
-                listOf("network=wifi", "power=low"),
+                listOf("network=none", "power=low"),
                 checkNotNull(checkpoint).values.map { "${it.state}=${it.value_}" },
             )
         }
-        assertEquals(listOf(3L, 4L), journal.subList(1, 3).map(StateRecord::sequence))
-        assertEquals(listOf("wan", "none"), journal.subList(1, 3).map { it.change?.value_?.value_ })
-        with(journal[3]) {
-            assertEquals(4L, sequence)
-            assertEquals(2, checkNotNull(part_start).dropped_changes)
-        }
-        assertEquals(2, changesDropped)
+        assertEquals(listOf("network:3", "power:1"), checkNotNull(journal[1].part_start).notInSession())
 
-        // the changes a journal opens with count towards its limit
+        // the journal lists as many of its own changes as the limit allows
         update("power", "normal")
         update("power", "low")
         update("power", "normal")
-        assertEquals(listOf(3L, 4L, 5L, 6L), journal.filter { it.change != null }.map(StateRecord::sequence))
+        assertEquals(listOf(5L, 6L), journal.filter { it.change != null }.map(StateRecord::sequence))
         recorder.endJournal(clock.now())
         with(checkNotNull(journal.last().part_end)) {
             assertEquals(1, dropped_changes)
             // only the state that had a change refused: the changes listed lead to the value of the other
             assertEquals(listOf("power=normal"), values.map { "${it.state}=${it.value_}" })
-            assertEquals(4, global_limit)
+            assertEquals(2, global_limit)
         }
-
-        // nothing was folded before the next journal
-        val nextJournal = mutableListOf<StateRecord>()
-        recorder.beginJournal(clock.now(), nextJournal::addAll)
-        assertEquals(7L, nextJournal[0].sequence)
-        assertEquals(0, checkNotNull(nextJournal[1].part_start).dropped_changes)
+        assertEquals(1, changesDropped)
     }
 
     @Test
@@ -820,6 +848,11 @@ internal class StateRecorderTest {
     private fun List<StateRecord>.limitsReached(): List<String> = mapNotNull { record ->
         record.limit_reached?.let { "${it.state}:${it.limit}@${record.sequence}" }
     }
+
+    /**
+     * What a part start counts as made with no journal open, as `state:count` for each state it counts something for.
+     */
+    private fun StatePartStart.notInSession(): List<String> = not_in_session_counts.map { "${it.state}:${it.count}" }
 
     /**
      * What a part end counts as not listed, as `state:count:limit` for each state it counts something for.

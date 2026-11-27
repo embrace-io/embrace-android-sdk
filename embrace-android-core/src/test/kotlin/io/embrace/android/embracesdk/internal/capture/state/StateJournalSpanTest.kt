@@ -9,14 +9,16 @@ import io.embrace.android.embracesdk.internal.payload.Attribute
 import io.embrace.android.embracesdk.internal.payload.Envelope
 import io.embrace.android.embracesdk.internal.payload.SessionPartPayload
 import io.embrace.android.embracesdk.internal.payload.Span
+import io.embrace.android.embracesdk.internal.session.persistence.StateChange
+import io.embrace.android.embracesdk.internal.session.persistence.StateCheckpoint
 import io.embrace.android.embracesdk.internal.session.persistence.StatePartEnd
+import io.embrace.android.embracesdk.internal.session.persistence.StatePartStart
 import io.embrace.android.embracesdk.internal.session.persistence.StateRecord
 import io.embrace.android.embracesdk.internal.session.persistence.StateValue
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotEquals
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertSame
-import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
 
@@ -49,10 +51,14 @@ internal class StateJournalSpanTest {
     @Test
     fun `a journal of a part that ended is delivered as a completed span`() {
         declare("screen", attributeKeys = setOf("key"))
+        // a part before this one, in which power saving took its value
+        recorder.beginJournal(clock.now(), mutableListOf<StateRecord>()::addAll)
+        update("power", "low")
+        recorder.endJournal(clock.now())
+        // between the two parts the network changes twice and the screen once, and power saving does not change
         update("network", "wifi")
         update("screen", Backgrounded)
-        recorder.endJournal(clock.now())
-        val heldChangeTime = update("network", "wan")
+        update("network", "wan")
         val partStart = clock.tick(1000)
         recorder.beginJournal(partStart, journal::addAll)
         val changeTime = update("screen", "Home", mapOf("key" to "value"))
@@ -77,29 +83,26 @@ internal class StateJournalSpanTest {
                 "emb.process_identifier" to "process",
                 "emb.session_part_id" to "part",
                 "emb.user_session_id" to "user-session",
-                // nothing had a value when the process started, which is what this first journal opens with
-                "emb.app.state.initial_seq" to "0",
-                "emb.app.state.part_start_seq" to "3",
+                // every state's value as the part started, as of the last change made before it
+                "emb.app.state.initial_value.power" to "low",
+                "emb.app.state.initial_value.network" to "wan",
+                "emb.app.state.initial_value.screen" to "Backgrounded",
+                "emb.app.state.initial_value_type.screen" to "system",
+                "emb.app.state.initial_seq" to "4",
+                // how many times each state changed with no session part since the part before: the states that did
+                // have a count, and the state that did not has none
+                "emb.app.state.not_in_session_count.network" to "2",
+                "emb.app.state.not_in_session_count.screen" to "1",
             ),
             stateSpan.attributeMap(),
         )
 
-        val events = checkNotNull(stateSpan.events)
-        assertEquals(
-            listOf("emb-state-network", "emb-state-screen", "emb-state-network", "emb-state-screen"),
-            events.map { it.name },
-        )
-        // an event carries its own number, which is its position after the journal's opening values
-        assertEquals(listOf("1", "2", "3", "4"), events.map { it.attributeMap()["emb.app.state.seq"] })
-        assertEquals(
-            mapOf("emb.app.state.seq" to "2", "emb.app.state.new_value" to "Backgrounded", "emb.app.state.new_value_type" to "system"),
-            events[1].attributeMap(),
-        )
-        // made before the part started, so it is earlier than the span itself
-        assertEquals(heldChangeTime.millisToNanos(), events[2].timestampNanos)
-        assertTrue(checkNotNull(events[2].timestampNanos) < checkNotNull(stateSpan.startTimeNanos))
-        assertEquals(changeTime.millisToNanos(), events[3].timestampNanos)
-        assertEquals(mapOf("key" to "value", "emb.app.state.seq" to "4", "emb.app.state.new_value" to "Home"), events[3].attributeMap())
+        // the changes made between the two parts are listed nowhere: the events are the part's own
+        val event = checkNotNull(stateSpan.events).single()
+        assertEquals("emb-state-screen", event.name)
+        assertEquals(changeTime.millisToNanos(), event.timestampNanos)
+        // an event carries its own number, which is above the number the opening values are as of
+        assertEquals(mapOf("key" to "value", "emb.app.state.seq" to "5", "emb.app.state.new_value" to "Home"), event.attributeMap())
 
         val link = checkNotNull(spans[1].links).single()
         assertEquals(stateSpan.spanId, link.spanId)
@@ -135,7 +138,8 @@ internal class StateJournalSpanTest {
         assertEquals("Backgrounded", attributes["emb.app.state.initial_value.screen"])
         assertEquals("system", attributes["emb.app.state.initial_value_type.screen"])
         assertEquals("2", attributes["emb.app.state.initial_seq"])
-        assertEquals("2", attributes["emb.app.state.part_start_seq"])
+        // nothing changed between the two parts, so no state has a count of changes made with no session part
+        assertEquals(emptyList<String?>(), attributes.keys.filter { it?.contains("not_in_session") == true })
         // nothing says how the part ended, so nothing says the events lead to the values it ended with
         assertEquals("true", attributes["emb.app.state.truncated"])
         assertEquals(listOf("wan"), checkNotNull(stateSpan.events).map { it.attributeMap()["emb.app.state.new_value"] })
@@ -170,8 +174,8 @@ internal class StateJournalSpanTest {
 
     @Test
     fun `a span carried over a part boundary is given the number the journal's checkpoint and part start hold`() {
-        // nine changes are folded into the checkpoint, and the process is killed before another is made
-        recorder = StateRecorder(clock, maxChanges = 100, maxHeldChanges = 0)
+        // nine changes are made with no session part, which no journal lists, and the process is killed in the part that
+        // follows before another is made
         repeat(9) { update("network", "value-$it") }
         recorder.beginJournal(clock.now(), journal::addAll)
         assertEquals(emptyList<StateRecord>(), journal.filter { it.change != null })
@@ -488,8 +492,8 @@ internal class StateJournalSpanTest {
     }
 
     @Test
-    fun `changes folded in before the part and changes dropped during it are counted apart`() {
-        recorder = StateRecorder(clock, maxChanges = 2, maxHeldChanges = 1)
+    fun `changes made with no session part and changes dropped during the part are counted apart`() {
+        recorder = StateRecorder(clock, maxChanges = 1)
         update("network", "wifi")
         update("network", "wan")
         recorder.beginJournal(clock.now(), journal::addAll)
@@ -500,13 +504,14 @@ internal class StateJournalSpanTest {
         val stateSpan = stateSpanOf(listOf(sessionSpan))
         val attributes = stateSpan.attributeMap()
 
-        // the first change is behind the values the span opens with, and the last is past the changes it holds
-        assertEquals("1", attributes["emb.app.state.folded_changes"])
-        assertEquals("1", attributes["emb.app.state.initial_seq"])
-        assertEquals("wifi", attributes["emb.app.state.initial_value.network"])
-        assertEquals(listOf("wan", "none"), stateSpan.newValues())
-        // the numbers follow initial_seq, and the dropped change is not among them
-        assertEquals(listOf("2", "3"), checkNotNull(stateSpan.events).map { it.attributeMap()["emb.app.state.seq"] })
+        // the first two changes are behind the values the span opens with, and the last is past the changes it holds
+        assertEquals("2", attributes["emb.app.state.not_in_session_count.network"])
+        assertNull(attributes["emb.app.state.not_in_session_count.screen"])
+        assertEquals("2", attributes["emb.app.state.initial_seq"])
+        assertEquals("wan", attributes["emb.app.state.initial_value.network"])
+        assertEquals(listOf("none"), stateSpan.newValues())
+        // the number follows initial_seq, and the dropped change is not among the events
+        assertEquals(listOf("3"), checkNotNull(stateSpan.events).map { it.attributeMap()["emb.app.state.seq"] })
         assertEquals("1", attributes["emb.app.state.dropped_changes"])
         // the value the part ended with is given for the state that had a change dropped, and not for the other
         assertEquals("Backgrounded", attributes["emb.app.state.final_value.screen"])
@@ -516,7 +521,7 @@ internal class StateJournalSpanTest {
     }
 
     @Test
-    fun `a journal that stops before its part start holds only changes made before the part`() {
+    fun `a journal that stops before its part start is delivered with its opening values and no count of what changed before it`() {
         update("network", "wifi")
         update("network", "wan")
         recorder.beginJournal(clock.now(), journal::addAll)
@@ -526,9 +531,48 @@ internal class StateJournalSpanTest {
             .last()
             .attributeMap()
 
-        assertEquals("0", attributes["emb.app.state.initial_seq"])
-        assertEquals("2", attributes["emb.app.state.part_start_seq"])
+        assertEquals("2", attributes["emb.app.state.initial_seq"])
+        assertEquals("wan", attributes["emb.app.state.initial_value.network"])
+        // the counts are in the part start, which this journal does not have
+        assertEquals(emptyList<String?>(), attributes.keys.filter { it?.contains("not_in_session") == true })
         assertEquals("true", attributes["emb.app.state.truncated"])
+    }
+
+    @Test
+    fun `a journal an earlier build wrote, with changes from before its part listed in it, is delivered with those changes`() {
+        fun change(sequence: Long, value: String) = StateRecord(
+            sequence = sequence,
+            time_ms = clock.tick(),
+            change = StateChange(value_ = StateValue(state = "network", value_ = value)),
+        )
+        // as that build wrote it: a checkpoint from before the changes it held, those changes, a part start whose
+        // first field counted the held changes it had let go of, the part's own changes, and the part's end
+        val written = listOf(
+            StateRecord(sequence = 0, time_ms = clock.now(), checkpoint = StateCheckpoint()),
+            change(1, "wifi"),
+            change(2, "wan"),
+            StateRecord(sequence = 2, time_ms = clock.now(), part_start = StatePartStart.ADAPTER.decode(byteArrayOf(0x08, 0x03))),
+            change(3, "none"),
+            StateRecord(sequence = 3, time_ms = clock.now(), part_end = StatePartEnd()),
+        )
+        // read back from the bytes it was written as
+        val readBack = written.map { StateRecord.ADAPTER.decode(it.encode()) }
+
+        val stateSpan = checkNotNull(envelope(spans = listOf(sessionSpan)).withStateSpan(readBack).data.spans).last()
+        val attributes = stateSpan.attributeMap()
+
+        // every change it holds is an event, in order from the number its opening values are as of
+        assertEquals(listOf("wifi", "wan", "none"), stateSpan.newValues())
+        assertEquals(listOf("1", "2", "3"), checkNotNull(stateSpan.events).map { it.attributeMap()["emb.app.state.seq"] })
+        assertEquals("0", attributes["emb.app.state.initial_seq"])
+        // nothing marks where its part started, and it has no count of a kind it never held
+        assertEquals(
+            emptyList<String?>(),
+            attributes.keys.filter { key ->
+                listOf("part_start", "folded", "not_in_session").any { key?.contains(it) == true }
+            },
+        )
+        assertNull(attributes["emb.app.state.truncated"])
     }
 
     @Test

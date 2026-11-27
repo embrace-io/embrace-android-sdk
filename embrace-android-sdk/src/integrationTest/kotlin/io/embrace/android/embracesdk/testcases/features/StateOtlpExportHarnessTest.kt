@@ -63,7 +63,8 @@ import java.util.concurrent.ConcurrentLinkedQueue
  * background activity is not captured. It is opened on a product list, put in the background, and opened again on a
  * checkout. The network, power saving and the screen change through all of it, between the two session parts too. It
  * makes about 20 state changes, about 30 spans and about 20 logs. One span runs across a change of the network, one starts
- * in the first session part and ends in the second, and one is recorded after the fact.
+ * in the first session part and ends in the second, and one is recorded after the fact. About half of the changes are
+ * made with no session part in progress: those make no event, and each part's snapshot event has the values they left.
  *
  * Beside `network`, `power` and `screen-automatic`, one more state is in what is sent: `test`, from a data source the
  * tests' fakes register in every integration test.
@@ -119,15 +120,29 @@ internal class StateOtlpExportHarnessTest {
         posted.assertSpansAndLogsAreLinked()
         val values = posted.assertEventsReplayToValues()
 
-        // a span carries the value of every state when it started, and of each state that differed when it ended
+        // A span carries the value of every state when it started, and of each state that differed when it ended. A span
+        // that started or ended with no session part in progress has a number there that no event has, and the values it
+        // carries are all an app's exporter has for that number.
+        val partStarts = posted.events(SNAPSHOT_EVENT).map { checkNotNull(it.long(SEQUENCE)) }.sorted()
+        val lastOfFirstPart = values.keys.filter { it < partStarts[1] }.max()
+        fun numberedWithNoPart(number: Long) = number < partStarts[0] || (number > lastOfFirstPart && number < partStarts[1])
         posted.linkedSpans().forEach { span ->
             val sequence = checkNotNull(span.long(SEQUENCE))
-            assertEquals(span.name(), values.getValue(sequence), span.strings(VALUE_PREFIX))
-            val expectedAtEnd = span.long(END_SEQUENCE)?.let { endSequence ->
-                values.getValue(endSequence).filter { (state, value) -> values.getValue(sequence)[state] != value }
+            val endSequence = span.long(END_SEQUENCE)
+            listOfNotNull(sequence, endSequence).filterNot(values::containsKey).forEach { number ->
+                assertTrue("${span.name()} at $number", numberedWithNoPart(number))
             }
-            assertEquals(span.name(), expectedAtEnd.orEmpty(), span.strings(END_VALUE_PREFIX))
+            val atStart = values[sequence] ?: span.strings(VALUE_PREFIX)
+            assertEquals(span.name(), atStart, span.strings(VALUE_PREFIX))
+            if (endSequence == null) {
+                assertEquals(span.name(), emptyMap<String, String>(), span.strings(END_VALUE_PREFIX))
+            }
+            endSequence?.let(values::get)?.let { atEnd ->
+                assertEquals(span.name(), atEnd.filter { (state, value) -> atStart[state] != value }, span.strings(END_VALUE_PREFIX))
+            }
         }
+        // the scenario has a span of each kind: the SDK starts some before the first session part does
+        assertEquals(setOf(true, false), posted.linkedSpans().map { numberedWithNoPart(checkNotNull(it.long(SEQUENCE))) }.toSet())
         // and each change event carries the value of every state after that change
         posted.events(CHANGE_EVENT).forEach { change ->
             assertEquals(values.getValue(checkNotNull(change.long(SEQUENCE))), change.strings(VALUE_PREFIX))
@@ -352,31 +367,52 @@ internal class StateOtlpExportHarnessTest {
     }
 
     /**
-     * The events are every change the process made, each once and in order, and the value of every state when each of the
-     * two session parts started. Replaying the changes gives the value of every state as of each number, which is what
-     * this returns, and what a snapshot, a log and, in the verbose rendering, a span and a change event say they were.
+     * The events are the value of every state when each of the two session parts started, and every change made during a
+     * session part, each once and in order. A change made with no session part in progress has no event, and the next
+     * snapshot has the value it left. Replaying each part's changes from its snapshot gives the value of every state as of
+     * each number an event has, which is what this returns, and what a log and, in the verbose rendering, a span and a
+     * change event say they were.
      */
     private fun Posted.assertEventsReplayToValues(): Map<Long, Map<String, String>> {
-        val changes = events(CHANGE_EVENT)
-        assertEquals((1L..changes.size).toList(), changes.map { it.long(SEQUENCE) })
+        val changes = events(CHANGE_EVENT).sortedBy { it.long(SEQUENCE) }
+        val snapshots = events(SNAPSHOT_EVENT).sortedBy { it.long(SEQUENCE) }
+        assertEquals(2, snapshots.size)
+        val (firstStart, secondStart) = snapshots.map { checkNotNull(it.long(SEQUENCE)) }
         val processIdentifier = checkNotNull(changes.first().string(ENTITY_ID))
         val values = LinkedHashMap<Long, Map<String, String>>()
-        values[0] = emptyMap()
-        changes.forEach { change ->
+        var current = emptyMap<String, String>()
+        var last = 0L
+        changes.forEachIndexed { index, change ->
             val sequence = checkNotNull(change.long(SEQUENCE))
+            // the changes of a part follow its snapshot, and no limit refused one, so their numbers run on from it
+            val startOfPart = if (sequence > secondStart) secondStart else firstStart
+            if (last < startOfPart) {
+                current = snapshots[if (startOfPart == firstStart) 0 else 1].strings(VALUE_PREFIX)
+                values[startOfPart] = current
+                last = startOfPart
+            }
+            assertEquals("change $index", last + 1, sequence)
+            last = sequence
             val state = checkNotNull(change.string("emb.app.state.name"))
-            values[sequence] = values.getValue(sequence - 1) + (state to checkNotNull(change.string("emb.app.state.new_value")))
+            current = current + (state to checkNotNull(change.string("emb.app.state.new_value")))
+            values[sequence] = current
             assertEquals("process", change.string("emb.entity.type"))
             assertEquals(processIdentifier, change.string(ENTITY_ID))
             assertNull(change["body"])
         }
 
-        val snapshots = events(SNAPSHOT_EVENT)
-        assertEquals(2, snapshots.size)
-        snapshots.forEach { snapshot ->
-            assertEquals(values.getValue(checkNotNull(snapshot.long(SEQUENCE))), snapshot.strings(VALUE_PREFIX))
-            assertEquals(processIdentifier, snapshot.string(ENTITY_ID))
+        // The network changed before the first part, and power saving and the network between the two: each took a number
+        // and has no event, and the snapshot that follows has the value it left.
+        assertTrue(firstStart >= 1)
+        assertEquals("wifi", snapshots[0].strings(VALUE_PREFIX)["network"])
+        val lastOfFirstPart = changes.map { checkNotNull(it.long(SEQUENCE)) }.last { it <= secondStart }
+        assertTrue(secondStart >= lastOfFirstPart + 2)
+        with(snapshots[1].strings(VALUE_PREFIX)) {
+            assertEquals("wifi", get("network"))
+            assertEquals("normal", get("power"))
+            assertNotEquals(values.getValue(lastOfFirstPart)["power"], get("power"))
         }
+        snapshots.forEach { snapshot -> assertEquals(processIdentifier, snapshot.string(ENTITY_ID)) }
         assertEquals(changes.size + snapshots.size, logRecords.count { it["eventName"] != null })
 
         logRecords.filter { it["eventName"] == null }.forEach { log ->
@@ -486,18 +522,23 @@ internal class StateOtlpExportHarnessTest {
         fun events(name: String): List<JsonObject> = logRecords.filter { it["eventName"]?.jsonPrimitive?.content == name }
 
         /**
-         * Prints the size of the JSON of the first and last change record, the last being one with a previous value, where
-         * the environment names an endpoint.
+         * Prints the size of the JSON of a change record, where the environment names an endpoint: of the first one with no
+         * previous value, which is a state's first change, and of the last one with a previous value. Every state of the
+         * scenario has its first value before the first session part, and a change made with no session part has no
+         * event, so the scenario has no record of the first kind and says so.
          */
         fun printChangeRecordSize(mode: StateExportMode) {
             // printed only where the harness is run for its numbers, as the endpoint test is
             if (System.getenv(ENDPOINT_VARIABLE).isNullOrBlank()) {
                 return
             }
-            val changes = events(CHANGE_EVENT)
-            val first = changes.first().toString().length
-            val last = changes.last().toString().length
-            println("State OTLP harness, $mode: a change record is $first bytes of JSON at first, and $last at last")
+            val (later, first) = events(CHANGE_EVENT).partition { it.string(PREVIOUS_VALUE) != null }
+            val firstSize = first.firstOrNull()?.toString()?.length ?: "none in this scenario"
+            val laterSize = later.lastOrNull()?.toString()?.length ?: "none in this scenario"
+            println(
+                "State OTLP harness, $mode: a change record with no previous value is $firstSize bytes of JSON, " +
+                    "and one with a previous value is $laterSize",
+            )
         }
 
         fun linkedSpans(): List<JsonObject> = spans.filter { it.attribute(SEQUENCE) != null }
@@ -516,6 +557,7 @@ internal class StateOtlpExportHarnessTest {
         const val END_VALUE_PREFIX = "emb.app.state.end_value."
         const val CHANGE_EVENT = "emb.app.state.change"
         const val SNAPSHOT_EVENT = "emb.app.state.snapshot"
+        const val PREVIOUS_VALUE = "emb.app.state.previous_value"
         const val ENTITY_ID = "emb.entity.id"
         const val PROCESS_IDENTIFIER = "emb.process_identifier"
         const val TRACE_ID_LENGTH = 32

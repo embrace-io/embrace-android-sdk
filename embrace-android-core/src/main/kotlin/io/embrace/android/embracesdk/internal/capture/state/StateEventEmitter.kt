@@ -15,8 +15,9 @@ import java.util.concurrent.atomic.AtomicInteger
 
 /**
  * Emits what a [StateRecorder] records as events for an app's own OpenTelemetry log exporters and log record
- * processors: one for each state change as it is made, which also carries the value the state had before, and one with
- * every state's value when a session part starts.
+ * processors: one for each state change a session part lists, as it is made, which also carries the value the state had
+ * before, and one with every state's value when a session part starts. A change made with no session part in progress
+ * has no event, and the values after it are in the event for the next part's start.
  * Whatever receives them can replay the changes, and so resolve the sequence numbers a span carries. None of it is part
  * of Embrace's own payload, which has the changes as a span of the session part.
  *
@@ -177,7 +178,7 @@ class StateEventEmitter(
     private companion object {
         /**
          * The most events that wait to be emitted, by default. It is a tenth of the changes a session part's journal
-         * holds, which is also how many changes are held while no part is in progress.
+         * holds.
          */
         const val MAX_PENDING_EVENTS = 1_000
     }

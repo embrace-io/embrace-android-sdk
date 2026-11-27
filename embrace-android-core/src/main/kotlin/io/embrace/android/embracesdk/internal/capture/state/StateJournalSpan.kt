@@ -28,10 +28,13 @@ import java.security.MessageDigest
  *   `emb.app.state.initial_value_type.<name>` beside it for a value the SDK generated
  * - every change is an event named `emb-state-<name>`, in the order of the journal, carrying its new value and its own
  *   sequence number, `emb.app.state.seq`
- * - `emb.app.state.initial_seq` says what the initial values are as of. The events are in the order of their numbers, the
- *   first is numbered above that, and a gap between two numbers is one or more changes a limit refused, which are not
- *   listed. One state can reach its own limit while the others go on, so a gap can be anywhere after the part's start
- * - `emb.app.state.part_start_seq` says which changes were made before the session part started: those numbered up to it
+ * - `emb.app.state.initial_seq` says what the initial values are as of: the number of the last change made before the
+ *   session part started. The events are in the order of their numbers, the first is numbered above that, and a gap
+ *   between two numbers is one or more changes a limit refused, which are not listed. One state can reach its own limit
+ *   while the others go on, so a gap can be anywhere
+ * - a change made with no session part in progress is listed nowhere. `emb.app.state.not_in_session_count.<name>` says,
+ *   for each state that had one, how many there were since the part before this one ended. The initial values are the
+ *   values after them
  * - what is not listed is counted when the part's end is recorded: `emb.app.state.dropped_changes` for every state together,
  *   and for each state `emb.app.state.dropped_count.<name>`. A state that had a change refused also has
  *   `emb.app.state.final_value.<name>`, its value when the part ended, and `emb.app.state.final_seq.<name>`, the number of
@@ -187,11 +190,12 @@ private fun Span?.sharedAttributes(): List<Attribute> = buildList {
 
 /**
  * What the journal's [records] say about the states as a whole: the values it opened with, what those values are as of,
- * which changes came before the session part started, how many changes it does not hold, and whether it stops short.
+ * how many changes each state made with no session part since the part before, how many changes it does not hold, and
+ * whether it stops short.
  *
- * Two counts are kept apart. Changes folded into the opening values were made before those values, so the events still
- * lead on from them. Changes dropped during the part leave the events of their state short of the value it ended the
- * part with, which is then given as well, for that state. The count for each state also holds the changes its reporter
+ * Two counts are kept apart. Changes made with no session part in progress came before the opening values, so the
+ * events still lead on from those. Changes dropped during the part leave the events of their state short of the value it
+ * ended the part with, which is then given as well, for that state. The count for each state also holds the changes its reporter
  * said it never passed on, so the counts of the states can add up to more than the count for the part. A journal written
  * before states had limits of their own has the count for the part alone, and every state's value. A journal with no
  * part end has no counts and no final values, and states the limits it has a record of having reached.
@@ -210,11 +214,11 @@ private fun stateAttributes(
         }
     }
     add(Attribute(StateAttributes.INITIAL_SEQUENCE, opening.sequence.toString()))
-    // a journal that stops before its part start holds only changes made before the part
-    val partStartSequence = partStart?.sequence ?: records.last { it.change != null || it === opening }.sequence
-    add(Attribute(StateAttributes.PART_START_SEQUENCE, partStartSequence.toString()))
-    partStart?.part_start?.dropped_changes?.takeIf { it > 0 }?.let { folded ->
-        add(Attribute(StateAttributes.FOLDED_CHANGES, folded.toString()))
+    partStart?.part_start?.not_in_session_counts?.forEach { notInSession ->
+        if (notInSession.count > 0) {
+            val key = "${StateAttributes.NOT_IN_SESSION_COUNT_PREFIX}${notInSession.state}"
+            add(Attribute(key, notInSession.count.toString()))
+        }
     }
     val end = partEnd?.part_end
     addAll(if (end != null) partEndAttributes(end) else limitsReachedAttributes(records))

@@ -70,20 +70,17 @@ object StateAttributes {
     const val FINAL_SEQUENCE_PREFIX: String = "emb.app.state.final_seq."
 
     /**
-     * The number of the last state change that the opening values of a session part's change log are as of.
+     * The number of the last state change that the opening values of a session part's change log are as of, which is the
+     * last change made before the part started.
      */
     const val INITIAL_SEQUENCE: String = "emb.app.state.initial_seq"
 
     /**
-     * The number of the last state change made before a session part started, which is where its change log says the part
-     * began.
+     * Followed by a state's name: how many changes of that state were made with no session part in progress, since the
+     * part before this one ended or since the process started. They are listed in no change log, and the opening values
+     * of this one are the values after them.
      */
-    const val PART_START_SEQUENCE: String = "emb.app.state.part_start_seq"
-
-    /**
-     * How many changes were folded into the opening values of a change log, which are made before them and not listed.
-     */
-    const val FOLDED_CHANGES: String = "emb.app.state.folded_changes"
+    const val NOT_IN_SESSION_COUNT_PREFIX: String = "emb.app.state.not_in_session_count."
 
     /**
      * How many changes made during a session part took a number and are not listed in its change log, for every state
@@ -104,8 +101,8 @@ object StateAttributes {
     const val CHANGE_LIMIT_PREFIX: String = "emb.app.state.change_limit."
 
     /**
-     * The most changes one session part's change log lists for every state together, counting those made before the part
-     * that it opens with, where that limit refused a change during the part.
+     * The most changes one session part's change log lists for every state together, where that limit refused a change
+     * during the part.
      */
     const val GLOBAL_CHANGE_LIMIT: String = "emb.app.state.global_change_limit"
 

@@ -10,6 +10,7 @@ import io.embrace.android.embracesdk.internal.session.persistence.StateChange
 import io.embrace.android.embracesdk.internal.session.persistence.StateCheckpoint
 import io.embrace.android.embracesdk.internal.session.persistence.StateDroppedCount
 import io.embrace.android.embracesdk.internal.session.persistence.StateLimitReached
+import io.embrace.android.embracesdk.internal.session.persistence.StateNotInSessionCount
 import io.embrace.android.embracesdk.internal.session.persistence.StatePartEnd
 import io.embrace.android.embracesdk.internal.session.persistence.StatePartStart
 import io.embrace.android.embracesdk.internal.session.persistence.StateRecord
@@ -28,9 +29,9 @@ import io.embrace.android.embracesdk.internal.utils.event.EventHandler
  * [onUndeclaredState].
  *
  * Every [StateUpdate] of a declared state passes through one lock, whichever thread reports it. Under that lock an update that changes its
- * state's value takes the next sequence number, replaces [snapshot] with one that holds the new value, and is handed to
- * the journal. So the order of the journal, the sequence, and the values anything else reads from [snapshot] cannot
- * disagree.
+ * state's value takes the next sequence number and replaces [snapshot] with one that holds the new value. Where a
+ * session part is in progress it is then handed to the part's journal. So the order of the journal, the sequence, and
+ * the values anything else reads from [snapshot] cannot disagree.
  *
  * Nothing waits for the journal to be persisted. Handing a record to the journal is expected to queue it, and as records
  * are handed over in sequence order, what has been persisted at any moment is the start of the sequence with nothing
@@ -38,12 +39,12 @@ import io.embrace.android.embracesdk.internal.utils.event.EventHandler
  *
  * A journal belongs to a session part. Two limits bound what it lists. Each state has its own, which its declaration
  * gives as [StateDeclaration.maxChangesInPart]: the most changes of that state made while the part is in progress. The journal as a
- * whole holds at most [maxChanges] changes, counting those it opened with, a limit on what a part's payload should
+ * whole holds at most [maxChanges] changes, a limit on what a part's payload should
  * carry. A change either limit refuses still takes its number and still replaces its state's value, so everything read
  * from [snapshot] stays right. It is not handed to the journal or to [listener]. It is counted, for its state and for the
  * journal, and the journal ends with those counts, with each limit that refused a change, a state's own and the
  * journal's, and with the value of each state that had a change refused. So the numbers of the changes a journal lists
- * can skip anywhere after its part start.
+ * can skip anywhere.
  *
  * The first time in a part that a limit refuses a change, the journal is also handed a record of that limit there and
  * then: the state and its limit, or the journal's limit with no state. So a journal that never gets its end, because the
@@ -54,15 +55,16 @@ import io.embrace.android.embracesdk.internal.utils.event.EventHandler
  * number, as nothing says when they happened, and are counted for their state alone, in the journal in progress, or in
  * the next to start where none is.
  *
- * Changes made while no part is in progress are held, and open the journal of the next part to start. At most
- * [maxHeldChanges] are held. Past that the oldest is folded into the values that journal opens with, so the journal still
- * leads from its opening values to the present with no change missing, and holds the changes nearest the part.
+ * A change made while no part is in progress is not kept. It takes its number and replaces its state's value like any
+ * other, so [snapshot] and [snapshotAt] stay right, and it is counted for its state. It is in no journal, and [listener]
+ * is not told of it. The journal of the next part to start opens with every state's value as it then stands, and its
+ * part start carries, for each state, how many such changes there were since the journal before it ended. No limit
+ * applies to them, as nothing of them is kept but a count.
  *
- * [listener] is told of every change that is recorded as it is made, whether or not a part is in progress, and of every
- * part that starts. It is called under the same lock, so the order it is told things in is the order of the sequence.
+ * [listener] is told of every change that a journal lists, as it is made, and of every part that starts. It is called
+ * under the same lock, so the order it is told things in is the order of the sequence.
  *
- * @param onChangeDropped called for each change the limit on a journal as a whole refuses, and for each held change that
- * is folded.
+ * @param onChangeDropped called for each change the limit on a journal as a whole refuses.
  * @param onStateLimitApplied called with a state's name for each change of it that the state's own limit refuses.
  * @param onUndeclaredState called for each update that is discarded because its state has not been declared.
  * @param keepRecent whether this notes when each change takes effect and remembers the snapshots of the most recent
@@ -72,7 +74,6 @@ import io.embrace.android.embracesdk.internal.utils.event.EventHandler
 class StateRecorder(
     private val clock: Clock,
     private val maxChanges: Int = MAX_JOURNAL_CHANGES,
-    private val maxHeldChanges: Int = maxChanges / HELD_SHARE,
     private val onChangeDropped: () -> Unit = {},
     private val onStateLimitApplied: (state: String) -> Unit = {},
     private val onUndeclaredState: () -> Unit = {},
@@ -118,28 +119,14 @@ class StateRecorder(
     private var journal: ((List<StateRecord>) -> Unit)? = null
 
     /**
-     * The values the next journal opens with, guarded by [lock]: every state's value when the last journal ended, with the
-     * changes folded into it since.
+     * For each state, how many of its changes took a number while no journal was open, since the last journal ended or
+     * since the process started, guarded by [lock]. The next journal to begin takes them for its part start, and they
+     * start again from nothing.
      */
-    private var opening: StateSnapshot = StateSnapshot.NONE
+    private val notInSession = LinkedHashMap<String, Int>()
 
     /**
-     * When [opening] held, guarded by [lock].
-     */
-    private var openingTimeMs: Long = clock.now()
-
-    /**
-     * The changes made since [opening], oldest first, guarded by [lock].
-     */
-    private val held = ArrayDeque<StateRecord>()
-
-    /**
-     * How many changes have been folded into [opening] since the last journal ended, guarded by [lock].
-     */
-    private var folded = 0
-
-    /**
-     * How many changes the journal in progress holds, counting those it opened with, guarded by [lock].
+     * How many changes the journal in progress holds, guarded by [lock].
      */
     private var recorded = 0
 
@@ -255,9 +242,15 @@ class StateRecorder(
         }
         current = snapshot
 
-        // the value was replaced first, so a change that is refused here is still what everything stamped from now on carries
         val journal = journal
-        if (journal != null && refusedByALimit(event, state, journal)) {
+        if (journal == null) {
+            // no session part is in progress: the change has its number and its value is in place, and all that is kept
+            // of it is a count for its state, which the next journal's part start carries
+            notInSession[event.state] = sumUpToTheMost(notInSession[event.state] ?: 0, 1)
+            return
+        }
+        // the value was replaced first, so a change that is refused here is still what everything stamped from now on carries
+        if (refusedByALimit(event, state, journal)) {
             return
         }
         val record = StateRecord(
@@ -265,11 +258,7 @@ class StateRecorder(
             time_ms = event.timeMs,
             change = StateChange(value_ = stateValue, attributes = event.attributes.limitedTo(state.attributeKeys)),
         )
-        if (journal != null) {
-            journal(listOf(record))
-        } else {
-            hold(record)
-        }
+        journal(listOf(record))
         listener?.onChange(record, snapshot, previous)
     }
 
@@ -336,36 +325,38 @@ class StateRecorder(
 
     /**
      * Begins the journal of a session part that started at [timeMs]. [journal] is handed every record of the part, in
-     * order, starting with the changes held since the last part ended, and must not block.
+     * order, and must not block. It opens with every state's value as it stands, as of the last change made, and with
+     * the count for each state of the changes made with no journal open since the last one ended.
+     *
+     * Those counts start again from nothing here, whatever becomes of the records [journal] is handed: this does not
+     * learn whether they were written, so a count is given to one journal and never carried to a later one.
      */
     fun beginJournal(timeMs: Long, journal: (List<StateRecord>) -> Unit) {
         synchronized(lock) {
             // a part should always end before the next one starts, but a journal left open must still be closed
             endJournalUnderLock(timeMs)
 
-            val records = ArrayList<StateRecord>(held.size + 2)
-            records.add(
+            val opening = current
+            val records = listOf(
                 StateRecord(
                     sequence = opening.sequence,
-                    time_ms = openingTimeMs,
+                    time_ms = timeMs,
                     checkpoint = StateCheckpoint(values = opening.values.values.toList()),
                 ),
-            )
-            records.addAll(held)
-            records.add(
                 StateRecord(
-                    sequence = sequence,
+                    sequence = opening.sequence,
                     time_ms = timeMs,
-                    part_start = StatePartStart(dropped_changes = folded),
+                    part_start = StatePartStart(
+                        not_in_session_counts = notInSession.map { (state, count) -> StateNotInSessionCount(state, count) },
+                    ),
                 ),
             )
-            // the changes held from before the part count towards the limit on the journal, and towards no state's own:
-            // every state's count of what is listed starts at nothing here, as the last journal's end emptied the tallies
-            recorded = held.size
+            notInSession.clear()
+            // both limits count only the changes made while this journal is open: every state's count of what is listed
+            // starts at nothing here, as the last journal's end emptied the tallies
+            recorded = 0
             dropped = 0
             globalLimitApplied = false
-            held.clear()
-            folded = 0
             this.journal = journal
             journal(records)
             listener?.onPartStart(timeMs, current)
@@ -373,7 +364,8 @@ class StateRecorder(
     }
 
     /**
-     * Ends the journal of the session part that ended at [timeMs]. Changes made from here on are held for the next.
+     * Ends the journal of the session part that ended at [timeMs]. Changes made from here on are in no journal, and are
+     * counted for the next one to begin.
      */
     fun endJournal(timeMs: Long) {
         synchronized(lock) {
@@ -404,8 +396,6 @@ class StateRecorder(
             ),
         )
         this.journal = null
-        opening = snapshot
-        openingTimeMs = timeMs
         recorded = 0
         dropped = 0
         globalLimitApplied = false
@@ -420,20 +410,6 @@ class StateRecorder(
         val kept = minOf(before.size, RECENT_SNAPSHOTS - 1)
         val dropped = before.size - kept
         recent = Array(kept + 1) { index -> if (index < kept) before[dropped + index] else snapshot }
-    }
-
-    /**
-     * Keeps [record] for the next journal, folding the oldest change held into [opening] if that is one more than is kept.
-     */
-    private fun hold(record: StateRecord) {
-        held.addLast(record)
-        if (held.size > maxHeldChanges) {
-            val oldest = held.removeFirst()
-            oldest.change?.value_?.let { value -> opening = opening.with(oldest.sequence, value) }
-            openingTimeMs = oldest.time_ms
-            folded++
-            onChangeDropped()
-        }
     }
 
     /**
@@ -524,11 +500,6 @@ class StateRecorder(
          * be recorded.
          */
         const val MAX_JOURNAL_CHANGES: Int = 10_000
-
-        /**
-         * The share of a journal's changes that can be from before its session part started: one in this many.
-         */
-        private const val HELD_SHARE = 10
 
         /**
          * How many snapshots are remembered for [snapshotAt]: the current one and the 63 before it. A span that starts or

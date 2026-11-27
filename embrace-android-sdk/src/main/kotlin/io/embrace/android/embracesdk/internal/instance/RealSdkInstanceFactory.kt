@@ -1023,7 +1023,7 @@ private inline fun <T> init(name: String, recordDuration: Boolean = false, suppl
 
 /**
  * What a state change is tracked as when it is not recorded, because the limit on how many a journal holds for every state
- * together was reached, or the limit on how many are held with no session part in progress.
+ * together was reached.
  */
 private const val STATE_CHANGE_LIMIT_TYPE = "state_change"
 

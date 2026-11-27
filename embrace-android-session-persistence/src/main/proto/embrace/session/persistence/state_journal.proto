@@ -8,13 +8,13 @@ option java_package = "io.embrace.android.embracesdk.internal.session.persistenc
 // append is a StateJournal message holding the records being added, so the file as a whole reads
 // back as one StateJournal with every record in the order it was appended.
 //
-// A journal opens with a checkpoint, then the changes made since it and before the session part
-// started, then a part start, then the changes made during the part, and a part end if the part
-// ended in the process that started it. The changes are in the order of their sequence. Those
-// before the part start are consecutive from the sequence after the checkpoint's. A change made
-// during the part that a limit refused is not recorded and keeps its number, so the numbers of the
-// changes after the part start can skip, anywhere among them. The first change a limit refuses in
-// a part is followed by a record of that limit, and the part end counts what is missing.
+// A journal opens with a checkpoint and a part start, then holds the changes made during the part,
+// and a part end if the part ended in the process that started it. It holds no change made while no
+// session part was in progress: such a change is counted for its state in the part start of the
+// next journal. The changes are in the order of their sequence, and the first is numbered above the
+// checkpoint. A change made during the part that a limit refused is not recorded and keeps its
+// number, so the numbers of the changes can skip, anywhere among them. The first change a limit
+// refuses in a part is followed by a record of that limit, and the part end counts what is missing.
 message StateJournal {
   uint32 format_version = 1;
   repeated StateRecord records = 2;
@@ -62,12 +62,29 @@ message StateChange {
   map<string, string> attributes = 2;
 }
 
-// The session part the journal belongs to started. The changes recorded before it were made with
-// no session part in progress.
+// The session part the journal belongs to started. Its sequence is the checkpoint's: the number of
+// the last change made before the part.
 message StatePartStart {
-  // Changes made with no session part in progress that the journal does not hold as records, as
-  // there were more than are kept. They are the oldest, and the checkpoint is the values after them.
-  int32 dropped_changes = 1;
+  // A journal written by an earlier build of the proof of concept used field 1 for a count of
+  // changes made before the part that it did not hold. Nothing writes it or reads it.
+  reserved 1;
+  reserved "dropped_changes";
+
+  // For each state that changed while no session part was in progress, how many of its changes
+  // took a number since the journal before this one ended, or since the process started. Those
+  // changes are in no journal. The checkpoint holds the values after them.
+  repeated StateNotInSessionCount not_in_session_counts = 2;
+}
+
+// How many changes of one state were made while no session part was in progress.
+message StateNotInSessionCount {
+  // The name of the state.
+  string state = 1;
+
+  // How many changes of the state took a number with no journal open. A state's first value counts
+  // like any other change. An update that repeated the state's value took no number and is not
+  // counted.
+  int32 count = 2;
 }
 
 // The session part ended in the process that started it.
@@ -85,8 +102,8 @@ message StatePartEnd {
   // A journal written before states had limits of their own holds none.
   repeated StateDroppedCount dropped_counts = 3;
 
-  // The most changes the journal holds for every state together, counting those it opened with.
-  // Set only if that limit refused a change during the part.
+  // The most changes the journal holds for every state together. Set only if that limit refused a
+  // change during the part.
   optional int32 global_limit = 4;
 }
 

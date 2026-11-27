@@ -128,6 +128,68 @@ internal class StateAssociationFeatureTest(
     }
 
     @Test
+    fun `a state that changes with no session part is counted by the next part, a log made then has its value, and no event is made`() {
+        testRule.runTest(
+            persistedRemoteConfig = associatedConfig("association"),
+            preSdkStartAction = {
+                embrace.addLogRecordExporter(logExporter)
+            },
+            testCaseAction = {
+                // background activity is off, so no session part is in progress while the app is in the background
+                changeTestState("in-background")
+                changeTestState("still-in-background")
+                embrace.logInfo(LOG_MESSAGE)
+                emitStateEvents()
+                eventsBeforeFirstPart = stateEvents()
+                recordSession {
+                    changeTestState("foo")
+                }
+                changeTestState("in-background-again")
+                recordSession { }
+                emitStateEvents()
+            },
+            assertAction = {
+                val (first, next) = deliveredParts(2).sortedBy { it.findSessionPartSpan().startTimeNanos }
+                    .map { it.findSpansOfType(EmbType.State).single() }
+
+                // the change log of the next part to start counts the changes for their state: the value the state's data
+                // source started with and the two after it. It lists none of them, and opens with the value they left.
+                assertEquals("3", first.stateAttribute("emb.app.state.not_in_session_count.test"))
+                assertEquals("still-in-background", first.stateAttribute("emb.app.state.initial_value.test"))
+                assertEquals(listOf("foo"), first.newValuesOf("test"))
+                val initialSequence = checkNotNull(first.stateAttribute("emb.app.state.initial_seq")).toLong()
+                // and the part after it counts the one change made since the first ended
+                assertEquals("1", next.stateAttribute("emb.app.state.not_in_session_count.test"))
+                assertEquals("in-background-again", next.stateAttribute("emb.app.state.initial_value.test"))
+                assertEquals(emptyList<String>(), next.newValuesOf("test"))
+
+                // the log made in the background has the value the state had then, in Embrace's payload and as an app's
+                // exporter was handed it, and the number of the last change, which no change log lists
+                val log = getLogEnvelopes(1).flatMap { checkNotNull(it.data.logs) }.single { it.body == LOG_MESSAGE }
+                assertEquals("still-in-background", states(log)["test"]?.first)
+                val loggedSequence = checkNotNull(log.attribute("emb.app.state.seq")).toLong()
+                assertTrue(loggedSequence in 3..initialSequence)
+                val exported = logExporter.exportedLogs.single { it.body == LOG_MESSAGE }
+                assertEquals("still-in-background", exported.attributes["emb.app.state.value.test"])
+                assertEquals(loggedSequence, exported.attributes["emb.app.state.seq"])
+
+                // an app's exporter is handed no event for a change made with no session part: nothing before the first
+                // part started, and of the test state only the change made during a part
+                assertEquals(emptyList<LogRecordData>(), eventsBeforeFirstPart)
+                val events = stateEvents()
+                val changes = events.filter { it.eventName == CHANGE_EVENT }
+                assertEquals(listOf("foo"), changes.filter { it.stateName() == "test" }.map { it.newValue() })
+                assertEquals("still-in-background", changes.single { it.newValue() == "foo" }.attributes["emb.app.state.previous_value"])
+                // what it is handed as each part starts has the value those changes left
+                assertEquals(
+                    listOf("still-in-background", "in-background-again"),
+                    events.filter { it.eventName == SNAPSHOT_EVENT }.map { it.attributes["emb.app.state.value.test"] },
+                )
+            },
+        )
+    }
+
+    @Test
     fun `with the switch off, no span carries anything of state, and a span is not handed to the SDK as it ends`() {
         testRule.runTest(
             persistedRemoteConfig = associatedConfig("verbose").copy(pctStateAssociationEnabled = 0.0f),
@@ -273,9 +335,9 @@ internal class StateAssociationFeatureTest(
      * Runs one scenario with what an app's exporters and processors are given set to [exportMode], asserts everything that
      * does not depend on that, and then [assertMode].
      *
-     * The scenario: a state changes with no session part in progress, as background activity is off. Then, in a session
-     * part, a span runs across a change of that state, and another does that is told afterwards that it ended before the
-     * change. A span starts and ends after the change, a span is recorded after the fact with a start from before the
+     * The scenario: a state changes with no session part in progress, as background activity is off, which makes no event.
+     * Then, in a session part, a span runs across a change of that state, and another does that is told afterwards that it
+     * ended before the change. A span starts and ends after the change, a span is recorded after the fact with a start from before the
      * change and an end from after it, a log is written, and a span starts that is still in progress when the part ends.
      * The state changes once more at the end, and only then are the state events of the part emitted.
      */
@@ -295,7 +357,7 @@ internal class StateAssociationFeatureTest(
             },
             testCaseAction = {
                 changeTestState("in-background")
-                // an app's processor is handed the change once it is emitted, and does not wait for a session part to start
+                // an app's processor is handed nothing for a change made with no session part in progress
                 emitStateEvents()
                 eventsBeforeFirstPart = processedLogs.filter { it.eventName != null }
                 recordSession {
@@ -422,8 +484,9 @@ internal class StateAssociationFeatureTest(
     }
 
     /**
-     * An app's log exporter and log record processor are handed every change in order, the one made with no session part
-     * in progress when it was made, and the value of every state when the session part started.
+     * An app's log exporter and log record processor are handed the value of every state when the session part started, and
+     * then every change made during the part, in order. They are handed nothing for a change made with no session part in
+     * progress.
      */
     private fun assertExportedEvents(part: Envelope<SessionPartPayload>, stateSpan: Span, changeTimeMs: Long) {
         val events = stateEvents()
@@ -441,38 +504,36 @@ internal class StateAssociationFeatureTest(
             assertEquals(emptyList<String>(), event.attributes.keys.filter { it.contains("session") || it == "log.record.uid" })
         }
 
-        // every change of the process so far, each once and in order, and the snapshot where the session part started
+        // the snapshot where the session part started, and then every change of the part, each once and in order
         val changes = events.filter { it.eventName == CHANGE_EVENT }
         val snapshot = events.single { it.eventName == SNAPSHOT_EVENT }
-        assertEquals((1L..changes.size).toList(), changes.map { it.attributes["emb.app.state.seq"] })
-        val inBackground = changes.single { it.newValue() == "in-background" }
+        assertEquals(snapshot, events.first())
+        val partStartSequence = checkNotNull(stateSpan.stateAttribute("emb.app.state.initial_seq")).toLong()
+        assertEquals((1L..changes.size).map { partStartSequence + it }, changes.map { it.attributes["emb.app.state.seq"] })
         val foo = changes.single { it.newValue() == "foo" }
         assertEquals("test", foo.stateName())
-        // a change says what the state had before, in both renderings, and the state's first change and the snapshot say none
+        // a change says what the state had before, in both renderings, and the snapshot says none
         assertEquals("in-background", foo.attributes["emb.app.state.previous_value"])
         assertEquals("foo", changes.single { it.newValue() == LAST_VALUE }.attributes["emb.app.state.previous_value"])
-        assertNull(changes.first { it.stateName() == "test" }.attributes["emb.app.state.previous_value"])
         assertEquals(emptyList<String>(), snapshot.attributes.keys.filter { it.contains("previous") })
         assertEquals(changeTimeMs.millisToNanos(), foo.timestamp)
-        // the change made with no part in progress, then the part starting, then the change made in it. Starting the part
-        // changes other states too, so the two changes are not next to the snapshot.
-        assertEquals(events.indexOf(inBackground) + 1, events.indexOf(snapshot))
-        assertTrue(events.indexOf(snapshot) < events.indexOf(foo))
-        assertTrue(eventsBeforeFirstPart.any { it.newValue() == "in-background" })
-        assertTrue(eventsBeforeFirstPart.none { it.eventName == SNAPSHOT_EVENT })
 
-        // the snapshot is every value as the part started, which is what the change log says they were then
-        val partStartSequence = checkNotNull(stateSpan.attributes?.findAttributeValue("emb.app.state.part_start_seq")).toLong()
+        // no event was made for the change made with no part in progress, or for the value the state started with: the
+        // change log counts both for the state
+        assertEquals(emptyList<LogRecordData>(), eventsBeforeFirstPart)
+        assertEquals(emptyList<LogRecordData>(), events.filter { it.newValue() == "in-background" || it.newValue() == "UNKNOWN" })
+        assertEquals("2", stateSpan.stateAttribute("emb.app.state.not_in_session_count.test"))
+
+        // the snapshot is every value as the part started, which is what the change log says they were then, and has the
+        // value that change left
         assertEquals(partStartSequence, snapshot.attributes["emb.app.state.seq"])
-        assertEquals(inBackground.attributes["emb.app.state.seq"], snapshot.attributes["emb.app.state.seq"])
-        assertTrue(checkNotNull(snapshot.timestamp) >= checkNotNull(inBackground.timestamp))
+        assertEquals("in-background", snapshot.attributes["emb.app.state.value.test"])
         assertEquals(
             stateSpan.valuesAt(partStartSequence),
             snapshot.attributes.filterKeys { it.startsWith(VALUE_PREFIX) }.map { it.key.removePrefix(VALUE_PREFIX) to it.value }.toMap(),
         )
 
         // the span that ran across the change started at the number before it, and ended at its number
-        assertEquals("UNKNOWN", changes.first { it.stateName() == "test" }.newValue())
         assertEquals(foo.attributes["emb.app.state.seq"], exportedSpan(ACROSS).attributes["emb.app.state.end_seq"])
     }
 
@@ -536,6 +597,12 @@ internal class StateAssociationFeatureTest(
     private fun Log.attribute(key: String): String? = attributes?.findAttributeValue(key)
 
     private fun Span.stateAttribute(key: String): String? = attributes?.findAttributeValue(key)
+
+    /**
+     * The values the changes of [state] that the span lists took, in order.
+     */
+    private fun Span.newValuesOf(state: String): List<String?> = checkNotNull(events).filter { it.name == "emb-state-$state" }
+        .map { it.attributes?.findAttributeValue("emb.app.state.new_value") }
 
     private fun Span.stateKeys(): List<String> = attributes.orEmpty().mapNotNull { it.key }.filter { it.startsWith("emb.app.state.") }
 

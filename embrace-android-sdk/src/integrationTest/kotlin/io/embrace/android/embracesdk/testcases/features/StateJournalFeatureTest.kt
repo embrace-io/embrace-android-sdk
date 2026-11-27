@@ -80,7 +80,7 @@ internal class StateJournalFeatureTest(
                 assertNotNull(attributes.findAttributeValue("emb.app.state.initial_value.network"))
 
                 // two states of two data sources, in one order
-                val events = stateSpan.eventsAfterPartStart()
+                val events = stateSpan.listedChanges()
                 val changes = events.filter { it.name == "emb-state-test" || it.name == "emb-state-network" }
                 assertEquals(
                     listOf("emb-state-test", "emb-state-network", "emb-state-test", "emb-state-test"),
@@ -117,24 +117,43 @@ internal class StateJournalFeatureTest(
     }
 
     @Test
-    fun `changes made with no session part in progress are delivered with the next part to start`() {
+    fun `changes made with no session part in progress are counted by the next part to start, which opens with the value they left`() {
         testRule.runTest(
             persistedRemoteConfig = journaledConfig(backgroundActivity = BackgroundActivityRemoteConfig(0f)),
             testCaseAction = {
+                // background activity is off, so no session part is in progress until the app comes to the foreground
                 changeTestState("in-background")
+                changeTestState("still-in-background")
                 recordSession {
                     changeTestState("in-foreground")
                 }
+                changeTestState("in-background-again")
+                recordSession {
+                    embrace.logInfo("in-next-part")
+                }
             },
             assertAction = {
-                val stateSpan = deliveredParts().single().stateSpan()
-                val partStartSequence = checkNotNull(stateSpan.attributes?.findAttributeValue("emb.app.state.part_start_seq")).toLong()
-                val testChanges = checkNotNull(stateSpan.events).filter { it.name == "emb-state-test" }
-                assertEquals(listOf("UNKNOWN", "in-background", "in-foreground"), testChanges.map { it.newValue() })
-                assertEquals(
-                    listOf(true, true, false),
-                    testChanges.map { stateSpan.sequenceOf(it) <= partStartSequence },
-                )
+                val (first, next) = deliveredParts(2).sortedBy { it.findSessionPartSpan().startTimeNanos }.map { it.stateSpan() }
+
+                // the value the state's data source started with and the two changes after it: none is listed, each is
+                // counted for the state, and the part opens with the last of them
+                val attributes = checkNotNull(first.attributes)
+                assertEquals("3", attributes.findAttributeValue("emb.app.state.not_in_session_count.test"))
+                assertEquals("still-in-background", attributes.findAttributeValue("emb.app.state.initial_value.test"))
+                val listed = first.listedChanges().filter { it.name == "emb-state-test" }
+                assertEquals(listOf("in-foreground"), listed.map { it.newValue() })
+                // the numbers the changes took are still used: the part's opening values are as of the last of them
+                assertTrue(checkNotNull(attributes.findAttributeValue("emb.app.state.initial_seq")).toLong() >= 3)
+
+                // the next part counts what changed since the first ended, and nothing from before that
+                val nextAttributes = checkNotNull(next.attributes)
+                assertEquals("1", nextAttributes.findAttributeValue("emb.app.state.not_in_session_count.test"))
+                assertEquals("in-background-again", nextAttributes.findAttributeValue("emb.app.state.initial_value.test"))
+                assertEquals(emptyList<SpanEvent>(), next.listedChanges().filter { it.name == "emb-state-test" })
+                val log = checkNotNull(getSingleLogEnvelope().getLastLog().attributes)
+                val logged = decodeStates(checkNotNull(log.findAttributeValue("emb.app.state.packed")))
+                assertEquals("in-background-again", logged["test"])
+                assertEquals(next.valuesAt(checkNotNull(log.findAttributeValue("emb.app.state.seq")).toLong()), logged)
             },
         )
     }
@@ -161,7 +180,7 @@ internal class StateJournalFeatureTest(
                 val attributes = checkNotNull(limited.attributes)
 
                 // the first hundred changes of the part are listed, and the network goes on being listed after them
-                val events = limited.eventsAfterPartStart()
+                val events = limited.listedChanges()
                 assertEquals(
                     (0 until TEST_STATE_LIMIT).map { "value-$it" },
                     events.filter { it.name == "emb-state-test" }.map { it.newValue() },
@@ -207,7 +226,7 @@ internal class StateJournalFeatureTest(
                 // the next part opens with the value the last ended with, and counts from nothing again
                 val nextAttributes = checkNotNull(next.attributes)
                 assertEquals("value-${TEST_STATE_LIMIT + 2}", nextAttributes.findAttributeValue("emb.app.state.initial_value.test"))
-                assertEquals(listOf("next-part"), next.eventsAfterPartStart().filter { it.name == "emb-state-test" }.map { it.newValue() })
+                assertEquals(listOf("next-part"), next.listedChanges().filter { it.name == "emb-state-test" }.map { it.newValue() })
                 assertNull(nextAttributes.findAttributeValue("emb.app.state.dropped_changes"))
                 assertNull(nextAttributes.findAttributeValue("emb.app.state.dropped_count.test"))
             },
@@ -215,7 +234,7 @@ internal class StateJournalFeatureTest(
     }
 
     @Test
-    fun `the power state is present from the start, as unknown and then as the mode that was read`() {
+    fun `the power state is present from the start, so a part opens with the mode that was read and counts the changes before it`() {
         testRule.runTest(
             instrumentedConfig = FakeInstrumentedConfig(enabledFeatures = FakeEnabledFeatureConfig(powerSaveCapture = true)),
             persistedRemoteConfig = journaledConfig(backgroundActivity = BackgroundActivityRemoteConfig(0f)),
@@ -225,12 +244,13 @@ internal class StateJournalFeatureTest(
                 }
             },
             assertAction = {
-                // power saving was never on, and the state is there all the same: with a span for each state it would not be
+                // power saving was never on, and the state is there all the same: with a span for each state it would not be.
+                // It was unknown and then the mode that was read, both before the session part started.
                 val stateSpan = deliveredParts().single().stateSpan()
-                assertEquals(
-                    listOf("unknown", "normal"),
-                    checkNotNull(stateSpan.events).filter { it.name == "emb-state-power" }.map { it.newValue() },
-                )
+                val attributes = checkNotNull(stateSpan.attributes)
+                assertEquals("normal", attributes.findAttributeValue("emb.app.state.initial_value.power"))
+                assertEquals("2", attributes.findAttributeValue("emb.app.state.not_in_session_count.power"))
+                assertEquals(emptyList<SpanEvent>(), stateSpan.listedChanges().filter { it.name == "emb-state-power" })
                 val log = checkNotNull(getSingleLogEnvelope().getLastLog().attributes)
                 assertEquals("normal", decodeStates(checkNotNull(log.findAttributeValue("emb.app.state.packed")))["power"])
             },
@@ -262,7 +282,7 @@ internal class StateJournalFeatureTest(
                 val stateSpan = deliveredParts().single().stateSpan()
                 assertEquals(
                     listOf("before-crash"),
-                    stateSpan.eventsAfterPartStart().filter { it.name == "emb-state-test" }.map { it.newValue() },
+                    stateSpan.listedChanges().filter { it.name == "emb-state-test" }.map { it.newValue() },
                 )
                 // the crash ended the part, and its journal with it
                 assertNotNull(stateSpan.endTimeNanos)
@@ -307,7 +327,7 @@ internal class StateJournalFeatureTest(
             assertAction = {
                 val part = deliveredParts().single()
                 val stateSpan = part.stateSpan()
-                val events = stateSpan.eventsAfterPartStart()
+                val events = stateSpan.listedChanges()
                 assertEquals(
                     (0 until TEST_STATE_LIMIT).map { "before-kill-$it" },
                     events.filter { it.name == "emb-state-test" }.map { it.newValue() },
@@ -348,10 +368,11 @@ internal class StateJournalFeatureTest(
         assertEquals("emb-states", it.name)
     }
 
-    private fun Span.eventsAfterPartStart(): List<SpanEvent> {
-        val partStartSequence = checkNotNull(attributes?.findAttributeValue("emb.app.state.part_start_seq")).toLong()
-        return checkNotNull(events).filter { sequenceOf(it) > partStartSequence }
-    }
+    /**
+     * The changes the span lists, each of which was made during its session part: every one is numbered above the last
+     * change made before the part.
+     */
+    private fun Span.listedChanges(): List<SpanEvent> = checkNotNull(events).onEach { sequenceOf(it) }
 
     /**
      * The place of [event] in the order of state changes, which the event carries as `emb.app.state.seq`. The events of a span

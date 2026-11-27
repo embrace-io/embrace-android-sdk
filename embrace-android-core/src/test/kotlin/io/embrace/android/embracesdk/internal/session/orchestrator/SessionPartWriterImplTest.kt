@@ -64,7 +64,6 @@ internal class SessionPartWriterImplTest {
         private val SYMBOLS = mapOf("armeabi-v7a" to "my-symbols")
         private const val RACING_REPORTERS = 4
         private const val RACING_UPDATES = 2000
-        private const val RACING_HELD_CHANGES = 4
         private const val RACING_PARTS = 100
         private const val RACE_TIMEOUT_SECONDS = 30L
     }
@@ -145,18 +144,19 @@ internal class SessionPartWriterImplTest {
     }
 
     @Test
-    fun `state changes are journaled with the session part they were made in or the next to start`() {
+    fun `state changes are journaled with the session part they were made in, and those made between parts are counted in the next`() {
         val recorder = StateRecorder(clock).apply { declare(StateDeclaration("network")) }
         val writer = createWriter(stateRecorder = recorder)
 
-        // no session part is in progress, so this is held for the next one
+        // no session part is in progress, so this is in no journal, and the next one counts it
         recorder.onEvent(StateUpdate("network", "wifi", clock.now()))
         writer.onSessionPartStarted(clock.now(), USER_SESSION_ID, SESSION_PART_ID)
         recorder.onEvent(StateUpdate("network", "wan", clock.tick(100)))
         drain()
 
         // journaled while the part is still in progress, in the order the changes were made
-        assertEquals(listOf("checkpoint", "wifi", "part start", "wan"), journalOnDisk(SESSION_PART_ID))
+        assertEquals(listOf("checkpoint", "part start", "wan"), journalOnDisk(SESSION_PART_ID))
+        assertEquals(listOf("network" to 1), countedWithNoPart(SESSION_PART_ID))
 
         clock.tick(10000)
         writer.endPart()
@@ -165,24 +165,29 @@ internal class SessionPartWriterImplTest {
         writer.onSessionPartStarted(clock.now(), USER_SESSION_ID, OTHER_SESSION_PART_ID)
         drain()
 
-        assertEquals(listOf("checkpoint", "wifi", "part start", "wan", "part end"), journalOnDisk(SESSION_PART_ID))
-        assertEquals(listOf("checkpoint", "none", "part start"), journalOnDisk(OTHER_SESSION_PART_ID))
+        assertEquals(listOf("checkpoint", "part start", "wan", "part end"), journalOnDisk(SESSION_PART_ID))
+        assertEquals(listOf("checkpoint", "part start"), journalOnDisk(OTHER_SESSION_PART_ID))
+        assertEquals(listOf("network" to 1), countedWithNoPart(OTHER_SESSION_PART_ID))
+        // the next part opens with the value the change between the two left
+        val opening = journalRecordsOnDisk(OTHER_SESSION_PART_ID).first()
+        assertEquals(listOf("none"), checkNotNull(opening.checkpoint).values.map { it.value_ })
+        assertEquals(3L, opening.sequence)
         assertNoSdkErrors()
     }
 
     /**
      * State changes are reported from any thread while session parts change on another, and are written by a worker that
      * neither waits for. Whatever the interleaving, every change is accounted for once: journaled with the part it was made
-     * in or the next to start, or folded into the values that next journal opens with, or refused by its state's limit for
-     * the part and counted in that part's end. Read one after another, the journals lead from each number to the next with
+     * in, or refused by its state's limit for the part and counted in that part's end, or made with no part in progress and
+     * counted in the start of the next part. Read one after another, the journals lead from each number to the next with
      * none unaccounted for.
      */
     @Test
-    fun `state changes racing session part changes are each journaled once and in order`() {
+    fun `state changes racing session part changes are each journaled or counted once, and in order`() {
         val persistence = Executors.newSingleThreadScheduledExecutor()
-        // room in a journal for every change, and for few enough between two that some are folded
+        // room in a journal for every change
         val changes = RACING_REPORTERS * RACING_UPDATES
-        val recorder = StateRecorder(clock, maxChanges = changes, maxHeldChanges = RACING_HELD_CHANGES)
+        val recorder = StateRecorder(clock, maxChanges = changes)
         // each reporter's state is declared with the limit a state has unless it is a named exception
         repeat(RACING_REPORTERS) { reporter -> recorder.declare(StateDeclaration("state-$reporter")) }
         val writer = createWriter(worker = BackgroundWorker(persistence), stateRecorder = recorder)
@@ -210,31 +215,31 @@ internal class SessionPartWriterImplTest {
             runPart()
         }
         reporters.forEach { it.join(TimeUnit.SECONDS.toMillis(RACE_TIMEOUT_SECONDS)) }
-        // one more, for the changes made after the last of those ended
+        // one more, to count the changes made after the last of those ended
         runPart()
         persistence.submit {}.get(RACE_TIMEOUT_SECONDS, TimeUnit.SECONDS)
         persistence.shutdownNow()
 
         var lastChange = 0L
         var journaled = 0
-        var folded = 0
+        var betweenParts = 0
         var refused = 0
         partIds.forEach { partId ->
             val records = journalRecordsOnDisk(partId)
-            val partStart = records.indexOfFirst { it.part_start != null }
-            val foldedBefore = checkNotNull(records[partStart].part_start).dropped_changes
-            val changesHeld = records.filter { it.change != null }
+            val partStart = checkNotNull(records[1].part_start)
+            val countedBefore = partStart.not_in_session_counts.sumOf { it.count }
+            val changesListed = records.filter { it.change != null }
 
-            // a journal opens with the values as of the last change before the ones it holds, which is the last change of
-            // the journal before it unless changes were folded in since
+            // a journal opens with the values as of the last change made before it, which is the last change of the
+            // journal before it and every change made between the two, each of which its start counts for its state
             assertNotNull(records.first().checkpoint)
-            assertEquals(lastChange + foldedBefore, records.first().sequence)
+            assertEquals(lastChange + countedBefore, records.first().sequence)
+            assertEquals(records.first().sequence, records[1].sequence)
+            assertTrue(partStart.not_in_session_counts.all { it.count > 0 })
             lastChange = records.first().sequence
-            // the changes from before the part follow one another, as no limit refuses a change that is held
-            records.subList(0, partStart).filter { it.change != null }.forEach { assertEquals(++lastChange, it.sequence) }
-            assertEquals(lastChange, records[partStart].sequence)
-            // those made during it are in order, and skip a number for each change a state's limit refused
-            records.subList(partStart, records.size).filter { it.change != null }.forEach {
+            // the changes it lists were made during it: they are in order, and skip a number for each change a state's
+            // limit refused
+            changesListed.forEach {
                 assertTrue(it.sequence > lastChange)
                 lastChange = it.sequence
             }
@@ -244,7 +249,7 @@ internal class SessionPartWriterImplTest {
                 assertTrue(sequence >= lastChange)
                 lastChange = sequence
                 // what the journal lists and what it counts as refused add up to the numbers it covers
-                assertEquals(sequence - records.first().sequence, (changesHeld.size + partEnd.dropped_changes).toLong())
+                assertEquals(sequence - records.first().sequence, (changesListed.size + partEnd.dropped_changes).toLong())
                 // every refusal was a state's own limit, and the count for each state says whose
                 assertNull(partEnd.global_limit)
                 assertEquals(partEnd.dropped_changes, partEnd.dropped_counts.sumOf { it.count })
@@ -256,11 +261,11 @@ internal class SessionPartWriterImplTest {
                 )
                 refused += partEnd.dropped_changes
             }
-            journaled += changesHeld.size
-            folded += foldedBefore
+            journaled += changesListed.size
+            betweenParts += countedBefore
         }
         assertEquals(changes.toLong(), lastChange)
-        assertEquals(changes, journaled + folded + refused)
+        assertEquals(changes, journaled + betweenParts + refused)
         assertEquals(lastChange, recorder.snapshot().sequence)
         assertNoSdkErrors()
     }
@@ -2002,6 +2007,14 @@ internal class SessionPartWriterImplTest {
             record.part_end != null -> "part end"
             else -> record.change?.value_?.value_ ?: "unknown"
         }
+    }
+
+    /**
+     * What the journal of a part counts as changed with no session part in progress before it, by state.
+     */
+    private fun countedWithNoPart(sessionPartId: String): List<Pair<String, Int>> {
+        val partStart = journalRecordsOnDisk(sessionPartId).mapNotNull(StateRecord::part_start).single()
+        return partStart.not_in_session_counts.map { it.state to it.count }
     }
 
     private fun journalRecordsOnDisk(sessionPartId: String): List<StateRecord> {

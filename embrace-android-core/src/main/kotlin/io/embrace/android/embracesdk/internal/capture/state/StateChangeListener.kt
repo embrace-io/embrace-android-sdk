@@ -12,14 +12,16 @@ import io.embrace.android.embracesdk.internal.session.persistence.StateValue
 interface StateChangeListener {
 
     /**
-     * A state took a new value. [record] is the change, and [snapshot] the value of every state after it. [previous] is the
-     * value the state had before, or null if this is its first. A change the recorder counts and does not record, because
-     * a limit refused it, is not reported.
+     * A state took a new value while a session part was in progress. [record] is the change, and [snapshot] the value of
+     * every state after it. [previous] is the value the state had before, or null if this is its first. A change the
+     * recorder counts and does not record is not reported: one a limit refused, and one made with no session part in
+     * progress.
      */
     fun onChange(record: StateRecord, snapshot: StateSnapshot, previous: StateValue?)
 
     /**
-     * A session part started at [timeMs], when the value of every state was [snapshot].
+     * A session part started at [timeMs], when the value of every state was [snapshot]. That includes whatever changed
+     * with no session part in progress since the last one ended, of which nothing else is reported.
      */
     fun onPartStart(timeMs: Long, snapshot: StateSnapshot)
 }

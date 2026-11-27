@@ -75,6 +75,31 @@ internal class StateJournalReaderTest {
     }
 
     @Test
+    fun `a part start reads back with its count for each state, and one an earlier build wrote reads back with none`() {
+        val counts = listOf(
+            StateNotInSessionCount(state = "network", count = 2),
+            StateNotInSessionCount(state = "", count = 1),
+        )
+        val partStart = StatePartStart(not_in_session_counts = counts)
+        val start = StateRecord(sequence = 3, time_ms = 1_000L, part_start = partStart)
+        val decoded = decode(stateJournalLog(listOf(start, stateRecord(4))))
+
+        assertNull(decoded.corruption)
+        assertEquals(counts, checkNotNull(decoded.records.first().part_start).not_in_session_counts)
+
+        // a part start with nothing to count is still a part start
+        val nothingCounted = StateRecord(sequence = 3, part_start = StatePartStart())
+        assertNotNull(decode(stateJournalLog(listOf(nothingCounted))).records.single().part_start)
+
+        // field 1 as a varint, which an earlier build wrote in a part start and nothing reads
+        val earlier = StateRecord(sequence = 3, part_start = StatePartStart.ADAPTER.decode(byteArrayOf(0x08, 0x05)))
+        val read = decode(stateJournalLog(listOf(earlier, stateRecord(4))))
+        assertNull(read.corruption)
+        assertEquals(listOf(3L, 4L), sequences(read))
+        assertEquals(emptyList<StateNotInSessionCount>(), checkNotNull(read.records.first().part_start).not_in_session_counts)
+    }
+
+    @Test
     fun `a record of a limit that was reached reads back with its state, or with none for the global limit`() {
         val networkLimit = StateLimitReached(state = "network", limit = 100)
         val ofAState = StateRecord(sequence = 2, time_ms = 1_002L, limit_reached = networkLimit)

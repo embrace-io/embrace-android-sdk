@@ -4,7 +4,7 @@ plugins {
     id("io.embrace.android.testplugin")
 }
 
-def agpVersion = project.findProperty("agp_version") ?: "8.0.0"
+def agpVersion = project.findProperty("agp_version") ?: "8.9.1"
 def agpMajorVersion = agpVersion.toString().split("\\.")[0].toInteger()
 if (agpMajorVersion < 9) {
     apply plugin: "org.jetbrains.kotlin.android"

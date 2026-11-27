@@ -28,6 +28,8 @@ dependencies {
 buildConfig {
     val version = providers.gradleProperty("version").get()
     buildConfigField("String", "VERSION", "\"$version\"")
+    buildConfigField("String", "MIN_AGP_VERSION", "\"${findVersion("minAgpVersion")}\"")
+    buildConfigField("String", "MIN_GRADLE_VERSION", "\"${findVersion("minGradleVersion")}\"")
 }
 
 // marker artifact publication

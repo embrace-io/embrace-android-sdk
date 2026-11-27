@@ -3,11 +3,7 @@ apply plugin: 'io.embrace.gradle'
 apply plugin: "com.facebook.react"
 apply plugin: "io.embrace.android.testplugin"
 
-def agpVersion = project.findProperty("agp_version") ?: "8.0.0"
-def agpMajorVersion = agpVersion.toString().split('\\.')[0].toInteger()
-if (agpMajorVersion < 9) {
-    apply plugin: "org.jetbrains.kotlin.android"
-}
+apply plugin: "org.jetbrains.kotlin.android"
 
 repositories {
     google()

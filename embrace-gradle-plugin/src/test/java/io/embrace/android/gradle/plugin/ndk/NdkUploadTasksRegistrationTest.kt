@@ -1,10 +1,8 @@
 package io.embrace.android.gradle.plugin.ndk
 
-import com.android.build.api.AndroidPluginVersion
 import com.android.build.api.artifact.Artifacts
 import com.android.build.api.artifact.SingleArtifact
 import com.android.build.api.variant.Variant
-import io.embrace.android.gradle.plugin.agp.AgpVersion
 import io.embrace.android.gradle.plugin.api.EmbraceExtension
 import io.embrace.android.gradle.plugin.config.PluginBehavior
 import io.embrace.android.gradle.plugin.config.PluginBehaviorImpl
@@ -24,7 +22,6 @@ import io.embrace.bytecode.config.model.VariantConfig
 import org.gradle.api.DefaultTask
 import org.gradle.api.Project
 import org.gradle.api.internal.provider.AbstractProperty.PropertyQueryException
-import org.gradle.api.internal.provider.MissingValueException
 import org.gradle.api.provider.ListProperty
 import org.gradle.api.tasks.TaskProvider
 import org.gradle.testfixtures.ProjectBuilder
@@ -57,9 +54,6 @@ class NdkUploadTasksRegistrationTest {
         productFlavors = emptyList(),
         sourceMapPath = "sourceMapPath",
     )
-
-    private val agp802 = AgpVersion.CURRENT(AndroidPluginVersion(8, 0, 2))
-    private val agp941 = AgpVersion.CURRENT(AndroidPluginVersion(9, 4, 1))
 
     // The directory returned for SingleArtifact.MERGED_NATIVE_LIBS. An empty dir (no lib/) unless a test replaces it.
     private var mergedNativeLibsArtifactDir: File = Files.createTempDirectory("merged-native-libs").toFile()
@@ -165,29 +159,6 @@ class NdkUploadTasksRegistrationTest {
     }
 
     @Test
-    fun `an error is thrown when merge native libs task is not found`() {
-        // When NDK upload tasks are registered using the legacy lookup, as only it consults the merge task
-        embraceExtension.legacyNativeLibsLookup.set(true)
-        val registration = createNdkUploadTasksRegistration()
-        registration.register(testRegistrationParams)
-
-        // Then an exception is thrown when trying to access architecturesDirectory
-        val compressionTask = project.tasks.findByName(
-            "${CompressSharedObjectFilesTask.NAME}${testAndroidCompactedVariantData.name.capitalizedString()}",
-        ) as CompressSharedObjectFilesTask
-
-        val exception = assertThrows(MissingValueException::class.java) {
-            compressionTask.architecturesDirectory.get()
-        }
-
-        assertEquals(
-            "Cannot query the value of task ':compressSharedObjectFilesVariantName' property" +
-                " 'architecturesDirectory' because it has no value available.",
-            exception.message,
-        )
-    }
-
-    @Test
     fun `an error is thrown when customSymbolsDirectory doesn't exist`() {
         // Given a project with a customSymbolsDirectory that doesn't exist
         val variantName = testAndroidCompactedVariantData.name.capitalizedString()
@@ -209,39 +180,18 @@ class NdkUploadTasksRegistrationTest {
     }
 
     @Test
-    fun `merged native libs resolve from the artifact API on AGP 8_1+`() {
+    fun `merged native libs resolve from the artifact API`() {
         val artifactDir = createNativeLibsDir()
         mergedNativeLibsArtifactDir = artifactDir
-        createNdkUploadTasksRegistration(agpVersion = agp941).register(testRegistrationParams)
+        createNdkUploadTasksRegistration().register(testRegistrationParams)
 
         assertEquals(File(artifactDir, "lib"), getCompressionTask().architecturesDirectory.get().asFile)
         assertEquals(1, getArtifactsCalls)
     }
 
     @Test
-    fun `merged native libs use the merge task when legacyNativeLibsLookup is set`() {
-        embraceExtension.legacyNativeLibsLookup.set(true)
-        val taskOutputDir = createNativeLibsDir()
-        registerMergeNativeLibsTask(taskOutputDir)
-        createNdkUploadTasksRegistration(agpVersion = agp941).register(testRegistrationParams)
-
-        assertDependsOnMergeNativeLibsTask()
-        assertEquals(0, getArtifactsCalls)
-    }
-
-    @Test
-    fun `merged native libs use the merge task before AGP 8_1`() {
-        val taskOutputDir = createNativeLibsDir()
-        registerMergeNativeLibsTask(taskOutputDir)
-        createNdkUploadTasksRegistration(agpVersion = agp802).register(testRegistrationParams)
-
-        assertDependsOnMergeNativeLibsTask()
-        assertEquals(0, getArtifactsCalls)
-    }
-
-    @Test
     fun `architecturesDirectory has no value when the merged native libs artifact has no lib dir`() {
-        createNdkUploadTasksRegistration(agpVersion = agp941).register(testRegistrationParams)
+        createNdkUploadTasksRegistration().register(testRegistrationParams)
         assertFalse(getCompressionTask().architecturesDirectory.isPresent)
     }
 
@@ -249,10 +199,12 @@ class NdkUploadTasksRegistrationTest {
     fun `customSymbolsDirectory takes precedence over the artifact API`() {
         val customDir = Files.createTempDirectory("custom-symbols").toFile()
         embraceExtension.customSymbolsDirectory.set(customDir.absolutePath)
-        createNdkUploadTasksRegistration(agpVersion = agp941).register(testRegistrationParams)
+        registerMergeNativeLibsTask()
+        createNdkUploadTasksRegistration().register(testRegistrationParams)
 
         assertEquals(customDir, getCompressionTask().architecturesDirectory.get().asFile)
         assertEquals(0, getArtifactsCalls)
+        assertDependsOnMergeNativeLibsTask()
     }
 
     /**
@@ -265,10 +217,8 @@ class NdkUploadTasksRegistrationTest {
         return dir
     }
 
-    private fun registerMergeNativeLibsTask(outputDir: File) {
-        registerTestTask(project, "merge${testAndroidCompactedVariantData.name.capitalizedString()}NativeLibs").configure {
-            it.outputs.dir(outputDir)
-        }
+    private fun registerMergeNativeLibsTask() {
+        registerTestTask(project, "merge${testAndroidCompactedVariantData.name.capitalizedString()}NativeLibs")
     }
 
     private fun assertDependsOnMergeNativeLibsTask() {
@@ -284,11 +234,9 @@ class NdkUploadTasksRegistrationTest {
     private fun createNdkUploadTasksRegistration(
         behavior: PluginBehavior? = null,
         variantConfig: VariantConfig? = null,
-        agpVersion: AgpVersion = agp941,
     ) = NdkUploadTasksRegistration(
         behavior ?: testBehavior,
         variantConfig ?: testVariantConfig,
-        agpVersion,
     )
 
     private fun createEmbraceVariantConfig(

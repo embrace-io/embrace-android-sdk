@@ -46,9 +46,8 @@ gradleTestKit = "8.11.1"
 zstdJni = "1.5.7-17"
 detekt = "1.23.8"
 buildconfig = "6.1.2"
-# bump aliases manually: see .github/dependabot.yml.
-agp-api = "8.1.0"
-agp-api-min = "8.0.2"
+# bump manually: see .github/dependabot.yml.
+agp-api = "8.9.1"
 smali = "3.0.10"
 bundletool = "1.18.3"
 vanniktechMavenPublish = "0.37.0"
@@ -58,9 +57,30 @@ perfettoTraceProcessor = "59.1"
 jvmTargetCompatibility = "11"
 kotlinCoreLibrariesVersion = "2.0.21"
 minCompileSdk = "34"
-minAgpVersion = "8.0.2"
+# The minimum supported AGP and Gradle. The Gradle plugin enforces both, and TestMatrix.MinVersion runs on them.
+# The gradle-api library (agp-api-min) is pinned to minAgpVersion.
+minAgpVersion = "8.9.1"
+minGradleVersion = "8.11.1"
 compileSdk = "37"
 minSdk = "24"
+
+# Gradle plugin integration test matrix (TestMatrix in embrace-gradle-plugin-integration-tests). Locked: no library
+# references these, so Dependabot never bumps them. Move them by hand when the supported range changes.
+# MinVersion uses minAgpVersion, minGradleVersion, kotlinCoreLibrariesVersion and minCompileSdk.
+testMatrixMinJdk = "17"
+testMatrixMiddleAgp = "9.0.1"
+testMatrixMiddleGradle = "9.1.0"
+testMatrixMiddleKotlin = "2.2.10"
+testMatrixMiddleJdk = "21"
+testMatrixMiddleCompileSdk = "36"
+testMatrixMaxAgp = "9.5.3"
+testMatrixMaxGradle = "9.9.1"
+testMatrixMaxKotlin = "2.4.21"
+testMatrixMaxJdk = "21"
+testMatrixMaxCompileSdk = "37"
+# Below minGradleVersion, so the Gradle plugin must refuse to apply.
+testMatrixUnsupportedGradleAgp = "8.7.3"
+testMatrixUnsupportedGradle = "8.10.2"
 
 [libraries]
 detekt-gradle-plugin = { module = "io.gitlab.arturbosch.detekt:detekt-gradle-plugin", version.ref = "detekt" }
@@ -118,7 +138,7 @@ asm-util = { module = "org.ow2.asm:asm-util", version.ref = "asmUtil" }
 gradle-test-kit = { module = "dev.gradleplugins:gradle-test-kit", version.ref = "gradleTestKit" }
 zstd-jni = { module = "com.github.luben:zstd-jni", version.ref = "zstdJni" }
 agp-api = { module = "com.android.tools.build:gradle-api", version.ref = "agp-api" }
-agp-api-min = { module = "com.android.tools.build:gradle-api", version.ref = "agp-api-min" }
+agp-api-min = { module = "com.android.tools.build:gradle-api", version.ref = "minAgpVersion" }
 smali-baksmali = { module = "com.android.tools.smali:smali-baksmali", version.ref = "smali" }
 smali-dexlib2 = { module = "com.android.tools.smali:smali-dexlib2", version.ref = "smali" }
 bundletool = { module = "com.android.tools.build:bundletool", version.ref = "bundletool" }

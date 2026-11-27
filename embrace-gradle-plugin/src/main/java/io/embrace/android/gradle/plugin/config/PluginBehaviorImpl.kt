@@ -70,10 +70,6 @@ class PluginBehaviorImpl(
         embrace.customSymbolsDirectory.orNull ?: ""
     }
 
-    override val legacyNativeLibsLookup: Boolean by lazy {
-        embrace.legacyNativeLibsLookup.get()
-    }
-
     override fun isInstrumentationDisabledForVariant(variantName: String): Boolean {
         return !findBuildVariant(variantName).bytecodeInstrumentationEnabled
     }

@@ -6,15 +6,18 @@ import org.objectweb.asm.ClassWriter
 import org.objectweb.asm.Opcodes
 import kotlin.reflect.KClass
 
-// constants checked against AGP 7.4.2
+// constants checked against AGP 8.9.1 and 9.5.3
 
-// com.android.build.gradle.internal.instrumentation.InstrumentationUtils.ASM_API_VERSION_FOR_INSTRUMENTATION
+// com.android.build.gradle.internal.instrumentation.InstrumentationUtils: ASM_API_VERSION_FOR_INSTRUMENTATION (AGP 8),
+// ASM_API_VERSION (AGP 9)
 internal const val ASM_API_VERSION = Opcodes.ASM9
 
-// com.android.build.gradle.internal.instrumentation.AsmInstrumentationManager#getClassReaderFlags
+// com.android.build.gradle.internal.instrumentation.AsmInstrumentationManager#getClassReaderFlags, for the
+// plugin's FramesComputationMode.COMPUTE_FRAMES_FOR_INSTRUMENTED_METHODS
 internal const val ASM_CLASS_READER_FLAGS = ClassReader.EXPAND_FRAMES
 
-// com.android.build.gradle.internal.instrumentation.AsmInstrumentationManager#getClassWriterFlags
+// com.android.build.gradle.internal.instrumentation.AsmInstrumentationManager#getClassWriterFlags, for the
+// plugin's FramesComputationMode.COMPUTE_FRAMES_FOR_INSTRUMENTED_METHODS
 internal const val ASM_CLASS_WRITER_FLAGS = ClassWriter.COMPUTE_FRAMES
 
 internal typealias ClassVisitorFactory = (nextVisitor: ClassVisitor, params: BytecodeTestParams) -> ClassVisitor

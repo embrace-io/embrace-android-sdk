@@ -3,6 +3,7 @@ package io.embrace.android.embracesdk.internal.state
 import io.embrace.android.embracesdk.fakes.FakeClock
 import io.embrace.android.embracesdk.fakes.FakeErrorHandler
 import io.embrace.android.embracesdk.fakes.FakeInternalTelemetryService
+import io.embrace.android.embracesdk.internal.telemetry.AppliedLimitType
 import io.embrace.android.embracesdk.internal.utils.event.EventBus
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
@@ -15,6 +16,8 @@ import java.util.concurrent.ConcurrentLinkedQueue
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.Executors
 import java.util.concurrent.TimeUnit
+import java.util.concurrent.atomic.AtomicBoolean
+import java.util.concurrent.atomic.AtomicReference
 
 internal class StateRecorderTest {
 
@@ -397,6 +400,169 @@ internal class StateRecorderTest {
     }
 
     @Test
+    fun `changes made after a journal is attached reach it, and not before`() {
+        recorder = StateRecorder(clock, telemetryService)
+        recorder.declare(StateDefinition("network"), "wifi", false, clock.now())
+        recorder.openPart(PART, clock.now())
+        recorder.update("network", "none", false, clock.now())
+        assertTrue(journal.records.isEmpty())
+
+        recorder.attach(journal)
+        recorder.update("network", "wan", false, clock.now())
+
+        assertEquals(listOf("wan"), journal.changes().map { it.value })
+        assertTrue(replay.changes.isEmpty())
+    }
+
+    @Test
+    fun `changes made after a replay is attached reach it, and not before`() {
+        recorder = StateRecorder(clock, telemetryService)
+        recorder.declare(StateDefinition("network"), "wifi", false, clock.now())
+        recorder.openPart(PART, clock.now())
+        recorder.update("network", "none", false, clock.now())
+        assertTrue(replay.changes.isEmpty())
+
+        recorder.attach(replay)
+        recorder.update("network", "wan", false, clock.now())
+
+        assertEquals(listOf("wan"), replay.changes.map { it.value })
+        assertTrue(journal.records.isEmpty())
+    }
+
+    @Test
+    fun `with no window a time before the latest change has no snapshot`() {
+        recorder = newRecorder(keepsWindow = false)
+        // nothing is known before any change, whatever the time
+        assertSame(StateSnapshot.EMPTY, recorder.snapshotAt(clock.now()))
+
+        recorder.declare(StateDefinition("network"), "wifi", false, clock.now())
+        val firstAt = clock.now()
+        clock.tick(100)
+        recorder.update("network", "none", false, clock.now())
+        val secondAt = clock.now()
+
+        assertEquals(2L, recorder.snapshotAt(secondAt)?.seq)
+        assertEquals(2L, recorder.snapshotAt(secondAt + 10_000)?.seq)
+        assertNull(recorder.snapshotAt(secondAt - 1))
+        assertNull(recorder.snapshotAt(firstAt))
+        assertNull(recorder.snapshotAt(firstAt - 1))
+    }
+
+    @Test
+    fun `with a window a time before the first change has the empty snapshot until the window lets go of changes`() {
+        recorder = newRecorder(windowSize = 2)
+        recorder.declare(StateDefinition("network"), "wifi", false, clock.now())
+        val firstAt = clock.now()
+        clock.tick(10)
+        recorder.update("network", "none", false, clock.now())
+
+        assertSame(StateSnapshot.EMPTY, recorder.snapshotAt(firstAt - 1))
+
+        clock.tick(10)
+        recorder.update("network", "wan", false, clock.now())
+        assertNull(recorder.snapshotAt(firstAt - 1))
+        assertNull(recorder.snapshotAt(firstAt))
+    }
+
+    @Test
+    fun `a reader placing times while a writer makes changes never sees the sequence go backwards for a later time`() {
+        recorder = newRecorder(windowSize = 8, globalChangeLimit = Int.MAX_VALUE)
+        recorder.declare(StateDefinition("network", changeLimit = Int.MAX_VALUE), "initial", false, clock.now())
+        val failure = AtomicReference<Throwable?>()
+        val done = AtomicBoolean(false)
+        val start = CountDownLatch(1)
+        val executor = Executors.newFixedThreadPool(2)
+
+        // the clock is the fake's, so the writer moves it one millisecond per change and the reader asks about times it has passed
+        val writer = executor.submit {
+            try {
+                start.await()
+                repeat(CHANGES_PER_STATE) {
+                    clock.tick(1)
+                    recorder.update("network", "value-$it", false, clock.now())
+                }
+            } catch (t: Throwable) {
+                failure.set(t)
+            } finally {
+                done.set(true)
+            }
+        }
+        val reader = executor.submit {
+            try {
+                start.await()
+                var lastTime = Long.MIN_VALUE
+                var lastSeq = 0L
+                while (!done.get()) {
+                    val time = clock.now()
+                    val seq = recorder.snapshotAt(time)?.seq ?: continue
+                    if (time >= lastTime) {
+                        assertTrue("seq $seq at $time after $lastSeq at $lastTime", seq >= lastSeq)
+                        lastTime = time
+                        lastSeq = seq
+                    }
+                }
+            } catch (t: Throwable) {
+                failure.set(t)
+            }
+        }
+        start.countDown()
+        writer.get(30, TimeUnit.SECONDS)
+        reader.get(30, TimeUnit.SECONDS)
+        executor.shutdown()
+
+        assertNull(failure.get())
+        assertEquals(CHANGES_PER_STATE + 1L, recorder.current().seq)
+    }
+
+    @Test
+    fun `a change refused by its state's limit is tracked under the state and not under the change limit`() {
+        recorder.declare(StateDefinition("network", changeLimit = 1), "wifi", false, clock.now())
+        recorder.openPart(PART, clock.now())
+        recorder.update("network", "none", false, clock.now())
+        recorder.update("network", "wan", false, clock.now())
+
+        assertEquals(listOf("network_state_data_source" to AppliedLimitType.DROP), telemetryService.appliedLimits)
+    }
+
+    @Test
+    fun `a change refused by the limit across all states is tracked under the change limit and not under the state`() {
+        recorder = newRecorder(globalChangeLimit = 1)
+        recorder.declare(StateDefinition("network"), "wifi", false, clock.now())
+        recorder.openPart(PART, clock.now())
+        recorder.update("network", "none", false, clock.now())
+        recorder.update("network", "wan", false, clock.now())
+
+        assertEquals(listOf("state_change" to AppliedLimitType.DROP), telemetryService.appliedLimits)
+    }
+
+    @Test
+    fun `an update for an undeclared state is tracked as undeclared`() {
+        assertFalse(recorder.update("made-up", "value", false, clock.now()))
+
+        assertEquals(listOf("undeclared_state_update" to AppliedLimitType.DROP), telemetryService.appliedLimits)
+    }
+
+    @Test
+    fun `a report from outside for an undeclared state is tracked and changes nothing, and one for a declared state does neither`() {
+        val eventBus = EventBus(FakeErrorHandler())
+        recorder.attach(eventBus)
+        recorder.openPart(PART, clock.now())
+        eventBus.emit(StateEvents.DECLARED, StateDeclaration(StateDefinition("network"), "wifi", false, clock.now()))
+
+        eventBus.emit(StateEvents.REPORTED, StateReport("made-up", "value", clock.now()))
+        assertEquals(listOf("undeclared_state_update" to AppliedLimitType.DROP), telemetryService.appliedLimits)
+        assertEquals(1L, recorder.current().seq)
+
+        // the state's data source acts on a report for a declared state, not the recorder
+        eventBus.emit(StateEvents.REPORTED, StateReport("network", "none", clock.now()))
+        assertEquals(1, telemetryService.appliedLimits.size)
+        assertEquals("network=wifi", recorder.current().packed())
+        assertEquals(1L, recorder.current().seq)
+        // only the declaration is listed
+        assertEquals(1, journal.changes().size)
+    }
+
+    @Test
     fun `changes reported from several threads take one order, and every snapshot agrees with the history`() {
         recorder = newRecorder(globalChangeLimit = Int.MAX_VALUE)
         val states = (0 until STATES).map { "state-$it" }
@@ -447,9 +613,10 @@ internal class StateRecorderTest {
     private fun newRecorder(
         globalChangeLimit: Int = StateRecorder.GLOBAL_CHANGE_LIMIT,
         windowSize: Int = StateRecorder.WINDOW_SIZE,
-    ) = StateRecorder(clock, telemetryService, globalChangeLimit, windowSize).also {
-        it.journal = journal
-        it.replay = replay
+        keepsWindow: Boolean = true,
+    ) = StateRecorder(clock, telemetryService, globalChangeLimit, windowSize, keepsWindow).also {
+        it.attach(journal)
+        it.attach(replay)
     }
 
     private fun StateSnapshot.names(): List<String> = (0 until size).map(::name)

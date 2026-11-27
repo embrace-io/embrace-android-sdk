@@ -6,6 +6,8 @@ import io.embrace.android.embracesdk.fakes.FakeErrorHandler
 import io.embrace.android.embracesdk.fakes.FakeInternalTelemetryService
 import io.embrace.android.embracesdk.fakes.FakeLogRecord
 import io.embrace.android.embracesdk.fakes.FakeOpenTelemetryLogger
+import io.embrace.android.embracesdk.fakes.OtelSdkMode
+import io.embrace.android.embracesdk.fakes.fakeOpenTelemetry
 import io.embrace.android.embracesdk.internal.arch.schema.EmbType
 import io.embrace.android.embracesdk.internal.clock.millisToNanos
 import io.embrace.android.embracesdk.internal.state.AppStateKeys
@@ -17,9 +19,13 @@ import io.embrace.android.embracesdk.internal.worker.BackgroundWorker
 import io.opentelemetry.kotlin.logging.Logger
 import io.opentelemetry.kotlin.logging.SeverityNumber
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertNotEquals
 import org.junit.Assert.assertNull
+import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
+import java.util.concurrent.Executors
+import java.util.concurrent.TimeUnit
 
 internal class StateReplayEmitterTest {
 
@@ -291,6 +297,72 @@ internal class StateReplayEmitterTest {
         assertEquals("boom", errorHandler.sdkErrorMessages.single().throwable?.message)
     }
 
+    @Test
+    fun `every record, change or snapshot, is emitted with the context that marks a replay`() {
+        attach(StateExportMode.ASSOCIATION)
+        recorder.declare(StateDefinition(NETWORK), "wifi", false, START_MS)
+        recorder.openPart(PART, START_MS)
+        recorder.update(NETWORK, "cell", false, CHANGE_MS)
+        executor.runCurrentlyBlocked()
+
+        assertEquals(
+            listOf(AppStateKeys.SNAPSHOT_EVENT_NAME, AppStateKeys.CHANGE_EVENT_NAME),
+            logger.logs.map { it.eventName },
+        )
+        logger.logs.forEach { assertTrue(checkNotNull(it.context).isStateReplay()) }
+    }
+
+    @Test
+    fun `a change left out at the cap does not stop a part's snapshot being queued, in order after the changes before it`() {
+        attach(StateExportMode.ASSOCIATION, maxQueued = 2)
+        recorder.declare(StateDefinition(NETWORK), "wifi", false, START_MS)
+        recorder.openPart(PART, START_MS) // queued: snapshot
+        recorder.update(NETWORK, "cell", false, CHANGE_MS) // queued: change 2
+        recorder.update(NETWORK, "none", false, CHANGE_MS + 1) // at the cap: left out
+        recorder.openPart("part-2", PART_MS) // queued although the cap is reached
+        executor.runCurrentlyBlocked()
+
+        assertEquals(listOf(LIMIT_TYPE to AppliedLimitType.DROP), telemetryService.appliedLimits)
+        assertEquals(
+            listOf(AppStateKeys.SNAPSHOT_EVENT_NAME, AppStateKeys.CHANGE_EVENT_NAME, AppStateKeys.SNAPSHOT_EVENT_NAME),
+            logger.logs.map { it.eventName },
+        )
+        // the number skips over the change that was left out, and the snapshot has the value that change made
+        assertEquals(listOf<Any?>(1L, 2L, 3L), logger.logs.map { it.attributes[AppStateKeys.SEQ] })
+        assertEquals("none", logger.logs[2].attributes["${AppStateKeys.VALUE_PREFIX}$NETWORK"])
+    }
+
+    @Test
+    fun `nothing is emitted on the thread that made the change`() {
+        val emittedOn = mutableListOf<String>()
+        val worker = Executors.newSingleThreadScheduledExecutor { Thread(it, "replay-test-worker") }
+        try {
+            val emitter = StateReplayEmitter(
+                loggerProvider = {
+                    emittedOn.add(Thread.currentThread().name)
+                    logger
+                },
+                worker = BackgroundWorker(worker),
+                processIdentifier = { PROCESS_ID },
+                stateTelemetry = StateTelemetry(recorder, exportMode = { StateExportMode.ASSOCIATION }),
+                errorHandler = errorHandler,
+                telemetryService = telemetryService,
+                rootContextProvider = { fakeOpenTelemetry(OtelSdkMode.REGULAR).context.root() },
+            )
+            recorder.attach(emitter)
+            recorder.declare(StateDefinition(NETWORK), "wifi", false, START_MS)
+            recorder.openPart(PART, START_MS)
+            recorder.update(NETWORK, "cell", false, CHANGE_MS)
+        } finally {
+            worker.shutdown()
+            assertTrue(worker.awaitTermination(5, TimeUnit.SECONDS))
+        }
+
+        assertEquals(2, logger.logs.size)
+        assertEquals(listOf("replay-test-worker", "replay-test-worker"), emittedOn)
+        assertNotEquals(Thread.currentThread().name, emittedOn.first())
+    }
+
     private fun attach(
         mode: StateExportMode,
         maxQueued: Int = 1000,
@@ -304,8 +376,9 @@ internal class StateReplayEmitterTest {
             errorHandler = errorHandler,
             telemetryService = telemetryService,
             maxQueued = maxQueued,
+            rootContextProvider = { fakeOpenTelemetry(OtelSdkMode.REGULAR).context.root() },
         )
-        recorder.replay = emitter
+        recorder.attach(emitter)
         return emitter
     }
 

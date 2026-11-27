@@ -10,18 +10,22 @@ import io.embrace.android.embracesdk.fakes.FakeReadWriteSpan
 import io.embrace.android.embracesdk.fakes.FakeSpan
 import io.embrace.android.embracesdk.fakes.FakeSpanExporter
 import io.embrace.android.embracesdk.fakes.FakeSpanProcessor
+import io.embrace.android.embracesdk.fakes.OtelSdkMode
 import io.embrace.android.embracesdk.fakes.TestUuidSource
+import io.embrace.android.embracesdk.fakes.fakeOpenTelemetry
 import io.embrace.android.embracesdk.internal.SystemInfo
 import io.embrace.android.embracesdk.internal.otel.export.immediateExportDispatcher
 import io.embrace.android.embracesdk.internal.otel.logs.LogSinkImpl
 import io.embrace.android.embracesdk.internal.otel.spans.SpanRepository
 import io.embrace.android.embracesdk.internal.otel.state.StateExportMode
 import io.embrace.android.embracesdk.internal.otel.state.StateTelemetry
+import io.embrace.android.embracesdk.internal.otel.state.markedAsStateReplay
 import io.embrace.android.embracesdk.internal.state.AppStateKeys
 import io.embrace.android.embracesdk.internal.state.StateRecorder
 import io.opentelemetry.kotlin.NoopOpenTelemetry
 import io.opentelemetry.kotlin.semconv.AndroidAttributes
 import io.opentelemetry.kotlin.semconv.DeviceAttributes
+import io.opentelemetry.kotlin.semconv.LogAttributes
 import io.opentelemetry.kotlin.semconv.OsAttributes
 import io.opentelemetry.kotlin.semconv.ServiceAttributes
 import io.opentelemetry.kotlin.semconv.TelemetryAttributes
@@ -138,6 +142,46 @@ internal class OtelSdkConfigTest {
 
         assertEquals("process-id", resource(telemetry)[AppStateKeys.PROCESS_IDENTIFIER])
         assertFalse(resource(null).containsKey(AppStateKeys.PROCESS_IDENTIFIER))
+    }
+
+    @Test
+    fun `a replayed record skips Embrace's store only when the second step is on`() {
+        fun emitReplay(associationEnabled: Boolean): Triple<Int, Int, Boolean> {
+            val sink = LogSinkImpl(FakeErrorHandler())
+            val external = FakeLogRecordExporter()
+            val configuration = OtelSdkConfig(
+                spanRepository = SpanRepository(FakeErrorHandler()),
+                logSink = sink,
+                sdkName = "sdk",
+                sdkVersion = "1.0",
+                appVersion = "2.5.1",
+                packageName = "com.test.app",
+                systemInfo = SystemInfo(),
+                uuidSource = TestUuidSource(),
+                externalExportDispatcher = immediateExportDispatcher(),
+                externalConfig = ExternalOtelConfig().apply { addLogExporter(external) },
+                stateTelemetry = StateTelemetry(
+                    StateRecorder(FakeClock()),
+                    exportMode = { StateExportMode.ASSOCIATION },
+                    associationEnabled = associationEnabled,
+                ),
+            )
+            val log = FakeReadWriteLogRecord(eventName = AppStateKeys.CHANGE_EVENT_NAME)
+            val replayContext = fakeOpenTelemetry(OtelSdkMode.REGULAR).context.root().markedAsStateReplay()
+
+            configuration.logRecordProcessor.onEmit(log, replayContext)
+
+            return Triple(
+                sink.logsForNextBatch().size,
+                external.exportedLogs.size,
+                log.attributes.containsKey(LogAttributes.LOG_RECORD_UID),
+            )
+        }
+
+        // replayed: only the app's exporter gets it, and it is not given a log id
+        assertEquals(Triple(0, 1, false), emitReplay(associationEnabled = true))
+        // not replayed: the mark means nothing, so it is an ordinary log that is stored and exported
+        assertEquals(Triple(1, 1, true), emitReplay(associationEnabled = false))
     }
 
     private fun config(externalConfig: ExternalOtelConfig) = OtelSdkConfig(

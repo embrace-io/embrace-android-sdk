@@ -10,6 +10,7 @@ import io.embrace.android.embracesdk.internal.state.AppStateKeys
 import io.embrace.android.embracesdk.internal.state.StateDefinition
 import io.embrace.android.embracesdk.internal.state.StateRecorder
 import io.embrace.android.embracesdk.internal.state.StateSnapshot
+import io.opentelemetry.kotlin.logging.data.LogRecordData
 import org.junit.Assert.assertEquals
 import org.junit.Before
 import org.junit.Test
@@ -36,11 +37,19 @@ internal class StateTelemetryTest {
     }
 
     @Test
-    fun `the kind of a log decides how it is stamped and where it goes`() {
+    fun `with the second step off the rendering is never verbose`() {
+        StateExportMode.entries.forEach { mode ->
+            val telemetry = StateTelemetry(recorder, exportMode = { mode }, associationEnabled = false)
+            assertEquals(false, telemetry.isVerbose())
+        }
+    }
+
+    @Test
+    fun `only the log of a process that has died is of that kind, and an event name changes nothing`() {
         assertEquals(LogKind.DEAD_PROCESS, association.kindOf(log(EmbType.System.NativeCrash.value)))
         assertEquals(LogKind.DEAD_PROCESS, association.kindOf(log(EmbType.System.Exit.value)))
-        assertEquals(LogKind.REPLAY, association.kindOf(log(EmbType.State.value, AppStateKeys.CHANGE_EVENT_NAME)))
-        assertEquals(LogKind.REPLAY, association.kindOf(log(EmbType.State.value, AppStateKeys.SNAPSHOT_EVENT_NAME)))
+        assertEquals(LogKind.LIVE, association.kindOf(log(EmbType.State.value, AppStateKeys.CHANGE_EVENT_NAME)))
+        assertEquals(LogKind.LIVE, association.kindOf(log(EmbType.State.value, AppStateKeys.SNAPSHOT_EVENT_NAME)))
         assertEquals(LogKind.LIVE, association.kindOf(log(EmbType.State.value, "another.event")))
         assertEquals(LogKind.LIVE, association.kindOf(log(EmbType.State.value, null)))
         assertEquals(LogKind.LIVE, association.kindOf(log(EmbType.System.Log.value)))
@@ -57,13 +66,18 @@ internal class StateTelemetryTest {
     }
 
     @Test
-    fun `the kind of a log is the same read from the event name and attributes`() {
-        assertEquals(LogKind.REPLAY, association.kindOf(AppStateKeys.CHANGE_EVENT_NAME, mapOf(EmbType.State.key to EmbType.State.value)))
-        assertEquals(LogKind.REPLAY, association.kindOf(AppStateKeys.SNAPSHOT_EVENT_NAME, mapOf(EmbType.State.key to EmbType.State.value)))
-        assertEquals(LogKind.LIVE, association.kindOf("another.event", mapOf(EmbType.State.key to EmbType.State.value)))
-        assertEquals(LogKind.LIVE, association.kindOf(AppStateKeys.CHANGE_EVENT_NAME, emptyMap()))
-        assertEquals(LogKind.DEAD_PROCESS, association.kindOf(null, mapOf(EmbType.State.key to EmbType.System.NativeCrash.value)))
-        assertEquals(LogKind.DEAD_PROCESS, association.kindOf(null, mapOf(EmbType.State.key to EmbType.System.Exit.value)))
+    fun `the kind of a log is the same read from its attributes as from the record`() {
+        listOf(
+            EmbType.System.NativeCrash.value to LogKind.DEAD_PROCESS,
+            EmbType.System.Exit.value to LogKind.DEAD_PROCESS,
+            EmbType.State.value to LogKind.LIVE,
+            EmbType.System.Log.value to LogKind.LIVE,
+        ).forEach { (type, kind) ->
+            assertEquals(kind, association.kindOf(mapOf<String, Any>(EmbType.State.key to type)))
+            assertEquals(kind, association.kindOf(log(type)))
+        }
+        assertEquals(LogKind.LIVE, association.kindOf(emptyMap()))
+        assertEquals(LogKind.LIVE, association.kindOf(mapOf<String, Any>("other" to EmbType.System.NativeCrash.value)))
     }
 
     @Test
@@ -74,6 +88,24 @@ internal class StateTelemetryTest {
             listOf(
                 Attribute("first", "x"),
                 Attribute("count", "3"),
+                Attribute(AppStateKeys.PACKED, "network=wifi;screen-automatic~Initializing"),
+                Attribute(AppStateKeys.SEQ, "2"),
+            ),
+            association.withPackedStamp(attributes, twoStates()),
+        )
+    }
+
+    @Test
+    fun `an attribute a log already has under one of the stamp's keys is replaced by the stamp, not sent beside it`() {
+        val attributes = linkedMapOf<String, Any>(
+            AppStateKeys.PACKED to "network=made-up",
+            "first" to "x",
+            AppStateKeys.SEQ to 99L,
+        )
+
+        assertEquals(
+            listOf(
+                Attribute("first", "x"),
                 Attribute(AppStateKeys.PACKED, "network=wifi;screen-automatic~Initializing"),
                 Attribute(AppStateKeys.SEQ, "2"),
             ),
@@ -120,6 +152,47 @@ internal class StateTelemetryTest {
             ),
             record.attributes,
         )
+    }
+
+    @Test
+    fun `the plain stamp of a record that can be written to is written, with no skip reported`() {
+        var skipped = 0
+        val telemetry = StateTelemetry(
+            recorder,
+            exportMode = { StateExportMode.ASSOCIATION },
+            onPlainStampSkipped = { skipped++ },
+        )
+        val record = FakeReadWriteLogRecord()
+        val data: LogRecordData = record
+
+        telemetry.writeLogExportForm(data, twoStates())
+
+        assertEquals(
+            mapOf<String, Any>(
+                "${AppStateKeys.VALUE_PREFIX}$NETWORK" to "wifi",
+                "${AppStateKeys.VALUE_PREFIX}$SCREEN" to "Initializing",
+                "${AppStateKeys.VALUE_TYPE_PREFIX}$SCREEN" to AppStateKeys.VALUE_TYPE_SYSTEM,
+                AppStateKeys.SEQ to 2L,
+            ),
+            record.attributes,
+        )
+        assertEquals(0, skipped)
+    }
+
+    @Test
+    fun `a record that cannot be written to is left as it is and the skip is reported once`() {
+        var skipped = 0
+        val telemetry = StateTelemetry(
+            recorder,
+            exportMode = { StateExportMode.ASSOCIATION },
+            onPlainStampSkipped = { skipped++ },
+        )
+        val readOnly = object : LogRecordData by FakeReadWriteLogRecord() {}
+
+        telemetry.writeLogExportForm(readOnly, twoStates())
+
+        assertEquals(1, skipped)
+        assertEquals(emptyMap<String, Any>(), readOnly.attributes)
     }
 
     @Test

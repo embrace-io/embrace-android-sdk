@@ -5,6 +5,7 @@ import android.app.Application
 import android.content.Context
 import android.content.Intent
 import android.os.Looper
+import android.view.FrameMetrics
 import android.os.PowerManager
 import androidx.test.core.app.ApplicationProvider
 import io.embrace.android.embracesdk.assertions.findSpanByName
@@ -15,6 +16,7 @@ import io.embrace.android.embracesdk.fakes.config.FakeInstrumentedConfig
 import io.embrace.android.embracesdk.internal.arch.schema.SchemaType.NetworkState.Status
 import io.embrace.android.embracesdk.internal.arch.schema.SchemaType.PowerState.PowerMode
 import io.embrace.android.embracesdk.internal.capture.connectivity.ConnectivityStatus
+import io.embrace.android.embracesdk.internal.EmbraceInternalApi
 import io.embrace.android.embracesdk.internal.config.remote.BackgroundActivityRemoteConfig
 import io.embrace.android.embracesdk.internal.config.remote.RemoteConfig
 import io.embrace.android.embracesdk.internal.otel.sdk.findAttributeValue
@@ -26,6 +28,7 @@ import io.embrace.android.embracesdk.internal.payload.SpanEvent
 import io.embrace.android.embracesdk.internal.state.AppStateKeys
 import io.embrace.android.embracesdk.internal.state.PackedStates
 import io.embrace.android.embracesdk.internal.worker.Worker
+import io.embrace.android.embracesdk.semconv.EmbFrameCountsAttributes
 import io.embrace.android.embracesdk.testframework.OtelSdkMode
 import io.embrace.android.embracesdk.testframework.SdkIntegrationTestRule
 import io.embrace.android.embracesdk.testframework.actions.EmbraceSetupInterface
@@ -40,6 +43,7 @@ import org.junit.runner.RunWith
 import org.robolectric.ParameterizedRobolectricTestRunner
 import org.robolectric.Robolectric
 import org.robolectric.Shadows
+import org.robolectric.shadows.FrameMetricsBuilder
 import org.robolectric.shadows.ShadowLooper
 import org.robolectric.shadows.ShadowPowerManager
 
@@ -57,18 +61,21 @@ internal class AppStateRealStatesTest(otelSdkMode: OtelSdkMode) {
                 Worker.Background.SessionPersistenceWorker,
                 Worker.Background.PeriodicCacheWorker,
                 Worker.Background.NonIoRegWorker,
+                Worker.Background.StateExportWorker,
                 Worker.Background.IoRegWorker,
             ),
         ).apply {
             getFakedWorkerExecutor(Worker.Background.SessionPersistenceWorker).blockingMode = false
             getFakedWorkerExecutor(Worker.Background.NonIoRegWorker).blockingMode = false
+            getFakedWorkerExecutor(Worker.Background.StateExportWorker).blockingMode = false
             getFakedWorkerExecutor(Worker.Background.IoRegWorker).blockingMode = false
         }
     }
 
     private val appStateOn = RemoteConfig(
         pctStateCaptureEnabledV2 = 100f,
-        pctAppStateEnabled = 100f,
+        pctSharedStateSpanEnabled = 100f,
+        pctStateAssociationEnabled = 100f,
         pctMultiFilePersistenceEnabled = 100f,
         backgroundActivityConfig = BackgroundActivityRemoteConfig(100f),
     )
@@ -196,6 +203,46 @@ internal class AppStateRealStatesTest(otelSdkMode: OtelSdkMode) {
     }
 
     @Test
+    fun `a hosted SDK's report of the screen is a change of its own, and the next native screen is a change again`() {
+        val activities = listOf(
+            Robolectric.buildActivity(HomeActivity::class.java),
+            Robolectric.buildActivity(HomeActivity::class.java),
+        )
+        testRule.runTest(
+            persistedRemoteConfig = appStateOn.copy(pctNavigationStateCaptureEnabled = 100f, pctSmoothnessEnabled = 100f),
+            testCaseAction = {
+                simulateOpeningActivities(
+                    addStartupActivity = false,
+                    startInBackground = true,
+                    activitiesAndActions = listOf(
+                        activities[0] to {
+                            // 45ms spans three vsyncs: two dropped of five expected
+                            activities[0].get().renderFrames(5, 5, 45)
+                            EmbraceInternalApi.internalInterface.reportState("screen-automatic", "hosted-screen", clock.now())
+                        },
+                        activities[1] to {},
+                    ),
+                )
+            },
+            assertAction = {
+                val changeLog = getSessionEnvelopes(1).single().changeLog()
+                val name = activities[0].get().localClassName
+                val events = changeLog.stateEvents("screen-automatic")
+                // the hosted report and the native screen after it each replace the value, so the part ends on the native screen
+                assertEquals(listOf(name, "hosted-screen", name, "Backgrounded"), events.map { it.attribute(AppStateKeys.NEW_VALUE) })
+                val seqs = events.map { checkNotNull(it.attribute(AppStateKeys.SEQ)).toLong() }
+                assertEquals(seqs.sorted(), seqs)
+                assertEquals(seqs.distinct(), seqs)
+
+                // the hosted change is of a screen it left, so it has that screen's frames, as a native change does
+                val hosted = events[1]
+                assertEquals("2", hosted.attribute(EmbFrameCountsAttributes.SMOOTHNESS_DROPPED_FRAMES))
+                assertEquals("5", hosted.attribute(EmbFrameCountsAttributes.SMOOTHNESS_EXPECTED_FRAMES))
+            },
+        )
+    }
+
+    @Test
     fun `changes of two states made together are numbered in the order they were made in one change log`() {
         testRule.runTest(
             instrumentedConfig = FakeInstrumentedConfig(enabledFeatures = FakeEnabledFeatureConfig(networkConnectivityCapture = true)),
@@ -233,6 +280,16 @@ internal class AppStateRealStatesTest(otelSdkMode: OtelSdkMode) {
                 )
             },
         )
+    }
+
+    /** Delivers one frame per entry to the Activity's frame-metrics listeners, each taking that many milliseconds to render. */
+    private fun Activity.renderFrames(vararg durationsMs: Long) {
+        durationsMs.forEach { durationMs ->
+            val frame = FrameMetricsBuilder()
+                .setMetric(FrameMetrics.DRAW_DURATION, durationMs * 1_000_000L)
+                .build()
+            Shadows.shadowOf(window).reportOnFrameMetricsAvailable(frame)
+        }
     }
 
     private fun setPowerSaveMode(powerSaveModeEnabled: Boolean) {

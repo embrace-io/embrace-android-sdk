@@ -39,7 +39,7 @@ internal class AppStateConfigFeatureTest(
     @Test
     fun `remote app state config overrides local`() {
         testRule.runTest(
-            persistedRemoteConfig = RemoteConfig(pctAppStateEnabled = 0f, appStateExportMode = "association"),
+            persistedRemoteConfig = RemoteConfig(pctSharedStateSpanEnabled = 0f, pctStateAssociationEnabled = 0f, stateExportMode = "association"),
             setupAction = { appStateLocalConfig = FakeAppStateLocalConfig(enabled = true, exportMode = "verbose") },
             testCaseAction = {},
             assertAction = {

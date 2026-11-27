@@ -12,6 +12,7 @@ import io.embrace.android.embracesdk.internal.envelope.metadata.HostedSdkVersion
 import io.embrace.android.embracesdk.internal.injection.createHostedSdkVersionInfo
 import io.embrace.android.embracesdk.internal.logging.SdkErrorType
 import io.embrace.android.embracesdk.internal.payload.AppFramework
+import io.embrace.android.embracesdk.internal.state.StateReport
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Before
@@ -40,6 +41,29 @@ internal class HostedSdkInternalInterfaceImplTest {
             errorHandler = errorHandler,
             telemetryService = telemetryService,
         )
+    }
+
+    @Test
+    fun `reporting a state hands the reporter one report with the name, value and time given`() {
+        val reports = mutableListOf<StateReport>()
+        val reporting = HostedSdkInternalInterfaceImpl(
+            logsApi = unimplemented(),
+            configService = FakeConfigService(),
+            resourceSource = FakeEnvelopeResourceSource(),
+            instrumentationRegistry = unimplemented(),
+            serializer = unimplemented(),
+            rnBundleIdTracker = lazy { error("rn bundle id tracker failure") },
+            hostedSdkVersionInfo = hostedSdkVersionInfo,
+            errorHandler = errorHandler,
+            telemetryService = telemetryService,
+            stateReporter = reports::add,
+        )
+        reporting.reportState("screen", "B", 1234L)
+        val report = reports.single()
+        assertEquals("screen", report.state)
+        assertEquals("B", report.value)
+        assertEquals(1234L, report.timeMs)
+        assertEquals(listOf("report_state"), telemetryService.apiCalls)
     }
 
     @Test

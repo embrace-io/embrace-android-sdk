@@ -50,11 +50,13 @@ internal class AppStateFeatureTest(otelSdkMode: OtelSdkMode) {
                 Worker.Background.SessionPersistenceWorker,
                 Worker.Background.PeriodicCacheWorker,
                 Worker.Background.NonIoRegWorker,
+                Worker.Background.StateExportWorker,
                 Worker.Background.IoRegWorker,
             ),
         ).apply {
             getFakedWorkerExecutor(Worker.Background.SessionPersistenceWorker).blockingMode = false
             getFakedWorkerExecutor(Worker.Background.NonIoRegWorker).blockingMode = false
+            getFakedWorkerExecutor(Worker.Background.StateExportWorker).blockingMode = false
             getFakedWorkerExecutor(Worker.Background.IoRegWorker).blockingMode = false
         }
     }
@@ -66,7 +68,8 @@ internal class AppStateFeatureTest(otelSdkMode: OtelSdkMode) {
 
     private val appStateOn = RemoteConfig(
         pctStateCaptureEnabledV2 = 100f,
-        pctAppStateEnabled = 100f,
+        pctSharedStateSpanEnabled = 100f,
+        pctStateAssociationEnabled = 100f,
         pctMultiFilePersistenceEnabled = 100f,
         // a session part is always in progress, so each part's change log opens where the one before closed
         backgroundActivityConfig = BackgroundActivityRemoteConfig(100f),
@@ -283,6 +286,11 @@ internal class AppStateFeatureTest(otelSdkMode: OtelSdkMode) {
                 // nothing is recorded, stamped or sent for a state no data source defines
                 assertTrue(changeLog.stateEvents("hosted-only").isEmpty())
                 assertNull(changeLog.attribute(AppStateKeys.INITIAL_VALUE_PREFIX + "hosted-only"))
+                // the report is refused and tracked as an applied limit, once for the one report
+                assertEquals(
+                    "1",
+                    getSingleSessionEnvelope().findSessionPartSpan().attribute("emb.private.applied_limit.undeclared_state_update.drop"),
+                )
                 val log = checkNotNull(getSingleLogEnvelope().getLogs { it.body == "on the hosted screen" }.single().attributes)
                 assertEquals("route/home" to false, log.packedState("test"))
                 assertNull(log.packedState("hosted-only"))

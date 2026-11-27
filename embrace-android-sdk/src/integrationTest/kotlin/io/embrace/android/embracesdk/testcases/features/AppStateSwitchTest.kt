@@ -43,11 +43,13 @@ internal class AppStateSwitchTest(otelSdkMode: OtelSdkMode) {
                 Worker.Background.SessionPersistenceWorker,
                 Worker.Background.PeriodicCacheWorker,
                 Worker.Background.NonIoRegWorker,
+                Worker.Background.StateExportWorker,
                 Worker.Background.IoRegWorker,
             ),
         ).apply {
             getFakedWorkerExecutor(Worker.Background.SessionPersistenceWorker).blockingMode = false
             getFakedWorkerExecutor(Worker.Background.NonIoRegWorker).blockingMode = false
+            getFakedWorkerExecutor(Worker.Background.StateExportWorker).blockingMode = false
             getFakedWorkerExecutor(Worker.Background.IoRegWorker).blockingMode = false
         }
     }
@@ -66,7 +68,8 @@ internal class AppStateSwitchTest(otelSdkMode: OtelSdkMode) {
         runWithEarlierModel(
             RemoteConfig(
                 pctStateCaptureEnabledV2 = 100f,
-                pctAppStateEnabled = 100f,
+                pctSharedStateSpanEnabled = 100f,
+                pctStateAssociationEnabled = 100f,
                 pctMultiFilePersistenceEnabled = 0f,
                 backgroundActivityConfig = BackgroundActivityRemoteConfig(100f),
             )
@@ -78,7 +81,8 @@ internal class AppStateSwitchTest(otelSdkMode: OtelSdkMode) {
         testRule.runTest(
             persistedRemoteConfig = RemoteConfig(
                 pctStateCaptureEnabledV2 = 0f,
-                pctAppStateEnabled = 100f,
+                pctSharedStateSpanEnabled = 100f,
+                pctStateAssociationEnabled = 100f,
                 pctMultiFilePersistenceEnabled = 100f,
                 backgroundActivityConfig = BackgroundActivityRemoteConfig(100f),
             ),

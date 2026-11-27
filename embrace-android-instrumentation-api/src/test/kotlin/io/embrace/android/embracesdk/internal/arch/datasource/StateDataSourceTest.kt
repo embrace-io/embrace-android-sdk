@@ -10,6 +10,8 @@ import io.embrace.android.embracesdk.internal.arch.InstrumentationArgs
 import io.embrace.android.embracesdk.internal.state.StateDeclaration
 import io.embrace.android.embracesdk.internal.state.StateDrops
 import io.embrace.android.embracesdk.internal.state.StateEvents
+import io.embrace.android.embracesdk.internal.state.StateRecorder
+import io.embrace.android.embracesdk.internal.state.StateReport
 import io.embrace.android.embracesdk.internal.state.StateUpdate
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotEquals
@@ -268,6 +270,169 @@ internal class StateDataSourceTest {
         assertEquals(1, args.destination.createdStateTokens.size)
     }
 
+    @Test
+    fun `with the model on two typed values that render to the same text are one value`() {
+        val modelArgs = modelOnArgs()
+        val recorder = recorderOn(modelArgs)
+        val source = TestStateDataSource(modelArgs).apply { onDataCaptureEnabled() }
+
+        // a String and a StringBuilder are different typed values with the same text
+        source.onStateChange("x", 1L)
+        source.onStateChange(StringBuilder("x"), 2L)
+
+        assertEquals(listOf("x"), updates.map { it.value })
+        assertEquals(2L, recorder.current().seq)
+        assertEquals("test=x", recorder.current().packed())
+    }
+
+    @Test
+    fun `with the model on values that differ only past the length limit are one value with no attributes gathered`() {
+        val modelArgs = modelOnArgs()
+        val recorder = recorderOn(modelArgs)
+        var gathered = 0
+        val source = object : StateDataSource<Any>(
+            args = modelArgs,
+            stateTypeFactory = ::TestState,
+            defaultValue = "UNKNOWN",
+        ) {
+            override fun outgoingValueAttributes(value: Any): Map<String, String> {
+                gathered++
+                return emptyMap()
+            }
+        }.apply { onDataCaptureEnabled() }
+
+        source.onStateChange("a".repeat(2_500) + "b", 1L)
+        assertEquals(1, gathered)
+        source.onStateChange("a".repeat(2_500) + "c", 2L)
+
+        assertEquals(1, updates.size)
+        assertEquals(1, gathered)
+        assertEquals(2L, recorder.current().seq)
+        assertEquals(2_000, recorder.current().value(0).length)
+    }
+
+    @Test
+    fun `with the model on the latest report stands whoever made it`() {
+        val modelArgs = modelOnArgs()
+        val recorder = recorderOn(modelArgs)
+        val source = TestStateDataSource(modelArgs).apply { onDataCaptureEnabled() }
+
+        source.onStateChange("A", 1L)
+        modelArgs.eventBus.emit(StateEvents.REPORTED, StateReport("test", "B", 2L))
+        source.onStateChange("A", 3L)
+
+        assertEquals(listOf("A", "B", "A"), updates.map { it.value })
+        assertEquals("A", recorder.current().value(0))
+        assertEquals(4L, recorder.current().seq)
+    }
+
+    @Test
+    fun `with the model on a report from outside that repeats the native value is no change`() {
+        val modelArgs = modelOnArgs()
+        val recorder = recorderOn(modelArgs)
+        val source = TestStateDataSource(modelArgs).apply { onDataCaptureEnabled() }
+
+        source.onStateChange("A", 1L)
+        modelArgs.eventBus.emit(StateEvents.REPORTED, StateReport("test", "A", 2L))
+
+        assertEquals(listOf("A"), updates.map { it.value })
+        assertEquals(2L, recorder.current().seq)
+    }
+
+    @Test
+    fun `with the model on a report from outside is not generated, has the reporter's time and the outgoing attributes`() {
+        val modelArgs = modelOnArgs()
+        val source = attributedSource(modelArgs).apply { onDataCaptureEnabled() }
+
+        val generated = TestStateValue.SystemValue("generated")
+        source.onStateChange(generated, 1L)
+        modelArgs.eventBus.emit(StateEvents.REPORTED, StateReport("test", "$generated", 7L))
+
+        assertEquals(listOf(true, false), updates.map { it.system })
+        val outside = updates.last()
+        assertEquals("$generated", outside.value)
+        assertEquals(7L, outside.timeMs)
+        assertEquals(mapOf(OUTGOING_KEY to "typed:$generated"), outside.attributes)
+    }
+
+    @Test
+    fun `with the model on the change after an outside report carries the reported value's outgoing attributes`() {
+        val modelArgs = modelOnArgs()
+        val source = attributedSource(modelArgs).apply { onDataCaptureEnabled() }
+
+        source.onStateChange("a", 1L)
+        modelArgs.eventBus.emit(StateEvents.REPORTED, StateReport("test", "b", 2L))
+        source.onStateChange("c", 3L)
+
+        assertEquals(
+            listOf(
+                mapOf(OUTGOING_KEY to "typed:UNKNOWN"),
+                mapOf(OUTGOING_KEY to "typed:a"),
+                mapOf(OUTGOING_KEY to "generated:false"),
+            ),
+            updates.map { it.attributes },
+        )
+    }
+
+    @Test
+    fun `with the model on a report from outside for another state is ignored`() {
+        val modelArgs = modelOnArgs()
+        val recorder = recorderOn(modelArgs)
+        TestStateDataSource(modelArgs).onDataCaptureEnabled()
+
+        modelArgs.eventBus.emit(StateEvents.REPORTED, StateReport("other", "B", 2L))
+
+        assertTrue(updates.isEmpty())
+        assertEquals("test=UNKNOWN", recorder.current().packed())
+    }
+
+    @Test
+    fun `with the model on a report from outside before the data source is enabled changes nothing, then or later`() {
+        val modelArgs = modelOnArgs()
+        val recorder = recorderOn(modelArgs)
+        val source = TestStateDataSource(modelArgs)
+
+        modelArgs.eventBus.emit(StateEvents.REPORTED, StateReport("test", "B", 1L))
+        source.onDataCaptureEnabled()
+
+        assertTrue(updates.isEmpty())
+        assertEquals("test=UNKNOWN", recorder.current().packed())
+        assertEquals(1L, recorder.current().seq)
+        assertEquals("UNKNOWN", source.getCurrentStateValue())
+        source.onStateChange("UNKNOWN", 2L)
+        assertEquals(1L, recorder.current().seq)
+    }
+
+    @Test
+    fun `with the model off a report from outside does nothing`() {
+        dataSource.onDataCaptureEnabled()
+        dataSource.onStateChange("a", 1L)
+
+        args.eventBus.emit(StateEvents.REPORTED, StateReport("test", "B", 2L))
+        dataSource.onStateChange("a", 3L)
+
+        assertTrue(updates.isEmpty())
+        assertEquals("a", dataSource.getCurrentStateValue())
+        assertEquals(mapOf<String, Any>("emb.state.test" to "a"), dataSource.currentStateAttributes())
+        assertEquals(listOf("a"), args.destination.createdStateTokens.single().transitions.map { it.second })
+    }
+
+    private fun attributedSource(modelArgs: InstrumentationArgs) = object : StateDataSource<Any>(
+        args = modelArgs,
+        stateTypeFactory = ::TestState,
+        defaultValue = "UNKNOWN",
+        changeAttributeKeys = setOf(OUTGOING_KEY),
+    ) {
+        override fun outgoingValueAttributes(value: Any): Map<String, String> = mapOf(OUTGOING_KEY to "typed:$value")
+        override fun outgoingAttributes(
+            generated: Boolean,
+        ): Map<String, String> = mapOf(OUTGOING_KEY to "generated:$generated")
+    }
+
+    private fun recorderOn(modelArgs: FakeInstrumentationArgs) = StateRecorder(modelArgs.clock).also {
+        it.attach(modelArgs.eventBus)
+    }
+
     private fun modelOnArgs(): FakeInstrumentationArgs = FakeInstrumentationArgs(
         sessionPartIdSupplier = { "part-id" },
         configService = appStateEnabledConfigService(),
@@ -281,6 +446,7 @@ internal class StateDataSourceTest {
 
     private companion object {
         const val MAX_TRANSITIONS = 100
+        const val OUTGOING_KEY = "outgoing"
         const val CAPTURE_THREAD = "first-capture"
         const val PART_CHANGE_THREAD = "part-change"
         const val AWAIT_SECONDS = 5L

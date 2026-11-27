@@ -219,7 +219,7 @@ internal class DefaultLogRecordExporterTest {
     }
 
     @Test
-    fun `a replayed record is not stored, but is still sent to the app's exporters unstamped`() {
+    fun `exporting externally hands records to the app's exporters and stores nothing for Embrace`() {
         declareStates()
         val logSink: LogSink = LogSinkImpl(FakeErrorHandler())
         val externalExporter = FakeLogRecordExporter()
@@ -227,26 +227,81 @@ internal class DefaultLogRecordExporterTest {
             setStringAttribute(EmbType.State.key, EmbType.State.value)
         }
 
-        val result = exporter(logSink, listOf(externalExporter), stateTelemetry = stateTelemetry)
-            .exportInline(listOf(replay))
+        exporter(logSink, listOf(externalExporter), stateTelemetry = stateTelemetry).exportExternally(listOf(replay))
 
-        assertEquals(OperationResultCode.Success, result)
         assertTrue(logSink.logsForNextBatch().isEmpty())
         assertEquals(mapOf<String, Any>(EmbType.State.key to EmbType.State.value), externalExporter.exportedLogs.single().attributes)
+        assertEquals(mapOf<String, Any>(EmbType.State.key to EmbType.State.value), replay.attributes)
     }
 
     @Test
-    fun `a batch with a replayed record stores only the others`() {
+    fun `exporting externally does nothing when the export check fails`() {
+        val externalExporter = FakeLogRecordExporter()
+        val logSink: LogSink = LogSinkImpl(FakeErrorHandler())
+        val exporter = DefaultLogRecordExporter(
+            logSink = logSink,
+            externalExporters = listOf(externalExporter),
+            exportCheck = { false },
+            externalExportDispatcher = immediateExportDispatcher(),
+        )
+
+        exporter.exportExternally(listOf(FakeReadWriteLogRecord()))
+
+        assertTrue(externalExporter.exportedLogs.isEmpty())
+        assertTrue(logSink.logsForNextBatch().isEmpty())
+    }
+
+    @Test
+    fun `an inline record named as a state change is stored like any other log`() {
         declareStates()
         val logSink: LogSink = LogSinkImpl(FakeErrorHandler())
-        val replay = FakeReadWriteLogRecord(eventName = AppStateKeys.SNAPSHOT_EVENT_NAME).apply {
+        val externalExporter = FakeLogRecordExporter()
+        val log = FakeReadWriteLogRecord(eventName = AppStateKeys.CHANGE_EVENT_NAME, body = "hello").apply {
             setStringAttribute(EmbType.State.key, EmbType.State.value)
         }
-        val ordinary = FakeReadWriteLogRecord(body = "hello")
 
-        exporter(logSink, stateTelemetry = stateTelemetry).exportInline(listOf(replay, ordinary))
+        exporter(logSink, listOf(externalExporter), stateTelemetry = stateTelemetry).exportInline(listOf(log))
 
-        assertEquals(listOf("hello"), logSink.logsForNextBatch().map { it.body })
+        val stored = logSink.logsForNextBatch().single()
+        assertEquals("hello", stored.body)
+        assertEquals(
+            listOf(
+                Attribute(EmbType.State.key, EmbType.State.value),
+                Attribute(AppStateKeys.PACKED, "network=wifi;screen-automatic~Initializing"),
+                Attribute(AppStateKeys.SEQ, "2"),
+            ),
+            stored.attributes,
+        )
+        assertEquals(1, externalExporter.exportedLogs.size)
+    }
+
+    @Test
+    fun `a record that cannot be written to is reported as skipped and is still stored and exported`() {
+        declareStates()
+        var skipped = 0
+        val telemetry = StateTelemetry(
+            recorder,
+            exportMode = { StateExportMode.ASSOCIATION },
+            onPlainStampSkipped = { skipped++ },
+        )
+        val logSink: LogSink = LogSinkImpl(FakeErrorHandler())
+        val externalExporter = FakeLogRecordExporter()
+        val writable = FakeReadWriteLogRecord(body = "hello").apply { setStringAttribute("custom", "x") }
+        val readOnly = object : LogRecordData by writable {}
+
+        val result = exporter(logSink, listOf(externalExporter), stateTelemetry = telemetry).exportInline(listOf(readOnly))
+
+        assertEquals(OperationResultCode.Success, result)
+        assertEquals(1, skipped)
+        assertEquals(
+            listOf(
+                Attribute("custom", "x"),
+                Attribute(AppStateKeys.PACKED, "network=wifi;screen-automatic~Initializing"),
+                Attribute(AppStateKeys.SEQ, "2"),
+            ),
+            logSink.logsForNextBatch().single().attributes,
+        )
+        assertEquals(mapOf<String, Any>("custom" to "x"), externalExporter.exportedLogs.single().attributes)
     }
 
     @Test

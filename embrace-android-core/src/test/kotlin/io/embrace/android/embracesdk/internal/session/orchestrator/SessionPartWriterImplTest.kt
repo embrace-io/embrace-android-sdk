@@ -1665,7 +1665,7 @@ internal class SessionPartWriterImplTest {
         writer.onSessionPartStarted(clock.now(), USER_SESSION_ID, SESSION_PART_ID)
         drain()
         val stateRecorder = StateRecorder(clock)
-        stateRecorder.journal = writer
+        stateRecorder.attach(writer)
         stateRecorder.declare(StateDefinition("network"), "wifi", false, clock.now())
 
         stateRecorder.openPart(SESSION_PART_ID, clock.now())

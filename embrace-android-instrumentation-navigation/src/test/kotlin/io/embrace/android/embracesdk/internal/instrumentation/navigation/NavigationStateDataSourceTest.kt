@@ -9,6 +9,7 @@ import io.embrace.android.embracesdk.internal.arch.navigation.ScreenAttributesSo
 import io.embrace.android.embracesdk.internal.arch.schema.SchemaType.NavigationState.Screen
 import io.embrace.android.embracesdk.internal.state.StateDeclaration
 import io.embrace.android.embracesdk.internal.state.StateEvents
+import io.embrace.android.embracesdk.internal.state.StateReport
 import io.embrace.android.embracesdk.internal.state.StateUpdate
 import io.embrace.android.embracesdk.semconv.EmbFrameCountsAttributes
 import io.embrace.android.embracesdk.semconv.ExperimentalSemconv
@@ -233,6 +234,34 @@ internal class NavigationStateDataSourceTest {
         assertEquals(emptyMap<String, String>(), updates[0].attributes)
         assertEquals(mapOf("screen.visit" to "2"), updates[1].attributes)
         assertEquals(emptyList<Any>(), modelArgs.destination.createdStateTokens)
+    }
+
+    @Test
+    fun `with the app state model on an outside report of a screen carries the counts of the screen being left`() {
+        val modelArgs = FakeInstrumentationArgs(configService = appStateEnabledConfigService())
+        val updates = mutableListOf<StateUpdate>()
+        modelArgs.eventBus.addHandler(StateEvents.UPDATED) { updates.add(it) }
+        val source = CountingScreenAttributesSource()
+        modelArgs.navigationTrackingService.addScreenAttributesSource(source)
+        NavigationStateDataSource(modelArgs).onDataCaptureEnabled()
+
+        modelArgs.eventBus.emitState(CurrentScreen.KEY, CurrentScreen(Screen.Named("home"), modelArgs.clock.tick()))
+        val reportedTime = modelArgs.clock.tick()
+        modelArgs.eventBus.emit(StateEvents.REPORTED, StateReport("screen-automatic", "${Screen.Named("hosted")}", reportedTime))
+        modelArgs.eventBus.emitState(CurrentScreen.KEY, CurrentScreen(Screen.Named("profile"), modelArgs.clock.tick()))
+
+        assertEquals(
+            listOf("${Screen.Named("home")}", "${Screen.Named("hosted")}", "${Screen.Named("profile")}"),
+            updates.map { it.value },
+        )
+        assertEquals(reportedTime, updates[1].timeMs)
+        assertEquals(false, updates[1].system)
+        // leaving Initializing collects and discards; each screen left after that is collected once, from its own start
+        assertEquals(
+            listOf(emptyMap(), mapOf("screen.visit" to "2"), mapOf("screen.visit" to "3")),
+            updates.map { it.attributes },
+        )
+        assertEquals(3, source.collectCount)
     }
 
     private class CountingScreenAttributesSource : ScreenAttributesSource {

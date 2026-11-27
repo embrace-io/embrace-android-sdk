@@ -339,6 +339,60 @@ internal class SessionPartResurrectorTest {
         assertEquals(emptyMap<String, String>(), metadata.filterKeys { it.startsWith(AppStateKeys.STEM) })
     }
 
+    @Test
+    fun `with span links off a span the dead process left running gets no end number but a native crash still gets its stamp`() {
+        resurrector = SessionPartResurrector(
+            cachedLogEnvelopeStore,
+            stampDeadProcessState = { true },
+            completeSpanLinks = { false },
+        )
+        val deadPart = incompleteEnvelope(sessionPartId = FAKE_SESSION_PART_ID).withChangeLog()
+        val resurrected = checkNotNull(resurrect(deadPart, crash = nativeCrashData(FAKE_SESSION_PART_ID)))
+
+        checkNotNull(resurrected.data.spans).forEach { span ->
+            assertNull(span.attributes.orEmpty().findAttributeValue(AppStateKeys.END_SEQ))
+        }
+        val metadata = nativeCrashService.metadataSent.single()
+        assertEquals("5", metadata[AppStateKeys.SEQ])
+        assertEquals("cell", metadata["${AppStateKeys.VALUE_PREFIX}network"])
+    }
+
+    @Test
+    fun `with the dead process stamp off a native crash gets no state but a running span still gets its end number`() {
+        resurrector = SessionPartResurrector(
+            cachedLogEnvelopeStore,
+            stampDeadProcessState = { false },
+            completeSpanLinks = { true },
+        )
+        val deadPart = incompleteEnvelope(sessionPartId = FAKE_SESSION_PART_ID).withChangeLog()
+        val resurrected = checkNotNull(resurrect(deadPart, crash = nativeCrashData(FAKE_SESSION_PART_ID)))
+
+        val metadata = nativeCrashService.metadataSent.single()
+        assertEquals(emptyMap<String, String>(), metadata.filterKeys { it.startsWith(AppStateKeys.STEM) })
+        val (_, others) = checkNotNull(resurrected.data.spans).partition { it.isStateChangeLog() }
+        assertEquals(2, others.size)
+        others.forEach { span ->
+            assertEquals("5", span.attributes.orEmpty().findAttributeValue(AppStateKeys.END_SEQ))
+        }
+    }
+
+    @Test
+    fun `with both the stamp and the span links on both happen`() {
+        resurrector = SessionPartResurrector(
+            cachedLogEnvelopeStore,
+            stampDeadProcessState = { true },
+            completeSpanLinks = { true },
+        )
+        val deadPart = incompleteEnvelope(sessionPartId = FAKE_SESSION_PART_ID).withChangeLog()
+        val resurrected = checkNotNull(resurrect(deadPart, crash = nativeCrashData(FAKE_SESSION_PART_ID)))
+
+        assertEquals("5", nativeCrashService.metadataSent.single()[AppStateKeys.SEQ])
+        val (_, others) = checkNotNull(resurrected.data.spans).partition { it.isStateChangeLog() }
+        others.forEach { span ->
+            assertEquals("5", span.attributes.orEmpty().findAttributeValue(AppStateKeys.END_SEQ))
+        }
+    }
+
     private fun Envelope<SessionPartPayload>.withChangeLog() = copy(
         data = data.copy(spanSnapshots = checkNotNull(data.spanSnapshots) + DeadPartStateTest.changeLog()),
     )

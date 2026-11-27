@@ -11,11 +11,13 @@ import io.embrace.android.embracesdk.internal.clock.millisToNanos
 import io.embrace.android.embracesdk.internal.config.remote.BackgroundActivityRemoteConfig
 import io.embrace.android.embracesdk.internal.config.remote.RemoteConfig
 import io.embrace.android.embracesdk.internal.otel.sdk.findAttributeValue
+import io.embrace.android.embracesdk.internal.payload.Attribute
 import io.embrace.android.embracesdk.internal.payload.Envelope
 import io.embrace.android.embracesdk.internal.payload.SessionPartPayload
 import io.embrace.android.embracesdk.internal.payload.Span
 import io.embrace.android.embracesdk.internal.payload.SpanEvent
 import io.embrace.android.embracesdk.internal.state.AppStateKeys
+import io.embrace.android.embracesdk.internal.state.PackedStates
 import io.embrace.android.embracesdk.internal.toStringMap
 import io.embrace.android.embracesdk.internal.worker.Worker
 import io.embrace.android.embracesdk.testframework.OtelSdkMode
@@ -51,11 +53,13 @@ internal class AppStateExportTest(otelSdkMode: OtelSdkMode) {
                 Worker.Background.SessionPersistenceWorker,
                 Worker.Background.PeriodicCacheWorker,
                 Worker.Background.NonIoRegWorker,
+                Worker.Background.StateExportWorker,
                 Worker.Background.IoRegWorker,
             ),
         ).apply {
             getFakedWorkerExecutor(Worker.Background.SessionPersistenceWorker).blockingMode = false
             getFakedWorkerExecutor(Worker.Background.NonIoRegWorker).blockingMode = false
+            getFakedWorkerExecutor(Worker.Background.StateExportWorker).blockingMode = false
             getFakedWorkerExecutor(Worker.Background.IoRegWorker).blockingMode = false
         }
     }
@@ -64,14 +68,15 @@ internal class AppStateExportTest(otelSdkMode: OtelSdkMode) {
 
     private val appStateOn = RemoteConfig(
         pctStateCaptureEnabledV2 = 100f,
-        pctAppStateEnabled = 100f,
+        pctSharedStateSpanEnabled = 100f,
+        pctStateAssociationEnabled = 100f,
         pctMultiFilePersistenceEnabled = 100f,
         backgroundActivityConfig = BackgroundActivityRemoteConfig(100f),
     )
 
     private val appStateOnWithoutBackgroundActivity = appStateOn.copy(backgroundActivityConfig = null)
 
-    private val appStateVerbose = appStateOn.copy(appStateExportMode = "verbose")
+    private val appStateVerbose = appStateOn.copy(stateExportMode = "verbose")
 
     @Test
     fun `a change made in a session part reaches the log exporter as a change event with every field`() {
@@ -246,6 +251,40 @@ internal class AppStateExportTest(otelSdkMode: OtelSdkMode) {
                 val attributes = awaitChangesOf("test", 1).single().attributes.toStringMap()
                 assertEquals("declared-value", attributes[TEST_STATE_DECLARED_ATTRIBUTE_KEY])
                 assertFalse(attributes.containsKey("test.undeclared"))
+            },
+        )
+    }
+
+    @Test
+    fun `an app's own log named like a change event is an ordinary log, stamped, delivered to Embrace and exported once`() {
+        testRule.runTest(
+            persistedRemoteConfig = appStateOn,
+            testCaseAction = {
+                recordSession {
+                    findDataSource<TestStateDataSource>().onStateChange(newState = "foo", transitionTimeMs = clock.tick(100L))
+                    embrace.getOpenTelemetryKotlin().loggerProvider.getLogger("app-logger").emit(
+                        body = "app's own",
+                        eventName = AppStateKeys.CHANGE_EVENT_NAME,
+                    ) {
+                        setStringAttribute(EmbType.State.key, "state")
+                    }
+                }
+            },
+            assertAction = {
+                val log = getSingleLogEnvelope().getLogs { it.body == "app's own" }.single()
+                val attributes = checkNotNull(log.attributes)
+                assertEquals("foo" to false, attributes.packedState("test"))
+                assertNotNull(attributes.findAttributeValue(AppStateKeys.SEQ))
+                assertNotNull(attributes.findAttributeValue("log.record.uid"))
+            },
+            otelExportAssertion = {
+                val exported = awaitLogs(1) { it.bodyValue?.asString() == "app's own" }.single()
+                assertEquals(AppStateKeys.CHANGE_EVENT_NAME, exported.eventName)
+                assertEquals("foo", exported.attributes.toStringMap()[AppStateKeys.VALUE_PREFIX + "test"])
+                assertNotNull(exported.longAttribute(AppStateKeys.SEQ))
+
+                // the replayed change of the test state is still the one record of that change
+                assertEquals(1, awaitChangesOf("test", 1).size)
             },
         )
     }
@@ -452,6 +491,11 @@ internal class AppStateExportTest(otelSdkMode: OtelSdkMode) {
         assertNull(events.first().attributes.toStringMap()[AppStateKeys.PREVIOUS_VALUE])
         return events.drop(1)
     }
+
+    private fun List<Attribute>.packedState(state: String): Pair<String, Boolean>? =
+        PackedStates.unpack(checkNotNull(findAttributeValue(AppStateKeys.PACKED)))
+            .singleOrNull { it.name == state }
+            ?.let { it.value to it.system }
 
     private fun Envelope<SessionPartPayload>.changeLog(): Span = findSpanByName(AppStateKeys.CHANGE_LOG_SPAN_NAME)
 

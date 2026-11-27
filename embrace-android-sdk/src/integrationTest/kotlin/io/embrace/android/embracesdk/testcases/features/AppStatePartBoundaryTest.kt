@@ -49,24 +49,28 @@ internal class AppStatePartBoundaryTest(otelSdkMode: OtelSdkMode) {
                 Worker.Background.SessionPersistenceWorker,
                 Worker.Background.PeriodicCacheWorker,
                 Worker.Background.NonIoRegWorker,
+                Worker.Background.StateExportWorker,
                 Worker.Background.IoRegWorker,
             ),
         ).apply {
             getFakedWorkerExecutor(Worker.Background.SessionPersistenceWorker).blockingMode = false
             getFakedWorkerExecutor(Worker.Background.NonIoRegWorker).blockingMode = false
+            getFakedWorkerExecutor(Worker.Background.StateExportWorker).blockingMode = false
             getFakedWorkerExecutor(Worker.Background.IoRegWorker).blockingMode = false
         }
     }
 
     private val appStateOn = RemoteConfig(
         pctStateCaptureEnabledV2 = 100f,
-        pctAppStateEnabled = 100f,
+        pctSharedStateSpanEnabled = 100f,
+        pctStateAssociationEnabled = 100f,
         pctMultiFilePersistenceEnabled = 100f,
     )
 
     private val withBackgroundActivity = RemoteConfig(
         pctStateCaptureEnabledV2 = 100f,
-        pctAppStateEnabled = 100f,
+        pctSharedStateSpanEnabled = 100f,
+        pctStateAssociationEnabled = 100f,
         pctMultiFilePersistenceEnabled = 100f,
         backgroundActivityConfig = BackgroundActivityRemoteConfig(100f),
     )

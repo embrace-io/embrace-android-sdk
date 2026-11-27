@@ -3,7 +3,8 @@ package io.embrace.android.embracesdk.benchmark.fakes
 import io.embrace.android.embracesdk.PropertyScope
 import io.embrace.android.embracesdk.Severity
 import io.embrace.android.embracesdk.internal.api.SdkApi
-import io.embrace.android.embracesdk.network.EmbraceNetworkRequest
+import io.embrace.android.embracesdk.network.NetworkRequestDsl
+import io.embrace.android.embracesdk.network.http.HttpMethod
 import io.embrace.android.embracesdk.spans.AutoTerminationMode
 import io.embrace.android.embracesdk.spans.EmbraceSpan
 import io.embrace.android.embracesdk.spans.EmbraceSpanEvent
@@ -20,7 +21,7 @@ import java.lang.reflect.Proxy
 internal class FakeSdkApi(private val clock: () -> Long) : SdkApi by throwingSdkApi() {
 
     val breadcrumbs: MutableList<String> = mutableListOf()
-    val networkRequests: MutableList<EmbraceNetworkRequest> = mutableListOf()
+    val networkRequests: MutableList<FakeNetworkRequest> = mutableListOf()
     val spans: MutableList<FakeEmbraceSpan> = mutableListOf()
     val logs: MutableList<Log> = mutableListOf()
     val userSessionProperties: MutableMap<String, String> = mutableMapOf()
@@ -35,8 +36,14 @@ internal class FakeSdkApi(private val clock: () -> Long) : SdkApi by throwingSdk
         breadcrumbs += message
     }
 
-    override fun recordNetworkRequest(networkRequest: EmbraceNetworkRequest) {
-        networkRequests += networkRequest
+    override fun recordNetworkRequest(
+        url: String,
+        httpMethod: HttpMethod,
+        startTime: Long,
+        endTime: Long,
+        action: NetworkRequestDsl.() -> Unit,
+    ) {
+        networkRequests += FakeNetworkRequest(url, httpMethod, startTime, endTime).apply(action)
     }
 
     override fun startSpan(

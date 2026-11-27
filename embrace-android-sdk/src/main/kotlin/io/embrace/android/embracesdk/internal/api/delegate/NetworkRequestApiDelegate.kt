@@ -6,12 +6,15 @@ import io.embrace.android.embracesdk.internal.instrumentation.network.DefaultTra
 import io.embrace.android.embracesdk.internal.instrumentation.network.HttpNetworkRequest
 import io.embrace.android.embracesdk.internal.instrumentation.network.NetworkCaptureDataSource
 import io.embrace.android.embracesdk.internal.instrumentation.network.NetworkRequestDataSource
+import io.embrace.android.embracesdk.internal.network.EmbraceNetworkRequest
+import io.embrace.android.embracesdk.internal.network.EmbraceNetworkRequestDsl
 import io.embrace.android.embracesdk.internal.network.http.HttpRequestInfoModifierChain
 import io.embrace.android.embracesdk.internal.network.parent.NetworkSpanParentService
 import io.embrace.android.embracesdk.internal.session.orchestrator.SessionOrchestrator
-import io.embrace.android.embracesdk.network.EmbraceNetworkRequest
+import io.embrace.android.embracesdk.network.NetworkRequestDsl
 import io.embrace.android.embracesdk.network.NetworkSpanParentProvider
 import io.embrace.android.embracesdk.network.NetworkSpanParentToken
+import io.embrace.android.embracesdk.network.http.HttpMethod
 import io.embrace.android.embracesdk.network.http.HttpRequestInfoModifier
 import io.embrace.android.embracesdk.spans.EmbraceSpan
 import io.opentelemetry.kotlin.tracing.SpanContext
@@ -23,8 +26,15 @@ internal class NetworkRequestApiDelegate(
     private val networkSpanParentService: Lazy<NetworkSpanParentService>,
 ) : NetworkRequestApi {
 
-    override fun recordNetworkRequest(networkRequest: EmbraceNetworkRequest) {
-        logNetworkRequest(networkRequest)
+    override fun recordNetworkRequest(
+        url: String,
+        httpMethod: HttpMethod,
+        startTime: Long,
+        endTime: Long,
+        action: NetworkRequestDsl.() -> Unit,
+    ) {
+        val request = EmbraceNetworkRequestDsl(url, httpMethod, startTime, endTime).apply(action).build()
+        logNetworkRequest(request)
     }
 
     override fun addHttpRequestInfoModifier(modifier: HttpRequestInfoModifier) {

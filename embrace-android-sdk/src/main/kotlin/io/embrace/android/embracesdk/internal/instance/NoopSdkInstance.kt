@@ -20,9 +20,10 @@ import io.embrace.android.embracesdk.internal.clock.Clock
 import io.embrace.android.embracesdk.internal.logging.ErrorHandler
 import io.embrace.android.embracesdk.internal.network.parent.NoopNetworkSpanParentToken
 import io.embrace.android.embracesdk.internal.otel.spans.NoopEmbraceSdkSpan
-import io.embrace.android.embracesdk.network.EmbraceNetworkRequest
+import io.embrace.android.embracesdk.network.NetworkRequestDsl
 import io.embrace.android.embracesdk.network.NetworkSpanParentProvider
 import io.embrace.android.embracesdk.network.NetworkSpanParentToken
+import io.embrace.android.embracesdk.network.http.HttpMethod
 import io.embrace.android.embracesdk.network.http.HttpRequestInfoModifier
 import io.embrace.android.embracesdk.spans.AutoTerminationMode
 import io.embrace.android.embracesdk.spans.EmbraceSpan
@@ -134,7 +135,13 @@ internal class NoopSdkInstance(
         logDropped("log_push_notification")
     }
 
-    override fun recordNetworkRequest(networkRequest: EmbraceNetworkRequest) {
+    override fun recordNetworkRequest(
+        url: String,
+        httpMethod: HttpMethod,
+        startTime: Long,
+        endTime: Long,
+        action: NetworkRequestDsl.() -> Unit,
+    ) {
         logDropped("record_network_request")
     }
 

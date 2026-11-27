@@ -53,6 +53,7 @@ public final class io/embrace/android/embracesdk/Embrace : io/embrace/android/em
 	public fun observeNavigation (Landroid/app/Activity;Ljava/lang/Object;)V
 	public fun recordCompletedSpan (Ljava/lang/String;JJLio/embrace/android/embracesdk/spans/ErrorCode;Lio/embrace/android/embracesdk/spans/EmbraceSpan;Ljava/util/Map;Ljava/util/List;)Z
 	public fun recordNetworkRequest (Lio/embrace/android/embracesdk/network/EmbraceNetworkRequest;)V
+	public fun recordNetworkRequest (Ljava/lang/String;Lio/embrace/android/embracesdk/network/http/HttpMethod;JJLkotlin/jvm/functions/Function1;)V
 	public fun recordSpan (Ljava/lang/String;Lio/embrace/android/embracesdk/spans/EmbraceSpan;Ljava/util/Map;Ljava/util/List;Lio/embrace/android/embracesdk/spans/AutoTerminationMode;Lkotlin/jvm/functions/Function0;)Ljava/lang/Object;
 	public fun removeHttpRequestInfoModifier (Lio/embrace/android/embracesdk/network/http/HttpRequestInfoModifier;)V
 	public fun removeUserSessionListener (Lio/embrace/android/embracesdk/UserSessionListener;)V

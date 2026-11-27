@@ -21,9 +21,10 @@ import io.embrace.android.embracesdk.internal.logging.guardSdkCode
 import io.embrace.android.embracesdk.internal.network.parent.NoopNetworkSpanParentToken
 import io.embrace.android.embracesdk.internal.otel.spans.NoopEmbraceSdkSpan
 import io.embrace.android.embracesdk.internal.telemetry.InternalTelemetryService
-import io.embrace.android.embracesdk.network.EmbraceNetworkRequest
+import io.embrace.android.embracesdk.network.NetworkRequestDsl
 import io.embrace.android.embracesdk.network.NetworkSpanParentProvider
 import io.embrace.android.embracesdk.network.NetworkSpanParentToken
+import io.embrace.android.embracesdk.network.http.HttpMethod
 import io.embrace.android.embracesdk.network.http.HttpRequestInfoModifier
 import io.embrace.android.embracesdk.spans.AutoTerminationMode
 import io.embrace.android.embracesdk.spans.EmbraceSpan
@@ -121,8 +122,13 @@ internal class SdkApiDispatcher(
         )
     }
 
-    override fun recordNetworkRequest(networkRequest: EmbraceNetworkRequest) =
-        record("record_network_request") { target.recordNetworkRequest(networkRequest) }
+    override fun recordNetworkRequest(
+        url: String,
+        httpMethod: HttpMethod,
+        startTime: Long,
+        endTime: Long,
+        action: NetworkRequestDsl.() -> Unit,
+    ) = record("record_network_request") { target.recordNetworkRequest(url, httpMethod, startTime, endTime, action) }
 
     override fun addHttpRequestInfoModifier(modifier: HttpRequestInfoModifier) =
         record("add_http_request_info_modifier") { target.addHttpRequestInfoModifier(modifier) }

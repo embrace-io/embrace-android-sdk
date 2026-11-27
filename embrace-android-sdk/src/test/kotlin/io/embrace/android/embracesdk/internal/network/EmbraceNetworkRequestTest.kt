@@ -1,3 +1,5 @@
+@file:Suppress("DEPRECATION")
+
 package io.embrace.android.embracesdk.internal.network
 
 import io.embrace.android.embracesdk.internal.instrumentation.network.DefaultTraceparentGenerator

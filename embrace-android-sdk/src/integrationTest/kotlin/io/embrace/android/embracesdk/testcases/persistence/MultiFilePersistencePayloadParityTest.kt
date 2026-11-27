@@ -13,7 +13,6 @@ import io.embrace.android.embracesdk.internal.otel.sdk.findAttributeValue
 import io.embrace.android.embracesdk.internal.payload.SpanEvent
 import io.embrace.android.embracesdk.internal.session.getSessionProperty
 import io.embrace.android.embracesdk.internal.worker.Worker
-import io.embrace.android.embracesdk.network.EmbraceNetworkRequest
 import io.embrace.android.embracesdk.network.http.HttpMethod
 import io.embrace.android.embracesdk.semconv.EmbSessionAttributes
 import io.embrace.android.embracesdk.semconv.EmbSpanAttributes
@@ -167,17 +166,13 @@ internal class MultiFilePersistencePayloadParityTest(
             persistedRemoteConfig = remoteConfig(),
             testCaseAction = {
                 recordSession {
-                    embrace.recordNetworkRequest(
-                        EmbraceNetworkRequest.fromCompletedRequest(
-                            "https://embrace.io",
-                            HttpMethod.GET,
-                            clock.now(),
-                            clock.now() + 100,
-                            100,
-                            1000,
-                            200,
-                        ),
-                    )
+                    embrace.recordNetworkRequest("https://embrace.io", HttpMethod.GET, clock.now(), clock.now() + 100) {
+                        completed {
+                            bytesSent = 100
+                            bytesReceived = 1000
+                            statusCode = 200
+                        }
+                    }
                 }
             },
             assertAction = {

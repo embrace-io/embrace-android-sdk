@@ -1,7 +1,6 @@
 package io.embrace.android.embracesdk.benchmark.scenario
 
 import io.embrace.android.embracesdk.internal.api.SdkApi
-import io.embrace.android.embracesdk.network.EmbraceNetworkRequest
 import io.embrace.android.embracesdk.network.http.HttpMethod
 
 /**
@@ -72,17 +71,13 @@ interface ScenarioScope {
         require(endTimeMs >= startTimeMs) {
             "a request to $url cannot end at $endTimeMs, before it starts at $startTimeMs"
         }
-        embrace.recordNetworkRequest(
-            EmbraceNetworkRequest.fromCompletedRequest(
-                url = url,
-                httpMethod = method,
-                startTime = startTimeMs,
-                endTime = endTimeMs,
-                bytesSent = REQUEST_BYTES_SENT,
-                bytesReceived = bytesReceived,
-                statusCode = statusCode,
-            ),
-        )
+        embrace.recordNetworkRequest(url, method, startTimeMs, endTimeMs) {
+            completed {
+                this.statusCode = statusCode
+                this.bytesSent = REQUEST_BYTES_SENT
+                this.bytesReceived = bytesReceived
+            }
+        }
     }
 }
 

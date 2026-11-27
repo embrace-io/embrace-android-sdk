@@ -153,10 +153,16 @@ public abstract interface class io/embrace/android/embracesdk/internal/api/Netwo
 	public abstract fun clearNetworkSpanParent (Lio/embrace/android/embracesdk/network/NetworkSpanParentToken;)Z
 	public abstract fun generateW3cTraceparent ()Ljava/lang/String;
 	public abstract fun recordNetworkRequest (Lio/embrace/android/embracesdk/network/EmbraceNetworkRequest;)V
+	public abstract fun recordNetworkRequest (Ljava/lang/String;Lio/embrace/android/embracesdk/network/http/HttpMethod;JJLkotlin/jvm/functions/Function1;)V
 	public abstract fun removeHttpRequestInfoModifier (Lio/embrace/android/embracesdk/network/http/HttpRequestInfoModifier;)V
 	public abstract fun setNetworkSpanParent (Lio/embrace/android/embracesdk/spans/EmbraceSpan;)Lio/embrace/android/embracesdk/network/NetworkSpanParentToken;
 	public abstract fun setNetworkSpanParent (Lio/opentelemetry/kotlin/tracing/SpanContext;)Lio/embrace/android/embracesdk/network/NetworkSpanParentToken;
 	public abstract fun setNetworkSpanParentProvider (Lio/embrace/android/embracesdk/network/NetworkSpanParentProvider;)V
+}
+
+public final class io/embrace/android/embracesdk/internal/api/NetworkRequestApi$DefaultImpls {
+	public static fun recordNetworkRequest (Lio/embrace/android/embracesdk/internal/api/NetworkRequestApi;Lio/embrace/android/embracesdk/network/EmbraceNetworkRequest;)V
+	public static synthetic fun recordNetworkRequest$default (Lio/embrace/android/embracesdk/internal/api/NetworkRequestApi;Ljava/lang/String;Lio/embrace/android/embracesdk/network/http/HttpMethod;JJLkotlin/jvm/functions/Function1;ILjava/lang/Object;)V
 }
 
 public abstract interface class io/embrace/android/embracesdk/internal/api/OTelApi {
@@ -174,6 +180,7 @@ public abstract interface class io/embrace/android/embracesdk/internal/api/SdkAp
 public final class io/embrace/android/embracesdk/internal/api/SdkApi$DefaultImpls {
 	public static fun addLoadTraceChildSpan (Lio/embrace/android/embracesdk/internal/api/SdkApi;Landroid/app/Activity;Ljava/lang/String;JJ)V
 	public static fun addStartupTraceChildSpan (Lio/embrace/android/embracesdk/internal/api/SdkApi;Ljava/lang/String;JJ)V
+	public static fun recordNetworkRequest (Lio/embrace/android/embracesdk/internal/api/SdkApi;Lio/embrace/android/embracesdk/network/EmbraceNetworkRequest;)V
 	public static fun trackExperiment (Lio/embrace/android/embracesdk/internal/api/SdkApi;Ljava/lang/String;Ljava/lang/String;Ljava/lang/Long;)V
 	public static fun trackFeatureFlag (Lio/embrace/android/embracesdk/internal/api/SdkApi;Ljava/lang/String;Ljava/lang/String;Ljava/lang/Long;)V
 	public static fun untrackExperiment (Lio/embrace/android/embracesdk/internal/api/SdkApi;Ljava/lang/String;Ljava/lang/Long;)V
@@ -236,6 +243,15 @@ public final class io/embrace/android/embracesdk/internal/network/http/NetworkCa
 	public fun toString ()Ljava/lang/String;
 }
 
+public abstract interface class io/embrace/android/embracesdk/network/CompletedNetworkRequestDsl {
+	public abstract fun getBytesReceived ()Ljava/lang/Long;
+	public abstract fun getBytesSent ()Ljava/lang/Long;
+	public abstract fun getStatusCode ()Ljava/lang/Integer;
+	public abstract fun setBytesReceived (Ljava/lang/Long;)V
+	public abstract fun setBytesSent (Ljava/lang/Long;)V
+	public abstract fun setStatusCode (Ljava/lang/Integer;)V
+}
+
 public final class io/embrace/android/embracesdk/network/EmbraceNetworkRequest {
 	public static final field Companion Lio/embrace/android/embracesdk/network/EmbraceNetworkRequest$Companion;
 	public static final fun fromCompletedRequest (Ljava/lang/String;Lio/embrace/android/embracesdk/network/http/HttpMethod;JJJJI)Lio/embrace/android/embracesdk/network/EmbraceNetworkRequest;
@@ -274,6 +290,27 @@ public final class io/embrace/android/embracesdk/network/EmbraceNetworkRequest$C
 	public final fun fromIncompleteRequest (Ljava/lang/String;Lio/embrace/android/embracesdk/network/http/HttpMethod;JJLjava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;)Lio/embrace/android/embracesdk/network/EmbraceNetworkRequest;
 	public final fun fromIncompleteRequest (Ljava/lang/String;Lio/embrace/android/embracesdk/network/http/HttpMethod;JJLjava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Lio/embrace/android/embracesdk/internal/network/http/NetworkCaptureData;)Lio/embrace/android/embracesdk/network/EmbraceNetworkRequest;
 	public static synthetic fun fromIncompleteRequest$default (Lio/embrace/android/embracesdk/network/EmbraceNetworkRequest$Companion;Ljava/lang/String;Lio/embrace/android/embracesdk/network/http/HttpMethod;JJLjava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Lio/embrace/android/embracesdk/internal/network/http/NetworkCaptureData;ILjava/lang/Object;)Lio/embrace/android/embracesdk/network/EmbraceNetworkRequest;
+}
+
+public abstract interface class io/embrace/android/embracesdk/network/IncompleteNetworkRequestDsl {
+	public abstract fun getErrorMessage ()Ljava/lang/String;
+	public abstract fun getErrorType ()Ljava/lang/String;
+	public abstract fun setErrorMessage (Ljava/lang/String;)V
+	public abstract fun setErrorType (Ljava/lang/String;)V
+}
+
+public abstract interface class io/embrace/android/embracesdk/network/NetworkRequestDsl {
+	public abstract fun completed (Lkotlin/jvm/functions/Function1;)V
+	public abstract fun getNetworkCaptureData ()Lio/embrace/android/embracesdk/internal/network/http/NetworkCaptureData;
+	public abstract fun getTraceId ()Ljava/lang/String;
+	public abstract fun getW3cTraceparent ()Ljava/lang/String;
+	public abstract fun incomplete (Lkotlin/jvm/functions/Function1;)V
+	public abstract fun setNetworkCaptureData (Lio/embrace/android/embracesdk/internal/network/http/NetworkCaptureData;)V
+	public abstract fun setTraceId (Ljava/lang/String;)V
+	public abstract fun setW3cTraceparent (Ljava/lang/String;)V
+}
+
+public abstract interface annotation class io/embrace/android/embracesdk/network/NetworkRequestDslMarker : java/lang/annotation/Annotation {
 }
 
 public abstract interface class io/embrace/android/embracesdk/network/NetworkSpanParent {

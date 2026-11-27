@@ -18,10 +18,13 @@ import androidx.test.ext.junit.runners.AndroidJUnit4
 import io.embrace.android.embracesdk.concurrency.runConcurrently
 import io.embrace.android.embracesdk.fakes.FakeClock
 import io.embrace.android.embracesdk.fakes.FakeErrorHandler
+import io.embrace.android.embracesdk.internal.arch.lifecycle.ActivityLifecycle
 import io.embrace.android.embracesdk.internal.arch.navigation.NavigationSignal
 import io.embrace.android.embracesdk.internal.arch.navigation.NavigationSignal.ScreenChanged
 import io.embrace.android.embracesdk.internal.arch.navigation.NavigationSignal.ScreenSourceAttached
 import io.embrace.android.embracesdk.internal.arch.navigation.getId
+import io.embrace.android.embracesdk.internal.arch.screen.ScreenStart
+import io.embrace.android.embracesdk.internal.arch.screen.ScreenStop
 import io.embrace.android.embracesdk.internal.logging.SdkErrorType
 import io.embrace.android.embracesdk.internal.utils.event.EventBus
 import org.junit.Assert.assertEquals
@@ -167,6 +170,53 @@ internal class NavControllerTrackerTest {
     }
 
     @Test
+    fun `each destination change stops the previous navigation screen and starts the next`() {
+        val screens = recordScreens()
+        tracker.onDataCaptureEnabled()
+
+        val controller = createTestNavController("foo", "bar")
+        tracker.trackNavigation(activity, controller)
+        controller.navigate("bar")
+
+        val id = activity.getId()
+        assertEquals(listOf("start foo NAVIGATION $id", "stop NAVIGATED NAVIGATION $id", "start bar NAVIGATION $id"), screens)
+        assertEquals(listOf("foo", "bar"), screenChanges.map { it.name })
+    }
+
+    @Test
+    fun `the navigation screen stays open across pauses and stops when its activity is destroyed`() {
+        val screens = recordScreens()
+        tracker.onDataCaptureEnabled()
+        tracker.trackNavigation(activity, createTestNavController("foo"))
+
+        eventBus.emit(ActivityLifecycle.PAUSED, activity)
+        eventBus.emit(ActivityLifecycle.RESUMED, activity)
+        eventBus.emit(ActivityLifecycle.DESTROYED, activity)
+        eventBus.emit(ActivityLifecycle.DESTROYED, activity)
+
+        val id = activity.getId()
+        assertEquals(listOf("start foo NAVIGATION $id", "stop HIDDEN NAVIGATION $id"), screens)
+    }
+
+    @Test
+    fun `destroying an activity with no navigation screen stops nothing`() {
+        val screens = recordScreens()
+        tracker.onDataCaptureEnabled()
+        eventBus.emit(ActivityLifecycle.DESTROYED, activity)
+        assertTrue(screens.isEmpty())
+    }
+
+    @Test
+    fun `activity destruction is ignored after capture is disabled`() {
+        val screens = recordScreens()
+        tracker.onDataCaptureEnabled()
+        tracker.trackNavigation(activity, createTestNavController("foo"))
+        tracker.onDataCaptureDisabled()
+        eventBus.emit(ActivityLifecycle.DESTROYED, activity)
+        assertEquals(listOf("start foo NAVIGATION ${activity.getId()}"), screens)
+    }
+
+    @Test
     fun `destination changes are not reported after capture is disabled`() {
         val controller = createTestNavController("foo", "bar")
         tracker.trackNavigation(activity, controller)
@@ -223,6 +273,11 @@ internal class NavControllerTrackerTest {
             assertEquals(1, attached.count { it.instanceId == roundActivity.getId() })
             assertEquals(1, screenChanges.count { it.instanceId == roundActivity.getId() })
         }
+    }
+
+    private fun recordScreens(): MutableList<String> = CopyOnWriteArrayList<String>().also { screens ->
+        eventBus.addHandler(ScreenStart.KEY) { screens.add("start ${it.name} ${it.source} ${it.activityId}") }
+        eventBus.addHandler(ScreenStop.KEY) { screens.add("stop ${it.reason} ${it.source} ${it.activityId}") }
     }
 
     private fun createActivity(

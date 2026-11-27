@@ -109,7 +109,7 @@ class FakeTelemetryDestination(
             parent = parent,
             type = type,
             internal = true,
-            private = false,
+            private = private,
             initialAttrs = emptyMap(),
             events = mutableListOf(),
             uuidSource = uuidSource,

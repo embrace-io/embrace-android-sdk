@@ -49,6 +49,8 @@ sealed class EmbType(type: String, subtype: String?) : EmbraceAttribute {
         object Tap : Ux("tap")
 
         object WebView : Ux("webview")
+
+        object Screen : Ux("screen")
     }
 
     /**

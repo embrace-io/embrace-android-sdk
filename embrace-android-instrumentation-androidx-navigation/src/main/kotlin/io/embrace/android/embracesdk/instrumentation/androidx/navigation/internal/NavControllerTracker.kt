@@ -5,17 +5,22 @@ import androidx.fragment.app.FragmentActivity
 import androidx.navigation.NavController
 import androidx.navigation.NavDestination
 import androidx.navigation.fragment.NavHostFragment
+import io.embrace.android.embracesdk.internal.arch.lifecycle.ActivityLifecycle
 import io.embrace.android.embracesdk.internal.arch.navigation.NavigationSignal
 import io.embrace.android.embracesdk.internal.arch.navigation.NavigationSignal.ScreenChanged
 import io.embrace.android.embracesdk.internal.arch.navigation.NavigationSignal.ScreenSourceAttached
 import io.embrace.android.embracesdk.internal.arch.navigation.NavigationTrackingInitListener
 import io.embrace.android.embracesdk.internal.arch.navigation.NavigationTrackingService
 import io.embrace.android.embracesdk.internal.arch.navigation.getId
+import io.embrace.android.embracesdk.internal.arch.screen.ScreenSource
+import io.embrace.android.embracesdk.internal.arch.screen.ScreenStart
+import io.embrace.android.embracesdk.internal.arch.screen.ScreenStop
 import io.embrace.android.embracesdk.internal.clock.Clock
 import io.embrace.android.embracesdk.internal.logging.ErrorHandler
 import io.embrace.android.embracesdk.internal.logging.SdkErrorType
 import io.embrace.android.embracesdk.internal.logging.guardSdkCode
 import io.embrace.android.embracesdk.internal.utils.event.EventBus
+import io.embrace.android.embracesdk.internal.utils.event.EventHandler
 import java.lang.ref.WeakReference
 import java.util.concurrent.atomic.AtomicReference
 
@@ -31,10 +36,24 @@ internal class NavControllerTracker(
 ) : NavigationTrackingInitListener {
 
     /**
+     * The NavController tracked for one Activity, and whether a screen has been started for its current destination.
+     */
+    private class TrackedController(
+        val controller: WeakReference<NavController>,
+        val activityId: Int,
+    ) {
+        /**
+         * Guarded by this object, which is held while the screen's stop and start are emitted so that they can't interleave
+         * with another thread's for the same controller.
+         */
+        var screenOpen = false
+    }
+
+    /**
      * An Activity's id is mapped to the first NavController found for it until it is removed, at which time
      * another NavController instance can be used if found.
      */
-    private val trackedControllers = mutableMapOf<Int, WeakReference<NavController>>()
+    private val trackedControllers = mutableMapOf<Int, TrackedController>()
 
     /**
      * Listeners registered on a [NavController] hold this reference rather than the tracker to allow
@@ -42,12 +61,31 @@ internal class NavControllerTracker(
      */
     private val trackerRef = AtomicReference(this)
 
+    /**
+     * Stops the screen of an Activity's current destination when the Activity is destroyed, as a best effort to pair its
+     * last start. A destination otherwise stays open across its Activity pausing and resuming, bounded by the Activity's own
+     * screen.
+     */
+    private val onActivityDestroyed = EventHandler<Activity> { activity ->
+        errorHandler.guardSdkCode(SdkErrorType.UiCallbackFail) {
+            val tracked = synchronized(trackedControllers) { trackedControllers[activity.getId()] } ?: return@guardSdkCode
+            synchronized(tracked) {
+                if (tracked.screenOpen) {
+                    tracked.screenOpen = false
+                    stopScreen(tracked.activityId, clock.now(), ScreenStop.Reason.HIDDEN)
+                }
+            }
+        }
+    }
+
     fun onDataCaptureEnabled() {
         trackerRef.set(this)
+        eventBus.addHandler(ActivityLifecycle.DESTROYED, onActivityDestroyed)
     }
 
     fun onDataCaptureDisabled() {
         trackerRef.set(null)
+        eventBus.removeHandler(ActivityLifecycle.DESTROYED, onActivityDestroyed)
     }
 
     override fun trackNavigation(activity: Activity, controller: Any?) {
@@ -57,7 +95,7 @@ internal class NavControllerTracker(
         errorHandler.guardSdkCode(SdkErrorType.NavControllerTrackingFail) {
             synchronized(trackedControllers) {
                 val activityId = activity.getId()
-                if (trackedControllers[activityId]?.get() != null) {
+                if (trackedControllers[activityId]?.controller?.get() != null) {
                     return@guardSdkCode
                 }
 
@@ -67,26 +105,40 @@ internal class NavControllerTracker(
                     is NavController -> controller
                     else -> null
                 } ?: return@guardSdkCode
-                trackedControllers.values.removeAll { it.get() == null }
-                trackedControllers[activityId] = controllerRef(navController)
-                navController.trackForActivity(activity)
+                trackedControllers.values.removeAll { it.controller.get() == null }
+                val tracked = TrackedController(controllerRef(navController), activityId)
+                trackedControllers[activityId] = tracked
+                navController.trackForActivity(tracked)
             }
         }
     }
 
-    private fun NavController.trackForActivity(activity: Activity) {
-        val activityId = activity.getId()
-        eventBus.emit(NavigationSignal.KEY, ScreenSourceAttached(activityId, clock.now()))
+    private fun NavController.trackForActivity(tracked: TrackedController) {
+        eventBus.emit(NavigationSignal.KEY, ScreenSourceAttached(tracked.activityId, clock.now()))
         val ref = trackerRef
         addOnDestinationChangedListener { _, destination, _ ->
-            ref.get()?.onDestinationChanged(activityId, destination)
+            ref.get()?.onDestinationChanged(tracked, destination)
         }
     }
 
-    private fun onDestinationChanged(activityId: Int, destination: NavDestination) {
+    private fun onDestinationChanged(tracked: TrackedController, destination: NavDestination) {
         errorHandler.guardSdkCode(SdkErrorType.UiCallbackFail) {
-            eventBus.emit(NavigationSignal.KEY, ScreenChanged(activityId, extractScreenName(destination), clock.now()))
+            val activityId = tracked.activityId
+            val name = extractScreenName(destination)
+            val timestampMs = clock.now()
+            eventBus.emit(NavigationSignal.KEY, ScreenChanged(activityId, name, timestampMs))
+            synchronized(tracked) {
+                if (tracked.screenOpen) {
+                    stopScreen(activityId, timestampMs, ScreenStop.Reason.NAVIGATED)
+                }
+                tracked.screenOpen = true
+                eventBus.emit(ScreenStart.KEY, ScreenStart(name, ScreenSource.NAVIGATION, activityId, timestampMs))
+            }
         }
+    }
+
+    private fun stopScreen(activityId: Int, timestampMs: Long, reason: ScreenStop.Reason) {
+        eventBus.emit(ScreenStop.KEY, ScreenStop(ScreenSource.NAVIGATION, activityId, timestampMs, reason))
     }
 
     private fun findNavController(activity: Activity): NavController? {

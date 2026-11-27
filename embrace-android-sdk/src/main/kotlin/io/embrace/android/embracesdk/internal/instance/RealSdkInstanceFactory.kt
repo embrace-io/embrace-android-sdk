@@ -280,7 +280,8 @@ internal fun createRealSdkInstance(
             redactionFunction = createRedactionFunction(sensitiveKeysBehavior),
             telemetryService = telemetryService,
             errorHandler = errorHandler,
-            stateTelemetry = stateTelemetry,
+            // a span is linked to state only where the model's second step is on
+            stateTelemetry = stateTelemetry?.takeIf { it.associationEnabled },
         )
     }
 
@@ -822,10 +823,11 @@ internal fun createRealSdkInstance(
                 stateTelemetry = stateTelemetry,
                 externalOtelConfig = preStartServices.externalOtelConfig,
                 loggerProvider = { otelSdkWrapper.value.sdkLogger },
-                worker = workerThreadPool.backgroundWorker(Worker.Background.NonIoRegWorker),
+                worker = workerThreadPool.backgroundWorker(Worker.Background.StateExportWorker),
                 processIdentifier = { otelSdkConfig.value.processIdentifier },
                 errorHandler = errorHandler,
                 telemetryService = telemetryService,
+                rootContextProvider = { otelSdkWrapper.value.openTelemetryKotlin.context.root() },
             )
         }
     }
@@ -924,7 +926,7 @@ internal fun createRealSdkInstance(
                 hostedSdkVersionInfo = hostedSdkVersionInfo,
                 errorHandler = errorHandler,
                 telemetryService = telemetryService,
-                stateReporter = { eventBus.emit(StateEvents.UPDATED, it) },
+                stateReporter = { eventBus.emit(StateEvents.REPORTED, it) },
             ),
             viewTrackingApiDelegate = ViewTrackingApiDelegate(
                 registry = instrumentationRegistry,

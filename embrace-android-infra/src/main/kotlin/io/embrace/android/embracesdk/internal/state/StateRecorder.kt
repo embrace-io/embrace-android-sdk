@@ -3,7 +3,6 @@ package io.embrace.android.embracesdk.internal.state
 import io.embrace.android.embracesdk.internal.clock.Clock
 import io.embrace.android.embracesdk.internal.telemetry.AppliedLimitType
 import io.embrace.android.embracesdk.internal.telemetry.InternalTelemetryService
-import io.embrace.android.embracesdk.internal.utils.PropertyUtils
 import io.embrace.android.embracesdk.internal.utils.event.EventBus
 
 /**
@@ -11,43 +10,50 @@ import io.embrace.android.embracesdk.internal.utils.event.EventBus
  *
  * Each change takes the next number of one sequence, which starts at 1 and belongs to this process. Taking the number and replacing
  * the values happen together under [lock], which is held only for work in memory, so that reporting a change never waits for a
- * write and costs the same however many came before. What reads the values now, a log being stamped or a span starting or
- * ending as it runs, reads the whole of one [StateSnapshot] with no lock. Only a span given a time earlier than the last change
- * takes the lock, to be placed among the recent snapshots.
+ * write and costs the same however many came before. Nothing of a data source's or of the app's runs under it. What reads the
+ * values takes no lock: a log being stamped and a span starting or ending read the whole of one [StateSnapshot], and a span given
+ * a time in the past is placed among the recent snapshots, which are replaced as a whole on each change.
  *
- * A change made while a session part is open is passed on to the [journal], which the part's change log is later made from, and to
- * [replay], unless a limit refuses it. A refused change, and one made with no session part, still takes its number and still
+ * A change made while a session part is open is passed on to the journal, which the part's change log is later made from, and to
+ * the replay, unless a limit refuses it. A refused change, and one made with no session part, still takes its number and still
  * replaces the state's value, and is counted for its state. Nothing but a short window of recent snapshots is kept in memory.
+ *
+ * @param keepsWindow whether recent snapshots are kept for [snapshotAt]. Only what links spans to state reads them, so they are
+ * not kept where nothing does.
  */
 class StateRecorder(
     private val clock: Clock,
     private val telemetryService: InternalTelemetryService? = null,
     private val globalChangeLimit: Int = GLOBAL_CHANGE_LIMIT,
     windowSize: Int = WINDOW_SIZE,
+    private val keepsWindow: Boolean = true,
 ) {
 
     /**
      * Where the open session part's records go, or null when nothing keeps them, as in an app that sends nothing to Embrace.
      */
     @Volatile
-    var journal: StateJournal? = null
+    private var journal: StateJournal? = null
 
     /**
      * What replays changes to a customer's exporter, or null when no exporter receives them.
      */
     @Volatile
-    var replay: StateReplay? = null
+    private var replay: StateReplay? = null
 
     private val lock = Any()
+
+    private val windowSize = windowSize.coerceAtLeast(1)
 
     @Volatile
     private var snapshot: StateSnapshot = StateSnapshot.EMPTY
 
-    /** The most recent snapshots, oldest overwritten first. Guarded by [lock]. */
-    private val window = arrayOfNulls<StateSnapshot>(windowSize.coerceAtLeast(1))
-
-    /** How many snapshots have ever been put in [window]. Guarded by [lock]. */
-    private var recorded = 0L
+    /**
+     * The most recent snapshots, oldest first, and whether an older one has been let go. It is never written to: a change replaces
+     * it with a copy under [lock], so [snapshotAt] reads it with no lock.
+     */
+    @Volatile
+    private var window: Window = Window(emptyArray(), false)
 
     /** One entry for each declared state, in the order of the snapshot's states. Guarded by [lock]. */
     private var counters = emptyArray<Counters>()
@@ -65,23 +71,21 @@ class StateRecorder(
      * recorded at counts as after the change.
      *
      * Returns [StateSnapshot.EMPTY] for a time before the first change, and null for a time older than the window of recent
-     * snapshots, where what held is no longer known.
+     * snapshots, where what held is no longer known. It takes no lock, so it can be called as a span starts or ends.
      */
     fun snapshotAt(timeMs: Long): StateSnapshot? {
         val latest = snapshot
         if (timeMs >= latest.recordedAtMs) {
             return latest
         }
-        synchronized(lock) {
-            val held = minOf(recorded, window.size.toLong()).toInt()
-            for (age in 1..held) {
-                val candidate = window[((recorded - age) % window.size).toInt()] ?: break
-                if (timeMs >= candidate.recordedAtMs) {
-                    return candidate
-                }
+        val recent = window
+        for (i in recent.snapshots.indices.reversed()) {
+            val candidate = recent.snapshots[i]
+            if (timeMs >= candidate.recordedAtMs) {
+                return candidate
             }
-            return if (recorded > window.size) null else StateSnapshot.EMPTY
         }
+        return if (recent.evicted || !keepsWindow) null else StateSnapshot.EMPTY
     }
 
     /**
@@ -92,6 +96,21 @@ class StateRecorder(
         eventBus.addHandler(StateEvents.DECLARED) { declare(it.definition, it.initialValue, it.system, it.timeMs) }
         eventBus.addHandler(StateEvents.UPDATED) { update(it.state, it.value, it.system, it.timeMs, it.attributes) }
         eventBus.addHandler(StateEvents.DROPPED) { reportDropped(it.state, it.count) }
+        eventBus.addHandler(StateEvents.REPORTED) { noteReport(it.state) }
+    }
+
+    /**
+     * Sets where the open session part's records go. It is set once, as the SDK is put together.
+     */
+    fun attach(journal: StateJournal) {
+        this.journal = journal
+    }
+
+    /**
+     * Sets what replays changes to the app's own exporters. It is set once, as the SDK is put together.
+     */
+    fun attach(replay: StateReplay) {
+        this.replay = replay
     }
 
     /**
@@ -102,7 +121,7 @@ class StateRecorder(
         if (!StateDefinition.isValidName(definition.name)) {
             return false
         }
-        val value = cap(initialValue)
+        val value = StateValues.cap(initialValue)
         synchronized(lock) {
             val before = snapshot
             if (before.indexOf(definition.name) >= 0) {
@@ -133,6 +152,10 @@ class StateRecorder(
      * Reports that the state called [state] has [value] as of [timeMs]. An update for a state no data source declared is
      * discarded, and one that leaves the value as it was is not a change and takes no number. Returns whether it was a change.
      *
+     * Whether an update is a change is decided here, by [StateValues.isRepeat]. A data source applies the same rule before it
+     * reports, so that it gathers what describes the value being left only for a change. It is the only reporter of its state,
+     * so the two cannot disagree.
+     *
      * [attributes] describe the value being left. Only the keys the state's data source declared are kept.
      */
     fun update(
@@ -142,16 +165,17 @@ class StateRecorder(
         timeMs: Long,
         attributes: Map<String, String> = emptyMap(),
     ): Boolean {
-        val capped = cap(value)
+        val capped = StateValues.cap(value)
         synchronized(lock) {
             val before = snapshot
             val index = before.indexOf(state)
             if (index < 0) {
+                telemetryService?.trackAppliedLimit(UNDECLARED_STATE_TELEMETRY_NAME, AppliedLimitType.DROP)
                 return false
             }
             val previousValue = before.value(index)
             val previousSystem = before.isSystem(index)
-            if (previousValue == capped && previousSystem == system) {
+            if (StateValues.isRepeat(previousValue, previousSystem, capped, system)) {
                 return false
             }
             val definition = before.definition(index)
@@ -221,6 +245,16 @@ class StateRecorder(
         }
     }
 
+    /**
+     * A report of [state] from outside its data source has been emitted. The state's data source takes it up if there is one. One
+     * for a state nothing declared goes nowhere, and is counted here so that it can be seen.
+     */
+    private fun noteReport(state: String) {
+        if (snapshot.indexOf(state) < 0) {
+            telemetryService?.trackAppliedLimit(UNDECLARED_STATE_TELEMETRY_NAME, AppliedLimitType.DROP)
+        }
+    }
+
     private fun closePartLocked() {
         val closing = part ?: return
         val closingValues = snapshot
@@ -248,8 +282,15 @@ class StateRecorder(
 
     /** Makes [after] the values everything reads, and keeps it in the window. Called with [lock] held. */
     private fun publish(after: StateSnapshot) {
-        window[(recorded % window.size).toInt()] = after
-        recorded++
+        if (keepsWindow) {
+            val before = window
+            val kept = minOf(before.snapshots.size, windowSize - 1)
+            val let = before.snapshots.size - kept
+            window = Window(
+                snapshots = Array(kept + 1) { if (it < kept) before.snapshots[let + it] else after },
+                evicted = before.evicted || let > 0,
+            )
+        }
         snapshot = after
     }
 
@@ -272,7 +313,7 @@ class StateRecorder(
                     counts.limitStated = true
                     journal?.append(StateJournalRecord.LimitReached(open.sessionPartId, definition.name, definition.changeLimit))
                 }
-                refuse(open, counts, definition)
+                refuse(open, counts, definition.limitTelemetryName)
             }
 
             open.listed >= globalChangeLimit -> {
@@ -280,7 +321,7 @@ class StateRecorder(
                     open.globalLimitStated = true
                     journal?.append(StateJournalRecord.LimitReached(open.sessionPartId, null, globalChangeLimit))
                 }
-                refuse(open, counts, definition)
+                refuse(open, counts, GLOBAL_LIMIT_TELEMETRY_NAME)
             }
 
             else -> {
@@ -292,10 +333,10 @@ class StateRecorder(
         }
     }
 
-    private fun refuse(open: OpenPart, counts: Counters, definition: StateDefinition) {
+    private fun refuse(open: OpenPart, counts: Counters, telemetryName: String) {
         counts.refused++
         open.refused++
-        telemetryService?.trackAppliedLimit(definition.limitTelemetryName, AppliedLimitType.DROP)
+        telemetryService?.trackAppliedLimit(telemetryName, AppliedLimitType.DROP)
     }
 
     private fun ownAttributes(definition: StateDefinition, attributes: Map<String, String>): Map<String, String> {
@@ -305,12 +346,12 @@ class StateRecorder(
         val kept = LinkedHashMap<String, String>()
         for (key in definition.attributeKeys) {
             val value = attributes[key] ?: continue
-            kept[key] = cap(value)
+            kept[key] = StateValues.cap(value)
         }
         return kept
     }
 
-    private fun cap(value: String): String = PropertyUtils.truncate(value, MAX_VALUE_LENGTH)
+    private class Window(val snapshots: Array<StateSnapshot>, val evicted: Boolean)
 
     private class OpenPart(val sessionPartId: String) {
 
@@ -361,9 +402,14 @@ class StateRecorder(
         const val WINDOW_SIZE: Int = 64
 
         /**
-         * The longest a state's value, or the value of a change's own attribute, may be. It is the SDK's limit on an internal
-         * attribute's value. A longer one is cut to this length less three and `...`, without splitting a surrogate pair.
+         * The longest a state's value, or the value of a change's own attribute, may be.
          */
-        const val MAX_VALUE_LENGTH: Int = 2000
+        const val MAX_VALUE_LENGTH: Int = StateValues.MAX_VALUE_LENGTH
+
+        /** The name a change refused by the limit across every state is tracked under, apart from any state's own. */
+        const val GLOBAL_LIMIT_TELEMETRY_NAME: String = "state_change"
+
+        /** The name an update or a report for a state nothing declared is tracked under. */
+        const val UNDECLARED_STATE_TELEMETRY_NAME: String = "undeclared_state_update"
     }
 }

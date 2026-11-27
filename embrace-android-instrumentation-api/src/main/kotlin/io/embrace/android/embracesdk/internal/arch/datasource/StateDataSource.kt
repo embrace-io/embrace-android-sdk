@@ -15,6 +15,7 @@ import io.embrace.android.embracesdk.internal.state.StateDefinition
 import io.embrace.android.embracesdk.internal.state.StateDrops
 import io.embrace.android.embracesdk.internal.state.StateEvents
 import io.embrace.android.embracesdk.internal.state.StateUpdate
+import io.embrace.android.embracesdk.internal.state.StateValues
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicReference
 
@@ -28,8 +29,12 @@ import java.util.concurrent.atomic.AtomicReference
  *
  * When the app state data model is on, none of that happens here. This data source then only defines the state, by its name, its
  * limit on changes ([maxTransitions]) and the attribute keys a change of it may carry ([changeAttributeKeys]), and reports each
- * value over the event bus to the one recorder, which decides what is a change, puts every change of every state in one order and
- * enforces the limit. The state has a value from the moment this data source is enabled, whatever [captureStateOnCreation] says.
+ * value over the event bus to the one recorder, which puts every change of every state in one order and enforces the limit. The
+ * state has a value from the moment this data source is enabled, whatever [captureStateOnCreation] says.
+ *
+ * A state has one reporter, which is its data source. A report from anywhere else, such as a hosted SDK's, arrives on the event
+ * bus and is passed on from here like any other, under the same lock. So the latest report stands whoever made it, and whether
+ * a report is a change is settled by one rule, [StateValues.isRepeat], against what this data source last handed the recorder.
  */
 abstract class StateDataSource<T : Any>(
     private val args: InstrumentationArgs,
@@ -68,9 +73,22 @@ abstract class StateDataSource<T : Any>(
     private var declared = false
 
     /**
-     * Held while a value is handed to the recorder. See [reportToRecorder].
+     * Held while a value is handed to the recorder. See [report].
      */
     private val reportLock = Any()
+
+    /**
+     * What this data source last handed the recorder, as the recorder holds it: the text once cut to length, and whether the SDK
+     * generated it. Null until the state is declared. Guarded by [reportLock].
+     */
+    private var reportedValue: String? = null
+    private var reportedGenerated = false
+
+    /**
+     * Whether what was last handed over came from outside this data source, so that no value of [T] stands for it. Guarded by
+     * [reportLock].
+     */
+    private var reportedFromOutside = false
 
     /**
      * Attribute key under which the type of the current state value is stored when the state value is a system value.
@@ -196,7 +214,16 @@ abstract class StateDataSource<T : Any>(
     /**
      * Attributes describing the state [value] being left, added to the transition away from it.
      */
-    protected open fun outgoingValueAttributes(value: T): Map<String, String> = emptyMap()
+    protected open fun outgoingValueAttributes(
+        value: T,
+    ): Map<String, String> = outgoingAttributes(value is SystemStateValue)
+
+    /**
+     * Attributes describing the value being left when all that is known of it is whether the SDK [generated] it, as when it was
+     * reported from outside this data source. A data source whose attributes do not depend on the value itself overrides this
+     * one, and [outgoingValueAttributes] then follows it.
+     */
+    protected open fun outgoingAttributes(generated: Boolean): Map<String, String> = emptyMap()
 
     @CallSuper
     override fun onDataCaptureEnabled() {
@@ -205,11 +232,22 @@ abstract class StateDataSource<T : Any>(
                 // a value reported before this point is the one the state is declared with, so that the recorder starts from
                 // what this data source last reported
                 val firstValue = currentState.get()
+                val generated = firstValue is SystemStateValue
                 args.eventBus.emit(
                     StateEvents.DECLARED,
-                    StateDeclaration(stateDefinition, firstValue.toString(), firstValue is SystemStateValue, clock.now()),
+                    StateDeclaration(stateDefinition, firstValue.toString(), generated, clock.now()),
                 )
+                reportedValue = StateValues.cap(firstValue.toString())
+                reportedGenerated = generated
+                reportedFromOutside = false
                 declared = true
+            }
+            // a report of this state from outside, such as a hosted SDK's, is passed on from here, so that the state has one
+            // reporter and the latest report stands whoever made it
+            args.eventBus.addHandler(StateEvents.REPORTED) { outside ->
+                if (outside.state == stateName) {
+                    report(outside.value, false, null, outside.timeMs, emptyMap(), 0)
+                }
             }
         } else if (captureStateOnCreation) {
             startStateCapture()
@@ -217,34 +255,66 @@ abstract class StateDataSource<T : Any>(
     }
 
     /**
-     * Reports [newState] to the recorder, with the attributes of the value being left when it differs from the one last reported.
+     * Reports [newState] to the recorder, with the attributes of the value being left when it is a change.
      */
     private fun reportToRecorder(
         newState: T,
         transitionTimeMs: Long,
         transitionAttributes: Map<String, String>,
         droppedTransitions: Int,
+    ) = report(
+        value = newState.toString(),
+        generated = newState is SystemStateValue,
+        typed = newState,
+        timeMs = transitionTimeMs,
+        transitionAttributes = transitionAttributes,
+        droppedTransitions = droppedTransitions,
+    )
+
+    /**
+     * Hands [value] to the recorder if it is a change from what this data source last handed it, with the attributes of the value
+     * being left. [typed] is the value as this data source knows it, or null for a report from outside.
+     *
+     * Whether it is a change is decided by the rule the recorder decides by, against the same value, so that what describes the
+     * value being left is gathered once, for a change, and with nothing of this data source's running under the recorder's lock.
+     */
+    private fun report(
+        value: String,
+        generated: Boolean,
+        typed: T?,
+        timeMs: Long,
+        transitionAttributes: Map<String, String>,
+        droppedTransitions: Int,
     ) {
         errorHandler.guardSdkCode(SdkErrorType.DataSourceDataCaptureFail) {
-            // held so that two threads reporting this state hand their values to the recorder in the order this data source took
-            // them in. The recorder is what orders changes across states, and never calls back into a data source.
+            // held so that every report of this state, its own or from outside, is handed to the recorder in the order this data
+            // source took it in. The recorder is what orders changes across states, and never calls back into a data source.
             synchronized(reportLock) {
+                val leftTyped = currentState.get()
+                if (typed != null) {
+                    currentState.set(typed)
+                }
                 if (!declared) {
-                    // the recorder discards an update for a state it has not been told of, so keep the value to declare it with
-                    currentState.set(newState)
+                    // the recorder discards an update for a state it has not been told of. A value of this data source's own is
+                    // kept above to declare the state with, and a report from outside has no state to go to yet.
                     return
                 }
                 if (droppedTransitions > 0) {
                     args.eventBus.emit(StateEvents.DROPPED, StateDrops(stateName, droppedTransitions))
                 }
-                val oldState = currentState.getAndSet(newState)
-                if (newState != oldState) {
-                    val attributes = outgoingValueAttributes(oldState) + transitionAttributes
-                    args.eventBus.emit(
-                        StateEvents.UPDATED,
-                        StateUpdate(stateName, newState.toString(), newState is SystemStateValue, transitionTimeMs, attributes),
-                    )
+                val capped = StateValues.cap(value)
+                val held = reportedValue
+                if (held != null && StateValues.isRepeat(held, reportedGenerated, capped, generated)) {
+                    return
                 }
+                val leaving = if (reportedFromOutside) outgoingAttributes(reportedGenerated) else outgoingValueAttributes(leftTyped)
+                reportedValue = capped
+                reportedGenerated = generated
+                reportedFromOutside = typed == null
+                args.eventBus.emit(
+                    StateEvents.UPDATED,
+                    StateUpdate(stateName, capped, generated, timeMs, leaving + transitionAttributes),
+                )
             }
         }
     }

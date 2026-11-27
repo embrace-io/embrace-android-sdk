@@ -39,5 +39,5 @@ interface EmbraceInternalInterface {
      * [name] has to be a state this SDK already defines, such as `screen-automatic`. A report for any other name is discarded:
      * a hosted SDK cannot create a state by naming one. Nothing happens either unless the app state data model is switched on.
      */
-    fun reportState(name: String, value: String, changedAtMs: Long)
+    fun reportState(name: String, value: String, changedAtMs: Long) {}
 }

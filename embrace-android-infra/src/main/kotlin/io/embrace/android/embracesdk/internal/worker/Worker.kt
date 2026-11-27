@@ -59,5 +59,11 @@ sealed class Worker(val threadName: String) {
          * latency-sensitive registration tasks such as [IoRegWorker].
          */
         object HttpRequestWorker : Background("http-request")
+
+        /**
+         * Replays state changes to an app's own OpenTelemetry log record processors and log exporters. A processor the app
+         * supplies runs on it, for as long as it takes, so nothing else shares it.
+         */
+        object StateExportWorker : Background("state-export")
     }
 }

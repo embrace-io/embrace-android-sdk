@@ -10,6 +10,7 @@ import io.embrace.android.embracesdk.internal.capture.user.UserService
 import io.embrace.android.embracesdk.internal.clock.Clock
 import io.embrace.android.embracesdk.internal.config.ConfigService
 import io.embrace.android.embracesdk.internal.config.isAppStateEnabled
+import io.embrace.android.embracesdk.internal.config.isStateAssociationEnabled
 import io.embrace.android.embracesdk.internal.delivery.caching.PayloadCachingService
 import io.embrace.android.embracesdk.internal.delivery.intake.IntakeService
 import io.embrace.android.embracesdk.internal.delivery.storage.CachedLogEnvelopeStore
@@ -79,7 +80,11 @@ fun createSessionPartReader(
         intakeService = intakeService,
         writeTracker = sessionPartWriteTracker,
         deadPartResurrector = MultiFileDeadPartResurrector(
-            resurrector = SessionPartResurrector(cachedLogEnvelopeStore, configService::isAppStateEnabled),
+            resurrector = SessionPartResurrector(
+                cachedLogEnvelopeStore,
+                stampDeadProcessState = configService::isAppStateEnabled,
+                completeSpanLinks = configService::isStateAssociationEnabled,
+            ),
             nativeCrashServiceProvider = nativeCrashServiceProvider,
             restoreDecisionProvider = restoreDecisionProvider,
         ),
@@ -176,7 +181,7 @@ fun createSessionOrchestrator(
             spanRepository.addSpanChangeListener { span ->
                 writer.onSpanSnapshotChanged(span)
             }
-            stateRecorder?.journal = writer
+            stateRecorder?.attach(writer)
         }
     }
 

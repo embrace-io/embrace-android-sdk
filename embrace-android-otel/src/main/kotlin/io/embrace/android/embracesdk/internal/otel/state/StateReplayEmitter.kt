@@ -14,6 +14,7 @@ import io.embrace.android.embracesdk.internal.telemetry.InternalTelemetryService
 import io.embrace.android.embracesdk.internal.utils.Provider
 import io.embrace.android.embracesdk.internal.worker.BackgroundWorker
 import io.opentelemetry.kotlin.attributes.AttributesMutator
+import io.opentelemetry.kotlin.context.Context
 import io.opentelemetry.kotlin.logging.Logger
 import io.opentelemetry.kotlin.logging.SeverityNumber
 import java.util.concurrent.ConcurrentLinkedQueue
@@ -25,11 +26,14 @@ import java.util.concurrent.atomic.AtomicInteger
  * `emb.app.state.change` for each change made in a session part, with the value the state had before, and one named
  * `emb.app.state.snapshot` with every state's value when a session part starts.
  *
- * The recorder hands these over under its lock, so they are only queued here and built on [worker]. At most [maxQueued] wait at
- * once: one that finds as many waiting is left out, and the numbers on the events then skip.
+ * The recorder hands these over under its lock, so they are only queued here and built on [worker], which nothing else uses: an
+ * app's own log record processor runs where a record is emitted, for as long as it takes. At most [maxQueued] changes wait at
+ * once: one that finds as many waiting is left out, counted, and the numbers on the events then skip. A snapshot is never left
+ * out, since there is one for a session part and it is what the changes after it are read against.
  *
  * The records are not sent to Embrace, whose payload has the change log, and carry no session ids: the sequence and the process
- * identifier are what tie them to other telemetry.
+ * identifier are what tie them to other telemetry. Each is emitted with a context that marks it, which is how Embrace's own
+ * log record processor tells it from a log.
  */
 class StateReplayEmitter(
     private val loggerProvider: Provider<Logger>,
@@ -39,7 +43,12 @@ class StateReplayEmitter(
     private val errorHandler: ErrorHandler,
     private val telemetryService: InternalTelemetryService,
     private val maxQueued: Int = MAX_QUEUED_EVENTS,
+    rootContextProvider: Provider<Context>,
 ) : StateReplay {
+
+    private val replayContext: Context by lazy(LazyThreadSafetyMode.PUBLICATION) {
+        rootContextProvider().markedAsStateReplay()
+    }
 
     private val queue = ConcurrentLinkedQueue<Pending>()
     private val queued = AtomicInteger()
@@ -53,14 +62,14 @@ class StateReplayEmitter(
     }
 
     override fun onChange(change: StateChange) {
-        enqueue(Pending(change.after, change.timeMs, change))
-    }
-
-    private fun enqueue(pending: Pending) {
         if (queued.get() >= maxQueued) {
             telemetryService.trackAppliedLimit(LIMIT_TELEMETRY_TYPE, AppliedLimitType.DROP)
             return
         }
+        enqueue(Pending(change.after, change.timeMs, change))
+    }
+
+    private fun enqueue(pending: Pending) {
         queued.incrementAndGet()
         queue.add(pending)
         if (draining.compareAndSet(false, true)) {
@@ -94,6 +103,7 @@ class StateReplayEmitter(
             eventName = if (change == null) AppStateKeys.SNAPSHOT_EVENT_NAME else AppStateKeys.CHANGE_EVENT_NAME,
             timestamp = timeNanos,
             observedTimestamp = timeNanos,
+            context = replayContext,
             severityNumber = SeverityNumber.INFO,
             severityText = SeverityNumber.INFO.name,
         ) {

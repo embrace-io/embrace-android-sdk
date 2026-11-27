@@ -34,6 +34,12 @@ import io.embrace.android.embracesdk.semconv.ExperimentalSemconv
 class SessionPartResurrector(
     private val cachedLogEnvelopeStore: CachedLogEnvelopeStore,
     private val stampDeadProcessState: () -> Boolean = { true },
+
+    /**
+     * Whether a span the dead process left running is given the end of its link to state, which only a launch that links spans
+     * to state does.
+     */
+    private val completeSpanLinks: () -> Boolean = { true },
 ) {
 
     /**
@@ -110,7 +116,7 @@ class SessionPartResurrector(
             userSessionTerminationReason = userSessionTerminationReason,
             isBackgroundOnly = isBackgroundOnly,
             lastWrittenMs = lastWrittenMs,
-            deadPartState = deadPartState,
+            deadPartState = deadPartState?.takeIf { completeSpanLinks() },
         )
     }
 

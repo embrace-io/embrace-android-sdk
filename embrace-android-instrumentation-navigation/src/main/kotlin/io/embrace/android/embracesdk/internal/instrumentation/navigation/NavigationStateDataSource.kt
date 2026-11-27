@@ -7,7 +7,6 @@ import io.embrace.android.embracesdk.internal.arch.datasource.StateDataSource
 import io.embrace.android.embracesdk.internal.arch.navigation.CurrentScreen
 import io.embrace.android.embracesdk.internal.arch.schema.SchemaType.NavigationState
 import io.embrace.android.embracesdk.internal.arch.schema.SchemaType.NavigationState.Screen
-import io.embrace.android.embracesdk.internal.arch.schema.SystemStateValue
 import io.embrace.android.embracesdk.semconv.EmbFrameCountsAttributes
 import io.embrace.android.embracesdk.semconv.ExperimentalSemconv
 
@@ -36,8 +35,8 @@ class NavigationStateDataSource(
         activityTracker?.close()
     }
 
-    override fun outgoingValueAttributes(value: Screen): Map<String, String> {
-        if (value is SystemStateValue) {
+    override fun outgoingAttributes(generated: Boolean): Map<String, String> {
+        if (generated) {
             // no app screen was showing: collect only to discard what accrued, so it isn't attributed to the next screen
             args.navigationTrackingService.collectScreenAttributes { _, _ -> }
             return emptyMap()

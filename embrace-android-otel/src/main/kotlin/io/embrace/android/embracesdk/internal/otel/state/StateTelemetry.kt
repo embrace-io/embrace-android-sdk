@@ -20,9 +20,23 @@ class StateTelemetry(
     val recorder: StateRecorder,
     exportMode: () -> StateExportMode,
     receivesLogs: () -> Boolean = { true },
+
+    /**
+     * Whether the model's second step is on: spans are linked to state, and changes are replayed for the app's own exporters.
+     * With it off a log is still stamped, and nothing else here runs.
+     */
+    val associationEnabled: Boolean = true,
+
+    /**
+     * Called when a log record could not be given the stamp in the form the app's own exporters take, because it could not be
+     * written to. Embrace's copy is stamped all the same.
+     */
+    private val onPlainStampSkipped: () -> Unit = {},
 ) {
 
-    private val verbose: Boolean by lazy(LazyThreadSafetyMode.PUBLICATION) { exportMode() == StateExportMode.VERBOSE }
+    private val verbose: Boolean by lazy(LazyThreadSafetyMode.PUBLICATION) {
+        associationEnabled && exportMode() == StateExportMode.VERBOSE
+    }
 
     private val logsReceived: Boolean by lazy(LazyThreadSafetyMode.PUBLICATION, receivesLogs)
 
@@ -75,17 +89,12 @@ class StateTelemetry(
     /**
      * What kind of log [record] is, which decides the state it is stamped with and where it is sent.
      */
-    fun kindOf(record: LogRecordData): LogKind = kindOf(record.eventName, record.attributes)
+    fun kindOf(record: LogRecordData): LogKind = kindOf(record.attributes)
 
     /**
-     * What kind of log one with [eventName] and [attributes] is, for a caller that has already read them from the record.
+     * What kind of log one with [attributes] is, for a caller that has already read them from the record.
      */
-    fun kindOf(eventName: String?, attributes: Map<String, Any>): LogKind = when (attributes[EMB_TYPE]) {
-        STATE_TYPE -> when (eventName) {
-            AppStateKeys.CHANGE_EVENT_NAME, AppStateKeys.SNAPSHOT_EVENT_NAME -> LogKind.REPLAY
-            else -> LogKind.LIVE
-        }
-
+    fun kindOf(attributes: Map<String, Any>): LogKind = when (attributes[EMB_TYPE]) {
         NATIVE_CRASH_TYPE, EXIT_TYPE -> LogKind.DEAD_PROCESS
         else -> LogKind.LIVE
     }
@@ -117,6 +126,19 @@ class StateTelemetry(
     fun writeLogExportForm(record: AttributesMutator, snapshot: StateSnapshot) {
         record.setValues(snapshot)
         record.setLongAttribute(AppStateKeys.SEQ, snapshot.seq)
+    }
+
+    /**
+     * As above, for a record whose type does not say it can be written to. One that cannot is left as it is, and reported, so
+     * that an app's exporters going without the stamp is never silent.
+     */
+    fun writeLogExportForm(record: LogRecordData, snapshot: StateSnapshot) {
+        val mutator = record as? AttributesMutator
+        if (mutator == null) {
+            onPlainStampSkipped()
+        } else {
+            writeLogExportForm(mutator, snapshot)
+        }
     }
 
     /**
@@ -177,14 +199,10 @@ class StateTelemetry(
 
         /** A log about a process that has died. It carries that process's state, or none, and never this one's. */
         DEAD_PROCESS,
-
-        /** A change or a snapshot replayed for the app's own exporters. It is not stamped and is not sent to Embrace. */
-        REPLAY,
     }
 
     private companion object {
         val EMB_TYPE: String = EmbType.State.key
-        val STATE_TYPE: String = EmbType.State.value
         val NATIVE_CRASH_TYPE: String = EmbType.System.NativeCrash.value
         val EXIT_TYPE: String = EmbType.System.Exit.value
     }

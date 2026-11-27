@@ -16,6 +16,13 @@ object StateEvents {
 
     /** A state's instrumentation reports changes it never passed on. */
     val DROPPED: EventKey<StateDrops> = EventKey()
+
+    /**
+     * Something other than a state's data source reports its value, as a hosted SDK does for the screen. The state's own data
+     * source takes the report up and passes it on as its own, so that a state has one reporter and its value one judge of whether
+     * it changed. A report for a state nothing declared is discarded.
+     */
+    val REPORTED: EventKey<StateReport> = EventKey()
 }
 
 class StateDeclaration(
@@ -36,4 +43,10 @@ class StateUpdate(
 class StateDrops(
     val state: String,
     val count: Int,
+)
+
+class StateReport(
+    val state: String,
+    val value: String,
+    val timeMs: Long,
 )

@@ -3,16 +3,19 @@ package io.embrace.android.embracesdk.internal.injection
 import io.embrace.android.embracesdk.internal.clock.Clock
 import io.embrace.android.embracesdk.internal.config.ConfigService
 import io.embrace.android.embracesdk.internal.config.isAppStateEnabled
+import io.embrace.android.embracesdk.internal.config.isStateAssociationEnabled
 import io.embrace.android.embracesdk.internal.logging.ErrorHandler
 import io.embrace.android.embracesdk.internal.otel.config.ExternalOtelConfig
 import io.embrace.android.embracesdk.internal.otel.state.StateExportMode
 import io.embrace.android.embracesdk.internal.otel.state.StateReplayEmitter
 import io.embrace.android.embracesdk.internal.otel.state.StateTelemetry
 import io.embrace.android.embracesdk.internal.state.StateRecorder
+import io.embrace.android.embracesdk.internal.telemetry.AppliedLimitType
 import io.embrace.android.embracesdk.internal.telemetry.InternalTelemetryService
 import io.embrace.android.embracesdk.internal.utils.Provider
 import io.embrace.android.embracesdk.internal.utils.event.EventBus
 import io.embrace.android.embracesdk.internal.worker.BackgroundWorker
+import io.opentelemetry.kotlin.context.Context
 import io.opentelemetry.kotlin.logging.Logger
 
 /**
@@ -32,7 +35,10 @@ fun createStateTelemetry(
     if (!configService.isAppStateEnabled()) {
         return null
     }
-    val recorder = StateRecorder(clock, telemetryService)
+    // the model's second step: spans linked to state, and changes replayed for the app's own exporters
+    val associationEnabled = configService.isStateAssociationEnabled()
+    // only a span given its own times reads the recent snapshots, so they are kept only where spans are linked
+    val recorder = StateRecorder(clock, telemetryService, keepsWindow = associationEnabled)
     recorder.attach(eventBus())
     return StateTelemetry(
         recorder = recorder,
@@ -44,12 +50,19 @@ fun createStateTelemetry(
             )
         },
         receivesLogs = externalOtelConfig::receivesLogs,
+        associationEnabled = associationEnabled,
+        onPlainStampSkipped = { telemetryService.trackAppliedLimit(PLAIN_STAMP_TELEMETRY_NAME, AppliedLimitType.DROP) },
     )
 }
 
+/** The name a log that could not be given the stamp for the app's own exporters is tracked under. */
+private const val PLAIN_STAMP_TELEMETRY_NAME = "state_log_stamp"
+
 /**
- * Starts replaying state changes to the app's own exporters as events, if the app registered anything that receives log records.
- * An app with only a span exporter gets none, and gets the values on its spans instead.
+ * Starts replaying state changes to the app's own exporters as events, if the model's second step is on and the app registered
+ * anything that receives log records. An app with only a span exporter gets none, and gets the values on its spans instead.
+ *
+ * [worker] is used for nothing else: an app's own log record processor runs on it for as long as it takes.
  */
 fun startStateReplay(
     stateTelemetry: StateTelemetry,
@@ -59,16 +72,20 @@ fun startStateReplay(
     processIdentifier: Provider<String>,
     errorHandler: ErrorHandler,
     telemetryService: InternalTelemetryService,
+    rootContextProvider: Provider<Context>,
 ) {
-    if (!externalOtelConfig.receivesLogs()) {
+    if (!stateTelemetry.associationEnabled || !externalOtelConfig.receivesLogs()) {
         return
     }
-    stateTelemetry.recorder.replay = StateReplayEmitter(
-        loggerProvider = loggerProvider,
-        worker = worker,
-        processIdentifier = processIdentifier,
-        stateTelemetry = stateTelemetry,
-        errorHandler = errorHandler,
-        telemetryService = telemetryService,
+    stateTelemetry.recorder.attach(
+        StateReplayEmitter(
+            loggerProvider = loggerProvider,
+            worker = worker,
+            processIdentifier = processIdentifier,
+            stateTelemetry = stateTelemetry,
+            errorHandler = errorHandler,
+            telemetryService = telemetryService,
+            rootContextProvider = rootContextProvider,
+        ),
     )
 }

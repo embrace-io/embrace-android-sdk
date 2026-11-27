@@ -7,7 +7,6 @@ import io.embrace.android.embracesdk.internal.otel.payload.toEmbracePayload
 import io.embrace.android.embracesdk.internal.otel.sdk.StoreDataResult
 import io.embrace.android.embracesdk.internal.otel.state.StateTelemetry
 import io.embrace.android.embracesdk.internal.payload.Log
-import io.opentelemetry.kotlin.attributes.AttributesMutator
 import io.opentelemetry.kotlin.export.OperationResultCode
 import io.opentelemetry.kotlin.logging.data.LogRecordData
 import io.opentelemetry.kotlin.logging.export.LogRecordExporter
@@ -33,9 +32,8 @@ internal class DefaultLogRecordExporter(
             else -> storeStamped(stateTelemetry, telemetry)
         }
 
-        if (result == StoreDataResult.SUCCESS && externalExporters.isNotEmpty()) {
-            val snapshot = telemetry.map { (it as? ReadableLogRecord)?.toLogRecordData() ?: it }
-            externalExportDispatcher.dispatch(externalExporters) { it.export(snapshot) }
+        if (result == StoreDataResult.SUCCESS) {
+            dispatchToExternalExporters(telemetry)
         }
 
         return when (result) {
@@ -45,20 +43,36 @@ internal class DefaultLogRecordExporter(
     }
 
     /**
+     * Hands [telemetry] to the app's own exporters only: nothing of it is stored for Embrace. It is how a state change or a
+     * snapshot replayed for those exporters goes out.
+     */
+    fun exportExternally(telemetry: List<LogRecordData>) {
+        if (exportCheck()) {
+            dispatchToExternalExporters(telemetry)
+        }
+    }
+
+    private fun dispatchToExternalExporters(telemetry: List<LogRecordData>) {
+        if (externalExporters.isNotEmpty()) {
+            val snapshot = telemetry.map { (it as? ReadableLogRecord)?.toLogRecordData() ?: it }
+            externalExportDispatcher.dispatch(externalExporters) { it.export(snapshot) }
+        }
+    }
+
+    /**
      * Stores [telemetry] for Embrace with the state stamp in its packed form, then writes the stamp on each record in the form the
      * app's own processors and exporters take, which are given the record after this.
      *
      * A log about what is happening now is stamped with the state now. A log about a process that has died keeps the state it was
      * given, which is that process's, and is never stamped with this one's. A change or a snapshot replayed for the app's own
-     * exporters is not stamped, and is not stored for Embrace at all.
+     * exporters never comes this way: see [exportExternally].
      */
     private fun storeStamped(state: StateTelemetry, telemetry: List<LogRecordData>): StoreDataResult {
         val stored = ArrayList<Log>(telemetry.size)
         for (record in telemetry) {
             // read once: in compat mode a getter on the live record copies it
             val attributes = record.attributes
-            when (state.kindOf(record.eventName, attributes)) {
-                StateTelemetry.LogKind.REPLAY -> Unit
+            when (state.kindOf(attributes)) {
                 StateTelemetry.LogKind.DEAD_PROCESS -> {
                     stored.add(record.toEmbracePayload(state.packPlainStamp(attributes)))
                     state.writeDeadProcessSeq(record, attributes)
@@ -71,7 +85,7 @@ internal class DefaultLogRecordExporter(
                     } else {
                         stored.add(record.toEmbracePayload(state.withPackedStamp(attributes, snapshot)))
                         if (state.appReceivesLogs()) {
-                            (record as? AttributesMutator)?.let { state.writeLogExportForm(it, snapshot) }
+                            state.writeLogExportForm(record, snapshot)
                         }
                     }
                 }

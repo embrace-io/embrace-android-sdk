@@ -17,7 +17,7 @@ class PluginBehaviorImpl(
 
     override val isTelemetryDisabled: Provider<Boolean> by lazy {
         project.provider {
-            embrace.telemetryEnabled.orNull?.not() ?: project.getBoolProperty(EMBRACE_DISABLE_COLLECT_BUILD_DATA)
+            embrace.telemetryEnabled.orNull == false
         }
     }
 
@@ -60,10 +60,6 @@ class PluginBehaviorImpl(
     override val autoAddEmbraceDependencies: Boolean by lazy {
         val userValue = embrace.autoAddEmbraceDependencies.orNull ?: true
         userValue && !isUnityEdmEnabled
-    }
-
-    override val autoAddEmbraceComposeDependency: Boolean by lazy {
-        embrace.autoAddEmbraceComposeClickDependency.orNull ?: false
     }
 
     override val customSymbolsDirectory: String? by lazy {

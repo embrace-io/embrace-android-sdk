@@ -5,7 +5,7 @@ import org.gradle.api.provider.Provider
 interface PluginBehavior {
 
     /**
-     * Whether telemetry can be captured for this build, set via `embrace.disableCollectBuildData`.
+     * Whether telemetry can be captured for this build, set via `embrace.telemetryEnabled`.
      */
     val isTelemetryDisabled: Provider<Boolean>
 
@@ -53,12 +53,6 @@ interface PluginBehavior {
     val autoAddEmbraceDependencies: Boolean
 
     /**
-     * Whether the project should automatically add the embrace compose dependency to the classpath,
-     * set via `embrace.autoAddEmbraceComposeClickDependency`
-     */
-    val autoAddEmbraceComposeDependency: Boolean
-
-    /**
      * A custom directory containing SO files, set via `embrace.customSymbolsDirectory`
      */
     val customSymbolsDirectory: String?
@@ -81,7 +75,6 @@ interface PluginBehavior {
 }
 
 const val EMBRACE_BASE_URL = "embrace.baseUrl"
-const val EMBRACE_DISABLE_COLLECT_BUILD_DATA = "embrace.disableCollectBuildData"
 const val EMBRACE_UPLOAD_IL2CPP_MAPPING_FILES = "embrace.uploadIl2CppMappingFiles"
 const val EMBRACE_DISABLE_MAPPING_FILE_UPLOAD = "embrace.disableMappingFileUpload"
 const val EMBRACE_EXPORT_BUILD_INFO = "embrace.exportBuildInfo"

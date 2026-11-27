@@ -18,13 +18,6 @@ abstract class EmbraceExtension @Inject internal constructor(objectFactory: Obje
     val autoAddEmbraceDependencies: Property<Boolean> = objectFactory.property(Boolean::class.java)
 
     /**
-     * Whether the Embrace Gradle Plugin should automatically add the embrace-android-compose dependency to this module's classpath.
-     * Defaults to false.
-     */
-    val autoAddEmbraceComposeClickDependency: Property<Boolean> =
-        objectFactory.property(Boolean::class.java)
-
-    /**
      * Whether the Embrace Gradle Plugin should report telemetry on its own performance.
      * Defaults to true.
      */

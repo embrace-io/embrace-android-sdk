@@ -7,6 +7,7 @@ import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNull
+import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -73,6 +74,18 @@ internal class LeakDetectionDataSourceTest {
     private fun encoded(): String? = args.destination.attributes[EmbSessionAttributes.EMB_MEMORY_LEAK_SUSPECTS]
 
     private fun candidates(): String? = args.destination.attributes[EmbSessionAttributes.EMB_MEMORY_LEAK_CANDIDATES]
+
+    @Test
+    fun `a suspect past the tracked-suspect cap is reported as dropped in the next candidates attribute`() {
+        // held strongly for the duration of the test so that none can be collected
+        val leaked = List(LeakDetector.MAX_TRACKED_SUSPECTS + 1) { Any() }
+        leaked.forEach { confirmLeak(it, sessionIds = SESSION_IDS) }
+
+        dataSource.onPreSessionEnd()
+
+        assertTrue(candidates()?.startsWith("${args.clock.now()};1;") == true)
+        assertEquals("2;part-1_session-1:activity|java.lang.Object|256", encoded())
+    }
 
     @Test
     fun `nothing is reported when there are no confirmed suspects`() {

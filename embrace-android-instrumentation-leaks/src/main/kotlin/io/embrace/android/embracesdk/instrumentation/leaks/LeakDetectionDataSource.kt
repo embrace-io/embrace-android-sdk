@@ -67,7 +67,7 @@ class LeakDetectionDataSource internal constructor(
         val suspects = leakDetector.suspects(previousReportedCycleCount, cycleCount)
         previousReportedCycleCount = cycleCount
         addIfNotEmpty(EmbSessionAttributes.EMB_MEMORY_LEAK_SUSPECTS, encodeLeakSuspects(suspects))
-        val candidates = encodeLeakCandidates(suspects, clock.now(), dropped = 0)
+        val candidates = encodeLeakCandidates(suspects, clock.now(), leakDetector.takeDropped())
         addIfNotEmpty(EmbSessionAttributes.EMB_MEMORY_LEAK_CANDIDATES, candidates)
     }
 

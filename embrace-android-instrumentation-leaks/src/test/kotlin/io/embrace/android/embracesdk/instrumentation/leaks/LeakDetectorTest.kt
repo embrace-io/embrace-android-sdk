@@ -393,10 +393,13 @@ internal class LeakDetectorTest {
 
         assertEquals(total, referents.size)
         assertEquals(total, reclaimed.size)
-        assertEquals(total - collectedCount, suspects().size)
+        // more objects are confirmed than can be tracked, so only the first to arrive are
+        assertEquals(LeakDetector.MAX_TRACKED_SUSPECTS, suspects().size)
+        assertTrue("a collected object is never confirmed", suspects().all { (it.token as Int) % 4 != 0 })
         assertEquals(
-            (0 until total).filter { it % 4 != 0 }.toSet(),
-            suspects().map { it.token }.toSet(),
+            "every confirmation past the cap is dropped",
+            total - collectedCount - LeakDetector.MAX_TRACKED_SUSPECTS,
+            detector.takeDropped(),
         )
         assertTrue(
             "every reference has already been handled, so none may still be watched",
@@ -449,6 +452,30 @@ internal class LeakDetectorTest {
         val confirmation = checkNotNull(detector.onSentinelReclaimed(ref))
         detector.onSentinelReclaimed(confirmation)
         return confirmation
+    }
+
+    @Test
+    fun `at most 256 suspects are tracked, one past that is dropped for good, and a collection makes room again`() {
+        // held strongly for the duration of the test so that none can be collected
+        val leaked = List(LeakDetector.MAX_TRACKED_SUSPECTS + 1) { Any() }
+        leaked.forEach { referent ->
+            detector.trackOpened(referent, OWNER)
+            confirmAfterSecondSentinel(checkNotNull(detector.trackClosed(referent, OWNER)))
+        }
+
+        assertEquals(LeakDetector.MAX_TRACKED_SUSPECTS, detector.confirmedSuspects().size)
+        assertEquals(1, detector.takeDropped())
+        assertEquals("taking the count resets it", 0, detector.takeDropped())
+        detector.trackOpened(leaked.last(), OWNER)
+        assertNull("a dropped suspect is never tracked again", detector.trackClosed(leaked.last(), OWNER))
+
+        detector.onSuspectCollected(detector.confirmedSuspects().first())
+        val next = Any()
+        detector.trackOpened(next, OWNER)
+        confirmAfterSecondSentinel(checkNotNull(detector.trackClosed(next, OWNER)))
+
+        assertTrue(detector.confirmedSuspects().any { it.get() === next })
+        assertEquals(0, detector.takeDropped())
     }
 
     /**

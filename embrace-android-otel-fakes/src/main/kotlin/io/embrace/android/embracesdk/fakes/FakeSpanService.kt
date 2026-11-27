@@ -8,8 +8,8 @@ import io.embrace.android.embracesdk.internal.otel.spans.EmbraceSdkSpan
 import io.embrace.android.embracesdk.internal.otel.spans.NoopEmbraceSdkSpan
 import io.embrace.android.embracesdk.internal.otel.spans.OtelSpanStartArgs
 import io.embrace.android.embracesdk.internal.otel.spans.SpanService
-import io.embrace.android.embracesdk.internal.otel.spans.SpanTerminationMode
 import io.embrace.android.embracesdk.internal.otel.spans.createContext
+import io.embrace.android.embracesdk.spans.AutoTerminationMode
 import io.embrace.android.embracesdk.spans.EmbraceSpan
 import io.opentelemetry.kotlin.tracing.SpanContext
 
@@ -26,7 +26,7 @@ class FakeSpanService : SpanService {
         type: EmbType,
         internal: Boolean,
         private: Boolean,
-        terminationMode: SpanTerminationMode,
+        autoTerminationMode: AutoTerminationMode,
     ): EmbraceSdkSpan = FakeEmbraceSdkSpan(
         name = name,
         parentContext = (parent as? EmbraceSdkSpan)?.createContext(fakeOpenTelemetry(OtelSdkMode.REGULAR))
@@ -36,7 +36,7 @@ class FakeSpanService : SpanService {
         type = type,
         internal = internal,
         private = private,
-        terminationMode = terminationMode
+        autoTerminationMode = autoTerminationMode
     ).apply {
         createdSpans.add(this)
     }
@@ -50,7 +50,7 @@ class FakeSpanService : SpanService {
             type = otelSpanStartArgs.embraceAttributes.filterIsInstance<EmbType>().single(),
             internal = otelSpanStartArgs.internal,
             private = otelSpanStartArgs.embraceAttributes.contains(PrivateSpan),
-            terminationMode = otelSpanStartArgs.terminationMode,
+            autoTerminationMode = otelSpanStartArgs.autoTerminationMode,
             otelSpanStartArgs = otelSpanStartArgs
         ).apply {
             createdSpans.add(this)
@@ -64,7 +64,7 @@ class FakeSpanService : SpanService {
         type: EmbType,
         internal: Boolean,
         private: Boolean,
-        terminationMode: SpanTerminationMode,
+        autoTerminationMode: AutoTerminationMode,
         parentSpanContext: SpanContext?,
     ): EmbraceSdkSpan {
         val newSpan = createSpan(
@@ -74,7 +74,7 @@ class FakeSpanService : SpanService {
             type = type,
             internal = internal,
             private = private,
-            terminationMode = terminationMode,
+            autoTerminationMode = autoTerminationMode,
         )
         return when {
             newSpan.start(startTimeMs) -> newSpan
@@ -90,7 +90,7 @@ class FakeSpanService : SpanService {
         private: Boolean,
         attributes: Map<String, Any>,
         events: List<SpanEvent>,
-        terminationMode: SpanTerminationMode,
+        autoTerminationMode: AutoTerminationMode,
         code: () -> T,
     ): T {
         return code()

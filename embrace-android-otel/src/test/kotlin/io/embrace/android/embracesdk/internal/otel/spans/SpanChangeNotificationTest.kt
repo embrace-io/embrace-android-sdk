@@ -74,7 +74,6 @@ internal class SpanChangeNotificationTest(
         "isRecording",
         "getParent",
         "getAutoTerminationMode",
-        "getTerminationMode",
         "getStatus",
         "getSpanKind",
         "asNewContext",

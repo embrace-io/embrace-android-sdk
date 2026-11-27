@@ -11,6 +11,7 @@ import io.embrace.android.embracesdk.internal.logging.SdkErrorType
 import io.embrace.android.embracesdk.internal.otel.sdk.StoreDataResult
 import io.embrace.android.embracesdk.internal.payload.Span
 import io.embrace.android.embracesdk.internal.toEmbracePayload
+import io.embrace.android.embracesdk.spans.AutoTerminationMode
 import io.opentelemetry.kotlin.OpenTelemetry
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
@@ -122,7 +123,7 @@ internal class SpanRepositoryTest {
 
     @Test
     fun `timed out span is failed at its deadline once the timeout elapses`() {
-        val span = FakeEmbraceSdkSpan(terminationMode = SpanTerminationMode.Timeout(1000L)).apply { start(100L) }
+        val span = FakeEmbraceSdkSpan(autoTerminationMode = AutoTerminationMode.Timeout(1000L)).apply { start(100L) }
         repository.trackStartedEmbraceSpan(span)
 
         // before the deadline the span is left
@@ -139,8 +140,8 @@ internal class SpanRepositoryTest {
 
     @Test
     fun `spans without a timeout are not affected by the sweep`() {
-        val onBackground = FakeEmbraceSdkSpan(terminationMode = SpanTerminationMode.OnBackground).apply { start(0L) }
-        val none = FakeEmbraceSdkSpan(terminationMode = SpanTerminationMode.None).apply { start(0L) }
+        val onBackground = FakeEmbraceSdkSpan(autoTerminationMode = AutoTerminationMode.OnBackground).apply { start(0L) }
+        val none = FakeEmbraceSdkSpan(autoTerminationMode = AutoTerminationMode.None).apply { start(0L) }
         repository.trackStartedEmbraceSpan(onBackground)
         repository.trackStartedEmbraceSpan(none)
 
@@ -152,7 +153,7 @@ internal class SpanRepositoryTest {
 
     @Test
     fun `already stopped timed out spans are not stopped again`() {
-        val span = FakeEmbraceSdkSpan(terminationMode = SpanTerminationMode.Timeout(1000L)).apply {
+        val span = FakeEmbraceSdkSpan(autoTerminationMode = AutoTerminationMode.Timeout(1000L)).apply {
             start(100L)
             stop(endTimeMs = 500L)
         }
@@ -170,7 +171,7 @@ internal class SpanRepositoryTest {
         val openTelemetry = fakeOpenTelemetry(OtelSdkMode.REGULAR)
         val autoRoot = FakeEmbraceSdkSpan(
             openTelemetry = openTelemetry,
-            terminationMode = SpanTerminationMode.OnBackground,
+            autoTerminationMode = AutoTerminationMode.OnBackground,
         ).apply { start(0L) }
         val child = createChildSpan(openTelemetry, parent = autoRoot)
         val grandchild = createChildSpan(openTelemetry, parent = child)
@@ -211,7 +212,7 @@ internal class SpanRepositoryTest {
     @Test
     fun `a span that fails to stop does not prevent others timing out`() {
         val spans = trackWithThrowingSpan {
-            FakeEmbraceSdkSpan(terminationMode = SpanTerminationMode.Timeout(1000L)).apply { start(0L) }
+            FakeEmbraceSdkSpan(autoTerminationMode = AutoTerminationMode.Timeout(1000L)).apply { start(0L) }
         }
         repository.stopTimedOutSpans(now = 1000L)
         spans.forEach { assertFalse(it.isRecording) }
@@ -221,7 +222,7 @@ internal class SpanRepositoryTest {
     @Test
     fun `a span that fails to stop does not prevent others being auto terminated`() {
         val spans = trackWithThrowingSpan {
-            FakeEmbraceSdkSpan(terminationMode = SpanTerminationMode.OnBackground).apply { start(0L) }
+            FakeEmbraceSdkSpan(autoTerminationMode = AutoTerminationMode.OnBackground).apply { start(0L) }
         }
         repository.autoTerminateEmbraceSpans(now = 1000L)
         spans.forEach { assertFalse(it.isRecording) }

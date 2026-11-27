@@ -10,11 +10,11 @@ import io.embrace.android.embracesdk.internal.arch.schema.EmbType
 import io.embrace.android.embracesdk.internal.arch.schema.ErrorCodeAttribute
 import io.embrace.android.embracesdk.internal.arch.state.ProcessState
 import io.embrace.android.embracesdk.internal.otel.spans.SpanRepository
-import io.embrace.android.embracesdk.internal.otel.spans.SpanTerminationMode
 import io.embrace.android.embracesdk.internal.otel.spans.hasEmbraceAttribute
 import io.embrace.android.embracesdk.internal.payload.SessionPartPayload
 import io.embrace.android.embracesdk.internal.payload.Span
 import io.embrace.android.embracesdk.internal.session.orchestrator.SessionPartSnapshotType
+import io.embrace.android.embracesdk.spans.AutoTerminationMode
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNotEquals
@@ -89,7 +89,7 @@ internal class SessionPartPayloadSourceImplTest {
     @Test
     fun `timed out spans are failed when the session part ends regardless of app state`() {
         val clock = FakeClock()
-        val timedOutSpan = FakeEmbraceSdkSpan(terminationMode = SpanTerminationMode.Timeout(1000L)).apply {
+        val timedOutSpan = FakeEmbraceSdkSpan(autoTerminationMode = AutoTerminationMode.Timeout(1000L)).apply {
             start(clock.now())
         }
         val repository = SpanRepository(FakeErrorHandler()).apply {
@@ -136,7 +136,7 @@ internal class SessionPartPayloadSourceImplTest {
     @Test
     fun `timed out spans are failed when the session part ends without a payload`() {
         val clock = FakeClock()
-        val timedOutSpan = FakeEmbraceSdkSpan(terminationMode = SpanTerminationMode.Timeout(1000L)).apply {
+        val timedOutSpan = FakeEmbraceSdkSpan(autoTerminationMode = AutoTerminationMode.Timeout(1000L)).apply {
             start(clock.now())
         }
         val repository = SpanRepository(FakeErrorHandler()).apply {
@@ -162,7 +162,7 @@ internal class SessionPartPayloadSourceImplTest {
 
     @Test
     fun `spans are auto terminated when a session part ends in the background without a payload`() {
-        val terminatedSpan = FakeEmbraceSdkSpan(terminationMode = SpanTerminationMode.OnBackground).apply {
+        val terminatedSpan = FakeEmbraceSdkSpan(autoTerminationMode = AutoTerminationMode.OnBackground).apply {
             start(0L)
         }
         val repository = SpanRepository(FakeErrorHandler()).apply {

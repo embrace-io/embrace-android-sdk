@@ -85,9 +85,9 @@ class SpanRepository(
      */
     fun stopTimedOutSpans(now: Long) {
         getActiveEmbraceSpans().forEach { span ->
-            val mode = span.terminationMode
+            val mode = span.autoTerminationMode
             val startTimeMs = span.getStartTimeMs()
-            if (mode is SpanTerminationMode.Timeout && startTimeMs != null) {
+            if (mode is AutoTerminationMode.Timeout && startTimeMs != null) {
                 val deadlineMs = startTimeMs + mode.timeoutMs
                 if (now >= deadlineMs) {
                     errorHandler.guardSdkCode(SdkErrorType.SpanStopFail) { span.stopWithErrorCode(ErrorCodeAttribute.Failure, deadlineMs) }
@@ -144,7 +144,7 @@ class SpanRepository(
      */
     fun autoTerminateEmbraceSpans(now: Long) {
         val roots = buildSpanTree()
-        terminateSpansIfRequired(now, roots.filter { it.span.autoTerminationMode == AutoTerminationMode.ON_BACKGROUND })
+        terminateSpansIfRequired(now, roots.filter { it.span.autoTerminationMode == AutoTerminationMode.OnBackground })
     }
 
     /**

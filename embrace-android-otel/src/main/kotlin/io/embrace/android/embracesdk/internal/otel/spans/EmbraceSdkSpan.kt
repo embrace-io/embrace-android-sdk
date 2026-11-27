@@ -35,12 +35,6 @@ interface EmbraceSdkSpan : EmbraceSpan {
     fun discard(): Boolean
 
     /**
-     * How this span terminates automatically. Unlike the public [autoTerminationMode], this can also
-     * carry a [SpanTerminationMode.Timeout] used by the timeout sweep.
-     */
-    val terminationMode: SpanTerminationMode
-
-    /**
      * Create a new context object based in this span and its parent's context. This can be used for the parent context for a new span
      * with this span as its parent.
      */

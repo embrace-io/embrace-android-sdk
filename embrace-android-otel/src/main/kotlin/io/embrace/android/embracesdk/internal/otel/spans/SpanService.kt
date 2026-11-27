@@ -3,6 +3,7 @@ package io.embrace.android.embracesdk.internal.otel.spans
 import io.embrace.android.embracesdk.internal.arch.datasource.SpanEvent
 import io.embrace.android.embracesdk.internal.arch.schema.EmbType
 import io.embrace.android.embracesdk.internal.arch.schema.ErrorCodeAttribute
+import io.embrace.android.embracesdk.spans.AutoTerminationMode
 import io.embrace.android.embracesdk.spans.EmbraceSpan
 import io.opentelemetry.kotlin.tracing.SpanContext
 
@@ -23,7 +24,7 @@ interface SpanService {
         type: EmbType = EmbType.Performance.Default,
         internal: Boolean = true,
         private: Boolean = false,
-        terminationMode: SpanTerminationMode = SpanTerminationMode.None,
+        autoTerminationMode: AutoTerminationMode = AutoTerminationMode.None,
     ): EmbraceSdkSpan
 
     /**
@@ -42,7 +43,7 @@ interface SpanService {
         type: EmbType = EmbType.Performance.Default,
         internal: Boolean = true,
         private: Boolean = false,
-        terminationMode: SpanTerminationMode = SpanTerminationMode.None,
+        autoTerminationMode: AutoTerminationMode = AutoTerminationMode.None,
         parentSpanContext: SpanContext? = null,
     ): EmbraceSdkSpan
 
@@ -59,7 +60,7 @@ interface SpanService {
         private: Boolean = false,
         attributes: Map<String, Any> = emptyMap(),
         events: List<SpanEvent> = emptyList(),
-        terminationMode: SpanTerminationMode = SpanTerminationMode.None,
+        autoTerminationMode: AutoTerminationMode = AutoTerminationMode.None,
         code: () -> T,
     ): T
 

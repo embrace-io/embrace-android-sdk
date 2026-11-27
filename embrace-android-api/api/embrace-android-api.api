@@ -3,7 +3,6 @@ public final class io/embrace/android/embracesdk/LastRunEndState : java/lang/Enu
 	public static final field CRASH Lio/embrace/android/embracesdk/LastRunEndState;
 	public static final field INVALID Lio/embrace/android/embracesdk/LastRunEndState;
 	public static fun getEntries ()Lkotlin/enums/EnumEntries;
-	public final fun getValue ()I
 	public static fun valueOf (Ljava/lang/String;)Lio/embrace/android/embracesdk/LastRunEndState;
 	public static fun values ()[Lio/embrace/android/embracesdk/LastRunEndState;
 }

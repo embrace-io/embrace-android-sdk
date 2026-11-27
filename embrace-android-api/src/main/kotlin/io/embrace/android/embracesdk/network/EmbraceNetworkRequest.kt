@@ -7,6 +7,10 @@ import java.util.Locale
 /**
  * This class is used to create manually-recorded network requests.
  */
+@Deprecated(
+    "Use recordNetworkRequest(url, httpMethod, startTime, endTime) { completed { ... } } or " +
+        "{ incomplete { ... } } instead.",
+)
 public class EmbraceNetworkRequest private constructor(
 
     /**
@@ -81,6 +85,7 @@ public class EmbraceNetworkRequest private constructor(
     public val bytesOut: Long
         get() = bytesSent ?: 0
 
+    @Suppress("DEPRECATION")
     public companion object {
         /**
          * Construct a new [EmbraceNetworkRequest] instance where a HTTP response was returned.

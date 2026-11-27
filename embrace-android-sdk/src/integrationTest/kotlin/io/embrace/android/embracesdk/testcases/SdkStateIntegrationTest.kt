@@ -36,7 +36,6 @@ import io.embrace.android.embracesdk.internal.otel.sdk.findAttributeValue
 import io.embrace.android.embracesdk.internal.otel.spans.NoopEmbraceSdkSpan
 import io.embrace.android.embracesdk.internal.toStringMap
 import io.embrace.android.embracesdk.internal.utils.event.EventKey
-import io.embrace.android.embracesdk.network.EmbraceNetworkRequest
 import io.embrace.android.embracesdk.network.http.HttpMethod
 import io.embrace.android.embracesdk.network.http.HttpRequestInfoModifier
 import io.embrace.android.embracesdk.testframework.OtelSdkMode
@@ -825,17 +824,13 @@ internal class SdkStateIntegrationTest(
                 isNotification = true,
                 hasData = true,
             )
-            embrace.recordNetworkRequest(
-                EmbraceNetworkRequest.fromCompletedRequest(
-                    "https://example.com",
-                    HttpMethod.GET,
-                    startMs,
-                    endMs,
-                    0,
-                    0,
-                    200,
-                ),
-            )
+            embrace.recordNetworkRequest("https://example.com", HttpMethod.GET, startMs, endMs) {
+                completed {
+                    bytesSent = 0
+                    bytesReceived = 0
+                    statusCode = 200
+                }
+            }
             val modifier = HttpRequestInfoModifier { }
             embrace.addHttpRequestInfoModifier(modifier)
             embrace.removeHttpRequestInfoModifier(modifier)

@@ -10,10 +10,11 @@ import io.embrace.android.embracesdk.internal.arch.schema.SendMode
 import io.embrace.android.embracesdk.internal.clock.millisToNanos
 import io.embrace.android.embracesdk.internal.config.remote.NetworkCaptureRuleRemoteConfig
 import io.embrace.android.embracesdk.internal.config.remote.RemoteConfig
+import io.embrace.android.embracesdk.internal.network.EmbraceNetworkRequestDsl
 import io.embrace.android.embracesdk.internal.network.http.NetworkCaptureData
 import io.embrace.android.embracesdk.internal.otel.sdk.findAttributeValue
 import io.embrace.android.embracesdk.internal.payload.Span
-import io.embrace.android.embracesdk.network.EmbraceNetworkRequest
+import io.embrace.android.embracesdk.network.NetworkRequestDsl
 import io.embrace.android.embracesdk.network.http.HttpMethod
 import io.embrace.android.embracesdk.network.http.HttpRequestInfoModifier
 import io.embrace.android.embracesdk.semconv.EmbNetworkCapturedRequestAttributes
@@ -44,151 +45,136 @@ internal class NetworkRequestApiTest(
 
     @Test
     fun `record basic completed GET request`() {
-        assertSingleNetworkRequestInSession(
-            EmbraceNetworkRequest.fromCompletedRequest(
-                URL,
-                HttpMethod.GET,
-                START_TIME,
-                END_TIME,
-                BYTES_SENT,
-                BYTES_RECEIVED,
-                200
-            )
-        )
+        assertSingleNetworkRequestInSession(HttpMethod.GET) {
+            completed {
+                bytesSent = BYTES_SENT
+                bytesReceived = BYTES_RECEIVED
+                statusCode = 200
+            }
+        }
     }
 
     @Test
     fun `record completed GET request with long URL`() {
-        assertSingleNetworkRequestInSession(
-            EmbraceNetworkRequest.fromCompletedRequest(
-                LONG_URL,
-                HttpMethod.GET,
-                START_TIME,
-                END_TIME,
-                BYTES_SENT,
-                BYTES_RECEIVED,
-                200
-            )
-        )
+        assertSingleNetworkRequestInSession(HttpMethod.GET, url = LONG_URL) {
+            completed {
+                bytesSent = BYTES_SENT
+                bytesReceived = BYTES_RECEIVED
+                statusCode = 200
+            }
+        }
     }
 
     @Test
     fun `record completed POST request with traceId`() {
-        assertSingleNetworkRequestInSession(
-            expectedRequest = EmbraceNetworkRequest.fromCompletedRequest(
-                URL,
-                HttpMethod.POST,
-                START_TIME,
-                END_TIME,
-                BYTES_SENT,
-                BYTES_RECEIVED,
-                200,
-                TRACE_ID,
-            )
-        )
+        assertSingleNetworkRequestInSession(HttpMethod.POST) {
+            completed {
+                bytesSent = BYTES_SENT
+                bytesReceived = BYTES_RECEIVED
+                statusCode = 200
+            }
+            traceId = TRACE_ID
+        }
     }
 
     @Test
     fun `record completed request that failed with captured response`() {
-        assertSingleNetworkRequestInSession(
-            expectedRequest = EmbraceNetworkRequest.fromCompletedRequest(
-                URL,
-                HttpMethod.GET,
-                START_TIME,
-                END_TIME,
-                BYTES_SENT,
-                BYTES_RECEIVED,
-                500,
-                TRACE_ID,
-                null,
-                NETWORK_CAPTURE_DATA
-            )
-        )
+        assertSingleNetworkRequestInSession(HttpMethod.GET) {
+            completed {
+                bytesSent = BYTES_SENT
+                bytesReceived = BYTES_RECEIVED
+                statusCode = 500
+            }
+            traceId = TRACE_ID
+            networkCaptureData = NETWORK_CAPTURE_DATA
+        }
     }
 
     @Test
     fun `record completed request with traceparent`() {
-        assertSingleNetworkRequestInSession(
-            expectedRequest = EmbraceNetworkRequest.fromCompletedRequest(
-                URL,
-                HttpMethod.GET,
-                START_TIME,
-                END_TIME,
-                BYTES_SENT,
-                BYTES_RECEIVED,
-                200,
-                TRACE_ID,
-                TRACEPARENT,
-                NETWORK_CAPTURE_DATA
-            )
-        )
+        assertSingleNetworkRequestInSession(HttpMethod.GET) {
+            completed {
+                bytesSent = BYTES_SENT
+                bytesReceived = BYTES_RECEIVED
+                statusCode = 200
+            }
+            traceId = TRACE_ID
+            w3cTraceparent = TRACEPARENT
+            networkCaptureData = NETWORK_CAPTURE_DATA
+        }
+    }
+
+    @Test
+    fun `record completed request through the deprecated API`() {
+        assertSingleNetworkRequestInSession(HttpMethod.POST, deprecatedApi = true) {
+            completed {
+                bytesSent = BYTES_SENT
+                bytesReceived = BYTES_RECEIVED
+                statusCode = 200
+            }
+            traceId = TRACE_ID
+            w3cTraceparent = TRACEPARENT
+            networkCaptureData = NETWORK_CAPTURE_DATA
+        }
     }
 
     @Test
     fun `record basic incomplete request`() {
-        assertSingleNetworkRequestInSession(
-            EmbraceNetworkRequest.fromIncompleteRequest(
-                URL,
-                HttpMethod.GET,
-                START_TIME,
-                END_TIME,
-                NullPointerException::class.toString(),
-                "Dang nothing there"
-            ),
-            completed = false
-        )
+        assertSingleNetworkRequestInSession(HttpMethod.GET, completed = false) {
+            incomplete {
+                errorType = NullPointerException::class.toString()
+                errorMessage = "Dang nothing there"
+            }
+        }
     }
 
     @Test
     fun `record incomplete POST request with trace ID`() {
-        assertSingleNetworkRequestInSession(
-            EmbraceNetworkRequest.fromIncompleteRequest(
-                URL,
-                HttpMethod.POST,
-                START_TIME,
-                END_TIME,
-                NullPointerException::class.toString(),
-                "Dang nothing there",
-                TRACE_ID
-            ),
-            completed = false
-        )
+        assertSingleNetworkRequestInSession(HttpMethod.POST, completed = false) {
+            incomplete {
+                errorType = NullPointerException::class.toString()
+                errorMessage = "Dang nothing there"
+            }
+            traceId = TRACE_ID
+        }
     }
 
     @Test
     fun `record incomplete request with network capture`() {
-        assertSingleNetworkRequestInSession(
-            EmbraceNetworkRequest.fromIncompleteRequest(
-                URL,
-                HttpMethod.GET,
-                START_TIME,
-                END_TIME,
-                NullPointerException::class.toString(),
-                "Dang nothing there",
-                TRACE_ID,
-                null,
-                NETWORK_CAPTURE_DATA
-            ),
-            completed = false
-        )
+        assertSingleNetworkRequestInSession(HttpMethod.GET, completed = false) {
+            incomplete {
+                errorType = NullPointerException::class.toString()
+                errorMessage = "Dang nothing there"
+            }
+            traceId = TRACE_ID
+            networkCaptureData = NETWORK_CAPTURE_DATA
+        }
     }
 
     @Test
     fun `record incomplete request with traceparent`() {
-        assertSingleNetworkRequestInSession(
-            EmbraceNetworkRequest.fromIncompleteRequest(
-                URL,
-                HttpMethod.GET,
-                START_TIME,
-                END_TIME,
-                NullPointerException::class.toString(),
-                "Dang nothing there",
-                TRACE_ID,
-                TRACEPARENT,
-                NETWORK_CAPTURE_DATA
-            ),
-            completed = false
-        )
+        assertSingleNetworkRequestInSession(HttpMethod.GET, completed = false) {
+            incomplete {
+                errorType = NullPointerException::class.toString()
+                errorMessage = "Dang nothing there"
+            }
+            traceId = TRACE_ID
+            w3cTraceparent = TRACEPARENT
+            networkCaptureData = NETWORK_CAPTURE_DATA
+        }
+    }
+
+    @Test
+    fun `record incomplete request through the deprecated API`() {
+        assertSingleNetworkRequestInSession(HttpMethod.GET, completed = false, deprecatedApi = true) {
+            incomplete {
+                errorType = NullPointerException::class.toString()
+                errorMessage = "Dang nothing there"
+            }
+            traceId = TRACE_ID
+            w3cTraceparent = TRACEPARENT
+            networkCaptureData = NETWORK_CAPTURE_DATA
+        }
     }
 
     @Test
@@ -209,40 +195,28 @@ internal class NetworkRequestApiTest(
             testCaseAction = {
                 recordSession {
                     clock.tick(5)
-                    embrace.recordNetworkRequest(
-                        EmbraceNetworkRequest.fromCompletedRequest(
-                            DISABLED_URL,
-                            HttpMethod.GET,
-                            START_TIME,
-                            END_TIME,
-                            BYTES_SENT,
-                            BYTES_RECEIVED,
-                            200
-                        )
-                    )
+                    embrace.recordNetworkRequest(DISABLED_URL, HttpMethod.GET, START_TIME, END_TIME) {
+                        completed {
+                            bytesSent = BYTES_SENT
+                            bytesReceived = BYTES_RECEIVED
+                            statusCode = 200
+                        }
+                    }
                     clock.tick(5)
-                    embrace.recordNetworkRequest(
-                        EmbraceNetworkRequest.fromIncompleteRequest(
-                            DISABLED_URL,
-                            HttpMethod.GET,
-                            START_TIME + 1,
-                            END_TIME,
-                            NullPointerException::class.toString(),
-                            "Dang nothing there"
-                        )
-                    )
+                    embrace.recordNetworkRequest(DISABLED_URL, HttpMethod.GET, START_TIME + 1, END_TIME) {
+                        incomplete {
+                            errorType = NullPointerException::class.toString()
+                            errorMessage = "Dang nothing there"
+                        }
+                    }
                     clock.tick(5)
-                    embrace.recordNetworkRequest(
-                        EmbraceNetworkRequest.fromCompletedRequest(
-                            URL,
-                            HttpMethod.GET,
-                            START_TIME + 2,
-                            END_TIME,
-                            BYTES_SENT,
-                            BYTES_RECEIVED,
-                            200
-                        )
-                    )
+                    embrace.recordNetworkRequest(URL, HttpMethod.GET, START_TIME + 2, END_TIME) {
+                        completed {
+                            bytesSent = BYTES_SENT
+                            bytesReceived = BYTES_RECEIVED
+                            statusCode = 200
+                        }
+                    }
                 }
             },
             assertAction = {
@@ -263,18 +237,15 @@ internal class NetworkRequestApiTest(
                 recordSession {
                     clock.tick(5)
 
-                    val request = EmbraceNetworkRequest.fromCompletedRequest(
-                        URL,
-                        HttpMethod.GET,
-                        START_TIME,
-                        END_TIME,
-                        BYTES_SENT,
-                        BYTES_RECEIVED,
-                        200
-                    )
-
-                    embrace.recordNetworkRequest(request)
-                    embrace.recordNetworkRequest(request)
+                    repeat(2) {
+                        embrace.recordNetworkRequest(URL, HttpMethod.GET, START_TIME, END_TIME) {
+                            completed {
+                                bytesSent = BYTES_SENT
+                                bytesReceived = BYTES_RECEIVED
+                                statusCode = 200
+                            }
+                        }
+                    }
                 }
             },
             assertAction = {
@@ -312,18 +283,14 @@ internal class NetworkRequestApiTest(
             testCaseAction = {
                 recordSession {
                     repeat(2) {
-                        embrace.recordNetworkRequest(
-                            EmbraceNetworkRequest.fromCompletedRequest(
-                                URL,
-                                HttpMethod.GET,
-                                START_TIME + it,
-                                END_TIME,
-                                BYTES_SENT,
-                                BYTES_RECEIVED,
-                                200,
-                                networkCaptureData = NETWORK_CAPTURE_DATA,
-                            )
-                        )
+                        embrace.recordNetworkRequest(URL, HttpMethod.GET, START_TIME + it, END_TIME) {
+                            completed {
+                                bytesSent = BYTES_SENT
+                                bytesReceived = BYTES_RECEIVED
+                                statusCode = 200
+                            }
+                            networkCaptureData = NETWORK_CAPTURE_DATA
+                        }
                     }
                 }
             },
@@ -351,18 +318,14 @@ internal class NetworkRequestApiTest(
             ),
             testCaseAction = {
                 recordSession {
-                    embrace.recordNetworkRequest(
-                        EmbraceNetworkRequest.fromCompletedRequest(
-                            URL,
-                            HttpMethod.GET,
-                            START_TIME,
-                            END_TIME,
-                            BYTES_SENT,
-                            BYTES_RECEIVED,
-                            200,
-                            networkCaptureData = NETWORK_CAPTURE_DATA,
-                        )
-                    )
+                    embrace.recordNetworkRequest(URL, HttpMethod.GET, START_TIME, END_TIME) {
+                        completed {
+                            bytesSent = BYTES_SENT
+                            bytesReceived = BYTES_RECEIVED
+                            statusCode = 200
+                        }
+                        networkCaptureData = NETWORK_CAPTURE_DATA
+                    }
                 }
             },
             assertAction = {
@@ -412,17 +375,13 @@ internal class NetworkRequestApiTest(
                         info.httpMethod = "POST"
                     }
                     clock.tick(5)
-                    embrace.recordNetworkRequest(
-                        EmbraceNetworkRequest.fromCompletedRequest(
-                            URL,
-                            HttpMethod.GET,
-                            START_TIME,
-                            END_TIME,
-                            BYTES_SENT,
-                            BYTES_RECEIVED,
-                            200
-                        )
-                    )
+                    embrace.recordNetworkRequest(URL, HttpMethod.GET, START_TIME, END_TIME) {
+                        completed {
+                            bytesSent = BYTES_SENT
+                            bytesReceived = BYTES_RECEIVED
+                            statusCode = 200
+                        }
+                    }
                 }
             },
             assertAction = {
@@ -447,17 +406,13 @@ internal class NetworkRequestApiTest(
                     embrace.addHttpRequestInfoModifier(modifier)
                     embrace.removeHttpRequestInfoModifier(modifier)
                     clock.tick(5)
-                    embrace.recordNetworkRequest(
-                        EmbraceNetworkRequest.fromCompletedRequest(
-                            URL,
-                            HttpMethod.GET,
-                            START_TIME,
-                            END_TIME,
-                            BYTES_SENT,
-                            BYTES_RECEIVED,
-                            200
-                        )
-                    )
+                    embrace.recordNetworkRequest(URL, HttpMethod.GET, START_TIME, END_TIME) {
+                        completed {
+                            bytesSent = BYTES_SENT
+                            bytesReceived = BYTES_RECEIVED
+                            statusCode = 200
+                        }
+                    }
                 }
             },
             assertAction = {
@@ -489,18 +444,14 @@ internal class NetworkRequestApiTest(
                         info.url = MODIFIED_URL
                         info.httpMethod = "POST"
                     }
-                    embrace.recordNetworkRequest(
-                        EmbraceNetworkRequest.fromCompletedRequest(
-                            URL,
-                            HttpMethod.GET,
-                            START_TIME,
-                            END_TIME,
-                            BYTES_SENT,
-                            BYTES_RECEIVED,
-                            200,
-                            networkCaptureData = NETWORK_CAPTURE_DATA,
-                        )
-                    )
+                    embrace.recordNetworkRequest(URL, HttpMethod.GET, START_TIME, END_TIME) {
+                        completed {
+                            bytesSent = BYTES_SENT
+                            bytesReceived = BYTES_RECEIVED
+                            statusCode = 200
+                        }
+                        networkCaptureData = NETWORK_CAPTURE_DATA
+                    }
                 }
             },
             assertAction = {
@@ -523,17 +474,53 @@ internal class NetworkRequestApiTest(
         )
     }
 
+    @Suppress("DEPRECATION")
     private fun assertSingleNetworkRequestInSession(
-        expectedRequest: EmbraceNetworkRequest,
+        httpMethod: HttpMethod,
+        url: String = URL,
         completed: Boolean = true,
+        deprecatedApi: Boolean = false,
+        action: NetworkRequestDsl.() -> Unit,
     ) {
+        val expectedRequest = EmbraceNetworkRequestDsl(url, httpMethod, START_TIME, END_TIME).apply(action).build()
 
         testRule.runTest(
             testCaseAction = {
                 recordSession {
                     clock.tick(2L)
                     clock.tick(5L)
-                    embrace.recordNetworkRequest(expectedRequest)
+                    if (!deprecatedApi) {
+                        embrace.recordNetworkRequest(url, httpMethod, START_TIME, END_TIME, action)
+                    } else if (completed) {
+                        embrace.recordNetworkRequest(
+                            io.embrace.android.embracesdk.network.EmbraceNetworkRequest.fromCompletedRequest(
+                                url,
+                                httpMethod,
+                                START_TIME,
+                                END_TIME,
+                                checkNotNull(expectedRequest.bytesSent),
+                                checkNotNull(expectedRequest.bytesReceived),
+                                checkNotNull(expectedRequest.responseCode),
+                                expectedRequest.traceId,
+                                expectedRequest.w3cTraceparent,
+                                expectedRequest.networkCaptureData,
+                            )
+                        )
+                    } else {
+                        embrace.recordNetworkRequest(
+                            io.embrace.android.embracesdk.network.EmbraceNetworkRequest.fromIncompleteRequest(
+                                url,
+                                httpMethod,
+                                START_TIME,
+                                END_TIME,
+                                checkNotNull(expectedRequest.errorType),
+                                checkNotNull(expectedRequest.errorMessage),
+                                expectedRequest.traceId,
+                                expectedRequest.w3cTraceparent,
+                                expectedRequest.networkCaptureData,
+                            )
+                        )
+                    }
                 }
             },
             assertAction = {

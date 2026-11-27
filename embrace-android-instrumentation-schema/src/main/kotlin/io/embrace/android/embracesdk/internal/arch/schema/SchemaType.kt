@@ -164,8 +164,7 @@ sealed class SchemaType(
     }
 
     class NetworkRequest(networkRequestAttrs: Map<String, String>) : SchemaType(EmbType.Performance.Network) {
-        // EmbraceNetworkRequest needs to stay in embrace-android-sdk module as it's a public API,
-        // so pass a map of attributes directly.
+        // Network request models live in modules this one can't depend on, so pass a map of attributes directly.
         override val schemaAttributes: Map<String, String> = networkRequestAttrs
     }
 

@@ -17,12 +17,12 @@ internal class ScenarioScopeTest {
         assertEquals(80, scope.elapsedMs)
         with(scope.embrace.networkRequests.single()) {
             assertEquals("https://api.example.com/v1/cart", url)
-            assertEquals("POST", httpMethod)
+            assertEquals(HttpMethod.POST, httpMethod)
             assertEquals(START_TIME_MS, startTime)
             assertEquals(START_TIME_MS + 80, endTime)
             assertEquals(512L, bytesSent)
             assertEquals(12L, bytesReceived)
-            assertEquals(503, responseCode)
+            assertEquals(503, statusCode)
         }
     }
 
@@ -31,8 +31,8 @@ internal class ScenarioScopeTest {
         scope.recordRequest("https://api.example.com/v1/cart", START_TIME_MS - 250, START_TIME_MS - 30)
 
         with(scope.embrace.networkRequests.single()) {
-            assertEquals("GET", httpMethod)
-            assertEquals(200, responseCode)
+            assertEquals(HttpMethod.GET, httpMethod)
+            assertEquals(200, statusCode)
             assertEquals(4_096L, bytesReceived)
         }
     }
@@ -51,12 +51,12 @@ internal class ScenarioScopeTest {
         assertEquals(0, scope.elapsedMs)
         with(scope.embrace.networkRequests.single()) {
             assertEquals("https://api.example.com/v1/cart", url)
-            assertEquals("POST", httpMethod)
+            assertEquals(HttpMethod.POST, httpMethod)
             assertEquals(START_TIME_MS - 250, startTime)
             assertEquals(START_TIME_MS - 30, endTime)
             assertEquals(512L, bytesSent)
             assertEquals(12L, bytesReceived)
-            assertEquals(503, responseCode)
+            assertEquals(503, statusCode)
         }
     }
 
